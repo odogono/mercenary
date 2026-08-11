@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Define a private-by-default publication policy for solo research and
+  implementation, with a maintainer checklist and qualified-review gate for
+  Reconstructed Payloads and other sensitive material.
 - Define the versioned Fidelity Contract for observable equivalence, evidence-linked
   Behavior Cases, Acceptance Envelopes, Preserved Quirks, Mac Adaptations, and
   publicly governed Departure Records.

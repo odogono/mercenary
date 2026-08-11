@@ -59,3 +59,11 @@ _Avoid_: Port behaviour, manual intent
 **Research Provenance**:
 The trace from a recovered fact or datum to ROM offsets, runtime addresses, source hashes, observations, and the interpretation used to reconstruct it.
 _Avoid_: Extraction notes, reverse-engineering log
+
+**Restricted Material**:
+Original or expression-bearing Reference Build inputs, captured artifacts, or derived content withheld from publication unless expressly cleared for the intended use.
+_Avoid_: Private asset, secret content
+
+**Reconstructed Payload**:
+An immutable dataset or content artifact derived from Restricted Material for use by the Independent Implementation, governed separately from application code.
+_Avoid_: Asset dump, extracted ROM data

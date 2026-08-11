@@ -2,6 +2,9 @@
 # repository content.
 /roms/
 
+# Other Restricted Material that does not belong to a specific research harness.
+/restricted/
+
 # Generated C64 laboratory artifacts may contain ROM-derived data.
 /research/c64-reference-build/work/
 
