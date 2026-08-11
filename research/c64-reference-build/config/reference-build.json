@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "logicalName": "C64 Reference Build (supplied ABC/1001 crack)",
+  "filename": "MERCENARY.PRG",
+  "size": 49203,
+  "hashes": {
+    "sha256": "ff725f37a7dc131396272d75625f7397aafecc15b158626c0a9165f2607808f3",
+    "sha1": "ef147f04006c9e264ed7ce02863110bb6e2c83cd",
+    "md5": "b3212f2210f56382ab4b936bf28edd73"
+  },
+  "loadAddress": 2049,
+  "endAddress": 51249,
+  "basicSysAddress": 2080,
+  "packer": "COMPACKER V2.0",
+  "authority": "provisional-crack",
+  "qualification": "Facts potentially affected by cracking require comparison with preservation-grade retail media before becoming Authoritative Evidence."
+}

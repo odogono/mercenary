@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "machineModel": "c64",
+  "minimumViceVersion": "3.10",
+  "minimumPythonVersion": "3.13",
+  "seed": 12648430,
+  "cycleLimit": 120000000,
+  "binaryMonitorAddress": "ip4://127.0.0.1:6502",
+  "checkpoints": {
+    "post-unpack": {
+      "address": 486,
+      "description": "COMPACKER has restored the memory map and returned from BASIC ROM $A871; the next instruction is JMP $A7AE."
+    },
+    "interactive": {
+      "address": 33911,
+      "condition": "@ram:$007f == $3f",
+      "description": "Recurring renderer boundary after the runtime state marker at raw RAM $007F reaches $3F; startup reaches the same code with a different marker."
+    }
+  }
+}

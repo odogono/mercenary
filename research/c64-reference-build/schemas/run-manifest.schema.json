@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/odogono/mercenary/research/c64-reference-build/run-manifest.schema.json",
+  "title": "C64 Reference Build laboratory run manifest",
+  "type": "object",
+  "required": ["schemaVersion", "runId", "createdAt", "build", "toolchain", "machine", "scenario", "checkpoint", "artifacts"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "runId": {"type": "string", "minLength": 1},
+    "createdAt": {"type": "string", "format": "date-time"},
+    "build": {
+      "type": "object",
+      "required": ["logicalName", "size", "loadAddress", "endAddress", "hashes", "authority"],
+      "properties": {
+        "logicalName": {"type": "string"},
+        "size": {"type": "integer", "minimum": 1},
+        "loadAddress": {"type": "integer", "minimum": 0, "maximum": 65535},
+        "endAddress": {"type": "integer", "minimum": 0, "maximum": 65535},
+        "hashes": {
+          "type": "object",
+          "required": ["sha256", "sha1", "md5"],
+          "properties": {
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "sha1": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            "md5": {"type": "string", "pattern": "^[0-9a-f]{32}$"}
+          },
+          "additionalProperties": false
+        },
+        "authority": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "toolchain": {
+      "type": "object",
+      "required": ["pythonVersion", "viceVersion", "viceVersionSource", "viceBinarySha256", "viceFeaturesSha256"],
+      "properties": {
+        "pythonVersion": {"type": "string"},
+        "viceVersion": {"type": "string"},
+        "viceVersionSource": {"type": "string"},
+        "viceBinarySha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "viceFeaturesSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "machine": {
+      "type": "object",
+      "required": ["model", "seed", "cycleLimit", "configSha256"],
+      "properties": {
+        "model": {"const": "c64"},
+        "seed": {"type": "integer", "minimum": 0},
+        "cycleLimit": {"type": "integer", "minimum": 1},
+        "configSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "scenario": {
+      "type": "object",
+      "required": ["name", "sha256"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "checkpoint": {
+      "type": "object",
+      "required": ["name", "address", "registers"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "address": {"type": "integer", "minimum": 0, "maximum": 65535},
+        "startAddress": {"type": "integer", "minimum": 0, "maximum": 65535},
+        "registers": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["role", "path", "size", "sha256"],
+        "properties": {
+          "role": {"type": "string", "minLength": 1},
+          "path": {"type": "string", "minLength": 1},
+          "size": {"type": "integer", "minimum": 0},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

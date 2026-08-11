@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "qualification": "Navigation metadata for the supplied crack, not copied implementation material.",
+  "segments": [
+    {"name": "prg-load", "start": 2049, "endInclusive": 51249, "kind": "packed-input"},
+    {"name": "resident-unpacker", "start": 256, "endInclusive": 488, "kind": "runtime-copy"}
+  ],
+  "entrypoints": [
+    {"name": "basic-stub", "address": 2049},
+    {"name": "compacker-entry", "address": 2080},
+    {"name": "unpacked-sys-stub", "address": 2065},
+    {"name": "post-unpack-transfer", "address": 486},
+    {"name": "basic-warm-start", "address": 42926},
+    {"name": "runtime-stage-entry", "address": 47499},
+    {"name": "interactive-renderer-boundary", "address": 33911}
+  ]
+}

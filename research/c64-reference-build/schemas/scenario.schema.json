@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/odogono/mercenary/research/c64-reference-build/scenario.schema.json",
+  "title": "C64 Reference Build observation scenario",
+  "type": "object",
+  "required": ["schemaVersion", "name", "checkpoint", "actions"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "name": {"type": "string", "minLength": 1},
+    "checkpoint": {"type": "string", "enum": ["post-unpack", "interactive"]},
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["type", "address"],
+            "properties": {"type": {"const": "wait_pc"}, "address": {"type": "integer", "minimum": 0, "maximum": 65535}},
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["type", "instructions"],
+            "properties": {"type": {"const": "wait_instructions"}, "instructions": {"type": "integer", "minimum": 1, "maximum": 65535}},
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["type", "petscii"],
+            "properties": {"type": {"const": "key"}, "petscii": {"type": "string", "maxLength": 255}},
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["type", "port", "value", "durationInstructions"],
+            "properties": {
+              "type": {"const": "joystick"},
+              "port": {"const": 2},
+              "value": {"type": "integer", "minimum": 0, "maximum": 31},
+              "durationInstructions": {"type": "integer", "minimum": 1, "maximum": 65535}
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["type", "artifacts"],
+            "properties": {
+              "type": {"const": "capture"},
+              "artifacts": {
+                "type": "array",
+                "minItems": 1,
+                "uniqueItems": true,
+                "items": {"enum": ["ram", "cpu-memory", "registers", "display", "snapshot"]}
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "qualification": "Exact supplied ABC/1001 crack; VSF and displays are local corroboration only.",
+  "buildSha256": "ff725f37a7dc131396272d75625f7397aafecc15b158626c0a9165f2607808f3",
+  "viceVersion": "3.10",
+  "machineModel": "c64",
+  "seed": 12648430,
+  "checkpoint": {
+    "address": 33911,
+    "condition": "@ram:$007f == $3f",
+    "physicalRamSha256": "04076f2abf5d043990cb26c3392ef548bca204df5dfc897a8180d0061f24ca6d",
+    "cpuVisibleMemorySha256": "a36036d9982fa56c5d56392ec29bdb7ded771095ff19fb94083096b498b3c95f",
+    "registersSha256": "ef04664fd28f64719f454fa675c905c7b1a92ee60bb5a23587e23deeffe3d7cc",
+    "displaySha256": "c325638e8084927db9dad982f400582853568496759a99005b687b984dc29339"
+  },
+  "observation": {
+    "scenario": "input-smoke",
+    "scenarioSha256": "2748b0cdeda192f450b49e12bb288ec2e54271b381a53a5e40d680b6ab7ab20d",
+    "snapshotRestore": "passed with the same VICE version",
+    "petsciiKeyboard": "accepted",
+    "joystickPort2": "accepted",
+    "finalPc": 42394,
+    "finalRegistersSha256": "effcea9911bb73ea9ee9096ce9e2edd9014f8bfcd807984eafb2742a2aa744c9",
+    "binaryDisplaySha256": "7a423bc1411df865901c1997e60289068a8342739ab3ffae227ccd7263ac57f1",
+    "exitScreenshotSha256": "81ca1b9ba4010eb877a7ddc06641962abd8a539bb2896476834805d39b4ef2f2"
+  }
+}

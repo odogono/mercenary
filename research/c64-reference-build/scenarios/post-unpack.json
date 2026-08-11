@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "name": "post-unpack",
+  "checkpoint": "post-unpack",
+  "actions": [
+    {
+      "type": "wait_pc",
+      "address": 486
+    },
+    {
+      "type": "capture",
+      "artifacts": ["ram", "cpu-memory", "registers", "display", "snapshot"]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+# VICE research basis
+
+The laboratory uses primary upstream VICE documentation as its source of truth.
+
+- VICE's [command-line documentation](https://vice-emu.sourceforge.io/vice_2.html) defines autostart, console test mode, bounded cycle execution, version/features reporting, and exit screenshots.
+- The [monitor manual](https://vice-emu.sourceforge.io/vice_12.html) defines checkpoints, command playback, explicit memory banks, raw `bsave` output, snapshots, and screenshots. Physical RAM and CPU-visible address space must be captured separately because C64 ROM and I/O banking changes what the CPU sees.
+- The [binary monitor protocol](https://vice-emu.sourceforge.io/vice_13.html) supplies request-correlated register/memory/display access, keyboard feed, joystick state, checkpoints, and snapshot control. It is bound to loopback only.
+- VICE explicitly warns that [snapshots are not permanent storage](https://vice-emu.sourceforge.io/vice_9.html). The laboratory therefore treats raw RAM plus metadata as durable analysis input and VSF snapshots as version-coupled conveniences.
+- [Event history](https://vice-emu.sourceforge.io/vice_11.html) covers keyboard and joystick events but may diverge during playback. The laboratory uses bounded binary-monitor scenarios for machine-readable input and retains event history only as optional corroboration.
+
+The supported installation is deliberately pragmatic rather than hermetic: `brew install vice` with a minimum version check. Each run records the exact VICE version, features, and effective configuration, so comparisons are qualified by the observed toolchain.
+
+VICE 3.10 is the verified baseline. On this arm64 macOS host, Homebrew's
+`x64sc -version` launcher fails while reconstructing its executable path; the
+laboratory therefore requires `-features` to succeed, hashes the actual binary,
+and records `brew list --versions vice` as the version source. This is a tested
+fallback, not permission to accept an unknown executable.
+
+For an upstream DMG installation, invoke its terminal launcher under `bin/x64sc`
+directly. Upstream [bug 2193](https://sourceforge.net/p/vice-emu/bugs/2193/)
+reports that macOS `open ... --args` can discard arguments. Also, `-console`
+means test-program console behavior rather than a display-free GTK backend;
+[bug 2207](https://sourceforge.net/p/vice-emu/bugs/2207/) records GTK startup
+failure without a display. The current lab is local macOS automation, not a
+claim of headless CI support.
+
+The binary protocol's wait primitive is instruction-counted, so scenarios name
+it `wait_instructions`; the emulator-wide `-limitcycles` remains the hard cycle
+bound. The protocol exposes control ports with zero-based identifiers even
+though scenarios use the C64's user-facing joystick port 2.
