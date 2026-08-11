@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mercenary.invalid/schemas/geometry-provenance.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "decoderVersion", "source", "entries", "bridge"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "decoderVersion": {"type": "integer", "minimum": 1},
+    "source": {"type": "object", "required": ["runId", "buildSha256", "ramSha256"]},
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["provenanceId", "role", "runtimeSpan", "rawHex", "sha256"],
+        "properties": {
+          "provenanceId": {"type": "string", "minLength": 1},
+          "runtimeSpan": {"type": "array", "prefixItems": [{"type": "integer"}, {"type": "integer"}], "minItems": 2, "maxItems": 2},
+          "rawHex": {"type": "string", "pattern": "^(?:[0-9a-f]{2})+$"},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "bridge": {"type": "string", "minLength": 1}
+  }
+}

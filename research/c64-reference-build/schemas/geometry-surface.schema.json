@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mercenary.invalid/schemas/geometry-surface.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "structures", "cells", "roadAltitudeLookup", "counts"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "structures": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
+    "cells": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
+    "roadAltitudeLookup": {"type": "object", "required": ["runtimeSpan", "rawHex"]},
+    "counts": {"type": "object"}
+  },
+  "$defs": {"entity": {"type": "object", "required": ["geometryIdentity", "provenanceRefs"], "properties": {"geometryIdentity": {"type": "string"}, "provenanceRefs": {"type": "array", "items": {"type": "string"}}}}}
+}

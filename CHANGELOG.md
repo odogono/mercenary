@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Add a reproducible, schema-validated World Geometry Dataset extractor with
+  exact object, surface, road, underground, provenance, expansion, bounds,
+  curation, comparison, review, and redacted-summary workflows for issue #7.
+- Add Geometry Identity and Curated Name to the project language while keeping
+  exact reconstructed payloads and comparison media in ignored restricted
+  storage.
 - Define a private-by-default publication policy for solo research and
   implementation, with a maintainer checklist and qualified-review gate for
   Reconstructed Payloads and other sensitive material.

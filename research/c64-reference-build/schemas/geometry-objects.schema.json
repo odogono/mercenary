@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mercenary.invalid/schemas/geometry-objects.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "models", "instances"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "models": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
+    "instances": {"type": "array", "items": {"$ref": "#/$defs/entity"}}
+  },
+  "$defs": {"entity": {"type": "object", "required": ["geometryIdentity", "provenanceRefs"], "properties": {"geometryIdentity": {"type": "string"}, "provenanceRefs": {"type": "array", "items": {"type": "string"}}}}}
+}

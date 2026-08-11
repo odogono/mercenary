@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mercenary.invalid/schemas/geometry-manifest.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "datasetId", "decoderVersion", "coreDigest", "curationDigest", "counts", "files", "publicationStatus"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "datasetId": {"type": "string", "minLength": 1},
+    "decoderVersion": {"type": "integer", "minimum": 1},
+    "coreDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "curationDigest": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "files": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "path", "size", "sha256"],
+        "properties": {
+          "role": {"enum": ["provenance", "objects", "surface", "underground", "curation"]},
+          "path": {"type": "string", "pattern": "^[^/]+\\.json$"},
+          "size": {"type": "integer", "minimum": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "publicationStatus": {"const": "restricted"}
+  }
+}

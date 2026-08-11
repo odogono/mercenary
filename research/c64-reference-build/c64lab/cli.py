@@ -8,6 +8,14 @@ from typing import Sequence
 
 from .core import LabError
 from .laboratory import capture, doctor, observe, reproduce, verify
+from .geometry import (
+    compare_geometry,
+    extract_geometry,
+    reproduce_geometry,
+    review_comparisons,
+    summarize_geometry,
+    verify_dataset,
+)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -30,6 +38,36 @@ def _parser() -> argparse.ArgumentParser:
 
     reproduce_parser = subparsers.add_parser("reproduce", help="compare two clean post-unpack captures")
     reproduce_parser.add_argument("--prg", required=True, type=Path)
+
+    geometry_parser = subparsers.add_parser("geometry", help="extract and validate the World Geometry Dataset")
+    geometry_commands = geometry_parser.add_subparsers(dest="geometry_command", required=True)
+
+    geometry_extract = geometry_commands.add_parser("extract", help="extract a dataset from an interactive capture")
+    geometry_extract.add_argument("--run", required=True, type=Path)
+    geometry_extract.add_argument("--curation", type=Path)
+    geometry_extract.add_argument("--output", type=Path)
+
+    geometry_verify = geometry_commands.add_parser("verify", help="verify a generated dataset bundle")
+    geometry_verify.add_argument("--dataset", required=True, type=Path)
+
+    geometry_reproduce = geometry_commands.add_parser("reproduce", help="compare datasets from two clean initialized captures")
+    geometry_reproduce.add_argument("--prg", required=True, type=Path)
+    geometry_reproduce.add_argument("--curation", type=Path)
+
+    geometry_compare = geometry_commands.add_parser("compare", help="compare representative geometry with a fresh Reference Build capture")
+    geometry_compare.add_argument("--prg", required=True, type=Path)
+    geometry_compare.add_argument("--dataset", required=True, type=Path)
+
+    geometry_review = geometry_commands.add_parser("review", help="record a maintainer comparison decision")
+    geometry_review.add_argument("--comparisons", required=True, type=Path)
+    geometry_review.add_argument("--reviewer", required=True)
+    geometry_review.add_argument("--decision", required=True, choices=("approved", "rejected"))
+
+    geometry_summarize = geometry_commands.add_parser("summarize", help="write an allowlisted redacted evidence baseline")
+    geometry_summarize.add_argument("--dataset", required=True, type=Path)
+    geometry_summarize.add_argument("--comparisons", required=True, type=Path)
+    geometry_summarize.add_argument("--review", required=True, type=Path)
+    geometry_summarize.add_argument("--output", required=True, type=Path)
     return parser
 
 
@@ -48,8 +86,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif arguments.command == "verify":
             manifest = verify(arguments.run)
             result = {"status": "verified", "run": str(arguments.run), "runId": manifest["runId"]}
-        else:
+        elif arguments.command == "reproduce":
             result = reproduce(arguments.prg)
+        elif arguments.geometry_command == "extract":
+            result = extract_geometry(arguments.run, curation_path=arguments.curation, output=arguments.output)
+        elif arguments.geometry_command == "verify":
+            verified = verify_dataset(arguments.dataset)
+            result = {"status": "verified", "dataset": str(arguments.dataset), "manifest": verified["manifest"]}
+        elif arguments.geometry_command == "reproduce":
+            result = reproduce_geometry(arguments.prg, curation_path=arguments.curation)
+        elif arguments.geometry_command == "compare":
+            result = compare_geometry(arguments.prg, arguments.dataset)
+        elif arguments.geometry_command == "review":
+            result = review_comparisons(arguments.comparisons, arguments.reviewer, arguments.decision)
+        else:
+            result = summarize_geometry(arguments.dataset, arguments.comparisons, arguments.review, arguments.output)
     except LabError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
