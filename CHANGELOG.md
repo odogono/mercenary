@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Define the versioned Fidelity Contract for observable equivalence, evidence-linked
+  Behavior Cases, Acceptance Envelopes, Preserved Quirks, Mac Adaptations, and
+  publicly governed Departure Records.
+- Add normative Behavior Case and Departure Record templates, including
+  crack-sensitive evidence handling, comparative wireframe review, semantic
+  input/save rules, and nondeterministic verification requirements.
 - Establish the provenance-safe C64 Reference Build laboratory for issue #2.
 - Add repeatable VICE environment checks, checkpoint captures, binary-monitor
   observations, artifact verification, and two-run reproduction through the

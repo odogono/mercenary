@@ -9,11 +9,11 @@ The Commodore 64 edition of *Mercenary: Escape from Targ*, used as the authority
 _Avoid_: Canonical ROM, original version
 
 **Faithful Remake**:
-A recreation that preserves the Reference Build's world, geometry, mechanics, progression, economy, encounters, and wireframe visual language while fitting naturally into macOS.
+A recreation evaluated by the Fidelity Contract that preserves the Reference Build's world, geometry, mechanics, progression, economy, encounters, and wireframe visual language, except for necessary least-divergent alternatives accepted through public Departure Records, while fitting naturally into macOS.
 _Avoid_: Port, remaster, emulator
 
 **Mac Adaptation**:
-A host-platform accommodation—such as input, display scaling, windowing, audio plumbing, or save handling—that does not alter the preserved game.
+A separable host-platform accommodation—such as input, display scaling, windowing, audio plumbing, or save handling—that remains within the applicable Acceptance Envelopes and does not alter the preserved semantic baseline.
 _Avoid_: Gameplay improvement, modernization
 
 **Initial Release**:
@@ -29,8 +29,28 @@ A lossless, provenance-backed representation of the Reference Build's object mod
 _Avoid_: Mesh dump, model pack
 
 **Preserved Quirk**:
-Reference Build behaviour retained because it affects progression, established solutions, world behaviour, or the characteristic feel of play.
+Reference Build behaviour retained because it materially affects play or has been explicitly curated as part of the game's characteristic identity.
 _Avoid_: Bug compatibility
+
+**Fidelity Contract**:
+The versioned policy that defines how the Faithful Remake demonstrates observable equivalence to the evidence-derived baseline, including governed exceptions.
+_Avoid_: Pixel-perfect clone, feels-the-same promise
+
+**Behavior Case**:
+An evidence-linked statement of initial state, player actions, expected observables, and Acceptance Envelopes used to evaluate one fidelity obligation.
+_Avoid_: Test case, anecdote
+
+**Acceptance Envelope**:
+The evidence-backed bounds within which an observable may vary without changing the preserved game.
+_Avoid_: Close enough, tolerance guess
+
+**Repairable Artifact**:
+A reproducible C64 hardware or software effect demonstrated not to have material player impact and therefore eligible for a governed repair.
+_Avoid_: Obvious bug, free fix
+
+**Departure Record**:
+A public, versioned decision accepting a necessary least-divergent mismatch from one or more Behavior Cases while retaining the original evidence-derived expectations.
+_Avoid_: Exception note, silent improvement
 
 **Authoritative Evidence**:
 Behaviour observed in the running Reference Build or data decoded directly from it; when sources disagree, this evidence outranks manuals and other platform editions.
