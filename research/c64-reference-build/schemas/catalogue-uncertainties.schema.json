@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/odogono/mercenary/research/c64-reference-build/catalogue-uncertainties.schema.json",
+  "title": "Behavior Catalogue uncertainty register",
+  "type": "object",
+  "required": ["schemaVersion", "uncertainties"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "uncertainties": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "question", "affectedEntryIds", "affectedBehaviorCaseIds", "evidenceAttempted", "impact", "crackSensitivity", "nextExperiment", "status"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^UNC-[0-9]{4}$"},
+          "title": {"type": "string", "minLength": 1},
+          "question": {"type": "string", "minLength": 1},
+          "affectedEntryIds": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^CAT-[0-9]{4}$"}},
+          "affectedBehaviorCaseIds": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^BC-[0-9]{4}$"}},
+          "evidenceAttempted": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^EV-[0-9a-f]{16}$"}},
+          "impact": {"enum": ["material", "non-material"]},
+          "crackSensitivity": {"enum": ["retail-corroborated", "crack-sensitive", "not-applicable"]},
+          "nextExperiment": {"type": "string", "minLength": 1},
+          "status": {"enum": ["open", "resolved"]}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

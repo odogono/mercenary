@@ -44,6 +44,25 @@ An optional ignored Curated Name overlay may be passed to `extract` with
 [`docs/research/world-geometry-dataset.md`](../../docs/research/world-geometry-dataset.md)
 for the schemas, evidence contract, review gate, and redaction rules.
 
+### Behavior Catalogue
+
+Issue #8's public-safe catalogue and trace definitions live under `catalogue/`.
+Exact evidence is written to ignored content-addressed storage under
+`restricted/behavior-catalogue/evidence`; ordinary generated runs stay under
+`work/`. Validate the tracked indexes with:
+
+```sh
+research/c64-reference-build/lab catalogue verify \
+  --catalogue research/c64-reference-build/catalogue
+```
+
+`catalogue run` executes a versioned branch trace from the conditioned
+interactive checkpoint. Proof traces reject memory injection. Audio traces run
+unwarped with an effective configuration capture; D64 media is attached at
+branch-process setup in read/write or read-only mode and hashed only after
+orderly shutdown. See
+[`docs/research/behavior-catalogue.md`](../../docs/research/behavior-catalogue.md).
+
 `doctor` rejects a missing or altered input before VICE starts. It checks the
 49,203-byte PRG, its load header/range and all three recorded hashes; Python
 3.13+; VICE 3.10+; the PAL `c64` machine model; the fixed seed; and the local

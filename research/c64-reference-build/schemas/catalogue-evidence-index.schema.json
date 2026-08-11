@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/odogono/mercenary/research/c64-reference-build/catalogue-evidence-index.schema.json",
+  "title": "Public-safe catalogue evidence index",
+  "type": "object",
+  "required": ["schemaVersion", "evidence"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "authority", "buildSha256", "traceId", "traceVersion", "traceSha256", "decoderVersions", "artifactHashes", "restriction", "restrictedPointer", "mode"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^EV-[0-9a-f]{16}$"},
+          "authority": {"enum": ["running-reference-build", "decoded-reference-build"]},
+          "buildSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "traceId": {"type": "string", "pattern": "^TR-[0-9]{4}$"},
+          "traceVersion": {"type": "integer", "minimum": 1},
+          "traceSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "decoderVersions": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "artifactHashes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+          "restriction": {"const": "local-restricted"},
+          "restrictedPointer": {"type": "string", "pattern": "^(sha256|evidence)/[A-Za-z0-9._/-]+$"},
+          "mode": {"enum": ["probe", "proof"]}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

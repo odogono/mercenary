@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/odogono/mercenary/research/c64-reference-build/catalogue-entries.schema.json",
+  "title": "Public-safe Behavior Catalogue entries",
+  "type": "object",
+  "required": ["schemaVersion", "entries"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "version", "status", "title", "summary", "kind", "domains", "fidelityDimensions", "classification", "materiality", "crackSensitivity", "evidenceIds", "behaviorCaseIds", "geometryIdentities", "uncertaintyIds"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^CAT-[0-9]{4}$"},
+          "version": {"type": "integer", "minimum": 1},
+          "status": {"enum": ["verified", "provisional"]},
+          "title": {"type": "string", "minLength": 1},
+          "summary": {"type": "string", "minLength": 1},
+          "kind": {"enum": ["behavior", "content", "state", "transition", "presentation", "route"]},
+          "domains": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["audio", "controls", "economy", "endings", "inventory", "mechanics", "messages", "missions", "movement", "nondeterminism", "objects", "progression", "quirks", "saves", "timing", "vehicles", "visuals", "world"]}},
+          "fidelityDimensions": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["audio", "content", "controls", "nondeterminism", "outcome", "saves", "state", "timing", "visuals"]}},
+          "classification": {"enum": ["required-behavior", "preserved-quirk", "repairable-artifact", "mac-adaptation", "excluded-crack-artifact"]},
+          "materiality": {"enum": ["material", "non-material"]},
+          "crackSensitivity": {"enum": ["retail-corroborated", "crack-sensitive", "not-applicable"]},
+          "evidenceIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^EV-[0-9a-f]{16}$"}},
+          "behaviorCaseIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^BC-[0-9]{4}$"}},
+          "geometryIdentities": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "uncertaintyIds": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^UNC-[0-9]{4}$"}}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

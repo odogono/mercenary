@@ -19,7 +19,9 @@ from c64lab.monitor import (  # noqa: E402
     joyport_set_body,
     keyboard_feed_body,
     memory_get_body,
+    memory_set_body,
     parse_response,
+    resource_set_body,
 )
 
 
@@ -47,6 +49,15 @@ class MonitorProtocolTests(unittest.TestCase):
             memory_get_body(0x0000, 0xFFFF, bank_id=3),
             struct.pack("<BHHBH", 0, 0, 0xFFFF, 0, 3),
         )
+
+    def test_builds_an_explicit_bank_memory_write(self) -> None:
+        self.assertEqual(
+            memory_set_body(0x1000, b"\xaa\xbb", bank_id=3),
+            struct.pack("<BHHBH", 0, 0x1000, 0x1001, 0, 3) + b"\xaa\xbb",
+        )
+
+    def test_builds_a_string_resource_write_that_integer_resources_can_interpret(self) -> None:
+        self.assertEqual(resource_set_body("Sound", "1"), b"\x00\x05Sound\x011")
 
     def test_parses_a_response_and_preserves_request_id(self) -> None:
         raw = bytes.fromhex("02 02 02 00 00 00 62 00 ff ff ff ff cf e5")

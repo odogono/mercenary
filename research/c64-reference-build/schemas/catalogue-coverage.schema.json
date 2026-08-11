@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/odogono/mercenary/research/c64-reference-build/catalogue-coverage.schema.json",
+  "title": "Behavior Catalogue coverage matrix",
+  "type": "object",
+  "required": ["schemaVersion", "requiredDomains", "requiredDimensions", "inventorySources", "domains", "journeys"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "requiredDomains": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+    "requiredDimensions": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+    "inventorySources": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["id", "kind", "evidenceIds", "status"], "properties": {"id": {"type": "string", "pattern": "^INV-[0-9]{4}$"}, "kind": {"type": "string", "minLength": 1}, "evidenceIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^EV-[0-9a-f]{16}$"}}, "status": {"enum": ["closed"]}}, "additionalProperties": false}},
+    "domains": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["domain", "entryIds", "behaviorCaseIds", "uncertaintyIds", "status"], "properties": {"domain": {"type": "string"}, "entryIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^CAT-[0-9]{4}$"}}, "behaviorCaseIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^BC-[0-9]{4}$"}}, "uncertaintyIds": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^UNC-[0-9]{4}$"}}, "status": {"const": "complete"}}, "additionalProperties": false}},
+    "journeys": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["behaviorCaseId", "kind", "status"], "properties": {"behaviorCaseId": {"type": "string", "pattern": "^BC-[0-9]{4}$"}, "kind": {"const": "material-route"}, "status": {"enum": ["verified", "provisional"]}}, "additionalProperties": false}}
+  },
+  "additionalProperties": false
+}

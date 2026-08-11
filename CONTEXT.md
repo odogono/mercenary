@@ -48,6 +48,14 @@ _Avoid_: Pixel-perfect clone, feels-the-same promise
 An evidence-linked statement of initial state, player actions, expected observables, and Acceptance Envelopes used to evaluate one fidelity obligation.
 _Avoid_: Test case, anecdote
 
+**Behavior Catalogue**:
+The complete evidence-backed index of player-observable Reference Build content and behaviour, including its coverage and explicitly bounded uncertainties.
+_Avoid_: Feature list, walkthrough
+
+**Catalogue Entry**:
+One stable player-observable content or behaviour identity in the Behavior Catalogue, independent of its current interpretation or domain classification.
+_Avoid_: Behavior Case, reference fact
+
 **Acceptance Envelope**:
 The evidence-backed bounds within which an observable may vary without changing the preserved game.
 _Avoid_: Close enough, tolerance guess

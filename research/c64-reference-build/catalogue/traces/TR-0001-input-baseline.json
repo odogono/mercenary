@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "TR-0001",
+  "version": 1,
+  "title": "Conditioned input and movement baseline",
+  "mode": "proof",
+  "branches": [
+    {
+      "id": "turn-left",
+      "from": {"checkpoint": "interactive"},
+      "actions": [
+        {"type":"capture","name":"before","artifacts":["registers","display","snapshot","memory"],"ranges":[{"bank":"ram","start":9472,"end":10751}]},
+        {"type":"joystick","port":2,"value":4,"durationInstructions":1024,"semanticAction":"turn-left"},
+        {"type":"capture","name":"after","artifacts":["registers","display","memory"],"ranges":[{"bank":"ram","start":9472,"end":10751}]}
+      ]
+    },
+    {
+      "id": "turn-right",
+      "from": {"branch":"turn-left","capture":"before"},
+      "actions": [
+        {"type":"joystick","port":2,"value":8,"durationInstructions":1024,"semanticAction":"turn-right"},
+        {"type":"capture","name":"after","artifacts":["registers","display","memory"],"ranges":[{"bank":"ram","start":9472,"end":10751}]}
+      ]
+    }
+  ]
+}
