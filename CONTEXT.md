@@ -16,6 +16,30 @@ _Avoid_: Port, remaster, emulator
 A separable host-platform accommodation—such as input, display scaling, windowing, audio plumbing, or save handling—that remains within the applicable Acceptance Envelopes and does not alter the preserved semantic baseline.
 _Avoid_: Gameplay improvement, modernization
 
+**Game Surface**:
+The game-owned presentation region containing the world view, status information, prompts, and gameplay feedback whose observable behaviour is governed by the Fidelity Contract.
+_Avoid_: Viewport, game UI
+
+**Native Shell**:
+The macOS-owned experience surrounding the Game Surface, including windows, menus, settings, help, file interaction, and host feedback.
+_Avoid_: Host UI, Mac shell
+
+**Semantic Action**:
+A device-independent player intent whose availability, conflicts, ordering, rate limits, and outcomes are governed by Behavior Cases.
+_Avoid_: Key press, button press, scan code
+
+**Control Profile**:
+A named set of device-specific bindings that maps physical controls to Semantic Actions.
+_Avoid_: Keymap, input profile
+
+**Accommodation**:
+An optional Mac Adaptation that improves access through equivalent input or redundant presentation without changing game semantics or player-relevant timing.
+_Avoid_: Assist mode, accessibility mode
+
+**Display Composition**:
+A validated arrangement of the world view, status information, and prompts within the Game Surface that preserves their governed information and behaviour.
+_Avoid_: Layout mode, aspect mode
+
 **Initial Release**:
 The complete *Mercenary: Escape from Targ* experience delivered by this effort, with extension seams for *The Second City* but without that expansion's content.
 _Avoid_: Mercenary 1, base game

@@ -12,3 +12,6 @@
 # Python development artifacts.
 __pycache__/
 *.py[cod]
+
+# Throwaway native-prototype build products.
+/prototypes/macos-experience/.build/
