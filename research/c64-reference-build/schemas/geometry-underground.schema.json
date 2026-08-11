@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mercenary.invalid/schemas/geometry-underground.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "primitiveTemplates", "records", "rooms"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "primitiveTemplates": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
+    "records": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
+    "rooms": {"type": "array", "items": {"$ref": "#/$defs/entity"}}
+  },
+  "$defs": {"entity": {"type": "object", "required": ["geometryIdentity", "provenanceRefs"], "properties": {"geometryIdentity": {"type": "string"}, "provenanceRefs": {"type": "array", "items": {"type": "string"}}}}}
+}

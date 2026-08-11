@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "qualification": "Exact supplied ABC/1001 crack; potentially crack-affected facts and candidate identities remain provisional.",
+  "decoderVersion": 1,
+  "datasetId": "world-geometry-965cf8fe0d122d28",
+  "coreDigest": "965cf8fe0d122d286fad8a4f421e76de13c3f9e0f58417f62f2e4494f1eeb55b",
+  "curationDigest": "f9b13e157ad76becc7a45764265f5c8f77745f7c87da32762200166697a18500",
+  "counts": {
+    "objectSlots": 64,
+    "objectModels": 55,
+    "surfaceCells": 256,
+    "surfaceStructures": 98,
+    "firstRoadSegments": 135,
+    "secondRoadSegments": 136,
+    "roomIds": 192,
+    "roomRecords": 174,
+    "roomCommands": 427
+  },
+  "reproduction": {
+    "coldStarts": 2,
+    "result": "equal"
+  },
+  "comparisons": [
+    {"role": "surface", "result": "pass"},
+    {"role": "underground", "result": "pass"},
+    {"role": "vehicle", "result": "pass"},
+    {"role": "orbital", "result": "pass"}
+  ],
+  "review": {
+    "reviewer": null,
+    "reviewedAt": null,
+    "decision": "pending"
+  },
+  "restrictedEvidence": {
+    "dataset": "world-geometry-965cf8fe0d122d28",
+    "comparisonBundle": "local-restricted"
+  }
+}

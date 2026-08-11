@@ -9,6 +9,9 @@ media.
 
 ```sh
 brew bundle --file research/c64-reference-build/Brewfile
+python3 -m venv research/c64-reference-build/.venv
+research/c64-reference-build/.venv/bin/python -m pip install \
+  -r research/c64-reference-build/requirements.txt
 research/c64-reference-build/lab doctor --prg /path/to/MERCENARY.PRG
 research/c64-reference-build/lab reproduce --prg /path/to/MERCENARY.PRG
 research/c64-reference-build/lab capture --prg /path/to/MERCENARY.PRG --checkpoint interactive
@@ -17,6 +20,29 @@ research/c64-reference-build/lab observe --prg /path/to/MERCENARY.PRG \
 research/c64-reference-build/lab verify --run research/c64-reference-build/work/<run-id>
 python3 -m unittest discover -s research/c64-reference-build/tests -v
 ```
+
+### World Geometry Dataset
+
+The geometry commands consume only a verified, conditioned `interactive`
+capture. Exact output remains below ignored `work/` or `restricted/` paths.
+
+```sh
+research/c64-reference-build/lab geometry extract \
+  --run research/c64-reference-build/work/<interactive-run>
+research/c64-reference-build/lab geometry verify \
+  --dataset research/c64-reference-build/work/<geometry-dataset>
+research/c64-reference-build/lab geometry reproduce --prg /path/to/MERCENARY.PRG
+research/c64-reference-build/lab geometry compare --prg /path/to/MERCENARY.PRG \
+  --dataset research/c64-reference-build/work/<geometry-dataset>
+research/c64-reference-build/lab geometry review \
+  --comparisons research/c64-reference-build/work/<geometry-dataset>/comparisons \
+  --reviewer <maintainer> --decision approved
+```
+
+An optional ignored Curated Name overlay may be passed to `extract` with
+`--curation`. A verified name must cite Authoritative Evidence. See
+[`docs/research/world-geometry-dataset.md`](../../docs/research/world-geometry-dataset.md)
+for the schemas, evidence contract, review gate, and redaction rules.
 
 `doctor` rejects a missing or altered input before VICE starts. It checks the
 49,203-byte PRG, its load header/range and all three recorded hashes; Python

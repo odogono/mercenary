@@ -28,6 +28,14 @@ _Avoid_: Source port, ROM wrapper
 A lossless, provenance-backed representation of the Reference Build's object models, vertices, edges, instances, transforms, coordinate systems, layouts, bounds, identities, and visibility rules.
 _Avoid_: Mesh dump, model pack
 
+**Geometry Identity**:
+A stable, Research Provenance-backed identity for an entity in the World Geometry Dataset that remains valid when its interpretation or name changes.
+_Avoid_: Object name, canonical name
+
+**Curated Name**:
+A human game-world label attached to a Geometry Identity, marked verified when supported by Authoritative Evidence and candidate when its interpretation remains uncertain.
+_Avoid_: Canonical identity, definitive name
+
 **Preserved Quirk**:
 Reference Build behaviour retained because it materially affects play or has been explicitly curated as part of the game's characteristic identity.
 _Avoid_: Bug compatibility
