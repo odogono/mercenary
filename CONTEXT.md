@@ -24,6 +24,10 @@ _Avoid_: Viewport, game UI
 The macOS-owned experience surrounding the Game Surface, including windows, menus, settings, help, file interaction, and host feedback.
 _Avoid_: Host UI, Mac shell
 
+**Game Semantics**:
+The fidelity-governed rules and state transitions that determine outcomes and meaningful future state from Semantic Actions and time, independently of the Native Shell and Mac Adaptations.
+_Avoid_: Game logic, gameplay layer
+
 **Semantic Action**:
 A device-independent player intent whose availability, conflicts, ordering, rate limits, and outcomes are governed by Behavior Cases.
 _Avoid_: Key press, button press, scan code
@@ -33,7 +37,7 @@ A named set of device-specific bindings that maps physical controls to Semantic 
 _Avoid_: Keymap, input profile
 
 **Accommodation**:
-An optional Mac Adaptation that improves access through equivalent input or redundant presentation without changing game semantics or player-relevant timing.
+An optional Mac Adaptation that improves access through equivalent input or redundant presentation without changing Game Semantics or player-relevant timing.
 _Avoid_: Assist mode, accessibility mode
 
 **Display Composition**:
