@@ -66,6 +66,27 @@ Public issue comments, pull requests, CI logs and artifacts, source archives,
 package registries, application bundles, crash reports, screenshots, recordings,
 and downloads are publication surfaces under this policy.
 
+## Locally sideloaded Mods
+
+The Initial Release may import an untrusted, user-selected Mod from local
+storage. Local execution does not make the project its publisher, endorse its
+contents, clear its rights, or add it to the official Fidelity Contract claim.
+The project must not upload, mirror, catalogue, or include a Mod in its own
+distribution without classifying that exact package and every publication
+surface under this policy.
+
+Import metadata, diagnostics, crash reports, issue reports, and verification
+artifacts must not copy a Mod's payload excerpts, local paths, expression-bearing
+content, or hashes that the project has not decided are safe to publish. Public
+synthetic example Mods remain maintainer-reviewed publication candidates;
+examples containing reconstructed geometry, text, audio, names, or other
+Restricted Material require the qualified-review tier.
+
+The Initial Release assumes direct Developer ID distribution and notarization.
+Mac App Store eligibility, a hosted Mod catalogue, moderation, reporting,
+payments, and network distribution are separate publication and product
+decisions; this policy does not clear them.
+
 ## Sensitive-item record
 
 Before qualified review, maintain a compact inventory of every sensitive or
@@ -112,6 +133,7 @@ CI gates, separate personnel, or exhaustive file-level provenance.
 | Exact World Geometry Dataset values are proposed without written clearance | Publication is blocked; the data remains Restricted Material. |
 | Counsel clears one Reconstructed Payload hash for named uses and territories | Only that immutable payload may be included, and only within the recorded scope. |
 | Exact fidelity-critical content cannot be cleared | Retain the original Behavior Case, use a newly authored least-divergent substitute only through an accepted public Departure Record, and obtain clearance for the resulting release. |
+| A user locally imports a third-party Mod | Sandbox and label the resulting session as modded; do not publish or imply clearance of the package. |
 
 Fidelity approval and publication clearance remain independent. A maintainer's
 acceptance of a Departure Record never clears material for publication.

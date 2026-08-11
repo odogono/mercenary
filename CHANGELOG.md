@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Define the normative Content and State Model for issue #11, including exact
+  Content Set and linear Content Overlay resolution, typed ResourceGraph
+  relationships, deterministic Lua 5.5.1 Mods in a sandboxed XPC simulation
+  service, authoritative Transition Logs, exact-bound saves, audited migration,
+  and ADRs 0008–0009.
+- Add Content Set, Content Overlay, Mod, Session State, and Transition Log to the
+  shared language, and extend the native, macOS, fidelity, and publication
+  contracts with the resulting boundaries.
+
 - Define the accepted macOS experience contract, Native Shell and Game Surface
   boundary, Mac Adaptation review scenarios, and a synthetic SwiftUI/Core
   Graphics prototype with tested display, input, accessibility, feedback, and

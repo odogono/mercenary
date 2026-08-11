@@ -4,7 +4,7 @@ Status: accepted for implementation; executable validation pending
 
 Decision ticket: [#10 — Choose the native simulation and rendering architecture](https://github.com/odogono/mercenary/issues/10)
 
-Related decisions: [Apple-native stack](adr/0001-use-an-apple-native-stack.md), [research/implementation separation](adr/0002-separate-rom-research-from-implementation.md), [Fidelity Contract](fidelity-contract.md), [Native Shell/Game Surface boundary](adr/0006-separate-the-native-shell-from-the-game-surface.md), and [macOS Experience Contract](macos-experience.md)
+Related decisions: [Apple-native stack](adr/0001-use-an-apple-native-stack.md), [research/implementation separation](adr/0002-separate-rom-research-from-implementation.md), [Fidelity Contract](fidelity-contract.md), [Native Shell/Game Surface boundary](adr/0006-separate-the-native-shell-from-the-game-surface.md), [macOS Experience Contract](macos-experience.md), and [Content and State Model](content-state-model.md)
 
 ## Purpose and status
 
@@ -12,7 +12,7 @@ This contract defines the production application, simulation, renderer, and reso
 
 The architecture is accepted as the implementation baseline. It has been checked statically against the synthetic macOS prototype, the tracked World Geometry Dataset schemas and reports, and the shape of ignored restricted bundles, but it has not been implemented or validated at runtime. It therefore makes no Fidelity Contract conformance claim.
 
-The production target is macOS 14 or newer on Apple silicon. Packaging, signing, notarization, release licensing, exact text and audio reconstruction, content schemas, save migration, and content from *The Second City* remain outside this decision.
+The production target is macOS 14 or newer on Apple silicon. Direct Developer ID distribution is the Initial Release assumption; final signing, notarization, release licensing, exact text and audio reconstruction, and content from *The Second City* remain downstream work. Issue #11 now defines the content, Lua, state, and save boundaries that extend this architecture.
 
 ## Governing invariants
 
@@ -22,6 +22,7 @@ The production target is macOS 14 or newer on Apple silicon. Packaging, signing,
 - Display Composition and Accommodations may change presentation only. They cannot change the camera, scene membership, primitive order, Semantic Actions, simulation timing, outcomes, or meaningful future state.
 - The renderer may discard stale visual snapshots but no consumer may drop, reorder, duplicate, or infer tick-ordered semantic events from visual differences.
 - Invalid resources and an unavailable renderer stop session creation or advancement. The application never substitutes synthetic or partial content, silently changes renderers, or advances headlessly.
+- Official and sideloaded Game Semantics use the same restricted Lua path. Sideloaded Mods execute as untrusted inputs inside the sandboxed simulation service and never gain host-framework access.
 
 ## Deployment and module boundaries
 
@@ -31,18 +32,22 @@ Platform-neutral code lives in one local Swift package with compiler-enforced ta
 
 | Target | Responsibility | Allowed dependencies |
 | --- | --- | --- |
-| `GameResources` | Validate schema-first bundles and construct an immutable `ResourceGraph`. | Swift standard library and Foundation only |
-| `GameCore` | Own Game Semantics, deterministic state, input admission, random streams, snapshots, events, and the future state codec. | `GameResources`, Swift standard library, and Foundation only |
+| `GameResources` | Validate `.mercenarycontent` packages, compose one linear Content Overlay chain, and construct an immutable `ResourceGraph`. | Swift standard library and Foundation only |
+| `GameCore` | Own the semantic kernel, deterministic Session State projection, Transition Log, input admission, random streams, command validation, snapshots, events, and state codec. | `GameResources`, Swift standard library, and Foundation only |
+| `GameScripting` | Embed pinned Lua, enforce the deterministic language subset and budgets, and translate fixed hooks into proposed commands and module state. | `GameCore`, pinned Lua C sources, Swift standard library, and Foundation only |
 | `ReferenceRendering` | Provide the CPU projection/clipping oracle and comparison representations. | `GameCore` only |
 
-The Xcode project adds `MetalGameSurface`, `MacGameShell`, and the application composition target. `MetalGameSurface` may depend on `GameCore`, `ReferenceRendering`, Metal, and MetalKit. `MacGameShell` may depend on all local-package and rendering targets plus SwiftUI, AppKit, GameController, and other host frameworks. No platform-neutral target may import a host or rendering framework.
+The Xcode project adds `SimulationService`, `MetalGameSurface`, `MacGameShell`, and the application composition target. `SimulationService` is a separately sandboxed XPC service that composes `GameResources`, `GameCore`, and `GameScripting`; it receives package/save bytes and semantic commands over a narrow versioned protocol and has no file, network, device, or automation entitlement. `MetalGameSurface` may depend on `GameCore`, `ReferenceRendering`, Metal, and MetalKit. `MacGameShell` may depend on the protocol and rendering targets plus SwiftUI, AppKit, GameController, and other host frameworks, but it cannot link Lua or inspect Session State. No platform-neutral target may import a host or rendering framework.
 
 ```mermaid
 flowchart LR
   P["Physical controls and host lifecycle"] --> S["MacGameShell"]
-  S -->|"SemanticActionTransition and host commands"| R["SimulationRuntime actor"]
-  B["Versioned resource bundle"] --> V["GameResources validation"]
-  V -->|"immutable ResourceGraph"| R
+  S -->|"versioned XPC protocol"| X["sandboxed SimulationService"]
+  B["Content Set and Overlay packages"] --> S
+  X --> V["GameResources resolution"]
+  V -->|"immutable ResourceGraph"| R["SimulationRuntime actor"]
+  L["restricted Lua modules"] -->|"proposed commands"| R
+  R -->|"HookContext"| L
   R -->|"latest GameSurfaceSnapshot"| M["MetalGameSurface"]
   R -->|"lossless GameEventBatch"| A["game-owned and host adapters"]
   O["ReferenceRendering CPU oracle"] -. "fixture comparison" .-> M
@@ -66,7 +71,7 @@ For equal timestamps, admission sequence is the stable tie-breaker. The runtime 
 
 ### Simulation ownership and output
 
-`SimulationRuntime` is a non-main Swift actor and the exclusive owner of mutable game state, the pending action queue, seeded random streams, tick and event sequences, and save/restore admission. Tick mutation is synchronous within actor isolation and never suspends partway through a transition.
+`SimulationRuntime` is a non-main Swift actor inside `SimulationService` and the exclusive owner of the Session State projection, Transition Log, pending admitted-action queue, per-module random streams, tick and event sequences, and save/restore admission. Fixed Lua phases execute synchronously within the service. A tick stages every command, next module-state value, and random draw, then commits them atomically as `CommittedTransition` records or rolls the entire tick back and suspends.
 
 Each completed tick produces `SimulationOutput` with:
 
@@ -75,9 +80,9 @@ Each completed tick produces `SimulationOutput` with:
 
 Snapshots use latest-value delivery: the renderer may replace an unconsumed snapshot with a newer completed one. Event batches use a separate lossless ordered channel with sequence acknowledgement; presentation adapters may not derive them by comparing snapshots. Accommodations are renderer inputs kept separate from snapshots so they cannot feed back into Game Semantics.
 
-`GameStateCodec` will later own save availability and conversion between actor-owned state and versioned opaque bytes. The Native Shell may atomically move those bytes through documents and quick slots, but it cannot encode exposed game fields or initiate storage from inside a simulation tick. Issue #11 defines the state representation and compatibility policy.
+`GameStateCodec` owns save availability and conversion between the authoritative Transition Log and the versioned opaque `SaveEnvelope` defined by the [Content and State Model](content-state-model.md). The Native Shell may inspect safe compatibility metadata and atomically move exact envelope bytes through documents and the ten global quick slots, but it cannot encode exposed game fields or initiate storage from inside a simulation tick.
 
-Seeded random streams are injected when a session is created, advanced only by Game Semantics, and included in future traces and saved state. Platform random APIs are not called from state transitions.
+The session seed is injected when a session is created. `GameCore` derives one independent host-backed `math.random`-compatible stream per stable Lua `ModuleID`; streams advance only when their containing tick commits and belong to Session State and saves. Platform random APIs and Lua's private PRNG are not called from state transitions.
 
 ## Fixed-step scheduling
 
@@ -105,23 +110,28 @@ If Metal device, pipeline, drawable, or command submission setup fails, the comp
 
 ## Resource architecture
 
-`ResourceBundleProvider` eagerly loads one schema-first bundle before constructing a session. A supported bundle has a versioned manifest, payload schema versions, immutable payload digests, provenance references, and all records needed to construct one complete `ResourceGraph`. Validation occurs in this order:
+`ResourceBundleProvider` eagerly resolves one base `.mercenarycontent` package and its single-parent Content Overlay ancestry before constructing a session. Packages have versioned manifests, payload and asset digests, optional author signatures, Lua/ABI requirements, capabilities, and provenance references. Explicit typed additions, replacements, and removals compose one complete `ResourceGraph`. Validation occurs in this order:
 
-1. recognize the manifest and schema versions;
-2. read every declared payload and verify its digest;
-3. validate payload schemas, integer ranges, identities, aliases, and cross-record references;
-4. preserve provenance and raw-command information required by the World Geometry Dataset contract; and
-5. construct one immutable graph or return one typed failure.
+1. validate package containment and declared membership;
+2. recognize manifest, payload, property, Lua host-ABI, transition, and save versions;
+3. read every declared payload and verify its digest and optional signature;
+4. validate payload schemas, Lua source restrictions, integer ranges, typed identities, capabilities, aliases, and traceability;
+5. resolve the exact linear ancestry and explicit overlay operations;
+6. validate every resolved cross-record reference and initial-state value;
+7. preserve provenance and raw-command information required by the World Geometry Dataset contract; and
+8. construct one immutable graph and resolved digest or return one typed failure.
 
 Unknown versions, missing payloads, digest mismatches, invalid references, and partial graphs fail closed before a `SimulationRuntime` exists. Runtime diagnostics report safe failure categories only. They do not print raw values, Restricted Material paths, payload excerpts, or Reference Build-specific hashes.
 
-Public synthetic bundles and ignored restricted bundles implement the same provider contract. Synthetic data supports public tests and examples but is never a production fallback. A future loader may compose base and expansion inputs before validation, but the session receives exactly one resolved graph; layering, precedence, and *The Second City* relationships remain issue #11 decisions.
+Public synthetic, official restricted, and sideloaded Mod packages implement the same provider contract. Synthetic data supports public tests and examples but is never a production fallback. A future *The Second City* Content Overlay may use the same exact-base composition and audited migration seams, but this architecture includes no expansion content or state-transfer promise.
 
 ## Game events and host effects
 
 Game-owned presentation adapters consume `GameEventBatch` values without calling back into the current tick. Gameplay audio and visual cues remain part of the Game Surface experience. Controller haptics may redundantly echo an existing cue, while file errors, controller changes, and renderer/resource failures produce Native Shell feedback. Host effects never become unique gameplay information.
 
 Save, load, close, and quit requests cross the actor boundary as commands. The core determines evidence-derived availability and produces or accepts opaque state bytes; the shell owns panels, slot storage, atomic writes, and destructive-action confirmation. No shell convenience expands legal save/load states or creates hidden game state.
+
+Package import, signature/capability display, exact-digest consent, enable/disable, and installed-version management are Native Shell responsibilities. Consent never widens the XPC sandbox. A modded resolved digest is visibly identified by the Native Shell and cannot inherit the official Fidelity Contract claim.
 
 ## Failure and lifecycle matrix
 
@@ -131,6 +141,9 @@ Save, load, close, and quit requests cross the actor boundary as commands. The c
 | System sleep and wake | Suspend work, retain state, reset the monotonic baseline, and perform no sleep catch-up. |
 | Transient scheduling backlog | Execute bounded ordered catch-up, skip no ticks, discard stale snapshots, retain every event, and record sustained fault state. |
 | Invalid or unsupported resource bundle | Refuse session creation and show a safe Native Shell diagnostic. |
+| Lua trap, budget violation, invalid command/state, or capability breach | Roll back the entire tick and suspend at the last committed transition. |
+| XPC simulation-service crash | End the session and lose unsaved progress; offer explicit saves only and create no hidden recovery state. |
+| Missing exact package chain during load | Preserve the save and refuse logical-ID substitution or best-effort loading. |
 | Metal initialization or submission failure | Suspend the session before further ticks; do not fall back or continue headlessly. |
 | Controller disconnect | Release that device's contributions outside the core, retain keyboard input, and deliver passive Native Shell feedback. |
 | Dirty load, close, or quit | Ask the core for legal save state and use the Native Shell's Save/Discard/Cancel flow. |
@@ -146,7 +159,8 @@ This crosswalk establishes design compatibility, not executable proof.
 | Resource admission | Tracked geometry schemas, manifests, aggregate reports, and synthetic fixtures define validation expectations | Exact World Geometry Dataset bundles remain ignored and are admitted locally through the same provider contract | Corrupt-bundle tests plus clean synthetic and restricted loads. |
 | CPU/GPU rendering split | Tracked geometry research defines ordered edges, transforms, projection, clipping, and detail transitions; synthetic geometry is safe for public comparisons | Ignored reconstructed geometry and comparison captures exercise real ranges and identities | CPU-oracle/Metal primitive and render comparisons under issue #12. |
 | Snapshot and event separation | The macOS Experience Contract requires identical information and event ordering across Display Compositions and Accommodations | Reference traces may establish exact one-shot cue ordering | Vary display rate, window state, and Accommodation settings while comparing identical simulation/event traces. |
-| Seeded randomness and saves | Behavior Catalogue schemas distinguish deterministic and stochastic traces; the prototype establishes shell-only document/slot behavior | Restricted traces and saves may establish legal outcomes and state coverage | Seed replay, state round trips, and nondeterministic Acceptance Envelopes after issues #11 and #12. |
+| Seeded randomness and saves | The Content and State Model defines per-module staged random streams, committed transitions, compaction, exact-bound envelopes, and explicit migrations | Restricted traces and saves may establish legal outcomes and state coverage | Transition replay, random isolation, state round trips, migration, and nondeterministic Acceptance Envelopes under issue #12. |
+| Untrusted Mods | The Content and State Model defines package admission, exact-digest consent, restricted Lua, capabilities, transactional commands, and XPC isolation | No Restricted Material is required for malicious synthetic fixtures | Parser/runtime fuzzing, capability and budget attacks, service termination, safe diagnostics, and deterministic mod traces. |
 
 No exact reconstructed payload, comparison capture, decoded value, or restricted hash is made public by this contract. Publication remains governed independently by the [Publication Policy](publication-policy.md).
 
@@ -162,6 +176,9 @@ Implementation and issue #12 must cover at least:
 - CPU-oracle and Metal agreement for transforms, projection, clipping, primitive order, point/wireframe changes, altitude detail, and room membership using public synthetic and local restricted fixtures;
 - lossless, exactly ordered event delivery when visual snapshots are replaced;
 - seeded random replay and future save/load round trips including random-stream state;
+- authoritative Transition Log replay, save compaction, dirty-state acknowledgement, exact-environment rejection, and audited migration;
+- deterministic restricted Lua execution, explicit module order, capability enforcement, transactional rollback, and independent per-module random streams;
+- malicious package and Lua fixtures plus XPC-crash containment without hidden recovery;
 - safe suspension and diagnostics for Metal initialization and command failures; and
 - regression of MAS-0001 through MAS-0007 without importing prototype implementation choices.
 
