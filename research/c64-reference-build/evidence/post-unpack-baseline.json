@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "qualification": "Exact supplied ABC/1001 crack; potentially crack-affected facts remain provisional.",
+  "buildSha256": "ff725f37a7dc131396272d75625f7397aafecc15b158626c0a9165f2607808f3",
+  "viceVersion": "3.10",
+  "viceBinarySha256": "4ce7b3c30816386dcfd4920c61304c92bbbc1244c294f0d33dc5e834d22e9c91",
+  "viceFeaturesSha256": "67f119c4cdb24e4484f17ccc617d1f3748b4b5d3ed22e62ec3029cad651dac52",
+  "machineModel": "c64",
+  "seed": 12648430,
+  "checkpoint": {
+    "address": 486,
+    "registers": {
+      "A": 0,
+      "PC": 486,
+      "SP": 250,
+      "X": 250,
+      "Y": 229,
+      "flags": "00110011",
+      "port00": 47,
+      "port01": 55,
+      "rasterCycle": 57,
+      "rasterLine": 246,
+      "stopwatch": 10197363
+    }
+  },
+  "normalizedArtifacts": {
+    "physicalRam": {"size": 65536, "sha256": "d5683c3d89417469288200fec78d02000bc963f73725d5fb4698f846f1dc167d"},
+    "cpuVisibleMemory": {"size": 65536, "sha256": "880cd2cd476aa80760c8f5e2d416891f2f78d126bdc5e64227e7edf187241773"},
+    "registers": {"size": 185, "sha256": "a69fb0f3fb297935faaa62556649de24dba06fac621cee3fcfc5cf3de7f9081a"},
+    "display": {"size": 1662, "sha256": "ab6b0c4c553dfad29157ce872a417e0b46a5f536885ae9067232f98ad48269cd"}
+  },
+  "reproduction": {
+    "coldStarts": 2,
+    "result": "equal"
+  }
+}

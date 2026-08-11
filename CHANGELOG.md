@@ -1,0 +1,19 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [Unreleased]
+
+### Added
+
+- Establish the provenance-safe C64 Reference Build laboratory for issue #2.
+- Add repeatable VICE environment checks, checkpoint captures, binary-monitor
+  observations, artifact verification, and two-run reproduction through the
+  `research/c64-reference-build/lab` CLI.
+- Record the qualified ABC/1001 crack identity, boot and unpacking path,
+  normalized post-unpack and interactive evidence, schemas, scenarios, labels,
+  segment metadata, and primary-source VICE research.
+- Ignore supplied ROM inputs and generated research artifacts so no PRG, RAM
+  dump, snapshot, screenshot, or reconstructed payload is published.

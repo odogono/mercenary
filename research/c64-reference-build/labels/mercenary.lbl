@@ -1,0 +1,11 @@
+; Navigation metadata for the qualified C64 Reference Build.
+; No instruction bytes or reconstructed executable are included.
+.basic_stub = $0801
+.compacker_entry = $0820
+.resident_unpacker_start = $0100
+.resident_unpacker_end = $01e8
+.post_unpack_transfer = $01e6
+.basic_warm_start = $a7ae
+.unpacked_sys_stub = $0811
+.runtime_stage_entry = $b98b
+.interactive_renderer_boundary = $8477

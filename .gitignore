@@ -1,0 +1,10 @@
+# Supplied reference media and documentation are research inputs, not publishable
+# repository content.
+/roms/
+
+# Generated C64 laboratory artifacts may contain ROM-derived data.
+/research/c64-reference-build/work/
+
+# Python development artifacts.
+__pycache__/
+*.py[cod]
