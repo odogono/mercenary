@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "TR-0005",
+  "version": 1,
+  "title": "Writable disposable D64 smoke trace",
+  "mode": "proof",
+  "branches": [
+    {
+      "id": "blank-disk",
+      "from": {"checkpoint": "interactive"},
+      "actions": [
+        {"type":"attach_disk","format":"d64","mode":"blank"},
+        {"type":"wait_instructions","instructions":1024},
+        {"type":"capture","name":"attached","artifacts":["registers","disk"]},
+        {"type":"detach_disk"}
+      ]
+    }
+  ]
+}

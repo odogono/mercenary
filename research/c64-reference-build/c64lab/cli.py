@@ -16,6 +16,14 @@ from .geometry import (
     summarize_geometry,
     verify_dataset,
 )
+from .catalogue import (
+    build_catalogue,
+    review_catalogue,
+    run_catalogue_trace,
+    sample_catalogue,
+    summarize_catalogue,
+    verify_catalogue,
+)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -68,6 +76,37 @@ def _parser() -> argparse.ArgumentParser:
     geometry_summarize.add_argument("--comparisons", required=True, type=Path)
     geometry_summarize.add_argument("--review", required=True, type=Path)
     geometry_summarize.add_argument("--output", required=True, type=Path)
+
+    catalogue_parser = subparsers.add_parser("catalogue", help="build and validate the player-observable Behavior Catalogue")
+    catalogue_commands = catalogue_parser.add_subparsers(dest="catalogue_command", required=True)
+
+    catalogue_run = catalogue_commands.add_parser("run", help="run one provenance-backed catalogue trace")
+    catalogue_run.add_argument("--prg", required=True, type=Path)
+    catalogue_run.add_argument("--trace", required=True, type=Path)
+
+    catalogue_build = catalogue_commands.add_parser("build", help="assemble a restricted catalogue bundle")
+    catalogue_build.add_argument("--entries", required=True, type=Path)
+    catalogue_build.add_argument("--evidence-store", required=True, type=Path)
+    catalogue_build.add_argument("--geometry", required=True, type=Path)
+    catalogue_build.add_argument("--output", required=True, type=Path)
+
+    catalogue_verify = catalogue_commands.add_parser("verify", help="verify a Behavior Catalogue")
+    catalogue_verify.add_argument("--catalogue", required=True, type=Path)
+
+    catalogue_sample = catalogue_commands.add_parser("sample", help="validate and run deterministic or stochastic trace samples")
+    catalogue_sample.add_argument("--prg", required=True, type=Path)
+    catalogue_sample.add_argument("--trace-set", required=True, type=Path)
+
+    catalogue_review = catalogue_commands.add_parser("review", help="record a maintainer catalogue review")
+    catalogue_review.add_argument("--catalogue", required=True, type=Path)
+    catalogue_review.add_argument("--domain", required=True)
+    catalogue_review.add_argument("--reviewer", required=True)
+    catalogue_review.add_argument("--decision", required=True, choices=("approved", "rejected"))
+
+    catalogue_summarize = catalogue_commands.add_parser("summarize", help="write an allowlisted catalogue baseline")
+    catalogue_summarize.add_argument("--catalogue", required=True, type=Path)
+    catalogue_summarize.add_argument("--reviews", required=True, type=Path)
+    catalogue_summarize.add_argument("--output", required=True, type=Path)
     return parser
 
 
@@ -88,19 +127,34 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = {"status": "verified", "run": str(arguments.run), "runId": manifest["runId"]}
         elif arguments.command == "reproduce":
             result = reproduce(arguments.prg)
-        elif arguments.geometry_command == "extract":
-            result = extract_geometry(arguments.run, curation_path=arguments.curation, output=arguments.output)
-        elif arguments.geometry_command == "verify":
-            verified = verify_dataset(arguments.dataset)
-            result = {"status": "verified", "dataset": str(arguments.dataset), "manifest": verified["manifest"]}
-        elif arguments.geometry_command == "reproduce":
-            result = reproduce_geometry(arguments.prg, curation_path=arguments.curation)
-        elif arguments.geometry_command == "compare":
-            result = compare_geometry(arguments.prg, arguments.dataset)
-        elif arguments.geometry_command == "review":
-            result = review_comparisons(arguments.comparisons, arguments.reviewer, arguments.decision)
+        elif arguments.command == "geometry":
+            if arguments.geometry_command == "extract":
+                result = extract_geometry(arguments.run, curation_path=arguments.curation, output=arguments.output)
+            elif arguments.geometry_command == "verify":
+                verified = verify_dataset(arguments.dataset)
+                result = {"status": "verified", "dataset": str(arguments.dataset), "manifest": verified["manifest"]}
+            elif arguments.geometry_command == "reproduce":
+                result = reproduce_geometry(arguments.prg, curation_path=arguments.curation)
+            elif arguments.geometry_command == "compare":
+                result = compare_geometry(arguments.prg, arguments.dataset)
+            elif arguments.geometry_command == "review":
+                result = review_comparisons(arguments.comparisons, arguments.reviewer, arguments.decision)
+            else:
+                result = summarize_geometry(arguments.dataset, arguments.comparisons, arguments.review, arguments.output)
+        elif arguments.catalogue_command == "build":
+            result = build_catalogue(arguments.entries, arguments.evidence_store, arguments.geometry, arguments.output)
+        elif arguments.catalogue_command == "verify":
+            result = verify_catalogue(arguments.catalogue)
+        elif arguments.catalogue_command == "review":
+            result = review_catalogue(arguments.catalogue, arguments.domain, arguments.reviewer, arguments.decision)
+        elif arguments.catalogue_command == "summarize":
+            if arguments.reviews.resolve() != (arguments.catalogue / "reviews").resolve():
+                raise LabError("Catalogue --reviews must name the catalogue's reviews directory")
+            result = summarize_catalogue(arguments.catalogue, arguments.output)
+        elif arguments.catalogue_command == "sample":
+            result = sample_catalogue(arguments.prg, arguments.trace_set)
         else:
-            result = summarize_geometry(arguments.dataset, arguments.comparisons, arguments.review, arguments.output)
+            result = run_catalogue_trace(arguments.prg, arguments.trace)
     except LabError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1

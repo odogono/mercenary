@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Add the public-safe Behavior Catalogue model, neutral Catalogue Entries,
+  evidence-linked Behavior Cases, closed coverage and uncertainty indexes, and
+  ADR 0005 for issue #8.
+- Add schema-validated `lab catalogue` run, build, verify, sample, review, and
+  summarize workflows with branch traces, content-addressed restricted evidence,
+  PAL timing, probe enforcement, WAV/SID capture, and writable D64 support.
+
 - Add a reproducible, schema-validated World Geometry Dataset extractor with
   exact object, surface, road, underground, provenance, expansion, bounds,
   curation, comparison, review, and redacted-summary workflows for issue #7.

@@ -35,6 +35,17 @@ def memory_get_body(start: int, end: int, bank_id: int, *, side_effects: bool = 
     return struct.pack("<BHHBH", int(side_effects), start, end, 0, bank_id)
 
 
+def memory_set_body(start: int, data: bytes, bank_id: int, *, side_effects: bool = False) -> bytes:
+    if not data:
+        raise ValueError("memory write cannot be empty")
+    end = start + len(data) - 1
+    if not 0 <= start <= end <= 0xFFFF:
+        raise ValueError("memory write range must fit in 16 bits")
+    if not 0 <= bank_id <= 0xFFFF:
+        raise ValueError("bank_id must fit in 16 bits")
+    return struct.pack("<BHHBH", int(side_effects), start, end, 0, bank_id) + data
+
+
 def checkpoint_set_body(address: int, *, temporary: bool = True) -> bytes:
     if not 0 <= address <= 0xFFFF:
         raise ValueError("checkpoint address must fit in 16 bits")
@@ -65,6 +76,18 @@ def advance_instructions_body(count: int) -> bytes:
     if not 1 <= count <= 0xFFFF:
         raise ValueError("instruction count must be 1..65535")
     return struct.pack("<BH", 0, count)
+
+
+def resource_set_body(name: str, value: str) -> bytes:
+    encoded_name = name.encode("ascii")
+    encoded_value = value.encode("utf-8")
+    if not encoded_name or len(encoded_name) > 255:
+        raise ValueError("resource name must contain 1..255 ASCII bytes")
+    if len(encoded_value) > 255:
+        raise ValueError("resource value cannot exceed 255 bytes")
+    # Send a string resource. VICE documents that string values are interpreted
+    # when the destination resource is an integer.
+    return b"\x00" + bytes([len(encoded_name)]) + encoded_name + bytes([len(encoded_value)]) + encoded_value
 
 
 def parse_response(raw: bytes) -> Response:
@@ -257,6 +280,16 @@ class MonitorClient:
             )
         return data
 
+    def set_memory(self, bank_id: int, start: int, data: bytes) -> None:
+        response, _ = self.request(0x02, memory_set_body(start, data, bank_id))
+        if response.response_type != 0x02 or response.body:
+            raise MonitorProtocolError("VICE returned an invalid memory-set response")
+
+    def set_resource(self, name: str, value: str) -> None:
+        response, _ = self.request(0x52, resource_set_body(name, value))
+        if response.response_type != 0x52 or response.body:
+            raise MonitorProtocolError(f"VICE returned an invalid resource-set response for {name}")
+
     def display(self) -> bytes:
         response, _ = self.request(0x84, b"\x01\x00")
         return response.body
@@ -266,6 +299,15 @@ class MonitorClient:
         if len(encoded) > 255:
             raise MonitorProtocolError("snapshot path exceeds the VICE protocol limit")
         self.request(0x41, b"\x00\x00" + bytes([len(encoded)]) + encoded)
+
+    def restore_snapshot(self, path: Path) -> int:
+        encoded = str(path.resolve()).encode("utf-8")
+        if len(encoded) > 255:
+            raise MonitorProtocolError("snapshot path exceeds the VICE protocol limit")
+        response, _ = self.request(0x42, bytes([len(encoded)]) + encoded)
+        if response.response_type != 0x42 or len(response.body) != 2:
+            raise MonitorProtocolError("VICE returned an invalid snapshot-restore response")
+        return struct.unpack("<H", response.body)[0]
 
     def quit(self) -> None:
         self.request(0xBB)

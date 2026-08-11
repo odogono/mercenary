@@ -1,0 +1,56 @@
+{
+  "catalogueDigest": "66a3405a8f3b7769721c411eddca902d998bb7c37f39df5ddf728e1c7ec2f9e5",
+  "catalogueVersion": "catalogue-v1",
+  "counts": {
+    "behaviorCases": 21,
+    "domains": 18,
+    "entries": 18,
+    "evidence": 7,
+    "journeys": 3,
+    "uncertainties": 9
+  },
+  "coverage": {
+    "inventorySourcesClosed": true,
+    "requiredDimensions": 9,
+    "requiredDomains": 18,
+    "result": "complete"
+  },
+  "qualification": "Exact supplied Reference Build; plausibly crack-affected behavior remains provisional pending retail corroboration.",
+  "restrictedEvidence": {
+    "pointerScheme": "sha256",
+    "store": "local-content-addressed"
+  },
+  "review": {
+    "approvedSubjects": [],
+    "decision": "pending",
+    "requiredSubjects": [
+      "audio",
+      "audiovisual",
+      "controls",
+      "economy",
+      "endings",
+      "inventory",
+      "material-journeys",
+      "mechanics",
+      "messages",
+      "missions",
+      "movement",
+      "nondeterminism",
+      "objects",
+      "progression",
+      "quirks",
+      "saves",
+      "timing",
+      "uncertainties",
+      "vehicles",
+      "visuals",
+      "world"
+    ]
+  },
+  "samplingPolicy": {
+    "deterministicColdStarts": 2,
+    "interval": "wilson-95",
+    "stochasticMinimumTrials": 100
+  },
+  "schemaVersion": 1
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "TR-0004",
+  "version": 1,
+  "title": "Unwarped WAV and SID-event smoke trace",
+  "mode": "proof",
+  "branches": [
+    {
+      "id": "interactive-audio",
+      "from": {"checkpoint": "interactive"},
+      "actions": [
+        {"type":"audio_start"},
+        {"type":"sid_start"},
+        {"type":"wait_instructions","instructions":10000},
+        {"type":"sid_stop"},
+        {"type":"audio_stop"},
+        {"type":"capture","name":"after","artifacts":["registers","audio","sid-events"]}
+      ]
+    }
+  ]
+}

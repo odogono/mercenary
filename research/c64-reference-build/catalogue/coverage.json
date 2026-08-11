@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "requiredDomains": ["audio","controls","economy","endings","inventory","mechanics","messages","missions","movement","nondeterminism","objects","progression","quirks","saves","timing","vehicles","visuals","world"],
+  "requiredDimensions": ["audio","content","controls","nondeterminism","outcome","saves","state","timing","visuals"],
+  "inventorySources": [
+    {"id":"INV-0001","kind":"conditioned-runtime-state-and-input-surface","evidenceIds":["EV-cfe389c3e5fd1a27","EV-2461ba01c7ec71e4"],"status":"closed"},
+    {"id":"INV-0002","kind":"world-geometry-and-identity-tables","evidenceIds":["EV-a7cbec4ce3631fe0"],"status":"closed"}
+  ],
+  "domains": [
+    {"domain":"audio","entryIds":["CAT-0014"],"behaviorCaseIds":["BC-0014"],"uncertaintyIds":["UNC-0005"],"status":"complete"},
+    {"domain":"controls","entryIds":["CAT-0001"],"behaviorCaseIds":["BC-0001"],"uncertaintyIds":["UNC-0001"],"status":"complete"},
+    {"domain":"economy","entryIds":["CAT-0010"],"behaviorCaseIds":["BC-0010"],"uncertaintyIds":["UNC-0003"],"status":"complete"},
+    {"domain":"endings","entryIds":["CAT-0016"],"behaviorCaseIds":["BC-0016","BC-0019","BC-0020","BC-0021"],"uncertaintyIds":["UNC-0007","UNC-0008"],"status":"complete"},
+    {"domain":"inventory","entryIds":["CAT-0009"],"behaviorCaseIds":["BC-0009"],"uncertaintyIds":["UNC-0003"],"status":"complete"},
+    {"domain":"mechanics","entryIds":["CAT-0004"],"behaviorCaseIds":["BC-0004"],"uncertaintyIds":["UNC-0001"],"status":"complete"},
+    {"domain":"messages","entryIds":["CAT-0013"],"behaviorCaseIds":["BC-0013"],"uncertaintyIds":["UNC-0004","UNC-0008"],"status":"complete"},
+    {"domain":"missions","entryIds":["CAT-0011"],"behaviorCaseIds":["BC-0011"],"uncertaintyIds":["UNC-0003"],"status":"complete"},
+    {"domain":"movement","entryIds":["CAT-0002"],"behaviorCaseIds":["BC-0002"],"uncertaintyIds":["UNC-0001"],"status":"complete"},
+    {"domain":"nondeterminism","entryIds":["CAT-0018"],"behaviorCaseIds":["BC-0018"],"uncertaintyIds":["UNC-0001"],"status":"complete"},
+    {"domain":"objects","entryIds":["CAT-0005"],"behaviorCaseIds":["BC-0005"],"uncertaintyIds":["UNC-0002","UNC-0009"],"status":"complete"},
+    {"domain":"progression","entryIds":["CAT-0012"],"behaviorCaseIds":["BC-0012"],"uncertaintyIds":["UNC-0003"],"status":"complete"},
+    {"domain":"quirks","entryIds":["CAT-0017"],"behaviorCaseIds":["BC-0017"],"uncertaintyIds":["UNC-0007","UNC-0008"],"status":"complete"},
+    {"domain":"saves","entryIds":["CAT-0015"],"behaviorCaseIds":["BC-0015"],"uncertaintyIds":["UNC-0006","UNC-0008"],"status":"complete"},
+    {"domain":"timing","entryIds":["CAT-0003"],"behaviorCaseIds":["BC-0003"],"uncertaintyIds":["UNC-0001"],"status":"complete"},
+    {"domain":"vehicles","entryIds":["CAT-0006"],"behaviorCaseIds":["BC-0006"],"uncertaintyIds":["UNC-0002"],"status":"complete"},
+    {"domain":"visuals","entryIds":["CAT-0008"],"behaviorCaseIds":["BC-0008"],"uncertaintyIds":["UNC-0002","UNC-0009"],"status":"complete"},
+    {"domain":"world","entryIds":["CAT-0007"],"behaviorCaseIds":["BC-0007"],"uncertaintyIds":["UNC-0002","UNC-0009"],"status":"complete"}
+  ],
+  "journeys": [
+    {"behaviorCaseId":"BC-0019","kind":"material-route","status":"provisional"},
+    {"behaviorCaseId":"BC-0020","kind":"material-route","status":"provisional"},
+    {"behaviorCaseId":"BC-0021","kind":"material-route","status":"provisional"}
+  ]
+}
