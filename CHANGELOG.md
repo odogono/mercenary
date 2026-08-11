@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Define the accepted macOS experience contract, Native Shell and Game Surface
+  boundary, Mac Adaptation review scenarios, and a synthetic SwiftUI/Core
+  Graphics prototype with tested display, input, accessibility, feedback, and
+  save interactions for issue #9.
+
 - Add the public-safe Behavior Catalogue model, neutral Catalogue Entries,
   evidence-linked Behavior Cases, closed coverage and uncertainty indexes, and
   ADR 0005 for issue #8.
