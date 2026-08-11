@@ -1,0 +1,3 @@
+# Isolate untrusted Lua Game Semantics
+
+The Initial Release and locally sideloaded Mods will use the same restricted Lua 5.5.1 hook-and-command interface inside a separately sandboxed XPC simulation service. Lua receives immutable typed input and proposes capability-checked commands and canonical module state that commit atomically; it receives no direct model, file, network, clock, native-code, or Native Shell access. This makes a deterministic public mod surface possible without a privileged official rule path, at the cost of process isolation, a stable host ABI, resource metering, security maintenance, and losing unsaved progress if the simulation service crashes.

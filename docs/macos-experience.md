@@ -58,11 +58,21 @@ The 800-point and 1,200-point prototype thresholds are implementation evidence f
 
 - First launch may open a concise, dismissible native welcome window. Later launches open the restored main window directly.
 - Standard menus, Settings, and Help expose controls, display behavior, Accommodations, audio, documents, and review instructions. Do not place onboarding overlays over play.
-- Offer standard named save documents plus ten app-managed quick slots numbered 0–9.
+- Offer standard named save documents plus ten app-wide quick slots numbered 0–9. A slot stores one complete save envelope and may identify any exact installed official or modded Content Set; slots are not multiplied per Content Set.
 - Documents and quick slots obey the same evidence-derived save/load availability and state gates. Native convenience never expands when saving or loading is legal.
 - A load, close, or quit that would replace unsaved meaningful state offers Save, Discard, and Cancel. No operation silently saves or discards progress.
 - Restore Native Shell preferences and window state automatically. Do not create hidden, crash-recovery, or launch-resume game state.
 - The prototype file and slot payloads are synthetic and marked `PROTOTYPE-ONLY`. Production serialization belongs to later content/state and verification work.
+
+## Content Sets and Mods
+
+- The Native Shell imports user-selected `.mercenarycontent` packages, displays safe identity, signature, exact digest, and requested Game Semantics capabilities, and asks for consent before enabling a sideloaded Mod.
+- Consent is bound to the exact package digest. Changed bytes, signature status, or capabilities require fresh consent.
+- Installed package versions remain immutable and may coexist so exact-bound saves can continue to resolve. Updates never overwrite an installed digest in place.
+- A player selects one resolved Content Set leaf before starting a session. The shell does not expose arbitrary sibling-Mod ordering or change content while a session is active.
+- A modded session is visibly identified in the Native Shell and never presented as an official Fidelity Contract-conformant session. Mods cannot add Native Shell UI or unique host feedback.
+- Loading a document or quick slot activates its exact installed environment or reports the missing/blocked environment. The shell never downloads, substitutes, or best-effort updates content.
+- A Lua failure produces a passive Native Shell diagnostic and leaves the live session suspended at its last committed state. A simulation XPC crash ends the session and may offer only explicit documents or slots; unsaved progress is not recovered.
 
 ## Mac Adaptation scenarios
 
@@ -115,9 +125,17 @@ These stable scenarios are the issue #9 acceptance surface. Issue #12 must prese
 - Confirm all guidance is in the Native Shell and the Game Surface contains no onboarding overlay.
 - Traceability: `BC-0001`, `BC-0008`; `UNC-0001`, `UNC-0009`.
 
+### MAS-0008 — Local Mod admission and identity
+
+- Import signed, unsigned, changed, invalid-signature, and over-capability synthetic `.mercenarycontent` packages.
+- Confirm safe metadata and capabilities appear before exact-digest consent, changed packages require fresh consent, invalid packages never enable, and installed versions remain side by side.
+- Start an approved Mod, confirm the Native Shell identifies the session as modded without adding information to the Game Surface, then load a save whose exact package is missing and confirm safe failure without substitution or download.
+- Terminate the sandboxed simulation service and confirm unsaved progress is lost, explicit saves remain intact, and no hidden recovery appears.
+- Traceability: Content and State Model `CSM-0003`, `CSM-0006`, and `CSM-0007`.
+
 ## Verification status
 
-Automated verification covers input merging and release behavior, repeat/shortcut exclusion, binding reassignment and coverage, layout invariants, minimum sizing, lifecycle timing, controller loss, preference round trips, quick-slot identities, save gates, destructive decisions, first-launch persistence, and native rendering of the main, Settings, and Help views.
+Automated verification covers input merging and release behavior, repeat/shortcut exclusion, binding reassignment and coverage, layout invariants, minimum sizing, lifecycle timing, controller loss, preference round trips, quick-slot identities, save gates, destructive decisions, first-launch persistence, and native rendering of the main, Settings, and Help views. Production implementation must extend it with MAS-0008; the current synthetic issue #9 prototype does not implement Mod admission.
 
 Human acceptance requires two independent passes over MAS-0001 through MAS-0007:
 
@@ -133,5 +151,5 @@ Issue #9 may close after both rows are accepted. Until then, the interaction con
 ## Downstream handoff
 
 - Issue #10 chooses production application-shell, Metal, simulation-loop, and deployment architecture while preserving this observable contract.
-- Issue #11 owns production content/state and save representation.
+- Issue #11 defines production content/state, untrusted Mod, and save representation in the [Content and State Model](content-state-model.md).
 - Issue #12 defines executable host evidence, promotes MAS scenario intent, and prevents conformance claims while linked uncertainties remain open.

@@ -48,6 +48,26 @@ _Avoid_: Layout mode, aspect mode
 The complete *Mercenary: Escape from Targ* experience delivered by this effort, with extension seams for *The Second City* but without that expansion's content.
 _Avoid_: Mercenary 1, base game
 
+**Content Set**:
+The complete immutable definition selected for a playable experience, resolved and validated before a session begins.
+_Avoid_: Content pack, campaign, resource bundle
+
+**Content Overlay**:
+A versioned layer that names one exact Content Set ancestry and explicitly adds, replaces, or removes definitions before a new Content Set is resolved.
+_Avoid_: Patch, DLC, load order
+
+**Mod**:
+An untrusted, locally sideloaded Content Overlay whose resolved experience is outside the official Fidelity Contract conformance claim.
+_Avoid_: Plugin, official expansion
+
+**Session State**:
+The complete set of mutable, future-affecting Game Semantics values for one play session.
+_Avoid_: Save file, runtime snapshot, game data
+
+**Transition Log**:
+The authoritative ordered history of committed Game Semantics outcomes from which Session State is derived.
+_Avoid_: Input recording, debug log, event telemetry
+
 **Independent Implementation**:
 New native application code written without incorporating or mechanically translating the Reference Build's program code, intended to support public distribution.
 _Avoid_: Source port, ROM wrapper

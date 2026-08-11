@@ -59,6 +59,14 @@ case to `provisional` and every dependent departure to `reopened`. Neither
 regains its prior status until the evidence, expectations, tests, and approval
 have been reviewed again.
 
+Conformance is evaluated against a maintainer-designated exact official Content
+Set digest. The designation identifies the immutable content and Game Semantics
+under test; it does not establish conformance without the evidence above. Any
+sideloaded Content Overlay, Mod, changed Lua module, replaced property or asset,
+or migration into a modded environment produces a different resolved digest
+that is ineligible to inherit the official claim. An author signature, manifest
+declaration, or passing subset of local tests cannot transfer that status.
+
 ## Fidelity dimensions
 
 Behavior Cases declare each dimension they exercise. A missing dimension is not
@@ -249,6 +257,7 @@ These examples test the policy; they do not create actual catalogue entries.
 | A crack intro is proven absent from retail C64 media | Classify it as an `excluded-crack-artifact` and retain its provenance outside conformance. |
 | A controller replaces joystick-port input | Treat device mapping as a `mac-adaptation`; semantic actions, conflicts, rate limits, timing, and outcomes still pass their cases. |
 | A native save uses a new file format | It passes when restored meaningful state and future behavior match; C64 media compatibility is unnecessary. |
+| A sideloaded Mod passes its own deterministic tests | It remains outside the official conformance claim because its resolved Content Set digest is not the designated official candidate. |
 | Random encounters produce different sequences | Verify seeded traces where possible and otherwise compare legal outcomes, invariants, frequencies, and timing envelopes. |
 | Fidelity-critical content cannot receive publication clearance | Retain the content-identity case and require a necessary least-divergent public departure for any substitute. |
 | Retail C64 evidence contradicts a case derived from the crack | Set the case to `provisional`, dependent departures to `reopened`, and require fresh verification and approval. |
