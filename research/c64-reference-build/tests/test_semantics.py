@@ -143,6 +143,10 @@ class EventHistorySafetyTests(unittest.TestCase):
             "focusChecks": 4,
             "durationMilliseconds": 1200,
             "typedObservations": {"mode": "SM-0001", "x": 10},
+            "expectedAssertions": [
+                {"observation": "mode", "operator": "equals", "value": "SM-0001"},
+                {"observation": "x", "operator": "equals", "value": 10},
+            ],
             "events": [
                 {"atMilliseconds": 200, "actualMilliseconds": 203, "type": "key-down", "keyCode": 36, "modifiers": []},
                 {"atMilliseconds": 700, "actualMilliseconds": 704, "type": "key-up", "keyCode": 36, "modifiers": []},
@@ -182,6 +186,7 @@ class EventHistorySafetyTests(unittest.TestCase):
             "focusChecks": 4,
             "durationMilliseconds": 100,
             "typedObservations": {"mode": "SM-0001"},
+            "expectedAssertions": [{"observation": "mode", "operator": "equals", "value": "SM-0001"}],
             "events": [
                 {"atMilliseconds": 10, "actualMilliseconds": 11, "type": "key-down", "keyCode": 0, "modifiers": []},
                 {"atMilliseconds": 20, "actualMilliseconds": 21, "type": "key-up", "keyCode": 0, "modifiers": []},
@@ -238,6 +243,36 @@ class EventHistorySafetyTests(unittest.TestCase):
         }
 
         with self.assertRaisesRegex(LabError, "recorded typed end state"):
+            validate_event_history_proof(capture, [{**replay, "coldStartId": "cold-1"}, {**replay, "coldStartId": "cold-2"}])
+
+    def test_rejects_reproducible_history_with_the_wrong_semantic_result(self) -> None:
+        capture = {
+            "schemaVersion": 1,
+            "accessibilityTrusted": True,
+            "viceExecutableSha256": "a" * 64,
+            "driverExecutableSha256": "b" * 64,
+            "effectiveConfigSha256": "f" * 64,
+            "inputSetupSha256": "1" * 64,
+            "focusChecks": 4,
+            "durationMilliseconds": 100,
+            "typedObservations": {"command": "plain-return"},
+            "expectedAssertions": [{"observation": "command", "operator": "equals", "value": "pause"}],
+            "events": [
+                {"atMilliseconds": 10, "actualMilliseconds": 11, "type": "key-down", "keyCode": 0, "modifiers": []},
+                {"atMilliseconds": 20, "actualMilliseconds": 21, "type": "key-up", "keyCode": 0, "modifiers": []},
+            ],
+            "eventHistory": {"startSnapshotSha256": "c" * 64, "endSnapshotSha256": "d" * 64, "hotkeyFileSha256": "e" * 64},
+        }
+        replay = {
+            "viceExecutableSha256": "a" * 64,
+            "effectiveConfigSha256": "f" * 64,
+            "inputSetupSha256": "1" * 64,
+            "startSnapshotSha256": "c" * 64,
+            "viceLog": "Main CPU: RESET.\nUnit 8: RESET (For undump).\n",
+            "typedObservations": {"command": "plain-return"},
+        }
+
+        with self.assertRaisesRegex(LabError, "failed equals assertion"):
             validate_event_history_proof(capture, [{**replay, "coldStartId": "cold-1"}, {**replay, "coldStartId": "cold-2"}])
 
     def test_accepts_typed_replay_after_the_only_startup_reset(self) -> None:

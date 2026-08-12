@@ -289,6 +289,11 @@ def validate_event_history_proof(
     recorded_end = capture_report.get("typedObservations")
     _require(isinstance(recorded_end, Mapping) and bool(recorded_end), "Event-history proof requires the recorded typed end state")
     expected = dict(recorded_end)
+    recorded_start = capture_report.get("typedStartObservations", {})
+    _require(isinstance(recorded_start, Mapping), "Event-history proof recorded typed start state must be an object")
+    expected_assertions = capture_report.get("expectedAssertions")
+    _require(isinstance(expected_assertions, list) and bool(expected_assertions), "Event-history proof requires declared semantic assertions")
+    assert_semantic_observations(recorded_start, expected, expected_assertions)
     config_digest: str | None = None
     for report in replay_reports:
         _require(report.get("viceExecutableSha256") == capture_report["viceExecutableSha256"], "Event-history replay VICE executable identity diverged")
@@ -315,6 +320,7 @@ def validate_event_history_proof(
         "effectiveConfigSha256": config_digest,
         "inputSetupSha256": recorded_input_setup,
         "typedObservations": expected,
+        "expectedAssertions": expected_assertions,
     }
     normalized_digest = hashlib.sha256(json.dumps(normalized, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     return {"replays": 2, "typedObservations": expected, "normalizedDigest": normalized_digest}

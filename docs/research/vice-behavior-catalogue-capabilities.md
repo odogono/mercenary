@@ -54,7 +54,9 @@ VICE configuration and compare typed semantic observations, not playback success
 or snapshot hashes alone. `lab catalogue verify-history` enforces exactly two
 distinct cold starts, capture/replay executable and start-state identity,
 effective-configuration and opaque input-setup equality, reset ordering, and
-identical typed end observations; its result omits raw histories, paths, logs,
+identical typed end observations. It also requires the recorded result to pass
+declared typed semantic assertions, so two reproducible replays of the wrong
+command cannot qualify as proof. Its result omits raw histories, paths, logs,
 physical keys, and the restricted input setup itself.
 The bounded `replay-keyboard-history.swift` helper activates only the pinned
 VICE PID, verifies the executable, start snapshot, hotkey map, sole main

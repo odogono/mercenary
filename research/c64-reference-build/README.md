@@ -100,7 +100,8 @@ Write each replay's cold-start ID, VICE and effective-configuration digests,
 start-snapshot digest, VICE log, and typed end observations to an ignored JSON
 report. The verifier requires exactly two distinct cold starts, binds both to
 the capture identities, recording configuration, and opaque input-setup
-digest, rejects startup-reset races and configuration or setup drift,
+digest, first checks the captured typed result against declared semantic
+assertions, rejects startup-reset races and configuration or setup drift,
 and emits only a normalized public-safe summary:
 
 ```sh
