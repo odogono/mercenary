@@ -17,6 +17,7 @@ from c64lab.monitor import (  # noqa: E402
     checkpoint_set_body,
     command_frame,
     cpu_history_body,
+    host_key_event_body,
     joyport_set_body,
     keyboard_feed_body,
     keyboard_matrix_set_body,
@@ -198,6 +199,17 @@ class MonitorProtocolTests(unittest.TestCase):
         client.request = MagicMock(return_value=(Response(0xA4, 0, 1, rows[:-1]), []))
         with self.assertRaisesRegex(MonitorProtocolError, "keyboard-matrix response"):
             client.keyboard_matrix()
+
+    def test_host_key_event_uses_vice_key_symbol_and_modifier_bits(self) -> None:
+        self.assertEqual(host_key_event_body(0x53, 0x04, True), struct.pack("<IHB", 0x53, 0x04, 1))
+        client = MonitorClient(MagicMock())
+        client.request = MagicMock(return_value=(Response(0xA5, 0, 1, b""), []))
+
+        client.host_key_event(0x53, modifiers=0x04, pressed=True)
+
+        client.request.assert_called_once_with(0xA5, struct.pack("<IHB", 0x53, 0x04, 1))
+        with self.assertRaisesRegex(ValueError, "modifier"):
+            host_key_event_body(0x53, 0x80, True)
 
 
 if __name__ == "__main__":

@@ -80,6 +80,14 @@ def keyboard_matrix_set_body(rows: list[int]) -> bytes:
     return bytes(rows)
 
 
+def host_key_event_body(key_symbol: int, modifiers: int, pressed: bool) -> bytes:
+    if not 0 <= key_symbol <= 0xFFFFFFFF:
+        raise ValueError("host key symbol must fit in 32 bits")
+    if not 0 <= modifiers <= 0x7F:
+        raise ValueError("host key modifier mask must use VICE's seven defined bits")
+    return struct.pack("<IHB", key_symbol, modifiers, int(pressed))
+
+
 def joyport_set_body(port: int, value: int) -> bytes:
     if port != 2:
         raise ValueError("the Reference Build uses joystick port 2")
@@ -305,6 +313,11 @@ class MonitorClient:
         if response.response_type != 0xA4 or len(response.body) != 16:
             raise MonitorProtocolError("VICE returned an invalid keyboard-matrix response")
         return list(response.body)
+
+    def host_key_event(self, key_symbol: int, *, modifiers: int = 0, pressed: bool) -> None:
+        response, _ = self.request(0xA5, host_key_event_body(key_symbol, modifiers, pressed))
+        if response.response_type != 0xA5 or response.body:
+            raise MonitorProtocolError("VICE returned an invalid host-key-event response")
 
     def configure_joyport_simulation(self) -> None:
         # Binary-monitor joyport writes address VICE's I/O Simulation device,

@@ -43,6 +43,13 @@ currently latched row masks for fail-fast injection checks. No game-specific
 rows, columns, addresses, or decoded values belong in the patch or tracked
 callers.
 
+Command `0xA5` submits one VICE host-key queue event as a little-endian
+32-bit key symbol, a 16-bit mask restricted to VICE's seven keyboard modifier
+bits, and a one-byte pressed flag. This bypasses macOS focus translation while
+retaining VICE keymap, queue, latch, and event-history behavior. Its empty
+response also uses type `0xA5`; acknowledgment proves queue admission only,
+not semantic dispatch.
+
 The source archive must hash to
 `8e5bac18cbcb9f192380ad3ef881f8790f5b75c41d7b3da65d831985d864d6d1`.
 On current macOS SDKs, apply `patches/vice-3.10-macos-dyld-header.patch` as a
