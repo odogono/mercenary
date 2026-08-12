@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "id", "version", "status", "affectedCases", "evidenceVersion", "constraint", "observedMismatch", "materiality", "researchProvenance", "alternatives", "leastDivergentChoice", "playerImpact", "verification", "publicRationale", "revalidation", "approvalIds"],
+  "properties": {
+    "schemaVersion": {"const": 1}, "id": {"type": "string", "pattern": "^DR-[0-9]{4}$"}, "version": {"type": "integer", "minimum": 1},
+    "status": {"enum": ["proposed", "accepted", "reopened", "superseded"]},
+    "affectedCases": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "object", "additionalProperties": false, "required": ["id", "version"], "properties": {"id": {"type": "string", "pattern": "^BC-[0-9]{4}$"}, "version": {"type": "integer", "minimum": 1}}}},
+    "evidenceVersion": {"type": "string", "minLength": 1}, "constraint": {"type": "string", "minLength": 1}, "observedMismatch": {"type": "string", "minLength": 1},
+    "materiality": {"enum": ["material", "non-material"]}, "researchProvenance": {"type": "string", "minLength": 1}, "alternatives": {"type": "string", "minLength": 1},
+    "leastDivergentChoice": {"type": "string", "minLength": 1}, "playerImpact": {"type": "string", "minLength": 1}, "verification": {"type": "string", "minLength": 1},
+    "publicRationale": {"type": "string", "minLength": 1}, "revalidation": {"type": "string", "minLength": 1},
+    "approvalIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^AP-[0-9]{4}$"}}
+  }
+}

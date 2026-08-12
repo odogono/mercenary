@@ -1,0 +1,55 @@
+{
+  "acceptanceEnvelopes": "Dataset membership and identities exact; transition behavior provisional.",
+  "actions": "Traverse every portal class and region boundary in both legal directions and observe relevant detail transitions.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-a7cbec4ce3631fe0"
+    ],
+    "uncertaintyIds": [
+      "UNC-0002",
+      "UNC-0009"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "Membership, destination, boundary behavior, visible content, and persistent world state match; command semantics remain UNC-0002.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "not-applicable",
+    "departureIds": [],
+    "dimensions": [
+      "content",
+      "state",
+      "outcome",
+      "visuals"
+    ],
+    "evidenceIds": [
+      "EV-a7cbec4ce3631fe0"
+    ],
+    "materiality": "material",
+    "researchProvenance": "complete World Geometry Dataset and room/cell relationships"
+  },
+  "id": "BC-0007",
+  "initialState": "Reachable surface cells, underground rooms, portals, elevators, altitude bands, and high-altitude encounters.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "World regions and transitions",
+  "verification": {
+    "method": "graph coverage plus legal runtime traversal",
+    "oracleDiagnosticRequired": true
+  },
+  "verificationArea": "rendering",
+  "version": 1
+}

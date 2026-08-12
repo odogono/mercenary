@@ -1,0 +1,36 @@
+{
+  "acceptanceEnvelopes": "One digest-bound maintainer approval for the exact reviewed inputs.",
+  "actions": "Review advisories, blocked versions, forbidden Lua features, entitlements, and diagnostic policy.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [],
+    "uncertaintyIds": []
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "No known-blocked runtime is executable and the documented containment boundary remains intact.",
+  "id": "BC-0040",
+  "initialState": "The exact application dependencies, embedded Lua release, capabilities, and sandbox configuration.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Dependency and Lua security review",
+  "verification": {
+    "method": "Automated inventory plus maintainer review",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "security",
+  "version": 1
+}

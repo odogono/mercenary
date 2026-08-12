@@ -1,0 +1,54 @@
+{
+  "acceptanceEnvelopes": "Exact wording and association; display timing remains provisional.",
+  "actions": "Trigger, advance, dismiss, repeat, and interrupt each message where legal.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "uncertaintyIds": [
+      "UNC-0004",
+      "UNC-0008"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "Message identity, exact restricted wording, dynamic values, association, ordering, persistence, and dismissal match; inventory remains UNC-0004.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "crack-sensitive",
+    "departureIds": [],
+    "dimensions": [
+      "content",
+      "state",
+      "timing"
+    ],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "materiality": "material",
+    "researchProvenance": "restricted decoded message candidates and conditioned RAM"
+  },
+  "id": "BC-0013",
+  "initialState": "Every decoded message trigger and every dynamic-composition state.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "Messages and authored wording",
+  "verification": {
+    "method": "decoded composition tables plus runtime trigger matrix",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "semantics",
+  "version": 1
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "version", "tier", "candidate", "caseGraphDigest", "evidenceDigest", "protocolDigest", "toolDigest", "environmentDigest", "referenceMac"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "id": {"type": "string", "pattern": "^VP-[0-9]{4}$"},
+    "version": {"type": "integer", "minimum": 1},
+    "tier": {"enum": ["public-ci", "release-candidate"]},
+    "candidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "appBuildDigest", "contentSetDigest", "advertisedMacOSMajors"],
+      "properties": {
+        "kind": {"enum": ["official", "modded"]},
+        "appBuildDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "contentSetDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "advertisedMacOSMajors": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 14}}
+      }
+    },
+    "caseGraphDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "evidenceDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "protocolDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "toolDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "environmentDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "referenceMac": {
+      "type": "object", "additionalProperties": false, "required": ["name", "metadataDigest"],
+      "properties": {"name": {"type": "string", "pattern": "^[a-z0-9-]+$"}, "metadataDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+    }
+  }
+}

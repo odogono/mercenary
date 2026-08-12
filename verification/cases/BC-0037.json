@@ -1,0 +1,36 @@
+{
+  "acceptanceEnvelopes": "Exact suspension and diagnostic allowlist.",
+  "actions": "Fail device, pipeline, drawable, and command submission stages.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [],
+    "uncertaintyIds": []
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "The simulation suspends before advancement, no fallback/headless path runs, and diagnostics expose only safe categories.",
+  "id": "BC-0037",
+  "initialState": "A running session with injectable Metal setup and submission failures.",
+  "reviewRequired": false,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Renderer failure containment and safe diagnostics",
+  "verification": {
+    "method": "Public synthetic renderer failure injection",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "rendering",
+  "version": 1
+}

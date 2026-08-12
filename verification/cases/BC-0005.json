@@ -1,0 +1,55 @@
+{
+  "acceptanceEnvelopes": "Geometry identity and decoded placement exact; behavior provisional.",
+  "actions": "Approach, observe, collide with, take, drop, activate, destroy, board, or otherwise trigger each applicable identity.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-a7cbec4ce3631fe0"
+    ],
+    "uncertaintyIds": [
+      "UNC-0002",
+      "UNC-0009"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "Identity, placement, visibility, interaction eligibility, state changes, and future effects match; semantic mapping remains UNC-0002.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "not-applicable",
+    "departureIds": [],
+    "dimensions": [
+      "content",
+      "state",
+      "visuals",
+      "outcome"
+    ],
+    "evidenceIds": [
+      "EV-a7cbec4ce3631fe0"
+    ],
+    "materiality": "material",
+    "researchProvenance": "World Geometry Dataset identities and restricted runtime state"
+  },
+  "id": "BC-0005",
+  "initialState": "Each of the 64 object slots in every reachable membership and interaction state.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "Object identities and interactions",
+  "verification": {
+    "method": "geometry-reference integrity plus object-state traces",
+    "oracleDiagnosticRequired": true
+  },
+  "verificationArea": "rendering",
+  "version": 1
+}

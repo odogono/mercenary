@@ -1,0 +1,57 @@
+{
+  "acceptanceEnvelopes": "Meaningful state and future behavior exact; original disk bytes are evidence, not a remake requirement.",
+  "actions": "Save and load identities 0-9, overwrite each identity, provoke every media failure, then continue independently after a successful load.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4",
+      "EV-cfe389c3e5fd1a27"
+    ],
+    "uncertaintyIds": [
+      "UNC-0006",
+      "UNC-0008"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "Prompts, success/failure, overwrite, restored location/progression/inventory/economy/vehicle/world state, and future behavior match; current build status remains UNC-0006.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "crack-sensitive",
+    "departureIds": [],
+    "dimensions": [
+      "saves",
+      "state",
+      "outcome",
+      "content"
+    ],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4",
+      "EV-cfe389c3e5fd1a27"
+    ],
+    "materiality": "material",
+    "researchProvenance": "supplied PRG plus disposable D64 traces"
+  },
+  "id": "BC-0015",
+  "initialState": "Material progression states with writable, write-protected, missing, invalid, fresh, and previously populated unit-8 media.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "C64 save and load semantics",
+  "verification": {
+    "method": "clean-process D64 round trips and semantic-state comparison",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "saves",
+  "version": 1
+}

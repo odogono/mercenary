@@ -1,0 +1,54 @@
+{
+  "acceptanceEnvelopes": "Legal set and invariants exact; frequencies remain provisional until sampled.",
+  "actions": "Run at least 100 phase-varied trials per state while retaining the fixed machine seed and decoded legal outcome set.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "uncertaintyIds": [
+      "UNC-0001"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "No illegal outcome occurs; each observed count and 95% Wilson interval is recorded; decoded but unobserved outcomes remain UNC-0001.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "not-applicable",
+    "departureIds": [],
+    "dimensions": [
+      "nondeterminism",
+      "state",
+      "outcome",
+      "timing"
+    ],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "materiality": "material",
+    "researchProvenance": "decoded branch candidates and fixed-seed phase-varied traces"
+  },
+  "id": "BC-0018",
+  "initialState": "Every state whose observable continuation depends on random or timing-sensitive input.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "Nondeterministic outcomes",
+  "verification": {
+    "method": "decoded legal set plus statistical trace report",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "semantics",
+  "version": 1
+}

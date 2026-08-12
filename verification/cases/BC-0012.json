@@ -1,0 +1,53 @@
+{
+  "acceptanceEnvelopes": "Exact meaningful state and future behavior.",
+  "actions": "Advance, revisit prior locations, reset a situation, save/load where available, and continue toward each ending.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "uncertaintyIds": [
+      "UNC-0003"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "All meaningful state persists or resets exactly as in the Reference Build and constrains the same future choices; map remains UNC-0003.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "not-applicable",
+    "departureIds": [],
+    "dimensions": [
+      "state",
+      "outcome",
+      "saves"
+    ],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "materiality": "material",
+    "researchProvenance": "conditioned RAM mutable-state candidates"
+  },
+  "id": "BC-0012",
+  "initialState": "Fresh game and every state reached after a material item, economy, mission, vehicle, or world transition.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "Progression and persistent world state",
+  "verification": {
+    "method": "state-delta graph and continuation traces",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "saves",
+  "version": 1
+}

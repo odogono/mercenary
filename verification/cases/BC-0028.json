@@ -1,0 +1,38 @@
+{
+  "acceptanceEnvelopes": "Maintainer acceptance on the Reference Mac.",
+  "actions": "Locate controls, options, audio, saves, and Help without coaching; relaunch.",
+  "aliases": [
+    "MAS-0007"
+  ],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [],
+    "uncertaintyIds": []
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "Guidance remains discoverable in the Native Shell and never overlays play.",
+  "id": "BC-0028",
+  "initialState": "A first launch with no persisted preferences.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Native discovery without in-play overlays",
+  "verification": {
+    "method": "Public host tests plus one maintainer review",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "native-shell",
+  "version": 1
+}

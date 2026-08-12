@@ -1,0 +1,38 @@
+{
+  "acceptanceEnvelopes": "Exact graph and digest equality.",
+  "actions": "Compose additions, replacements, removals, cycles, siblings, collisions, and dangling references.",
+  "aliases": [
+    "CSM-0002"
+  ],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [],
+    "uncertaintyIds": []
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "Valid ancestry resolves deterministically; every invalid graph fails before session creation.",
+  "id": "BC-0031",
+  "initialState": "A base plus two-generation overlay chain and invalid variants.",
+  "reviewRequired": false,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Linear Content Overlay composition",
+  "verification": {
+    "method": "Public synthetic composition tests",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "content",
+  "version": 1
+}

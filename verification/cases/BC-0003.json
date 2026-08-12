@@ -1,0 +1,52 @@
+{
+  "acceptanceEnvelopes": "Case-specific only; all currently unmeasured bounds remain UNC-0001.",
+  "actions": "Execute the action twice from independent cold starts and record every observable boundary.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-cfe389c3e5fd1a27"
+    ],
+    "uncertaintyIds": [
+      "UNC-0001"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "Ordering and measured PAL cadence agree across repetitions; no global tolerance is inferred.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "not-applicable",
+    "departureIds": [],
+    "dimensions": [
+      "timing",
+      "state"
+    ],
+    "evidenceIds": [
+      "EV-cfe389c3e5fd1a27"
+    ],
+    "materiality": "material",
+    "researchProvenance": "raster line/cycle and client-counted instruction boundaries"
+  },
+  "id": "BC-0003",
+  "initialState": "Each deterministic interaction, transition, message, movement, and rate-limited action at a reproducible checkpoint.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "Player-relevant PAL timing",
+  "verification": {
+    "method": "raster/instruction trace comparison",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "semantics",
+  "version": 1
+}

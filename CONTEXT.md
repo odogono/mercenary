@@ -93,8 +93,24 @@ The versioned policy that defines how the Faithful Remake demonstrates observabl
 _Avoid_: Pixel-perfect clone, feels-the-same promise
 
 **Behavior Case**:
-An evidence-linked statement of initial state, player actions, expected observables, and Acceptance Envelopes used to evaluate one fidelity obligation.
-_Avoid_: Test case, anecdote
+A versioned executable scenario with explicit Fidelity Conformance and/or Release Readiness claim scopes, dependencies, initial state, actions, expected observables, and Acceptance Envelopes. Fidelity-scoped cases additionally carry the evidence and classification required by the Fidelity Contract.
+_Avoid_: Test case, MAS scenario, CSM scenario, anecdote
+
+**Verification Run**:
+One execution of a Verification Plan in a recorded public or restricted environment, producing immutable results and a sanitized manifest.
+_Avoid_: Test run, evidence session
+
+**Conformance Report**:
+The immutable public-safe aggregation for one exact application build and Content Set, reporting Fidelity Conformance, Release Readiness, evidence lineage, diagnostics, and Release Eligibility.
+_Avoid_: Test report, certification
+
+**Release Eligibility**:
+The derived state in which an exact candidate is both conformant and release-ready with every required human approval already recorded; publication remains a separate maintainer action.
+_Avoid_: Release approval, automatic publication
+
+**Reference Mac**:
+The named Mac used for protected visual and characteristic-feel comparisons, with its actual hardware, operating system, display, settings, build, content, and tool metadata captured per Verification Run.
+_Avoid_: Supported Mac, golden machine
 
 **Behavior Catalogue**:
 The complete evidence-backed index of player-observable Reference Build content and behaviour, including its coverage and explicitly bounded uncertainties.

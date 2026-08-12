@@ -1,0 +1,3 @@
+# Unify verification under scoped Behavior Cases
+
+Every executable verification scenario will use one stable Behavior Case model with explicit `fidelity` and `release-readiness` claim scopes. Fidelity-specific classification and evidence fields remain conditional, and aggregate reports compute the two verdicts independently. This replaces separate BC, MAS, CSM, architecture, compatibility, and security result models because one dependency and evidence protocol prevents silent omissions and divergent status semantics, at the cost of broadening the established Behavior Case term beyond Reference-facing fidelity obligations.

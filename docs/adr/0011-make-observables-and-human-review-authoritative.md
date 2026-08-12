@@ -1,0 +1,3 @@
+# Make observables and human review authoritative for visual fidelity
+
+Visual Fidelity Conformance will be decided by case-specific objective observables plus one maintainer's documented Reference Build/remake review, not by a generic raster threshold or mandatory CPU ProjectionOracle/Metal agreement. Relevant runs must still capture and disclose oracle output, but disagreement is diagnostic and non-blocking. This preserves measurable geometry, scene, visibility, detail, order, and information obligations while avoiding a second implementation path becoming the definition of visible truth, at the cost of allowing a released renderer to differ from the oracle when the governed observables and human review pass.

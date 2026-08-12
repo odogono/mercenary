@@ -1,0 +1,58 @@
+{
+  "acceptanceEnvelopes": "Exact semantic state and outcome.",
+  "actions": "Follow a legal route that obtains every required object/state, reaches and operates the recovered escape-capable craft, and triggers escape.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4",
+      "EV-a7cbec4ce3631fe0"
+    ],
+    "uncertaintyIds": [
+      "UNC-0007",
+      "UNC-0008"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "Every intermediate state, vehicle/world transition, and resulting ending match; exact route remains UNC-0007.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "crack-sensitive",
+    "departureIds": [],
+    "dimensions": [
+      "content",
+      "state",
+      "outcome",
+      "timing",
+      "controls"
+    ],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4",
+      "EV-a7cbec4ce3631fe0"
+    ],
+    "materiality": "material",
+    "researchProvenance": "secondary hypothesis and candidate high-altitude Geometry Identity awaiting proof"
+  },
+  "id": "BC-0020",
+  "initialState": "Fresh game at the first interactive state.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "Recovered-craft escape journey",
+  "verification": {
+    "method": "end-to-end legal runtime journey linked to stable Geometry Identities",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "journey",
+  "version": 1
+}

@@ -1,0 +1,57 @@
+{
+  "acceptanceEnvelopes": "Exact canonical state and case-linked continuation outcomes.",
+  "actions": "Save at a completed tick, compact history, acknowledge or fail storage, restore, and continue all named branches.",
+  "aliases": [
+    "CSM-0005"
+  ],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "fidelity",
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [
+      "BC-0015"
+    ],
+    "evidenceIds": [],
+    "uncertaintyIds": [
+      "UNC-0006",
+      "UNC-0008"
+    ]
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "Origins, dirty state, restored projection, random state, and future behavior are exact.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "crack-sensitive",
+    "departureIds": [],
+    "dimensions": [
+      "saves",
+      "state",
+      "outcome"
+    ],
+    "evidenceIds": [],
+    "materiality": "material",
+    "researchProvenance": "CSM-0005 and its linked Behavior Cases."
+  },
+  "id": "BC-0034",
+  "initialState": "A session exercising every future-affecting state category.",
+  "reviewRequired": false,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Canonical save and dirty state",
+  "verification": {
+    "method": "Public synthetic round trips plus restricted save continuations",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "saves",
+  "version": 1
+}

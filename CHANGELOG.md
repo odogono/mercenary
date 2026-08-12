@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Define the normative Verification System for issue #12 with scoped Behavior
+  Cases, immutable results, public/restricted manifests, dependency-aware reuse,
+  digest-bound approvals and departures, dual conformance/readiness verdicts,
+  and derived Release Eligibility.
+- Add schema-validated `lab verification validate`, `aggregate`, and `render`
+  workflows; migrate BC-0001 through BC-0021 to canonical JSON; promote the
+  MAS/CSM scenarios as BC-0022 through BC-0036; and add focused renderer,
+  compatibility, fuzzing, and dependency-review cases through BC-0040.
+
 - Define the normative Content and State Model for issue #11, including exact
   Content Set and linear Content Overlay resolution, typed ResourceGraph
   relationships, deterministic Lua 5.5.1 Mods in a sandboxed XPC simulation

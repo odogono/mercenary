@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "id", "caseId", "caseVersion", "runId", "outcome", "dependencyFingerprint", "approvalIds", "diagnostics", "evidenceManifestId"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "id": {"type": "string", "pattern": "^VR-[0-9]{4}$"},
+    "caseId": {"type": "string", "pattern": "^BC-[0-9]{4}$"},
+    "caseVersion": {"type": "integer", "minimum": 1},
+    "runId": {"type": "string", "pattern": "^RUN-[0-9]{4}$"},
+    "outcome": {"enum": ["pass", "fail", "departed", "blocked"]},
+    "dependencyFingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "approvalIds": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^AP-[0-9]{4}$"}},
+    "diagnostics": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["kind", "captured", "agreement", "summary"], "properties": {"kind": {"enum": ["cpu-metal-oracle"]}, "captured": {"type": "boolean"}, "agreement": {"type": "boolean"}, "summary": {"type": "string"}}}},
+    "evidenceManifestId": {"type": "string", "pattern": "^VM-[0-9]{4}$"},
+    "coveredMacOSMajors": {"type": "array", "uniqueItems": true, "items": {"type": "integer", "minimum": 14}},
+    "departureId": {"type": "string", "pattern": "^DR-[0-9]{4}$"},
+    "reason": {"type": "string", "minLength": 1}
+  },
+  "allOf": [{"if": {"properties": {"outcome": {"const": "departed"}}}, "then": {"required": ["departureId"]}}]
+}

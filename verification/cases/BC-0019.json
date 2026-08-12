@@ -1,0 +1,56 @@
+{
+  "acceptanceEnvelopes": "Exact semantic state and outcome; journey timing is descriptive, not a speed requirement.",
+  "actions": "Follow a legal route that acquires the required resources through verified economy and progression actions, obtains an escape-capable craft by purchase, and triggers escape.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "uncertaintyIds": [
+      "UNC-0007",
+      "UNC-0008"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "Every intermediate state and the resulting ending match the Reference Build; exact route and ending identity remain UNC-0007.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "crack-sensitive",
+    "departureIds": [],
+    "dimensions": [
+      "content",
+      "state",
+      "outcome",
+      "timing",
+      "controls"
+    ],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "materiality": "material",
+    "researchProvenance": "secondary hypothesis awaiting decoded and runtime proof"
+  },
+  "id": "BC-0019",
+  "initialState": "Fresh game at the first interactive state.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "Purchased escape journey",
+  "verification": {
+    "method": "end-to-end legal runtime journey",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "journey",
+  "version": 1
+}

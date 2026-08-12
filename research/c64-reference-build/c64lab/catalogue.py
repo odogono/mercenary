@@ -15,6 +15,7 @@ from .core import LabError, file_hash
 from .laboratory import WORK_ROOT, capture, load_configuration
 from .monitor import MonitorClient, MonitorProtocolError
 from .toolchain import discover_toolchain
+from .verification import REPOSITORY_ROOT, validate_verification
 
 
 CATALOGUE_VERSION = "catalogue-v1"
@@ -363,7 +364,7 @@ def _validate_behavior_case(path: Path) -> set[str]:
     return evidence_ids
 
 
-def validate_catalogue(root: Path) -> dict[str, Any]:
+def validate_catalogue(root: Path, *, case_root: Path | None = None) -> dict[str, Any]:
     entries_document = _load_json(root / "entries.json")
     uncertainties_document = _load_json(root / "uncertainties.json")
     evidence_document = _load_json(root / "evidence-index.json")
@@ -391,11 +392,40 @@ def validate_catalogue(root: Path) -> dict[str, Any]:
     evidence = _ids(evidence_list, EVIDENCE_ID, "evidence")
 
     cases_root = root / "cases"
-    case_ids = {path.stem for path in cases_root.glob("BC-*.md")} if cases_root.is_dir() else set()
+    canonical_root = case_root
+    if canonical_root is None and not any(cases_root.glob("BC-*.md")):
+        canonical_root = root if any(cases_root.glob("BC-*.json")) else REPOSITORY_ROOT / "verification"
     case_evidence: dict[str, set[str]] = {}
-    for case_id in case_ids:
-        _require(bool(CASE_ID.fullmatch(case_id)), f"Behavior Case filename has invalid ID {case_id}")
-        case_evidence[case_id] = _validate_behavior_case(cases_root / f"{case_id}.md")
+    if canonical_root is None:
+        case_ids = {path.stem for path in cases_root.glob("BC-*.md")} if cases_root.is_dir() else set()
+        for case_id in case_ids:
+            _require(bool(CASE_ID.fullmatch(case_id)), f"Behavior Case filename has invalid ID {case_id}")
+            case_evidence[case_id] = _validate_behavior_case(cases_root / f"{case_id}.md")
+    else:
+        canonical = validate_verification(canonical_root)["caseById"]
+        referenced_case_ids = {
+            case_id
+            for entry in entries_list
+            for case_id in entry.get("behaviorCaseIds", [])
+        } | {
+            case_id
+            for uncertainty in uncertainty_list
+            for case_id in uncertainty.get("affectedBehaviorCaseIds", [])
+        } | {
+            case_id
+            for row in coverage.get("domains", [])
+            for case_id in row.get("behaviorCaseIds", [])
+        } | {
+            journey.get("behaviorCaseId")
+            for journey in coverage.get("journeys", [])
+            if journey.get("behaviorCaseId")
+        }
+        _require(referenced_case_ids <= canonical.keys(), "Behavior Catalogue references a missing canonical Behavior Case")
+        case_ids = referenced_case_ids
+        for case_id in case_ids:
+            fidelity = canonical[case_id].get("fidelity")
+            _require(fidelity is not None, f"Catalogue Behavior Case {case_id} must have fidelity scope")
+            case_evidence[case_id] = set(fidelity["evidenceIds"])
 
     trace_hashes: dict[tuple[str, int], str] = {}
     for evidence_id, item in evidence.items():
@@ -478,6 +508,7 @@ def validate_catalogue(root: Path) -> dict[str, Any]:
     }
     return {
         "documents": documents,
+        "caseIds": sorted(case_ids),
         "digest": catalogue_digest(documents),
         "counts": {
             "entries": len(entries),
@@ -610,7 +641,12 @@ def build_catalogue(source_root: Path, evidence_store: Path, geometry: Path, out
     output_root.mkdir(parents=True)
     for filename in ("entries.json", "uncertainties.json", "evidence-index.json", "coverage.json"):
         shutil.copyfile(source_root / filename, output_root / filename)
-    shutil.copytree(source_root / "cases", output_root / "cases")
+    if any((source_root / "cases").glob("BC-*.md")):
+        shutil.copytree(source_root / "cases", output_root / "cases")
+    else:
+        (output_root / "cases").mkdir()
+        for case_id in verified["caseIds"]:
+            shutil.copyfile(REPOSITORY_ROOT / "verification" / "cases" / f"{case_id}.json", output_root / "cases" / f"{case_id}.json")
     cited_hashes = [
         digest
         for item in verified["documents"]["evidence"]["evidence"]

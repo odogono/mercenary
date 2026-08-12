@@ -1,0 +1,57 @@
+{
+  "acceptanceEnvelopes": "Byte-exact canonical outputs for equal inputs.",
+  "actions": "Run identical traces twice; provoke traps, invalid state, conflicts, and capability breaches.",
+  "aliases": [
+    "CSM-0004"
+  ],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "fidelity",
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [
+      "BC-0004",
+      "BC-0018"
+    ],
+    "evidenceIds": [],
+    "uncertaintyIds": [
+      "UNC-0001"
+    ]
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "Transitions, projections, snapshots, events, and random states are exact; failed ticks commit nothing.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "not-applicable",
+    "departureIds": [],
+    "dimensions": [
+      "state",
+      "outcome",
+      "nondeterminism"
+    ],
+    "evidenceIds": [],
+    "materiality": "material",
+    "researchProvenance": "CSM-0004 and its linked Behavior Cases."
+  },
+  "id": "BC-0033",
+  "initialState": "Equal Content Sets, resources, module order, seeds, and Semantic Actions.",
+  "reviewRequired": false,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Deterministic transactional Lua",
+  "verification": {
+    "method": "Two-run deterministic integration traces",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "semantics",
+  "version": 1
+}

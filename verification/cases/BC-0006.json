@@ -1,0 +1,56 @@
+{
+  "acceptanceEnvelopes": "Semantic outcomes exact; motion and cadence await measurements.",
+  "actions": "Board, operate every control/capability, collide, use weapons where available, and leave.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-a7cbec4ce3631fe0"
+    ],
+    "uncertaintyIds": [
+      "UNC-0002"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "Entry conditions, controls, speed/flight behavior, capacity, weapons, persistence, and exit state match; mapping remains UNC-0002.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "not-applicable",
+    "departureIds": [],
+    "dimensions": [
+      "content",
+      "controls",
+      "state",
+      "timing",
+      "outcome",
+      "visuals"
+    ],
+    "evidenceIds": [
+      "EV-a7cbec4ce3631fe0"
+    ],
+    "materiality": "material",
+    "researchProvenance": "vehicle Geometry Identities and runtime object state"
+  },
+  "id": "BC-0006",
+  "initialState": "Player positioned legally to enter each vehicle identity.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "Vehicle modes and capabilities",
+  "verification": {
+    "method": "per-vehicle proof traces and decoded capability flags",
+    "oracleDiagnosticRequired": true
+  },
+  "verificationArea": "rendering",
+  "version": 1
+}

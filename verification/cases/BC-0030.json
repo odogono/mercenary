@@ -1,0 +1,38 @@
+{
+  "acceptanceEnvelopes": "Exact schema, identity, digest, and reference integrity.",
+  "actions": "Validate, resolve, construct the immutable graph, and create a session.",
+  "aliases": [
+    "CSM-0001"
+  ],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [],
+    "uncertaintyIds": []
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "The exact digest is eligible for verification but does not itself establish fidelity.",
+  "id": "BC-0030",
+  "initialState": "One complete synthetic official package with traceability.",
+  "reviewRequired": false,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Official Content Set admission",
+  "verification": {
+    "method": "Public synthetic resource admission",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "content",
+  "version": 1
+}

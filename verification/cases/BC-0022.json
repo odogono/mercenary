@@ -1,0 +1,56 @@
+{
+  "acceptanceEnvelopes": "Case-linked objective visual envelopes; no generic image tolerance.",
+  "actions": "Resize the window, switch compositions and Accommodations, and repeat representative scenes.",
+  "aliases": [
+    "MAS-0001"
+  ],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "fidelity",
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [
+      "BC-0008"
+    ],
+    "evidenceIds": [],
+    "uncertaintyIds": [
+      "UNC-0009"
+    ]
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "Projection, visible content, Semantic Actions, simulation time, and information remain invariant while layout changes.",
+  "fidelity": {
+    "classification": "mac-adaptation",
+    "crackSensitivity": "not-applicable",
+    "departureIds": [],
+    "dimensions": [
+      "visuals",
+      "controls",
+      "timing"
+    ],
+    "evidenceIds": [],
+    "materiality": "material",
+    "researchProvenance": "MAS-0001 and its linked Behavior Cases."
+  },
+  "id": "BC-0022",
+  "initialState": "A running session in each supported Display Composition.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Display Composition invariance",
+  "verification": {
+    "method": "Synthetic host automation plus restricted visual scenarios",
+    "oracleDiagnosticRequired": true
+  },
+  "verificationArea": "native-shell",
+  "version": 1
+}

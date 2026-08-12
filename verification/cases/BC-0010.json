@@ -1,0 +1,53 @@
+{
+  "acceptanceEnvelopes": "All numeric and semantic results exact.",
+  "actions": "Request offers, buy, sell, hire, earn rewards, repeat transactions, and attempt invalid transactions.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "uncertaintyIds": [
+      "UNC-0003"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "Prices, balances, item transfer, rejection, repeatability, and downstream progression match; exact tables remain UNC-0003.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "not-applicable",
+    "departureIds": [],
+    "dimensions": [
+      "content",
+      "state",
+      "outcome"
+    ],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "materiality": "material",
+    "researchProvenance": "conditioned RAM economy candidates"
+  },
+  "id": "BC-0010",
+  "initialState": "Every transaction type at below, exact, and above required credit or item preconditions.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "Economy transactions",
+  "verification": {
+    "method": "decoded tables plus transaction matrix traces",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "semantics",
+  "version": 1
+}

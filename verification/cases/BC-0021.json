@@ -1,0 +1,56 @@
+{
+  "acceptanceEnvelopes": "Exact existence/non-existence and semantic outcome.",
+  "actions": "Execute the legal route for any additional materially distinct terminal branch found by exhaustive decoding; if none exists, resolve this case and its uncertainty as disproven.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "uncertaintyIds": [
+      "UNC-0007",
+      "UNC-0008"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "Any additional ending is reproduced exactly, or direct decoding and runtime coverage establish that no such route exists.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "crack-sensitive",
+    "departureIds": [],
+    "dimensions": [
+      "content",
+      "state",
+      "outcome",
+      "timing",
+      "controls"
+    ],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "materiality": "material",
+    "researchProvenance": "unresolved terminal-branch inventory"
+  },
+  "id": "BC-0021",
+  "initialState": "Fresh game at the first interactive state.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "Additional terminal-branch journey",
+  "verification": {
+    "method": "exhaustive terminal dispatch decoding plus legal runtime proof",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "journey",
+  "version": 1
+}

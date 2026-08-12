@@ -137,19 +137,20 @@ These stable scenarios are the issue #9 acceptance surface. Issue #12 must prese
 
 Automated verification covers input merging and release behavior, repeat/shortcut exclusion, binding reassignment and coverage, layout invariants, minimum sizing, lifecycle timing, controller loss, preference round trips, quick-slot identities, save gates, destructive decisions, first-launch persistence, and native rendering of the main, Settings, and Help views. Production implementation must extend it with MAS-0008; the current synthetic issue #9 prototype does not implement Mod admission.
 
-Human acceptance requires two independent passes over MAS-0001 through MAS-0007:
+Human acceptance requires one maintainer to complete MAS-0001 through MAS-0007,
+including both the Reference-familiar characteristic-feel perspective and the
+modern-Mac discovery perspective. The decision is stored as a digest-bound
+Approval Record against the promoted Behavior Case result. Any blocking finding
+must be resolved and rerun. Reference comparison captures remain ignored
+Restricted Material; only public-safe findings may be committed.
 
-| Perspective | Required decision | Status |
-| --- | --- | --- |
-| Reference-familiar reviewer | Accept the documented characteristic feel and identify any fidelity blocker. | Pending |
-| Modern-Mac/new-player reviewer | Discover controls and options without coaching and identify any usability blocker. | Pending |
-
-Both reviewers must complete every assigned scenario. Any blocking finding must be resolved and rerun. Reference comparison captures remain ignored Restricted Material; only public-safe findings may be committed.
-
-Issue #9 may close after both rows are accepted. Until then, the interaction contract is accepted for implementation but review completion and final conformance remain pending.
+Issue #9 established the interaction contract. Its pending human execution is
+now represented by BC-0022 through BC-0028 and remains a release-candidate gate
+under the [Verification System](verification-system.md), rather than a reason to
+reopen the design ticket.
 
 ## Downstream handoff
 
 - Issue #10 chooses production application-shell, Metal, simulation-loop, and deployment architecture while preserving this observable contract.
 - Issue #11 defines production content/state, untrusted Mod, and save representation in the [Content and State Model](content-state-model.md).
-- Issue #12 defines executable host evidence, promotes MAS scenario intent, and prevents conformance claims while linked uncertainties remain open.
+- Issue #12's [Verification System](verification-system.md) promotes MAS-0001 through MAS-0008 to BC-0022 through BC-0029 and prevents conformance claims while linked uncertainties remain open.

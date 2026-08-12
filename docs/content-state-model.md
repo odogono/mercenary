@@ -305,6 +305,11 @@ Independent security review is recommended but is not an Initial Release gate un
 
 ## Acceptance scenarios
 
+The Verification System promotes CSM-0001 through CSM-0007 one-to-one as
+BC-0030 through BC-0036. The CSM identifiers remain stable traceability aliases;
+the canonical executable definitions and immutable results live under
+`verification/`.
+
 ### CSM-0001 — Official Content Set admission
 
 Load one complete official package, validate all records and traceability, construct one immutable graph, create a session, and confirm its exact digest is eligible for—but does not by itself establish—Fidelity Contract conformance.
@@ -346,4 +351,4 @@ This model deliberately does not fill unresolved content with current crack-deri
 - `UNC-0008` supplies retail corroboration for crack-sensitive facts.
 - `UNC-0009` resolves geometry comparison-review bookkeeping without changing identity boundaries.
 
-Issue #12 must turn CSM-0001 through CSM-0007 into executable verification alongside the Behavior Cases and macOS scenarios. Issue #13 must choose concrete wire schemas, host budgets, XPC messages, package limits, signature representation, and implementation libraries while preserving every boundary and failure rule above.
+Issue #12's [Verification System](verification-system.md) turns CSM-0001 through CSM-0007 into BC-0030 through BC-0036 and adds release-readiness coverage for renderer failure, supported hosts, fuzz resilience, and dependency/Lua review. Issue #13 must choose concrete wire schemas, host budgets, XPC messages, package limits, signature representation, production adapters, and implementation libraries while preserving every boundary and failure rule above.

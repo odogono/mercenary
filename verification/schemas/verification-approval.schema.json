@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "id", "targetType", "targetId", "targetVersion", "targetDigest", "maintainer", "timestamp", "decision"],
+  "properties": {
+    "schemaVersion": {"const": 1}, "id": {"type": "string", "pattern": "^AP-[0-9]{4}$"},
+    "targetType": {"enum": ["result", "departure"]}, "targetId": {"type": "string", "pattern": "^(?:VR|DR)-[0-9]{4}$"},
+    "targetVersion": {"type": "integer", "minimum": 1}, "targetDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "maintainer": {"type": "string", "minLength": 1}, "timestamp": {"type": "string"}, "decision": {"enum": ["approved", "rejected"]}
+  }
+}

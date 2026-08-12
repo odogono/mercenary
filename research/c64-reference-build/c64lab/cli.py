@@ -24,6 +24,7 @@ from .catalogue import (
     summarize_catalogue,
     verify_catalogue,
 )
+from .verification import aggregate_verification, render_report, validate_verification
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -107,6 +108,21 @@ def _parser() -> argparse.ArgumentParser:
     catalogue_summarize.add_argument("--catalogue", required=True, type=Path)
     catalogue_summarize.add_argument("--reviews", required=True, type=Path)
     catalogue_summarize.add_argument("--output", required=True, type=Path)
+
+    verification_parser = subparsers.add_parser("verification", help="validate and aggregate verification evidence")
+    verification_commands = verification_parser.add_subparsers(dest="verification_command", required=True)
+
+    verification_validate = verification_commands.add_parser("validate", help="validate verification records and their dependency graph")
+    verification_validate.add_argument("--root", required=True, type=Path)
+
+    verification_aggregate = verification_commands.add_parser("aggregate", help="generate an immutable aggregate Conformance Report")
+    verification_aggregate.add_argument("--root", required=True, type=Path)
+    verification_aggregate.add_argument("--plan", required=True, type=Path)
+    verification_aggregate.add_argument("--output", required=True, type=Path)
+
+    verification_render = verification_commands.add_parser("render", help="render a Conformance Report as deterministic Markdown")
+    verification_render.add_argument("--report", required=True, type=Path)
+    verification_render.add_argument("--output", required=True, type=Path)
     return parser
 
 
@@ -141,6 +157,23 @@ def main(argv: Sequence[str] | None = None) -> int:
                 result = review_comparisons(arguments.comparisons, arguments.reviewer, arguments.decision)
             else:
                 result = summarize_geometry(arguments.dataset, arguments.comparisons, arguments.review, arguments.output)
+        elif arguments.command == "verification":
+            if arguments.verification_command == "validate":
+                documents = validate_verification(arguments.root)
+                result = {"status": "verified", "cases": len(documents["cases"])}
+            elif arguments.verification_command == "aggregate":
+                report = aggregate_verification(arguments.root, arguments.plan)
+                arguments.output.parent.mkdir(parents=True, exist_ok=True)
+                arguments.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+                result = {"status": "aggregated", "report": str(arguments.output), "reportId": report["id"]}
+            else:
+                try:
+                    report = json.loads(arguments.report.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError) as error:
+                    raise LabError(f"Could not read Conformance Report from {arguments.report}: {error}") from error
+                arguments.output.parent.mkdir(parents=True, exist_ok=True)
+                arguments.output.write_text(render_report(report), encoding="utf-8")
+                result = {"status": "rendered", "output": str(arguments.output)}
         elif arguments.catalogue_command == "build":
             result = build_catalogue(arguments.entries, arguments.evidence_store, arguments.geometry, arguments.output)
         elif arguments.catalogue_command == "verify":

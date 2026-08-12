@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "id", "planId", "planDigest", "candidate", "caseGraphDigest", "fidelityVerdict", "releaseReadinessVerdict", "releaseEligible", "reproducibility", "caseResults", "diagnostics"],
+  "properties": {
+    "schemaVersion": {"const": 1}, "id": {"type": "string", "pattern": "^CR-[0-9a-f]{12}$"}, "planId": {"type": "string", "pattern": "^VP-[0-9]{4}$"},
+    "planDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "caseGraphDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "candidate": {"type": "object"}, "fidelityVerdict": {"enum": ["conformant", "nonconformant", "blocked"]},
+    "releaseReadinessVerdict": {"enum": ["ready", "not-ready", "blocked"]}, "releaseEligible": {"type": "boolean"},
+    "reproducibility": {"enum": ["current", "historical-only"]},
+    "caseResults": {"type": "object", "patternProperties": {"^BC-[0-9]{4}$": {"type": "object", "additionalProperties": false, "required": ["outcome"], "properties": {"outcome": {"enum": ["pass", "fail", "departed", "blocked", "not-run"]}, "resultId": {"type": "string", "pattern": "^VR-[0-9]{4}$"}, "reusedFromRun": {"type": "string", "pattern": "^RUN-[0-9]{4}$"}, "staleResultIds": {"type": "array", "items": {"type": "string", "pattern": "^VR-[0-9]{4}$"}}}}}, "additionalProperties": false},
+    "diagnostics": {"type": "array", "items": {"type": "object"}}
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "acceptanceEnvelopes": "Semantic outcomes exact; timing pending evidence.",
+  "actions": "Attempt each interaction inside, outside, and at every boundary of its legal precondition.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4",
+      "EV-cfe389c3e5fd1a27"
+    ],
+    "uncertaintyIds": [
+      "UNC-0001"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "Success, rejection, messages, state effects, and future behavior match the Reference Build; unresolved boundaries remain UNC-0001.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "not-applicable",
+    "departureIds": [],
+    "dimensions": [
+      "controls",
+      "state",
+      "outcome",
+      "timing"
+    ],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4",
+      "EV-cfe389c3e5fd1a27"
+    ],
+    "materiality": "material",
+    "researchProvenance": "conditioned runtime and decoded dispatch candidates"
+  },
+  "id": "BC-0004",
+  "initialState": "Reachable positive and negative preconditions for boarding, leaving, taking, dropping, activating, firing, pausing, and resetting a situation.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "Core interaction mechanics",
+  "verification": {
+    "method": "exhaustive precondition matrix and runtime traces",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "semantics",
+  "version": 1
+}
