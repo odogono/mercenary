@@ -421,7 +421,11 @@ def validate_pal_phase_coverage(
     actuals: list[Mapping[str, int]],
     *,
     period_cycles: int,
-    maximum_overshoot_cycles: int = 8,
+    # VICE's client-visible single-step boundary can include interrupt entry,
+    # so the next observable boundary may be later than one ordinary 6502
+    # instruction. Keep it within one PAL raster line and within the same
+    # midpoint stratum; duplicate or incomplete phase coverage still fails.
+    maximum_overshoot_cycles: int = PAL_CYCLES_PER_LINE,
 ) -> None:
     _require(len(targets) >= 100 and len(actuals) == len(targets), "PAL phase coverage is incomplete")
     phases: list[int] = []

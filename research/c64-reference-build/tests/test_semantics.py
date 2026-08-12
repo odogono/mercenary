@@ -461,6 +461,16 @@ class PalSamplingTests(unittest.TestCase):
         with self.assertRaisesRegex(LabError, "phase coverage"):
             validate_pal_phase_coverage(targets, actuals, period_cycles=20_000)
 
+    def test_accepts_interrupt_entry_but_rejects_more_than_one_pal_line_of_overshoot(self) -> None:
+        targets = stratified_pal_targets(period_cycles=20_000, trials=100)
+        actuals = [{"elapsedCycles": target["phaseCycle"]} for target in targets]
+        actuals[10] = {"elapsedCycles": targets[10]["phaseCycle"] + 42}
+        validate_pal_phase_coverage(targets, actuals, period_cycles=20_000)
+
+        actuals[10] = {"elapsedCycles": targets[10]["phaseCycle"] + 64}
+        with self.assertRaisesRegex(LabError, "instruction-boundary tolerance"):
+            validate_pal_phase_coverage(targets, actuals, period_cycles=20_000)
+
     def test_summarizes_exact_pal_cadence_from_absolute_clock_boundaries(self) -> None:
         timeline = [
             {"type": "joystick_state", "cpuClock": 100, "rasterLine": 0, "rasterCycle": 10},
