@@ -21,6 +21,16 @@
       "path": "traces/TR-0007-fire-effect-cadence.json",
       "kind": "deterministic",
       "repetitions": 2
+    },
+    {
+      "path": "traces/TR-9004-opaque-enterable-accelerating.json",
+      "kind": "deterministic",
+      "repetitions": 2
+    },
+    {
+      "path": "traces/TR-9005-opaque-enterable-fixed-rate.json",
+      "kind": "deterministic",
+      "repetitions": 2
     }
   ]
 }
