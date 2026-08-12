@@ -282,7 +282,9 @@ def validate_event_history_proof(
     _require(len(replay_reports) == 2, "Event-history proof requires exactly two independent cold starts")
     cold_start_ids = [report.get("coldStartId") for report in replay_reports]
     _require(all(isinstance(value, str) and bool(value) for value in cold_start_ids) and len(set(cold_start_ids)) == 2, "Event-history proof requires two independent cold starts")
-    expected: dict[str, int | bool | str] | None = None
+    recorded_end = capture_report.get("typedObservations")
+    _require(isinstance(recorded_end, Mapping) and bool(recorded_end), "Event-history proof requires the recorded typed end state")
+    expected = dict(recorded_end)
     config_digest: str | None = None
     for report in replay_reports:
         _require(report.get("viceExecutableSha256") == capture_report["viceExecutableSha256"], "Event-history replay VICE executable identity diverged")
@@ -294,13 +296,11 @@ def validate_event_history_proof(
         _require(current_config == config_digest, "Event-history replay effective configurations diverged")
         observations = report.get("typedObservations")
         _require(isinstance(observations, Mapping) and bool(observations), "Event-history replay lacks typed observations")
-        if expected is None:
-            expected = dict(observations)
         vice_log = report.get("viceLog")
         _require(isinstance(vice_log, str), "Event-history replay lacks its VICE log")
         validate_event_history_replay(vice_log, expected, observations)
 
-    assert expected is not None and config_digest is not None
+    assert config_digest is not None
     normalized = {
         "viceExecutableSha256": capture_report["viceExecutableSha256"],
         "driverExecutableSha256": capture_report["driverExecutableSha256"],

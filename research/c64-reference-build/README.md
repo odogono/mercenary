@@ -115,6 +115,12 @@ swiftc research/c64-reference-build/tools/capture-keyboard-history.swift \
 research/c64-reference-build/work/capture-keyboard-history \
   restricted/behavior-catalogue/unc-0001/capture-request.json \
   > restricted/behavior-catalogue/unc-0001/capture-report.json
+
+swiftc research/c64-reference-build/tools/replay-keyboard-history.swift \
+  -o research/c64-reference-build/work/replay-keyboard-history
+research/c64-reference-build/work/replay-keyboard-history \
+  restricted/behavior-catalogue/unc-0001/replay-activation.json \
+  restricted/behavior-catalogue/unc-0001/replay-activation-report.json
 ```
 
 ### Verification System

@@ -55,6 +55,10 @@ or snapshot hashes alone. `lab catalogue verify-history` enforces exactly two
 distinct cold starts, capture/replay executable and start-state identity,
 effective-configuration equality, reset ordering, and identical typed end
 observations; its result omits raw histories, paths, logs, and physical keys.
+The bounded `replay-keyboard-history.swift` helper activates only the pinned
+VICE PID, verifies the executable, start snapshot, hotkey map, sole main
+window, and Accessibility grant, triggers playback after monitor preparation,
+and checks foreground focus throughout the requested replay interval.
 
 The C64/6510 register list in the 3.10 source includes `LIN` and `CYC`, so each
 stopped boundary can record PAL raster line and cycle alongside the CPU

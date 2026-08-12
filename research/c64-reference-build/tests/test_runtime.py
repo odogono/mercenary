@@ -10,6 +10,7 @@ sys.path.insert(0, str(LAB_ROOT))
 
 from c64lab.runtime import (  # noqa: E402
     build_capture_command,
+    build_event_history_replay_command,
     parse_register_log,
     render_capture_script,
     render_checkpoint_script,
@@ -18,6 +19,42 @@ from c64lab.runtime import (  # noqa: E402
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_builds_a_cold_event_history_replay_command(self) -> None:
+        run = Path("/restricted/replay-1")
+        command = build_event_history_replay_command(
+            vice_binary=Path("/opt/homebrew/bin/x64sc"),
+            run_directory=run,
+            monitor_address="ip4://127.0.0.1:6516",
+            start_snapshot=Path("/restricted/history/start.vsf"),
+            end_snapshot=Path("/restricted/history/end.vsf"),
+            prepare_script=run / "prepare.mon",
+            machine_model="c64",
+            seed=0xC0FFEE,
+        )
+
+        self.assertEqual(command[0], "/opt/homebrew/bin/x64sc")
+        self.assertEqual(command[command.index("-eventsnapshotdir") + 1], "/restricted/history")
+        self.assertEqual(command[command.index("-eventstartsnapshot") + 1], "start.vsf")
+        self.assertEqual(command[command.index("-eventendsnapshot") + 1], "end.vsf")
+        self.assertEqual(command[command.index("-binarymonitoraddress") + 1], "ip4://127.0.0.1:6516")
+        self.assertEqual(command[command.index("-dumpconfig") + 1], "/restricted/replay-1/effective.vicerc")
+        self.assertEqual(command[command.index("-logfile") + 1], "/restricted/replay-1/vice.log")
+        self.assertEqual(command[command.index("-initbreak") + 1], "ready")
+        self.assertNotIn("-playback", command)
+
+    def test_rejects_event_history_snapshots_from_different_directories(self) -> None:
+        with self.assertRaisesRegex(Exception, "same restricted directory"):
+            build_event_history_replay_command(
+                vice_binary=Path("/opt/homebrew/bin/x64sc"),
+                run_directory=Path("/restricted/replay"),
+                monitor_address="ip4://127.0.0.1:6516",
+                start_snapshot=Path("/restricted/a/start.vsf"),
+                end_snapshot=Path("/restricted/b/end.vsf"),
+                prepare_script=Path("/restricted/replay/prepare.mon"),
+                machine_model="c64",
+                seed=1,
+            )
+
     def test_builds_a_bounded_deterministic_capture_command(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             run = Path(directory)

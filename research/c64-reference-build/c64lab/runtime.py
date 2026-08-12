@@ -92,6 +92,63 @@ def build_capture_command(
     ]
 
 
+def build_event_history_replay_command(
+    *,
+    vice_binary: Path,
+    run_directory: Path,
+    monitor_address: str,
+    start_snapshot: Path,
+    end_snapshot: Path,
+    prepare_script: Path,
+    machine_model: str,
+    seed: int,
+) -> list[str]:
+    start = start_snapshot.resolve()
+    end = end_snapshot.resolve()
+    if start.parent != end.parent:
+        raise LabError("Event-history snapshots must share the same restricted directory")
+    if start == end:
+        raise LabError("Event-history replay needs distinct start and end snapshots")
+    if re.fullmatch(r"ip4://127\.0\.0\.1:[1-9][0-9]{0,4}", monitor_address) is None:
+        raise LabError("Event-history replay monitor must use an explicit IPv4 loopback port")
+    port = int(monitor_address.rsplit(":", 1)[1])
+    if port > 65535:
+        raise LabError("Event-history replay monitor port is invalid")
+    if not isinstance(seed, int) or seed < 0:
+        raise LabError("Event-history replay seed must be a non-negative integer")
+    run = run_directory.resolve()
+    return [
+        str(vice_binary),
+        "-default",
+        "-model",
+        machine_model,
+        "-seed",
+        str(seed),
+        "-sounddev",
+        "dummy",
+        "-sound",
+        "-speed",
+        "100",
+        "-binarymonitor",
+        "-binarymonitoraddress",
+        monitor_address,
+        "-eventsnapshotdir",
+        str(start.parent),
+        "-eventstartsnapshot",
+        start.name,
+        "-eventendsnapshot",
+        end.name,
+        "-dumpconfig",
+        str(run / "effective.vicerc"),
+        "-logfile",
+        str(run / "vice.log"),
+        "-initbreak",
+        "ready",
+        "-moncommands",
+        str(prepare_script.resolve()),
+    ]
+
+
 _REGISTER_LINE = re.compile(
     r"^\.?(?:;)(?P<pc>[0-9a-f]{4})\s+"
     r"(?P<a>[0-9a-f]{2})\s+(?P<x>[0-9a-f]{2})\s+(?P<y>[0-9a-f]{2})\s+"
