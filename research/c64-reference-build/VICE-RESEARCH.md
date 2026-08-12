@@ -74,6 +74,13 @@ reaches a declared release boundary. This prevents a release/press pair from
 being coalesced when a saturation or edge-trigger proof needs distinct holds;
 the aggregate remains capped at 512 decoded handler occurrences.
 
+VICE applies `-limitcycles` to its absolute CPU clock, including the clock
+restored from a snapshot. Catalogue branches that start from a content-addressed
+evidence snapshot therefore omit that cold-start-only limit; bounded trace
+actions, monitor read timeouts, and process teardown remain the execution guard.
+Branches starting from a cold catalogue checkpoint retain the configured cycle
+limit.
+
 The source archive must hash to
 `8e5bac18cbcb9f192380ad3ef881f8790f5b75c41d7b3da65d831985d864d6d1`.
 On current macOS SDKs, apply `patches/vice-3.10-macos-dyld-header.patch` as a

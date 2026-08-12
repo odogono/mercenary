@@ -11,6 +11,7 @@ sys.path.insert(0, str(LAB_ROOT))
 
 from c64lab.catalogue import (
     build_evidence_record,
+    catalogue_cycle_limit_arguments,
     catalogue_digest,
     normalized_sample_digest,
     review_catalogue,
@@ -241,6 +242,21 @@ None.
 
 
 class TraceContractTests(unittest.TestCase):
+    def test_keeps_cycle_limit_for_cold_checkpoint_branch(self) -> None:
+        self.assertEqual(
+            catalogue_cycle_limit_arguments(120_000_000, {"checkpoint": "interactive"}),
+            ["-limitcycles", "120000000"],
+        )
+
+    def test_omits_absolute_cycle_limit_for_restored_evidence_snapshot(self) -> None:
+        self.assertEqual(
+            catalogue_cycle_limit_arguments(
+                120_000_000,
+                {"evidenceSnapshot": "sha256/aa/" + "a" * 64},
+            ),
+            [],
+        )
+
     def test_accepts_a_bounded_joystick_hold_and_release(self) -> None:
         trace = {
             "schemaVersion": 1,

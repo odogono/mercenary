@@ -131,6 +131,18 @@ def _validate_restricted_pointer(value: Any, context: str) -> Path:
     return pointer
 
 
+def catalogue_cycle_limit_arguments(cycle_limit: int, source: dict[str, Any]) -> list[str]:
+    """Return a VICE absolute-clock limit only for cold checkpoint sources."""
+    _require(
+        isinstance(cycle_limit, int) and not isinstance(cycle_limit, bool) and cycle_limit > 0,
+        "Catalogue cycle limit must be a positive integer",
+    )
+    _require(isinstance(source, dict), "Catalogue branch source must be an object")
+    if "evidenceSnapshot" in source:
+        return []
+    return ["-limitcycles", str(cycle_limit)]
+
+
 def catalogue_digest(value: Any) -> str:
     return hashlib.sha256(_canonical_bytes(value)).hexdigest()
 
@@ -1107,8 +1119,7 @@ def _run_trace_branch(
         config["machineModel"],
         "-seed",
         str(config["seed"]),
-        "-limitcycles",
-        str(config["cycleLimit"]),
+        *catalogue_cycle_limit_arguments(config["cycleLimit"], branch["from"]),
         "-chdir",
         str(branch_root.resolve()),
         "-dumpconfig",
