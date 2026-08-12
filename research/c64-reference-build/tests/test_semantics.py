@@ -17,6 +17,7 @@ from c64lab.semantics import (
     semantic_boundary_address,
     stratified_pal_targets,
     validate_event_history_capture,
+    validate_event_history_proof,
     validate_event_history_replay,
     validate_pal_phase_coverage,
 )
@@ -131,6 +132,68 @@ class PalSamplingTests(unittest.TestCase):
 
 
 class EventHistorySafetyTests(unittest.TestCase):
+    def test_accepts_two_identity_bound_typed_replays(self) -> None:
+        capture = {
+            "schemaVersion": 1,
+            "accessibilityTrusted": True,
+            "viceExecutableSha256": "a" * 64,
+            "driverExecutableSha256": "b" * 64,
+            "focusChecks": 4,
+            "durationMilliseconds": 1200,
+            "events": [
+                {"atMilliseconds": 200, "actualMilliseconds": 203, "type": "key-down", "keyCode": 36, "modifiers": []},
+                {"atMilliseconds": 700, "actualMilliseconds": 704, "type": "key-up", "keyCode": 36, "modifiers": []},
+            ],
+            "eventHistory": {
+                "startSnapshotSha256": "c" * 64,
+                "endSnapshotSha256": "d" * 64,
+                "hotkeyFileSha256": "e" * 64,
+            },
+        }
+        replay = {
+            "viceExecutableSha256": "a" * 64,
+            "effectiveConfigSha256": "f" * 64,
+            "startSnapshotSha256": "c" * 64,
+            "viceLog": "Main CPU: RESET.\nUnit 8: RESET (For undump).\n",
+            "typedObservations": {"mode": "SM-0001", "x": 10},
+        }
+
+        summary = validate_event_history_proof(capture, [
+            {**replay, "coldStartId": "cold-1"},
+            {**replay, "coldStartId": "cold-2"},
+        ])
+
+        self.assertEqual(summary["replays"], 2)
+        self.assertEqual(summary["typedObservations"], {"mode": "SM-0001", "x": 10})
+        self.assertEqual(len(summary["normalizedDigest"]), 64)
+
+    def test_rejects_reused_or_identity_divergent_replays(self) -> None:
+        capture = {
+            "schemaVersion": 1,
+            "accessibilityTrusted": True,
+            "viceExecutableSha256": "a" * 64,
+            "driverExecutableSha256": "b" * 64,
+            "focusChecks": 4,
+            "durationMilliseconds": 100,
+            "events": [
+                {"atMilliseconds": 10, "actualMilliseconds": 11, "type": "key-down", "keyCode": 0, "modifiers": []},
+                {"atMilliseconds": 20, "actualMilliseconds": 21, "type": "key-up", "keyCode": 0, "modifiers": []},
+            ],
+            "eventHistory": {"startSnapshotSha256": "c" * 64, "endSnapshotSha256": "d" * 64, "hotkeyFileSha256": "e" * 64},
+        }
+        replay = {
+            "coldStartId": "same",
+            "viceExecutableSha256": "a" * 64,
+            "effectiveConfigSha256": "f" * 64,
+            "startSnapshotSha256": "c" * 64,
+            "viceLog": "Main CPU: RESET.\nUnit 8: RESET (For undump).\n",
+            "typedObservations": {"mode": "SM-0001"},
+        }
+        with self.assertRaisesRegex(LabError, "independent cold starts"):
+            validate_event_history_proof(capture, [replay, replay])
+        with self.assertRaisesRegex(LabError, "VICE executable"):
+            validate_event_history_proof(capture, [replay, {**replay, "coldStartId": "other", "viceExecutableSha256": "9" * 64}])
+
     def test_accepts_typed_replay_after_the_only_startup_reset(self) -> None:
         validate_event_history_replay(
             "Main CPU: RESET.\nMonitor playback command: x\nUnit 8: RESET (For undump).\n",

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from collections.abc import Mapping
 from typing import Any
 
@@ -231,3 +233,81 @@ def validate_event_history_replay(
     )
     _require(bool(expected), "Event-history replay needs expected typed observations")
     _require(dict(actual) == dict(expected), "Event-history replay typed observations diverged from the recorded end state")
+
+
+def validate_event_history_proof(
+    capture_report: Mapping[str, Any],
+    replay_reports: list[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Validate two cold replays without retaining restricted paths or logs."""
+    _require(capture_report.get("schemaVersion") == 1, "Event-history capture report schemaVersion must be 1")
+    _require(capture_report.get("accessibilityTrusted") is True, "Event-history capture lacked Accessibility permission")
+    digest_fields = ("viceExecutableSha256", "driverExecutableSha256")
+    for field in digest_fields:
+        value = capture_report.get(field)
+        _require(isinstance(value, str) and len(value) == 64 and all(character in "0123456789abcdef" for character in value), f"Event-history capture report has invalid {field}")
+    history = capture_report.get("eventHistory")
+    _require(isinstance(history, Mapping), "Event-history capture report lacks history identities")
+    for field in ("startSnapshotSha256", "endSnapshotSha256", "hotkeyFileSha256"):
+        value = history.get(field)
+        _require(isinstance(value, str) and len(value) == 64 and all(character in "0123456789abcdef" for character in value), f"Event-history capture report has invalid {field}")
+    _require(history["startSnapshotSha256"] != history["endSnapshotSha256"], "Event-history capture start and end snapshots must be distinct")
+
+    duration = capture_report.get("durationMilliseconds")
+    events = capture_report.get("events")
+    _require(isinstance(duration, int) and 0 < duration <= MAX_EVENT_HISTORY_DURATION_MS, "Event-history capture report duration is unbounded")
+    _require(isinstance(events, list) and bool(events), "Event-history capture report lacks events")
+    held: set[int] = set()
+    previous_actual = -1
+    for event in events:
+        _require(isinstance(event, Mapping), "Event-history captured event must be an object")
+        requested, actual = event.get("atMilliseconds"), event.get("actualMilliseconds")
+        event_type, key_code = event.get("type"), event.get("keyCode")
+        _require(isinstance(requested, int) and isinstance(actual, int) and requested <= actual <= duration, "Event-history actual event timing is outside its bounded request")
+        _require(actual >= previous_actual, "Event-history actual event timing is unordered")
+        _require(isinstance(key_code, int) and 0 <= key_code <= 0x7F, "Event-history captured key code is invalid")
+        if event_type == "key-down":
+            _require(key_code not in held, f"Event-history captured key {key_code} is pressed twice")
+            held.add(key_code)
+        elif event_type == "key-up":
+            _require(key_code in held, f"Event-history captured key {key_code} is released without a press")
+            held.remove(key_code)
+        else:
+            raise LabError("Event-history captured event type is invalid")
+        previous_actual = actual
+    _require(not held, f"Event-history captured keys must be released: {sorted(held)}")
+    focus_checks = capture_report.get("focusChecks")
+    _require(isinstance(focus_checks, int) and focus_checks >= len(events) + 2, "Event-history capture did not check focus at every boundary")
+
+    _require(len(replay_reports) == 2, "Event-history proof requires exactly two independent cold starts")
+    cold_start_ids = [report.get("coldStartId") for report in replay_reports]
+    _require(all(isinstance(value, str) and bool(value) for value in cold_start_ids) and len(set(cold_start_ids)) == 2, "Event-history proof requires two independent cold starts")
+    expected: dict[str, int | bool | str] | None = None
+    config_digest: str | None = None
+    for report in replay_reports:
+        _require(report.get("viceExecutableSha256") == capture_report["viceExecutableSha256"], "Event-history replay VICE executable identity diverged")
+        _require(report.get("startSnapshotSha256") == history["startSnapshotSha256"], "Event-history replay start snapshot identity diverged")
+        current_config = report.get("effectiveConfigSha256")
+        _require(isinstance(current_config, str) and len(current_config) == 64 and all(character in "0123456789abcdef" for character in current_config), "Event-history replay lacks an effective configuration identity")
+        if config_digest is None:
+            config_digest = current_config
+        _require(current_config == config_digest, "Event-history replay effective configurations diverged")
+        observations = report.get("typedObservations")
+        _require(isinstance(observations, Mapping) and bool(observations), "Event-history replay lacks typed observations")
+        if expected is None:
+            expected = dict(observations)
+        vice_log = report.get("viceLog")
+        _require(isinstance(vice_log, str), "Event-history replay lacks its VICE log")
+        validate_event_history_replay(vice_log, expected, observations)
+
+    assert expected is not None and config_digest is not None
+    normalized = {
+        "viceExecutableSha256": capture_report["viceExecutableSha256"],
+        "driverExecutableSha256": capture_report["driverExecutableSha256"],
+        "hotkeyFileSha256": history["hotkeyFileSha256"],
+        "startSnapshotSha256": history["startSnapshotSha256"],
+        "effectiveConfigSha256": config_digest,
+        "typedObservations": expected,
+    }
+    normalized_digest = hashlib.sha256(json.dumps(normalized, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    return {"replays": 2, "typedObservations": expected, "normalizedDigest": normalized_digest}

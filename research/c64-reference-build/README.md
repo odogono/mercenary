@@ -96,6 +96,19 @@ sole `Main CPU: RESET.` before `Unit 8: RESET (For undump).`; a CPU reset after
 that restore marker is a hard failure. Compare typed observations with the
 recorded end state for two independent replay processes.
 
+Write each replay's cold-start ID, VICE and effective-configuration digests,
+start-snapshot digest, VICE log, and typed end observations to an ignored JSON
+report. The verifier requires exactly two distinct cold starts, binds both to
+the capture identities, rejects startup-reset races and configuration drift,
+and emits only a normalized public-safe summary:
+
+```sh
+research/c64-reference-build/lab catalogue verify-history \
+  --capture-report restricted/behavior-catalogue/unc-0001/capture-report.json \
+  --replay-report restricted/behavior-catalogue/unc-0001/replay-1.json \
+  --replay-report restricted/behavior-catalogue/unc-0001/replay-2.json
+```
+
 ```sh
 swiftc research/c64-reference-build/tools/capture-keyboard-history.swift \
   -o research/c64-reference-build/work/capture-keyboard-history

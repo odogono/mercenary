@@ -51,7 +51,10 @@ the VICE and driver executable identities, requested and actual event times, and
 the number of focus checks. Requests and resulting histories are Restricted
 Material. Proof replays start from the reproduced checkpoint and exact recorded
 VICE configuration and compare typed semantic observations, not playback success
-or snapshot hashes alone.
+or snapshot hashes alone. `lab catalogue verify-history` enforces exactly two
+distinct cold starts, capture/replay executable and start-state identity,
+effective-configuration equality, reset ordering, and identical typed end
+observations; its result omits raw histories, paths, logs, and physical keys.
 
 The C64/6510 register list in the 3.10 source includes `LIN` and `CYC`, so each
 stopped boundary can record PAL raster line and cycle alongside the CPU
