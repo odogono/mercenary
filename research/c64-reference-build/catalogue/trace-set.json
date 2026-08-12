@@ -110,6 +110,19 @@
         "increase-upper-bound": "92d5e34a2222ed454c9724e3ea5d3b4cd782e7ca981a9f5212b6b997305d49ff",
         "decrease-lower-bound": "4f327cfe0014cf510ca57390617973c957ad9a3c215a3e7b2213b7036a3b76aa"
       }
+    },
+    {
+      "path": "traces/TR-9026-surface-denied-interactions.json",
+      "kind": "event-history",
+      "repetitions": 2,
+      "evidenceIds": ["EV-7c804f81ccee050c", "EV-b4a453d96cc641c0", "EV-fe19e11ecf67b1fb", "EV-e27179607639f923", "EV-4b607732a34f2c0e"],
+      "normalizedDigests": {
+        "drop-denied": "bcede12ba6fc8a4d3e6d82baf24af235eb9511711ca1a52f19d824600a79290a",
+        "exit-denied": "339beab6728922d7d59f098f6094820ca7ad5189a724a8a9576fe55d4afeeaec",
+        "contextual-transition-denied": "a69999f944d6de669ab4a618dd85dcec3f91f5f0b66e0dec18a4cf55b3c1a515",
+        "take-denied": "9a505a1a2e380e79f7b6ea1dfbcfd31c6ca0aad86f9b267f388ea04801ec7f53",
+        "enter-denied": "754e1a4e74445ff355a80cf35fe62b6ebc29af14b288b5eb569a2aeed2e6549c"
+      }
     }
   ]
 }
