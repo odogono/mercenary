@@ -1,0 +1,57 @@
+{
+  "acceptanceEnvelopes": "Exact semantic effect; timing and characteristic identity case-specific.",
+  "actions": "Exercise each candidate unusual sequence, then reproduce material candidates without injected state.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4",
+      "EV-cfe389c3e5fd1a27"
+    ],
+    "uncertaintyIds": [
+      "UNC-0007",
+      "UNC-0008"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "Every material quirk or unusual viable solution is preserved and classified; harmless artifacts require evidence before repair classification.",
+  "fidelity": {
+    "classification": "preserved-quirk",
+    "crackSensitivity": "crack-sensitive",
+    "departureIds": [],
+    "dimensions": [
+      "state",
+      "outcome",
+      "timing",
+      "visuals"
+    ],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4",
+      "EV-cfe389c3e5fd1a27"
+    ],
+    "materiality": "material",
+    "researchProvenance": "systematic edge-case probes awaiting legal reproduction"
+  },
+  "id": "BC-0017",
+  "initialState": "Boundary, collision, inventory, mission, vehicle, world-transition, and ending states identified by decoding or exploration.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "Meaningful quirks and unusual solutions",
+  "verification": {
+    "method": "probe-then-proof traces and materiality review",
+    "oracleDiagnosticRequired": true
+  },
+  "verificationArea": "rendering",
+  "version": 1
+}

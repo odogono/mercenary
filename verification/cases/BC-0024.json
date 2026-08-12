@@ -1,0 +1,60 @@
+{
+  "acceptanceEnvelopes": "Exact action/order/outcome; timing is case-specific.",
+  "actions": "Exercise press, hold, release, conflict, OS repeat, shortcuts, and controller disconnect.",
+  "aliases": [
+    "MAS-0003"
+  ],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "fidelity",
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [
+      "BC-0001",
+      "BC-0002",
+      "BC-0004",
+      "BC-0006"
+    ],
+    "evidenceIds": [],
+    "uncertaintyIds": [
+      "UNC-0001",
+      "UNC-0002"
+    ]
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "Devices produce equivalent Semantic Actions, ordering, cadence, and outcomes.",
+  "fidelity": {
+    "classification": "mac-adaptation",
+    "crackSensitivity": "not-applicable",
+    "departureIds": [],
+    "dimensions": [
+      "controls",
+      "timing",
+      "outcome"
+    ],
+    "evidenceIds": [],
+    "materiality": "material",
+    "researchProvenance": "MAS-0003 and its linked Behavior Cases."
+  },
+  "id": "BC-0024",
+  "initialState": "A running session with keyboard and controller Control Profiles.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Semantic input equivalence",
+  "verification": {
+    "method": "Synthetic input merging plus restricted trace comparison",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "native-shell",
+  "version": 1
+}

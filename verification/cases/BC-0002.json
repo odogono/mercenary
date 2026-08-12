@@ -1,0 +1,56 @@
+{
+  "acceptanceEnvelopes": "State changes are exact; per-mode PAL timing envelopes remain provisional.",
+  "actions": "Apply steering, thrust, reverse thrust, climb/descent, and stop actions over their legal ranges.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4",
+      "EV-cfe389c3e5fd1a27"
+    ],
+    "uncertaintyIds": [
+      "UNC-0001"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "Position, orientation, speed, altitude, collision, and mode transitions follow the decoded and observed rules; exact rules remain UNC-0001.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "not-applicable",
+    "departureIds": [],
+    "dimensions": [
+      "controls",
+      "state",
+      "timing",
+      "outcome"
+    ],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4",
+      "EV-cfe389c3e5fd1a27"
+    ],
+    "materiality": "material",
+    "researchProvenance": "conditioned RAM plus TR-0001 input traces"
+  },
+  "id": "BC-0002",
+  "initialState": "Reachable stationary states for walking and every enterable vehicle mode.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "Player and vehicle movement",
+  "verification": {
+    "method": "decoded state transitions plus two-cold-start traces",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "semantics",
+  "version": 1
+}

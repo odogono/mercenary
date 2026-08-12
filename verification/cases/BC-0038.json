@@ -1,0 +1,36 @@
+{
+  "acceptanceEnvelopes": "Exact smoke-flow completion; hardware sampling is recorded but not a GPU-family matrix.",
+  "actions": "Build, launch, exercise the Native Shell and synthetic Game Surface, save, and terminate cleanly.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [],
+    "uncertaintyIds": []
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "Every advertised major passes; missing platform coverage blocks readiness.",
+  "id": "BC-0038",
+  "initialState": "A synthetic candidate on every advertised macOS major using available Apple-silicon CI runners.",
+  "reviewRequired": false,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Supported-host compatibility",
+  "verification": {
+    "method": "Public compatibility matrix",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "compatibility",
+  "version": 1
+}

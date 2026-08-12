@@ -1,0 +1,57 @@
+{
+  "acceptanceEnvelopes": "Exact state and future behavior.",
+  "actions": "Exercise named documents, all ten quick slots, dirty replacement decisions, and closed gates.",
+  "aliases": [
+    "MAS-0006"
+  ],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "fidelity",
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [
+      "BC-0015"
+    ],
+    "evidenceIds": [],
+    "uncertaintyIds": [
+      "UNC-0006",
+      "UNC-0008"
+    ]
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "Native conveniences do not expand legal save/load behavior; restored meaningful state and future behavior match.",
+  "fidelity": {
+    "classification": "mac-adaptation",
+    "crackSensitivity": "crack-sensitive",
+    "departureIds": [],
+    "dimensions": [
+      "saves",
+      "state",
+      "outcome"
+    ],
+    "evidenceIds": [],
+    "materiality": "material",
+    "researchProvenance": "MAS-0006 and its linked Behavior Cases."
+  },
+  "id": "BC-0027",
+  "initialState": "Sessions at evidence-derived open and closed save gates.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Native saves without semantic expansion",
+  "verification": {
+    "method": "Synthetic shell tests plus case-linked save continuations",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "saves",
+  "version": 1
+}

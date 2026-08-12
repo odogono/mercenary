@@ -1,0 +1,62 @@
+{
+  "acceptanceEnvelopes": "Exact semantic neutrality and case-linked presentation envelopes.",
+  "actions": "Trigger gameplay and host feedback while varying presentation accommodations.",
+  "aliases": [
+    "MAS-0005"
+  ],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "fidelity",
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [
+      "BC-0008",
+      "BC-0013",
+      "BC-0014"
+    ],
+    "evidenceIds": [],
+    "uncertaintyIds": [
+      "UNC-0002",
+      "UNC-0004",
+      "UNC-0005",
+      "UNC-0009"
+    ]
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "All information remains available and Game Semantics, timing, projection decisions, and scene identities remain unchanged.",
+  "fidelity": {
+    "classification": "mac-adaptation",
+    "crackSensitivity": "not-applicable",
+    "departureIds": [],
+    "dimensions": [
+      "visuals",
+      "audio",
+      "state",
+      "timing"
+    ],
+    "evidenceIds": [],
+    "materiality": "material",
+    "researchProvenance": "MAS-0005 and its linked Behavior Cases."
+  },
+  "id": "BC-0026",
+  "initialState": "Representative gameplay and host cues with every Accommodation combination.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Feedback and Accommodation neutrality",
+  "verification": {
+    "method": "Synthetic invariance tests plus maintainer review",
+    "oracleDiagnosticRequired": true
+  },
+  "verificationArea": "native-shell",
+  "version": 1
+}

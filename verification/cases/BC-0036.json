@@ -1,0 +1,38 @@
+{
+  "acceptanceEnvelopes": "Exact containment and safe diagnostics.",
+  "actions": "Trigger Lua suspension and terminate the service.",
+  "aliases": [
+    "CSM-0007"
+  ],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [],
+    "uncertaintyIds": []
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "Lua stops at the last committed tick; XPC loss preserves explicit saves, loses unsaved work, and creates no hidden recovery.",
+  "id": "BC-0036",
+  "initialState": "A saved session with recoverable Lua failures and a terminable XPC service.",
+  "reviewRequired": false,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Simulation failure containment",
+  "verification": {
+    "method": "Public synthetic failure injection",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "security",
+  "version": 1
+}

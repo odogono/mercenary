@@ -1,0 +1,38 @@
+{
+  "acceptanceEnvelopes": "Exact containment and rollback.",
+  "actions": "Import, consent, mutate inputs, attempt unauthorized commands, and start sessions.",
+  "aliases": [
+    "CSM-0003"
+  ],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [],
+    "uncertaintyIds": []
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "Consent is digest-bound, unauthorized work rolls back, and every overlay marks the session modded.",
+  "id": "BC-0032",
+  "initialState": "Signed and unsigned synthetic Mods with changing bytes and capabilities.",
+  "reviewRequired": false,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Mod consent and capability enforcement",
+  "verification": {
+    "method": "Malicious synthetic fixtures",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "security",
+  "version": 1
+}

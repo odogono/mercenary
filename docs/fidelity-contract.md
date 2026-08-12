@@ -13,8 +13,8 @@ intentional difference can be accepted without erasing the C64-derived
 baseline.
 
 The words **must**, **must not**, **required**, **should**, and **may** are
-normative. This document defines records and decisions in Markdown; executable
-schemas and verification tooling belong to issue #12.
+normative. Canonical executable records, schemas, result lifecycle, and verdict
+aggregation are defined by the [Verification System](verification-system.md).
 
 ## Evidence and baseline
 
@@ -42,10 +42,12 @@ separate decision governed by the
 
 ## Conformance rule
 
-Every applicable Behavior Case must either pass its expected observables and
-Acceptance Envelopes or link to an `accepted` Departure Record. Draft cases do
-not establish evidence, and unresolved material provisional cases prevent full
-conformance unless covered by an accepted departure.
+Every applicable fidelity-scoped Behavior Case must either pass its expected
+observables and Acceptance Envelopes or have a result covered by an `accepted`
+Departure Record. Release-readiness-only cases do not contribute to this
+verdict. Draft cases do not establish evidence, and unresolved material
+provisional cases prevent full conformance unless covered by an accepted
+departure.
 
 An accepted departure may cover material behavior or a fidelity-critical
 content substitute and still count as full Fidelity Contract conformance. To do
@@ -69,9 +71,9 @@ declaration, or passing subset of local tests cannot transfer that status.
 
 ## Fidelity dimensions
 
-Behavior Cases declare each dimension they exercise. A missing dimension is not
-implicitly waived; the catalogue must cover the complete player-observable
-Initial Release before final conformance can be claimed.
+Fidelity-scoped Behavior Cases declare each dimension they exercise. A missing
+dimension is not implicitly waived; the catalogue must cover the complete
+player-observable Initial Release before final conformance can be claimed.
 
 ### Semantic state and outcomes
 
@@ -131,7 +133,9 @@ player-observable and material.
 
 ## Classification rules
 
-Each Behavior Case has one classification:
+Each fidelity-scoped Behavior Case has one classification. Release-readiness-
+only cases instead declare their verification area and must not borrow a
+fidelity classification:
 
 - `required-behavior`: ordinary player-observable content or behavior.
 - `preserved-quirk`: reproducible behavior whose removal changes progression,
@@ -153,61 +157,31 @@ Materiality means that a difference can affect progression, a viable solution,
 meaningful choice, learned timing, persistent state, world behavior, or
 characteristic feel.
 
-## Behavior Case template
+## Behavior Case records
 
-Behavior Cases are versioned Markdown records. Changes to evidence,
-expectations, envelopes, classification, or applicability increment `Version`;
-editorial changes do not. Status is `draft`, `provisional`, or `verified`.
-Implementation result is independently recorded as `not-run`, `pass`, `fail`,
-or `departed`.
+Behavior Cases are canonical versioned JSON records under `verification/cases`
+and validate against `behavior-case.schema.json`. Changes to expectations,
+dependencies, envelopes, claim scopes, classification, applicability, or
+evidence increment `version`; editorial changes do not. Status is `draft`,
+`provisional`, or `verified`.
 
-```md
-# BC-<stable-id>: <title>
-
-- Version: <positive integer>
-- Status: draft | provisional | verified
-- Classification: required-behavior | preserved-quirk |
-  repairable-artifact | mac-adaptation | excluded-crack-artifact
-- Materiality: material | non-material
-- Crack sensitivity: retail-corroborated | crack-sensitive | not-applicable
-- Fidelity dimensions: <state, outcome, timing, controls, visuals, content,
-  audio, saves, nondeterminism>
-- Evidence version: <stable evidence identifier and version>
-- Research Provenance: <public-safe references; restricted pointer if needed>
-
-## Initial state
-<Meaningful state and setup required before input.>
-
-## Semantic actions
-<Ordered player actions and any timing or concurrency constraints.>
-
-## Expected observables
-<Exact state/outcome expectations and observable presentation.>
-
-## Acceptance Envelopes
-<Evidence-backed bounds per non-exact dimension; no guessed defaults.>
-
-## Verification
-- Method: <automated comparison, manual observation, statistical check>
-- Result: not-run | pass | fail | departed
-- Evidence: <run/report identifiers>
-
-## Characteristic-feel review
-- Scenario: <shared comparative scenario or not-applicable>
-- Reviewer/date: <maintainer and date or pending>
-- Findings: <recorded comparison>
-- Decision: pending | approved | rejected | not-applicable
-
-## Departures
-<Departure Record identifiers or none.>
-```
+The case contains no mutable implementation result. A Verification Run emits a
+separate immutable result with `pass`, `fail`, `departed`, or `blocked`;
+`not-run` is derived by the Conformance Report when no current reusable result
+exists. Human characteristic-feel findings are digest-bound Approval Records.
+The complete field contract and conditional fidelity fields are defined by the
+[Verification System](verification-system.md) and tracked JSON Schema.
 
 ## Departure Record template
 
-Departure Records are versioned Markdown records in a public ledger. Status is
+Departure Records are canonical versioned JSON records in a public ledger and
+may be rendered to Markdown on demand. Status is
 `proposed`, `accepted`, `reopened`, or `superseded`. A status change, affected
 case change, new evidence, or substantive decision change increments `Version`.
 Restricted evidence is referenced, not copied into the public record.
+
+The following is the generated human-readable view; the JSON schema is
+authoritative:
 
 ```md
 # DR-<stable-id>: <title>
@@ -264,7 +238,9 @@ These examples test the policy; they do not create actual catalogue entries.
 
 ## Deferred decisions
 
-This contract deliberately does not choose executable schemas, verification
-tools, concrete thresholds, native UI, input layouts, rendering architecture,
-or actual catalogue cases. The behavior catalogue belongs to issue #8, the
-macOS experience to issue #9, and executable verification to issue #12.
+This contract deliberately does not choose native UI, input layouts, rendering
+architecture, or case-specific evidence values. The behavior catalogue belongs
+to issue #8, the macOS experience to issue #9, and the executable schema,
+evidence, and aggregation protocol is now defined by issue #12's
+[Verification System](verification-system.md). Concrete production adapters
+remain downstream.

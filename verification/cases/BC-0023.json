@@ -1,0 +1,56 @@
+{
+  "acceptanceEnvelopes": "Timing remains within linked evidence-derived envelopes.",
+  "actions": "Move, resize, full-screen, minimize, focus, live-resize, sleep, wake, and relaunch.",
+  "aliases": [
+    "MAS-0002"
+  ],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "fidelity",
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [
+      "BC-0003",
+      "BC-0004"
+    ],
+    "evidenceIds": [],
+    "uncertaintyIds": [
+      "UNC-0001"
+    ]
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "Window restoration is valid; Game Semantics continue except during sleep; wake performs no wall-clock catch-up.",
+  "fidelity": {
+    "classification": "mac-adaptation",
+    "crackSensitivity": "not-applicable",
+    "departureIds": [],
+    "dimensions": [
+      "timing",
+      "state"
+    ],
+    "evidenceIds": [],
+    "materiality": "material",
+    "researchProvenance": "MAS-0002 and its linked Behavior Cases."
+  },
+  "id": "BC-0023",
+  "initialState": "A running session with persisted and fresh window state.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Window and lifecycle timing",
+  "verification": {
+    "method": "Host lifecycle automation and a Reference Mac release run",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "native-shell",
+  "version": 1
+}

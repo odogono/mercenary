@@ -1,0 +1,38 @@
+{
+  "acceptanceEnvelopes": "Exact security and identity invariants.",
+  "actions": "Inspect, consent, import, run, reload, and terminate the simulation service.",
+  "aliases": [
+    "MAS-0008"
+  ],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [],
+    "uncertaintyIds": []
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "Consent binds exact digests, invalid packages fail closed, modded identity is visible, and saves remain exact-bound.",
+  "id": "BC-0029",
+  "initialState": "Signed, unsigned, changed, invalid, and over-capability synthetic packages.",
+  "reviewRequired": false,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Local Mod admission and identity",
+  "verification": {
+    "method": "Public malicious fixtures and service-containment tests",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "security",
+  "version": 1
+}

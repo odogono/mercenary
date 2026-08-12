@@ -1,0 +1,53 @@
+{
+  "acceptanceEnvelopes": "Exact semantic state and outcomes.",
+  "actions": "Accept or decline, satisfy or violate requirements, complete using every materially distinct solution, and revisit involved locations.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "uncertaintyIds": [
+      "UNC-0003"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "Offer availability, requirements, completion/failure, reward, messages, faction/world effects, and repeatability match; inventory remains UNC-0003.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "not-applicable",
+    "departureIds": [],
+    "dimensions": [
+      "content",
+      "state",
+      "outcome"
+    ],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "materiality": "material",
+    "researchProvenance": "conditioned RAM mission/message candidates"
+  },
+  "id": "BC-0011",
+  "initialState": "Every mission offer before, during, and after its relevant progression and world-state conditions.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "Mission offers and outcomes",
+  "verification": {
+    "method": "decoded mission graph plus reachable proof traces",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "semantics",
+  "version": 1
+}

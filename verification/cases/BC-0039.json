@@ -1,0 +1,36 @@
+{
+  "acceptanceEnvelopes": "Zero safety invariant violations within recorded budgets.",
+  "actions": "Run bounded fuzzing and malicious oversized, deep, invalid-UTF-8, and malformed inputs.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [],
+    "uncertaintyIds": []
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "Inputs fail closed without escape, unsafe diagnostics, partial state, or uncontrolled resource use.",
+  "id": "BC-0039",
+  "initialState": "Fuzz corpora for package, manifest, payload, save, transition, module state, and XPC decoders.",
+  "reviewRequired": false,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Decoder and protocol fuzz resilience",
+  "verification": {
+    "method": "Public fuzzing and malicious fixtures",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "security",
+  "version": 1
+}

@@ -46,7 +46,10 @@ for the schemas, evidence contract, review gate, and redaction rules.
 
 ### Behavior Catalogue
 
-Issue #8's public-safe catalogue and trace definitions live under `catalogue/`.
+Issue #8's public-safe catalogue indexes and trace definitions live under
+`catalogue/`. Canonical Behavior Cases live at the repository root under
+`verification/cases/`; catalogue validation resolves its BC-0001 through
+BC-0021 references there.
 Exact evidence is written to ignored content-addressed storage under
 `restricted/behavior-catalogue/evidence`; ordinary generated runs stay under
 `work/`. Validate the tracked indexes with:
@@ -62,6 +65,21 @@ unwarped with an effective configuration capture; D64 media is attached at
 branch-process setup in read/write or read-only mode and hashed only after
 orderly shutdown. See
 [`docs/research/behavior-catalogue.md`](../../docs/research/behavior-catalogue.md).
+
+### Verification System
+
+Issue #12's platform-neutral schemas and canonical records live under
+`verification/`. Validate all tracked cases and their dependency graph with:
+
+```sh
+research/c64-reference-build/lab verification validate --root verification
+```
+
+The `verification aggregate` command derives applicable cases for an exact
+candidate, reuses only matching dependency fingerprints, and writes a
+public-safe Conformance Report. `verification render` creates a deterministic
+Markdown view on demand; generated Markdown is not tracked. See the
+[Verification System](../../docs/verification-system.md).
 
 `doctor` rejects a missing or altered input before VICE starts. It checks the
 49,203-byte PRG, its load header/range and all three recorded hashes; Python

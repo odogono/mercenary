@@ -1,0 +1,55 @@
+{
+  "acceptanceEnvelopes": "Exact ending identity and semantic outcome.",
+  "actions": "Exercise every decoded terminal branch and reconcile it with all observed materially distinct solution routes.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "uncertaintyIds": [
+      "UNC-0007",
+      "UNC-0008"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "The complete ending identity set, preconditions, final state, messages, timing, and post-ending behavior match; route count remains UNC-0007.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "crack-sensitive",
+    "departureIds": [],
+    "dimensions": [
+      "content",
+      "state",
+      "outcome",
+      "timing"
+    ],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "materiality": "material",
+    "researchProvenance": "terminal-state and authored-content candidates in conditioned RAM"
+  },
+  "id": "BC-0016",
+  "initialState": "Every reachable state that can enter an escape or terminal outcome.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "Escape ending inventory",
+  "verification": {
+    "method": "decoded terminal dispatch plus journey traces",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "semantics",
+  "version": 1
+}

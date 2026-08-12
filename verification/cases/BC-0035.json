@@ -1,0 +1,38 @@
+{
+  "acceptanceEnvelopes": "Exact environment matching and atomic failure.",
+  "actions": "Load or migrate each input while retaining the source.",
+  "aliases": [
+    "CSM-0006"
+  ],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [],
+    "uncertaintyIds": []
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "Only exact loads or declared audited migrations succeed; failure emits no target save.",
+  "id": "BC-0035",
+  "initialState": "Exact, missing, changed, corrupt, unsupported, and explicitly migratable environments.",
+  "reviewRequired": false,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Exact load and audited migration",
+  "verification": {
+    "method": "Public synthetic load and migration matrix",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "saves",
+  "version": 1
+}

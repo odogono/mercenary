@@ -1,0 +1,53 @@
+{
+  "acceptanceEnvelopes": "Exact semantic state only.",
+  "actions": "Take and drop every item class at empty, intermediate, and capacity boundaries; trigger situation reset.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": [
+      "official"
+    ]
+  },
+  "claimScopes": [
+    "fidelity"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "uncertaintyIds": [
+      "UNC-0003"
+    ]
+  },
+  "executionTiers": [
+    "release-candidate"
+  ],
+  "expectedObservables": "Eligibility, ordering, capacity, world placement, loss/retention, and future mission/economy effects match; exact inventory remains UNC-0003.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "not-applicable",
+    "departureIds": [],
+    "dimensions": [
+      "content",
+      "state",
+      "outcome"
+    ],
+    "evidenceIds": [
+      "EV-2461ba01c7ec71e4"
+    ],
+    "materiality": "material",
+    "researchProvenance": "conditioned RAM item/state candidates"
+  },
+  "id": "BC-0009",
+  "initialState": "Reachable inventory sizes, item classes, world placements, and reset states.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "provisional",
+  "title": "Inventory state and capacity",
+  "verification": {
+    "method": "decoded inventory tables plus boundary traces",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "semantics",
+  "version": 1
+}

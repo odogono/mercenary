@@ -1,0 +1,38 @@
+{
+  "acceptanceEnvelopes": "Exact management behavior.",
+  "actions": "Switch profiles, remap every action, resolve duplicates, and relaunch.",
+  "aliases": [
+    "MAS-0004"
+  ],
+  "applicability": {
+    "candidateKinds": [
+      "official",
+      "modded"
+    ]
+  },
+  "claimScopes": [
+    "release-readiness"
+  ],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [],
+    "uncertaintyIds": []
+  },
+  "executionTiers": [
+    "public-ci",
+    "release-candidate"
+  ],
+  "expectedObservables": "Every action is bindable; duplicate consent and profile persistence are correct.",
+  "id": "BC-0025",
+  "initialState": "Default and customized keyboard/controller Control Profiles.",
+  "reviewRequired": false,
+  "schemaVersion": 1,
+  "status": "draft",
+  "title": "Control Profile management",
+  "verification": {
+    "method": "Public synthetic host tests",
+    "oracleDiagnosticRequired": false
+  },
+  "verificationArea": "native-shell",
+  "version": 1
+}

@@ -314,6 +314,48 @@ class EvidenceTests(unittest.TestCase):
 
 
 class CatalogueContractTests(unittest.TestCase):
+    def test_catalogue_can_resolve_canonical_root_json_behavior_cases(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "catalogue"
+            verification_root = Path(directory) / "verification"
+            _write_catalogue(root)
+            (root / "cases" / "BC-0001.md").unlink()
+            (root / "cases").rmdir()
+            case = {
+                "schemaVersion": 1,
+                "id": "BC-0001",
+                "version": 1,
+                "title": "Semantic movement input",
+                "status": "verified",
+                "aliases": [],
+                "claimScopes": ["fidelity"],
+                "verificationArea": "semantics",
+                "executionTiers": ["release-candidate"],
+                "dependencies": {"caseIds": [], "uncertaintyIds": [], "evidenceIds": ["EV-" + "a" * 16]},
+                "applicability": {"candidateKinds": ["official"]},
+                "initialState": "Conditioned interactive checkpoint.",
+                "actions": "Apply directional input.",
+                "expectedObservables": "Heading changes.",
+                "acceptanceEnvelopes": "No inferred timing envelope.",
+                "verification": {"method": "Run TR-0001 twice.", "oracleDiagnosticRequired": False},
+                "reviewRequired": True,
+                "fidelity": {
+                    "classification": "required-behavior",
+                    "materiality": "material",
+                    "crackSensitivity": "not-applicable",
+                    "dimensions": ["controls", "outcome"],
+                    "evidenceIds": ["EV-" + "a" * 16],
+                    "researchProvenance": "Local restricted evidence pointer.",
+                    "departureIds": [],
+                },
+            }
+            (verification_root / "cases").mkdir(parents=True)
+            (verification_root / "cases" / "BC-0001.json").write_text(json.dumps(case), encoding="utf-8")
+
+            verified = validate_catalogue(root, case_root=verification_root)
+
+            self.assertEqual(verified["counts"]["behaviorCases"], 1)
+
     def test_accepts_a_closed_cross_referenced_catalogue(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
