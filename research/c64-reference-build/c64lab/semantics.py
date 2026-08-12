@@ -172,8 +172,8 @@ def run_held_host_key_sequence(
         "Held host-key handler PC must fit in 16 bits",
     )
     _require(
-        isinstance(occurrences, int) and not isinstance(occurrences, bool) and 1 <= occurrences <= 100,
-        "Held host-key occurrences must be 1..100",
+        isinstance(occurrences, int) and not isinstance(occurrences, bool) and 1 <= occurrences <= 512,
+        "Held host-key occurrences must be 1..512",
     )
 
     client.clear_checkpoints()
@@ -230,6 +230,77 @@ def run_held_host_key_sequence(
         "minimumIntervalCycles": min(intervals) if intervals else None,
         "maximumIntervalCycles": max(intervals) if intervals else None,
     }
+
+
+def run_host_key_bursts(
+    client: Any,
+    *,
+    key_symbol: int,
+    modifiers: int,
+    handler_pc: int,
+    occurrences_per_burst: int | list[int],
+    bursts: int,
+    release_boundary_pc: int,
+    observe_final_release: bool = False,
+) -> dict[str, Any]:
+    """Repeat bounded host-key holds after observing each intervening release."""
+    _require(
+        isinstance(bursts, int) and not isinstance(bursts, bool) and 1 <= bursts <= 64,
+        "Held host-key bursts must be 1..64",
+    )
+    if isinstance(occurrences_per_burst, list):
+        occurrence_schedule = occurrences_per_burst
+        _require(
+            len(occurrence_schedule) == bursts,
+            "Held host-key occurrence schedule must match the burst count",
+        )
+    else:
+        occurrence_schedule = [occurrences_per_burst] * bursts
+    _require(
+        all(
+            isinstance(count, int) and not isinstance(count, bool) and 1 <= count <= 512
+            for count in occurrence_schedule
+        ),
+        "Held host-key occurrences per burst must be 1..512",
+    )
+    _require(
+        sum(occurrence_schedule) <= 512,
+        "Held host-key bursts must contain at most 512 total occurrences",
+    )
+    _require(
+        isinstance(release_boundary_pc, int)
+        and not isinstance(release_boundary_pc, bool)
+        and 0 <= release_boundary_pc <= 0xFFFF,
+        "Held host-key release boundary PC must fit in 16 bits",
+    )
+    _require(
+        isinstance(observe_final_release, bool),
+        "Held host-key final-release flag must be boolean",
+    )
+
+    reports: list[dict[str, Any]] = []
+    release_boundaries: list[dict[str, int]] = []
+    for burst, occurrence_count in enumerate(occurrence_schedule, start=1):
+        reports.append(run_held_host_key_sequence(
+            client,
+            key_symbol=key_symbol,
+            modifiers=modifiers,
+            handler_pc=handler_pc,
+            occurrences=occurrence_count,
+        ))
+        if burst == bursts and not observe_final_release:
+            continue
+        client.clear_checkpoints()
+        checkpoint = client.set_checkpoint(release_boundary_pc)
+        stopped_pc = client.resume_until_checkpoint(checkpoint)
+        _require(
+            stopped_pc == release_boundary_pc,
+            f"Held host-key release boundary was not reached after burst {burst}",
+        )
+        release_boundaries.append({"burst": burst, "pc": stopped_pc})
+        client.advance_instructions(1)
+
+    return {"bursts": reports, "releaseBoundaries": release_boundaries}
 
 
 def decode_semantic_observations(memory: Mapping[str, bytes], observation_map: Mapping[str, Any]) -> dict[str, int | bool | str]:

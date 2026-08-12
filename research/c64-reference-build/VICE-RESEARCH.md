@@ -63,11 +63,16 @@ supply all decoded details. Held-input schedules may require a bounded
 the matrix remains active until the final required handler, then neutralizes.
 
 `run_held_host_key_sequence` covers keys that must remain latched across input
-scans. It queues one VICE host-key press, requires a bounded number of decoded
-handler occurrences through temporary checkpoints, records absolute CPU clocks
+scans. It queues one VICE host-key press, requires up to 512 decoded handler
+occurrences through temporary checkpoints, records absolute CPU clocks
 and PAL registers, and releases the key even when the sequence fails. Use
 `summarize_pal_cadence` to validate retained timeline clock deltas against their
 PAL progression and emit only exact public-safe interval summaries.
+
+`run_host_key_bursts` repeats those bounded holds only after the emulated CPU
+reaches a declared release boundary. This prevents a release/press pair from
+being coalesced when a saturation or edge-trigger proof needs distinct holds;
+the aggregate remains capped at 512 decoded handler occurrences.
 
 The source archive must hash to
 `8e5bac18cbcb9f192380ad3ef881f8790f5b75c41d7b3da65d831985d864d6d1`.

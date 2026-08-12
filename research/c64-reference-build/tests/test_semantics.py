@@ -14,6 +14,7 @@ from c64lab.semantics import (
     classify_semantic_outcome,
     decode_semantic_observations,
     pal_forward_delta,
+    run_host_key_bursts,
     run_held_host_key_sequence,
     run_phase_aligned_matrix_sequence,
     semantic_boundary_address,
@@ -267,6 +268,90 @@ class HeldHostKeyTests(unittest.TestCase):
             )
 
         self.assertEqual(monitor.host_events[-1], (43, 0, False))
+
+    def test_allows_a_bounded_saturation_probe_longer_than_one_hundred_occurrences(self) -> None:
+        frame_cycles = 312 * 63
+        monitor = FakeHeldKeyMonitor([
+            (1_000 + occurrence * frame_cycles, 10, 5)
+            for occurrence in range(101)
+        ])
+
+        report = run_held_host_key_sequence(
+            monitor,
+            key_symbol=45,
+            modifiers=0,
+            handler_pc=0x3000,
+            occurrences=101,
+        )
+
+        self.assertEqual(len(report["handlerClocks"]), 101)
+        self.assertEqual(monitor.host_events[-1], (45, 0, False))
+
+    def test_repeats_bounded_holds_after_an_observed_release_boundary(self) -> None:
+        frame_cycles = 312 * 63
+        monitor = FakeHeldKeyMonitor([
+            (1_000, 10, 5),
+            (1_000 + frame_cycles, 10, 5),
+            (1_000 + 2 * frame_cycles, 10, 5),
+            (1_000 + 3 * frame_cycles, 10, 5),
+            (1_000 + 4 * frame_cycles, 10, 5),
+        ])
+
+        report = run_host_key_bursts(
+            monitor,
+            key_symbol=45,
+            modifiers=0,
+            handler_pc=0x3000,
+            occurrences_per_burst=2,
+            bursts=2,
+            release_boundary_pc=0x1000,
+        )
+
+        self.assertEqual(len(report["bursts"]), 2)
+        self.assertEqual(
+            monitor.host_events,
+            [(45, 0, True), (45, 0, False), (45, 0, True), (45, 0, False)],
+        )
+        self.assertEqual(report["releaseBoundaries"], [{"burst": 1, "pc": 0x1000}])
+
+    def test_accepts_a_per_burst_occurrence_schedule(self) -> None:
+        frame_cycles = 312 * 63
+        monitor = FakeHeldKeyMonitor([
+            (1_000 + occurrence * frame_cycles, 10, 5)
+            for occurrence in range(4)
+        ])
+
+        report = run_host_key_bursts(
+            monitor,
+            key_symbol=45,
+            modifiers=0,
+            handler_pc=0x3000,
+            occurrences_per_burst=[2, 1],
+            bursts=2,
+            release_boundary_pc=0x1000,
+        )
+
+        self.assertEqual([len(item["handlerClocks"]) for item in report["bursts"]], [2, 1])
+
+    def test_can_observe_release_after_the_final_burst(self) -> None:
+        frame_cycles = 312 * 63
+        monitor = FakeHeldKeyMonitor([
+            (1_000 + occurrence * frame_cycles, 10, 5)
+            for occurrence in range(2)
+        ])
+
+        report = run_host_key_bursts(
+            monitor,
+            key_symbol=45,
+            modifiers=0,
+            handler_pc=0x3000,
+            occurrences_per_burst=1,
+            bursts=1,
+            release_boundary_pc=0x1000,
+            observe_final_release=True,
+        )
+
+        self.assertEqual(report["releaseBoundaries"], [{"burst": 1, "pc": 0x1000}])
 
 
 class SemanticObservationTests(unittest.TestCase):
