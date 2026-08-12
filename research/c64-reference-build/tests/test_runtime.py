@@ -93,6 +93,24 @@ class RuntimeTests(unittest.TestCase):
 
         self.assertIn("break exec $8477 if @ram:$007f == $3f", script)
 
+    def test_renders_a_phase_delayed_checkpoint_start(self) -> None:
+        script = render_checkpoint_script(
+            0x01E6,
+            Path("/input/MERCENARY.PRG"),
+            prestart_instructions=137,
+        )
+
+        self.assertIn('loadbasic "/input/MERCENARY.PRG" 0\nz 137\nbreak exec $01e6', script)
+        self.assertLess(script.index("z 137"), script.index("g $0820"))
+
+    def test_rejects_an_invalid_phase_delay(self) -> None:
+        with self.assertRaisesRegex(Exception, "pre-start instruction delay"):
+            render_checkpoint_script(
+                0x01E6,
+                Path("/input/MERCENARY.PRG"),
+                prestart_instructions=-1,
+            )
+
     def test_rejects_a_prg_path_that_cannot_be_safely_quoted(self) -> None:
         with self.assertRaisesRegex(Exception, "quote"):
             render_checkpoint_script(0x01E6, Path('/input/bad"name.prg'))

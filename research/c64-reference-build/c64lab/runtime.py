@@ -23,7 +23,13 @@ def render_capture_script(prefix: str) -> str:
     )
 
 
-def render_checkpoint_script(address: int, prg: Path, *, condition: str | None = None) -> str:
+def render_checkpoint_script(
+    address: int,
+    prg: Path,
+    *,
+    condition: str | None = None,
+    prestart_instructions: int = 0,
+) -> str:
     if not 0 <= address <= 0xFFFF:
         raise LabError(f"Checkpoint address is outside C64 memory: {address}")
     prg_path = str(prg.resolve())
@@ -31,16 +37,23 @@ def render_checkpoint_script(address: int, prg: Path, *, condition: str | None =
         raise LabError("Reference Build path contains a quote or newline and cannot be used in a monitor command")
     if condition is not None and ("\n" in condition or "\r" in condition or ";" in condition):
         raise LabError("Checkpoint condition contains a command separator")
+    if (
+        not isinstance(prestart_instructions, int)
+        or isinstance(prestart_instructions, bool)
+        or prestart_instructions < 0
+    ):
+        raise LabError("Checkpoint pre-start instruction delay must be a non-negative integer")
     break_command = f"break exec ${address:04x}"
     if condition:
         break_command += f" if {condition}"
-    return (
-        "; Load the exact PRG after a clean KERNAL/BASIC boot.\n"
-        f'loadbasic "{prg_path}" 0\n'
-        f"{break_command}\n"
-        'command 1 "playback \\"capture.mon\\""\n'
-        "g $0820\n"
-    )
+    lines = [
+        "; Load the exact PRG after a clean KERNAL/BASIC boot.",
+        f'loadbasic "{prg_path}" 0',
+    ]
+    if prestart_instructions:
+        lines.append(f"z {prestart_instructions}")
+    lines.extend((break_command, 'command 1 "playback \\"capture.mon\\""', "g $0820"))
+    return "\n".join(lines) + "\n"
 
 
 def render_event_history_prepare_script(hotkey_file: Path) -> str:
