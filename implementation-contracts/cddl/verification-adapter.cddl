@@ -1,0 +1,22 @@
+; Neutral production adapter output; claim semantics remain in verification/.
+contract = adapter-result / candidate-gate
+schema-major = 1
+schema-minor = 0
+digest = bstr .size 32
+adapter-result = {
+  0: schema-major, 1: schema-minor,
+  2: tstr .size (1..64),
+  3: tstr .size (1..64),
+  4: digest,
+  5: 0..2,
+  6: [* adapter-observable],
+  7: [* adapter-artifact]
+}
+adapter-observable = { 0: tstr .size (1..128), 1: bool / int / tstr }
+adapter-artifact = { 0: tstr .size (1..64), 1: digest, 2: uint }
+candidate-gate = {
+  0: schema-major, 1: schema-minor,
+  2: digest, 3: digest, 4: tstr .size (1..64),
+  5: 0..7200, 6: 0, 7: ["SPDX", "CycloneDX"],
+  8: 0..3, 9: [* { 0: tstr, 1: 0..2 }], 10: bool
+}

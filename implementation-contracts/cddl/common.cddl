@@ -1,0 +1,24 @@
+; Mercenary deterministic-CBOR common values v1.0.
+contract = execution-environment / int64 / uint64-safe / typed-id / sequence / semantic-tick / canonical-value
+schema-major = 1
+schema-minor = 0
+int64 = -9223372036854775808..9223372036854775807
+uint64-safe = 0..9223372036854775807
+digest = bstr .size 32
+typed-id = tstr .size (1..255)
+sequence = uint64-safe
+semantic-tick = uint64-safe
+canonical-value = bool / int64 / tstr / typed-id / [* canonical-value] / canonical-record
+canonical-record = [* [tstr, canonical-value]]
+execution-environment = {
+  0: schema-major,
+  1: schema-minor,
+  2: [1* digest],
+  3: digest,
+  4: "5.5.1",
+  5: "lua-security-1.0",
+  6: 1,
+  7: 0,
+  8: "host-policy-1.0",
+  9: { 1* uint => [schema-major, schema-minor] }
+}

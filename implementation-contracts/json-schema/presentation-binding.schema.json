@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mercenary.invalid/schema/v1/presentation-binding.schema.json",
+  "title": "PresentationBinding v1.0",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaMajor", "schemaMinor", "id", "ownerId", "kind", "assetId"],
+  "properties": {
+    "schemaMajor": {"const": 1}, "schemaMinor": {"const": 0},
+    "id": {"type": "string", "maxLength": 255}, "ownerId": {"type": "string", "maxLength": 255},
+    "kind": {"enum": ["geometry", "message", "prompt", "audio", "cue"]},
+    "assetId": {"type": "string", "maxLength": 255},
+    "presentationOnly": {"const": true}
+  }
+}

@@ -52,6 +52,10 @@ _Avoid_: Mercenary 1, base game
 The complete immutable definition selected for a playable experience, resolved and validated before a session begins.
 _Avoid_: Content pack, campaign, resource bundle
 
+**Execution Environment**:
+The exact digest-bound combination of Content Set ancestry, resolved content, Lua release and security policy, host ABI, schema versions, and host-policy version required to execute a session or load its state.
+_Avoid_: Compatible environment, runtime profile
+
 **Content Overlay**:
 A versioned layer that names one exact Content Set ancestry and explicitly adds, replaces, or removes definitions before a new Content Set is resolved.
 _Avoid_: Patch, DLC, load order

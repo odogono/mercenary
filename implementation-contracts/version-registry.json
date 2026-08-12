@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaMajor": 1,
+  "schemaMinor": 0,
+  "policyVersion": "host-policy-1.0",
+  "families": [
+    {"name": "content-manifest", "major": 1, "minor": 0, "encoding": "mcj-1"},
+    {"name": "resource-graph", "major": 1, "minor": 0, "encoding": "mcj-1"},
+    {"name": "signature", "major": 1, "minor": 0, "encoding": "mcj-1"},
+    {"name": "lua-host-abi", "major": 1, "minor": 0, "encoding": "deterministic-cbor"},
+    {"name": "transition", "major": 1, "minor": 0, "encoding": "deterministic-cbor"},
+    {"name": "state", "major": 1, "minor": 0, "encoding": "deterministic-cbor"},
+    {"name": "save", "major": 1, "minor": 0, "encoding": "deterministic-cbor"},
+    {"name": "migration", "major": 1, "minor": 0, "encoding": "deterministic-cbor"},
+    {"name": "xpc", "major": 1, "minor": 0, "encoding": "deterministic-cbor"},
+    {"name": "diagnostic", "major": 1, "minor": 0, "encoding": "mcj-1+deterministic-cbor"},
+    {"name": "verification-adapter", "major": 1, "minor": 0, "encoding": "mcj-1+deterministic-cbor"}
+  ]
+}

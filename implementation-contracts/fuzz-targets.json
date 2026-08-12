@@ -1,0 +1,24 @@
+{
+  "schemaMajor": 1,
+  "schemaMinor": 0,
+  "engine": "LLVM-libFuzzer",
+  "sanitizers": ["address", "undefined"],
+  "durationsSecondsPerTarget": {"pullRequest": 30, "nightly": 600, "release": 7200},
+  "retainEveryCrashCorpus": true,
+  "targets": [
+    {"name": "package-filesystem", "entry": "PackageEnumerator.accept", "seed": "malicious/index.json"},
+    {"name": "mcj-preflight", "entry": "MCJPreflight.decode", "seed": "vectors/"},
+    {"name": "json-schemas", "entry": "ResourceDecoder.decode", "seed": "vectors/"},
+    {"name": "deterministic-cbor", "entry": "DeterministicCBOR.decode", "seed": "vectors/"},
+    {"name": "signature-block", "entry": "AuthorSignature.verify", "seed": "vectors/"},
+    {"name": "lua-compiler", "entry": "RestrictedLua.compile", "seed": "malicious/"},
+    {"name": "lua-host-values", "entry": "LuaHostValue.decode", "seed": "malicious/"},
+    {"name": "transition", "entry": "TransitionCodec.decode", "seed": "vectors/"},
+    {"name": "state-origin", "entry": "StateCodec.decodeOrigin", "seed": "vectors/"},
+    {"name": "save-envelope", "entry": "StateCodec.decodeSave", "seed": "vectors/"},
+    {"name": "migration", "entry": "MigrationCodec.decode", "seed": "malicious/"},
+    {"name": "xpc-envelope", "entry": "XPCEnvelope.decode", "seed": "vectors/"},
+    {"name": "xpc-state-machine", "entry": "ProtocolState.accept", "seed": "vectors/"},
+    {"name": "diagnostic", "entry": "SafeDiagnostic.decode", "seed": "vectors/"}
+  ]
+}

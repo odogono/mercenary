@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mercenary.invalid/schema/v1/resource-graph.schema.json",
+  "title": "Resolved ResourceGraph v1.0",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaMajor", "schemaMinor", "resolvedContentSetDigest", "records", "referenceEdges"],
+  "properties": {
+    "schemaMajor": {"const": 1}, "schemaMinor": {"const": 0},
+    "resolvedContentSetDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "records": {
+      "type": "array", "maxItems": 100000,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["id", "family", "payloadDigest"],
+        "properties": {
+          "id": {"type": "string", "maxLength": 255},
+          "family": {"enum": ["metadata", "world", "region", "location", "boundary", "portal", "transition", "entity", "property-schema", "presentation", "mission", "economy", "progression", "ending", "semantic-action", "phase", "lua-module", "hook", "initial-state", "save-gate", "migration", "traceability"]},
+          "payloadDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "referenceEdges": {
+      "type": "array", "maxItems": 1000000,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["source", "relation", "target"],
+        "properties": {"source": {"type": "string", "maxLength": 255}, "relation": {"type": "string", "maxLength": 255}, "target": {"type": "string", "maxLength": 255}}
+      }
+    }
+  }
+}

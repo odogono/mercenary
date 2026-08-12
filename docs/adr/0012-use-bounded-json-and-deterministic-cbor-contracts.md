@@ -1,0 +1,3 @@
+# Use bounded JSON and deterministic CBOR contracts
+
+Production content packages use the integer-preserving MCJ-1 JSON profile, while Lua, state, saves, migrations, diagnostics, and the XPC protocol use a closed integer-only RFC 8949 deterministic-CBOR profile behind a minimal `Data` bridge. This keeps authored content inspectable while giving security-sensitive runtime boundaries exact bounded bytes, stable hashes, strict evolution, and language-independent fuzz targets; it costs two codecs, golden cross-format fixtures, and explicit version registries instead of relying on Swift `Codable` or method-rich `NSSecureCoding` objects.

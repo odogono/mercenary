@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mercenary.invalid/schema/v1/candidate-evidence.schema.json",
+  "title": "CandidateEvidenceManifest v1.0",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaMajor", "schemaMinor", "candidateId", "buildDigest", "contentSetDigest", "verificationReportId", "fuzz", "dependencies", "sbom", "notarization", "clearance", "eligible"],
+  "properties": {
+    "schemaMajor": {"const": 1}, "schemaMinor": {"const": 0}, "candidateId": {"type": "string", "maxLength": 255},
+    "buildDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}, "contentSetDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "verificationReportId": {"type": "string", "pattern": "^CR-[0-9a-f]{12}$"},
+    "fuzz": {"type": "object", "additionalProperties": false, "required": ["minimumSecondsPerTarget", "knownCrashes"], "properties": {"minimumSecondsPerTarget": {"const": 7200}, "knownCrashes": {"const": 0}}},
+    "dependencies": {"type": "object", "additionalProperties": false, "required": ["reviewed", "securityFloorMet"], "properties": {"reviewed": {"type": "boolean"}, "securityFloorMet": {"type": "boolean"}}},
+    "sbom": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"enum": ["SPDX", "CycloneDX"]}, "uniqueItems": true},
+    "notarization": {"enum": ["pending", "accepted", "rejected", "not-applicable"]},
+    "clearance": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["artifactId", "status"], "properties": {"artifactId": {"type": "string", "maxLength": 255}, "status": {"enum": ["pending", "cleared", "excluded"]}}}},
+    "eligible": {"type": "boolean"}
+  },
+  "allOf": [{
+    "if": {"properties": {"eligible": {"const": true}}},
+    "then": {
+      "properties": {
+        "dependencies": {"properties": {"reviewed": {"const": true}, "securityFloorMet": {"const": true}}},
+        "notarization": {"const": "accepted"},
+        "clearance": {"not": {"contains": {"properties": {"status": {"const": "pending"}}, "required": ["status"]}}}
+      }
+    }
+  }]
+}

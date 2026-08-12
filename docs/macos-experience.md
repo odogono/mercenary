@@ -154,3 +154,4 @@ reopen the design ticket.
 - Issue #10 chooses production application-shell, Metal, simulation-loop, and deployment architecture while preserving this observable contract.
 - Issue #11 defines production content/state, untrusted Mod, and save representation in the [Content and State Model](content-state-model.md).
 - Issue #12's [Verification System](verification-system.md) promotes MAS-0001 through MAS-0008 to BC-0022 through BC-0029 and prevents conformance claims while linked uncertainties remain open.
+- Issue #13's [Product and Technical Implementation Specification](implementation-specification.md) fixes the package, signature, consent, XPC, Lua, save, migration, diagnostic, and release-evidence interfaces needed to implement this contract.

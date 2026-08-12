@@ -4,7 +4,7 @@ Status: normative
 
 Decision ticket: [#11 — Define the content and state model](https://github.com/odogono/mercenary/issues/11)
 
-Related decisions: [Fidelity Contract](fidelity-contract.md), [Publication Policy](publication-policy.md), [Native Simulation and Rendering Architecture](native-architecture.md), [macOS Experience Contract](macos-experience.md), [ADR 0005](adr/0005-separate-catalogue-entries-from-behavior-cases.md), [ADR 0008](adr/0008-derive-session-state-from-committed-transitions.md), and [ADR 0009](adr/0009-isolate-untrusted-lua-game-semantics.md)
+Related decisions: [Fidelity Contract](fidelity-contract.md), [Publication Policy](publication-policy.md), [Native Simulation and Rendering Architecture](native-architecture.md), [macOS Experience Contract](macos-experience.md), [Product and Technical Implementation Specification](implementation-specification.md), [ADR 0005](adr/0005-separate-catalogue-entries-from-behavior-cases.md), [ADR 0008](adr/0008-derive-session-state-from-committed-transitions.md), and [ADR 0009](adr/0009-isolate-untrusted-lua-game-semantics.md)
 
 ## Purpose and status
 
@@ -134,7 +134,7 @@ The XPC simulation service contains `SimulationRuntime`, the semantic kernel, im
 
 Lua cannot call AppKit, SwiftUI, Metal, Foundation, platform random APIs, wall time, locale, environment variables, files, sockets, dynamic libraries, native code, or XPC. The host does not open the standard `io`, `os`, `package`, `debug`, or coroutine libraries and does not expose `load`, `loadfile`, `dofile`, `require`, arbitrary garbage-collector control, unordered `pairs`/`next`, or C module loading. The accepted language subset rejects float constants and float-producing operations for semantic code; ordered collection helpers, integers, fixed-point helpers, strings, UTF-8 helpers, and deterministic table/array operations are supplied by the host ABI.
 
-Instruction, call-depth, allocation, state-size, command-count, and per-tick aggregate budgets are versioned host policy. A manifest may request a lower budget but never a higher limit. Exact numerical limits must be fixed by the implementation specification and tested on the minimum supported Apple-silicon Mac before untrusted Mods ship.
+Instruction, call-depth, allocation, state-size, command-count, and per-tick aggregate budgets are versioned host policy. A manifest may request a lower budget but never a higher limit. The [Product and Technical Implementation Specification](implementation-specification.md) fixes the v1 limits and their minimum-Mac verification gate; both must pass before untrusted Mods ship.
 
 ### Host ABI and phases
 
@@ -208,7 +208,7 @@ Creating save bytes does not clear dirty state. The semantic service issues a sa
 | `SaveEnvelope` | Envelope version; exact package chain and resolved digest; Lua release; host ABI; property/transition/state schemas; State Origin; transition tail; integrity digest; no host path. |
 | `ContentMigration` | Exact allowed source and target environments; migration module and capability set; source-save digest; validated target origin; audit result. |
 
-Executable declarations and wire schemas belong to the implementation specification. The codec must use a deterministic, length-bounded representation that preserves signed integers, fixed-point values, typed IDs, ordered arrays, byte digests, and canonical record-key ordering without float coercion.
+Executable declarations and wire schemas live in the [implementation contract bundle](../implementation-contracts/). Its codecs use deterministic, length-bounded representations that preserve signed integers, fixed-point values, typed IDs, ordered arrays, byte digests, and canonical record-key ordering without float coercion.
 
 ## Saves and migrations
 
@@ -351,4 +351,4 @@ This model deliberately does not fill unresolved content with current crack-deri
 - `UNC-0008` supplies retail corroboration for crack-sensitive facts.
 - `UNC-0009` resolves geometry comparison-review bookkeeping without changing identity boundaries.
 
-Issue #12's [Verification System](verification-system.md) turns CSM-0001 through CSM-0007 into BC-0030 through BC-0036 and adds release-readiness coverage for renderer failure, supported hosts, fuzz resilience, and dependency/Lua review. Issue #13 must choose concrete wire schemas, host budgets, XPC messages, package limits, signature representation, production adapters, and implementation libraries while preserving every boundary and failure rule above.
+Issue #12's [Verification System](verification-system.md) turns CSM-0001 through CSM-0007 into BC-0030 through BC-0036 and adds release-readiness coverage for renderer failure, supported hosts, fuzz resilience, and dependency/Lua review. Issue #13's [Product and Technical Implementation Specification](implementation-specification.md) and [machine contracts](../implementation-contracts/) now fix the concrete wire schemas, host budgets, XPC messages, package limits, signature representation, production adapters, and implementation libraries while preserving every boundary and failure rule above.

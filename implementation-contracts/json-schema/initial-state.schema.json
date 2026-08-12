@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mercenary.invalid/schema/v1/initial-state.schema.json",
+  "title": "InitialStateAndMigrationDefinition v1.0",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaMajor", "schemaMinor", "id", "kind", "environment", "values"],
+  "properties": {
+    "schemaMajor": {"const": 1}, "schemaMinor": {"const": 0}, "id": {"type": "string", "maxLength": 255},
+    "kind": {"enum": ["initial-state", "save-gate", "migration"]},
+    "environment": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "values": {"type": "object", "maxProperties": 100000},
+    "sourceEnvironment": {"type": ["string", "null"], "pattern": "^(?:[0-9a-f]{64})?$"}
+  }
+}

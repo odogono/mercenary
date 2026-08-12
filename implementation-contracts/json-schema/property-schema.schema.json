@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mercenary.invalid/schema/v1/property-schema.schema.json",
+  "title": "PropertySchema v1.0",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaMajor", "schemaMinor", "id", "ownerFamily", "valueType", "required", "persistence", "capabilityNamespace"],
+  "properties": {
+    "schemaMajor": {"const": 1}, "schemaMinor": {"const": 0},
+    "id": {"type": "string", "maxLength": 255},
+    "ownerFamily": {"enum": ["world", "region", "location", "entity", "mission", "economy", "progression", "session", "module"]},
+    "valueType": {"enum": ["boolean", "int64", "fixed", "string", "typed-id", "array", "record"]},
+    "required": {"type": "boolean"},
+    "default": {},
+    "referenceTarget": {"type": ["string", "null"], "maxLength": 64},
+    "persistence": {"enum": ["persistent", "derived", "presentation-only"]},
+    "capabilityNamespace": {"type": "string", "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z0-9-]+)+$"},
+    "migrationRequired": {"type": "boolean"}
+  }
+}

@@ -1,0 +1,34 @@
+; Lua host ABI: map keys are closed unsigned labels.
+contract = hook-context / hook-result / query-request / query-result
+schema-major = 1
+schema-minor = 0
+int64 = -9223372036854775808..9223372036854775807
+typed-id = tstr .size (1..255)
+canonical-value = bool / int64 / tstr / [* canonical-value] / canonical-record
+canonical-record = [* [tstr, canonical-value]]
+semantic-phase = 0..6
+semantic-action = { 0: typed-id, 1: 0..2, 2: int64 }
+hook-context = {
+  0: schema-major,
+  1: schema-minor,
+  2: int64,
+  3: semantic-phase,
+  4: [* semantic-action],
+  5: canonical-value,
+  6: bstr .size 32
+}
+command-kind = 0..6
+proposed-command = {
+  0: command-kind,
+  1: typed-id,
+  2: canonical-value
+}
+hook-result = {
+  0: schema-major,
+  1: schema-minor,
+  2: [* proposed-command],
+  3: canonical-value,
+  4: 0..1024
+}
+query-request = { 0: 0..3, 1: typed-id, ? 2: typed-id }
+query-result = { 0: 0..1, 1: [* canonical-value] }

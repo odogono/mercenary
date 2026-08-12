@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mercenary.invalid/schema/v1/signature-block.schema.json",
+  "title": "DetachedAuthorSignature v1.0",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaMajor", "schemaMinor", "algorithm", "publicKey", "keyId", "signature"],
+  "properties": {
+    "schemaMajor": {"const": 1}, "schemaMinor": {"const": 0}, "algorithm": {"const": "Ed25519"},
+    "publicKey": {"type": "string", "pattern": "^[A-Za-z0-9_-]{43}$"},
+    "keyId": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "signature": {"type": "string", "pattern": "^[A-Za-z0-9_-]{86}$"}
+  }
+}

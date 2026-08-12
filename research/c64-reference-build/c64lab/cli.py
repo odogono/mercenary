@@ -25,6 +25,7 @@ from .catalogue import (
     verify_catalogue,
 )
 from .verification import aggregate_verification, render_report, validate_verification
+from .implementation_contracts import validate_implementation_contracts
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -123,6 +124,11 @@ def _parser() -> argparse.ArgumentParser:
     verification_render = verification_commands.add_parser("render", help="render a Conformance Report as deterministic Markdown")
     verification_render.add_argument("--report", required=True, type=Path)
     verification_render.add_argument("--output", required=True, type=Path)
+
+    implementation_parser = subparsers.add_parser("implementation", help="validate production implementation contracts")
+    implementation_commands = implementation_parser.add_subparsers(dest="implementation_command", required=True)
+    implementation_validate = implementation_commands.add_parser("validate", help="validate schemas, CDDL, and golden vectors")
+    implementation_validate.add_argument("--root", required=True, type=Path)
     return parser
 
 
@@ -157,6 +163,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 result = review_comparisons(arguments.comparisons, arguments.reviewer, arguments.decision)
             else:
                 result = summarize_geometry(arguments.dataset, arguments.comparisons, arguments.review, arguments.output)
+        elif arguments.command == "implementation":
+            result = {"status": "verified", **validate_implementation_contracts(arguments.root)}
         elif arguments.command == "verification":
             if arguments.verification_command == "validate":
                 documents = validate_verification(arguments.root)

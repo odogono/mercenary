@@ -1,0 +1,23 @@
+{
+  "schemaMajor": 1,
+  "schemaMinor": 0,
+  "fixtures": [
+    {"id": "infinite-loop", "path": "infinite-loop.lua", "expectedCode": "lua.instruction-limit", "rollbackRequired": true},
+    {"id": "deep-recursion", "path": "deep-recursion.lua", "expectedCode": "lua.call-depth", "rollbackRequired": true},
+    {"id": "allocation-bomb", "path": "allocation-bomb.lua", "expectedCode": "lua.allocation-limit", "rollbackRequired": true},
+    {"id": "oversized-state", "path": "oversized-state.lua", "expectedCode": "lua.module-state-limit", "rollbackRequired": true},
+    {"id": "forbidden-library", "path": "forbidden-library.lua", "expectedCode": "lua.forbidden-api", "rollbackRequired": true},
+    {"id": "native-module", "path": "native-module.lua", "expectedCode": "lua.forbidden-api", "rollbackRequired": true},
+    {"id": "capability-escalation", "path": "capability-escalation.lua", "expectedCode": "lua.capability-denied", "rollbackRequired": true},
+    {"id": "command-flood", "path": "command-flood.lua", "expectedCode": "lua.command-limit", "rollbackRequired": true},
+    {"id": "query-flood", "path": "query-flood.lua", "expectedCode": "lua.query-limit", "rollbackRequired": true},
+    {"id": "random-flood", "path": "random-flood.lua", "expectedCode": "lua.random-limit", "rollbackRequired": true},
+    {"id": "hidden-global", "path": "hidden-global.lua", "expectedCode": "lua.hidden-state", "rollbackRequired": true},
+    {"id": "metatable-state", "path": "metatable-state.lua", "expectedCode": "lua.invalid-state", "rollbackRequired": true},
+    {"id": "conflicting-commands", "path": "conflicting-commands.lua", "expectedCode": "kernel.command-conflict", "rollbackRequired": true},
+    {"id": "invalid-migration", "path": "invalid-migration.lua", "expectedCode": "migration.invalid-target", "rollbackRequired": false},
+    {"id": "invalid-utf8", "inlineHex": "72657475726e20ff", "expectedCode": "lua.invalid-utf8", "rollbackRequired": false},
+    {"id": "binary-chunk", "inlineHex": "1b4c756100", "expectedCode": "lua.binary-chunk", "rollbackRequired": false},
+    {"id": "deep-table", "generator": "nested-array", "depth": 65, "expectedCode": "codec.depth-limit", "rollbackRequired": false}
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mercenary.invalid/schema/v1/diagnostic.schema.json",
+  "title": "SafeDiagnostic v1.0",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaMajor", "schemaMinor", "code", "severity"],
+  "properties": {
+    "schemaMajor": {"const": 1}, "schemaMinor": {"const": 0},
+    "code": {"type": "string", "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z0-9-]+)+$", "maxLength": 128},
+    "severity": {"enum": ["info", "warning", "error", "fatal"]},
+    "phase": {"type": "string", "maxLength": 64},
+    "safeContentSetId": {"type": "string", "maxLength": 255},
+    "safeModuleId": {"type": "string", "maxLength": 255},
+    "safeRecordId": {"type": "string", "maxLength": 255},
+    "safeContext": {"type": "object", "maxProperties": 32, "additionalProperties": {"type": ["boolean", "integer", "string"]}}
+  }
+}

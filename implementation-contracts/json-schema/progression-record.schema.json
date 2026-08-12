@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mercenary.invalid/schema/v1/progression-record.schema.json",
+  "title": "MissionEconomyProgressionRecord v1.0",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaMajor", "schemaMinor", "id", "family", "conditionIds", "propertySchemaIds"],
+  "properties": {
+    "schemaMajor": {"const": 1}, "schemaMinor": {"const": 0}, "id": {"type": "string", "maxLength": 255},
+    "family": {"enum": ["mission", "economy", "progression", "ending"]},
+    "conditionIds": {"type": "array", "maxItems": 4096, "items": {"type": "string", "maxLength": 255}, "uniqueItems": true},
+    "propertySchemaIds": {"type": "array", "maxItems": 1024, "items": {"type": "string", "maxLength": 255}, "uniqueItems": true}
+  }
+}

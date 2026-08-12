@@ -4,6 +4,11 @@ This policy resolves [issue #5](https://github.com/odogono/mercenary/issues/5).
 It governs engineering decisions about publication; it is not legal advice or a
 release clearance.
 
+The [Product and Technical Implementation Specification](implementation-specification.md)
+implements this policy through allowlisted diagnostics, per-artifact candidate
+clearance records, SBOM and dependency evidence, and an explicit non-publishing
+release gate.
+
 The repository remains private during research. One maintainer may perform both
 Reference Build research and Independent Implementation work; the project does
 not represent this as a personnel clean room. The Independent Implementation

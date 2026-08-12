@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mercenary.invalid/schema/v1/content-metadata.schema.json",
+  "title": "ContentMetadataRecord v1.0",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaMajor", "schemaMinor", "id", "title", "initialRelease"],
+  "properties": {
+    "schemaMajor": {"const": 1}, "schemaMinor": {"const": 0},
+    "id": {"type": "string", "maxLength": 255},
+    "title": {"type": "string", "maxLength": 1024},
+    "initialRelease": {"type": "boolean"},
+    "officialDesignationEligible": {"type": "boolean"}
+  }
+}

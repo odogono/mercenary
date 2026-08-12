@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+contract_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repository_root=$(CDPATH= cd -- "$contract_root/.." && pwd)
+export BUNDLE_GEMFILE="$contract_root/Gemfile"
+
+bundle check >/dev/null
+for cddl_file in "$contract_root"/cddl/*.cddl; do
+  bundle exec cddl "$cddl_file" generate 1 >/dev/null
+done
+
+exec "$repository_root/research/c64-reference-build/lab" \
+  implementation validate --root "$contract_root"

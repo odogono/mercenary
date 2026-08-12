@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mercenary.invalid/schema/v1/traceability-record.schema.json",
+  "title": "TraceabilityRecord v1.0",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaMajor", "schemaMinor", "productionId", "catalogueEntryIds", "behaviorCaseIds", "geometryIds", "provenanceIds"],
+  "properties": {
+    "schemaMajor": {"const": 1}, "schemaMinor": {"const": 0}, "productionId": {"type": "string", "maxLength": 255},
+    "catalogueEntryIds": {"type": "array", "maxItems": 4096, "items": {"type": "string", "pattern": "^CAT-[0-9]{4}$"}, "uniqueItems": true},
+    "behaviorCaseIds": {"type": "array", "maxItems": 4096, "items": {"type": "string", "pattern": "^BC-[0-9]{4}$"}, "uniqueItems": true},
+    "geometryIds": {"type": "array", "maxItems": 4096, "items": {"type": "string", "maxLength": 255}, "uniqueItems": true},
+    "provenanceIds": {"type": "array", "maxItems": 4096, "items": {"type": "string", "maxLength": 255}, "uniqueItems": true}
+  }
+}

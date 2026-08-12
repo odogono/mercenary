@@ -1,0 +1,24 @@
+; Safe diagnostics are allowlisted and never contain paths, excerpts, or hashes.
+contract = diagnostic / diagnostic-bundle
+schema-major = 1
+schema-minor = 0
+diagnostic = {
+  0: schema-major,
+  1: schema-minor,
+  2: diagnostic-code,
+  3: severity,
+  ? 4: tstr .size (1..64),
+  ? 5: tstr .size (1..255),
+  ? 6: tstr .size (1..255),
+  ? 7: tstr .size (1..255),
+  ? 8: { * uint => safe-scalar }
+}
+diagnostic-code = tstr .size (3..128)
+severity = 0..3
+safe-scalar = bool / int / tstr .size (0..1024)
+diagnostic-bundle = {
+  0: schema-major, 1: schema-minor,
+  2: tstr .size (1..64),
+  3: [* diagnostic],
+  4: { * uint => safe-scalar }
+}

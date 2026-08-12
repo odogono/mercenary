@@ -230,8 +230,10 @@ rejects stale results, resolves dependency blocking, and emits the report.
 `render` produces deterministic Markdown without making it canonical.
 
 Production adapters must emit these neutral records without widening their
-claim semantics. Concrete Swift APIs, execution budgets, XPC messages, and
-release automation remain issue #13 responsibilities.
+claim semantics. Issue #13's [Product and Technical Implementation
+Specification](implementation-specification.md) and [machine
+contracts](../implementation-contracts/) fix the concrete Swift boundary,
+execution budgets, XPC messages, and candidate-evidence automation.
 
 ## Acceptance
 

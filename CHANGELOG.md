@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Define the normative Product and Technical Implementation Specification for
+  issue #13, including MCJ-1 package JSON, deterministic-CBOR runtime contracts,
+  exact identities and signatures, bounded Lua/XPC execution, migration,
+  diagnostics, author tooling, fuzz gates, and candidate-release evidence.
+- Add 14 Draft 2020-12 schemas, six CDDL contract families, closed version
+  registries, 25 positive/negative golden vectors, and `lab implementation
+  validate`; add Execution Environment to the shared language and record ADR
+  0012 for the production encoding boundary.
+
 - Define the normative Verification System for issue #12 with scoped Behavior
   Cases, immutable results, public/restricted manifests, dependency-aware reuse,
   digest-bound approvals and departures, dual conformance/readiness verdicts,

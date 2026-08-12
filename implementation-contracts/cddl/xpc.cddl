@@ -1,0 +1,31 @@
+; Minimal NSXPC Data envelope. Message type labels are normative below.
+contract = xpc-envelope / bulk-chunk / snapshot / event-batch / event-ack / save-ack
+schema-major = 1
+schema-minor = 0
+digest = bstr .size 32
+connection-id = bstr .size 16
+session-id = bstr .size 16
+request-sequence = 0..9223372036854775807
+message-type = 0..24
+; 0 handshake, 1 handshake-reply, 2 bulk-begin, 3 bulk-chunk,
+; 4 bulk-complete, 5 validate-package, 6 create-session, 7 actions,
+; 8 lifecycle, 9 save-request, 10 save-bytes, 11 save-ack,
+; 12 load-request, 13 migrate-request, 14 cancel, 15 end-session,
+; 16 status, 17 reply, 18 snapshot, 19 event-batch, 20 event-ack,
+; 21 diagnostic, 22 suspend, 23 resume, 24 invalidation-notice.
+xpc-envelope = {
+  0: schema-major,
+  1: schema-minor,
+  2: message-type,
+  3: connection-id,
+  ? 4: session-id,
+  5: request-sequence,
+  6: digest,
+  7: { * uint => cbor-value }
+}
+cbor-value = bool / int / tstr / bstr / [* cbor-value] / { * uint => cbor-value }
+bulk-chunk = { 0: bstr .size 16, 1: uint, 2: bstr .size (0..1048576), 3: digest }
+snapshot = { 0: uint, 1: uint, 2: bstr .size (0..4194304) }
+event-batch = { 0: uint, 1: uint, 2: [* { * uint => cbor-value }] }
+event-ack = { 0: uint, 1: uint }
+save-ack = { 0: bstr .size 16, 1: 0..2 }

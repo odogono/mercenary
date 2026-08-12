@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mercenary.invalid/schema/v1/world-record.schema.json",
+  "title": "WorldGeometryRecord v1.0",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaMajor", "schemaMinor", "id", "family", "properties", "relationships"],
+  "properties": {
+    "schemaMajor": {"const": 1}, "schemaMinor": {"const": 0},
+    "id": {"type": "string", "maxLength": 255},
+    "family": {"enum": ["world", "region", "location", "boundary", "portal", "transition"]},
+    "properties": {"type": "object", "maxProperties": 1024},
+    "relationships": {"type": "array", "maxItems": 100000, "items": {"type": "string", "maxLength": 255}, "uniqueItems": true}
+  }
+}

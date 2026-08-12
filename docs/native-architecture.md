@@ -4,7 +4,7 @@ Status: accepted for implementation; executable validation pending
 
 Decision ticket: [#10 — Choose the native simulation and rendering architecture](https://github.com/odogono/mercenary/issues/10)
 
-Related decisions: [Apple-native stack](adr/0001-use-an-apple-native-stack.md), [research/implementation separation](adr/0002-separate-rom-research-from-implementation.md), [Fidelity Contract](fidelity-contract.md), [Native Shell/Game Surface boundary](adr/0006-separate-the-native-shell-from-the-game-surface.md), [macOS Experience Contract](macos-experience.md), and [Content and State Model](content-state-model.md)
+Related decisions: [Apple-native stack](adr/0001-use-an-apple-native-stack.md), [research/implementation separation](adr/0002-separate-rom-research-from-implementation.md), [Fidelity Contract](fidelity-contract.md), [Native Shell/Game Surface boundary](adr/0006-separate-the-native-shell-from-the-game-surface.md), [macOS Experience Contract](macos-experience.md), [Content and State Model](content-state-model.md), and [Product and Technical Implementation Specification](implementation-specification.md)
 
 ## Purpose and status
 

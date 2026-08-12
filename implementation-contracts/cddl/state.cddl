@@ -1,0 +1,28 @@
+; Transition Log, State Origin, SaveEnvelope, and migration records.
+contract = committed-transition / state-origin / save-envelope / migration-request / migration-result
+schema-major = 1
+schema-minor = 0
+int64 = -9223372036854775808..9223372036854775807
+digest = bstr .size 32
+typed-id = tstr .size (1..255)
+canonical-value = bool / int64 / tstr / typed-id / bstr / [* canonical-value] / canonical-record
+canonical-record = [* [tstr, canonical-value]]
+committed-transition = {
+  0: schema-major, 1: schema-minor, 2: int64, 3: int64,
+  4: uint, 5: [* typed-id], 6: canonical-value,
+  7: canonical-value, ? 8: typed-id, ? 9: uint,
+  10: digest, 11: digest
+}
+state-origin = {
+  0: schema-major, 1: schema-minor, 2: canonical-value,
+  3: digest, 4: digest, ? 5: migration-provenance
+}
+migration-provenance = { 0: digest, 1: digest, 2: typed-id, 3: digest }
+save-envelope = {
+  0: schema-major, 1: schema-minor, 2: digest,
+  3: [1* digest], 4: state-origin,
+  5: [* committed-transition], 6: digest
+}
+migration-request = { 0: schema-major, 1: schema-minor, 2: digest, 3: digest, 4: bstr }
+migration-result = { 0: schema-major, 1: schema-minor, 2: 0..1, ? 3: state-origin, 4: diagnostic-code }
+diagnostic-code = tstr .size (3..128)

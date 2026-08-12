@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mercenary.invalid/schema/v1/semantic-definition.schema.json",
+  "title": "SemanticAndLuaDefinition v1.0",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaMajor", "schemaMinor", "id", "kind", "phase", "order", "capabilities"],
+  "properties": {
+    "schemaMajor": {"const": 1}, "schemaMinor": {"const": 0}, "id": {"type": "string", "maxLength": 255},
+    "kind": {"enum": ["semantic-action", "phase", "lua-module", "hook-registration", "save-gate"]},
+    "phase": {"enum": ["session-initialize", "pre-action", "action", "simulation-tick", "post-transition", "save-gate", "content-migration"]},
+    "order": {"type": "integer", "minimum": -9223372036854775808, "maximum": 9223372036854775807},
+    "sourcePath": {"type": ["string", "null"], "maxLength": 240},
+    "stateSchemaId": {"type": ["string", "null"], "maxLength": 255},
+    "capabilities": {"type": "array", "maxItems": 1024, "items": {"type": "string", "maxLength": 255}, "uniqueItems": true}
+  }
+}
