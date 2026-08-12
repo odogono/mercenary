@@ -95,6 +95,21 @@
         "exact-eight": "287c17a1f41dc0864fe6a5b479ea881c42f331a6239d5647c92e4d1b30cd7e39",
         "exact-nine": "89521ac0b402735a2ae9bff2b4eaacae247b2a21892803233c58f29d3e7e98d3"
       }
+    },
+    {
+      "path": "traces/TR-9025-relative-throttle-rules.json",
+      "kind": "event-history",
+      "repetitions": 2,
+      "evidenceIds": [
+        "EV-b81ed98fb38f7290", "EV-2b8bbcf30d818772",
+        "EV-c96f3ef58d014f21", "EV-5d639381730021d4"
+      ],
+      "normalizedDigests": {
+        "decrease-held": "cc33c7102ac913cfe466356b984e30e21c9402b1a7a4cac9ad22c66f175452c6",
+        "increase-held": "c9b787209bc93d5d62e79ab68d57d1cb54d6c8bae73ae6f74603ffbca51cebb8",
+        "increase-upper-bound": "92d5e34a2222ed454c9724e3ea5d3b4cd782e7ca981a9f5212b6b997305d49ff",
+        "decrease-lower-bound": "4f327cfe0014cf510ca57390617973c957ad9a3c215a3e7b2213b7036a3b76aa"
+      }
     }
   ]
 }
