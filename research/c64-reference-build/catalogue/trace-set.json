@@ -123,6 +123,16 @@
         "take-denied": "9a505a1a2e380e79f7b6ea1dfbcfd31c6ca0aad86f9b267f388ea04801ec7f53",
         "enter-denied": "754e1a4e74445ff355a80cf35fe62b6ebc29af14b288b5eb569a2aeed2e6549c"
       }
+    },
+    {
+      "path": "traces/TR-9027-save-load-dispatch.json",
+      "kind": "event-history",
+      "repetitions": 2,
+      "evidenceIds": ["EV-4e0aa92bd59977d1", "EV-aef4557a117074a1"],
+      "normalizedDigests": {
+        "save-dispatch": "4e17d5a3ef1a59e0eb418ce5a64a3c6b4e3bbaf6459f7f8a1bebd9241bb52955",
+        "load-dispatch": "768b8d29e850b1ce76e6411cbcc2fdb5b54210634611490888140afcf18a3e8a"
+      }
     }
   ]
 }
