@@ -36,6 +36,16 @@
       "path": "traces/TR-9016-underground-walking-actions.json",
       "kind": "deterministic",
       "repetitions": 2
+    },
+    {
+      "path": "traces/TR-9018-underground-walking-conflicts.json",
+      "kind": "deterministic",
+      "repetitions": 2
+    },
+    {
+      "path": "traces/TR-9020-underground-walking-held.json",
+      "kind": "deterministic",
+      "repetitions": 2
     }
   ]
 }
