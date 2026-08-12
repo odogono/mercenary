@@ -5,6 +5,17 @@
     {"path":"traces/TR-0002-input-conflicts.json","kind":"deterministic","repetitions":2},
     {"path":"traces/TR-0003-held-input.json","kind":"deterministic","repetitions":2},
     {"path":"traces/TR-0004-audio-smoke.json","kind":"deterministic","repetitions":2},
-    {"path":"traces/TR-0005-d64-smoke.json","kind":"deterministic","repetitions":2}
+    {"path":"traces/TR-0005-d64-smoke.json","kind":"deterministic","repetitions":2},
+    {
+      "path": "traces/TR-0006-contextual-transition-boundaries.json",
+      "kind": "event-history",
+      "repetitions": 2,
+      "evidenceIds": ["EV-1ed196a211b0ab0b", "EV-6af8a4cd73712fcc", "EV-840030cf53dc5f60"],
+      "normalizedDigests": {
+        "accepted-boundary": "2969f256437c6d4e862bddea03da655053c72a6b42c0cfdda7bba891db38dfa0",
+        "forward-adjacent-denied": "74618d9dffc51b8d731d2332079dcd771ee335f5a720c75fd9b42a2db48a6ff6",
+        "opposing-adjacent-denied": "e3bc076c78c438d48717f9ddfe564ab6f8f86157a1b9fd59710cf3bd369c6462"
+      }
+    }
   ]
 }

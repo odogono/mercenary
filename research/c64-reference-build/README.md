@@ -78,6 +78,11 @@ The map supports integer widths and signedness, endianness, masks, shifts,
 booleans, enums, and opaque execution-boundary IDs; raw addresses, values, and
 reports stay restricted. Stochastic trace
 sets use a `stratified-pal` schedule with at least 100 distinct midpoint phases.
+Trace sets may also register `event-history` proofs produced by the foreground
+physical-key workflow below. Sampling does not reinterpret those inputs as
+PETSCII or replay them through the binary runner: it verifies that every named
+trace branch has one proof-mode Evidence record bound to the canonical trace
+hash, an opaque normalized replay digest, and at least two cold replays.
 
 Games that scan the C64 keyboard matrix cannot be driven by the monitor's
 PETSCII queue. Compile the bounded macOS driver and run it with an ignored

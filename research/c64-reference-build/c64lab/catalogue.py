@@ -428,6 +428,11 @@ def validate_catalogue_trace(trace: dict[str, Any], cycle_limit: int) -> None:
                     outcome_ids.add(outcome_id)
                     _validate_semantic_assertions(outcome.get("assertions"), f"{context}/{outcome_id}")
                 semantic_outcome_seen = True
+            elif action_type == "event_history":
+                _require(mode == "proof", f"{context} event history is allowed only in proof mode")
+                setup_digest = action.get("inputSetupSha256")
+                _require(isinstance(setup_digest, str) and bool(SHA256.fullmatch(setup_digest)), f"{context} has an invalid input setup digest")
+                _validate_semantic_assertions(action.get("expectedAssertions"), context)
             elif action_type == "attach_disk":
                 _require(not disk_attached, f"{context} cannot attach a second disk")
                 _require(action.get("format") == "d64" and action.get("mode") in {"blank", "evidence"}, f"{context} supports blank or evidence D64 media")
@@ -997,10 +1002,27 @@ def validate_trace_set(trace_set: dict[str, Any]) -> None:
         _require(isinstance(item, dict), f"Catalogue trace set item {index} must be an object")
         _require(isinstance(item.get("path"), str) and bool(item["path"]), f"Catalogue trace set item {index} needs a path")
         kind = item.get("kind")
-        _require(kind in {"deterministic", "stochastic"}, f"Catalogue trace set item {index} has an invalid kind")
+        _require(kind in {"deterministic", "event-history", "stochastic"}, f"Catalogue trace set item {index} has an invalid kind")
         repetitions = item.get("repetitions")
-        minimum = 2 if kind == "deterministic" else 100
+        minimum = 100 if kind == "stochastic" else 2
         _require(isinstance(repetitions, int) and repetitions >= minimum, f"Catalogue {kind} trace needs at least {minimum} repetitions")
+        if kind == "event-history":
+            evidence_ids = item.get("evidenceIds")
+            _require(
+                isinstance(evidence_ids, list)
+                and bool(evidence_ids)
+                and len(evidence_ids) == len(set(evidence_ids))
+                and all(isinstance(value, str) and bool(EVIDENCE_ID.fullmatch(value)) for value in evidence_ids),
+                f"Catalogue event-history trace {index} needs unique Evidence IDs",
+            )
+            digests = item.get("normalizedDigests")
+            _require(
+                isinstance(digests, dict)
+                and bool(digests)
+                and all(isinstance(branch, str) and bool(re.fullmatch(r"[a-z0-9-]+", branch)) for branch in digests)
+                and all(isinstance(value, str) and bool(SHA256.fullmatch(value)) for value in digests.values()),
+                f"Catalogue event-history trace {index} needs normalized branch digests",
+            )
         if kind == "stochastic":
             outcomes = item.get("legalOutcomes")
             _require(isinstance(outcomes, list) and bool(outcomes) and len(outcomes) == len(set(outcomes)), f"Catalogue stochastic trace {index} needs unique legal outcomes")
@@ -1046,13 +1068,63 @@ def normalized_sample_digest(records: list[dict[str, Any]]) -> str:
     return catalogue_digest(sorted(normalized, key=lambda item: item["branch"]))
 
 
+def summarize_registered_event_history(
+    trace: dict[str, Any],
+    trace_sha256: str,
+    item: dict[str, Any],
+    evidence_by_id: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    branch_ids = [branch["id"] for branch in trace["branches"]]
+    digests = item["normalizedDigests"]
+    _require(set(digests) == set(branch_ids), "Event-history normalized digests must cover every trace branch")
+    records: list[tuple[str, str]] = []
+    for evidence_id in item["evidenceIds"]:
+        _require(evidence_id in evidence_by_id, f"Event-history Evidence ID {evidence_id} is not registered")
+        record = evidence_by_id[evidence_id]
+        _require(record.get("mode") == "proof", f"Event-history Evidence ID {evidence_id} is not proof evidence")
+        _require(
+            record.get("traceId") == trace["id"] and record.get("traceVersion") == trace["version"],
+            f"Event-history Evidence ID {evidence_id} has a different trace identity",
+        )
+        _require(record.get("traceSha256") == trace_sha256, f"Event-history Evidence ID {evidence_id} has a different trace hash")
+        branch_id = record.get("branchId")
+        _require(branch_id in branch_ids, f"Event-history Evidence ID {evidence_id} has an unknown branch")
+        records.append((branch_id, evidence_id))
+    _require(
+        len(records) == len(branch_ids) and {branch for branch, _ in records} == set(branch_ids),
+        "Event-history Evidence IDs must cover every trace branch exactly once",
+    )
+    evidence_for_branch = dict(records)
+    return {
+        "trace": item["path"],
+        "kind": "event-history",
+        "repetitions": item["repetitions"],
+        "result": "verified",
+        "branches": [
+            {"branch": branch_id, "normalizedDigest": digests[branch_id], "evidenceId": evidence_for_branch[branch_id]}
+            for branch_id in branch_ids
+        ],
+    }
+
+
 def sample_catalogue(prg: Path, trace_set_path: Path, observation_map_path: Path | None = None) -> dict[str, Any]:
     trace_set = _load_json(trace_set_path)
     validate_trace_set(trace_set)
     reports: list[dict[str, Any]] = []
+    evidence_by_id: dict[str, dict[str, Any]] | None = None
     for item in trace_set["traces"]:
         trace_path = (trace_set_path.parent / item["path"]).resolve()
         _require(trace_path.is_file(), f"Catalogue sample trace does not exist: {item['path']}")
+        if item["kind"] == "event-history":
+            if evidence_by_id is None:
+                evidence_path = trace_set_path.parent / "evidence-index.json"
+                _require(evidence_path.is_file(), "Event-history catalogue sampling requires evidence-index.json")
+                evidence_document = _load_json(evidence_path)
+                evidence_by_id = _ids(evidence_document.get("evidence", []), EVIDENCE_ID, "evidence")
+            trace = _load_json(trace_path)
+            validate_catalogue_trace(trace, cycle_limit=_load_json(LAB_ROOT / "config" / "lab.json")["cycleLimit"])
+            reports.append(summarize_registered_event_history(trace, file_hash(trace_path), item, evidence_by_id))
+            continue
         if item["kind"] == "stochastic":
             targets = stratified_pal_targets(period_cycles=item["schedule"]["periodCycles"], trials=item["repetitions"])
             runs = [run_catalogue_trace(prg, trace_path, observation_map_path, phase_target=target) for target in targets]
@@ -1119,6 +1191,10 @@ def run_catalogue_trace(
     trace = _load_json(trace_path)
     _, config = load_configuration()
     validate_catalogue_trace(trace, config["cycleLimit"])
+    _require(
+        not any(action["type"] == "event_history" for branch in trace["branches"] for action in branch["actions"]),
+        "Event-history traces are externally captured proofs and must be verified through catalogue sample",
+    )
     selected_branches = select_catalogue_trace_branches(trace, branch_ids)
     uses_semantics = any(
         action["type"].startswith("semantic_") or action["type"] == "wait_boundary"

@@ -15,8 +15,10 @@ from c64lab.catalogue import (
     catalogue_digest,
     normalized_sample_digest,
     review_catalogue,
+    run_catalogue_trace,
     select_catalogue_trace_branches,
     store_artifact,
+    summarize_registered_event_history,
     summarize_catalogue,
     validate_catalogue,
     validate_catalogue_trace,
@@ -415,6 +417,67 @@ class TraceContractTests(unittest.TestCase):
             }
         )
 
+    def test_accepts_an_event_history_trace_set_with_branch_proofs(self) -> None:
+        validate_trace_set(
+            {
+                "schemaVersion": 1,
+                "traces": [
+                    {
+                        "path": "traces/TR-0006-event-history.json",
+                        "kind": "event-history",
+                        "repetitions": 2,
+                        "evidenceIds": ["EV-aaaaaaaaaaaaaaaa", "EV-bbbbbbbbbbbbbbbb"],
+                        "normalizedDigests": {"allowed": "c" * 64, "denied": "d" * 64},
+                    }
+                ],
+            }
+        )
+
+    def test_rejects_event_history_sampling_without_branch_proofs(self) -> None:
+        with self.assertRaisesRegex(LabError, "Evidence IDs"):
+            validate_trace_set(
+                {
+                    "schemaVersion": 1,
+                    "traces": [
+                        {
+                            "path": "traces/TR-0006-event-history.json",
+                            "kind": "event-history",
+                            "repetitions": 2,
+                            "normalizedDigests": {"allowed": "c" * 64},
+                        }
+                    ],
+                }
+            )
+
+    def test_direct_runner_rejects_an_external_event_history_trace(self) -> None:
+        trace = {
+            "schemaVersion": 1,
+            "id": "TR-0006",
+            "version": 1,
+            "title": "External physical key proof",
+            "mode": "proof",
+            "branches": [
+                {
+                    "id": "allowed",
+                    "from": {"checkpoint": "interactive"},
+                    "actions": [
+                        {
+                            "type": "event_history",
+                            "inputSetupSha256": "a" * 64,
+                            "expectedAssertions": [
+                                {"observation": "walking-mode", "operator": "equals", "value": True}
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            trace_path = Path(directory) / "TR-0006.json"
+            trace_path.write_text(json.dumps(trace))
+            with self.assertRaisesRegex(LabError, "catalogue sample"):
+                run_catalogue_trace(Path(directory) / "reference.prg", trace_path)
+
     def test_rejects_stochastic_sampling_without_a_phase_schedule(self) -> None:
         with self.assertRaisesRegex(LabError, "stratified-pal"):
             validate_trace_set(
@@ -803,6 +866,66 @@ class SamplingAndReviewTests(unittest.TestCase):
         first = [{"trace": {"branch": "a"}, "artifacts": [{"role": "vice-log", "sha256": "a" * 64}, {"role": "a:state:display", "sha256": "b" * 64}]}]
         second = [{"trace": {"branch": "a"}, "artifacts": [{"role": "vice-log", "sha256": "c" * 64}, {"role": "a:state:display", "sha256": "b" * 64}]}]
         self.assertEqual(normalized_sample_digest(first), normalized_sample_digest(second))
+
+    def test_event_history_summary_binds_every_branch_to_matching_proof_evidence(self) -> None:
+        trace = {
+            "id": "TR-0006",
+            "version": 1,
+            "branches": [{"id": "allowed"}, {"id": "denied"}],
+        }
+        item = {
+            "path": "traces/TR-0006-event-history.json",
+            "kind": "event-history",
+            "repetitions": 2,
+            "evidenceIds": ["EV-aaaaaaaaaaaaaaaa", "EV-bbbbbbbbbbbbbbbb"],
+            "normalizedDigests": {"allowed": "c" * 64, "denied": "d" * 64},
+        }
+        evidence = {
+            "EV-aaaaaaaaaaaaaaaa": {
+                "id": "EV-aaaaaaaaaaaaaaaa",
+                "traceId": "TR-0006",
+                "traceVersion": 1,
+                "traceSha256": "e" * 64,
+                "branchId": "allowed",
+                "mode": "proof",
+            },
+            "EV-bbbbbbbbbbbbbbbb": {
+                "id": "EV-bbbbbbbbbbbbbbbb",
+                "traceId": "TR-0006",
+                "traceVersion": 1,
+                "traceSha256": "e" * 64,
+                "branchId": "denied",
+                "mode": "proof",
+            },
+        }
+
+        summary = summarize_registered_event_history(trace, "e" * 64, item, evidence)
+
+        self.assertEqual(summary["result"], "verified")
+        self.assertEqual([branch["branch"] for branch in summary["branches"]], ["allowed", "denied"])
+
+    def test_event_history_summary_rejects_trace_hash_drift(self) -> None:
+        trace = {"id": "TR-0006", "version": 1, "branches": [{"id": "allowed"}]}
+        item = {
+            "path": "traces/TR-0006-event-history.json",
+            "kind": "event-history",
+            "repetitions": 2,
+            "evidenceIds": ["EV-aaaaaaaaaaaaaaaa"],
+            "normalizedDigests": {"allowed": "c" * 64},
+        }
+        evidence = {
+            "EV-aaaaaaaaaaaaaaaa": {
+                "id": "EV-aaaaaaaaaaaaaaaa",
+                "traceId": "TR-0006",
+                "traceVersion": 1,
+                "traceSha256": "f" * 64,
+                "branchId": "allowed",
+                "mode": "proof",
+            }
+        }
+
+        with self.assertRaisesRegex(LabError, "trace hash"):
+            summarize_registered_event_history(trace, "e" * 64, item, evidence)
 
     def test_wilson_interval_bounds_a_half_success_rate(self) -> None:
         low, high = wilson_interval(50, 100)

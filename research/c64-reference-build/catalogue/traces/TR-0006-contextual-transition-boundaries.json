@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "id": "TR-0006",
+  "version": 1,
+  "title": "Contextual transition accepted and adjacent denied boundaries",
+  "mode": "proof",
+  "branches": [
+    {
+      "id": "accepted-boundary",
+      "from": {
+        "evidenceSnapshot": "sha256/82/82bfd4ef0c4302c531d505c89f104dd6d531ff371338fd171afc42cb32310e2b"
+      },
+      "actions": [
+        {
+          "type": "event_history",
+          "inputSetupSha256": "f6d5be1733ea698e9569326d08840d6980b4aa272eeb3e36674e8101f01e87a9",
+          "expectedAssertions": [
+            {"observation": "walking-mode", "operator": "equals", "value": true},
+            {"observation": "underground-mode", "operator": "equals", "value": true},
+            {"observation": "craft-mode-class", "operator": "equals", "value": 128}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "forward-adjacent-denied",
+      "from": {
+        "evidenceSnapshot": "sha256/a7/a742b0904d8d8f45a744fc59657a32ce82c17a8ff45cf6bdd11d12c106b89d70"
+      },
+      "actions": [
+        {
+          "type": "event_history",
+          "inputSetupSha256": "5b48dfacb845c0c353c7e8419526542aa4e71406336e446d557a6ee3eb0a3830",
+          "expectedAssertions": [
+            {"observation": "walking-mode", "operator": "equals", "value": true},
+            {"observation": "underground-mode", "operator": "equals", "value": false},
+            {"observation": "craft-mode-class", "operator": "equals", "value": 128}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "opposing-adjacent-denied",
+      "from": {
+        "evidenceSnapshot": "sha256/33/3326dd62fc7d95d8cb920db7bef85ee8b16651ef18cf6c48bf75e4c5d3d1d1c9"
+      },
+      "actions": [
+        {
+          "type": "event_history",
+          "inputSetupSha256": "72a5a0587c14387a60a87902c22dce193654aae7e9ab1f31e4ae0fc76955d5a5",
+          "expectedAssertions": [
+            {"observation": "walking-mode", "operator": "equals", "value": true},
+            {"observation": "underground-mode", "operator": "equals", "value": false},
+            {"observation": "craft-mode-class", "operator": "equals", "value": 128}
+          ]
+        }
+      ]
+    }
+  ]
+}

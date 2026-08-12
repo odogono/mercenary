@@ -19,6 +19,7 @@
           "traceId": {"type": "string", "pattern": "^TR-[0-9]{4}$"},
           "traceVersion": {"type": "integer", "minimum": 1},
           "traceSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "branchId": {"type": "string", "pattern": "^[a-z0-9-]+$"},
           "decoderVersions": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
           "artifactHashes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
           "restriction": {"const": "local-restricted"},
