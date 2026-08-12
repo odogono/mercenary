@@ -15,6 +15,7 @@ from c64lab.catalogue import (
     catalogue_digest,
     normalized_sample_digest,
     review_catalogue,
+    select_catalogue_trace_branches,
     store_artifact,
     summarize_catalogue,
     validate_catalogue,
@@ -242,6 +243,38 @@ None.
 
 
 class TraceContractTests(unittest.TestCase):
+    def test_selects_named_trace_branches_in_canonical_trace_order(self) -> None:
+        trace = {
+            "branches": [
+                {"id": "mask-03", "actions": []},
+                {"id": "mask-04", "actions": []},
+                {"id": "mask-05", "actions": []},
+            ]
+        }
+
+        selected = select_catalogue_trace_branches(trace, ["mask-05", "mask-03"])
+
+        self.assertEqual([branch["id"] for branch in selected], ["mask-03", "mask-05"])
+
+    def test_rejects_an_unknown_or_repeated_trace_branch_selection(self) -> None:
+        trace = {"branches": [{"id": "mask-03", "actions": []}]}
+
+        with self.assertRaisesRegex(LabError, "unknown catalogue trace branch"):
+            select_catalogue_trace_branches(trace, ["mask-04"])
+        with self.assertRaisesRegex(LabError, "repeats catalogue trace branch"):
+            select_catalogue_trace_branches(trace, ["mask-03", "mask-03"])
+
+    def test_rejects_a_selected_branch_without_its_snapshot_source_branch(self) -> None:
+        trace = {
+            "branches": [
+                {"id": "setup", "from": {"checkpoint": "interactive"}, "actions": []},
+                {"id": "action", "from": {"branch": "setup", "capture": "ready"}, "actions": []},
+            ]
+        }
+
+        with self.assertRaisesRegex(LabError, "requires selected source branch setup"):
+            select_catalogue_trace_branches(trace, ["action"])
+
     def test_keeps_cycle_limit_for_cold_checkpoint_branch(self) -> None:
         self.assertEqual(
             catalogue_cycle_limit_arguments(120_000_000, {"checkpoint": "interactive"}),

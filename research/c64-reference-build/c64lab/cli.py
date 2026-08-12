@@ -87,6 +87,7 @@ def _parser() -> argparse.ArgumentParser:
     catalogue_run.add_argument("--prg", required=True, type=Path)
     catalogue_run.add_argument("--trace", required=True, type=Path)
     catalogue_run.add_argument("--observation-map", type=Path)
+    catalogue_run.add_argument("--branch", action="append", dest="branches")
 
     catalogue_build = catalogue_commands.add_parser("build", help="assemble a restricted catalogue bundle")
     catalogue_build.add_argument("--entries", required=True, type=Path)
@@ -209,7 +210,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                 raise LabError(f"Could not read event-history proof report: {error}") from error
             result = {"status": "verified", **validate_event_history_proof(capture_report, replay_reports)}
         else:
-            result = run_catalogue_trace(arguments.prg, arguments.trace, arguments.observation_map)
+            result = run_catalogue_trace(
+                arguments.prg,
+                arguments.trace,
+                arguments.observation_map,
+                branch_ids=arguments.branches,
+            )
     except LabError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1

@@ -65,6 +65,12 @@ unwarped with an effective configuration capture; D64 media is attached at
 branch-process setup in read/write or read-only mode and hashed only after
 orderly shutdown. See
 [`docs/research/behavior-catalogue.md`](../../docs/research/behavior-catalogue.md).
+If an emulator process fails partway through a multi-branch trace, repeat
+`--branch <branch-id>` to run only the affected branch. The selector validates
+the complete trace first and retains its original version and content hash in
+the Evidence record; repeated selectors are allowed and execute in canonical
+trace order. This is bounded failure recovery, not permission to omit an
+unfavourable or failing branch from the required proof count.
 
 Semantic proof traces may add typed captures, assertions, and outcome
 classification by passing an ignored declarative map with `--observation-map`.

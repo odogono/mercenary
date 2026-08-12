@@ -470,6 +470,29 @@ def validate_catalogue_trace(trace: dict[str, Any], cycle_limit: int) -> None:
     _require(total_budget <= cycle_limit, f"Catalogue trace exceeds cycle limit {cycle_limit}")
 
 
+def select_catalogue_trace_branches(
+    trace: dict[str, Any], branch_ids: list[str] | None
+) -> list[dict[str, Any]]:
+    branches = trace["branches"]
+    if branch_ids is None:
+        return branches
+    _require(bool(branch_ids), "Catalogue trace branch selection must not be empty")
+    requested = set(branch_ids)
+    _require(len(requested) == len(branch_ids), "Catalogue trace selection repeats catalogue trace branch")
+    available = {branch["id"] for branch in branches}
+    unknown = sorted(requested - available)
+    _require(not unknown, f"Catalogue trace selection names unknown catalogue trace branch: {', '.join(unknown)}")
+    selected = [branch for branch in branches if branch["id"] in requested]
+    for branch in selected:
+        source_branch = branch.get("from", {}).get("branch")
+        if source_branch is not None:
+            _require(
+                source_branch in requested,
+                f"Catalogue trace branch {branch['id']} requires selected source branch {source_branch}",
+            )
+    return selected
+
+
 def _validate_semantic_assertions(assertions: Any, context: str) -> None:
     _require(isinstance(assertions, list) and bool(assertions), f"{context} needs semantic assertions")
     operators = {"equals", "not-equals", "unchanged", "changed", "delta", "range", "member"}
@@ -1091,10 +1114,12 @@ def run_catalogue_trace(
     observation_map_path: Path | None = None,
     *,
     phase_target: dict[str, int] | None = None,
+    branch_ids: list[str] | None = None,
 ) -> dict[str, Any]:
     trace = _load_json(trace_path)
     _, config = load_configuration()
     validate_catalogue_trace(trace, config["cycleLimit"])
+    selected_branches = select_catalogue_trace_branches(trace, branch_ids)
     uses_semantics = any(
         action["type"].startswith("semantic_") or action["type"] == "wait_boundary"
         for branch in trace["branches"]
@@ -1119,7 +1144,7 @@ def run_catalogue_trace(
     pal_phases: list[dict[str, int]] = []
     trace_sha256 = file_hash(trace_path)
 
-    for branch in trace["branches"]:
+    for branch in selected_branches:
         source = branch["from"]
         if "checkpoint" in source:
             branch_snapshot = source_snapshot
@@ -1158,6 +1183,7 @@ def run_catalogue_trace(
         "traceSha256": trace_sha256,
         "sourceRunId": source_manifest["runId"],
         "mode": trace["mode"],
+        "selectedBranches": [branch["id"] for branch in selected_branches],
         "evidenceIds": [record["id"] for record in evidence_records],
     }
     _write_json(run_root / "manifest.json", manifest)
