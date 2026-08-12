@@ -114,3 +114,17 @@ must itself be proof-mode, and must match each cited Evidence record's exact
 trace version and content hash. Stochastic obligations additionally require a
 typed `stratified-pal` trace; artifact-hash outcome classification cannot
 promote UNC-0001.
+
+UNC-0001 is bounded to reachable, mode-neutral Game Semantics. It establishes
+the action surface, conflicts, rate limits, PAL timing, generic entry/exit/fire
+transitions, generic interaction boundaries, and player-observable stochastic
+outcomes without naming or selecting a Geometry Identity. It does not need to
+prove unreachable dispatch states or transient random values that converge
+before changing player-observable state.
+
+Geometry Identity mappings and object-conditioned entry, collision, portal,
+visibility, weapon, interaction, and restart-placement predicates belong to
+UNC-0002 (issue #28). Inventory identity, capacity, and item-conditioned
+take/drop predicates belong to UNC-0003 (issue #29). Evidence may discover
+those predicates while proving UNC-0001, but they do not become UNC-0001
+closure obligations.
