@@ -139,6 +139,7 @@ class EventHistorySafetyTests(unittest.TestCase):
             "viceExecutableSha256": "a" * 64,
             "driverExecutableSha256": "b" * 64,
             "effectiveConfigSha256": "f" * 64,
+            "inputSetupSha256": "1" * 64,
             "focusChecks": 4,
             "durationMilliseconds": 1200,
             "typedObservations": {"mode": "SM-0001", "x": 10},
@@ -155,6 +156,7 @@ class EventHistorySafetyTests(unittest.TestCase):
         replay = {
             "viceExecutableSha256": "a" * 64,
             "effectiveConfigSha256": "f" * 64,
+            "inputSetupSha256": "1" * 64,
             "startSnapshotSha256": "c" * 64,
             "viceLog": "Main CPU: RESET.\nUnit 8: RESET (For undump).\n",
             "typedObservations": {"mode": "SM-0001", "x": 10},
@@ -176,6 +178,7 @@ class EventHistorySafetyTests(unittest.TestCase):
             "viceExecutableSha256": "a" * 64,
             "driverExecutableSha256": "b" * 64,
             "effectiveConfigSha256": "f" * 64,
+            "inputSetupSha256": "1" * 64,
             "focusChecks": 4,
             "durationMilliseconds": 100,
             "typedObservations": {"mode": "SM-0001"},
@@ -189,6 +192,7 @@ class EventHistorySafetyTests(unittest.TestCase):
             "coldStartId": "same",
             "viceExecutableSha256": "a" * 64,
             "effectiveConfigSha256": "f" * 64,
+            "inputSetupSha256": "1" * 64,
             "startSnapshotSha256": "c" * 64,
             "viceLog": "Main CPU: RESET.\nUnit 8: RESET (For undump).\n",
             "typedObservations": {"mode": "SM-0001"},
@@ -202,6 +206,11 @@ class EventHistorySafetyTests(unittest.TestCase):
                 {**replay, "coldStartId": "cold-1", "effectiveConfigSha256": "9" * 64},
                 {**replay, "coldStartId": "cold-2", "effectiveConfigSha256": "9" * 64},
             ])
+        with self.assertRaisesRegex(LabError, "input setup"):
+            validate_event_history_proof(capture, [
+                {**replay, "coldStartId": "cold-1", "inputSetupSha256": "9" * 64},
+                {**replay, "coldStartId": "cold-2", "inputSetupSha256": "9" * 64},
+            ])
 
     def test_rejects_proof_without_the_recorded_typed_end_state(self) -> None:
         capture = {
@@ -210,6 +219,7 @@ class EventHistorySafetyTests(unittest.TestCase):
             "viceExecutableSha256": "a" * 64,
             "driverExecutableSha256": "b" * 64,
             "effectiveConfigSha256": "f" * 64,
+            "inputSetupSha256": "1" * 64,
             "focusChecks": 4,
             "durationMilliseconds": 100,
             "events": [
@@ -222,6 +232,7 @@ class EventHistorySafetyTests(unittest.TestCase):
             "viceExecutableSha256": "a" * 64,
             "effectiveConfigSha256": "f" * 64,
             "startSnapshotSha256": "c" * 64,
+            "inputSetupSha256": "1" * 64,
             "viceLog": "Main CPU: RESET.\nUnit 8: RESET (For undump).\n",
             "typedObservations": {"mode": "SM-0001"},
         }

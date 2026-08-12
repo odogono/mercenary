@@ -99,7 +99,8 @@ recorded end state for two independent replay processes.
 Write each replay's cold-start ID, VICE and effective-configuration digests,
 start-snapshot digest, VICE log, and typed end observations to an ignored JSON
 report. The verifier requires exactly two distinct cold starts, binds both to
-the capture identities, rejects startup-reset races and configuration drift,
+the capture identities, recording configuration, and opaque input-setup
+digest, rejects startup-reset races and configuration or setup drift,
 and emits only a normalized public-safe summary:
 
 ```sh
