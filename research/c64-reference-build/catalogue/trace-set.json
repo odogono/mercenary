@@ -72,6 +72,29 @@
       "path": "traces/TR-9023-locomotion-pal-cadence.json",
       "kind": "deterministic",
       "repetitions": 2
+    },
+    {
+      "path": "traces/TR-9024-exact-throttle-commands.json",
+      "kind": "event-history",
+      "repetitions": 2,
+      "evidenceIds": [
+        "EV-85fb46ab00ac386e", "EV-b2dddd5389c096ec", "EV-af0335197c4535aa",
+        "EV-078c7d051dcc7705", "EV-9199e9f0af452ff0", "EV-2faae6fb300f4173",
+        "EV-c996f025f55967f5", "EV-1f1c3c88a4f85422", "EV-96e1c885b18b5c95",
+        "EV-9de13aa93345299d"
+      ],
+      "normalizedDigests": {
+        "exact-zero": "d2685f7bf547b2b6c6975166b7ceb055c53617af8b2d3484154f02b31e0ffa02",
+        "exact-one": "8ad69b22031f27ea621ae9d79682b83b75ffec263a3285d8f707cdd444855f63",
+        "exact-two": "a72f49f049471f5cc1b4afa47ac318291bc3cd1c88d29c332fa73844e1e3042b",
+        "exact-three": "906ee6c5f5f4044e37a930a861979fa10f060525e58b609d601f8d938aacf0db",
+        "exact-four": "cd5ae6c23977dca828515aac99d045bf88319d14c1e5cace577b6e18dcb3f904",
+        "exact-five": "601fccf4e08e996f775818fab5c4bf1aaa77d3a84d211cd56831c71c4ae04284",
+        "exact-six": "f2382f55b5bd56a3d59f846d90b46a3bcffff861b0c8dfac5290b6931aeb6879",
+        "exact-seven": "b04f56b16a0703fe847d92dc1de7ed5d195b8df1ab4a7ffad1331ad83155dc88",
+        "exact-eight": "287c17a1f41dc0864fe6a5b479ea881c42f331a6239d5647c92e4d1b30cd7e39",
+        "exact-nine": "89521ac0b402735a2ae9bff2b4eaacae247b2a21892803233c58f29d3e7e98d3"
+      }
     }
   ]
 }
