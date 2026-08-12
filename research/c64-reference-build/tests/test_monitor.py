@@ -19,6 +19,7 @@ from c64lab.monitor import (  # noqa: E402
     cpu_history_body,
     joyport_set_body,
     keyboard_feed_body,
+    keyboard_matrix_set_body,
     memory_get_body,
     memory_set_body,
     parse_response,
@@ -101,6 +102,7 @@ class MonitorProtocolTests(unittest.TestCase):
             struct.pack("<HHBBBBB", 0x8477, 0x8477, 1, 1, 4, 1, 0),
         )
         self.assertEqual(keyboard_feed_body("Y\r"), b"\x02Y\r")
+        self.assertEqual(keyboard_matrix_set_body([0, 1, 2, 4] + [0] * 12), bytes([0, 1, 2, 4] + [0] * 12))
         self.assertEqual(joyport_set_body(2, 17), struct.pack("<HH", 1, 17))
         self.assertEqual(advance_instructions_body(20000), struct.pack("<BH", 0, 20000))
 
@@ -171,6 +173,31 @@ class MonitorProtocolTests(unittest.TestCase):
         client = MonitorClient(MagicMock())
         with self.assertRaisesRegex(ValueError, "five-bit"):
             client.joyport_set(0x20)
+
+    def test_keyboard_matrix_set_is_atomic_and_requires_all_rows(self) -> None:
+        client = MonitorClient(MagicMock())
+        client.request = MagicMock(return_value=(Response(0xA3, 0, 1, b""), []))
+        rows = [0, 0x20] + [0] * 14
+
+        client.keyboard_matrix_set(rows)
+
+        client.request.assert_called_once_with(0xA3, bytes(rows))
+        with self.assertRaisesRegex(ValueError, "16 rows"):
+            keyboard_matrix_set_body([0] * 15)
+        with self.assertRaisesRegex(ValueError, "eight-bit"):
+            keyboard_matrix_set_body([0] * 15 + [256])
+
+    def test_keyboard_matrix_get_requires_all_rows_in_the_response(self) -> None:
+        client = MonitorClient(MagicMock())
+        rows = bytes([0, 0x20] + [0] * 14)
+        client.request = MagicMock(return_value=(Response(0xA4, 0, 1, rows), []))
+
+        self.assertEqual(client.keyboard_matrix(), list(rows))
+
+        client.request.assert_called_once_with(0xA4)
+        client.request = MagicMock(return_value=(Response(0xA4, 0, 1, rows[:-1]), []))
+        with self.assertRaisesRegex(MonitorProtocolError, "keyboard-matrix response"):
+            client.keyboard_matrix()
 
 
 if __name__ == "__main__":

@@ -88,7 +88,9 @@ private func activate(pid: Int32) throws {
     guard let application = NSRunningApplication(processIdentifier: pid) else {
         throw DriverError.invalid("pinned VICE application is unavailable")
     }
-    try require(application.activate(options: [.activateAllWindows]), "could not activate the pinned VICE process")
+    if !application.isActive {
+        _ = application.activate(options: [.activateAllWindows])
+    }
     let deadline = Date().addingTimeInterval(2)
     while !application.isActive && Date() < deadline {
         Thread.sleep(forTimeInterval: 0.02)

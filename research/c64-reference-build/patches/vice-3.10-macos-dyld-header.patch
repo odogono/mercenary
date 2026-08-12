@@ -1,0 +1,11 @@
+diff --git a/src/arch/shared/macOS-launcher.c b/src/arch/shared/macOS-launcher.c
+--- a/src/arch/shared/macOS-launcher.c
++++ b/src/arch/shared/macOS-launcher.c
+@@ -26,6 +26,7 @@
+ #include <unistd.h>
+ #include <libgen.h>
+ #include <limits.h>
++#include <mach-o/dyld.h>
+ 
+ int main(int argc, char *argv[])
+ {

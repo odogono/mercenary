@@ -28,3 +28,26 @@ The binary protocol's wait primitive is instruction-counted, so scenarios name
 it `wait_instructions`; the emulator-wide `-limitcycles` remains the hard cycle
 bound. The protocol exposes control ports with zero-based identifiers even
 though scenarios use the C64's user-facing joystick port 2.
+
+## Laboratory keyboard-matrix extension
+
+Host keyboard translation cannot reliably express simultaneous C64 matrix
+keys on macOS. For restricted semantic-input experiments, the laboratory may
+build the pinned VICE 3.10 source archive after applying
+`patches/vice-3.10-keyboard-matrix-monitor.patch`. The generic patch adds binary
+monitor command `0xA3`: its request is exactly 16 one-byte row masks, applied
+atomically to the emulated matrix, latched immediately, and recorded through
+VICE's existing `EVENT_KEYBOARD_MATRIX` history path. Its empty response also
+uses type `0xA3`. Readback command `0xA4` takes no body and returns the 16
+currently latched row masks for fail-fast injection checks. No game-specific
+rows, columns, addresses, or decoded values belong in the patch or tracked
+callers.
+
+The source archive must hash to
+`8e5bac18cbcb9f192380ad3ef881f8790f5b75c41d7b3da65d831985d864d6d1`.
+On current macOS SDKs, apply `patches/vice-3.10-macos-dyld-header.patch` as a
+build-only compatibility fix. Evidence must record the source, both applied
+patch hashes, built executable hash, effective configuration, and actual input
+setup. The extension changes only how laboratory input reaches the existing
+emulated matrix; typed semantic observations, repeated cold starts, and event
+history replay remain the proof rather than command acknowledgment alone.

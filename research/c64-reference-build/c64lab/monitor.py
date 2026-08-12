@@ -72,6 +72,14 @@ def keyboard_feed_body(text: str) -> bytes:
     return bytes([len(encoded)]) + encoded
 
 
+def keyboard_matrix_set_body(rows: list[int]) -> bytes:
+    if len(rows) != 16:
+        raise ValueError("keyboard matrix must contain exactly 16 rows")
+    if any(not isinstance(row, int) or not 0 <= row <= 0xFF for row in rows):
+        raise ValueError("each keyboard matrix row must be an eight-bit mask")
+    return bytes(rows)
+
+
 def joyport_set_body(port: int, value: int) -> bytes:
     if port != 2:
         raise ValueError("the Reference Build uses joystick port 2")
@@ -286,6 +294,17 @@ class MonitorClient:
 
     def keyboard_feed(self, text: str) -> None:
         self.request(0x72, keyboard_feed_body(text))
+
+    def keyboard_matrix_set(self, rows: list[int]) -> None:
+        response, _ = self.request(0xA3, keyboard_matrix_set_body(rows))
+        if response.response_type != 0xA3 or response.body:
+            raise MonitorProtocolError("VICE returned an invalid keyboard-matrix response")
+
+    def keyboard_matrix(self) -> list[int]:
+        response, _ = self.request(0xA4)
+        if response.response_type != 0xA4 or len(response.body) != 16:
+            raise MonitorProtocolError("VICE returned an invalid keyboard-matrix response")
+        return list(response.body)
 
     def configure_joyport_simulation(self) -> None:
         # Binary-monitor joyport writes address VICE's I/O Simulation device,
