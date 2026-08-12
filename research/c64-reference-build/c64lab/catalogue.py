@@ -1228,6 +1228,8 @@ def _run_trace_branch(
                         pass
                     client_instruction_count += advanced
                     registers = client.registers()
+                    history = client.cpu_history(1)
+                    _require(len(history) == 1, "VICE did not return the current absolute CPU clock")
                     timeline.append(
                         {
                             "actionIndex": index,
@@ -1238,6 +1240,7 @@ def _run_trace_branch(
                             "rasterLine": registers.get("LIN"),
                             "rasterCycle": registers.get("CYC"),
                             "pc": registers.get("PC"),
+                            "cpuClock": history[0]["clock"],
                         }
                     )
                 client.quit()

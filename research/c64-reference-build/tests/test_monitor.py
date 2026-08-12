@@ -16,6 +16,7 @@ from c64lab.monitor import (  # noqa: E402
     advance_instructions_body,
     checkpoint_set_body,
     command_frame,
+    cpu_history_body,
     joyport_set_body,
     keyboard_feed_body,
     memory_get_body,
@@ -59,6 +60,20 @@ class MonitorProtocolTests(unittest.TestCase):
         self.assertEqual(
             memory_set_body(0x1000, b"\xaa\xbb", bank_id=3),
             struct.pack("<BHHBH", 0, 0x1000, 0x1001, 0, 3) + b"\xaa\xbb",
+        )
+
+    def test_decodes_the_absolute_cpu_clock_from_history(self) -> None:
+        client = MonitorClient(MagicMock())
+        client._register_names = {3: "PC"}
+        register_item = b"\x03\x03\x34\x12"
+        history_item = struct.pack("<H", 1) + register_item + struct.pack("<Q", 0x0102030405060708) + b"\x02\xa9\x01"
+        body = struct.pack("<I", 1) + bytes([len(history_item)]) + history_item
+        client.request = MagicMock(return_value=(Response(0x86, 0, 1, body), []))
+
+        self.assertEqual(cpu_history_body(1), struct.pack("<BI", 0, 1))
+        self.assertEqual(
+            client.cpu_history(1),
+            [{"clock": 0x0102030405060708, "registers": {"PC": 0x1234}, "instructionHex": "a901"}],
         )
 
     def test_builds_a_string_resource_write_that_integer_resources_can_interpret(self) -> None:

@@ -59,8 +59,10 @@ registers. `Advance Instructions` counts instructions, not cycles. VICE 3.10
 also added `CPU History`, whose records include an eight-byte CPU clock and the
 instruction's register state and bytes, but CPU history is a compile-time
 option (`--enable-cpuhistory`) and uses a bounded cyclic buffer. The catalogue
-must therefore feature-test it and must not make it the only source of boundary
-ordering. [register and instruction commands](https://vice-emu.sourceforge.io/vice_13.html#SEC358)
+runner requests the latest history record at each stopped action boundary and
+records its absolute clock alongside `LIN`, `CYC`, and client instruction
+counts. It rejects a missing or malformed clock, and does not make CPU history
+the only source of boundary ordering. [register and instruction commands](https://vice-emu.sourceforge.io/vice_13.html#SEC358)
 [CPU History](https://vice-emu.sourceforge.io/vice_13.html#SEC372)
 [VICE 3.10 release source](https://sourceforge.net/projects/vice-emu/files/releases/vice-3.10.tar.gz/download)
 

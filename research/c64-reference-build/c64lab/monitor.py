@@ -88,6 +88,12 @@ def advance_instructions_body(count: int) -> bytes:
     return struct.pack("<BH", 0, count)
 
 
+def cpu_history_body(count: int) -> bytes:
+    if not 1 <= count <= 0xFFFFFFFF:
+        raise ValueError("CPU history count must be 1..4294967295")
+    return struct.pack("<BI", 0, count)
+
+
 def resource_set_body(name: str, value: str) -> bytes:
     encoded_name = name.encode("ascii")
     encoded_value = value.encode("utf-8")
@@ -328,6 +334,50 @@ class MonitorClient:
                 raise MonitorProtocolError("invalid VICE register value")
             registers[names.get(item[0], f"register-{item[0]}")] = struct.unpack_from("<H", item, 1)[0]
         return registers
+
+    def cpu_history(self, count: int) -> list[dict[str, object]]:
+        names = self._get_register_names()
+        response, _ = self.request(0x86, cpu_history_body(count))
+        if response.response_type != 0x86 or len(response.body) < 4:
+            raise MonitorProtocolError("VICE returned an invalid CPU history response")
+        item_count = struct.unpack_from("<I", response.body, 0)[0]
+        position = 4
+        history: list[dict[str, object]] = []
+        for _ in range(item_count):
+            if position >= len(response.body):
+                raise MonitorProtocolError("truncated VICE CPU history item")
+            item_size = response.body[position]
+            item_end = position + 1 + item_size
+            if item_end > len(response.body):
+                raise MonitorProtocolError("truncated VICE CPU history item body")
+            item = response.body[position + 1 : item_end]
+            if len(item) < 11:
+                raise MonitorProtocolError("VICE CPU history item is too short")
+            register_count = struct.unpack_from("<H", item, 0)[0]
+            item_position = 2
+            registers: dict[str, int] = {}
+            for _ in range(register_count):
+                if item_position >= len(item):
+                    raise MonitorProtocolError("truncated VICE CPU history register")
+                register_size = item[item_position]
+                register_end = item_position + 1 + register_size
+                register = item[item_position + 1 : register_end]
+                if register_end > len(item) or len(register) != 3:
+                    raise MonitorProtocolError("invalid VICE CPU history register")
+                registers[names.get(register[0], f"register-{register[0]}")] = struct.unpack_from("<H", register, 1)[0]
+                item_position = register_end
+            if item_position + 9 > len(item):
+                raise MonitorProtocolError("truncated VICE CPU history clock")
+            clock = struct.unpack_from("<Q", item, item_position)[0]
+            instruction_length = item[item_position + 8]
+            instruction = item[item_position + 9 :]
+            if len(instruction) != instruction_length:
+                raise MonitorProtocolError("invalid VICE CPU history instruction")
+            history.append({"clock": clock, "registers": registers, "instructionHex": instruction.hex()})
+            position = item_end
+        if len(history) != item_count or position != len(response.body):
+            raise MonitorProtocolError("VICE CPU history count did not match its records")
+        return history
 
     def memory(self, bank_id: int, start: int = 0, end: int = 0xFFFF) -> bytes:
         response, _ = self.request(0x01, memory_get_body(start, end, bank_id))
