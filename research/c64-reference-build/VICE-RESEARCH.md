@@ -50,6 +50,13 @@ retaining VICE keymap, queue, latch, and event-history behavior. Its empty
 response also uses type `0xA5`; acknowledgment proves queue admission only,
 not semantic dispatch.
 
+`run_phase_aligned_matrix_sequence` applies ignored declarative schedules at
+decoded CPU boundaries. It records the scanner entry, each matrix transition,
+and the required semantic handler with the actual PAL line and cycle registers.
+The generic sequencer contains no Reference-specific addresses or matrix rows,
+requires a bounded instruction search, and returns the matrix to neutral on
+both success and failure. Restricted schedules supply all decoded details.
+
 The source archive must hash to
 `8e5bac18cbcb9f192380ad3ef881f8790f5b75c41d7b3da65d831985d864d6d1`.
 On current macOS SDKs, apply `patches/vice-3.10-macos-dyld-header.patch` as a

@@ -28,6 +28,90 @@ def semantic_boundary_address(observation_map: Mapping[str, Any], boundary_id: s
     return address
 
 
+def run_phase_aligned_matrix_sequence(client: Any, schedule: Mapping[str, Any]) -> dict[str, Any]:
+    """Inject matrix transitions at CPU boundaries and require a semantic handler."""
+    scanner_entry = schedule.get("scannerEntryPc")
+    row_pc = schedule.get("rowPc")
+    handler_pc = schedule.get("handlerPc")
+    max_instructions = schedule.get("maxInstructions", 2_000)
+    for name, value in (
+        ("scannerEntryPc", scanner_entry),
+        ("rowPc", row_pc),
+        ("handlerPc", handler_pc),
+    ):
+        _require(isinstance(value, int) and 0 <= value <= 0xFFFF, f"Phase-aligned schedule has invalid {name}")
+    _require(
+        isinstance(max_instructions, int) and 1 <= max_instructions <= 100_000,
+        "Phase-aligned schedule maxInstructions must be 1..100000",
+    )
+
+    def matrix_rows(value: Any, label: str) -> list[int]:
+        _require(isinstance(value, list) and len(value) == 16, f"Phase-aligned {label} must contain 16 rows")
+        _require(
+            all(isinstance(row, int) and 0 <= row <= 0xFF for row in value),
+            f"Phase-aligned {label} rows must be eight-bit masks",
+        )
+        return list(value)
+
+    initial_rows = matrix_rows(schedule.get("initialRows"), "initialRows")
+    raw_switches = schedule.get("switches")
+    _require(isinstance(raw_switches, list) and bool(raw_switches), "Phase-aligned schedule requires switches")
+    switches: list[tuple[int, list[int]]] = []
+    for index, switch in enumerate(raw_switches, start=1):
+        _require(isinstance(switch, Mapping), f"Phase-aligned switch {index} must be an object")
+        before_row = switch.get("beforeRow")
+        _require(
+            isinstance(before_row, int) and 0 <= before_row <= 0xFF,
+            f"Phase-aligned switch {index} has invalid beforeRow",
+        )
+        switches.append((before_row, matrix_rows(switch.get("rows"), f"switch {index}")))
+
+    neutral = [0] * 16
+    boundaries: list[dict[str, Any]] = []
+    readbacks: list[list[int]] = []
+
+    def apply_matrix(rows: list[int]) -> None:
+        client.keyboard_matrix_set(rows)
+        actual = client.keyboard_matrix()
+        _require(actual == rows, "Phase-aligned matrix readback did not match the requested rows")
+        readbacks.append(actual)
+
+    try:
+        client.clear_checkpoints()
+        checkpoint = client.set_checkpoint(scanner_entry)
+        stopped_pc = client.resume_until_checkpoint(checkpoint)
+        _require(stopped_pc == scanner_entry, "Phase-aligned input did not reach its scanner-entry boundary")
+        boundaries.append({"id": "scanner-entry", "pc": stopped_pc, "registers": client.registers()})
+        apply_matrix(initial_rows)
+
+        for index, (before_row, rows) in enumerate(switches, start=1):
+            for _ in range(max_instructions):
+                pc = client.advance_instructions(1)
+                registers = client.registers()
+                if pc == row_pc and registers.get("X") == before_row:
+                    boundaries.append({
+                        "id": f"matrix-switch-{index}",
+                        "pc": pc,
+                        "registers": registers,
+                    })
+                    break
+            else:
+                raise LabError("Phase-aligned input did not reach its matrix-switch boundary")
+            apply_matrix(rows)
+
+        for _ in range(max_instructions):
+            pc = client.advance_instructions(1)
+            if pc == handler_pc:
+                boundaries.append({"id": "semantic-handler", "pc": pc, "registers": client.registers()})
+                break
+        else:
+            raise LabError("Phase-aligned input did not reach its semantic-handler boundary")
+        client.advance_instructions(1)
+        return {"boundaries": boundaries, "matrixReadbacks": readbacks}
+    finally:
+        client.keyboard_matrix_set(neutral)
+
+
 def decode_semantic_observations(memory: Mapping[str, bytes], observation_map: Mapping[str, Any]) -> dict[str, int | bool | str]:
     _require(observation_map.get("schemaVersion") == 1, "Semantic observation map schemaVersion must be 1")
     definitions = observation_map.get("observations")

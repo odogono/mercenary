@@ -14,6 +14,7 @@ from c64lab.semantics import (
     classify_semantic_outcome,
     decode_semantic_observations,
     pal_forward_delta,
+    run_phase_aligned_matrix_sequence,
     semantic_boundary_address,
     stratified_pal_targets,
     validate_event_history_capture,
@@ -21,6 +22,105 @@ from c64lab.semantics import (
     validate_event_history_replay,
     validate_pal_phase_coverage,
 )
+
+
+class FakePhaseMonitor:
+    def __init__(self, steps: list[tuple[int, dict[str, int]]]):
+        self.steps = iter(steps)
+        self.current = {"PC": 0x1000, "X": 0, "LIN": 1, "CYC": 2}
+        self.matrix_writes: list[list[int]] = []
+        self.checkpoint_address = 0
+
+    def clear_checkpoints(self) -> list[int]:
+        return []
+
+    def set_checkpoint(self, address: int) -> int:
+        self.checkpoint_address = address
+        return 1
+
+    def resume_until_checkpoint(self, checkpoint: int) -> int:
+        self.current = {"PC": self.checkpoint_address, "X": 0, "LIN": 10, "CYC": 11}
+        return self.checkpoint_address
+
+    def registers(self) -> dict[str, int]:
+        return dict(self.current)
+
+    def keyboard_matrix_set(self, rows: list[int]) -> None:
+        self.matrix_writes.append(list(rows))
+
+    def keyboard_matrix(self) -> list[int]:
+        return list(self.matrix_writes[-1])
+
+    def advance_instructions(self, count: int) -> int:
+        pc, registers = next(self.steps)
+        self.current = dict(registers)
+        return pc
+
+
+class PhaseAlignedMatrixTests(unittest.TestCase):
+    def test_records_exact_boundaries_and_requires_the_semantic_handler(self) -> None:
+        neutral = [0] * 16
+        command = [0, 32, *([0] * 14)]
+        modifier = [*([0] * 7), 4, *([0] * 8)]
+        monitor = FakePhaseMonitor([
+            (0x2000, {"PC": 0x2000, "X": 2, "LIN": 20, "CYC": 21}),
+            (0x2000, {"PC": 0x2000, "X": 7, "LIN": 22, "CYC": 23}),
+            (0x3000, {"PC": 0x3000, "X": 7, "LIN": 24, "CYC": 25}),
+            (0x3001, {"PC": 0x3001, "X": 7, "LIN": 24, "CYC": 27}),
+        ])
+
+        report = run_phase_aligned_matrix_sequence(monitor, {
+            "scannerEntryPc": 0x1000,
+            "rowPc": 0x2000,
+            "handlerPc": 0x3000,
+            "initialRows": command,
+            "switches": [
+                {"beforeRow": 2, "rows": neutral},
+                {"beforeRow": 7, "rows": modifier},
+            ],
+            "maxInstructions": 10,
+        })
+
+        self.assertEqual([item["id"] for item in report["boundaries"]], [
+            "scanner-entry", "matrix-switch-1", "matrix-switch-2", "semantic-handler",
+        ])
+        self.assertEqual(report["boundaries"][-1]["registers"]["LIN"], 24)
+        self.assertEqual(monitor.matrix_writes, [command, neutral, modifier, neutral])
+
+    def test_neutralizes_the_matrix_when_a_boundary_is_not_reached(self) -> None:
+        monitor = FakePhaseMonitor([
+            (0x2222, {"PC": 0x2222, "X": 1, "LIN": 1, "CYC": 1}),
+            (0x2222, {"PC": 0x2222, "X": 1, "LIN": 1, "CYC": 2}),
+        ])
+
+        with self.assertRaisesRegex(LabError, "matrix-switch boundary"):
+            run_phase_aligned_matrix_sequence(monitor, {
+                "scannerEntryPc": 0x1000,
+                "rowPc": 0x2000,
+                "handlerPc": 0x3000,
+                "initialRows": [1] + [0] * 15,
+                "switches": [{"beforeRow": 2, "rows": [0] * 16}],
+                "maxInstructions": 2,
+            })
+
+        self.assertEqual(monitor.matrix_writes[-1], [0] * 16)
+
+    def test_rejects_a_matrix_readback_mismatch(self) -> None:
+        class MismatchedReadbackMonitor(FakePhaseMonitor):
+            def keyboard_matrix(self) -> list[int]:
+                return [0] * 16
+
+        monitor = MismatchedReadbackMonitor([])
+        with self.assertRaisesRegex(LabError, "matrix readback"):
+            run_phase_aligned_matrix_sequence(monitor, {
+                "scannerEntryPc": 0x1000,
+                "rowPc": 0x2000,
+                "handlerPc": 0x3000,
+                "initialRows": [1] + [0] * 15,
+                "switches": [{"beforeRow": 2, "rows": [0] * 16}],
+            })
+
+        self.assertEqual(monitor.matrix_writes[-1], [0] * 16)
 
 
 class SemanticObservationTests(unittest.TestCase):
