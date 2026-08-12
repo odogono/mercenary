@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "TR-9022",
+  "version": 1,
+  "title": "Global reset-session transition from conditioned locomotion",
+  "mode": "proof",
+  "branches": [
+    {
+      "id": "reset-session",
+      "from": {
+        "evidenceSnapshot": "sha256/1e/1e440985aad5c05782c56c0621edfb71f7d18ada81be8422d63f5a00a73cebaf"
+      },
+      "actions": [
+        {
+          "type": "event_history",
+          "inputSetupSha256": "500d30dd2bffed90f284dba5733b7c3705e55a2a1c6efd128a7354faf19cea94",
+          "expectedAssertions": [
+            {"observation":"walking-mode","operator":"changed"},
+            {"observation":"walking-mode","operator":"equals","value":false},
+            {"observation":"position-x","operator":"unchanged"},
+            {"observation":"position-y","operator":"equals","value":128},
+            {"observation":"position-z","operator":"unchanged"}
+          ]
+        }
+      ]
+    }
+  ]
+}

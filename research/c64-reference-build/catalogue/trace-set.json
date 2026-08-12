@@ -56,6 +56,17 @@
         "release-remains-paused": "dc25eba33f04d1f671d9f7aa340e8d67fa4b1371ee1e5bfae776100b22aa2740",
         "replacement-edge-resumes": "2e2f69e2b4cbce2e1bd2568152025f9ee02204aa3746d299ebf0e490444e248e"
       }
+    },
+    {
+      "path": "traces/TR-9022-reset-session-transition.json",
+      "kind": "event-history",
+      "repetitions": 2,
+      "evidenceIds": [
+        "EV-9629a72c4606a504"
+      ],
+      "normalizedDigests": {
+        "reset-session": "fc5d8842564e16877ef8f5593f29a228412d633ea106d71576129207cc0cb7a8"
+      }
     }
   ]
 }
