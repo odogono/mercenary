@@ -59,6 +59,25 @@ def _unc_0001_scope() -> dict[str, object]:
     return {
         "uncertaintyId": "UNC-0001",
         "behaviorCaseIds": ["BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"],
+        "includedResponsibilities": [
+            "action-surface",
+            "input-conflicts",
+            "rate-limits",
+            "pal-timing",
+            "generic-transitions",
+            "generic-interaction-boundaries",
+            "player-observable-stochastic-outcomes",
+        ],
+        "excludedResponsibilities": [
+            "geometry-identity",
+            "object-conditioned-interactions",
+            "restart-placement",
+            "inventory-identity",
+            "inventory-capacity",
+            "item-conditioned-take-drop",
+            "unreachable-dispatch-states",
+            "transient-nonobservable-randomness",
+        ],
         "obligationKinds": [
             "action",
             "conflict",
@@ -961,6 +980,24 @@ class SemanticCoverageTests(unittest.TestCase):
         coverage, evidence = _complete_semantic_coverage()
 
         validate_semantic_coverage(coverage, "d" * 64, evidence, {"BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"})
+
+    def test_rejects_semantic_coverage_with_a_broadened_scope_boundary(self) -> None:
+        coverage, evidence = _complete_semantic_coverage()
+        coverage["scope"]["excludedResponsibilities"].remove("restart-placement")  # type: ignore[index]
+
+        with self.assertRaisesRegex(LabError, "scope must declare the exact excluded responsibilities"):
+            validate_semantic_coverage(
+                coverage, "d" * 64, evidence, {"BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"}
+            )
+
+    def test_rejects_semantic_coverage_with_an_incomplete_included_scope(self) -> None:
+        coverage, evidence = _complete_semantic_coverage()
+        coverage["scope"]["includedResponsibilities"].remove("pal-timing")  # type: ignore[index]
+
+        with self.assertRaisesRegex(LabError, "scope must declare the exact included responsibilities"):
+            validate_semantic_coverage(
+                coverage, "d" * 64, evidence, {"BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"}
+            )
 
     def test_rejects_semantic_coverage_that_names_an_unregistered_trace(self) -> None:
         coverage, evidence = _complete_semantic_coverage()

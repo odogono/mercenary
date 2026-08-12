@@ -38,6 +38,25 @@ EVIDENCE_ID = re.compile(r"EV-[0-9a-f]{16}")
 SHA256 = re.compile(r"[0-9a-f]{64}")
 SEMANTIC_MODE_ID = re.compile(r"SM-[0-9]{4}")
 SEMANTIC_OBLIGATION_ID = re.compile(r"SO-[0-9]{4}")
+UNC_0001_INCLUDED_RESPONSIBILITIES = {
+    "action-surface",
+    "input-conflicts",
+    "rate-limits",
+    "pal-timing",
+    "generic-transitions",
+    "generic-interaction-boundaries",
+    "player-observable-stochastic-outcomes",
+}
+UNC_0001_EXCLUDED_RESPONSIBILITIES = {
+    "geometry-identity",
+    "object-conditioned-interactions",
+    "restart-placement",
+    "inventory-identity",
+    "inventory-capacity",
+    "item-conditioned-take-drop",
+    "unreachable-dispatch-states",
+    "transient-nonobservable-randomness",
+}
 
 REQUIRED_DOMAINS = {
     "audio",
@@ -202,6 +221,14 @@ def validate_semantic_coverage(
     _require(
         declared_case_ids == required_case_ids,
         "Semantic coverage scope must declare exactly the UNC-0001 Behavior Cases",
+    )
+    _require(
+        set(scope["includedResponsibilities"]) == UNC_0001_INCLUDED_RESPONSIBILITIES,
+        "Semantic coverage scope must declare the exact included responsibilities",
+    )
+    _require(
+        set(scope["excludedResponsibilities"]) == UNC_0001_EXCLUDED_RESPONSIBILITIES,
+        "Semantic coverage scope must declare the exact excluded responsibilities",
     )
     declared_kinds = set(scope["obligationKinds"])
     _require(

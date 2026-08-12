@@ -9,10 +9,22 @@
     "catalogueSubjectDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "scope": {
       "type": "object",
-      "required": ["uncertaintyId", "behaviorCaseIds", "obligationKinds"],
+      "required": ["uncertaintyId", "behaviorCaseIds", "includedResponsibilities", "excludedResponsibilities", "obligationKinds"],
       "properties": {
         "uncertaintyId": {"const": "UNC-0001"},
         "behaviorCaseIds": {"$ref": "#/$defs/caseIds"},
+        "includedResponsibilities": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/includedResponsibility"}
+        },
+        "excludedResponsibilities": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/excludedResponsibility"}
+        },
         "obligationKinds": {
           "type": "array",
           "minItems": 1,
@@ -73,6 +85,8 @@
     "traceIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^TR-[0-9]{4}$"}},
     "evidenceIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^EV-[0-9a-f]{16}$"}},
     "outcomeIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^OUT-[a-z0-9-]+$"}},
+    "includedResponsibility": {"enum": ["action-surface", "input-conflicts", "rate-limits", "pal-timing", "generic-transitions", "generic-interaction-boundaries", "player-observable-stochastic-outcomes"]},
+    "excludedResponsibility": {"enum": ["geometry-identity", "object-conditioned-interactions", "restart-placement", "inventory-identity", "inventory-capacity", "item-conditioned-take-drop", "unreachable-dispatch-states", "transient-nonobservable-randomness"]},
     "obligationKind": {"enum": ["action", "conflict", "rate-limit", "interaction-precondition", "interaction-boundary", "stochastic-branch"]}
   },
   "additionalProperties": false

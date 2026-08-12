@@ -128,3 +128,10 @@ UNC-0002 (issue #28). Inventory identity, capacity, and item-conditioned
 take/drop predicates belong to UNC-0003 (issue #29). Evidence may discover
 those predicates while proving UNC-0001, but they do not become UNC-0001
 closure obligations.
+
+The canonical manifest repeats this boundary as closed
+`includedResponsibilities` and `excludedResponsibilities` sets. Catalogue
+validation requires those sets to match the UNC-0001 contract exactly, so a
+later coverage edit cannot silently make Geometry Identity, object predicates,
+inventory rules, unreachable states, or non-observable random activity block
+resolution again.
