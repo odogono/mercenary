@@ -109,4 +109,8 @@ rate-limit, interaction-precondition, interaction-boundary, and stochastic-branc
 obligation class. Validation also rejects modes without obligations, probe
 evidence, incomplete deterministic replays, stochastic branches below 100
 stratified PAL trials, illegal outcomes, and legal outcomes that remain
-unobserved.
+unobserved. Every cited trace must be registered by the catalogue trace set,
+must itself be proof-mode, and must match each cited Evidence record's exact
+trace version and content hash. Stochastic obligations additionally require a
+typed `stratified-pal` trace; artifact-hash outcome classification cannot
+promote UNC-0001.

@@ -806,6 +806,80 @@ class SemanticCoverageTests(unittest.TestCase):
 
         validate_semantic_coverage(coverage, "d" * 64, evidence, {"BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"})
 
+    def test_rejects_semantic_coverage_that_names_an_unregistered_trace(self) -> None:
+        coverage, evidence = _complete_semantic_coverage()
+
+        with self.assertRaisesRegex(LabError, "unregistered proof trace.*TR-0002"):
+            validate_semantic_coverage(
+                coverage,
+                "d" * 64,
+                evidence,
+                {"BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"},
+                trace_proofs={"TR-0001": {"mode": "proof", "kind": "deterministic", "repetitions": 2}},
+            )
+
+    def test_rejects_semantic_coverage_backed_by_a_probe_trace(self) -> None:
+        coverage, evidence = _complete_semantic_coverage()
+
+        with self.assertRaisesRegex(LabError, "TR-0001 must be a proof trace"):
+            validate_semantic_coverage(
+                coverage,
+                "d" * 64,
+                evidence,
+                {"BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"},
+                trace_proofs={
+                    "TR-0001": {"mode": "probe", "kind": "deterministic", "repetitions": 2},
+                    "TR-0002": {"mode": "proof", "kind": "stochastic", "repetitions": 100},
+                },
+            )
+
+    def test_rejects_stochastic_coverage_without_a_typed_stratified_trace(self) -> None:
+        coverage, evidence = _complete_semantic_coverage()
+
+        with self.assertRaisesRegex(LabError, "SO-0006 requires typed stratified-pal stochastic traces"):
+            validate_semantic_coverage(
+                coverage,
+                "d" * 64,
+                evidence,
+                {"BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"},
+                trace_proofs={
+                    "TR-0001": {"mode": "proof", "kind": "deterministic", "repetitions": 2},
+                    "TR-0002": {
+                        "mode": "proof",
+                        "kind": "stochastic",
+                        "repetitions": 100,
+                        "scheduleKind": "stratified-pal",
+                        "outcomeSource": "artifact-hash",
+                    },
+                },
+            )
+
+    def test_rejects_semantic_evidence_for_a_different_registered_trace_version(self) -> None:
+        coverage, evidence = _complete_semantic_coverage()
+        for record in evidence.values():
+            record["traceVersion"] = 1  # type: ignore[assignment]
+            record["traceSha256"] = "a" * 64
+        evidence["EV-aaaaaaaaaaaaaaaa"]["traceVersion"] = 2  # type: ignore[index]
+
+        with self.assertRaisesRegex(LabError, "evidence does not match registered trace version"):
+            validate_semantic_coverage(
+                coverage,
+                "d" * 64,
+                evidence,
+                {"BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"},
+                trace_proofs={
+                    "TR-0001": {
+                        "mode": "proof", "kind": "deterministic", "repetitions": 2,
+                        "version": 1, "sha256": "a" * 64,
+                    },
+                    "TR-0002": {
+                        "mode": "proof", "kind": "stochastic", "repetitions": 100,
+                        "scheduleKind": "stratified-pal", "outcomeSource": "typed",
+                        "version": 1, "sha256": "a" * 64,
+                    },
+                },
+            )
+
     def test_rejects_an_uncovered_unc_0001_behavior_case(self) -> None:
         coverage, evidence = _complete_semantic_coverage()
         coverage["modes"][0]["behaviorCaseIds"].remove("BC-0003")  # type: ignore[index]

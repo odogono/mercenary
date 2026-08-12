@@ -152,6 +152,8 @@ def validate_semantic_coverage(
     catalogue_subject_digest: str,
     evidence: dict[str, dict[str, Any]],
     case_ids: set[str],
+    *,
+    trace_proofs: dict[str, dict[str, Any]] | None = None,
 ) -> None:
     _validate_schema(coverage, "catalogue-semantic-coverage.schema.json")
     _require(coverage.get("catalogueSubjectDigest") == catalogue_subject_digest, "Semantic coverage targets a stale catalogue subject digest")
@@ -160,7 +162,7 @@ def validate_semantic_coverage(
     for mode_id, mode in modes.items():
         _require(bool(SEMANTIC_MODE_ID.fullmatch(mode_id)), f"Semantic coverage mode {mode_id} has an invalid ID")
         _require(mode["status"] == "verified", f"Semantic coverage mode {mode_id} is unresolved")
-        _validate_semantic_links(mode, evidence, case_ids, f"Semantic Mode {mode_id}")
+        _validate_semantic_links(mode, evidence, case_ids, f"Semantic Mode {mode_id}", trace_proofs)
     obligations = {item["id"]: item for item in coverage["obligations"]}
     _require(len(obligations) == len(coverage["obligations"]), "Semantic coverage repeats an obligation")
     kinds = {"action", "conflict", "rate-limit", "interaction-precondition", "interaction-boundary", "stochastic-branch"}
@@ -172,12 +174,23 @@ def validate_semantic_coverage(
         minimum = 100 if obligation["kind"] == "stochastic-branch" else 2
         _require(obligation["minimumProofRuns"] >= minimum, f"Semantic obligation {obligation_id} has too few required proof runs")
         _require(obligation["completedProofRuns"] >= obligation["minimumProofRuns"], f"Semantic obligation {obligation_id} has incomplete proof runs")
+        _validate_semantic_links(obligation, evidence, case_ids, f"Semantic obligation {obligation_id}", trace_proofs)
         if obligation["kind"] == "stochastic-branch":
             legal = set(obligation["legalOutcomeIds"])
             observed = set(obligation["observedOutcomeIds"])
             _require(observed <= legal, f"Semantic obligation {obligation_id} observed an illegal outcome")
             _require(legal <= observed, f"Semantic obligation {obligation_id} has unobserved legal outcomes")
-        _validate_semantic_links(obligation, evidence, case_ids, f"Semantic obligation {obligation_id}")
+            if trace_proofs is not None:
+                _require(
+                    all(
+                        trace_proofs[trace_id].get("kind") == "stochastic"
+                        and trace_proofs[trace_id].get("repetitions", 0) >= obligation["minimumProofRuns"]
+                        and trace_proofs[trace_id].get("scheduleKind") == "stratified-pal"
+                        and trace_proofs[trace_id].get("outcomeSource") == "typed"
+                        for trace_id in obligation["traceIds"]
+                    ),
+                    f"Semantic obligation {obligation_id} requires typed stratified-pal stochastic traces",
+                )
         _require(
             len(set(obligation["evidenceIds"])) >= obligation["minimumProofRuns"],
             f"Semantic obligation {obligation_id} lacks distinct proof evidence for every required run",
@@ -219,13 +232,63 @@ def validate_semantic_coverage(
     )
 
 
-def _validate_semantic_links(item: dict[str, Any], evidence: dict[str, dict[str, Any]], case_ids: set[str], context: str) -> None:
+def _validate_semantic_links(
+    item: dict[str, Any],
+    evidence: dict[str, dict[str, Any]],
+    case_ids: set[str],
+    context: str,
+    trace_proofs: dict[str, dict[str, Any]] | None,
+) -> None:
     _require(all(case_id in case_ids for case_id in item["behaviorCaseIds"]), f"{context} references an unknown Behavior Case")
+    if trace_proofs is not None:
+        for trace_id in item["traceIds"]:
+            trace = trace_proofs.get(trace_id)
+            _require(trace is not None, f"{context} references unregistered proof trace {trace_id}")
+            _require(trace.get("mode") == "proof", f"{context} trace {trace_id} must be a proof trace")
     for evidence_id in item["evidenceIds"]:
         record = evidence.get(evidence_id)
         _require(record is not None, f"{context} references unknown evidence")
         _require(record.get("mode") == "proof", f"{context} must use proof evidence")
         _require(record.get("traceId") in item["traceIds"], f"{context} evidence does not match its proof traces")
+        if trace_proofs is not None:
+            trace = trace_proofs[record["traceId"]]
+            if "version" in trace:
+                _require(
+                    record.get("traceVersion") == trace["version"],
+                    f"{context} evidence does not match registered trace version",
+                )
+            if "sha256" in trace:
+                _require(
+                    record.get("traceSha256") == trace["sha256"],
+                    f"{context} evidence does not match registered trace hash",
+                )
+
+
+def _load_semantic_trace_proofs(root: Path) -> dict[str, dict[str, Any]]:
+    trace_set_path = root / "trace-set.json"
+    _require(trace_set_path.is_file(), "Semantic coverage requires catalogue trace-set.json")
+    trace_set = _load_json(trace_set_path)
+    validate_trace_set(trace_set)
+    _, config = load_configuration()
+    traces: dict[str, dict[str, Any]] = {}
+    for item in trace_set["traces"]:
+        trace_path = (root / item["path"]).resolve()
+        _require(trace_path.is_relative_to(root.resolve()), "Semantic coverage trace path escapes the catalogue")
+        _require(trace_path.is_file(), f"Semantic coverage trace does not exist: {item['path']}")
+        trace = _load_json(trace_path)
+        validate_catalogue_trace(trace, config["cycleLimit"])
+        trace_id = trace["id"]
+        _require(trace_id not in traces, f"Semantic coverage repeats trace {trace_id}")
+        traces[trace_id] = {
+            "mode": trace["mode"],
+            "kind": item["kind"],
+            "repetitions": item["repetitions"],
+            "scheduleKind": item.get("schedule", {}).get("kind"),
+            "outcomeSource": item.get("outcomeSource"),
+            "version": trace["version"],
+            "sha256": file_hash(trace_path),
+        }
+    return traces
 
 
 def validate_catalogue_trace(trace: dict[str, Any], cycle_limit: int) -> None:
@@ -703,7 +766,13 @@ def validate_catalogue(root: Path, *, case_root: Path | None = None) -> dict[str
     semantic_coverage: dict[str, Any] | None = None
     if semantic_path.is_file():
         semantic_coverage = _load_json(semantic_path)
-        validate_semantic_coverage(semantic_coverage, catalogue_digest(catalogue_subject), evidence, case_ids)
+        validate_semantic_coverage(
+            semantic_coverage,
+            catalogue_digest(catalogue_subject),
+            evidence,
+            case_ids,
+            trace_proofs=_load_semantic_trace_proofs(root),
+        )
     documents = dict(catalogue_subject)
     if semantic_coverage is not None:
         documents["semanticCoverage"] = semantic_coverage
@@ -848,8 +917,16 @@ def build_catalogue(source_root: Path, evidence_store: Path, geometry: Path, out
     filenames = ["entries.json", "uncertainties.json", "evidence-index.json", "coverage.json"]
     if (source_root / "semantic-coverage.json").is_file():
         filenames.append("semantic-coverage.json")
+        filenames.append("trace-set.json")
     for filename in filenames:
         shutil.copyfile(source_root / filename, output_root / filename)
+    if (source_root / "semantic-coverage.json").is_file():
+        trace_set = _load_json(source_root / "trace-set.json")
+        for item in trace_set["traces"]:
+            source_trace = source_root / item["path"]
+            destination_trace = output_root / item["path"]
+            destination_trace.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source_trace, destination_trace)
     if any((source_root / "cases").glob("BC-*.md")):
         shutil.copytree(source_root / "cases", output_root / "cases")
     else:
