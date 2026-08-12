@@ -31,6 +31,11 @@
       "path": "traces/TR-9005-opaque-enterable-fixed-rate.json",
       "kind": "deterministic",
       "repetitions": 2
+    },
+    {
+      "path": "traces/TR-9016-underground-walking-actions.json",
+      "kind": "deterministic",
+      "repetitions": 2
     }
   ]
 }
