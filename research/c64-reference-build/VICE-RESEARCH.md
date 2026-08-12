@@ -55,7 +55,10 @@ decoded CPU boundaries. It records the scanner entry, each matrix transition,
 and the required semantic handler with the actual PAL line and cycle registers.
 The generic sequencer contains no Reference-specific addresses or matrix rows,
 requires a bounded instruction search, and returns the matrix to neutral on
-both success and failure. Restricted schedules supply all decoded details.
+both success and failure. A chained schedule may declare `startAtCurrent` only
+when the prior handler leaves the CPU stopped at the next scanner entry;
+the sequencer verifies that PC before accepting any input. Restricted schedules
+supply all decoded details.
 
 The source archive must hash to
 `8e5bac18cbcb9f192380ad3ef881f8790f5b75c41d7b3da65d831985d864d6d1`.

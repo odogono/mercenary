@@ -34,6 +34,7 @@ def run_phase_aligned_matrix_sequence(client: Any, schedule: Mapping[str, Any]) 
     row_pc = schedule.get("rowPc")
     handler_pc = schedule.get("handlerPc")
     max_instructions = schedule.get("maxInstructions", 2_000)
+    start_at_current = schedule.get("startAtCurrent", False)
     for name, value in (
         ("scannerEntryPc", scanner_entry),
         ("rowPc", row_pc),
@@ -44,6 +45,7 @@ def run_phase_aligned_matrix_sequence(client: Any, schedule: Mapping[str, Any]) 
         isinstance(max_instructions, int) and 1 <= max_instructions <= 100_000,
         "Phase-aligned schedule maxInstructions must be 1..100000",
     )
+    _require(isinstance(start_at_current, bool), "Phase-aligned schedule startAtCurrent must be boolean")
 
     def matrix_rows(value: Any, label: str) -> list[int]:
         _require(isinstance(value, list) and len(value) == 16, f"Phase-aligned {label} must contain 16 rows")
@@ -78,10 +80,15 @@ def run_phase_aligned_matrix_sequence(client: Any, schedule: Mapping[str, Any]) 
 
     try:
         client.clear_checkpoints()
-        checkpoint = client.set_checkpoint(scanner_entry)
-        stopped_pc = client.resume_until_checkpoint(checkpoint)
+        if start_at_current:
+            entry_registers = client.registers()
+            stopped_pc = entry_registers.get("PC")
+        else:
+            checkpoint = client.set_checkpoint(scanner_entry)
+            stopped_pc = client.resume_until_checkpoint(checkpoint)
+            entry_registers = client.registers()
         _require(stopped_pc == scanner_entry, "Phase-aligned input did not reach its scanner-entry boundary")
-        boundaries.append({"id": "scanner-entry", "pc": stopped_pc, "registers": client.registers()})
+        boundaries.append({"id": "scanner-entry", "pc": stopped_pc, "registers": entry_registers})
         apply_matrix(initial_rows)
 
         for index, (before_row, rows) in enumerate(switches, start=1):

@@ -30,6 +30,7 @@ class FakePhaseMonitor:
         self.current = {"PC": 0x1000, "X": 0, "LIN": 1, "CYC": 2}
         self.matrix_writes: list[list[int]] = []
         self.checkpoint_address = 0
+        self.resume_count = 0
 
     def clear_checkpoints(self) -> list[int]:
         return []
@@ -39,6 +40,7 @@ class FakePhaseMonitor:
         return 1
 
     def resume_until_checkpoint(self, checkpoint: int) -> int:
+        self.resume_count += 1
         self.current = {"PC": self.checkpoint_address, "X": 0, "LIN": 10, "CYC": 11}
         return self.checkpoint_address
 
@@ -121,6 +123,24 @@ class PhaseAlignedMatrixTests(unittest.TestCase):
             })
 
         self.assertEqual(monitor.matrix_writes[-1], [0] * 16)
+
+    def test_can_chain_from_an_already_stopped_scanner_entry(self) -> None:
+        monitor = FakePhaseMonitor([
+            (0x2000, {"PC": 0x2000, "X": 2, "LIN": 20, "CYC": 21}),
+            (0x3000, {"PC": 0x3000, "X": 2, "LIN": 21, "CYC": 22}),
+            (0x3001, {"PC": 0x3001, "X": 2, "LIN": 21, "CYC": 24}),
+        ])
+
+        run_phase_aligned_matrix_sequence(monitor, {
+            "scannerEntryPc": 0x1000,
+            "startAtCurrent": True,
+            "rowPc": 0x2000,
+            "handlerPc": 0x3000,
+            "initialRows": [1] + [0] * 15,
+            "switches": [{"beforeRow": 2, "rows": [0] * 16}],
+        })
+
+        self.assertEqual(monitor.resume_count, 0)
 
 
 class SemanticObservationTests(unittest.TestCase):
