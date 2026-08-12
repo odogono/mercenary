@@ -91,6 +91,7 @@ def _unc_0001_scope() -> dict[str, object]:
 
 def _complete_semantic_coverage() -> tuple[dict[str, object], dict[str, dict[str, str]]]:
     deterministic_ids = ["EV-aaaaaaaaaaaaaaaa", "EV-cccccccccccccccc"]
+    inventory_id = "EV-bbbbbbbbbbbbbbbb"
     stochastic_ids = [f"EV-{index:016x}" for index in range(100, 200)]
     deterministic_rows = [
         ("SO-0001", "Action availability", "action", ["BC-0001", "BC-0002"], "TR-0001"),
@@ -103,6 +104,14 @@ def _complete_semantic_coverage() -> tuple[dict[str, object], dict[str, dict[str
         "schemaVersion": 1,
         "catalogueSubjectDigest": "d" * 64,
         "scope": _unc_0001_scope(),
+        "modeInventory": {
+            "method": "decoded-dispatch-reachability",
+            "modeIds": ["SM-0001"],
+            "behaviorCaseIds": ["BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"],
+            "traceIds": ["TR-0001"],
+            "evidenceIds": [inventory_id],
+            "status": "verified",
+        },
         "modes": [{
             "id": "SM-0001",
             "title": "Surface locomotion",
@@ -144,8 +153,15 @@ def _complete_semantic_coverage() -> tuple[dict[str, object], dict[str, dict[str
         ],
     }
     evidence = {
-        **{evidence_id: {"mode": "proof", "traceId": "TR-0001"} for evidence_id in deterministic_ids},
-        **{evidence_id: {"mode": "proof", "traceId": "TR-0002"} for evidence_id in stochastic_ids},
+        **{
+            evidence_id: {"mode": "proof", "traceId": "TR-0001", "authority": "running-reference-build"}
+            for evidence_id in deterministic_ids
+        },
+        inventory_id: {"mode": "proof", "traceId": "TR-0001", "authority": "decoded-reference-build"},
+        **{
+            evidence_id: {"mode": "proof", "traceId": "TR-0002", "authority": "running-reference-build"}
+            for evidence_id in stochastic_ids
+        },
     }
     return coverage, evidence
 
@@ -981,6 +997,44 @@ class SemanticCoverageTests(unittest.TestCase):
 
         validate_semantic_coverage(coverage, "d" * 64, evidence, {"BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"})
 
+    def test_rejects_semantic_coverage_without_an_exhaustive_mode_inventory(self) -> None:
+        coverage, evidence = _complete_semantic_coverage()
+        coverage.pop("modeInventory")
+
+        with self.assertRaisesRegex(LabError, "mode inventory"):
+            validate_semantic_coverage(
+                coverage,
+                "d" * 64,
+                evidence,
+                {"BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"},
+            )
+
+    def test_rejects_a_mode_inventory_that_omits_a_declared_mode(self) -> None:
+        coverage, evidence = _complete_semantic_coverage()
+        second_mode = dict(coverage["modes"][0])  # type: ignore[index]
+        second_mode["id"] = "SM-0002"
+        coverage["modes"].append(second_mode)  # type: ignore[index]
+
+        with self.assertRaisesRegex(LabError, "enumerate every and only"):
+            validate_semantic_coverage(
+                coverage,
+                "d" * 64,
+                evidence,
+                {"BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"},
+            )
+
+    def test_rejects_a_mode_inventory_without_decoded_reference_proof(self) -> None:
+        coverage, evidence = _complete_semantic_coverage()
+        evidence["EV-bbbbbbbbbbbbbbbb"]["authority"] = "running-reference-build"
+
+        with self.assertRaisesRegex(LabError, "requires decoded Reference Build proof"):
+            validate_semantic_coverage(
+                coverage,
+                "d" * 64,
+                evidence,
+                {"BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"},
+            )
+
     def test_rejects_semantic_coverage_with_a_broadened_scope_boundary(self) -> None:
         coverage, evidence = _complete_semantic_coverage()
         coverage["scope"]["excludedResponsibilities"].remove("restart-placement")  # type: ignore[index]
@@ -1101,6 +1155,11 @@ class SemanticCoverageTests(unittest.TestCase):
             "schemaVersion": 1,
             "catalogueSubjectDigest": "d" * 64,
             "scope": _unc_0001_scope(),
+            "modeInventory": {
+                "method": "decoded-dispatch-reachability", "modeIds": ["SM-0001"],
+                "behaviorCaseIds": ["BC-0001"], "traceIds": ["TR-0001"],
+                "evidenceIds": ["EV-bbbbbbbbbbbbbbbb"], "status": "verified",
+            },
             "modes": [{
                 "id": "SM-0001", "title": "Surface locomotion", "behaviorCaseIds": ["BC-0001"],
                 "traceIds": ["TR-0001"], "evidenceIds": ["EV-aaaaaaaaaaaaaaaa"], "status": "verified",
@@ -1117,7 +1176,10 @@ class SemanticCoverageTests(unittest.TestCase):
             validate_semantic_coverage(
                 coverage,
                 "d" * 64,
-                {"EV-aaaaaaaaaaaaaaaa": {"mode": "proof", "traceId": "TR-0001"}},
+                {
+                    "EV-aaaaaaaaaaaaaaaa": {"mode": "proof", "traceId": "TR-0001", "authority": "running-reference-build"},
+                    "EV-bbbbbbbbbbbbbbbb": {"mode": "proof", "traceId": "TR-0001", "authority": "decoded-reference-build"},
+                },
                 {"BC-0001"},
             )
 
@@ -1126,6 +1188,11 @@ class SemanticCoverageTests(unittest.TestCase):
             "schemaVersion": 1,
             "catalogueSubjectDigest": "d" * 64,
             "scope": _unc_0001_scope(),
+            "modeInventory": {
+                "method": "decoded-dispatch-reachability", "modeIds": ["SM-0001"],
+                "behaviorCaseIds": ["BC-0018"], "traceIds": ["TR-0002"],
+                "evidenceIds": ["EV-cccccccccccccccc"], "status": "verified",
+            },
             "modes": [
                 {
                     "id": "SM-0001",
@@ -1158,7 +1225,10 @@ class SemanticCoverageTests(unittest.TestCase):
             validate_semantic_coverage(
                 coverage,
                 "d" * 64,
-                {"EV-bbbbbbbbbbbbbbbb": {"mode": "proof", "traceId": "TR-0002"}},
+                {
+                    "EV-bbbbbbbbbbbbbbbb": {"mode": "proof", "traceId": "TR-0002", "authority": "running-reference-build"},
+                    "EV-cccccccccccccccc": {"mode": "proof", "traceId": "TR-0002", "authority": "decoded-reference-build"},
+                },
                 {"BC-0018"},
             )
 
@@ -1167,6 +1237,11 @@ class SemanticCoverageTests(unittest.TestCase):
             "schemaVersion": 1,
             "catalogueSubjectDigest": "d" * 64,
             "scope": _unc_0001_scope(),
+            "modeInventory": {
+                "method": "decoded-dispatch-reachability", "modeIds": ["SM-0001"],
+                "behaviorCaseIds": ["BC-0001"], "traceIds": ["TR-0001"],
+                "evidenceIds": ["EV-bbbbbbbbbbbbbbbb"], "status": "verified",
+            },
             "modes": [
                 {
                     "id": "SM-0001",
@@ -1197,7 +1272,10 @@ class SemanticCoverageTests(unittest.TestCase):
             validate_semantic_coverage(
                 coverage,
                 "d" * 64,
-                {"EV-aaaaaaaaaaaaaaaa": {"mode": "probe", "traceId": "TR-0001"}},
+                {
+                    "EV-aaaaaaaaaaaaaaaa": {"mode": "probe", "traceId": "TR-0001", "authority": "running-reference-build"},
+                    "EV-bbbbbbbbbbbbbbbb": {"mode": "proof", "traceId": "TR-0001", "authority": "decoded-reference-build"},
+                },
                 {"BC-0001"},
             )
 
@@ -1206,6 +1284,11 @@ class SemanticCoverageTests(unittest.TestCase):
             "schemaVersion": 1,
             "catalogueSubjectDigest": "d" * 64,
             "scope": _unc_0001_scope(),
+            "modeInventory": {
+                "method": "decoded-dispatch-reachability", "modeIds": ["SM-0001"],
+                "behaviorCaseIds": ["BC-0018"], "traceIds": ["TR-0002"],
+                "evidenceIds": ["EV-cccccccccccccccc"], "status": "verified",
+            },
             "modes": [{
                 "id": "SM-0001", "title": "Surface locomotion", "behaviorCaseIds": ["BC-0018"],
                 "traceIds": ["TR-0002"], "evidenceIds": ["EV-bbbbbbbbbbbbbbbb"], "status": "verified",
@@ -1222,7 +1305,10 @@ class SemanticCoverageTests(unittest.TestCase):
             validate_semantic_coverage(
                 coverage,
                 "d" * 64,
-                {"EV-bbbbbbbbbbbbbbbb": {"mode": "proof", "traceId": "TR-0002"}},
+                {
+                    "EV-bbbbbbbbbbbbbbbb": {"mode": "proof", "traceId": "TR-0002", "authority": "running-reference-build"},
+                    "EV-cccccccccccccccc": {"mode": "proof", "traceId": "TR-0002", "authority": "decoded-reference-build"},
+                },
                 {"BC-0018"},
             )
 

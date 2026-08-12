@@ -106,7 +106,10 @@ Typed observation maps and their decoded reports must remain below ignored
 in digest-bound `semantic-coverage.json`. Its scope must declare and cover
 BC-0001, BC-0002, BC-0003, BC-0004, and BC-0018 plus every action, conflict,
 rate-limit, interaction-precondition, interaction-boundary, and stochastic-branch
-obligation class. Validation also rejects modes without obligations, probe
+obligation class. It must also enumerate every declared Semantic Mode through
+a decoded-dispatch reachability inventory backed by proof evidence; runtime
+examples alone cannot establish that the mode list is exhaustive. Validation
+also rejects modes without obligations, probe
 evidence, incomplete deterministic replays, stochastic branches below 100
 stratified PAL trials, illegal outcomes, and legal outcomes that remain
 unobserved. Every cited trace must be registered by the catalogue trace set,

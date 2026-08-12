@@ -174,10 +174,21 @@ def validate_semantic_coverage(
     *,
     trace_proofs: dict[str, dict[str, Any]] | None = None,
 ) -> None:
+    _require("modeInventory" in coverage, "Semantic coverage needs a verified exhaustive mode inventory")
     _validate_schema(coverage, "catalogue-semantic-coverage.schema.json")
     _require(coverage.get("catalogueSubjectDigest") == catalogue_subject_digest, "Semantic coverage targets a stale catalogue subject digest")
     modes = {item["id"]: item for item in coverage["modes"]}
     _require(len(modes) == len(coverage["modes"]), "Semantic coverage repeats a Semantic Mode")
+    mode_inventory = coverage["modeInventory"]
+    _require(
+        set(mode_inventory["modeIds"]) == set(modes),
+        "Semantic coverage mode inventory must enumerate every and only declared Semantic Mode",
+    )
+    _validate_semantic_links(mode_inventory, evidence, case_ids, "Semantic coverage mode inventory", trace_proofs)
+    _require(
+        any(evidence[evidence_id].get("authority") == "decoded-reference-build" for evidence_id in mode_inventory["evidenceIds"]),
+        "Semantic coverage mode inventory requires decoded Reference Build proof",
+    )
     for mode_id, mode in modes.items():
         _require(bool(SEMANTIC_MODE_ID.fullmatch(mode_id)), f"Semantic coverage mode {mode_id} has an invalid ID")
         _require(mode["status"] == "verified", f"Semantic coverage mode {mode_id} is unresolved")

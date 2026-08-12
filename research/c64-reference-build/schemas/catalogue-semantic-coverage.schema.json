@@ -3,7 +3,7 @@
   "$id": "https://github.com/odogono/mercenary/research/c64-reference-build/catalogue-semantic-coverage.schema.json",
   "title": "Semantic Mode coverage manifest",
   "type": "object",
-  "required": ["schemaVersion", "catalogueSubjectDigest", "scope", "modes", "obligations"],
+  "required": ["schemaVersion", "catalogueSubjectDigest", "scope", "modeInventory", "modes", "obligations"],
   "properties": {
     "schemaVersion": {"const": 1},
     "catalogueSubjectDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
@@ -31,6 +31,19 @@
           "uniqueItems": true,
           "items": {"$ref": "#/$defs/obligationKind"}
         }
+      },
+      "additionalProperties": false
+    },
+    "modeInventory": {
+      "type": "object",
+      "required": ["method", "modeIds", "behaviorCaseIds", "traceIds", "evidenceIds", "status"],
+      "properties": {
+        "method": {"const": "decoded-dispatch-reachability"},
+        "modeIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^SM-[0-9]{4}$"}},
+        "behaviorCaseIds": {"$ref": "#/$defs/caseIds"},
+        "traceIds": {"$ref": "#/$defs/traceIds"},
+        "evidenceIds": {"$ref": "#/$defs/evidenceIds"},
+        "status": {"const": "verified"}
       },
       "additionalProperties": false
     },
