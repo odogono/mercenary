@@ -46,10 +46,20 @@ def memory_set_body(start: int, data: bytes, bank_id: int, *, side_effects: bool
     return struct.pack("<BHHBH", int(side_effects), start, end, 0, bank_id) + data
 
 
-def checkpoint_set_body(address: int, *, temporary: bool = True) -> bytes:
-    if not 0 <= address <= 0xFFFF:
-        raise ValueError("checkpoint address must fit in 16 bits")
-    return struct.pack("<HHBBBBB", address, address, 1, 1, 4, int(temporary), 0)
+def checkpoint_set_body(
+    address: int,
+    *,
+    end_address: int | None = None,
+    operation: str = "execute",
+    temporary: bool = True,
+) -> bytes:
+    end = address if end_address is None else end_address
+    if not 0 <= address <= end <= 0xFFFF:
+        raise ValueError("checkpoint range must fit in 16 bits and start before end")
+    operation_flags = {"load": 1, "store": 2, "execute": 4}
+    if operation not in operation_flags:
+        raise ValueError("checkpoint operation must be load, store, or execute")
+    return struct.pack("<HHBBBBB", address, end, 1, 1, operation_flags[operation], int(temporary), 0)
 
 
 def keyboard_feed_body(text: str) -> bytes:
@@ -202,21 +212,63 @@ class MonitorClient:
             if response.request_id == 0xFFFFFFFF and response.response_type == response_type:
                 return response
 
-    def set_execution_checkpoint(self, address: int) -> int:
-        response, _ = self.request(0x12, checkpoint_set_body(address))
+    def set_checkpoint(
+        self,
+        address: int,
+        *,
+        end_address: int | None = None,
+        operation: str = "execute",
+        temporary: bool = True,
+    ) -> int:
+        response, _ = self.request(
+            0x12,
+            checkpoint_set_body(
+                address,
+                end_address=end_address,
+                operation=operation,
+                temporary=temporary,
+            ),
+        )
         if response.response_type != 0x11 or len(response.body) < 4:
             raise MonitorProtocolError("VICE did not return checkpoint information")
         return struct.unpack_from("<I", response.body, 0)[0]
 
-    def resume_until_checkpoint(self) -> int:
-        _, events = self.request(0xAA)
-        for event in events:
-            if event.response_type == 0x62 and len(event.body) == 2:
+    def set_execution_checkpoint(self, address: int) -> int:
+        return self.set_checkpoint(address)
+
+    def clear_checkpoints(self) -> list[int]:
+        response, events = self.request(0x14)
+        if response.response_type != 0x14 or len(response.body) != 4:
+            raise MonitorProtocolError("VICE returned an invalid checkpoint list")
+        expected_count = struct.unpack("<I", response.body)[0]
+        checkpoint_numbers = [
+            struct.unpack_from("<I", event.body, 0)[0]
+            for event in events
+            if event.response_type == 0x11 and len(event.body) >= 4
+        ]
+        if len(checkpoint_numbers) != expected_count:
+            raise MonitorProtocolError("VICE checkpoint list count did not match its records")
+        for checkpoint_number in checkpoint_numbers:
+            deleted, _ = self.request(0x13, struct.pack("<I", checkpoint_number))
+            if deleted.response_type != 0x13 or deleted.body:
+                raise MonitorProtocolError("VICE returned an invalid checkpoint-delete response")
+        return checkpoint_numbers
+
+    def resume_until_checkpoint(self, checkpoint_number: int) -> int:
+        self.request(0xAA)
+        self.wait_for_event(0x63)
+        matched_checkpoint = False
+        while True:
+            event = self.read_response()
+            if event.request_id != 0xFFFFFFFF:
+                continue
+            if event.response_type == 0x11 and len(event.body) >= 5:
+                event_checkpoint = struct.unpack_from("<I", event.body, 0)[0]
+                matched_checkpoint = event.body[4] != 0 and event_checkpoint == checkpoint_number
+            elif matched_checkpoint and event.response_type == 0x62:
+                if len(event.body) != 2:
+                    raise MonitorProtocolError("VICE stopped event has an invalid PC")
                 return struct.unpack("<H", event.body)[0]
-        stopped = self.wait_for_event(0x62)
-        if len(stopped.body) != 2:
-            raise MonitorProtocolError("VICE stopped event has an invalid PC")
-        return struct.unpack("<H", stopped.body)[0]
 
     def advance_instructions(self, count: int) -> int:
         _, events = self.request(0x71, advance_instructions_body(count))

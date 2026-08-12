@@ -260,6 +260,7 @@ def validate_catalogue_trace(trace: dict[str, Any], cycle_limit: int) -> None:
         audio_active = False
         sid_active = False
         disk_attached = False
+        joystick_state_value = 0
         for action_index, action in enumerate(actions):
             _require(isinstance(action, dict), f"Catalogue trace action {branch_id}/{action_index} must be an object")
             action_type = action.get("type")
@@ -293,7 +294,13 @@ def validate_catalogue_trace(trace: dict[str, Any], cycle_limit: int) -> None:
                 _require(isinstance(action.get("value"), int) and 0 <= action["value"] <= 31, f"{context} has an invalid joystick value")
                 duration = action.get("durationInstructions")
                 _require(isinstance(duration, int) and duration > 0, f"{context} needs a positive durationInstructions")
+                _require(joystick_state_value == 0, f"{context} cannot run a timed joystick action while input is held")
                 total_budget += duration
+            elif action_type == "joystick_state":
+                _require(action.get("port") == 2, f"{context} must use joystick port 2")
+                value = action.get("value")
+                _require(isinstance(value, int) and 0 <= value <= 31, f"{context} has an invalid joystick value")
+                joystick_state_value = value
             elif action_type == "capture":
                 name = action.get("name")
                 _require(isinstance(name, str) and bool(re.fullmatch(r"[a-z0-9-]+", name)), f"{context} has an invalid capture name")
@@ -373,6 +380,7 @@ def validate_catalogue_trace(trace: dict[str, Any], cycle_limit: int) -> None:
                 raise LabError(f"{context} has unknown type {action_type!r}")
         _require(not audio_active, f"Catalogue trace branch {branch_id} leaves audio recording active")
         _require(not sid_active, f"Catalogue trace branch {branch_id} leaves SID recording active")
+        _require(joystick_state_value == 0, f"Catalogue trace branch {branch_id} leaves joystick input held")
         if "saveMedia" in source:
             first = actions[0]
             _require(
@@ -1146,7 +1154,8 @@ def _run_trace_branch(
         with branch_log.open("w", encoding="utf-8") as log:
             process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT, text=True)
             with MonitorClient.connect(host, int(port_text), timeout=15) as client:
-                if any(action["type"] == "joystick" for action in branch["actions"]):
+                client.clear_checkpoints()
+                if any(action["type"] in {"joystick", "joystick_state"} for action in branch["actions"]):
                     client.configure_joyport_simulation()
                 if sid_requested:
                     client.set_resource("SoundDeviceName", "dump")
@@ -1166,8 +1175,9 @@ def _run_trace_branch(
                     action_type = action["type"]
                     advanced = 0
                     if action_type == "wait_pc":
-                        client.set_execution_checkpoint(action["address"])
-                        client.resume_until_checkpoint()
+                        checkpoint_number = client.set_execution_checkpoint(action["address"])
+                        stopped_pc = client.resume_until_checkpoint(checkpoint_number)
+                        _require(stopped_pc == action["address"], f"Catalogue trace wait_pc stopped at ${stopped_pc:04X}, expected ${action['address']:04X}")
                     elif action_type == "wait_instructions":
                         advanced = _advance(client, action["instructions"])
                     elif action_type == "wait_frames":
@@ -1180,6 +1190,8 @@ def _run_trace_branch(
                         client.joyport_set(action["value"])
                         advanced = _advance(client, action["durationInstructions"])
                         client.joyport_set(0)
+                    elif action_type == "joystick_state":
+                        client.joyport_set(action["value"])
                     elif action_type == "patch_memory":
                         client.set_memory(banks[action["bank"]], action["address"], bytes.fromhex(action["bytesHex"]))
                     elif action_type == "capture":

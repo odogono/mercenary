@@ -26,15 +26,20 @@ from c64lab.monitor import (  # noqa: E402
 
 
 class MonitorProtocolTests(unittest.TestCase):
-    def test_resume_accepts_a_stopped_event_that_precedes_the_ack(self) -> None:
+    def test_resume_ignores_the_pre_ack_stop_and_waits_for_a_post_resume_stop(self) -> None:
         client = MonitorClient(MagicMock())
         client.request = MagicMock(
             return_value=(Response(0xAA, 0, 1, b""), [Response(0x62, 0, 0xFFFFFFFF, b"\x77\x84")])
         )
-        client.wait_for_event = MagicMock()
+        client.wait_for_event = MagicMock(return_value=Response(0x63, 0, 0xFFFFFFFF, b"\x77\x84"))
+        client.read_response = MagicMock(side_effect=[
+            Response(0x11, 0, 0xFFFFFFFF, struct.pack("<IB", 7, 1) + b"checkpoint"),
+            Response(0x31, 0, 0xFFFFFFFF, b"registers"),
+            Response(0x62, 0, 0xFFFFFFFF, b"\x34\x12"),
+        ])
 
-        self.assertEqual(client.resume_until_checkpoint(), 0x8477)
-        client.wait_for_event.assert_not_called()
+        self.assertEqual(client.resume_until_checkpoint(7), 0x1234)
+        client.wait_for_event.assert_called_once_with(0x63)
 
     def test_builds_an_api_v2_command_frame(self) -> None:
         frame = command_frame(0x1234DEAD, 0x12, b"\xe2\xfc\xe3\xfc\x01\x01\x04\x01")
@@ -83,6 +88,52 @@ class MonitorProtocolTests(unittest.TestCase):
         self.assertEqual(keyboard_feed_body("Y\r"), b"\x02Y\r")
         self.assertEqual(joyport_set_body(2, 17), struct.pack("<HH", 1, 17))
         self.assertEqual(advance_instructions_body(20000), struct.pack("<BH", 0, 20000))
+
+    def test_builds_load_store_and_execute_checkpoints(self) -> None:
+        self.assertEqual(
+            checkpoint_set_body(0x2000, operation="load", temporary=False),
+            struct.pack("<HHBBBBB", 0x2000, 0x2000, 1, 1, 1, 0, 0),
+        )
+        self.assertEqual(
+            checkpoint_set_body(0x3000, end_address=0x3001, operation="store"),
+            struct.pack("<HHBBBBB", 0x3000, 0x3001, 1, 1, 2, 1, 0),
+        )
+        with self.assertRaisesRegex(ValueError, "operation"):
+            checkpoint_set_body(0x1000, operation="invalid")
+
+    def test_sets_a_generic_checkpoint_and_returns_its_number(self) -> None:
+        client = MonitorClient(MagicMock())
+        client.request = MagicMock(return_value=(Response(0x11, 0, 1, struct.pack("<I", 7)), []))
+
+        self.assertEqual(client.set_checkpoint(0x2000, operation="load", temporary=False), 7)
+        client.request.assert_called_once_with(
+            0x12,
+            checkpoint_set_body(0x2000, operation="load", temporary=False),
+        )
+
+    def test_clears_checkpoints_restored_from_a_snapshot(self) -> None:
+        client = MonitorClient(MagicMock())
+        client.request = MagicMock(side_effect=[
+            (
+                Response(0x14, 0, 1, struct.pack("<I", 2)),
+                [
+                    Response(0x11, 0, 0xFFFFFFFF, struct.pack("<I", 7)),
+                    Response(0x11, 0, 0xFFFFFFFF, struct.pack("<I", 9)),
+                ],
+            ),
+            (Response(0x13, 0, 2, b""), []),
+            (Response(0x13, 0, 3, b""), []),
+        ])
+
+        self.assertEqual(client.clear_checkpoints(), [7, 9])
+        self.assertEqual(
+            client.request.call_args_list,
+            [
+                unittest.mock.call(0x14),
+                unittest.mock.call(0x13, struct.pack("<I", 7)),
+                unittest.mock.call(0x13, struct.pack("<I", 9)),
+            ],
+        )
 
     def test_joyport_uses_the_io_simulator_and_translates_pressed_bits(self) -> None:
         client = MonitorClient(MagicMock())

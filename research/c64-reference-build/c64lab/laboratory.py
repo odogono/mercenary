@@ -295,13 +295,14 @@ def observe(prg: Path, scenario_path: Path) -> tuple[Path, dict[str, Any]]:
                 text=True,
             )
             with MonitorClient.connect(host, port, timeout=15) as client:
+                client.clear_checkpoints()
                 if any(action["type"] == "joystick" for action in scenario["actions"]):
                     client.configure_joyport_simulation()
                 for action in scenario["actions"]:
                     action_type = action["type"]
                     if action_type == "wait_pc":
-                        client.set_execution_checkpoint(action["address"])
-                        current_pc = client.resume_until_checkpoint()
+                        checkpoint_number = client.set_execution_checkpoint(action["address"])
+                        current_pc = client.resume_until_checkpoint(checkpoint_number)
                         if current_pc != action["address"]:
                             raise LabError(
                                 f"VICE stopped at ${current_pc:04X}, expected ${action['address']:04X}"

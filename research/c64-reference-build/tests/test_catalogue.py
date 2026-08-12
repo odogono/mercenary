@@ -241,6 +241,47 @@ None.
 
 
 class TraceContractTests(unittest.TestCase):
+    def test_accepts_a_bounded_joystick_hold_and_release(self) -> None:
+        trace = {
+            "schemaVersion": 1,
+            "id": "TR-0002",
+            "version": 1,
+            "title": "Observe held input",
+            "mode": "proof",
+            "branches": [{
+                "id": "held-input",
+                "from": {"checkpoint": "interactive"},
+                "actions": [
+                    {"type": "joystick_state", "port": 2, "value": 8, "semanticAction": "turn-right"},
+                    {"type": "wait_frames", "frames": 2},
+                    {"type": "semantic_capture", "name": "held", "observationIds": ["direction-lines"]},
+                    {"type": "joystick_state", "port": 2, "value": 0},
+                ],
+            }],
+        }
+
+        validate_catalogue_trace(trace, cycle_limit=120_000_000)
+
+    def test_rejects_a_branch_that_leaves_joystick_input_held(self) -> None:
+        trace = {
+            "schemaVersion": 1,
+            "id": "TR-0002",
+            "version": 1,
+            "title": "Unbounded held input",
+            "mode": "proof",
+            "branches": [{
+                "id": "held-input",
+                "from": {"checkpoint": "interactive"},
+                "actions": [
+                    {"type": "joystick_state", "port": 2, "value": 8, "semanticAction": "turn-right"},
+                    {"type": "wait_frames", "frames": 2},
+                ],
+            }],
+        }
+
+        with self.assertRaisesRegex(LabError, "leaves joystick input held"):
+            validate_catalogue_trace(trace, cycle_limit=120_000_000)
+
     def test_accepts_typed_semantic_capture_assertion_and_outcome_actions(self) -> None:
         trace = {
             "schemaVersion": 1,
