@@ -16,6 +16,11 @@
         "forward-adjacent-denied": "74618d9dffc51b8d731d2332079dcd771ee335f5a720c75fd9b42a2db48a6ff6",
         "opposing-adjacent-denied": "e3bc076c78c438d48717f9ddfe564ab6f8f86157a1b9fd59710cf3bd369c6462"
       }
+    },
+    {
+      "path": "traces/TR-0007-fire-effect-cadence.json",
+      "kind": "deterministic",
+      "repetitions": 2
     }
   ]
 }
