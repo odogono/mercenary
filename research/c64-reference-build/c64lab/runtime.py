@@ -16,6 +16,8 @@ def render_capture_script(prefix: str) -> str:
         f'bsave "{prefix}.cpu" 0 $0000 $ffff\n'
         "registers\n"
         f'screenshot "{prefix}.png" 2\n'
+        "; Keep loadbasic's transient media outside retained snapshots.\n"
+        "detach 1\n"
         f'dump "{prefix}.vsf"\n'
         "quit\n"
     )
@@ -38,6 +40,18 @@ def render_checkpoint_script(address: int, prg: Path, *, condition: str | None =
         f"{break_command}\n"
         'command 1 "playback \\"capture.mon\\""\n'
         "g $0820\n"
+    )
+
+
+def render_event_history_prepare_script(hotkey_file: Path) -> str:
+    hotkey_path = str(hotkey_file.resolve())
+    if '"' in hotkey_path or "\n" in hotkey_path or "\r" in hotkey_path:
+        raise LabError("Event-history hotkey path contains a quote or newline")
+    return (
+        f'resset "HotkeyFile" "{hotkey_path}"\n'
+        'resset "EventStartMode" "0"\n'
+        'resset "EventImageInclude" "0"\n'
+        "x\n"
     )
 
 

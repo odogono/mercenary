@@ -229,8 +229,19 @@ class MonitorClient:
     def keyboard_feed(self, text: str) -> None:
         self.request(0x72, keyboard_feed_body(text))
 
+    def configure_joyport_simulation(self) -> None:
+        # Binary-monitor joyport writes address VICE's I/O Simulation device,
+        # not the ordinary host joystick device. JOYPORT_ID_IO_SIMULATION is
+        # 37 in the pinned VICE 3.10 device enumeration.
+        self.set_resource("JoyPort2Device", "37")
+
     def joyport_set(self, value: int) -> None:
-        self.request(0xA2, joyport_set_body(2, value))
+        if not 0 <= value <= 0x1F:
+            raise ValueError("joystick value must be a five-bit pressed-line mask")
+        # Trace values use the familiar pressed-bit convention. The I/O
+        # Simulation device exposes the electrical lines directly, which are
+        # active-low on a C64 joystick port.
+        self.request(0xA2, joyport_set_body(2, value ^ 0x1F))
 
     def banks(self) -> dict[str, int]:
         response, _ = self.request(0x82)

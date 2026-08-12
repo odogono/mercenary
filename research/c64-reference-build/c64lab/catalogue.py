@@ -14,6 +14,14 @@ from typing import Any
 from .core import LabError, file_hash
 from .laboratory import WORK_ROOT, capture, load_configuration
 from .monitor import MonitorClient, MonitorProtocolError
+from .semantics import (
+    assert_semantic_observations,
+    classify_semantic_outcome,
+    decode_semantic_observations,
+    pal_forward_delta,
+    stratified_pal_targets,
+    validate_pal_phase_coverage,
+)
 from .toolchain import discover_toolchain
 from .verification import REPOSITORY_ROOT, validate_verification
 
@@ -27,6 +35,8 @@ UNCERTAINTY_ID = re.compile(r"UNC-[0-9]{4}")
 TRACE_ID = re.compile(r"TR-[0-9]{4}")
 EVIDENCE_ID = re.compile(r"EV-[0-9a-f]{16}")
 SHA256 = re.compile(r"[0-9a-f]{64}")
+SEMANTIC_MODE_ID = re.compile(r"SM-[0-9]{4}")
+SEMANTIC_OBLIGATION_ID = re.compile(r"SO-[0-9]{4}")
 
 REQUIRED_DOMAINS = {
     "audio",
@@ -124,6 +134,87 @@ def catalogue_digest(value: Any) -> str:
     return hashlib.sha256(_canonical_bytes(value)).hexdigest()
 
 
+def validate_semantic_coverage(
+    coverage: dict[str, Any],
+    catalogue_subject_digest: str,
+    evidence: dict[str, dict[str, Any]],
+    case_ids: set[str],
+) -> None:
+    _validate_schema(coverage, "catalogue-semantic-coverage.schema.json")
+    _require(coverage.get("catalogueSubjectDigest") == catalogue_subject_digest, "Semantic coverage targets a stale catalogue subject digest")
+    modes = {item["id"]: item for item in coverage["modes"]}
+    _require(len(modes) == len(coverage["modes"]), "Semantic coverage repeats a Semantic Mode")
+    for mode_id, mode in modes.items():
+        _require(bool(SEMANTIC_MODE_ID.fullmatch(mode_id)), f"Semantic coverage mode {mode_id} has an invalid ID")
+        _require(mode["status"] == "verified", f"Semantic coverage mode {mode_id} is unresolved")
+        _validate_semantic_links(mode, evidence, case_ids, f"Semantic Mode {mode_id}")
+    obligations = {item["id"]: item for item in coverage["obligations"]}
+    _require(len(obligations) == len(coverage["obligations"]), "Semantic coverage repeats an obligation")
+    kinds = {"action", "conflict", "rate-limit", "interaction-precondition", "interaction-boundary", "stochastic-branch"}
+    for obligation_id, obligation in obligations.items():
+        _require(bool(SEMANTIC_OBLIGATION_ID.fullmatch(obligation_id)), f"Semantic obligation {obligation_id} has an invalid ID")
+        _require(obligation["kind"] in kinds, f"Semantic obligation {obligation_id} has an invalid kind")
+        _require(all(mode_id in modes for mode_id in obligation["modeIds"]), f"Semantic obligation {obligation_id} references an unknown Semantic Mode")
+        _require(obligation["status"] == "verified", f"Semantic obligation {obligation_id} is unresolved")
+        minimum = 100 if obligation["kind"] == "stochastic-branch" else 2
+        _require(obligation["minimumProofRuns"] >= minimum, f"Semantic obligation {obligation_id} has too few required proof runs")
+        _require(obligation["completedProofRuns"] >= obligation["minimumProofRuns"], f"Semantic obligation {obligation_id} has incomplete proof runs")
+        if obligation["kind"] == "stochastic-branch":
+            legal = set(obligation["legalOutcomeIds"])
+            observed = set(obligation["observedOutcomeIds"])
+            _require(observed <= legal, f"Semantic obligation {obligation_id} observed an illegal outcome")
+            _require(legal <= observed, f"Semantic obligation {obligation_id} has unobserved legal outcomes")
+        _validate_semantic_links(obligation, evidence, case_ids, f"Semantic obligation {obligation_id}")
+        _require(
+            len(set(obligation["evidenceIds"])) >= obligation["minimumProofRuns"],
+            f"Semantic obligation {obligation_id} lacks distinct proof evidence for every required run",
+        )
+
+    scope = coverage["scope"]
+    required_case_ids = {"BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"}
+    declared_case_ids = set(scope["behaviorCaseIds"])
+    _require(
+        declared_case_ids == required_case_ids,
+        "Semantic coverage scope must declare exactly the UNC-0001 Behavior Cases",
+    )
+    declared_kinds = set(scope["obligationKinds"])
+    _require(
+        declared_kinds == kinds,
+        "Semantic coverage scope must declare every UNC-0001 obligation kind",
+    )
+    covered_case_ids = {
+        case_id
+        for item in [*coverage["modes"], *coverage["obligations"]]
+        for case_id in item["behaviorCaseIds"]
+    }
+    missing_case_ids = sorted(declared_case_ids - covered_case_ids)
+    _require(
+        not missing_case_ids,
+        f"Semantic coverage does not cover Behavior Cases: {', '.join(missing_case_ids)}",
+    )
+    covered_kinds = {item["kind"] for item in coverage["obligations"]}
+    missing_kinds = sorted(declared_kinds - covered_kinds)
+    _require(
+        not missing_kinds,
+        f"Semantic coverage does not cover obligation kinds: {', '.join(missing_kinds)}",
+    )
+    referenced_mode_ids = {mode_id for item in coverage["obligations"] for mode_id in item["modeIds"]}
+    unused_mode_ids = sorted(set(modes) - referenced_mode_ids)
+    _require(
+        not unused_mode_ids,
+        f"Semantic coverage has modes without obligations: {', '.join(unused_mode_ids)}",
+    )
+
+
+def _validate_semantic_links(item: dict[str, Any], evidence: dict[str, dict[str, Any]], case_ids: set[str], context: str) -> None:
+    _require(all(case_id in case_ids for case_id in item["behaviorCaseIds"]), f"{context} references an unknown Behavior Case")
+    for evidence_id in item["evidenceIds"]:
+        record = evidence.get(evidence_id)
+        _require(record is not None, f"{context} references unknown evidence")
+        _require(record.get("mode") == "proof", f"{context} must use proof evidence")
+        _require(record.get("traceId") in item["traceIds"], f"{context} evidence does not match its proof traces")
+
+
 def validate_catalogue_trace(trace: dict[str, Any], cycle_limit: int) -> None:
     _validate_schema(trace, "catalogue-trace.schema.json")
     _require(trace.get("schemaVersion") == 1, "Catalogue trace schemaVersion must be 1")
@@ -164,6 +255,8 @@ def validate_catalogue_trace(trace: dict[str, Any], cycle_limit: int) -> None:
         actions = branch.get("actions")
         _require(isinstance(actions, list) and bool(actions), f"Catalogue trace branch {branch_id} actions must be non-empty")
         captures: set[str] = set()
+        semantic_captures: set[str] = set()
+        semantic_outcome_seen = False
         audio_active = False
         sid_active = False
         disk_attached = False
@@ -216,6 +309,39 @@ def validate_catalogue_trace(trace: dict[str, Any], cycle_limit: int) -> None:
                         _validate_memory_range(memory_range, context)
                 if "snapshot" in artifacts:
                     captures.add(name)
+            elif action_type == "semantic_capture":
+                name = action.get("name")
+                observation_ids = action.get("observationIds")
+                _require(isinstance(name, str) and bool(re.fullmatch(r"[a-z0-9-]+", name)), f"{context} has an invalid semantic capture name")
+                _require(name not in semantic_captures, f"{context} repeats semantic capture {name}")
+                _require(
+                    isinstance(observation_ids, list)
+                    and bool(observation_ids)
+                    and len(observation_ids) == len(set(observation_ids))
+                    and all(isinstance(value, str) and bool(re.fullmatch(r"[a-z][a-z0-9-]*", value)) for value in observation_ids),
+                    f"{context} has invalid semantic observation IDs",
+                )
+                semantic_captures.add(name)
+            elif action_type == "semantic_assert":
+                before, after = action.get("before"), action.get("after")
+                _require(before in semantic_captures and after in semantic_captures, f"{context} must reference an earlier semantic capture")
+                _validate_semantic_assertions(action.get("assertions"), context)
+            elif action_type == "semantic_outcome":
+                _require(not semantic_outcome_seen, f"{context} repeats a semantic outcome")
+                _require(action.get("capture") in semantic_captures, f"{context} must reference an earlier semantic capture")
+                if "before" in action:
+                    _require(action["before"] in semantic_captures, f"{context} before must reference an earlier semantic capture")
+                outcomes = action.get("outcomes")
+                _require(isinstance(outcomes, list) and bool(outcomes), f"{context} needs typed outcomes")
+                outcome_ids: set[str] = set()
+                for outcome in outcomes:
+                    _require(isinstance(outcome, dict), f"{context} outcome must be an object")
+                    outcome_id = outcome.get("id")
+                    _require(isinstance(outcome_id, str) and bool(re.fullmatch(r"[a-z0-9-]+", outcome_id)), f"{context} has an invalid outcome ID")
+                    _require(outcome_id not in outcome_ids, f"{context} repeats outcome {outcome_id}")
+                    outcome_ids.add(outcome_id)
+                    _validate_semantic_assertions(outcome.get("assertions"), f"{context}/{outcome_id}")
+                semantic_outcome_seen = True
             elif action_type == "attach_disk":
                 _require(not disk_attached, f"{context} cannot attach a second disk")
                 _require(action.get("format") == "d64" and action.get("mode") in {"blank", "evidence"}, f"{context} supports blank or evidence D64 media")
@@ -255,6 +381,28 @@ def validate_catalogue_trace(trace: dict[str, Any], cycle_limit: int) -> None:
             )
         seen_branches[branch_id] = captures
     _require(total_budget <= cycle_limit, f"Catalogue trace exceeds cycle limit {cycle_limit}")
+
+
+def _validate_semantic_assertions(assertions: Any, context: str) -> None:
+    _require(isinstance(assertions, list) and bool(assertions), f"{context} needs semantic assertions")
+    operators = {"equals", "not-equals", "unchanged", "changed", "delta", "range", "member"}
+    for assertion in assertions:
+        _require(isinstance(assertion, dict), f"{context} semantic assertion must be an object")
+        _require(assertion.get("operator") in operators, f"{context} semantic assertion has an invalid operator")
+        _require(isinstance(assertion.get("observation"), str), f"{context} semantic assertion needs an observation")
+        operator = assertion["operator"]
+        required = {
+            "equals": {"operator", "observation", "value"},
+            "not-equals": {"operator", "observation", "value"},
+            "unchanged": {"operator", "observation"},
+            "changed": {"operator", "observation"},
+            "delta": {"operator", "observation", "value"},
+            "range": {"operator", "observation", "minimum", "maximum"},
+            "member": {"operator", "observation", "values"},
+        }[operator]
+        _require(set(assertion) == required, f"{context} semantic {operator} assertion has invalid fields")
+        if operator == "member":
+            _require(isinstance(assertion["values"], list) and bool(assertion["values"]), f"{context} semantic member assertion needs values")
 
 
 def _validate_memory_location(value: dict[str, Any], context: str) -> None:
@@ -396,11 +544,18 @@ def validate_catalogue(root: Path, *, case_root: Path | None = None) -> dict[str
     if canonical_root is None and not any(cases_root.glob("BC-*.md")):
         canonical_root = root if any(cases_root.glob("BC-*.json")) else REPOSITORY_ROOT / "verification"
     case_evidence: dict[str, set[str]] = {}
+    case_statuses: dict[str, str] = {}
+    case_uncertainties: dict[str, set[str]] = {}
     if canonical_root is None:
         case_ids = {path.stem for path in cases_root.glob("BC-*.md")} if cases_root.is_dir() else set()
         for case_id in case_ids:
             _require(bool(CASE_ID.fullmatch(case_id)), f"Behavior Case filename has invalid ID {case_id}")
-            case_evidence[case_id] = _validate_behavior_case(cases_root / f"{case_id}.md")
+            case_path = cases_root / f"{case_id}.md"
+            case_evidence[case_id] = _validate_behavior_case(case_path)
+            source = case_path.read_text(encoding="utf-8")
+            status_match = re.search(r"^- Status:\s*(.+)$", source, re.MULTILINE)
+            case_statuses[case_id] = status_match.group(1).strip() if status_match is not None else ""
+            case_uncertainties[case_id] = set()
     else:
         canonical = validate_verification(canonical_root)["caseById"]
         referenced_case_ids = {
@@ -426,6 +581,8 @@ def validate_catalogue(root: Path, *, case_root: Path | None = None) -> dict[str
             fidelity = canonical[case_id].get("fidelity")
             _require(fidelity is not None, f"Catalogue Behavior Case {case_id} must have fidelity scope")
             case_evidence[case_id] = set(fidelity["evidenceIds"])
+            case_statuses[case_id] = canonical[case_id]["status"]
+            case_uncertainties[case_id] = set(canonical[case_id]["dependencies"]["uncertaintyIds"])
 
     trace_hashes: dict[tuple[str, int], str] = {}
     for evidence_id, item in evidence.items():
@@ -442,9 +599,12 @@ def validate_catalogue(root: Path, *, case_root: Path | None = None) -> dict[str
 
     for case_id, evidence_ids in case_evidence.items():
         _require(evidence_ids <= evidence.keys(), f"Behavior Case {case_id} references unknown evidence")
+        if case_statuses[case_id] == "verified":
+            _require(not case_uncertainties[case_id], f"Verified Behavior Case {case_id} cannot retain uncertainty links")
+            _require(all(evidence[value]["mode"] == "proof" for value in evidence_ids), f"Verified Behavior Case {case_id} cannot rely on probe evidence")
 
     for uncertainty_id, item in uncertainties.items():
-        for field in ("title", "question", "impact", "crackSensitivity", "nextExperiment", "status"):
+        for field in ("title", "question", "impact", "crackSensitivity", "status"):
             _require(isinstance(item.get(field), str) and bool(item[field]), f"Uncertainty {uncertainty_id} is missing {field}")
         _require(item["status"] in {"open", "resolved"}, f"Uncertainty {uncertainty_id} has an invalid status")
         affected_entries = item.get("affectedEntryIds")
@@ -453,6 +613,11 @@ def validate_catalogue(root: Path, *, case_root: Path | None = None) -> dict[str
         _require(isinstance(affected_cases, list) and all(value in case_ids for value in affected_cases), f"Uncertainty {uncertainty_id} has an unknown affected Behavior Case")
         attempted = item.get("evidenceAttempted")
         _require(isinstance(attempted, list) and all(value in evidence for value in attempted), f"Uncertainty {uncertainty_id} has unknown attempted evidence")
+        if item["status"] == "resolved":
+            resolution = item["resolution"]
+            resolution_evidence = resolution["evidenceIds"]
+            _require(all(value in evidence for value in resolution_evidence), f"Uncertainty {uncertainty_id} resolution references unknown evidence")
+            _require(all(evidence[value]["mode"] == "proof" for value in resolution_evidence), f"Uncertainty {uncertainty_id} resolution must use proof evidence")
 
     for entry_id, item in entries.items():
         _require(isinstance(item.get("version"), int) and item["version"] > 0, f"Catalogue Entry {entry_id} version is invalid")
@@ -473,6 +638,7 @@ def validate_catalogue(root: Path, *, case_root: Path | None = None) -> dict[str
         if item["status"] == "provisional":
             _require(bool(uncertainty_ids), f"Provisional Catalogue Entry {entry_id} requires a linked uncertainty")
         if item["status"] == "verified":
+            _require(not uncertainty_ids, f"Verified Catalogue Entry {entry_id} cannot retain uncertainty links")
             _require(all(evidence[value]["mode"] == "proof" for value in evidence_ids), f"Verified Catalogue Entry {entry_id} cannot rely on probe evidence")
 
     required_domains = coverage.get("requiredDomains")
@@ -500,12 +666,23 @@ def validate_catalogue(root: Path, *, case_root: Path | None = None) -> dict[str
         _require(journey.get("kind") == "material-route", "Coverage journey kind must be material-route")
         _require(journey.get("status") in STATUSES, "Coverage journey must be verified or provisional")
 
-    documents = {
+    catalogue_subject = {
         "entries": entries_document,
         "uncertainties": uncertainties_document,
         "evidence": evidence_document,
         "coverage": coverage,
     }
+    semantic_path = root / "semantic-coverage.json"
+    unc_0001 = uncertainties.get("UNC-0001")
+    if unc_0001 is not None and unc_0001["status"] == "resolved":
+        _require(semantic_path.is_file(), "Resolved UNC-0001 requires semantic-coverage.json")
+    semantic_coverage: dict[str, Any] | None = None
+    if semantic_path.is_file():
+        semantic_coverage = _load_json(semantic_path)
+        validate_semantic_coverage(semantic_coverage, catalogue_digest(catalogue_subject), evidence, case_ids)
+    documents = dict(catalogue_subject)
+    if semantic_coverage is not None:
+        documents["semanticCoverage"] = semantic_coverage
     return {
         "documents": documents,
         "caseIds": sorted(case_ids),
@@ -517,6 +694,11 @@ def validate_catalogue(root: Path, *, case_root: Path | None = None) -> dict[str
             "evidence": len(evidence),
             "domains": len(rows),
             "journeys": len(journeys),
+            **(
+                {"semanticModes": len(semantic_coverage["modes"]), "semanticObligations": len(semantic_coverage["obligations"])}
+                if semantic_coverage is not None
+                else {}
+            ),
         },
     }
 
@@ -639,7 +821,10 @@ def build_catalogue(source_root: Path, evidence_store: Path, geometry: Path, out
     _require(isinstance(geometry_digest, str) and bool(SHA256.fullmatch(geometry_digest)), "Geometry input does not expose a valid coreDigest")
 
     output_root.mkdir(parents=True)
-    for filename in ("entries.json", "uncertainties.json", "evidence-index.json", "coverage.json"):
+    filenames = ["entries.json", "uncertainties.json", "evidence-index.json", "coverage.json"]
+    if (source_root / "semantic-coverage.json").is_file():
+        filenames.append("semantic-coverage.json")
+    for filename in filenames:
         shutil.copyfile(source_root / filename, output_root / filename)
     if any((source_root / "cases").glob("BC-*.md")):
         shutil.copytree(source_root / "cases", output_root / "cases")
@@ -695,6 +880,13 @@ def validate_trace_set(trace_set: dict[str, Any]) -> None:
         if kind == "stochastic":
             outcomes = item.get("legalOutcomes")
             _require(isinstance(outcomes, list) and bool(outcomes) and len(outcomes) == len(set(outcomes)), f"Catalogue stochastic trace {index} needs unique legal outcomes")
+            schedule = item.get("schedule")
+            _require(isinstance(schedule, dict) and schedule.get("kind") == "stratified-pal", f"Catalogue stochastic trace {index} needs a stratified-pal schedule")
+            stratified_pal_targets(period_cycles=schedule.get("periodCycles"), trials=repetitions)
+            outcome_source = item.get("outcomeSource")
+            _require(outcome_source in {"typed", "artifact-hash"}, f"Catalogue stochastic trace {index} needs a typed or artifact-hash outcome source")
+            if outcome_source == "artifact-hash":
+                _require(isinstance(item.get("outcomeArtifactRole"), str) and isinstance(item.get("outcomeHashes"), dict), f"Catalogue stochastic trace {index} needs artifact outcome mapping")
 
 
 def summarize_sample_outcomes(observed: list[str], legal_outcomes: list[str]) -> dict[str, Any]:
@@ -730,14 +922,18 @@ def normalized_sample_digest(records: list[dict[str, Any]]) -> str:
     return catalogue_digest(sorted(normalized, key=lambda item: item["branch"]))
 
 
-def sample_catalogue(prg: Path, trace_set_path: Path) -> dict[str, Any]:
+def sample_catalogue(prg: Path, trace_set_path: Path, observation_map_path: Path | None = None) -> dict[str, Any]:
     trace_set = _load_json(trace_set_path)
     validate_trace_set(trace_set)
     reports: list[dict[str, Any]] = []
     for item in trace_set["traces"]:
         trace_path = (trace_set_path.parent / item["path"]).resolve()
         _require(trace_path.is_file(), f"Catalogue sample trace does not exist: {item['path']}")
-        runs = [run_catalogue_trace(prg, trace_path) for _ in range(item["repetitions"])]
+        if item["kind"] == "stochastic":
+            targets = stratified_pal_targets(period_cycles=item["schedule"]["periodCycles"], trials=item["repetitions"])
+            runs = [run_catalogue_trace(prg, trace_path, observation_map_path, phase_target=target) for target in targets]
+        else:
+            runs = [run_catalogue_trace(prg, trace_path, observation_map_path) for _ in range(item["repetitions"])]
         if item["kind"] == "deterministic":
             digests = [normalized_sample_digest(run["evidence"]) for run in runs]
             _require(len(set(digests)) == 1, f"Deterministic catalogue trace {item['path']} did not reproduce")
@@ -752,15 +948,30 @@ def sample_catalogue(prg: Path, trace_set_path: Path) -> dict[str, Any]:
                 }
             )
         else:
-            role = item.get("outcomeArtifactRole")
-            mapping = item.get("outcomeHashes")
-            _require(isinstance(role, str) and isinstance(mapping, dict), f"Stochastic catalogue trace {item['path']} needs an outcomeArtifactRole and outcomeHashes")
-            observed: list[str] = []
-            for run in runs:
-                matches = [artifact["sha256"] for record in run["evidence"] for artifact in record["artifacts"] if artifact["role"] == role]
-                _require(len(matches) == 1 and matches[0] in mapping, f"Stochastic catalogue trace {item['path']} produced an unclassified outcome artifact")
-                observed.append(mapping[matches[0]])
-            reports.append({"trace": item["path"], "kind": "stochastic", **summarize_sample_outcomes(observed, item["legalOutcomes"])})
+            if item["outcomeSource"] == "typed":
+                observed = []
+                for run in runs:
+                    outcomes = run["typedOutcomes"]
+                    _require(len(outcomes) == 1, f"Stochastic catalogue trace {item['path']} must produce exactly one typed outcome")
+                    observed.append(outcomes[0])
+            else:
+                role = item.get("outcomeArtifactRole")
+                mapping = item.get("outcomeHashes")
+                _require(isinstance(role, str) and isinstance(mapping, dict), f"Stochastic catalogue trace {item['path']} needs an outcomeArtifactRole and outcomeHashes")
+                observed = []
+                for run in runs:
+                    matches = [artifact["sha256"] for record in run["evidence"] for artifact in record["artifacts"] if artifact["role"] == role]
+                    _require(len(matches) == 1 and matches[0] in mapping, f"Stochastic catalogue trace {item['path']} produced an unclassified outcome artifact")
+                    observed.append(mapping[matches[0]])
+            actuals = [run["palPhases"][0] for run in runs if len(run["palPhases"]) == 1]
+            _require(len(actuals) == len(targets), f"Stochastic catalogue trace {item['path']} did not record one PAL boundary per trial")
+            validate_pal_phase_coverage(targets, actuals, period_cycles=item["schedule"]["periodCycles"])
+            reports.append({
+                "trace": item["path"],
+                "kind": "stochastic",
+                "phaseCoverage": [{"target": target, "actual": actual} for target, actual in zip(targets, actuals, strict=True)],
+                **summarize_sample_outcomes(observed, item["legalOutcomes"]),
+            })
     report = {
         "schemaVersion": 1,
         "traceSetSha256": file_hash(trace_set_path),
@@ -773,10 +984,23 @@ def sample_catalogue(prg: Path, trace_set_path: Path) -> dict[str, Any]:
     return {"status": "sampled", "report": str(output_root / "report.json"), "summary": report}
 
 
-def run_catalogue_trace(prg: Path, trace_path: Path) -> dict[str, Any]:
+def run_catalogue_trace(
+    prg: Path,
+    trace_path: Path,
+    observation_map_path: Path | None = None,
+    *,
+    phase_target: dict[str, int] | None = None,
+) -> dict[str, Any]:
     trace = _load_json(trace_path)
     _, config = load_configuration()
     validate_catalogue_trace(trace, config["cycleLimit"])
+    uses_semantics = any(action["type"].startswith("semantic_") for branch in trace["branches"] for action in branch["actions"])
+    observation_map: dict[str, Any] | None = None
+    if uses_semantics:
+        _require(observation_map_path is not None, "Typed catalogue traces require --observation-map")
+        restricted_map_path = _require_restricted_path(observation_map_path)
+        observation_map = _load_json(restricted_map_path)
+        _validate_schema(observation_map, "semantic-observation-map.schema.json")
     source_root, source_manifest = capture(prg, "interactive")
     source_snapshot = source_root / "interactive.vsf"
     vice_binary, toolchain, _ = discover_toolchain(config)
@@ -786,6 +1010,8 @@ def run_catalogue_trace(prg: Path, trace_path: Path) -> dict[str, Any]:
     run_root.mkdir(parents=True)
     snapshot_sources: dict[tuple[str, str], Path] = {}
     evidence_records: list[dict[str, Any]] = []
+    typed_outcomes: list[str] = []
+    pal_phases: list[dict[str, int]] = []
     trace_sha256 = file_hash(trace_path)
 
     for branch in trace["branches"]:
@@ -798,7 +1024,8 @@ def run_catalogue_trace(prg: Path, trace_path: Path) -> dict[str, Any]:
             pointer = _validate_restricted_pointer(source["evidenceSnapshot"], "Evidence snapshot")
             branch_snapshot = evidence_store / pointer
             _require(branch_snapshot.is_file(), f"Evidence snapshot does not exist: {pointer}")
-        record, snapshots = _run_trace_branch(
+        outcome_branch = any(action["type"] == "semantic_outcome" for action in branch["actions"])
+        record, snapshots, outcome, actual_phase = _run_trace_branch(
             vice_binary=vice_binary,
             toolchain=toolchain.as_dict(),
             config=config,
@@ -809,8 +1036,14 @@ def run_catalogue_trace(prg: Path, trace_path: Path) -> dict[str, Any]:
             source_snapshot=branch_snapshot,
             run_root=run_root,
             evidence_store=evidence_store,
+            observation_map=observation_map,
+            phase_target=phase_target if outcome_branch else None,
         )
         evidence_records.append(record)
+        if outcome is not None:
+            typed_outcomes.append(outcome)
+        if actual_phase is not None:
+            pal_phases.append(actual_phase)
         snapshot_sources.update({(branch["id"], name): path for name, path in snapshots.items()})
 
     manifest = {
@@ -823,7 +1056,7 @@ def run_catalogue_trace(prg: Path, trace_path: Path) -> dict[str, Any]:
         "evidenceIds": [record["id"] for record in evidence_records],
     }
     _write_json(run_root / "manifest.json", manifest)
-    return {"status": "captured", "run": str(run_root), "manifest": manifest, "evidence": evidence_records}
+    return {"status": "captured", "run": str(run_root), "manifest": manifest, "evidence": evidence_records, "typedOutcomes": typed_outcomes, "palPhases": pal_phases}
 
 
 def _run_trace_branch(
@@ -838,7 +1071,9 @@ def _run_trace_branch(
     source_snapshot: Path,
     run_root: Path,
     evidence_store: Path,
-) -> tuple[dict[str, Any], dict[str, Path]]:
+    observation_map: dict[str, Any] | None,
+    phase_target: dict[str, int] | None,
+) -> tuple[dict[str, Any], dict[str, Path], str | None, dict[str, int] | None]:
     branch_root = run_root / branch["id"]
     branch_root.mkdir()
     resume_script = branch_root / "resume.mon"
@@ -904,10 +1139,15 @@ def _run_trace_branch(
     artifacts: list[dict[str, Any]] = []
     snapshots: dict[str, Path] = {}
     client_instruction_count = 0
+    semantic_captures: dict[str, dict[str, int | bool | str]] = {}
+    semantic_outcome: str | None = None
+    actual_phase: dict[str, int] | None = None
     try:
         with branch_log.open("w", encoding="utf-8") as log:
             process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT, text=True)
             with MonitorClient.connect(host, int(port_text), timeout=15) as client:
+                if any(action["type"] == "joystick" for action in branch["actions"]):
+                    client.configure_joyport_simulation()
                 if sid_requested:
                     client.set_resource("SoundDeviceName", "dump")
                     client.set_resource("SoundDeviceArg", str((branch_root / "sid-events.log").resolve()))
@@ -918,6 +1158,10 @@ def _run_trace_branch(
                     client.set_resource("Sound", "1")
                 banks = client.banks()
                 _require("ram" in banks and "cpu" in banks, "VICE catalogue trace requires ram and cpu banks")
+                if phase_target is not None:
+                    advanced, actual_phase = _advance_to_pal_phase(client, phase_target["phaseCycle"])
+                    client_instruction_count += advanced
+                    timeline.append({"actionIndex": -1, "type": "stratified-pal", "target": phase_target, "actual": actual_phase, "advancedInstructions": advanced, "clientInstructionCount": client_instruction_count})
                 for index, action in enumerate(branch["actions"]):
                     action_type = action["type"]
                     advanced = 0
@@ -942,6 +1186,18 @@ def _run_trace_branch(
                         capture_artifacts, capture_snapshots = _capture_trace_artifacts(client, banks, branch_root, branch["id"], action)
                         artifacts.extend(capture_artifacts)
                         snapshots.update(capture_snapshots)
+                    elif action_type == "semantic_capture":
+                        _require(observation_map is not None, "Semantic capture requires an observation map")
+                        observations = _capture_semantic_observations(client, banks, observation_map, action["observationIds"])
+                        semantic_captures[action["name"]] = observations
+                        path = branch_root / f"{action['name']}-semantic.json"
+                        _write_json(path, observations)
+                        artifacts.append({"role": f"{branch['id']}:{action['name']}:semantic", "source": path})
+                    elif action_type == "semantic_assert":
+                        assert_semantic_observations(semantic_captures[action["before"]], semantic_captures[action["after"]], action["assertions"])
+                    elif action_type == "semantic_outcome":
+                        before = semantic_captures[action["before"]] if "before" in action else {}
+                        semantic_outcome = classify_semantic_outcome(before, semantic_captures[action["capture"]], action["outcomes"])
                     elif action_type in {"attach_disk", "detach_disk", "audio_start", "audio_stop", "sid_start", "sid_stop"}:
                         pass
                     client_instruction_count += advanced
@@ -1004,7 +1260,52 @@ def _run_trace_branch(
         mode=trace["mode"],
     )
     _write_json(evidence_store / "records" / f"{record['id']}.json", record)
-    return record, snapshots
+    return record, snapshots, semantic_outcome, actual_phase
+
+
+def _capture_semantic_observations(
+    client: MonitorClient,
+    banks: dict[str, int],
+    observation_map: dict[str, Any],
+    observation_ids: list[str],
+) -> dict[str, int | bool | str]:
+    definitions = {item["id"]: item for item in observation_map["observations"]}
+    _require(all(observation_id in definitions for observation_id in observation_ids), "Semantic capture references an unknown observation")
+    selected = [definitions[observation_id] for observation_id in observation_ids]
+    memory: dict[str, bytearray] = {}
+    for definition in selected:
+        bank = definition["bank"]
+        _require(bank in banks, f"Semantic observation bank {bank} is unavailable")
+        target = memory.setdefault(bank, bytearray(0x10000))
+        start = definition["address"]
+        end = start + definition["width"] - 1
+        target[start : end + 1] = client.memory(banks[bank], start, end)
+    return decode_semantic_observations({bank: bytes(value) for bank, value in memory.items()}, {"schemaVersion": 1, "observations": selected})
+
+
+def _advance_to_pal_phase(client: MonitorClient, target_cycles: int) -> tuple[int, dict[str, int]]:
+    _require(isinstance(target_cycles, int) and target_cycles >= 0, "PAL phase target must be non-negative")
+    registers = client.registers()
+    previous_line, previous_cycle = registers.get("LIN"), registers.get("CYC")
+    _require(isinstance(previous_line, int) and isinstance(previous_cycle, int), "VICE does not expose PAL raster position")
+    elapsed_cycles = 0
+    advanced = 0
+    maximum_instructions = max(1_000, target_cycles + 1_000)
+    while elapsed_cycles < target_cycles and advanced < maximum_instructions:
+        client.advance_instructions(1)
+        advanced += 1
+        registers = client.registers()
+        current_line, current_cycle = registers.get("LIN"), registers.get("CYC")
+        _require(isinstance(current_line, int) and isinstance(current_cycle, int), "VICE stopped exposing PAL raster position")
+        elapsed_cycles += pal_forward_delta(previous_line, previous_cycle, current_line, current_cycle)
+        previous_line, previous_cycle = current_line, current_cycle
+    _require(elapsed_cycles >= target_cycles, "VICE could not reach the requested PAL phase within its instruction budget")
+    return advanced, {
+        "elapsedCycles": elapsed_cycles,
+        "rasterLine": previous_line,
+        "rasterCycle": previous_cycle,
+        "clientInstructions": advanced,
+    }
 
 
 def _advance(client: MonitorClient, instructions: int) -> int:

@@ -18,6 +18,7 @@ from c64lab.catalogue import (
     summarize_catalogue,
     validate_catalogue,
     validate_catalogue_trace,
+    validate_semantic_coverage,
     validate_redacted_summary,
     validate_trace_set,
     verify_artifact_hashes,
@@ -48,6 +49,82 @@ DOMAINS = [
 ]
 
 DIMENSIONS = ["audio", "content", "controls", "nondeterminism", "outcome", "saves", "state", "timing", "visuals"]
+
+
+def _unc_0001_scope() -> dict[str, object]:
+    return {
+        "uncertaintyId": "UNC-0001",
+        "behaviorCaseIds": ["BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"],
+        "obligationKinds": [
+            "action",
+            "conflict",
+            "rate-limit",
+            "interaction-precondition",
+            "interaction-boundary",
+            "stochastic-branch",
+        ],
+    }
+
+
+def _complete_semantic_coverage() -> tuple[dict[str, object], dict[str, dict[str, str]]]:
+    deterministic_ids = ["EV-aaaaaaaaaaaaaaaa", "EV-cccccccccccccccc"]
+    stochastic_ids = [f"EV-{index:016x}" for index in range(100, 200)]
+    deterministic_rows = [
+        ("SO-0001", "Action availability", "action", ["BC-0001", "BC-0002"], "TR-0001"),
+        ("SO-0002", "Conflicting input", "conflict", ["BC-0001"], "TR-0001"),
+        ("SO-0003", "PAL rate limit", "rate-limit", ["BC-0003"], "TR-0001"),
+        ("SO-0004", "Interaction precondition", "interaction-precondition", ["BC-0004"], "TR-0001"),
+        ("SO-0005", "Interaction boundary", "interaction-boundary", ["BC-0004"], "TR-0001"),
+    ]
+    coverage: dict[str, object] = {
+        "schemaVersion": 1,
+        "catalogueSubjectDigest": "d" * 64,
+        "scope": _unc_0001_scope(),
+        "modes": [{
+            "id": "SM-0001",
+            "title": "Surface locomotion",
+            "behaviorCaseIds": ["BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"],
+            "traceIds": ["TR-0001", "TR-0002"],
+            "evidenceIds": deterministic_ids,
+            "status": "verified",
+        }],
+        "obligations": [
+            *[
+                {
+                    "id": row_id,
+                    "title": title,
+                    "kind": kind,
+                    "modeIds": ["SM-0001"],
+                    "behaviorCaseIds": cases,
+                    "traceIds": [trace_id],
+                    "evidenceIds": deterministic_ids,
+                    "minimumProofRuns": 2,
+                    "completedProofRuns": 2,
+                    "status": "verified",
+                }
+                for row_id, title, kind, cases, trace_id in deterministic_rows
+            ],
+            {
+                "id": "SO-0006",
+                "title": "Choose a legal arrival branch",
+                "kind": "stochastic-branch",
+                "modeIds": ["SM-0001"],
+                "behaviorCaseIds": ["BC-0018"],
+                "traceIds": ["TR-0002"],
+                "evidenceIds": stochastic_ids,
+                "minimumProofRuns": 100,
+                "completedProofRuns": 100,
+                "legalOutcomeIds": ["OUT-a", "OUT-b"],
+                "observedOutcomeIds": ["OUT-a", "OUT-b"],
+                "status": "verified",
+            },
+        ],
+    }
+    evidence = {
+        **{evidence_id: {"mode": "proof", "traceId": "TR-0001"} for evidence_id in deterministic_ids},
+        **{evidence_id: {"mode": "proof", "traceId": "TR-0002"} for evidence_id in stochastic_ids},
+    }
+    return coverage, evidence
 
 
 def _entry(**overrides: object) -> dict[str, object]:
@@ -164,6 +241,106 @@ None.
 
 
 class TraceContractTests(unittest.TestCase):
+    def test_accepts_typed_semantic_capture_assertion_and_outcome_actions(self) -> None:
+        trace = {
+            "schemaVersion": 1,
+            "id": "TR-0002",
+            "version": 1,
+            "title": "Typed movement trace",
+            "mode": "proof",
+            "branches": [
+                {
+                    "id": "move",
+                    "from": {"checkpoint": "interactive"},
+                    "actions": [
+                        {"type": "semantic_capture", "name": "before", "observationIds": ["mode", "heading"]},
+                        {"type": "joystick", "port": 2, "value": 8, "durationInstructions": 100, "semanticAction": "turn-right"},
+                        {"type": "semantic_capture", "name": "after", "observationIds": ["mode", "heading"]},
+                        {
+                            "type": "semantic_assert",
+                            "before": "before",
+                            "after": "after",
+                            "assertions": [
+                                {"operator": "unchanged", "observation": "mode"},
+                                {"operator": "changed", "observation": "heading"},
+                            ],
+                        },
+                        {
+                            "type": "semantic_outcome",
+                            "capture": "after",
+                            "outcomes": [
+                                {"id": "turned", "assertions": [{"operator": "changed", "observation": "heading"}]}
+                            ],
+                        },
+                    ],
+                }
+            ],
+        }
+
+        validate_catalogue_trace(trace, cycle_limit=120_000_000)
+
+    def test_rejects_a_semantic_assertion_that_references_a_later_capture(self) -> None:
+        trace = {
+            "schemaVersion": 1,
+            "id": "TR-0002",
+            "version": 1,
+            "title": "Invalid typed trace",
+            "mode": "proof",
+            "branches": [
+                {
+                    "id": "move",
+                    "from": {"checkpoint": "interactive"},
+                    "actions": [
+                        {
+                            "type": "semantic_assert",
+                            "before": "before",
+                            "after": "after",
+                            "assertions": [{"operator": "changed", "observation": "heading"}],
+                        },
+                        {"type": "semantic_capture", "name": "before", "observationIds": ["heading"]},
+                        {"type": "semantic_capture", "name": "after", "observationIds": ["heading"]},
+                    ],
+                }
+            ],
+        }
+
+        with self.assertRaisesRegex(LabError, "earlier semantic capture"):
+            validate_catalogue_trace(trace, cycle_limit=120_000_000)
+
+    def test_accepts_a_stratified_pal_stochastic_trace_set(self) -> None:
+        validate_trace_set(
+            {
+                "schemaVersion": 1,
+                "traces": [
+                    {
+                        "path": "traces/TR-0002-stochastic.json",
+                        "kind": "stochastic",
+                        "repetitions": 100,
+                        "schedule": {"kind": "stratified-pal", "periodCycles": 19656},
+                        "outcomeSource": "typed",
+                        "legalOutcomes": ["none", "encounter"],
+                    }
+                ],
+            }
+        )
+
+    def test_rejects_stochastic_sampling_without_a_phase_schedule(self) -> None:
+        with self.assertRaisesRegex(LabError, "stratified-pal"):
+            validate_trace_set(
+                {
+                    "schemaVersion": 1,
+                    "traces": [
+                        {
+                            "path": "traces/TR-0002-stochastic.json",
+                            "kind": "stochastic",
+                            "repetitions": 100,
+                            "outcomeSource": "typed",
+                            "legalOutcomes": ["none", "encounter"],
+                        }
+                    ],
+                }
+            )
+
     def test_trace_set_rejects_unallowlisted_fields(self) -> None:
         with self.assertRaisesRegex(LabError, "schema validation"):
             validate_trace_set(
@@ -314,6 +491,74 @@ class EvidenceTests(unittest.TestCase):
 
 
 class CatalogueContractTests(unittest.TestCase):
+    def test_resolved_uncertainty_requires_an_answer_and_proof_evidence(self) -> None:
+        uncertainty = {
+            "id": "UNC-0002",
+            "title": "Resolved question",
+            "question": "What happens?",
+            "affectedEntryIds": ["CAT-0001"],
+            "affectedBehaviorCaseIds": ["BC-0001"],
+            "evidenceAttempted": ["EV-aaaaaaaaaaaaaaaa"],
+            "impact": "material",
+            "crackSensitivity": "not-applicable",
+            "status": "resolved",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _write_catalogue(root, uncertainty=uncertainty)
+
+            with self.assertRaisesRegex(LabError, "schema validation"):
+                validate_catalogue(root)
+
+            uncertainty["resolution"] = {
+                "answer": "The evidence-backed transition is exact.",
+                "evidenceIds": ["EV-aaaaaaaaaaaaaaaa"],
+            }
+            (root / "uncertainties.json").write_text(
+                json.dumps({"schemaVersion": 1, "uncertainties": [uncertainty]}), encoding="utf-8"
+            )
+            validate_catalogue(root)
+
+    def test_open_uncertainty_requires_a_next_experiment_and_forbids_resolution(self) -> None:
+        uncertainty = {
+            "id": "UNC-0002",
+            "title": "Open question",
+            "question": "What happens?",
+            "affectedEntryIds": ["CAT-0001"],
+            "affectedBehaviorCaseIds": ["BC-0001"],
+            "evidenceAttempted": ["EV-aaaaaaaaaaaaaaaa"],
+            "impact": "material",
+            "crackSensitivity": "not-applicable",
+            "status": "open",
+            "resolution": {"answer": "Premature", "evidenceIds": ["EV-aaaaaaaaaaaaaaaa"]},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _write_catalogue(root, uncertainty=uncertainty)
+
+            with self.assertRaisesRegex(LabError, "schema validation"):
+                validate_catalogue(root)
+
+    def test_resolving_unc_0001_requires_semantic_coverage(self) -> None:
+        uncertainty = {
+            "id": "UNC-0001",
+            "title": "Movement semantics",
+            "question": "What are the exact rules?",
+            "affectedEntryIds": ["CAT-0001"],
+            "affectedBehaviorCaseIds": ["BC-0001"],
+            "evidenceAttempted": ["EV-aaaaaaaaaaaaaaaa"],
+            "impact": "material",
+            "crackSensitivity": "not-applicable",
+            "status": "resolved",
+            "resolution": {"answer": "Exact evidence-backed rules.", "evidenceIds": ["EV-aaaaaaaaaaaaaaaa"]},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _write_catalogue(root, uncertainty=uncertainty)
+
+            with self.assertRaisesRegex(LabError, "semantic-coverage"):
+                validate_catalogue(root)
+
     def test_catalogue_can_resolve_canonical_root_json_behavior_cases(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory) / "catalogue"
@@ -403,6 +648,26 @@ class CatalogueContractTests(unittest.TestCase):
             with self.assertRaisesRegex(LabError, "probe evidence"):
                 validate_catalogue(root)
 
+    def test_verified_entries_cannot_retain_uncertainty_links(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            uncertainty = {
+                "id": "UNC-0001",
+                "title": "Pending semantics",
+                "question": "What happens?",
+                "affectedEntryIds": ["CAT-0001"],
+                "affectedBehaviorCaseIds": ["BC-0001"],
+                "evidenceAttempted": ["EV-" + "a" * 16],
+                "impact": "material",
+                "crackSensitivity": "not-applicable",
+                "nextExperiment": "Run a proof trace.",
+                "status": "open",
+            }
+            _write_catalogue(root, entry=_entry(uncertaintyIds=["UNC-0001"]), uncertainty=uncertainty)
+
+            with self.assertRaisesRegex(LabError, "cannot retain uncertainty"):
+                validate_catalogue(root)
+
     def test_rejects_conflicting_hashes_for_one_trace_version(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -475,6 +740,166 @@ class SamplingAndReviewTests(unittest.TestCase):
     def test_redacted_summary_rejects_expression_bearing_payloads(self) -> None:
         with self.assertRaisesRegex(LabError, "not allowlisted"):
             validate_redacted_summary({"schemaVersion": 1, "messageText": "restricted wording"})
+
+
+class SemanticCoverageTests(unittest.TestCase):
+    def test_accepts_complete_proof_only_semantic_coverage(self) -> None:
+        coverage, evidence = _complete_semantic_coverage()
+
+        validate_semantic_coverage(coverage, "d" * 64, evidence, {"BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"})
+
+    def test_rejects_an_uncovered_unc_0001_behavior_case(self) -> None:
+        coverage, evidence = _complete_semantic_coverage()
+        coverage["modes"][0]["behaviorCaseIds"].remove("BC-0003")  # type: ignore[index]
+        coverage["obligations"] = [  # type: ignore[index]
+            row for row in coverage["obligations"] if row["kind"] != "rate-limit"  # type: ignore[index]
+        ]
+
+        with self.assertRaisesRegex(LabError, "does not cover Behavior Cases.*BC-0003"):
+            validate_semantic_coverage(
+                coverage, "d" * 64, evidence, {"BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"}
+            )
+
+    def test_rejects_a_missing_unc_0001_obligation_kind(self) -> None:
+        coverage, evidence = _complete_semantic_coverage()
+        coverage["obligations"] = [  # type: ignore[index]
+            row for row in coverage["obligations"] if row["kind"] != "conflict"  # type: ignore[index]
+        ]
+
+        with self.assertRaisesRegex(LabError, "does not cover obligation kinds.*conflict"):
+            validate_semantic_coverage(
+                coverage, "d" * 64, evidence, {"BC-0001", "BC-0002", "BC-0003", "BC-0004", "BC-0018"}
+            )
+
+    def test_rejects_self_reported_runs_without_distinct_proof_evidence(self) -> None:
+        coverage = {
+            "schemaVersion": 1,
+            "catalogueSubjectDigest": "d" * 64,
+            "scope": _unc_0001_scope(),
+            "modes": [{
+                "id": "SM-0001", "title": "Surface locomotion", "behaviorCaseIds": ["BC-0001"],
+                "traceIds": ["TR-0001"], "evidenceIds": ["EV-aaaaaaaaaaaaaaaa"], "status": "verified",
+            }],
+            "obligations": [{
+                "id": "SO-0001", "title": "Turn", "kind": "action", "modeIds": ["SM-0001"],
+                "behaviorCaseIds": ["BC-0001"], "traceIds": ["TR-0001"],
+                "evidenceIds": ["EV-aaaaaaaaaaaaaaaa"], "minimumProofRuns": 2,
+                "completedProofRuns": 2, "status": "verified",
+            }],
+        }
+
+        with self.assertRaisesRegex(LabError, "distinct proof evidence"):
+            validate_semantic_coverage(
+                coverage,
+                "d" * 64,
+                {"EV-aaaaaaaaaaaaaaaa": {"mode": "proof", "traceId": "TR-0001"}},
+                {"BC-0001"},
+            )
+
+    def test_rejects_incomplete_stochastic_trial_counts(self) -> None:
+        coverage = {
+            "schemaVersion": 1,
+            "catalogueSubjectDigest": "d" * 64,
+            "scope": _unc_0001_scope(),
+            "modes": [
+                {
+                    "id": "SM-0001",
+                    "title": "Surface locomotion",
+                    "behaviorCaseIds": ["BC-0018"],
+                    "traceIds": ["TR-0002"],
+                    "evidenceIds": ["EV-bbbbbbbbbbbbbbbb"],
+                    "status": "verified",
+                }
+            ],
+            "obligations": [
+                {
+                    "id": "SO-0001",
+                    "title": "Choose a legal arrival branch",
+                    "kind": "stochastic-branch",
+                    "modeIds": ["SM-0001"],
+                    "behaviorCaseIds": ["BC-0018"],
+                    "traceIds": ["TR-0002"],
+                    "evidenceIds": ["EV-bbbbbbbbbbbbbbbb"],
+                    "minimumProofRuns": 100,
+                    "completedProofRuns": 99,
+                    "legalOutcomeIds": ["OUT-a"],
+                    "observedOutcomeIds": ["OUT-a"],
+                    "status": "verified",
+                }
+            ],
+        }
+
+        with self.assertRaisesRegex(LabError, "proof runs"):
+            validate_semantic_coverage(
+                coverage,
+                "d" * 64,
+                {"EV-bbbbbbbbbbbbbbbb": {"mode": "proof", "traceId": "TR-0002"}},
+                {"BC-0018"},
+            )
+
+    def test_rejects_probe_evidence_for_a_verified_mode(self) -> None:
+        coverage = {
+            "schemaVersion": 1,
+            "catalogueSubjectDigest": "d" * 64,
+            "scope": _unc_0001_scope(),
+            "modes": [
+                {
+                    "id": "SM-0001",
+                    "title": "Surface locomotion",
+                    "behaviorCaseIds": ["BC-0001"],
+                    "traceIds": ["TR-0001"],
+                    "evidenceIds": ["EV-aaaaaaaaaaaaaaaa"],
+                    "status": "verified",
+                }
+            ],
+            "obligations": [
+                {
+                    "id": "SO-0001",
+                    "title": "Turn while on the surface",
+                    "kind": "action",
+                    "modeIds": ["SM-0001"],
+                    "behaviorCaseIds": ["BC-0001"],
+                    "traceIds": ["TR-0001"],
+                    "evidenceIds": ["EV-aaaaaaaaaaaaaaaa"],
+                    "minimumProofRuns": 2,
+                    "completedProofRuns": 2,
+                    "status": "verified",
+                }
+            ],
+        }
+
+        with self.assertRaisesRegex(LabError, "proof evidence"):
+            validate_semantic_coverage(
+                coverage,
+                "d" * 64,
+                {"EV-aaaaaaaaaaaaaaaa": {"mode": "probe", "traceId": "TR-0001"}},
+                {"BC-0001"},
+            )
+
+    def test_rejects_a_stochastic_branch_with_an_unobserved_legal_outcome(self) -> None:
+        coverage = {
+            "schemaVersion": 1,
+            "catalogueSubjectDigest": "d" * 64,
+            "scope": _unc_0001_scope(),
+            "modes": [{
+                "id": "SM-0001", "title": "Surface locomotion", "behaviorCaseIds": ["BC-0018"],
+                "traceIds": ["TR-0002"], "evidenceIds": ["EV-bbbbbbbbbbbbbbbb"], "status": "verified",
+            }],
+            "obligations": [{
+                "id": "SO-0001", "title": "Choose a legal arrival branch", "kind": "stochastic-branch",
+                "modeIds": ["SM-0001"], "behaviorCaseIds": ["BC-0018"], "traceIds": ["TR-0002"],
+                "evidenceIds": ["EV-bbbbbbbbbbbbbbbb"], "minimumProofRuns": 100, "completedProofRuns": 100,
+                "legalOutcomeIds": ["OUT-a", "OUT-b"], "observedOutcomeIds": ["OUT-a"], "status": "verified",
+            }],
+        }
+
+        with self.assertRaisesRegex(LabError, "unobserved legal outcomes"):
+            validate_semantic_coverage(
+                coverage,
+                "d" * 64,
+                {"EV-bbbbbbbbbbbbbbbb": {"mode": "proof", "traceId": "TR-0002"}},
+                {"BC-0018"},
+            )
 
 
 if __name__ == "__main__":

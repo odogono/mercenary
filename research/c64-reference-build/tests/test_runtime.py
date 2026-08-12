@@ -13,6 +13,7 @@ from c64lab.runtime import (  # noqa: E402
     parse_register_log,
     render_capture_script,
     render_checkpoint_script,
+    render_event_history_prepare_script,
 )
 
 
@@ -65,6 +66,22 @@ class RuntimeTests(unittest.TestCase):
         self.assertIn('bsave "interactive.ram"', script)
         self.assertIn('screenshot "interactive.png"', script)
         self.assertIn('dump "interactive.vsf"', script)
+
+    def test_detaches_loadbasic_virtual_tape_before_snapshot(self) -> None:
+        script = render_capture_script("interactive")
+
+        self.assertLess(script.index("detach 1"), script.index('dump "interactive.vsf"'))
+
+    def test_prepares_event_playback_after_the_startup_reset(self) -> None:
+        script = render_event_history_prepare_script(Path("/restricted/history.vhk"))
+
+        self.assertEqual(
+            script,
+            'resset "HotkeyFile" "/restricted/history.vhk"\n'
+            'resset "EventStartMode" "0"\n'
+            'resset "EventImageInclude" "0"\n'
+            "x\n",
+        )
 
     def test_parses_registers_and_stopwatch_from_monitor_log(self) -> None:
         log = """#1 (Stop on exec 01e6)\n  ADDR A  X  Y  SP 00 01 NV-BDIZC LIN CYC  STOPWATCH\n.;01e6 00 fa e5 fa 2f 37 00110011 114 050   11152184\n"""

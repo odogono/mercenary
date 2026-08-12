@@ -22,6 +22,16 @@
             "uniqueItems": true,
             "items": {"type": "string", "minLength": 1}
           },
+          "schedule": {
+            "type": "object",
+            "required": ["kind", "periodCycles"],
+            "properties": {
+              "kind": {"const": "stratified-pal"},
+              "periodCycles": {"type": "integer", "minimum": 100}
+            },
+            "additionalProperties": false
+          },
+          "outcomeSource": {"enum": ["typed", "artifact-hash"]},
           "outcomeArtifactRole": {"type": "string", "minLength": 1},
           "outcomeHashes": {
             "type": "object",

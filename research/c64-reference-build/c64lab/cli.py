@@ -85,6 +85,7 @@ def _parser() -> argparse.ArgumentParser:
     catalogue_run = catalogue_commands.add_parser("run", help="run one provenance-backed catalogue trace")
     catalogue_run.add_argument("--prg", required=True, type=Path)
     catalogue_run.add_argument("--trace", required=True, type=Path)
+    catalogue_run.add_argument("--observation-map", type=Path)
 
     catalogue_build = catalogue_commands.add_parser("build", help="assemble a restricted catalogue bundle")
     catalogue_build.add_argument("--entries", required=True, type=Path)
@@ -98,6 +99,7 @@ def _parser() -> argparse.ArgumentParser:
     catalogue_sample = catalogue_commands.add_parser("sample", help="validate and run deterministic or stochastic trace samples")
     catalogue_sample.add_argument("--prg", required=True, type=Path)
     catalogue_sample.add_argument("--trace-set", required=True, type=Path)
+    catalogue_sample.add_argument("--observation-map", type=Path)
 
     catalogue_review = catalogue_commands.add_parser("review", help="record a maintainer catalogue review")
     catalogue_review.add_argument("--catalogue", required=True, type=Path)
@@ -193,9 +195,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 raise LabError("Catalogue --reviews must name the catalogue's reviews directory")
             result = summarize_catalogue(arguments.catalogue, arguments.output)
         elif arguments.catalogue_command == "sample":
-            result = sample_catalogue(arguments.prg, arguments.trace_set)
+            result = sample_catalogue(arguments.prg, arguments.trace_set, arguments.observation_map)
         else:
-            result = run_catalogue_trace(arguments.prg, arguments.trace)
+            result = run_catalogue_trace(arguments.prg, arguments.trace, arguments.observation_map)
     except LabError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1

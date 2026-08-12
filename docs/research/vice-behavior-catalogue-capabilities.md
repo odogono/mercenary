@@ -16,7 +16,7 @@ VICE's binary monitor API v2 is sufficient for deterministic, request-correlated
 state capture. It can discover bank and register identifiers, read or write an
 inclusive memory range in a named bank, read or set registers, create conditional
 load/store/execute checkpoints, get the indexed display buffer and palette, feed
-PETSCII keyboard input, set joystick state, advance a requested number of
+PETSCII keyboard input, drive a configured joyport I/O Simulation device, advance a requested number of
 instructions, save or restore a snapshot, reset or power-cycle the machine, and
 autostart a file. Responses echo the client's request ID; unsolicited events such
 as checkpoint hits use request ID `0xffffffff`. Clients must use the advertised
@@ -25,6 +25,33 @@ register and bank names rather than assuming numeric IDs are stable.
 [memory and bank discovery](https://vice-emu.sourceforge.io/vice_13.html#SEC350)
 [register discovery](https://vice-emu.sourceforge.io/vice_13.html#SEC369)
 [display capture](https://vice-emu.sourceforge.io/vice_13.html#SEC370)
+
+The joyport monitor command does not drive VICE's ordinary host-joystick device.
+The runner must select VICE 3.10's `Joyport I/O simulation` device for control
+port 2 and translate the trace's pressed-bit mask to the C64's active-low
+electrical lines. A successful monitor response without that device selection
+does not prove that the emulated machine observed the requested input.
+
+## Physical keyboard and VICE event history
+
+The binary monitor's PETSCII feed writes VICE's keyboard buffer; it cannot prove
+software that scans the C64 keyboard matrix directly, nor can it represent an
+exact host key down, key up, chord, or hold. VICE event recording, by contrast,
+records keyboard activity and writes start/end snapshots around a history. The
+laboratory therefore supplies a bounded macOS `CGEvent` driver plus an isolated
+hotkey file for starting, stopping, and replaying VICE event history.
+[keyboard feed](https://vice-emu.sourceforge.io/vice_13.html#SEC365)
+[event history](https://vice-emu.sourceforge.io/vice_11.html)
+
+The driver refuses to run without Accessibility permission, an exact positive
+VICE PID and executable digest, the `x64sc` window owner, continuous foreground
+focus, ordered balanced key edges, and a duration no longer than 60 seconds. Its
+request is validated by `event-history-capture.schema.json`; its report records
+the VICE and driver executable identities, requested and actual event times, and
+the number of focus checks. Requests and resulting histories are Restricted
+Material. Proof replays start from the reproduced checkpoint and exact recorded
+VICE configuration and compare typed semantic observations, not playback success
+or snapshot hashes alone.
 
 The C64/6510 register list in the 3.10 source includes `LIN` and `CYC`, so each
 stopped boundary can record PAL raster line and cycle alongside the CPU

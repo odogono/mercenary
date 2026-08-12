@@ -84,6 +84,28 @@ class MonitorProtocolTests(unittest.TestCase):
         self.assertEqual(joyport_set_body(2, 17), struct.pack("<HH", 1, 17))
         self.assertEqual(advance_instructions_body(20000), struct.pack("<BH", 0, 20000))
 
+    def test_joyport_uses_the_io_simulator_and_translates_pressed_bits(self) -> None:
+        client = MonitorClient(MagicMock())
+        client.request = MagicMock(return_value=(Response(0x52, 0, 1, b""), []))
+
+        client.configure_joyport_simulation()
+        client.joyport_set(0x11)
+        client.joyport_set(0)
+
+        self.assertEqual(
+            client.request.call_args_list,
+            [
+                unittest.mock.call(0x52, resource_set_body("JoyPort2Device", "37")),
+                unittest.mock.call(0xA2, joyport_set_body(2, 0x0E)),
+                unittest.mock.call(0xA2, joyport_set_body(2, 0x1F)),
+            ],
+        )
+
+    def test_joyport_rejects_bits_outside_the_five_c64_lines(self) -> None:
+        client = MonitorClient(MagicMock())
+        with self.assertRaisesRegex(ValueError, "five-bit"):
+            client.joyport_set(0x20)
+
 
 if __name__ == "__main__":
     unittest.main()

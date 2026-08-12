@@ -32,6 +32,10 @@ _Avoid_: Game logic, gameplay layer
 A device-independent player intent whose availability, conflicts, ordering, rate limits, and outcomes are governed by Behavior Cases.
 _Avoid_: Key press, button press, scan code
 
+**Semantic Mode**:
+An evidence-backed Game Semantics state class that determines which Semantic Actions are available, how they conflict, which transitions they cause, and their timing, independently of device bindings and Geometry Identity.
+_Avoid_: Control scheme, vehicle identity, input mode
+
 **Control Profile**:
 A named set of device-specific bindings that maps physical controls to Semantic Actions.
 _Avoid_: Keymap, input profile

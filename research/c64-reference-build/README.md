@@ -66,6 +66,43 @@ branch-process setup in read/write or read-only mode and hashed only after
 orderly shutdown. See
 [`docs/research/behavior-catalogue.md`](../../docs/research/behavior-catalogue.md).
 
+Semantic proof traces may add typed captures, assertions, and outcome
+classification by passing an ignored declarative map with `--observation-map`.
+The map supports integer widths and signedness, endianness, masks, shifts,
+booleans, and enums; raw values and reports stay restricted. Stochastic trace
+sets use a `stratified-pal` schedule with at least 100 distinct midpoint phases.
+
+Games that scan the C64 keyboard matrix cannot be driven by the monitor's
+PETSCII queue. Compile the bounded macOS driver and run it with an ignored
+`event-history-capture.schema.json` request against the exact foreground VICE
+PID. VICE must be launched with `config/event-history-hotkeys.vhk` and an
+isolated `-eventsnapshotdir`; the hotkey file clears VICE's default shortcut
+map so the driver's pinned `Command-Shift-R`/`Command-Shift-T` host controls
+cannot fall through to media recording. The request contains only the physical
+key edges under test and pins the hotkey file by SHA-256. The driver fails
+without Accessibility permission, if any modal or auxiliary VICE window is
+present, or on any process, executable, focus, timing, identity, or key-balance
+mismatch. It emits an identity-bearing JSON report, which remains restricted.
+
+Set `EventStartMode` to `0` (file-save) and `EventImageInclude` to `0` before
+recording. For replay, do not use VICE's command-line `-playback` switch: it
+can restore the history snapshot before the normal startup reset has settled,
+after which that pending reset destroys the restored state. Start each cold
+VICE process with `-initbreak ready`, load the pinned hotkey map from the
+monitor after `-default` has initialized the UI, resume, and only then invoke
+the pinned `history-playback-start` host action. A valid replay log has its
+sole `Main CPU: RESET.` before `Unit 8: RESET (For undump).`; a CPU reset after
+that restore marker is a hard failure. Compare typed observations with the
+recorded end state for two independent replay processes.
+
+```sh
+swiftc research/c64-reference-build/tools/capture-keyboard-history.swift \
+  -o research/c64-reference-build/work/capture-keyboard-history
+research/c64-reference-build/work/capture-keyboard-history \
+  restricted/behavior-catalogue/unc-0001/capture-request.json \
+  > restricted/behavior-catalogue/unc-0001/capture-report.json
+```
+
 ### Verification System
 
 Issue #12's platform-neutral schemas and canonical records live under
@@ -109,8 +146,10 @@ monitor logs, effective config, display, snapshot and scripts.
 The `interactive` capture stops at `$8477` only after raw RAM `$007F` has become
 `$3F`, excluding an earlier startup visit to the same code. `observe` restores
 that version-coupled snapshot, waits at the checkpoint through the loopback
-binary monitor, and replays bounded PETSCII and joystick-port-2 actions. The
-scenario's human-facing port 2 maps to VICE monitor index 1.
+binary monitor, and replays bounded PETSCII-buffer and joystick-port-2 actions.
+It must not claim physical keyboard holds or matrix-scanned input. The
+scenario's human-facing port 2 maps to VICE monitor index 1; the runner selects
+VICE's I/O Simulation device and translates pressed bits to active-low lines.
 
 ## Artifact policy
 

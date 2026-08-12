@@ -295,6 +295,8 @@ def observe(prg: Path, scenario_path: Path) -> tuple[Path, dict[str, Any]]:
                 text=True,
             )
             with MonitorClient.connect(host, port, timeout=15) as client:
+                if any(action["type"] == "joystick" for action in scenario["actions"]):
+                    client.configure_joyport_simulation()
                 for action in scenario["actions"]:
                     action_type = action["type"]
                     if action_type == "wait_pc":
@@ -311,6 +313,7 @@ def observe(prg: Path, scenario_path: Path) -> tuple[Path, dict[str, Any]]:
                     elif action_type == "joystick":
                         client.joyport_set(action["value"])
                         current_pc = client.advance_instructions(action["durationInstructions"])
+                        client.joyport_set(0)
                     elif action_type == "capture":
                         banks = client.banks()
                         if "ram" not in banks or "cpu" not in banks:

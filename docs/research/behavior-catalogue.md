@@ -76,7 +76,8 @@ review records and a regenerated baseline.
 ```sh
 research/c64-reference-build/lab catalogue run \
   --prg roms/c64.ABC/MERCENARY.PRG \
-  --trace research/c64-reference-build/catalogue/traces/TR-0001-input-baseline.json
+  --trace research/c64-reference-build/catalogue/traces/TR-0001-input-baseline.json \
+  --observation-map research/c64-reference-build/work/semantic-observation-map.json
 
 research/c64-reference-build/lab catalogue verify \
   --catalogue research/c64-reference-build/catalogue
@@ -99,3 +100,13 @@ research/c64-reference-build/lab catalogue summarize \
 
 See the primary-source [VICE capability note](vice-behavior-catalogue-capabilities.md)
 for binary-monitor, WAV/SID, D64, timing, and snapshot constraints.
+
+Typed observation maps and their decoded reports must remain below ignored
+`work/` or `restricted/` paths. A resolved Semantic Mode inventory is recorded
+in digest-bound `semantic-coverage.json`. Its scope must declare and cover
+BC-0001, BC-0002, BC-0003, BC-0004, and BC-0018 plus every action, conflict,
+rate-limit, interaction-precondition, interaction-boundary, and stochastic-branch
+obligation class. Validation also rejects modes without obligations, probe
+evidence, incomplete deterministic replays, stochastic branches below 100
+stratified PAL trials, illegal outcomes, and legal outcomes that remain
+unobserved.
