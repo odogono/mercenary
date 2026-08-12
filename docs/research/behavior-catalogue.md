@@ -67,8 +67,9 @@ routes receive end-to-end journey cases; harmless input permutations do not.
 Automated validation establishes structural completeness and reproducibility.
 It does not replace review. Before issue #8 closes, one maintainer must approve
 every domain plus material journeys, audiovisual evidence, save behavior, and
-the final uncertainty register. The initial tracked baseline intentionally
-reports review as pending.
+the final uncertainty register. The tracked baseline records those approvals
+against one exact catalogue digest; later catalogue changes require fresh
+review records and a regenerated baseline.
 
 ## Commands
 

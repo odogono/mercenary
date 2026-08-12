@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Record the maintainer's digest-bound approval of all four World Geometry
+  Dataset comparisons and all 21 Behavior Catalogue review subjects; resolve
+  the non-material geometry-review bookkeeping uncertainty while preserving
+  the eight material evidence uncertainties as downstream work.
+
 - Define the normative Product and Technical Implementation Specification for
   issue #13, including MCJ-1 package JSON, deterministic-CBOR runtime contracts,
   exact identities and signatures, bounded Lua/XPC execution, migration,
