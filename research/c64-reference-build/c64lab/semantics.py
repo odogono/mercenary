@@ -16,6 +16,16 @@ def _require(condition: bool, message: str) -> None:
         raise LabError(message)
 
 
+def semantic_boundary_address(observation_map: Mapping[str, Any], boundary_id: str) -> int:
+    boundaries = observation_map.get("boundaries", [])
+    _require(isinstance(boundaries, list), "Semantic observation map boundaries must be a list")
+    matches = [item for item in boundaries if isinstance(item, dict) and item.get("id") == boundary_id]
+    _require(len(matches) == 1, f"Semantic observation map has unknown semantic boundary {boundary_id}")
+    address = matches[0].get("address")
+    _require(isinstance(address, int) and 0 <= address <= 0xFFFF, f"Semantic boundary {boundary_id} has an invalid address")
+    return address
+
+
 def decode_semantic_observations(memory: Mapping[str, bytes], observation_map: Mapping[str, Any]) -> dict[str, int | bool | str]:
     _require(observation_map.get("schemaVersion") == 1, "Semantic observation map schemaVersion must be 1")
     definitions = observation_map.get("observations")

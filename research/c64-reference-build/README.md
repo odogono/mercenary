@@ -69,7 +69,8 @@ orderly shutdown. See
 Semantic proof traces may add typed captures, assertions, and outcome
 classification by passing an ignored declarative map with `--observation-map`.
 The map supports integer widths and signedness, endianness, masks, shifts,
-booleans, and enums; raw values and reports stay restricted. Stochastic trace
+booleans, enums, and opaque execution-boundary IDs; raw addresses, values, and
+reports stay restricted. Stochastic trace
 sets use a `stratified-pal` schedule with at least 100 distinct midpoint phases.
 
 Games that scan the C64 keyboard matrix cannot be driven by the monitor's

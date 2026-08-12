@@ -14,6 +14,7 @@ from c64lab.semantics import (
     classify_semantic_outcome,
     decode_semantic_observations,
     pal_forward_delta,
+    semantic_boundary_address,
     stratified_pal_targets,
     validate_event_history_capture,
     validate_event_history_replay,
@@ -22,6 +23,16 @@ from c64lab.semantics import (
 
 
 class SemanticObservationTests(unittest.TestCase):
+    def test_resolves_an_opaque_semantic_boundary(self) -> None:
+        observation_map = {
+            "schemaVersion": 1,
+            "observations": [{"id": "mode", "type": "integer", "bank": "ram", "address": 1, "width": 1}],
+            "boundaries": [{"id": "input-sampled", "address": 0x2345}],
+        }
+
+        self.assertEqual(semantic_boundary_address(observation_map, "input-sampled"), 0x2345)
+        with self.assertRaisesRegex(LabError, "unknown semantic boundary"):
+            semantic_boundary_address(observation_map, "missing")
     def test_decodes_integer_boolean_and_enum_observations(self) -> None:
         memory = {"ram": bytes.fromhex("00 34 12 04 02")}
         observation_map = {

@@ -253,7 +253,8 @@ class TraceContractTests(unittest.TestCase):
                 "from": {"checkpoint": "interactive"},
                 "actions": [
                     {"type": "joystick_state", "port": 2, "value": 8, "semanticAction": "turn-right"},
-                    {"type": "wait_frames", "frames": 2},
+                    {"type": "wait_boundary", "boundary": "input-sampled"},
+                    {"type": "wait_instructions", "instructions": 100},
                     {"type": "semantic_capture", "name": "held", "observationIds": ["direction-lines"]},
                     {"type": "joystick_state", "port": 2, "value": 0},
                 ],

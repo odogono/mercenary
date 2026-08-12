@@ -19,6 +19,7 @@ from .semantics import (
     classify_semantic_outcome,
     decode_semantic_observations,
     pal_forward_delta,
+    semantic_boundary_address,
     stratified_pal_targets,
     validate_pal_phase_coverage,
 )
@@ -267,6 +268,9 @@ def validate_catalogue_trace(trace: dict[str, Any], cycle_limit: int) -> None:
             context = f"Catalogue trace action {branch_id}/{action_index}"
             if action_type == "wait_pc":
                 _require(isinstance(action.get("address"), int) and 0 <= action["address"] <= 0xFFFF, f"{context} has an invalid address")
+            elif action_type == "wait_boundary":
+                boundary = action.get("boundary")
+                _require(isinstance(boundary, str) and bool(re.fullmatch(r"[a-z][a-z0-9-]*", boundary)), f"{context} has an invalid semantic boundary")
             elif action_type == "wait_instructions":
                 count = action.get("instructions")
                 _require(isinstance(count, int) and 0 < count <= cycle_limit, f"{context} has an invalid instruction count")
@@ -1002,7 +1006,11 @@ def run_catalogue_trace(
     trace = _load_json(trace_path)
     _, config = load_configuration()
     validate_catalogue_trace(trace, config["cycleLimit"])
-    uses_semantics = any(action["type"].startswith("semantic_") for branch in trace["branches"] for action in branch["actions"])
+    uses_semantics = any(
+        action["type"].startswith("semantic_") or action["type"] == "wait_boundary"
+        for branch in trace["branches"]
+        for action in branch["actions"]
+    )
     observation_map: dict[str, Any] | None = None
     if uses_semantics:
         _require(observation_map_path is not None, "Typed catalogue traces require --observation-map")
@@ -1178,6 +1186,12 @@ def _run_trace_branch(
                         checkpoint_number = client.set_execution_checkpoint(action["address"])
                         stopped_pc = client.resume_until_checkpoint(checkpoint_number)
                         _require(stopped_pc == action["address"], f"Catalogue trace wait_pc stopped at ${stopped_pc:04X}, expected ${action['address']:04X}")
+                    elif action_type == "wait_boundary":
+                        _require(observation_map is not None, "Semantic boundary requires an observation map")
+                        address = semantic_boundary_address(observation_map, action["boundary"])
+                        checkpoint_number = client.set_execution_checkpoint(address)
+                        stopped_pc = client.resume_until_checkpoint(checkpoint_number)
+                        _require(stopped_pc == address, f"Catalogue trace wait_boundary stopped at an unexpected execution boundary")
                     elif action_type == "wait_instructions":
                         advanced = _advance(client, action["instructions"])
                     elif action_type == "wait_frames":
