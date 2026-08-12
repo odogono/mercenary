@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "TR-9021",
+  "version": 1,
+  "title": "Pause mode entry, blocking release, and replacement-edge exit",
+  "mode": "proof",
+  "branches": [
+    {
+      "id": "release-remains-paused",
+      "from": {
+        "evidenceSnapshot": "sha256/34/34b6081f85b580005f53e2e7816de83793cde3a83954454f6b952ff1f86ca1cd"
+      },
+      "actions": [
+        {
+          "type": "event_history",
+          "inputSetupSha256": "43133057278c1a1c8fb5588071299679fc530763addd239f4aa0579a50e11c03",
+          "expectedAssertions": [
+            {"observation":"input-command-latch","operator":"equals","value":129},
+            {"observation":"input-key-state","operator":"equals","value":255},
+            {"observation":"walking-mode","operator":"equals","value":true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "replacement-edge-resumes",
+      "from": {
+        "evidenceSnapshot": "sha256/1e/1e440985aad5c05782c56c0621edfb71f7d18ada81be8422d63f5a00a73cebaf"
+      },
+      "actions": [
+        {
+          "type": "event_history",
+          "inputSetupSha256": "d3ae0704ce356751ebe013baa67fdca3b73577439a9ec8a6be95b9b78167274d",
+          "expectedAssertions": [
+            {"observation":"input-command-latch","operator":"not-equals","value":129},
+            {"observation":"input-key-state","operator":"equals","value":255},
+            {"observation":"walking-mode","operator":"equals","value":true}
+          ]
+        }
+      ]
+    }
+  ]
+}

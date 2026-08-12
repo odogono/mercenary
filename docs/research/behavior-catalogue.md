@@ -76,7 +76,8 @@ review records and a regenerated baseline.
 ```sh
 research/c64-reference-build/lab catalogue run \
   --prg roms/c64.ABC/MERCENARY.PRG \
-  --trace research/c64-reference-build/catalogue/traces/TR-0001-input-baseline.json
+  --trace research/c64-reference-build/catalogue/traces/TR-0001-input-baseline.json \
+  --observation-map research/c64-reference-build/work/semantic-observation-map.json
 
 research/c64-reference-build/lab catalogue verify \
   --catalogue research/c64-reference-build/catalogue
@@ -99,3 +100,54 @@ research/c64-reference-build/lab catalogue summarize \
 
 See the primary-source [VICE capability note](vice-behavior-catalogue-capabilities.md)
 for binary-monitor, WAV/SID, D64, timing, and snapshot constraints.
+
+Typed observation maps and their decoded reports must remain below ignored
+`work/` or `restricted/` paths. A resolved Semantic Mode inventory is recorded
+in digest-bound `semantic-coverage.json`. Its scope must declare and cover
+BC-0001, BC-0002, BC-0003, BC-0004, and BC-0018 plus every action, conflict,
+rate-limit, interaction-precondition, interaction-boundary, and stochastic-branch
+obligation class. It must also enumerate every declared Semantic Mode through
+a decoded-dispatch reachability inventory backed by proof evidence; runtime
+examples alone cannot establish that the mode list is exhaustive. Validation
+also rejects modes without obligations, probe
+evidence, incomplete deterministic replays, stochastic branches below 100
+stratified PAL trials, illegal outcomes, and legal outcomes that remain
+unobserved. Every cited trace must be registered by the catalogue trace set,
+must itself be proof-mode, and must match each cited Evidence record's exact
+trace version and content hash. Stochastic obligations additionally require a
+typed `stratified-pal` trace; artifact-hash outcome classification cannot
+promote UNC-0001.
+
+UNC-0001 is bounded to reachable, mode-neutral Game Semantics. It establishes
+the action surface, conflicts, rate limits, PAL timing, generic entry/exit/fire
+transitions, generic interaction boundaries, and player-observable stochastic
+outcomes without naming or selecting a Geometry Identity. It does not need to
+prove unreachable dispatch states or transient random values that converge
+before changing player-observable state.
+
+Geometry Identity mappings and object-conditioned entry, collision, portal,
+visibility, weapon, interaction, and restart-placement predicates belong to
+UNC-0002 (issue #28). Inventory identity, capacity, and item-conditioned
+take/drop predicates belong to UNC-0003 (issue #29). Evidence may discover
+those predicates while proving UNC-0001, but they do not become UNC-0001
+closure obligations.
+
+For enterable objects, UNC-0002 supplies a restricted, opaque mapping from its
+complete enterable-object inventory to mode-neutral handler-equivalence
+classes. UNC-0001 proves each distinct class once; it does not repeat the same
+action, conflict, and timing matrix for every Geometry Identity in a class.
+The mapping may not publish object identities, decoded table contents, or
+Reference Build addresses.
+
+This boundary also applies to narrative labels. The starting arrival and its
+transaction are object-conditioned interactions, while destruction followed by
+relocation is restart placement. Neither label creates an UNC-0001 Semantic
+Mode by itself. It does so only if reachable evidence establishes a distinct
+mode-neutral action surface, conflict rule, transition rule, or timing rule.
+
+The canonical manifest repeats this boundary as closed
+`includedResponsibilities` and `excludedResponsibilities` sets. Catalogue
+validation requires those sets to match the UNC-0001 contract exactly, so a
+later coverage edit cannot silently make Geometry Identity, object predicates,
+inventory rules, unreachable states, or non-observable random activity block
+resolution again.

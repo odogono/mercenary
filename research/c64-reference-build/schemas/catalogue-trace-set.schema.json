@@ -14,14 +14,36 @@
         "required": ["path", "kind", "repetitions"],
         "properties": {
           "path": {"type": "string", "pattern": "^traces/TR-[0-9]{4}[-a-z0-9]*\\.json$"},
-          "kind": {"enum": ["deterministic", "stochastic"]},
+          "kind": {"enum": ["deterministic", "event-history", "stochastic"]},
           "repetitions": {"type": "integer", "minimum": 2},
+          "evidenceIds": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"type": "string", "pattern": "^EV-[0-9a-f]{16}$"}
+          },
+          "normalizedDigests": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {"pattern": "^[a-z0-9-]+$"},
+            "additionalProperties": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          },
           "legalOutcomes": {
             "type": "array",
             "minItems": 1,
             "uniqueItems": true,
             "items": {"type": "string", "minLength": 1}
           },
+          "schedule": {
+            "type": "object",
+            "required": ["kind", "periodCycles"],
+            "properties": {
+              "kind": {"const": "stratified-pal"},
+              "periodCycles": {"type": "integer", "minimum": 100}
+            },
+            "additionalProperties": false
+          },
+          "outcomeSource": {"enum": ["typed", "artifact-hash"]},
           "outcomeArtifactRole": {"type": "string", "minLength": 1},
           "outcomeHashes": {
             "type": "object",

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "TR-9027",
+  "version": 1,
+  "title": "Surface save and load command dispatch proof",
+  "mode": "proof",
+  "branches": [
+    {
+      "id": "save-dispatch",
+      "from": {"checkpoint": "interactive"},
+      "actions": [{
+        "type": "event_history",
+        "inputSetupSha256": "d7897adc185b402138ccbcaa26f429116e156101eb2fde2af3811cddc373b6c3",
+        "expectedAssertions": [{"observation": "load-save-mode", "operator": "equals", "value": 141}]
+      }]
+    },
+    {
+      "id": "load-dispatch",
+      "from": {"checkpoint": "interactive"},
+      "actions": [{
+        "type": "event_history",
+        "inputSetupSha256": "ae793ea8f23c1c28e3ae0d31d1cd6d577066244e7d384c2fc4099543b8c9da5d",
+        "expectedAssertions": [{"observation": "modal-prompt-signature", "operator": "equals", "value": 3301035980}]
+      }]
+    }
+  ]
+}

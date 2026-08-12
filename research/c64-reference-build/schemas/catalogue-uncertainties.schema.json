@@ -10,7 +10,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "title", "question", "affectedEntryIds", "affectedBehaviorCaseIds", "evidenceAttempted", "impact", "crackSensitivity", "nextExperiment", "status"],
+        "required": ["id", "title", "question", "affectedEntryIds", "affectedBehaviorCaseIds", "evidenceAttempted", "impact", "crackSensitivity", "status"],
         "properties": {
           "id": {"type": "string", "pattern": "^UNC-[0-9]{4}$"},
           "title": {"type": "string", "minLength": 1},
@@ -21,8 +21,21 @@
           "impact": {"enum": ["material", "non-material"]},
           "crackSensitivity": {"enum": ["retail-corroborated", "crack-sensitive", "not-applicable"]},
           "nextExperiment": {"type": "string", "minLength": 1},
+          "resolution": {
+            "type": "object",
+            "required": ["answer", "evidenceIds"],
+            "properties": {
+              "answer": {"type": "string", "minLength": 1},
+              "evidenceIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^EV-[0-9a-f]{16}$"}}
+            },
+            "additionalProperties": false
+          },
           "status": {"enum": ["open", "resolved"]}
         },
+        "oneOf": [
+          {"properties": {"status": {"const": "open"}}, "required": ["nextExperiment"], "not": {"required": ["resolution"]}},
+          {"properties": {"status": {"const": "resolved"}}, "required": ["resolution"], "not": {"required": ["nextExperiment"]}}
+        ],
         "additionalProperties": false
       }
     }

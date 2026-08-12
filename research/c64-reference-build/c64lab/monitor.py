@@ -46,10 +46,20 @@ def memory_set_body(start: int, data: bytes, bank_id: int, *, side_effects: bool
     return struct.pack("<BHHBH", int(side_effects), start, end, 0, bank_id) + data
 
 
-def checkpoint_set_body(address: int, *, temporary: bool = True) -> bytes:
-    if not 0 <= address <= 0xFFFF:
-        raise ValueError("checkpoint address must fit in 16 bits")
-    return struct.pack("<HHBBBBB", address, address, 1, 1, 4, int(temporary), 0)
+def checkpoint_set_body(
+    address: int,
+    *,
+    end_address: int | None = None,
+    operation: str = "execute",
+    temporary: bool = True,
+) -> bytes:
+    end = address if end_address is None else end_address
+    if not 0 <= address <= end <= 0xFFFF:
+        raise ValueError("checkpoint range must fit in 16 bits and start before end")
+    operation_flags = {"load": 1, "store": 2, "execute": 4}
+    if operation not in operation_flags:
+        raise ValueError("checkpoint operation must be load, store, or execute")
+    return struct.pack("<HHBBBBB", address, end, 1, 1, operation_flags[operation], int(temporary), 0)
 
 
 def keyboard_feed_body(text: str) -> bytes:
@@ -60,6 +70,22 @@ def keyboard_feed_body(text: str) -> bytes:
     if len(encoded) > 255:
         raise ValueError("keyboard input cannot exceed 255 bytes")
     return bytes([len(encoded)]) + encoded
+
+
+def keyboard_matrix_set_body(rows: list[int]) -> bytes:
+    if len(rows) != 16:
+        raise ValueError("keyboard matrix must contain exactly 16 rows")
+    if any(not isinstance(row, int) or not 0 <= row <= 0xFF for row in rows):
+        raise ValueError("each keyboard matrix row must be an eight-bit mask")
+    return bytes(rows)
+
+
+def host_key_event_body(key_symbol: int, modifiers: int, pressed: bool) -> bytes:
+    if not 0 <= key_symbol <= 0xFFFFFFFF:
+        raise ValueError("host key symbol must fit in 32 bits")
+    if not 0 <= modifiers <= 0x7F:
+        raise ValueError("host key modifier mask must use VICE's seven defined bits")
+    return struct.pack("<IHB", key_symbol, modifiers, int(pressed))
 
 
 def joyport_set_body(port: int, value: int) -> bytes:
@@ -76,6 +102,12 @@ def advance_instructions_body(count: int) -> bytes:
     if not 1 <= count <= 0xFFFF:
         raise ValueError("instruction count must be 1..65535")
     return struct.pack("<BH", 0, count)
+
+
+def cpu_history_body(count: int) -> bytes:
+    if not 1 <= count <= 0xFFFFFFFF:
+        raise ValueError("CPU history count must be 1..4294967295")
+    return struct.pack("<BI", 0, count)
 
 
 def resource_set_body(name: str, value: str) -> bytes:
@@ -202,21 +234,72 @@ class MonitorClient:
             if response.request_id == 0xFFFFFFFF and response.response_type == response_type:
                 return response
 
-    def set_execution_checkpoint(self, address: int) -> int:
-        response, _ = self.request(0x12, checkpoint_set_body(address))
+    def set_checkpoint(
+        self,
+        address: int,
+        *,
+        end_address: int | None = None,
+        operation: str = "execute",
+        temporary: bool = True,
+    ) -> int:
+        response, _ = self.request(
+            0x12,
+            checkpoint_set_body(
+                address,
+                end_address=end_address,
+                operation=operation,
+                temporary=temporary,
+            ),
+        )
         if response.response_type != 0x11 or len(response.body) < 4:
             raise MonitorProtocolError("VICE did not return checkpoint information")
         return struct.unpack_from("<I", response.body, 0)[0]
 
-    def resume_until_checkpoint(self) -> int:
-        _, events = self.request(0xAA)
-        for event in events:
-            if event.response_type == 0x62 and len(event.body) == 2:
+    def set_execution_checkpoint(self, address: int) -> int:
+        return self.set_checkpoint(address)
+
+    def clear_checkpoints(self) -> list[int]:
+        response, events = self.request(0x14)
+        if response.response_type != 0x14 or len(response.body) != 4:
+            raise MonitorProtocolError("VICE returned an invalid checkpoint list")
+        expected_count = struct.unpack("<I", response.body)[0]
+        checkpoint_numbers = [
+            struct.unpack_from("<I", event.body, 0)[0]
+            for event in events
+            if event.response_type == 0x11 and len(event.body) >= 4
+        ]
+        if len(checkpoint_numbers) != expected_count:
+            raise MonitorProtocolError("VICE checkpoint list count did not match its records")
+        for checkpoint_number in checkpoint_numbers:
+            self.delete_checkpoint(checkpoint_number)
+        return checkpoint_numbers
+
+    def delete_checkpoint(self, checkpoint_number: int) -> None:
+        if (
+            not isinstance(checkpoint_number, int)
+            or isinstance(checkpoint_number, bool)
+            or not 0 <= checkpoint_number <= 0xFFFFFFFF
+        ):
+            raise ValueError("checkpoint number must fit in 32 bits")
+        deleted, _ = self.request(0x13, struct.pack("<I", checkpoint_number))
+        if deleted.response_type != 0x13 or deleted.body:
+            raise MonitorProtocolError("VICE returned an invalid checkpoint-delete response")
+
+    def resume_until_checkpoint(self, checkpoint_number: int) -> int:
+        self.request(0xAA)
+        self.wait_for_event(0x63)
+        matched_checkpoint = False
+        while True:
+            event = self.read_response()
+            if event.request_id != 0xFFFFFFFF:
+                continue
+            if event.response_type == 0x11 and len(event.body) >= 5:
+                event_checkpoint = struct.unpack_from("<I", event.body, 0)[0]
+                matched_checkpoint = event.body[4] != 0 and event_checkpoint == checkpoint_number
+            elif matched_checkpoint and event.response_type == 0x62:
+                if len(event.body) != 2:
+                    raise MonitorProtocolError("VICE stopped event has an invalid PC")
                 return struct.unpack("<H", event.body)[0]
-        stopped = self.wait_for_event(0x62)
-        if len(stopped.body) != 2:
-            raise MonitorProtocolError("VICE stopped event has an invalid PC")
-        return struct.unpack("<H", stopped.body)[0]
 
     def advance_instructions(self, count: int) -> int:
         _, events = self.request(0x71, advance_instructions_body(count))
@@ -229,8 +312,35 @@ class MonitorClient:
     def keyboard_feed(self, text: str) -> None:
         self.request(0x72, keyboard_feed_body(text))
 
+    def keyboard_matrix_set(self, rows: list[int]) -> None:
+        response, _ = self.request(0xA3, keyboard_matrix_set_body(rows))
+        if response.response_type != 0xA3 or response.body:
+            raise MonitorProtocolError("VICE returned an invalid keyboard-matrix response")
+
+    def keyboard_matrix(self) -> list[int]:
+        response, _ = self.request(0xA4)
+        if response.response_type != 0xA4 or len(response.body) != 16:
+            raise MonitorProtocolError("VICE returned an invalid keyboard-matrix response")
+        return list(response.body)
+
+    def host_key_event(self, key_symbol: int, *, modifiers: int = 0, pressed: bool) -> None:
+        response, _ = self.request(0xA5, host_key_event_body(key_symbol, modifiers, pressed))
+        if response.response_type != 0xA5 or response.body:
+            raise MonitorProtocolError("VICE returned an invalid host-key-event response")
+
+    def configure_joyport_simulation(self) -> None:
+        # Binary-monitor joyport writes address VICE's I/O Simulation device,
+        # not the ordinary host joystick device. JOYPORT_ID_IO_SIMULATION is
+        # 37 in the pinned VICE 3.10 device enumeration.
+        self.set_resource("JoyPort2Device", "37")
+
     def joyport_set(self, value: int) -> None:
-        self.request(0xA2, joyport_set_body(2, value))
+        if not 0 <= value <= 0x1F:
+            raise ValueError("joystick value must be a five-bit pressed-line mask")
+        # Trace values use the familiar pressed-bit convention. The I/O
+        # Simulation device exposes the electrical lines directly, which are
+        # active-low on a C64 joystick port.
+        self.request(0xA2, joyport_set_body(2, value ^ 0x1F))
 
     def banks(self) -> dict[str, int]:
         response, _ = self.request(0x82)
@@ -265,6 +375,50 @@ class MonitorClient:
                 raise MonitorProtocolError("invalid VICE register value")
             registers[names.get(item[0], f"register-{item[0]}")] = struct.unpack_from("<H", item, 1)[0]
         return registers
+
+    def cpu_history(self, count: int) -> list[dict[str, object]]:
+        names = self._get_register_names()
+        response, _ = self.request(0x86, cpu_history_body(count))
+        if response.response_type != 0x86 or len(response.body) < 4:
+            raise MonitorProtocolError("VICE returned an invalid CPU history response")
+        item_count = struct.unpack_from("<I", response.body, 0)[0]
+        position = 4
+        history: list[dict[str, object]] = []
+        for _ in range(item_count):
+            if position >= len(response.body):
+                raise MonitorProtocolError("truncated VICE CPU history item")
+            item_size = response.body[position]
+            item_end = position + 1 + item_size
+            if item_end > len(response.body):
+                raise MonitorProtocolError("truncated VICE CPU history item body")
+            item = response.body[position + 1 : item_end]
+            if len(item) < 11:
+                raise MonitorProtocolError("VICE CPU history item is too short")
+            register_count = struct.unpack_from("<H", item, 0)[0]
+            item_position = 2
+            registers: dict[str, int] = {}
+            for _ in range(register_count):
+                if item_position >= len(item):
+                    raise MonitorProtocolError("truncated VICE CPU history register")
+                register_size = item[item_position]
+                register_end = item_position + 1 + register_size
+                register = item[item_position + 1 : register_end]
+                if register_end > len(item) or len(register) != 3:
+                    raise MonitorProtocolError("invalid VICE CPU history register")
+                registers[names.get(register[0], f"register-{register[0]}")] = struct.unpack_from("<H", register, 1)[0]
+                item_position = register_end
+            if item_position + 9 > len(item):
+                raise MonitorProtocolError("truncated VICE CPU history clock")
+            clock = struct.unpack_from("<Q", item, item_position)[0]
+            instruction_length = item[item_position + 8]
+            instruction = item[item_position + 9 :]
+            if len(instruction) != instruction_length:
+                raise MonitorProtocolError("invalid VICE CPU history instruction")
+            history.append({"clock": clock, "registers": registers, "instructionHex": instruction.hex()})
+            position = item_end
+        if len(history) != item_count or position != len(response.body):
+            raise MonitorProtocolError("VICE CPU history count did not match its records")
+        return history
 
     def memory(self, bank_id: int, start: int = 0, end: int = 0xFFFF) -> bytes:
         response, _ = self.request(0x01, memory_get_body(start, end, bank_id))

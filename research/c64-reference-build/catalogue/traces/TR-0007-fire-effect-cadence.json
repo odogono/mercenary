@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "id": "TR-0007",
+  "version": 1,
+  "title": "Mode-neutral fire effect availability and held cadence",
+  "mode": "proof",
+  "branches": [
+    {
+      "id": "allowed-craft-held",
+      "from": {
+        "evidenceSnapshot": "sha256/b4/b473efec12232b6a11cfac723f5b9383925d71c02509c5d530d8c6dc99bd8d8b"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": ["walking-mode", "underground-mode", "fire-line-released", "fire-effect-active", "fire-effect-lifecycle"]
+        },
+        {"type": "joystick_state", "port": 2, "value": 16, "semanticAction": "fire"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_instructions", "instructions": 2000},
+        {
+          "type": "semantic_capture",
+          "name": "effect-1",
+          "observationIds": ["walking-mode", "underground-mode", "fire-line-released", "fire-effect-active", "fire-effect-lifecycle"]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "effect-1",
+          "assertions": [
+            {"operator": "unchanged", "observation": "walking-mode"},
+            {"operator": "unchanged", "observation": "underground-mode"},
+            {"operator": "equals", "observation": "fire-line-released", "value": false},
+            {"operator": "equals", "observation": "fire-effect-active", "value": true},
+            {"operator": "equals", "observation": "fire-effect-lifecycle", "value": 15}
+          ]
+        },
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_instructions", "instructions": 2000},
+        {
+          "type": "semantic_capture",
+          "name": "effect-2",
+          "observationIds": ["fire-line-released", "fire-effect-active", "fire-effect-lifecycle"]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "effect-1",
+          "after": "effect-2",
+          "assertions": [
+            {"operator": "equals", "observation": "fire-line-released", "value": false},
+            {"operator": "equals", "observation": "fire-effect-active", "value": true},
+            {"operator": "equals", "observation": "fire-effect-lifecycle", "value": 14}
+          ]
+        },
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_instructions", "instructions": 2000},
+        {
+          "type": "semantic_capture",
+          "name": "effect-3",
+          "observationIds": ["fire-line-released", "fire-effect-active", "fire-effect-lifecycle"]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "effect-2",
+          "after": "effect-3",
+          "assertions": [
+            {"operator": "equals", "observation": "fire-line-released", "value": false},
+            {"operator": "equals", "observation": "fire-effect-active", "value": true},
+            {"operator": "equals", "observation": "fire-effect-lifecycle", "value": 13}
+          ]
+        },
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_instructions", "instructions": 2000},
+        {
+          "type": "semantic_capture",
+          "name": "effect-4",
+          "observationIds": ["fire-line-released", "fire-effect-active", "fire-effect-lifecycle"]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "effect-3",
+          "after": "effect-4",
+          "assertions": [
+            {"operator": "equals", "observation": "fire-line-released", "value": false},
+            {"operator": "equals", "observation": "fire-effect-active", "value": true},
+            {"operator": "equals", "observation": "fire-effect-lifecycle", "value": 12}
+          ]
+        },
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_instructions", "instructions": 2000},
+        {
+          "type": "semantic_capture",
+          "name": "available",
+          "observationIds": ["fire-line-released", "fire-effect-active", "fire-effect-lifecycle"]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "effect-4",
+          "after": "available",
+          "assertions": [
+            {"operator": "equals", "observation": "fire-line-released", "value": false},
+            {"operator": "equals", "observation": "fire-effect-active", "value": false},
+            {"operator": "equals", "observation": "fire-effect-lifecycle", "value": 0}
+          ]
+        },
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_instructions", "instructions": 2000},
+        {
+          "type": "semantic_capture",
+          "name": "effect-2-start",
+          "observationIds": ["walking-mode", "underground-mode", "fire-line-released", "fire-effect-active", "fire-effect-lifecycle"]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "available",
+          "after": "effect-2-start",
+          "assertions": [
+            {"operator": "equals", "observation": "walking-mode", "value": false},
+            {"operator": "equals", "observation": "underground-mode", "value": false},
+            {"operator": "equals", "observation": "fire-line-released", "value": false},
+            {"operator": "equals", "observation": "fire-effect-active", "value": true},
+            {"operator": "equals", "observation": "fire-effect-lifecycle", "value": 15}
+          ]
+        },
+        {"type": "joystick_state", "port": 2, "value": 0}
+      ]
+    },
+    {
+      "id": "denied-walking-held",
+      "from": {
+        "evidenceSnapshot": "sha256/35/35deb4743a0dfa2f00f2957eb72751d44803755d5ec56470b221168e5087534e"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": ["walking-mode", "underground-mode", "fire-line-released", "fire-effect-active", "fire-effect-lifecycle"]
+        },
+        {"type": "joystick_state", "port": 2, "value": 16, "semanticAction": "fire"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_instructions", "instructions": 2000},
+        {
+          "type": "semantic_capture",
+          "name": "denied-1",
+          "observationIds": ["walking-mode", "underground-mode", "fire-line-released", "fire-effect-active", "fire-effect-lifecycle"]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "denied-1",
+          "assertions": [
+            {"operator": "equals", "observation": "walking-mode", "value": true},
+            {"operator": "unchanged", "observation": "underground-mode"},
+            {"operator": "equals", "observation": "fire-line-released", "value": false},
+            {"operator": "equals", "observation": "fire-effect-active", "value": false},
+            {"operator": "equals", "observation": "fire-effect-lifecycle", "value": 0}
+          ]
+        },
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_instructions", "instructions": 2000},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_instructions", "instructions": 2000},
+        {
+          "type": "semantic_capture",
+          "name": "denied-3",
+          "observationIds": ["walking-mode", "underground-mode", "fire-line-released", "fire-effect-active", "fire-effect-lifecycle"]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "denied-1",
+          "after": "denied-3",
+          "assertions": [
+            {"operator": "equals", "observation": "walking-mode", "value": true},
+            {"operator": "unchanged", "observation": "underground-mode"},
+            {"operator": "equals", "observation": "fire-line-released", "value": false},
+            {"operator": "equals", "observation": "fire-effect-active", "value": false},
+            {"operator": "equals", "observation": "fire-effect-lifecycle", "value": 0}
+          ]
+        },
+        {"type": "joystick_state", "port": 2, "value": 0}
+      ]
+    }
+  ]
+}

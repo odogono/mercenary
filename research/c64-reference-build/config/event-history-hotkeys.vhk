@@ -1,0 +1,11 @@
+# Laboratory-only VICE event-history controls. These host shortcuts are not
+# C64 input and are deliberately outside the game's ordinary key surface.
+!clear
+
+!if MACOS
+    warp-mode-toggle       <Command>w
+    history-record-start   <Command><Shift>r
+    history-record-stop    <Command><Shift>t
+    history-playback-start <Command><Shift>p
+    history-playback-stop  <Command><Shift>o
+!endif

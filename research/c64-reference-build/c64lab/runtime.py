@@ -16,12 +16,20 @@ def render_capture_script(prefix: str) -> str:
         f'bsave "{prefix}.cpu" 0 $0000 $ffff\n'
         "registers\n"
         f'screenshot "{prefix}.png" 2\n'
+        "; Keep loadbasic's transient media outside retained snapshots.\n"
+        "detach 1\n"
         f'dump "{prefix}.vsf"\n'
         "quit\n"
     )
 
 
-def render_checkpoint_script(address: int, prg: Path, *, condition: str | None = None) -> str:
+def render_checkpoint_script(
+    address: int,
+    prg: Path,
+    *,
+    condition: str | None = None,
+    prestart_instructions: int = 0,
+) -> str:
     if not 0 <= address <= 0xFFFF:
         raise LabError(f"Checkpoint address is outside C64 memory: {address}")
     prg_path = str(prg.resolve())
@@ -29,15 +37,34 @@ def render_checkpoint_script(address: int, prg: Path, *, condition: str | None =
         raise LabError("Reference Build path contains a quote or newline and cannot be used in a monitor command")
     if condition is not None and ("\n" in condition or "\r" in condition or ";" in condition):
         raise LabError("Checkpoint condition contains a command separator")
+    if (
+        not isinstance(prestart_instructions, int)
+        or isinstance(prestart_instructions, bool)
+        or prestart_instructions < 0
+    ):
+        raise LabError("Checkpoint pre-start instruction delay must be a non-negative integer")
     break_command = f"break exec ${address:04x}"
     if condition:
         break_command += f" if {condition}"
+    lines = [
+        "; Load the exact PRG after a clean KERNAL/BASIC boot.",
+        f'loadbasic "{prg_path}" 0',
+    ]
+    if prestart_instructions:
+        lines.append(f"z {prestart_instructions}")
+    lines.extend((break_command, 'command 1 "playback \\"capture.mon\\""', "g $0820"))
+    return "\n".join(lines) + "\n"
+
+
+def render_event_history_prepare_script(hotkey_file: Path) -> str:
+    hotkey_path = str(hotkey_file.resolve())
+    if '"' in hotkey_path or "\n" in hotkey_path or "\r" in hotkey_path:
+        raise LabError("Event-history hotkey path contains a quote or newline")
     return (
-        "; Load the exact PRG after a clean KERNAL/BASIC boot.\n"
-        f'loadbasic "{prg_path}" 0\n'
-        f"{break_command}\n"
-        'command 1 "playback \\"capture.mon\\""\n'
-        "g $0820\n"
+        f'resset "HotkeyFile" "{hotkey_path}"\n'
+        'resset "EventStartMode" "0"\n'
+        'resset "EventImageInclude" "0"\n'
+        "x\n"
     )
 
 
@@ -75,6 +102,63 @@ def build_capture_command(
         "-monlog",
         "-monlogname",
         "monitor.log",
+    ]
+
+
+def build_event_history_replay_command(
+    *,
+    vice_binary: Path,
+    run_directory: Path,
+    monitor_address: str,
+    start_snapshot: Path,
+    end_snapshot: Path,
+    prepare_script: Path,
+    machine_model: str,
+    seed: int,
+) -> list[str]:
+    start = start_snapshot.resolve()
+    end = end_snapshot.resolve()
+    if start.parent != end.parent:
+        raise LabError("Event-history snapshots must share the same restricted directory")
+    if start == end:
+        raise LabError("Event-history replay needs distinct start and end snapshots")
+    if re.fullmatch(r"ip4://127\.0\.0\.1:[1-9][0-9]{0,4}", monitor_address) is None:
+        raise LabError("Event-history replay monitor must use an explicit IPv4 loopback port")
+    port = int(monitor_address.rsplit(":", 1)[1])
+    if port > 65535:
+        raise LabError("Event-history replay monitor port is invalid")
+    if not isinstance(seed, int) or seed < 0:
+        raise LabError("Event-history replay seed must be a non-negative integer")
+    run = run_directory.resolve()
+    return [
+        str(vice_binary),
+        "-default",
+        "-model",
+        machine_model,
+        "-seed",
+        str(seed),
+        "-sounddev",
+        "dummy",
+        "-sound",
+        "-speed",
+        "100",
+        "-binarymonitor",
+        "-binarymonitoraddress",
+        monitor_address,
+        "-eventsnapshotdir",
+        str(start.parent),
+        "-eventstartsnapshot",
+        start.name,
+        "-eventendsnapshot",
+        end.name,
+        "-dumpconfig",
+        str(run / "effective.vicerc"),
+        "-logfile",
+        str(run / "vice.log"),
+        "-initbreak",
+        "ready",
+        "-moncommands",
+        str(prepare_script.resolve()),
     ]
 
 

@@ -1,0 +1,142 @@
+diff --git a/src/keyboard.h b/src/keyboard.h
+--- a/src/keyboard.h
++++ b/src/keyboard.h
+@@ -108,6 +108,7 @@ int keyboard_snapshot_read_module(struct snapshot_s *s);
+ 
+ void keyboard_set_keyarr(int row, int col, int value);
+ void keyboard_set_keyarr_any(int row, int col, int value);
++void keyboard_set_matrix(const uint8_t rows[KBD_ROWS]);
+ 
+ void keyboard_clear_keymatrix(void);
+ 
+diff --git a/src/keyboard.c b/src/keyboard.c
+--- a/src/keyboard.c
++++ b/src/keyboard.c
+@@ -375,6 +375,20 @@ void keyboard_set_keyarr(int row, int col, int value)
+     /* FIXME: perhaps trigger alarm here? */
+ }
+ 
++/* Atomically replace, latch, and event-record the emulated matrix. */
++void keyboard_set_matrix(const uint8_t rows[KBD_ROWS])
++{
++    int row, col;
++
++    for (row = 0; row < KBD_ROWS; row++) {
++        for (col = 0; col < KBD_COLS; col++) {
++            keyboard_set_latch_keyarr(row, col, rows[row] & (1 << col));
++        }
++    }
++    keyboard_latch_matrix(0);
++    keyboard_event_record();
++}
++
+ /*-----------------------------------------------------------------------*/
+ 
+ static void clear_modifier_flags(void)
+diff --git a/src/monitor/monitor_binary.c b/src/monitor/monitor_binary.c
+--- a/src/monitor/monitor_binary.c
++++ b/src/monitor/monitor_binary.c
+@@ -40,4 +40,5 @@
+ #include "kbdbuf.h"
++#include "keyboard.h"
+ #include "monitor.h"
+ #include "monitor_binary.h"
+ #include "montypes.h"
+@@ -116,6 +117,9 @@ enum t_binary_command {
+     e_MON_CMD_PALETTE_GET = 0x91,
+ 
+     e_MON_CMD_JOYPORT_SET = 0xa2,
++    e_MON_CMD_KEYBOARD_MATRIX_SET = 0xa3,
++    e_MON_CMD_KEYBOARD_MATRIX_GET = 0xa4,
++    e_MON_CMD_HOST_KEY_EVENT = 0xa5,
+ 
+     e_MON_CMD_USERPORT_SET = 0xb2,
+ 
+@@ -165,6 +169,9 @@ enum t_binary_response {
+     e_MON_RESPONSE_PALETTE_GET = 0x91,
+ 
+     e_MON_RESPONSE_JOYPORT_SET = 0xa2,
++    e_MON_RESPONSE_KEYBOARD_MATRIX_SET = 0xa3,
++    e_MON_RESPONSE_KEYBOARD_MATRIX_GET = 0xa4,
++    e_MON_RESPONSE_HOST_KEY_EVENT = 0xa5,
+ 
+     e_MON_RESPONSE_USERPORT_SET = 0xb2,
+ 
+@@ -1397,6 +1404,61 @@ static void monitor_binary_process_joyport_set(binary_command_t *command)
+     monitor_binary_response(0, e_MON_RESPONSE_JOYPORT_SET, e_MON_ERR_OK, command->request_id, NULL);
+ }
+ 
++static void monitor_binary_process_keyboard_matrix_set(binary_command_t *command)
++{
++    if (command->length != KBD_ROWS) {
++        monitor_binary_error(e_MON_ERR_CMD_INVALID_LENGTH, command->request_id);
++        return;
++    }
++
++    keyboard_set_matrix(command->body);
++    monitor_binary_response(0, e_MON_RESPONSE_KEYBOARD_MATRIX_SET,
++                            e_MON_ERR_OK, command->request_id, NULL);
++}
++
++static void monitor_binary_process_keyboard_matrix_get(binary_command_t *command)
++{
++    uint8_t response[KBD_ROWS];
++    int row;
++
++    if (command->length != 0) {
++        monitor_binary_error(e_MON_ERR_CMD_INVALID_LENGTH, command->request_id);
++        return;
++    }
++    for (row = 0; row < KBD_ROWS; row++) {
++        response[row] = (uint8_t)keyarr[row];
++    }
++    monitor_binary_response(KBD_ROWS, e_MON_RESPONSE_KEYBOARD_MATRIX_GET,
++                            e_MON_ERR_OK, command->request_id, response);
++}
++
++static void monitor_binary_process_host_key_event(binary_command_t *command)
++{
++    unsigned char *body = command->body;
++    uint32_t key;
++    uint16_t modifiers;
++    uint8_t pressed;
++
++    if (command->length != 7) {
++        monitor_binary_error(e_MON_ERR_CMD_INVALID_LENGTH, command->request_id);
++        return;
++    }
++    key = little_endian_to_uint32(&body[0]);
++    modifiers = little_endian_to_uint16(&body[4]);
++    pressed = body[6];
++    if ((modifiers & ~0x7f) != 0 || pressed > 1) {
++        monitor_binary_error(e_MON_ERR_INVALID_PARAMETER, command->request_id);
++        return;
++    }
++    if (pressed) {
++        keyboard_key_pressed((signed long)key, modifiers);
++    } else {
++        keyboard_key_released((signed long)key, modifiers);
++    }
++    monitor_binary_response(0, e_MON_RESPONSE_HOST_KEY_EVENT,
++                            e_MON_ERR_OK, command->request_id, NULL);
++}
++
+ static void monitor_binary_process_userport_set(binary_command_t *command)
+ {
+     IO_SIM_RESULT ret;
+@@ -1818,6 +1880,15 @@ static void monitor_binary_process_command(unsigned char * pbuffer)
+     } else if (command_type == e_MON_CMD_JOYPORT_SET) {
+         monitor_binary_process_joyport_set(&command);
+ 
++    } else if (command_type == e_MON_CMD_KEYBOARD_MATRIX_SET) {
++        monitor_binary_process_keyboard_matrix_set(&command);
++
++    } else if (command_type == e_MON_CMD_KEYBOARD_MATRIX_GET) {
++        monitor_binary_process_keyboard_matrix_get(&command);
++
++    } else if (command_type == e_MON_CMD_HOST_KEY_EVENT) {
++        monitor_binary_process_host_key_event(&command);
++
+     } else if (command_type == e_MON_CMD_USERPORT_SET) {
+         monitor_binary_process_userport_set(&command);
+ 

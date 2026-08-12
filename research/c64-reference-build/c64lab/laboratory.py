@@ -98,7 +98,13 @@ def _run_id(checkpoint: str) -> str:
     return f"{checkpoint}-{timestamp}-{uuid.uuid4().hex[:8]}"
 
 
-def capture(prg: Path, checkpoint: str, *, run_id: str | None = None) -> tuple[Path, dict[str, Any]]:
+def capture(
+    prg: Path,
+    checkpoint: str,
+    *,
+    run_id: str | None = None,
+    prestart_instructions: int = 0,
+) -> tuple[Path, dict[str, Any]]:
     reference, config = load_configuration()
     build = validate_prg(prg, reference)
     checkpoint_config = config["checkpoints"].get(checkpoint)
@@ -120,7 +126,12 @@ def capture(prg: Path, checkpoint: str, *, run_id: str | None = None) -> tuple[P
     (run_directory / "capture.mon").write_text(render_capture_script(checkpoint), encoding="utf-8")
     checkpoint_script = run_directory / "checkpoint.mon"
     checkpoint_script.write_text(
-        render_checkpoint_script(address, prg, condition=checkpoint_config.get("condition")),
+        render_checkpoint_script(
+            address,
+            prg,
+            condition=checkpoint_config.get("condition"),
+            prestart_instructions=prestart_instructions,
+        ),
         encoding="utf-8",
     )
     (run_directory / "vice-features.txt").write_text(features, encoding="utf-8")
@@ -194,6 +205,7 @@ def capture(prg: Path, checkpoint: str, *, run_id: str | None = None) -> tuple[P
             "seed": config["seed"],
             "cycleLimit": config["cycleLimit"],
             "configSha256": file_hash(run_directory / "effective.vicerc"),
+            "prestartInstructions": prestart_instructions,
         },
         "scenario": {
             "name": checkpoint,
@@ -295,11 +307,14 @@ def observe(prg: Path, scenario_path: Path) -> tuple[Path, dict[str, Any]]:
                 text=True,
             )
             with MonitorClient.connect(host, port, timeout=15) as client:
+                client.clear_checkpoints()
+                if any(action["type"] == "joystick" for action in scenario["actions"]):
+                    client.configure_joyport_simulation()
                 for action in scenario["actions"]:
                     action_type = action["type"]
                     if action_type == "wait_pc":
-                        client.set_execution_checkpoint(action["address"])
-                        current_pc = client.resume_until_checkpoint()
+                        checkpoint_number = client.set_execution_checkpoint(action["address"])
+                        current_pc = client.resume_until_checkpoint(checkpoint_number)
                         if current_pc != action["address"]:
                             raise LabError(
                                 f"VICE stopped at ${current_pc:04X}, expected ${action['address']:04X}"
@@ -311,6 +326,7 @@ def observe(prg: Path, scenario_path: Path) -> tuple[Path, dict[str, Any]]:
                     elif action_type == "joystick":
                         client.joyport_set(action["value"])
                         current_pc = client.advance_instructions(action["durationInstructions"])
+                        client.joyport_set(0)
                     elif action_type == "capture":
                         banks = client.banks()
                         if "ram" not in banks or "cpu" not in banks:

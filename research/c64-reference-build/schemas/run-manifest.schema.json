@@ -49,7 +49,8 @@
         "model": {"const": "c64"},
         "seed": {"type": "integer", "minimum": 0},
         "cycleLimit": {"type": "integer", "minimum": 1},
-        "configSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        "configSha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "prestartInstructions": {"type": "integer", "minimum": 0}
       },
       "additionalProperties": false
     },

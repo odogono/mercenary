@@ -1,0 +1,2875 @@
+{
+  "schemaVersion": 1,
+  "id": "TR-9018",
+  "version": 1,
+  "title": "Underground walking joystick conflict proof",
+  "mode": "proof",
+  "branches": [
+    {
+      "id": "mask-03",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 3,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 12
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-05",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 5,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -75
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -31
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": 16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 10
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-06",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 6,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": 74
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": 30
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": 16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 9
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-07",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 7,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": 16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 8
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-09",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 9,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -75
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -31
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": -16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 6
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-10",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 10,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": 74
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": 30
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": -16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 5
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-11",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 11,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": -16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 4
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-12",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 12,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 3
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-13",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 13,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -75
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -31
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 2
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-14",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 14,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": 74
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": 30
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 1
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-15",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 15,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 0
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-17",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 17,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -75
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -31
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 14
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-18",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 18,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": 74
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": 30
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 13
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-19",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 19,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 12
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-20",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 20,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": 16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 11
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-21",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 21,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -75
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -31
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": 16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 10
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-22",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 22,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": 74
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": 30
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": 16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 9
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-23",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 23,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": 16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 8
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-24",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 24,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": -16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 7
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-25",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 25,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -75
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -31
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": -16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 6
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-26",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 26,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": 74
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": 30
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": -16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 5
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-27",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 27,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": -16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 4
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-28",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 28,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 3
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-29",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 29,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -75
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -31
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 2
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-30",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 30,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": 74
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": 30
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 1
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "mask-31",
+      "from": {
+        "evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 31,
+          "semanticAction": "input-conflict-probe"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "after",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "after",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 0
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/odogono/mercenary/research/c64-reference-build/catalogue-semantic-coverage.schema.json",
+  "title": "Semantic Mode coverage manifest",
+  "type": "object",
+  "required": ["schemaVersion", "catalogueSubjectDigest", "scope", "modeInventory", "modes", "obligations"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "catalogueSubjectDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "scope": {
+      "type": "object",
+      "required": ["uncertaintyId", "behaviorCaseIds", "includedResponsibilities", "excludedResponsibilities", "obligationKinds"],
+      "properties": {
+        "uncertaintyId": {"const": "UNC-0001"},
+        "behaviorCaseIds": {"$ref": "#/$defs/caseIds"},
+        "includedResponsibilities": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/includedResponsibility"}
+        },
+        "excludedResponsibilities": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/excludedResponsibility"}
+        },
+        "obligationKinds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/obligationKind"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "modeInventory": {
+      "type": "object",
+      "required": ["method", "modeIds", "behaviorCaseIds", "traceIds", "evidenceIds", "status"],
+      "properties": {
+        "method": {"const": "decoded-dispatch-reachability"},
+        "modeIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^SM-[0-9]{4}$"}},
+        "behaviorCaseIds": {"$ref": "#/$defs/caseIds"},
+        "traceIds": {"$ref": "#/$defs/traceIds"},
+        "evidenceIds": {"$ref": "#/$defs/evidenceIds"},
+        "status": {"const": "verified"}
+      },
+      "additionalProperties": false
+    },
+    "modes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "behaviorCaseIds", "traceIds", "evidenceIds", "status"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^SM-[0-9]{4}$"},
+          "title": {"type": "string", "minLength": 1},
+          "behaviorCaseIds": {"$ref": "#/$defs/caseIds"},
+          "traceIds": {"$ref": "#/$defs/traceIds"},
+          "evidenceIds": {"$ref": "#/$defs/evidenceIds"},
+          "status": {"const": "verified"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "obligations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "kind", "modeIds", "behaviorCaseIds", "traceIds", "evidenceIds", "minimumProofRuns", "completedProofRuns", "status"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^SO-[0-9]{4}$"},
+          "title": {"type": "string", "minLength": 1},
+          "kind": {"$ref": "#/$defs/obligationKind"},
+          "modeIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^SM-[0-9]{4}$"}},
+          "behaviorCaseIds": {"$ref": "#/$defs/caseIds"},
+          "traceIds": {"$ref": "#/$defs/traceIds"},
+          "evidenceIds": {"$ref": "#/$defs/evidenceIds"},
+          "minimumProofRuns": {"type": "integer", "minimum": 2},
+          "completedProofRuns": {"type": "integer", "minimum": 0},
+          "legalOutcomeIds": {"$ref": "#/$defs/outcomeIds"},
+          "observedOutcomeIds": {"$ref": "#/$defs/outcomeIds"},
+          "status": {"const": "verified"}
+        },
+        "allOf": [{
+          "if": {"properties": {"kind": {"const": "stochastic-branch"}}},
+          "then": {"required": ["legalOutcomeIds", "observedOutcomeIds"]},
+          "else": {"not": {"anyOf": [{"required": ["legalOutcomeIds"]}, {"required": ["observedOutcomeIds"]}]}}
+        }],
+        "additionalProperties": false
+      }
+    }
+  },
+  "$defs": {
+    "caseIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^BC-[0-9]{4}$"}},
+    "traceIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^TR-[0-9]{4}$"}},
+    "evidenceIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^EV-[0-9a-f]{16}$"}},
+    "outcomeIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^OUT-[a-z0-9-]+$"}},
+    "includedResponsibility": {"enum": ["action-surface", "input-conflicts", "rate-limits", "pal-timing", "generic-transitions", "generic-interaction-boundaries", "player-observable-stochastic-outcomes"]},
+    "excludedResponsibility": {"enum": ["geometry-identity", "object-conditioned-interactions", "restart-placement", "inventory-identity", "inventory-capacity", "item-conditioned-take-drop", "unreachable-dispatch-states", "transient-nonobservable-randomness"]},
+    "obligationKind": {"enum": ["action", "conflict", "rate-limit", "interaction-precondition", "interaction-boundary", "stochastic-branch"]}
+  },
+  "additionalProperties": false
+}

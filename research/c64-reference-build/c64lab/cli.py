@@ -26,6 +26,7 @@ from .catalogue import (
 )
 from .verification import aggregate_verification, render_report, validate_verification
 from .implementation_contracts import validate_implementation_contracts
+from .semantics import validate_event_history_proof
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -85,6 +86,8 @@ def _parser() -> argparse.ArgumentParser:
     catalogue_run = catalogue_commands.add_parser("run", help="run one provenance-backed catalogue trace")
     catalogue_run.add_argument("--prg", required=True, type=Path)
     catalogue_run.add_argument("--trace", required=True, type=Path)
+    catalogue_run.add_argument("--observation-map", type=Path)
+    catalogue_run.add_argument("--branch", action="append", dest="branches")
 
     catalogue_build = catalogue_commands.add_parser("build", help="assemble a restricted catalogue bundle")
     catalogue_build.add_argument("--entries", required=True, type=Path)
@@ -98,6 +101,11 @@ def _parser() -> argparse.ArgumentParser:
     catalogue_sample = catalogue_commands.add_parser("sample", help="validate and run deterministic or stochastic trace samples")
     catalogue_sample.add_argument("--prg", required=True, type=Path)
     catalogue_sample.add_argument("--trace-set", required=True, type=Path)
+    catalogue_sample.add_argument("--observation-map", type=Path)
+
+    catalogue_history = catalogue_commands.add_parser("verify-history", help="verify two typed VICE event-history replays")
+    catalogue_history.add_argument("--capture-report", required=True, type=Path)
+    catalogue_history.add_argument("--replay-report", required=True, action="append", type=Path)
 
     catalogue_review = catalogue_commands.add_parser("review", help="record a maintainer catalogue review")
     catalogue_review.add_argument("--catalogue", required=True, type=Path)
@@ -193,9 +201,21 @@ def main(argv: Sequence[str] | None = None) -> int:
                 raise LabError("Catalogue --reviews must name the catalogue's reviews directory")
             result = summarize_catalogue(arguments.catalogue, arguments.output)
         elif arguments.catalogue_command == "sample":
-            result = sample_catalogue(arguments.prg, arguments.trace_set)
+            result = sample_catalogue(arguments.prg, arguments.trace_set, arguments.observation_map)
+        elif arguments.catalogue_command == "verify-history":
+            try:
+                capture_report = json.loads(arguments.capture_report.read_text(encoding="utf-8"))
+                replay_reports = [json.loads(path.read_text(encoding="utf-8")) for path in arguments.replay_report]
+            except (OSError, json.JSONDecodeError) as error:
+                raise LabError(f"Could not read event-history proof report: {error}") from error
+            result = {"status": "verified", **validate_event_history_proof(capture_report, replay_reports)}
         else:
-            result = run_catalogue_trace(arguments.prg, arguments.trace)
+            result = run_catalogue_trace(
+                arguments.prg,
+                arguments.trace,
+                arguments.observation_map,
+                branch_ids=arguments.branches,
+            )
     except LabError as error:
         print(f"error: {error}", file=sys.stderr)
         return 1

@@ -16,7 +16,7 @@ VICE's binary monitor API v2 is sufficient for deterministic, request-correlated
 state capture. It can discover bank and register identifiers, read or write an
 inclusive memory range in a named bank, read or set registers, create conditional
 load/store/execute checkpoints, get the indexed display buffer and palette, feed
-PETSCII keyboard input, set joystick state, advance a requested number of
+PETSCII keyboard input, drive a configured joyport I/O Simulation device, advance a requested number of
 instructions, save or restore a snapshot, reset or power-cycle the machine, and
 autostart a file. Responses echo the client's request ID; unsolicited events such
 as checkpoint hits use request ID `0xffffffff`. Clients must use the advertised
@@ -26,14 +26,53 @@ register and bank names rather than assuming numeric IDs are stable.
 [register discovery](https://vice-emu.sourceforge.io/vice_13.html#SEC369)
 [display capture](https://vice-emu.sourceforge.io/vice_13.html#SEC370)
 
+The joyport monitor command does not drive VICE's ordinary host-joystick device.
+The runner must select VICE 3.10's `Joyport I/O simulation` device for control
+port 2 and translate the trace's pressed-bit mask to the C64's active-low
+electrical lines. A successful monitor response without that device selection
+does not prove that the emulated machine observed the requested input.
+
+## Physical keyboard and VICE event history
+
+The binary monitor's PETSCII feed writes VICE's keyboard buffer; it cannot prove
+software that scans the C64 keyboard matrix directly, nor can it represent an
+exact host key down, key up, chord, or hold. VICE event recording, by contrast,
+records keyboard activity and writes start/end snapshots around a history. The
+laboratory therefore supplies a bounded macOS `CGEvent` driver plus an isolated
+hotkey file for starting, stopping, and replaying VICE event history.
+[keyboard feed](https://vice-emu.sourceforge.io/vice_13.html#SEC365)
+[event history](https://vice-emu.sourceforge.io/vice_11.html)
+
+The driver refuses to run without Accessibility permission, an exact positive
+VICE PID and executable digest, the `x64sc` window owner, continuous foreground
+focus, ordered balanced key edges, and a duration no longer than 60 seconds. Its
+request is validated by `event-history-capture.schema.json`; its report records
+the VICE and driver executable identities, requested and actual event times, and
+the number of focus checks. Requests and resulting histories are Restricted
+Material. Proof replays start from the reproduced checkpoint and exact recorded
+VICE configuration and compare typed semantic observations, not playback success
+or snapshot hashes alone. `lab catalogue verify-history` enforces exactly two
+distinct cold starts, capture/replay executable and start-state identity,
+effective-configuration and opaque input-setup equality, reset ordering, and
+identical typed end observations. It also requires the recorded result to pass
+declared typed semantic assertions, so two reproducible replays of the wrong
+command cannot qualify as proof. Its result omits raw histories, paths, logs,
+physical keys, and the restricted input setup itself.
+The bounded `replay-keyboard-history.swift` helper activates only the pinned
+VICE PID, verifies the executable, start snapshot, hotkey map, sole main
+window, and Accessibility grant, triggers playback after monitor preparation,
+and checks foreground focus throughout the requested replay interval.
+
 The C64/6510 register list in the 3.10 source includes `LIN` and `CYC`, so each
 stopped boundary can record PAL raster line and cycle alongside the CPU
 registers. `Advance Instructions` counts instructions, not cycles. VICE 3.10
 also added `CPU History`, whose records include an eight-byte CPU clock and the
 instruction's register state and bytes, but CPU history is a compile-time
 option (`--enable-cpuhistory`) and uses a bounded cyclic buffer. The catalogue
-must therefore feature-test it and must not make it the only source of boundary
-ordering. [register and instruction commands](https://vice-emu.sourceforge.io/vice_13.html#SEC358)
+runner requests the latest history record at each stopped action boundary and
+records its absolute clock alongside `LIN`, `CYC`, and client instruction
+counts. It rejects a missing or malformed clock, and does not make CPU history
+the only source of boundary ordering. [register and instruction commands](https://vice-emu.sourceforge.io/vice_13.html#SEC358)
 [CPU History](https://vice-emu.sourceforge.io/vice_13.html#SEC372)
 [VICE 3.10 release source](https://sourceforge.net/projects/vice-emu/files/releases/vice-3.10.tar.gz/download)
 

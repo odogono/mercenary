@@ -65,6 +65,81 @@ unwarped with an effective configuration capture; D64 media is attached at
 branch-process setup in read/write or read-only mode and hashed only after
 orderly shutdown. See
 [`docs/research/behavior-catalogue.md`](../../docs/research/behavior-catalogue.md).
+If an emulator process fails partway through a multi-branch trace, repeat
+`--branch <branch-id>` to run only the affected branch. The selector validates
+the complete trace first and retains its original version and content hash in
+the Evidence record; repeated selectors are allowed and execute in canonical
+trace order. This is bounded failure recovery, not permission to omit an
+unfavourable or failing branch from the required proof count.
+
+Semantic proof traces may add typed captures, assertions, and outcome
+classification by passing an ignored declarative map with `--observation-map`.
+The map supports integer widths and signedness, endianness, masks, shifts,
+booleans, enums, and opaque execution-boundary IDs; raw addresses, values, and
+reports stay restricted. Stochastic trace
+sets use a `stratified-pal` schedule with at least 100 distinct midpoint phases.
+Trace sets may also register `event-history` proofs produced by the foreground
+physical-key workflow below. Sampling does not reinterpret those inputs as
+PETSCII or replay them through the binary runner: it verifies that every named
+trace branch has one proof-mode Evidence record bound to the canonical trace
+hash, an opaque normalized replay digest, and at least two cold replays.
+
+Games that scan the C64 keyboard matrix cannot be driven by the monitor's
+PETSCII queue. Compile the bounded macOS driver and run it with an ignored
+`event-history-capture.schema.json` request against the exact foreground VICE
+PID. VICE must be launched with `config/event-history-hotkeys.vhk` and an
+isolated `-eventsnapshotdir`; the hotkey file clears VICE's default shortcut
+map so the driver's pinned `Command-Shift-R`/`Command-Shift-T` host controls
+cannot fall through to media recording. The request contains only the physical
+key edges under test and pins the hotkey file by SHA-256. The driver fails
+without Accessibility permission, if any modal or auxiliary VICE window is
+present, or on any process, executable, focus, timing, identity, or key-balance
+mismatch. It emits an identity-bearing JSON report, which remains restricted.
+Follow the [macOS foreground launch contract](VICE-RESEARCH.md#macos-foreground-launch-contract):
+event-history capture needs a running event-history start snapshot made by the
+same VICE executable and configuration, never the monitor-stopped interactive
+checkpoint. If a warning or monitor window appears over VICE, stop and correct
+the snapshot or launch identity; do not dismiss it and continue.
+
+Set `EventStartMode` to `0` (file-save) and `EventImageInclude` to `0` before
+recording. For replay, do not use VICE's command-line `-playback` switch: it
+can restore the history snapshot before the normal startup reset has settled,
+after which that pending reset destroys the restored state. Start each cold
+VICE process with `-initbreak ready`, load the pinned hotkey map from the
+monitor after `-default` has initialized the UI, resume, and only then invoke
+the pinned `history-playback-start` host action. A valid replay log has its
+sole `Main CPU: RESET.` before `Unit 8: RESET (For undump).`; a CPU reset after
+that restore marker is a hard failure. Compare typed observations with the
+recorded end state for two independent replay processes.
+
+Write each replay's cold-start ID, VICE and effective-configuration digests,
+start-snapshot digest, VICE log, and typed end observations to an ignored JSON
+report. The verifier requires exactly two distinct cold starts, binds both to
+the capture identities, recording configuration, and opaque input-setup
+digest, first checks the captured typed result against declared semantic
+assertions, rejects startup-reset races and configuration or setup drift,
+and emits only a normalized public-safe summary:
+
+```sh
+research/c64-reference-build/lab catalogue verify-history \
+  --capture-report restricted/behavior-catalogue/unc-0001/capture-report.json \
+  --replay-report restricted/behavior-catalogue/unc-0001/replay-1.json \
+  --replay-report restricted/behavior-catalogue/unc-0001/replay-2.json
+```
+
+```sh
+swiftc research/c64-reference-build/tools/capture-keyboard-history.swift \
+  -o research/c64-reference-build/work/capture-keyboard-history
+research/c64-reference-build/work/capture-keyboard-history \
+  restricted/behavior-catalogue/unc-0001/capture-request.json \
+  > restricted/behavior-catalogue/unc-0001/capture-report.json
+
+swiftc research/c64-reference-build/tools/replay-keyboard-history.swift \
+  -o research/c64-reference-build/work/replay-keyboard-history
+research/c64-reference-build/work/replay-keyboard-history \
+  restricted/behavior-catalogue/unc-0001/replay-activation.json \
+  restricted/behavior-catalogue/unc-0001/replay-activation-report.json
+```
 
 ### Verification System
 
@@ -109,8 +184,10 @@ monitor logs, effective config, display, snapshot and scripts.
 The `interactive` capture stops at `$8477` only after raw RAM `$007F` has become
 `$3F`, excluding an earlier startup visit to the same code. `observe` restores
 that version-coupled snapshot, waits at the checkpoint through the loopback
-binary monitor, and replays bounded PETSCII and joystick-port-2 actions. The
-scenario's human-facing port 2 maps to VICE monitor index 1.
+binary monitor, and replays bounded PETSCII-buffer and joystick-port-2 actions.
+It must not claim physical keyboard holds or matrix-scanned input. The
+scenario's human-facing port 2 maps to VICE monitor index 1; the runner selects
+VICE's I/O Simulation device and translates pressed bits to active-low lines.
 
 ## Artifact policy
 

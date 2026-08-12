@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "id": "TR-9025",
+  "version": 1,
+  "title": "Surface relative-throttle hold and saturation proof",
+  "mode": "proof",
+  "branches": [
+    {
+      "id": "decrease-held",
+      "from": {"checkpoint": "interactive"},
+      "actions": [{
+        "type": "event_history",
+        "inputSetupSha256": "34c6dc29cf637de0bb12358c66fe0257b78836dd24b928620115862a2db0ebf2",
+        "expectedAssertions": [
+          {"observation": "walking-mode", "operator": "unchanged"},
+          {"observation": "throttle-encoding", "operator": "changed"}
+        ]
+      }]
+    },
+    {
+      "id": "increase-held",
+      "from": {"checkpoint": "interactive"},
+      "actions": [{
+        "type": "event_history",
+        "inputSetupSha256": "f506c64916a285f2aa606bb7c1b7e6982dd080b433f9b87c8190cd65699533f5",
+        "expectedAssertions": [
+          {"observation": "walking-mode", "operator": "unchanged"},
+          {"observation": "throttle-encoding", "operator": "changed"}
+        ]
+      }]
+    },
+    {
+      "id": "increase-upper-bound",
+      "from": {"checkpoint": "interactive"},
+      "actions": [{
+        "type": "event_history",
+        "inputSetupSha256": "8103129ab3b8bc936d57b31f6317c057c5ebb0b03a427307c3c91f064e01896b",
+        "expectedAssertions": [
+          {"observation": "walking-mode", "operator": "unchanged"},
+          {"observation": "throttle-encoding", "operator": "equals", "value": 34848}
+        ]
+      }]
+    },
+    {
+      "id": "decrease-lower-bound",
+      "from": {"checkpoint": "interactive"},
+      "actions": [{
+        "type": "event_history",
+        "inputSetupSha256": "8cc1bf6cb15aa3312bba4966d4e07969bb058b8f9f31f6f63bbeafaf43b83426",
+        "expectedAssertions": [
+          {"observation": "walking-mode", "operator": "unchanged"},
+          {"observation": "throttle-encoding", "operator": "equals", "value": 6144}
+        ]
+      }]
+    }
+  ]
+}
