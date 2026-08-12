@@ -246,6 +246,8 @@ def validate_event_history_proof(
     for field in digest_fields:
         value = capture_report.get(field)
         _require(isinstance(value, str) and len(value) == 64 and all(character in "0123456789abcdef" for character in value), f"Event-history capture report has invalid {field}")
+    recorded_config = capture_report.get("effectiveConfigSha256")
+    _require(isinstance(recorded_config, str) and len(recorded_config) == 64 and all(character in "0123456789abcdef" for character in recorded_config), "Event-history capture report lacks its recording configuration identity")
     history = capture_report.get("eventHistory")
     _require(isinstance(history, Mapping), "Event-history capture report lacks history identities")
     for field in ("startSnapshotSha256", "endSnapshotSha256", "hotkeyFileSha256"):
@@ -291,6 +293,7 @@ def validate_event_history_proof(
         _require(report.get("startSnapshotSha256") == history["startSnapshotSha256"], "Event-history replay start snapshot identity diverged")
         current_config = report.get("effectiveConfigSha256")
         _require(isinstance(current_config, str) and len(current_config) == 64 and all(character in "0123456789abcdef" for character in current_config), "Event-history replay lacks an effective configuration identity")
+        _require(current_config == recorded_config, "Event-history replay diverged from the recording configuration")
         if config_digest is None:
             config_digest = current_config
         _require(current_config == config_digest, "Event-history replay effective configurations diverged")

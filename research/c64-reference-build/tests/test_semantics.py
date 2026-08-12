@@ -138,6 +138,7 @@ class EventHistorySafetyTests(unittest.TestCase):
             "accessibilityTrusted": True,
             "viceExecutableSha256": "a" * 64,
             "driverExecutableSha256": "b" * 64,
+            "effectiveConfigSha256": "f" * 64,
             "focusChecks": 4,
             "durationMilliseconds": 1200,
             "typedObservations": {"mode": "SM-0001", "x": 10},
@@ -174,6 +175,7 @@ class EventHistorySafetyTests(unittest.TestCase):
             "accessibilityTrusted": True,
             "viceExecutableSha256": "a" * 64,
             "driverExecutableSha256": "b" * 64,
+            "effectiveConfigSha256": "f" * 64,
             "focusChecks": 4,
             "durationMilliseconds": 100,
             "typedObservations": {"mode": "SM-0001"},
@@ -195,6 +197,11 @@ class EventHistorySafetyTests(unittest.TestCase):
             validate_event_history_proof(capture, [replay, replay])
         with self.assertRaisesRegex(LabError, "VICE executable"):
             validate_event_history_proof(capture, [replay, {**replay, "coldStartId": "other", "viceExecutableSha256": "9" * 64}])
+        with self.assertRaisesRegex(LabError, "recording configuration"):
+            validate_event_history_proof(capture, [
+                {**replay, "coldStartId": "cold-1", "effectiveConfigSha256": "9" * 64},
+                {**replay, "coldStartId": "cold-2", "effectiveConfigSha256": "9" * 64},
+            ])
 
     def test_rejects_proof_without_the_recorded_typed_end_state(self) -> None:
         capture = {
@@ -202,6 +209,7 @@ class EventHistorySafetyTests(unittest.TestCase):
             "accessibilityTrusted": True,
             "viceExecutableSha256": "a" * 64,
             "driverExecutableSha256": "b" * 64,
+            "effectiveConfigSha256": "f" * 64,
             "focusChecks": 4,
             "durationMilliseconds": 100,
             "events": [
