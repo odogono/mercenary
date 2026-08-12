@@ -271,10 +271,19 @@ class MonitorClient:
         if len(checkpoint_numbers) != expected_count:
             raise MonitorProtocolError("VICE checkpoint list count did not match its records")
         for checkpoint_number in checkpoint_numbers:
-            deleted, _ = self.request(0x13, struct.pack("<I", checkpoint_number))
-            if deleted.response_type != 0x13 or deleted.body:
-                raise MonitorProtocolError("VICE returned an invalid checkpoint-delete response")
+            self.delete_checkpoint(checkpoint_number)
         return checkpoint_numbers
+
+    def delete_checkpoint(self, checkpoint_number: int) -> None:
+        if (
+            not isinstance(checkpoint_number, int)
+            or isinstance(checkpoint_number, bool)
+            or not 0 <= checkpoint_number <= 0xFFFFFFFF
+        ):
+            raise ValueError("checkpoint number must fit in 32 bits")
+        deleted, _ = self.request(0x13, struct.pack("<I", checkpoint_number))
+        if deleted.response_type != 0x13 or deleted.body:
+            raise MonitorProtocolError("VICE returned an invalid checkpoint-delete response")
 
     def resume_until_checkpoint(self, checkpoint_number: int) -> int:
         self.request(0xAA)

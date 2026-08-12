@@ -129,6 +129,14 @@ class MonitorProtocolTests(unittest.TestCase):
             checkpoint_set_body(0x2000, operation="load", temporary=False),
         )
 
+    def test_deletes_one_exact_checkpoint_without_listing_global_state(self) -> None:
+        client = MonitorClient(MagicMock())
+        client.request = MagicMock(return_value=(Response(0x13, 0, 1, b""), []))
+
+        client.delete_checkpoint(7)
+
+        client.request.assert_called_once_with(0x13, struct.pack("<I", 7))
+
     def test_clears_checkpoints_restored_from_a_snapshot(self) -> None:
         client = MonitorClient(MagicMock())
         client.request = MagicMock(side_effect=[
