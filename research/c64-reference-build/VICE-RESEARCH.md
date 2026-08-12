@@ -58,7 +58,16 @@ requires a bounded instruction search, and returns the matrix to neutral on
 both success and failure. A chained schedule may declare `startAtCurrent` only
 when the prior handler leaves the CPU stopped at the next scanner entry;
 the sequencer verifies that PC before accepting any input. Restricted schedules
-supply all decoded details.
+supply all decoded details. Held-input schedules may require a bounded
+`handlerOccurrences` count; every occurrence records its own PAL registers and
+the matrix remains active until the final required handler, then neutralizes.
+
+`run_held_host_key_sequence` covers keys that must remain latched across input
+scans. It queues one VICE host-key press, requires a bounded number of decoded
+handler occurrences through temporary checkpoints, records absolute CPU clocks
+and PAL registers, and releases the key even when the sequence fails. Use
+`summarize_pal_cadence` to validate retained timeline clock deltas against their
+PAL progression and emit only exact public-safe interval summaries.
 
 The source archive must hash to
 `8e5bac18cbcb9f192380ad3ef881f8790f5b75c41d7b3da65d831985d864d6d1`.

@@ -35,6 +35,8 @@ def run_phase_aligned_matrix_sequence(client: Any, schedule: Mapping[str, Any]) 
     handler_pc = schedule.get("handlerPc")
     max_instructions = schedule.get("maxInstructions", 2_000)
     start_at_current = schedule.get("startAtCurrent", False)
+    handler_occurrences = schedule.get("handlerOccurrences", 1)
+    use_handler_checkpoints = schedule.get("useHandlerCheckpoints", False)
     for name, value in (
         ("scannerEntryPc", scanner_entry),
         ("rowPc", row_pc),
@@ -46,6 +48,16 @@ def run_phase_aligned_matrix_sequence(client: Any, schedule: Mapping[str, Any]) 
         "Phase-aligned schedule maxInstructions must be 1..100000",
     )
     _require(isinstance(start_at_current, bool), "Phase-aligned schedule startAtCurrent must be boolean")
+    _require(
+        isinstance(use_handler_checkpoints, bool),
+        "Phase-aligned schedule useHandlerCheckpoints must be boolean",
+    )
+    _require(
+        isinstance(handler_occurrences, int)
+        and not isinstance(handler_occurrences, bool)
+        and 1 <= handler_occurrences <= 100,
+        "Phase-aligned schedule handlerOccurrences must be 1..100",
+    )
 
     def matrix_rows(value: Any, label: str) -> list[int]:
         _require(isinstance(value, list) and len(value) == 16, f"Phase-aligned {label} must contain 16 rows")
@@ -106,17 +118,118 @@ def run_phase_aligned_matrix_sequence(client: Any, schedule: Mapping[str, Any]) 
                 raise LabError("Phase-aligned input did not reach its matrix-switch boundary")
             apply_matrix(rows)
 
-        for _ in range(max_instructions):
-            pc = client.advance_instructions(1)
-            if pc == handler_pc:
-                boundaries.append({"id": "semantic-handler", "pc": pc, "registers": client.registers()})
-                break
-        else:
-            raise LabError("Phase-aligned input did not reach its semantic-handler boundary")
-        client.advance_instructions(1)
+        for occurrence in range(1, handler_occurrences + 1):
+            if use_handler_checkpoints:
+                checkpoint = client.set_checkpoint(handler_pc)
+                pc = client.resume_until_checkpoint(checkpoint)
+                _require(
+                    pc == handler_pc,
+                    f"Phase-aligned input did not reach semantic-handler occurrence {occurrence}",
+                )
+                handler_registers = client.registers()
+            else:
+                for _ in range(max_instructions):
+                    pc = client.advance_instructions(1)
+                    if pc == handler_pc:
+                        handler_registers = client.registers()
+                        break
+                else:
+                    raise LabError(
+                        "Phase-aligned input did not reach semantic-handler "
+                        f"occurrence {occurrence} of {handler_occurrences}"
+                    )
+            handler_id = (
+                "semantic-handler"
+                if handler_occurrences == 1
+                else f"semantic-handler-{occurrence}"
+            )
+            boundaries.append({"id": handler_id, "pc": pc, "registers": handler_registers})
+            client.advance_instructions(1)
         return {"boundaries": boundaries, "matrixReadbacks": readbacks}
     finally:
         client.keyboard_matrix_set(neutral)
+
+
+def run_held_host_key_sequence(
+    client: Any,
+    *,
+    key_symbol: int,
+    modifiers: int,
+    handler_pc: int,
+    occurrences: int,
+) -> dict[str, Any]:
+    """Hold one VICE host key across exact handler occurrences, then release it."""
+    _require(
+        isinstance(key_symbol, int) and not isinstance(key_symbol, bool) and 0 <= key_symbol <= 0xFFFFFFFF,
+        "Held host-key symbol must fit in 32 bits",
+    )
+    _require(
+        isinstance(modifiers, int) and not isinstance(modifiers, bool) and 0 <= modifiers <= 0x7F,
+        "Held host-key modifiers must use VICE's seven defined bits",
+    )
+    _require(
+        isinstance(handler_pc, int) and not isinstance(handler_pc, bool) and 0 <= handler_pc <= 0xFFFF,
+        "Held host-key handler PC must fit in 16 bits",
+    )
+    _require(
+        isinstance(occurrences, int) and not isinstance(occurrences, bool) and 1 <= occurrences <= 100,
+        "Held host-key occurrences must be 1..100",
+    )
+
+    client.clear_checkpoints()
+    key_pressed = False
+    boundaries: list[dict[str, Any]] = []
+    clocks: list[int] = []
+    try:
+        client.host_key_event(key_symbol, modifiers=modifiers, pressed=True)
+        key_pressed = True
+        for occurrence in range(1, occurrences + 1):
+            checkpoint = client.set_checkpoint(handler_pc)
+            stopped_pc = client.resume_until_checkpoint(checkpoint)
+            _require(
+                stopped_pc == handler_pc,
+                f"Held host key did not reach handler occurrence {occurrence}",
+            )
+            registers = client.registers()
+            history = client.cpu_history(1)
+            _require(len(history) == 1, "Held host-key handler lacks an absolute CPU clock")
+            clock = history[0].get("clock")
+            _require(
+                isinstance(clock, int) and not isinstance(clock, bool) and clock >= 0,
+                "Held host-key handler has an invalid absolute CPU clock",
+            )
+            if clocks:
+                clock_delta = clock - clocks[-1]
+                _require(clock_delta > 0, "Held host-key handler clocks must increase")
+                prior = boundaries[-1]["registers"]
+                position_delta = pal_forward_delta(
+                    prior["LIN"], prior["CYC"], registers["LIN"], registers["CYC"]
+                )
+                frame_cycles = PAL_LINES_PER_FRAME * PAL_CYCLES_PER_LINE
+                _require(
+                    clock_delta % frame_cycles == position_delta,
+                    "Held host-key clock delta disagrees with its PAL position",
+                )
+            clocks.append(clock)
+            boundaries.append({
+                "id": f"semantic-handler-{occurrence}",
+                "pc": stopped_pc,
+                "clock": clock,
+                "registers": registers,
+            })
+            client.advance_instructions(1)
+    finally:
+        if key_pressed:
+            client.host_key_event(key_symbol, modifiers=modifiers, pressed=False)
+
+    intervals = [current - previous for previous, current in zip(clocks, clocks[1:])]
+    return {
+        "boundaries": boundaries,
+        "handlerClocks": clocks,
+        "intervalCycles": intervals,
+        "minimumIntervalCycles": min(intervals) if intervals else None,
+        "maximumIntervalCycles": max(intervals) if intervals else None,
+    }
 
 
 def decode_semantic_observations(memory: Mapping[str, bytes], observation_map: Mapping[str, Any]) -> dict[str, int | bool | str]:
@@ -255,6 +368,58 @@ def pal_forward_delta(previous_line: int, previous_cycle: int, current_line: int
     previous = previous_line * PAL_CYCLES_PER_LINE + previous_cycle
     current = current_line * PAL_CYCLES_PER_LINE + current_cycle
     return (current - previous) % frame_cycles
+
+
+def summarize_pal_cadence(timeline: list[Mapping[str, Any]]) -> dict[str, Any]:
+    """Validate and summarize exact wait-boundary cadence without payload data."""
+    boundary_items = [
+        (index, item) for index, item in enumerate(timeline) if item.get("type") == "wait_boundary"
+    ]
+    _require(len(boundary_items) >= 2, "PAL cadence requires at least two wait boundaries")
+    first_boundary_index = boundary_items[0][0]
+    triggers = [
+        item for item in timeline[:first_boundary_index] if item.get("type") == "joystick_state"
+    ]
+    _require(bool(triggers), "PAL cadence requires an input trigger before its first boundary")
+    ordered = [triggers[-1], *[item for _, item in boundary_items]]
+    frame_cycles = PAL_LINES_PER_FRAME * PAL_CYCLES_PER_LINE
+    deltas: list[int] = []
+    for pair_index, (previous, current) in enumerate(zip(ordered, ordered[1:])):
+        fields = (
+            previous.get("cpuClock"),
+            previous.get("rasterLine"),
+            previous.get("rasterCycle"),
+            current.get("cpuClock"),
+            current.get("rasterLine"),
+            current.get("rasterCycle"),
+        )
+        _require(
+            all(isinstance(value, int) and not isinstance(value, bool) for value in fields),
+            "PAL cadence boundary lacks integer clock or raster fields",
+        )
+        previous_clock, previous_line, previous_cycle, current_clock, current_line, current_cycle = fields
+        _require(0 <= previous_line < PAL_LINES_PER_FRAME and 0 <= current_line < PAL_LINES_PER_FRAME,
+                 "PAL cadence boundary has an invalid raster line")
+        _require(0 <= previous_cycle < PAL_CYCLES_PER_LINE and 0 <= current_cycle < PAL_CYCLES_PER_LINE,
+                 "PAL cadence boundary has an invalid raster cycle")
+        clock_delta = current_clock - previous_clock
+        _require(clock_delta > 0, "PAL cadence absolute clocks must increase")
+        position_delta = pal_forward_delta(previous_line, previous_cycle, current_line, current_cycle)
+        if pair_index > 0:
+            _require(
+                clock_delta % frame_cycles == position_delta,
+                "PAL cadence clock delta disagrees with its PAL position",
+            )
+        deltas.append(clock_delta)
+
+    intervals = deltas[1:]
+    return {
+        "boundaryCount": len(boundary_items),
+        "firstResponseCycles": deltas[0],
+        "intervalCycles": intervals,
+        "minimumIntervalCycles": min(intervals),
+        "maximumIntervalCycles": max(intervals),
+    }
 
 
 def validate_event_history_capture(request: Mapping[str, Any]) -> None:
