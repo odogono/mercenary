@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "traces": [
     {"path":"traces/TR-0001-input-baseline.json","kind":"deterministic","repetitions":2},
+    {"path":"traces/TR-0002-input-conflicts.json","kind":"deterministic","repetitions":2},
     {"path":"traces/TR-0004-audio-smoke.json","kind":"deterministic","repetitions":2},
     {"path":"traces/TR-0005-d64-smoke.json","kind":"deterministic","repetitions":2}
   ]
