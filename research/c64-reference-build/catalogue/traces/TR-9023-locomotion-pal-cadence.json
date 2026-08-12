@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "id": "TR-9023",
+  "version": 1,
+  "title": "Reachable locomotion input-sampling PAL cadence proof",
+  "mode": "proof",
+  "branches": [
+    {
+      "id": "surface-walking",
+      "from": {"checkpoint": "interactive"},
+      "actions": [
+        {"type": "semantic_capture", "name": "before", "observationIds": ["walking-mode", "underground-mode"]},
+        {"type": "joystick_state", "port": 2, "value": 1, "semanticAction": "held-forward"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "joystick_state", "port": 2, "value": 0, "semanticAction": "release"},
+        {"type": "semantic_capture", "name": "after", "observationIds": ["walking-mode", "underground-mode"]},
+        {"type": "semantic_assert", "before": "before", "after": "after", "assertions": [
+          {"operator": "unchanged", "observation": "walking-mode"},
+          {"operator": "unchanged", "observation": "underground-mode"}
+        ]}
+      ]
+    },
+    {
+      "id": "enterable-accelerating",
+      "from": {"evidenceSnapshot": "sha256/b4/b473efec12232b6a11cfac723f5b9383925d71c02509c5d530d8c6dc99bd8d8b"},
+      "actions": [
+        {"type": "semantic_capture", "name": "before", "observationIds": ["walking-mode", "underground-mode", "craft-mode-class"]},
+        {"type": "joystick_state", "port": 2, "value": 1, "semanticAction": "held-primary"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "joystick_state", "port": 2, "value": 0, "semanticAction": "release"},
+        {"type": "semantic_capture", "name": "after", "observationIds": ["walking-mode", "underground-mode", "craft-mode-class"]},
+        {"type": "semantic_assert", "before": "before", "after": "after", "assertions": [
+          {"operator": "unchanged", "observation": "walking-mode"},
+          {"operator": "unchanged", "observation": "underground-mode"},
+          {"operator": "unchanged", "observation": "craft-mode-class"}
+        ]}
+      ]
+    },
+    {
+      "id": "enterable-fixed-rate",
+      "from": {"evidenceSnapshot": "sha256/93/935f478654721587bf05e391db6a28408a9dd054ab4db3d9acfac56cccb860c3"},
+      "actions": [
+        {"type": "semantic_capture", "name": "before", "observationIds": ["walking-mode", "underground-mode", "craft-mode-class"]},
+        {"type": "joystick_state", "port": 2, "value": 1, "semanticAction": "held-primary"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "joystick_state", "port": 2, "value": 0, "semanticAction": "release"},
+        {"type": "semantic_capture", "name": "after", "observationIds": ["walking-mode", "underground-mode", "craft-mode-class"]},
+        {"type": "semantic_assert", "before": "before", "after": "after", "assertions": [
+          {"operator": "unchanged", "observation": "walking-mode"},
+          {"operator": "unchanged", "observation": "underground-mode"},
+          {"operator": "unchanged", "observation": "craft-mode-class"}
+        ]}
+      ]
+    },
+    {
+      "id": "underground-walking",
+      "from": {"evidenceSnapshot": "sha256/6e/6ea45e2b46cec0f98200cb4b9f1ac0829d8ef1a085d7a31e32cb435ed8f7a792"},
+      "actions": [
+        {"type": "semantic_capture", "name": "before", "observationIds": ["walking-mode", "underground-mode"]},
+        {"type": "joystick_state", "port": 2, "value": 1, "semanticAction": "held-forward"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "wait_boundary", "boundary": "input-sampled"},
+        {"type": "joystick_state", "port": 2, "value": 0, "semanticAction": "release"},
+        {"type": "semantic_capture", "name": "after", "observationIds": ["walking-mode", "underground-mode"]},
+        {"type": "semantic_assert", "before": "before", "after": "after", "assertions": [
+          {"operator": "unchanged", "observation": "walking-mode"},
+          {"operator": "unchanged", "observation": "underground-mode"}
+        ]}
+      ]
+    }
+  ]
+}

@@ -67,6 +67,11 @@
       "normalizedDigests": {
         "reset-session": "fc5d8842564e16877ef8f5593f29a228412d633ea106d71576129207cc0cb7a8"
       }
+    },
+    {
+      "path": "traces/TR-9023-locomotion-pal-cadence.json",
+      "kind": "deterministic",
+      "repetitions": 2
     }
   ]
 }
