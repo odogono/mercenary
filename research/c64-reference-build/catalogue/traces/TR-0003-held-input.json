@@ -1,0 +1,3144 @@
+{
+  "schemaVersion": 1,
+  "id": "TR-0003",
+  "version": 1,
+  "title": "Conditioned surface held-input repetition proof",
+  "mode": "proof",
+  "branches": [
+    {
+      "id": "forward",
+      "from": {
+        "checkpoint": "interactive"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 1,
+          "semanticAction": "held-forward"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-1",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "sample-1",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": 80
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 14
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-2",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-1",
+          "after": "sample-2",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": 80
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 14
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-3",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-2",
+          "after": "sample-3",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": 80
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 14
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-4",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-3",
+          "after": "sample-4",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": 80
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 14
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-5",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-4",
+          "after": "sample-5",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": 80
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 14
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-6",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-5",
+          "after": "sample-6",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": 80
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 14
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-7",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-6",
+          "after": "sample-7",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": 80
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 14
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-8",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-7",
+          "after": "sample-8",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": 80
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 14
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "reverse",
+      "from": {
+        "checkpoint": "interactive"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 2,
+          "semanticAction": "held-reverse"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-1",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "sample-1",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -81
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 13
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-2",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-1",
+          "after": "sample-2",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -81
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 13
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-3",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-2",
+          "after": "sample-3",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -81
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 13
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-4",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-3",
+          "after": "sample-4",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -81
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 13
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-5",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-4",
+          "after": "sample-5",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -81
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 13
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-6",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-5",
+          "after": "sample-6",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -81
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 13
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-7",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-6",
+          "after": "sample-7",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -81
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 13
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-8",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-7",
+          "after": "sample-8",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-x",
+              "value": -1
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "delta",
+              "observation": "position-z",
+              "value": -81
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 13
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "turn-left",
+      "from": {
+        "checkpoint": "interactive"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 4,
+          "semanticAction": "held-turn-left"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-1",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "sample-1",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": 16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 11
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-2",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-1",
+          "after": "sample-2",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": 16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 11
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-3",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-2",
+          "after": "sample-3",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": 16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 11
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-4",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-3",
+          "after": "sample-4",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": 16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 11
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-5",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-4",
+          "after": "sample-5",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": 16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 11
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-6",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-5",
+          "after": "sample-6",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": 16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 11
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-7",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-6",
+          "after": "sample-7",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": 16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 11
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-8",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-7",
+          "after": "sample-8",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": 16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 11
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "turn-right",
+      "from": {
+        "checkpoint": "interactive"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 8,
+          "semanticAction": "held-turn-right"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-1",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "sample-1",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": -16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 7
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-2",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-1",
+          "after": "sample-2",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": -16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 7
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-3",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-2",
+          "after": "sample-3",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": -16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 7
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-4",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-3",
+          "after": "sample-4",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": -16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 7
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-5",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-4",
+          "after": "sample-5",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": -16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 7
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-6",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-5",
+          "after": "sample-6",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": -16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 7
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-7",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-6",
+          "after": "sample-7",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": -16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 7
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-8",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-7",
+          "after": "sample-8",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "delta",
+              "observation": "yaw",
+              "value": -16
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 7
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": true
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "fire",
+      "from": {
+        "checkpoint": "interactive"
+      },
+      "actions": [
+        {
+          "type": "semantic_capture",
+          "name": "before",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 16,
+          "semanticAction": "held-fire"
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-1",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "before",
+          "after": "sample-1",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 15
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-2",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-1",
+          "after": "sample-2",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 15
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-3",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-2",
+          "after": "sample-3",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 15
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-4",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-3",
+          "after": "sample-4",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 15
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-5",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-4",
+          "after": "sample-5",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 15
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-6",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-5",
+          "after": "sample-6",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 15
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-7",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-6",
+          "after": "sample-7",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 15
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "wait_boundary",
+          "boundary": "input-sampled"
+        },
+        {
+          "type": "wait_instructions",
+          "instructions": 2000
+        },
+        {
+          "type": "semantic_capture",
+          "name": "sample-8",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "position-x",
+            "position-y",
+            "position-z",
+            "roll",
+            "pitch",
+            "yaw",
+            "direction-lines",
+            "fire-line-released"
+          ]
+        },
+        {
+          "type": "semantic_assert",
+          "before": "sample-7",
+          "after": "sample-8",
+          "assertions": [
+            {
+              "operator": "unchanged",
+              "observation": "walking-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "underground-mode"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-x"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-y"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "position-z"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "roll"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "pitch"
+            },
+            {
+              "operator": "unchanged",
+              "observation": "yaw"
+            },
+            {
+              "operator": "equals",
+              "observation": "direction-lines",
+              "value": 15
+            },
+            {
+              "operator": "equals",
+              "observation": "fire-line-released",
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "joystick_state",
+          "port": 2,
+          "value": 0
+        }
+      ]
+    }
+  ]
+}
