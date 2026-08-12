@@ -1,5 +1,5 @@
 {
-  "catalogueDigest": "66a3405a8f3b7769721c411eddca902d998bb7c37f39df5ddf728e1c7ec2f9e5",
+  "catalogueDigest": "de8dd6308b17adb7c915f77379f7078ca426a73dbd8ed0655cf32100025d3c12",
   "catalogueVersion": "catalogue-v1",
   "counts": {
     "behaviorCases": 21,
@@ -21,8 +21,135 @@
     "store": "local-content-addressed"
   },
   "review": {
-    "approvedSubjects": [],
-    "decision": "pending",
+    "approvedSubjects": [
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:28.995887Z",
+        "reviewer": "odogono",
+        "subject": "audio"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:31.264816Z",
+        "reviewer": "odogono",
+        "subject": "audiovisual"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:29.120351Z",
+        "reviewer": "odogono",
+        "subject": "controls"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:29.241361Z",
+        "reviewer": "odogono",
+        "subject": "economy"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:29.358790Z",
+        "reviewer": "odogono",
+        "subject": "endings"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:29.477667Z",
+        "reviewer": "odogono",
+        "subject": "inventory"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:31.144920Z",
+        "reviewer": "odogono",
+        "subject": "material-journeys"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:29.595134Z",
+        "reviewer": "odogono",
+        "subject": "mechanics"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:29.712862Z",
+        "reviewer": "odogono",
+        "subject": "messages"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:29.830783Z",
+        "reviewer": "odogono",
+        "subject": "missions"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:29.949478Z",
+        "reviewer": "odogono",
+        "subject": "movement"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:30.071486Z",
+        "reviewer": "odogono",
+        "subject": "nondeterminism"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:30.192229Z",
+        "reviewer": "odogono",
+        "subject": "objects"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:30.311135Z",
+        "reviewer": "odogono",
+        "subject": "progression"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:30.434028Z",
+        "reviewer": "odogono",
+        "subject": "quirks"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:30.554433Z",
+        "reviewer": "odogono",
+        "subject": "saves"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:30.672807Z",
+        "reviewer": "odogono",
+        "subject": "timing"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:31.385809Z",
+        "reviewer": "odogono",
+        "subject": "uncertainties"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:30.790098Z",
+        "reviewer": "odogono",
+        "subject": "vehicles"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:30.906257Z",
+        "reviewer": "odogono",
+        "subject": "visuals"
+      },
+      {
+        "decision": "approved",
+        "reviewedAt": "2026-08-12T08:13:31.023532Z",
+        "reviewer": "odogono",
+        "subject": "world"
+      }
+    ],
+    "decision": "approved",
     "requiredSubjects": [
       "audio",
       "audiovisual",
