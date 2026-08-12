@@ -132,6 +132,13 @@ take/drop predicates belong to UNC-0003 (issue #29). Evidence may discover
 those predicates while proving UNC-0001, but they do not become UNC-0001
 closure obligations.
 
+For enterable objects, UNC-0002 supplies a restricted, opaque mapping from its
+complete enterable-object inventory to mode-neutral handler-equivalence
+classes. UNC-0001 proves each distinct class once; it does not repeat the same
+action, conflict, and timing matrix for every Geometry Identity in a class.
+The mapping may not publish object identities, decoded table contents, or
+Reference Build addresses.
+
 This boundary also applies to narrative labels. The starting arrival and its
 transaction are object-conditioned interactions, while destruction followed by
 relocation is restart placement. Neither label creates an UNC-0001 Semantic
