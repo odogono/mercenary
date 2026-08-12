@@ -129,6 +129,12 @@ take/drop predicates belong to UNC-0003 (issue #29). Evidence may discover
 those predicates while proving UNC-0001, but they do not become UNC-0001
 closure obligations.
 
+This boundary also applies to narrative labels. The starting arrival and its
+transaction are object-conditioned interactions, while destruction followed by
+relocation is restart placement. Neither label creates an UNC-0001 Semantic
+Mode by itself. It does so only if reachable evidence establishes a distinct
+mode-neutral action surface, conflict rule, transition rule, or timing rule.
+
 The canonical manifest repeats this boundary as closed
 `includedResponsibilities` and `excludedResponsibilities` sets. Catalogue
 validation requires those sets to match the UNC-0001 contract exactly, so a
