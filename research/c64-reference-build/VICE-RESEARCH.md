@@ -24,6 +24,44 @@ means test-program console behavior rather than a display-free GTK backend;
 failure without a display. The current lab is local macOS automation, not a
 claim of headless CI support.
 
+## macOS foreground launch contract
+
+Launch the selected `x64sc` executable directly through the laboratory
+command builder. Do not use Finder, `open ... --args`, or `-console`, and do
+not reconstruct the command by hand. The generated command owns the machine
+model, seed, speed, dummy audio device, loopback binary-monitor address,
+isolated event-snapshot directory, effective-configuration dump, log, and any
+initial monitor break. Record the executable digest and require it to match
+the evidence request.
+
+Choose the snapshot for the workflow before starting VICE:
+
+- Monitor and binary-monitor research may restore the canonical interactive
+  checkpoint, which can have been saved while the CPU was stopped in the
+  monitor. Resume it explicitly through the monitor.
+- Physical macOS `CGEvent` capture and event-history replay require their
+  running event-history start snapshot, created with the same VICE executable
+  and effective configuration. Never use the monitor-stopped interactive
+  checkpoint as the foreground input source.
+
+The macOS driver deliberately accepts only the pinned process and the single
+main window whose owner is `x64sc` and whose title is `VICE (C64SC)`. A monitor
+window, snapshot warning, configuration dialog, or other auxiliary VICE
+window in front is a hard failure, not a prompt to dismiss. Stop the pinned
+process without sending input, inspect `vice.log` for snapshot-module,
+configuration, and sound-engine errors, verify the snapshot provenance and
+executable/configuration digests, then regenerate or select the correct
+running event-history start snapshot. Do not weaken the focus check or click
+through the window: either action could send the evidence keystrokes to the
+wrong target.
+
+For event-history replay, use `build_event_history_replay_command`; do not add
+VICE's `-playback` switch. Wait for the generated monitor preparation to
+finish, resume the emulation, and require the exact main VICE window to be
+frontmost before invoking the bounded `CGEvent` driver. This is the known-good
+launch sequence that avoids placing a monitor or warning window over the
+capture target.
+
 The binary protocol's wait primitive is instruction-counted, so scenarios name
 it `wait_instructions`; the emulator-wide `-limitcycles` remains the hard cycle
 bound. The protocol exposes control ports with zero-based identifiers even

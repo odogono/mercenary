@@ -84,6 +84,11 @@ key edges under test and pins the hotkey file by SHA-256. The driver fails
 without Accessibility permission, if any modal or auxiliary VICE window is
 present, or on any process, executable, focus, timing, identity, or key-balance
 mismatch. It emits an identity-bearing JSON report, which remains restricted.
+Follow the [macOS foreground launch contract](VICE-RESEARCH.md#macos-foreground-launch-contract):
+event-history capture needs a running event-history start snapshot made by the
+same VICE executable and configuration, never the monitor-stopped interactive
+checkpoint. If a warning or monitor window appears over VICE, stop and correct
+the snapshot or launch identity; do not dismiss it and continue.
 
 Set `EventStartMode` to `0` (file-save) and `EventImageInclude` to `0` before
 recording. For replay, do not use VICE's command-line `-playback` switch: it
