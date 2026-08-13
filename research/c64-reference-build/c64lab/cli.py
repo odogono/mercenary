@@ -19,10 +19,17 @@ from .geometry import (
 from .catalogue import (
     build_catalogue,
     review_catalogue,
+    review_status,
     run_catalogue_trace,
     sample_catalogue,
     summarize_catalogue,
     verify_catalogue,
+)
+from .object_semantics import (
+    attest_object_semantics,
+    corroborate_object_semantics,
+    decode_object_semantics,
+    verify_object_semantics,
 )
 from .verification import aggregate_verification, render_report, validate_verification
 from .implementation_contracts import validate_implementation_contracts
@@ -118,6 +125,41 @@ def _parser() -> argparse.ArgumentParser:
     catalogue_summarize.add_argument("--reviews", required=True, type=Path)
     catalogue_summarize.add_argument("--output", required=True, type=Path)
 
+    catalogue_review_status = catalogue_commands.add_parser(
+        "review-status", help="fail when a recorded catalogue review no longer matches the live digest"
+    )
+    catalogue_review_status.add_argument("--catalogue", required=True, type=Path)
+
+    object_semantics_parser = subparsers.add_parser(
+        "object-semantics", help="decode the enterable inventory and its Handler-Equivalence Classes"
+    )
+    object_semantics_commands = object_semantics_parser.add_subparsers(dest="object_semantics_command", required=True)
+
+    object_semantics_decode = object_semantics_commands.add_parser(
+        "decode", help="decode a restricted enterable mapping from an interactive capture"
+    )
+    object_semantics_decode.add_argument("--run", required=True, type=Path)
+    object_semantics_decode.add_argument("--output", required=True, type=Path)
+
+    object_semantics_verify = object_semantics_commands.add_parser(
+        "verify", help="validate a decoded restricted enterable mapping"
+    )
+    object_semantics_verify.add_argument("--mapping", required=True, type=Path)
+
+    object_semantics_corroborate = object_semantics_commands.add_parser(
+        "corroborate", help="corroborate a decoded mapping against the states a trace run reached"
+    )
+    object_semantics_corroborate.add_argument("--mapping", required=True, type=Path)
+    object_semantics_corroborate.add_argument("--run", required=True, type=Path)
+    object_semantics_corroborate.add_argument("--output", required=True, type=Path)
+
+    object_semantics_attest = object_semantics_commands.add_parser(
+        "attest", help="mint the decoded mapping's Evidence record and its public index entry"
+    )
+    object_semantics_attest.add_argument("--mapping", required=True, type=Path)
+    object_semantics_attest.add_argument("--run", required=True, type=Path)
+    object_semantics_attest.add_argument("--report", required=True, type=Path)
+
     verification_parser = subparsers.add_parser("verification", help="validate and aggregate verification evidence")
     verification_commands = verification_parser.add_subparsers(dest="verification_command", required=True)
 
@@ -171,6 +213,15 @@ def main(argv: Sequence[str] | None = None) -> int:
                 result = review_comparisons(arguments.comparisons, arguments.reviewer, arguments.decision)
             else:
                 result = summarize_geometry(arguments.dataset, arguments.comparisons, arguments.review, arguments.output)
+        elif arguments.command == "object-semantics":
+            if arguments.object_semantics_command == "decode":
+                result = decode_object_semantics(arguments.run, arguments.output)
+            elif arguments.object_semantics_command == "corroborate":
+                result = corroborate_object_semantics(arguments.mapping, arguments.run, arguments.output)
+            elif arguments.object_semantics_command == "attest":
+                result = attest_object_semantics(arguments.mapping, arguments.run, arguments.report)
+            else:
+                result = verify_object_semantics(arguments.mapping)
         elif arguments.command == "implementation":
             result = {"status": "verified", **validate_implementation_contracts(arguments.root)}
         elif arguments.command == "verification":
@@ -196,6 +247,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = verify_catalogue(arguments.catalogue)
         elif arguments.catalogue_command == "review":
             result = review_catalogue(arguments.catalogue, arguments.domain, arguments.reviewer, arguments.decision)
+        elif arguments.catalogue_command == "review-status":
+            result = review_status(arguments.catalogue)
         elif arguments.catalogue_command == "summarize":
             if arguments.reviews.resolve() != (arguments.catalogue / "reviews").resolve():
                 raise LabError("Catalogue --reviews must name the catalogue's reviews directory")

@@ -1,0 +1,174 @@
+{
+  "catalogueSubjectDigest": "c3bbc4db4d32fa01d9434a988a960a64683c45f0ab9178bcfa0aac571de996c4",
+  "enterableInventory": {
+    "behaviorCaseIds": [
+      "BC-0041"
+    ],
+    "classCount": 8,
+    "classes": [
+      {
+        "id": "HEC-0001",
+        "status": "open"
+      },
+      {
+        "behaviorCaseIds": [
+          "BC-0041"
+        ],
+        "evidenceIds": [
+          "EV-49b6c3a2215034a8",
+          "EV-69ad714d5871b3bd"
+        ],
+        "id": "HEC-0002",
+        "status": "verified",
+        "traceBranchId": "enterable-accelerating",
+        "traceIds": [
+          "TR-9028"
+        ]
+      },
+      {
+        "behaviorCaseIds": [
+          "BC-0041"
+        ],
+        "evidenceIds": [
+          "EV-13a85f905064a548",
+          "EV-e47677c04de0460a"
+        ],
+        "id": "HEC-0003",
+        "status": "verified",
+        "traceBranchId": "enterable-fixed-rate",
+        "traceIds": [
+          "TR-9028"
+        ]
+      },
+      {
+        "id": "HEC-0004",
+        "status": "open"
+      },
+      {
+        "id": "HEC-0005",
+        "status": "open"
+      },
+      {
+        "id": "HEC-0006",
+        "status": "open"
+      },
+      {
+        "id": "HEC-0007",
+        "status": "open"
+      },
+      {
+        "id": "HEC-0008",
+        "status": "open"
+      }
+    ],
+    "completenessArgument": "The enterable inventory is closed by the Reference Build's own entry dispatch: a single immediate comparison bounds the accepted slot range and every larger slot index takes the reject branch before any state is read, so no reachable input can enter an object outside the enumerated set. Each accepted slot selects one fixed-length parameter block, and the block is copied verbatim into the live block that the locomotion handler is dispatched through, so the slot-to-block relation is total and single-valued. The class key is the projection of that block onto the offsets consumed by action-surface, rate-limit and PAL-timing code; the single offset consumed by no dispatched handler is excluded as inert. Because every enumerated slot projects to a distinct key, the partition is currently singleton: no coarser partition is provable until specific rate magnitudes are shown inert to UNC-0001's responsibilities. The dispatch handler count records the coarsest partition that the dispatch structure alone would support.",
+    "dispatchHandlerCount": 3,
+    "evidenceIds": [
+      "EV-13a85f905064a548",
+      "EV-49b6c3a2215034a8",
+      "EV-69ad714d5871b3bd",
+      "EV-a7222cbb3eecec80",
+      "EV-e47677c04de0460a"
+    ],
+    "mappingContentDigest": "f570cd79dacf2c982e84b448515af8e6e28609d24a69fba4b018e55225029457",
+    "mappingDigest": "ecb17564d604d73940f2c2d791c2be2e1c153dcc26bd1760ef1b62d1feca7540",
+    "mappingEvidenceId": "EV-a7222cbb3eecec80",
+    "memberCount": 8,
+    "method": "decoded-dispatch-reachability",
+    "perMemberRuntimeEntryProven": false,
+    "runtimeCorroboratedClassCount": 2,
+    "status": "verified",
+    "traceIds": [
+      "TR-9028"
+    ]
+  },
+  "families": [
+    {
+      "family": "object-entry-eligibility",
+      "id": "OSF-0001",
+      "nextExperiment": "Prove, per enterable class, which object and player state permits entry and which denies it, including per-member runtime entry for every enumerated enterable Geometry Identity.",
+      "status": "open",
+      "title": "Object entry eligibility predicates"
+    },
+    {
+      "family": "object-collision",
+      "id": "OSF-0002",
+      "nextExperiment": "Correlate object state with collision outcomes for every interactable Geometry Identity.",
+      "status": "open",
+      "title": "Object collision predicates"
+    },
+    {
+      "family": "portal-transitions",
+      "id": "OSF-0003",
+      "nextExperiment": "Partition room portals into behaviour classes and prove each class's transition outcome.",
+      "status": "open",
+      "title": "Portal transition predicates"
+    },
+    {
+      "family": "object-visibility",
+      "id": "OSF-0004",
+      "nextExperiment": "Prove which object state governs scene membership and detail transitions per identity.",
+      "status": "open",
+      "title": "Object visibility predicates"
+    },
+    {
+      "family": "weapon-behavior",
+      "id": "OSF-0005",
+      "nextExperiment": "Prove object-conditioned weapon availability and effect per enterable class.",
+      "status": "open",
+      "title": "Weapon behaviour predicates"
+    },
+    {
+      "family": "object-conditioned-interaction",
+      "id": "OSF-0006",
+      "nextExperiment": "Prove the object-conditioned interaction outcomes, including the starting arrival transaction.",
+      "status": "open",
+      "title": "Object-conditioned interaction predicates"
+    },
+    {
+      "family": "restart-placement",
+      "id": "OSF-0007",
+      "nextExperiment": "Prove the placement that follows destruction for each reachable destruction cause.",
+      "status": "open",
+      "title": "Restart placement predicates"
+    },
+    {
+      "family": "take-drop-eligibility",
+      "id": "OSF-0008",
+      "nextExperiment": "Prove which Geometry Identities are eligible to be taken or dropped, excluding the item identity and capacity rules that belong to UNC-0003.",
+      "status": "open",
+      "title": "Object take and drop eligibility predicates"
+    }
+  ],
+  "schemaVersion": 1,
+  "scope": {
+    "behaviorCaseIds": [
+      "BC-0005",
+      "BC-0006",
+      "BC-0007",
+      "BC-0008",
+      "BC-0041"
+    ],
+    "excludedResponsibilities": [
+      "inventory-capacity",
+      "inventory-identity",
+      "item-conditioned-take-drop",
+      "mode-neutral-action-surface",
+      "mode-neutral-input-conflicts",
+      "mode-neutral-rate-limits",
+      "pal-timing",
+      "player-observable-stochastic-outcomes"
+    ],
+    "includedResponsibilities": [
+      "object-collision",
+      "object-conditioned-interaction",
+      "object-entry-eligibility",
+      "object-visibility",
+      "portal-transitions",
+      "restart-placement",
+      "take-drop-eligibility",
+      "weapon-behavior"
+    ],
+    "uncertaintyId": "UNC-0002"
+  }
+}

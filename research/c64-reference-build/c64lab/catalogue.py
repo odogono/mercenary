@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from .core import LabError, file_hash
+from .core import OBJECT_SEMANTICS_DECODER_VERSION, LabError, file_hash
 from .laboratory import WORK_ROOT, capture, load_configuration
 from .monitor import MonitorClient, MonitorProtocolError
 from .semantics import (
@@ -38,6 +38,8 @@ EVIDENCE_ID = re.compile(r"EV-[0-9a-f]{16}")
 SHA256 = re.compile(r"[0-9a-f]{64}")
 SEMANTIC_MODE_ID = re.compile(r"SM-[0-9]{4}")
 SEMANTIC_OBLIGATION_ID = re.compile(r"SO-[0-9]{4}")
+OBJECT_FAMILY_ID = re.compile(r"OSF-[0-9]{4}")
+HANDLER_CLASS_ID = re.compile(r"HEC-[0-9]{4}")
 UNC_0001_INCLUDED_RESPONSIBILITIES = {
     "action-surface",
     "input-conflicts",
@@ -57,6 +59,27 @@ UNC_0001_EXCLUDED_RESPONSIBILITIES = {
     "unreachable-dispatch-states",
     "transient-nonobservable-randomness",
 }
+UNC_0002_INCLUDED_RESPONSIBILITIES = {
+    "object-entry-eligibility",
+    "object-collision",
+    "portal-transitions",
+    "object-visibility",
+    "weapon-behavior",
+    "object-conditioned-interaction",
+    "restart-placement",
+    "take-drop-eligibility",
+}
+UNC_0002_EXCLUDED_RESPONSIBILITIES = {
+    "mode-neutral-action-surface",
+    "mode-neutral-input-conflicts",
+    "mode-neutral-rate-limits",
+    "pal-timing",
+    "player-observable-stochastic-outcomes",
+    "inventory-identity",
+    "inventory-capacity",
+    "item-conditioned-take-drop",
+}
+UNC_0002_BEHAVIOR_CASE_IDS = {"BC-0005", "BC-0006", "BC-0007", "BC-0008", "BC-0041"}
 
 REQUIRED_DOMAINS = {
     "audio",
@@ -327,6 +350,151 @@ def _load_semantic_trace_proofs(root: Path) -> dict[str, dict[str, Any]]:
             "sha256": file_hash(trace_path),
         }
     return traces
+
+
+def validate_object_semantics_coverage(
+    coverage: dict[str, Any],
+    catalogue_subject_digest: str,
+    evidence: dict[str, dict[str, Any]],
+    case_ids: set[str],
+    *,
+    trace_proofs: dict[str, dict[str, Any]] | None = None,
+) -> None:
+    """Validate the UNC-0002 object semantics manifest and its closed scope."""
+    _require("enterableInventory" in coverage, "Object semantics coverage needs an enterable inventory")
+    _validate_schema(coverage, "catalogue-object-semantics-coverage.schema.json")
+    _require(
+        coverage.get("catalogueSubjectDigest") == catalogue_subject_digest,
+        "Object semantics coverage targets a stale catalogue subject digest",
+    )
+
+    scope = coverage["scope"]
+    _require(
+        set(scope["behaviorCaseIds"]) == UNC_0002_BEHAVIOR_CASE_IDS,
+        "Object semantics coverage scope must declare exactly the UNC-0002 Behavior Cases",
+    )
+    _require(
+        set(scope["includedResponsibilities"]) == UNC_0002_INCLUDED_RESPONSIBILITIES,
+        "Object semantics coverage scope must declare the exact included responsibilities",
+    )
+    _require(
+        set(scope["excludedResponsibilities"]) == UNC_0002_EXCLUDED_RESPONSIBILITIES,
+        "Object semantics coverage scope must declare the exact excluded responsibilities",
+    )
+
+    families = {item["id"]: item for item in coverage["families"]}
+    _require(len(families) == len(coverage["families"]), "Object semantics coverage repeats a family ID")
+    declared_families = [item["family"] for item in coverage["families"]]
+    _require(
+        set(declared_families) == UNC_0002_INCLUDED_RESPONSIBILITIES and len(set(declared_families)) == len(declared_families),
+        "Object semantics coverage must declare every UNC-0002 predicate family exactly once",
+    )
+    for family_id, family in families.items():
+        _require(bool(OBJECT_FAMILY_ID.fullmatch(family_id)), f"Object semantics family {family_id} has an invalid ID")
+        if family["status"] == "verified":
+            _validate_semantic_links(family, evidence, case_ids, f"Object semantics family {family_id}", trace_proofs)
+            _require(
+                len(set(family["evidenceIds"])) >= 2,
+                f"Object semantics family {family_id} needs distinct proof evidence for two reproduced runs",
+            )
+
+    inventory = coverage["enterableInventory"]
+    classes = {item["id"]: item for item in inventory["classes"]}
+    _require(len(classes) == len(inventory["classes"]), "Object semantics coverage repeats a handler-equivalence class")
+    _require(
+        inventory["classCount"] == len(classes),
+        "Object semantics enterable inventory class count must match its declared classes",
+    )
+    _require(
+        inventory["memberCount"] >= inventory["classCount"],
+        "Object semantics enterable inventory cannot have fewer members than classes",
+    )
+    mapping_evidence_id = inventory["mappingEvidenceId"]
+    mapping_record = evidence.get(mapping_evidence_id)
+    _require(mapping_record is not None, "Object semantics enterable inventory references unknown mapping evidence")
+    _require(
+        mapping_evidence_id in inventory["evidenceIds"],
+        "Object semantics enterable inventory must cite its own mapping evidence",
+    )
+    _require(
+        mapping_record.get("authority") == "decoded-reference-build",
+        "Object semantics enterable inventory requires decoded Reference Build proof for its mapping",
+    )
+    _require(
+        inventory["mappingDigest"] in mapping_record.get("artifactHashes", []),
+        "Object semantics enterable inventory mapping digest is not an artifact of its mapping evidence",
+    )
+    _require(
+        inventory["mappingContentDigest"] != inventory["mappingDigest"],
+        "Object semantics enterable inventory must distinguish the mapping artifact hash from its content digest",
+    )
+    _require(
+        OBJECT_SEMANTICS_DECODER_VERSION in mapping_record.get("decoderVersions", []),
+        "Object semantics enterable inventory mapping evidence must record the object semantics decoder",
+    )
+
+    _require(
+        inventory["dispatchHandlerCount"] <= inventory["classCount"],
+        "Object semantics enterable inventory cannot dispatch more handlers than it has classes",
+    )
+    verified_classes = [item for item in inventory["classes"] if item["status"] == "verified"]
+    _require(
+        inventory["runtimeCorroboratedClassCount"] == len(verified_classes),
+        "Object semantics enterable inventory runtime corroboration count must match its verified classes",
+    )
+    for class_id in classes:
+        _require(bool(HANDLER_CLASS_ID.fullmatch(class_id)), f"Handler-equivalence class {class_id} has an invalid ID")
+
+    if inventory["status"] == "verified":
+        _validate_semantic_links(inventory, evidence, case_ids, "Object semantics enterable inventory", trace_proofs)
+        _require(
+            len(set(inventory["evidenceIds"])) >= 2,
+            "Object semantics enterable inventory needs distinct proof evidence for two reproduced runs",
+        )
+        _require(
+            bool(verified_classes),
+            "Object semantics enterable inventory cannot be verified without runtime corroboration for at least one class",
+        )
+        for item in verified_classes:
+            class_id = item["id"]
+            _validate_semantic_links(item, evidence, case_ids, f"Handler-equivalence class {class_id}", trace_proofs)
+            _require(
+                len(set(item["evidenceIds"])) >= 2,
+                f"Handler-equivalence class {class_id} needs distinct proof evidence for two reproduced runs",
+            )
+            branch_id = item["traceBranchId"]
+            _require(
+                all(evidence[value].get("branchId", branch_id) == branch_id for value in item["evidenceIds"]),
+                f"Handler-equivalence class {class_id} cites evidence from another trace branch",
+            )
+
+    declared_case_ids = set(scope["behaviorCaseIds"])
+    covered_case_ids = {
+        case_id
+        for item in [inventory, *classes.values(), *coverage["families"]]
+        for case_id in item.get("behaviorCaseIds", [])
+    }
+    stray_case_ids = sorted(covered_case_ids - declared_case_ids)
+    _require(
+        not stray_case_ids,
+        f"Object semantics coverage cites Behavior Cases outside its scope: {', '.join(stray_case_ids)}",
+    )
+    if object_semantics_resolvable(coverage):
+        missing_case_ids = sorted(declared_case_ids - covered_case_ids)
+        _require(
+            not missing_case_ids,
+            f"Object semantics coverage does not cover Behavior Cases: {', '.join(missing_case_ids)}",
+        )
+
+
+def object_semantics_resolvable(coverage: dict[str, Any]) -> bool:
+    """Report whether every UNC-0002 obligation in the manifest is verified."""
+    inventory = coverage.get("enterableInventory", {})
+    if inventory.get("status") != "verified":
+        return False
+    if any(item.get("status") != "verified" for item in inventory.get("classes", [])):
+        return False
+    return all(family.get("status") == "verified" for family in coverage.get("families", []))
 
 
 def validate_catalogue_trace(trace: dict[str, Any], cycle_limit: int) -> None:
@@ -826,9 +994,16 @@ def validate_catalogue(root: Path, *, case_root: Path | None = None) -> dict[str
         "coverage": coverage,
     }
     semantic_path = root / "semantic-coverage.json"
+    object_semantics_path = root / "object-semantics-coverage.json"
     unc_0001 = uncertainties.get("UNC-0001")
     if unc_0001 is not None and unc_0001["status"] == "resolved":
         _require(semantic_path.is_file(), "Resolved UNC-0001 requires semantic-coverage.json")
+    unc_0002 = uncertainties.get("UNC-0002")
+    if unc_0002 is not None and unc_0002["status"] == "resolved":
+        _require(object_semantics_path.is_file(), "Resolved UNC-0002 requires object-semantics-coverage.json")
+    trace_proofs: dict[str, dict[str, Any]] | None = None
+    if semantic_path.is_file() or object_semantics_path.is_file():
+        trace_proofs = _load_semantic_trace_proofs(root)
     semantic_coverage: dict[str, Any] | None = None
     if semantic_path.is_file():
         semantic_coverage = _load_json(semantic_path)
@@ -837,11 +1012,28 @@ def validate_catalogue(root: Path, *, case_root: Path | None = None) -> dict[str
             catalogue_digest(catalogue_subject),
             evidence,
             case_ids,
-            trace_proofs=_load_semantic_trace_proofs(root),
+            trace_proofs=trace_proofs,
+        )
+    object_semantics_coverage: dict[str, Any] | None = None
+    if object_semantics_path.is_file():
+        object_semantics_coverage = _load_json(object_semantics_path)
+        validate_object_semantics_coverage(
+            object_semantics_coverage,
+            catalogue_digest(catalogue_subject),
+            evidence,
+            case_ids,
+            trace_proofs=trace_proofs,
+        )
+    if unc_0002 is not None and unc_0002["status"] == "resolved":
+        _require(
+            object_semantics_resolvable(object_semantics_coverage or {}),
+            "Resolved UNC-0002 requires every predicate family and the enterable inventory to be verified",
         )
     documents = dict(catalogue_subject)
     if semantic_coverage is not None:
         documents["semanticCoverage"] = semantic_coverage
+    if object_semantics_coverage is not None:
+        documents["objectSemanticsCoverage"] = object_semantics_coverage
     return {
         "documents": documents,
         "caseIds": sorted(case_ids),
@@ -856,6 +1048,17 @@ def validate_catalogue(root: Path, *, case_root: Path | None = None) -> dict[str
             **(
                 {"semanticModes": len(semantic_coverage["modes"]), "semanticObligations": len(semantic_coverage["obligations"])}
                 if semantic_coverage is not None
+                else {}
+            ),
+            **(
+                {
+                    "handlerEquivalenceClasses": object_semantics_coverage["enterableInventory"]["classCount"],
+                    "objectPredicateFamilies": len(object_semantics_coverage["families"]),
+                    "verifiedObjectPredicateFamilies": sum(
+                        1 for family in object_semantics_coverage["families"] if family["status"] == "verified"
+                    ),
+                }
+                if object_semantics_coverage is not None
                 else {}
             ),
         },
@@ -902,6 +1105,53 @@ def _review_status(root: Path, digest: str) -> dict[str, Any]:
     return {
         "decision": "approved" if len(approvals) == len(required) else "pending",
         "approvedSubjects": approvals,
+        "requiredSubjects": sorted(required),
+    }
+
+
+def review_status(root: Path) -> dict[str, Any]:
+    """Fail loudly when a recorded catalogue review no longer matches the live digest.
+
+    ``_review_status`` silently drops mismatched reviews, so a catalogue edit can
+    invalidate every recorded approval without any command reporting it. This verb
+    exists to make that drift visible; it is deliberately not folded into
+    ``validate_catalogue`` so a catalogue edit does not immediately fail ``verify``.
+    """
+    verified = validate_catalogue(root)
+    digest = verified["digest"]
+    required = REQUIRED_DOMAINS | {"material-journeys", "audiovisual", "saves", "uncertainties"}
+    approved: list[str] = []
+    stale: list[dict[str, str]] = []
+    rejected: list[str] = []
+    missing: list[str] = []
+    for subject in sorted(required):
+        path = root / "reviews" / f"{subject}.json"
+        if not path.is_file():
+            missing.append(subject)
+            continue
+        review = _load_json(path)
+        recorded = str(review.get("catalogueDigest", ""))
+        if review.get("decision") != "approved":
+            rejected.append(subject)
+        elif recorded != digest:
+            stale.append({"subject": subject, "recordedDigest": recorded})
+        else:
+            approved.append(subject)
+    problems: list[str] = []
+    if missing:
+        problems.append(f"missing approvals for {', '.join(missing)}")
+    if rejected:
+        problems.append(f"unapproved reviews for {', '.join(rejected)}")
+    if stale:
+        problems.append(f"stale approvals for {', '.join(item['subject'] for item in stale)}")
+    _require(
+        not problems,
+        f"Catalogue review status is not current at digest {digest}: {'; '.join(problems)}",
+    )
+    return {
+        "status": "current",
+        "catalogueDigest": digest,
+        "approvedSubjects": approved,
         "requiredSubjects": sorted(required),
     }
 

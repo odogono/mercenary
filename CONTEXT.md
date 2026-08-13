@@ -36,6 +36,14 @@ _Avoid_: Key press, button press, scan code
 An evidence-backed Game Semantics state class that determines which Semantic Actions are available, how they conflict, which transitions they cause, and their timing, independently of device bindings and Geometry Identity.
 _Avoid_: Control scheme, vehicle identity, input mode
 
+**Handler-Equivalence Class**:
+A class of enterable Geometry Identities that share every parameter affecting their Semantic Action surface, conflicts, rate limits, and timing, so one member's proof stands for the whole class.
+_Avoid_: Vehicle type, craft class, ship model
+
+**Object-Conditioned Predicate**:
+A fidelity-governed rule whose outcome depends on which Geometry Identity is involved, as distinct from the mode-neutral rules that hold whatever the player is interacting with.
+_Avoid_: Object rule, per-object logic
+
 **Control Profile**:
 A named set of device-specific bindings that maps physical controls to Semantic Actions.
 _Avoid_: Keymap, input profile

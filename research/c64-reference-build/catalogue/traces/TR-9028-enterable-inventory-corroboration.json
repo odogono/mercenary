@@ -1,0 +1,163 @@
+{
+  "branches": [
+    {
+      "actions": [
+        {
+          "name": "entered",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "craft-mode-class",
+            "enterable-block-handler",
+            "enterable-block-rates-low",
+            "enterable-block-rates-high"
+          ],
+          "type": "semantic_capture"
+        },
+        {
+          "boundary": "input-sampled",
+          "type": "wait_boundary"
+        },
+        {
+          "name": "settled",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "craft-mode-class",
+            "enterable-block-handler",
+            "enterable-block-rates-low",
+            "enterable-block-rates-high"
+          ],
+          "type": "semantic_capture"
+        },
+        {
+          "after": "settled",
+          "assertions": [
+            {
+              "observation": "walking-mode",
+              "operator": "equals",
+              "value": false
+            },
+            {
+              "observation": "underground-mode",
+              "operator": "equals",
+              "value": false
+            },
+            {
+              "observation": "craft-mode-class",
+              "operator": "unchanged"
+            },
+            {
+              "observation": "enterable-block-handler",
+              "operator": "unchanged"
+            },
+            {
+              "observation": "enterable-block-rates-low",
+              "operator": "unchanged"
+            },
+            {
+              "observation": "enterable-block-rates-high",
+              "operator": "unchanged"
+            }
+          ],
+          "before": "entered",
+          "type": "semantic_assert"
+        },
+        {
+          "artifacts": [
+            "snapshot",
+            "registers"
+          ],
+          "name": "enterable-state",
+          "type": "capture"
+        }
+      ],
+      "from": {
+        "evidenceSnapshot": "sha256/b4/b473efec12232b6a11cfac723f5b9383925d71c02509c5d530d8c6dc99bd8d8b"
+      },
+      "id": "enterable-accelerating"
+    },
+    {
+      "actions": [
+        {
+          "name": "entered",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "craft-mode-class",
+            "enterable-block-handler",
+            "enterable-block-rates-low",
+            "enterable-block-rates-high"
+          ],
+          "type": "semantic_capture"
+        },
+        {
+          "boundary": "input-sampled",
+          "type": "wait_boundary"
+        },
+        {
+          "name": "settled",
+          "observationIds": [
+            "walking-mode",
+            "underground-mode",
+            "craft-mode-class",
+            "enterable-block-handler",
+            "enterable-block-rates-low",
+            "enterable-block-rates-high"
+          ],
+          "type": "semantic_capture"
+        },
+        {
+          "after": "settled",
+          "assertions": [
+            {
+              "observation": "walking-mode",
+              "operator": "equals",
+              "value": false
+            },
+            {
+              "observation": "underground-mode",
+              "operator": "equals",
+              "value": false
+            },
+            {
+              "observation": "craft-mode-class",
+              "operator": "unchanged"
+            },
+            {
+              "observation": "enterable-block-handler",
+              "operator": "unchanged"
+            },
+            {
+              "observation": "enterable-block-rates-low",
+              "operator": "unchanged"
+            },
+            {
+              "observation": "enterable-block-rates-high",
+              "operator": "unchanged"
+            }
+          ],
+          "before": "entered",
+          "type": "semantic_assert"
+        },
+        {
+          "artifacts": [
+            "snapshot",
+            "registers"
+          ],
+          "name": "enterable-state",
+          "type": "capture"
+        }
+      ],
+      "from": {
+        "evidenceSnapshot": "sha256/93/935f478654721587bf05e391db6a28408a9dd054ab4db3d9acfac56cccb860c3"
+      },
+      "id": "enterable-fixed-rate"
+    }
+  ],
+  "id": "TR-9028",
+  "mode": "proof",
+  "schemaVersion": 1,
+  "title": "Restricted enterable inventory class assignment corroboration",
+  "version": 1
+}

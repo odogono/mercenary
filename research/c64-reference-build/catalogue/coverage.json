@@ -22,7 +22,7 @@
     {"domain":"quirks","entryIds":["CAT-0017"],"behaviorCaseIds":["BC-0017"],"uncertaintyIds":["UNC-0007","UNC-0008"],"status":"complete"},
     {"domain":"saves","entryIds":["CAT-0015"],"behaviorCaseIds":["BC-0015"],"uncertaintyIds":["UNC-0006","UNC-0008"],"status":"complete"},
     {"domain":"timing","entryIds":["CAT-0003"],"behaviorCaseIds":["BC-0003"],"uncertaintyIds":["UNC-0001"],"status":"complete"},
-    {"domain":"vehicles","entryIds":["CAT-0006"],"behaviorCaseIds":["BC-0006"],"uncertaintyIds":["UNC-0002"],"status":"complete"},
+    {"domain":"vehicles","entryIds":["CAT-0006"],"behaviorCaseIds":["BC-0006","BC-0041"],"uncertaintyIds":["UNC-0002"],"status":"complete"},
     {"domain":"visuals","entryIds":["CAT-0008"],"behaviorCaseIds":["BC-0008"],"uncertaintyIds":["UNC-0002","UNC-0009"],"status":"complete"},
     {"domain":"world","entryIds":["CAT-0007"],"behaviorCaseIds":["BC-0007"],"uncertaintyIds":["UNC-0002","UNC-0009"],"status":"complete"}
   ],

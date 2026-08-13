@@ -125,19 +125,42 @@ outcomes without naming or selecting a Geometry Identity. It does not need to
 prove unreachable dispatch states or transient random values that converge
 before changing player-observable state.
 
-Geometry Identity mappings and object-conditioned entry, collision, portal,
-visibility, weapon, interaction, and restart-placement predicates belong to
-UNC-0002 (issue #28). Inventory identity, capacity, and item-conditioned
-take/drop predicates belong to UNC-0003 (issue #29). Evidence may discover
-those predicates while proving UNC-0001, but they do not become UNC-0001
-closure obligations.
+Geometry Identity mappings and eight Object-Conditioned Predicate families
+belong to UNC-0002 (issue #28): object entry eligibility, collision, portal
+transitions, visibility, weapon behaviour, object-conditioned interaction,
+restart placement, and take/drop eligibility. Inventory identity, capacity, and
+item-conditioned take/drop predicates belong to UNC-0003 (issue #29). The seam
+between the last UNC-0002 family and the last UNC-0003 one is deliberate:
+whether a Geometry Identity is eligible to be taken or dropped at all is
+UNC-0002's, while which item results and whether it fits is UNC-0003's.
+Evidence may discover those predicates while proving UNC-0001, but they do not
+become UNC-0001 closure obligations.
+
+Each family carries its own equivalence partition over Geometry Identities with
+its own completeness argument. A single global partition is not used, because one
+object may share a collision profile with one group and a portal profile with
+another.
 
 For enterable objects, UNC-0002 supplies a restricted, opaque mapping from its
-complete enterable-object inventory to mode-neutral handler-equivalence
-classes. UNC-0001 proves each distinct class once; it does not repeat the same
-action, conflict, and timing matrix for every Geometry Identity in a class.
-The mapping may not publish object identities, decoded table contents, or
-Reference Build addresses.
+complete enterable-object inventory to mode-neutral Handler-Equivalence Classes.
+UNC-0001 proves each distinct class once; it does not repeat the same action,
+conflict, and timing matrix for every Geometry Identity in a class. The mapping
+may not publish object identities, decoded table contents, or Reference Build
+addresses. A class is keyed by the projection of a member's locomotion parameter
+block onto the offsets that affect UNC-0001's responsibilities, with inert
+offsets excluded through a recorded per-field ledger; see
+`docs/adr/0013-define-handler-equivalence-classes-by-parameter-projection.md`.
+
+The inventory is closed by decoded dispatch reachability, which is the only
+accepted method: the entry dispatch itself bounds the accepted range, so no
+reachable input can enter an object outside the enumerated set. Runtime
+corroborates the mapping rather than establishing it — a reached state must load
+the class's parameter block unchanged across an input boundary — because a slot
+cannot be force-reached to prove it non-enterable while memory injection remains
+probe-only. The inventory may therefore be verified while individual classes and
+predicate families remain open; `perMemberRuntimeEntryProven` records whether
+per-member runtime entry has been proven, and per-member entry preconditions
+belong to the object entry eligibility family rather than to the inventory.
 
 This boundary also applies to narrative labels. The starting arrival and its
 transaction are object-conditioned interactions, while destruction followed by
@@ -151,3 +174,22 @@ validation requires those sets to match the UNC-0001 contract exactly, so a
 later coverage edit cannot silently make Geometry Identity, object predicates,
 inventory rules, unreachable states, or non-observable random activity block
 resolution again.
+
+UNC-0002 has its own manifest at `catalogue/object-semantics-coverage.json`,
+governed by `schemas/catalogue-object-semantics-coverage.schema.json` and bound
+to the same catalogue subject digest. It is separate from
+`semantic-coverage.json` because that document is pinned to UNC-0001 by a closed
+root and exact responsibility sets. The manifest has two independently verifiable
+parts: an `enterableInventory` block, which is what UNC-0001 cites, and a
+`families` ledger carrying one entry per predicate family with a status of `open`
+or `verified`. Its scope sets are pinned by the same exact-set rule, so the
+manifest cannot silently absorb UNC-0001's mode-neutral matrix or UNC-0003's
+inventory rules. UNC-0002 may only be recorded as resolved once the inventory,
+every Handler-Equivalence Class, and all eight families are verified.
+
+Public content in that manifest is limited to counts, class identifiers, digests,
+and the completeness argument. The exact mapping, the per-field ledger, and the
+corroboration reports are Restricted Material cited by Evidence ID and artifact
+hash. The manifest additionally publishes a `mappingContentDigest` that excludes
+the capture a decode came from, so two independent decodes of the same Reference
+Build must agree on it.
