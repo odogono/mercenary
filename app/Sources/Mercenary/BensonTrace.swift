@@ -18,6 +18,9 @@ enum BensonTrace {
     var presses: [(key: BensonKey?, at: Double)] = []
     /// Craft to board, and when.
     var boarding: [(craft: Int, at: Double)] = []
+    /// An object slot to walk to and reach for, rather than boarding by fiat.
+    var walkTo: Int?
+    var walkAction: InteractionAction = .board
   }
 
   static func options(from arguments: [String]) -> Options? {
@@ -42,6 +45,11 @@ enum BensonTrace {
         if let parsed = split(value), let craft = Int(parsed.name) {
           options.boarding.append((craft: craft, at: parsed.at))
         }
+      case "--walk-to":
+        options.walkTo = value.flatMap(Int.init)
+      case "--take":
+        options.walkTo = value.flatMap(Int.init)
+        options.walkAction = .take
       default:
         break
       }
@@ -78,6 +86,26 @@ enum BensonTrace {
         return fail("script \(options.script) would not start")
       }
 
+      // Walking to something needs the world the player walks through, and the
+      // rules for reaching it once there.
+      let world = World(bundle: bundle)
+      var limits = WalkLimits()
+      limits.groundExtent = Double(world.groundExtent)
+      var game = GameState(player: OpeningScene.player)
+      let interaction = bundle.interaction.map(Interaction.init(document:))
+      let target = options.walkTo.flatMap { slot in
+        world.objects.first { $0.slot == slot }
+      }
+      if let target {
+        print(
+          String(
+            format: "walking to slot %d at %.0f, %.0f", target.slot,
+            Double(target.origin.x), Double(target.origin.z)
+          )
+        )
+      }
+      var reached = false
+
       let step = 1.0 / 60
       var elapsed: Double = 0
       var shown = ""
@@ -95,6 +123,33 @@ enum BensonTrace {
           boarding.removeFirst()
           print(String(format: "%7.2f  » board craft %d", elapsed, next.craft))
           session.board(craft: next.craft)
+        }
+
+        // Walk toward the target and reach for it on arrival, so the whole loop
+        // is exercised rather than the boarding being asserted from outside.
+        if let target, let interaction, !reached {
+          let position = SIMD3<Double>(target.origin)
+          let candidate = Interaction.Candidate(slot: target.slot, position: position)
+          let range = options.walkAction == .board ? interaction.boardRange : interaction.takeRange
+          if interaction.isWithinReach(candidate, of: game.player.position, range: range) {
+            var host = session.hostState
+            let outcome = interaction.attempt(
+              options.walkAction, from: game.player.position, among: [candidate], host: &host
+            )
+            session.hostState = host
+            reached = true
+            print(String(format: "%7.2f  » %@", elapsed, String(describing: outcome)))
+            switch outcome {
+            case .took(let slot), .boarded(let slot):
+              session.describe(interaction.description(of: slot, flags: host.objectFlags[slot] ?? 0))
+            case .tooHeavy:
+              session.show(message: interaction.tooHeavyMessage)
+            default:
+              break
+            }
+          } else {
+            game = GameCore.step(game, intent: steer(from: game.player, to: position), dt: step, limits: limits)
+          }
         }
 
         for effect in session.advance(by: step) {
@@ -120,6 +175,18 @@ enum BensonTrace {
     } catch {
       return fail(String(describing: error))
     }
+  }
+
+  /// Turn toward a point and walk at it, the way a player would.
+  private static func steer(from player: PlayerState, to target: SIMD3<Double>) -> Intent {
+    let wanted = atan2(target.x - player.position.x, target.z - player.position.z)
+    var turn = wanted - player.heading
+    while turn > .pi { turn -= 2 * .pi }
+    while turn < -.pi { turn += 2 * .pi }
+    // Walk once roughly facing the target, so the path is a turn and a stride
+    // rather than a spiral.
+    let aligned = abs(turn) < 0.05
+    return Intent(forward: aligned ? 1 : 0, turn: aligned ? 0 : (turn > 0 ? 1 : -1))
   }
 
   private static func fail(_ message: String) -> Int32 {

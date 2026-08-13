@@ -125,4 +125,45 @@ public struct BensonSession: Sendable {
   public mutating func board(craft: Int) {
     host.boardedCraft = craft
   }
+
+  /// Show a message the engine rather than a script has to say.
+  ///
+  /// The Reference Build played messages from engine code as well as from
+  /// scripts — refusing a lift is the engine's own line — and both went to the
+  /// same line and blocked the same interpreter.
+  public mutating func show(message index: Int) {
+    guard let composed = text.message(index, substituting: .init(numbers: host.numberSubstitutions))
+    else { return }
+    show(text: composed)
+  }
+
+  public mutating func show(text composed: String) {
+    ticker = MessageTicker(
+      text: composed,
+      charactersPerSecond: MessageTicker.rate(
+        forInterval: host.messageInterval, base: tunables.messageCharactersPerSecond
+      ) * tunables.timeScale,
+      holdSeconds: tunables.messageHoldSeconds
+    )
+    host.messagePlaying = true
+  }
+
+  /// Apply whatever an object says when the player reaches it. Some objects have
+  /// a message, some start a script, and most say nothing at all.
+  public mutating func describe(_ description: Interaction.Description) {
+    switch description {
+    case .none:
+      break
+    case .message(let index):
+      show(message: index)
+    case .script(let script):
+      start(script: script)
+    }
+  }
+
+  /// The state a host mutates directly when the player acts on the world.
+  public var hostState: BensonHostState {
+    get { host }
+    set { host = newValue }
+  }
 }

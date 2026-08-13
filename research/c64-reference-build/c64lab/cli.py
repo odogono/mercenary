@@ -9,6 +9,7 @@ from typing import Sequence
 from .core import LabError
 from .laboratory import capture, doctor, observe, reproduce, verify
 from .benson import decode_benson
+from .interaction import decode_interaction
 from .geometry import (
     compare_geometry,
     export_road_network_svg,
@@ -250,6 +251,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         elif arguments.command == "benson":
             ram, source = load_geometry_source(arguments.run)
             document = decode_benson(ram)
+            document["interaction"] = decode_interaction(ram)
             if arguments.output is None:
                 result = {
                     "status": "decoded",

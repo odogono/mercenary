@@ -51,6 +51,8 @@ final class WalkaboutModel {
 
   /// Present when the payload carries scripts.
   private var session: BensonSession?
+  /// Present when the payload carries the take-and-board rules.
+  private var interaction: Interaction?
 
   private var pressed: Set<UInt16> = []
   private var running = false
@@ -76,6 +78,8 @@ final class WalkaboutModel {
     static let leftBracket: UInt16 = 33
     static let rightBracket: UInt16 = 30
     static let y: UInt16 = 16
+    static let b: UInt16 = 11
+    static let t: UInt16 = 17
     static let space: UInt16 = 49
 
     /// The keys a Benson Script can be asked about.
@@ -157,6 +161,9 @@ final class WalkaboutModel {
       let bundle = try Payload.load(from: directory)
       let world = World(bundle: bundle)
       limits.groundExtent = Double(world.groundExtent)
+      if let rules = bundle.interaction {
+        interaction = Interaction(document: rules)
+      }
       if let text = bundle.text {
         let table = TextTable(document: text)
         if let document = bundle.benson {
@@ -194,6 +201,48 @@ final class WalkaboutModel {
       framesPerSecond = Double(frameAccumulator.count) / frameAccumulator.seconds
       frameAccumulator = (0, 0)
     }
+  }
+
+  /// Reach for whatever the player is standing next to.
+  ///
+  /// The Reference Build ran this check inside its draw loop, so only objects in
+  /// the scene could be reached; the candidates here are the same drawable
+  /// surface objects the renderer works from.
+  private func reach(for action: InteractionAction) {
+    guard let interaction, var session, case .ready(let world, _) = load else { return }
+    let candidates = world.objects
+      .filter(\.isDrawable)
+      .filter { session.hostState.objectRooms[$0.slot] != BensonHostState.outOfTheWorld }
+      .map {
+        Interaction.Candidate(slot: $0.slot, position: SIMD3<Double>($0.origin))
+      }
+
+    var host = session.hostState
+    let outcome = interaction.attempt(action, from: state.player.position, among: candidates, host: &host)
+    session.hostState = host
+
+    switch outcome {
+    case .took(let slot), .boarded(let slot):
+      NSSound.beep()
+      // Climbing aboard puts the player where the craft is, as the Reference
+      // Build did. It also took the craft's heading, which waits for the flight
+      // step that gives a craft a heading worth having.
+      if case .boarded = outcome, let craft = world.objects.first(where: { $0.slot == slot }) {
+        state.player.position = SIMD3(
+          Double(craft.origin.x), state.player.position.y, Double(craft.origin.z)
+        )
+      }
+      // Both paths play the object's own description, which for some objects
+      // starts a script instead — boarding the Dart is how the opening ends.
+      session.describe(interaction.description(of: slot, flags: host.objectFlags[slot] ?? 0))
+    case .tooHeavy:
+      session.show(message: interaction.tooHeavyMessage)
+    case .nothingInReach, .fixedInPlace, .handsFull, .notACraft, .alreadyAboard:
+      // The Reference Build refused these silently.
+      break
+    }
+    self.session = session
+    comms = .scripted(text: session.messageText, credits: session.credits)
   }
 
   /// Run the game's own logic for this frame, and act on what it asks for.
@@ -244,6 +293,8 @@ final class WalkaboutModel {
       // Skipping is a reading aid, so it deliberately does not tell the scripts
       // the player pressed something — the opening reads that as intent to walk.
       case Key.space where session != nil: session?.skipMessage()
+      case Key.b where interaction != nil: reach(for: .board)
+      case Key.t where interaction != nil: reach(for: .take)
       default:
         pressed.insert(event.keyCode)
         // Any key tells the scripts the player is there; only some are matched.
