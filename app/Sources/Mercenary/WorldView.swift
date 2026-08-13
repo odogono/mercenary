@@ -13,6 +13,9 @@ struct WorldView: View {
         draw(context: context, size: size)
       }
       .frame(minWidth: 480, minHeight: 320)
+      if let comms = model.comms {
+        MessageLine(comms: comms)
+      }
       StatusStrip(model: model, manifest: manifest, world: world)
     }
     .background(SceneStyle.sky)
@@ -68,6 +71,28 @@ struct WorldView: View {
     let maxY = max(line.y1, line.y2)
     return maxX > -margin && minX < Float(size.width) + margin
       && maxY > -margin && minY < Float(size.height) + margin
+  }
+}
+
+/// The game's message line, showing text composed from the decoded tables.
+private struct MessageLine: View {
+  let comms: WalkaboutModel.Comms
+
+  var body: some View {
+    HStack(spacing: 12) {
+      Text(comms.text.isEmpty ? "—" : comms.text)
+        .lineLimit(1)
+      Spacer()
+      Text("MSG \(comms.index, specifier: "%02d")/\(comms.table.messageCount - 1)  [ ]")
+        .foregroundStyle(SceneStyle.horizon)
+    }
+    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+    .foregroundStyle(SceneStyle.messageText)
+    .padding(.horizontal, 12)
+    .padding(.vertical, 7)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(SceneStyle.statusBackground)
+    .overlay(alignment: .top) { Divider().overlay(SceneStyle.horizon) }
   }
 }
 

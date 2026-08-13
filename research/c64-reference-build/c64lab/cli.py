@@ -181,6 +181,7 @@ def _parser() -> argparse.ArgumentParser:
     payload_export = payload_commands.add_parser("export", help="write the Data Payload for one World Geometry Dataset")
     payload_export.add_argument("--dataset", required=True, type=Path)
     payload_export.add_argument("--output", required=True, type=Path)
+    payload_export.add_argument("--run", type=Path, help="interactive capture to decode text from")
 
     implementation_parser = subparsers.add_parser("implementation", help="validate production implementation contracts")
     implementation_commands = implementation_parser.add_subparsers(dest="implementation_command", required=True)
@@ -230,7 +231,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             else:
                 result = verify_object_semantics(arguments.mapping)
         elif arguments.command == "payload":
-            result = export_payload(arguments.dataset, arguments.output)
+            result = export_payload(arguments.dataset, arguments.output, run=arguments.run)
         elif arguments.command == "implementation":
             result = {"status": "verified", **validate_implementation_contracts(arguments.root)}
         elif arguments.command == "verification":

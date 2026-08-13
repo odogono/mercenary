@@ -18,9 +18,11 @@ from .core import LabError, file_hash
 from .geometry import (
     RESTRICTED_ROOT,
     WORK_ROOT,
+    load_geometry_source,
     load_json,
     verify_dataset,
 )
+from .text import decode_text
 
 
 PAYLOAD_SCHEMA_VERSION = 1
@@ -174,8 +176,13 @@ def build_objects(objects: dict[str, Any]) -> dict[str, Any]:
     return {"schemaVersion": PAYLOAD_SCHEMA_VERSION, "models": models, "instances": instances}
 
 
-def export_payload(dataset: Path, output: Path) -> dict[str, Any]:
-    """Write the Data Payload for one verified World Geometry Dataset."""
+def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict[str, Any]:
+    """Write the Data Payload for one verified World Geometry Dataset.
+
+    ``run`` names an interactive capture to decode text from. Geometry travels
+    through the dataset, but the text tables are read straight from a capture's
+    memory, so they need the original run.
+    """
     resolved = _require_ignored_output(output)
     verified = verify_dataset(dataset)
     manifest = verified["manifest"]
@@ -187,6 +194,9 @@ def export_payload(dataset: Path, output: Path) -> dict[str, Any]:
         "surface.json": build_surface(surface),
         "objects.json": build_objects(objects),
     }
+    if run is not None:
+        ram, _ = load_geometry_source(run)
+        documents["text.json"] = decode_text(ram)
     resolved.mkdir(parents=True, exist_ok=True)
     files: list[dict[str, Any]] = []
     for name, document in documents.items():
@@ -203,6 +213,11 @@ def export_payload(dataset: Path, output: Path) -> dict[str, Any]:
         "roads": len(documents["world.json"]["roads"]),
         "models": len(documents["objects.json"]["models"]),
         "instances": len(documents["objects.json"]["instances"]),
+        **(
+            {f"text.{key}": value for key, value in documents["text.json"]["counts"].items()}
+            if "text.json" in documents
+            else {}
+        ),
     }
     payload_manifest = {
         "schemaVersion": PAYLOAD_SCHEMA_VERSION,

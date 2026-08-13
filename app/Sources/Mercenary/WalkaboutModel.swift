@@ -14,10 +14,23 @@ final class WalkaboutModel {
     case failed(String)
   }
 
+  /// The message currently on the status line, and how to page through the set.
+  struct Comms: Equatable {
+    var table: TextTable
+    var index: Int
+
+    var text: String {
+      // Credits are the only runtime slot the walkabout can honestly fill; the
+      // rest stay as placeholders until the simulation owns that state.
+      table.message(index, substituting: .init(numbers: [0: 5000])) ?? ""
+    }
+  }
+
   private(set) var load: Load = .loading
   private(set) var state: GameState
   private(set) var framesPerSecond: Double = 0
   private(set) var visibleLines: Int = 0
+  private(set) var comms: Comms?
 
   var limits = WalkLimits()
   let selector = VisibilitySelector()
@@ -27,6 +40,7 @@ final class WalkaboutModel {
   private var ticker: Timer?
   private var lastTick: CFTimeInterval?
   private var monitor: Any?
+  private var observers: [NSObjectProtocol] = []
   private var frameAccumulator: (count: Int, seconds: Double) = (0, 0)
 
   /// macOS virtual key codes. Keeping the mapping in one table makes the
@@ -42,6 +56,8 @@ final class WalkaboutModel {
     static let right: UInt16 = 124
     static let up: UInt16 = 126
     static let down: UInt16 = 125
+    static let leftBracket: UInt16 = 33
+    static let rightBracket: UInt16 = 30
   }
 
   init() {
@@ -59,6 +75,13 @@ final class WalkaboutModel {
       guard let self else { return event }
       return self.handle(event) ? nil : event
     }
+    // A key-up that arrives while the app is inactive is never seen, which would
+    // otherwise leave that key held down forever.
+    observers = [NSApplication.willResignActiveNotification, NSWindow.didResignKeyNotification].map { name in
+      NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+        MainActor.assumeIsolated { self?.releaseAllKeys() }
+      }
+    }
     lastTick = CACurrentMediaTime()
     let ticker = Timer(timeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
       MainActor.assumeIsolated { self?.tick() }
@@ -72,11 +95,25 @@ final class WalkaboutModel {
     ticker = nil
     if let monitor { NSEvent.removeMonitor(monitor) }
     monitor = nil
+    observers.forEach(NotificationCenter.default.removeObserver)
+    observers.removeAll()
+    releaseAllKeys()
+  }
+
+  private func releaseAllKeys() {
     pressed.removeAll()
+    running = false
   }
 
   func report(visibleLines: Int) {
     self.visibleLines = visibleLines
+  }
+
+  private func page(by delta: Int) {
+    guard var comms, comms.table.messageCount > 0 else { return }
+    let count = comms.table.messageCount
+    comms.index = ((comms.index + delta) % count + count) % count
+    self.comms = comms
   }
 
   private func loadPayload() {
@@ -99,6 +136,9 @@ final class WalkaboutModel {
       let bundle = try Payload.load(from: directory)
       let world = World(bundle: bundle)
       limits.groundExtent = Double(world.groundExtent)
+      if let text = bundle.text {
+        comms = Comms(table: TextTable(document: text), index: 0)
+      }
       load = .ready(world, bundle.manifest)
     } catch {
       load = .failed(String(describing: error))
@@ -143,7 +183,11 @@ final class WalkaboutModel {
     case .keyDown:
       // Never swallow a Command chord; the menu bar needs it.
       guard !event.modifierFlags.contains(.command) else { return false }
-      pressed.insert(event.keyCode)
+      switch event.keyCode {
+      case Key.leftBracket: page(by: -1)
+      case Key.rightBracket: page(by: 1)
+      default: pressed.insert(event.keyCode)
+      }
       return true
     case .keyUp:
       pressed.remove(event.keyCode)
