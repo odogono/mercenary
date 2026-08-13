@@ -72,11 +72,11 @@ enum InspectCommand {
           return 1
         }
         try render(
-          segments: cell.segments,
+          segments: cell.segments(at: 0),
           camera: try require(inspector.canonicalCamera(for: .cell(index: index))),
           size: CGSize(width: 900, height: 760), to: url)
         print(Inspector.table(inspector.cellRows().filter { $0.subject.contains("\(index)") }, title: "cell \(index)"))
-        print("{\"status\":\"inspected\",\"output\":\"\(url.path)\",\"edges\":\(cell.segments.count)}")
+        print("{\"status\":\"inspected\",\"output\":\"\(url.path)\",\"edges\":\(cell.segments(at: 0).count)}")
       }
       return 0
     } catch {

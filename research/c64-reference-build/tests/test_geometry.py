@@ -110,12 +110,13 @@ class RoadNetworkSVGTests(unittest.TestCase):
 
 class ObjectModelTests(unittest.TestCase):
     def test_decodes_and_reconstructs_packed_edges(self) -> None:
-        raw = bytes([1, 0x7F, 0x80, 0x81, 0x82, 0x83, 0x84, 0, 0x01])
+        raw = bytes([1, 0xFF, 0x00, 0x01, 0x7F, 0x80, 0x81, 0, 0x01])
 
         model = decode_object_model(raw, address=0x2000)
 
         self.assertEqual(model["vertexCount"], 2)
         self.assertEqual(model["vertices"][0]["normalized"], [-16, 0, 16])
+        self.assertEqual(model["vertices"][1]["normalized"], [2032, -2048, -2032])
         self.assertEqual({key: model["edges"][0][key] for key in ("start", "end", "rawHex")}, {"start": 0, "end": 1, "rawHex": "01"})
         self.assertEqual(bytes.fromhex(model["reconstructedHex"]), raw)
 

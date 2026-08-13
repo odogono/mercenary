@@ -84,7 +84,80 @@ public struct WorldCell: Sendable, Equatable {
   public var row: Int
   /// Centre of the cell on the ground plane, for distance culling.
   public var centre: SIMD3<Float>
-  public var segments: [Segment]
+  private var vertices: [SurfaceVertex]
+  private var edges: [SurfaceEdge]
+  private var rotation: SurfaceRotation?
+
+  init(
+    index: Int, column: Int, row: Int, centre: SIMD3<Float>,
+    vertices: [SurfaceVertex], edges: [SurfaceEdge], rotation: SurfaceRotation?
+  ) {
+    self.index = index
+    self.column = column
+    self.row = row
+    self.centre = centre
+    self.vertices = vertices
+    self.edges = edges
+    self.rotation = rotation
+  }
+
+  /// Resolve runtime-rotated points and return the cell's complete wireframe.
+  public func segments(at elapsed: Double) -> [Segment] {
+    let points = vertices.map { vertex in
+      switch vertex {
+      case .world(let point):
+        return point
+      case .rotated(let input):
+        return rotation?.resolve(input, elapsed: elapsed) ?? .zero
+      }
+    }
+    return edges.compactMap { edge in
+      guard points.indices.contains(edge.start), points.indices.contains(edge.end) else { return nil }
+      return Segment(a: points[edge.start], b: points[edge.end], ink: edge.ink)
+    }
+  }
+}
+
+enum SurfaceVertex: Sendable, Equatable {
+  case world(SIMD3<Float>)
+  case rotated(SIMD3<Int>)
+}
+
+struct SurfaceEdge: Sendable, Equatable {
+  var start: Int
+  var end: Int
+  var ink: Ink
+}
+
+struct SurfaceRotation: Sendable, Equatable {
+  /// The Reference Build advances structures at the PAL update rate.
+  static let referenceFramesPerSecond = 50.0
+  /// Its sine routine uses the low byte within a quadrant and the low two bits
+  /// of the high byte to select the four quadrants: one turn is therefore $0400.
+  static let angleUnitsPerTurn = 1_024.0
+
+  var descriptor: Int
+  var centre: SIMD2<Int>
+
+  func resolve(_ input: SIMD3<Int>, elapsed: Double) -> SIMD3<Float> {
+    let step = Double((descriptor & 0xF0) >> 1)
+    let referenceFrame = floor(max(0, elapsed) * Self.referenceFramesPerSecond)
+    let angle = referenceFrame * step
+      / Self.angleUnitsPerTurn * (2 * Double.pi)
+    let localX = Double(Self.signedByte(input.x) << 8)
+    let localZ = Double(Self.signedByte(input.z) << 8)
+    let cosine = cos(angle)
+    let sine = sin(angle)
+    return SIMD3(
+      Float(Double(centre.x) + localX * cosine - localZ * sine),
+      Float(input.y << 8),
+      Float(Double(centre.y) + localX * sine + localZ * cosine)
+    )
+  }
+
+  private static func signedByte(_ value: Int) -> Int {
+    value & 0x80 == 0 ? value & 0xFF : (value & 0xFF) - 0x100
+  }
 }
 
 /// Render-ready world derived from a ``Payload.Bundle``.
@@ -122,26 +195,29 @@ public struct World: Sendable, Equatable {
 
     var cells: [WorldCell] = []
     var byGrid: [Int: Int] = [:]
-    var deferred = 0
     cells.reserveCapacity(bundle.surface.cells.count)
     for cell in bundle.surface.cells {
-      deferred += cell.deferredEdges
-      let points = cell.vertices.map { World.point($0) }
-      let isAirstrip = cell.structure == "surface-structure:cef6"
-      var segments: [Segment] = []
-      segments.reserveCapacity(cell.edges.count)
-      for edge in cell.edges where edge.count == 3 {
-        let (start, end, ink) = (edge[0], edge[1], edge[2])
-        guard points.indices.contains(start), points.indices.contains(end) else { continue }
-        segments.append(
-          Segment(
-            a: points[start], b: points[end],
-            ink: isAirstrip ? .black : (Ink(rawValue: ink) ?? .white)
-          )
-        )
-      }
       let column = cell.grid.count == 2 ? cell.grid[0] : cell.cell % cellsPerAxis
       let row = cell.grid.count == 2 ? cell.grid[1] : cell.cell / cellsPerAxis
+      let vertices: [SurfaceVertex] = cell.vertices.map { vertex in
+        if vertex.kind == .worldPoint, let position = vertex.position {
+          return .world(World.point(position))
+        }
+        let raw = vertex.rotationInput ?? []
+        return .rotated(raw.count == 3 ? SIMD3(raw[0], raw[1], raw[2]) : .zero)
+      }
+      let edges = cell.edges.compactMap { edge -> SurfaceEdge? in
+        guard edge.count == 3 else { return nil }
+        return SurfaceEdge(start: edge[0], end: edge[1], ink: Ink(rawValue: edge[2]) ?? .white)
+      }
+      let rotation = cell.rotation.flatMap { rotation -> SurfaceRotation? in
+        guard rotation.center.count == 2 else { return nil }
+        let centre = SIMD2(
+          (column << 16) + (rotation.center[0] << 8),
+          (row << 16) + (rotation.center[1] << 8)
+        )
+        return SurfaceRotation(descriptor: rotation.descriptor, centre: centre)
+      }
       byGrid[row * cellsPerAxis + column] = cells.count
       cells.append(
         WorldCell(
@@ -153,13 +229,15 @@ public struct World: Sendable, Equatable {
             0,
             (Float(row) + 0.5) * cellSize
           ),
-          segments: segments
+          vertices: vertices,
+          edges: edges,
+          rotation: rotation
         )
       )
     }
     self.cells = cells
     self.byGrid = byGrid
-    self.deferredEdges = deferred
+    self.deferredEdges = 0
 
     self.roadAltitudeLookup = bundle.world.roadAltitudeLookup
     var mapLinesByCell: [Int: [SurfaceMapLine]] = [:]

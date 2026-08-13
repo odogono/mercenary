@@ -34,7 +34,7 @@ public struct Inspector: Sendable {
     case .object(let slot):
       return object(slot: slot)?.segments ?? []
     case .cell(let index):
-      return cell(index: index)?.segments ?? []
+      return cell(index: index)?.segments(at: 0) ?? []
     }
   }
 
@@ -113,13 +113,14 @@ public struct Inspector: Sendable {
 
   public func cellRows() -> [Row] {
     world.cells.sorted { $0.index < $1.index }.map { cell in
+      let segments = cell.segments(at: 0)
       let bounds = self.bounds(for: .cell(index: cell.index))
       let spans = bounds.map { $0.max - $0.min } ?? .zero
       return Row(
         subject: String(format: "cell %3d", cell.index),
         detail: "grid \(cell.column):\(cell.row)",
-        vertices: Set(cell.segments.flatMap { [$0.a, $0.b] }.map(\.debugDescription)).count,
-        edges: cell.segments.count,
+        vertices: Set(segments.flatMap { [$0.a, $0.b] }.map(\.debugDescription)).count,
+        edges: segments.count,
         spans: spans,
         note: ""
       )

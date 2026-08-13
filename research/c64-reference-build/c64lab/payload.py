@@ -16,6 +16,7 @@ from typing import Any
 
 from .core import LabError, file_hash
 from .geometry import (
+    DECODER_VERSION as GEOMETRY_DECODER_VERSION,
     RESTRICTED_ROOT,
     WORK_ROOT,
     load_geometry_source,
@@ -25,7 +26,7 @@ from .geometry import (
 from .text import decode_text
 
 
-PAYLOAD_SCHEMA_VERSION = 3
+PAYLOAD_SCHEMA_VERSION = 4
 PAYLOAD_ROOT = Path(__file__).resolve().parents[3] / "payload"
 CELLS_PER_AXIS = 16
 CELL_SIZE = 0x10000
@@ -59,6 +60,15 @@ def _require_ignored_output(path: Path) -> Path:
         f"Data Payload output must remain under ignored payload/, work/, or restricted/ storage: {path}",
     )
     return resolved
+
+
+def require_current_geometry_decoder(manifest: dict[str, Any]) -> None:
+    found = manifest.get("decoderVersion")
+    _require(
+        found == GEOMETRY_DECODER_VERSION,
+        f"World Geometry Dataset uses decoder {found}; "
+        f"re-extract it with decoder {GEOMETRY_DECODER_VERSION}",
+    )
 
 
 def build_world(surface: dict[str, Any]) -> dict[str, Any]:
@@ -113,39 +123,36 @@ def build_road_cells(surface: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def build_surface(surface: dict[str, Any]) -> dict[str, Any]:
-    """Flatten each cell into world-space line segments the renderer can draw.
-
-    A minority of structure vertices are rotated at runtime and carry a rotation
-    input rather than a position. Those vertices, and any edge touching one, are
-    reported as deferred rather than guessed at.
-    """
+    """Preserve each cell's complete point index space and edge topology."""
+    structures = {structure["geometryIdentity"]: structure for structure in surface.get("structures", [])}
     cells: list[dict[str, Any]] = []
     for cell in surface["cells"]:
         expanded = cell.get("expanded")
         if not expanded:
             continue
-        remapped: dict[int, int] = {}
-        vertices: list[list[int]] = []
-        deferred: list[dict[str, Any]] = []
-        for index, vertex in enumerate(expanded["vertices"]):
+        vertices: list[dict[str, Any]] = []
+        for vertex in expanded["vertices"]:
             if vertex["kind"] == "world-point":
-                remapped[index] = len(vertices)
-                vertices.append(list(vertex["position"]))
+                vertices.append({"kind": "world-point", "position": list(vertex["position"])})
+            elif vertex["kind"] == "rotated-input":
+                vertices.append({"kind": "rotated-input", "rotationInput": list(vertex["rotationInput"])})
             else:
-                # Carried rather than discarded: the rotation input is what a
-                # later pass needs to place these points.
-                deferred.append({"vertex": index, "rotationInput": list(vertex["rotationInput"])})
+                raise LabError(f"Surface vertex has an unknown kind {vertex['kind']!r}")
 
         edges: list[list[int]] = []
-        deferred_edges = 0
         for edge in expanded["edges"]:
             start, end = edge["indices"]
-            if start in remapped and end in remapped:
-                ink = INK_CODES.get(edge["operation"])
-                _require(ink is not None, f"Surface edge has an unknown ink operation {edge['operation']!r}")
-                edges.append([remapped[start], remapped[end], ink])
-            else:
-                deferred_edges += 1
+            ink = INK_CODES.get(edge["operation"])
+            _require(ink is not None, f"Surface edge has an unknown ink operation {edge['operation']!r}")
+            edges.append([start, end, ink])
+
+        structure = structures.get(cell.get("structure"))
+        descriptor = structure.get("rotatedPointDescriptor", 0) if structure else 0
+        rotation = None
+        if descriptor:
+            center = structure.get("rotationCenter")
+            _require(isinstance(center, list) and len(center) == 2, "Rotated structure has no two-axis center")
+            rotation = {"descriptor": descriptor, "center": list(center)}
 
         cells.append(
             {
@@ -154,21 +161,10 @@ def build_surface(surface: dict[str, Any]) -> dict[str, Any]:
                 "structure": cell.get("structure"),
                 "vertices": vertices,
                 "edges": edges,
-                "deferredVertices": deferred,
-                "deferredEdges": deferred_edges,
+                "rotation": rotation,
             }
         )
-    structures = [
-        {
-            "id": structure["geometryIdentity"],
-            "rotatedPointDescriptor": structure["rotatedPointDescriptor"],
-            "rotationCenter": structure["rotationCenter"],
-            "rotatedPointCount": (structure["rotatedPointDescriptor"] & 0x0F) + 1,
-        }
-        for structure in surface.get("structures", [])
-        if structure.get("rotatedPointDescriptor")
-    ]
-    return {"schemaVersion": PAYLOAD_SCHEMA_VERSION, "cells": cells, "rotatedStructures": structures}
+    return {"schemaVersion": PAYLOAD_SCHEMA_VERSION, "cells": cells}
 
 
 def build_objects(objects: dict[str, Any]) -> dict[str, Any]:
@@ -219,6 +215,7 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
     resolved = _require_ignored_output(output)
     verified = verify_dataset(dataset)
     manifest = verified["manifest"]
+    require_current_geometry_decoder(manifest)
     surface = load_json(dataset / "surface.json")
     objects = load_json(dataset / "objects.json")
 
@@ -242,8 +239,8 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
         "cells": len(surface_document["cells"]),
         "surfaceVertices": sum(len(cell["vertices"]) for cell in surface_document["cells"]),
         "surfaceEdges": sum(len(cell["edges"]) for cell in surface_document["cells"]),
-        "deferredSurfaceEdges": sum(cell["deferredEdges"] for cell in surface_document["cells"]),
-        "rotatedStructures": len(surface_document["rotatedStructures"]),
+        "deferredSurfaceEdges": 0,
+        "rotatedStructures": sum(cell["rotation"] is not None for cell in surface_document["cells"]),
         "roadTableSegments": sum(len(cell["segments"]) for cell in documents["world.json"]["roadCells"]),
         "models": len(documents["objects.json"]["models"]),
         "instances": len(documents["objects.json"]["instances"]),

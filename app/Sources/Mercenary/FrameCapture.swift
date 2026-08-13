@@ -17,6 +17,7 @@ enum FrameCapture {
     var heading: Double = .pi / 4
     var pitch: Double = 0
     var cellRadius: Int = 3
+    var elapsed: Double = 0
   }
 
   static func run(_ options: Options) -> Int32 {
@@ -28,7 +29,7 @@ enum FrameCapture {
       let world = World(bundle: try Payload.load(from: directory))
       let camera = Camera(position: options.position, heading: options.heading, pitch: options.pitch)
       let selector = VisibilitySelector(cellRadius: options.cellRadius)
-      let visible = selector.visible(in: world, from: options.position)
+      let visible = selector.visible(in: world, from: options.position, elapsed: options.elapsed)
       let (image, drawn) = render(world: world, camera: camera, visible: visible, size: options.size)
       try write(image, to: options.output)
       let summary = """
@@ -136,6 +137,7 @@ enum FrameCapture {
     if let heading = value("--heading") { options.heading = heading * .pi / 180 }
     if let pitch = value("--pitch") { options.pitch = pitch * .pi / 180 }
     if let radius = value("--cell-radius") { options.cellRadius = Int(radius) }
+    if let elapsed = value("--time") { options.elapsed = max(0, elapsed) }
     return options
   }
 }

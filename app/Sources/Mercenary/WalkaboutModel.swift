@@ -62,11 +62,7 @@ final class WalkaboutModel {
   }
 
   init() {
-    // Spawn facing the tallest structure on the surface, so the first thing on
-    // screen is recognisably Targ rather than empty ground.
-    state = GameState(
-      player: PlayerState(position: SIMD3(557_056, 400, 745_000), heading: 0, pitch: 0.2)
-    )
+    state = GameState(player: OpeningScene.player)
   }
 
   func start() {

@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Render the complete opening scene at cell 8:8 (issue #51): start the app
+  facing the airstrip, Dart, crashed spacecraft, and deterministically rotating
+  inverted pyramid; preserve every surface vertex and edge in Data Payload
+  schema 4; and add pinned-time headless captures for animation comparisons.
+  Correct object-model coordinates to signed two's-complement values, fixing
+  the severely stretched spacecraft produced by the previous offset-binary
+  interpretation, and require geometry decoder 2 so stale datasets cannot
+  silently restore the distortion.
 - Decode the Reference Build's two road-table slots as full, zero-width runs,
   preserve all 256 lookup entries in Data Payload schema 3, reproduce the
   altitude/current-structure/fixed-map selection rules, and add a verified

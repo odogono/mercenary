@@ -16,7 +16,7 @@ does not affect the core geometry digest.
 
 Canonical values remain integers in their Reference Build widths and units:
 
-- object coordinates retain biased source bytes, exact local displacements,
+- object coordinates retain signed source bytes, exact local displacements,
   signed and unsigned 24-bit positions, initial orientation bytes, bounds,
   membership, state, and point-versus-wireframe visibility rules;
 - surface data retains shared structures, line operations, rotated inputs,
