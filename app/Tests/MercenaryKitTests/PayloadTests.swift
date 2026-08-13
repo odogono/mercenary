@@ -6,33 +6,41 @@ import XCTest
 /// the shapes are what matter.
 enum PayloadFixture {
   static let manifest = """
-    {"schemaVersion":1,"sourceDatasetId":"world-geometry-test","sourceCoreDigest":"\(String(repeating: "a", count: 64))",
+    {"schemaVersion":2,"sourceDatasetId":"world-geometry-test","sourceCoreDigest":"\(String(repeating: "a", count: 64))",
      "decoderVersion":1,"counts":{"cells":2,"models":1,"instances":2}}
     """
 
   static let world = """
-    {"schemaVersion":1,"grid":{"cellsPerAxis":2,"cellSize":1000},
+    {"schemaVersion":2,"grid":{"cellsPerAxis":2,"cellSize":1000},
      "bounds":{"min":[0,0,0],"max":[2000,500,2000]},
-     "roads":[{"from":[0,0],"to":[1,0],"segment":0}]}
+     "roadAltitudeLookup":[0,3],
+     "roads":[{"from":[0,0],"to":[1,0],"cell":[0,0],"segment":0}]}
     """
 
   static let surface = """
-    {"schemaVersion":1,"cells":[
-      {"cell":0,"grid":[0,0],"vertices":[[0,0,0],[100,0,0],[100,200,0]],
-       "edges":[[0,1,0],[1,2,1]],"deferredVertices":0,"deferredEdges":0},
-      {"cell":1,"grid":[1,0],"vertices":[[1000,0,0],[1100,0,0]],
-       "edges":[[0,1,0]],"deferredVertices":2,"deferredEdges":3}]}
+    {"schemaVersion":2,"cells":[
+      {"cell":0,"grid":[0,0],"structure":"surface-structure:test",
+       "vertices":[[0,0,0],[100,0,0],[100,200,0]],
+       "edges":[[0,1,0],[1,2,1]],"deferredVertices":[],"deferredEdges":0},
+      {"cell":1,"grid":[1,0],"structure":null,
+       "vertices":[[1000,0,0],[1100,0,0]],
+       "edges":[[0,1,0]],
+       "deferredVertices":[{"vertex":2,"rotationInput":[1,2,3]}],"deferredEdges":3}],
+     "rotatedStructures":[{"id":"surface-structure:test","rotatedPointDescriptor":115,
+       "rotationCenter":[132,132],"rotatedPointCount":4}]}
     """
 
   static let objects = """
-    {"schemaVersion":1,
-     "models":[{"id":"object-model:test","vertices":[[-10,-100,-10],[10,-100,-10],[10,-60,-10]],
-                "edges":[[0,1],[1,2]]}],
+    {"schemaVersion":2,
+     "models":[{"id":"object-model:test","vertices":[[-10,-100,-10],[10,-100,-10]],
+                "edges":[[0,1]]}],
      "instances":[
        {"slot":0,"id":"object-instance:00","model":"object-model:test","position":[500,0,500],
-        "orientation":[0,0,0],"room":0,"stateFlags":48,"rotatable":true,"placement":"surface"},
+        "orientation":[0,0,0],"room":0,"stateFlags":48,"rotatable":true,"placement":"surface",
+        "visibility":{"detailCubePerAxis":65536,"farRepresentation":"point"}},
        {"slot":1,"id":"object-instance:01","model":"object-model:test","position":[10,0,20],
-        "orientation":null,"room":7,"stateFlags":32,"rotatable":false,"placement":"room"}]}
+        "orientation":null,"room":7,"stateFlags":32,"rotatable":false,"placement":"room",
+        "visibility":{"detailCubePerAxis":65536,"farRepresentation":"point"}}]}
     """
 
   static func write(
@@ -97,11 +105,11 @@ final class PayloadTests: XCTestCase {
   func testAFutureSchemaIsRejectedRatherThanMisread() throws {
     try PayloadFixture.write(
       into: directory,
-      world: PayloadFixture.world.replacingOccurrences(of: "\"schemaVersion\":1", with: "\"schemaVersion\":2")
+      world: PayloadFixture.world.replacingOccurrences(of: "\"schemaVersion\":2", with: "\"schemaVersion\":3")
     )
 
     XCTAssertThrowsError(try Payload.load(from: directory)) { error in
-      XCTAssertEqual(error as? Payload.LoadError, .unsupportedSchema("world.json", 2))
+      XCTAssertEqual(error as? Payload.LoadError, .unsupportedSchema("world.json", 3))
     }
   }
 

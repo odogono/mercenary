@@ -25,7 +25,7 @@ from .geometry import (
 from .text import decode_text
 
 
-PAYLOAD_SCHEMA_VERSION = 1
+PAYLOAD_SCHEMA_VERSION = 2
 PAYLOAD_ROOT = Path(__file__).resolve().parents[3] / "payload"
 CELLS_PER_AXIS = 16
 CELL_SIZE = 0x10000
@@ -76,23 +76,53 @@ def build_world(surface: dict[str, Any]) -> dict[str, Any]:
             high[axis] = maximum if high[axis] is None else max(high[axis], maximum)
     _require(all(value is not None for value in low), "Surface dataset expanded no cell bounds")
 
-    roads: dict[tuple[int, int, int, int, int], dict[str, Any]] = {}
-    for cell in surface["cells"]:
-        for road in cell.get("roads", []):
-            start = tuple(road["startGrid"])
-            end = tuple(road["endGrid"])
-            # A segment is listed from both ends; keep one entry per undirected pair.
-            ordered = (start, end) if start <= end else (end, start)
-            key = (*ordered[0], *ordered[1], road["segment"])
-            roads.setdefault(key, {"from": list(ordered[0]), "to": list(ordered[1]), "segment": road["segment"]})
+    roads = build_roads(surface)
+    lookup = surface.get("roadAltitudeLookup", {})
+    raw = lookup.get("rawHex", "")
+    _require(len(raw) % 2 == 0, "Road altitude lookup hex is malformed")
 
     return {
         "schemaVersion": PAYLOAD_SCHEMA_VERSION,
         "grid": {"cellsPerAxis": CELLS_PER_AXIS, "cellSize": CELL_SIZE},
         "bounds": {"min": low, "max": high},
         "verticalConvention": dict(VERTICAL_CONVENTION),
-        "roads": [roads[key] for key in sorted(roads)],
+        # The Reference Build selects how far road geometry extends through this
+        # table; without it every road draws at full length from any altitude.
+        "roadAltitudeLookup": list(bytes.fromhex(raw)),
+        "transformContract": surface.get("transformContract", {}),
+        "roads": roads,
     }
+
+
+def build_roads(surface: dict[str, Any]) -> list[dict[str, Any]]:
+    """Split each road into one piece per cell it crosses.
+
+    The dataset records a road as a single run between two cell centres, listed
+    from both ends. Emitting that run verbatim draws a line straight across the
+    world; the Reference Build limits how much road is visible by altitude, which
+    only works if the run is divided into per-cell pieces that can be culled.
+    """
+    pieces: dict[tuple[int, ...], dict[str, Any]] = {}
+    for cell in surface["cells"]:
+        for road in cell.get("roads", []):
+            start, end = tuple(road["startGrid"]), tuple(road["endGrid"])
+            ordered = (start, end) if start <= end else (end, start)
+            axis = 0 if ordered[0][1] == ordered[1][1] else 1
+            _require(
+                ordered[0][1 - axis] == ordered[1][1 - axis],
+                "Road run is neither row-aligned nor column-aligned",
+            )
+            low_index, high_index = ordered[0][axis], ordered[1][axis]
+            for step in range(low_index, high_index):
+                a = [ordered[0][0], ordered[0][1]]
+                b = [ordered[0][0], ordered[0][1]]
+                a[axis], b[axis] = step, step + 1
+                key = (*a, *b, road["segment"])
+                pieces.setdefault(
+                    key,
+                    {"from": a, "to": b, "cell": list(a), "segment": road["segment"]},
+                )
+    return [pieces[key] for key in sorted(pieces)]
 
 
 def build_surface(surface: dict[str, Any]) -> dict[str, Any]:
@@ -109,13 +139,15 @@ def build_surface(surface: dict[str, Any]) -> dict[str, Any]:
             continue
         remapped: dict[int, int] = {}
         vertices: list[list[int]] = []
-        deferred_vertices = 0
+        deferred: list[dict[str, Any]] = []
         for index, vertex in enumerate(expanded["vertices"]):
             if vertex["kind"] == "world-point":
                 remapped[index] = len(vertices)
                 vertices.append(list(vertex["position"]))
             else:
-                deferred_vertices += 1
+                # Carried rather than discarded: the rotation input is what a
+                # later pass needs to place these points.
+                deferred.append({"vertex": index, "rotationInput": list(vertex["rotationInput"])})
 
         edges: list[list[int]] = []
         deferred_edges = 0
@@ -132,13 +164,24 @@ def build_surface(surface: dict[str, Any]) -> dict[str, Any]:
             {
                 "cell": cell["cell"],
                 "grid": list(cell["grid"]),
+                "structure": cell.get("structure"),
                 "vertices": vertices,
                 "edges": edges,
-                "deferredVertices": deferred_vertices,
+                "deferredVertices": deferred,
                 "deferredEdges": deferred_edges,
             }
         )
-    return {"schemaVersion": PAYLOAD_SCHEMA_VERSION, "cells": cells}
+    structures = [
+        {
+            "id": structure["geometryIdentity"],
+            "rotatedPointDescriptor": structure["rotatedPointDescriptor"],
+            "rotationCenter": structure["rotationCenter"],
+            "rotatedPointCount": (structure["rotatedPointDescriptor"] & 0x0F) + 1,
+        }
+        for structure in surface.get("structures", [])
+        if structure.get("rotatedPointDescriptor")
+    ]
+    return {"schemaVersion": PAYLOAD_SCHEMA_VERSION, "cells": cells, "rotatedStructures": structures}
 
 
 def build_objects(objects: dict[str, Any]) -> dict[str, Any]:
@@ -171,6 +214,9 @@ def build_objects(objects: dict[str, Any]) -> dict[str, Any]:
                 "stateFlags": instance["stateFlags"],
                 "rotatable": instance["rotatable"],
                 "placement": "surface" if instance["roomMembership"] == 0 else "room",
+                # Beyond this cube per axis the Reference Build draws the object as
+                # a single projected point instead of its wireframe.
+                "visibility": instance["visibility"],
             }
         )
     return {"schemaVersion": PAYLOAD_SCHEMA_VERSION, "models": models, "instances": instances}
@@ -210,6 +256,7 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
         "surfaceVertices": sum(len(cell["vertices"]) for cell in surface_document["cells"]),
         "surfaceEdges": sum(len(cell["edges"]) for cell in surface_document["cells"]),
         "deferredSurfaceEdges": sum(cell["deferredEdges"] for cell in surface_document["cells"]),
+        "rotatedStructures": len(surface_document["rotatedStructures"]),
         "roads": len(documents["world.json"]["roads"]),
         "models": len(documents["objects.json"]["models"]),
         "instances": len(documents["objects.json"]["instances"]),

@@ -8,6 +8,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Add a geometry debug mode (`--inspect-objects`, `--inspect-object`,
+  `--inspect-cell`) that renders a subject in isolation with its decoded numbers,
+  plus a contact sheet of all 64 objects on one page. Canonical framing by
+  default; `--in-situ` for the game-accurate view.
+
+### Fixed
+
+- Carry the Reference Build's presentation rules through to the app, which the
+  payload exporter had been discarding: the object detail cube and far-point
+  representation, the road altitude table, structure rotation data, and the
+  transform contract (payload schema 2). Apply model-local orientation for the
+  rotatable slots, derive the projection from the original's 160x136 frustum
+  instead of an invented field of view, and stop drawing instances parked outside
+  the world. Fix a grid-key aliasing bug where a negative column resolved to the
+  previous row and duplicated that cell's geometry at the world edges.
+  Road selection and the sky and ground colours remain unresolved; a capture of
+  the original showed both to be wrongly modelled.
+
 - Decode the dictionary-compressed text tables and put a message line in the app
   (issue #45, first step): 64 messages and 159 distinct words recovered from our
   own Reference Build, composed by reproducing the emitter's spacing rule, and

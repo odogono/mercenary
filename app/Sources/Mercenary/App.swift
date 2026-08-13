@@ -7,6 +7,9 @@ import SwiftUI
 @main
 enum Entry {
   static func main() {
+    if let mode = InspectCommand.mode(from: CommandLine.arguments) {
+      exit(InspectCommand.run(mode))
+    }
     if let options = FrameCapture.options(from: CommandLine.arguments) {
       exit(FrameCapture.run(options))
     }
