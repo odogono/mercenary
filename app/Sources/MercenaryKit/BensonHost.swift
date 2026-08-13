@@ -30,7 +30,8 @@ public struct BensonHostState: Sendable, Equatable {
   /// writing this; the endgame slows it to a crawl.
   public var messageInterval: Int
   public var currentRoom: Int
-  /// The craft the player is aboard; zero means on foot.
+  /// The craft the player is aboard, which is that craft's object slot. On foot
+  /// is a sentinel rather than zero, because slot zero is a real ship.
   public var boardedCraft: Int
   /// Eight-digit decimal registers. Slot 8 is the bank balance and slot 9 the
   /// cash in the current room; text number slot `n` renders slot `8 + n`.
@@ -48,6 +49,11 @@ public struct BensonHostState: Sendable, Equatable {
   public var shipInbound: Int
   /// The signed register, which no Reference Build script reads.
   public var signedRegister: Int
+
+  /// What the boarded-craft value holds while the player is walking. The
+  /// Reference Build's own on-foot value, and negative as a signed byte, which is
+  /// how its boarding check tested for it.
+  public static let onFoot = 0x80
 
   /// The flag bit the host sets when the player presses a key.
   public static let inputDetected: UInt8 = 0x80
@@ -68,7 +74,7 @@ public struct BensonHostState: Sendable, Equatable {
     tickCounter: Int = 0,
     messageInterval: Int = Self.defaultMessageInterval,
     currentRoom: Int = 0,
-    boardedCraft: Int = 0,
+    boardedCraft: Int = Self.onFoot,
     decimals: [Int] = Array(repeating: 0, count: Self.decimalCount),
     objectRooms: [Int: Int] = [:],
     objectFlags: [Int: UInt8] = [:],

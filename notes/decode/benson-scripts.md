@@ -151,7 +151,30 @@ STILL ALIVE", "WHERE ARE YOU" and then waits indefinitely.
 Both paths end at the same place: a two-instruction loop testing whether you have
 boarded craft 1. It never blocks, which is why the interpreter needs an
 instruction budget to stand in for the frame boundary the original had for free.
-The script finishes when you board the Dart.
+
+Boarding does not end the script — it **jumps into script 01**, the Dart's own
+description, which clears the object's description bits so it only plays once and
+then says "THIS CRAFT BELONGED TO THE PALYAR COMMANDER'S BROTHER-IN-LAW / HE IS
+NOT TOO PLEASED", before the game proper begins with "PALYAR SHIP ATTACKING".
+Craft ids are object slots, so `tstc craft 1` is literally "have you boarded
+object 1", the wireframe on the pad at 8:8.
+
+## How a script ends, and how it does not
+
+The running flag (`$BEC0` bit 6) is **not** a stop signal. The step loop never
+reads it; only `BENSON_START` does. A script clearing it is saying "I may be
+interrupted now", and several keep running afterwards — script 01 clears it as its
+third instruction and then plays four messages. Reading that clear as termination
+truncates the opening's ending without any visible error, which is exactly how it
+survived a first pass here.
+
+A script ends at a `ret` with nothing to return to. The Reference Build pushed the
+current program counter before entering a script, so its outermost `ret` restored
+a stale one; our interpreter starts with an empty stack and goes idle instead,
+which is the same thing said plainly.
+
+On foot is `$80` in the boarded-craft byte, not zero — the boarding check tested
+it as a negative signed byte, and slot zero is a real ship.
 
 ## Open questions
 

@@ -153,6 +153,7 @@ final class BensonSessionTests: XCTestCase {
       .testCraft(craft: 1, .init(branchOn: false, branch: .jump(7))),
       .jump(5),
       .clearFlags(mask: BensonHostState.scriptRunning),
+      .ret,
     ])
 
     // Let both messages reveal and be held.
