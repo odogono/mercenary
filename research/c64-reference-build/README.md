@@ -59,6 +59,52 @@ research/c64-reference-build/lab catalogue verify \
   --catalogue research/c64-reference-build/catalogue
 ```
 
+A catalogue edit moves the catalogue digest and silently invalidates every
+recorded maintainer approval, because `summarize` drops mismatched reviews rather
+than reporting them. Check for that drift explicitly; the verb exits non-zero when
+an approval is stale, unapproved, or missing:
+
+```sh
+research/c64-reference-build/lab catalogue review-status \
+  --catalogue research/c64-reference-build/catalogue
+```
+
+## Object semantics (UNC-0002)
+
+`object-semantics` decodes the enterable-object inventory and its
+Handler-Equivalence Classes from an interactive capture, then ties the decode to
+a runtime state. It is deliberately separate from `geometry` so that behavioural
+interpretation never enters the World Geometry Dataset's `coreDigest`. Every exact
+value stays in the restricted mapping; the tracked manifest carries only counts,
+class identifiers, digests, and the completeness argument.
+
+```sh
+research/c64-reference-build/lab object-semantics decode \
+  --run research/c64-reference-build/work/<interactive-run> \
+  --output restricted/behavior-catalogue/unc-0002/handler-equivalence.json
+
+research/c64-reference-build/lab object-semantics verify \
+  --mapping restricted/behavior-catalogue/unc-0002/handler-equivalence.json
+
+research/c64-reference-build/lab object-semantics corroborate \
+  --mapping restricted/behavior-catalogue/unc-0002/handler-equivalence.json \
+  --run research/c64-reference-build/work/<catalogue-tr-9028-run> \
+  --output restricted/behavior-catalogue/unc-0002/corroboration-<run>.json
+
+research/c64-reference-build/lab object-semantics attest \
+  --mapping restricted/behavior-catalogue/unc-0002/handler-equivalence.json \
+  --run research/c64-reference-build/work/<catalogue-tr-9028-run> \
+  --report restricted/behavior-catalogue/unc-0002/corroboration-<run>.json
+```
+
+`decode` output must resolve under ignored `work/` or `restricted/` storage.
+`corroborate` reads the typed captures the trace run already recorded, so the
+tracked trace carries no decoded constants and no addresses. `attest` mints the
+mapping's `decoded-reference-build` Evidence record through the same content store
+as every other artifact and prints the public-safe `evidence-index.json` entry to
+add. Run the corroboration trace twice so each class carries distinct proof
+evidence for two reproduced cold runs.
+
 `catalogue run` executes a versioned branch trace from the conditioned
 interactive checkpoint. Proof traces reject memory injection. Audio traces run
 unwarped with an effective configuration capture; D64 media is attached at

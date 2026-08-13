@@ -8,6 +8,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Verify the enterable-object inventory and its Handler-Equivalence Class
+  assignment for UNC-0002 (issue #28), unblocking UNC-0001's exhaustive Semantic
+  Mode inventory. The inventory is closed by decoded dispatch reachability and
+  corroborated by typed live-block observations from two reproduced cold runs of
+  new proof trace TR-9028. The decoded partition is singleton and the dispatch
+  handler count is published as the candidate coarsening, so UNC-0001 must prove
+  its matrix once per member rather than the two classes previously assumed.
+- Add `catalogue/object-semantics-coverage.json` with a closed eight-family
+  Object-Conditioned Predicate ledger, its Draft 2020-12 schema, machine-checked
+  UNC-0002 responsibility sets, and a resolution gate requiring every family and
+  class to be verified. All eight families remain `open`; UNC-0002 stays open.
+- Add the `lab object-semantics decode|verify|corroborate|attest` workflow, a
+  verified BC-0041, ADR 0013 for the class-key projection, and Handler-Equivalence
+  Class and Object-Conditioned Predicate to the shared language. Exact mappings,
+  per-field ledgers, and corroboration reports remain Restricted Material cited by
+  Evidence ID and artifact hash.
+- Add `lab catalogue review-status`, which fails when a recorded maintainer
+  approval is stale, unapproved, or missing. All 21 approvals recorded in #38 were
+  already stale, because #39 moved the catalogue digest without any command
+  reporting it.
+
 - Record the maintainer's digest-bound approval of all four World Geometry
   Dataset comparisons and all 21 Behavior Catalogue review subjects; resolve
   the non-material geometry-review bookkeeping uncertainty while preserving

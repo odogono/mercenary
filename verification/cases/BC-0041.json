@@ -1,0 +1,49 @@
+{
+  "acceptanceEnvelopes": "The enterable inventory and its Handler-Equivalence Class assignment are exact. Per-member runtime entry is not claimed; entry preconditions per member remain UNC-0002.",
+  "actions": "Resume each legally reached enterable state and observe the live locomotion parameter block across an input-sampling boundary.",
+  "aliases": [],
+  "applicability": {
+    "candidateKinds": ["official"]
+  },
+  "claimScopes": ["fidelity"],
+  "dependencies": {
+    "caseIds": [],
+    "evidenceIds": [
+      "EV-13a85f905064a548",
+      "EV-49b6c3a2215034a8",
+      "EV-69ad714d5871b3bd",
+      "EV-a7222cbb3eecec80",
+      "EV-e47677c04de0460a"
+    ],
+    "uncertaintyIds": []
+  },
+  "executionTiers": ["release-candidate"],
+  "expectedObservables": "The enterable inventory is exactly the set the entry dispatch admits, each member selects exactly one Handler-Equivalence Class, and every corroborated class loads the class's parameter block unchanged across an input-sampling boundary.",
+  "fidelity": {
+    "classification": "required-behavior",
+    "crackSensitivity": "not-applicable",
+    "departureIds": [],
+    "dimensions": ["content", "controls", "state"],
+    "evidenceIds": [
+      "EV-13a85f905064a548",
+      "EV-49b6c3a2215034a8",
+      "EV-69ad714d5871b3bd",
+      "EV-a7222cbb3eecec80",
+      "EV-e47677c04de0460a"
+    ],
+    "materiality": "material",
+    "researchProvenance": "Decoded entry-dispatch reachability over the enterable parameter block table, corroborated by typed live-block observations from two reproduced cold runs of the registered proof trace. The exact mapping and its per-field ledger remain Restricted Material cited by content digest."
+  },
+  "id": "BC-0041",
+  "initialState": "Each legally reached enterable state recorded as restricted evidence, one per corroborated Handler-Equivalence Class.",
+  "reviewRequired": true,
+  "schemaVersion": 1,
+  "status": "verified",
+  "title": "Enterable object inventory and class assignment",
+  "verificationArea": "semantics",
+  "verification": {
+    "method": "decoded entry-dispatch enumeration with typed live-block corroboration",
+    "oracleDiagnosticRequired": true
+  },
+  "version": 1
+}

@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/odogono/mercenary/research/c64-reference-build/catalogue-object-semantics-coverage.schema.json",
+  "title": "Object semantics coverage manifest",
+  "type": "object",
+  "required": ["schemaVersion", "catalogueSubjectDigest", "scope", "enterableInventory", "families"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "catalogueSubjectDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "scope": {
+      "type": "object",
+      "required": ["uncertaintyId", "behaviorCaseIds", "includedResponsibilities", "excludedResponsibilities"],
+      "properties": {
+        "uncertaintyId": {"const": "UNC-0002"},
+        "behaviorCaseIds": {"$ref": "#/$defs/caseIds"},
+        "includedResponsibilities": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/family"}
+        },
+        "excludedResponsibilities": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/excludedResponsibility"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "enterableInventory": {
+      "type": "object",
+      "required": [
+        "method",
+        "classes",
+        "classCount",
+        "memberCount",
+        "dispatchHandlerCount",
+        "runtimeCorroboratedClassCount",
+        "mappingEvidenceId",
+        "mappingDigest",
+        "mappingContentDigest",
+        "perMemberRuntimeEntryProven",
+        "completenessArgument",
+        "behaviorCaseIds",
+        "traceIds",
+        "evidenceIds",
+        "status"
+      ],
+      "properties": {
+        "method": {"const": "decoded-dispatch-reachability"},
+        "classes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "status"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^HEC-[0-9]{4}$"},
+              "traceBranchId": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+              "behaviorCaseIds": {"$ref": "#/$defs/caseIds"},
+              "traceIds": {"$ref": "#/$defs/traceIds"},
+              "evidenceIds": {"$ref": "#/$defs/evidenceIds"},
+              "status": {"enum": ["open", "verified"]}
+            },
+            "allOf": [
+              {
+                "if": {"properties": {"status": {"const": "verified"}}},
+                "then": {"required": ["traceBranchId", "behaviorCaseIds", "traceIds", "evidenceIds"]},
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {"required": ["behaviorCaseIds"]},
+                      {"required": ["traceIds"]},
+                      {"required": ["evidenceIds"]}
+                    ]
+                  }
+                }
+              }
+            ],
+            "additionalProperties": false
+          }
+        },
+        "classCount": {"type": "integer", "minimum": 1},
+        "memberCount": {"type": "integer", "minimum": 1},
+        "dispatchHandlerCount": {"type": "integer", "minimum": 1},
+        "runtimeCorroboratedClassCount": {"type": "integer", "minimum": 0},
+        "mappingEvidenceId": {"type": "string", "pattern": "^EV-[0-9a-f]{16}$"},
+        "mappingDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "mappingContentDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "perMemberRuntimeEntryProven": {"type": "boolean"},
+        "completenessArgument": {"type": "string", "minLength": 1},
+        "behaviorCaseIds": {"$ref": "#/$defs/caseIds"},
+        "traceIds": {"$ref": "#/$defs/traceIds"},
+        "evidenceIds": {"$ref": "#/$defs/evidenceIds"},
+        "status": {"enum": ["open", "verified"]}
+      },
+      "additionalProperties": false
+    },
+    "families": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "required": ["id", "family", "title", "status"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^OSF-[0-9]{4}$"},
+          "family": {"$ref": "#/$defs/family"},
+          "title": {"type": "string", "minLength": 1},
+          "status": {"enum": ["open", "verified"]},
+          "partitionClassCount": {"type": "integer", "minimum": 1},
+          "partitionDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "behaviorCaseIds": {"$ref": "#/$defs/caseIds"},
+          "traceIds": {"$ref": "#/$defs/traceIds"},
+          "evidenceIds": {"$ref": "#/$defs/evidenceIds"},
+          "nextExperiment": {"type": "string", "minLength": 1}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"status": {"const": "verified"}}},
+            "then": {
+              "required": [
+                "partitionClassCount",
+                "partitionDigest",
+                "behaviorCaseIds",
+                "traceIds",
+                "evidenceIds"
+              ]
+            },
+            "else": {
+              "required": ["nextExperiment"],
+              "not": {
+                "anyOf": [
+                  {"required": ["partitionClassCount"]},
+                  {"required": ["partitionDigest"]},
+                  {"required": ["behaviorCaseIds"]},
+                  {"required": ["traceIds"]},
+                  {"required": ["evidenceIds"]}
+                ]
+              }
+            }
+          }
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "$defs": {
+    "caseIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^BC-[0-9]{4}$"}},
+    "traceIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^TR-[0-9]{4}$"}},
+    "evidenceIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^EV-[0-9a-f]{16}$"}},
+    "family": {
+      "enum": [
+        "object-entry-eligibility",
+        "object-collision",
+        "portal-transitions",
+        "object-visibility",
+        "weapon-behavior",
+        "object-conditioned-interaction",
+        "restart-placement",
+        "take-drop-eligibility"
+      ]
+    },
+    "excludedResponsibility": {
+      "enum": [
+        "mode-neutral-action-surface",
+        "mode-neutral-input-conflicts",
+        "mode-neutral-rate-limits",
+        "pal-timing",
+        "player-observable-stochastic-outcomes",
+        "inventory-identity",
+        "inventory-capacity",
+        "item-conditioned-take-drop"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

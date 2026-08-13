@@ -14,7 +14,9 @@ from c64lab.catalogue import (
     catalogue_cycle_limit_arguments,
     catalogue_digest,
     normalized_sample_digest,
+    object_semantics_resolvable,
     review_catalogue,
+    review_status,
     run_catalogue_trace,
     select_catalogue_trace_branches,
     store_artifact,
@@ -22,13 +24,14 @@ from c64lab.catalogue import (
     summarize_catalogue,
     validate_catalogue,
     validate_catalogue_trace,
+    validate_object_semantics_coverage,
     validate_semantic_coverage,
     validate_redacted_summary,
     validate_trace_set,
     verify_artifact_hashes,
     wilson_interval,
 )
-from c64lab.core import LabError
+from c64lab.core import OBJECT_SEMANTICS_DECODER_VERSION, LabError
 
 
 DOMAINS = [
@@ -86,6 +89,121 @@ def _unc_0001_scope() -> dict[str, object]:
             "interaction-boundary",
             "stochastic-branch",
         ],
+    }
+
+
+REVIEW_SUBJECTS = sorted(set(DOMAINS) | {"material-journeys", "audiovisual", "saves", "uncertainties"})
+OBJECT_SEMANTICS_CASE_IDS = {"BC-0005", "BC-0006", "BC-0007", "BC-0008", "BC-0041"}
+OBJECT_SEMANTICS_FAMILIES = [
+    "object-entry-eligibility",
+    "object-collision",
+    "portal-transitions",
+    "object-visibility",
+    "weapon-behavior",
+    "object-conditioned-interaction",
+    "restart-placement",
+    "take-drop-eligibility",
+]
+
+
+def _unc_0002_scope() -> dict[str, object]:
+    return {
+        "uncertaintyId": "UNC-0002",
+        "behaviorCaseIds": sorted(OBJECT_SEMANTICS_CASE_IDS),
+        "includedResponsibilities": list(OBJECT_SEMANTICS_FAMILIES),
+        "excludedResponsibilities": [
+            "mode-neutral-action-surface",
+            "mode-neutral-input-conflicts",
+            "mode-neutral-rate-limits",
+            "pal-timing",
+            "player-observable-stochastic-outcomes",
+            "inventory-identity",
+            "inventory-capacity",
+            "item-conditioned-take-drop",
+        ],
+    }
+
+
+def _complete_object_semantics_coverage() -> tuple[dict[str, object], dict[str, dict[str, object]]]:
+    """A manifest with a verified inventory, one corroborated class, and open families."""
+    mapping_id = "EV-1111111111111111"
+    branch_ids = ["EV-2222222222222222", "EV-3333333333333333"]
+    evidence = {
+        mapping_id: {
+            "mode": "proof",
+            "authority": "decoded-reference-build",
+            "traceId": "TR-9028",
+            "traceVersion": 1,
+            "traceSha256": "e" * 64,
+            "decoderVersions": ["catalogue-v1", OBJECT_SEMANTICS_DECODER_VERSION],
+            "artifactHashes": ["a" * 64, "b" * 64],
+        },
+    }
+    for evidence_id in branch_ids:
+        evidence[evidence_id] = {
+            "mode": "proof",
+            "authority": "running-reference-build",
+            "traceId": "TR-9028",
+            "traceVersion": 1,
+            "traceSha256": "e" * 64,
+            "branchId": "enterable-accelerating",
+            "decoderVersions": ["catalogue-v1"],
+            "artifactHashes": ["c" * 64],
+        }
+    coverage: dict[str, object] = {
+        "schemaVersion": 1,
+        "catalogueSubjectDigest": "d" * 64,
+        "scope": _unc_0002_scope(),
+        "enterableInventory": {
+            "method": "decoded-dispatch-reachability",
+            "classes": [
+                {
+                    "id": "HEC-0001",
+                    "traceBranchId": "enterable-accelerating",
+                    "behaviorCaseIds": ["BC-0041"],
+                    "traceIds": ["TR-9028"],
+                    "evidenceIds": list(branch_ids),
+                    "status": "verified",
+                },
+                {"id": "HEC-0002", "status": "open"},
+            ],
+            "classCount": 2,
+            "memberCount": 2,
+            "dispatchHandlerCount": 2,
+            "runtimeCorroboratedClassCount": 1,
+            "mappingEvidenceId": mapping_id,
+            "mappingDigest": "a" * 64,
+            "mappingContentDigest": "f" * 64,
+            "perMemberRuntimeEntryProven": False,
+            "completenessArgument": "The entry dispatch bounds the enterable slot range.",
+            "behaviorCaseIds": ["BC-0041"],
+            "traceIds": ["TR-9028"],
+            "evidenceIds": sorted([mapping_id, *branch_ids]),
+            "status": "verified",
+        },
+        "families": [
+            {
+                "id": f"OSF-{index:04d}",
+                "family": family,
+                "title": f"{family} predicates",
+                "status": "open",
+                "nextExperiment": f"Partition {family} over Geometry Identities.",
+            }
+            for index, family in enumerate(OBJECT_SEMANTICS_FAMILIES, start=1)
+        ],
+    }
+    return coverage, evidence
+
+
+def _object_semantics_trace_proofs() -> dict[str, dict[str, object]]:
+    return {
+        "TR-9028": {
+            "mode": "proof",
+            "kind": "deterministic",
+            "repetitions": 2,
+            "version": 1,
+            "sha256": "e" * 64,
+        }
     }
 
 
@@ -682,7 +800,7 @@ class EvidenceTests(unittest.TestCase):
 class CatalogueContractTests(unittest.TestCase):
     def test_resolved_uncertainty_requires_an_answer_and_proof_evidence(self) -> None:
         uncertainty = {
-            "id": "UNC-0002",
+            "id": "UNC-0004",
             "title": "Resolved question",
             "question": "What happens?",
             "affectedEntryIds": ["CAT-0001"],
@@ -708,9 +826,48 @@ class CatalogueContractTests(unittest.TestCase):
             )
             validate_catalogue(root)
 
-    def test_open_uncertainty_requires_a_next_experiment_and_forbids_resolution(self) -> None:
+    def test_resolved_unc_0002_requires_the_object_semantics_manifest(self) -> None:
         uncertainty = {
             "id": "UNC-0002",
+            "title": "Object, vehicle, and world behavior semantics",
+            "question": "What happens?",
+            "affectedEntryIds": ["CAT-0001"],
+            "affectedBehaviorCaseIds": ["BC-0001"],
+            "evidenceAttempted": ["EV-aaaaaaaaaaaaaaaa"],
+            "impact": "material",
+            "crackSensitivity": "not-applicable",
+            "status": "resolved",
+            "resolution": {
+                "answer": "The evidence-backed predicates are exact.",
+                "evidenceIds": ["EV-aaaaaaaaaaaaaaaa"],
+            },
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _write_catalogue(root, uncertainty=uncertainty)
+
+            with self.assertRaisesRegex(LabError, "Resolved UNC-0002 requires object-semantics-coverage.json"):
+                validate_catalogue(root)
+
+    def test_object_semantics_is_resolvable_only_when_everything_is_verified(self) -> None:
+        coverage, _ = _complete_object_semantics_coverage()
+        self.assertFalse(object_semantics_resolvable(coverage))
+
+        inventory = coverage["enterableInventory"]
+        inventory["classes"][1] = dict(inventory["classes"][0], id="HEC-0002")
+        self.assertFalse(object_semantics_resolvable(coverage))
+
+        for family in coverage["families"]:
+            family["status"] = "verified"
+        self.assertTrue(object_semantics_resolvable(coverage))
+
+        inventory["status"] = "open"
+        self.assertFalse(object_semantics_resolvable(coverage))
+
+
+    def test_open_uncertainty_requires_a_next_experiment_and_forbids_resolution(self) -> None:
+        uncertainty = {
+            "id": "UNC-0004",
             "title": "Open question",
             "question": "What happens?",
             "affectedEntryIds": ["CAT-0001"],
@@ -1311,6 +1468,214 @@ class SemanticCoverageTests(unittest.TestCase):
                 },
                 {"BC-0018"},
             )
+
+
+class ObjectSemanticsCoverageTests(unittest.TestCase):
+    def _validate(self, coverage, evidence, *, trace_proofs=None) -> None:
+        validate_object_semantics_coverage(
+            coverage, "d" * 64, evidence, OBJECT_SEMANTICS_CASE_IDS, trace_proofs=trace_proofs
+        )
+
+    def test_accepts_a_verified_inventory_with_open_families(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+
+        self._validate(coverage, evidence, trace_proofs=_object_semantics_trace_proofs())
+
+    def test_rejects_a_manifest_without_an_enterable_inventory(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        coverage.pop("enterableInventory")
+
+        with self.assertRaisesRegex(LabError, "needs an enterable inventory"):
+            self._validate(coverage, evidence)
+
+    def test_rejects_a_stale_catalogue_subject_digest(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        coverage["catalogueSubjectDigest"] = "0" * 64
+
+        with self.assertRaisesRegex(LabError, "stale catalogue subject digest"):
+            self._validate(coverage, evidence)
+
+    def test_rejects_a_broadened_excluded_scope(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        coverage["scope"]["excludedResponsibilities"].remove("inventory-capacity")
+
+        with self.assertRaisesRegex(LabError, "exact excluded responsibilities"):
+            self._validate(coverage, evidence)
+
+    def test_rejects_an_incomplete_included_scope(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        coverage["scope"]["includedResponsibilities"].remove("restart-placement")
+
+        with self.assertRaisesRegex(LabError, "exact included responsibilities"):
+            self._validate(coverage, evidence)
+
+    def test_rejects_a_manifest_that_omits_a_predicate_family(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        coverage["families"][1]["family"] = coverage["families"][0]["family"]
+
+        with self.assertRaisesRegex(LabError, "every UNC-0002 predicate family exactly once"):
+            self._validate(coverage, evidence)
+
+    def test_rejects_an_inventory_whose_class_count_disagrees(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        coverage["enterableInventory"]["classCount"] = 3
+
+        with self.assertRaisesRegex(LabError, "class count must match its declared classes"):
+            self._validate(coverage, evidence)
+
+    def test_rejects_more_handlers_than_classes(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        coverage["enterableInventory"]["dispatchHandlerCount"] = 5
+
+        with self.assertRaisesRegex(LabError, "more handlers than it has classes"):
+            self._validate(coverage, evidence)
+
+    def test_rejects_a_misreported_runtime_corroboration_count(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        coverage["enterableInventory"]["runtimeCorroboratedClassCount"] = 2
+
+        with self.assertRaisesRegex(LabError, "runtime corroboration count must match"):
+            self._validate(coverage, evidence)
+
+    def test_rejects_an_inventory_without_a_decoded_mapping(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        evidence["EV-1111111111111111"]["authority"] = "running-reference-build"
+
+        with self.assertRaisesRegex(LabError, "requires decoded Reference Build proof"):
+            self._validate(coverage, evidence)
+
+    def test_rejects_a_mapping_digest_that_is_not_an_artifact(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        coverage["enterableInventory"]["mappingDigest"] = "9" * 64
+
+        with self.assertRaisesRegex(LabError, "not an artifact of its mapping evidence"):
+            self._validate(coverage, evidence)
+
+    def test_rejects_a_mapping_evidence_without_the_object_semantics_decoder(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        evidence["EV-1111111111111111"]["decoderVersions"] = ["catalogue-v1"]
+
+        with self.assertRaisesRegex(LabError, "must record the object semantics decoder"):
+            self._validate(coverage, evidence)
+
+    def test_rejects_a_verified_inventory_with_no_corroborated_class(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        coverage["enterableInventory"]["classes"][0] = {"id": "HEC-0001", "status": "open"}
+        coverage["enterableInventory"]["runtimeCorroboratedClassCount"] = 0
+
+        with self.assertRaisesRegex(LabError, "without runtime corroboration for at least one class"):
+            self._validate(coverage, evidence)
+
+    def test_rejects_a_class_backed_by_a_single_run(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        coverage["enterableInventory"]["classes"][0]["evidenceIds"] = ["EV-2222222222222222"]
+
+        with self.assertRaisesRegex(LabError, "distinct proof evidence for two reproduced runs"):
+            self._validate(coverage, evidence)
+
+    def test_rejects_a_class_citing_another_branch(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        evidence["EV-3333333333333333"]["branchId"] = "enterable-fixed-rate"
+
+        with self.assertRaisesRegex(LabError, "cites evidence from another trace branch"):
+            self._validate(coverage, evidence)
+
+    def test_rejects_an_unregistered_proof_trace(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+
+        with self.assertRaisesRegex(LabError, "unregistered proof trace.*TR-9028"):
+            self._validate(coverage, evidence, trace_proofs={})
+
+    def test_rejects_a_probe_mode_trace(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        proofs = _object_semantics_trace_proofs()
+        proofs["TR-9028"]["mode"] = "probe"
+
+        with self.assertRaisesRegex(LabError, "must be a proof trace"):
+            self._validate(coverage, evidence, trace_proofs=proofs)
+
+    def test_rejects_trace_version_drift(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        proofs = _object_semantics_trace_proofs()
+        proofs["TR-9028"]["version"] = 2
+
+        with self.assertRaisesRegex(LabError, "does not match registered trace version"):
+            self._validate(coverage, evidence, trace_proofs=proofs)
+
+    def test_rejects_trace_hash_drift(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        proofs = _object_semantics_trace_proofs()
+        proofs["TR-9028"]["sha256"] = "1" * 64
+
+        with self.assertRaisesRegex(LabError, "does not match registered trace hash"):
+            self._validate(coverage, evidence, trace_proofs=proofs)
+
+    def test_rejects_a_manifest_citing_a_case_outside_its_scope(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        coverage["enterableInventory"]["behaviorCaseIds"] = ["BC-0041", "BC-0001"]
+
+        with self.assertRaisesRegex(LabError, "outside its scope: BC-0001"):
+            validate_object_semantics_coverage(
+                coverage,
+                "d" * 64,
+                evidence,
+                OBJECT_SEMANTICS_CASE_IDS | {"BC-0001"},
+            )
+
+    def test_requires_full_case_coverage_only_once_everything_is_verified(self) -> None:
+        coverage, evidence = _complete_object_semantics_coverage()
+        inventory = coverage["enterableInventory"]
+        inventory["classes"][1] = dict(inventory["classes"][0], id="HEC-0002")
+        inventory["runtimeCorroboratedClassCount"] = 2
+        for family in coverage["families"]:
+            family.pop("nextExperiment")
+            family["status"] = "verified"
+            family["partitionClassCount"] = 1
+            family["partitionDigest"] = "7" * 64
+            family["behaviorCaseIds"] = ["BC-0041"]
+            family["traceIds"] = ["TR-9028"]
+            family["evidenceIds"] = ["EV-2222222222222222", "EV-3333333333333333"]
+
+        with self.assertRaisesRegex(LabError, "does not cover Behavior Cases: BC-0005"):
+            self._validate(coverage, evidence, trace_proofs=_object_semantics_trace_proofs())
+
+
+class CatalogueReviewStatusTests(unittest.TestCase):
+    def test_reports_current_reviews_and_rejects_stale_ones(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _write_catalogue(root)
+            for domain in REVIEW_SUBJECTS:
+                review_catalogue(root, domain, "maintainer", "approved")
+
+            self.assertEqual(review_status(root)["status"], "current")
+
+            path = root / "reviews" / "vehicles.json"
+            stale = json.loads(path.read_text(encoding="utf-8"))
+            stale["catalogueDigest"] = "0" * 64
+            path.write_text(json.dumps(stale), encoding="utf-8")
+
+            with self.assertRaisesRegex(LabError, "stale approvals for vehicles"):
+                review_status(root)
+
+    def test_reports_missing_approvals(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _write_catalogue(root)
+
+            with self.assertRaisesRegex(LabError, "missing approvals for"):
+                review_status(root)
+
+    def test_reports_an_unapproved_review(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _write_catalogue(root)
+            for domain in REVIEW_SUBJECTS:
+                review_catalogue(root, domain, "maintainer", "approved")
+            review_catalogue(root, "vehicles", "maintainer", "rejected")
+
+            with self.assertRaisesRegex(LabError, "unapproved reviews for vehicles"):
+                review_status(root)
 
 
 if __name__ == "__main__":

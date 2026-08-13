@@ -133,6 +133,7 @@
         "save-dispatch": "4e17d5a3ef1a59e0eb418ce5a64a3c6b4e3bbaf6459f7f8a1bebd9241bb52955",
         "load-dispatch": "768b8d29e850b1ce76e6411cbcc2fdb5b54210634611490888140afcf18a3e8a"
       }
-    }
+    },
+    {"path":"traces/TR-9028-enterable-inventory-corroboration.json","kind":"deterministic","repetitions":2}
   ]
 }

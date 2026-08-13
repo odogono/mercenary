@@ -10,6 +10,12 @@ class LabError(RuntimeError):
     """A user-actionable laboratory validation or execution failure."""
 
 
+#: Decoder identity recorded on every UNC-0002 object semantics Evidence record.
+#: Declared here so the catalogue validator and the decoder agree without importing
+#: one another.
+OBJECT_SEMANTICS_DECODER_VERSION = "object-semantics-v1"
+
+
 def file_hash(path: Path, algorithm: str = "sha256") -> str:
     digest = hashlib.new(algorithm)
     with path.open("rb") as handle:
