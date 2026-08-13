@@ -54,21 +54,30 @@ unambiguously by the words that use them: `$0D` is the hyphen (BROTHER-IN-LAW),
 `$6F` the apostrophe (COMMANDER'S), and `$6E` the comma (the single-character
 suffix in "AH, YOU ARE BACK").
 
-`$09`, `$0E` and `$6D` remain **unresolved** and render as nothing. All three occur
-together in one word used by the load and save prompts, which decodes as
-`NO[0e] O-[09] [6d]` — most likely "NO. 0-9" with a trailing mark, but the digits
-would be an odd encoding and guessing wrongly is worse than leaving a gap. They
-are listed in the payload's `unresolvedCodes`, so message 58 ("LOAD NO O-") is the
-one visibly incomplete string of the 64.
+Codes `$00`–`$09` are the **digits**. The engine settles this rather than a word
+does: the numeric-field emitter (`PRINT_DECIMAL`, `$8E76`) unpacks a decimal
+register's BCD nibbles and stores those raw values straight into the character
+stream, so the font's first ten glyphs must be `0`–`9`. It also explains the "5"
+that was missing from "PRICE 5OOO CREDITS", which is a `$05` inside an inline
+literal — and it resolves `$09`, which had been listed as unknown.
+
+`$0E` and `$6D` remain **unresolved** and render as nothing. Both occur in the word
+used by the load and save prompts, which now decodes as `NO[0e] O-9 [6d]` — "NO.
+0-9" with a trailing mark, with the zero written as a letter O the way the game
+also writes "LOC O-O". They are listed in the payload's `unresolvedCodes`, so
+message 58 ("LOAD NO O-9") remains the one visibly incomplete string of the 64.
 
 ## What is addressable, and what is not
 
 The 64-entry message table covers `$151F`–`$16CA` only. The text region actually
 runs from about `$0880`, and the earlier part holds the **intro and comms text** —
 "CRASH LANDED ON TARG", "PRESTINIUM DESTROYED", "STATE OF WAR BETWEEN", "CRAFT FOR
-SALE", "PRICE 5OOO CREDITS". That block is reached by some other mechanism, most
-likely the Benson scripts, so it is deferred to the next step rather than guessed
-at.
+SALE", "PRICE 5OOO CREDITS".
+
+**Resolved:** that text is not addressable because it has no address to speak of.
+It is inlined into the Benson Scripts, in this same token vocabulary, immediately
+after the instruction that plays it — the intro run belongs to script 00. See
+[benson-scripts.md](benson-scripts.md).
 
 Of the 239 word slots, 159 hold distinct text and 82 consecutive slots
 (68–149) are filler sharing one pointer value. Only slot 150 in that range is

@@ -124,8 +124,12 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(render([0x41, 0x6F, 0x53]), "A'S")
         self.assertEqual(render([0x41, 0x6E]), "A,")
 
+    def test_renders_the_digit_codes_the_numeric_emitter_uses(self) -> None:
+        self.assertEqual(render([0x05, 0x00, 0x00, 0x00]), "5000")
+        self.assertEqual(render([0x09, 0x0D, 0x00]), "9-0")
+
     def test_drops_codes_whose_meaning_is_unresolved(self) -> None:
-        self.assertEqual(render([0x41, 0x09, 0x0E, 0x6D, 0x42]), "AB")
+        self.assertEqual(render([0x41, 0x0E, 0x6D, 0x42]), "AB")
 
 
 class WordDecodeTests(unittest.TestCase):
@@ -217,11 +221,11 @@ class MessageDecodeTests(unittest.TestCase):
 
     def test_reports_the_unresolved_codes_it_encountered(self) -> None:
         builder = _basic()
-        builder.word("A\x09B", at=20)
+        builder.word("A\x0eB", at=20)
         builder.message(bytes([20]))
         text = decode_text(builder.build())
 
-        self.assertEqual(text["unresolvedCodes"], ["0x09"])
+        self.assertEqual(text["unresolvedCodes"], ["0x0e"])
 
 
 class EngineGuardTests(unittest.TestCase):

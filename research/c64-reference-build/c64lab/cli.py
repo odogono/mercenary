@@ -8,10 +8,12 @@ from typing import Sequence
 
 from .core import LabError
 from .laboratory import capture, doctor, observe, reproduce, verify
+from .benson import decode_benson
 from .geometry import (
     compare_geometry,
     export_road_network_svg,
     extract_geometry,
+    load_geometry_source,
     reproduce_geometry,
     review_comparisons,
     summarize_geometry,
@@ -26,7 +28,7 @@ from .catalogue import (
     summarize_catalogue,
     verify_catalogue,
 )
-from .payload import export_payload
+from .payload import export_payload, require_ignored_output
 from .object_semantics import (
     attest_object_semantics,
     corroborate_object_semantics,
@@ -188,6 +190,12 @@ def _parser() -> argparse.ArgumentParser:
     payload_export.add_argument("--output", required=True, type=Path)
     payload_export.add_argument("--run", type=Path, help="interactive capture to decode text from")
 
+    benson_parser = subparsers.add_parser("benson", help="decode the Reference Build's Benson Scripts")
+    benson_commands = benson_parser.add_subparsers(dest="benson_command", required=True)
+    benson_decode = benson_commands.add_parser("decode", help="re-encode every script into our own instruction format")
+    benson_decode.add_argument("--run", required=True, type=Path, help="interactive capture to decode scripts from")
+    benson_decode.add_argument("--output", type=Path, help="write the document here instead of summarizing it")
+
     implementation_parser = subparsers.add_parser("implementation", help="validate production implementation contracts")
     implementation_commands = implementation_parser.add_subparsers(dest="implementation_command", required=True)
     implementation_validate = implementation_commands.add_parser("validate", help="validate schemas, CDDL, and golden vectors")
@@ -239,6 +247,24 @@ def main(argv: Sequence[str] | None = None) -> int:
                 result = verify_object_semantics(arguments.mapping)
         elif arguments.command == "payload":
             result = export_payload(arguments.dataset, arguments.output, run=arguments.run)
+        elif arguments.command == "benson":
+            ram, source = load_geometry_source(arguments.run)
+            document = decode_benson(ram)
+            if arguments.output is None:
+                result = {
+                    "status": "decoded",
+                    "runId": source["runId"],
+                    "symbols": document["symbols"],
+                    "decimalSeeds": document["decimalSeeds"],
+                    "counts": document["counts"],
+                }
+            else:
+                # Script bytes are Data Payload material, so the readable dump
+                # is held to the same ignored storage as the payload itself.
+                path = require_ignored_output(arguments.output)
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+                result = {"status": "decoded", "output": str(arguments.output), "counts": document["counts"]}
         elif arguments.command == "implementation":
             result = {"status": "verified", **validate_implementation_contracts(arguments.root)}
         elif arguments.command == "verification":

@@ -82,12 +82,22 @@ struct WorldView: View {
 private struct MessageLine: View {
   let comms: WalkaboutModel.Comms
 
+  /// The balance while the game is running; the pager's position when it is not.
+  private var trailing: String {
+    switch comms {
+    case .scripted(_, let credits):
+      return "\(credits) CREDITS"
+    case .browsing(let table, let index):
+      return String(format: "MSG %02d/%d  [ ]", index, table.messageCount - 1)
+    }
+  }
+
   var body: some View {
     HStack(spacing: 12) {
       Text(comms.text.isEmpty ? "—" : comms.text)
         .lineLimit(1)
       Spacer()
-      Text("MSG \(comms.index, specifier: "%02d")/\(comms.table.messageCount - 1)  [ ]")
+      Text(trailing)
         .foregroundStyle(SceneStyle.interfaceAccent)
     }
     .font(.system(size: 13, weight: .semibold, design: .monospaced))

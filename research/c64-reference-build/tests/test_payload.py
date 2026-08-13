@@ -16,6 +16,7 @@ from c64lab.payload import (
     build_objects,
     build_surface,
     build_world,
+    capture_counts,
     export_payload,
     require_current_geometry_decoder,
 )
@@ -225,6 +226,23 @@ class ObjectExportTests(unittest.TestCase):
 
         with self.assertRaisesRegex(LabError, "unknown model"):
             build_objects(objects)
+
+
+class CaptureCountsTests(unittest.TestCase):
+    def test_prefixes_each_capture_document_with_its_own_name(self) -> None:
+        counts = capture_counts(
+            {
+                "text.json": {"counts": {"messages": 64}},
+                "benson.json": {"counts": {"scripts": 51, "instructions": 494}},
+            }
+        )
+
+        self.assertEqual(
+            counts, {"text.messages": 64, "benson.scripts": 51, "benson.instructions": 494}
+        )
+
+    def test_reports_nothing_for_a_payload_exported_without_a_capture(self) -> None:
+        self.assertEqual(capture_counts({"world.json": {"cells": []}}), {})
 
 
 class PayloadOutputGuardTests(unittest.TestCase):
