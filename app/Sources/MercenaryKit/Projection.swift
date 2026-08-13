@@ -9,18 +9,22 @@ public struct ScreenLine: Sendable, Equatable {
   public var ink: Ink
 }
 
-/// The Reference Build's projection target: a 160-by-136 viewport centred at
-/// (80, 68). Adopting its aspect and centre means objects subtend the angles they
-/// did originally once the frustum is scaled to the window.
+/// The Reference Build projects into 160-by-136 logical coordinates centred at
+/// (80, 68). Its multicolour display makes each logical X coordinate two
+/// physical pixels wide, producing a 320-by-136 playfield. Keeping that pixel
+/// aspect is essential: treating logical pixels as square makes every model
+/// half as wide as it should be.
 ///
 /// The perspective scale follows the Reference Build's `$21` FOCUS value of
 /// `$18`. Its floating-point projection adds six exponent steps to X/Z,
 /// multiplying that ratio by 64. Y receives one additional exponent step, so
 /// its ratio is multiplied by 128 before either axis is added to the centre.
 public struct ReferenceViewport: Sendable {
-  public static let width: Double = 160
+  public static let logicalWidth: Double = 160
+  public static let horizontalPixelScale: Double = 2
+  public static let width: Double = logicalWidth * horizontalPixelScale
   public static let height: Double = 136
-  public static let centre = (x: 80.0, y: 68.0)
+  public static let logicalCentre = (x: 80.0, y: 68.0)
   /// Perspective scale in reference pixels, decoded from FOCUS `$18` as 2^6.
   public static let focalPixels: Double = 64
   /// The point pipeline increments the Y exponent once before perspective.
@@ -32,7 +36,7 @@ public struct ReferenceViewport: Sendable {
     self.size = size
   }
 
-  /// Uniform scale from reference pixels to view pixels, preserving aspect.
+  /// Uniform scale from physical reference pixels to view pixels.
   public var scale: Double {
     min(Double(size.width) / ReferenceViewport.width, Double(size.height) / ReferenceViewport.height)
   }
@@ -43,7 +47,9 @@ public struct ReferenceViewport: Sendable {
   }
 
   /// Horizontal and vertical perspective scales in view pixels.
-  public var horizontalFocalLength: Double { ReferenceViewport.focalPixels * scale }
+  public var horizontalFocalLength: Double {
+    ReferenceViewport.focalPixels * ReferenceViewport.horizontalPixelScale * scale
+  }
   public var verticalFocalLength: Double {
     ReferenceViewport.focalPixels * ReferenceViewport.verticalRatioScale * scale
   }

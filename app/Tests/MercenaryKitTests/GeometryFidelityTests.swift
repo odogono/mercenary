@@ -95,14 +95,15 @@ final class ReferenceViewportTests: XCTestCase {
     XCTAssertEqual(small.verticalFieldOfView, large.verticalFieldOfView, accuracy: 1e-12)
   }
 
-  func testReferenceBuildFocusProjectsAUnitRatioBy64Pixels() {
+  func testFocusProjects64LogicalPixelsAs128PhysicalPixels() {
     let camera = Camera(position: .zero, heading: 0, pitch: 0)
 
     let point = camera.project(
       camera.viewSpace(SIMD3<Float>(1_000, 0, 1_000)),
-      size: CGSize(width: 160, height: 136))
+      size: CGSize(width: 320, height: 136))
 
-    XCTAssertEqual(point.x, 144, accuracy: 0.0001)
+    // The 160 logical X positions occupy two physical pixels each.
+    XCTAssertEqual(point.x, 288, accuracy: 0.0001)
     XCTAssertEqual(point.y, 68, accuracy: 0.0001)
   }
 
@@ -111,10 +112,20 @@ final class ReferenceViewportTests: XCTestCase {
 
     let point = camera.project(
       camera.viewSpace(SIMD3<Float>(0, 500, 1_000)),
-      size: CGSize(width: 160, height: 136))
+      size: CGSize(width: 320, height: 136))
 
-    XCTAssertEqual(point.x, 80, accuracy: 0.0001)
+    XCTAssertEqual(point.x, 160, accuracy: 0.0001)
     XCTAssertEqual(point.y, 4, accuracy: 0.0001)
+  }
+
+  func testMulticolourPixelAspectMakesEqualWorldOffsetsEqualOnScreen() {
+    let camera = Camera(position: .zero, heading: 0, pitch: 0)
+    let size = CGSize(width: 320, height: 136)
+    let centre = camera.project(camera.viewSpace(SIMD3<Float>(0, 0, 1_000)), size: size)
+    let right = camera.project(camera.viewSpace(SIMD3<Float>(500, 0, 1_000)), size: size)
+    let above = camera.project(camera.viewSpace(SIMD3<Float>(0, 500, 1_000)), size: size)
+
+    XCTAssertEqual(right.x - centre.x, centre.y - above.y, accuracy: 0.0001)
   }
 
   func testACustomVerticalFieldOfViewChangesOnlyTheVerticalScale() {
@@ -126,9 +137,9 @@ final class ReferenceViewportTests: XCTestCase {
 
     let point = camera.project(
       camera.viewSpace(SIMD3<Float>(500, 500, 1_000)),
-      size: CGSize(width: 160, height: 136))
+      size: CGSize(width: 320, height: 136))
 
-    XCTAssertEqual(point.x, 112, accuracy: 0.0001)
+    XCTAssertEqual(point.x, 224, accuracy: 0.0001)
     XCTAssertEqual(point.y, 36, accuracy: 0.0001)
   }
 

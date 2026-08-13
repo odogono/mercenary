@@ -42,8 +42,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Replace the guessed 124-pixel camera focal length with the Reference Build's
   decoded projection: FOCUS `$18` yields `64 X/Z`, while the Y pipeline's extra
-  exponent step yields `128 Y/Z`. This removes the over-wide, flattened look of
-  objects, pins apparent size in projection tests, and calibrates the cell 8:8
+  exponent step yields `128 Y/Z`. Restore the VIC-II multicolour pixel aspect:
+  the 160 logical X positions occupy a 320-pixel display, making the physical
+  X and Y focal lengths equal instead of rendering models half-width and overly
+  tall. This pins apparent size in projection tests and calibrates the cell 8:8
   opening to a neutral-horizon pose 12,000 world units from its scene focus at
   the decoded `$0080` eye height. Treat a zero road-altitude extent as the
   Reference Build's no-roads sentinel, hiding the road network below Y=2048;

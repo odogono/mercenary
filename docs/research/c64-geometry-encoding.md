@@ -240,8 +240,11 @@ All three geometry families eventually populate the same point arrays and pass t
 2. Convert the 24-bit difference to the engine's two-byte floating representation.
 3. For object slots below `$10`, apply model-local orientation first.
 4. Build camera sine/cosine values from roll, pitch, and yaw, then a 3-by-3 camera rotation matrix (`$A320-$A4B1`).
-5. Transform points and project them into a 160-by-136 viewport centred at
-   `(80, 68)` (`$50`, `$44`). The live FOCUS value at zero-page `$21` is `$18`:
+5. Transform points and project them into a 160-by-136 logical viewport centred
+   at `(80, 68)` (`$50`, `$44`). The outdoor VIC-II mode writes `$18` to `$D016`,
+   enabling multicolour pixels: each logical X position occupies two physical
+   pixels, so presentation maps the projection to a 320-by-136 display viewport.
+   The live FOCUS value at zero-page `$21` is `$18`:
    adding it to the floating exponent multiplies X/Z by 64. The Y path adds one
    further exponent step at `$A8E9` before the same perspective operation, so
    the reference-pixel projection is `x = 80 + 64 X/Z`,
