@@ -2,9 +2,11 @@
 public enum OpeningScene {
   public static let focus = SIMD3<Double>(559_104, 0, 559_104)
 
-  /// Back away from the structure centre while staying inside cell 8:8, so the
-  /// pyramid, two craft, and airstrip are visible instead of surrounding the camera.
+  /// A neutral-horizon view from 12,000 world units south of the scene centre,
+  /// using the Reference Build's decoded $0080 opening eye height.
+  /// This keeps the pyramid, two craft, and airstrip visible with the decoded
+  /// Reference Build projection instead of compensating with geometry scale.
   public static let player = PlayerState(
-    position: SIMD3(focus.x, 400, 545_000), heading: 0, pitch: 5 * .pi / 180
+    position: SIMD3(focus.x, 128, focus.z - 12_000), heading: 0, pitch: 0
   )
 }

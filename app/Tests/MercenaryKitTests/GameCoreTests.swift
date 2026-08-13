@@ -127,6 +127,10 @@ final class GameCoreTests: XCTestCase {
     XCTAssertEqual(settled.player.position.y, limits.eyeHeight, accuracy: 1e-9)
   }
 
+  func testDefaultEyeHeightMatchesTheReferenceOpeningHeight() {
+    XCTAssertEqual(WalkLimits().eyeHeight, 128)
+  }
+
   func testNonPositiveOrNonFiniteStepsAreIgnored() {
     let state = start()
 

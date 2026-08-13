@@ -90,7 +90,12 @@ public struct Inspector: Sendable {
       centre.y - sin(pitch) * distance,
       centre.z - cos(heading) * distance * cos(pitch)
     )
-    return Camera(position: position, heading: heading, pitch: pitch, nearPlane: max(1, distance / 1000))
+    let neutralVerticalFieldOfView = 2 * atan(
+      ReferenceViewport.height / 2 / ReferenceViewport.focalPixels)
+    return Camera(
+      position: position, heading: heading, pitch: pitch,
+      verticalFieldOfView: neutralVerticalFieldOfView,
+      nearPlane: max(1, distance / 1000))
   }
 
   /// One row of the report table.

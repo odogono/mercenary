@@ -25,8 +25,10 @@ map. Schema-2 payloads must be re-exported.
   a projected point, which the doc calls part of the original's look.
 - **Reference viewport.** Projection now derives from the original's 160×136
   frustum centred at (80, 68), so field of view no longer depends on window size.
-  The focal length is **not** recovered from the original; it remains one constant
-  a future decode can replace.
+  Runtime FOCUS `$18` adds six exponent steps, giving a recovered horizontal
+  perspective scale of 64 reference pixels. The Y path adds one more exponent
+  step before division, giving a vertical scale of 128. These are decoded
+  Reference Build behaviour, not visual tuning.
 - **Parked instances.** Instances outside the world grid are no longer drawn. All
   64 remain inspectable.
 - **Grid aliasing.** `World.cell(column:row:)` packed its key without range
@@ -40,11 +42,19 @@ The contact sheet shows roughly 50 of 64 objects as flat plates, with a Y span o
 spacecraft that a decode error seemed likelier than the truth, and the ratio is
 suspiciously close to one nibble — the difference between `<< 4` and `<< 8`.
 
-**Both the ROM and the original's own display say the decode is correct.**
+**Both the ROM and the original's own display say the model decode is correct.**
 
 The scaling code at `$A6F1-$A725` is three identical blocks, one per component:
 `EOR #$80`, then four `ASL`/`ROL` pairs shifting a 16-bit pair left by four. X, Y
-and Z are treated the same way. There is no separate vertical scale.
+and Z are treated the same way. There is no separate vertical scale in model or
+world coordinates.
+
+There is, however, a separate scale in the final screen projection. At `$A8E9`
+the transformed Y exponent is incremented by four—one power-of-two step in this
+floating format—before the perspective divide. Consequently screen X uses
+`64 X/Z`, while screen Y uses `128 Y/Z`. The old 124-pixel guess happened to be
+close to the correct vertical value but incorrectly widened X by almost 2×,
+which made otherwise-correct models look flat and over-wide.
 
 The captured C64 interactive display confirms it visually: at grid 8:8 the game
 draws a small flat plate with a delta marking sitting on the ground — exactly a
@@ -54,6 +64,15 @@ is not evidence about ours.
 
 Lesson recorded: a plausibility argument produced a confident wrong answer here,
 and thirty lines of disassembly settled it. Go to the ROM first.
+
+## Opening presentation at 8:8
+
+The app's opening pose remains a Mac Adaptation presentation choice: X 559104,
+Y 400, Z 547104, looking north with a neutral pitch. It is 12,000 world units
+south of the scene focus, keeping the airstrip, inverted pyramid, Dart and wreck
+inside cell 8:8 and visible under the decoded projection. The focal values and
+axis ratio are Reference Build behaviour; this particular camera placement is
+not claimed as decoded initial state.
 
 ## Roads and the cell 8:8 airstrip
 

@@ -169,6 +169,16 @@ edges to those indices, so the 956 affected cell-edge instances are reported as
 road-workspace links until camera-dependent workspace expansion is reproduced;
 they are not malformed local indices.
 
+The Mac presentation intentionally keeps the immediately surrounding ring of
+surface structures visible as well. This is not a decoded C64 selection claim:
+it prevents an entire building from popping into existence at a cell boundary.
+Placed objects remain governed independently by their decoded detail cube.
+
+An altitude-table value of zero is a no-roads sentinel. `L8EC2` returns before
+scanning the road tables in that case; it does not select a square containing
+only the current cell. The extracted table therefore hides road-table geometry
+below Y=2048 and selects the surrounding square beginning at Y=2048.
+
 ### Surface-structure record
 
 A record begins:
@@ -190,9 +200,9 @@ is not repeated for each pair. The renderer walks the line list backwards and
 changes line operation at `white_black_split_index`, reproducing the
 characteristic two-colour/erase wireframe behaviour.
 
-If `rotated_point_descriptor` is nonzero, its low nibble plus one is the number of leading rotated points. Four of the 98 unique records use this extension. Each such point consumes three bytes; X and Z are signed middle-byte offsets, Y is an unsigned middle-byte height, and the engine rotates the X/Z pair about the two-byte centre before joining it to the ordinary points.
+If `rotated_point_descriptor` is nonzero, its low nibble plus one is the number of leading rotated points. Four of the 98 unique records use this extension. Each such point consumes three bytes. X and Z are signed bytes scaled by 16: the setup routine converts each byte to floating point and subtracts `$28` from its exponent before rotation. Y is an unsigned middle-byte height scaled by 256. The engine rotates the X/Z pair about the two-byte centre before joining it to the ordinary points.
 
-The rotation update adds `(descriptor & $F0) >> 1` to a 16-bit phase once per PAL update. The sine routine treats the low byte as the position within a quadrant and the low two bits of the high byte as the quadrant, so `$0400` phase units make a full turn. For `surface-structure:cef6`, descriptor `$32` therefore means three leading rotated points and a 24-unit phase step. Its first six white edges join those points into the rotating inverted pyramid; the remaining eight black edges are the fixed airstrip outline.
+The rotation update adds `(descriptor & $F0) >> 1` to a 16-bit phase once per completed geometry frame, rather than once per PAL display update. A pinned 8:8 Reference Build run measured about 196,000 C64 cycles per phase update, approximately ten PAL frames or 5 updates per second. The sine routine treats the low byte as the position within a quadrant and the low two bits of the high byte as the quadrant, so `$0400` phase units make a full turn. For `surface-structure:cef6`, descriptor `$32` therefore means three leading rotated points and a 24-unit phase step. Its first six white edges join those points into the rotating inverted pyramid; the remaining eight black edges are the fixed airstrip outline.
 
 Ordinary points use two bytes, `qx` and `qz`:
 
@@ -230,7 +240,15 @@ All three geometry families eventually populate the same point arrays and pass t
 2. Convert the 24-bit difference to the engine's two-byte floating representation.
 3. For object slots below `$10`, apply model-local orientation first.
 4. Build camera sine/cosine values from roll, pitch, and yaw, then a 3-by-3 camera rotation matrix (`$A320-$A4B1`).
-5. Transform points and project them into a 160-by-136 viewport centred at `(80, 68)` (`$50`, `$44`).
+5. Transform points and project them into a 160-by-136 logical viewport centred
+   at `(80, 68)` (`$50`, `$44`). The outdoor VIC-II mode writes `$18` to `$D016`,
+   enabling multicolour pixels: each logical X position occupies two physical
+   pixels, so presentation maps the projection to a 320-by-136 display viewport.
+   The live FOCUS value at zero-page `$21` is `$18`:
+   adding it to the floating exponent multiplies X/Z by 64. The Y path adds one
+   further exponent step at `$A8E9` before the same perspective operation, so
+   the reference-pixel projection is `x = 80 + 64 X/Z`,
+   `y = 68 - 128 Y/Z` (before the original's integer approximation and clipping).
 6. Store per-point classification bits and clip lines crossing the near plane or viewport borders.
 7. Draw edges with one of eight octant-specific incremental line loops into alternating bitmap buffers.
 

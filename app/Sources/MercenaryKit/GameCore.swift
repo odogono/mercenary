@@ -46,7 +46,7 @@ public struct WalkLimits: Sendable, Equatable {
     turnRate: Double = 1.9,
     pitchRate: Double = 1.3,
     pitchLimit: Double = 1.2,
-    eyeHeight: Double = 400,
+    eyeHeight: Double = 128,
     groundExtent: Double = 1_048_576
   ) {
     self.walkSpeed = walkSpeed

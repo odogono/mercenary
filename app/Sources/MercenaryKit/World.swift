@@ -145,8 +145,9 @@ struct SurfaceEdge: Sendable, Equatable {
 }
 
 struct SurfaceRotation: Sendable, Equatable {
-  /// The Reference Build advances structures at the PAL update rate.
-  static let referenceFramesPerSecond = 50.0
+  /// The Reference Build advances the structure phase once per completed
+  /// geometry frame. At cell 8:8 this is approximately every ten PAL frames.
+  static let referenceFramesPerSecond = 5.0
   /// Its sine routine uses the low byte within a quadrant and the low two bits
   /// of the high byte to select the four quadrants: one turn is therefore $0400.
   static let angleUnitsPerTurn = 1_024.0
@@ -159,8 +160,11 @@ struct SurfaceRotation: Sendable, Equatable {
     let referenceFrame = floor(max(0, elapsed) * Self.referenceFramesPerSecond)
     let angle = referenceFrame * step
       / Self.angleUnitsPerTurn * (2 * Double.pi)
-    let localX = Double(Self.signedByte(input.x) << 8)
-    let localZ = Double(Self.signedByte(input.z) << 8)
+    // SETUP_STRUCTURE_POINTERS converts the source byte to floating point and
+    // subtracts $28 from its exponent. That leaves a signed ×16 displacement;
+    // only the independently stored Y byte uses middle-byte (×256) units.
+    let localX = Double(Self.signedByte(input.x) << 4)
+    let localZ = Double(Self.signedByte(input.z) << 4)
     let cosine = cos(angle)
     let sine = sin(angle)
     return SIMD3(
@@ -285,12 +289,16 @@ public struct World: Sendable, Equatable {
     var selected: [SurfaceMapLine] = []
     var seen: Set<MapLineKey> = []
 
-    for selectedRow in max(0, row - extent)...min(cellsPerAxis - 1, row + extent) {
-      for selectedColumn in max(0, column - extent)...min(cellsPerAxis - 1, column + extent) {
-        let lookupCell = selectedRow * cellsPerAxis + selectedColumn
-        for line in mapLinesByCell[lookupCell, default: []] {
-          if currentCell != 0 && (line.startPacked == currentCell || line.endPacked == currentCell) { continue }
-          if seen.insert(MapLineKey(line)).inserted { selected.append(line) }
+    // L8EC2 exits before scanning the road tables when the altitude lookup
+    // returns zero. It is a no-roads sentinel, not a zero-radius selection.
+    if extent > 0 {
+      for selectedRow in max(0, row - extent)...min(cellsPerAxis - 1, row + extent) {
+        for selectedColumn in max(0, column - extent)...min(cellsPerAxis - 1, column + extent) {
+          let lookupCell = selectedRow * cellsPerAxis + selectedColumn
+          for line in mapLinesByCell[lookupCell, default: []] {
+            if currentCell != 0 && (line.startPacked == currentCell || line.endPacked == currentCell) { continue }
+            if seen.insert(MapLineKey(line)).inserted { selected.append(line) }
+          }
         }
       }
     }

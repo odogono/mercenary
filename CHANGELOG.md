@@ -8,15 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- Render only the current cell's detailed surface structure, matching the
-  Reference Build instead of producing an invented skyline from a 7×7 cell
-  neighbourhood. Add `--inspect-structures` with a deterministic contact sheet
-  and report for all 98 unique structures, retain their stable Geometry
-  Identities at runtime, and report edges whose endpoints belong to the shared
-  road-point workspace rather than silently dropping them. Correct the surface
-  edge decoder: a zero marker switches the remainder of the record from packed
-  nibbles to full-width endpoint pairs, fixing buildings such as Novabill's
-  house at 03:08, and require geometry decoder 3 so stale payloads are rejected.
+- Decode the Reference Build's current-cell surface-structure selection, while
+  keeping the immediate one-cell ring visible in the Mac presentation to avoid
+  whole buildings popping at cell boundaries. Add `--inspect-structures` with a
+  deterministic contact sheet and report for all 98 unique structures, retain
+  their stable Geometry Identities at runtime, and report edges whose endpoints
+  belong to the shared road-point workspace rather than silently dropping them.
+  Correct the surface edge decoder: a zero marker switches the remainder of the
+  record from packed nibbles to full-width endpoint pairs, fixing buildings such
+  as Novabill's house at 03:08, and require geometry decoder 3 so stale payloads
+  are rejected.
 - Render the complete opening scene at cell 8:8 (issue #51): start the app
   facing the airstrip, Dart, crashed spacecraft, and deterministically rotating
   inverted pyramid; preserve every surface vertex and edge in Data Payload
@@ -39,6 +40,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Correct the rotating surface-structure transform used by the inverted pyramid
+  at 8:8: its X/Z source bytes are exponent-scaled by 16 while Y remains scaled
+  by 256. Advance its phase at the measured completed-geometry-frame cadence of
+  about 5 Hz, rather than the 50 Hz PAL display rate that made it sixteen times
+  too wide and spin ten times too fast.
+- Replace the guessed 124-pixel camera focal length with the Reference Build's
+  decoded projection: FOCUS `$18` yields `64 X/Z`, while the Y pipeline's extra
+  exponent step yields `128 Y/Z`. Restore the VIC-II multicolour pixel aspect:
+  the 160 logical X positions occupy a 320-pixel display, making the physical
+  X and Y focal lengths equal instead of rendering models half-width and overly
+  tall. This pins apparent size in projection tests and calibrates the cell 8:8
+  opening to a neutral-horizon pose 12,000 world units from its scene focus at
+  the decoded `$0080` eye height. Treat a zero road-altitude extent as the
+  Reference Build's no-roads sentinel, hiding the road network below Y=2048;
+  higher extents continue to select the complete clipped surrounding square.
 - Carry the Reference Build's presentation rules through to the app, which the
   payload exporter had been discarding: the object detail cube and far-point
   representation, the road altitude table, structure rotation data, and the

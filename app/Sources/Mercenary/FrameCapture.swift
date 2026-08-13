@@ -13,7 +13,7 @@ enum FrameCapture {
   struct Options {
     var output: URL
     var size: CGSize = CGSize(width: 1280, height: 800)
-    var position: SIMD3<Double> = SIMD3(32_000, 320, 32_000)
+    var position: SIMD3<Double> = SIMD3(32_000, 128, 32_000)
     var heading: Double = .pi / 4
     var pitch: Double = 0
     var elapsed: Double = 0
