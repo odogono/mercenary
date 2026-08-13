@@ -5,6 +5,10 @@
 # Other Restricted Material that does not belong to a specific research harness.
 /restricted/
 
+# The Data Payload: game data re-extracted from the Reference Build, loaded by
+# the app at runtime. Never tracked (ADR 0014).
+/payload/
+
 # Generated C64 laboratory artifacts may contain ROM-derived data.
 /research/c64-reference-build/work/
 /research/c64-reference-build/.venv/

@@ -2,7 +2,21 @@
 
 This context defines the shared language for recreating Novagen's *Mercenary: Escape from Targ* as a native macOS game.
 
+Terms marked **(historical)** describe the frozen verification-era records (see ADR 0014). They remain accurate for reading those records but no new records of their kind are created.
+
 ## Language
+
+**Data Payload**:
+The single gitignored collection of game data re-extracted from the Reference Build by this project's own tooling, loaded by the app at runtime and kept out of Git.
+_Avoid_: Asset folder, resources, ROM data
+
+**Benson Script**:
+An original game-logic bytecode program from the Reference Build's in-game interpreter, re-extracted into the Data Payload and executed by this project's own interpreter.
+_Avoid_: Game script, event code, AI logic
+
+**Reference Disassembly**:
+The community-maintained annotated disassembly of the Reference Build, consumed as unlicensed reference documentation only — read for structure and locations, never copied into code or the Data Payload.
+_Avoid_: Source code, upstream, dependency
 
 **Reference Build**:
 The Commodore 64 edition of *Mercenary: Escape from Targ*, used as the authority for the original world's data and game behaviour.
@@ -60,19 +74,19 @@ _Avoid_: Layout mode, aspect mode
 The complete *Mercenary: Escape from Targ* experience delivered by this effort, with extension seams for *The Second City* but without that expansion's content.
 _Avoid_: Mercenary 1, base game
 
-**Content Set**:
+**Content Set** (historical):
 The complete immutable definition selected for a playable experience, resolved and validated before a session begins.
 _Avoid_: Content pack, campaign, resource bundle
 
-**Execution Environment**:
+**Execution Environment** (historical):
 The exact digest-bound combination of Content Set ancestry, resolved content, Lua release and security policy, host ABI, schema versions, and host-policy version required to execute a session or load its state.
 _Avoid_: Compatible environment, runtime profile
 
-**Content Overlay**:
+**Content Overlay** (historical):
 A versioned layer that names one exact Content Set ancestry and explicitly adds, replaces, or removes definitions before a new Content Set is resolved.
 _Avoid_: Patch, DLC, load order
 
-**Mod**:
+**Mod** (historical):
 An untrusted, locally sideloaded Content Overlay whose resolved experience is outside the official Fidelity Contract conformance claim.
 _Avoid_: Plugin, official expansion
 
@@ -80,7 +94,7 @@ _Avoid_: Plugin, official expansion
 The complete set of mutable, future-affecting Game Semantics values for one play session.
 _Avoid_: Save file, runtime snapshot, game data
 
-**Transition Log**:
+**Transition Log** (historical):
 The authoritative ordered history of committed Game Semantics outcomes from which Session State is derived.
 _Avoid_: Input recording, debug log, event telemetry
 
@@ -104,47 +118,47 @@ _Avoid_: Canonical identity, definitive name
 Reference Build behaviour retained because it materially affects play or has been explicitly curated as part of the game's characteristic identity.
 _Avoid_: Bug compatibility
 
-**Fidelity Contract**:
+**Fidelity Contract** (historical):
 The versioned policy that defines how the Faithful Remake demonstrates observable equivalence to the evidence-derived baseline, including governed exceptions.
 _Avoid_: Pixel-perfect clone, feels-the-same promise
 
-**Behavior Case**:
+**Behavior Case** (historical):
 A versioned executable scenario with explicit Fidelity Conformance and/or Release Readiness claim scopes, dependencies, initial state, actions, expected observables, and Acceptance Envelopes. Fidelity-scoped cases additionally carry the evidence and classification required by the Fidelity Contract.
 _Avoid_: Test case, MAS scenario, CSM scenario, anecdote
 
-**Verification Run**:
+**Verification Run** (historical):
 One execution of a Verification Plan in a recorded public or restricted environment, producing immutable results and a sanitized manifest.
 _Avoid_: Test run, evidence session
 
-**Conformance Report**:
+**Conformance Report** (historical):
 The immutable public-safe aggregation for one exact application build and Content Set, reporting Fidelity Conformance, Release Readiness, evidence lineage, diagnostics, and Release Eligibility.
 _Avoid_: Test report, certification
 
-**Release Eligibility**:
+**Release Eligibility** (historical):
 The derived state in which an exact candidate is both conformant and release-ready with every required human approval already recorded; publication remains a separate maintainer action.
 _Avoid_: Release approval, automatic publication
 
-**Reference Mac**:
+**Reference Mac** (historical):
 The named Mac used for protected visual and characteristic-feel comparisons, with its actual hardware, operating system, display, settings, build, content, and tool metadata captured per Verification Run.
 _Avoid_: Supported Mac, golden machine
 
-**Behavior Catalogue**:
+**Behavior Catalogue** (historical):
 The complete evidence-backed index of player-observable Reference Build content and behaviour, including its coverage and explicitly bounded uncertainties.
 _Avoid_: Feature list, walkthrough
 
-**Catalogue Entry**:
+**Catalogue Entry** (historical):
 One stable player-observable content or behaviour identity in the Behavior Catalogue, independent of its current interpretation or domain classification.
 _Avoid_: Behavior Case, reference fact
 
-**Acceptance Envelope**:
+**Acceptance Envelope** (historical):
 The evidence-backed bounds within which an observable may vary without changing the preserved game.
 _Avoid_: Close enough, tolerance guess
 
-**Repairable Artifact**:
+**Repairable Artifact** (historical):
 A reproducible C64 hardware or software effect demonstrated not to have material player impact and therefore eligible for a governed repair.
 _Avoid_: Obvious bug, free fix
 
-**Departure Record**:
+**Departure Record** (historical):
 A public, versioned decision accepting a necessary least-divergent mismatch from one or more Behavior Cases while retaining the original evidence-derived expectations.
 _Avoid_: Exception note, silent improvement
 
@@ -160,6 +174,6 @@ _Avoid_: Extraction notes, reverse-engineering log
 Original or expression-bearing Reference Build inputs, captured artifacts, or derived content withheld from publication unless expressly cleared for the intended use.
 _Avoid_: Private asset, secret content
 
-**Reconstructed Payload**:
+**Reconstructed Payload** (historical):
 An immutable dataset or content artifact derived from Restricted Material for use by the Independent Implementation, governed separately from application code.
 _Avoid_: Asset dump, extracted ROM data

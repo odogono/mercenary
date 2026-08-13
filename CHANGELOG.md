@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Pivot the project to a private-first playable artifact (ADR 0014). The
+  verification-era apparatus — Behavior Cases, Acceptance Envelopes, Evidence
+  records, Conformance Reports, and the uncertainty ledger — is frozen as
+  history and extended by nothing; the maintainer playing the remake beside the
+  Reference Build becomes the fidelity judge, with a modernised-feel bar. Game
+  data moves to a single gitignored Data Payload re-extracted by this project's
+  own tooling; the community Reference Disassembly is consumed as unlicensed
+  reference documentation only. Game logic will run as original Benson Scripts
+  under a native interpreter behind a host-callout seam sized for a later Lua
+  rewrite. Add Data Payload, Benson Script, and Reference Disassembly to the
+  shared language and mark the claim-era terms historical.
+
 ### Added
 
 - Verify the enterable-object inventory and its Handler-Equivalence Class
