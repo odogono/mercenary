@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Deliver M1, the surface walkabout (issue #44): a macOS app that loads the Data
+  Payload and lets you walk around Targ in authentic C64-palette wireframe. Adds
+  the `app/` Swift package — `MercenaryKit` (payload decoding, world building,
+  projection, and a pure deterministic `GameCore`) and `Mercenary` (window,
+  input, Canvas renderer) — plus `lab payload export`, which rewrites a verified
+  World Geometry Dataset into the runtime payload shape without decoding anything
+  new. Includes headless `--render-frame` capture for fidelity spot-checks from a
+  machine that cannot open a window, and `notes/decode/surface-geometry.md`
+  recording the world frame, the 410 deferred runtime-rotated edges, and the
+  object-grounding judgement.
+
 ### Changed
 
 - Pivot the project to a private-first playable artifact (ADR 0014). The
