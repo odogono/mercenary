@@ -56,30 +56,25 @@ enum FrameCapture {
       height: height,
       bitsPerComponent: 8,
       bytesPerRow: width * 4,
-      space: CGColorSpaceCreateDeviceRGB(),
+      space: CGColorSpace(name: CGColorSpace.sRGB)!,
       bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
     )!
     // Match the on-screen view, whose origin is top-left.
     context.translateBy(x: 0, y: size.height)
     context.scaleBy(x: 1, y: -1)
 
-    context.setFillColor(rgb(0, 0, 0))
+    context.setFillColor(color(ScenePalette.sky))
     context.fill(CGRect(origin: .zero, size: size))
 
     let horizon = max(0, min(Double(size.height), camera.horizon(size: size)))
     if horizon < Double(size.height) {
-      context.setFillColor(rgb(0x50, 0x45, 0x9B))
+      context.setFillColor(color(ScenePalette.ground))
       context.fill(CGRect(x: 0, y: horizon, width: size.width, height: Double(size.height) - horizon))
-      context.setStrokeColor(rgb(0x88, 0x7E, 0xCB))
-      context.setLineWidth(1)
-      context.move(to: CGPoint(x: 0, y: horizon))
-      context.addLine(to: CGPoint(x: size.width, y: horizon))
-      context.strokePath()
     }
 
     var drawn = 0
     for ink in [Ink.black, Ink.white] {
-      context.setStrokeColor(ink == .white ? rgb(255, 255, 255) : rgb(0x8B, 0x8B, 0x8B))
+      context.setStrokeColor(color(ink == .white ? ScenePalette.whiteInk : ScenePalette.blackInk))
       context.setLineWidth(1)
       var any = false
       for segment in visible.segments where segment.ink == ink {
@@ -93,7 +88,7 @@ enum FrameCapture {
     }
 
     // Far objects reduce to a single point, matching the original's look.
-    context.setFillColor(rgb(255, 255, 255))
+    context.setFillColor(color(ScenePalette.whiteInk))
     for origin in visible.points {
       guard let point = camera.project(point: origin, size: size) else { continue }
       context.fill(CGRect(x: point.x, y: point.y, width: 1, height: 1))
@@ -101,8 +96,16 @@ enum FrameCapture {
     return (context.makeImage()!, drawn)
   }
 
-  private static func rgb(_ r: Int, _ g: Int, _ b: Int) -> CGColor {
-    CGColor(red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255, alpha: 1)
+  private static func color(_ rgb: RGB8) -> CGColor {
+    CGColor(
+      colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
+      components: [
+        Double(rgb.red) / 255,
+        Double(rgb.green) / 255,
+        Double(rgb.blue) / 255,
+        1,
+      ]
+    )!
   }
 
   private static func write(_ image: CGImage, to url: URL) throws {

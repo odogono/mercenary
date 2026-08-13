@@ -137,9 +137,28 @@ The map is therefore a 16-by-16 toroidal-looking address space at the data level
 
 `$2600/$2700` map every cell to a surface-structure record. The 256 slots reference 98 distinct records. Repeated pointers are intentional instance reuse: placement comes from the selected cell and the record holds local geometry.
 
-Road/map lines are separate from the detailed structures. For each cell, `$2C00/$2D00` hold the first segment's endpoints and `$2E00/$2F00` the second. A nonzero endpoint byte packs `Z` in its high nibble and `X` in its low nibble. At runtime the engine deduplicates the nearby packed points into `$7540-$757F` and edges into `$7580-$75FF`, excluding the selected detailed structure's endpoints. The initialized data contains 135 first segments and 136 second segments.
+Road/map lines are separate from the detailed structures. For each table index,
+`$2C00/$2D00` hold the first full segment's endpoints and `$2E00/$2F00` the
+second. The index selects an entry; it does not confer geometry ownership on a
+cell. A nonzero endpoint byte packs `Z` in its high nibble and `X` in its low
+nibble. A packed point becomes world `(X, 0, Z)` with each horizontal component
+`(nibble << 16) + $8000`, placing it at a grid-cell centre. The initialized data
+contains 135 first-table and 136 second-table entries; normalized globally, the
+271 entries describe 32 unique undirected lines.
 
-The visible road radius changes with altitude through `$2A00`. Above the detailed-ground threshold the engine falls back to a small fixed line set. This is a real level-of-detail rule and belongs in the World Geometry Dataset's visibility metadata, not merely in renderer code.
+The engine indexes `$2A00` with `clamp(floor(camera_y / 2048), 0, 255)` and uses
+the resulting extent to select a square around the current lookup cell, clipped
+to the 16-by-16 table. It deduplicates packed points and undirected segments and
+suppresses endpoints belonging to the current detailed structure. Above the
+first 64 KiB it handles the current lookup cell separately. Once the camera Y
+high byte reaches `$20`, table selection is replaced by the fixed map encoded at
+`$902A`. These are real level-of-detail rules and belong in the World Geometry
+Dataset's visibility metadata, not merely in renderer code.
+
+Cell `8:8` is the important ownership regression: its road-table entries are
+empty. The parallel ground lines seen there come from surface structure
+`surface-structure:cef6` (the airstrip), so they remain structure geometry when
+map lines are disabled and disappear when structures are disabled.
 
 ### Surface-structure record
 

@@ -12,7 +12,7 @@ sys.path.insert(0, str(LAB_ROOT))
 from c64lab.core import LabError
 from c64lab.payload import (
     CELL_SIZE,
-    build_roads,
+    build_road_cells,
     build_objects,
     build_surface,
     build_world,
@@ -122,28 +122,36 @@ class WorldExportTests(unittest.TestCase):
         self.assertEqual(world["verticalConvention"]["axis"], "y")
         self.assertEqual(world["verticalConvention"]["groundLevel"], 0)
 
-    def test_splits_roads_into_one_piece_per_cell(self) -> None:
+    def test_preserves_full_road_table_runs_and_lookup_cells(self) -> None:
         world = build_world(_surface())
 
-        # The run spans three cells, listed from both ends; it must deduplicate to
-        # three unit pieces rather than one line across the world.
-        self.assertEqual(len(world["roads"]), 3)
-        self.assertEqual(world["roads"][0], {"from": [0, 0], "to": [1, 0], "cell": [0, 0], "segment": 0})
-        self.assertEqual([piece["cell"] for piece in world["roads"]], [[0, 0], [1, 0], [2, 0]])
+        self.assertEqual(len(world["roadCells"]), 2)
+        self.assertEqual(
+            world["roadCells"][0],
+            {"cell": 0, "segments": [{"slot": 0, "from": [0, 0], "to": [3, 0]}]},
+        )
+        self.assertEqual(
+            world["roadCells"][1],
+            {"cell": 1, "segments": [{"slot": 0, "from": [3, 0], "to": [0, 0]}]},
+        )
+
+    def test_preserves_both_optional_slots_and_empty_cells(self) -> None:
+        surface = _surface()
+        surface["cells"][0]["roads"].append(
+            {"startGrid": [0, 0], "endGrid": [0, 3], "segment": 1}
+        )
+        surface["cells"][1]["roads"] = []
+
+        cells = build_road_cells(surface)
+
+        self.assertEqual([segment["slot"] for segment in cells[0]["segments"]], [0, 1])
+        self.assertEqual(cells[1], {"cell": 1, "segments": []})
 
     def test_carries_the_road_altitude_lookup_and_transform_contract(self) -> None:
         world = build_world(_surface())
 
         self.assertEqual(world["roadAltitudeLookup"], [0, 1, 3])
         self.assertIn("cell", world["transformContract"])
-
-    def test_rejects_a_road_run_that_is_neither_row_nor_column_aligned(self) -> None:
-        surface = _surface()
-        surface["cells"][0]["roads"] = [{"startGrid": [0, 0], "endGrid": [3, 3], "segment": 0}]
-        surface["cells"][1]["roads"] = []
-
-        with self.assertRaisesRegex(LabError, "neither row-aligned nor column-aligned"):
-            build_roads(surface)
 
     def test_rejects_a_surface_with_no_expanded_cells(self) -> None:
         with self.assertRaisesRegex(LabError, "expanded no cell bounds"):

@@ -68,11 +68,12 @@ public struct ObjectPlacement: Sendable, Equatable {
   }
 }
 
-/// A road piece belonging to one grid cell.
-public struct RoadPiece: Sendable, Equatable {
+/// One full surface map line decoded from a road-table endpoint pair.
+public struct SurfaceMapLine: Sendable, Equatable {
   public var segment: Segment
-  public var column: Int
-  public var row: Int
+  public var startPacked: Int
+  public var endPacked: Int
+  public var slot: Int
 }
 
 /// One grid cell's drawable content, kept together so the renderer can cull by
@@ -89,19 +90,19 @@ public struct WorldCell: Sendable, Equatable {
 /// Render-ready world derived from a ``Payload.Bundle``.
 public struct World: Sendable, Equatable {
   public var cells: [WorldCell]
-  public var roads: [RoadPiece]
   public var objects: [ObjectPlacement]
   public var cellSize: Float
   public var cellsPerAxis: Int
   public var groundExtent: Float
   public var deferredEdges: Int
-  /// Altitude-indexed road extent, carried from the Reference Build's table. Not
-  /// yet used: see ``World`` notes on road selection being unresolved.
+  /// Altitude-indexed square extent used to select road-table cells.
   public var roadAltitudeLookup: [Int]
 
   /// Cells indexed by `row * cellsPerAxis + column`, mirroring the payload's
   /// packed cell numbering, for O(1) neighbourhood lookup while culling.
   private var byGrid: [Int: Int]
+  private var mapLinesByCell: [Int: [SurfaceMapLine]]
+  private var highAltitudeMap: [SurfaceMapLine]
 
   public func cell(column: Int, row: Int) -> WorldCell? {
     // Range-check before packing: a negative column would otherwise alias onto
@@ -126,12 +127,18 @@ public struct World: Sendable, Equatable {
     for cell in bundle.surface.cells {
       deferred += cell.deferredEdges
       let points = cell.vertices.map { World.point($0) }
+      let isAirstrip = cell.structure == "surface-structure:cef6"
       var segments: [Segment] = []
       segments.reserveCapacity(cell.edges.count)
       for edge in cell.edges where edge.count == 3 {
         let (start, end, ink) = (edge[0], edge[1], edge[2])
         guard points.indices.contains(start), points.indices.contains(end) else { continue }
-        segments.append(Segment(a: points[start], b: points[end], ink: Ink(rawValue: ink) ?? .white))
+        segments.append(
+          Segment(
+            a: points[start], b: points[end],
+            ink: isAirstrip ? .black : (Ink(rawValue: ink) ?? .white)
+          )
+        )
       }
       let column = cell.grid.count == 2 ? cell.grid[0] : cell.cell % cellsPerAxis
       let row = cell.grid.count == 2 ? cell.grid[1] : cell.cell / cellsPerAxis
@@ -154,24 +161,82 @@ public struct World: Sendable, Equatable {
     self.byGrid = byGrid
     self.deferredEdges = deferred
 
-    // Roads join cell centres on the ground plane. Lifting them a hair above
-    // zero keeps them from z-fighting the ground horizon line.
     self.roadAltitudeLookup = bundle.world.roadAltitudeLookup
-    self.roads = bundle.world.roads.compactMap { road in
-      guard road.from.count == 2, road.to.count == 2, road.cell.count == 2 else { return nil }
-      let height: Float = 8
-      return RoadPiece(
-        segment: Segment(
-          a: SIMD3((Float(road.from[0]) + 0.5) * cellSize, height, (Float(road.from[1]) + 0.5) * cellSize),
-          b: SIMD3((Float(road.to[0]) + 0.5) * cellSize, height, (Float(road.to[1]) + 0.5) * cellSize),
-          ink: .white
-        ),
-        column: road.cell[0],
-        row: road.cell[1]
-      )
+    var mapLinesByCell: [Int: [SurfaceMapLine]] = [:]
+    for roadCell in bundle.world.roadCells {
+      mapLinesByCell[roadCell.cell] = roadCell.segments.compactMap {
+        World.mapLine($0, cellSize: cellSize)
+      }
+    }
+    self.mapLinesByCell = mapLinesByCell
+    self.highAltitudeMap = bundle.world.highAltitudeMap.compactMap {
+      World.mapLine($0, cellSize: cellSize)
     }
 
     self.objects = World.placements(bundle: bundle, groundExtent: cellSize * Float(cellsPerAxis))
+  }
+
+  /// Select the Reference Build's map lines for one camera position.
+  public func mapSegments(from position: SIMD3<Double>) -> [Segment] {
+    let column = Int((position.x / Double(cellSize)).rounded(.down))
+    let row = Int((position.z / Double(cellSize)).rounded(.down))
+    guard (0..<cellsPerAxis).contains(column), (0..<cellsPerAxis).contains(row) else { return [] }
+
+    let y = max(0, Int(position.y.rounded(.down)))
+    if y >> 16 >= 0x20 { return highAltitudeMap.map(\.segment) }
+    guard !roadAltitudeLookup.isEmpty else { return [] }
+    let altitudeIndex = min(roadAltitudeLookup.count - 1, y >> 11)
+    let extent = max(0, roadAltitudeLookup[altitudeIndex])
+    let currentCell = row * cellsPerAxis + column
+    var selected: [SurfaceMapLine] = []
+    var seen: Set<MapLineKey> = []
+
+    for selectedRow in max(0, row - extent)...min(cellsPerAxis - 1, row + extent) {
+      for selectedColumn in max(0, column - extent)...min(cellsPerAxis - 1, column + extent) {
+        let lookupCell = selectedRow * cellsPerAxis + selectedColumn
+        for line in mapLinesByCell[lookupCell, default: []] {
+          if currentCell != 0 && (line.startPacked == currentCell || line.endPacked == currentCell) { continue }
+          if seen.insert(MapLineKey(line)).inserted { selected.append(line) }
+        }
+      }
+    }
+
+    // Above the first 64 KiB, the Reference Build draws the current lookup
+    // cell's stored runs separately after suppressing structure endpoints.
+    if y >> 16 != 0 {
+      for line in mapLinesByCell[currentCell, default: []] where seen.insert(MapLineKey(line)).inserted {
+        selected.append(line)
+      }
+    }
+    return selected.map(\.segment)
+  }
+
+  private struct MapLineKey: Hashable {
+    var low: Int
+    var high: Int
+
+    init(_ line: SurfaceMapLine) {
+      low = min(line.startPacked, line.endPacked)
+      high = max(line.startPacked, line.endPacked)
+    }
+  }
+
+  private static func mapLine(
+    _ raw: Payload.WorldDocument.RoadSegment, cellSize: Float
+  ) -> SurfaceMapLine? {
+    guard raw.from.count == 2, raw.to.count == 2 else { return nil }
+    let startPacked = raw.from[1] << 4 | raw.from[0]
+    let endPacked = raw.to[1] << 4 | raw.to[0]
+    return SurfaceMapLine(
+      segment: Segment(
+        a: SIMD3((Float(raw.from[0]) + 0.5) * cellSize, 0, (Float(raw.from[1]) + 0.5) * cellSize),
+        b: SIMD3((Float(raw.to[0]) + 0.5) * cellSize, 0, (Float(raw.to[1]) + 0.5) * cellSize),
+        ink: .black
+      ),
+      startPacked: startPacked,
+      endPacked: endPacked,
+      slot: raw.slot
+    )
   }
 
   private static func point(_ raw: [Int]) -> SIMD3<Float> {

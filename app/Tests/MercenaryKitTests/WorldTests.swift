@@ -15,9 +15,9 @@ final class WorldTests: XCTestCase {
     let world = World(bundle: try bundle())
 
     XCTAssertEqual(world.cells.count, 2)
-    XCTAssertEqual(world.cellsPerAxis, 2)
+    XCTAssertEqual(world.cellsPerAxis, 4)
     XCTAssertEqual(world.cellSize, 1000)
-    XCTAssertEqual(world.groundExtent, 2000)
+    XCTAssertEqual(world.groundExtent, 4000)
     let first = try XCTUnwrap(world.cell(column: 0, row: 0))
     XCTAssertEqual(first.segments.count, 2)
     XCTAssertEqual(first.centre, SIMD3(500, 0, 500))
@@ -38,22 +38,43 @@ final class WorldTests: XCTestCase {
     XCTAssertEqual(sparse.segments.count, 1)
   }
 
-  func testRoadsJoinCellCentresAndKnowTheirCell() throws {
+  func testMapLinesPreserveFullRunsBetweenGridCentres() throws {
     let world = World(bundle: try bundle())
 
-    XCTAssertEqual(world.roads.count, 1)
-    let road = try XCTUnwrap(world.roads.first)
-    XCTAssertEqual(road.segment.a.x, 500)
-    XCTAssertEqual(road.segment.a.z, 500)
-    XCTAssertEqual(road.segment.b.x, 1500)
-    XCTAssertEqual(road.column, 0)
-    XCTAssertEqual(road.row, 0)
+    let lines = world.mapSegments(from: SIMD3(500, 320, 500))
+
+    XCTAssertEqual(lines.count, 1)
+    XCTAssertEqual(lines[0].a, SIMD3(1500, 0, 500))
+    XCTAssertEqual(lines[0].b, SIMD3(3500, 0, 500))
+    XCTAssertEqual(lines[0].ink, .black)
   }
 
-  func testTheAltitudeLookupIsCarriedEvenThoughItIsNotYetUsed() throws {
+  func testTheAltitudeLookupSelectsAWiderCellSquare() throws {
     let world = World(bundle: try bundle())
 
-    XCTAssertEqual(world.roadAltitudeLookup, [0, 3])
+    XCTAssertEqual(world.roadAltitudeLookup, [0, 1])
+  }
+
+  func testMapSelectionDeduplicatesReversedRuns() throws {
+    var payload = try bundle()
+    payload.world.roadCells[0].segments = [
+      .init(slot: 0, from: [1, 0], to: [3, 0]),
+      .init(slot: 1, from: [3, 0], to: [1, 0]),
+    ]
+    let world = World(bundle: payload)
+
+    XCTAssertEqual(world.mapSegments(from: SIMD3(500, 320, 500)).count, 1)
+  }
+
+  func testCurrentStructureEndpointIsSuppressedThenRestoredAboveTheFirst64KiB() throws {
+    var payload = try bundle()
+    payload.world.roadCells[1].segments = [.init(slot: 0, from: [1, 0], to: [3, 0])]
+    let world = World(bundle: payload)
+    let low = world.mapSegments(from: SIMD3(1_500, 320, 500))
+    let raised = world.mapSegments(from: SIMD3(1_500, 0x01_0000, 500))
+
+    XCTAssertTrue(low.isEmpty)
+    XCTAssertEqual(raised.count, 1)
   }
 
   func testEveryInstanceIsPlacedButOnlySurfaceOnesAreDrawable() throws {
@@ -91,12 +112,16 @@ final class WorldTests: XCTestCase {
 }
 
 final class VisibilitySelectorTests: XCTestCase {
-  private func world() throws -> World {
+  private func bundle() throws -> Payload.Bundle {
     let directory = URL(fileURLWithPath: NSTemporaryDirectory())
       .appendingPathComponent("vis-\(UUID().uuidString)")
     try PayloadFixture.write(into: directory)
     defer { try? FileManager.default.removeItem(at: directory) }
-    return World(bundle: try Payload.load(from: directory))
+    return try Payload.load(from: directory)
+  }
+
+  private func world() throws -> World {
+    World(bundle: try bundle())
   }
 
   func testAnObjectInsideItsDetailCubeContributesItsWireframe() throws {
@@ -114,18 +139,70 @@ final class VisibilitySelectorTests: XCTestCase {
     XCTAssertGreaterThan(visible.segments.count, bare.segments.count)
   }
 
-  func testRoadsAreDrawnAtAnyAltitude() throws {
+  func testMapLinesComeFromTheAltitudeSelectedCells() throws {
     let world = try world()
     let selector = VisibilitySelector(cellRadius: 1)
     let withoutRoads = VisibilitySelector(cellRadius: 1, includeRoads: false)
 
-    // A capture of the original shows a road at altitude zero from a cell that
-    // owns none, so neither an altitude radius nor cell ownership can gate them.
-    for altitude in [320.0, 70_000.0] {
-      let with = selector.visible(in: world, from: SIMD3(1500, altitude, 500))
-      let without = withoutRoads.visible(in: world, from: SIMD3(1500, altitude, 500))
-      XCTAssertGreaterThan(with.segments.count, without.segments.count)
-    }
+    let with = selector.visible(in: world, from: SIMD3(500, 320, 500))
+    let without = withoutRoads.visible(in: world, from: SIMD3(500, 320, 500))
+
+    XCTAssertEqual(with.segments.count, without.segments.count + 1)
+  }
+
+  func testHighAltitudeUsesTheFixedFallbackMap() throws {
+    let world = try world()
+
+    let lines = world.mapSegments(from: SIMD3(500, 0x20_0000, 500))
+
+    XCTAssertEqual(lines.count, 1)
+    XCTAssertEqual(lines[0].a, SIMD3(500, 0, 1500))
+    XCTAssertEqual(lines[0].b, SIMD3(3500, 0, 1500))
+  }
+
+  func testStructuresCanBeHiddenWithoutHidingMapLines() throws {
+    let world = try world()
+    let mapOnly = VisibilitySelector(cellRadius: 1, includeObjects: false, includeRoads: true, includeStructures: false)
+    let empty = VisibilitySelector(cellRadius: 1, includeObjects: false, includeRoads: false, includeStructures: false)
+
+    let position = SIMD3<Double>(500, 320, 500)
+    XCTAssertEqual(mapOnly.visible(in: world, from: position).segments.count, 1)
+    XCTAssertTrue(empty.visible(in: world, from: position).segments.isEmpty)
+  }
+
+  func testCellEightEightAirstripIsStructureGeometryNotMapLines() throws {
+    var payload = try bundle()
+    payload.world.grid.cellsPerAxis = 16
+    payload.world.roadAltitudeLookup = [0]
+    payload.world.roadCells = [.init(cell: 0x88, segments: [])]
+    var airstrip = payload.surface.cells[0]
+    airstrip.cell = 0x88
+    airstrip.grid = [8, 8]
+    airstrip.structure = "surface-structure:cef6"
+    airstrip.vertices = [
+      [8_000, 0, 8_200], [9_000, 0, 8_200],
+      [8_000, 0, 8_800], [9_000, 0, 8_800],
+    ]
+    // The structure table's ink split does not control the chosen Atari ST
+    // presentation: every airstrip outline edge is black.
+    airstrip.edges = [[0, 1, 0], [2, 3, 0]]
+    payload.surface.cells = [airstrip]
+    let world = World(bundle: payload)
+    let position = SIMD3<Double>(8_500, 63, 8_500)
+
+    XCTAssertTrue(world.mapSegments(from: position).isEmpty)
+    let airstripSegments = try XCTUnwrap(world.cell(column: 8, row: 8)?.segments)
+    XCTAssertEqual(airstripSegments.count, 2)
+    XCTAssertEqual(airstripSegments.map(\.ink), [.black, .black])
+
+    let structuresOnly = VisibilitySelector(
+      cellRadius: 0, includeObjects: false, includeRoads: false, includeStructures: true
+    )
+    let hidden = VisibilitySelector(
+      cellRadius: 0, includeObjects: false, includeRoads: true, includeStructures: false
+    )
+    XCTAssertEqual(structuresOnly.visible(in: world, from: position).segments.count, 2)
+    XCTAssertTrue(hidden.visible(in: world, from: position).segments.isEmpty)
   }
 
   func testExcludingRoadsAndObjectsLeavesOnlyStructures() throws {

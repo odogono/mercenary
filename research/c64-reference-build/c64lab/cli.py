@@ -10,6 +10,7 @@ from .core import LabError
 from .laboratory import capture, doctor, observe, reproduce, verify
 from .geometry import (
     compare_geometry,
+    export_road_network_svg,
     extract_geometry,
     reproduce_geometry,
     review_comparisons,
@@ -76,6 +77,10 @@ def _parser() -> argparse.ArgumentParser:
     geometry_compare = geometry_commands.add_parser("compare", help="compare representative geometry with a fresh Reference Build capture")
     geometry_compare.add_argument("--prg", required=True, type=Path)
     geometry_compare.add_argument("--dataset", required=True, type=Path)
+
+    geometry_roads_svg = geometry_commands.add_parser("roads-svg", help="export the complete decoded road network")
+    geometry_roads_svg.add_argument("--dataset", required=True, type=Path)
+    geometry_roads_svg.add_argument("--output", required=True, type=Path)
 
     geometry_review = geometry_commands.add_parser("review", help="record a maintainer comparison decision")
     geometry_review.add_argument("--comparisons", required=True, type=Path)
@@ -217,6 +222,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 result = reproduce_geometry(arguments.prg, curation_path=arguments.curation)
             elif arguments.geometry_command == "compare":
                 result = compare_geometry(arguments.prg, arguments.dataset)
+            elif arguments.geometry_command == "roads-svg":
+                result = export_road_network_svg(arguments.dataset, arguments.output)
             elif arguments.geometry_command == "review":
                 result = review_comparisons(arguments.comparisons, arguments.reviewer, arguments.decision)
             else:

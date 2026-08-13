@@ -4,6 +4,7 @@ import json
 import hashlib
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from c64lab.core import LabError
@@ -11,6 +12,7 @@ from c64lab.geometry import (
     canonical_digest,
     core_dataset_digest,
     decode_object_model,
+    decode_high_altitude_map,
     decode_primitive_templates,
     decode_room_record,
     decode_surface_structure,
@@ -19,6 +21,7 @@ from c64lab.geometry import (
     encode_surface_structure,
     expand_room,
     load_geometry_source,
+    render_road_network_svg,
     select_comparison_subjects,
     signed24,
     validate_curation,
@@ -32,6 +35,77 @@ class NumericTests(unittest.TestCase):
         self.assertEqual(signed24(0x7FFFFF), 0x7FFFFF)
         self.assertEqual(signed24(0x800000), -0x800000)
         self.assertEqual(signed24(0xFFFFFF), -1)
+
+    def test_decodes_the_fixed_high_altitude_map(self) -> None:
+        ram = bytearray(0x10000)
+        ram[0x902A:0x9030] = bytes([0x3E, 0x12, 0x34, 3, 0x3F, 0x3E])
+
+        decoded = decode_high_altitude_map(bytes(ram))
+
+        self.assertEqual(decoded["packedPoints"], [0x12, 0x34])
+        self.assertEqual(decoded["segments"], [{
+            "slot": 0,
+            "startPacked": 0x34,
+            "endPacked": 0x12,
+            "startGrid": [4, 3],
+            "endGrid": [2, 1],
+        }])
+        self.assertEqual(decoded["runtimeSpan"], [0x902A, 0x902F])
+
+
+class RoadNetworkSVGTests(unittest.TestCase):
+    def test_renders_only_unique_road_table_lines_with_metadata(self) -> None:
+        surface = {
+            "cells": [
+                {
+                    "cell": 1,
+                    "roads": [
+                        {"segment": 0, "startPacked": 0x01, "endPacked": 0x0F,
+                         "startGrid": [1, 0], "endGrid": [15, 0]},
+                        {"segment": 1, "startPacked": 0x01, "endPacked": 0xF1,
+                         "startGrid": [1, 0], "endGrid": [1, 15]},
+                    ],
+                    "expanded": {"vertices": [{"position": [999, 0, 999]}], "edges": []},
+                },
+                {
+                    "cell": 2,
+                    "roads": [
+                        {"segment": 0, "startPacked": 0x0F, "endPacked": 0x01,
+                         "startGrid": [15, 0], "endGrid": [1, 0]},
+                    ],
+                },
+            ]
+        }
+
+        svg, summary = render_road_network_svg(surface, dataset_id="world-test", core_digest="a" * 64)
+
+        self.assertEqual(summary, {"sourceEntries": 3, "uniqueLines": 2})
+        self.assertEqual(svg.count('<line class="road"'), 2)
+        self.assertIn('data-sources="01:0 02:0"', svg)
+        self.assertIn('data-sources="01:1"', svg)
+        self.assertIn('data-dataset-id="world-test"', svg)
+        root = ET.fromstring(svg)
+        self.assertEqual(root.tag, "{http://www.w3.org/2000/svg}svg")
+        road = root.findall(".//{http://www.w3.org/2000/svg}line")[-2]
+        self.assertEqual((road.attrib["x1"], road.attrib["y1"]), ("1.5", "0.5"))
+        self.assertIn('fill="#008000"', svg)
+        self.assertIn('class="road"', svg)
+        self.assertIn('stroke-width="1" vector-effect="non-scaling-stroke"', svg)
+        self.assertNotIn("999", svg)
+        self.assertLess(svg.index('class="grid"'), svg.index('class="road"'))
+
+    def test_svg_is_deterministic_when_cells_are_reordered(self) -> None:
+        cells = [
+            {"cell": 2, "roads": [{"segment": 0, "startPacked": 0x0F, "endPacked": 0x01,
+                                     "startGrid": [15, 0], "endGrid": [1, 0]}]},
+            {"cell": 1, "roads": [{"segment": 0, "startPacked": 0x01, "endPacked": 0x0F,
+                                     "startGrid": [1, 0], "endGrid": [15, 0]}]},
+        ]
+
+        first, _ = render_road_network_svg({"cells": cells}, dataset_id="world-test", core_digest="b" * 64)
+        second, _ = render_road_network_svg({"cells": list(reversed(cells))}, dataset_id="world-test", core_digest="b" * 64)
+
+        self.assertEqual(first, second)
 
 
 class ObjectModelTests(unittest.TestCase):

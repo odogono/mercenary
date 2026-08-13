@@ -31,6 +31,9 @@ research/c64-reference-build/lab geometry extract \
   --run research/c64-reference-build/work/<interactive-run>
 research/c64-reference-build/lab geometry verify \
   --dataset research/c64-reference-build/work/<geometry-dataset>
+research/c64-reference-build/lab geometry roads-svg \
+  --dataset research/c64-reference-build/work/<geometry-dataset> \
+  --output research/c64-reference-build/work/roads.svg
 research/c64-reference-build/lab geometry reproduce --prg /path/to/MERCENARY.PRG
 research/c64-reference-build/lab geometry compare --prg /path/to/MERCENARY.PRG \
   --dataset research/c64-reference-build/work/<geometry-dataset>
@@ -43,6 +46,10 @@ An optional ignored Curated Name overlay may be passed to `extract` with
 `--curation`. A verified name must cite Authoritative Evidence. See
 [`docs/research/world-geometry-dataset.md`](../../docs/research/world-geometry-dataset.md)
 for the schemas, evidence contract, review gate, and redaction rules.
+`roads-svg` verifies the dataset, reads only the four road tables, globally
+deduplicates their undirected full runs, and prints a machine-readable summary.
+The exact SVG is Restricted Material and must remain in ignored `work/` or
+`restricted/` storage.
 
 ### Behavior Catalogue
 
