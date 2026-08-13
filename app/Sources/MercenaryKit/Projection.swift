@@ -148,21 +148,15 @@ public struct Camera: Sendable, Equatable {
 
 /// Selects the world geometry worth projecting this frame.
 public struct VisibilitySelector: Sendable {
-  /// How many grid cells away from the camera to consider. The world is 16×16
-  /// cells, so three rings keeps the segment count low without a visible pop-in
-  /// at the sizes structures occupy.
-  public var cellRadius: Int
   public var includeObjects: Bool
   public var includeRoads: Bool
   public var includeStructures: Bool
 
   public init(
-    cellRadius: Int = 3,
     includeObjects: Bool = true,
     includeRoads: Bool = true,
     includeStructures: Bool = true
   ) {
-    self.cellRadius = cellRadius
     self.includeObjects = includeObjects
     self.includeRoads = includeRoads
     self.includeStructures = includeStructures
@@ -189,11 +183,8 @@ public struct VisibilitySelector: Sendable {
     let row = Int((position.z / Double(world.cellSize)).rounded(.down))
     var segments: [Segment] = []
     if includeStructures {
-      for dz in -cellRadius...cellRadius {
-        for dx in -cellRadius...cellRadius {
-          guard let cell = world.cell(column: column + dx, row: row + dz) else { continue }
-          segments.append(contentsOf: cell.segments(at: elapsed))
-        }
+      if let cell = world.cell(column: column, row: row), cell.index != 0 {
+        segments.append(contentsOf: cell.segments(at: elapsed))
       }
     }
 

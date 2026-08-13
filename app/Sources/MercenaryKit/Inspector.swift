@@ -9,6 +9,7 @@ public struct Inspector: Sendable {
   public enum Subject: Sendable, Equatable {
     case object(slot: Int)
     case cell(index: Int)
+    case structure(id: String)
   }
 
   public let world: World
@@ -19,6 +20,9 @@ public struct Inspector: Sendable {
 
   public var objectSlots: [Int] { world.objects.map(\.slot).sorted() }
   public var cellIndices: [Int] { world.cells.map(\.index).sorted() }
+  public var structureIdentities: [String] {
+    Array(Set(world.cells.compactMap(\.structure))).sorted()
+  }
 
   public func object(slot: Int) -> ObjectPlacement? {
     world.objects.first { $0.slot == slot }
@@ -28,6 +32,10 @@ public struct Inspector: Sendable {
     world.cells.first { $0.index == index }
   }
 
+  public func representativeCell(forStructure id: String) -> WorldCell? {
+    world.cells.filter { $0.structure == id }.min { $0.index < $1.index }
+  }
+
   /// The geometry for a subject, in world space.
   public func segments(for subject: Subject) -> [Segment] {
     switch subject {
@@ -35,6 +43,8 @@ public struct Inspector: Sendable {
       return object(slot: slot)?.segments ?? []
     case .cell(let index):
       return cell(index: index)?.segments(at: 0) ?? []
+    case .structure(let id):
+      return representativeCell(forStructure: id)?.segments(at: 0) ?? []
     }
   }
 
@@ -123,6 +133,28 @@ public struct Inspector: Sendable {
         edges: segments.count,
         spans: spans,
         note: ""
+      )
+    }
+  }
+
+  public func structureRows() -> [Row] {
+    structureIdentities.compactMap { id in
+      guard let cell = representativeCell(forStructure: id) else { return nil }
+      let bounds = self.bounds(for: .structure(id: id))
+      let spans = bounds.map { $0.max - $0.min } ?? .zero
+      let usageCount = world.cells.count { $0.structure == id }
+      let shared = cell.unresolvedEdgeCount
+      var notes = ["\(usageCount) \(usageCount == 1 ? "cell" : "cells")"]
+      if shared > 0 {
+        notes.append("\(shared) road-workspace \(shared == 1 ? "edge" : "edges")")
+      }
+      return Row(
+        subject: id.replacingOccurrences(of: "surface-structure:", with: ""),
+        detail: String(format: "cell %02X", cell.index),
+        vertices: cell.vertexCount,
+        edges: cell.edgeCount,
+        spans: spans,
+        note: notes.joined(separator: "; ")
       )
     }
   }

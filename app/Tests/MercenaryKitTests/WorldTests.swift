@@ -30,6 +30,25 @@ final class WorldTests: XCTestCase {
     XCTAssertEqual(cell.segments(at: 0).map(\.ink), [.white, .black])
   }
 
+  func testCellsRetainTheirStableStructureIdentity() throws {
+    let world = World(bundle: try bundle())
+
+    XCTAssertEqual(world.cell(column: 0, row: 0)?.structure, "surface-structure:test")
+    XCTAssertNil(world.cell(column: 1, row: 0)?.structure)
+  }
+
+  func testEdgesUsingTheSharedRoadWorkspaceAreReportedNotSilentlyLost() throws {
+    var payload = try bundle()
+    payload.surface.cells[0].edges.append([0, 60, 0])
+
+    let world = World(bundle: payload)
+    let cell = try XCTUnwrap(world.cell(column: 0, row: 0))
+
+    XCTAssertEqual(cell.unresolvedEdgeCount, 1)
+    XCTAssertEqual(world.deferredEdges, 1)
+    XCTAssertEqual(cell.segments(at: 0).count, 2)
+  }
+
   func testEdgesTouchingRotatedPointsAreDrawn() throws {
     let world = World(bundle: try bundle())
     let rotating = try XCTUnwrap(world.cell(column: 0, row: 0))
@@ -141,8 +160,8 @@ final class VisibilitySelectorTests: XCTestCase {
 
   func testAnObjectInsideItsDetailCubeContributesItsWireframe() throws {
     let world = try world()
-    let selector = VisibilitySelector(cellRadius: 1)
-    let structuresOnly = VisibilitySelector(cellRadius: 1, includeObjects: false, includeRoads: false)
+    let selector = VisibilitySelector()
+    let structuresOnly = VisibilitySelector(includeObjects: false, includeRoads: false)
 
     // Stand next to the surface instance, well inside its detail cube.
     let position = SIMD3<Double>(500, 320, 500)
@@ -156,8 +175,8 @@ final class VisibilitySelectorTests: XCTestCase {
 
   func testMapLinesComeFromTheAltitudeSelectedCells() throws {
     let world = try world()
-    let selector = VisibilitySelector(cellRadius: 1)
-    let withoutRoads = VisibilitySelector(cellRadius: 1, includeRoads: false)
+    let selector = VisibilitySelector()
+    let withoutRoads = VisibilitySelector(includeRoads: false)
 
     let with = selector.visible(in: world, from: SIMD3(500, 320, 500))
     let without = withoutRoads.visible(in: world, from: SIMD3(500, 320, 500))
@@ -177,8 +196,8 @@ final class VisibilitySelectorTests: XCTestCase {
 
   func testStructuresCanBeHiddenWithoutHidingMapLines() throws {
     let world = try world()
-    let mapOnly = VisibilitySelector(cellRadius: 1, includeObjects: false, includeRoads: true, includeStructures: false)
-    let empty = VisibilitySelector(cellRadius: 1, includeObjects: false, includeRoads: false, includeStructures: false)
+    let mapOnly = VisibilitySelector(includeObjects: false, includeRoads: true, includeStructures: false)
+    let empty = VisibilitySelector(includeObjects: false, includeRoads: false, includeStructures: false)
 
     let position = SIMD3<Double>(500, 320, 500)
     XCTAssertEqual(mapOnly.visible(in: world, from: position).segments.count, 1)
@@ -230,15 +249,15 @@ final class VisibilitySelectorTests: XCTestCase {
     XCTAssertEqual(airstripSegments.filter { $0.ink == .black }.count, 8)
 
     let structuresOnly = VisibilitySelector(
-      cellRadius: 0, includeObjects: false, includeRoads: false, includeStructures: true
+      includeObjects: false, includeRoads: false, includeStructures: true
     )
     let hidden = VisibilitySelector(
-      cellRadius: 0, includeObjects: false, includeRoads: true, includeStructures: false
+      includeObjects: false, includeRoads: true, includeStructures: false
     )
     XCTAssertEqual(structuresOnly.visible(in: world, from: position).segments.count, 14)
     XCTAssertTrue(hidden.visible(in: world, from: position).segments.isEmpty)
 
-    let opening = VisibilitySelector(cellRadius: 0, includeRoads: false)
+    let opening = VisibilitySelector(includeRoads: false)
       .visible(in: world, from: position)
     XCTAssertEqual(opening.detailedObjects, 2)
     XCTAssertEqual(opening.segments.count, 16)
@@ -246,20 +265,40 @@ final class VisibilitySelectorTests: XCTestCase {
 
   func testExcludingRoadsAndObjectsLeavesOnlyStructures() throws {
     let world = try world()
-    let selector = VisibilitySelector(cellRadius: 1, includeObjects: false, includeRoads: false)
+    let selector = VisibilitySelector(includeObjects: false, includeRoads: false)
 
-    let visible = selector.visible(in: world, from: SIMD3(500, 320, 500))
+    let visible = selector.visible(in: world, from: SIMD3(1_500, 320, 500))
 
-    // Both fixture cells are in range; only their own edges remain.
-    let cellEdges = world.cells.reduce(0) { $0 + $1.segments(at: 0).count }
-    XCTAssertEqual(visible.segments.count, cellEdges)
+    // The Reference Build expands only the current cell's detailed structure.
+    let currentCellEdges = try XCTUnwrap(world.cell(column: 1, row: 0)).segments(at: 0).count
+    XCTAssertEqual(visible.segments.count, currentCellEdges)
     XCTAssertTrue(visible.points.isEmpty)
     XCTAssertEqual(visible.detailedObjects, 0)
   }
 
+  func testMovingAcrossACellBoundaryReplacesTheDetailedStructure() throws {
+    let world = try world()
+    let selector = VisibilitySelector(includeObjects: false, includeRoads: false)
+
+    let first = selector.visible(in: world, from: SIMD3(1_500, 320, 500))
+    let second = selector.visible(in: world, from: SIMD3(500, 320, 500))
+
+    XCTAssertEqual(first.segments.count, 1)
+    XCTAssertTrue(second.segments.isEmpty)
+  }
+
+  func testCellZeroDoesNotExpandItsSentinelStructurePointer() throws {
+    let world = try world()
+    let selector = VisibilitySelector(includeObjects: false, includeRoads: false)
+
+    let visible = selector.visible(in: world, from: SIMD3(500, 320, 500))
+
+    XCTAssertTrue(visible.segments.isEmpty)
+  }
+
   func testADistantObjectBecomesAPoint() throws {
     let world = try world()
-    let selector = VisibilitySelector(cellRadius: 1)
+    let selector = VisibilitySelector()
 
     let visible = selector.visible(in: world, from: SIMD3(500, 500_000, 500))
 
@@ -269,7 +308,7 @@ final class VisibilitySelectorTests: XCTestCase {
 
   func testAPositionOutsideTheGridStillReturnsWhatIsInRange() throws {
     let world = try world()
-    let selector = VisibilitySelector(cellRadius: 1)
+    let selector = VisibilitySelector()
 
     let visible = selector.visible(in: world, from: SIMD3(-5_000, 320, -5_000))
 

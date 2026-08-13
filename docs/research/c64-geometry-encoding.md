@@ -160,6 +160,15 @@ empty. The parallel ground lines seen there come from surface structure
 `surface-structure:cef6` (the airstrip), so they remain structure geometry when
 map lines are disabled and disappear when structures are disabled.
 
+Only the current cell's detailed surface structure is expanded. Neighbouring
+cells contribute through the altitude-selected road workspace; drawing their
+detailed structures produces geometry the Reference Build never places in the
+same frame. That workspace assigns deduplicated road points from indices
+`$3F` downward. Nine shared structure records deliberately join some of their
+edges to those indices, so the 64 affected cell-edge instances are reported as
+road-workspace links until camera-dependent workspace expansion is reproduced;
+they are not malformed local indices.
+
 ### Surface-structure record
 
 A record begins:

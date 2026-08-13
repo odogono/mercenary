@@ -82,19 +82,30 @@ public struct WorldCell: Sendable, Equatable {
   public var index: Int
   public var column: Int
   public var row: Int
+  /// Stable identity of the shared surface-structure record used by this cell.
+  public var structure: String?
   /// Centre of the cell on the ground plane, for distance culling.
   public var centre: SIMD3<Float>
   private var vertices: [SurfaceVertex]
   private var edges: [SurfaceEdge]
   private var rotation: SurfaceRotation?
 
+  public var vertexCount: Int { vertices.count }
+  public var edgeCount: Int { edges.count }
+  /// Edges whose endpoint lives in the Reference Build's shared road-point
+  /// workspace rather than this structure's local vertex list.
+  public var unresolvedEdgeCount: Int {
+    edges.count { !vertices.indices.contains($0.start) || !vertices.indices.contains($0.end) }
+  }
+
   init(
-    index: Int, column: Int, row: Int, centre: SIMD3<Float>,
+    index: Int, column: Int, row: Int, structure: String?, centre: SIMD3<Float>,
     vertices: [SurfaceVertex], edges: [SurfaceEdge], rotation: SurfaceRotation?
   ) {
     self.index = index
     self.column = column
     self.row = row
+    self.structure = structure
     self.centre = centre
     self.vertices = vertices
     self.edges = edges
@@ -224,6 +235,7 @@ public struct World: Sendable, Equatable {
           index: cell.cell,
           column: column,
           row: row,
+          structure: cell.structure,
           centre: SIMD3(
             (Float(column) + 0.5) * cellSize,
             0,
@@ -237,7 +249,7 @@ public struct World: Sendable, Equatable {
     }
     self.cells = cells
     self.byGrid = byGrid
-    self.deferredEdges = 0
+    self.deferredEdges = cells.reduce(0) { $0 + $1.unresolvedEdgeCount }
 
     self.roadAltitudeLookup = bundle.world.roadAltitudeLookup
     var mapLinesByCell: [Int: [SurfaceMapLine]] = [:]
