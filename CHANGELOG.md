@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Render only the current cell's detailed surface structure, matching the
+  Reference Build instead of producing an invented skyline from a 7×7 cell
+  neighbourhood. Add `--inspect-structures` with a deterministic contact sheet
+  and report for all 98 unique structures, retain their stable Geometry
+  Identities at runtime, and report edges whose endpoints belong to the shared
+  road-point workspace rather than silently dropping them. Correct the surface
+  edge decoder: a zero marker switches the remainder of the record from packed
+  nibbles to full-width endpoint pairs, fixing buildings such as Novabill's
+  house at 03:08, and require geometry decoder 3 so stale payloads are rejected.
 - Render the complete opening scene at cell 8:8 (issue #51): start the app
   facing the airstrip, Dart, crashed spacecraft, and deterministically rotating
   inverted pyramid; preserve every surface vertex and edge in Data Payload

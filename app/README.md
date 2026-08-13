@@ -50,10 +50,12 @@ Build — the fidelity bar is modernised feel.
 ## Geometry debug mode
 
 Renders a subject in isolation with its decoded numbers, so "some geometry looks
-wrong" becomes a named defect. The contact sheet puts all 64 objects on one page.
+wrong" becomes a named defect. Contact sheets cover all 64 object slots and one
+representative cell for each of the 98 unique surface structures.
 
 ```sh
 app/.build/debug/mercenary --inspect-objects /tmp/sheet.png   # 64 tiles + table
+app/.build/debug/mercenary --inspect-structures /tmp/structures.png # 98 tiles + table
 app/.build/debug/mercenary --inspect-object 3 --out /tmp/o.png [--in-situ]
 app/.build/debug/mercenary --inspect-cell 72 --out /tmp/c.png
 ```
@@ -69,7 +71,7 @@ spot-checks, and for looking at a scene from a machine that cannot open a window
 
 ```sh
 app/.build/debug/mercenary --render-frame /tmp/frame.png \
-  --x 557056 --z 745000 --eye 400 --heading 0 --pitch 12 --cell-radius 3
+  --x 557056 --z 745000 --eye 400 --heading 0 --pitch 12
 ```
 
 `--heading` and `--pitch` are degrees; `--x`, `--z`, `--eye` are world units.

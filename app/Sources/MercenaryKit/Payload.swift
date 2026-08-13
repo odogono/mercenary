@@ -171,7 +171,7 @@ public enum Payload {
   }
 
   public static let supportedSchemaVersion = 4
-  public static let supportedDecoderVersion = 2
+  public static let supportedDecoderVersion = 3
   /// The text document carries its own version, because its format is
   /// independent of the geometry documents and changes on its own schedule.
   public static let supportedTextSchemaVersion = 1

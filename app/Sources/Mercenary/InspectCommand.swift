@@ -12,6 +12,7 @@ import UniformTypeIdentifiers
 enum InspectCommand {
   enum Mode {
     case objectSheet(URL)
+    case structureSheet(URL)
     case object(slot: Int, output: URL, inSitu: Bool)
     case cell(index: Int, output: URL)
   }
@@ -24,6 +25,9 @@ enum InspectCommand {
     let output = URL(fileURLWithPath: value("--out") ?? "/tmp/mercenary-inspect.png")
     if let sheet = value("--inspect-objects") {
       return .objectSheet(URL(fileURLWithPath: sheet))
+    }
+    if let sheet = value("--inspect-structures") {
+      return .structureSheet(URL(fileURLWithPath: sheet))
     }
     if let slot = value("--inspect-object").flatMap({ Int($0, radix: 10) }) {
       return .object(slot: slot, output: output, inSitu: arguments.contains("--in-situ"))
@@ -44,9 +48,22 @@ enum InspectCommand {
       let inspector = Inspector(world: world)
       switch mode {
       case .objectSheet(let url):
-        try contactSheet(inspector: inspector, to: url)
+        try contactSheet(
+          items: inspector.objectSlots.map { (String(format: "%02X", $0), .object(slot: $0)) },
+          columns: 8, inspector: inspector, to: url)
         print(Inspector.table(inspector.objectRows(), title: "objects"))
         print("{\"status\":\"inspected\",\"output\":\"\(url.path)\",\"objects\":\(world.objects.count)}")
+      case .structureSheet(let url):
+        let identities = inspector.structureIdentities
+        try contactSheet(
+          items: identities.map {
+            ($0.replacingOccurrences(of: "surface-structure:", with: "").uppercased(), .structure(id: $0))
+          },
+          columns: 10, inspector: inspector, to: url)
+        print(Inspector.table(inspector.structureRows(), title: "surface structures"))
+        print(
+          "{\"status\":\"inspected\",\"output\":\"\(url.path)\","
+            + "\"structures\":\(identities.count),\"roadWorkspaceEdges\":\(world.deferredEdges)}")
       case .object(let slot, let url, let inSitu):
         guard let object = inspector.object(slot: slot) else {
           FileHandle.standardError.write(Data("error: no surface object in slot \(slot)\n".utf8))
@@ -90,18 +107,19 @@ enum InspectCommand {
     return camera
   }
 
-  /// All 64 objects as tiles on one page, each framed to its own bounds.
-  private static func contactSheet(inspector: Inspector, to url: URL) throws {
-    let slots = inspector.objectSlots
-    let columns = 8
-    let rows = max(1, (slots.count + columns - 1) / columns)
+  /// Subjects as canonical tiles on one page, each framed to its own bounds.
+  private static func contactSheet(
+    items: [(label: String, subject: Inspector.Subject)], columns: Int,
+    inspector: Inspector, to url: URL
+  ) throws {
+    let rows = max(1, (items.count + columns - 1) / columns)
     let tile = CGSize(width: 220, height: 190)
     let size = CGSize(width: tile.width * Double(columns), height: tile.height * Double(rows))
     let context = try bitmap(size: size)
     context.setFillColor(gray(0.04))
     context.fill(CGRect(origin: .zero, size: size))
 
-    for (position, slot) in slots.enumerated() {
+    for (position, item) in items.enumerated() {
       let column = position % columns
       let row = position / columns
       // Bitmap origin is bottom-left; lay the sheet out top-down.
@@ -115,19 +133,18 @@ enum InspectCommand {
       context.setLineWidth(1)
       context.stroke(frame.insetBy(dx: 0.5, dy: 0.5))
 
-      if let camera = inspector.canonicalCamera(for: .object(slot: slot)) {
-        let segments = inspector.segments(for: .object(slot: slot))
-        context.setStrokeColor(gray(1))
-        var drew = false
+      if let camera = inspector.canonicalCamera(for: item.subject) {
+        let segments = inspector.segments(for: item.subject)
         for segment in segments {
           guard let line = camera.project(segment: segment, size: frame.size) else { continue }
+          context.setStrokeColor(segment.ink == .white ? gray(1) : gray(0.45))
+          context.beginPath()
           context.move(to: CGPoint(x: frame.minX + Double(line.x1), y: frame.maxY - Double(line.y1)))
           context.addLine(to: CGPoint(x: frame.minX + Double(line.x2), y: frame.maxY - Double(line.y2)))
-          drew = true
+          context.strokePath()
         }
-        if drew { context.strokePath() }
       }
-      draw(label: String(format: "%02X", slot), in: frame, context: context)
+      draw(label: item.label, in: frame, context: context)
       context.restoreGState()
     }
     try write(context.makeImage()!, to: url)

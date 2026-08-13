@@ -143,6 +143,26 @@ class ObjectModelTests(unittest.TestCase):
 
 
 class SurfaceStructureTests(unittest.TestCase):
+    def test_zero_switches_the_rest_of_the_edge_table_to_full_width_pairs(self) -> None:
+        raw = bytes(
+            [
+                1, 2, 2, 0,  # two points, three lines, no rotation
+                0x01,  # packed 0 -> 1
+                0, 1, 0,  # switch mode, then full-width 1 -> 0
+                0, 1,  # full-width 0 -> 1; no second marker
+                0, 0, 1, 1,  # points
+            ]
+        )
+
+        structure = decode_surface_structure(raw, address=0xC000)
+
+        self.assertEqual(
+            [(line["start"], line["end"], line["rawHex"]) for line in structure["lines"]],
+            [(0, 1, "01"), (1, 0, "000100"), (0, 1, "0001")],
+        )
+        self.assertEqual(structure["points"][0]["rawHex"], "0000")
+        self.assertEqual(encode_surface_structure(structure), raw)
+
     def test_decodes_full_width_edge_and_escaped_height(self) -> None:
         # Two points, one escaped full-width edge, no rotated prefix.  Point 1
         # uses height code 15 and therefore carries an extra height byte.
