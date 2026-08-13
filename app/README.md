@@ -47,6 +47,24 @@ Discovery walks up from the working directory looking for `payload/manifest.json
 Speeds are tuned for how the walkabout plays, not copied from the Reference
 Build — the fidelity bar is modernised feel.
 
+## Geometry debug mode
+
+Renders a subject in isolation with its decoded numbers, so "some geometry looks
+wrong" becomes a named defect. The contact sheet puts all 64 objects on one page.
+
+```sh
+app/.build/debug/mercenary --inspect-objects /tmp/sheet.png   # 64 tiles + table
+app/.build/debug/mercenary --inspect-object 3 --out /tmp/o.png [--in-situ]
+app/.build/debug/mercenary --inspect-cell 72 --out /tmp/c.png
+```
+
+The default view is canonical: a camera framed to the subject's own bounds, with
+no level of detail and no orientation, because a malformed model has to be visible
+as one. `--in-situ` draws the object as the game would instead.
+
+`MERCENARY_MODEL_Y_SCALE=16` is an open experiment, not a setting — see
+`notes/decode/geometry-render-fidelity.md`.
+
 ## Headless frame capture
 
 Renders one frame to a PNG with no window. Useful for side-by-side fidelity

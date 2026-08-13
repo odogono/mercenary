@@ -25,10 +25,10 @@ struct WorldView: View {
     let camera = Camera(player: model.state.player)
     drawGround(context: context, size: size, camera: camera)
 
-    let segments = model.selector.segments(in: world, from: model.state.player.position)
+    let visible = model.selector.visible(in: world, from: model.state.player.position)
     var paths: [Ink: Path] = [:]
     var drawn = 0
-    for segment in segments {
+    for segment in visible.segments {
       guard let line = camera.project(segment: segment, size: size) else { continue }
       guard isOnScreen(line, size: size) else { continue }
       paths[segment.ink, default: Path()].move(to: CGPoint(x: CGFloat(line.x1), y: CGFloat(line.y1)))
@@ -42,16 +42,22 @@ struct WorldView: View {
     if let bright = paths[.white] {
       context.stroke(bright, with: .color(SceneStyle.whiteInk), lineWidth: 1)
     }
-    Task { @MainActor in model.report(visibleLines: drawn) }
+
+    // Objects beyond their detail cube are a single point, as in the original.
+    var dots = Path()
+    for origin in visible.points {
+      guard let point = camera.project(point: origin, size: size) else { continue }
+      dots.addRect(CGRect(x: point.x, y: point.y, width: 1, height: 1))
+    }
+    context.fill(dots, with: .color(SceneStyle.whiteInk))
+
+    Task { @MainActor in model.report(visibleLines: drawn, points: visible.points.count) }
   }
 
   /// Fill the ground below the projected horizon, so the world reads as a
   /// surface rather than floating lines.
   private func drawGround(context: GraphicsContext, size: CGSize, camera: Camera) {
-    let focal = Double(size.height) / (2 * tan(camera.verticalFieldOfView / 2))
-    // The horizon sits where an infinitely distant ground point projects.
-    let horizon = Double(size.height) / 2 + tan(camera.pitch) * focal
-    let clamped = max(0, min(Double(size.height), horizon))
+    let clamped = max(0, min(Double(size.height), camera.horizon(size: size)))
     guard clamped < Double(size.height) else { return }
     let ground = CGRect(x: 0, y: clamped, width: size.width, height: Double(size.height) - clamped)
     context.fill(Path(ground), with: .color(SceneStyle.ground))
@@ -111,6 +117,7 @@ private struct StatusStrip: View {
       Text("HDG \(Int(player.heading * 180 / .pi))°")
       Spacer()
       Text("\(model.visibleLines) LINES")
+      Text("\(model.visiblePoints) PTS")
       Text("\(Int(model.framesPerSecond.rounded())) FPS")
     }
     .font(.system(size: 11, weight: .medium, design: .monospaced))

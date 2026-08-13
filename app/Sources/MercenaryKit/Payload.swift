@@ -27,29 +27,50 @@ public enum Payload {
     public struct Road: Codable, Sendable, Equatable {
       public var from: [Int]
       public var to: [Int]
+      /// Grid cell this piece belongs to, for altitude culling.
+      public var cell: [Int]
       public var segment: Int
     }
 
     public var schemaVersion: Int
     public var grid: Grid
     public var bounds: Bounds
+    /// Maps an altitude index to how far road geometry extends. Without it every
+    /// road draws at full length from any altitude.
+    public var roadAltitudeLookup: [Int]
     public var roads: [Road]
   }
 
   public struct SurfaceDocument: Codable, Sendable, Equatable {
+    /// A structure point the Reference Build rotates at runtime. Carried rather
+    /// than dropped so a later pass can place it.
+    public struct DeferredVertex: Codable, Sendable, Equatable {
+      public var vertex: Int
+      public var rotationInput: [Int]
+    }
+
+    public struct RotatedStructure: Codable, Sendable, Equatable {
+      public var id: String
+      public var rotatedPointDescriptor: Int
+      public var rotationCenter: [Int]?
+      public var rotatedPointCount: Int
+    }
+
     public struct Cell: Codable, Sendable, Equatable {
       public var cell: Int
       public var grid: [Int]
+      public var structure: String?
       /// World-space integer positions; index space for ``edges``.
       public var vertices: [[Int]]
       /// `[startIndex, endIndex, inkCode]` triples.
       public var edges: [[Int]]
-      public var deferredVertices: Int
+      public var deferredVertices: [DeferredVertex]
       public var deferredEdges: Int
     }
 
     public var schemaVersion: Int
     public var cells: [Cell]
+    public var rotatedStructures: [RotatedStructure]
   }
 
   public struct ObjectsDocument: Codable, Sendable, Equatable {
@@ -59,6 +80,13 @@ public enum Payload {
       public var vertices: [[Int]]
       /// `[startIndex, endIndex]` pairs.
       public var edges: [[Int]]
+    }
+
+    /// The Reference Build's object detail rule: beyond this cube per axis the
+    /// object is drawn as a single projected point rather than its wireframe.
+    public struct Visibility: Codable, Sendable, Equatable {
+      public var detailCubePerAxis: Int
+      public var farRepresentation: String
     }
 
     public struct Instance: Codable, Sendable, Equatable {
@@ -71,6 +99,7 @@ public enum Payload {
       public var stateFlags: Int
       public var rotatable: Bool
       public var placement: String
+      public var visibility: Visibility
     }
 
     public var schemaVersion: Int
@@ -126,7 +155,10 @@ public enum Payload {
     }
   }
 
-  public static let supportedSchemaVersion = 1
+  public static let supportedSchemaVersion = 2
+  /// The text document carries its own version, because its format is
+  /// independent of the geometry documents and changes on its own schedule.
+  public static let supportedTextSchemaVersion = 1
 
   /// Load and schema-check a payload directory.
   public static func load(from directory: URL) throws -> Bundle {
@@ -147,7 +179,9 @@ public enum Payload {
     var text: TextDocument?
     if FileManager.default.fileExists(atPath: directory.appendingPathComponent("text.json").path) {
       let decoded: TextDocument = try decode("text.json", in: directory)
-      try check("text.json", decoded.schemaVersion)
+      guard decoded.schemaVersion == supportedTextSchemaVersion else {
+        throw LoadError.unsupportedSchema("text.json", decoded.schemaVersion)
+      }
       text = decoded
     }
 

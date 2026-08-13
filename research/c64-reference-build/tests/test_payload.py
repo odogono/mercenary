@@ -12,6 +12,7 @@ sys.path.insert(0, str(LAB_ROOT))
 from c64lab.core import LabError
 from c64lab.payload import (
     CELL_SIZE,
+    build_roads,
     build_objects,
     build_surface,
     build_world,
@@ -23,6 +24,16 @@ def _surface() -> dict:
     """A two-cell synthetic surface. Nothing here is Reference Build data."""
     return {
         "schemaVersion": 1,
+        "roadAltitudeLookup": {"rawHex": "000103"},
+        "transformContract": {"cell": "((zHigh & $0F) << 4) | (xHigh & $0F)"},
+        "structures": [
+            {
+                "geometryIdentity": "surface-structure:test",
+                "rotatedPointDescriptor": 0x73,
+                "rotationCenter": [132, 132],
+            },
+            {"geometryIdentity": "surface-structure:plain", "rotatedPointDescriptor": 0},
+        ],
         "cells": [
             {
                 "cell": 0,
@@ -80,6 +91,7 @@ def _objects() -> dict:
                 "roomMembership": 0,
                 "stateFlags": 48,
                 "rotatable": True,
+                "visibility": {"detailCubePerAxis": 0x010000, "farRepresentation": "point"},
             },
             {
                 "geometryIdentity": "object-instance:01",
@@ -90,6 +102,7 @@ def _objects() -> dict:
                 "roomMembership": 7,
                 "stateFlags": 32,
                 "rotatable": False,
+                "visibility": {"detailCubePerAxis": 0x010000, "farRepresentation": "point"},
             },
         ],
     }
@@ -109,10 +122,28 @@ class WorldExportTests(unittest.TestCase):
         self.assertEqual(world["verticalConvention"]["axis"], "y")
         self.assertEqual(world["verticalConvention"]["groundLevel"], 0)
 
-    def test_deduplicates_roads_listed_from_both_ends(self) -> None:
+    def test_splits_roads_into_one_piece_per_cell(self) -> None:
         world = build_world(_surface())
 
-        self.assertEqual(world["roads"], [{"from": [0, 0], "to": [3, 0], "segment": 0}])
+        # The run spans three cells, listed from both ends; it must deduplicate to
+        # three unit pieces rather than one line across the world.
+        self.assertEqual(len(world["roads"]), 3)
+        self.assertEqual(world["roads"][0], {"from": [0, 0], "to": [1, 0], "cell": [0, 0], "segment": 0})
+        self.assertEqual([piece["cell"] for piece in world["roads"]], [[0, 0], [1, 0], [2, 0]])
+
+    def test_carries_the_road_altitude_lookup_and_transform_contract(self) -> None:
+        world = build_world(_surface())
+
+        self.assertEqual(world["roadAltitudeLookup"], [0, 1, 3])
+        self.assertIn("cell", world["transformContract"])
+
+    def test_rejects_a_road_run_that_is_neither_row_nor_column_aligned(self) -> None:
+        surface = _surface()
+        surface["cells"][0]["roads"] = [{"startGrid": [0, 0], "endGrid": [3, 3], "segment": 0}]
+        surface["cells"][1]["roads"] = []
+
+        with self.assertRaisesRegex(LabError, "neither row-aligned nor column-aligned"):
+            build_roads(surface)
 
     def test_rejects_a_surface_with_no_expanded_cells(self) -> None:
         with self.assertRaisesRegex(LabError, "expanded no cell bounds"):
@@ -127,11 +158,19 @@ class SurfaceExportTests(unittest.TestCase):
         self.assertEqual(first["vertices"], [[0, 0, 0], [100, 0, 0]])
         self.assertEqual(first["edges"], [[0, 1, 0]])
 
-    def test_defers_runtime_rotated_vertices_and_their_edges(self) -> None:
+    def test_defers_runtime_rotated_vertices_but_keeps_their_rotation_input(self) -> None:
         first = build_surface(_surface())["cells"][0]
 
-        self.assertEqual(first["deferredVertices"], 1)
         self.assertEqual(first["deferredEdges"], 1)
+        self.assertEqual(first["deferredVertices"], [{"vertex": 2, "rotationInput": [1, 2, 3]}])
+
+    def test_reports_only_the_structures_that_carry_rotated_points(self) -> None:
+        structures = build_surface(_surface())["rotatedStructures"]
+
+        self.assertEqual(len(structures), 1)
+        self.assertEqual(structures[0]["id"], "surface-structure:test")
+        self.assertEqual(structures[0]["rotatedPointCount"], 4)
+        self.assertEqual(structures[0]["rotationCenter"], [132, 132])
 
     def test_rejects_an_unknown_ink_operation(self) -> None:
         surface = _surface()
@@ -159,6 +198,12 @@ class ObjectExportTests(unittest.TestCase):
 
         self.assertEqual(instances[0]["placement"], "surface")
         self.assertEqual(instances[1]["placement"], "room")
+
+    def test_carries_the_object_detail_rule(self) -> None:
+        instances = build_objects(_objects())["instances"]
+
+        self.assertEqual(instances[0]["visibility"]["detailCubePerAxis"], 0x010000)
+        self.assertEqual(instances[0]["visibility"]["farRepresentation"], "point")
 
     def test_rejects_an_instance_referencing_an_unknown_model(self) -> None:
         objects = _objects()

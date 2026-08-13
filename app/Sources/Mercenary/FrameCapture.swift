@@ -28,13 +28,14 @@ enum FrameCapture {
       let world = World(bundle: try Payload.load(from: directory))
       let camera = Camera(position: options.position, heading: options.heading, pitch: options.pitch)
       let selector = VisibilitySelector(cellRadius: options.cellRadius)
-      let segments = selector.segments(in: world, from: options.position)
-      let (image, drawn) = render(world: world, camera: camera, segments: segments, size: options.size)
+      let visible = selector.visible(in: world, from: options.position)
+      let (image, drawn) = render(world: world, camera: camera, visible: visible, size: options.size)
       try write(image, to: options.output)
       let summary = """
         {"status":"rendered","output":"\(options.output.path)",\
-        "candidateSegments":\(segments.count),"drawnLines":\(drawn),\
-        "deferredEdges":\(world.deferredEdges)}
+        "candidateSegments":\(visible.segments.count),"drawnLines":\(drawn),\
+        "farPoints":\(visible.points.count),"detailedObjects":\(visible.detailedObjects),\
+        "roadRadius":\(visible.roadRadius),"deferredEdges":\(world.deferredEdges)}
         """
       print(summary)
       return 0
@@ -45,7 +46,7 @@ enum FrameCapture {
   }
 
   private static func render(
-    world: World, camera: Camera, segments: [Segment], size: CGSize
+    world: World, camera: Camera, visible: VisibilitySelector.Visible, size: CGSize
   ) -> (CGImage, Int) {
     let width = Int(size.width)
     let height = Int(size.height)
@@ -65,8 +66,7 @@ enum FrameCapture {
     context.setFillColor(rgb(0, 0, 0))
     context.fill(CGRect(origin: .zero, size: size))
 
-    let focal = Double(size.height) / (2 * tan(camera.verticalFieldOfView / 2))
-    let horizon = max(0, min(Double(size.height), Double(size.height) / 2 + tan(camera.pitch) * focal))
+    let horizon = max(0, min(Double(size.height), camera.horizon(size: size)))
     if horizon < Double(size.height) {
       context.setFillColor(rgb(0x50, 0x45, 0x9B))
       context.fill(CGRect(x: 0, y: horizon, width: size.width, height: Double(size.height) - horizon))
@@ -82,7 +82,7 @@ enum FrameCapture {
       context.setStrokeColor(ink == .white ? rgb(255, 255, 255) : rgb(0x8B, 0x8B, 0x8B))
       context.setLineWidth(1)
       var any = false
-      for segment in segments where segment.ink == ink {
+      for segment in visible.segments where segment.ink == ink {
         guard let line = camera.project(segment: segment, size: size) else { continue }
         context.move(to: CGPoint(x: Double(line.x1), y: Double(line.y1)))
         context.addLine(to: CGPoint(x: Double(line.x2), y: Double(line.y2)))
@@ -90,6 +90,13 @@ enum FrameCapture {
         drawn += 1
       }
       if any { context.strokePath() }
+    }
+
+    // Far objects reduce to a single point, matching the original's look.
+    context.setFillColor(rgb(255, 255, 255))
+    for origin in visible.points {
+      guard let point = camera.project(point: origin, size: size) else { continue }
+      context.fill(CGRect(x: point.x, y: point.y, width: 1, height: 1))
     }
     return (context.makeImage()!, drawn)
   }

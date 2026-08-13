@@ -30,6 +30,7 @@ final class WalkaboutModel {
   private(set) var state: GameState
   private(set) var framesPerSecond: Double = 0
   private(set) var visibleLines: Int = 0
+  private(set) var visiblePoints: Int = 0
   private(set) var comms: Comms?
 
   var limits = WalkLimits()
@@ -105,8 +106,9 @@ final class WalkaboutModel {
     running = false
   }
 
-  func report(visibleLines: Int) {
+  func report(visibleLines: Int, points: Int) {
     self.visibleLines = visibleLines
+    self.visiblePoints = points
   }
 
   private func page(by delta: Int) {

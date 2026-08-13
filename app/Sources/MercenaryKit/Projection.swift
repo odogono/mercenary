@@ -9,6 +9,46 @@ public struct ScreenLine: Sendable, Equatable {
   public var ink: Ink
 }
 
+/// The Reference Build's projection target: a 160-by-136 viewport centred at
+/// (80, 68). Adopting its aspect and centre means objects subtend the angles they
+/// did originally once the frustum is scaled to the window.
+///
+/// The focal length is *not* recovered from the original — only the viewport
+/// dimensions and centre are. It is expressed here in reference pixels so that a
+/// future decode can replace one constant.
+public struct ReferenceViewport: Sendable {
+  public static let width: Double = 160
+  public static let height: Double = 136
+  public static let centre = (x: 80.0, y: 68.0)
+  /// Half-height focal length in reference pixels. Chosen to frame the world
+  /// comfortably; the original's value is still unknown.
+  public static let focalPixels: Double = 124
+
+  public var size: CGSize
+
+  public init(size: CGSize) {
+    self.size = size
+  }
+
+  /// Uniform scale from reference pixels to view pixels, preserving aspect.
+  public var scale: Double {
+    min(Double(size.width) / ReferenceViewport.width, Double(size.height) / ReferenceViewport.height)
+  }
+
+  /// Where the reference viewport's centre lands in view pixels.
+  public var centre: CGPoint {
+    CGPoint(x: Double(size.width) / 2, y: Double(size.height) / 2)
+  }
+
+  /// Focal length in view pixels.
+  public var focalLength: Double { ReferenceViewport.focalPixels * scale }
+
+  /// Vertical field of view implied by the reference frustum.
+  public var verticalFieldOfView: Double {
+    2 * atan(ReferenceViewport.height / 2 / ReferenceViewport.focalPixels)
+  }
+}
+
 /// Perspective projection from world space to view pixels.
 ///
 /// Kept in the kit rather than the renderer so the maths is unit-testable without
@@ -26,7 +66,7 @@ public struct Camera: Sendable, Equatable {
     position: SIMD3<Double>,
     heading: Double,
     pitch: Double,
-    verticalFieldOfView: Double = 1.05,
+    verticalFieldOfView: Double = ReferenceViewport(size: CGSize(width: 160, height: 136)).verticalFieldOfView,
     nearPlane: Double = 24,
     farPlane: Double = 320_000
   ) {
@@ -62,13 +102,20 @@ public struct Camera: Sendable, Equatable {
   }
 
   /// Project a clipped view-space point into pixels for a view of `size`.
+  ///
+  /// The frustum comes from the reference viewport, so the projection keeps the
+  /// original's aspect and centre whatever the window size.
   public func project(_ view: SIMD3<Double>, size: CGSize) -> CGPoint {
-    let focal = Double(size.height) / (2 * tan(verticalFieldOfView / 2))
-    let scale = focal / view.z
-    return CGPoint(
-      x: Double(size.width) / 2 + view.x * scale,
-      y: Double(size.height) / 2 - view.y * scale
-    )
+    let viewport = ReferenceViewport(size: size)
+    let scale = viewport.focalLength / view.z
+    let centre = viewport.centre
+    return CGPoint(x: centre.x + view.x * scale, y: centre.y - view.y * scale)
+  }
+
+  /// Where the horizon sits in view pixels for this camera.
+  public func horizon(size: CGSize) -> Double {
+    let viewport = ReferenceViewport(size: size)
+    return viewport.centre.y + tan(pitch) * viewport.focalLength
   }
 
   /// Clip a segment to the near plane, returning nil when it is wholly behind.
@@ -114,24 +161,66 @@ public struct VisibilitySelector: Sendable {
     self.includeRoads = includeRoads
   }
 
-  /// Gather candidate segments near the camera. Frustum rejection is left to the
-  /// projection step, which has to compute view space anyway.
-  public func segments(in world: World, from position: SIMD3<Double>) -> [Segment] {
+  /// What the renderer should draw this frame: line segments plus any objects
+  /// reduced to a single point by the detail rule.
+  public struct Visible: Sendable {
+    public var segments: [Segment]
+    /// Origins of objects outside the detail cube, drawn as points.
+    public var points: [SIMD3<Float>]
+    public var detailedObjects: Int
+    public var roadRadius: Int
+  }
+
+  /// Gather what is worth projecting near the camera. Frustum rejection is left to
+  /// the projection step, which has to compute view space anyway.
+  ///
+  /// Surface cells are culled by a fixed radius. Roads are culled by the
+  /// altitude-derived radius the Reference Build uses, so at ground level only the
+  /// nearby road shows instead of every road at full length. Objects beyond their
+  /// detail cube collapse to a point, which the original does too — the doc calls
+  /// that transition part of its look.
+  public func visible(in world: World, from position: SIMD3<Double>) -> Visible {
     let column = Int((position.x / Double(world.cellSize)).rounded(.down))
     let row = Int((position.z / Double(world.cellSize)).rounded(.down))
-    var result: [Segment] = []
+    var segments: [Segment] = []
     for dz in -cellRadius...cellRadius {
       for dx in -cellRadius...cellRadius {
-        let candidate = (column + dx, row + dz)
-        guard candidate.0 >= 0, candidate.0 < world.cellsPerAxis,
-          candidate.1 >= 0, candidate.1 < world.cellsPerAxis,
-          let cell = world.cell(column: candidate.0, row: candidate.1)
-        else { continue }
-        result.append(contentsOf: cell.segments)
+        guard let cell = world.cell(column: column + dx, row: row + dz) else { continue }
+        segments.append(contentsOf: cell.segments)
       }
     }
-    if includeRoads { result.append(contentsOf: world.roads) }
-    if includeObjects { result.append(contentsOf: world.objects) }
-    return result
+
+    let radius = world.roadRadius(altitude: position.y)
+    if includeRoads {
+      for road in world.roads
+      where abs(road.column - column) <= radius && abs(road.row - row) <= radius {
+        segments.append(road.segment)
+      }
+    }
+
+    var points: [SIMD3<Float>] = []
+    var detailed = 0
+    if includeObjects {
+      for object in world.objects where object.isDrawable {
+        if object.isDetailed(from: position) {
+          segments.append(contentsOf: object.segments)
+          detailed += 1
+        } else if object.drawsFarAsPoint {
+          points.append(object.origin)
+        }
+      }
+    }
+    return Visible(segments: segments, points: points, detailedObjects: detailed, roadRadius: radius)
+  }
+}
+
+extension Camera {
+  /// Project a single world point, or nil when it is behind the near plane.
+  public func project(point world: SIMD3<Float>, size: CGSize) -> CGPoint? {
+    let view = viewSpace(world)
+    guard view.z >= nearPlane, view.z <= farPlane else { return nil }
+    let projected = project(view, size: size)
+    guard projected.x.isFinite, projected.y.isFinite else { return nil }
+    return projected
   }
 }
