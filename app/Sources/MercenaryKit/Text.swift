@@ -80,8 +80,16 @@ public struct TextTable: Sendable, Equatable {
   public func compose(
     _ message: Payload.TextDocument.Message, substituting values: Substitutions = .none
   ) -> String {
+    compose(message.tokens, substituting: values)
+  }
+
+  /// Compose a bare token stream. Benson Scripts carry message text inside the
+  /// instruction rather than in the table, in this same token vocabulary.
+  public func compose(
+    _ tokens: [Payload.TextDocument.Token], substituting values: Substitutions = .none
+  ) -> String {
     var out = ""
-    for token in message.tokens {
+    for token in tokens {
       switch token.kind {
       case "word":
         guard let index = token.word, words.indices.contains(index) else { continue }

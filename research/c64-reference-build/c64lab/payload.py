@@ -23,6 +23,7 @@ from .geometry import (
     load_json,
     verify_dataset,
 )
+from .benson import decode_benson
 from .text import decode_text
 
 
@@ -52,7 +53,7 @@ def _require(condition: bool, message: str) -> None:
         raise LabError(message)
 
 
-def _require_ignored_output(path: Path) -> Path:
+def require_ignored_output(path: Path) -> Path:
     resolved = path.resolve()
     allowed = (PAYLOAD_ROOT.resolve(), WORK_ROOT.resolve(), RESTRICTED_ROOT.resolve())
     _require(
@@ -205,6 +206,22 @@ def build_objects(objects: dict[str, Any]) -> dict[str, Any]:
     return {"schemaVersion": PAYLOAD_SCHEMA_VERSION, "models": models, "instances": instances}
 
 
+#: Documents decoded from a capture rather than from the geometry dataset. Each
+#: reports its own counts, so they are prefixed to keep one document's totals
+#: from colliding with another's as more of them arrive.
+CAPTURE_DOCUMENTS = ("text.json", "benson.json")
+
+
+def capture_counts(documents: dict[str, Any]) -> dict[str, int]:
+    """Prefix each capture-decoded document's counts with its own name."""
+    return {
+        f"{name.removesuffix('.json')}.{key}": value
+        for name in CAPTURE_DOCUMENTS
+        if name in documents
+        for key, value in documents[name]["counts"].items()
+    }
+
+
 def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict[str, Any]:
     """Write the Data Payload for one verified World Geometry Dataset.
 
@@ -212,7 +229,7 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
     through the dataset, but the text tables are read straight from a capture's
     memory, so they need the original run.
     """
-    resolved = _require_ignored_output(output)
+    resolved = require_ignored_output(output)
     verified = verify_dataset(dataset)
     manifest = verified["manifest"]
     require_current_geometry_decoder(manifest)
@@ -227,6 +244,7 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
     if run is not None:
         ram, _ = load_geometry_source(run)
         documents["text.json"] = decode_text(ram)
+        documents["benson.json"] = decode_benson(ram)
     resolved.mkdir(parents=True, exist_ok=True)
     files: list[dict[str, Any]] = []
     for name, document in documents.items():
@@ -244,11 +262,7 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
         "roadTableSegments": sum(len(cell["segments"]) for cell in documents["world.json"]["roadCells"]),
         "models": len(documents["objects.json"]["models"]),
         "instances": len(documents["objects.json"]["instances"]),
-        **(
-            {f"text.{key}": value for key, value in documents["text.json"]["counts"].items()}
-            if "text.json" in documents
-            else {}
-        ),
+        **capture_counts(documents),
     }
     payload_manifest = {
         "schemaVersion": PAYLOAD_SCHEMA_VERSION,

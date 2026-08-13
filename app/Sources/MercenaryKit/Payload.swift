@@ -127,19 +127,24 @@ public enum Payload {
     /// Absent when the payload was exported without an interactive capture to
     /// decode text from.
     public var text: TextDocument?
+    /// Absent for the same reason as `text`, which it depends on: its inline
+    /// messages and message indices are meaningless without the word dictionary.
+    public var benson: BensonDocument?
 
     public init(
       manifest: Manifest,
       world: WorldDocument,
       surface: SurfaceDocument,
       objects: ObjectsDocument,
-      text: TextDocument? = nil
+      text: TextDocument? = nil,
+      benson: BensonDocument? = nil
     ) {
       self.manifest = manifest
       self.world = world
       self.surface = surface
       self.objects = objects
       self.text = text
+      self.benson = benson
     }
   }
 
@@ -175,6 +180,9 @@ public enum Payload {
   /// The text document carries its own version, because its format is
   /// independent of the geometry documents and changes on its own schedule.
   public static let supportedTextSchemaVersion = 1
+  /// The Benson document versions separately again: its instruction format is
+  /// ours rather than the Reference Build's, so it moves as the interpreter does.
+  public static let supportedBensonSchemaVersion = 1
 
   /// Load and schema-check a payload directory.
   public static func load(from directory: URL) throws -> Bundle {
@@ -204,7 +212,21 @@ public enum Payload {
       text = decoded
     }
 
-    return Bundle(manifest: manifest, world: world, surface: surface, objects: objects, text: text)
+    var benson: BensonDocument?
+    if FileManager.default.fileExists(atPath: directory.appendingPathComponent("benson.json").path) {
+      let decoded: BensonDocument = try decode("benson.json", in: directory)
+      guard decoded.schemaVersion == supportedBensonSchemaVersion else {
+        throw LoadError.unsupportedSchema("benson.json", decoded.schemaVersion)
+      }
+      guard text != nil else {
+        throw LoadError.missingFile("text.json, which benson.json needs to render its messages")
+      }
+      benson = decoded
+    }
+
+    return Bundle(
+      manifest: manifest, world: world, surface: surface, objects: objects, text: text, benson: benson
+    )
   }
 
   private static func check(_ name: String, _ version: Int) throws {

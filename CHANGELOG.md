@@ -8,6 +8,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Run the Reference Build's own game logic: decode all 51 Benson Scripts and add a
+  Swift interpreter behind the Host Callout seam (issue #45, second step; ADR
+  0015). The opening now plays in the app because script 00 is running — the crash
+  sequence, a random landing verdict, the full status report, and the craft-sale
+  argument, on a scrolling message line whose pace blocks the script as the
+  original's did. Pressing Y buys the Dominion Dart and the balance falls from
+  9000 to 4000 credits through the same ten's-complement BCD add the Reference
+  Build used; pressing anything else takes the "IT WILL BE A LONG WALK" branch;
+  either way the script parks on the craft test that a later step will satisfy.
+  This answers the question the text-table step left open: the intro text has no
+  table entry because it is inlined into the scripts themselves.
+  Scripts are re-encoded rather than copied (ADR 0015), with every machine address
+  and key code resolved to a named symbol at export, so the app never handles a
+  C64 address and an unnamed one fails the export. Adds `c64lab/benson.py` with
+  per-opcode width assertions and interpreter fingerprints checked in memory,
+  `lab benson decode`, `benson.json` in the Data Payload, `BensonProgram`,
+  `BensonHostState`, `BensonMachine`, `BensonSession`, and `MessageTicker` in
+  MercenaryKit, and `--benson-trace` for checking a script without a window.
+  Our own extraction found six scripts the Reference Disassembly had not resolved,
+  cutting unreachable script bytes from 146 to 8, and established that `wfr` waits
+  count seconds rather than video frames.
+- Resolve the text engine's digit glyphs: character codes `$00`-`$09` are `0`-`9`,
+  which the numeric-field emitter settles by storing unpacked BCD nibbles straight
+  into the character stream. Fixes the missing "5" in "PRICE 5OOO CREDITS" and
+  leaves `$0E` and `$6D` as the only unresolved codes.
 - Decode the Reference Build's current-cell surface-structure selection, while
   keeping the immediate one-cell ring visible in the Mac presentation to avoid
   whole buildings popping at cell boundaries. Add `--inspect-structures` with a

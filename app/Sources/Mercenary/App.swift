@@ -2,7 +2,8 @@ import AppKit
 import MercenaryKit
 import SwiftUI
 
-/// Entry point. `--render-frame <path>` writes one frame and exits; otherwise the
+/// Entry point. `--render-frame <path>` writes one frame and exits,
+/// `--benson-trace` runs a script and prints what it says; otherwise the
 /// interactive app runs.
 @main
 enum Entry {
@@ -12,6 +13,9 @@ enum Entry {
     }
     if let options = FrameCapture.options(from: CommandLine.arguments) {
       exit(FrameCapture.run(options))
+    }
+    if let options = BensonTrace.options(from: CommandLine.arguments) {
+      exit(BensonTrace.run(options))
     }
     MercenaryApp.main()
   }

@@ -55,12 +55,17 @@ MAX_MESSAGES = 0x40
 #: Character codes whose meaning is established. Letters and the space are literal;
 #: the punctuation codes were read off words that fix them unambiguously —
 #: BROTHER-IN-LAW for the hyphen, COMMANDER'S for the apostrophe, and the
-#: single-character suffix used by "AH, YOU ARE BACK" for the comma.
-CHARACTER_MAP = {0x20: " ", 0x0D: "-", 0x6F: "'", 0x6E: ","}
+#: single-character suffix used by "AH, YOU ARE BACK" for the comma. The digits
+#: come from the engine rather than from a word: the numeric-field emitter writes
+#: unpacked BCD nibbles straight into the character stream, so codes zero through
+#: nine are the ten digit glyphs.
+CHARACTER_MAP = {code: str(code) for code in range(10)} | {0x20: " ", 0x0D: "-", 0x6F: "'", 0x6E: ","}
 
 #: Codes that appear in the tables but whose meaning is not yet established. They
-#: are preserved rather than guessed at, and render as nothing.
-UNRESOLVED_CODES = (0x09, 0x0E, 0x6D)
+#: are preserved rather than guessed at, and render as nothing. Both remaining
+#: codes occur in the load/save prompt, which reads "LOAD NO" and then wants
+#: punctuation the font's tail must supply.
+UNRESOLVED_CODES = (0x0E, 0x6D)
 
 
 def _require(condition: bool, message: str) -> None:
@@ -150,42 +155,54 @@ def decode_words(ram: bytes) -> list[dict[str, Any]]:
     return words
 
 
+def decode_token_stream(
+    ram: bytes, pointer: int, words: list[dict[str, Any]], *, context: str
+) -> tuple[list[dict[str, Any]], int]:
+    """Decode one zero-terminated token stream starting after ``pointer``.
+
+    Both the message table and the Benson Scripts' inline messages are the same
+    token vocabulary read by the same emitter, so they share this walker and
+    produce identical token shapes. Returns the tokens and the cursor resting on
+    the terminator.
+    """
+    tokens: list[dict[str, Any]] = []
+    cursor = pointer + 1
+    while cursor < TEXT_REGION[1]:
+        token = ram[cursor]
+        if token == MESSAGE_END:
+            return tokens, cursor
+        if token == INLINE_LITERAL_TOKEN:
+            codes, cursor = read_characters(ram, cursor)
+            tokens.append({"kind": "literal", "text": render(codes), "codes": codes})
+            continue
+        if token == EXTRA_SPACE_TOKEN:
+            tokens.append({"kind": "space"})
+        elif token >= FIRST_NUMBER_TOKEN:
+            tokens.append({"kind": "number", "slot": token - FIRST_NUMBER_TOKEN})
+        elif token >= FIRST_SUBSTITUTION_TOKEN:
+            resolved = ram[SUBSTITUTION_TABLE + token]
+            _require(
+                resolved < len(words) and not words[resolved]["unused"],
+                f"{context} substitution resolves to unusable word {resolved}",
+            )
+            tokens.append({"kind": "substitution", "slot": token - FIRST_SUBSTITUTION_TOKEN, "word": resolved})
+        else:
+            _require(
+                token < len(words) and not words[token]["unused"],
+                f"{context} references unusable word {token}",
+            )
+            tokens.append({"kind": "word", "word": token})
+        cursor += 1
+    raise LabError(f"Unterminated {context} starting at ${pointer + 1:04x}")
+
+
 def decode_messages(ram: bytes, words: list[dict[str, Any]]) -> list[dict[str, Any]]:
     count = _table_length(ram, MESSAGE_POINTER_LOW, MESSAGE_POINTER_HIGH, MAX_MESSAGES)
     _require(count > 0, "Message pointer table addresses nothing in the text region")
     messages: list[dict[str, Any]] = []
     for index in range(count):
         pointer = _pointer(ram, MESSAGE_POINTER_LOW, MESSAGE_POINTER_HIGH, index)
-        tokens: list[dict[str, Any]] = []
-        cursor = pointer + 1
-        while cursor < TEXT_REGION[1]:
-            token = ram[cursor]
-            if token == MESSAGE_END:
-                break
-            if token == INLINE_LITERAL_TOKEN:
-                codes, cursor = read_characters(ram, cursor)
-                tokens.append({"kind": "literal", "text": render(codes), "codes": codes})
-                continue
-            if token == EXTRA_SPACE_TOKEN:
-                tokens.append({"kind": "space"})
-            elif token >= FIRST_NUMBER_TOKEN:
-                tokens.append({"kind": "number", "slot": token - FIRST_NUMBER_TOKEN})
-            elif token >= FIRST_SUBSTITUTION_TOKEN:
-                resolved = ram[SUBSTITUTION_TABLE + token]
-                _require(
-                    resolved < len(words) and not words[resolved]["unused"],
-                    f"Message {index} substitution resolves to unusable word {resolved}",
-                )
-                tokens.append({"kind": "substitution", "slot": token - FIRST_SUBSTITUTION_TOKEN, "word": resolved})
-            else:
-                _require(
-                    token < len(words) and not words[token]["unused"],
-                    f"Message {index} references unusable word {token}",
-                )
-                tokens.append({"kind": "word", "word": token})
-            cursor += 1
-        else:
-            raise LabError(f"Unterminated message {index} starting at ${pointer + 1:04x}")
+        tokens, _ = decode_token_stream(ram, pointer, words, context=f"message {index}")
         messages.append({"index": index, "tokens": tokens, "text": compose(tokens, words)})
     return messages
 

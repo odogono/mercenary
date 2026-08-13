@@ -14,15 +14,21 @@ final class WalkaboutModel {
     case failed(String)
   }
 
-  /// The message currently on the status line, and how to page through the set.
-  struct Comms: Equatable {
-    var table: TextTable
-    var index: Int
+  /// The message line. A payload with scripts hands it to them; without them it
+  /// stays a browser over the message table, which is all step one could offer.
+  enum Comms: Equatable {
+    /// A Benson Script owns the line, revealing its own text as it runs.
+    case scripted(text: String, credits: Int)
+    /// Nothing is running the game, so the messages are paged by hand.
+    case browsing(table: TextTable, index: Int)
 
     var text: String {
-      // Credits are the only runtime slot the walkabout can honestly fill; the
-      // rest stay as placeholders until the simulation owns that state.
-      table.message(index, substituting: .init(numbers: [0: 5000])) ?? ""
+      switch self {
+      case .scripted(let text, _):
+        return text
+      case .browsing(let table, let index):
+        return table.message(index) ?? ""
+      }
     }
   }
 
@@ -35,6 +41,18 @@ final class WalkaboutModel {
 
   var limits = WalkLimits()
   let selector = VisibilitySelector()
+
+  /// The opening script, which the Reference Build starts play with.
+  static let openingScript = 0
+
+  /// Script pacing, tuned rather than decoded — the same footing as ``WalkLimits``.
+  /// At the Reference Build's own pace the opening takes about two and a half
+  /// minutes to reach its first question, which is a period feature rather than
+  /// one a modern player will sit through.
+  var bensonTunables = BensonTunables(timeScale: 6)
+
+  /// Present when the payload carries scripts.
+  private var session: BensonSession?
 
   private var pressed: Set<UInt16> = []
   private var running = false
@@ -59,6 +77,13 @@ final class WalkaboutModel {
     static let down: UInt16 = 125
     static let leftBracket: UInt16 = 33
     static let rightBracket: UInt16 = 30
+    static let y: UInt16 = 16
+    static let space: UInt16 = 49
+
+    /// The keys a Benson Script can be asked about.
+    static func bensonKey(for code: UInt16) -> BensonKey? {
+      code == y ? .y : nil
+    }
   }
 
   init() {
@@ -108,10 +133,9 @@ final class WalkaboutModel {
   }
 
   private func page(by delta: Int) {
-    guard var comms, comms.table.messageCount > 0 else { return }
-    let count = comms.table.messageCount
-    comms.index = ((comms.index + delta) % count + count) % count
-    self.comms = comms
+    guard case .browsing(let table, let index) = comms, table.messageCount > 0 else { return }
+    let count = table.messageCount
+    comms = .browsing(table: table, index: ((index + delta) % count + count) % count)
   }
 
   private func loadPayload() {
@@ -135,7 +159,17 @@ final class WalkaboutModel {
       let world = World(bundle: bundle)
       limits.groundExtent = Double(world.groundExtent)
       if let text = bundle.text {
-        comms = Comms(table: TextTable(document: text), index: 0)
+        let table = TextTable(document: text)
+        if let document = bundle.benson {
+          let program = try BensonProgram(document: document)
+          bensonTunables.framesPerTick = program.framesPerTick
+          var session = BensonSession(program: program, text: table, tunables: bensonTunables)
+          session.start(script: Self.openingScript)
+          self.session = session
+          comms = .scripted(text: "", credits: session.credits)
+        } else {
+          comms = .browsing(table: table, index: 0)
+        }
       }
       load = .ready(world, bundle.manifest)
     } catch {
@@ -150,6 +184,7 @@ final class WalkaboutModel {
     guard elapsed > 0 else { return }
 
     state = GameCore.step(state, intent: currentIntent(), dt: elapsed, limits: limits)
+    advanceScripts(by: elapsed)
 
     frameAccumulator.count += 1
     frameAccumulator.seconds += elapsed
@@ -157,6 +192,26 @@ final class WalkaboutModel {
       framesPerSecond = Double(frameAccumulator.count) / frameAccumulator.seconds
       frameAccumulator = (0, 0)
     }
+  }
+
+  /// Run the game's own logic for this frame, and act on what it asks for.
+  private func advanceScripts(by elapsed: Double) {
+    guard var session else { return }
+    for effect in session.advance(by: elapsed) {
+      switch effect {
+      case .keyAcknowledged:
+        // The Reference Build answered an accepted key with a tone.
+        NSSound.beep()
+      case .sound, .cityLocationChanged, .scriptFinished:
+        // Sound waits for an audio pass; the location readout and script
+        // completion wait for the surfaces that would show them.
+        break
+      case .playMessage:
+        break
+      }
+    }
+    self.session = session
+    comms = .scripted(text: session.messageText, credits: session.credits)
   }
 
   private func currentIntent() -> Intent {
@@ -184,7 +239,13 @@ final class WalkaboutModel {
       switch event.keyCode {
       case Key.leftBracket: page(by: -1)
       case Key.rightBracket: page(by: 1)
-      default: pressed.insert(event.keyCode)
+      // Skipping is a reading aid, so it deliberately does not tell the scripts
+      // the player pressed something — the opening reads that as intent to walk.
+      case Key.space where session != nil: session?.skipMessage()
+      default:
+        pressed.insert(event.keyCode)
+        // Any key tells the scripts the player is there; only some are matched.
+        session?.press(Key.bensonKey(for: event.keyCode))
       }
       return true
     case .keyUp:

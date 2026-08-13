@@ -11,8 +11,12 @@ The single gitignored collection of game data re-extracted from the Reference Bu
 _Avoid_: Asset folder, resources, ROM data
 
 **Benson Script**:
-An original game-logic bytecode program from the Reference Build's in-game interpreter, re-extracted into the Data Payload and executed by this project's own interpreter.
-_Avoid_: Game script, event code, AI logic
+An original game-logic program from the Reference Build's in-game interpreter, re-extracted into the Data Payload in a structurally preserved re-encoding of its bytecode, and executed by this project's own interpreter through the Host Callout.
+_Avoid_: Game script, event code, AI logic, bytecode dump
+
+**Host Callout**:
+The explicit seam through which a Benson Script reaches the engine, comprising the named engine state it may read and write and the effects it may ask the host to perform; it is the only path between game logic and the rest of the app, and the boundary an eventual scripting layer replaces.
+_Avoid_: Script API, engine hooks, bridge
 
 **Reference Disassembly**:
 The community-maintained annotated disassembly of the Reference Build, consumed as unlicensed reference documentation only — read for structure and locations, never copied into code or the Data Payload.
