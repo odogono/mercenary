@@ -45,11 +45,9 @@ final class WalkaboutModel {
   /// The opening script, which the Reference Build starts play with.
   static let openingScript = 0
 
-  /// Script pacing, tuned rather than decoded — the same footing as ``WalkLimits``.
-  /// At the Reference Build's own pace the opening takes about two and a half
-  /// minutes to reach its first question, which is a period feature rather than
-  /// one a modern player will sit through.
-  var bensonTunables = BensonTunables(timeScale: 6)
+  /// Tuned values read from `settings.json`, so judging them does not mean
+  /// editing Swift. Falls back to the built-in defaults when there is no file.
+  private(set) var settings = Settings()
 
   /// Present when the payload carries scripts.
   private var session: BensonSession?
@@ -155,6 +153,7 @@ final class WalkaboutModel {
       return
     }
     do {
+      settings = try Settings.load()
       let bundle = try Payload.load(from: directory)
       let world = World(bundle: bundle)
       limits.groundExtent = Double(world.groundExtent)
@@ -162,8 +161,11 @@ final class WalkaboutModel {
         let table = TextTable(document: text)
         if let document = bundle.benson {
           let program = try BensonProgram(document: document)
-          bensonTunables.framesPerTick = program.framesPerTick
-          var session = BensonSession(program: program, text: table, tunables: bensonTunables)
+          var session = BensonSession(
+            program: program,
+            text: table,
+            tunables: settings.bensonTunables(framesPerTick: program.framesPerTick)
+          )
           session.start(script: Self.openingScript)
           self.session = session
           comms = .scripted(text: "", credits: session.credits)

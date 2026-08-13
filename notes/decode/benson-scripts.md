@@ -162,6 +162,12 @@ The script finishes when you board the Dart.
   write to `messageInterval` as a *relative* retiming, which preserves what the
   script means without adopting a granularity we have not established. Worth a
   side-by-side ruling.
+
+  The rate, the reading hold, and the script timing scale are all in
+  `settings.json` at the repository root, so settling this is a matter of playing
+  and editing rather than editing and rebuilding. None of the three is a decoded
+  value: script timing scales the Reference Build's own pacing, while the hold is
+  time given to the player to read and is deliberately not scaled with it.
 - **How the engine starts script 00.** The intro proper was stripped from the
   Reference Disassembly, and we start it at launch. The other triggers — room
   entry, structure approach, kill, object examine — are visible in the engine and

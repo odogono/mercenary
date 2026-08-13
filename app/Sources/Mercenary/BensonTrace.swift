@@ -11,7 +11,9 @@ enum BensonTrace {
   struct Options {
     var script = 0
     var seconds: Double = 240
-    var timeScale: Double = 1
+    /// Overrides the settings file's script timing, so a trace can be hurried
+    /// along without changing what the app will do.
+    var timeScale: Double?
     /// Keys to press, and when.
     var presses: [(key: BensonKey?, at: Double)] = []
     /// Craft to board, and when.
@@ -66,10 +68,11 @@ enum BensonTrace {
         return fail("this Data Payload carries no scripts; export one with --run")
       }
       let program = try BensonProgram(document: document)
+      // The same settings the app runs on, so a trace is representative.
+      var tunables = try Settings.load().bensonTunables(framesPerTick: program.framesPerTick)
+      if let timeScale = options.timeScale { tunables.timeScale = timeScale }
       var session = BensonSession(
-        program: program,
-        text: TextTable(document: text),
-        tunables: BensonTunables(framesPerTick: program.framesPerTick, timeScale: options.timeScale)
+        program: program, text: TextTable(document: text), tunables: tunables
       )
       guard session.start(script: options.script) else {
         return fail("script \(options.script) would not start")

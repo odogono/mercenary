@@ -1,0 +1,10 @@
+{
+  "message": {
+    "holdSeconds": 3,
+    "charactersPerSecond": 2
+  },
+  "scripts": {
+    "timeScale": 6,
+    "instructionBudget": 512
+  }
+}

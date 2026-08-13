@@ -19,17 +19,27 @@ public struct BensonTunables: Sendable, Equatable {
   /// player's craft and never blocks at all — so a budget stands in for the
   /// frame boundary the original had for free.
   public var instructionBudget: Int
+  /// How fast the message line reveals text, before ``timeScale``.
+  public var messageCharactersPerSecond: Double
+  /// How long a revealed message is held to be read. Not scaled by
+  /// ``timeScale``: the scale speeds up the Reference Build's pacing, and a
+  /// reading pause is the player's time rather than the original's.
+  public var messageHoldSeconds: Double
 
   public init(
     framesPerTick: Int = 50,
     framesPerSecond: Double = 50,
     timeScale: Double = 1,
-    instructionBudget: Int = 512
+    instructionBudget: Int = 512,
+    messageCharactersPerSecond: Double = MessageTicker.referenceRate,
+    messageHoldSeconds: Double = MessageTicker.referenceHold
   ) {
     self.framesPerTick = framesPerTick
     self.framesPerSecond = framesPerSecond
     self.timeScale = timeScale
     self.instructionBudget = instructionBudget
+    self.messageCharactersPerSecond = messageCharactersPerSecond
+    self.messageHoldSeconds = messageHoldSeconds
   }
 
   /// Seconds of real time one tick of the wait counter lasts.

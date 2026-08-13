@@ -29,6 +29,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Our own extraction found six scripts the Reference Disassembly had not resolved,
   cutting unreachable script bytes from 146 to 8, and established that `wfr` waits
   count seconds rather than video frames.
+- Read the app's tuned values from `settings.json` at the repository root, so
+  judging feel means playing and editing rather than editing and rebuilding: the
+  message line's reading hold and reveal rate, and the script timing scale and
+  instruction budget. Every field has a default, so the file may name only what it
+  changes, and a missing file is simply the defaults; a malformed one is reported
+  rather than silently ignored, which would otherwise leave a tuning session
+  running the old values. `MERCENARY_SETTINGS` points at an alternative file, and
+  `--benson-trace` honours the same settings so a trace matches what the app does.
 - Resolve the text engine's digit glyphs: character codes `$00`-`$09` are `0`-`9`,
   which the numeric-field emitter settles by storing unpacked BCD nibbles straight
   into the character stream. Fixes the missing "5" in "PRICE 5OOO CREDITS" and

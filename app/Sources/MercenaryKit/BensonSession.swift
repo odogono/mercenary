@@ -106,7 +106,10 @@ public struct BensonSession: Sendable {
         // does not get shorter because the rest of the game runs faster.
         ticker = MessageTicker(
           text: message,
-          charactersPerSecond: MessageTicker.rate(forInterval: host.messageInterval) * tunables.timeScale
+          charactersPerSecond: MessageTicker.rate(
+            forInterval: host.messageInterval, base: tunables.messageCharactersPerSecond
+          ) * tunables.timeScale,
+          holdSeconds: tunables.messageHoldSeconds
         )
       default:
         remaining.append(effect)
