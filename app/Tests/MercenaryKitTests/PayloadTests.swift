@@ -7,7 +7,7 @@ import XCTest
 enum PayloadFixture {
   static let manifest = """
     {"schemaVersion":4,"sourceDatasetId":"world-geometry-test","sourceCoreDigest":"\(String(repeating: "a", count: 64))",
-     "decoderVersion":2,"counts":{"cells":2,"models":1,"instances":2}}
+     "decoderVersion":3,"counts":{"cells":2,"models":1,"instances":2}}
     """
 
   static let world = """
@@ -135,12 +135,12 @@ final class PayloadTests: XCTestCase {
     try PayloadFixture.write(
       into: directory,
       manifest: PayloadFixture.manifest.replacingOccurrences(
-        of: "\"decoderVersion\":2", with: "\"decoderVersion\":1"
+        of: "\"decoderVersion\":3", with: "\"decoderVersion\":2"
       )
     )
 
     XCTAssertThrowsError(try Payload.load(from: directory)) { error in
-      XCTAssertEqual(error as? Payload.LoadError, .unsupportedDecoder(1))
+      XCTAssertEqual(error as? Payload.LoadError, .unsupportedDecoder(2))
     }
   }
 

@@ -164,8 +164,8 @@ Only the current cell's detailed surface structure is expanded. Neighbouring
 cells contribute through the altitude-selected road workspace; drawing their
 detailed structures produces geometry the Reference Build never places in the
 same frame. That workspace assigns deduplicated road points from indices
-`$3F` downward. Nine shared structure records deliberately join some of their
-edges to those indices, so the 64 affected cell-edge instances are reported as
+`$3F` downward. 83 shared structure records deliberately join some of their
+edges to those indices, so the 956 affected cell-edge instances are reported as
 road-workspace links until camera-dependent workspace expansion is reproduced;
 they are not malformed local indices.
 
@@ -183,7 +183,12 @@ if rotated_point_descriptor != 0:
     u8 rotation_center_z
 ```
 
-`highest_* + 1` gives the counts. Lines follow the header. A nonzero line byte packs two four-bit point indices; zero is an escape followed by two full-byte indices. The renderer walks the line list backwards and changes line operation at `white_black_split_index`, reproducing the characteristic two-colour/erase wireframe behaviour.
+`highest_* + 1` gives the counts. Lines follow the header. Initially, each
+nonzero line byte packs two four-bit point indices. A zero marker permanently
+switches the remainder of that record to pairs of full-byte indices; the marker
+is not repeated for each pair. The renderer walks the line list backwards and
+changes line operation at `white_black_split_index`, reproducing the
+characteristic two-colour/erase wireframe behaviour.
 
 If `rotated_point_descriptor` is nonzero, its low nibble plus one is the number of leading rotated points. Four of the 98 unique records use this extension. Each such point consumes three bytes; X and Z are signed middle-byte offsets, Y is an unsigned middle-byte height, and the engine rotates the X/Z pair about the two-byte centre before joining it to the ordinary points.
 

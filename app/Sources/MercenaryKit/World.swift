@@ -121,40 +121,6 @@ public struct WorldCell: Sendable, Equatable {
     }
   }
 
-  /// Resolve the wireframe while retaining topology between local point
-  /// indices. Equal coordinates are not necessarily the same authored point.
-  func segmentComponents(at elapsed: Double) -> [[Segment]] {
-    let points = resolvedPoints(at: elapsed)
-    var remaining = edges.filter {
-      points.indices.contains($0.start) && points.indices.contains($0.end)
-    }
-    var components: [[Segment]] = []
-    while !remaining.isEmpty {
-      let seed = remaining.removeFirst()
-      var component = [seed]
-      var pointIndices = Set([seed.start, seed.end])
-      var foundAnother = true
-      while foundAnother {
-        foundAnother = false
-        for index in remaining.indices.reversed() {
-          let edge = remaining[index]
-          if pointIndices.contains(edge.start) || pointIndices.contains(edge.end) {
-            component.append(edge)
-            pointIndices.insert(edge.start)
-            pointIndices.insert(edge.end)
-            remaining.remove(at: index)
-            foundAnother = true
-          }
-        }
-      }
-      components.append(
-        component.map { edge in
-          Segment(a: points[edge.start], b: points[edge.end], ink: edge.ink)
-        })
-    }
-    return components
-  }
-
   private func resolvedPoints(at elapsed: Double) -> [SIMD3<Float>] {
     vertices.map { vertex in
       switch vertex {

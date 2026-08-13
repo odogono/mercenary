@@ -11,7 +11,7 @@ from typing import Any, Iterable
 from .core import LabError, verify_run_artifacts
 
 
-DECODER_VERSION = 2
+DECODER_VERSION = 3
 LAB_ROOT = Path(__file__).resolve().parents[1]
 WORK_ROOT = LAB_ROOT / "work"
 REPOSITORY_ROOT = LAB_ROOT.parents[1]
@@ -123,14 +123,20 @@ def encode_surface_structure(structure: dict[str, Any]) -> bytes:
     )
     if structure["rotatedPointDescriptor"]:
         encoded.extend(structure["rotationCenter"])
+    full_width = False
     for line in lines:
         start, end = line["start"], line["end"]
-        if len(bytes.fromhex(line["rawHex"])) == 1:
+        if not full_width and len(bytes.fromhex(line["rawHex"])) == 1:
             if not 0 <= start <= 0x0F or not 0 <= end <= 0x0F:
                 raise LabError("Packed surface edge index does not fit in a nibble")
             encoded.append((start << 4) | end)
         else:
-            encoded.extend((0, start, end))
+            if not 0 <= start <= 0xFF or not 0 <= end <= 0xFF:
+                raise LabError("Full-width surface edge index does not fit in a byte")
+            if not full_width:
+                encoded.append(0)
+                full_width = True
+            encoded.extend((start, end))
     for point in points:
         if point["kind"] == "rotated":
             encoded.extend(point["rotationInput"])
@@ -238,13 +244,16 @@ def decode_surface_structure(data: bytes, *, address: int) -> dict[str, Any]:
         position += 2
 
     lines: list[dict[str, Any]] = []
+    full_width = False
     for line_index in range(line_count):
         _need(data, position + 1, f"surface line at ${address:04X}")
-        if data[position] == 0:
-            _need(data, position + 3, f"wide surface line at ${address:04X}")
-            raw = data[position : position + 3]
-            start, end = raw[1], raw[2]
-            position += 3
+        if full_width or data[position] == 0:
+            marker_width = 0 if full_width else 1
+            _need(data, position + marker_width + 2, f"wide surface line at ${address:04X}")
+            raw = data[position : position + marker_width + 2]
+            start, end = raw[marker_width], raw[marker_width + 1]
+            position += marker_width + 2
+            full_width = True
         else:
             raw = data[position : position + 1]
             start, end = raw[0] >> 4, raw[0] & 0x0F

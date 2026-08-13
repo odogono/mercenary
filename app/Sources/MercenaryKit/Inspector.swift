@@ -48,44 +48,9 @@ public struct Inspector: Sendable {
     }
   }
 
-  /// Authored connected components in stable edge order. Structure records
-  /// often pair a building with separate ground or animated geometry.
-  public func segmentComponents(for subject: Subject) -> [[Segment]] {
-    switch subject {
-    case .object:
-      let segments = segments(for: subject)
-      return segments.isEmpty ? [] : [segments]
-    case .cell(let index):
-      return cell(index: index)?.segmentComponents(at: 0) ?? []
-    case .structure(let id):
-      return representativeCell(forStructure: id)?.segmentComponents(at: 0) ?? []
-    }
-  }
-
   /// Axis-aligned bounds of a subject's geometry, or nil when it has none.
   public func bounds(for subject: Subject) -> (min: SIMD3<Float>, max: SIMD3<Float>)? {
     bounds(of: segments(for: subject))
-  }
-
-  /// Bounds used by the canonical debug camera.
-  ///
-  /// Surface records can contain a detailed structure plus disconnected map or
-  /// ground runs. The Reference Build views those in situ, but fitting all of
-  /// them into one inspector tile can reduce the actual structure to a speck.
-  /// Frame the largest connected component while continuing to draw every edge.
-  public func framingBounds(for subject: Subject) -> (min: SIMD3<Float>, max: SIMD3<Float>)? {
-    switch subject {
-    case .object:
-      return bounds(for: subject)
-    case .cell, .structure:
-      let component = segmentComponents(for: subject).max {
-        if $0.count != $1.count { return $0.count < $1.count }
-        let leftPoints = Set($0.flatMap { [$0.a, $0.b] }).count
-        let rightPoints = Set($1.flatMap { [$0.a, $0.b] }).count
-        return leftPoints < rightPoints
-      }
-      return component.flatMap(bounds(of:))
-    }
   }
 
   private func bounds(of segments: [Segment]) -> (min: SIMD3<Float>, max: SIMD3<Float>)? {
@@ -106,18 +71,7 @@ public struct Inspector: Sendable {
   /// rest of the world, because a malformed model has to be visible as a
   /// malformed model. Placed on a three-quarter view so all three axes read.
   public func canonicalCamera(for subject: Subject, margin: Double = 1.6) -> Camera? {
-    guard let bounds = framingBounds(for: subject) else { return nil }
-    return canonicalCamera(for: bounds, margin: margin)
-  }
-
-  public func canonicalCamera(for segments: [Segment], margin: Double = 1.6) -> Camera? {
-    guard let bounds = bounds(of: segments) else { return nil }
-    return canonicalCamera(for: bounds, margin: margin)
-  }
-
-  private func canonicalCamera(
-    for bounds: (min: SIMD3<Float>, max: SIMD3<Float>), margin: Double
-  ) -> Camera {
+    guard let bounds = bounds(for: subject) else { return nil }
     let centre = SIMD3<Double>(
       Double(bounds.min.x + bounds.max.x) / 2,
       Double(bounds.min.y + bounds.max.y) / 2,
@@ -195,10 +149,6 @@ public struct Inspector: Sendable {
       let usageCount = world.cells.count { $0.structure == id }
       let shared = cell.unresolvedEdgeCount
       var notes = ["\(usageCount) \(usageCount == 1 ? "cell" : "cells")"]
-      let componentCount = segmentComponents(for: .structure(id: id)).count
-      if componentCount > 1 {
-        notes.append("\(componentCount) components")
-      }
       if shared > 0 {
         notes.append("\(shared) road-workspace \(shared == 1 ? "edge" : "edges")")
       }
