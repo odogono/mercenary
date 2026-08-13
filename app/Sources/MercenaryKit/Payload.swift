@@ -83,12 +83,22 @@ public enum Payload {
     public var world: WorldDocument
     public var surface: SurfaceDocument
     public var objects: ObjectsDocument
+    /// Absent when the payload was exported without an interactive capture to
+    /// decode text from.
+    public var text: TextDocument?
 
-    public init(manifest: Manifest, world: WorldDocument, surface: SurfaceDocument, objects: ObjectsDocument) {
+    public init(
+      manifest: Manifest,
+      world: WorldDocument,
+      surface: SurfaceDocument,
+      objects: ObjectsDocument,
+      text: TextDocument? = nil
+    ) {
       self.manifest = manifest
       self.world = world
       self.surface = surface
       self.objects = objects
+      self.text = text
     }
   }
 
@@ -134,7 +144,14 @@ public enum Payload {
     try check("surface.json", surface.schemaVersion)
     try check("objects.json", objects.schemaVersion)
 
-    return Bundle(manifest: manifest, world: world, surface: surface, objects: objects)
+    var text: TextDocument?
+    if FileManager.default.fileExists(atPath: directory.appendingPathComponent("text.json").path) {
+      let decoded: TextDocument = try decode("text.json", in: directory)
+      try check("text.json", decoded.schemaVersion)
+      text = decoded
+    }
+
+    return Bundle(manifest: manifest, world: world, surface: surface, objects: objects, text: text)
   }
 
   private static func check(_ name: String, _ version: Int) throws {

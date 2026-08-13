@@ -28,4 +28,6 @@ enum SceneStyle {
   static let horizon = C64Palette.lightBlue
   static let statusText = C64Palette.cyan
   static let statusBackground = C64Palette.black
+  /// The game's own message line, which the original renders in white.
+  static let messageText = C64Palette.white
 }

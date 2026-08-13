@@ -18,10 +18,13 @@ Build and deliberately never committed. Export one first:
 ```sh
 research/c64-reference-build/lab payload export \
   --dataset research/c64-reference-build/work/<geometry-dataset> \
-  --output payload
+  --output payload \
+  --run research/c64-reference-build/work/<interactive-run>
 ```
 
-Use a dataset that passes `lab geometry verify`. Then, from the repository root:
+Use a dataset that passes `lab geometry verify`. `--run` is optional and names an
+interactive capture to decode the text tables from; without it the app runs but
+has no message line. Then, from the repository root:
 
 ```sh
 swift run --package-path app mercenary
@@ -39,6 +42,7 @@ Discovery walks up from the working directory looking for `payload/manifest.json
 | `Q` / `E` | Sidestep |
 | `↑` / `↓` | Look up and down |
 | `Shift` | Run |
+| `[` / `]` | Page through the decoded messages |
 
 Speeds are tuned for how the walkabout plays, not copied from the Reference
 Build — the fidelity bar is modernised feel.
