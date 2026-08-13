@@ -44,16 +44,33 @@ final class BensonMachineTests: XCTestCase {
     XCTAssertNil(BensonMachine.start(script: 0, of: program, state: first.state, host: first.host))
   }
 
-  func testAScriptEndsItselfByClearingTheRunningFlag() throws {
-    let advance = running([.clearFlags(mask: BensonHostState.scriptRunning), .clearKey])
+  func testClearingTheRunningFlagDoesNotStopTheScript() throws {
+    // The Reference Build's step loop never consulted this flag — only its start
+    // did — so clearing it says "I may be interrupted now", not "I am done".
+    // Boarding the Dart runs on past its own clear into the craft's description.
+    let advance = running([
+      .clearFlags(mask: BensonHostState.scriptRunning),
+      .setFlags(mask: 0x01),
+      .ret,
+    ])
 
-    XCTAssertNil(advance.state.pc)
+    XCTAssertEqual(advance.host.engineFlags & 0x01, 0x01, "the script kept running")
     XCTAssertFalse(advance.host.isScriptRunning)
-    XCTAssertEqual(advance.effects, [.scriptFinished])
-    // Having finished, the next script may start.
+  }
+
+  func testAClearedRunningFlagLetsAnotherScriptStart() throws {
+    let advance = running([.clearFlags(mask: BensonHostState.scriptRunning), .testRandom(value: 0, .init(branchOn: false, branch: .jump(0)))])
+
     XCTAssertNotNil(
       BensonMachine.start(script: 0, of: program([.ret]), state: advance.state, host: advance.host)
     )
+  }
+
+  func testAScriptEndsAtAReturnWithNothingToReturnTo() throws {
+    let advance = running([.clearFlags(mask: BensonHostState.scriptRunning), .ret])
+
+    XCTAssertNil(advance.state.pc)
+    XCTAssertEqual(advance.effects, [.scriptFinished])
   }
 
   func testAnOutermostReturnLeavesTheInterpreterIdle() throws {
@@ -434,6 +451,7 @@ final class BensonMachineTests: XCTestCase {
       .testCraft(craft: 1, .init(branchOn: false, branch: .jump(7))),
       .jump(5),
       .clearFlags(mask: BensonHostState.scriptRunning),
+      .ret,
     ]
     let program = program(instructions)
     var host = BensonHostState()

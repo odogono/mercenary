@@ -269,14 +269,12 @@ public enum BensonMachine {
       return .advanced
 
     case .clearFlags(let mask):
+      // Clearing the running bit does not stop anything: the Reference Build's
+      // step loop never consulted it, only its start did. A script clears it to
+      // say it may now be interrupted, and several keep running afterwards —
+      // boarding the Dart runs on into its description that way.
       host.engineFlags &= ~mask
       state.pc = pc + 1
-      // Clearing the running bit is how a script ends itself.
-      if mask & BensonHostState.scriptRunning != 0 {
-        state.pc = nil
-        state.callStack = []
-        effects.append(.scriptFinished)
-      }
       return .advanced
 
     case .testRoom(let condition):

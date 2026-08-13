@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Stop treating a script's clear of the engine's running flag as the end of that
+  script. The Reference Build's step loop never consulted that flag — only its
+  start did — so clearing it means "I may be interrupted now", and several scripts
+  keep running afterwards. The opening's ending was being swallowed as a result:
+  boarding the Dart jumps into the craft's own description, which clears the flag
+  as its third instruction and then says "THIS CRAFT BELONGED TO THE PALYAR
+  COMMANDER'S BROTHER-IN-LAW / HE IS NOT TOO PLEASED" before the game proper
+  begins with "PALYAR SHIP ATTACKING". A script now ends where it actually ends: a
+  return with nothing to return to. Also correct the on-foot value of the
+  boarded-craft byte, which is `$80` rather than zero, because slot zero is a real
+  ship.
+
 ### Added
 
 - Run the Reference Build's own game logic: decode all 51 Benson Scripts and add a
