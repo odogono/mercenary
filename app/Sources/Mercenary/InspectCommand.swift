@@ -133,15 +133,38 @@ enum InspectCommand {
       context.setLineWidth(1)
       context.stroke(frame.insetBy(dx: 0.5, dy: 0.5))
 
-      if let camera = inspector.canonicalCamera(for: item.subject) {
-        let segments = inspector.segments(for: item.subject)
-        for segment in segments {
-          guard let line = camera.project(segment: segment, size: frame.size) else { continue }
-          context.setStrokeColor(segment.ink == .white ? gray(1) : gray(0.45))
+      let components = inspector.segmentComponents(for: item.subject).enumerated().sorted {
+        $0.element.count == $1.element.count
+          ? $0.offset < $1.offset : $0.element.count > $1.element.count
+      }
+      for (componentPosition, indexedComponent) in components.enumerated() {
+        let component = indexedComponent.element
+        let componentFrame = CGRect(
+          x: frame.minX + Double(componentPosition) * frame.width / Double(components.count),
+          y: frame.minY,
+          width: frame.width / Double(components.count), height: frame.height)
+        if componentPosition > 0 {
+          context.setStrokeColor(gray(0.15))
           context.beginPath()
-          context.move(to: CGPoint(x: frame.minX + Double(line.x1), y: frame.maxY - Double(line.y1)))
-          context.addLine(to: CGPoint(x: frame.minX + Double(line.x2), y: frame.maxY - Double(line.y2)))
+          context.move(to: CGPoint(x: componentFrame.minX, y: componentFrame.minY + 24))
+          context.addLine(to: CGPoint(x: componentFrame.minX, y: componentFrame.maxY))
           context.strokePath()
+        }
+        if let camera = inspector.canonicalCamera(for: component) {
+          for segment in component {
+            guard let line = camera.project(segment: segment, size: componentFrame.size) else { continue }
+            context.setStrokeColor(segment.ink == .white ? gray(1) : gray(0.45))
+            context.beginPath()
+            context.move(
+              to: CGPoint(
+                x: componentFrame.minX + Double(line.x1),
+                y: componentFrame.maxY - Double(line.y1)))
+            context.addLine(
+              to: CGPoint(
+                x: componentFrame.minX + Double(line.x2),
+                y: componentFrame.maxY - Double(line.y2)))
+            context.strokePath()
+          }
         }
       }
       draw(label: item.label, in: frame, context: context)

@@ -60,9 +60,10 @@ app/.build/debug/mercenary --inspect-object 3 --out /tmp/o.png [--in-situ]
 app/.build/debug/mercenary --inspect-cell 72 --out /tmp/c.png
 ```
 
-The default view is canonical: a camera framed to the subject's own bounds, with
-no level of detail and no orientation, because a malformed model has to be visible
-as one. `--in-situ` draws the object as the game would instead.
+The default view is canonical, with no level of detail or orientation. Structure
+tiles split disconnected authored components into separately framed panes; this
+keeps a building readable when its record also contains a long ground run.
+`--in-situ` draws an object as the game would instead.
 
 ## Headless frame capture
 
