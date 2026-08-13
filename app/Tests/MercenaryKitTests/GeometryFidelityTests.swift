@@ -95,6 +95,43 @@ final class ReferenceViewportTests: XCTestCase {
     XCTAssertEqual(small.verticalFieldOfView, large.verticalFieldOfView, accuracy: 1e-12)
   }
 
+  func testReferenceBuildFocusProjectsAUnitRatioBy64Pixels() {
+    let camera = Camera(position: .zero, heading: 0, pitch: 0)
+
+    let point = camera.project(
+      camera.viewSpace(SIMD3<Float>(1_000, 0, 1_000)),
+      size: CGSize(width: 160, height: 136))
+
+    XCTAssertEqual(point.x, 144, accuracy: 0.0001)
+    XCTAssertEqual(point.y, 68, accuracy: 0.0001)
+  }
+
+  func testReferenceBuildDoublesTheVerticalRatioBeforeProjection() {
+    let camera = Camera(position: .zero, heading: 0, pitch: 0)
+
+    let point = camera.project(
+      camera.viewSpace(SIMD3<Float>(0, 500, 1_000)),
+      size: CGSize(width: 160, height: 136))
+
+    XCTAssertEqual(point.x, 80, accuracy: 0.0001)
+    XCTAssertEqual(point.y, 4, accuracy: 0.0001)
+  }
+
+  func testACustomVerticalFieldOfViewChangesOnlyTheVerticalScale() {
+    let neutralVerticalFieldOfView = 2 * atan(
+      ReferenceViewport.height / 2 / ReferenceViewport.focalPixels)
+    let camera = Camera(
+      position: .zero, heading: 0, pitch: 0,
+      verticalFieldOfView: neutralVerticalFieldOfView)
+
+    let point = camera.project(
+      camera.viewSpace(SIMD3<Float>(500, 500, 1_000)),
+      size: CGSize(width: 160, height: 136))
+
+    XCTAssertEqual(point.x, 112, accuracy: 0.0001)
+    XCTAssertEqual(point.y, 36, accuracy: 0.0001)
+  }
+
   func testAPointSubtendsTheSameAngleAtAnyWindowSize() {
     let camera = Camera(position: .zero, heading: 0, pitch: 0)
     func fraction(_ size: CGSize) -> Double {

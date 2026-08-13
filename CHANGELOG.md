@@ -39,6 +39,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Replace the guessed 124-pixel camera focal length with the Reference Build's
+  decoded projection: FOCUS `$18` yields `64 X/Z`, while the Y pipeline's extra
+  exponent step yields `128 Y/Z`. This removes the over-wide, flattened look of
+  objects, pins apparent size in projection tests, and calibrates the cell 8:8
+  opening to a neutral-horizon pose 12,000 world units from its scene focus.
 - Carry the Reference Build's presentation rules through to the app, which the
   payload exporter had been discarding: the object detail cube and far-point
   representation, the road altitude table, structure rotation data, and the

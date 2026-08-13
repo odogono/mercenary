@@ -13,16 +13,18 @@ public struct ScreenLine: Sendable, Equatable {
 /// (80, 68). Adopting its aspect and centre means objects subtend the angles they
 /// did originally once the frustum is scaled to the window.
 ///
-/// The focal length is *not* recovered from the original — only the viewport
-/// dimensions and centre are. It is expressed here in reference pixels so that a
-/// future decode can replace one constant.
+/// The perspective scale follows the Reference Build's `$21` FOCUS value of
+/// `$18`. Its floating-point projection adds six exponent steps to X/Z,
+/// multiplying that ratio by 64. Y receives one additional exponent step, so
+/// its ratio is multiplied by 128 before either axis is added to the centre.
 public struct ReferenceViewport: Sendable {
   public static let width: Double = 160
   public static let height: Double = 136
   public static let centre = (x: 80.0, y: 68.0)
-  /// Half-height focal length in reference pixels. Chosen to frame the world
-  /// comfortably; the original's value is still unknown.
-  public static let focalPixels: Double = 124
+  /// Perspective scale in reference pixels, decoded from FOCUS `$18` as 2^6.
+  public static let focalPixels: Double = 64
+  /// The point pipeline increments the Y exponent once before perspective.
+  public static let verticalRatioScale: Double = 2
 
   public var size: CGSize
 
@@ -40,12 +42,17 @@ public struct ReferenceViewport: Sendable {
     CGPoint(x: Double(size.width) / 2, y: Double(size.height) / 2)
   }
 
-  /// Focal length in view pixels.
-  public var focalLength: Double { ReferenceViewport.focalPixels * scale }
+  /// Horizontal and vertical perspective scales in view pixels.
+  public var horizontalFocalLength: Double { ReferenceViewport.focalPixels * scale }
+  public var verticalFocalLength: Double {
+    ReferenceViewport.focalPixels * ReferenceViewport.verticalRatioScale * scale
+  }
 
   /// Vertical field of view implied by the reference frustum.
   public var verticalFieldOfView: Double {
-    2 * atan(ReferenceViewport.height / 2 / ReferenceViewport.focalPixels)
+    2 * atan(
+      ReferenceViewport.height / 2
+        / (ReferenceViewport.focalPixels * ReferenceViewport.verticalRatioScale))
   }
 }
 
@@ -107,15 +114,21 @@ public struct Camera: Sendable, Equatable {
   /// original's aspect and centre whatever the window size.
   public func project(_ view: SIMD3<Double>, size: CGSize) -> CGPoint {
     let viewport = ReferenceViewport(size: size)
-    let scale = viewport.focalLength / view.z
     let centre = viewport.centre
-    return CGPoint(x: centre.x + view.x * scale, y: centre.y - view.y * scale)
+    return CGPoint(
+      x: centre.x + view.x * viewport.horizontalFocalLength / view.z,
+      y: centre.y - view.y * verticalFocalLength(size: size) / view.z)
   }
 
   /// Where the horizon sits in view pixels for this camera.
   public func horizon(size: CGSize) -> Double {
     let viewport = ReferenceViewport(size: size)
-    return viewport.centre.y + tan(pitch) * viewport.focalLength
+    return viewport.centre.y + tan(pitch) * verticalFocalLength(size: size)
+  }
+
+  private func verticalFocalLength(size: CGSize) -> Double {
+    let referencePixels = ReferenceViewport.height / 2 / tan(verticalFieldOfView / 2)
+    return referencePixels * ReferenceViewport(size: size).scale
   }
 
   /// Clip a segment to the near plane, returning nil when it is wholly behind.
