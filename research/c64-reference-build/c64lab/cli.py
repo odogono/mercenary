@@ -25,6 +25,7 @@ from .catalogue import (
     summarize_catalogue,
     verify_catalogue,
 )
+from .payload import export_payload
 from .object_semantics import (
     attest_object_semantics,
     corroborate_object_semantics,
@@ -175,6 +176,12 @@ def _parser() -> argparse.ArgumentParser:
     verification_render.add_argument("--report", required=True, type=Path)
     verification_render.add_argument("--output", required=True, type=Path)
 
+    payload_parser = subparsers.add_parser("payload", help="export the app's Data Payload from a verified dataset")
+    payload_commands = payload_parser.add_subparsers(dest="payload_command", required=True)
+    payload_export = payload_commands.add_parser("export", help="write the Data Payload for one World Geometry Dataset")
+    payload_export.add_argument("--dataset", required=True, type=Path)
+    payload_export.add_argument("--output", required=True, type=Path)
+
     implementation_parser = subparsers.add_parser("implementation", help="validate production implementation contracts")
     implementation_commands = implementation_parser.add_subparsers(dest="implementation_command", required=True)
     implementation_validate = implementation_commands.add_parser("validate", help="validate schemas, CDDL, and golden vectors")
@@ -222,6 +229,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 result = attest_object_semantics(arguments.mapping, arguments.run, arguments.report)
             else:
                 result = verify_object_semantics(arguments.mapping)
+        elif arguments.command == "payload":
+            result = export_payload(arguments.dataset, arguments.output)
         elif arguments.command == "implementation":
             result = {"status": "verified", **validate_implementation_contracts(arguments.root)}
         elif arguments.command == "verification":

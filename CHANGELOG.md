@@ -22,6 +22,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Deliver M1, the surface walkabout (issue #44): a macOS app that loads the Data
+  Payload and lets you walk around Targ in authentic C64-palette wireframe. Adds
+  the `app/` Swift package — `MercenaryKit` (payload decoding, world building,
+  projection, and a pure deterministic `GameCore`) and `Mercenary` (window,
+  input, Canvas renderer) — plus `lab payload export`, which rewrites a verified
+  World Geometry Dataset into the runtime payload shape without decoding anything
+  new. Includes headless `--render-frame` capture for fidelity spot-checks from a
+  machine that cannot open a window, and `notes/decode/surface-geometry.md`
+  recording the world frame, the 410 deferred runtime-rotated edges, and the
+  object-grounding judgement.
+
+### Changed
+
+- Pivot the project to a private-first playable artifact (ADR 0014). The
+  verification-era apparatus — Behavior Cases, Acceptance Envelopes, Evidence
+  records, Conformance Reports, and the uncertainty ledger — is frozen as
+  history and extended by nothing; the maintainer playing the remake beside the
+  Reference Build becomes the fidelity judge, with a modernised-feel bar. Game
+  data moves to a single gitignored Data Payload re-extracted by this project's
+  own tooling; the community Reference Disassembly is consumed as unlicensed
+  reference documentation only. Game logic will run as original Benson Scripts
+  under a native interpreter behind a host-callout seam sized for a later Lua
+  rewrite. Add Data Payload, Benson Script, and Reference Disassembly to the
+  shared language and mark the claim-era terms historical.
+
+### Added
+
 - Verify the enterable-object inventory and its Handler-Equivalence Class
   assignment for UNC-0002 (issue #28), unblocking UNC-0001's exhaustive Semantic
   Mode inventory. The inventory is closed by decoded dispatch reachability and
