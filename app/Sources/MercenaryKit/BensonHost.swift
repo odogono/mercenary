@@ -41,6 +41,11 @@ public struct BensonHostState: Sendable, Equatable {
   public var objectFlags: [Int: UInt8]
   public var inventory: Set<Int>
   public var destroyedBlocks: Set<Int>
+  /// Global capability overrides the Reference Build kept beside the object
+  /// tables: one lifts anything however heavy, the other takes anything however
+  /// firmly fixed. Both are off until something in the world grants them.
+  public var canLiftAnything: Bool
+  public var canTakeAnything: Bool
   /// A ship is attacking the player.
   public var attackingShip: Bool
   /// The player has escaped Targ.
@@ -54,6 +59,10 @@ public struct BensonHostState: Sendable, Equatable {
   /// Reference Build's own on-foot value, and negative as a signed byte, which is
   /// how its boarding check tested for it.
   public static let onFoot = 0x80
+
+  /// The room value for an object that is no longer in the world, because the
+  /// player took it or climbed into it.
+  public static let outOfTheWorld = 0xFF
 
   /// The flag bit the host sets when the player presses a key.
   public static let inputDetected: UInt8 = 0x80
@@ -80,6 +89,8 @@ public struct BensonHostState: Sendable, Equatable {
     objectFlags: [Int: UInt8] = [:],
     inventory: Set<Int> = [],
     destroyedBlocks: Set<Int> = [],
+    canLiftAnything: Bool = false,
+    canTakeAnything: Bool = false,
     attackingShip: Bool = false,
     gameComplete: Bool = false,
     shipInbound: Int = 0,
@@ -97,6 +108,8 @@ public struct BensonHostState: Sendable, Equatable {
     self.objectFlags = objectFlags
     self.inventory = inventory
     self.destroyedBlocks = destroyedBlocks
+    self.canLiftAnything = canLiftAnything
+    self.canTakeAnything = canTakeAnything
     self.attackingShip = attackingShip
     self.gameComplete = gameComplete
     self.shipInbound = shipInbound

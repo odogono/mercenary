@@ -130,6 +130,9 @@ public enum Payload {
     /// Absent for the same reason as `text`, which it depends on: its inline
     /// messages and message indices are meaningless without the word dictionary.
     public var benson: BensonDocument?
+    /// Absent when the payload was exported without a capture to read the
+    /// take-and-board rules from.
+    public var interaction: InteractionDocument?
 
     public init(
       manifest: Manifest,
@@ -137,7 +140,8 @@ public enum Payload {
       surface: SurfaceDocument,
       objects: ObjectsDocument,
       text: TextDocument? = nil,
-      benson: BensonDocument? = nil
+      benson: BensonDocument? = nil,
+      interaction: InteractionDocument? = nil
     ) {
       self.manifest = manifest
       self.world = world
@@ -145,6 +149,7 @@ public enum Payload {
       self.objects = objects
       self.text = text
       self.benson = benson
+      self.interaction = interaction
     }
   }
 
@@ -183,6 +188,9 @@ public enum Payload {
   /// The Benson document versions separately again: its instruction format is
   /// ours rather than the Reference Build's, so it moves as the interpreter does.
   public static let supportedBensonSchemaVersion = 1
+  /// The interaction rules version separately again: they are decoded engine
+  /// parameters rather than geometry, and move when that routine's decode does.
+  public static let supportedInteractionSchemaVersion = 1
 
   /// Load and schema-check a payload directory.
   public static func load(from directory: URL) throws -> Bundle {
@@ -224,8 +232,18 @@ public enum Payload {
       benson = decoded
     }
 
+    var interaction: InteractionDocument?
+    if FileManager.default.fileExists(atPath: directory.appendingPathComponent("interaction.json").path) {
+      let decoded: InteractionDocument = try decode("interaction.json", in: directory)
+      guard decoded.schemaVersion == supportedInteractionSchemaVersion else {
+        throw LoadError.unsupportedSchema("interaction.json", decoded.schemaVersion)
+      }
+      interaction = decoded
+    }
+
     return Bundle(
-      manifest: manifest, world: world, surface: surface, objects: objects, text: text, benson: benson
+      manifest: manifest, world: world, surface: surface, objects: objects, text: text,
+      benson: benson, interaction: interaction
     )
   }
 

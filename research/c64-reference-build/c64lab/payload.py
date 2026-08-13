@@ -24,6 +24,7 @@ from .geometry import (
     verify_dataset,
 )
 from .benson import decode_benson
+from .interaction import decode_interaction
 from .text import decode_text
 
 
@@ -209,7 +210,7 @@ def build_objects(objects: dict[str, Any]) -> dict[str, Any]:
 #: Documents decoded from a capture rather than from the geometry dataset. Each
 #: reports its own counts, so they are prefixed to keep one document's totals
 #: from colliding with another's as more of them arrive.
-CAPTURE_DOCUMENTS = ("text.json", "benson.json")
+CAPTURE_DOCUMENTS = ("text.json", "benson.json", "interaction.json")
 
 
 def capture_counts(documents: dict[str, Any]) -> dict[str, int]:
@@ -245,6 +246,7 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
         ram, _ = load_geometry_source(run)
         documents["text.json"] = decode_text(ram)
         documents["benson.json"] = decode_benson(ram)
+        documents["interaction.json"] = decode_interaction(ram)
     resolved.mkdir(parents=True, exist_ok=True)
     files: list[dict[str, Any]] = []
     for name, document in documents.items():
