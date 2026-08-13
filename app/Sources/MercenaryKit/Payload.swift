@@ -47,35 +47,42 @@ public enum Payload {
   }
 
   public struct SurfaceDocument: Codable, Sendable, Equatable {
-    /// A structure point the Reference Build rotates at runtime. Carried rather
-    /// than dropped so a later pass can place it.
-    public struct DeferredVertex: Codable, Sendable, Equatable {
-      public var vertex: Int
-      public var rotationInput: [Int]
+    public struct Vertex: Codable, Sendable, Equatable {
+      public enum Kind: String, Codable, Sendable {
+        case worldPoint = "world-point"
+        case rotatedInput = "rotated-input"
+      }
+
+      public var kind: Kind
+      public var position: [Int]?
+      public var rotationInput: [Int]?
+
+      public init(kind: Kind, position: [Int]?, rotationInput: [Int]?) {
+        self.kind = kind
+        self.position = position
+        self.rotationInput = rotationInput
+      }
     }
 
-    public struct RotatedStructure: Codable, Sendable, Equatable {
-      public var id: String
-      public var rotatedPointDescriptor: Int
-      public var rotationCenter: [Int]?
-      public var rotatedPointCount: Int
+    public struct Rotation: Codable, Sendable, Equatable {
+      public var descriptor: Int
+      public var center: [Int]
     }
 
     public struct Cell: Codable, Sendable, Equatable {
       public var cell: Int
       public var grid: [Int]
       public var structure: String?
-      /// World-space integer positions; index space for ``edges``.
-      public var vertices: [[Int]]
+      /// Original structure point order. Rotated inputs deliberately remain in
+      /// the same index space as world points so every decoded edge survives.
+      public var vertices: [Vertex]
       /// `[startIndex, endIndex, inkCode]` triples.
       public var edges: [[Int]]
-      public var deferredVertices: [DeferredVertex]
-      public var deferredEdges: Int
+      public var rotation: Rotation?
     }
 
     public var schemaVersion: Int
     public var cells: [Cell]
-    public var rotatedStructures: [RotatedStructure]
   }
 
   public struct ObjectsDocument: Codable, Sendable, Equatable {
@@ -141,6 +148,7 @@ public enum Payload {
     case missingFile(String)
     case unreadable(String, String)
     case unsupportedSchema(String, Int)
+    case unsupportedDecoder(Int)
 
     public var description: String {
       switch self {
@@ -156,11 +164,14 @@ public enum Payload {
         return "Could not read \(name) from the Data Payload: \(reason)"
       case .unsupportedSchema(let name, let version):
         return "Data Payload \(name) declares unsupported schemaVersion \(version)."
+      case .unsupportedDecoder(let version):
+        return "Data Payload was extracted with geometry decoder \(version); re-extract and export it."
       }
     }
   }
 
-  public static let supportedSchemaVersion = 3
+  public static let supportedSchemaVersion = 4
+  public static let supportedDecoderVersion = 2
   /// The text document carries its own version, because its format is
   /// independent of the geometry documents and changes on its own schedule.
   public static let supportedTextSchemaVersion = 1
@@ -180,6 +191,9 @@ public enum Payload {
     try check("world.json", world.schemaVersion)
     try check("surface.json", surface.schemaVersion)
     try check("objects.json", objects.schemaVersion)
+    guard manifest.decoderVersion == supportedDecoderVersion else {
+      throw LoadError.unsupportedDecoder(manifest.decoderVersion)
+    }
 
     var text: TextDocument?
     if FileManager.default.fileExists(atPath: directory.appendingPathComponent("text.json").path) {

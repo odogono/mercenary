@@ -17,6 +17,7 @@ from c64lab.payload import (
     build_surface,
     build_world,
     export_payload,
+    require_current_geometry_decoder,
 )
 
 
@@ -38,6 +39,7 @@ def _surface() -> dict:
             {
                 "cell": 0,
                 "grid": [0, 0],
+                "structure": "surface-structure:test",
                 "roads": [{"startGrid": [0, 0], "endGrid": [3, 0], "segment": 0}],
                 "expanded": {
                     "bounds": {"min": [0, 0, 0], "max": [100, 200, 300]},
@@ -55,6 +57,7 @@ def _surface() -> dict:
             {
                 "cell": 1,
                 "grid": [1, 0],
+                "structure": "surface-structure:plain",
                 # The same segment is listed from the other end, so the road
                 # network must deduplicate it.
                 "roads": [{"startGrid": [3, 0], "endGrid": [0, 0], "segment": 0}],
@@ -159,26 +162,29 @@ class WorldExportTests(unittest.TestCase):
 
 
 class SurfaceExportTests(unittest.TestCase):
-    def test_reindexes_world_points_and_maps_ink(self) -> None:
+    def test_preserves_the_complete_vertex_index_space_and_maps_ink(self) -> None:
         surface = build_surface(_surface())
         first = surface["cells"][0]
 
-        self.assertEqual(first["vertices"], [[0, 0, 0], [100, 0, 0]])
-        self.assertEqual(first["edges"], [[0, 1, 0]])
+        self.assertEqual(
+            first["vertices"],
+            [
+                {"kind": "world-point", "position": [0, 0, 0]},
+                {"kind": "world-point", "position": [100, 0, 0]},
+                {"kind": "rotated-input", "rotationInput": [1, 2, 3]},
+            ],
+        )
+        self.assertEqual(first["edges"], [[0, 1, 0], [1, 2, 1]])
 
-    def test_defers_runtime_rotated_vertices_but_keeps_their_rotation_input(self) -> None:
+    def test_attaches_runtime_rotation_to_the_cell_that_uses_it(self) -> None:
         first = build_surface(_surface())["cells"][0]
 
-        self.assertEqual(first["deferredEdges"], 1)
-        self.assertEqual(first["deferredVertices"], [{"vertex": 2, "rotationInput": [1, 2, 3]}])
+        self.assertEqual(first["rotation"], {"descriptor": 0x73, "center": [132, 132]})
 
-    def test_reports_only_the_structures_that_carry_rotated_points(self) -> None:
-        structures = build_surface(_surface())["rotatedStructures"]
+    def test_plain_cells_do_not_claim_a_rotation(self) -> None:
+        second = build_surface(_surface())["cells"][1]
 
-        self.assertEqual(len(structures), 1)
-        self.assertEqual(structures[0]["id"], "surface-structure:test")
-        self.assertEqual(structures[0]["rotatedPointCount"], 4)
-        self.assertEqual(structures[0]["rotationCenter"], [132, 132])
+        self.assertIsNone(second["rotation"])
 
     def test_rejects_an_unknown_ink_operation(self) -> None:
         surface = _surface()
@@ -222,6 +228,10 @@ class ObjectExportTests(unittest.TestCase):
 
 
 class PayloadOutputGuardTests(unittest.TestCase):
+    def test_requires_geometry_to_be_reextracted_with_the_current_decoder(self) -> None:
+        with self.assertRaisesRegex(LabError, "re-extract"):
+            require_current_geometry_decoder({"decoderVersion": 1})
+
     def test_refuses_to_write_outside_ignored_storage(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             dataset = Path(directory) / "dataset"

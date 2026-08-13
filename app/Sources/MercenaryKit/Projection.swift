@@ -184,7 +184,7 @@ public struct VisibilitySelector: Sendable {
   /// collapse to a point, which the original does too — the doc calls that
   /// transition part of its look.
   ///
-  public func visible(in world: World, from position: SIMD3<Double>) -> Visible {
+  public func visible(in world: World, from position: SIMD3<Double>, elapsed: Double = 0) -> Visible {
     let column = Int((position.x / Double(world.cellSize)).rounded(.down))
     let row = Int((position.z / Double(world.cellSize)).rounded(.down))
     var segments: [Segment] = []
@@ -192,7 +192,7 @@ public struct VisibilitySelector: Sendable {
       for dz in -cellRadius...cellRadius {
         for dx in -cellRadius...cellRadius {
           guard let cell = world.cell(column: column + dx, row: row + dz) else { continue }
-          segments.append(contentsOf: cell.segments)
+          segments.append(contentsOf: cell.segments(at: elapsed))
         }
       }
     }

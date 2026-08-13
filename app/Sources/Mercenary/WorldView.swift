@@ -25,7 +25,9 @@ struct WorldView: View {
     let camera = Camera(player: model.state.player)
     drawGround(context: context, size: size, camera: camera)
 
-    let visible = model.selector.visible(in: world, from: model.state.player.position)
+    let visible = model.selector.visible(
+      in: world, from: model.state.player.position, elapsed: model.state.elapsed
+    )
     var paths: [Ink: Path] = [:]
     var drawn = 0
     for segment in visible.segments {

@@ -11,7 +11,7 @@ from typing import Any, Iterable
 from .core import LabError, verify_run_artifacts
 
 
-DECODER_VERSION = 1
+DECODER_VERSION = 2
 LAB_ROOT = Path(__file__).resolve().parents[1]
 WORK_ROOT = LAB_ROOT / "work"
 REPOSITORY_ROOT = LAB_ROOT.parents[1]
@@ -25,6 +25,12 @@ def signed24(value: int) -> int:
     if not 0 <= value <= 0xFFFFFF:
         raise LabError(f"24-bit value is out of range: {value}")
     return value - 0x1000000 if value & 0x800000 else value
+
+
+def signed8(value: int) -> int:
+    if not 0 <= value <= 0xFF:
+        raise LabError(f"8-bit value is out of range: {value}")
+    return value - 0x100 if value & 0x80 else value
 
 
 def decode_high_altitude_map(ram: bytes) -> dict[str, Any]:
@@ -88,9 +94,9 @@ def encode_object_model(model: dict[str, Any]) -> bytes:
         normalized = vertex["normalized"]
         if len(normalized) != 3 or any(component % 16 for component in normalized):
             raise LabError("Object model normalized coordinates are not exact sixteenth-byte displacements")
-        raw = [(component >> 4) + 0x80 for component in normalized]
-        if any(not 0 <= component <= 0xFF for component in raw):
-            raise LabError("Object model normalized coordinate cannot be represented by a biased byte")
+        raw = [(component >> 4) & 0xFF for component in normalized]
+        if any(not -0x80 <= component >> 4 <= 0x7F for component in normalized):
+            raise LabError("Object model normalized coordinate cannot be represented by a signed byte")
         encoded.extend(raw)
     edges = model["edges"]
     if not 1 <= len(edges) <= 128:
@@ -169,7 +175,7 @@ def decode_object_model(data: bytes, *, address: int) -> dict[str, Any]:
             {
                 "geometryIdentity": f"object-model:{address:04x}:vertex:{index:02x}",
                 "raw": list(raw),
-                "normalized": [(component - 0x80) << 4 for component in raw],
+                "normalized": [signed8(component) << 4 for component in raw],
                 "provenanceRefs": [f"span:{address + position - 3:04x}-{address + position - 1:04x}"],
             }
         )

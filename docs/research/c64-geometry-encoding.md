@@ -6,7 +6,7 @@ Research for [Determine the C64 geometry encoding and transform pipeline](https:
 
 The Reference Build does not contain one mesh bank. It has three geometry systems which converge on the same 64-point camera-space work arrays and wireframe line renderer:
 
-1. **Objects** use 64 instance slots and 55 unique explicit model records. Each model is a list of biased 8-bit local vertices followed by either packed or wide edge indices. Instances have 24-bit world positions and, for the first 16 slots, optional three-axis orientation.
+1. **Objects** use 64 instance slots and 55 unique explicit model records. Each model is a list of signed 8-bit local vertices followed by either packed or wide edge indices. Instances have 24-bit world positions and, for the first 16 slots, optional three-axis orientation.
 2. **The surface** is a 16-by-16 world grid. Each cell selects one of 98 unique structure records through a 256-entry pointer table. Four additional 256-byte tables describe as many as two road/map segments per cell using nibble-packed grid points. Structure records contain edge lists and compact point coordinates, including a small rotated-point extension.
 3. **The underground** has 192 room IDs backed by 174 unique, overlapping room records. Rooms are not stored as explicit meshes: a record selects and places primitive templates which the engine expands into vertices and edges at runtime. The same records also carry navigation/collision information, so raw room commands must remain in the World Geometry Dataset alongside derived geometry.
 
@@ -78,9 +78,9 @@ A model record is:
 ```text
 u8 highest_vertex_index               // vertex_count = value + 1
 repeat vertex_count:
-    u8 biased_x
-    u8 biased_y
-    u8 biased_z
+    i8 local_x
+    i8 local_y
+    i8 local_z
 u8 edge_header
 if edge_header.bit7 == 0:
     repeat ((edge_header & $7F) + 1):
@@ -93,13 +93,13 @@ else:
 
 The wide form is used when a model needs vertex indices above 15. As a concrete check, the record at `$1700` has 18 vertices and 13 wide edges; the record at `$1752` has 13 vertices and 22 packed edges.
 
-Local coordinate bytes are offset-binary. The renderer converts each component to a signed local displacement equivalent to:
+Local coordinate bytes are signed two's-complement values. The renderer first subtracts `$0800` from each instance-relative axis, then flips each byte's sign bit and shifts it four places. Those two operations combine to the exact local displacement:
 
 ```text
-local_component = (raw_byte - $80) << 4
+local_component = signed8(raw_byte) << 4
 ```
 
-This follows from the four shifts at `$A6F1-$A725` and the `$0800` centering subtraction at `$9788-$97AB`. Values close to `$00` and `$FF` therefore represent the negative and positive extremes; they are not ordinary signed bytes.
+This follows from the four shifts at `$A6F1-$A725` together with the `$0800` subtraction at `$9788-$97AB`; interpreting either operation alone gives the wrong centre. `$00` is zero, `$7F` is `+2032`, `$80` is `-2048`, and `$FF` is `-16`.
 
 ### Instance record
 
@@ -113,7 +113,7 @@ z24 = RAM[$2900+i] | RAM[$2500+i]<<8 | RAM[$25C0+i]<<16
 
 Interpret each result as signed two's-complement 24-bit when doing relative-position arithmetic. Position entries are mutable game state, so a dataset needs both the initial value and provenance for state-dependent changes.
 
-Object slots below `$10` may additionally be rotated by values in `$800A+i`, `$801A+i`, and `$802A+i`. The model decoder applies three plane rotations in sequence before scaling the biased local bytes. The affected coordinate pairs show that these are rotations around the Z, X, and Y axes respectively. Other object slots are emitted without model-local rotation.
+Object slots below `$10` may additionally be rotated by values in `$800A+i`, `$801A+i`, and `$802A+i`. The model decoder applies three plane rotations in sequence before scaling the signed local bytes. The affected coordinate pairs show that these are rotations around the Z, X, and Y axes respectively. Other object slots are emitted without model-local rotation.
 
 `$2940+i` associates an object with an underground room or the surface context. `$29C0+i` participates in visibility, pickup/vehicle state, and other behaviour. These bytes are not geometry, but omitting them would make instance placement and visibility impossible to reproduce.
 
@@ -176,7 +176,9 @@ if rotated_point_descriptor != 0:
 
 `highest_* + 1` gives the counts. Lines follow the header. A nonzero line byte packs two four-bit point indices; zero is an escape followed by two full-byte indices. The renderer walks the line list backwards and changes line operation at `white_black_split_index`, reproducing the characteristic two-colour/erase wireframe behaviour.
 
-If `rotated_point_descriptor` is nonzero, its low nibble plus one is the number of leading rotated points. Four of the 98 unique records use this extension. Each such point consumes three bytes; the engine rotates its X/Z pair about the two-byte centre before joining it to the ordinary points. The descriptor's high nibble contributes to the rotation state and must be retained raw.
+If `rotated_point_descriptor` is nonzero, its low nibble plus one is the number of leading rotated points. Four of the 98 unique records use this extension. Each such point consumes three bytes; X and Z are signed middle-byte offsets, Y is an unsigned middle-byte height, and the engine rotates the X/Z pair about the two-byte centre before joining it to the ordinary points.
+
+The rotation update adds `(descriptor & $F0) >> 1` to a 16-bit phase once per PAL update. The sine routine treats the low byte as the position within a quadrant and the low two bits of the high byte as the quadrant, so `$0400` phase units make a full turn. For `surface-structure:cef6`, descriptor `$32` therefore means three leading rotated points and a 24-unit phase step. Its first six white edges join those points into the rotating inverted pyramid; the remaining eight black edges are the fixed airstrip outline.
 
 Ordinary points use two bytes, `qx` and `qz`:
 
@@ -241,7 +243,6 @@ Each normalized vertex, edge, instance, or room command should carry at minimum:
 ## Remaining uncertainties
 
 - The semantic names of all 64 object slots are not encoded beside the model pointers. Slot `$3F` should remain an “orbital-station candidate” until verified through an observed encounter or authoritative text/behaviour correlation.
-- The high-nibble semantics of the surface rotated-point descriptor are known to participate in rotation but are not yet named confidently.
 - Several synthetic surface point indices are initialized by surrounding engine state. Their exact semantic names should be established while implementing the extractor, although their runtime coordinates can already be captured and validated.
 - Room command byte 1 and opcode high bits combine geometry with portal/collision/game-state behaviour. Geometry expansion is resolved, but full behavioural naming belongs with the player-observable content catalogue.
 

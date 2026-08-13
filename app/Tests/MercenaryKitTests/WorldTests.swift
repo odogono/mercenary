@@ -19,7 +19,7 @@ final class WorldTests: XCTestCase {
     XCTAssertEqual(world.cellSize, 1000)
     XCTAssertEqual(world.groundExtent, 4000)
     let first = try XCTUnwrap(world.cell(column: 0, row: 0))
-    XCTAssertEqual(first.segments.count, 2)
+    XCTAssertEqual(first.segments(at: 0).count, 2)
     XCTAssertEqual(first.centre, SIMD3(500, 0, 500))
   }
 
@@ -27,15 +27,30 @@ final class WorldTests: XCTestCase {
     let world = World(bundle: try bundle())
     let cell = try XCTUnwrap(world.cell(column: 0, row: 0))
 
-    XCTAssertEqual(cell.segments.map(\.ink), [.white, .black])
+    XCTAssertEqual(cell.segments(at: 0).map(\.ink), [.white, .black])
   }
 
-  func testDeferredEdgesAreCountedNotDrawn() throws {
+  func testEdgesTouchingRotatedPointsAreDrawn() throws {
     let world = World(bundle: try bundle())
-    let sparse = try XCTUnwrap(world.cell(column: 1, row: 0))
+    let rotating = try XCTUnwrap(world.cell(column: 0, row: 0))
 
-    XCTAssertEqual(world.deferredEdges, 3)
-    XCTAssertEqual(sparse.segments.count, 1)
+    XCTAssertEqual(world.deferredEdges, 0)
+    XCTAssertEqual(rotating.segments(at: 0).count, 2)
+    XCTAssertEqual(rotating.segments(at: 0)[1].b, SIMD3(34_048, 512, 34_560))
+  }
+
+  func testRotatedPointsUseAReferenceBuildRateAndDeterministicElapsedTime() throws {
+    let world = World(bundle: try bundle())
+    let rotating = try XCTUnwrap(world.cell(column: 0, row: 0))
+    let initial = rotating.segments(at: 0)[1].b
+    let beforeFirstUpdate = rotating.segments(at: 0.019)[1].b
+    let afterFirstUpdate = rotating.segments(at: 0.020)[1].b
+    let angle = 56.0 / 1_024.0 * (2 * Double.pi)
+
+    XCTAssertEqual(beforeFirstUpdate, initial)
+    XCTAssertEqual(afterFirstUpdate.x, Float(33_792 + 256 * cos(angle) - 768 * sin(angle)), accuracy: 0.01)
+    XCTAssertEqual(afterFirstUpdate.y, 512, accuracy: 0.01)
+    XCTAssertEqual(afterFirstUpdate.z, Float(33_792 + 256 * sin(angle) + 768 * cos(angle)), accuracy: 0.01)
   }
 
   func testMapLinesPreserveFullRunsBetweenGridCentres() throws {
@@ -173,6 +188,7 @@ final class VisibilitySelectorTests: XCTestCase {
   func testCellEightEightAirstripIsStructureGeometryNotMapLines() throws {
     var payload = try bundle()
     payload.world.grid.cellsPerAxis = 16
+    payload.world.grid.cellSize = 65_536
     payload.world.roadAltitudeLookup = [0]
     payload.world.roadCells = [.init(cell: 0x88, segments: [])]
     var airstrip = payload.surface.cells[0]
@@ -180,20 +196,38 @@ final class VisibilitySelectorTests: XCTestCase {
     airstrip.grid = [8, 8]
     airstrip.structure = "surface-structure:cef6"
     airstrip.vertices = [
-      [8_000, 0, 8_200], [9_000, 0, 8_200],
-      [8_000, 0, 8_800], [9_000, 0, 8_800],
+      .init(kind: .rotatedInput, position: nil, rotationInput: [240, 8, 244]),
+      .init(kind: .rotatedInput, position: nil, rotationInput: [0, 8, 24]),
+      .init(kind: .rotatedInput, position: nil, rotationInput: [16, 8, 244]),
+      .init(kind: .worldPoint, position: [553_984, 0, 560_896], rotationInput: nil),
+      .init(kind: .worldPoint, position: [550_000, 0, 558_000], rotationInput: nil),
+      .init(kind: .worldPoint, position: [568_000, 0, 558_000], rotationInput: nil),
+      .init(kind: .worldPoint, position: [550_000, 0, 560_000], rotationInput: nil),
+      .init(kind: .worldPoint, position: [568_000, 0, 560_000], rotationInput: nil),
+      .init(kind: .worldPoint, position: [550_000, 0, 562_000], rotationInput: nil),
+      .init(kind: .worldPoint, position: [568_000, 0, 562_000], rotationInput: nil),
+      .init(kind: .worldPoint, position: [550_000, 0, 564_000], rotationInput: nil),
+      .init(kind: .worldPoint, position: [568_000, 0, 564_000], rotationInput: nil),
     ]
-    // The structure table's ink split does not control the chosen Atari ST
-    // presentation: every airstrip outline edge is black.
-    airstrip.edges = [[0, 1, 0], [2, 3, 0]]
+    airstrip.edges = [
+      [0, 1, 0], [1, 2, 0], [2, 0, 0], [0, 3, 0], [1, 3, 0], [2, 3, 0],
+      [4, 5, 1], [5, 7, 1], [7, 6, 1], [6, 4, 1],
+      [8, 9, 1], [9, 11, 1], [11, 10, 1], [10, 8, 1],
+    ]
+    airstrip.rotation = .init(descriptor: 0x32, center: [116, 143])
     payload.surface.cells = [airstrip]
+    payload.objects.instances[0].position = [559_104, 0, 559_104]
+    payload.objects.instances[1].position = [562_916, 0, 559_991]
+    payload.objects.instances[1].placement = "surface"
+    payload.objects.instances[1].room = 0
     let world = World(bundle: payload)
-    let position = SIMD3<Double>(8_500, 63, 8_500)
+    let position = SIMD3<Double>(559_104, 400, 545_000)
 
     XCTAssertTrue(world.mapSegments(from: position).isEmpty)
-    let airstripSegments = try XCTUnwrap(world.cell(column: 8, row: 8)?.segments)
-    XCTAssertEqual(airstripSegments.count, 2)
-    XCTAssertEqual(airstripSegments.map(\.ink), [.black, .black])
+    let airstripSegments = try XCTUnwrap(world.cell(column: 8, row: 8)?.segments(at: 0))
+    XCTAssertEqual(airstripSegments.count, 14)
+    XCTAssertEqual(airstripSegments.filter { $0.ink == .white }.count, 6)
+    XCTAssertEqual(airstripSegments.filter { $0.ink == .black }.count, 8)
 
     let structuresOnly = VisibilitySelector(
       cellRadius: 0, includeObjects: false, includeRoads: false, includeStructures: true
@@ -201,8 +235,13 @@ final class VisibilitySelectorTests: XCTestCase {
     let hidden = VisibilitySelector(
       cellRadius: 0, includeObjects: false, includeRoads: true, includeStructures: false
     )
-    XCTAssertEqual(structuresOnly.visible(in: world, from: position).segments.count, 2)
+    XCTAssertEqual(structuresOnly.visible(in: world, from: position).segments.count, 14)
     XCTAssertTrue(hidden.visible(in: world, from: position).segments.isEmpty)
+
+    let opening = VisibilitySelector(cellRadius: 0, includeRoads: false)
+      .visible(in: world, from: position)
+    XCTAssertEqual(opening.detailedObjects, 2)
+    XCTAssertEqual(opening.segments.count, 16)
   }
 
   func testExcludingRoadsAndObjectsLeavesOnlyStructures() throws {
@@ -212,7 +251,7 @@ final class VisibilitySelectorTests: XCTestCase {
     let visible = selector.visible(in: world, from: SIMD3(500, 320, 500))
 
     // Both fixture cells are in range; only their own edges remain.
-    let cellEdges = world.cells.reduce(0) { $0 + $1.segments.count }
+    let cellEdges = world.cells.reduce(0) { $0 + $1.segments(at: 0).count }
     XCTAssertEqual(visible.segments.count, cellEdges)
     XCTAssertTrue(visible.points.isEmpty)
     XCTAssertEqual(visible.detailedObjects, 0)
