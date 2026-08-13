@@ -75,7 +75,7 @@ final class WorldTests: XCTestCase {
   func testMapLinesPreserveFullRunsBetweenGridCentres() throws {
     let world = World(bundle: try bundle())
 
-    let lines = world.mapSegments(from: SIMD3(500, 320, 500))
+    let lines = world.mapSegments(from: SIMD3(500, 2_048, 500))
 
     XCTAssertEqual(lines.count, 1)
     XCTAssertEqual(lines[0].a, SIMD3(1500, 0, 500))
@@ -83,10 +83,13 @@ final class WorldTests: XCTestCase {
     XCTAssertEqual(lines[0].ink, .black)
   }
 
-  func testTheAltitudeLookupSelectsAWiderCellSquare() throws {
-    let world = World(bundle: try bundle())
+  func testTheAltitudeLookupSelectsSurroundingRoadTableCells() throws {
+    var payload = try bundle()
+    payload.world.roadCells[1].segments = [.init(slot: 0, from: [2, 0], to: [3, 0])]
+    let world = World(bundle: payload)
 
     XCTAssertEqual(world.roadAltitudeLookup, [0, 1])
+    XCTAssertEqual(world.mapSegments(from: SIMD3(500, 2_048, 500)).count, 2)
   }
 
   func testMapSelectionDeduplicatesReversedRuns() throws {
@@ -97,14 +100,21 @@ final class WorldTests: XCTestCase {
     ]
     let world = World(bundle: payload)
 
-    XCTAssertEqual(world.mapSegments(from: SIMD3(500, 320, 500)).count, 1)
+    XCTAssertEqual(world.mapSegments(from: SIMD3(500, 2_048, 500)).count, 1)
+  }
+
+  func testZeroAltitudeExtentDrawsNoRoadCells() throws {
+    let world = World(bundle: try bundle())
+
+    XCTAssertTrue(world.mapSegments(from: SIMD3(500, 2_047, 500)).isEmpty)
+    XCTAssertEqual(world.mapSegments(from: SIMD3(500, 2_048, 500)).count, 1)
   }
 
   func testCurrentStructureEndpointIsSuppressedThenRestoredAboveTheFirst64KiB() throws {
     var payload = try bundle()
     payload.world.roadCells[1].segments = [.init(slot: 0, from: [1, 0], to: [3, 0])]
     let world = World(bundle: payload)
-    let low = world.mapSegments(from: SIMD3(1_500, 320, 500))
+    let low = world.mapSegments(from: SIMD3(1_500, 2_048, 500))
     let raised = world.mapSegments(from: SIMD3(1_500, 0x01_0000, 500))
 
     XCTAssertTrue(low.isEmpty)
@@ -178,8 +188,8 @@ final class VisibilitySelectorTests: XCTestCase {
     let selector = VisibilitySelector()
     let withoutRoads = VisibilitySelector(includeRoads: false)
 
-    let with = selector.visible(in: world, from: SIMD3(500, 320, 500))
-    let without = withoutRoads.visible(in: world, from: SIMD3(500, 320, 500))
+    let with = selector.visible(in: world, from: SIMD3(500, 2_048, 500))
+    let without = withoutRoads.visible(in: world, from: SIMD3(500, 2_048, 500))
 
     XCTAssertEqual(with.segments.count, without.segments.count + 1)
   }
@@ -199,7 +209,7 @@ final class VisibilitySelectorTests: XCTestCase {
     let mapOnly = VisibilitySelector(includeObjects: false, includeRoads: true, includeStructures: false)
     let empty = VisibilitySelector(includeObjects: false, includeRoads: false, includeStructures: false)
 
-    let position = SIMD3<Double>(500, 320, 500)
+    let position = SIMD3<Double>(500, 2_048, 500)
     XCTAssertEqual(mapOnly.visible(in: world, from: position).segments.count, 1)
     XCTAssertTrue(empty.visible(in: world, from: position).segments.isEmpty)
   }
@@ -269,14 +279,13 @@ final class VisibilitySelectorTests: XCTestCase {
 
     let visible = selector.visible(in: world, from: SIMD3(1_500, 320, 500))
 
-    // The Reference Build expands only the current cell's detailed structure.
-    let currentCellEdges = try XCTUnwrap(world.cell(column: 1, row: 0)).segments(at: 0).count
-    XCTAssertEqual(visible.segments.count, currentCellEdges)
+    let neighbouringCellEdges = try XCTUnwrap(world.cell(column: 1, row: 0)).segments(at: 0).count
+    XCTAssertEqual(visible.segments.count, neighbouringCellEdges)
     XCTAssertTrue(visible.points.isEmpty)
     XCTAssertEqual(visible.detailedObjects, 0)
   }
 
-  func testMovingAcrossACellBoundaryReplacesTheDetailedStructure() throws {
+  func testMovingAcrossACellBoundaryKeepsNeighbouringStructuresVisible() throws {
     let world = try world()
     let selector = VisibilitySelector(includeObjects: false, includeRoads: false)
 
@@ -284,16 +293,17 @@ final class VisibilitySelectorTests: XCTestCase {
     let second = selector.visible(in: world, from: SIMD3(500, 320, 500))
 
     XCTAssertEqual(first.segments.count, 1)
-    XCTAssertTrue(second.segments.isEmpty)
+    XCTAssertEqual(second.segments, first.segments)
   }
 
-  func testCellZeroDoesNotExpandItsSentinelStructurePointer() throws {
+  func testCellZeroDoesNotExpandItsSentinelStructurePointerButItsNeighbourCanRender() throws {
     let world = try world()
     let selector = VisibilitySelector(includeObjects: false, includeRoads: false)
 
     let visible = selector.visible(in: world, from: SIMD3(500, 320, 500))
 
-    XCTAssertTrue(visible.segments.isEmpty)
+    XCTAssertEqual(visible.segments.count, 1)
+    XCTAssertEqual(visible.segments, world.cell(column: 1, row: 0)?.segments(at: 0))
   }
 
   func testADistantObjectBecomesAPoint() throws {

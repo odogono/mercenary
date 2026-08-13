@@ -169,6 +169,16 @@ edges to those indices, so the 956 affected cell-edge instances are reported as
 road-workspace links until camera-dependent workspace expansion is reproduced;
 they are not malformed local indices.
 
+The Mac presentation intentionally keeps the immediately surrounding ring of
+surface structures visible as well. This is not a decoded C64 selection claim:
+it prevents an entire building from popping into existence at a cell boundary.
+Placed objects remain governed independently by their decoded detail cube.
+
+An altitude-table value of zero is a no-roads sentinel. `L8EC2` returns before
+scanning the road tables in that case; it does not select a square containing
+only the current cell. The extracted table therefore hides road-table geometry
+below Y=2048 and selects the surrounding square beginning at Y=2048.
+
 ### Surface-structure record
 
 A record begins:

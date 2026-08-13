@@ -187,17 +187,29 @@ public struct VisibilitySelector: Sendable {
   /// Gather what is worth projecting near the camera. Frustum rejection is left to
   /// the projection step, which has to compute view space anyway.
   ///
-  /// Surface cells are culled by a fixed radius. Objects beyond their detail cube
-  /// collapse to a point, which the original does too — the doc calls that
-  /// transition part of its look.
+  /// Surface structures include the immediately surrounding cells to avoid a
+  /// whole building appearing at a cell boundary. This one-cell ring is a Mac
+  /// presentation adaptation; the Reference Build expands only the current
+  /// structure. Objects retain their separate decoded detail-cube rule.
   ///
   public func visible(in world: World, from position: SIMD3<Double>, elapsed: Double = 0) -> Visible {
     let column = Int((position.x / Double(world.cellSize)).rounded(.down))
     let row = Int((position.z / Double(world.cellSize)).rounded(.down))
     var segments: [Segment] = []
     if includeStructures {
-      if let cell = world.cell(column: column, row: row), cell.index != 0 {
-        segments.append(contentsOf: cell.segments(at: elapsed))
+      let radius = 1
+      let firstColumn = max(0, column - radius)
+      let lastColumn = min(world.cellsPerAxis - 1, column + radius)
+      let firstRow = max(0, row - radius)
+      let lastRow = min(world.cellsPerAxis - 1, row + radius)
+      if firstColumn <= lastColumn, firstRow <= lastRow {
+        for selectedRow in firstRow...lastRow {
+          for selectedColumn in firstColumn...lastColumn {
+            if let cell = world.cell(column: selectedColumn, row: selectedRow), cell.index != 0 {
+              segments.append(contentsOf: cell.segments(at: elapsed))
+            }
+          }
+        }
       }
     }
 

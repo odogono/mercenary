@@ -285,12 +285,16 @@ public struct World: Sendable, Equatable {
     var selected: [SurfaceMapLine] = []
     var seen: Set<MapLineKey> = []
 
-    for selectedRow in max(0, row - extent)...min(cellsPerAxis - 1, row + extent) {
-      for selectedColumn in max(0, column - extent)...min(cellsPerAxis - 1, column + extent) {
-        let lookupCell = selectedRow * cellsPerAxis + selectedColumn
-        for line in mapLinesByCell[lookupCell, default: []] {
-          if currentCell != 0 && (line.startPacked == currentCell || line.endPacked == currentCell) { continue }
-          if seen.insert(MapLineKey(line)).inserted { selected.append(line) }
+    // L8EC2 exits before scanning the road tables when the altitude lookup
+    // returns zero. It is a no-roads sentinel, not a zero-radius selection.
+    if extent > 0 {
+      for selectedRow in max(0, row - extent)...min(cellsPerAxis - 1, row + extent) {
+        for selectedColumn in max(0, column - extent)...min(cellsPerAxis - 1, column + extent) {
+          let lookupCell = selectedRow * cellsPerAxis + selectedColumn
+          for line in mapLinesByCell[lookupCell, default: []] {
+            if currentCell != 0 && (line.startPacked == currentCell || line.endPacked == currentCell) { continue }
+            if seen.insert(MapLineKey(line)).inserted { selected.append(line) }
+          }
         }
       }
     }
