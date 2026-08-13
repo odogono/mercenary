@@ -25,7 +25,7 @@ from .geometry import (
 from .text import decode_text
 
 
-PAYLOAD_SCHEMA_VERSION = 2
+PAYLOAD_SCHEMA_VERSION = 3
 PAYLOAD_ROOT = Path(__file__).resolve().parents[3] / "payload"
 CELLS_PER_AXIS = 16
 CELL_SIZE = 0x10000
@@ -62,7 +62,7 @@ def _require_ignored_output(path: Path) -> Path:
 
 
 def build_world(surface: dict[str, Any]) -> dict[str, Any]:
-    """Collect grid metadata, world bounds, and the deduplicated road network."""
+    """Collect grid metadata, bounds, and table-faithful surface map lines."""
     low = [None, None, None]
     high = [None, None, None]
     for cell in surface["cells"]:
@@ -76,7 +76,7 @@ def build_world(surface: dict[str, Any]) -> dict[str, Any]:
             high[axis] = maximum if high[axis] is None else max(high[axis], maximum)
     _require(all(value is not None for value in low), "Surface dataset expanded no cell bounds")
 
-    roads = build_roads(surface)
+    road_cells = build_road_cells(surface)
     lookup = surface.get("roadAltitudeLookup", {})
     raw = lookup.get("rawHex", "")
     _require(len(raw) % 2 == 0, "Road altitude lookup hex is malformed")
@@ -90,39 +90,26 @@ def build_world(surface: dict[str, Any]) -> dict[str, Any]:
         # table; without it every road draws at full length from any altitude.
         "roadAltitudeLookup": list(bytes.fromhex(raw)),
         "transformContract": surface.get("transformContract", {}),
-        "roads": roads,
+        "roadCells": road_cells,
+        "highAltitudeMap": [
+            {"slot": index, "from": line["startGrid"], "to": line["endGrid"]}
+            for index, line in enumerate(surface.get("highAltitudeMap", {}).get("segments", []))
+        ],
     }
 
 
-def build_roads(surface: dict[str, Any]) -> list[dict[str, Any]]:
-    """Split each road into one piece per cell it crosses.
-
-    The dataset records a road as a single run between two cell centres, listed
-    from both ends. Emitting that run verbatim draws a line straight across the
-    world; the Reference Build limits how much road is visible by altitude, which
-    only works if the run is divided into per-cell pieces that can be culled.
-    """
-    pieces: dict[tuple[int, ...], dict[str, Any]] = {}
-    for cell in surface["cells"]:
-        for road in cell.get("roads", []):
-            start, end = tuple(road["startGrid"]), tuple(road["endGrid"])
-            ordered = (start, end) if start <= end else (end, start)
-            axis = 0 if ordered[0][1] == ordered[1][1] else 1
-            _require(
-                ordered[0][1 - axis] == ordered[1][1 - axis],
-                "Road run is neither row-aligned nor column-aligned",
-            )
-            low_index, high_index = ordered[0][axis], ordered[1][axis]
-            for step in range(low_index, high_index):
-                a = [ordered[0][0], ordered[0][1]]
-                b = [ordered[0][0], ordered[0][1]]
-                a[axis], b[axis] = step, step + 1
-                key = (*a, *b, road["segment"])
-                pieces.setdefault(
-                    key,
-                    {"from": a, "to": b, "cell": list(a), "segment": road["segment"]},
-                )
-    return [pieces[key] for key in sorted(pieces)]
+def build_road_cells(surface: dict[str, Any]) -> list[dict[str, Any]]:
+    """Preserve the four tables as two optional full runs per lookup cell."""
+    result = []
+    for cell in sorted(surface["cells"], key=lambda item: item["cell"]):
+        segments = [
+            {"slot": road["segment"], "from": list(road["startGrid"]), "to": list(road["endGrid"])}
+            for road in sorted(cell.get("roads", []), key=lambda item: item["segment"])
+        ]
+        _require(len(segments) <= 2, f"Road table cell {cell['cell']} has more than two segments")
+        _require(len({item["slot"] for item in segments}) == len(segments), f"Road table cell {cell['cell']} repeats a slot")
+        result.append({"cell": cell["cell"], "segments": segments})
+    return result
 
 
 def build_surface(surface: dict[str, Any]) -> dict[str, Any]:
@@ -257,7 +244,7 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
         "surfaceEdges": sum(len(cell["edges"]) for cell in surface_document["cells"]),
         "deferredSurfaceEdges": sum(cell["deferredEdges"] for cell in surface_document["cells"]),
         "rotatedStructures": len(surface_document["rotatedStructures"]),
-        "roads": len(documents["world.json"]["roads"]),
+        "roadTableSegments": sum(len(cell["segments"]) for cell in documents["world.json"]["roadCells"]),
         "models": len(documents["objects.json"]["models"]),
         "instances": len(documents["objects.json"]["instances"]),
         **(

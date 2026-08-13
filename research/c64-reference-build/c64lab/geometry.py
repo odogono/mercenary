@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import html
 import json
 import shutil
 from datetime import UTC, datetime
@@ -17,12 +18,51 @@ REPOSITORY_ROOT = LAB_ROOT.parents[1]
 RESTRICTED_ROOT = REPOSITORY_ROOT / "restricted"
 SCHEMA_ROOT = LAB_ROOT / "schemas"
 GEOMETRY_FILES = ("provenance.json", "objects.json", "surface.json", "underground.json")
+ATARI_ST_GROUND_HEX = "#008000"
 
 
 def signed24(value: int) -> int:
     if not 0 <= value <= 0xFFFFFF:
         raise LabError(f"24-bit value is out of range: {value}")
     return value - 0x1000000 if value & 0x800000 else value
+
+
+def decode_high_altitude_map(ram: bytes) -> dict[str, Any]:
+    """Decode the fixed map used once the camera's Y high byte reaches $20."""
+    address = 0x902A
+    point_start = ram[address]
+    point_count = 0x40 - point_start
+    cursor = address + 1
+    packed_points = list(ram[cursor : cursor + point_count])
+    cursor += point_count
+    line_end_index = ram[cursor]
+    cursor += 1
+    line_count = line_end_index - 2
+    _need(ram, cursor + line_count * 2, "high-altitude surface map")
+    points_by_index = {point_start + index: packed for index, packed in enumerate(packed_points)}
+    segments = []
+    for slot in range(line_count):
+        start_index, end_index = ram[cursor], ram[cursor + 1]
+        cursor += 2
+        if start_index not in points_by_index or end_index not in points_by_index:
+            raise LabError("High-altitude map line references an unknown packed point")
+        start, end = points_by_index[start_index], points_by_index[end_index]
+        segments.append(
+            {
+                "slot": slot,
+                "startPacked": start,
+                "endPacked": end,
+                "startGrid": [start & 0x0F, start >> 4],
+                "endGrid": [end & 0x0F, end >> 4],
+            }
+        )
+    return {
+        "runtimeSpan": [address, cursor - 1],
+        "rawHex": ram[address:cursor].hex(),
+        "pointStartIndex": point_start,
+        "packedPoints": packed_points,
+        "segments": segments,
+    }
 
 
 def canonical_bytes(value: Any) -> bytes:
@@ -749,6 +789,10 @@ def build_dataset(ram: bytes, source: dict[str, Any], curation: dict[str, Any] |
             }
         )
 
+    high_altitude_map = decode_high_altitude_map(ram)
+    high_altitude_map["provenanceRefs"] = [
+        f"span:{high_altitude_map['runtimeSpan'][0]:04x}-{high_altitude_map['runtimeSpan'][1]:04x}"
+    ]
     provenance_entries = [
         _span_entry(ram, model["runtimeSpan"][0], model["runtimeSpan"][1], "object-model") for model in models
     ] + [
@@ -769,6 +813,7 @@ def build_dataset(ram: bytes, source: dict[str, Any], curation: dict[str, Any] |
             (0x2800, 0x287F, "object-pointer-tables"),
             (0x2A00, 0x2FFF, "surface-metadata-tables"),
             (0x800A, 0x8039, "object-orientation-tables"),
+            (0x902A, high_altitude_map["runtimeSpan"][1], "surface-high-altitude-map"),
         )
     ]
     provenance_entries = list({entry["provenanceId"]: entry for entry in provenance_entries}.values())
@@ -795,6 +840,7 @@ def build_dataset(ram: bytes, source: dict[str, Any], curation: dict[str, Any] |
         "structures": structures,
         "cells": cells,
         "roadAltitudeLookup": {"runtimeSpan": [0x2A00, 0x2AFF], "rawHex": ram[0x2A00:0x2B00].hex()},
+        "highAltitudeMap": high_altitude_map,
         "counts": {"firstRoadSegments": first_roads, "secondRoadSegments": second_roads},
         "transformContract": {
             "cell": "((zHigh & $0F) << 4) | (xHigh & $0F)",
@@ -1114,6 +1160,87 @@ def _svg(geometry: dict[str, Any], title: str) -> str:
         + "".join(lines)
         + "</svg>\n"
     )
+
+
+def render_road_network_svg(
+    surface: dict[str, Any], *, dataset_id: str, core_digest: str
+) -> tuple[str, dict[str, int]]:
+    """Render all unique undirected lines from the four road tables."""
+    sources: dict[tuple[tuple[int, int], tuple[int, int]], list[tuple[int, int]]] = {}
+    source_entries = 0
+    for cell in sorted(surface["cells"], key=lambda item: item["cell"]):
+        for road in sorted(cell.get("roads", []), key=lambda item: item["segment"]):
+            source_entries += 1
+            start, end = tuple(road["startGrid"]), tuple(road["endGrid"])
+            key = (start, end) if start <= end else (end, start)
+            sources.setdefault(key, []).append((cell["cell"], road["segment"]))
+
+    metadata = html.escape(
+        json.dumps(
+            {
+                "schemaVersion": 1,
+                "datasetId": dataset_id,
+                "coreDigest": core_digest,
+                "sourceEntries": source_entries,
+                "uniqueLines": len(sources),
+            },
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+    )
+    grid = []
+    for coordinate in range(17):
+        grid.append(
+            f'<line x1="{coordinate}" y1="0" x2="{coordinate}" y2="16" '
+            'stroke-width="0.5" vector-effect="non-scaling-stroke"/>'
+        )
+        grid.append(
+            f'<line x1="0" y1="{coordinate}" x2="16" y2="{coordinate}" '
+            'stroke-width="0.5" vector-effect="non-scaling-stroke"/>'
+        )
+    labels = []
+    for coordinate in range(16):
+        labels.append(f'<text x="{coordinate + 0.5}" y="-0.18">{coordinate:X}</text>')
+        labels.append(f'<text x="-0.28" y="{coordinate + 0.56}">{coordinate:X}</text>')
+    roads = []
+    for (start, end), contributions in sorted(sources.items()):
+        source_text = " ".join(f"{cell:02X}:{slot}" for cell, slot in sorted(contributions))
+        roads.append(
+            f'<line class="road" x1="{start[0] + 0.5}" y1="{start[1] + 0.5}" '
+            f'x2="{end[0] + 0.5}" y2="{end[1] + 0.5}" data-sources="{source_text}" '
+            'stroke-width="1" vector-effect="non-scaling-stroke"/>'
+        )
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="-1 -1 18 18" '
+        f'data-dataset-id="{html.escape(dataset_id)}" data-core-digest="{html.escape(core_digest)}">'
+        f'<metadata>{metadata}</metadata><rect x="-1" y="-1" width="18" height="18" fill="{ATARI_ST_GROUND_HEX}"/>'
+        '<g class="grid" stroke="#000" stroke-opacity="0.16">'
+        + "".join(grid)
+        + '</g><g class="labels" fill="#000" fill-opacity="0.55" font-family="monospace" font-size="0.28" text-anchor="middle">'
+        + "".join(labels)
+        + '</g><g class="roads" stroke="#000">'
+        + "".join(roads)
+        + "</g></svg>\n"
+    )
+    return svg, {"sourceEntries": source_entries, "uniqueLines": len(sources)}
+
+
+def export_road_network_svg(dataset_root: Path, output: Path) -> dict[str, Any]:
+    verified = verify_dataset(dataset_root)
+    destination = _require_restricted_output(output)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    manifest = verified["manifest"]
+    svg, counts = render_road_network_svg(
+        verified["documents"]["surface"], dataset_id=manifest["datasetId"], core_digest=manifest["coreDigest"]
+    )
+    destination.write_text(svg, encoding="utf-8")
+    return {
+        "status": "exported",
+        "output": str(destination),
+        "datasetId": manifest["datasetId"],
+        "coreDigest": manifest["coreDigest"],
+        **counts,
+    }
 
 
 def compare_geometry(prg: Path, dataset_root: Path) -> dict[str, Any]:

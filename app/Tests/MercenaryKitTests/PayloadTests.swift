@@ -6,19 +6,24 @@ import XCTest
 /// the shapes are what matter.
 enum PayloadFixture {
   static let manifest = """
-    {"schemaVersion":2,"sourceDatasetId":"world-geometry-test","sourceCoreDigest":"\(String(repeating: "a", count: 64))",
+    {"schemaVersion":3,"sourceDatasetId":"world-geometry-test","sourceCoreDigest":"\(String(repeating: "a", count: 64))",
      "decoderVersion":1,"counts":{"cells":2,"models":1,"instances":2}}
     """
 
   static let world = """
-    {"schemaVersion":2,"grid":{"cellsPerAxis":2,"cellSize":1000},
-     "bounds":{"min":[0,0,0],"max":[2000,500,2000]},
-     "roadAltitudeLookup":[0,3],
-     "roads":[{"from":[0,0],"to":[1,0],"cell":[0,0],"segment":0}]}
+    {"schemaVersion":3,"grid":{"cellsPerAxis":4,"cellSize":1000},
+     "bounds":{"min":[0,0,0],"max":[4000,500,4000]},
+     "roadAltitudeLookup":[0,1],
+     "roadCells":[
+       {"cell":0,"segments":[{"slot":0,"from":[1,0],"to":[3,0]}]},
+       {"cell":1,"segments":[]},
+       {"cell":2,"segments":[]},
+       {"cell":3,"segments":[]}],
+     "highAltitudeMap":[{"slot":0,"from":[0,1],"to":[3,1]}]}
     """
 
   static let surface = """
-    {"schemaVersion":2,"cells":[
+    {"schemaVersion":3,"cells":[
       {"cell":0,"grid":[0,0],"structure":"surface-structure:test",
        "vertices":[[0,0,0],[100,0,0],[100,200,0]],
        "edges":[[0,1,0],[1,2,1]],"deferredVertices":[],"deferredEdges":0},
@@ -31,7 +36,7 @@ enum PayloadFixture {
     """
 
   static let objects = """
-    {"schemaVersion":2,
+    {"schemaVersion":3,
      "models":[{"id":"object-model:test","vertices":[[-10,-100,-10],[10,-100,-10]],
                 "edges":[[0,1]]}],
      "instances":[
@@ -79,7 +84,7 @@ final class PayloadTests: XCTestCase {
     let bundle = try Payload.load(from: directory)
 
     XCTAssertEqual(bundle.manifest.sourceDatasetId, "world-geometry-test")
-    XCTAssertEqual(bundle.world.grid.cellsPerAxis, 2)
+    XCTAssertEqual(bundle.world.grid.cellsPerAxis, 4)
     XCTAssertEqual(bundle.surface.cells.count, 2)
     XCTAssertEqual(bundle.objects.models.count, 1)
     XCTAssertEqual(bundle.objects.instances.count, 2)
@@ -105,11 +110,22 @@ final class PayloadTests: XCTestCase {
   func testAFutureSchemaIsRejectedRatherThanMisread() throws {
     try PayloadFixture.write(
       into: directory,
-      world: PayloadFixture.world.replacingOccurrences(of: "\"schemaVersion\":2", with: "\"schemaVersion\":3")
+      world: PayloadFixture.world.replacingOccurrences(of: "\"schemaVersion\":3", with: "\"schemaVersion\":4")
     )
 
     XCTAssertThrowsError(try Payload.load(from: directory)) { error in
-      XCTAssertEqual(error as? Payload.LoadError, .unsupportedSchema("world.json", 3))
+      XCTAssertEqual(error as? Payload.LoadError, .unsupportedSchema("world.json", 4))
+    }
+  }
+
+  func testSchemaTwoRequiresAReexport() throws {
+    try PayloadFixture.write(
+      into: directory,
+      manifest: PayloadFixture.manifest.replacingOccurrences(of: "\"schemaVersion\":3", with: "\"schemaVersion\":2")
+    )
+
+    XCTAssertThrowsError(try Payload.load(from: directory)) { error in
+      XCTAssertEqual(error as? Payload.LoadError, .unsupportedSchema("manifest.json", 2))
     }
   }
 

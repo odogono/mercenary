@@ -24,21 +24,26 @@ public enum Payload {
       public var max: [Int]
     }
 
-    public struct Road: Codable, Sendable, Equatable {
+    public struct RoadSegment: Codable, Sendable, Equatable {
+      public var slot: Int
       public var from: [Int]
       public var to: [Int]
-      /// Grid cell this piece belongs to, for altitude culling.
-      public var cell: [Int]
-      public var segment: Int
+    }
+
+    /// One index into the four Reference Build road tables. The cell selects
+    /// which entries are consulted; it does not own the segment geometry.
+    public struct RoadCell: Codable, Sendable, Equatable {
+      public var cell: Int
+      public var segments: [RoadSegment]
     }
 
     public var schemaVersion: Int
     public var grid: Grid
     public var bounds: Bounds
-    /// Maps an altitude index to how far road geometry extends. Without it every
-    /// road draws at full length from any altitude.
+    /// Maps `floor(cameraY / 2048)` to the road-table lookup extent.
     public var roadAltitudeLookup: [Int]
-    public var roads: [Road]
+    public var roadCells: [RoadCell]
+    public var highAltitudeMap: [RoadSegment]
   }
 
   public struct SurfaceDocument: Codable, Sendable, Equatable {
@@ -155,7 +160,7 @@ public enum Payload {
     }
   }
 
-  public static let supportedSchemaVersion = 2
+  public static let supportedSchemaVersion = 3
   /// The text document carries its own version, because its format is
   /// independent of the geometry documents and changes on its own schedule.
   public static let supportedTextSchemaVersion = 1

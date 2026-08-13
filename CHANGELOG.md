@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Decode the Reference Build's two road-table slots as full, zero-width runs,
+  preserve all 256 lookup entries in Data Payload schema 3, reproduce the
+  altitude/current-structure/fixed-map selection rules, and add a verified
+  `geometry roads-svg` exporter. The current 271 table entries collapse to 32
+  unique undirected lines; cell 8:8's parallel lines remain separate airstrip
+  structure geometry. Use the supplied Atari ST reference's sampled `#60A0E0`
+  sky and `#008000` ground, with true black ink and no synthetic horizon stroke.
 - Add a geometry debug mode (`--inspect-objects`, `--inspect-object`,
   `--inspect-cell`) that renders a subject in isolation with its decoded numbers,
   plus a contact sheet of all 64 objects on one page. Canonical framing by
@@ -18,13 +25,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Carry the Reference Build's presentation rules through to the app, which the
   payload exporter had been discarding: the object detail cube and far-point
   representation, the road altitude table, structure rotation data, and the
-  transform contract (payload schema 2). Apply model-local orientation for the
+  transform contract (introduced in payload schema 2 and retained by schema 3).
+  Apply model-local orientation for the
   rotatable slots, derive the projection from the original's 160x136 frustum
   instead of an invented field of view, and stop drawing instances parked outside
   the world. Fix a grid-key aliasing bug where a negative column resolved to the
   previous row and duplicated that cell's geometry at the world edges.
-  Road selection and the sky and ground colours remain unresolved; a capture of
-  the original showed both to be wrongly modelled.
+  Road selection and scene colours were subsequently resolved by the schema-3
+  work above.
 
 - Decode the dictionary-compressed text tables and put a message line in the app
   (issue #45, first step): 64 messages and 159 distinct words recovered from our
@@ -38,7 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Release held keys when the app loses focus, so a key-up delivered while
   inactive cannot leave the player turning forever.
 - Deliver M1, the surface walkabout (issue #44): a macOS app that loads the Data
-  Payload and lets you walk around Targ in authentic C64-palette wireframe. Adds
+  Payload and lets you walk around Targ in a wireframe presentation. Adds
   the `app/` Swift package — `MercenaryKit` (payload decoding, world building,
   projection, and a pure deterministic `GameCore`) and `Mercenary` (window,
   input, Canvas renderer) — plus `lab payload export`, which rewrites a verified

@@ -1,7 +1,7 @@
 import MercenaryKit
 import SwiftUI
 
-/// The Game Surface: sky, ground, horizon, wireframe, and a status strip.
+/// The Game Surface: sky, ground, wireframe, and a status strip.
 struct WorldView: View {
   let world: World
   let manifest: Payload.Manifest
@@ -61,10 +61,6 @@ struct WorldView: View {
     guard clamped < Double(size.height) else { return }
     let ground = CGRect(x: 0, y: clamped, width: size.width, height: Double(size.height) - clamped)
     context.fill(Path(ground), with: .color(SceneStyle.ground))
-    var line = Path()
-    line.move(to: CGPoint(x: 0, y: clamped))
-    line.addLine(to: CGPoint(x: size.width, y: clamped))
-    context.stroke(line, with: .color(SceneStyle.horizon), lineWidth: 1)
   }
 
   /// Reject lines wholly outside the view. A generous margin keeps long segments
@@ -90,7 +86,7 @@ private struct MessageLine: View {
         .lineLimit(1)
       Spacer()
       Text("MSG \(comms.index, specifier: "%02d")/\(comms.table.messageCount - 1)  [ ]")
-        .foregroundStyle(SceneStyle.horizon)
+        .foregroundStyle(SceneStyle.interfaceAccent)
     }
     .font(.system(size: 13, weight: .semibold, design: .monospaced))
     .foregroundStyle(SceneStyle.messageText)
@@ -98,7 +94,7 @@ private struct MessageLine: View {
     .padding(.vertical, 7)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(SceneStyle.statusBackground)
-    .overlay(alignment: .top) { Divider().overlay(SceneStyle.horizon) }
+    .overlay(alignment: .top) { Divider().overlay(SceneStyle.interfaceAccent) }
   }
 }
 
@@ -125,7 +121,7 @@ private struct StatusStrip: View {
     .padding(.horizontal, 12)
     .padding(.vertical, 6)
     .background(SceneStyle.statusBackground)
-    .overlay(alignment: .top) { Divider().overlay(SceneStyle.horizon) }
+    .overlay(alignment: .top) { Divider().overlay(SceneStyle.interfaceAccent) }
   }
 }
 

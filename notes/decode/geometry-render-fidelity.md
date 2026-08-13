@@ -9,8 +9,9 @@ The World Geometry Dataset preserves the Reference Build's presentation rules an
 the payload exporter was discarding them: `roadAltitudeLookup`, per-instance
 `visibility` (the detail cube and far representation), the structure
 `rotatedPointDescriptor` and `rotationCenter`, and the `transformContract`.
-`orientationBytes` was carried but the renderer ignored it. Payload schema 2
-carries all of them.
+`orientationBytes` was carried but the renderer ignored it. Payload schema 3
+carries all of them, plus table-faithful road runs and the fixed high-altitude
+map. Schema-2 payloads must be re-exported.
 
 ## Fixed and verified
 
@@ -54,32 +55,33 @@ is not evidence about ours.
 Lesson recorded: a plausibility argument produced a confident wrong answer here,
 and thirty lines of disassembly settled it. Go to the ROM first.
 
-## Roads are wrongly modelled, and the rule is unknown
+## Roads and the cell 8:8 airstrip
 
 A capture of the original at the interactive checkpoint reads `LOCA 08-08` with
 `ALT 00000`, and its camera position decodes to X/Z = 559104 — cell 8:8, which
-confirms the cell mapping. It draws **a road running to the horizon**, as two
-parallel lines, at altitude zero.
+confirms the cell mapping. The two parallel lines there are not a road. Cell
+`8:8` has no entries in any of the four road tables; the lines belong to its
+decoded airstrip model, `surface-structure:cef6`. They therefore remain visible
+when map lines are disabled and disappear with structures.
 
-Two conclusions follow, and both contradict work done in this pass:
+Each nonempty road-table slot is one full, zero-width run between nibble-packed
+grid centres. The 271 stored entries collapse to 32 unique undirected black
+lines. Runtime selection indexes the altitude table with
+`clamp(floor(Y / 2048), 0...255)`, clips its selected cell square to the map,
+deduplicates points and lines, applies current-structure suppression and the
+raised current-cell pass, then switches to the fixed `$902A` map at Y-high `$20`.
 
-- **The altitude lookup is not a cell radius.** Reading its index as the
-  altitude's high byte gives radius zero at ground level, which hid roads exactly
-  where the original shows them prominently. That interpretation has been removed;
-  every road is drawn again until the real rule is known. The table is still
-  carried in the payload.
-- **Roads are not cell-owned centre-to-centre links.** The dataset records *no*
-  road for cell 8:8, yet the original draws one there. So the four road tables the
-  encoding doc describes — "as many as two road/map segments per cell using
-  nibble-packed grid points" — are being modelled wrongly, and roads evidently
-  have width rather than being single lines.
+## Intentional Atari ST scene palette
 
-## The palette is invented
-
-The renderer's black sky and blue-purple ground are guesses. The original's ground
-is green. The captured VIC-II registers show border black and background white,
-so the sky and ground are drawn as filled geometry rather than as the background
-colour, and their colours have not yet been decoded.
+The supplied overhead airstrip image is the colour authority for this
+presentation choice. Sampling its largest uniform playfield regions gives sRGB
+sky `#60A0E0` and ground `#008000`; the same indexed colours appear in the
+[matching Atari ST screenshots](https://www.atarimania.com/game-atari-st-mercenary-escape-from-targ_9949.html).
+The interactive renderer, headless renderer, and road-network SVG all use these
+recorded values. Road and airstrip ink is true black `#000000`, and there is no
+separate horizon stroke: the boundary is formed by adjacent sky and ground fills.
+This is explicitly Atari ST-inspired presentation, not a decoded C64 colour
+claim.
 
 ## Still open
 
