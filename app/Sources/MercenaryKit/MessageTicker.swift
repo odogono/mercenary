@@ -23,7 +23,10 @@ public struct MessageTicker: Sendable, Equatable {
 
   /// Characters per second a conditioned Reference Build advances at.
   public static let referenceRate: Double = 2
-  public static let referenceHold: Double = 1
+  /// How long a revealed message is left up to be read. Unlike the reveal rate
+  /// this is not the Reference Build's number scaled — it is a reading pause, and
+  /// reading speed belongs to the reader rather than to the original's clock.
+  public static let referenceHold: Double = 3
 
   public init(
     text: String,

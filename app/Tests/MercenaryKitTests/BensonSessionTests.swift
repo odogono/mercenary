@@ -30,14 +30,17 @@ final class BensonSessionTests: XCTestCase {
     session.advance(by: 1.0 / 60)
     XCTAssertEqual(session.messageText, "", "the line starts empty and fills")
 
-    // At the reference rate this message takes a couple of seconds.
+    // At the reference rate these five characters take two and a half seconds.
     session.advance(by: 1.0)
     XCTAssertEqual(session.messageText, "CR")
     XCTAssertEqual(session.host.engineFlags & 0x01, 0, "the script waits for the line")
 
     session.advance(by: 2.0)
     XCTAssertEqual(session.messageText, "CRASH")
-    XCTAssertEqual(session.host.engineFlags & 0x01, 0x01, "a finished line releases the script")
+    XCTAssertEqual(session.host.engineFlags & 0x01, 0, "revealed, but still being read")
+
+    session.advance(by: MessageTicker.referenceHold)
+    XCTAssertEqual(session.host.engineFlags & 0x01, 0x01, "the hold expiring releases the script")
   }
 
   func testSkippingAMessageReleasesTheScriptImmediately() {

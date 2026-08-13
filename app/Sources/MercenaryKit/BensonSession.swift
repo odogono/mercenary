@@ -100,12 +100,13 @@ public struct BensonSession: Sendable {
     for effect in advance.effects {
       switch effect {
       case .playMessage(let message):
-        // The time scale speeds the whole opening up, message line included —
-        // reading pace is the largest part of what makes it feel slow.
+        // The time scale speeds up the original's pacing, the reveal included,
+        // since scrolling speed is one of the things it was chosen to fix. The
+        // hold is left alone: it is time given to the player to read, and that
+        // does not get shorter because the rest of the game runs faster.
         ticker = MessageTicker(
           text: message,
-          charactersPerSecond: MessageTicker.rate(forInterval: host.messageInterval) * tunables.timeScale,
-          holdSeconds: MessageTicker.referenceHold / tunables.timeScale
+          charactersPerSecond: MessageTicker.rate(forInterval: host.messageInterval) * tunables.timeScale
         )
       default:
         remaining.append(effect)
