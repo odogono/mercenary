@@ -200,9 +200,9 @@ is not repeated for each pair. The renderer walks the line list backwards and
 changes line operation at `white_black_split_index`, reproducing the
 characteristic two-colour/erase wireframe behaviour.
 
-If `rotated_point_descriptor` is nonzero, its low nibble plus one is the number of leading rotated points. Four of the 98 unique records use this extension. Each such point consumes three bytes; X and Z are signed middle-byte offsets, Y is an unsigned middle-byte height, and the engine rotates the X/Z pair about the two-byte centre before joining it to the ordinary points.
+If `rotated_point_descriptor` is nonzero, its low nibble plus one is the number of leading rotated points. Four of the 98 unique records use this extension. Each such point consumes three bytes. X and Z are signed bytes scaled by 16: the setup routine converts each byte to floating point and subtracts `$28` from its exponent before rotation. Y is an unsigned middle-byte height scaled by 256. The engine rotates the X/Z pair about the two-byte centre before joining it to the ordinary points.
 
-The rotation update adds `(descriptor & $F0) >> 1` to a 16-bit phase once per PAL update. The sine routine treats the low byte as the position within a quadrant and the low two bits of the high byte as the quadrant, so `$0400` phase units make a full turn. For `surface-structure:cef6`, descriptor `$32` therefore means three leading rotated points and a 24-unit phase step. Its first six white edges join those points into the rotating inverted pyramid; the remaining eight black edges are the fixed airstrip outline.
+The rotation update adds `(descriptor & $F0) >> 1` to a 16-bit phase once per completed geometry frame, rather than once per PAL display update. A pinned 8:8 Reference Build run measured about 196,000 C64 cycles per phase update, approximately ten PAL frames or 5 updates per second. The sine routine treats the low byte as the position within a quadrant and the low two bits of the high byte as the quadrant, so `$0400` phase units make a full turn. For `surface-structure:cef6`, descriptor `$32` therefore means three leading rotated points and a 24-unit phase step. Its first six white edges join those points into the rotating inverted pyramid; the remaining eight black edges are the fixed airstrip outline.
 
 Ordinary points use two bytes, `qx` and `qz`:
 

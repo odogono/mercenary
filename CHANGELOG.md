@@ -40,6 +40,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Correct the rotating surface-structure transform used by the inverted pyramid
+  at 8:8: its X/Z source bytes are exponent-scaled by 16 while Y remains scaled
+  by 256. Advance its phase at the measured completed-geometry-frame cadence of
+  about 5 Hz, rather than the 50 Hz PAL display rate that made it sixteen times
+  too wide and spin ten times too fast.
 - Replace the guessed 124-pixel camera focal length with the Reference Build's
   decoded projection: FOCUS `$18` yields `64 X/Z`, while the Y pipeline's extra
   exponent step yields `128 Y/Z`. Restore the VIC-II multicolour pixel aspect:

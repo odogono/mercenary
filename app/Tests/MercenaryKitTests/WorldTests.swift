@@ -55,21 +55,21 @@ final class WorldTests: XCTestCase {
 
     XCTAssertEqual(world.deferredEdges, 0)
     XCTAssertEqual(rotating.segments(at: 0).count, 2)
-    XCTAssertEqual(rotating.segments(at: 0)[1].b, SIMD3(34_048, 512, 34_560))
+    XCTAssertEqual(rotating.segments(at: 0)[1].b, SIMD3(33_808, 512, 33_840))
   }
 
   func testRotatedPointsUseAReferenceBuildRateAndDeterministicElapsedTime() throws {
     let world = World(bundle: try bundle())
     let rotating = try XCTUnwrap(world.cell(column: 0, row: 0))
     let initial = rotating.segments(at: 0)[1].b
-    let beforeFirstUpdate = rotating.segments(at: 0.019)[1].b
-    let afterFirstUpdate = rotating.segments(at: 0.020)[1].b
+    let beforeFirstUpdate = rotating.segments(at: 0.199)[1].b
+    let afterFirstUpdate = rotating.segments(at: 0.200)[1].b
     let angle = 56.0 / 1_024.0 * (2 * Double.pi)
 
     XCTAssertEqual(beforeFirstUpdate, initial)
-    XCTAssertEqual(afterFirstUpdate.x, Float(33_792 + 256 * cos(angle) - 768 * sin(angle)), accuracy: 0.01)
+    XCTAssertEqual(afterFirstUpdate.x, Float(33_792 + 16 * cos(angle) - 48 * sin(angle)), accuracy: 0.01)
     XCTAssertEqual(afterFirstUpdate.y, 512, accuracy: 0.01)
-    XCTAssertEqual(afterFirstUpdate.z, Float(33_792 + 256 * sin(angle) + 768 * cos(angle)), accuracy: 0.01)
+    XCTAssertEqual(afterFirstUpdate.z, Float(33_792 + 16 * sin(angle) + 48 * cos(angle)), accuracy: 0.01)
   }
 
   func testMapLinesPreserveFullRunsBetweenGridCentres() throws {
