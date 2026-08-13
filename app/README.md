@@ -62,9 +62,6 @@ The default view is canonical: a camera framed to the subject's own bounds, with
 no level of detail and no orientation, because a malformed model has to be visible
 as one. `--in-situ` draws the object as the game would instead.
 
-`MERCENARY_MODEL_Y_SCALE=16` is an open experiment, not a setting — see
-`notes/decode/geometry-render-fidelity.md`.
-
 ## Headless frame capture
 
 Renders one frame to a PNG with no window. Useful for side-by-side fidelity

@@ -95,7 +95,8 @@ public struct World: Sendable, Equatable {
   public var cellsPerAxis: Int
   public var groundExtent: Float
   public var deferredEdges: Int
-  /// Altitude-indexed road extent, straight from the Reference Build's table.
+  /// Altitude-indexed road extent, carried from the Reference Build's table. Not
+  /// yet used: see ``World`` notes on road selection being unresolved.
   public var roadAltitudeLookup: [Int]
 
   /// Cells indexed by `row * cellsPerAxis + column`, mirroring the payload's
@@ -178,16 +179,6 @@ public struct World: Sendable, Equatable {
     return SIMD3(Float(raw[0]), Float(raw[1]), Float(raw[2]))
   }
 
-  /// Experimental scale applied to model Y only, for testing whether the vertical
-  /// component of a model vertex uses a different shift from X and Z. Set
-  /// `MERCENARY_MODEL_Y_SCALE` to try a factor; 1 is the decoded value.
-  static let modelVerticalScale: Float = {
-    guard let raw = ProcessInfo.processInfo.environment["MERCENARY_MODEL_Y_SCALE"],
-      let value = Float(raw), value > 0
-    else { return 1 }
-    return value
-  }()
-
   /// Place every surface instance's model in world space.
   ///
   /// Model-local orientation is applied first, as the Reference Build does, and
@@ -210,11 +201,7 @@ public struct World: Sendable, Equatable {
       let withinWorld = (0...groundExtent).contains(origin.x) && (0...groundExtent).contains(origin.z)
 
       let orientation = instance.rotatable ? (Orientation(bytes: instance.orientation) ?? .identity) : .identity
-      let local = model.vertices.map { raw -> SIMD3<Float> in
-        var vertex = point(raw)
-        vertex.y *= World.modelVerticalScale
-        return orientation.apply(to: vertex)
-      }
+      let local = model.vertices.map { orientation.apply(to: point($0)) }
       guard let lowest = local.map(\.y).min() else { continue }
       let placed = local.map { SIMD3($0.x + origin.x, $0.y - lowest + origin.y, $0.z + origin.z) }
 
@@ -239,16 +226,4 @@ public struct World: Sendable, Equatable {
     return placements
   }
 
-  /// How far road geometry reaches, as a cell radius around the camera.
-  ///
-  /// The Reference Build selects road extent through an altitude-indexed table.
-  /// The index is read here as the altitude's high byte, which is the natural
-  /// reading for a 24-bit position on this machine and gives radius zero — the
-  /// camera's own cell — at ground level, widening as the player climbs. The
-  /// table is the Reference Build's; this indexing is an interpretation.
-  public func roadRadius(altitude: Double) -> Int {
-    guard !roadAltitudeLookup.isEmpty else { return cellsPerAxis }
-    let index = max(0, Int(altitude)) >> 16
-    return roadAltitudeLookup[min(index, roadAltitudeLookup.count - 1)]
-  }
 }

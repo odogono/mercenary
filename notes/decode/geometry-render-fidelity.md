@@ -20,11 +20,6 @@ carries all of them.
   (2862×192×5046 against 4048×192×3088) because slot 00 carries `y = 32`.
   **Only slot 00 has a non-zero orientation in the initial state** — this matters
   for correctness, not for how a fresh load looks.
-- **Road extent by altitude.** Roads are now split into one piece per cell at
-  export (32 runs became 239 pieces) and culled by the altitude-derived radius.
-  The lookup is the Reference Build's; reading its index as the altitude's high
-  byte is an interpretation, and gives radius zero — the camera's own cell — at
-  ground level.
 - **Object point-LOD.** Beyond the `$010000` cube per axis an object collapses to
   a projected point, which the doc calls part of the original's look.
 - **Reference viewport.** Projection now derives from the original's 160×136
@@ -37,34 +32,60 @@ carries all of them.
   checks, so a negative column aliased onto the previous row and duplicated that
   cell's geometry at the world edges. Caught by a test, not by eye.
 
-## The open question: are the object models flat?
+## Settled: the object models really are flat
 
-The contact sheet shows **roughly 50 of 64 objects as flat plates** — a quad or
-triangle with a Y span of 160–350 against X and Z spans near 4,000. Only slots
-08, 0E, 32, 38 and 3F read as volumes.
+The contact sheet shows roughly 50 of 64 objects as flat plates, with a Y span of
+160–350 against X and Z spans near 4,000. That looked so implausible for
+spacecraft that a decode error seemed likelier than the truth, and the ratio is
+suspiciously close to one nibble — the difference between `<< 4` and `<< 8`.
 
-Two readings, and the evidence does not settle it:
+**Both the ROM and the original's own display say the decode is correct.**
 
-- **The decode is right and the objects are flat.** The encoding doc states all
-  three components use `(raw - $80) << 4`, derived from four shifts at
-  `$A6F1-$A725`, and the record arithmetic checks out exactly: model `$1700` is
-  1 + 18×3 + 1 + 13×2 = 82 bytes, its recorded span.
-- **The vertical component uses a different shift.** The Y span is consistently
-  about one sixteenth of the horizontal spans, which is exactly the difference
-  between `<< 4` and `<< 8`. Scaling model Y by 16 turns almost every object into
-  a plausible volume — boxes, hoppers, a crystal, delta craft. Surface structures
-  use a *different* height encoding ("four high bits with `$0F` extension"), so
-  per-family encodings would not be unprecedented.
+The scaling code at `$A6F1-$A725` is three identical blocks, one per component:
+`EOR #$80`, then four `ASL`/`ROL` pairs shifting a 16-bit pair left by four. X, Y
+and Z are treated the same way. There is no separate vertical scale.
 
-`MERCENARY_MODEL_Y_SCALE=16` renders the second reading for comparison. It is an
-experiment, not a fix: "looks more plausible" is not evidence, and the honest
-resolution is a side-by-side against the running Reference Build.
+The captured C64 interactive display confirms it visually: at grid 8:8 the game
+draws a small flat plate with a delta marking sitting on the ground — exactly a
+contact-sheet tile. A screenshot of the **Atari ST** version shows recognisable
+three-dimensional craft, but that is a different edition with different models and
+is not evidence about ours.
+
+Lesson recorded: a plausibility argument produced a confident wrong answer here,
+and thirty lines of disassembly settled it. Go to the ROM first.
+
+## Roads are wrongly modelled, and the rule is unknown
+
+A capture of the original at the interactive checkpoint reads `LOCA 08-08` with
+`ALT 00000`, and its camera position decodes to X/Z = 559104 — cell 8:8, which
+confirms the cell mapping. It draws **a road running to the horizon**, as two
+parallel lines, at altitude zero.
+
+Two conclusions follow, and both contradict work done in this pass:
+
+- **The altitude lookup is not a cell radius.** Reading its index as the
+  altitude's high byte gives radius zero at ground level, which hid roads exactly
+  where the original shows them prominently. That interpretation has been removed;
+  every road is drawn again until the real rule is known. The table is still
+  carried in the payload.
+- **Roads are not cell-owned centre-to-centre links.** The dataset records *no*
+  road for cell 8:8, yet the original draws one there. So the four road tables the
+  encoding doc describes — "as many as two road/map segments per cell using
+  nibble-packed grid points" — are being modelled wrongly, and roads evidently
+  have width rather than being single lines.
+
+## The palette is invented
+
+The renderer's black sky and blue-purple ground are guesses. The original's ground
+is green. The captured VIC-II registers show border black and background white,
+so the sky and ground are drawn as filled geometry rather than as the background
+colour, and their colours have not yet been decoded.
 
 ## Still open
 
-- **The streaks are not roads.** Long lines radiating across the view survive
-  `roadRadius: 0`, and every cell's vertices were confirmed inside its own cell,
-  so neither roads nor misplaced geometry explains them. The remaining candidate
+- **The streaks are not roads.** Long lines radiating across the view survived
+  road culling entirely, and every cell's vertices were confirmed inside its own
+  cell, so neither roads nor misplaced geometry explains them. The remaining candidate
   is pipeline step 6 — the original clips lines to the **viewport borders**, which
   this renderer does not do; it clips only to the near plane, so a segment passing
   close to the camera projects to enormous coordinates. Standing inside a

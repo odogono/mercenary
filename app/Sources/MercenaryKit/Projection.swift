@@ -168,17 +168,19 @@ public struct VisibilitySelector: Sendable {
     /// Origins of objects outside the detail cube, drawn as points.
     public var points: [SIMD3<Float>]
     public var detailedObjects: Int
-    public var roadRadius: Int
   }
 
   /// Gather what is worth projecting near the camera. Frustum rejection is left to
   /// the projection step, which has to compute view space anyway.
   ///
-  /// Surface cells are culled by a fixed radius. Roads are culled by the
-  /// altitude-derived radius the Reference Build uses, so at ground level only the
-  /// nearby road shows instead of every road at full length. Objects beyond their
-  /// detail cube collapse to a point, which the original does too — the doc calls
-  /// that transition part of its look.
+  /// Surface cells are culled by a fixed radius. Objects beyond their detail cube
+  /// collapse to a point, which the original does too — the doc calls that
+  /// transition part of its look.
+  ///
+  /// Roads are all drawn. How the Reference Build selects them is unresolved: a
+  /// capture of the original at grid 8:8 shows a road running to the horizon at
+  /// altitude zero, while the dataset records no road owned by that cell, so
+  /// neither cell ownership nor an altitude radius explains what it draws.
   public func visible(in world: World, from position: SIMD3<Double>) -> Visible {
     let column = Int((position.x / Double(world.cellSize)).rounded(.down))
     let row = Int((position.z / Double(world.cellSize)).rounded(.down))
@@ -190,12 +192,8 @@ public struct VisibilitySelector: Sendable {
       }
     }
 
-    let radius = world.roadRadius(altitude: position.y)
     if includeRoads {
-      for road in world.roads
-      where abs(road.column - column) <= radius && abs(road.row - row) <= radius {
-        segments.append(road.segment)
-      }
+      segments.append(contentsOf: world.roads.map(\.segment))
     }
 
     var points: [SIMD3<Float>] = []
@@ -210,7 +208,7 @@ public struct VisibilitySelector: Sendable {
         }
       }
     }
-    return Visible(segments: segments, points: points, detailedObjects: detailed, roadRadius: radius)
+    return Visible(segments: segments, points: points, detailedObjects: detailed)
   }
 }
 

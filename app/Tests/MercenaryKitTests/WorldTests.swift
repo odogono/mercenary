@@ -50,13 +50,10 @@ final class WorldTests: XCTestCase {
     XCTAssertEqual(road.row, 0)
   }
 
-  func testRoadRadiusComesFromTheAltitudeTable() throws {
+  func testTheAltitudeLookupIsCarriedEvenThoughItIsNotYetUsed() throws {
     let world = World(bundle: try bundle())
 
-    // The fixture's table is [0, 3]; ground level indexes zero.
-    XCTAssertEqual(world.roadRadius(altitude: 0), 0)
-    XCTAssertEqual(world.roadRadius(altitude: 70000), 3)
-    XCTAssertEqual(world.roadRadius(altitude: 99_000_000), 3)
+    XCTAssertEqual(world.roadAltitudeLookup, [0, 3])
   }
 
   func testEveryInstanceIsPlacedButOnlySurfaceOnesAreDrawable() throws {
@@ -117,20 +114,18 @@ final class VisibilitySelectorTests: XCTestCase {
     XCTAssertGreaterThan(visible.segments.count, bare.segments.count)
   }
 
-  func testRoadsAppearOnlyOnceAltitudeOpensTheRadius() throws {
+  func testRoadsAreDrawnAtAnyAltitude() throws {
     let world = try world()
     let selector = VisibilitySelector(cellRadius: 1)
     let withoutRoads = VisibilitySelector(cellRadius: 1, includeRoads: false)
 
-    let ground = selector.visible(in: world, from: SIMD3(1500, 320, 500))
-    let high = selector.visible(in: world, from: SIMD3(1500, 70_000, 500))
-    let baseline = withoutRoads.visible(in: world, from: SIMD3(1500, 70_000, 500))
-
-    // The one road piece belongs to cell 0:0, a cell away from this camera, so it
-    // is out of range at ground level and in range once the radius widens.
-    XCTAssertEqual(ground.roadRadius, 0)
-    XCTAssertEqual(high.roadRadius, 3)
-    XCTAssertGreaterThan(high.segments.count, baseline.segments.count)
+    // A capture of the original shows a road at altitude zero from a cell that
+    // owns none, so neither an altitude radius nor cell ownership can gate them.
+    for altitude in [320.0, 70_000.0] {
+      let with = selector.visible(in: world, from: SIMD3(1500, altitude, 500))
+      let without = withoutRoads.visible(in: world, from: SIMD3(1500, altitude, 500))
+      XCTAssertGreaterThan(with.segments.count, without.segments.count)
+    }
   }
 
   func testExcludingRoadsAndObjectsLeavesOnlyStructures() throws {

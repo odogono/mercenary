@@ -35,7 +35,7 @@ enum FrameCapture {
         {"status":"rendered","output":"\(options.output.path)",\
         "candidateSegments":\(visible.segments.count),"drawnLines":\(drawn),\
         "farPoints":\(visible.points.count),"detailedObjects":\(visible.detailedObjects),\
-        "roadRadius":\(visible.roadRadius),"deferredEdges":\(world.deferredEdges)}
+        "deferredEdges":\(world.deferredEdges)}
         """
       print(summary)
       return 0
