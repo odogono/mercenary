@@ -115,3 +115,23 @@ claim.
   structures, their descriptors (`0x32`, `0x35`, `0x7f`, `0x73`), rotation centres
   and per-point rotation inputs are now all in the payload, so the bounded search
   can start from data rather than from a fresh decode.
+
+## Corrected: rotated structure displacements are ×64, not ×16
+
+The surface work recorded the rotated-structure displacement as "a signed ×16
+displacement" after `SETUP_STRUCTURE_POINTERS` subtracts `$28` from the exponent.
+It is ×64, and the flight step's reading of the float format is what settled it.
+
+`$9600` passes the source byte to `BIT24_TO_FP` (`$8510`) with the mid and low
+bytes zeroed, and that routine treats its argument as the *high* byte of a
+twenty-four bit value — its normalisation counter starts at `$18`, which is bit 24.
+So the float coming back is the byte shifted left sixteen. Subtracting `$28` from
+the exponent byte is ten powers of two, because one power of two is `$04`. The
+result is `byte << 16 >> 10`, that is `byte * 64`.
+
+That makes the displacement a quarter of the middle-byte unit the surface's own
+world points are placed in, which is a sensible sub-cell offset. At ×16 it was
+sixteen times finer, and the visible consequence was the rotating inverted pyramid
+at cell 8:8: four times too narrow in X and Z while its independently stored Y byte
+kept its correct ×256 units, so it drew as a tall spike rather than a squat
+pyramid. Y was never wrong; the axes either side of it were.

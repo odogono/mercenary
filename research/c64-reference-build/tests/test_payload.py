@@ -234,11 +234,18 @@ class CaptureCountsTests(unittest.TestCase):
             {
                 "text.json": {"counts": {"messages": 64}},
                 "benson.json": {"counts": {"scripts": 51, "instructions": 494}},
+                "flight.json": {"counts": {"flightBlocks": 11}},
             }
         )
 
         self.assertEqual(
-            counts, {"text.messages": 64, "benson.scripts": 51, "benson.instructions": 494}
+            counts,
+            {
+                "text.messages": 64,
+                "benson.scripts": 51,
+                "benson.instructions": 494,
+                "flight.flightBlocks": 11,
+            },
         )
 
     def test_reports_nothing_for_a_payload_exported_without_a_capture(self) -> None:

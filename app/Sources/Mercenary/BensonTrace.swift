@@ -77,7 +77,8 @@ enum BensonTrace {
       }
       let program = try BensonProgram(document: document)
       // The same settings the app runs on, so a trace is representative.
-      var tunables = try Settings.load().bensonTunables(framesPerTick: program.framesPerTick)
+      let settings = try Settings.load()
+      var tunables = settings.bensonTunables(framesPerTick: program.framesPerTick)
       if let timeScale = options.timeScale { tunables.timeScale = timeScale }
       var session = BensonSession(
         program: program, text: TextTable(document: text), tunables: tunables
@@ -89,9 +90,12 @@ enum BensonTrace {
       // Walking to something needs the world the player walks through, and the
       // rules for reaching it once there.
       let world = World(bundle: bundle)
-      var limits = WalkLimits()
-      limits.groundExtent = Double(world.groundExtent)
+      // Walking runs on the craft parameters too, so without them nothing moves.
+      let flight = bundle.flight.map { parameters in
+        settings.flight.model(for: parameters, groundExtent: Double(world.groundExtent))
+      }
       var game = GameState(player: OpeningScene.player)
+      if let flight { game.player.position.y = flight.groundAltitude }
       let interaction = bundle.interaction.map(Interaction.init(document:))
       let target = options.walkTo.flatMap { slot in
         world.objects.first { $0.slot == slot }
@@ -148,7 +152,11 @@ enum BensonTrace {
               break
             }
           } else {
-            game = GameCore.step(game, intent: steer(from: game.player, to: position), dt: step, limits: limits)
+            if let flight {
+              game = GameCore.step(
+                game, intent: steer(from: game.player, to: position), dt: step, flight: flight
+              )
+            }
           }
         }
 
@@ -180,13 +188,11 @@ enum BensonTrace {
   /// Turn toward a point and walk at it, the way a player would.
   private static func steer(from player: PlayerState, to target: SIMD3<Double>) -> Intent {
     let wanted = atan2(target.x - player.position.x, target.z - player.position.z)
-    var turn = wanted - player.heading
-    while turn > .pi { turn -= 2 * .pi }
-    while turn < -.pi { turn += 2 * .pi }
+    let turn = GameCore.wrapPitch(wanted - player.heading)
     // Walk once roughly facing the target, so the path is a turn and a stride
     // rather than a spiral.
     let aligned = abs(turn) < 0.05
-    return Intent(forward: aligned ? 1 : 0, turn: aligned ? 0 : (turn > 0 ? 1 : -1))
+    return Intent(turn: aligned ? 0 : (turn > 0 ? 1 : -1), walk: aligned ? 1 : 0)
   }
 
   private static func fail(_ message: String) -> Int32 {

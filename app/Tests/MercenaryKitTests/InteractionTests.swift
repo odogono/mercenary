@@ -172,6 +172,45 @@ final class InteractionTests: XCTestCase {
     XCTAssertEqual(interaction.description(of: 30, flags: 0), .none)
     XCTAssertEqual(interaction.description(of: 30, flags: 0xF3), .none)
   }
+
+  // MARK: - Leaving
+
+  func testLeavingPutsTheCraftBackIntoTheWorldWhereThePlayerGotOut() {
+    // Boarding takes the craft out of the world, so leaving has to undo both
+    // halves or the craft is gone for good.
+    var host = BensonHostState()
+    let outcome = interaction.attempt(
+      .board, from: SIMD3(0, 0, 0),
+      among: [Interaction.Candidate(slot: 1, position: SIMD3(0, 0, 0))], host: &host
+    )
+
+    XCTAssertEqual(outcome, .boarded(slot: 1))
+    XCTAssertEqual(host.objectRooms[1], BensonHostState.outOfTheWorld)
+    XCTAssertEqual(host.boardedCraft, 1)
+
+    XCTAssertEqual(interaction.leave(host: &host), 1)
+    XCTAssertEqual(host.boardedCraft, BensonHostState.onFoot)
+    XCTAssertEqual(host.objectRooms[1], Interaction.surfaceRoom)
+  }
+
+  func testLeavingOnFootDoesNothing() {
+    var host = BensonHostState()
+
+    XCTAssertNil(interaction.leave(host: &host))
+    XCTAssertEqual(host.boardedCraft, BensonHostState.onFoot)
+  }
+
+  func testABoardedCraftCanBeBoardedAgainAfterLeavingIt() {
+    var host = BensonHostState()
+    let candidates = [Interaction.Candidate(slot: 1, position: SIMD3(0, 0, 0))]
+    _ = interaction.attempt(.board, from: SIMD3(0, 0, 0), among: candidates, host: &host)
+    _ = interaction.leave(host: &host)
+
+    let again: Interaction.Outcome = interaction.attempt(
+      .board, from: SIMD3(0, 0, 0), among: candidates, host: &host
+    )
+    XCTAssertEqual(again, .boarded(slot: 1))
+  }
 }
 
 final class InteractionPayloadTests: XCTestCase {
@@ -222,4 +261,5 @@ final class InteractionPayloadTests: XCTestCase {
       XCTAssertEqual(error as? Payload.LoadError, .unsupportedSchema("interaction.json", 2))
     }
   }
+
 }

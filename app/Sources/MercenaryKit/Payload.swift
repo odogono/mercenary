@@ -133,6 +133,8 @@ public enum Payload {
     /// Absent when the payload was exported without a capture to read the
     /// take-and-board rules from.
     public var interaction: InteractionDocument?
+    /// Absent for the same reason: the craft dynamics are read from a capture.
+    public var flight: FlightDocument?
 
     public init(
       manifest: Manifest,
@@ -141,7 +143,8 @@ public enum Payload {
       objects: ObjectsDocument,
       text: TextDocument? = nil,
       benson: BensonDocument? = nil,
-      interaction: InteractionDocument? = nil
+      interaction: InteractionDocument? = nil,
+      flight: FlightDocument? = nil
     ) {
       self.manifest = manifest
       self.world = world
@@ -150,6 +153,7 @@ public enum Payload {
       self.text = text
       self.benson = benson
       self.interaction = interaction
+      self.flight = flight
     }
   }
 
@@ -191,6 +195,9 @@ public enum Payload {
   /// The interaction rules version separately again: they are decoded engine
   /// parameters rather than geometry, and move when that routine's decode does.
   public static let supportedInteractionSchemaVersion = 1
+  /// The flight parameters version separately again: they move when the control
+  /// loop's decode does, which is independent of every other document.
+  public static let supportedFlightSchemaVersion = 2
 
   /// Load and schema-check a payload directory.
   public static func load(from directory: URL) throws -> Bundle {
@@ -241,9 +248,18 @@ public enum Payload {
       interaction = decoded
     }
 
+    var flight: FlightDocument?
+    if FileManager.default.fileExists(atPath: directory.appendingPathComponent("flight.json").path) {
+      let decoded: FlightDocument = try decode("flight.json", in: directory)
+      guard decoded.schemaVersion == supportedFlightSchemaVersion else {
+        throw LoadError.unsupportedSchema("flight.json", decoded.schemaVersion)
+      }
+      flight = decoded
+    }
+
     return Bundle(
       manifest: manifest, world: world, surface: surface, objects: objects, text: text,
-      benson: benson, interaction: interaction
+      benson: benson, interaction: interaction, flight: flight
     )
   }
 

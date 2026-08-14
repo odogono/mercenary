@@ -6,8 +6,124 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Fly the craft. Decode the Reference Build's control loop and its Craft Parameter
+  Blocks, and run walking and flying through one loop as the original did (issue
+  #45, fifth step; ADR 0016). The Dominion Dart now takes off, climbs, banks into
+  its turns and lands, on rates re-extracted from the Reference Build rather than
+  tuned by hand.
+  The gating decode was the engine's sixteen-bit float: a mantissa byte with an
+  implicit leading one, then a byte holding the sign in bit 0 and the exponent two
+  places up, so one power of two is `$04` and `FP_MUL` can add the exponent bytes
+  whole — the sign bits exclusive-or in bit 0 and the carry lands in a scratch bit
+  that gets cleared. The format dies in `c64lab`: `flight.json` carries plain real
+  numbers and the app never sees the encoding, which is ADR 0015's rule applied to
+  arithmetic instead of addresses.
+  The read corrected three things the scoping note had guessed at. The block table
+  is eleven blocks and not eight — after the craft come walking, a crash tumble and
+  the parachute descent, and the run ends exactly where the first control routine's
+  code begins, which is what pins the count. Walking is one of those blocks and
+  dispatches through the same routine five of the craft use, so it was never a
+  capture-only variant. And the two filters are not the same shape: yaw damps and
+  then takes its input, while speed takes its input and then damps, which is why
+  their fixed points differ. All six offsets the note left open are pinned: a pitch
+  step, a roll coupling that banks a craft into its turn, a lift factor, an
+  altitude ceiling, and one offset that every block sets alike and nothing reads.
+  Take-off and landing turn out to be modes rather than inputs, and there are no
+  keys for them: the vertical step is skipped until speed reaches a threshold, so a
+  craft has to make a take-off run, and crossing back down through the altitude
+  band lands it — or crashes it, on either too much descent rate or too much
+  nose-down pitch, which puts the player out of the craft. The Dart's ceiling rises
+  when a poweramp is fitted, and the poweramp doubles its throttle rather than
+  adding four to it as the note had read. Throttle is ten notches each twice the
+  last, with `-` and `=` halving and doubling, refused rather than clamped at the
+  engine's own limit.
+  Adds `c64lab/flight.py` with per-site opcode assertions and a float round-trip,
+  `flight.json` in the Data Payload, `CraftParameterBlock`, `FlightModel`,
+  `ControlLoop` and `FlightMode` in MercenaryKit, a `flight` section in
+  `settings.json`, and `--flight-trace` for flying a craft without a window. The
+  new extraction reproduces the frozen UNC-0002 ledger byte for byte on all eight
+  craft, which is the closest thing to a second opinion available.
+  The filters are solved for an arbitrary timestep rather than iterated, so they
+  agree with the original at its own frame rate and stay smooth at 60.
+- Bank the view with the craft. `Camera` gains a roll term, and the horizon fill,
+  which both renderers now share, leans with it and changes sides when pitch
+  carries the view over the vertical — the Reference Build's pitch wraps rather
+  than clamping, so a craft really can be flown over the top. `--render-frame`
+  gains `--roll`.
+
+### Changed
+
+- Pace the control loop at 20 frames a second rather than the 5 the Reference Build
+  ran at, which is the single knob that fixes both how fast a craft turns and how
+  long it takes to get there: the Dart's turn goes from 28 to 112 degrees a second
+  and its build-up from 3.1 seconds to 0.8. Walking is held where it was by dropping
+  its notch two rungs, so only the craft get quicker. A scale alone would have
+  raised the rate and left the lag.
+- Start the throttle keys part way up the ladder. The decoded ladder is ten notches
+  each twice the last, so it spans 512 to 1 and its bottom rungs are imperceptible
+  whatever the overall speed — pressing `1` moved the Dart at a fortieth of walking
+  pace. `flight.throttleFloorNotch` is the notch the lowest key selects, defaulting
+  to the third, so all ten keys do something and the top rungs are shared rather
+  than run off the end. It maps keys to notches and changes nothing about the
+  decoded ladder. A pleasing consequence: the two lowest keys are below the take-off
+  speed, so they taxi, and the take-off run is real from the third key up.
+- Movement is the cursor keys alone, as the original's stick was: `W`, `A`, `S` and
+  `D` are gone. Up and down walk while on foot and pitch while aboard, and aboard
+  they read as a stick rather than a camera, so pushing up puts the nose down.
+  `Space` shuts the throttle aboard a craft, and goes on skipping the message on
+  foot, where there is no throttle to shut.
+- Walking runs on the walking Craft Parameter Block instead of its own tuned
+  constants, which changes how it feels: its turn is about a quarter of the old
+  rate and its speed has a short run-up where it had none (ADR 0016). `WalkLimits`
+  is gone; what is tunable now is the frame rate the decoded parameters are paced
+  at and per-axis scales, in `settings.json`. On foot the eye sits at the Reference
+  Build's own ground altitude rather than the 128 chosen for the walkabout, with a
+  setting to put it back.
+
 ### Fixed
 
+- Draw the rotating structures at their real width. A rotated structure's X and Z
+  displacements are a signed **×64** per byte, not ×16: `SETUP_STRUCTURE_POINTERS`
+  hands the source byte to `BIT24_TO_FP` as the *high* byte of a twenty-four bit
+  value — its normalisation counter starts at `$18`, which is bit 24 — so the float
+  it gets back is the byte shifted left sixteen, and subtracting `$28` from the
+  exponent byte takes ten powers of two off it rather than four. The visible
+  consequence was the rotating inverted pyramid at cell 8:8, four times too narrow
+  in X and Z while its independently stored Y byte kept its correct ×256 units, so
+  it drew as a tall spike instead of a squat pyramid. Its height was never wrong;
+  the two axes either side of it were. The corrected displacement is a quarter of
+  the middle-byte unit the surface's own world points sit in, which is what a
+  sub-cell offset should be. Reading the float format for flight is what settled
+  it; `notes/decode/geometry-render-fidelity.md` carries the correction.
+- Stop drawing a craft the player is sitting in. Boarding took the craft out of the
+  world in the script host's object rooms, but the renderer read the payload's
+  static room byte, so the Dart went on being drawn beside the player who was
+  flying it. The visibility pass now takes the slots the game has taken out of the
+  world, which is live state rather than payload data.
+- Put the craft back when the player steps out. Boarding removed it from the world
+  and nothing ever undid that, so leaving would have lost it for good. `L` now
+  leaves a grounded craft, which restores it to the surface and lets it be boarded
+  again.
+- Take the craft's heading from its orientation in the unit that orientation is
+  written in. Boarding read the object tables' orientation byte as though it
+  counted 1024 to a turn like the control loop's angles; those bytes count 256, so
+  a boarded craft faced a quarter of the way round from where it was pointing.
+- Say what the player is in. The status strip now shows the craft, and while
+  aboard, altitude, throttle notch, and whether the craft is flying or grounded —
+  none of which had any indication before.
+- Bank the right way. The world turns *against* a rolling craft, so a right bank
+  has to lift the right of the horizon; it was dropping it, which made a turn read
+  as a turn the other way. The ground fill and the wireframe now lean together.
+- Sit the player in the craft facing the way it points. A craft's nose runs along
+  decreasing Z when its orientation byte is zero, while a heading of zero looks
+  along increasing Z, so boarding put the player in back to front.
+- Spin the rotating structures smoothly. The Reference Build advanced a structure's
+  phase in whole steps once per geometry frame, which at 60 frames a second is a
+  stutter rather than a spin. The rate is still the decoded one; letting the phase
+  run continuously between its steps is a Mac presentation adaptation, in the same
+  spirit as drawing the one-cell ring of structures.
 - Stop treating a script's clear of the engine's running flag as the end of that
   script. The Reference Build's step loop never consulted that flag — only its
   start did — so clearing it means "I may be interrupted now", and several scripts

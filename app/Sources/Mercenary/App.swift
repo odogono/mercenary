@@ -17,6 +17,9 @@ enum Entry {
     if let options = BensonTrace.options(from: CommandLine.arguments) {
       exit(BensonTrace.run(options))
     }
+    if let options = FlightTrace.options(from: CommandLine.arguments) {
+      exit(FlightTrace.run(options))
+    }
     MercenaryApp.main()
   }
 }

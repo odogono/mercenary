@@ -6,5 +6,14 @@
   "scripts": {
     "timeScale": 6,
     "instructionBudget": 512
+  },
+  "flight": {
+    "referenceFrameRate": 20,
+    "turnScale": 1,
+    "pitchScale": 1,
+    "speedScale": 1,
+    "walkNotch": 4,
+    "runNotch": 6,
+    "throttleFloorNotch": 3
   }
 }

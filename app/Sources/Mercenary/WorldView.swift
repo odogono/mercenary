@@ -26,7 +26,8 @@ struct WorldView: View {
     drawGround(context: context, size: size, camera: camera)
 
     let visible = model.selector.visible(
-      in: world, from: model.state.player.position, elapsed: model.state.elapsed
+      in: world, from: model.state.player.position, elapsed: model.state.elapsed,
+      hidden: model.hiddenSlots
     )
     var paths: [Ink: Path] = [:]
     var drawn = 0
@@ -56,13 +57,19 @@ struct WorldView: View {
     Task { @MainActor in model.report(visibleLines: drawn, points: visible.points.count) }
   }
 
-  /// Fill the ground below the projected horizon, so the world reads as a
-  /// surface rather than floating lines.
+  /// Fill the ground on the far side of the projected horizon, so the world reads
+  /// as a surface rather than floating lines.
+  ///
+  /// In flight the horizon has to do two things it never did on foot: lean with
+  /// the craft's roll, and change sides when pitch carries the view over the
+  /// vertical, since the Reference Build's pitch wraps rather than clamping.
   private func drawGround(context: GraphicsContext, size: CGSize, camera: Camera) {
-    let clamped = max(0, min(Double(size.height), camera.horizon(size: size)))
-    guard clamped < Double(size.height) else { return }
-    let ground = CGRect(x: 0, y: clamped, width: size.width, height: Double(size.height) - clamped)
-    context.fill(Path(ground), with: .color(SceneStyle.ground))
+    let (rect, lean) = camera.groundFill(size: size)
+    var path = Path(rect)
+    if lean != 0 {
+      path = path.applying(Camera.leanTransform(lean, size: size))
+    }
+    context.fill(path, with: .color(SceneStyle.ground))
   }
 
   /// Reject lines wholly outside the view. A generous margin keeps long segments
@@ -123,6 +130,14 @@ private struct StatusStrip: View {
       Text("GRID \(column, specifier: "%02d"):\(row, specifier: "%02d")")
       Text("X \(Int(player.position.x))  Z \(Int(player.position.z))")
       Text("HDG \(Int(player.heading * 180 / .pi))°")
+      // What the player is in, and the readouts that only mean anything aboard.
+      Text(model.craftName)
+        .foregroundStyle(SceneStyle.interfaceAccent)
+      if model.state.craft != nil {
+        Text("ALT \(Int(player.position.y))")
+        Text("THR \(model.throttleNotch)")
+        Text(model.state.mode == .flying ? "FLYING" : "GROUNDED")
+      }
       Spacer()
       Text("\(model.visibleLines) LINES")
       Text("\(model.visiblePoints) PTS")

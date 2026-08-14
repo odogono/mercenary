@@ -157,14 +157,21 @@ struct SurfaceRotation: Sendable, Equatable {
 
   func resolve(_ input: SIMD3<Int>, elapsed: Double) -> SIMD3<Float> {
     let step = Double((descriptor & 0xF0) >> 1)
-    let referenceFrame = floor(max(0, elapsed) * Self.referenceFramesPerSecond)
-    let angle = referenceFrame * step
-      / Self.angleUnitsPerTurn * (2 * Double.pi)
-    // SETUP_STRUCTURE_POINTERS converts the source byte to floating point and
-    // subtracts $28 from its exponent. That leaves a signed ×16 displacement;
-    // only the independently stored Y byte uses middle-byte (×256) units.
-    let localX = Double(Self.signedByte(input.x) << 4)
-    let localZ = Double(Self.signedByte(input.z) << 4)
+    // The Reference Build advanced the phase in whole steps once per geometry
+    // frame, about five times a second, which at 60 frames a second reads as a
+    // stutter rather than a spin. The rate is the decoded one; letting the phase
+    // run continuously between its steps is a Mac presentation adaptation, in the
+    // same spirit as drawing the one-cell ring of structures.
+    let phase = max(0, elapsed) * Self.referenceFramesPerSecond
+    let angle = phase * step / Self.angleUnitsPerTurn * (2 * Double.pi)
+    // SETUP_STRUCTURE_POINTERS passes the source byte to `BIT24_TO_FP` as the
+    // high byte of a twenty-four bit value, so the float it gets back is the byte
+    // shifted left sixteen; it then subtracts $28 from the exponent byte, which is
+    // ten powers of two. That leaves a signed ×64 displacement, a quarter of the
+    // middle-byte unit the surface's own points are placed in. Only the
+    // independently stored Y byte is in that middle-byte (×256) unit itself.
+    let localX = Double(Self.signedByte(input.x) << 6)
+    let localZ = Double(Self.signedByte(input.z) << 6)
     let cosine = cos(angle)
     let sine = sin(angle)
     return SIMD3(
