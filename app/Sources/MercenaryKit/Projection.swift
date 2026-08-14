@@ -259,8 +259,16 @@ public struct VisibilitySelector: Sendable {
   /// the player has boarded, or anything picked up. The payload's room byte only
   /// says where a thing started; what is out of the world now is live state.
   public func visible(
-    in world: World, from position: SIMD3<Double>, elapsed: Double = 0, hidden: Set<Int> = []
+    in world: World, from position: SIMD3<Double>, elapsed: Double = 0, hidden: Set<Int> = [],
+    room: Int? = nil
   ) -> Visible {
+    // Underground the Reference Build draws one room and nothing else: no cell ring,
+    // no roads, no surface objects. A room is its own world.
+    if let room {
+      return Visible(
+        segments: world.rooms[room]?.segments ?? [], points: [], detailedObjects: 0
+      )
+    }
     let column = Int((position.x / Double(world.cellSize)).rounded(.down))
     let row = Int((position.z / Double(world.cellSize)).rounded(.down))
     var segments: [Segment] = []

@@ -60,6 +60,15 @@ enum PayloadFixture {
         "bounds":{"min":[0,0,0],"max":[512,0,0]},"hasPortal":false,"portals":[]}]}
     """
 
+  static let underground = """
+    {"schemaVersion":\(Payload.supportedUndergroundSchemaVersion),
+     "entrances":[{"site":1,"cell":[9,6],"room":1},{"site":2,"cell":[9,5],"room":2}],
+     "lift":{"ascendRate":38,"descendRate":6,"surfaceAt":12,"submergeAt":8,
+       "surfaceMiddle":113,"submergeMiddle":8,"floor":128,"altitudeWrap":6,
+       "altitudeWrapSubtract":7},
+     "counts":{"undergroundEntrances":2}}
+    """
+
   static let flight = """
     {"schemaVersion":\(Payload.supportedFlightSchemaVersion),
      "walk":{"step":80,"turnStep":16},
@@ -81,6 +90,7 @@ enum PayloadFixture {
     objects: String = objects,
     rooms: String = rooms,
     flight: String? = nil,
+    underground: String? = nil,
     omitting: Set<String> = []
   ) throws {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -89,6 +99,7 @@ enum PayloadFixture {
       ("surface.json", surface), ("objects.json", objects), ("rooms.json", rooms),
     ]
     if let flight { files.append(("flight.json", flight)) }
+    if let underground { files.append(("underground.json", underground)) }
     for (name, body) in files where !omitting.contains(name) {
       try body.write(to: directory.appendingPathComponent(name), atomically: true, encoding: .utf8)
     }
@@ -215,6 +226,31 @@ final class PayloadTests: XCTestCase {
       }
       XCTAssertEqual(name, "objects.json")
     }
+  }
+
+  func testLoadsTheLiftWhenTheExportCarriesIt() throws {
+    try PayloadFixture.write(into: directory, underground: PayloadFixture.underground)
+    let lift = try XCTUnwrap(try Payload.load(from: directory).underground)
+
+    XCTAssertEqual(lift.entrances.count, 2)
+    XCTAssertEqual(lift.lift.descendRate, 6)
+    // The site is handed to the room setup as a room id, so they agree by design.
+    XCTAssertEqual(lift.entrances.first?.site, lift.entrances.first?.room)
+  }
+
+  func testFindsTheLiftServingASurfaceCell() throws {
+    try PayloadFixture.write(into: directory, underground: PayloadFixture.underground)
+    let lift = try XCTUnwrap(try Payload.load(from: directory).underground)
+
+    XCTAssertEqual(lift.entrance(column: 9, row: 6)?.room, 1)
+    XCTAssertEqual(lift.entrance(column: 9, row: 5)?.room, 2)
+    XCTAssertNil(lift.entrance(column: 0, row: 0))
+  }
+
+  func testAPayloadWithoutTheLiftStillLoads() throws {
+    try PayloadFixture.write(into: directory)
+
+    XCTAssertNil(try Payload.load(from: directory).underground)
   }
 }
 

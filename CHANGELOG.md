@@ -27,6 +27,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   sliver are the corridors connecting them — a corridor is a chamber with one axis
   collapsed, so both shapes come out of the same decode with nothing wrong.
   `notes/decode/underground.md` carries the room structure and the lift.
+- Go underground. Decode the lift — the only thing that writes the underground flag —
+  and walk its five entrances into the Data Payload as `underground.json`, then draw
+  the room the player is in instead of the surface. Underground the on-foot mover runs
+  whatever the player is standing in, which is what the Reference Build's own dispatch
+  does, so the correction that landed with it is what made this straightforward.
+  **The elevator coordinates cross-check settles.** Our image's two destination tables
+  give `9:6`, `9:5`, `3:0`, `11:13` and `3:15` for sites one to five; site six lands
+  off the grid and site eight reads into the second table, so five is what bounds the
+  count. That is five of the six coordinates the community list carries, and the
+  missing `3:4` is absent from the lift table rather than misread — the documented
+  list covers elevators *and hangars*, and a hangar is entered by the separate box
+  test, so `3:4` is most likely a hangar.
+  The site turns out to be the room id: arriving hands it straight to the room setup,
+  which keys the room pointer tables with it, so site one arrives in room one.
+  What is not decoded is what *starts* the lift, so `G` stands in for the trigger —
+  it still refuses anywhere the tables say there is no lift. And the Reference Build
+  draws a different screen underground, which is unread, so a room is enclosed in a
+  placeholder rather than an invented palette; it was showing sky and grass until now.
+  `--render-frame --room N` renders from inside a room.
 
 ### Fixed
 

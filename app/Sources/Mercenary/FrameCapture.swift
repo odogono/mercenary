@@ -18,6 +18,8 @@ enum FrameCapture {
     var pitch: Double = 0
     var roll: Double = 0
     var elapsed: Double = 0
+    /// Draw one underground room instead of the surface, as the engine does.
+    var room: Int?
   }
 
   static func run(_ options: Options) -> Int32 {
@@ -32,8 +34,12 @@ enum FrameCapture {
         roll: options.roll
       )
       let selector = VisibilitySelector()
-      let visible = selector.visible(in: world, from: options.position, elapsed: options.elapsed)
-      let (image, drawn) = render(world: world, camera: camera, visible: visible, size: options.size)
+      let visible = selector.visible(
+        in: world, from: options.position, elapsed: options.elapsed, room: options.room
+      )
+      let (image, drawn) = render(
+        world: world, camera: camera, visible: visible, size: options.size, room: options.room
+      )
       try write(image, to: options.output)
       let summary = """
         {"status":"rendered","output":"\(options.output.path)",\
@@ -50,7 +56,8 @@ enum FrameCapture {
   }
 
   private static func render(
-    world: World, camera: Camera, visible: VisibilitySelector.Visible, size: CGSize
+    world: World, camera: Camera, visible: VisibilitySelector.Visible, size: CGSize,
+    room: Int? = nil
   ) -> (CGImage, Int) {
     let width = Int(size.width)
     let height = Int(size.height)
@@ -67,15 +74,17 @@ enum FrameCapture {
     context.translateBy(x: 0, y: size.height)
     context.scaleBy(x: 1, y: -1)
 
-    context.setFillColor(color(ScenePalette.sky))
+    context.setFillColor(color(room == nil ? ScenePalette.sky : ScenePalette.enclosed))
     context.fill(CGRect(origin: .zero, size: size))
 
-    let (ground, lean) = camera.groundFill(size: size)
-    context.setFillColor(color(ScenePalette.ground))
-    context.saveGState()
-    if lean != 0 { context.concatenate(Camera.leanTransform(lean, size: size)) }
-    context.fill(ground)
-    context.restoreGState()
+    if room == nil {
+      let (ground, lean) = camera.groundFill(size: size)
+      context.setFillColor(color(ScenePalette.ground))
+      context.saveGState()
+      if lean != 0 { context.concatenate(Camera.leanTransform(lean, size: size)) }
+      context.fill(ground)
+      context.restoreGState()
+    }
 
     var drawn = 0
     for ink in [Ink.black, Ink.white] {
@@ -142,6 +151,7 @@ enum FrameCapture {
     if let pitch = value("--pitch") { options.pitch = pitch * .pi / 180 }
     if let roll = value("--roll") { options.roll = roll * .pi / 180 }
     if let elapsed = value("--time") { options.elapsed = max(0, elapsed) }
+    if let room = value("--room") { options.room = Int(room) }
     return options
   }
 }

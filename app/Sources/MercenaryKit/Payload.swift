@@ -157,6 +157,43 @@ public enum Payload {
     }
   }
 
+  /// The lift, which is the only way between the surface and the rooms.
+  ///
+  /// The rooms' geometry travels in ``RoomsDocument`` out of the dataset; this is the
+  /// runtime half — where the lifts are and how one moves.
+  public struct UndergroundDocument: Codable, Sendable, Equatable {
+    public struct Entrance: Codable, Sendable, Equatable {
+      public var site: Int
+      /// `[column, row]` on the surface grid.
+      public var cell: [Int]
+      /// The room this lift arrives in. The Reference Build hands the site straight
+      /// to the room setup as a room id, so the two are the same number.
+      public var room: Int
+    }
+
+    public struct Lift: Codable, Sendable, Equatable {
+      public var ascendRate: Int
+      public var descendRate: Int
+      public var surfaceAt: Int
+      public var submergeAt: Int
+      public var surfaceMiddle: Int
+      public var submergeMiddle: Int
+      public var floor: Int
+      public var altitudeWrap: Int
+      public var altitudeWrapSubtract: Int
+    }
+
+    public var schemaVersion: Int
+    public var entrances: [Entrance]
+    public var lift: Lift
+    public var counts: [String: Int]
+
+    /// The lift serving a surface cell, if one does.
+    public func entrance(column: Int, row: Int) -> Entrance? {
+      entrances.first { $0.cell.count == 2 && $0.cell[0] == column && $0.cell[1] == row }
+    }
+  }
+
   public struct Bundle: Sendable, Equatable {
     public var manifest: Manifest
     public var world: WorldDocument
@@ -174,6 +211,8 @@ public enum Payload {
     public var interaction: InteractionDocument?
     /// Absent for the same reason: the craft dynamics are read from a capture.
     public var flight: FlightDocument?
+    /// Absent for the same reason: the lift's rules are read from a capture.
+    public var underground: UndergroundDocument?
 
     public init(
       manifest: Manifest,
@@ -184,7 +223,8 @@ public enum Payload {
       text: TextDocument? = nil,
       benson: BensonDocument? = nil,
       interaction: InteractionDocument? = nil,
-      flight: FlightDocument? = nil
+      flight: FlightDocument? = nil,
+      underground: UndergroundDocument? = nil
     ) {
       self.manifest = manifest
       self.world = world
@@ -195,6 +235,7 @@ public enum Payload {
       self.benson = benson
       self.interaction = interaction
       self.flight = flight
+      self.underground = underground
     }
   }
 
@@ -239,6 +280,8 @@ public enum Payload {
   /// The flight parameters version separately again: they move when the control
   /// loop's decode does, which is independent of every other document.
   public static let supportedFlightSchemaVersion = 3
+  /// The lift's rules version separately again, for the same reason.
+  public static let supportedUndergroundSchemaVersion = 1
 
   /// Load and schema-check a payload directory.
   public static func load(from directory: URL) throws -> Bundle {
@@ -300,9 +343,18 @@ public enum Payload {
       flight = decoded
     }
 
+    var underground: UndergroundDocument?
+    if FileManager.default.fileExists(atPath: directory.appendingPathComponent("underground.json").path) {
+      let decoded: UndergroundDocument = try decode("underground.json", in: directory)
+      guard decoded.schemaVersion == supportedUndergroundSchemaVersion else {
+        throw LoadError.unsupportedSchema("underground.json", decoded.schemaVersion)
+      }
+      underground = decoded
+    }
+
     return Bundle(
       manifest: manifest, world: world, surface: surface, objects: objects, rooms: rooms, text: text,
-      benson: benson, interaction: interaction, flight: flight
+      benson: benson, interaction: interaction, flight: flight, underground: underground
     )
   }
 

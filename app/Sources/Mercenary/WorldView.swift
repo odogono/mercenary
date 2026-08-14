@@ -23,11 +23,18 @@ struct WorldView: View {
 
   private func draw(context: GraphicsContext, size: CGSize) {
     let camera = Camera(player: model.state.player)
-    drawGround(context: context, size: size, camera: camera)
+    // A room has no horizon: the Reference Build draws a different screen underground
+    // and it cannot be showing sky. Its indoor palette is not decoded yet, so the
+    // enclosing fill stands in for it rather than an outdoor sky and ground.
+    if model.state.room == nil {
+      drawGround(context: context, size: size, camera: camera)
+    } else {
+      context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(SceneStyle.enclosed))
+    }
 
     let visible = model.selector.visible(
       in: world, from: model.state.player.position, elapsed: model.state.elapsed,
-      hidden: model.hiddenSlots
+      hidden: model.hiddenSlots, room: model.state.room
     )
     var paths: [Ink: Path] = [:]
     var drawn = 0
@@ -133,6 +140,10 @@ private struct StatusStrip: View {
       // What the player is in, and the readouts that only mean anything aboard.
       Text(model.craftName)
         .foregroundStyle(SceneStyle.interfaceAccent)
+      if let room = model.state.room {
+        Text("ROOM \(room, specifier: "%02d")")
+          .foregroundStyle(SceneStyle.interfaceAccent)
+      }
       if model.state.craft != nil {
         Text("ALT \(Int(player.position.y))")
         Text("THR \(model.throttleNotch)")

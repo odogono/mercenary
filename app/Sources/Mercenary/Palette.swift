@@ -14,6 +14,7 @@ enum InterfacePalette {
 enum SceneStyle {
   static let sky = Color(ScenePalette.sky)
   static let ground = Color(ScenePalette.ground)
+  static let enclosed = Color(ScenePalette.enclosed)
   static let whiteInk = Color(ScenePalette.whiteInk)
   static let blackInk = Color(ScenePalette.blackInk)
   static let interfaceAccent = InterfacePalette.lightBlue

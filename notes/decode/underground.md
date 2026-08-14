@@ -41,10 +41,36 @@ changed, which is a guard against the position being updated underneath it. The
 altitude wraps at a middle byte of 6 by subtracting 7.
 
 On arrival the transition zeroes the X and Z low bytes, sets both middles to `$71`,
-and takes the destination cell from a table at `$B4B7` indexed by `$CD`, which is
-the site the player is entering. That table is the elevator and hangar coordinate
-list; cross-checking it against the community list of `9:6, 9:5, 3:0, 3:4, 3:15,
-11:13` is still open, and the Z table's load site is still unread.
+and takes the destination cell from **two** tables indexed by the same site: X from
+`$B4B6 + site` and Z from `$B4BE + site`, so the site counts from one.
+
+Arriving inside hands the site to `SETUP_ROOM` (`$90BE`) as `$08`, and that routine
+keys the room pointer tables at `$2300`/`$23C0` with it. So the site *is* the room
+id: site one arrives in room one.
+
+### Ruling: five lift entrances, and the sixth documented one is not a lift
+
+Read out of our own image, the tables give `9:6`, `9:5`, `3:0`, `11:13`, `3:15` for
+sites one to five. Site six lands on `81:35` and site seven on `136:136`, both off a
+sixteen-by-sixteen grid, and site eight reads the first byte of the Z table — so the
+X table is five long and that is what bounds the count. Nothing in the ROM states it.
+
+That matches five of the six coordinates the community list carries (`9:6, 9:5, 3:0,
+3:4, 3:15, 11:13`). The missing one is `3:4`, and it is absent from the lift table
+altogether rather than misread. The documented list is of elevators *and hangars*,
+and a hangar is entered by a different mechanism — the box test below — so `3:4` is
+most likely a hangar. Not proven, but the tables are unambiguous about what they
+hold.
+
+## Still unread
+
+* **What starts the lift.** The ride and its arrival are decoded; the trigger is not.
+  Until it is read the app stands in for it with a key, which still refuses anywhere
+  the tables say there is no lift.
+* **The indoor screen.** The surface setup calls `DRAW_SCREEN_OUTDOOR` (`$AF6E`), so
+  there is an indoor counterpart and a room is plainly not drawn against sky and
+  ground. That routine has not been read, so the app encloses the view in a
+  placeholder rather than claiming a colour.
 
 ## Not the way in
 
