@@ -12,6 +12,7 @@ sys.path.insert(0, str(LAB_ROOT))
 from c64lab.core import LabError
 from c64lab.payload import (
     build_rooms,
+    render_room_map_svg,
     CELL_SIZE,
     build_road_cells,
     build_objects,
@@ -335,6 +336,59 @@ class RoomsTests(unittest.TestCase):
     def test_refuses_a_dataset_carrying_no_rooms(self) -> None:
         with self.assertRaises(LabError):
             build_rooms(self.dataset(rooms=[]))
+
+
+class RoomMapTests(unittest.TestCase):
+    """The checking map: every room's plan and where its doorways lead."""
+
+    @staticmethod
+    def rooms():
+        def room(identifier, links):
+            return {
+                "room": identifier,
+                "vertices": [[0, 0, 0], [4096, 0, 0], [4096, 0, 4096]],
+                "edges": [[0, 1], [1, 2]],
+                "bounds": {"min": [0, 0, 0], "max": [4096, 1024, 4096]},
+                "hasPortal": bool(links),
+                "portals": [
+                    {"linked": link, "plane": "xy", "xMiddle": 8, "zMiddle": 8} for link in links
+                ],
+            }
+
+        # 0 and 1 link to each other; 1 also links one way to 2, which links back to 0.
+        return [room(0, [1]), room(1, [0, 2]), room(2, [0])]
+
+    def test_counts_every_link_and_which_of_them_are_one_way(self) -> None:
+        _, counts = render_room_map_svg(self.rooms())
+
+        self.assertEqual(counts["rooms"], 3)
+        self.assertEqual(counts["links"], 4)
+        # 1 -> 2 is not answered by 2 -> 1, and 2 -> 0 is not answered by 0 -> 2.
+        self.assertEqual(counts["oneWayLinks"], 2)
+
+    def test_draws_one_tile_per_room_and_says_what_it_is_showing(self) -> None:
+        svg, _ = render_room_map_svg(self.rooms())
+
+        self.assertTrue(svg.startswith("<svg"))
+        self.assertTrue(svg.rstrip().endswith("</svg>"))
+        self.assertEqual(svg.count("<g transform="), 3)
+        self.assertIn("underground rooms: 3", svg)
+        self.assertIn("4 links, 2 reciprocal, 2 one-way", svg)
+
+    def test_marks_a_one_way_doorway_differently_from_a_mutual_one(self) -> None:
+        svg, _ = render_room_map_svg(self.rooms())
+
+        # Both classes have to appear, or the distinction is not being drawn at all.
+        self.assertIn('class="d"', svg)
+        self.assertIn('class="o"', svg)
+
+    def test_a_room_with_no_doorways_still_gets_a_tile(self) -> None:
+        rooms = self.rooms()
+        rooms[2]["portals"] = []
+        svg, counts = render_room_map_svg(rooms)
+
+        self.assertEqual(counts["rooms"], 3)
+        self.assertEqual(svg.count("<g transform="), 3)
 
 
 if __name__ == "__main__":

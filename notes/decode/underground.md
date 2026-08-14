@@ -17,9 +17,15 @@ Each command in a record names a primitive from a table of sixteen templates, a
 plane (`xy` or `zy`, selected by the opcode's top bit), a middle-byte position, and
 one further byte.
 
-**That further byte is both a room link and a behaviour**, and which of the two it
-is in any given command is not settled. Both readings are carried into the payload
-rather than one being chosen.
+**That further byte is a room link.** It was carried as possibly-a-behaviour until
+the map made it checkable: all 481 of them land on real room ids, none is a
+self-link, and 398 reciprocate. A behaviour byte would not hit a valid room id every
+single time. Both readings still travel in the payload, since a given command could
+in principle mean the other thing, but the weight of evidence is settled.
+
+The 83 that do not reciprocate are the interesting ones — one-way doors, or the lift,
+or that other reading in those particular commands. `lab geometry rooms-svg` draws
+them in a different colour so they can be found by eye.
 
 **Most rooms are uniform 4096 × 1024 × 4096 chambers; the ones that decode to a
 sliver are corridors connecting them.** Confirmed by eye against the rendered

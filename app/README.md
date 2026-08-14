@@ -83,6 +83,16 @@ app/.build/debug/mercenary --inspect-rooms /tmp/rooms.png      # all 192 undergr
 app/.build/debug/mercenary --inspect-room 2 --out /tmp/r.png
 ```
 
+For checking the rooms' topology rather than their look, the lab draws a map of all
+192 — each room's plan from above, its doorways, and where each one leads, with
+one-way links picked out in a different colour:
+
+```sh
+research/c64-reference-build/lab geometry rooms-svg \
+  --dataset research/c64-reference-build/work/<geometry-dataset> \
+  --output research/c64-reference-build/work/rooms-map.svg
+```
+
 An underground room's coordinates are its own — the Reference Build draws one room
 at a time and expands its commands into points first — so a room's camera is framed
 to its own bounds and its spans say how big it is, not where it sits.

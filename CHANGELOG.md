@@ -46,6 +46,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   draws a different screen underground, which is unread, so a room is enclosed in a
   placeholder rather than an invented palette; it was showing sky and grass until now.
   `--render-frame --room N` renders from inside a room.
+- Map the rooms for checking. `lab geometry rooms-svg` draws all 192 as one sheet:
+  each room's plan seen from above in its own coordinates, its doorways placed where
+  the commands put them, and the rooms each doorway leads to written on the tile.
+  Rooms share no coordinate space — the Reference Build draws one at a time from its
+  own points — so there is no floor plan of the underground to draw; a grid of plans
+  is what there is, and a corridor reads as a line.
+  It settles what the link byte is. All 481 links land on real room ids, none is a
+  self-link, and 398 of them reciprocate, which a behaviour byte would not do. The
+  map draws the 83 that do not link back in a different colour, since those are the
+  ones worth looking at.
 
 ### Fixed
 

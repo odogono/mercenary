@@ -179,6 +179,104 @@ def build_rooms(underground: dict[str, Any]) -> dict[str, Any]:
     return {"schemaVersion": PAYLOAD_SCHEMA_VERSION, "rooms": rooms}
 
 
+def render_room_map_svg(rooms: list[dict[str, Any]]) -> tuple[str, dict[str, int]]:
+    """A checking map: every room's plan, its doorways, and where its links go.
+
+    Rooms have no shared coordinate space — the Reference Build draws one at a time
+    from its own points — so there is no floor plan of the underground to draw. What
+    there is instead is each room's own plan, laid out in a grid, with its links
+    written on it, which is what makes a topology mistake visible.
+
+    A link's target is drawn differently when the target does not link back. All of
+    them land on real room ids and most reciprocate, which is the evidence that the
+    byte really is a room link rather than the behaviour it might equally have been;
+    the one-way ones are the cases worth looking at.
+    """
+    links = {room["room"]: [portal["linked"] for portal in room["portals"]] for room in rooms}
+    known = set(links)
+
+    columns = 12
+    tile, pad, header = 150, 12, 78
+    width = columns * tile
+    rows = (len(rooms) + columns - 1) // columns
+    height = header + rows * tile
+
+    one_way = sum(
+        1
+        for source, targets in links.items()
+        for target in targets
+        if not (target in known and source in links[target])
+    )
+    total = sum(len(value) for value in links.values())
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+        f'viewBox="0 0 {width} {height}">',
+        '<rect width="100%" height="100%" fill="#0d0f14"/>',
+        '<style>text{font-family:ui-monospace,monospace;fill:#8fa4c0}'
+        '.id{fill:#e8eef7;font-size:13px}.lk{font-size:9px}'
+        '.w{stroke:#cfe0f5;stroke-width:1.2;fill:none}'
+        '.d{fill:#5ad18a}.o{fill:#e0913f}</style>',
+        f'<text class="id" x="{pad}" y="24">underground rooms: {len(rooms)}</text>',
+        f'<text x="{pad}" y="43" font-size="11">{total} links, {total - one_way} reciprocal, '
+        f'{one_way} one-way &#183; a green doorway links both ways, an orange one does not</text>',
+        f'<text x="{pad}" y="60" font-size="11">each tile is one room seen from above in its own '
+        f'coordinates, so a corridor reads as a line; labels are the rooms linked to</text>',
+    ]
+    for index, room in enumerate(sorted(rooms, key=lambda entry: entry["room"])):
+        column, row = index % columns, index // columns
+        left, top = column * tile, header + row * tile
+        parts.append(f'<g transform="translate({left},{top})">')
+        parts.append(f'<rect x="0.5" y="0.5" width="{tile - 1}" height="{tile - 1}" fill="none" stroke="#1e2532"/>')
+
+        low, high = room["bounds"]["min"], room["bounds"]["max"]
+        span_x = max(1, high[0] - low[0])
+        span_z = max(1, high[2] - low[2])
+        inner = tile - 2 * pad - 16
+
+        def place(x: float, z: float) -> tuple[float, float]:
+            return (
+                pad + (x - low[0]) / span_x * inner,
+                pad + 16 + (z - low[2]) / span_z * inner,
+            )
+
+        # The plan is the wireframe seen from above, so a corridor reads as a line.
+        for start, end in room["edges"]:
+            a, b = room["vertices"][start], room["vertices"][end]
+            x1, y1 = place(a[0], a[2])
+            x2, y2 = place(b[0], b[2])
+            parts.append(f'<line class="w" x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}"/>')
+
+        parts.append(f'<text class="id" x="{pad}" y="13">{room["room"]:02X}</text>')
+        for order, portal in enumerate(room["portals"]):
+            target = portal["linked"]
+            mutual = target in known and room["room"] in links[target]
+            # The doorway's own position within the room, in middle bytes.
+            x, y = place(portal["xMiddle"] << 8, portal["zMiddle"] << 8)
+            parts.append(
+                f'<rect class="{"d" if mutual else "o"}" x="{x - 2.5:.1f}" y="{y - 2.5:.1f}" width="5" height="5"/>'
+            )
+            parts.append(
+                f'<text class="lk" x="{pad + (order % 4) * 30}" y="{tile - 16 - (order // 4) * 11}" '
+                f'fill="{"#5ad18a" if mutual else "#e0913f"}">{target:02X}</text>'
+            )
+        parts.append("</g>")
+
+    parts.append("</svg>")
+    counts = {"rooms": len(rooms), "links": total, "oneWayLinks": one_way}
+    return "\n".join(parts), counts
+
+
+def export_room_map_svg(dataset_root: Path, output: Path) -> dict[str, Any]:
+    """Write the room map beside the other restricted outputs."""
+    verified = verify_dataset(dataset_root)
+    destination = require_ignored_output(output)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    rooms = build_rooms(verified["documents"]["underground"])["rooms"]
+    svg, counts = render_room_map_svg(rooms)
+    destination.write_text(svg, encoding="utf-8")
+    return {"status": "exported", "output": str(destination), **counts}
+
+
 def build_surface(surface: dict[str, Any]) -> dict[str, Any]:
     """Preserve each cell's complete point index space and edge topology."""
     structures = {structure["geometryIdentity"]: structure for structure in surface.get("structures", [])}
