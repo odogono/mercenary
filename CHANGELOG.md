@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   A room's links are carried without being resolved. The Reference Build packs a
   room link and a behaviour into the same byte and the decode does not claim to know
   which is which, so both readings travel and the uncertainty stays visible.
+  Most rooms are uniform 4096 × 1024 × 4096 chambers and the ones that decode to a
+  sliver are the corridors connecting them — a corridor is a chamber with one axis
+  collapsed, so both shapes come out of the same decode with nothing wrong.
+  `notes/decode/underground.md` carries the room structure and the lift.
 
 ### Fixed
 
