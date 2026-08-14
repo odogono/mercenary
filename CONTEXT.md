@@ -14,6 +14,10 @@ _Avoid_: Asset folder, resources, ROM data
 An original game-logic program from the Reference Build's in-game interpreter, re-extracted into the Data Payload in a structurally preserved re-encoding of its bytecode, and executed by this project's own interpreter through the Host Callout.
 _Avoid_: Game script, event code, AI logic, bytecode dump
 
+**Craft Parameter Block**:
+The set of values that makes one craft handle as it does—its control routine and its rates, limits, and gains—re-extracted into the Data Payload as plain numbers and selected by whatever the player currently occupies; being on foot selects one of these too, which is why walking and flying are the same control loop.
+_Avoid_: Flight profile, craft config, tuning block, vehicle stats
+
 **Host Callout**:
 The explicit seam through which a Benson Script reaches the engine, comprising the named engine state it may read and write and the effects it may ask the host to perform; it is the only path between game logic and the rest of the app, and the boundary an eventual scripting layer replaces.
 _Avoid_: Script API, engine hooks, bridge

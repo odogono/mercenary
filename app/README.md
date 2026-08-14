@@ -37,15 +37,35 @@ Discovery walks up from the working directory looking for `payload/manifest.json
 
 | Key | Action |
 |---|---|
-| `W` / `S` | Walk forward and back |
-| `A` / `D`, `←` / `→` | Turn |
-| `Q` / `E` | Sidestep |
-| `↑` / `↓` | Look up and down |
+| `←` / `→` | Turn |
+| `↑` / `↓` | Walk forward and back on foot; aboard, nose down and up |
 | `Shift` | Run |
+| `B` / `T` | Board what you are standing next to, or take it |
+| `L` | Leave the craft, once it is on the ground |
+| `1`…`9`, `0` | Throttle, in a craft: ten keys onto the decoded notch ladder |
+| `-` / `=` | Halve and double the throttle |
+| `Space` | Shut the throttle aboard; on foot, skip the message |
 | `[` / `]` | Page through the decoded messages |
 
-Speeds are tuned for how the walkabout plays, not copied from the Reference
-Build — the fidelity bar is modernised feel.
+The cursor keys are the whole movement surface, as the original's stick was. Aboard
+a craft they read as a stick rather than a camera, so pushing up puts the nose
+down.
+
+The throttle ladder is ten notches each twice the last, so it spans 512 to 1 and
+its lowest rungs are imperceptible. `flight.throttleFloorNotch` is the notch the
+`1` key selects, so the ten keys cover a useful window of the ladder rather than
+all of it; the lowest two are below take-off speed and taxi.
+
+Walking and flying are the same control loop over different Craft Parameter
+Blocks, as they were in the Reference Build (ADR 0016), so the rates come from
+the decoded parameters rather than from tuned constants. What is tuned is the
+frame rate those parameters are paced at, and per-axis scales, both in
+`settings.json` — the fidelity bar is modernised feel.
+
+There is no take-off or landing key, because the Reference Build had none: build
+up speed on the ground until the craft will leave it, then pitch up. Crossing back
+down through the altitude band lands you, or crashes you if you arrive too fast or
+too nose-down.
 
 ## Geometry debug mode
 
@@ -64,6 +84,19 @@ The default view is canonical: a camera framed to the subject's own bounds, with
 no level of detail and no orientation, because a malformed model has to be visible
 as one. `--in-situ` draws the object as the game would instead.
 
+## Headless flight trace
+
+Flies a craft with no window, so the control loop can be read against the decoded
+parameters instead of judged by eye. Prints every Craft Parameter Block as real
+numbers and the control-loop rules, then flies a circuit: take-off run, climb,
+level off, turn, descent, touchdown.
+
+```sh
+app/.build/debug/mercenary --flight-trace                  # the Dominion Dart at full throttle
+app/.build/debug/mercenary --flight-trace --craft 3 --notch 7 --seconds 90
+app/.build/debug/mercenary --flight-trace --poweramp       # the Dart's raised ceiling
+```
+
 ## Headless frame capture
 
 Renders one frame to a PNG with no window. Useful for side-by-side fidelity
@@ -74,7 +107,9 @@ app/.build/debug/mercenary --render-frame /tmp/frame.png \
   --x 559104 --z 547104 --eye 128 --heading 0 --pitch 0
 ```
 
-`--heading` and `--pitch` are degrees; `--x`, `--z`, `--eye` are world units.
+`--heading`, `--pitch` and `--roll` are degrees; `--x`, `--z`, `--eye` are world
+units. `--roll` and a pitch past 90 degrees are what flight added: the horizon
+leans with the bank and changes sides when the view goes over the top.
 The command prints the candidate segment count, the number of lines actually
 drawn, and how many edges the payload deferred. The example is the calibrated
 cell 8:8 opening pose.

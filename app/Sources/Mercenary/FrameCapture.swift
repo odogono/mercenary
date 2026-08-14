@@ -16,6 +16,7 @@ enum FrameCapture {
     var position: SIMD3<Double> = SIMD3(32_000, 128, 32_000)
     var heading: Double = .pi / 4
     var pitch: Double = 0
+    var roll: Double = 0
     var elapsed: Double = 0
   }
 
@@ -26,7 +27,10 @@ enum FrameCapture {
     }
     do {
       let world = World(bundle: try Payload.load(from: directory))
-      let camera = Camera(position: options.position, heading: options.heading, pitch: options.pitch)
+      let camera = Camera(
+        position: options.position, heading: options.heading, pitch: options.pitch,
+        roll: options.roll
+      )
       let selector = VisibilitySelector()
       let visible = selector.visible(in: world, from: options.position, elapsed: options.elapsed)
       let (image, drawn) = render(world: world, camera: camera, visible: visible, size: options.size)
@@ -66,11 +70,12 @@ enum FrameCapture {
     context.setFillColor(color(ScenePalette.sky))
     context.fill(CGRect(origin: .zero, size: size))
 
-    let horizon = max(0, min(Double(size.height), camera.horizon(size: size)))
-    if horizon < Double(size.height) {
-      context.setFillColor(color(ScenePalette.ground))
-      context.fill(CGRect(x: 0, y: horizon, width: size.width, height: Double(size.height) - horizon))
-    }
+    let (ground, lean) = camera.groundFill(size: size)
+    context.setFillColor(color(ScenePalette.ground))
+    context.saveGState()
+    if lean != 0 { context.concatenate(Camera.leanTransform(lean, size: size)) }
+    context.fill(ground)
+    context.restoreGState()
 
     var drawn = 0
     for ink in [Ink.black, Ink.white] {
@@ -135,6 +140,7 @@ enum FrameCapture {
     if let y = value("--eye") { options.position.y = y }
     if let heading = value("--heading") { options.heading = heading * .pi / 180 }
     if let pitch = value("--pitch") { options.pitch = pitch * .pi / 180 }
+    if let roll = value("--roll") { options.roll = roll * .pi / 180 }
     if let elapsed = value("--time") { options.elapsed = max(0, elapsed) }
     return options
   }

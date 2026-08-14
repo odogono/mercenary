@@ -55,18 +55,96 @@ public struct Settings: Codable, Sendable, Equatable {
     }
   }
 
+  public struct Flight: Codable, Sendable, Equatable {
+    /// Frames per second the decoded craft parameters were written for. This is
+    /// the one knob that paces every craft at once, walking included.
+    public var referenceFrameRate: Double
+    public var turnScale: Double
+    public var pitchScale: Double
+    public var speedScale: Double
+    /// Which throttle notch a walk and a run stand for while on foot.
+    public var walkNotch: Int
+    public var runNotch: Int
+    /// The notch the lowest throttle key selects. The decoded ladder spans 512 to
+    /// 1, so starting part way up is what makes all ten keys do something.
+    public var throttleFloorNotch: Int
+    /// Eye height on foot. Absent means the Reference Build's own ground
+    /// altitude, which the payload carries.
+    public var groundAltitude: Double?
+
+    // Each knob's default is the control loop's own, so it lives once, on
+    // ``ControlLimits``, rather than being restated here.
+    public init(
+      referenceFrameRate: Double = ControlLimits().referenceFrameRate,
+      turnScale: Double = ControlLimits().turnScale,
+      pitchScale: Double = ControlLimits().pitchScale,
+      speedScale: Double = ControlLimits().speedScale,
+      walkNotch: Int = ControlLimits().walkNotch,
+      runNotch: Int = ControlLimits().runNotch,
+      throttleFloorNotch: Int = ControlLimits().throttleFloorNotch,
+      groundAltitude: Double? = ControlLimits().groundAltitude
+    ) {
+      self.referenceFrameRate = referenceFrameRate
+      self.turnScale = turnScale
+      self.pitchScale = pitchScale
+      self.speedScale = speedScale
+      self.walkNotch = walkNotch
+      self.runNotch = runNotch
+      self.throttleFloorNotch = throttleFloorNotch
+      self.groundAltitude = groundAltitude
+    }
+
+    public init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      let defaults = Flight()
+      referenceFrameRate =
+        try container.decodeIfPresent(Double.self, forKey: .referenceFrameRate) ?? defaults.referenceFrameRate
+      turnScale = try container.decodeIfPresent(Double.self, forKey: .turnScale) ?? defaults.turnScale
+      pitchScale = try container.decodeIfPresent(Double.self, forKey: .pitchScale) ?? defaults.pitchScale
+      speedScale = try container.decodeIfPresent(Double.self, forKey: .speedScale) ?? defaults.speedScale
+      walkNotch = try container.decodeIfPresent(Int.self, forKey: .walkNotch) ?? defaults.walkNotch
+      runNotch = try container.decodeIfPresent(Int.self, forKey: .runNotch) ?? defaults.runNotch
+      throttleFloorNotch =
+        try container.decodeIfPresent(Int.self, forKey: .throttleFloorNotch) ?? defaults.throttleFloorNotch
+      groundAltitude = try container.decodeIfPresent(Double.self, forKey: .groundAltitude)
+    }
+
+    /// The host bounds and knobs the control loop takes, for one world's extent.
+    public func limits(groundExtent: Double) -> ControlLimits {
+      ControlLimits(
+        referenceFrameRate: referenceFrameRate,
+        turnScale: turnScale,
+        pitchScale: pitchScale,
+        speedScale: speedScale,
+        walkNotch: walkNotch,
+        runNotch: runNotch,
+        throttleFloorNotch: throttleFloorNotch,
+        groundExtent: groundExtent,
+        groundAltitude: groundAltitude
+      )
+    }
+
+    /// The flight model these knobs produce for one payload's parameters.
+    public func model(for document: Payload.FlightDocument, groundExtent: Double) -> FlightModel {
+      FlightModel(document: document, limits: limits(groundExtent: groundExtent))
+    }
+  }
+
   public var message: Message
   public var scripts: Scripts
+  public var flight: Flight
 
-  public init(message: Message = Message(), scripts: Scripts = Scripts()) {
+  public init(message: Message = Message(), scripts: Scripts = Scripts(), flight: Flight = Flight()) {
     self.message = message
     self.scripts = scripts
+    self.flight = flight
   }
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     message = try container.decodeIfPresent(Message.self, forKey: .message) ?? Message()
     scripts = try container.decodeIfPresent(Scripts.self, forKey: .scripts) ?? Scripts()
+    flight = try container.decodeIfPresent(Flight.self, forKey: .flight) ?? Flight()
   }
 
   /// Script pacing built from these settings, for one payload's tick length.

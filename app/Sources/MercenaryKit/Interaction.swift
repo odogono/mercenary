@@ -168,6 +168,23 @@ public struct Interaction: Sendable, Equatable {
     }
   }
 
+  /// Step out of the boarded craft, which puts it back where the player is.
+  ///
+  /// Boarding takes the craft out of the world; leaving has to undo both halves of
+  /// that or the craft is gone for good. The Reference Build copied the camera's
+  /// position back into the craft's own, which is what makes it possible to fly
+  /// somewhere, get out, and find it still standing there.
+  public func leave(host: inout BensonHostState) -> Int? {
+    let slot = host.boardedCraft
+    guard slot != BensonHostState.onFoot else { return nil }
+    host.boardedCraft = BensonHostState.onFoot
+    host.objectRooms[slot] = Interaction.surfaceRoom
+    return slot
+  }
+
+  /// The room a craft belongs to when it is standing on the surface.
+  public static let surfaceRoom = 0
+
   /// What an object says when the player reaches it: a message, a script, or
   /// nothing. The Reference Build packed the choice into two flag bits, and both
   /// the take and the board path consult it.

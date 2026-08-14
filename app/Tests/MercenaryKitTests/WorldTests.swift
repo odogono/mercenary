@@ -55,21 +55,35 @@ final class WorldTests: XCTestCase {
 
     XCTAssertEqual(world.deferredEdges, 0)
     XCTAssertEqual(rotating.segments(at: 0).count, 2)
-    XCTAssertEqual(rotating.segments(at: 0)[1].b, SIMD3(33_808, 512, 33_840))
+    // A ×64 displacement per byte, corrected from ×16 — see the note.
+    XCTAssertEqual(rotating.segments(at: 0)[1].b, SIMD3(33_856, 512, 33_984))
   }
 
-  func testRotatedPointsUseAReferenceBuildRateAndDeterministicElapsedTime() throws {
+  func testRotatedPointsTurnAtTheReferenceBuildsRateAndDoNotStepBetweenFrames() throws {
+    // The rate is the decoded one — a whole step of the descriptor per geometry
+    // frame — but the phase runs continuously through it rather than jumping once
+    // every fifth of a second, which at 60 frames a second read as a stutter.
     let world = World(bundle: try bundle())
     let rotating = try XCTUnwrap(world.cell(column: 0, row: 0))
-    let initial = rotating.segments(at: 0)[1].b
-    let beforeFirstUpdate = rotating.segments(at: 0.199)[1].b
-    let afterFirstUpdate = rotating.segments(at: 0.200)[1].b
-    let angle = 56.0 / 1_024.0 * (2 * Double.pi)
+    func point(at elapsed: Double) -> SIMD3<Float> { rotating.segments(at: elapsed)[1].b }
+    func expected(afterFrames frames: Double) -> SIMD3<Float> {
+      let angle = frames * 56.0 / 1_024.0 * (2 * Double.pi)
+      return SIMD3(
+        Float(33_792 + 64 * cos(angle) - 192 * sin(angle)),
+        512,
+        Float(33_792 + 64 * sin(angle) + 192 * cos(angle))
+      )
+    }
 
-    XCTAssertEqual(beforeFirstUpdate, initial)
-    XCTAssertEqual(afterFirstUpdate.x, Float(33_792 + 16 * cos(angle) - 48 * sin(angle)), accuracy: 0.01)
-    XCTAssertEqual(afterFirstUpdate.y, 512, accuracy: 0.01)
-    XCTAssertEqual(afterFirstUpdate.z, Float(33_792 + 16 * sin(angle) + 48 * cos(angle)), accuracy: 0.01)
+    // One whole frame lands exactly where the original's own step would put it.
+    XCTAssertEqual(point(at: 0.2).x, expected(afterFrames: 1).x, accuracy: 0.01)
+    XCTAssertEqual(point(at: 0.2).y, expected(afterFrames: 1).y, accuracy: 0.01)
+    XCTAssertEqual(point(at: 0.2).z, expected(afterFrames: 1).z, accuracy: 0.01)
+
+    // Half a frame is half way round that step, and no longer where it started.
+    XCTAssertEqual(point(at: 0.1).x, expected(afterFrames: 0.5).x, accuracy: 0.01)
+    XCTAssertEqual(point(at: 0.1).z, expected(afterFrames: 0.5).z, accuracy: 0.01)
+    XCTAssertNotEqual(point(at: 0.1), point(at: 0))
   }
 
   func testMapLinesPreserveFullRunsBetweenGridCentres() throws {
@@ -152,6 +166,34 @@ final class WorldTests: XCTestCase {
     let world = World(bundle: try bundle())
 
     XCTAssertNil(world.cell(column: 9, row: 9))
+  }
+
+  func testARotatedStructureDisplacementIsSixtyFourPerByte() {
+    // `SETUP_STRUCTURE_POINTERS` hands the byte to `BIT24_TO_FP` as the high byte
+    // of a 24-bit value and then takes ten powers of two off the exponent, so the
+    // displacement is `byte << 16 >> 10`. Reading it as ×16 drew the rotating
+    // pyramid at cell 8:8 as a spike four times too narrow.
+    let rotation = SurfaceRotation(descriptor: 0, centre: SIMD2(0, 0))
+    let point = rotation.resolve(SIMD3(1, 0, 1), elapsed: 0)
+
+    XCTAssertEqual(point.x, 64, accuracy: 0.001)
+    XCTAssertEqual(point.z, 64, accuracy: 0.001)
+  }
+
+  func testARotatedStructureHeightStaysInMiddleByteUnits() {
+    // Y is stored straight into the ground-structure MSB rather than converted,
+    // so it is the one axis of the three that is not a ×64 displacement.
+    let rotation = SurfaceRotation(descriptor: 0, centre: SIMD2(0, 0))
+
+    XCTAssertEqual(rotation.resolve(SIMD3(0, 1, 0), elapsed: 0).y, 256, accuracy: 0.001)
+  }
+
+  func testARotatedDisplacementIsSignedAboutItsCentre() {
+    let rotation = SurfaceRotation(descriptor: 0, centre: SIMD2(10_000, 20_000))
+    let negative = rotation.resolve(SIMD3(0xFF, 0, 0xFF), elapsed: 0)
+
+    XCTAssertEqual(negative.x, 10_000 - 64, accuracy: 0.001)
+    XCTAssertEqual(negative.z, 20_000 - 64, accuracy: 0.001)
   }
 }
 
@@ -323,5 +365,28 @@ final class VisibilitySelectorTests: XCTestCase {
     let visible = selector.visible(in: world, from: SIMD3(-5_000, 320, -5_000))
 
     XCTAssertEqual(visible.segments.filter { $0.ink == Ink.black }.count, 0)
+  }
+
+  func testABoardedCraftIsNotDrawnAndReappearsWhenLeft() throws {
+    // The payload's room byte only says where a thing started. What is out of the
+    // world *now* is live state, so the renderer has to be told — otherwise the
+    // craft the player is sitting in goes on being drawn beside them.
+    let world = World(bundle: try bundle())
+    let selector = VisibilitySelector()
+    let slot = try XCTUnwrap(world.objects.first(where: \.isDrawable)).slot
+    let here = SIMD3<Double>(33_792, 128, 33_792)
+
+    let onFoot = selector.visible(in: world, from: here)
+    let aboard = selector.visible(in: world, from: here, hidden: [slot])
+    let afterLeaving = selector.visible(in: world, from: here, hidden: [])
+
+    XCTAssertLessThan(
+      aboard.segments.count + aboard.points.count,
+      onFoot.segments.count + onFoot.points.count
+    )
+    XCTAssertEqual(
+      afterLeaving.segments.count + afterLeaving.points.count,
+      onFoot.segments.count + onFoot.points.count
+    )
   }
 }

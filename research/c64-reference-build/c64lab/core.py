@@ -79,9 +79,18 @@ def parse_vice_version(output: str) -> tuple[int, int, int]:
     return tuple(int(part or 0) for part in match.groups())  # type: ignore[return-value]
 
 
-def _require(condition: bool, message: str) -> None:
+def require(condition: bool, message: str) -> None:
+    """Raise :class:`LabError` unless the condition holds.
+
+    Shared so a decoder states its assertions rather than restating this helper;
+    the older modules still carry their own copy.
+    """
     if not condition:
         raise LabError(message)
+
+
+#: The name this module's own callers have always used.
+_require = require
 
 
 def validate_scenario(scenario: dict[str, Any], cycle_limit: int) -> None:

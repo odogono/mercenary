@@ -27,13 +27,39 @@ final class SettingsTests: XCTestCase {
 
   func testEverySettingCanBeSet() throws {
     let settings = try settings(
-      #"{"message":{"holdSeconds":4,"charactersPerSecond":8},"scripts":{"timeScale":2,"instructionBudget":64}}"#
+      #"""
+      {"message":{"holdSeconds":4,"charactersPerSecond":8},
+       "scripts":{"timeScale":2,"instructionBudget":64},
+       "flight":{"referenceFrameRate":10,"turnScale":4,"pitchScale":2,"speedScale":3,
+                 "walkNotch":5,"runNotch":7,"groundAltitude":80}}
+      """#
     )
 
     XCTAssertEqual(settings.message.holdSeconds, 4)
     XCTAssertEqual(settings.message.charactersPerSecond, 8)
     XCTAssertEqual(settings.scripts.timeScale, 2)
     XCTAssertEqual(settings.scripts.instructionBudget, 64)
+    XCTAssertEqual(settings.flight.referenceFrameRate, 10)
+    XCTAssertEqual(settings.flight.turnScale, 4)
+    XCTAssertEqual(settings.flight.pitchScale, 2)
+    XCTAssertEqual(settings.flight.speedScale, 3)
+    XCTAssertEqual(settings.flight.walkNotch, 5)
+    XCTAssertEqual(settings.flight.runNotch, 7)
+    XCTAssertEqual(settings.flight.groundAltitude, 80)
+  }
+
+  func testAFlightSectionMayNameOnlyWhatItChanges() throws {
+    let settings = try settings(#"{"flight":{"turnScale":4}}"#)
+
+    XCTAssertEqual(settings.flight.turnScale, 4)
+    XCTAssertEqual(settings.flight.referenceFrameRate, Settings.Flight().referenceFrameRate)
+    XCTAssertNil(settings.flight.groundAltitude, "absent means the payload's own ground altitude")
+  }
+
+  func testTheFlightDefaultsAreTheControlLoopsOwn() {
+    // The knob defaults live once, on ControlLimits; the settings restate nothing.
+    let limits = ControlLimits()
+    XCTAssertEqual(Settings.Flight().limits(groundExtent: limits.groundExtent), limits)
   }
 
   func testAnEmptyObjectIsTheDefaults() throws {

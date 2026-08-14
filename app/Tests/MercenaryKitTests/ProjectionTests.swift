@@ -106,4 +106,37 @@ final class CameraTests: XCTestCase {
 
     XCTAssertGreaterThan(raisedPoint.y, levelPoint.y)
   }
+
+  func testBankingRightLiftsTheRightOfTheHorizon() {
+    // The world turns against the craft, so a right bank raises the right-hand
+    // side. Getting this backwards makes a turn read as a turn the other way.
+    let size = CGSize(width: 1280, height: 800)
+    let level = Camera(position: .zero, heading: 0, pitch: 0)
+    let banked = Camera(position: .zero, heading: 0, pitch: 0, roll: 0.4)
+    let toTheRight = SIMD3<Float>(10_000, 0, 10_000)
+
+    let flat = level.project(level.viewSpace(toTheRight), size: size)
+    let leaning = banked.project(banked.viewSpace(toTheRight), size: size)
+
+    // Screen y grows downward, so higher on screen is a smaller y.
+    XCTAssertLessThan(leaning.y, flat.y)
+  }
+
+  func testTheGroundFillLeansTheSameWayTheWorldDoes() {
+    let size = CGSize(width: 1280, height: 800)
+    let banked = Camera(position: .zero, heading: 0, pitch: 0, roll: 0.4)
+
+    let (_, lean) = banked.groundFill(size: size)
+
+    // Opposite in sign to the roll, for the same reason the world is.
+    XCTAssertEqual(lean, -0.4, accuracy: 1e-12)
+  }
+
+  func testAViewPastTheVerticalPutsTheGroundAboveTheHorizon() {
+    let upright = Camera(position: .zero, heading: 0, pitch: 0.4)
+    let overTheTop = Camera(position: .zero, heading: 0, pitch: .pi - 0.4)
+
+    XCTAssertFalse(upright.isInverted)
+    XCTAssertTrue(overTheTop.isInverted)
+  }
 }

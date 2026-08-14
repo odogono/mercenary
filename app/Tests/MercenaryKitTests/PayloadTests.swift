@@ -50,19 +50,34 @@ enum PayloadFixture {
         "visibility":{"detailCubePerAxis":65536,"farRepresentation":"point"}}]}
     """
 
+  static let flight = """
+    {"schemaVersion":2,
+     "blocks":[
+       {"index":0,"handler":"standard","yawDamping":0.9375,"yawAuthority":1,"pitchStep":8,
+        "rollCoupling":4,"liftFactor":0.5,"speedDamping":0.5,"ceiling":10,"throttleGain":0.390625}],
+     "rules":{"angleUnitsPerTurn":1024,"levelPitch":512,"groundAltitude":63,"groundBand":64,
+       "takeoffSpeed":128,"crashDescentRate":256,"crashPitch":640,"ceilingClimbScale":0,
+       "ceilingUnit":65536,"throttleNotches":[32,64],"throttleLimit":32768,
+       "poweramp":{"craft":1,"throttleScale":2,"ceiling":90},"walkingBlock":0},
+     "counts":{"flightBlocks":1}}
+    """
+
   static func write(
     into directory: URL,
     manifest: String = manifest,
     world: String = world,
     surface: String = surface,
     objects: String = objects,
+    flight: String? = nil,
     omitting: Set<String> = []
   ) throws {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    for (name, body) in [
+    var files = [
       ("manifest.json", manifest), ("world.json", world),
       ("surface.json", surface), ("objects.json", objects),
-    ] where !omitting.contains(name) {
+    ]
+    if let flight { files.append(("flight.json", flight)) }
+    for (name, body) in files where !omitting.contains(name) {
       try body.write(to: directory.appendingPathComponent(name), atomically: true, encoding: .utf8)
     }
   }
@@ -90,6 +105,35 @@ final class PayloadTests: XCTestCase {
     XCTAssertEqual(bundle.surface.cells.count, 2)
     XCTAssertEqual(bundle.objects.models.count, 1)
     XCTAssertEqual(bundle.objects.instances.count, 2)
+  }
+
+  func testLoadsFlightParametersWhenTheExportCarriesThem() throws {
+    try PayloadFixture.write(into: directory, flight: PayloadFixture.flight)
+
+    let bundle = try Payload.load(from: directory)
+
+    let document = try XCTUnwrap(bundle.flight)
+    XCTAssertEqual(document.blocks.count, 1)
+    XCTAssertEqual(document.blocks[0].handler, .standard)
+    XCTAssertEqual(document.blocks[0].rollCoupling, 4)
+    XCTAssertEqual(document.rules.walkingBlock, 0)
+  }
+
+  func testAPayloadWithoutFlightParametersStillLoads() throws {
+    try PayloadFixture.write(into: directory)
+
+    XCTAssertNil(try Payload.load(from: directory).flight)
+  }
+
+  func testAFutureFlightSchemaRequiresAReexport() throws {
+    try PayloadFixture.write(
+      into: directory,
+      flight: PayloadFixture.flight.replacingOccurrences(of: "\"schemaVersion\":2", with: "\"schemaVersion\":3")
+    )
+
+    XCTAssertThrowsError(try Payload.load(from: directory)) { error in
+      XCTAssertEqual(error as? Payload.LoadError, .unsupportedSchema("flight.json", 3))
+    }
   }
 
   func testAMissingDirectoryExplainsHowToExportOne() {

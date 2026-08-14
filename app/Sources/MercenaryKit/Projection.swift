@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 
 /// A projected line ready to stroke, in view pixels.
@@ -68,17 +69,31 @@ public struct ReferenceViewport: Sendable {
 /// a window: the clip behaviour at the near plane is the part most likely to go
 /// subtly wrong.
 public struct Camera: Sendable, Equatable {
-  public var position: SIMD3<Double>
-  public var heading: Double
-  public var pitch: Double
-  public var verticalFieldOfView: Double
-  public var nearPlane: Double
-  public var farPlane: Double
+  public let position: SIMD3<Double>
+  public let heading: Double
+  public let pitch: Double
+  /// Radians about the direction of travel. Non-zero only in flight.
+  public let roll: Double
+  public let verticalFieldOfView: Double
+  public let nearPlane: Double
+  public let farPlane: Double
+
+  /// The camera's angles as sines and cosines, taken once here rather than per
+  /// vertex: a camera is built once a frame and then asked to transform every
+  /// point in the scene, so this is the difference between six trig calls a
+  /// frame and six per vertex.
+  private let sinHeading: Double
+  private let cosHeading: Double
+  private let sinPitch: Double
+  private let cosPitch: Double
+  private let sinRoll: Double
+  private let cosRoll: Double
 
   public init(
     position: SIMD3<Double>,
     heading: Double,
     pitch: Double,
+    roll: Double = 0,
     verticalFieldOfView: Double = ReferenceViewport(size: CGSize(width: 160, height: 136)).verticalFieldOfView,
     nearPlane: Double = 24,
     farPlane: Double = 320_000
@@ -86,14 +101,32 @@ public struct Camera: Sendable, Equatable {
     self.position = position
     self.heading = heading
     self.pitch = pitch
+    self.roll = roll
     self.verticalFieldOfView = verticalFieldOfView
     self.nearPlane = nearPlane
     self.farPlane = farPlane
+    self.sinHeading = sin(heading)
+    self.cosHeading = cos(heading)
+    self.sinPitch = sin(pitch)
+    self.cosPitch = cos(pitch)
+    // The world turns against the craft, so these are the sine and cosine of the
+    // *negated* roll: a right bank has to lift the right of the horizon, not drop
+    // it, and getting that backwards makes a turn read as a turn the other way.
+    self.sinRoll = sin(-roll)
+    self.cosRoll = cos(-roll)
   }
 
   public init(player: PlayerState) {
-    self.init(position: player.position, heading: player.heading, pitch: player.pitch)
+    self.init(
+      position: player.position, heading: player.heading, pitch: player.pitch, roll: player.roll
+    )
   }
+
+  /// Whether the camera is past the vertical, so the ground is above the horizon.
+  ///
+  /// Pitch wraps in the Reference Build rather than clamping, so a craft really can
+  /// be flown over the top and the fill has to know which side is which.
+  public var isInverted: Bool { cosPitch < 0 }
 
   /// Transform a world point into view space: +X right, +Y up, +Z forward.
   public func viewSpace(_ world: SIMD3<Float>) -> SIMD3<Double> {
@@ -102,16 +135,15 @@ public struct Camera: Sendable, Equatable {
       Double(world.y) - position.y,
       Double(world.z) - position.z
     )
-    let sinHeading = sin(heading)
-    let cosHeading = cos(heading)
     // Yaw about the vertical axis, with heading measured clockwise from +Z.
     let x = relative.x * cosHeading - relative.z * sinHeading
     let forward = relative.x * sinHeading + relative.z * cosHeading
-    let sinPitch = sin(pitch)
-    let cosPitch = cos(pitch)
-    let y = relative.y * cosPitch - forward * sinPitch
+    let pitched = relative.y * cosPitch - forward * sinPitch
     let z = relative.y * sinPitch + forward * cosPitch
-    return SIMD3(x, y, z)
+    guard roll != 0 else { return SIMD3(x, pitched, z) }
+    // Roll turns the view about the direction of travel, which is how a banking
+    // craft leans the whole world rather than moving through it differently.
+    return SIMD3(x * cosRoll + pitched * sinRoll, pitched * cosRoll - x * sinRoll, z)
   }
 
   /// Project a clipped view-space point into pixels for a view of `size`.
@@ -130,6 +162,31 @@ public struct Camera: Sendable, Equatable {
   public func horizon(size: CGSize) -> Double {
     let viewport = ReferenceViewport(size: size)
     return viewport.centre.y + tan(pitch) * verticalFocalLength(size: size)
+  }
+
+  /// The ground's fill for a view of `size`: a rectangle in unrolled screen space
+  /// and the lean to apply to it about the view's centre.
+  ///
+  /// Both renderers need the same answer, and in flight it is no longer simply
+  /// "below the middle": the fill leans with the craft's roll, and changes sides
+  /// when pitch carries the view past the vertical, since pitch wraps rather than
+  /// clamping. The rectangle reaches well past the corners so leaning it cannot
+  /// uncover one.
+  public func groundFill(size: CGSize) -> (rect: CGRect, lean: Double) {
+    let edge = self.horizon(size: size)
+    let reach = Double(size.width + size.height) * 2
+    let rect = isInverted
+      ? CGRect(x: -reach, y: edge - reach, width: reach * 2, height: reach)
+      : CGRect(x: -reach, y: edge, width: reach * 2, height: reach)
+    return (rect, -roll)
+  }
+
+  /// Leaning the ground fill means turning it about the view's centre.
+  public static func leanTransform(_ roll: Double, size: CGSize) -> CGAffineTransform {
+    let centre = CGPoint(x: size.width / 2, y: size.height / 2)
+    return CGAffineTransform(translationX: centre.x, y: centre.y)
+      .rotated(by: roll)
+      .translatedBy(x: -centre.x, y: -centre.y)
   }
 
   private func verticalFocalLength(size: CGSize) -> Double {
@@ -198,7 +255,12 @@ public struct VisibilitySelector: Sendable {
   /// presentation adaptation; the Reference Build expands only the current
   /// structure. Objects retain their separate decoded detail-cube rule.
   ///
-  public func visible(in world: World, from position: SIMD3<Double>, elapsed: Double = 0) -> Visible {
+  /// `hidden` names object slots the game has taken out of the world — a craft
+  /// the player has boarded, or anything picked up. The payload's room byte only
+  /// says where a thing started; what is out of the world now is live state.
+  public func visible(
+    in world: World, from position: SIMD3<Double>, elapsed: Double = 0, hidden: Set<Int> = []
+  ) -> Visible {
     let column = Int((position.x / Double(world.cellSize)).rounded(.down))
     let row = Int((position.z / Double(world.cellSize)).rounded(.down))
     var segments: [Segment] = []
@@ -226,7 +288,7 @@ public struct VisibilitySelector: Sendable {
     var points: [SIMD3<Float>] = []
     var detailed = 0
     if includeObjects {
-      for object in world.objects where object.isDrawable {
+      for object in world.objects where object.isDrawable && !hidden.contains(object.slot) {
         if object.isDetailed(from: position) {
           segments.append(contentsOf: object.segments)
           detailed += 1
