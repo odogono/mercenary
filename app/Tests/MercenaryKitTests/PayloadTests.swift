@@ -50,6 +50,16 @@ enum PayloadFixture {
         "visibility":{"detailCubePerAxis":65536,"farRepresentation":"point"}}]}
     """
 
+  static let rooms = """
+    {"schemaVersion":\(Payload.supportedSchemaVersion),
+     "rooms":[
+       {"room":0,"vertices":[[0,0,0],[4096,0,0],[4096,1024,0]],"edges":[[0,1],[1,2]],
+        "bounds":{"min":[0,0,0],"max":[4096,1024,0]},"hasPortal":true,
+        "portals":[{"linked":88,"plane":"zy","xMiddle":16,"zMiddle":12}]},
+       {"room":1,"vertices":[[0,0,0],[512,0,0]],"edges":[[0,1]],
+        "bounds":{"min":[0,0,0],"max":[512,0,0]},"hasPortal":false,"portals":[]}]}
+    """
+
   static let flight = """
     {"schemaVersion":\(Payload.supportedFlightSchemaVersion),
      "walk":{"step":80,"turnStep":16},
@@ -69,13 +79,14 @@ enum PayloadFixture {
     world: String = world,
     surface: String = surface,
     objects: String = objects,
+    rooms: String = rooms,
     flight: String? = nil,
     omitting: Set<String> = []
   ) throws {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     var files = [
       ("manifest.json", manifest), ("world.json", world),
-      ("surface.json", surface), ("objects.json", objects),
+      ("surface.json", surface), ("objects.json", objects), ("rooms.json", rooms),
     ]
     if let flight { files.append(("flight.json", flight)) }
     for (name, body) in files where !omitting.contains(name) {

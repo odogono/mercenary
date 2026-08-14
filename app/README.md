@@ -78,7 +78,13 @@ app/.build/debug/mercenary --inspect-objects /tmp/sheet.png   # 64 tiles + table
 app/.build/debug/mercenary --inspect-structures /tmp/structures.png # 98 tiles + table
 app/.build/debug/mercenary --inspect-object 3 --out /tmp/o.png [--in-situ]
 app/.build/debug/mercenary --inspect-cell 72 --out /tmp/c.png
+app/.build/debug/mercenary --inspect-rooms /tmp/rooms.png      # all 192 underground rooms
+app/.build/debug/mercenary --inspect-room 2 --out /tmp/r.png
 ```
+
+An underground room's coordinates are its own — the Reference Build draws one room
+at a time and expands its commands into points first — so a room's camera is framed
+to its own bounds and its spans say how big it is, not where it sits.
 
 The default view is canonical: a camera framed to the subject's own bounds, with
 no level of detail and no orientation, because a malformed model has to be visible

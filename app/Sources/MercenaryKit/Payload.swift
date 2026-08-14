@@ -119,11 +119,50 @@ public enum Payload {
     public var instances: [Instance]
   }
 
+  /// The underground rooms, expanded into wireframes at extraction.
+  ///
+  /// Each room is a closed point space of its own: the Reference Build expands a
+  /// room's drawing commands into points before it draws anything, so a room's edge
+  /// indices mean nothing outside it.
+  public struct RoomsDocument: Codable, Sendable, Equatable {
+    public struct Room: Codable, Sendable, Equatable {
+      /// A way through to somewhere else, or a behaviour — the Reference Build packs
+      /// both into one byte and the decode does not claim to know which is which.
+      public struct Portal: Codable, Sendable, Equatable {
+        public var linked: Int
+        public var plane: String
+        public var xMiddle: Int
+        public var zMiddle: Int
+      }
+
+      public struct Bounds: Codable, Sendable, Equatable {
+        public var min: [Int]
+        public var max: [Int]
+      }
+
+      public var room: Int
+      public var vertices: [[Int]]
+      /// `[startIndex, endIndex]` pairs into this room's own vertices.
+      public var edges: [[Int]]
+      public var bounds: Bounds
+      public var hasPortal: Bool
+      public var portals: [Portal]
+    }
+
+    public var schemaVersion: Int
+    public var rooms: [Room]
+
+    public func room(_ id: Int) -> Room? {
+      rooms.first { $0.room == id }
+    }
+  }
+
   public struct Bundle: Sendable, Equatable {
     public var manifest: Manifest
     public var world: WorldDocument
     public var surface: SurfaceDocument
     public var objects: ObjectsDocument
+    public var rooms: RoomsDocument
     /// Absent when the payload was exported without an interactive capture to
     /// decode text from.
     public var text: TextDocument?
@@ -141,6 +180,7 @@ public enum Payload {
       world: WorldDocument,
       surface: SurfaceDocument,
       objects: ObjectsDocument,
+      rooms: RoomsDocument,
       text: TextDocument? = nil,
       benson: BensonDocument? = nil,
       interaction: InteractionDocument? = nil,
@@ -150,6 +190,7 @@ public enum Payload {
       self.world = world
       self.surface = surface
       self.objects = objects
+      self.rooms = rooms
       self.text = text
       self.benson = benson
       self.interaction = interaction
@@ -209,11 +250,13 @@ public enum Payload {
     let world: WorldDocument = try decode("world.json", in: directory)
     let surface: SurfaceDocument = try decode("surface.json", in: directory)
     let objects: ObjectsDocument = try decode("objects.json", in: directory)
+    let rooms: RoomsDocument = try decode("rooms.json", in: directory)
 
     try check("manifest.json", manifest.schemaVersion)
     try check("world.json", world.schemaVersion)
     try check("surface.json", surface.schemaVersion)
     try check("objects.json", objects.schemaVersion)
+    try check("rooms.json", rooms.schemaVersion)
     guard manifest.decoderVersion == supportedDecoderVersion else {
       throw LoadError.unsupportedDecoder(manifest.decoderVersion)
     }
@@ -258,7 +301,7 @@ public enum Payload {
     }
 
     return Bundle(
-      manifest: manifest, world: world, surface: surface, objects: objects, text: text,
+      manifest: manifest, world: world, surface: surface, objects: objects, rooms: rooms, text: text,
       benson: benson, interaction: interaction, flight: flight
     )
   }

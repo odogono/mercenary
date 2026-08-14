@@ -186,6 +186,52 @@ struct SurfaceRotation: Sendable, Equatable {
   }
 }
 
+/// One underground room's wireframe, ready to draw.
+///
+/// A room is a world of its own: its coordinates are room-local, and the Reference
+/// Build draws one room at a time rather than a neighbourhood, so there is no cell
+/// ring and no distance culling to do.
+public struct Room: Sendable, Equatable {
+  public var id: Int
+  public var segments: [Segment]
+  public var bounds: (min: SIMD3<Float>, max: SIMD3<Float>)
+  /// Ways through to somewhere else, or behaviours — the Reference Build packs both
+  /// into one byte, so which of the two a given entry is stays undecided here.
+  public var portals: [Payload.RoomsDocument.Room.Portal]
+
+  public var centre: SIMD3<Float> { (bounds.min + bounds.max) / 2 }
+
+  public static func == (a: Room, b: Room) -> Bool {
+    a.id == b.id && a.segments == b.segments
+  }
+
+  init(document room: Payload.RoomsDocument.Room) {
+    id = room.room
+    let points = room.vertices.map { position in
+      SIMD3<Float>(
+        Float(position.count == 3 ? position[0] : 0),
+        Float(position.count == 3 ? position[1] : 0),
+        Float(position.count == 3 ? position[2] : 0)
+      )
+    }
+    segments = room.edges.compactMap { edge in
+      guard edge.count == 2, points.indices.contains(edge[0]), points.indices.contains(edge[1]) else {
+        return nil
+      }
+      return Segment(a: points[edge[0]], b: points[edge[1]], ink: .white)
+    }
+    func corner(_ values: [Int]) -> SIMD3<Float> {
+      SIMD3(
+        Float(values.count == 3 ? values[0] : 0),
+        Float(values.count == 3 ? values[1] : 0),
+        Float(values.count == 3 ? values[2] : 0)
+      )
+    }
+    bounds = (corner(room.bounds.min), corner(room.bounds.max))
+    portals = room.portals
+  }
+}
+
 /// Render-ready world derived from a ``Payload.Bundle``.
 public struct World: Sendable, Equatable {
   public var cells: [WorldCell]
@@ -194,6 +240,8 @@ public struct World: Sendable, Equatable {
   public var cellsPerAxis: Int
   public var groundExtent: Float
   public var deferredEdges: Int
+  /// The underground rooms, by their own identifiers.
+  public var rooms: [Int: Room]
   /// Altitude-indexed square extent used to select road-table cells.
   public var roadAltitudeLookup: [Int]
 
@@ -265,6 +313,9 @@ public struct World: Sendable, Equatable {
     self.cells = cells
     self.byGrid = byGrid
     self.deferredEdges = cells.reduce(0) { $0 + $1.unresolvedEdgeCount }
+    self.rooms = Dictionary(
+      uniqueKeysWithValues: bundle.rooms.rooms.map { ($0.room, Room(document: $0)) }
+    )
 
     self.roadAltitudeLookup = bundle.world.roadAltitudeLookup
     var mapLinesByCell: [Int: [SurfaceMapLine]] = [:]

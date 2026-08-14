@@ -10,6 +10,7 @@ public struct Inspector: Sendable {
     case object(slot: Int)
     case cell(index: Int)
     case structure(id: String)
+    case room(id: Int)
   }
 
   public let world: World
@@ -45,6 +46,8 @@ public struct Inspector: Sendable {
       return cell(index: index)?.segments(at: 0) ?? []
     case .structure(let id):
       return representativeCell(forStructure: id)?.segments(at: 0) ?? []
+    case .room(let id):
+      return world.rooms[id]?.segments ?? []
     }
   }
 
@@ -106,6 +109,25 @@ public struct Inspector: Sendable {
     public var edges: Int
     public var spans: SIMD3<Float>
     public var note: String
+  }
+
+  /// One row per underground room, ordered by the room's own identifier.
+  ///
+  /// A room's coordinates are its own, so its spans say how big the room is rather
+  /// than where it sits — there is nowhere in the surface world for it to sit.
+  public func roomRows() -> [Row] {
+    world.rooms.keys.sorted().compactMap { id in
+      guard let room = world.rooms[id] else { return nil }
+      let spans = bounds(for: .room(id: id)).map { $0.max - $0.min } ?? .zero
+      return Row(
+        subject: String(format: "room %02X", id),
+        detail: room.portals.isEmpty ? "sealed" : "\(room.portals.count) linked",
+        vertices: room.segments.count * 2,
+        edges: room.segments.count,
+        spans: spans,
+        note: room.segments.isEmpty ? "empty" : ""
+      )
+    }
   }
 
   public func objectRows() -> [Row] {

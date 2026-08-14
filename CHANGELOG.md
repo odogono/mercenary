@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Carry the underground rooms into the Data Payload and render them. All 192 rooms
+  were already being decoded into the verified dataset — points, edges, bounds, and
+  the commands that link one room to another — and then thrown away, because
+  `payload export` never wrote them out. So the app has never been able to see
+  underground. `rooms.json` now carries them, `World` builds them into wireframes,
+  and `--inspect-rooms` puts every one on a contact sheet with `--inspect-room N`
+  for a single chamber.
+  Rooms come from the dataset rather than from a capture, like the surface and the
+  objects do, because their geometry is table data and not runtime state. Each room
+  is a closed point space of its own: the Reference Build expands a room's drawing
+  commands into points before it draws anything, so a room's edge indices mean
+  nothing outside it, and the export asserts as much rather than trusting it.
+  A room's links are carried without being resolved. The Reference Build packs a
+  room link and a behaviour into the same byte and the decode does not claim to know
+  which is which, so both readings travel and the uncertainty stays visible.
+
 ### Fixed
 
 - Walk on foot the way the Reference Build does, which is not through the control

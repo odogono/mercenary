@@ -125,6 +125,59 @@ def build_road_cells(surface: dict[str, Any]) -> list[dict[str, Any]]:
     return result
 
 
+def build_rooms(underground: dict[str, Any]) -> dict[str, Any]:
+    """The underground rooms, already expanded, as render-ready wireframes.
+
+    The rooms come out of the verified dataset like the surface and the objects do,
+    not from a live capture, because their geometry is table data rather than
+    runtime state. Each room is a closed index space of its own: the Reference Build
+    expands a room's drawing commands into points before drawing anything, and the
+    dataset has already done that, so this only has to carry the result across.
+
+    A room's ``portals`` are the commands whose linked byte names another room. The
+    Reference Build packs a room link and a behaviour into that one byte and the
+    dataset does not claim to know which is which, so both readings travel and the
+    app decides — the uncertainty is carried rather than resolved here.
+    """
+    # A room names its record by identity rather than carrying it, and several
+    # rooms share one record, so the commands are looked up rather than inlined.
+    records = {record["geometryIdentity"]: record for record in underground.get("records", [])}
+    rooms: list[dict[str, Any]] = []
+    for room in underground["rooms"]:
+        expanded = room.get("expanded")
+        if not expanded:
+            continue
+        vertices = [list(vertex["position"]) for vertex in expanded["vertices"]]
+        edges = [list(edge["indices"]) for edge in expanded["edges"]]
+        for start, end in edges:
+            _require(
+                0 <= start < len(vertices) and 0 <= end < len(vertices),
+                f"Room {room['roomId']} has an edge outside its own point space",
+            )
+        bounds = expanded["bounds"]
+        portals = [
+            {
+                "linked": command["linkedRoomOrBehaviour"],
+                "plane": command["plane"],
+                "xMiddle": command["xMiddle"],
+                "zMiddle": command["zMiddle"],
+            }
+            for command in records.get(room.get("record"), {}).get("commands", [])
+        ]
+        rooms.append(
+            {
+                "room": room["roomId"],
+                "vertices": vertices,
+                "edges": edges,
+                "bounds": {"min": list(bounds["min"]), "max": list(bounds["max"])},
+                "hasPortal": bool(room.get("hasPortal")),
+                "portals": portals,
+            }
+        )
+    _require(bool(rooms), "The underground dataset carries no rooms")
+    return {"schemaVersion": PAYLOAD_SCHEMA_VERSION, "rooms": rooms}
+
+
 def build_surface(surface: dict[str, Any]) -> dict[str, Any]:
     """Preserve each cell's complete point index space and edge topology."""
     structures = {structure["geometryIdentity"]: structure for structure in surface.get("structures", [])}
@@ -237,11 +290,13 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
     require_current_geometry_decoder(manifest)
     surface = load_json(dataset / "surface.json")
     objects = load_json(dataset / "objects.json")
+    underground = load_json(dataset / "underground.json")
 
     documents = {
         "world.json": build_world(surface),
         "surface.json": build_surface(surface),
         "objects.json": build_objects(objects),
+        "rooms.json": build_rooms(underground),
     }
     if run is not None:
         ram, _ = load_geometry_source(run)
@@ -266,6 +321,8 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
         "roadTableSegments": sum(len(cell["segments"]) for cell in documents["world.json"]["roadCells"]),
         "models": len(documents["objects.json"]["models"]),
         "instances": len(documents["objects.json"]["instances"]),
+        "rooms": len(documents["rooms.json"]["rooms"]),
+        "roomEdges": sum(len(room["edges"]) for room in documents["rooms.json"]["rooms"]),
         **capture_counts(documents),
     }
     payload_manifest = {

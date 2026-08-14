@@ -11,6 +11,7 @@ sys.path.insert(0, str(LAB_ROOT))
 
 from c64lab.core import LabError
 from c64lab.payload import (
+    build_rooms,
     CELL_SIZE,
     build_road_cells,
     build_objects,
@@ -271,6 +272,69 @@ class PayloadOutputGuardTests(unittest.TestCase):
             with self.assertRaises(LabError) as caught:
                 export_payload(Path(directory) / "absent-dataset", Path(directory) / "payload")
             self.assertNotIn("must remain under ignored", str(caught.exception))
+
+
+class RoomsTests(unittest.TestCase):
+    """The underground rooms, carried across from the verified dataset."""
+
+    @staticmethod
+    def dataset(rooms=None, records=None):
+        return {
+            "schemaVersion": 1,
+            "records": records if records is not None else [
+                {
+                    "geometryIdentity": "room-record:3000",
+                    "commands": [
+                        {"linkedRoomOrBehaviour": 88, "plane": "zy", "xMiddle": 16, "zMiddle": 12}
+                    ],
+                }
+            ],
+            "rooms": rooms if rooms is not None else [
+                {
+                    "roomId": 0,
+                    "record": "room-record:3000",
+                    "hasPortal": True,
+                    "edgeCount": 1,
+                    "expanded": {
+                        "vertices": [{"position": [0, 0, 0]}, {"position": [4096, 0, 0]}],
+                        "edges": [{"indices": [0, 1]}],
+                        "bounds": {"min": [0, 0, 0], "max": [4096, 0, 0]},
+                    },
+                }
+            ],
+        }
+
+    def test_carries_each_rooms_points_edges_and_bounds(self) -> None:
+        document = build_rooms(self.dataset())
+        room = document["rooms"][0]
+
+        self.assertEqual(room["room"], 0)
+        self.assertEqual(room["vertices"], [[0, 0, 0], [4096, 0, 0]])
+        self.assertEqual(room["edges"], [[0, 1]])
+        self.assertEqual(room["bounds"], {"min": [0, 0, 0], "max": [4096, 0, 0]})
+
+    def test_looks_up_the_record_a_room_names_rather_than_inlining_it(self) -> None:
+        # Several rooms share one record, so a room names it by identity.
+        room = build_rooms(self.dataset())["rooms"][0]
+
+        self.assertEqual(room["hasPortal"], True)
+        self.assertEqual(room["portals"], [{"linked": 88, "plane": "zy", "xMiddle": 16, "zMiddle": 12}])
+
+    def test_a_room_whose_record_is_missing_simply_has_no_links(self) -> None:
+        room = build_rooms(self.dataset(records=[]))["rooms"][0]
+
+        self.assertEqual(room["portals"], [])
+
+    def test_refuses_an_edge_outside_a_rooms_own_point_space(self) -> None:
+        dataset = self.dataset()
+        dataset["rooms"][0]["expanded"]["edges"] = [{"indices": [0, 9]}]
+
+        with self.assertRaises(LabError):
+            build_rooms(dataset)
+
+    def test_refuses_a_dataset_carrying_no_rooms(self) -> None:
+        with self.assertRaises(LabError):
+            build_rooms(self.dataset(rooms=[]))
 
 
 if __name__ == "__main__":
