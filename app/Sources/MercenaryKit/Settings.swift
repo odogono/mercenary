@@ -62,9 +62,8 @@ public struct Settings: Codable, Sendable, Equatable {
     public var turnScale: Double
     public var pitchScale: Double
     public var speedScale: Double
-    /// Which throttle notch a walk and a run stand for while on foot.
-    public var walkNotch: Int
-    public var runNotch: Int
+    /// How much faster a held run key walks. The Reference Build had no run.
+    public var runMultiplier: Double
     /// The notch the lowest throttle key selects. The decoded ladder spans 512 to
     /// 1, so starting part way up is what makes all ten keys do something.
     public var throttleFloorNotch: Int
@@ -79,8 +78,7 @@ public struct Settings: Codable, Sendable, Equatable {
       turnScale: Double = ControlLimits().turnScale,
       pitchScale: Double = ControlLimits().pitchScale,
       speedScale: Double = ControlLimits().speedScale,
-      walkNotch: Int = ControlLimits().walkNotch,
-      runNotch: Int = ControlLimits().runNotch,
+      runMultiplier: Double = ControlLimits().runMultiplier,
       throttleFloorNotch: Int = ControlLimits().throttleFloorNotch,
       groundAltitude: Double? = ControlLimits().groundAltitude
     ) {
@@ -88,8 +86,7 @@ public struct Settings: Codable, Sendable, Equatable {
       self.turnScale = turnScale
       self.pitchScale = pitchScale
       self.speedScale = speedScale
-      self.walkNotch = walkNotch
-      self.runNotch = runNotch
+      self.runMultiplier = runMultiplier
       self.throttleFloorNotch = throttleFloorNotch
       self.groundAltitude = groundAltitude
     }
@@ -102,8 +99,8 @@ public struct Settings: Codable, Sendable, Equatable {
       turnScale = try container.decodeIfPresent(Double.self, forKey: .turnScale) ?? defaults.turnScale
       pitchScale = try container.decodeIfPresent(Double.self, forKey: .pitchScale) ?? defaults.pitchScale
       speedScale = try container.decodeIfPresent(Double.self, forKey: .speedScale) ?? defaults.speedScale
-      walkNotch = try container.decodeIfPresent(Int.self, forKey: .walkNotch) ?? defaults.walkNotch
-      runNotch = try container.decodeIfPresent(Int.self, forKey: .runNotch) ?? defaults.runNotch
+      runMultiplier =
+        try container.decodeIfPresent(Double.self, forKey: .runMultiplier) ?? defaults.runMultiplier
       throttleFloorNotch =
         try container.decodeIfPresent(Int.self, forKey: .throttleFloorNotch) ?? defaults.throttleFloorNotch
       groundAltitude = try container.decodeIfPresent(Double.self, forKey: .groundAltitude)
@@ -116,8 +113,7 @@ public struct Settings: Codable, Sendable, Equatable {
         turnScale: turnScale,
         pitchScale: pitchScale,
         speedScale: speedScale,
-        walkNotch: walkNotch,
-        runNotch: runNotch,
+        runMultiplier: runMultiplier,
         throttleFloorNotch: throttleFloorNotch,
         groundExtent: groundExtent,
         groundAltitude: groundAltitude

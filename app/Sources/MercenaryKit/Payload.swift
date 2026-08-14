@@ -197,7 +197,7 @@ public enum Payload {
   public static let supportedInteractionSchemaVersion = 1
   /// The flight parameters version separately again: they move when the control
   /// loop's decode does, which is independent of every other document.
-  public static let supportedFlightSchemaVersion = 2
+  public static let supportedFlightSchemaVersion = 3
 
   /// Load and schema-check a payload directory.
   public static func load(from directory: URL) throws -> Bundle {

@@ -49,23 +49,18 @@ public struct FlightModel: Sendable, Equatable {
   public let radiansPerUnit: Double
   /// Eye height on foot: the tuning knob's, or the Reference Build's own.
   public let groundAltitude: Double
-  /// The throttle a step and a run stand for, off the ladder once rather than
-  /// per frame — the notches are fixed for as long as the model lives.
-  let walkThrottle: Double
-  let runThrottle: Double
+  /// The decoded on-foot step, already scaled by the tuning knob.
+  let walkStep: Double
+  /// The decoded on-foot turn, in angle units per frame, likewise scaled.
+  let walkTurn: Double
 
   public init(document: Payload.FlightDocument, limits: ControlLimits = ControlLimits()) {
     self.document = document
     self.limits = limits
     self.radiansPerUnit = 2 * Double.pi / Double(document.rules.angleUnitsPerTurn)
+    self.walkStep = document.walk.step * limits.speedScale
+    self.walkTurn = Double(document.walk.turnStep) * limits.turnScale
     self.groundAltitude = limits.groundAltitude ?? Double(document.rules.groundAltitude)
-    let ladder = document.rules.throttleNotches
-    func notch(_ wanted: Int) -> Double {
-      guard !ladder.isEmpty else { return 0 }
-      return ladder[Swift.min(Swift.max(wanted - 1, 0), ladder.count - 1)]
-    }
-    self.walkThrottle = notch(limits.walkNotch)
-    self.runThrottle = notch(limits.runNotch)
   }
 
   public var rules: Payload.FlightDocument.Rules { document.rules }
@@ -79,13 +74,10 @@ public struct FlightModel: Sendable, Equatable {
     state.poweramp && state.craft == rules.poweramp.craft
   }
 
-  /// The throttle the loop actually sees, after the walking substitution and the
-  /// Reference Build's one Object-Conditioned Predicate on the player's first craft.
+  /// The throttle the loop sees, after the Reference Build's one
+  /// Object-Conditioned Predicate on the player's first craft.
   func effectiveThrottle(for state: GameState, intent: Intent) -> Double {
     var throttle = state.throttle
-    if state.craft == nil {
-      throttle = intent.walk * (intent.running ? runThrottle : walkThrottle)
-    }
     if hasPoweramp(state) {
       throttle *= rules.poweramp.throttleScale
     }
@@ -119,9 +111,9 @@ public struct ControlLimits: Sendable, Equatable {
   public var turnScale: Double
   public var pitchScale: Double
   public var speedScale: Double
-  /// Which throttle notch a step and a run stand for while on foot.
-  public var walkNotch: Int
-  public var runNotch: Int
+  /// How much faster a held run key walks. The Reference Build had no run, so this
+  /// is a Mac Adaptation on a decoded step rather than anything it did.
+  public var runMultiplier: Double
   /// The notch the lowest throttle key selects.
   ///
   /// The decoded ladder is ten notches each twice the last, so it spans 512 to 1
@@ -139,8 +131,7 @@ public struct ControlLimits: Sendable, Equatable {
     turnScale: Double = 1,
     pitchScale: Double = 1,
     speedScale: Double = 1,
-    walkNotch: Int = 4,
-    runNotch: Int = 6,
+    runMultiplier: Double = 3,
     throttleFloorNotch: Int = 1,
     groundExtent: Double = 1_048_576,
     groundAltitude: Double? = nil
@@ -149,8 +140,7 @@ public struct ControlLimits: Sendable, Equatable {
     self.turnScale = turnScale
     self.pitchScale = pitchScale
     self.speedScale = speedScale
-    self.walkNotch = walkNotch
-    self.runNotch = runNotch
+    self.runMultiplier = runMultiplier
     self.throttleFloorNotch = throttleFloorNotch
     self.groundExtent = groundExtent
     self.groundAltitude = groundAltitude
@@ -307,6 +297,10 @@ public enum GameCore {
   private static func integrate(
     _ state: GameState, intent: Intent, dt: Double, flight: FlightModel
   ) -> GameState {
+    // On foot the Reference Build does not run the control loop at all: `MOVE`
+    // dispatches to its own routine whenever the player is out of a craft or
+    // underground. Only a craft reaches the Craft Parameter Blocks (ADR 0016).
+    guard state.craft != nil else { return walk(state, intent: intent, dt: dt, flight: flight) }
     var result = state
     var player = result.player
     let block = flight.block(for: state)
@@ -386,6 +380,45 @@ public enum GameCore {
     // The verdict on a touchdown is about how fast the craft was going down, so
     // the rate is what crosses the boundary rather than the step it came from.
     return transition(result, descentRate: frames > 0 ? abs(climb) / frames : 0, flight: flight)
+  }
+
+  /// The on-foot mover: a fixed step and a fixed turn, with no velocity to build
+  /// and none to shed.
+  ///
+  /// It cannot change altitude, because the routine it comes from has no vertical
+  /// term at all — which is also why a walker can never leave the ground.
+  private static func walk(
+    _ state: GameState, intent: Intent, dt: Double, flight: FlightModel
+  ) -> GameState {
+    var result = state
+    var player = result.player
+    let frames = dt * flight.limits.referenceFrameRate
+    guard frames > 0 else { return state }
+
+    player.heading = wrap(
+      player.heading + intent.turn * flight.walkTurn * frames * flight.radiansPerUnit
+    )
+    // Walking backwards is the step negated, as the Reference Build did it by
+    // flipping the sign bit of the one value rather than keeping two.
+    let advance = intent.walk * flight.walkStep
+      * (intent.running ? flight.limits.runMultiplier : 1) * frames
+    player.position.x = clampToWorld(
+      player.position.x + sin(player.heading) * advance, extent: flight.limits.groundExtent
+    )
+    player.position.z = clampToWorld(
+      player.position.z + cos(player.heading) * advance, extent: flight.limits.groundExtent
+    )
+    player.position.y = flight.groundAltitude
+    // None of the craft's dynamics survive stepping out of one.
+    player.yawVelocity = 0
+    player.speed = intent.walk * flight.walkStep
+    player.roll = 0
+    player.pitch = 0
+
+    result.player = player
+    result.mode = .grounded
+    result.elapsed = state.elapsed + dt
+    return result
   }
 
   /// Cross the altitude band in either direction, which is the only way the

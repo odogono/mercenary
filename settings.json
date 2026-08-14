@@ -12,8 +12,7 @@
     "turnScale": 1,
     "pitchScale": 1,
     "speedScale": 1,
-    "walkNotch": 4,
-    "runNotch": 6,
-    "throttleFloorNotch": 3
+    "throttleFloorNotch": 3,
+    "runMultiplier": 3
   }
 }

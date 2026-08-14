@@ -69,8 +69,22 @@ extension Payload {
       public var walkingBlock: Int
     }
 
+    /// The on-foot mover, which is not a Craft Parameter Block at all.
+    ///
+    /// `MOVE` dispatches to a separate routine whenever the player is underground
+    /// or out of a craft: a fixed step and a fixed turn per frame, with no velocity,
+    /// no damping and no throttle. Only a craft reaches the blocks (ADR 0016).
+    public struct Walk: Codable, Sendable, Equatable {
+      /// World units per frame. Walking backwards is this negated, which is how the
+      /// Reference Build did it — one value, with its sign bit flipped.
+      public var step: Double
+      /// Angle units added to or taken off the heading per frame.
+      public var turnStep: Int
+    }
+
     public var schemaVersion: Int
     public var blocks: [Block]
+    public var walk: Walk
     public var rules: Rules
     public var counts: [String: Int]
 
