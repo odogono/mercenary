@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Walk on foot the way the Reference Build does, which is not through the control
+  loop at all. `MOVE` (`$A165`) dispatches: with the underground flag set, or with
+  the craft byte's top bit set — which is what being on foot means — control goes to
+  a separate routine at `$A18B`, and only otherwise does it `jmp ($BEA0)` into the
+  live block. That routine walks by a fixed step held at `$AA/$AB` and turns by a
+  fixed number of angle units held at `$AC`, with no velocity, no damping, no
+  throttle and no vertical term. So the block after the eight craft is not the
+  on-foot walk: it is the block touchdown installs so a *landed craft taxis*, which
+  is why the touchdown copy exists, and it is named `grounded` now. ADR 0016 carries
+  the correction; the eleven-block table, the touchdown copy and the two filter
+  shapes all stand.
+  The numbers were nearly right by accident, which is why playing it never caught
+  this — the block's yaw authority is 16 angle units and the real on-foot turn step
+  is also 16, so turning was exact, and its settled speed was 85.3 units per frame
+  against a real step of 80. They are exact now.
+  Three things fall away with it. The on-foot walk no longer borrows a throttle notch
+  it never had, so `walkNotch` and `runNotch` are gone and running is an explicit
+  `runMultiplier` on a decoded step, honest about being a Mac Adaptation since the
+  Reference Build had no run. The "a walker could take off" guard is gone, because
+  the real reason a walker cannot leave the ground is that the routine has no
+  vertical term. And the keyboard adaptation that made the on-foot throttle follow
+  the key is gone, because there is no on-foot throttle.
+
 ### Added
 
 - Fly the craft. Decode the Reference Build's control loop and its Craft Parameter

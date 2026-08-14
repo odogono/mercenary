@@ -37,7 +37,7 @@ from typing import Any
 from .core import require as _require
 
 
-FLIGHT_SCHEMA_VERSION = 2
+FLIGHT_SCHEMA_VERSION = 3
 
 #: The parameter block table, and the live block one is copied into on boarding.
 BLOCK_TABLE_BASE = 0x9DAD
@@ -47,7 +47,11 @@ LIVE_BLOCK_BASE = 0xBEA0
 CRAFT_BLOCK_COUNT = 8
 BLOCK_COUNT = 11
 #: Names for the three blocks the engine installs itself, in table order.
-MODE_BLOCK_NAMES = ("walking", "tumble", "descent")
+#:
+#: The first is the block touchdown installs so a *landed craft* taxis. It is not
+#: the on-foot walk, which never reaches the control loop at all — see
+#: ``WALK_DISPATCH`` and the module docstring.
+MODE_BLOCK_NAMES = ("grounded", "tumble", "descent")
 #: Where the walking block's copied run starts: past the craft, past the handler.
 WALKING_BLOCK_SOURCE = BLOCK_TABLE_BASE + CRAFT_BLOCK_COUNT * BLOCK_LENGTH + 2
 
@@ -98,6 +102,25 @@ WALKING_COPY_SOURCE_SITE = 0xA0CE
 PITCH_LEVEL_SITE = 0xA030
 ROLL_COUPLING_SITE = 0xA11B
 THROTTLE_SATURATION_SITE = 0xB4A7
+
+#: On foot the engine does not run the control loop at all. ``MOVE`` dispatches to
+#: a separate routine whenever the player is underground or out of a craft, and that
+#: routine walks by a fixed step and turns by a fixed number of angle units, with no
+#: velocity, no damping and no throttle. Only a craft reaches the parameter blocks.
+MOVE_DISPATCH = 0xA165
+MOVE_UNDERGROUND_SITE = 0xA170
+MOVE_CRAFT_SITE = 0xA178
+WALK_DISPATCH = 0xA18B
+WALK_TRANSLATE = 0xA1ED
+WALK_YAW_ADD_SITE = 0xA1B5
+WALK_YAW_SUBTRACT_SITE = 0xA1CA
+WALK_STEP_SITE = 0xA1EE
+WALK_TURN_IMMEDIATE_SITE = 0x8108
+
+#: The walk step is initialised data rather than a stored constant, so it is read
+#: from the conditioned capture's zero page like any other live value.
+WALK_STEP_STATE = 0xAA
+WALK_TURN_STATE = 0xAC
 
 #: The throttle byte the loop reads, which is asserted at ``THROTTLE_SITE``. The
 #: rest of the state this loop drives — the flying flag at ``$7F``, yaw velocity
@@ -214,6 +237,13 @@ def _require_engine(ram: bytes) -> None:
         (PITCH_LEVEL_SITE, (0xA9,), "level pitch is not an immediate"),
         (ROLL_COUPLING_SITE, (0xAD, 0xA7, 0xBE), "roll coupling is not read from the live block"),
         (THROTTLE_SATURATION_SITE, (0xC9,), "the throttle limit is not an immediate compare"),
+        (MOVE_UNDERGROUND_SITE, (0xA5, 0xA8), "the mover does not test the underground flag"),
+        (MOVE_CRAFT_SITE, (0x6C, 0xA0, 0xBE), "the mover does not dispatch through the live block"),
+        (WALK_DISPATCH, (0xA5, 0xCA), "the walking routine does not begin as read"),
+        (WALK_STEP_SITE, (0xA6, WALK_STEP_STATE), "walking does not read its step from zero page"),
+        (WALK_YAW_ADD_SITE, (0x65, WALK_TURN_STATE), "walking does not turn by its own step"),
+        (WALK_YAW_SUBTRACT_SITE, (0xE5, WALK_TURN_STATE), "walking does not turn back by its own step"),
+        (WALK_TURN_IMMEDIATE_SITE, (0xA9,), "the walking turn step is not an immediate"),
     )
     for address, expected, complaint in checks:
         found = tuple(ram[address:address + len(expected)])
@@ -283,6 +313,24 @@ def _throttle_ladder() -> list[float]:
     ]
 
 
+def _walk(ram: bytes) -> dict[str, Any]:
+    """The on-foot mover, which is not a Craft Parameter Block at all.
+
+    A fixed step and a fixed turn, both per frame. The step's sign is flipped for
+    walking backwards by exclusive-oring the exponent byte's sign bit, which is why
+    it is one value rather than two.
+    """
+    step = decode_float(ram[WALK_STEP_STATE], ram[WALK_STEP_STATE + 1])
+    turn = ram[WALK_TURN_STATE]
+    _require(step > 0, f"The on-foot walk step decodes as {step}, which is not a step")
+    _require(
+        turn == ram[WALK_TURN_IMMEDIATE_SITE + 1],
+        "The live walking turn step disagrees with the one the Reference Build sets",
+    )
+    _require(0 < turn < ANGLE_UNITS_PER_TURN, f"The on-foot turn step {turn} is not an angle")
+    return {"step": step, "turnStep": turn}
+
+
 def _rules(ram: bytes) -> dict[str, Any]:
     pitch_wrap = (ram[PITCH_WRAP_SITE + 1] + 1) << 8
     _require(
@@ -319,11 +367,11 @@ def _rules(ram: bytes) -> dict[str, Any]:
 
 
 def live_block_matches_walking(ram: bytes) -> bool:
-    """Whether the live block carries the walking dynamics, as on foot it must.
+    """Whether the live block carries the grounded dynamics, as after landing it must.
 
-    Touchdown installs offsets 2 to 11 of the walking block, so in a capture taken
-    on foot the live block has to agree with the table. It is a free check on the
-    extraction, using bytes the geometry loader already guarantees are conditioned.
+    Touchdown installs offsets 2 to 11 of the grounded block, so a capture taken
+    after one has to agree with the table. It is a free check on the extraction,
+    using bytes the geometry loader already guarantees are conditioned.
     """
     count = ram[WALKING_COPY_COUNT_SITE + 1] + 1
     source = WALKING_BLOCK_SOURCE
@@ -337,15 +385,16 @@ def decode_flight(ram: bytes) -> dict[str, Any]:
     handlers = sorted({block["handler"] for block in blocks})
     _require(
         blocks[CRAFT_BLOCK_COUNT]["handler"] == "standard",
-        "The walking block does not dispatch through the standard control routine",
+        "The grounded block does not dispatch through the standard control routine",
     )
     _require(
         live_block_matches_walking(ram),
-        "The capture's live block does not carry the walking dynamics it should on foot",
+        "The capture's live block does not carry the grounded dynamics it should",
     )
     return {
         "schemaVersion": FLIGHT_SCHEMA_VERSION,
         "blocks": blocks,
+        "walk": _walk(ram),
         "rules": _rules(ram),
         "counts": {
             "flightBlocks": len(blocks),

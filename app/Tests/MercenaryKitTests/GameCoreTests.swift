@@ -52,14 +52,17 @@ enum FlightFixture {
     blocks[2] = block(index: 2, handler: .sinking, pitchStep: 0)
     blocks.append(
       block(
-        index: 8, handler: .standard, mode: "walking", yawDamping: 1.52587890625e-05,
+        index: 8, handler: .standard, mode: "grounded", yawDamping: 1.52587890625e-05,
         yawAuthority: 16, pitchStep: 1, liftFactor: 1, speedDamping: 0.25, ceiling: 0,
         throttleGain: 1
       )
     )
     return FlightModel(
       document: Payload.FlightDocument(
-        schemaVersion: Payload.supportedFlightSchemaVersion, blocks: blocks, rules: rules, counts: [:]
+        schemaVersion: Payload.supportedFlightSchemaVersion, blocks: blocks,
+        // The Reference Build's own on-foot step and turn, per frame.
+        walk: Payload.FlightDocument.Walk(step: 80, turnStep: 16),
+        rules: rules, counts: [:]
       ),
       limits: limits
     )
@@ -397,11 +400,13 @@ final class GameCoreTests: XCTestCase {
 
   // MARK: - Modes and blocks
 
-  func testOnFootTheLoopRunsOnTheWalkingBlock() {
-    let onFoot = flight.block(for: start())
+  func testTheBlockAfterTheCraftIsTheOneALandedCraftTaxisOn() {
+    // It is not the on-foot walk, which never reaches the control loop; touchdown
+    // installs this so a craft on the ground handles differently from one in the air.
+    let grounded = flight.document.block(craft: flight.rules.walkingBlock)
 
-    XCTAssertEqual(onFoot.mode, "walking")
-    XCTAssertEqual(onFoot.index, flight.rules.walkingBlock)
+    XCTAssertEqual(grounded.mode, "grounded")
+    XCTAssertEqual(grounded.handler, .standard)
   }
 
   func testBoardingTakesTheCraftsPositionAndHeadingAndItsBlock() {
@@ -424,7 +429,7 @@ final class GameCoreTests: XCTestCase {
     let out = GameCore.leave(state, flight: flight)
 
     XCTAssertNil(out.craft)
-    XCTAssertEqual(flight.block(for: out).mode, "walking")
+    XCTAssertNil(out.craft)
     XCTAssertEqual(out.player.position.y, Double(flight.rules.groundAltitude), accuracy: 1e-9)
     XCTAssertEqual(out.player.roll, 0)
     XCTAssertEqual(out.mode, .grounded)
@@ -523,5 +528,82 @@ final class GameCoreTests: XCTestCase {
     }
 
     XCTAssertGreaterThan(turned(quick, after: 0.5), turned(slow, after: 0.5) * 2)
+  }
+
+  // MARK: - The on-foot mover
+
+  func testOnFootTheStepIsFixedAndArrivesAtOnce() {
+    // `MOVE` dispatches out of a craft to its own routine: a fixed step and a
+    // fixed turn, with no velocity to build and none to shed (ADR 0016).
+    let frame = 1 / flight.limits.referenceFrameRate
+    let moved = GameCore.step(start(), intent: Intent(walk: 1), dt: frame, flight: flight)
+
+    XCTAssertEqual(moved.player.position.z - 10_000, 80, accuracy: 1e-9)
+    XCTAssertEqual(moved.player.speed, 80, accuracy: 1e-9)
+  }
+
+  func testOnFootTheTurnIsFixedTooAndLeavesNoVelocityBehind() {
+    let frame = 1 / flight.limits.referenceFrameRate
+    var state = GameCore.step(start(), intent: Intent(turn: 1), dt: frame, flight: flight)
+
+    XCTAssertEqual(state.player.heading, 16 * flight.radiansPerUnit, accuracy: 1e-9)
+    XCTAssertEqual(state.player.yawVelocity, 0)
+
+    // Letting go stops the turn dead, because there was never a velocity.
+    state = GameCore.step(state, intent: .idle, dt: frame, flight: flight)
+    XCTAssertEqual(state.player.heading, 16 * flight.radiansPerUnit, accuracy: 1e-9)
+  }
+
+  func testWalkingBackwardsIsTheStepNegated() {
+    let frame = 1 / flight.limits.referenceFrameRate
+    let forward = GameCore.step(start(), intent: Intent(walk: 1), dt: frame, flight: flight)
+    let back = GameCore.step(start(), intent: Intent(walk: -1), dt: frame, flight: flight)
+
+    XCTAssertEqual(
+      forward.player.position.z - 10_000, -(back.player.position.z - 10_000), accuracy: 1e-9
+    )
+  }
+
+  func testTheOnFootRoutineHasNoVerticalTermAtAll() {
+    // Which is the real reason a walker can never leave the ground: the routine
+    // this comes from does not touch altitude, whatever the pitch or the speed.
+    var state = start()
+    for _ in 0..<600 {
+      state = GameCore.step(
+        state, intent: Intent(pitch: 1, walk: 1, running: true), dt: 1.0 / 60.0, flight: flight
+      )
+    }
+
+    XCTAssertEqual(state.player.position.y, Double(flight.rules.groundAltitude), accuracy: 1e-9)
+    XCTAssertEqual(state.mode, .grounded)
+    XCTAssertEqual(state.player.pitch, 0)
+  }
+
+  func testRunningMultipliesTheDecodedStepRatherThanChangingIt() {
+    // The Reference Build had no run, so this is a Mac Adaptation on a decoded step.
+    let frame = 1 / flight.limits.referenceFrameRate
+    let walked = GameCore.step(start(), intent: Intent(walk: 1), dt: frame, flight: flight)
+    let ran = GameCore.step(
+      start(), intent: Intent(walk: 1, running: true), dt: frame, flight: flight
+    )
+
+    XCTAssertEqual(
+      ran.player.position.z - 10_000,
+      (walked.player.position.z - 10_000) * flight.limits.runMultiplier,
+      accuracy: 1e-9
+    )
+  }
+
+  func testSteppingOutOfACraftLeavesNoneOfItsDynamicsBehind() {
+    var state = flying()
+    state.player.roll = 0.4
+    state.player.yawVelocity = 12
+    let out = GameCore.step(
+      GameCore.leave(state, flight: flight), intent: .idle, dt: 1.0 / 60.0, flight: flight
+    )
+
+    XCTAssertEqual(out.player.yawVelocity, 0)
+    XCTAssertEqual(out.player.roll, 0)
+    XCTAssertEqual(out.player.pitch, 0)
   }
 }

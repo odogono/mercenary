@@ -32,6 +32,15 @@ from c64lab.flight import (
     TOUCHDOWN_GROUND_SITE,
     WALKING_BLOCK_SOURCE,
     WALKING_COPY_COUNT_SITE,
+    MOVE_CRAFT_SITE,
+    MOVE_UNDERGROUND_SITE,
+    WALK_DISPATCH,
+    WALK_STEP_SITE,
+    WALK_STEP_STATE,
+    WALK_TURN_IMMEDIATE_SITE,
+    WALK_TURN_STATE,
+    WALK_YAW_ADD_SITE,
+    WALK_YAW_SUBTRACT_SITE,
     WALKING_COPY_SOURCE_SITE,
     YAW_NEGATE_SITE,
     decode_flight,
@@ -133,6 +142,15 @@ class Builder:
         self.ram[POWERAMP_CRAFT_SITE] = 0xC0
         self.ram[POWERAMP_THROTTLE_SITE] = 0x69
         self.ram[WALKING_COPY_COUNT_SITE] = 0xA2
+        # The on-foot mover, which is not a parameter block at all.
+        self.ram[MOVE_UNDERGROUND_SITE:MOVE_UNDERGROUND_SITE + 2] = bytes([0xA5, 0xA8])
+        self.ram[MOVE_CRAFT_SITE:MOVE_CRAFT_SITE + 3] = bytes([0x6C, 0xA0, 0xBE])
+        self.ram[WALK_DISPATCH:WALK_DISPATCH + 2] = bytes([0xA5, 0xCA])
+        self.ram[WALK_STEP_SITE:WALK_STEP_SITE + 2] = bytes([0xA6, WALK_STEP_STATE])
+        self.ram[WALK_YAW_ADD_SITE:WALK_YAW_ADD_SITE + 2] = bytes([0x65, WALK_TURN_STATE])
+        self.ram[WALK_YAW_SUBTRACT_SITE:WALK_YAW_SUBTRACT_SITE + 2] = bytes([0xE5, WALK_TURN_STATE])
+        self.ram[WALK_TURN_IMMEDIATE_SITE] = 0xA9
+        self.walk(step=(0x40, 0x18), turn=0x10)
         self.walking_copy(count=10)
         # Plausible rules, so a test that cares about one can leave the rest alone.
         self.rule(PITCH_WRAP_SITE, 0x03)
@@ -150,6 +168,12 @@ class Builder:
         for index in range(BLOCK_COUNT):
             self.block(index)
         self.live_matches_walking()
+
+    def walk(self, *, step: tuple[int, int], turn: int) -> "Builder":
+        self.ram[WALK_STEP_STATE], self.ram[WALK_STEP_STATE + 1] = step
+        self.ram[WALK_TURN_STATE] = turn
+        self.ram[WALK_TURN_IMMEDIATE_SITE + 1] = turn
+        return self
 
     def rule(self, site: int, operand: int) -> "Builder":
         self.ram[site + 1] = operand
@@ -201,7 +225,7 @@ class DecodeTests(unittest.TestCase):
         builder.block(9, handler=0x9EBE)
         builder.block(10, handler=0x9E66)
         blocks = builder.decode()["blocks"]
-        self.assertEqual(blocks[8]["mode"], "walking")
+        self.assertEqual(blocks[8]["mode"], "grounded")
         self.assertEqual(blocks[9]["mode"], "tumble")
         self.assertEqual(blocks[10]["mode"], "descent")
         self.assertNotIn("mode", blocks[0])
@@ -357,6 +381,44 @@ class FrozenLedgerTests(unittest.TestCase):
                 self.assertEqual(key[13], block["ceiling"])
                 self.assertEqual(decode_float(key[14], key[15]), block["throttleGain"])
         self.assertEqual(craft_slots, set(range(flight["counts"]["flightCraft"])))
+
+
+class OnFootTests(unittest.TestCase):
+    """The mover the engine uses out of a craft, which is not a block at all."""
+
+    def test_reads_a_fixed_step_and_a_fixed_turn(self) -> None:
+        walk = Builder().decode()["walk"]
+
+        self.assertEqual(walk["step"], 80.0)
+        self.assertEqual(walk["turnStep"], 16)
+
+    def test_the_step_is_a_float_like_every_other_parameter(self) -> None:
+        builder = Builder()
+        builder.walk(step=(0x00, 0x10), turn=0x10)
+
+        self.assertEqual(builder.decode()["walk"]["step"], 16.0)
+
+    def test_refuses_a_step_that_is_not_a_step(self) -> None:
+        builder = Builder()
+        builder.walk(step=(0x00, 0x01), turn=0x10)  # negative
+
+        with self.assertRaises(LabError):
+            builder.decode()
+
+    def test_refuses_a_turn_the_engine_disagrees_with(self) -> None:
+        # The live value and the one the Reference Build sets have to match, or one
+        # of the two is not what this decoder thinks it is.
+        builder = Builder()
+        builder.ram[WALK_TURN_STATE] = 0x20
+
+        with self.assertRaises(LabError):
+            builder.decode()
+
+    def test_names_the_block_after_the_craft_for_what_it_is(self) -> None:
+        # It is the block a *landed craft* taxis on, not the on-foot walk.
+        blocks = Builder().decode()["blocks"]
+
+        self.assertEqual(blocks[CRAFT_BLOCK_COUNT]["mode"], "grounded")
 
 
 if __name__ == "__main__":

@@ -51,7 +51,8 @@ enum PayloadFixture {
     """
 
   static let flight = """
-    {"schemaVersion":2,
+    {"schemaVersion":\(Payload.supportedFlightSchemaVersion),
+     "walk":{"step":80,"turnStep":16},
      "blocks":[
        {"index":0,"handler":"standard","yawDamping":0.9375,"yawAuthority":1,"pitchStep":8,
         "rollCoupling":4,"liftFactor":0.5,"speedDamping":0.5,"ceiling":10,"throttleGain":0.390625}],
@@ -128,11 +129,17 @@ final class PayloadTests: XCTestCase {
   func testAFutureFlightSchemaRequiresAReexport() throws {
     try PayloadFixture.write(
       into: directory,
-      flight: PayloadFixture.flight.replacingOccurrences(of: "\"schemaVersion\":2", with: "\"schemaVersion\":3")
+      flight: PayloadFixture.flight.replacingOccurrences(
+        of: "\"schemaVersion\":\(Payload.supportedFlightSchemaVersion)",
+        with: "\"schemaVersion\":\(Payload.supportedFlightSchemaVersion + 1)"
+      )
     )
 
     XCTAssertThrowsError(try Payload.load(from: directory)) { error in
-      XCTAssertEqual(error as? Payload.LoadError, .unsupportedSchema("flight.json", 3))
+      XCTAssertEqual(
+        error as? Payload.LoadError,
+        .unsupportedSchema("flight.json", Payload.supportedFlightSchemaVersion + 1)
+      )
     }
   }
 

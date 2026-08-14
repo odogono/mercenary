@@ -31,7 +31,7 @@ final class SettingsTests: XCTestCase {
       {"message":{"holdSeconds":4,"charactersPerSecond":8},
        "scripts":{"timeScale":2,"instructionBudget":64},
        "flight":{"referenceFrameRate":10,"turnScale":4,"pitchScale":2,"speedScale":3,
-                 "walkNotch":5,"runNotch":7,"groundAltitude":80}}
+                 "runMultiplier":5,"groundAltitude":80}}
       """#
     )
 
@@ -43,8 +43,7 @@ final class SettingsTests: XCTestCase {
     XCTAssertEqual(settings.flight.turnScale, 4)
     XCTAssertEqual(settings.flight.pitchScale, 2)
     XCTAssertEqual(settings.flight.speedScale, 3)
-    XCTAssertEqual(settings.flight.walkNotch, 5)
-    XCTAssertEqual(settings.flight.runNotch, 7)
+    XCTAssertEqual(settings.flight.runMultiplier, 5)
     XCTAssertEqual(settings.flight.groundAltitude, 80)
   }
 

@@ -25,16 +25,21 @@ the engine installs itself rather than by boarding:
 
 | Block | Address | Handler | Role |
 | --- | --- | --- | --- |
-| 8 | `$9E2D` | `$9F17` | Walking — the same handler the craft use |
+| 8 | `$9E2D` | `$9F17` | A landed craft taxiing — the same handler the craft use |
 | 9 | `$9E3D` | `$9EBE` | Crash tumble / autoland |
 | 10 | `$9E4D` | `$9E66` | Descent under the parachute |
 
-The scoping pass said the walking parameters existed only in a live capture and
-that they dispatched to `$9E60`. Both were wrong: they are in the ROM at `$9E2D`
-like any other block, and they dispatch to `$9F17`, which is why walking and
-flying share one control loop. `LEAVE_CRAFT`'s touchdown path proves it — it
-copies ten bytes from `$9E2F` into `$BEA2`, that is offsets 2-11 of block 8 into
-the live block, leaving the handler pointer alone because it is already `$9F17`.
+The scoping pass said these parameters existed only in a live capture and that they
+dispatched to `$9E60`. Both were wrong: they are in the ROM at `$9E2D` like any
+other block, and they dispatch to `$9F17`. `LEAVE_CRAFT`'s touchdown path is what
+installs them — it copies ten bytes from `$9E2F` into `$BEA2`, that is offsets 2-11
+of block 8 into the live block, leaving the handler pointer alone because it is
+already `$9F17`.
+
+**Block 8 is not the on-foot walk.** A first reading took it for that, and the
+underground step caught the mistake. It is the block a *landed craft* runs on, which
+is why touchdown installs it: a craft on the ground handles differently from one in
+the air. The on-foot walk never reaches the control loop at all — see below.
 
 ### The sixteen-bit float format
 
@@ -152,6 +157,29 @@ vertical rate at touchdown, and then the pitch. Fail either and the touchdown
 still happens but the player is ejected from the craft and `$F9` is set to 2.
 There is no separate landing key either.
 
+## On foot the control loop does not run
+
+`MOVE` (`$A165`) decides which mover to use before any of the above happens. If the
+underground flag at `$A8` is set, or if the craft byte at `$A9` has its top bit set —
+which is what being on foot means — it goes to `$A18B`; only otherwise does it
+`jmp ($BEA0)` into the live block. So a player on foot, and a player underground,
+never touch a Craft Parameter Block.
+
+`$A18B` is a much smaller routine:
+
+* **Turn** — the heading takes a fixed number of angle units, held at `$AC`, added or
+  subtracted and wrapped to ten bits. The Reference Build sets it once, at `$8108`.
+* **Step** — a fixed float held at `$AA/$AB`, multiplied by the yaw sine and cosine
+  and added to X and Z. Walking backwards flips the sign bit of that one value rather
+  than keeping a second, which is the same `EOR` trick the control loop's turn uses.
+* **Nothing else.** No velocity, no damping, no throttle, and no vertical term at
+  all — which is the real reason a walker can never leave the ground, whatever their
+  speed or pitch.
+
+`$AA/$AB` is initialised data rather than a stored constant: nothing in the ROM
+writes it, so it is read from a conditioned capture's zero page like any other live
+value. In ours it decodes to 80 units per frame, against a turn step of 16.
+
 ## Throttle
 
 Throttle lives at `$EC/$ED` as a float like everything else, and is written two
@@ -169,5 +197,8 @@ ways.
 ## Still not read
 
 * `$AA62`, slot 7's handler, is read only as far as knowing it exists.
-* The colony-craft check at `$A13D` gates an altitude `$40` transition that leads
-  underground; it belongs to the building-entry step, not this one.
+* `$A13D` is not the way underground, as this note first assumed. It is a box test:
+  cell 8:8, a sixteen-middle-byte square, and an altitude high enough that it can
+  only be reached by climbing — the orbital transition, not a building. The way
+  underground is the lift at `$A24A`, which flips the `$A8` flag; that belongs to the
+  next step.
