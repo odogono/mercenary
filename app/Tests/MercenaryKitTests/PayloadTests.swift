@@ -50,6 +50,26 @@ enum PayloadFixture {
         "visibility":{"detailCubePerAxis":65536,"farRepresentation":"point"}}]}
     """
 
+  static let rooms = """
+    {"schemaVersion":\(Payload.supportedSchemaVersion),
+     "rooms":[
+       {"room":0,"vertices":[[0,0,0],[4096,0,0],[4096,1024,0]],"edges":[[0,1],[1,2]],
+        "bounds":{"min":[0,0,0],"max":[4096,1024,0]},"hasPortal":true,
+        "portals":[{"linked":88,"plane":"zy","xMiddle":16,"zMiddle":12}]},
+       {"room":1,"vertices":[[0,0,0],[512,0,0]],"edges":[[0,1]],
+        "bounds":{"min":[0,0,0],"max":[512,0,0]},"hasPortal":false,"portals":[]}]}
+    """
+
+  static let underground = """
+    {"schemaVersion":\(Payload.supportedUndergroundSchemaVersion),
+     "entrances":[{"site":1,"cell":[9,6],"room":1},{"site":2,"cell":[9,5],"room":2}],
+     "pad":{"x":28,"z":28,"shift":2},
+     "lift":{"ascendRate":38,"descendRate":6,"surfaceAt":12,"submergeAt":8,
+       "surfaceMiddle":113,"submergeMiddle":8,"floor":128,"altitudeWrap":6,
+       "altitudeWrapSubtract":7},
+     "counts":{"undergroundEntrances":2}}
+    """
+
   static let flight = """
     {"schemaVersion":\(Payload.supportedFlightSchemaVersion),
      "walk":{"step":80,"turnStep":16},
@@ -69,15 +89,18 @@ enum PayloadFixture {
     world: String = world,
     surface: String = surface,
     objects: String = objects,
+    rooms: String = rooms,
     flight: String? = nil,
+    underground: String? = nil,
     omitting: Set<String> = []
   ) throws {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     var files = [
       ("manifest.json", manifest), ("world.json", world),
-      ("surface.json", surface), ("objects.json", objects),
+      ("surface.json", surface), ("objects.json", objects), ("rooms.json", rooms),
     ]
     if let flight { files.append(("flight.json", flight)) }
+    if let underground { files.append(("underground.json", underground)) }
     for (name, body) in files where !omitting.contains(name) {
       try body.write(to: directory.appendingPathComponent(name), atomically: true, encoding: .utf8)
     }
@@ -204,6 +227,54 @@ final class PayloadTests: XCTestCase {
       }
       XCTAssertEqual(name, "objects.json")
     }
+  }
+
+  func testLoadsTheLiftWhenTheExportCarriesIt() throws {
+    try PayloadFixture.write(into: directory, underground: PayloadFixture.underground)
+    let lift = try XCTUnwrap(try Payload.load(from: directory).underground)
+
+    XCTAssertEqual(lift.entrances.count, 2)
+    XCTAssertEqual(lift.lift.descendRate, 6)
+    // The site is handed to the room setup as a room id, so they agree by design.
+    XCTAssertEqual(lift.entrances.first?.site, lift.entrances.first?.room)
+  }
+
+  func testFindsTheLiftServingASurfaceCell() throws {
+    try PayloadFixture.write(into: directory, underground: PayloadFixture.underground)
+    let lift = try XCTUnwrap(try Payload.load(from: directory).underground)
+
+    XCTAssertEqual(lift.entrance(column: 9, row: 6)?.room, 1)
+    XCTAssertEqual(lift.entrance(column: 9, row: 5)?.room, 2)
+    XCTAssertNil(lift.entrance(column: 0, row: 0))
+  }
+
+  func testTheLiftsPadIsASquareNearTheMiddleOfItsCell() throws {
+    try PayloadFixture.write(into: directory, underground: PayloadFixture.underground)
+    let pad = try XCTUnwrap(try Payload.load(from: directory).underground).pad
+    let cell = 65_536.0
+
+    // Middle bytes $70 to $73 stand on it; surfacing puts the player at $71, which is
+    // the pad's own middle, so arriving leaves them able to go straight back.
+    XCTAssertTrue(pad.covers(Double(0x70 << 8), cellSize: cell))
+    XCTAssertTrue(pad.covers(Double(0x71 << 8), cellSize: cell))
+    XCTAssertTrue(pad.covers(Double(0x73 << 8), cellSize: cell))
+    XCTAssertFalse(pad.covers(Double(0x74 << 8), cellSize: cell))
+    XCTAssertFalse(pad.covers(Double(0x6F << 8), cellSize: cell))
+  }
+
+  func testThePadIsFoundInAnyCellRatherThanOnlyTheFirst() throws {
+    try PayloadFixture.write(into: directory, underground: PayloadFixture.underground)
+    let pad = try XCTUnwrap(try Payload.load(from: directory).underground).pad
+    let cell = 65_536.0
+
+    XCTAssertTrue(pad.covers(9 * cell + Double(0x71 << 8), cellSize: cell))
+    XCTAssertFalse(pad.covers(9 * cell + Double(0x20 << 8), cellSize: cell))
+  }
+
+  func testAPayloadWithoutTheLiftStillLoads() throws {
+    try PayloadFixture.write(into: directory)
+
+    XCTAssertNil(try Payload.load(from: directory).underground)
   }
 }
 

@@ -606,4 +606,65 @@ final class GameCoreTests: XCTestCase {
     XCTAssertEqual(out.player.roll, 0)
     XCTAssertEqual(out.player.pitch, 0)
   }
+
+  // MARK: - Going underground
+
+  private static let lift = Payload.UndergroundDocument.Lift(
+    ascendRate: 38, descendRate: 6, surfaceAt: 12, submergeAt: 8,
+    surfaceMiddle: 113, submergeMiddle: 8, floor: 128, altitudeWrap: 6,
+    altitudeWrapSubtract: 7
+  )
+  private static let entrance = Payload.UndergroundDocument.Entrance(
+    site: 1, cell: [9, 6], room: 1
+  )
+
+  func testTakingTheLiftDownPutsThePlayerInTheRoomTheSiteNames() {
+    let inside = GameCore.enter(
+      start(), entrance: Self.entrance, lift: Self.lift, flight: flight
+    )
+
+    XCTAssertEqual(inside.room, 1)
+    XCTAssertNil(inside.craft)
+    XCTAssertEqual(inside.mode, .grounded)
+    // Room coordinates are the room's own, so arrival is at the lift's middle.
+    XCTAssertEqual(inside.player.position.x, Double(8 << 8))
+    XCTAssertEqual(inside.player.position.z, Double(8 << 8))
+  }
+
+  func testTakingTheLiftUpPutsThePlayerOnTheCellItServes() {
+    let inside = GameCore.enter(start(), entrance: Self.entrance, lift: Self.lift, flight: flight)
+    let outside = GameCore.surface(
+      inside, entrance: Self.entrance, lift: Self.lift, cellSize: 65_536, flight: flight
+    )
+
+    XCTAssertNil(outside.room)
+    XCTAssertEqual(outside.player.position.x, 9 * 65_536 + Double(113 << 8))
+    XCTAssertEqual(outside.player.position.z, 6 * 65_536 + Double(113 << 8))
+  }
+
+  func testUndergroundThePlayerMovesByTheOnFootRoutineWhateverTheyAreIn() {
+    // The Reference Build consults the underground flag before anything else, so a
+    // craft underground still moves on foot. Ours cannot get one down there, but the
+    // dispatch has to agree with the original's all the same.
+    var inside = GameCore.enter(start(), entrance: Self.entrance, lift: Self.lift, flight: flight)
+    inside.craft = 1
+    let frame = 1 / flight.limits.referenceFrameRate
+    let moved = GameCore.step(inside, intent: Intent(walk: 1), dt: frame, flight: flight)
+
+    XCTAssertEqual(moved.player.position.z - Double(8 << 8), 80, accuracy: 1e-9)
+    XCTAssertEqual(moved.player.speed, 80, accuracy: 1e-9)
+  }
+
+  func testEnteringACraftlessRoomClearsWhateverTheCraftWasDoing() {
+    var flying = self.flying()
+    flying.player.roll = 0.3
+    let inside = GameCore.enter(
+      flying, entrance: Self.entrance, lift: Self.lift, flight: flight
+    )
+
+    XCTAssertNil(inside.craft)
+    XCTAssertEqual(inside.throttle, 0)
+    XCTAssertEqual(inside.player.roll, 0)
+    XCTAssertEqual(inside.player.speed, 0)
+  }
 }

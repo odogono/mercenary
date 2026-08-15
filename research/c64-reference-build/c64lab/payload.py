@@ -26,6 +26,7 @@ from .geometry import (
 from .benson import decode_benson
 from .flight import decode_flight
 from .interaction import decode_interaction
+from .underground import decode_underground
 from .text import decode_text
 
 
@@ -125,6 +126,392 @@ def build_road_cells(surface: dict[str, Any]) -> list[dict[str, Any]]:
     return result
 
 
+def build_rooms(underground: dict[str, Any]) -> dict[str, Any]:
+    """The underground rooms, already expanded, as render-ready wireframes.
+
+    The rooms come out of the verified dataset like the surface and the objects do,
+    not from a live capture, because their geometry is table data rather than
+    runtime state. Each room is a closed index space of its own: the Reference Build
+    expands a room's drawing commands into points before drawing anything, and the
+    dataset has already done that, so this only has to carry the result across.
+
+    A room's ``portals`` are the commands whose linked byte names another room. The
+    Reference Build packs a room link and a behaviour into that one byte and the
+    dataset does not claim to know which is which, so both readings travel and the
+    app decides — the uncertainty is carried rather than resolved here.
+    """
+    # A room names its record by identity rather than carrying it, and several
+    # rooms share one record, so the commands are looked up rather than inlined.
+    records = {record["geometryIdentity"]: record for record in underground.get("records", [])}
+    rooms: list[dict[str, Any]] = []
+    for room in underground["rooms"]:
+        expanded = room.get("expanded")
+        if not expanded:
+            continue
+        vertices = [list(vertex["position"]) for vertex in expanded["vertices"]]
+        edges = [list(edge["indices"]) for edge in expanded["edges"]]
+        for start, end in edges:
+            _require(
+                0 <= start < len(vertices) and 0 <= end < len(vertices),
+                f"Room {room['roomId']} has an edge outside its own point space",
+            )
+        bounds = expanded["bounds"]
+        portals = [
+            {
+                "linked": command["linkedRoomOrBehaviour"],
+                "plane": command["plane"],
+                "xMiddle": command["xMiddle"],
+                "zMiddle": command["zMiddle"],
+            }
+            for command in records.get(room.get("record"), {}).get("commands", [])
+        ]
+        rooms.append(
+            {
+                "room": room["roomId"],
+                "vertices": vertices,
+                "edges": edges,
+                "bounds": {"min": list(bounds["min"]), "max": list(bounds["max"])},
+                "hasPortal": bool(room.get("hasPortal")),
+                "portals": portals,
+            }
+        )
+    _require(bool(rooms), "The underground dataset carries no rooms")
+    return {"schemaVersion": PAYLOAD_SCHEMA_VERSION, "rooms": rooms}
+
+
+def render_room_map_svg(rooms: list[dict[str, Any]]) -> tuple[str, dict[str, int]]:
+    """A checking map: every room's plan, its doorways, and where its links go.
+
+    Rooms have no shared coordinate space — the Reference Build draws one at a time
+    from its own points — so there is no floor plan of the underground to draw. What
+    there is instead is each room's own plan, laid out in a grid, with its links
+    written on it, which is what makes a topology mistake visible.
+
+    A link's target is drawn differently when the target does not link back. All of
+    them land on real room ids and most reciprocate, which is the evidence that the
+    byte really is a room link rather than the behaviour it might equally have been;
+    the one-way ones are the cases worth looking at.
+    """
+    links = {room["room"]: [portal["linked"] for portal in room["portals"]] for room in rooms}
+    known = set(links)
+
+    columns = 12
+    tile, pad, header = 150, 12, 78
+    width = columns * tile
+    rows = (len(rooms) + columns - 1) // columns
+    height = header + rows * tile
+
+    one_way = sum(
+        1
+        for source, targets in links.items()
+        for target in targets
+        if not (target in known and source in links[target])
+    )
+    total = sum(len(value) for value in links.values())
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+        f'viewBox="0 0 {width} {height}">',
+        '<rect width="100%" height="100%" fill="#0d0f14"/>',
+        '<style>text{font-family:ui-monospace,monospace;fill:#8fa4c0}'
+        '.id{fill:#e8eef7;font-size:13px}.lk{font-size:9px}'
+        '.w{stroke:#cfe0f5;stroke-width:1.2;fill:none}'
+        '.d{fill:#5ad18a}.o{fill:#e0913f}</style>',
+        f'<text class="id" x="{pad}" y="24">underground rooms: {len(rooms)}</text>',
+        f'<text x="{pad}" y="43" font-size="11">{total} links, {total - one_way} reciprocal, '
+        f'{one_way} one-way &#183; a green doorway links both ways, an orange one does not</text>',
+        f'<text x="{pad}" y="60" font-size="11">each tile is one room seen from above in its own '
+        f'coordinates, so a corridor reads as a line; labels are the rooms linked to</text>',
+    ]
+    for index, room in enumerate(sorted(rooms, key=lambda entry: entry["room"])):
+        column, row = index % columns, index // columns
+        left, top = column * tile, header + row * tile
+        parts.append(f'<g transform="translate({left},{top})">')
+        parts.append(f'<rect x="0.5" y="0.5" width="{tile - 1}" height="{tile - 1}" fill="none" stroke="#1e2532"/>')
+
+        low, high = room["bounds"]["min"], room["bounds"]["max"]
+        span_x = max(1, high[0] - low[0])
+        span_z = max(1, high[2] - low[2])
+        inner = tile - 2 * pad - 16
+
+        def place(x: float, z: float) -> tuple[float, float]:
+            return (
+                pad + (x - low[0]) / span_x * inner,
+                pad + 16 + (z - low[2]) / span_z * inner,
+            )
+
+        # The plan is the wireframe seen from above, so a corridor reads as a line.
+        for start, end in room["edges"]:
+            a, b = room["vertices"][start], room["vertices"][end]
+            x1, y1 = place(a[0], a[2])
+            x2, y2 = place(b[0], b[2])
+            parts.append(f'<line class="w" x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}"/>')
+
+        parts.append(f'<text class="id" x="{pad}" y="13">{room["room"]:02X}</text>')
+        for order, portal in enumerate(room["portals"]):
+            target = portal["linked"]
+            mutual = target in known and room["room"] in links[target]
+            # The doorway's own position within the room, in middle bytes.
+            x, y = place(portal["xMiddle"] << 8, portal["zMiddle"] << 8)
+            parts.append(
+                f'<rect class="{"d" if mutual else "o"}" x="{x - 2.5:.1f}" y="{y - 2.5:.1f}" width="5" height="5"/>'
+            )
+            parts.append(
+                f'<text class="lk" x="{pad + (order % 4) * 30}" y="{tile - 16 - (order // 4) * 11}" '
+                f'fill="{"#5ad18a" if mutual else "#e0913f"}">{target:02X}</text>'
+            )
+        parts.append("</g>")
+
+    parts.append("</svg>")
+    counts = {"rooms": len(rooms), "links": total, "oneWayLinks": one_way}
+    return "\n".join(parts), counts
+
+
+#: Which way a doorway on each wall leads, in room steps.
+_WALL_STEPS = {"west": (-1, 0), "east": (1, 0), "north": (0, -1), "south": (0, 1)}
+_OPPOSITE = {"west": "east", "east": "west", "north": "south", "south": "north"}
+
+
+def _doorways(room: dict[str, Any]) -> list[tuple[str, int]]:
+    """Which wall each of a room's doorways is on, and where it leads.
+
+    Every doorway in our image sits on a wall rather than inside the room, which is
+    what makes a layout derivable at all: a door on the east wall can only lead to
+    the room to the east. A few sit on a corner and are on two walls at once; those
+    are left for the caller to break, since the room on the other side knows.
+    """
+    high = room["bounds"]["max"]
+    found: list[tuple[str, int]] = []
+    for portal in room["portals"]:
+        x, z = portal["xMiddle"] << 8, portal["zMiddle"] << 8
+        walls = []
+        if x == 0:
+            walls.append("west")
+        if x == high[0]:
+            walls.append("east")
+        if z == 0:
+            walls.append("north")
+        if z == high[2]:
+            walls.append("south")
+        for wall in walls:
+            found.append((wall, portal["linked"]))
+    return found
+
+
+def _lay_out(rooms: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
+    """Place the rooms by butting their shared doorways together.
+
+    A doorway sits on a wall, so the room it leads to is on the other side of that
+    wall — and the two rooms' doorways are the same doorway, so they have to line up.
+    That fixes both axes at once: the far room's wall touches the near room's, and it
+    slides along until the doors meet. Rooms keep their own width and depth, so a
+    corridor lays out as a corridor.
+
+    The rooms are not one connected whole, so this is done once per group. Where a
+    room would overlap one already placed the first stands and the overlap is
+    counted, since a wrong reading should be a number and not a quiet correction.
+    """
+    doors = {room["room"]: _doorways(room) for room in rooms}
+    by_id = {room["room"]: room for room in rooms}
+    ways = {
+        room["room"]: [
+            (wall, portal["linked"], portal["xMiddle"] << 8, portal["zMiddle"] << 8)
+            for portal in room["portals"]
+            for wall, target in [(w, t) for w, t in _doorways(room) if t == portal["linked"]][:1]
+        ]
+        for room in rooms
+    }
+    placed: dict[int, tuple[int, float, float]] = {}
+    overlaps = 0
+    group = 0
+
+    def extent(identifier: int) -> tuple[float, float]:
+        bounds = by_id[identifier]["bounds"]
+        return (
+            max(1.0, bounds["max"][0] - bounds["min"][0]),
+            max(1.0, bounds["max"][2] - bounds["min"][2]),
+        )
+
+    for start_room in sorted(by_id):
+        if start_room in placed:
+            continue
+        placed[start_room] = (group, 0.0, 0.0)
+        here: list[tuple[float, float, float, float]] = [(0.0, 0.0, *extent(start_room))]
+        queue = [start_room]
+        while queue:
+            current = queue.pop(0)
+            _, x, y = placed[current]
+            width, depth = extent(current)
+            for wall, target, door_x, door_z in ways.get(current, []):
+                if target not in by_id or target in placed:
+                    continue
+                # Only a doorway the far room answers is a shared wall; a one-way link
+                # need not be adjacency at all, and the lift is one.
+                back = [
+                    (w, bx, bz) for w, t, bx, bz in ways.get(target, [])
+                    if t == current and w == _OPPOSITE[wall]
+                ]
+                if not back:
+                    continue
+                _, back_x, back_z = back[0]
+                far_width, far_depth = extent(target)
+                if wall == "east":
+                    at = (x + width, y + door_z - back_z)
+                elif wall == "west":
+                    at = (x - far_width, y + door_z - back_z)
+                elif wall == "south":
+                    at = (x + door_x - back_x, y + depth)
+                else:
+                    at = (x + door_x - back_x, y - far_depth)
+                box = (at[0], at[1], far_width, far_depth)
+                if any(
+                    box[0] < other[0] + other[2] - 1 and other[0] < box[0] + box[2] - 1
+                    and box[1] < other[1] + other[3] - 1 and other[1] < box[1] + box[3] - 1
+                    for other in here
+                ):
+                    overlaps += 1
+                    continue
+                here.append(box)
+                placed[target] = (group, at[0], at[1])
+                queue.append(target)
+        group += 1
+
+    laid = [
+        {"room": room, "group": placed[room["room"]][0], "at": placed[room["room"]][1:]}
+        for room in rooms
+    ]
+    return laid, overlaps
+
+
+def render_room_plan_svg(rooms: list[dict[str, Any]]) -> tuple[str, dict[str, int]]:
+    """The rooms laid out as they join, drawn at the size they actually are.
+
+    Rooms carry no coordinates, so the layout is walked out of the doorways: each one
+    says which wall it is on, which says where the room it leads to lies, and the two
+    halves of a shared doorway have to meet. What comes out is not one map — the rooms
+    are not all joined — so each connected group is drawn as its own block.
+    """
+    laid, overlaps = _lay_out(rooms)
+    doors = {entry["room"]["room"]: _doorways(entry["room"]) for entry in laid}
+    links = {room["room"]: [portal["linked"] for portal in room["portals"]] for room in rooms}
+    known = set(links)
+
+    groups: dict[int, list[dict[str, Any]]] = {}
+    for entry in laid:
+        groups.setdefault(entry["group"], []).append(entry)
+    order = sorted(groups, key=lambda key: (-len(groups[key]), key))
+
+    scale = 1 / 90
+    gap, header, limit = 26, 100, 1150
+
+    def size(entry: dict[str, Any]) -> tuple[float, float]:
+        bounds = entry["room"]["bounds"]
+        return (
+            max(1.0, bounds["max"][0] - bounds["min"][0]) * scale,
+            max(1.0, bounds["max"][2] - bounds["min"][2]) * scale,
+        )
+
+    blocks = []
+    cursor_x, cursor_y, row_height, widest = gap, header, 0.0, 0.0
+    for key in order:
+        entries = groups[key]
+        lows_x = min(entry["at"][0] * scale for entry in entries)
+        lows_y = min(entry["at"][1] * scale for entry in entries)
+        highs_x = max(entry["at"][0] * scale + size(entry)[0] for entry in entries)
+        highs_y = max(entry["at"][1] * scale + size(entry)[1] for entry in entries)
+        width, height = highs_x - lows_x, highs_y - lows_y + 14
+        if cursor_x + width > limit and cursor_x > gap:
+            cursor_x, cursor_y = gap, cursor_y + row_height + gap
+            row_height = 0.0
+        blocks.append((key, cursor_x - lows_x, cursor_y + 14 - lows_y, width))
+        cursor_x += width + gap
+        row_height = max(row_height, height)
+        widest = max(widest, cursor_x)
+    total_height = cursor_y + row_height + gap
+
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{widest:.0f}" height="{total_height:.0f}" '
+        f'viewBox="0 0 {widest:.0f} {total_height:.0f}">',
+        '<rect width="100%" height="100%" fill="#0d0f14"/>',
+        '<style>text{font-family:ui-monospace,monospace;fill:#8fa4c0}'
+        '.id{fill:#e8eef7;font-size:13px}.n{font-size:7px;fill:#9fb2c9}'
+        '.r{stroke:#cfe0f5;stroke-width:0.9;fill:#161d28}'
+        '.d{stroke:#5ad18a;stroke-width:2}.o{stroke:#e0913f;stroke-width:2}</style>',
+        f'<text class="id" x="{gap}" y="26">the underground, laid out by its doorways</text>',
+        f'<text x="{gap}" y="45" font-size="11">{len(rooms)} rooms in {len(groups)} groups that do '
+        f'not join &#183; a green doorway leads both ways, an orange one only outward</text>',
+        f'<text x="{gap}" y="62" font-size="11">north is up, and every room is drawn its own width '
+        f'and depth, so a corridor lays out as a corridor</text>',
+        f'<text x="{gap}" y="79" font-size="11">shared doorways are butted together, which fixes '
+        f'both axes at once; {overlaps} rooms would have overlapped one already placed and were '
+        f'left where they are</text>',
+    ]
+
+    for key, origin_x, origin_y, width in blocks:
+        entries = groups[key]
+        left_edge = origin_x + min(entry["at"][0] * scale for entry in entries)
+        top_edge = origin_y + min(entry["at"][1] * scale for entry in entries)
+        caption = f'group {key} &#183; {len(entries)} rooms' if width >= 120 else f'{key}&#183;{len(entries)}'
+        parts.append(f'<text x="{left_edge:.0f}" y="{top_edge - 4:.0f}" font-size="9">{caption}</text>')
+        for entry in entries:
+            identifier = entry["room"]["room"]
+            box_width, box_depth = size(entry)
+            left = origin_x + entry["at"][0] * scale
+            top = origin_y + entry["at"][1] * scale
+            parts.append(
+                f'<rect class="r" x="{left:.1f}" y="{top:.1f}" '
+                f'width="{box_width:.1f}" height="{box_depth:.1f}"/>'
+            )
+            if box_width > 22 and box_depth > 14:
+                parts.append(
+                    f'<text class="n" x="{left + 3:.0f}" y="{top + 10:.0f}">{identifier:02X}</text>'
+                )
+            for wall, target in doors.get(identifier, []):
+                mutual = target in known and identifier in links[target]
+                style = "d" if mutual else "o"
+                run = min(7.0, max(2.0, (box_depth if wall in ("west", "east") else box_width) / 3))
+                mid_x, mid_y = left + box_width / 2, top + box_depth / 2
+                edge = {
+                    "west": (left, mid_y - run, left, mid_y + run),
+                    "east": (left + box_width, mid_y - run, left + box_width, mid_y + run),
+                    "north": (mid_x - run, top, mid_x + run, top),
+                    "south": (mid_x - run, top + box_depth, mid_x + run, top + box_depth),
+                }[wall]
+                parts.append(
+                    f'<line class="{style}" x1="{edge[0]:.1f}" y1="{edge[1]:.1f}" '
+                    f'x2="{edge[2]:.1f}" y2="{edge[3]:.1f}"/>'
+                )
+    parts.append("</svg>")
+    counts = {
+        "rooms": len(rooms),
+        "groups": len(groups),
+        "largestGroup": max(len(value) for value in groups.values()),
+        "overlaps": overlaps,
+    }
+    return "\n".join(parts), counts
+
+
+def export_room_plan_svg(dataset_root: Path, output: Path) -> dict[str, Any]:
+    """Write the laid-out map beside the other restricted outputs."""
+    verified = verify_dataset(dataset_root)
+    destination = require_ignored_output(output)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    rooms = build_rooms(verified["documents"]["underground"])["rooms"]
+    svg, counts = render_room_plan_svg(rooms)
+    destination.write_text(svg, encoding="utf-8")
+    return {"status": "exported", "output": str(destination), **counts}
+
+
+def export_room_map_svg(dataset_root: Path, output: Path) -> dict[str, Any]:
+    """Write the room map beside the other restricted outputs."""
+    verified = verify_dataset(dataset_root)
+    destination = require_ignored_output(output)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    rooms = build_rooms(verified["documents"]["underground"])["rooms"]
+    svg, counts = render_room_map_svg(rooms)
+    destination.write_text(svg, encoding="utf-8")
+    return {"status": "exported", "output": str(destination), **counts}
+
+
 def build_surface(surface: dict[str, Any]) -> dict[str, Any]:
     """Preserve each cell's complete point index space and edge topology."""
     structures = {structure["geometryIdentity"]: structure for structure in surface.get("structures", [])}
@@ -211,7 +598,7 @@ def build_objects(objects: dict[str, Any]) -> dict[str, Any]:
 #: Documents decoded from a capture rather than from the geometry dataset. Each
 #: reports its own counts, so they are prefixed to keep one document's totals
 #: from colliding with another's as more of them arrive.
-CAPTURE_DOCUMENTS = ("text.json", "benson.json", "interaction.json", "flight.json")
+CAPTURE_DOCUMENTS = ("text.json", "benson.json", "interaction.json", "flight.json", "underground.json")
 
 
 def capture_counts(documents: dict[str, Any]) -> dict[str, int]:
@@ -237,11 +624,13 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
     require_current_geometry_decoder(manifest)
     surface = load_json(dataset / "surface.json")
     objects = load_json(dataset / "objects.json")
+    underground = load_json(dataset / "underground.json")
 
     documents = {
         "world.json": build_world(surface),
         "surface.json": build_surface(surface),
         "objects.json": build_objects(objects),
+        "rooms.json": build_rooms(underground),
     }
     if run is not None:
         ram, _ = load_geometry_source(run)
@@ -249,6 +638,7 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
         documents["benson.json"] = decode_benson(ram)
         documents["interaction.json"] = decode_interaction(ram)
         documents["flight.json"] = decode_flight(ram)
+        documents["underground.json"] = decode_underground(ram)
     resolved.mkdir(parents=True, exist_ok=True)
     files: list[dict[str, Any]] = []
     for name, document in documents.items():
@@ -266,6 +656,8 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
         "roadTableSegments": sum(len(cell["segments"]) for cell in documents["world.json"]["roadCells"]),
         "models": len(documents["objects.json"]["models"]),
         "instances": len(documents["objects.json"]["instances"]),
+        "rooms": len(documents["rooms.json"]["rooms"]),
+        "roomEdges": sum(len(room["edges"]) for room in documents["rooms.json"]["rooms"]),
         **capture_counts(documents),
     }
     payload_manifest = {

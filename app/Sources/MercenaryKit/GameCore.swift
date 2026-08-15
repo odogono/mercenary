@@ -190,6 +190,12 @@ public struct GameState: Sendable, Equatable {
   public var poweramp: Bool
   /// How the last touchdown ended, for the caller to act on once.
   public var touchdown: Touchdown?
+  /// The room the player is in, or nil on the surface.
+  ///
+  /// The Reference Build keeps this as a flag and a room id, and consults the flag
+  /// before it decides anything else — underground, the on-foot mover runs whatever
+  /// the player is standing in.
+  public var room: Int?
 
   public init(
     player: PlayerState,
@@ -198,7 +204,8 @@ public struct GameState: Sendable, Equatable {
     craft: Int? = nil,
     throttle: Double = 0,
     poweramp: Bool = false,
-    touchdown: Touchdown? = nil
+    touchdown: Touchdown? = nil,
+    room: Int? = nil
   ) {
     self.player = player
     self.elapsed = elapsed
@@ -207,6 +214,7 @@ public struct GameState: Sendable, Equatable {
     self.throttle = throttle
     self.poweramp = poweramp
     self.touchdown = touchdown
+    self.room = room
   }
 }
 
@@ -274,6 +282,46 @@ public enum GameCore {
     return result
   }
 
+  /// Take the lift down into a room.
+  ///
+  /// The Reference Build arrives rather than commands: the lift walks the camera down
+  /// and crossing a threshold is what sets the flag. Until that ride is simulated
+  /// this puts the player where the ride would have left them, which is the room the
+  /// site names, at the middle the arrival sets.
+  public static func enter(_ state: GameState, entrance: Payload.UndergroundDocument.Entrance,
+                           lift: Payload.UndergroundDocument.Lift, flight: FlightModel) -> GameState {
+    var result = state
+    result.room = entrance.room
+    result.craft = nil
+    result.throttle = 0
+    result.mode = .grounded
+    let middle = Double(lift.submergeMiddle << 8)
+    result.player.position = SIMD3(middle, flight.groundAltitude, middle)
+    result.player.yawVelocity = 0
+    result.player.speed = 0
+    result.player.pitch = 0
+    result.player.roll = 0
+    return result
+  }
+
+  /// Take the lift back up, which puts the player on the surface cell it serves.
+  public static func surface(_ state: GameState, entrance: Payload.UndergroundDocument.Entrance,
+                             lift: Payload.UndergroundDocument.Lift, cellSize: Double,
+                             flight: FlightModel) -> GameState {
+    var result = state
+    result.room = nil
+    result.mode = .grounded
+    let middle = Double(lift.surfaceMiddle << 8)
+    result.player.position = SIMD3(
+      Double(entrance.cell.first ?? 0) * cellSize + middle,
+      flight.groundAltitude,
+      Double(entrance.cell.count == 2 ? entrance.cell[1] : 0) * cellSize + middle
+    )
+    result.player.yawVelocity = 0
+    result.player.speed = 0
+    return result
+  }
+
   /// Leave the craft, which puts the player back on the walking block.
   public static func leave(_ state: GameState, flight: FlightModel) -> GameState {
     var result = state
@@ -300,7 +348,9 @@ public enum GameCore {
     // On foot the Reference Build does not run the control loop at all: `MOVE`
     // dispatches to its own routine whenever the player is out of a craft or
     // underground. Only a craft reaches the Craft Parameter Blocks (ADR 0016).
-    guard state.craft != nil else { return walk(state, intent: intent, dt: dt, flight: flight) }
+    guard state.craft != nil, state.room == nil else {
+      return walk(state, intent: intent, dt: dt, flight: flight)
+    }
     var result = state
     var player = result.player
     let block = flight.block(for: state)

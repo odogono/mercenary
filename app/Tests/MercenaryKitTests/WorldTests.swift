@@ -389,4 +389,48 @@ final class VisibilitySelectorTests: XCTestCase {
       onFoot.segments.count + onFoot.points.count
     )
   }
+
+  // MARK: - Underground rooms
+
+  func testRoomsAreBuiltFromTheirOwnPointSpace() throws {
+    // A room's edge indices mean nothing outside it: the Reference Build expands a
+    // room's drawing commands into points before drawing, one room at a time.
+    let world = World(bundle: try bundle())
+    let room = try XCTUnwrap(world.rooms[0])
+
+    XCTAssertEqual(room.id, 0)
+    XCTAssertEqual(room.segments.count, 2)
+    XCTAssertEqual(room.segments[0].a, SIMD3(0, 0, 0))
+    XCTAssertEqual(room.segments[0].b, SIMD3(4096, 0, 0))
+  }
+
+  func testARoomCarriesItsBoundsAndItsLinks() throws {
+    let world = World(bundle: try bundle())
+    let linked = try XCTUnwrap(world.rooms[0])
+    let sealed = try XCTUnwrap(world.rooms[1])
+
+    XCTAssertEqual(linked.bounds.max, SIMD3(4096, 1024, 0))
+    XCTAssertEqual(linked.portals.count, 1)
+    XCTAssertEqual(linked.portals.first?.linked, 88)
+    XCTAssertTrue(sealed.portals.isEmpty)
+  }
+
+  func testARoomsCentreIsTheMiddleOfItsOwnBounds() throws {
+    // There is nowhere in the surface world for a room to sit, so its centre is
+    // local — which is what the inspector frames its camera on.
+    let world = World(bundle: try bundle())
+    let room = try XCTUnwrap(world.rooms[0])
+
+    XCTAssertEqual(room.centre, SIMD3(2048, 512, 0))
+  }
+
+  func testAnEdgeOutsideARoomsPointSpaceIsDroppedRatherThanCrashing() throws {
+    var document = try bundle().rooms
+    document.rooms[0].edges.append([0, 99])
+    var replaced = try bundle()
+    replaced.rooms = document
+
+    // The export asserts this cannot happen; the app still refuses to trust it.
+    XCTAssertEqual(World(bundle: replaced).rooms[0]?.segments.count, 2)
+  }
 }

@@ -42,6 +42,8 @@ final class WalkaboutModel {
   /// Present when the payload carries the craft parameters. Without them there
   /// is nothing to move the player with, since walking runs on them too.
   private(set) var flight: FlightModel?
+  /// Present when the payload carries the lift's rules.
+  private(set) var underground: Payload.UndergroundDocument?
   let selector = VisibilitySelector()
 
   /// The opening script, which the Reference Build starts play with.
@@ -80,6 +82,7 @@ final class WalkaboutModel {
     static let b: UInt16 = 11
     static let t: UInt16 = 17
     static let l: UInt16 = 37
+    static let g: UInt16 = 5
     static let space: UInt16 = 49
     static let minus: UInt16 = 27
     static let equal: UInt16 = 24
@@ -174,6 +177,7 @@ final class WalkaboutModel {
         flight = model
         state.player.position.y = model.groundAltitude
       }
+      underground = bundle.underground
       if let rules = bundle.interaction {
         interaction = Interaction(document: rules)
       }
@@ -302,6 +306,37 @@ final class WalkaboutModel {
     )
   }
 
+  /// Ride the lift, in whichever direction the player is going.
+  ///
+  /// The Reference Build's lift is a ride whose arrival flips a flag; what is not yet
+  /// decoded is what *starts* it. Until that is read, this stands in for the trigger
+  /// so the rooms can be walked — and it still refuses anywhere there is no lift.
+  private func takeTheLift() {
+    guard let flight, let underground, case .ready(let world, _) = load else { return }
+    if let room = state.room {
+      guard let entrance = underground.entrances.first(where: { $0.room == room }) else { return }
+      state = GameCore.surface(
+        state, entrance: entrance, lift: underground.lift,
+        cellSize: Double(world.cellSize), flight: flight
+      )
+    } else {
+      let column = Int(state.player.position.x / Double(world.cellSize))
+      let row = Int(state.player.position.z / Double(world.cellSize))
+      let cell = Double(world.cellSize)
+      // On foot, and standing on the lift's own pad — the Reference Build asks for
+      // both before it will take anyone anywhere.
+      guard state.craft == nil,
+        underground.pad.covers(state.player.position.x, cellSize: cell),
+        underground.pad.covers(state.player.position.z, cellSize: cell),
+        let entrance = underground.entrance(column: column, row: row)
+      else { return }
+      state = GameCore.enter(
+        state, entrance: entrance, lift: underground.lift, flight: flight
+      )
+    }
+    NSSound.beep()
+  }
+
   /// Step out, which the Reference Build allowed only once on the ground.
   ///
   /// The craft goes back into the world where the player left it, so it can be
@@ -395,6 +430,7 @@ final class WalkaboutModel {
       case Key.b where interaction != nil: reach(for: .board)
       case Key.t where interaction != nil: reach(for: .take)
       case Key.l where state.craft != nil: leaveCraft()
+      case Key.g: takeTheLift()
       default:
         pressed.insert(event.keyCode)
         // Any key tells the scripts the player is there; only some are matched.

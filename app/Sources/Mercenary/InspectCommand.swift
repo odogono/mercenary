@@ -15,6 +15,8 @@ enum InspectCommand {
     case structureSheet(URL)
     case object(slot: Int, output: URL, inSitu: Bool)
     case cell(index: Int, output: URL)
+    case room(id: Int, output: URL)
+    case roomSheet(URL)
   }
 
   static func mode(from arguments: [String]) -> Mode? {
@@ -34,6 +36,12 @@ enum InspectCommand {
     }
     if let index = value("--inspect-cell").flatMap({ Int($0, radix: 10) }) {
       return .cell(index: index, output: output)
+    }
+    if let sheet = value("--inspect-rooms") {
+      return .roomSheet(URL(fileURLWithPath: sheet))
+    }
+    if let id = value("--inspect-room").flatMap({ Int($0, radix: 10) }) {
+      return .room(id: id, output: output)
     }
     return nil
   }
@@ -94,6 +102,31 @@ enum InspectCommand {
           size: CGSize(width: 900, height: 760), to: url)
         print(Inspector.table(inspector.cellRows().filter { $0.subject.contains("\(index)") }, title: "cell \(index)"))
         print("{\"status\":\"inspected\",\"output\":\"\(url.path)\",\"edges\":\(cell.segments(at: 0).count)}")
+      case .room(let id, let url):
+        guard let room = world.rooms[id] else {
+          FileHandle.standardError.write(Data("error: no underground room \(id)\n".utf8))
+          return 1
+        }
+        try render(
+          segments: room.segments,
+          camera: try require(inspector.canonicalCamera(for: .room(id: id))),
+          size: CGSize(width: 900, height: 760), to: url)
+        print(
+          Inspector.table(
+            inspector.roomRows().filter { $0.subject == String(format: "room %02X", id) },
+            title: "room \(id)"))
+        print(
+          "{\"status\":\"inspected\",\"output\":\"\(url.path)\","
+            + "\"edges\":\(room.segments.count),\"portals\":\(room.portals.count)}")
+      case .roomSheet(let url):
+        let rooms = world.rooms.keys.sorted().compactMap { world.rooms[$0] }
+        try contactSheet(
+          items: rooms.map { (String(format: "%02X", $0.id), .room(id: $0.id)) },
+          columns: 16, inspector: inspector, to: url)
+        print(Inspector.table(inspector.roomRows(), title: "underground rooms"))
+        print(
+          "{\"status\":\"inspected\",\"output\":\"\(url.path)\",\"rooms\":\(rooms.count),"
+            + "\"roomEdges\":\(rooms.reduce(0) { $0 + $1.segments.count })}")
       }
       return 0
     } catch {

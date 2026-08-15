@@ -45,6 +45,7 @@ Discovery walks up from the working directory looking for `payload/manifest.json
 | `1`…`9`, `0` | Throttle, in a craft: ten keys onto the decoded notch ladder |
 | `-` / `=` | Halve and double the throttle |
 | `Space` | Shut the throttle aboard; on foot, skip the message |
+| `G` | Ride the lift, where there is one — stands in for an undecoded trigger |
 | `[` / `]` | Page through the decoded messages |
 
 The cursor keys are the whole movement surface, as the original's stick was. Aboard
@@ -78,7 +79,32 @@ app/.build/debug/mercenary --inspect-objects /tmp/sheet.png   # 64 tiles + table
 app/.build/debug/mercenary --inspect-structures /tmp/structures.png # 98 tiles + table
 app/.build/debug/mercenary --inspect-object 3 --out /tmp/o.png [--in-situ]
 app/.build/debug/mercenary --inspect-cell 72 --out /tmp/c.png
+app/.build/debug/mercenary --inspect-rooms /tmp/rooms.png      # all 192 underground rooms
+app/.build/debug/mercenary --inspect-room 2 --out /tmp/r.png
 ```
+
+For checking the rooms' topology rather than their look, the lab draws a map of all
+192 — each room's plan from above, its doorways, and where each one leads, with
+one-way links picked out in a different colour:
+
+```sh
+research/c64-reference-build/lab geometry rooms-svg \
+  --dataset research/c64-reference-build/work/<geometry-dataset> \
+  --output research/c64-reference-build/work/rooms-map.svg
+```
+
+Or laid out as a place, walked out of the doorways — 57 groups that do not join each
+other, since the underground is not one connected whole:
+
+```sh
+research/c64-reference-build/lab geometry rooms-plan-svg \
+  --dataset research/c64-reference-build/work/<geometry-dataset> \
+  --output research/c64-reference-build/work/rooms-plan.svg
+```
+
+An underground room's coordinates are its own — the Reference Build draws one room
+at a time and expands its commands into points first — so a room's camera is framed
+to its own bounds and its spans say how big it is, not where it sits.
 
 The default view is canonical: a camera framed to the subject's own bounds, with
 no level of detail and no orientation, because a malformed model has to be visible

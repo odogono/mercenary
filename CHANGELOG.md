@@ -6,6 +6,78 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Carry the underground rooms into the Data Payload and render them. All 192 rooms
+  were already being decoded into the verified dataset — points, edges, bounds, and
+  the commands that link one room to another — and then thrown away, because
+  `payload export` never wrote them out. So the app has never been able to see
+  underground. `rooms.json` now carries them, `World` builds them into wireframes,
+  and `--inspect-rooms` puts every one on a contact sheet with `--inspect-room N`
+  for a single chamber.
+  Rooms come from the dataset rather than from a capture, like the surface and the
+  objects do, because their geometry is table data and not runtime state. Each room
+  is a closed point space of its own: the Reference Build expands a room's drawing
+  commands into points before it draws anything, so a room's edge indices mean
+  nothing outside it, and the export asserts as much rather than trusting it.
+  A room's links are carried without being resolved. The Reference Build packs a
+  room link and a behaviour into the same byte and the decode does not claim to know
+  which is which, so both readings travel and the uncertainty stays visible.
+  Most rooms are uniform 4096 × 1024 × 4096 chambers and the ones that decode to a
+  sliver are the corridors connecting them — a corridor is a chamber with one axis
+  collapsed, so both shapes come out of the same decode with nothing wrong.
+  `notes/decode/underground.md` carries the room structure and the lift.
+- Go underground. Decode the lift — the only thing that writes the underground flag —
+  and walk its five entrances into the Data Payload as `underground.json`, then draw
+  the room the player is in instead of the surface. Underground the on-foot mover runs
+  whatever the player is standing in, which is what the Reference Build's own dispatch
+  does, so the correction that landed with it is what made this straightforward.
+  **The elevator coordinates cross-check settles.** Our image's two destination tables
+  give `9:6`, `9:5`, `3:0`, `11:13` and `3:15` for sites one to five; site six lands
+  off the grid and site eight reads into the second table, so five is what bounds the
+  count. That is five of the six coordinates the community list carries, and the
+  missing `3:4` is absent from the lift table rather than misread — the documented
+  list covers elevators *and hangars*, and a hangar is entered by the separate box
+  test, so `3:4` is most likely a hangar.
+  The site turns out to be the room id: arriving hands it straight to the room setup,
+  which keys the room pointer tables with it, so site one arrives in room one.
+  The lift's conditions are read (`$B404`): on foot, and standing on its pad — middle
+  bytes `$70` to `$73` on both axes, a small square near the middle of the cell, which
+  is exactly where surfacing puts the player back down. The app now asks for all of
+  that. What is still open is how that routine is reached, since nothing refers to it
+  directly, so whether the last step is a key or simply walking onto the pad is
+  unknown and `G` stands in for it. And the Reference Build
+  draws a different screen underground, which is unread, so a room is enclosed in a
+  placeholder rather than an invented palette; it was showing sky and grass until now.
+  `--render-frame --room N` renders from inside a room.
+- Map the rooms for checking. `lab geometry rooms-svg` draws all 192 as one sheet:
+  each room's plan seen from above in its own coordinates, its doorways placed where
+  the commands put them, and the rooms each doorway leads to written on the tile.
+  Rooms share no coordinate space — the Reference Build draws one at a time from its
+  own points — so there is no floor plan of the underground to draw; a grid of plans
+  is what there is, and a corridor reads as a line.
+  It settles what the link byte is. All 481 links land on real room ids, none is a
+  self-link, and 398 of them reciprocate, which a behaviour byte would not do. The
+  map draws the 83 that do not link back in a different colour, since those are the
+  ones worth looking at.
+- Lay the underground out as a place. `lab geometry rooms-plan-svg` walks a layout
+  out of the doorways rather than reading one, which is possible because every
+  doorway sits on a wall: a door on the east wall can only lead east. Corner doors
+  are settled by the room on the other side, whose own door back has to face it.
+  Only a doorway the other room answers places anything, and that choice is
+  measured rather than assumed — laying out on one-way links too gives 62 collisions
+  against 52 and a largest joined group of 19 against 25, which is itself evidence
+  that a one-way link is not a shared wall.
+  Each room is placed at its own width and depth, and the two halves of a shared
+  doorway are butted together, which fixes both axes at once: the far room's wall
+  meets the near room's and slides along until the doors line up. So a corridor lays
+  out as a corridor, and a chamber as a chamber.
+  Drawing them true rather than as one square each is what makes the layout hold
+  together, by a wide margin — 42 groups against 57, a largest joined group of 38
+  against 25, and 5 overlaps against 52. The residue was almost entirely corridors
+  folded back on themselves for want of their real length. The five rooms that still
+  want ground already taken are named on the map rather than explained away.
+
 ### Fixed
 
 - Walk on foot the way the Reference Build does, which is not through the control

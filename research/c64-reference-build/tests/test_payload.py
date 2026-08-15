@@ -11,6 +11,9 @@ sys.path.insert(0, str(LAB_ROOT))
 
 from c64lab.core import LabError
 from c64lab.payload import (
+    build_rooms,
+    render_room_map_svg,
+    render_room_plan_svg,
     CELL_SIZE,
     build_road_cells,
     build_objects,
@@ -271,6 +274,192 @@ class PayloadOutputGuardTests(unittest.TestCase):
             with self.assertRaises(LabError) as caught:
                 export_payload(Path(directory) / "absent-dataset", Path(directory) / "payload")
             self.assertNotIn("must remain under ignored", str(caught.exception))
+
+
+class RoomsTests(unittest.TestCase):
+    """The underground rooms, carried across from the verified dataset."""
+
+    @staticmethod
+    def dataset(rooms=None, records=None):
+        return {
+            "schemaVersion": 1,
+            "records": records if records is not None else [
+                {
+                    "geometryIdentity": "room-record:3000",
+                    "commands": [
+                        {"linkedRoomOrBehaviour": 88, "plane": "zy", "xMiddle": 16, "zMiddle": 12}
+                    ],
+                }
+            ],
+            "rooms": rooms if rooms is not None else [
+                {
+                    "roomId": 0,
+                    "record": "room-record:3000",
+                    "hasPortal": True,
+                    "edgeCount": 1,
+                    "expanded": {
+                        "vertices": [{"position": [0, 0, 0]}, {"position": [4096, 0, 0]}],
+                        "edges": [{"indices": [0, 1]}],
+                        "bounds": {"min": [0, 0, 0], "max": [4096, 0, 0]},
+                    },
+                }
+            ],
+        }
+
+    def test_carries_each_rooms_points_edges_and_bounds(self) -> None:
+        document = build_rooms(self.dataset())
+        room = document["rooms"][0]
+
+        self.assertEqual(room["room"], 0)
+        self.assertEqual(room["vertices"], [[0, 0, 0], [4096, 0, 0]])
+        self.assertEqual(room["edges"], [[0, 1]])
+        self.assertEqual(room["bounds"], {"min": [0, 0, 0], "max": [4096, 0, 0]})
+
+    def test_looks_up_the_record_a_room_names_rather_than_inlining_it(self) -> None:
+        # Several rooms share one record, so a room names it by identity.
+        room = build_rooms(self.dataset())["rooms"][0]
+
+        self.assertEqual(room["hasPortal"], True)
+        self.assertEqual(room["portals"], [{"linked": 88, "plane": "zy", "xMiddle": 16, "zMiddle": 12}])
+
+    def test_a_room_whose_record_is_missing_simply_has_no_links(self) -> None:
+        room = build_rooms(self.dataset(records=[]))["rooms"][0]
+
+        self.assertEqual(room["portals"], [])
+
+    def test_refuses_an_edge_outside_a_rooms_own_point_space(self) -> None:
+        dataset = self.dataset()
+        dataset["rooms"][0]["expanded"]["edges"] = [{"indices": [0, 9]}]
+
+        with self.assertRaises(LabError):
+            build_rooms(dataset)
+
+    def test_refuses_a_dataset_carrying_no_rooms(self) -> None:
+        with self.assertRaises(LabError):
+            build_rooms(self.dataset(rooms=[]))
+
+
+class RoomMapTests(unittest.TestCase):
+    """The checking map: every room's plan and where its doorways lead."""
+
+    @staticmethod
+    def rooms():
+        def room(identifier, links):
+            return {
+                "room": identifier,
+                "vertices": [[0, 0, 0], [4096, 0, 0], [4096, 0, 4096]],
+                "edges": [[0, 1], [1, 2]],
+                "bounds": {"min": [0, 0, 0], "max": [4096, 1024, 4096]},
+                "hasPortal": bool(links),
+                "portals": [
+                    {"linked": link, "plane": "xy", "xMiddle": 8, "zMiddle": 8} for link in links
+                ],
+            }
+
+        # 0 and 1 link to each other; 1 also links one way to 2, which links back to 0.
+        return [room(0, [1]), room(1, [0, 2]), room(2, [0])]
+
+    def test_counts_every_link_and_which_of_them_are_one_way(self) -> None:
+        _, counts = render_room_map_svg(self.rooms())
+
+        self.assertEqual(counts["rooms"], 3)
+        self.assertEqual(counts["links"], 4)
+        # 1 -> 2 is not answered by 2 -> 1, and 2 -> 0 is not answered by 0 -> 2.
+        self.assertEqual(counts["oneWayLinks"], 2)
+
+    def test_draws_one_tile_per_room_and_says_what_it_is_showing(self) -> None:
+        svg, _ = render_room_map_svg(self.rooms())
+
+        self.assertTrue(svg.startswith("<svg"))
+        self.assertTrue(svg.rstrip().endswith("</svg>"))
+        self.assertEqual(svg.count("<g transform="), 3)
+        self.assertIn("underground rooms: 3", svg)
+        self.assertIn("4 links, 2 reciprocal, 2 one-way", svg)
+
+    def test_marks_a_one_way_doorway_differently_from_a_mutual_one(self) -> None:
+        svg, _ = render_room_map_svg(self.rooms())
+
+        # Both classes have to appear, or the distinction is not being drawn at all.
+        self.assertIn('class="d"', svg)
+        self.assertIn('class="o"', svg)
+
+    def test_a_room_with_no_doorways_still_gets_a_tile(self) -> None:
+        rooms = self.rooms()
+        rooms[2]["portals"] = []
+        svg, counts = render_room_map_svg(rooms)
+
+        self.assertEqual(counts["rooms"], 3)
+        self.assertEqual(svg.count("<g transform="), 3)
+
+
+class RoomPlanTests(unittest.TestCase):
+    """Laying the rooms out by their doorways, which is inference and not a read."""
+
+    @staticmethod
+    def room(identifier, portals, high=4096):
+        return {
+            "room": identifier,
+            "vertices": [[0, 0, 0], [high, 0, 0]],
+            "edges": [[0, 1]],
+            "bounds": {"min": [0, 0, 0], "max": [high, 1024, high]},
+            "hasPortal": bool(portals),
+            "portals": [
+                {"linked": link, "plane": "xy", "xMiddle": x, "zMiddle": z}
+                for link, x, z in portals
+            ],
+        }
+
+    def test_a_door_on_the_east_wall_puts_the_next_room_east(self) -> None:
+        # 0's door is at x = 4096, its east wall; 1 answers on its west wall at x = 0.
+        rooms = [self.room(0, [(1, 16, 8)]), self.room(1, [(0, 0, 8)])]
+        _, counts = render_room_plan_svg(rooms)
+
+        self.assertEqual(counts["groups"], 1)
+        self.assertEqual(counts["largestGroup"], 2)
+        self.assertEqual(counts["overlaps"], 0)
+
+    def test_rooms_that_do_not_join_are_separate_groups(self) -> None:
+        rooms = [self.room(0, []), self.room(1, []), self.room(2, [])]
+        _, counts = render_room_plan_svg(rooms)
+
+        self.assertEqual(counts["groups"], 3)
+        self.assertEqual(counts["largestGroup"], 1)
+
+    def test_a_one_way_link_does_not_place_a_room(self) -> None:
+        # The lift is one of these: a way through that is not a shared wall.
+        rooms = [self.room(0, [(1, 16, 8)]), self.room(1, [])]
+        _, counts = render_room_plan_svg(rooms)
+
+        self.assertEqual(counts["groups"], 2)
+
+    def test_a_room_that_would_overlap_one_already_placed_is_counted_not_hidden(self) -> None:
+        # Both doors are on 0's east wall at the same height, so 1 and 2 want the very
+        # same ground. One of them has to be left out, and said so.
+        rooms = [
+            self.room(0, [(1, 16, 8), (2, 16, 8)]),
+            self.room(1, [(0, 0, 8)]),
+            self.room(2, [(0, 0, 8)]),
+        ]
+        _, counts = render_room_plan_svg(rooms)
+
+        self.assertEqual(counts["overlaps"], 1)
+
+    def test_a_corridor_lays_out_at_its_own_size_rather_than_a_square(self) -> None:
+        # A thin room has to stay thin, which is the whole point of this layout over
+        # one square per room: a run of corridors folds back on itself otherwise.
+        rooms = [self.room(0, [(1, 16, 8)]), self.room(1, [(0, 0, 8)], high=512)]
+        svg, counts = render_room_plan_svg(rooms)
+
+        self.assertEqual(counts["overlaps"], 0)
+        self.assertEqual(counts["largestGroup"], 2)
+        # Two rects of visibly different width, not two of the same.
+        # Skipping the first piece, which is everything before any room: the backdrop.
+        widths = {
+            part.split('width="')[1].split('"')[0]
+            for part in svg.split("<rect class=")[1:]
+            if 'width="' in part
+        }
+        self.assertEqual(len(widths), 2)
 
 
 if __name__ == "__main__":

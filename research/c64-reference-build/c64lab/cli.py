@@ -29,7 +29,12 @@ from .catalogue import (
     summarize_catalogue,
     verify_catalogue,
 )
-from .payload import export_payload, require_ignored_output
+from .payload import (
+    export_payload,
+    export_room_map_svg,
+    export_room_plan_svg,
+    require_ignored_output,
+)
 from .object_semantics import (
     attest_object_semantics,
     corroborate_object_semantics,
@@ -84,6 +89,16 @@ def _parser() -> argparse.ArgumentParser:
     geometry_roads_svg = geometry_commands.add_parser("roads-svg", help="export the complete decoded road network")
     geometry_roads_svg.add_argument("--dataset", required=True, type=Path)
     geometry_roads_svg.add_argument("--output", required=True, type=Path)
+    geometry_rooms_svg = geometry_commands.add_parser(
+        "rooms-svg", help="export a map of every underground room and its links"
+    )
+    geometry_rooms_svg.add_argument("--dataset", required=True, type=Path)
+    geometry_rooms_svg.add_argument("--output", required=True, type=Path)
+    geometry_rooms_plan = geometry_commands.add_parser(
+        "rooms-plan-svg", help="export the underground laid out as it joins together"
+    )
+    geometry_rooms_plan.add_argument("--dataset", required=True, type=Path)
+    geometry_rooms_plan.add_argument("--output", required=True, type=Path)
 
     geometry_review = geometry_commands.add_parser("review", help="record a maintainer comparison decision")
     geometry_review.add_argument("--comparisons", required=True, type=Path)
@@ -233,6 +248,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 result = compare_geometry(arguments.prg, arguments.dataset)
             elif arguments.geometry_command == "roads-svg":
                 result = export_road_network_svg(arguments.dataset, arguments.output)
+            elif arguments.geometry_command == "rooms-svg":
+                result = export_room_map_svg(arguments.dataset, arguments.output)
+            elif arguments.geometry_command == "rooms-plan-svg":
+                result = export_room_plan_svg(arguments.dataset, arguments.output)
             elif arguments.geometry_command == "review":
                 result = review_comparisons(arguments.comparisons, arguments.reviewer, arguments.decision)
             else:
