@@ -81,12 +81,17 @@ as well is measurably worse — 62 collisions against 52, and a largest joined g
 19 against 25 — which is itself evidence that a one-way link is not a shared wall.
 The lift is one such link.
 
-That gives **57 groups that do not join each other**, the largest of 25 rooms, and 33
-rooms joined to nothing. 52 placements still collide, and the reason is known rather
-than mysterious: every room is drawn one square wide whatever its real size, so a run
-of corridors folds back on itself. A layout that stepped by each room's own extent
-would not have that, and is the obvious next improvement if the map needs to be
-exact rather than indicative.
+Each room is placed at its own width and depth, and the two halves of a shared
+doorway are butted together — which fixes both axes at once, since the far room's
+wall meets the near room's and then slides along until the doors line up.
+
+Doing that rather than giving every room one square is what makes the layout hold
+together, and by a wide margin: **42 groups against 57, a largest joined group of 38
+against 25, and 5 overlaps against 52.** The residue was almost entirely corridors
+folded back on themselves for want of their real length.
+
+Five rooms still want ground already taken. That is the honest remainder, and small
+enough to be worth chasing one at a time rather than explaining away.
 
 `lab geometry rooms-plan-svg` draws it.
 

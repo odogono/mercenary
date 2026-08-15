@@ -64,10 +64,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   measured rather than assumed — laying out on one-way links too gives 62 collisions
   against 52 and a largest joined group of 19 against 25, which is itself evidence
   that a one-way link is not a shared wall.
-  The result is 57 groups that do not join each other, the largest of 25 rooms, and
-  33 rooms joined to nothing at all. The 52 remaining collisions have a known cause:
-  every room is drawn one square wide whatever its real size, so a run of corridors
-  folds back on itself. The map says so on its face rather than hiding it.
+  Each room is placed at its own width and depth, and the two halves of a shared
+  doorway are butted together, which fixes both axes at once: the far room's wall
+  meets the near room's and slides along until the doors line up. So a corridor lays
+  out as a corridor, and a chamber as a chamber.
+  Drawing them true rather than as one square each is what makes the layout hold
+  together, by a wide margin — 42 groups against 57, a largest joined group of 38
+  against 25, and 5 overlaps against 52. The residue was almost entirely corridors
+  folded back on themselves for want of their real length. The five rooms that still
+  want ground already taken are named on the map rather than explained away.
 
 ### Fixed
 

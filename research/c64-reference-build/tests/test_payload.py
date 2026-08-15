@@ -416,7 +416,7 @@ class RoomPlanTests(unittest.TestCase):
 
         self.assertEqual(counts["groups"], 1)
         self.assertEqual(counts["largestGroup"], 2)
-        self.assertEqual(counts["clashes"], 0)
+        self.assertEqual(counts["overlaps"], 0)
 
     def test_rooms_that_do_not_join_are_separate_groups(self) -> None:
         rooms = [self.room(0, []), self.room(1, []), self.room(2, [])]
@@ -432,16 +432,34 @@ class RoomPlanTests(unittest.TestCase):
 
         self.assertEqual(counts["groups"], 2)
 
-    def test_two_rooms_wanting_the_same_square_are_counted_not_hidden(self) -> None:
-        # 0 has two east doors; both would land the same way, so one has to collide.
+    def test_a_room_that_would_overlap_one_already_placed_is_counted_not_hidden(self) -> None:
+        # Both doors are on 0's east wall at the same height, so 1 and 2 want the very
+        # same ground. One of them has to be left out, and said so.
         rooms = [
-            self.room(0, [(1, 16, 4), (2, 16, 12)]),
-            self.room(1, [(0, 0, 4)]),
-            self.room(2, [(0, 0, 12)]),
+            self.room(0, [(1, 16, 8), (2, 16, 8)]),
+            self.room(1, [(0, 0, 8)]),
+            self.room(2, [(0, 0, 8)]),
         ]
         _, counts = render_room_plan_svg(rooms)
 
-        self.assertEqual(counts["clashes"], 1)
+        self.assertEqual(counts["overlaps"], 1)
+
+    def test_a_corridor_lays_out_at_its_own_size_rather_than_a_square(self) -> None:
+        # A thin room has to stay thin, which is the whole point of this layout over
+        # one square per room: a run of corridors folds back on itself otherwise.
+        rooms = [self.room(0, [(1, 16, 8)]), self.room(1, [(0, 0, 8)], high=512)]
+        svg, counts = render_room_plan_svg(rooms)
+
+        self.assertEqual(counts["overlaps"], 0)
+        self.assertEqual(counts["largestGroup"], 2)
+        # Two rects of visibly different width, not two of the same.
+        # Skipping the first piece, which is everything before any room: the backdrop.
+        widths = {
+            part.split('width="')[1].split('"')[0]
+            for part in svg.split("<rect class=")[1:]
+            if 'width="' in part
+        }
+        self.assertEqual(len(widths), 2)
 
 
 if __name__ == "__main__":
