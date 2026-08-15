@@ -68,6 +68,28 @@ and a hangar is entered by a different mechanism — the box test below — so `
 most likely a hangar. Not proven, but the tables are unambiguous about what they
 hold.
 
+## Laying the rooms out
+
+Rooms carry no coordinates, but a layout can be walked out of the doorways, because
+**every one of the 481 sits on a wall** rather than inside the room. A door on the
+east wall can only lead to the room to the east. Forty-three sit on a corner and are
+on two walls at once; the room on the other side settles those, since its own door
+back has to be on the facing wall.
+
+Only a doorway the other room answers places anything. Laying out on one-way links
+as well is measurably worse — 62 collisions against 52, and a largest joined group of
+19 against 25 — which is itself evidence that a one-way link is not a shared wall.
+The lift is one such link.
+
+That gives **57 groups that do not join each other**, the largest of 25 rooms, and 33
+rooms joined to nothing. 52 placements still collide, and the reason is known rather
+than mysterious: every room is drawn one square wide whatever its real size, so a run
+of corridors folds back on itself. A layout that stepped by each room's own extent
+would not have that, and is the obvious next improvement if the map needs to be
+exact rather than indicative.
+
+`lab geometry rooms-plan-svg` draws it.
+
 ## Still unread
 
 * **What starts the lift.** The ride and its arrival are decoded; the trigger is not.

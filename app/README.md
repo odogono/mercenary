@@ -93,6 +93,15 @@ research/c64-reference-build/lab geometry rooms-svg \
   --output research/c64-reference-build/work/rooms-map.svg
 ```
 
+Or laid out as a place, walked out of the doorways — 57 groups that do not join each
+other, since the underground is not one connected whole:
+
+```sh
+research/c64-reference-build/lab geometry rooms-plan-svg \
+  --dataset research/c64-reference-build/work/<geometry-dataset> \
+  --output research/c64-reference-build/work/rooms-plan.svg
+```
+
 An underground room's coordinates are its own — the Reference Build draws one room
 at a time and expands its commands into points first — so a room's camera is framed
 to its own bounds and its spans say how big it is, not where it sits.

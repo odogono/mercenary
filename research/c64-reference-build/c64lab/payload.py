@@ -266,6 +266,199 @@ def render_room_map_svg(rooms: list[dict[str, Any]]) -> tuple[str, dict[str, int
     return "\n".join(parts), counts
 
 
+#: Which way a doorway on each wall leads, in room steps.
+_WALL_STEPS = {"west": (-1, 0), "east": (1, 0), "north": (0, -1), "south": (0, 1)}
+_OPPOSITE = {"west": "east", "east": "west", "north": "south", "south": "north"}
+
+
+def _doorways(room: dict[str, Any]) -> list[tuple[str, int]]:
+    """Which wall each of a room's doorways is on, and where it leads.
+
+    Every doorway in our image sits on a wall rather than inside the room, which is
+    what makes a layout derivable at all: a door on the east wall can only lead to
+    the room to the east. A few sit on a corner and are on two walls at once; those
+    are left for the caller to break, since the room on the other side knows.
+    """
+    high = room["bounds"]["max"]
+    found: list[tuple[str, int]] = []
+    for portal in room["portals"]:
+        x, z = portal["xMiddle"] << 8, portal["zMiddle"] << 8
+        walls = []
+        if x == 0:
+            walls.append("west")
+        if x == high[0]:
+            walls.append("east")
+        if z == 0:
+            walls.append("north")
+        if z == high[2]:
+            walls.append("south")
+        for wall in walls:
+            found.append((wall, portal["linked"]))
+    return found
+
+
+def _lay_out(rooms: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
+    """Place the rooms on a grid by walking their doorways.
+
+    A doorway's wall says which way its room lies, so following them from any room
+    lays out everything reachable from it. The rooms are not one connected whole, so
+    this is done once per group and each group gets its own grid.
+
+    Where two rooms would land on the same square the first placement stands and the
+    clash is counted rather than hidden: a wrong reading should be visible as a
+    number, not quietly overwritten.
+    """
+    doors = {room["room"]: _doorways(room) for room in rooms}
+    by_id = {room["room"]: room for room in rooms}
+    placed: dict[int, tuple[int, int, int]] = {}
+    clashes = 0
+    group = 0
+
+    for start in sorted(by_id):
+        if start in placed:
+            continue
+        placed[start] = (group, 0, 0)
+        taken = {(0, 0): start}
+        queue = [start]
+        while queue:
+            current = queue.pop(0)
+            _, x, y = placed[current]
+            for wall, target in doors.get(current, []):
+                if target not in by_id or target in placed:
+                    continue
+                # Only a doorway the other room answers is a shared wall. A one-way
+                # link need not be adjacency at all — the lift is one — and laying out
+                # on those puts rooms on top of each other, so they are left out.
+                back = [w for w, t in doors.get(target, []) if t == current]
+                if not back or _OPPOSITE[wall] not in back:
+                    continue
+                step = _WALL_STEPS[wall]
+                square = (x + step[0], y + step[1])
+                if square in taken:
+                    clashes += 1
+                    continue
+                taken[square] = target
+                placed[target] = (group, square[0], square[1])
+                queue.append(target)
+        group += 1
+
+    laid: list[dict[str, Any]] = []
+    for room in rooms:
+        component, x, y = placed[room["room"]]
+        laid.append({"room": room, "group": component, "at": (x, y)})
+    return laid, clashes
+
+
+def render_room_plan_svg(rooms: list[dict[str, Any]]) -> tuple[str, dict[str, int]]:
+    """The rooms laid out as they join, which is what a map of a place looks like.
+
+    Rooms carry no coordinates of their own, so the layout is walked out of the
+    doorways rather than read: each one says which wall it is on, and that says which
+    way the room it leads to lies. What comes out is not one map — the rooms are not
+    all joined — so each connected group is drawn as its own block.
+    """
+    laid, clashes = _lay_out(rooms)
+    doors = {entry["room"]["room"]: _doorways(entry["room"]) for entry in laid}
+    links = {room["room"]: [portal["linked"] for portal in room["portals"]] for room in rooms}
+    known = set(links)
+
+    groups: dict[int, list[dict[str, Any]]] = {}
+    for entry in laid:
+        groups.setdefault(entry["group"], []).append(entry)
+    # Biggest first, so the map opens on the part worth looking at.
+    order = sorted(groups, key=lambda key: (-len(groups[key]), key))
+
+    cell, gap, header = 54, 26, 96
+    blocks: list[tuple[int, int, int, int, int]] = []
+    cursor_x, cursor_y, row_height, widest = gap, header, 0, 0
+    limit = 1900
+    for key in order:
+        entries = groups[key]
+        xs = [entry["at"][0] for entry in entries]
+        ys = [entry["at"][1] for entry in entries]
+        width = (max(xs) - min(xs) + 1) * cell
+        height = (max(ys) - min(ys) + 1) * cell + 16
+        if cursor_x + width > limit and cursor_x > gap:
+            cursor_x, cursor_y = gap, cursor_y + row_height + gap
+            row_height = 0
+        blocks.append((key, cursor_x - min(xs) * cell, cursor_y - min(ys) * cell + 16, width, height))
+        cursor_x += width + gap
+        row_height = max(row_height, height)
+        widest = max(widest, cursor_x)
+    total_height = cursor_y + row_height + gap
+
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{widest}" height="{total_height}" '
+        f'viewBox="0 0 {widest} {total_height}">',
+        '<rect width="100%" height="100%" fill="#0d0f14"/>',
+        '<style>text{font-family:ui-monospace,monospace;fill:#8fa4c0}'
+        '.id{fill:#e8eef7;font-size:13px}.n{font-size:8px;fill:#7d8ea6}'
+        '.r{stroke:#cfe0f5;stroke-width:1;fill:#141a24}'
+        '.d{stroke:#5ad18a;stroke-width:2.5}.o{stroke:#e0913f;stroke-width:2.5}</style>',
+        f'<text class="id" x="{gap}" y="26">underground rooms, laid out by their doorways</text>',
+        f'<text x="{gap}" y="45" font-size="11">{len(rooms)} rooms in {len(groups)} groups that do '
+        f'not join &#183; a green doorway leads both ways, an orange one only outward</text>',
+        f'<text x="{gap}" y="62" font-size="11">north is up; only a doorway the other room answers '
+        f'places it, since a one-way link need not be a shared wall</text>',
+        f'<text x="{gap}" y="79" font-size="11">every square is drawn the same size whatever the '
+        f'room, so {clashes} placements collided and the first was kept</text>',
+    ]
+
+    for key, origin_x, origin_y, width, _ in blocks:
+        entries = groups[key]
+        # A one-room group is narrower than its own caption, so those get a short one.
+        wide = (max(entry["at"][0] for entry in entries) - min(entry["at"][0] for entry in entries) + 1) * cell
+        caption = f'group {key} &#183; {len(entries)} rooms' if wide >= 110 else f'{key}&#183;{len(entries)}'
+        parts.append(
+            f'<text x="{origin_x + min(entry["at"][0] for entry in entries) * cell}" '
+            f'y="{origin_y + min(entry["at"][1] for entry in entries) * cell - 5}" '
+            f'font-size="10">{caption}</text>'
+        )
+        for entry in entries:
+            identifier = entry["room"]["room"]
+            left = origin_x + entry["at"][0] * cell
+            top = origin_y + entry["at"][1] * cell
+            parts.append(
+                f'<rect class="r" x="{left + 2}" y="{top + 2}" width="{cell - 4}" height="{cell - 4}"/>'
+            )
+            parts.append(
+                f'<text class="n" x="{left + 6}" y="{top + 14}">{identifier:02X}</text>'
+            )
+            for wall, target in doors.get(identifier, []):
+                mutual = target in known and identifier in links[target]
+                style = "d" if mutual else "o"
+                mid = cell / 2
+                edge = {
+                    "west": (left + 2, top + mid - 7, left + 2, top + mid + 7),
+                    "east": (left + cell - 2, top + mid - 7, left + cell - 2, top + mid + 7),
+                    "north": (left + mid - 7, top + 2, left + mid + 7, top + 2),
+                    "south": (left + mid - 7, top + cell - 2, left + mid + 7, top + cell - 2),
+                }[wall]
+                parts.append(
+                    f'<line class="{style}" x1="{edge[0]:.0f}" y1="{edge[1]:.0f}" '
+                    f'x2="{edge[2]:.0f}" y2="{edge[3]:.0f}"/>'
+                )
+    parts.append("</svg>")
+    counts = {
+        "rooms": len(rooms),
+        "groups": len(groups),
+        "largestGroup": max(len(value) for value in groups.values()),
+        "clashes": clashes,
+    }
+    return "\n".join(parts), counts
+
+
+def export_room_plan_svg(dataset_root: Path, output: Path) -> dict[str, Any]:
+    """Write the laid-out map beside the other restricted outputs."""
+    verified = verify_dataset(dataset_root)
+    destination = require_ignored_output(output)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    rooms = build_rooms(verified["documents"]["underground"])["rooms"]
+    svg, counts = render_room_plan_svg(rooms)
+    destination.write_text(svg, encoding="utf-8")
+    return {"status": "exported", "output": str(destination), **counts}
+
+
 def export_room_map_svg(dataset_root: Path, output: Path) -> dict[str, Any]:
     """Write the room map beside the other restricted outputs."""
     verified = verify_dataset(dataset_root)

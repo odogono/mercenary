@@ -13,6 +13,7 @@ from c64lab.core import LabError
 from c64lab.payload import (
     build_rooms,
     render_room_map_svg,
+    render_room_plan_svg,
     CELL_SIZE,
     build_road_cells,
     build_objects,
@@ -389,6 +390,58 @@ class RoomMapTests(unittest.TestCase):
 
         self.assertEqual(counts["rooms"], 3)
         self.assertEqual(svg.count("<g transform="), 3)
+
+
+class RoomPlanTests(unittest.TestCase):
+    """Laying the rooms out by their doorways, which is inference and not a read."""
+
+    @staticmethod
+    def room(identifier, portals, high=4096):
+        return {
+            "room": identifier,
+            "vertices": [[0, 0, 0], [high, 0, 0]],
+            "edges": [[0, 1]],
+            "bounds": {"min": [0, 0, 0], "max": [high, 1024, high]},
+            "hasPortal": bool(portals),
+            "portals": [
+                {"linked": link, "plane": "xy", "xMiddle": x, "zMiddle": z}
+                for link, x, z in portals
+            ],
+        }
+
+    def test_a_door_on_the_east_wall_puts_the_next_room_east(self) -> None:
+        # 0's door is at x = 4096, its east wall; 1 answers on its west wall at x = 0.
+        rooms = [self.room(0, [(1, 16, 8)]), self.room(1, [(0, 0, 8)])]
+        _, counts = render_room_plan_svg(rooms)
+
+        self.assertEqual(counts["groups"], 1)
+        self.assertEqual(counts["largestGroup"], 2)
+        self.assertEqual(counts["clashes"], 0)
+
+    def test_rooms_that_do_not_join_are_separate_groups(self) -> None:
+        rooms = [self.room(0, []), self.room(1, []), self.room(2, [])]
+        _, counts = render_room_plan_svg(rooms)
+
+        self.assertEqual(counts["groups"], 3)
+        self.assertEqual(counts["largestGroup"], 1)
+
+    def test_a_one_way_link_does_not_place_a_room(self) -> None:
+        # The lift is one of these: a way through that is not a shared wall.
+        rooms = [self.room(0, [(1, 16, 8)]), self.room(1, [])]
+        _, counts = render_room_plan_svg(rooms)
+
+        self.assertEqual(counts["groups"], 2)
+
+    def test_two_rooms_wanting_the_same_square_are_counted_not_hidden(self) -> None:
+        # 0 has two east doors; both would land the same way, so one has to collide.
+        rooms = [
+            self.room(0, [(1, 16, 4), (2, 16, 12)]),
+            self.room(1, [(0, 0, 4)]),
+            self.room(2, [(0, 0, 12)]),
+        ]
+        _, counts = render_room_plan_svg(rooms)
+
+        self.assertEqual(counts["clashes"], 1)
 
 
 if __name__ == "__main__":

@@ -56,6 +56,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   self-link, and 398 of them reciprocate, which a behaviour byte would not do. The
   map draws the 83 that do not link back in a different colour, since those are the
   ones worth looking at.
+- Lay the underground out as a place. `lab geometry rooms-plan-svg` walks a layout
+  out of the doorways rather than reading one, which is possible because every
+  doorway sits on a wall: a door on the east wall can only lead east. Corner doors
+  are settled by the room on the other side, whose own door back has to face it.
+  Only a doorway the other room answers places anything, and that choice is
+  measured rather than assumed — laying out on one-way links too gives 62 collisions
+  against 52 and a largest joined group of 19 against 25, which is itself evidence
+  that a one-way link is not a shared wall.
+  The result is 57 groups that do not join each other, the largest of 25 rooms, and
+  33 rooms joined to nothing at all. The 52 remaining collisions have a known cause:
+  every room is drawn one square wide whatever its real size, so a run of corridors
+  folds back on itself. The map says so on its face rather than hiding it.
 
 ### Fixed
 
