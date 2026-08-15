@@ -27,7 +27,7 @@ from typing import Any
 from .core import require
 
 
-UNDERGROUND_SCHEMA_VERSION = 1
+UNDERGROUND_SCHEMA_VERSION = 2
 
 #: The flag that decides which mover runs, and the routine that walks the lift.
 UNDERGROUND_FLAG = 0xA8
@@ -58,6 +58,22 @@ ENTRANCE_Z_LOAD_SITE = 0xA2AB
 ROOM_SETUP_SITE = 0xA2E0
 ROOM_SETUP_ROUTINE = 0x90BE
 
+#: What has to be true before a lift will take the player anywhere.
+#:
+#: On foot, and standing on the lift's pad — a small square near the middle of the
+#: cell, tested by shifting the position's middle byte down two and comparing. The
+#: search that follows walks the same destination tables backwards to find which site
+#: the player is standing in.
+TRIGGER_ROUTINE = 0xB404
+TRIGGER_ON_FOOT_SITE = 0xB408
+TRIGGER_PAD_X_SITE = 0xB410
+TRIGGER_PAD_Z_SITE = 0xB418
+TRIGGER_PAD_SHIFT = 2
+TRIGGER_SEARCH_SITE = 0xB41C
+#: Which state each direction starts the lift in.
+DESCEND_STATE = 0x80
+ASCEND_STATE = 0x01
+
 #: The grid the surface is divided into, which bounds a plausible entrance.
 CELLS_PER_AXIS = 16
 
@@ -81,6 +97,11 @@ def _require_engine(ram: bytes) -> None:
         (ENTRANCE_X_LOAD_SITE, (0xBD,), "surfacing does not read its cell from a table"),
         (ENTRANCE_Z_LOAD_SITE, (0xBD,), "surfacing does not read its second axis from a table"),
         (ROOM_SETUP_SITE, (0x20,), "submerging does not call the room setup"),
+        (TRIGGER_ROUTINE, (0xA5, UNDERGROUND_FLAG), "the lift's trigger does not begin at the flag"),
+        (TRIGGER_ON_FOOT_SITE, (0xA5, 0x7F), "the lift's trigger does not require being on foot"),
+        (TRIGGER_PAD_X_SITE, (0xC9,), "the lift's pad is not an immediate compare on one axis"),
+        (TRIGGER_PAD_Z_SITE, (0xC9,), "the lift's pad is not an immediate compare on the other"),
+        (TRIGGER_SEARCH_SITE, (0xA2,), "the lift's trigger does not search the sites from a bound"),
     )
     for address, expected, complaint in checks:
         found = tuple(ram[address:address + len(expected)])
@@ -137,6 +158,13 @@ def decode_underground(ram: bytes) -> dict[str, Any]:
     return {
         "schemaVersion": UNDERGROUND_SCHEMA_VERSION,
         "entrances": entrances,
+        "pad": {
+            # The pad is the position's middle byte shifted down two, so one pad
+            # value covers four middle bytes: a square the player has to stand in.
+            "x": ram[TRIGGER_PAD_X_SITE + 1],
+            "z": ram[TRIGGER_PAD_Z_SITE + 1],
+            "shift": TRIGGER_PAD_SHIFT,
+        },
         "lift": {
             "ascendRate": ram[ASCEND_RATE_SITE + 1],
             "descendRate": ram[DESCEND_RATE_SITE + 1],

@@ -41,8 +41,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   test, so `3:4` is most likely a hangar.
   The site turns out to be the room id: arriving hands it straight to the room setup,
   which keys the room pointer tables with it, so site one arrives in room one.
-  What is not decoded is what *starts* the lift, so `G` stands in for the trigger —
-  it still refuses anywhere the tables say there is no lift. And the Reference Build
+  The lift's conditions are read (`$B404`): on foot, and standing on its pad — middle
+  bytes `$70` to `$73` on both axes, a small square near the middle of the cell, which
+  is exactly where surfacing puts the player back down. The app now asks for all of
+  that. What is still open is how that routine is reached, since nothing refers to it
+  directly, so whether the last step is a key or simply walking onto the pad is
+  unknown and `G` stands in for it. And the Reference Build
   draws a different screen underground, which is unread, so a room is enclosed in a
   placeholder rather than an invented palette; it was showing sky and grass until now.
   `--render-frame --room N` renders from inside a room.

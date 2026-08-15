@@ -171,6 +171,22 @@ public enum Payload {
       public var room: Int
     }
 
+    /// Where a lift will take the player from: a square near the middle of the cell.
+    public struct Pad: Codable, Sendable, Equatable {
+      public var x: Int
+      public var z: Int
+      /// The position's middle byte is shifted down by this before comparing, so one
+      /// pad value covers a run of middle bytes rather than a single one.
+      public var shift: Int
+
+      /// Whether a world position stands on the pad, on either axis.
+      public func covers(_ position: Double, cellSize: Double) -> Bool {
+        let within = position.truncatingRemainder(dividingBy: cellSize)
+        let middle = Int(within) >> 8
+        return middle >> shift == x
+      }
+    }
+
     public struct Lift: Codable, Sendable, Equatable {
       public var ascendRate: Int
       public var descendRate: Int
@@ -185,6 +201,7 @@ public enum Payload {
 
     public var schemaVersion: Int
     public var entrances: [Entrance]
+    public var pad: Pad
     public var lift: Lift
     public var counts: [String: Int]
 
@@ -281,7 +298,7 @@ public enum Payload {
   /// loop's decode does, which is independent of every other document.
   public static let supportedFlightSchemaVersion = 3
   /// The lift's rules version separately again, for the same reason.
-  public static let supportedUndergroundSchemaVersion = 1
+  public static let supportedUndergroundSchemaVersion = 2
 
   /// Load and schema-check a payload directory.
   public static func load(from directory: URL) throws -> Bundle {

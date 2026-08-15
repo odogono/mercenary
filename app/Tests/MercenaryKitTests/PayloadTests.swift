@@ -63,6 +63,7 @@ enum PayloadFixture {
   static let underground = """
     {"schemaVersion":\(Payload.supportedUndergroundSchemaVersion),
      "entrances":[{"site":1,"cell":[9,6],"room":1},{"site":2,"cell":[9,5],"room":2}],
+     "pad":{"x":28,"z":28,"shift":2},
      "lift":{"ascendRate":38,"descendRate":6,"surfaceAt":12,"submergeAt":8,
        "surfaceMiddle":113,"submergeMiddle":8,"floor":128,"altitudeWrap":6,
        "altitudeWrapSubtract":7},
@@ -245,6 +246,29 @@ final class PayloadTests: XCTestCase {
     XCTAssertEqual(lift.entrance(column: 9, row: 6)?.room, 1)
     XCTAssertEqual(lift.entrance(column: 9, row: 5)?.room, 2)
     XCTAssertNil(lift.entrance(column: 0, row: 0))
+  }
+
+  func testTheLiftsPadIsASquareNearTheMiddleOfItsCell() throws {
+    try PayloadFixture.write(into: directory, underground: PayloadFixture.underground)
+    let pad = try XCTUnwrap(try Payload.load(from: directory).underground).pad
+    let cell = 65_536.0
+
+    // Middle bytes $70 to $73 stand on it; surfacing puts the player at $71, which is
+    // the pad's own middle, so arriving leaves them able to go straight back.
+    XCTAssertTrue(pad.covers(Double(0x70 << 8), cellSize: cell))
+    XCTAssertTrue(pad.covers(Double(0x71 << 8), cellSize: cell))
+    XCTAssertTrue(pad.covers(Double(0x73 << 8), cellSize: cell))
+    XCTAssertFalse(pad.covers(Double(0x74 << 8), cellSize: cell))
+    XCTAssertFalse(pad.covers(Double(0x6F << 8), cellSize: cell))
+  }
+
+  func testThePadIsFoundInAnyCellRatherThanOnlyTheFirst() throws {
+    try PayloadFixture.write(into: directory, underground: PayloadFixture.underground)
+    let pad = try XCTUnwrap(try Payload.load(from: directory).underground).pad
+    let cell = 65_536.0
+
+    XCTAssertTrue(pad.covers(9 * cell + Double(0x71 << 8), cellSize: cell))
+    XCTAssertFalse(pad.covers(9 * cell + Double(0x20 << 8), cellSize: cell))
   }
 
   func testAPayloadWithoutTheLiftStillLoads() throws {

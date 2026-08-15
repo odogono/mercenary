@@ -322,9 +322,14 @@ final class WalkaboutModel {
     } else {
       let column = Int(state.player.position.x / Double(world.cellSize))
       let row = Int(state.player.position.z / Double(world.cellSize))
-      guard state.craft == nil, let entrance = underground.entrance(column: column, row: row) else {
-        return
-      }
+      let cell = Double(world.cellSize)
+      // On foot, and standing on the lift's own pad — the Reference Build asks for
+      // both before it will take anyone anywhere.
+      guard state.craft == nil,
+        underground.pad.covers(state.player.position.x, cellSize: cell),
+        underground.pad.covers(state.player.position.z, cellSize: cell),
+        let entrance = underground.entrance(column: column, row: row)
+      else { return }
       state = GameCore.enter(
         state, entrance: entrance, lift: underground.lift, flight: flight
       )

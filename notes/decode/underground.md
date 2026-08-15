@@ -97,9 +97,17 @@ enough to be worth chasing one at a time rather than explaining away.
 
 ## Still unread
 
-* **What starts the lift.** The ride and its arrival are decoded; the trigger is not.
-  Until it is read the app stands in for it with a key, which still refuses anywhere
-  the tables say there is no lift.
+* **How the lift is invoked.** Its *conditions* are read, at `$B404`: the player must
+  be on foot, and standing on the lift's pad — the position's middle byte shifted down
+  two and compared against `$1C`, so middle bytes `$70` to `$73` on both axes, a small
+  square near the middle of the cell. Surfacing puts the player at `$71`, the pad's own
+  middle, so arriving leaves them able to go straight back. A search then walks the
+  same destination tables backwards to find which site they are standing in, and the
+  lift starts with `$CA` set to `$80` going down or `$01` going up.
+  What is *not* read is how `$B404` is reached: nothing in the image refers to it, so
+  it is dispatched from a table, and whether that means a key or simply walking onto
+  the pad is still open. The app applies every condition above and uses a key for the
+  last step.
 * **The indoor screen.** The surface setup calls `DRAW_SCREEN_OUTDOOR` (`$AF6E`), so
   there is an indoor counterpart and a room is plainly not drawn against sky and
   ground. That routine has not been read, so the app encloses the view in a
