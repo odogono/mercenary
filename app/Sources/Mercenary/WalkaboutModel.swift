@@ -82,7 +82,7 @@ final class WalkaboutModel {
     static let b: UInt16 = 11
     static let t: UInt16 = 17
     static let l: UInt16 = 37
-    static let g: UInt16 = 5
+    static let e: UInt16 = 14
     static let space: UInt16 = 49
     static let minus: UInt16 = 27
     static let equal: UInt16 = 24
@@ -308,9 +308,9 @@ final class WalkaboutModel {
 
   /// Ride the lift, in whichever direction the player is going.
   ///
-  /// The Reference Build's lift is a ride whose arrival flips a flag; what is not yet
-  /// decoded is what *starts* it. Until that is read, this stands in for the trigger
-  /// so the rooms can be walked — and it still refuses anywhere there is no lift.
+  /// The Reference Build's lift is a ride whose arrival flips a flag. Its animation is
+  /// outside this opening-loop closeout, so this keeps the decoded arrival-state change
+  /// while still refusing anywhere there is no lift.
   private func takeTheLift() {
     guard let flight, let underground, case .ready(let world, _) = load else { return }
     if let room = state.room {
@@ -430,7 +430,7 @@ final class WalkaboutModel {
       case Key.b where interaction != nil: reach(for: .board)
       case Key.t where interaction != nil: reach(for: .take)
       case Key.l where state.craft != nil: leaveCraft()
-      case Key.g: takeTheLift()
+      case Key.e: takeTheLift()
       default:
         pressed.insert(event.keyCode)
         // Any key tells the scripts the player is there; only some are matched.

@@ -23,13 +23,10 @@ struct WorldView: View {
 
   private func draw(context: GraphicsContext, size: CGSize) {
     let camera = Camera(player: model.state.player)
-    // A room has no horizon: the Reference Build draws a different screen underground
-    // and it cannot be showing sky. Its indoor palette is not decoded yet, so the
-    // enclosing fill stands in for it rather than an outdoor sky and ground.
     if model.state.room == nil {
       drawGround(context: context, size: size, camera: camera)
-    } else {
-      context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(SceneStyle.enclosed))
+    } else if let roomID = model.state.room, let room = world.rooms[roomID] {
+      drawIndoorBackdrop(context: context, size: size, room: room)
     }
 
     let visible = model.selector.visible(
@@ -62,6 +59,20 @@ struct WorldView: View {
     context.fill(dots, with: .color(SceneStyle.whiteInk))
 
     Task { @MainActor in model.report(visibleLines: drawn, points: visible.points.count) }
+  }
+
+  private func drawIndoorBackdrop(context: GraphicsContext, size: CGSize, room: Room) {
+    let backdrop = IndoorBackdrop(
+      background: room.palette.background, foreground: room.palette.foreground
+    )
+    let scale = size.width / CGFloat(IndoorBackdrop.columnCount)
+    for column in 0..<IndoorBackdrop.columnCount {
+      guard let color = backdrop.color(atColumn: column) else { continue }
+      let x0 = CGFloat(column) * scale
+      let x1 = CGFloat(column + 1) * scale
+      let rect = CGRect(x: x0, y: 0, width: x1 - x0, height: size.height)
+      context.fill(Path(rect), with: .color(Color(color)))
+    }
   }
 
   /// Fill the ground on the far side of the projected horizon, so the world reads

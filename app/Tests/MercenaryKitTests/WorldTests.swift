@@ -23,6 +23,13 @@ final class WorldTests: XCTestCase {
     XCTAssertEqual(first.centre, SIMD3(500, 0, 500))
   }
 
+  func testRoomPalettePropagatesIntoTheWorld() throws {
+    let room = try XCTUnwrap(World(bundle: try bundle()).rooms[0])
+
+    XCTAssertEqual(room.palette.background, 6)
+    XCTAssertEqual(room.palette.foreground, 14)
+  }
+
   func testInkCodesBecomeInkCases() throws {
     let world = World(bundle: try bundle())
     let cell = try XCTUnwrap(world.cell(column: 0, row: 0))

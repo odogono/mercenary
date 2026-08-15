@@ -30,7 +30,7 @@ from .underground import decode_underground
 from .text import decode_text
 
 
-PAYLOAD_SCHEMA_VERSION = 4
+PAYLOAD_SCHEMA_VERSION = 5
 PAYLOAD_ROOT = Path(__file__).resolve().parents[3] / "payload"
 CELLS_PER_AXIS = 16
 CELL_SIZE = 0x10000
@@ -156,6 +156,23 @@ def build_rooms(underground: dict[str, Any]) -> dict[str, Any]:
                 f"Room {room['roomId']} has an edge outside its own point space",
             )
         bounds = expanded["bounds"]
+        record_identity = room.get("record")
+        record = records.get(record_identity)
+        _require(
+            record is not None,
+            f"Room {room['roomId']} names a missing record {record_identity}",
+        )
+        header = record.get("header")
+        _require(
+            isinstance(header, list) and len(header) >= 5,
+            f"Room {room['roomId']} record has a malformed header",
+        )
+        background, foreground = header[3], header[4]
+        _require(
+            isinstance(background, int) and isinstance(foreground, int)
+            and 0 <= background <= 15 and 0 <= foreground <= 15,
+            f"Room {room['roomId']} palette is outside the C64 colour range",
+        )
         portals = [
             {
                 "linked": command["linkedRoomOrBehaviour"],
@@ -163,7 +180,7 @@ def build_rooms(underground: dict[str, Any]) -> dict[str, Any]:
                 "xMiddle": command["xMiddle"],
                 "zMiddle": command["zMiddle"],
             }
-            for command in records.get(room.get("record"), {}).get("commands", [])
+            for command in record.get("commands", [])
         ]
         rooms.append(
             {
@@ -171,6 +188,7 @@ def build_rooms(underground: dict[str, Any]) -> dict[str, Any]:
                 "vertices": vertices,
                 "edges": edges,
                 "bounds": {"min": list(bounds["min"]), "max": list(bounds["max"])},
+                "palette": {"background": background, "foreground": foreground},
                 "hasPortal": bool(room.get("hasPortal")),
                 "portals": portals,
             }

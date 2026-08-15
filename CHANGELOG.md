@@ -44,11 +44,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   The lift's conditions are read (`$B404`): on foot, and standing on its pad — middle
   bytes `$70` to `$73` on both axes, a small square near the middle of the cell, which
   is exactly where surfacing puts the player back down. The app now asks for all of
-  that. What is still open is how that routine is reached, since nothing refers to it
-  directly, so whether the last step is a key or simply walking onto the pad is
-  unknown and `G` stands in for it. And the Reference Build
-  draws a different screen underground, which is unread, so a room is enclosed in a
-  placeholder rather than an invented palette; it was showing sky and grass until now.
+  that. `$B3F6` resolves the final step: it compares the keyboard result with `$0E`,
+  the Reference Build's `E` key, before entering the handler containing `$B404`, so
+  `E` now invokes the lift and the former `G` adaptation no longer does.
+  The indoor presentation is resolved too. `$AFC3` branches on the underground flag
+  to the clear at `$B197`, which fills the bitmap with `$AA`; room setup takes its
+  background and foreground indices from bytes 3 and 4 of that room record. Schema 5
+  carries those per-room colours, and both renderers now draw 320 scaled columns,
+  foreground first and then alternating foreground/background across the Game Surface.
+  The sRGB mapping is the complete palette captured from the same local VICE used by
+  the reference evidence. The remaining judgment is the maintainer's manual fidelity
+  playthrough; lift animation and additional sound reconstruction remain out of scope.
   `--render-frame --room N` renders from inside a room.
 - Map the rooms for checking. `lab geometry rooms-svg` draws all 192 as one sheet:
   each room's plan seen from above in its own coordinates, its doorways placed where
