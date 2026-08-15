@@ -1,5 +1,5 @@
-# Supplied reference media and documentation are research inputs, not publishable
-# repository content.
+# Supplied reference media remain research inputs, not repository content. The one
+# tracked documentation exception is research/reference-disassembly (ADR 0017).
 /roms/
 
 # Other Restricted Material that does not belong to a specific research harness.

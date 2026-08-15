@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/Ian-McG-1970/c64.git",
+  "commit": "9571e68d80465d73d14afbcd81be6a70a2bf8eee",
+  "importedAt": "2026-08-15",
+  "license": "none-declared",
+  "paths": [
+    "Mercenary (Novagen) Disassembly V15",
+    "Mercenary (Novagen) Object Viewer V11",
+    "Mercenary Source Code",
+    "Mercenary notzed"
+  ]
+}
