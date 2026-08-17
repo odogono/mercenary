@@ -21,6 +21,33 @@ enum FrameCapture {
     var elapsed: Double = 0
     /// Draw one underground room instead of the surface, as the engine does.
     var room: Int?
+    /// Where to write a Golden Trace of the same pose. The PNG is still written: a raster
+    /// is for a maintainer's eye (ADR 0011) and the trace is for a comparison, and this
+    /// command can be asked for both at once.
+    var trace: URL?
+
+    /// This pose as the catalogue would have written it.
+    var body: TraceScenario.Projection {
+      var body = TraceScenario.Projection()
+      body.width = size.width
+      body.height = size.height
+      body.x = position.x
+      body.z = position.z
+      body.eye = position.y
+      // Back to degrees, which is how the flags and the catalogue both say it.
+      body.heading = heading * 180 / .pi
+      body.pitch = pitch * 180 / .pi
+      body.roll = roll * 180 / .pi
+      body.time = elapsed
+      body.room = room
+      return body
+    }
+
+    var scenario: TraceScenario {
+      TraceScenario(
+        emitter: .projection, id: room.map { "room-\($0)" } ?? "surface",
+        note: "written by --render-frame", body: .projection(body))
+    }
   }
 
   static func run(_ options: Options) -> Int32 {
@@ -60,6 +87,12 @@ enum FrameCapture {
         "deferredEdges":\(world.deferredEdges)}
         """
       print(summary)
+      if let output = options.trace {
+        let trace = try ProjectionTrace.emit(
+          try TraceRun(), scenario: options.scenario, body: options.body)
+        try trace.write(to: output)
+        print("wrote \(output.path)")
+      }
       return 0
     } catch {
       FileHandle.standardError.write(Data("error: \(error)\n".utf8))
@@ -166,7 +199,7 @@ enum FrameCapture {
   /// Parse `--render-frame <path>` plus optional camera overrides.
   static let knownFlags: Set<String> = [
     "--render-frame", "--output", "--x", "--z", "--eye", "--heading", "--pitch",
-    "--roll", "--time", "--room",
+    "--roll", "--time", "--room", "--trace",
   ]
 
   static func options(from arguments: [String]) throws -> Options? {
@@ -182,6 +215,7 @@ enum FrameCapture {
     if let roll = try arguments.double("--roll") { options.roll = roll * .pi / 180 }
     if let elapsed = try arguments.double("--time") { options.elapsed = max(0, elapsed) }
     if let room = try arguments.int("--room", expected: "a room id") { options.room = room }
+    options.trace = try arguments.trace()
     return options
   }
 }

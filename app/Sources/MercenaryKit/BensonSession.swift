@@ -81,8 +81,15 @@ public struct BensonSession: Sendable {
   ///
   /// Returns the effects the app may want to act on. Everything that only
   /// changes game state has already been applied.
+  ///
+  /// `observer`, when given, is told about each instruction the script runs. It is here
+  /// rather than only on ``BensonMachine/run(_:host:program:text:tunables:observer:)``
+  /// because the clock and the message pacing are this type's, and an instruction trace
+  /// taken outside them would not be of the execution the app performs.
   @discardableResult
-  public mutating func advance(by seconds: Double) -> [BensonEffect] {
+  public mutating func advance(
+    by seconds: Double, observer: BensonObserver? = nil
+  ) -> [BensonEffect] {
     guard seconds > 0 else { return [] }
 
     if var ticker {
@@ -101,7 +108,7 @@ public struct BensonSession: Sendable {
     }
 
     let advance = BensonMachine.run(
-      state, host: host, program: program, text: text, tunables: tunables
+      state, host: host, program: program, text: text, tunables: tunables, observer: observer
     )
     state = advance.state
     host = advance.host

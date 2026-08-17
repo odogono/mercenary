@@ -22,11 +22,38 @@ enum BensonTrace {
     /// An object slot to walk to and reach for, rather than boarding by fiat.
     var walkTo: Int?
     var walkAction: InteractionAction = .board
+    /// Where to write a Golden Trace of the same rehearsal, when one was asked for.
+    var trace: URL?
+
+    var scenario: TraceScenario {
+      var body = TraceScenario.Session()
+      body.script = script
+      body.seconds = seconds
+      body.timeScale = timeScale
+      body.presses = presses.map {
+        var press = TraceScenario.Session.Press()
+        // Written back as the name the flag takes, not the engine's own `keyY`.
+        press.key = $0.key.map { String($0.rawValue.dropFirst(3)) }
+        press.at = $0.at
+        return press
+      }
+      body.boarding = boarding.map {
+        var boarding = TraceScenario.Session.Boarding()
+        boarding.craft = $0.craft
+        boarding.at = $0.at
+        return boarding
+      }
+      body.walkTo = walkTo
+      body.take = walkAction == .take
+      return TraceScenario(
+        emitter: .session, id: "script-\(script)", note: "written by --benson-trace",
+        body: .session(body))
+    }
   }
 
   static let knownFlags: Set<String> = [
     "--benson-trace", "--script", "--seconds", "--time-scale", "--press", "--board",
-    "--walk-to", "--take",
+    "--walk-to", "--take", "--trace",
   ]
 
   static func options(from arguments: [String]) throws -> Options? {
@@ -57,6 +84,7 @@ enum BensonTrace {
       options.walkTo = slot
       options.walkAction = .take
     }
+    options.trace = try arguments.trace()
     return options
   }
 
@@ -126,56 +154,23 @@ enum BensonTrace {
           )
         )
       }
-      var reached = false
-
-      let step = 1.0 / 60
-      var elapsed: Double = 0
-      var shown = ""
-      var presses = options.presses.sorted { $0.at < $1.at }
-      var boarding = options.boarding.sorted { $0.at < $1.at }
+      var sink = Rehearsal.Sink()
+      sink.say = { print($0) }
+      var recorder: CoreTrace.Recorder? =
+        options.trace == nil
+        ? nil
+        : try CoreTrace.Recorder(
+          run: try TraceRun(), scenario: options.scenario, session: session)
+      sink.step = { session, events, elapsed, note in
+        try recorder?.record(session: session, events: events, elapsed: elapsed, note: note)
+      }
+      sink.command = { command, elapsed in
+        try recorder?.command(command, elapsed: elapsed)
+      }
       print("script \(options.script), \(program.instructions.count) instructions, \(session.snapshot.credits) credits")
 
-      while elapsed < options.seconds {
-        while let next = presses.first, next.at <= elapsed {
-          presses.removeFirst()
-          print(String(format: "%7.2f  » press %@", elapsed, next.key.map(\.rawValue) ?? "any key"))
-          session.press(next.key)
-        }
-        while let next = boarding.first, next.at <= elapsed {
-          boarding.removeFirst()
-          print(String(format: "%7.2f  » board craft %d", elapsed, next.craft))
-          session.board(craft: next.craft)
-        }
-
-        // Walk toward the target and reach for it on arrival, so the whole loop
-        // is exercised rather than the boarding being asserted from outside. The
-        // reaching itself is the session's, so this exercises the same path the
-        // interactive shell takes rather than a second copy of it.
-        if let target, !reached {
-          let position = SIMD3<Double>(target.origin)
-          let (outcome, _) = session.reach(for: options.walkAction, only: target.slot)
-          if outcome == .nothingInReach {
-            session.intent = steer(from: session.game.player, to: position)
-          } else {
-            reached = true
-            session.intent = .idle
-            print(String(format: "%7.2f  » %@", elapsed, String(describing: outcome)))
-          }
-        }
-
-        for event in session.advance(by: step).events {
-          guard case .script(let effect) = event else { continue }
-          print(String(format: "%7.2f  · %@", elapsed, String(describing: effect)))
-        }
-        // Report each message as it starts, so the trace reads as the sequence of
-        // things said rather than as a per-frame log.
-        if let text = session.scripts?.ticker?.text, text != shown {
-          shown = text
-          print(String(format: "%7.2f  %@", elapsed, text.isEmpty ? "[blank line]" : text))
-        }
-        elapsed += step
-        if session.scripts?.isRunning != true { break }
-      }
+      let elapsed = try Rehearsal.drive(
+        &session, options: options, world: world, sink: sink)
 
       print(
         session.scripts?.isRunning == true
@@ -183,20 +178,66 @@ enum BensonTrace {
           : String(format: "%7.2f  [script finished]", elapsed)
       )
       print("credits \(session.snapshot.credits)")
+      if let output = options.trace, let recorder {
+        try recorder.trace.write(to: output)
+        print("wrote \(output.path)")
+      }
       return 0
     } catch {
       return fail(String(describing: error))
     }
   }
 
-  /// Turn toward a point and walk at it, the way a player would.
-  private static func steer(from player: PlayerState, to target: SIMD3<Double>) -> Intent {
-    let wanted = atan2(target.x - player.position.x, target.z - player.position.z)
-    let turn = GameCore.wrapPitch(wanted - player.heading)
-    // Walk once roughly facing the target, so the path is a turn and a stride
-    // rather than a spiral.
-    let aligned = abs(turn) < 0.05
-    return Intent(turn: aligned ? 0 : (turn > 0 ? 1 : -1), walk: aligned ? 1 : 0)
+  /// The rehearsal as a Golden Trace, with nothing printed.
+  ///
+  /// The top layer: everything is behind this one — decode, projection, the mover, the
+  /// interpreter and the interaction rules — so it is the last replay gate the browser port
+  /// can turn green, and the one that says the whole opening loop agrees.
+  static func emit(
+    _ run: TraceRun, scenario: TraceScenario, body: TraceScenario.Session
+  ) throws -> TraceFile {
+    guard try run.scripts(timeScale: body.timeScale) != nil else {
+      throw TraceRun.Failure.noScripts
+    }
+    let world = run.world
+    var session = GameplaySession(
+      content: GameplaySession.Content(world: world, bundle: run.bundle, flight: run.flight),
+      player: OpeningScene.player,
+      scripts: try run.scripts(timeScale: body.timeScale)
+    )
+    guard session.start(script: body.script) else {
+      throw TraceRun.Failure.scriptWouldNotStart(body.script)
+    }
+
+    var options = Options()
+    options.script = body.script
+    options.seconds = body.seconds
+    options.timeScale = body.timeScale
+    options.presses = try body.presses.map { press in
+      let key = try press.key.map { name -> BensonKey in
+        guard let key = BensonKey(rawValue: name) ?? BensonKey(rawValue: "key" + name.uppercased())
+        else { throw TraceRun.Failure.unknownKey(name) }
+        return key
+      }
+      return (key: key, at: press.at)
+    }
+    options.boarding = body.boarding.map { (craft: $0.craft, at: $0.at) }
+    options.walkTo = body.walkTo
+    options.walkAction = body.take ? .take : .board
+    if let slot = body.walkTo, world.objects.first(where: { $0.slot == slot }) == nil {
+      throw TraceRun.Failure.noObject(slot)
+    }
+
+    var recorder = try CoreTrace.Recorder(run: run, scenario: scenario, session: session)
+    var sink = Rehearsal.Sink()
+    sink.step = { session, events, elapsed, note in
+      try recorder.record(session: session, events: events, elapsed: elapsed, note: note)
+    }
+    sink.command = { command, elapsed in
+      try recorder.command(command, elapsed: elapsed)
+    }
+    try Rehearsal.drive(&session, options: options, world: world, sink: sink)
+    return recorder.trace
   }
 
   private static func fail(_ message: String) -> Int32 {

@@ -156,4 +156,55 @@ final class ArgumentsTests: XCTestCase {
       "--room needs a whole number, not \"kitchen\""
     )
   }
+
+  // MARK: - Golden traces
+
+  /// `--trace` is a second path flag beside `--output`, not a mode of it. The two write
+  /// different artifacts for different readers and a command may be asked for both, so
+  /// inferring one from the other's file extension is exactly the guess this type refuses.
+  func testTraceIsItsOwnPathFlag() throws {
+    let arguments = arguments("--room-trace", "--output", "/tmp/report.txt", "--trace", "/tmp/t.jsonl")
+
+    XCTAssertEqual(try arguments.trace()?.path, "/tmp/t.jsonl")
+    XCTAssertEqual(try arguments.output(default: "/tmp/fallback").path, "/tmp/report.txt")
+  }
+
+  func testNoTraceFlagMeansNoTrace() throws {
+    XCTAssertNil(try arguments("--room-trace", "--output", "/tmp/report.txt").trace())
+  }
+
+  /// A trace nobody asked for is not written, but a `--trace` with nowhere to write is a
+  /// mistake rather than a request for a default: unlike a report, a trace has no sensible
+  /// default path, and silently choosing one is how `--output` used to lose files.
+  func testTraceWithNoPathIsRefused() throws {
+    XCTAssertThrowsError(try arguments("--flight-trace", "--trace").trace()) { error in
+      XCTAssertEqual(
+        error as? Arguments.Failure,
+        .missingValue(flag: "--trace", expected: "a path to write a trace to")
+      )
+    }
+  }
+
+  func testTraceFollowedByAnotherFlagHasNoValue() throws {
+    XCTAssertThrowsError(
+      try arguments("--flight-trace", "--trace", "--craft", "1").trace()
+    ) { error in
+      XCTAssertEqual(
+        error as? Arguments.Failure,
+        .missingValue(flag: "--trace", expected: "a path to write a trace to")
+      )
+    }
+  }
+
+  /// Each diagnostic declares `--trace` for itself, so a command that has not been given a
+  /// trace emitter still refuses the flag rather than accepting it and writing nothing.
+  func testACommandThatDoesNotEmitTracesStillRefusesTheFlag() throws {
+    XCTAssertThrowsError(
+      try arguments("--emit-traces", "--trace", "/tmp/t.jsonl")
+        .rejectUnknownFlags(besides: ["--emit-traces", "--only", "--scenario", "--verify"])
+    ) { error in
+      XCTAssertEqual(
+        error as? Arguments.Failure, .unknownFlag("--trace", suggestion: nil))
+    }
+  }
 }

@@ -25,13 +25,39 @@ enum RoomTrace {
     /// Object slots to start out carrying, for the locked and dark Rooms.
     var carrying: [Int] = []
     var output: URL?
+    /// Where to write a Golden Trace of the same walk, when one was asked for. Orthogonal
+    /// to `--output`: that writes the report a maintainer reads, this writes the record a
+    /// replay compares, and a run may be asked for both.
+    var trace: URL?
     /// The random stream's seed, so the Room that picks at random can be made to pick
     /// something else without the trace stopping being reproducible.
     var seed: UInt64 = 0x2C69_2ED8_1B7F_0A31
+
+    var scenario: TraceScenario {
+      var body = TraceScenario.Navigation()
+      body.room = room
+      body.at = at.map {
+        var position = TraceScenario.Position()
+        position.x = $0.x
+        position.z = $0.z
+        return position
+      }
+      body.legs = legs.map {
+        var leg = TraceScenario.Navigation.Leg()
+        leg.heading = $0.heading
+        leg.seconds = $0.seconds
+        return leg
+      }
+      body.carrying = carrying
+      body.seed = Int(bitPattern: UInt(seed))
+      return TraceScenario(
+        emitter: .navigation, id: "room-\(room)", note: "written by --room-trace",
+        body: .navigation(body))
+    }
   }
 
   static let knownFlags: Set<String> = [
-    "--room-trace", "--room", "--at", "--walk", "--carry", "--seed", "--output",
+    "--room-trace", "--room", "--at", "--walk", "--carry", "--seed", "--output", "--trace",
   ]
 
   static func options(from arguments: [String]) throws -> Options? {
@@ -67,6 +93,7 @@ enum RoomTrace {
     }
     options.output = arguments.isPresent("--output")
       ? try arguments.output(default: "") : nil
+    options.trace = try arguments.trace()
     return options
   }
 
@@ -131,39 +158,18 @@ enum RoomTrace {
       say(describe(session, in: world))
       say(objects(session, in: world))
 
-      let step = 1.0 / 60
-      var elapsed: Double = 0
-      for (index, leg) in options.legs.enumerated() {
-        session.place(
-          at: session.game.player.position, facing: leg.heading * .pi / 180
-        )
-        say(String(format: "%7.2f  » leg %d: heading %.0f for %.1fs", elapsed, index + 1, leg.heading, leg.seconds))
-        var remaining = leg.seconds
-        session.intent = Intent(walk: 1)
-        while remaining > 0 {
-          for event in session.advance(by: step).events {
-            switch event {
-            case .arrived(let location):
-              say(String(format: "%7.2f  · through a doorway into %@", elapsed, String(describing: location)))
-              say(describe(session, in: world))
-            case .wall(let sound):
-              say(String(format: "%7.2f  · wall (sound %d)", elapsed, sound))
-            case .worldFlipped(let flipped):
-              say(String(format: "%7.2f  · the world is %@", elapsed, flipped ? "mirrored" : "back"))
-            default:
-              break
-            }
-          }
-          // The whole message as it starts, rather than a line per character
-          // revealed: this is a record of what was said, not of the typing.
-          if let message = session.scripts?.ticker?.text, message != lastMessage {
-            lastMessage = message
-            say(String(format: "%7.2f  %@", elapsed, message))
-          }
-          elapsed += step
-          remaining -= step
-        }
-      }
+      var recorder: CoreTrace.Recorder? =
+        options.trace == nil
+        ? nil
+        : try CoreTrace.Recorder(
+          run: try TraceRun(), scenario: options.scenario, session: session)
+      let elapsed = try walk(
+        &session, options: options, world: world, say: say,
+        step: { session, events, elapsed, note in
+          try recorder?.record(session: session, events: events, elapsed: elapsed, note: note)
+        },
+        command: { command, elapsed in try recorder?.command(command, elapsed: elapsed) })
+
       say(String(format: "%7.2f  [finished]", elapsed))
       say(describe(session, in: world))
 
@@ -174,10 +180,117 @@ enum RoomTrace {
       } else {
         print(report, terminator: "")
       }
+      if let output = options.trace, let recorder {
+        try recorder.trace.write(to: output)
+        print("wrote \(output.path)")
+      }
       return 0
     } catch {
       return fail(String(describing: error))
     }
+  }
+
+  /// Walk the legs, reporting what happened to whoever asked.
+  ///
+  /// One driver for the printed report and the Golden Trace, so a change to how the walk is
+  /// steered cannot move one without moving the other. Deterministic by construction: the
+  /// legs are instructions rather than a steering loop, and the random Room's selector runs
+  /// on the session's one seeded stream.
+  @discardableResult
+  static func walk(
+    _ session: inout GameplaySession, options: Options, world: World,
+    say: (String) -> Void,
+    step record:
+      (_ session: GameplaySession, _ events: [PresentationEvent], _ elapsed: Double,
+        _ note: TraceValue?) throws -> Void = { _, _, _, _ in },
+    command: (_ command: TraceValue, _ elapsed: Double) throws -> Void = { _, _ in }
+  ) throws -> Double {
+    let step = TraceRun.dt
+    var elapsed: Double = 0
+    var lastMessage = ""
+    if !options.carrying.isEmpty {
+      try command(
+        .object(["carry": .array(options.carrying.sorted().map { .int($0) })]), elapsed)
+    }
+    for (index, leg) in options.legs.enumerated() {
+      session.place(at: session.game.player.position, facing: leg.heading * .pi / 180)
+      say(
+        String(
+          format: "%7.2f  » leg %d: heading %.0f for %.1fs", elapsed, index + 1, leg.heading,
+          leg.seconds))
+      // Facing is an input, not an outcome: a replay has to turn the player the same way
+      // before it walks, or every step after this diverges.
+      try command(
+        .object(["face": .double(leg.heading * .pi / 180), "leg": .int(index + 1)]), elapsed)
+      var remaining = leg.seconds
+      session.intent = Intent(walk: 1)
+      while remaining > 0 {
+        let update = session.advance(by: step)
+        for event in update.events {
+          switch event {
+          case .arrived(let location):
+            say(
+              String(
+                format: "%7.2f  · through a doorway into %@", elapsed, String(describing: location)))
+            say(describe(session, in: world))
+          case .wall(let sound):
+            say(String(format: "%7.2f  · wall (sound %d)", elapsed, sound))
+          case .worldFlipped(let flipped):
+            say(String(format: "%7.2f  · the world is %@", elapsed, flipped ? "mirrored" : "back"))
+          default:
+            break
+          }
+        }
+        try record(session, update.events, elapsed, .object(["leg": .int(index + 1)]))
+        // The whole message as it starts, rather than a line per character revealed: this
+        // is a record of what was said, not of the typing.
+        if let message = session.scripts?.ticker?.text, message != lastMessage {
+          lastMessage = message
+          say(String(format: "%7.2f  %@", elapsed, message))
+        }
+        elapsed += step
+        remaining -= step
+      }
+    }
+    return elapsed
+  }
+
+  /// The walk as a Golden Trace, with nothing printed.
+  static func emit(
+    _ run: TraceRun, scenario: TraceScenario, body: TraceScenario.Navigation
+  ) throws -> TraceFile {
+    guard let flight = run.flight else { throw TraceRun.Failure.noFlight }
+    let world = run.world
+    guard let start = world.rooms[body.room] else { throw TraceRun.Failure.noRoom(body.room) }
+    var options = Options()
+    options.room = body.room
+    options.at = body.at.map { (x: $0.x, z: $0.z) }
+    options.legs = body.legs.map { (heading: $0.heading, seconds: $0.seconds) }
+    options.carrying = body.carrying
+    if let seed = body.seed { options.seed = UInt64(bitPattern: Int64(seed)) }
+
+    var session = GameplaySession(
+      content: GameplaySession.Content(world: world, bundle: run.bundle, flight: flight),
+      player: OpeningScene.player,
+      scripts: try run.scripts(seed: options.seed),
+      randomSeed: options.seed
+    )
+    session.teleport(to: .room(options.room))
+    let middle = (start.bounds.min + start.bounds.max) / 2
+    session.place(
+      at: SIMD3(
+        options.at?.x ?? Double(middle.x), session.game.player.position.y,
+        options.at?.z ?? Double(middle.z)))
+    for slot in options.carrying { session.carry(slot) }
+
+    var recorder = try CoreTrace.Recorder(run: run, scenario: scenario, session: session)
+    try walk(
+      &session, options: options, world: world, say: { _ in },
+      step: { session, events, elapsed, note in
+        try recorder.record(session: session, events: events, elapsed: elapsed, note: note)
+      },
+      command: { command, elapsed in try recorder.command(command, elapsed: elapsed) })
+    return recorder.trace
   }
 
   /// What is standing in the Room with the player. Room objects were undrawable and

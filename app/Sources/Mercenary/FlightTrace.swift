@@ -14,10 +14,25 @@ enum FlightTrace {
     var notch: Int
     var seconds: Double
     var poweramp: Bool
+    /// Where to write the Golden Trace, when one was asked for. The printed report is
+    /// unaffected either way: this adds a machine-comparable record of the same flight
+    /// rather than replacing the one a human reads.
+    var trace: URL?
+
+    var scenario: TraceScenario {
+      var body = TraceScenario.Flight()
+      body.craft = craft
+      body.notch = notch
+      body.seconds = seconds
+      body.poweramp = poweramp
+      return TraceScenario(
+        emitter: .flight, id: "craft-\(craft)-notch-\(notch)\(poweramp ? "-poweramp" : "")",
+        note: "written by --flight-trace", body: .flight(body))
+    }
   }
 
   static let knownFlags: Set<String> = [
-    "--flight-trace", "--craft", "--notch", "--seconds", "--poweramp",
+    "--flight-trace", "--craft", "--notch", "--seconds", "--poweramp", "--trace",
   ]
 
   static func options(from arguments: [String]) throws -> Options? {
@@ -28,7 +43,8 @@ enum FlightTrace {
       craft: try arguments.int("--craft", expected: "a craft slot") ?? 1,
       notch: try arguments.int("--notch", expected: "a throttle notch") ?? 10,
       seconds: try arguments.double("--seconds") ?? 30,
-      poweramp: arguments.isPresent("--poweramp")
+      poweramp: arguments.isPresent("--poweramp"),
+      trace: try arguments.trace()
     )
   }
 
@@ -74,48 +90,35 @@ enum FlightTrace {
 
       // A circuit rather than a fixed script: each leg ends when the craft has
       // done the thing, so the trace shows take-off, cruise, turn and landing
-      // whatever the craft's own rates happen to be.
-      enum Leg: String { case climbing, levelling, turning, descending }
-      let step = 1.0 / 60.0
-      let cruise = Double(parameters.rules.ceilingUnit) / 16
+      // whatever the craft's own rates happen to be. ``FlightCircuit`` owns the rule,
+      // so the printed report and the Golden Trace fly the same aircraft.
+      let step = TraceRun.dt
+      var circuit = FlightCircuit(rules: parameters.rules, notch: options.notch)
       var elapsed = 0.0
       var mode = session.game.mode
       var reported = -1.0
-      var leg = Leg.climbing
-      var legStarted = 0.0
       var flying = true
-      func enter(_ next: Leg) {
-        leg = next
-        legStarted = elapsed
-        // Throttle back for the descent, as a pilot would before landing.
-        if next == .descending {
-          session.throttle(notch: max(1, options.notch - 4))
-        }
-        print(String(format: "%6.2f  · %@", elapsed, next.rawValue))
-      }
-      print(String(format: "%6.2f  · %@", elapsed, leg.rawValue))
+      // Only when a trace was asked for: this re-reads the payload the same way, so a
+      // plain `--flight-trace` pays nothing for the option existing.
+      var recorder: CoreTrace.Recorder? =
+        options.trace == nil
+        ? nil
+        : try CoreTrace.Recorder(
+          run: try TraceRun(), scenario: options.scenario, session: session)
+      print(String(format: "%6.2f  · %@", elapsed, circuit.leg.rawValue))
 
       while elapsed < options.seconds && flying {
-        let held = elapsed - legStarted
-        switch leg {
-        case .climbing where session.game.player.position.y >= cruise: enter(.levelling)
-        case .levelling where abs(session.game.player.pitch) < 0.02 && held > 1: enter(.turning)
-        case .turning where held > 4: enter(.descending)
-        default: break
+        if let entered = circuit.enterNextLeg(at: elapsed, player: session.game.player) {
+          // Throttle back for the descent, as a pilot would before landing.
+          if entered == .descending { session.throttle(notch: circuit.landingNotch) }
+          print(String(format: "%6.2f  · %@", elapsed, entered.rawValue))
         }
 
-        let attitude: Double
-        switch leg {
-        case .climbing: attitude = 0.45
-        case .descending: attitude = -0.25
-        default: attitude = 0
-        }
-        // Fly toward the leg's attitude rather than holding a stick down, so the
-        // trace shows an attitude being held and not one running away.
-        let error = attitude - session.game.player.pitch
-        let pitch: Double = abs(error) < 0.01 ? 0 : (error > 0 ? 1 : -1)
-        session.intent = Intent(turn: leg == .turning ? 1 : 0, pitch: pitch)
+        session.intent = circuit.intent(for: session.game.player)
         let update = session.advance(by: step)
+        try recorder?.record(
+          session: session, events: update.events, elapsed: elapsed,
+          note: TraceValue.object(["leg": .string(circuit.leg.rawValue)]))
 
         if session.game.mode != mode {
           mode = session.game.mode
@@ -134,6 +137,10 @@ enum FlightTrace {
         elapsed += step
       }
       print(line(elapsed, session.game))
+      if let output = options.trace, let recorder {
+        try recorder.trace.write(to: output)
+        print("wrote \(output.path)")
+      }
       print(
         "{\"status\":\"flown\",\"craft\":\(options.craft),"
           + "\"mode\":\"\(session.game.mode == .flying ? "flying" : "grounded")\","
@@ -143,6 +150,60 @@ enum FlightTrace {
     } catch {
       return fail(String(describing: error))
     }
+  }
+
+  /// The circuit as a Golden Trace, with nothing printed.
+  ///
+  /// Shares ``FlightCircuit`` with ``run(_:)`` rather than reimplementing the legs, so a
+  /// trace is of the flight the printed report describes. What differs is only what comes
+  /// out: the report rounds for reading, and this records the inputs and full precision.
+  static func emit(
+    _ run: TraceRun, scenario: TraceScenario, body: TraceScenario.Flight
+  ) throws -> TraceFile {
+    guard let parameters = run.bundle.flight, let flight = run.flight else {
+      throw TraceRun.Failure.noFlight
+    }
+    guard parameters.blocks.indices.contains(body.craft) else {
+      throw TraceRun.Failure.noCraft(body.craft)
+    }
+    var session = GameplaySession(
+      content: GameplaySession.Content(world: run.world, bundle: run.bundle, flight: flight),
+      player: OpeningScene.player
+    )
+    session.board(craft: body.craft)
+    session.fitPoweramp(body.poweramp)
+    session.throttle(notch: body.notch)
+
+    var circuit = FlightCircuit(rules: parameters.rules, notch: body.notch)
+    var recorder = try CoreTrace.Recorder(run: run, scenario: scenario, session: session)
+    try recorder.command(
+      .object([
+        "board": .int(body.craft), "throttle": .int(body.notch),
+        "poweramp": .bool(body.poweramp),
+      ]), elapsed: 0)
+
+    let step = TraceRun.dt
+    var elapsed = 0.0
+    var flying = true
+    while elapsed < body.seconds && flying {
+      if let entered = circuit.enterNextLeg(at: elapsed, player: session.game.player) {
+        if entered == .descending {
+          session.throttle(notch: circuit.landingNotch)
+          try recorder.command(
+            .object(["throttle": .int(circuit.landingNotch)]), elapsed: elapsed)
+        }
+      }
+      session.intent = circuit.intent(for: session.game.player)
+      let update = session.advance(by: step)
+      try recorder.record(
+        session: session, events: update.events, elapsed: elapsed,
+        note: .object(["leg": .string(circuit.leg.rawValue)]))
+      if update.events.contains(where: { if case .touchdown = $0 { true } else { false } }) {
+        flying = false
+      }
+      elapsed += step
+    }
+    return recorder.trace
   }
 
   private static func line(_ elapsed: Double, _ state: GameState) -> String {

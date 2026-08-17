@@ -29,6 +29,15 @@ enum Entry {
       if let options = try RoomTrace.options(from: arguments) {
         exit(RoomTrace.run(options))
       }
+      if let options = try CoreTraceCommand.options(from: arguments) {
+        exit(CoreTraceCommand.run(options))
+      }
+      if let options = try ScriptTrace.options(from: arguments) {
+        exit(ScriptTrace.run(options))
+      }
+      if let options = try EmitTracesCommand.options(from: arguments) {
+        exit(EmitTracesCommand.run(options))
+      }
     } catch {
       FileHandle.standardError.write(Data("error: \(error)\n".utf8))
       FileHandle.standardError.write(Data(Self.usage.utf8))
@@ -56,6 +65,14 @@ enum Entry {
       mercenary --flight-trace [--craft SLOT] [--notch N] [--seconds N] [--poweramp]
       mercenary --room-trace   [--room ID] [--at X,Z] [--walk DEGREES@SECONDS]
                                [--carry SLOT] [--seed N] [--output PATH]
+      mercenary --core-trace   [--craft SLOT] [--notch N] [--room ID] [--at X,Z]
+                               [--leg TURN,PITCH,WALK@SECONDS] [--trace PATH]
+      mercenary --script-trace [--script ID] [--seconds N] [--time-scale N]
+                               [--press KEY@SECONDS] [--trace PATH]
+      mercenary --emit-traces  [--only EMITTER] [--scenario ID] [--verify]
+
+    Every diagnostic above also takes [--trace PATH], which writes a Golden Trace of
+    the same run beside its printed report (see docs/trace-oracle.md).
 
     """
 }
