@@ -1,6 +1,6 @@
 # Mercenary Remake
 
-This context defines the shared language for recreating Novagen's *Mercenary: Escape from Targ* as a native macOS game.
+This context defines the shared language for recreating Novagen's *Mercenary: Escape from Targ* as a browser game, with a native macOS implementation serving as its Trace Oracle until the browser reaches the opening loop (see ADR 0019).
 
 Terms marked **(historical)** describe the frozen verification-era records (see ADR 0014). They remain accurate for reading those records but no new records of their kind are created.
 
@@ -15,7 +15,7 @@ An original game-logic program from the Reference Build's in-game interpreter, r
 _Avoid_: Game script, event code, AI logic, bytecode dump
 
 **Craft Parameter Block**:
-The set of values that makes one craft handle as it does—its control routine and its rates, limits, and gains—re-extracted into the Data Payload as plain numbers and selected by whatever the player currently occupies; being on foot selects one of these too, which is why walking and flying are the same control loop.
+The set of values that makes one craft handle as it does—its control routine and its rates, limits, and gains—re-extracted into the Data Payload as plain numbers and selected by the craft the player currently occupies; a landed craft taxis on a block of its own, while a player on foot runs a separate fixed-step mover rather than this loop (ADR 0016).
 _Avoid_: Flight profile, craft config, tuning block, vehicle stats
 
 **Host Callout**:
@@ -45,6 +45,18 @@ _Avoid_: Viewport, game UI
 **Native Shell**:
 The macOS-owned experience surrounding the Game Surface, including windows, menus, settings, help, file interaction, and host feedback.
 _Avoid_: Host UI, Mac shell
+
+**Web Adaptation**:
+A separable browser-platform accommodation—such as key bindings, canvas sizing, frame pacing, or payload delivery—that leaves the preserved semantic baseline unchanged.
+_Avoid_: Browser hack, web tweak, responsive mode
+
+**Browser Shell**:
+The browser-owned experience surrounding the Game Surface, including the page, its canvas, controls help, settings, and host feedback.
+_Avoid_: Web UI, page chrome, wrapper
+
+**Trace Oracle**:
+The macOS implementation together with the deterministic traces it emits, held as the equivalence authority that the canonical browser implementation must reproduce (ADR 0019).
+_Avoid_: Golden master, reference app, source of truth
 
 **Game Semantics**:
 The fidelity-governed rules and state transitions that determine outcomes and meaningful future state from Semantic Actions and time, independently of the Native Shell and Mac Adaptations.

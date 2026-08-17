@@ -171,6 +171,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Pivot the remake to a browser-canonical TypeScript implementation (ADR 0019),
+  superseding ADR 0001's Apple-native stack. The driver is reach: a URL anyone
+  opens is a stronger artifact than a Mac application that has to be downloaded
+  and run on the right hardware, which is ADR 0014's own argument applied to the
+  platform. It is affordable because the port surface turned out to be small —
+  the whole simulation is Foundation-only pure value code, the interactive
+  renderer is one short segment-stroking pass, input is already reduced to
+  device-independent intents, and the Data Payload is language-neutral JSON — so
+  the work is a rewrite of a self-contained core plus a new shell.
+  The macOS app becomes the **Trace Oracle**: the reference implementation until
+  the browser reproduces the opening loop, with its headless diagnostics emitting
+  the deterministic traces the TypeScript modules must reproduce, and human
+  side-by-side review still the final arbiter (ADR 0011). At that point canonical
+  status flips and the app is archived rather than wrapped. The port starts from
+  the snapshot #65 leaves behind, so no browser work begins before it closes.
+  ADR 0009 is retired — the Host Callout seam survives, restricted Lua and the
+  sandboxed XPC service do not, and the `implementation-contracts/` Lua fixtures
+  are frozen as history like the verification apparatus before them.
+  Deployment is localhost only until qualified-counsel clearance (ADR 0004): the
+  Mac app kept extracted data on one private machine, whereas a hosted browser
+  build serves payload-derived data to every visitor. A public URL is still the
+  goal, so clearance moves onto the critical path. It stays reachable under ADR
+  0017: serving a bundle is an application distribution, which that decision
+  leaves to the qualified-review gate, whereas publishing the engine's source is
+  the act it forecloses for this history — so the canonical codebase is now
+  private source that may yield a public artifact.
+  Golden traces and built web bundles join `/payload/` in `.gitignore`. Adds Web
+  Adaptation, Browser Shell,
+  and Trace Oracle to the shared language, and corrects the Craft Parameter Block
+  entry, which still claimed walking and flying share one control loop after ADR
+  0016 retracted it.
 - Pace the control loop at 20 frames a second rather than the 5 the Reference Build
   ran at, which is the single knob that fixes both how fast a craft turns and how
   long it takes to get there: the Dart's turn goes from 28 to 112 degrees a second
