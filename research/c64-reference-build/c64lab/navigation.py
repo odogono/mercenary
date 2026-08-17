@@ -98,6 +98,21 @@ TRANSITION_COLOUR_TABLE_SITE = 0xAFB7
 WORLD_FLIP_INPUT_SITE = 0xA165
 WORLD_FLIP_INPUT_FLAG = 0x80
 
+#: The one Doorway that leads out of the underground rather than to another Room.
+#:
+#: Room setup special-cases a destination of zero before it does anything else
+#: (``$90C0``), and that path is not a Room at all: it clears the underground flag,
+#: restores the surface palette, installs a different mover, and copies nine bytes
+#: over the player's three coordinates. Those nine bytes are the arrival, and they
+#: are a fixed position rather than anything derived from where the player was.
+#:
+#: Only the horizontal pair is acted on by the app. The vertical value is exported
+#: with the others and left uninterpreted: it is far above anything a walker
+#: occupies, and the mover this path installs is one we do not model, so adopting a
+#: reading of it would be a guess in the middle of otherwise-decoded data.
+SURFACE_EXIT_SITE = 0x90D3
+SURFACE_EXIT_FLAG_SITE = 0x90C2
+
 #: Darkness, and the colour it clears that no Room carries.
 DARK_COMMAND_TEST_SITE = 0x91EE
 PHOTON_SEARCH_SITE = 0x91F2
@@ -211,6 +226,10 @@ def require_navigation(ram: bytes) -> None:
         (LINE_COLOUR_SITE, (0xA9,), "Room setup does not store an immediate line colour"),
         (WORLD_FLIP_ROUTINE, (0xA5, WORLD_FLIP_PARITY_FLAG, 0x49, 0x01, 0x85, WORLD_FLIP_PARITY_FLAG), "the world flip does not toggle a parity flag"),
         (WORLD_FLIP_COOLDOWN_SITE, (0xA9,), "the world flip does not install its own cooldown"),
+        (SURFACE_EXIT_FLAG_SITE, (0x86, 0xA8, 0x86, 0xCD), "leaving the underground does not clear the flag that says the player is in it"),
+        # Nine bytes, counted down from index eight, into the three coordinates.
+        (SURFACE_EXIT_SITE, (0xA2, 0x08, 0xBD), "leaving the underground does not copy a fixed position over the player's own"),
+        (SURFACE_EXIT_SITE + 5, (0x95, 0x72), "the fixed position is not written over the player's coordinates"),
         (CONTAINMENT_ROUTINE, (0xA9, 0x00, 0x85, 0xAE), "containment does not begin by clearing a clamp count"),
         (WALL_THUD_SITE, (0xA9,), "wall contact does not play an immediate sound"),
         (
@@ -338,6 +357,19 @@ def decode_navigation_rules(ram: bytes) -> dict[str, Any]:
         key_slot_bias + SHAPE_MASK < 64,
         "The key table's highest lock class would index past the object state flags",
     )
+    exit_table = ram[SURFACE_EXIT_SITE + 3] | (ram[SURFACE_EXIT_SITE + 4] << 8)
+    exit_bytes = ram[exit_table : exit_table + 9]
+
+    def coordinate(axis: int) -> int:
+        low, middle, high = exit_bytes[axis * 3 : axis * 3 + 3]
+        value = low | (middle << 8) | (high << 16)
+        return value - 0x1000000 if high & 0x80 else value
+
+    surface_exit = {
+        "x": coordinate(0),
+        "y": coordinate(1),
+        "z": coordinate(2),
+    }
     near_margin = ram[CONTAINMENT_SITES[0][0] + 1]
     far_margin = ram[CONTAINMENT_SITES[0][2] + 1]
     world_flip_cooldown = _immediate(ram, WORLD_FLIP_COOLDOWN_SITE, 0xA9, "the world flip does not install an immediate cooldown")
@@ -375,6 +407,7 @@ def decode_navigation_rules(ram: bytes) -> dict[str, Any]:
         "nearMargin": near_margin,
         "farMargin": far_margin,
         "wallThudSound": _immediate(ram, WALL_THUD_SITE, 0xA9, "wall contact does not play an immediate sound"),
+        "surfaceExit": surface_exit,
         "stepInterlock": _immediate(ram, STEP_INTERLOCK_SITE, 0xA9, "a transition does not reload an immediate step interlock"),
         "transitionColours": transition_colours,
         "worldFlipInputRemap": remap,

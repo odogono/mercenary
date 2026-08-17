@@ -86,7 +86,7 @@
     },
     "navigationRules": {
       "type": "object",
-      "required": ["predicate", "arrivalContract", "traversalGate", "containmentContract", "lockBoundary", "keySlotBias", "skeletonKeySlot", "photonEmitterSlot", "lineColour", "randomRoom", "worldFlipRoom", "nearMargin", "farMargin", "wallThudSound", "stepInterlock", "transitionColours", "worldFlipInputRemap"],
+      "required": ["predicate", "arrivalContract", "traversalGate", "containmentContract", "lockBoundary", "keySlotBias", "skeletonKeySlot", "photonEmitterSlot", "lineColour", "randomRoom", "worldFlipRoom", "nearMargin", "farMargin", "wallThudSound", "surfaceExit", "stepInterlock", "transitionColours", "worldFlipInputRemap"],
       "properties": {
         "predicate": {"type": "string"},
         "arrivalContract": {"type": "string"},
@@ -95,6 +95,12 @@
         "nearMargin": {"type": "integer", "minimum": 0, "maximum": 255},
         "farMargin": {"type": "integer", "minimum": 0, "maximum": 255},
         "wallThudSound": {"type": "integer", "minimum": 0, "maximum": 255},
+        "surfaceExit": {
+          "type": "object",
+          "required": ["x", "y", "z"],
+          "additionalProperties": false,
+          "properties": {"x": {"type": "integer"}, "y": {"type": "integer"}, "z": {"type": "integer"}}
+        },
         "stepInterlock": {"type": "integer", "minimum": 0, "maximum": 255},
         "transitionColours": {
           "type": "array",

@@ -60,6 +60,8 @@ SITES = {
     0x8570: (0x20, 0x9E, 0x93, 0xF0, 0x14, 0xA5, 0xB1, 0xD0, 0x10,
              0x20, 0x37, 0x94, 0x90, 0x0B, 0x20, 0xBE, 0x90),
     0x8585: (0xA9, 0x02, 0x85, 0xB1),
+    0x90C2: (0x86, 0xA8, 0x86, 0xCD),
+    0x90D3: (0xA2, 0x08, 0xBD, 0xED, 0x90, 0x95, 0x72),
     0x939E: (0xA9, 0x00, 0x85, 0xAE),
     0x93AA: (0xC9, 0x20),
     0x93AE: (0xA9, 0x20),
@@ -85,6 +87,9 @@ TABLES = {
     0xBB7E: (0x00, 0x0B, 0x0C, 0x0F, 0x01, 0x01, 0x01, 0x0F, 0x0C, 0x0B,
              0x00, 0x02, 0x04, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
              0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08),
+    # The fixed position leaving the underground puts the player at, three
+    # little-endian 24-bit coordinates: the middle of surface cell 8,8.
+    0x90ED: (0xC0, 0x67, 0x08, 0x80, 0xF8, 0x40, 0x00, 0x70, 0x08),
     # Bits 2 and 3 of the input byte swapped, which is turn-left and turn-right.
     0xA17B: (0x00, 0x01, 0x02, 0x03, 0x08, 0x09, 0x0A, 0x0B,
              0x04, 0x05, 0x06, 0x07, 0x0C, 0x0D, 0x0E, 0x0F),
@@ -194,6 +199,22 @@ class NavigationRuleTests(unittest.TestCase):
         ram[SKELETON_KEY_SITE + 2] = 0x40
         with self.assertRaisesRegex(LabError, "outside the object state flags"):
             decode_navigation_rules(ram)
+
+    def test_the_one_way_out_of_the_underground_is_a_fixed_position(self) -> None:
+        # Not derived from where the player was: nine bytes copied over all three
+        # coordinates. The horizontal pair is the middle of the cell the lift serves.
+        self.assertEqual(self.rules["surfaceExit"]["x"], 0x0867C0)
+        self.assertEqual(self.rules["surfaceExit"]["z"], 0x087000)
+        self.assertEqual(self.rules["surfaceExit"]["x"] // 0x10000, 8)
+        self.assertEqual(self.rules["surfaceExit"]["z"] // 0x10000, 8)
+
+    def test_the_way_out_is_read_from_the_table_the_copy_names(self) -> None:
+        # Rather than from a constant here that happens to agree with it.
+        ram = image()
+        ram[0x90D3 + 3] = 0xF0
+        ram[0x90F0 : 0x90F0 + 9] = bytes(9)
+
+        self.assertEqual(decode_navigation_rules(ram)["surfaceExit"], {"x": 0, "y": 0, "z": 0})
 
     def test_a_room_is_bounded_by_two_margins_the_same_on_both_axes(self) -> None:
         self.assertEqual(self.rules["nearMargin"], 0x20)

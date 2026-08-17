@@ -313,6 +313,88 @@ public struct GameplaySession: Sendable {
     return [.tone, .arrived(location)]
   }
 
+  // MARK: - Walking through a Doorway
+
+  /// Everything the walking path does once the player has moved, in the Reference
+  /// Build's own order (`$8570`).
+  ///
+  /// The order is the behaviour, so it is worth reading as a list:
+  ///
+  /// 1. containment must have clamped an axis — no wall contact, no Doorway;
+  /// 2. the step interlock must have run down;
+  /// 3. the transition cooldown must have expired;
+  /// 4. the first Doorway in record order the player stands in and faces wins;
+  /// 5. its lock must open, or the refusal is a message and nothing else;
+  /// 6. only then does anyone go anywhere.
+  ///
+  /// Steps 1 and 2 are the ones that look removable and are not. Without 1 a player
+  /// standing in a Doorway is moved by merely turning around; without 2 they are
+  /// handed straight back through the Doorway they arrived in, because arrival puts
+  /// them inside it.
+  private mutating func traverse() -> [PresentationEvent] {
+    guard case .room(let id) = location, let room = content.rooms[id],
+      let rules = content.doorwayRules,
+      game.wallContact != 0,
+      game.stepInterlock <= 0,
+      game.transitionCooldown <= 0
+    else { return [] }
+    let predicate = DoorwayPredicate(rules: rules)
+    guard
+      let doorway = predicate.doorway(
+        in: room, at: game.player.position, heading: game.player.heading
+      )
+    else { return [] }
+    guard predicate.opens(doorway, carrying: { residence(of: $0).isCarried }) else {
+      // A locked Doorway is a message and a wall. The player is already stopped by
+      // containment, so refusing takes no further doing.
+      show(message: rules.lockedMessage)
+      return []
+    }
+    return take(doorway, rules: rules)
+  }
+
+  /// Go through a Doorway that has already been accepted.
+  private mutating func take(
+    _ doorway: Payload.RoomsDocument.Room.Doorway, rules: Payload.RoomsDocument.DoorwayRules
+  ) -> [PresentationEvent] {
+    switch doorway.destination {
+    case .room(let destination):
+      game.room = destination
+      // The decoder resolved where in the destination the player lands, so there is
+      // no cross-Room index to chase here. Altitude is deliberately untouched: the
+      // Reference Build writes only the two horizontal coordinates.
+      if let arrival = doorway.arrival {
+        game.player.position.x = Double(arrival.x)
+        game.player.position.z = Double(arrival.z)
+      }
+    case .surface:
+      // The one Doorway that leaves the underground, at the fixed position the
+      // Reference Build copies over the player's own. Its altitude is not adopted —
+      // see ``Payload/RoomsDocument/DoorwayRules/surfaceExit``.
+      game.room = nil
+      game.player.position.x = Double(rules.surfaceExit.x)
+      game.player.position.z = Double(rules.surfaceExit.z)
+    }
+    game.transitionCooldown = Double(rules.cooldownFrames)
+    game.stepInterlock = Double(rules.stepInterlock)
+    // Room setup runs containment itself, before anything is drawn ($9226). It has to:
+    // several arrivals land exactly on a wall, or a little outside one, and without
+    // this the player would be drawn there for a frame before being pulled back. The
+    // contact it reports is kept rather than cleared, which is what stops the wall
+    // sounding a second time for a bump the player did not make.
+    if let walls = containment {
+      game.wallContactLatch = game.wallContact
+      game.wallContact = walls.clamp(&game.player.position)
+    } else {
+      game.wallContactLatch = game.wallContact
+      game.wallContact = 0
+    }
+    // A Room change is a change in what a script sees, so it has to reach the Host
+    // Callout before anything reads it.
+    republishHostState()
+    return [.arrived(location)]
+  }
+
   /// Put the player somewhere directly, without a lift to take them there.
   ///
   /// For bounded debug scenarios only, which the underground work needs to reach
@@ -320,6 +402,27 @@ public struct GameplaySession: Sendable {
   /// playthrough may not visit.
   public mutating func teleport(to location: Location) {
     game.room = location.room
+    republishHostState()
+  }
+
+  /// Stand the player somewhere in the Location they are already in, and optionally
+  /// turn them.
+  ///
+  /// For bounded debug scenarios only, alongside ``teleport(to:)``. It deliberately
+  /// does not clear the interlocks: a scenario that wants to start mid-transition can
+  /// say so, and one that does not is starting from rest anyway.
+  public mutating func place(at position: SIMD3<Double>, facing heading: Double? = nil) {
+    game.player.position = position
+    if let heading { game.player.heading = heading }
+  }
+
+  /// Put an object in the player's hands without their having reached for it.
+  ///
+  /// For bounded debug scenarios only, alongside ``teleport(to:)``: the locked, dark
+  /// and flipped states all turn on what is being carried, and reaching for each key
+  /// where it lies is a playthrough rather than a scenario.
+  public mutating func carry(_ slot: Int) {
+    residence[slot] = .carried
     republishHostState()
   }
 
@@ -411,6 +514,7 @@ public struct GameplaySession: Sendable {
       if game.wallThud, let rules = content.doorwayRules {
         events.append(.wall(sound: rules.wallThudSound))
       }
+      events.append(contentsOf: traverse())
       if let touchdown = game.touchdown {
         events.append(.tone)
         events.append(.touchdown(touchdown))

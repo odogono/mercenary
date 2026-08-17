@@ -256,6 +256,7 @@ _DOORWAY_RULE_FIELDS = (
     "nearMargin",
     "farMargin",
     "wallThudSound",
+    "surfaceExit",
     "stepInterlock",
     "transitionColours",
     "worldFlipInputRemap",

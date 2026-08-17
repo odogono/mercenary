@@ -11,13 +11,30 @@ enum UndergroundFixture {
     keySlotBias: 8, skeletonKeySlot: 0x30, photonEmitterSlot: 0x10, lockedMessage: 0,
     darkMessage: 1, lineColour: 1, cooldownFrames: 0x0A, worldFlipCooldownFrames: 0x1F,
     randomRoom: 0x72, worldFlipRoom: 0x7F, nearMargin: 0x20, farMargin: 0xDF,
-    wallThudSound: 0x14, stepInterlock: 2,
+    wallThudSound: 0x14, surfaceExit: .init(x: 0x0867C0, y: 0x40F880, z: 0x087000),
+    stepInterlock: 2,
     transitionColours: [
       0, 11, 12, 15, 1, 1, 1, 15, 12, 11, 0, 2, 4, 8, 8, 8,
       8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
     ],
     worldFlipInputRemap: [0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7, 12, 13, 14, 15]
   )
+
+  /// A Doorway shaped like the ones the payload carries. The defaults are Room 3's
+  /// first Doorway as our own export writes it: in the far X wall, six cells along,
+  /// leading to Room 48.
+  static func doorway(
+    index: Int = 0, shape: Int = 2, plane: String = "zy", x: Int = 4096, z: Int = 1536,
+    destination: Payload.RoomsDocument.Room.Doorway.Destination
+      = Payload.RoomsDocument.Room.Doorway.Destination.room(48),
+    arrival: Payload.RoomsDocument.Room.Doorway.Point? = .init(x: 512, z: 1664),
+    lock: Payload.RoomsDocument.Room.Doorway.Lock? = nil
+  ) -> Payload.RoomsDocument.Room.Doorway {
+    Payload.RoomsDocument.Room.Doorway(
+      index: index, shape: shape, plane: plane, position: .init(x: x, z: z),
+      destination: destination, arrivalCommandIndex: 0, arrival: arrival, lock: lock
+    )
+  }
 
   /// A Room `cellsX` by `cellsZ` cells, with whatever Doorways the test needs.
   static func room(
@@ -116,6 +133,123 @@ final class ContainmentTests: XCTestCase {
   }
 }
 
+/// The predicate on its own: which positions and headings a Doorway accepts.
+final class DoorwayPredicateTests: XCTestCase {
+  private let predicate = DoorwayPredicate(rules: UndergroundFixture.rules)
+  /// Room 3's first Doorway: the far X wall of a sixteen-cell Room, six cells along.
+  private let doorway = UndergroundFixture.doorway()
+  /// Facing +X, which is square-on to a `zy` wall.
+  private let facingTheWall = Double.pi / 2
+
+  private func accepts(x: Double, z: Double, heading: Double? = nil) -> Bool {
+    predicate.accepts(
+      doorway, at: SIMD3(x, 128, z), heading: heading ?? facingTheWall
+    )
+  }
+
+  func testAcceptsThePlayerAtTheDoorwayItself() {
+    XCTAssertTrue(accepts(x: 4063, z: 1664))
+  }
+
+  func testTheWindowAlongTheWallIsWhereTheDoorwayIsAndNotBeside() {
+    XCTAssertFalse(accepts(x: 4063, z: 1599), "before the Doorway's own depth window")
+    XCTAssertTrue(accepts(x: 4063, z: 1600), "the first position in it")
+    XCTAssertTrue(accepts(x: 4063, z: 1727), "the last")
+    XCTAssertFalse(accepts(x: 4063, z: 1728), "past it")
+  }
+
+  func testTheWindowIsSixtyFourEitherSideOfTheDoorwaysOwnCentre() {
+    // The derived form of the two immediates, which the literal implementation is
+    // deliberately not written as. A `zy` Doorway's centre along the wall is its z
+    // byte plus half a cell, and the accepted run is 64 either side of it.
+    let centre = Double(doorway.position.z + 128)
+    XCTAssertTrue(accepts(x: 4063, z: centre - 64))
+    XCTAssertTrue(accepts(x: 4063, z: centre + 63))
+    XCTAssertFalse(accepts(x: 4063, z: centre - 65))
+    XCTAssertFalse(accepts(x: 4063, z: centre + 64))
+  }
+
+  func testTheDepthWindowReachesBackFromTheWallButNotFarIntoTheRoom() {
+    XCTAssertTrue(accepts(x: 4008, z: 1664), "far enough into the wall")
+    XCTAssertFalse(accepts(x: 4007, z: 1664), "and no further out than that")
+  }
+
+  func testOnlyAHeadingSquareOnToTheWallOpensIt() {
+    // Both ways along the axis count, which is not an oversight: which way the player
+    // is pushing is settled by which wall they hit.
+    XCTAssertTrue(accepts(x: 4063, z: 1664, heading: .pi / 2), "facing the wall")
+    XCTAssertTrue(accepts(x: 4063, z: 1664, heading: 3 * .pi / 2), "and away from it")
+    XCTAssertFalse(accepts(x: 4063, z: 1664, heading: 0), "along the wall")
+    XCTAssertFalse(accepts(x: 4063, z: 1664, heading: .pi), "or along it the other way")
+  }
+
+  func testAHeadingIsRoundedToTheNearestQuarterTurnRatherThanTruncated() {
+    let eighth = Double.pi / 4
+    XCTAssertTrue(accepts(x: 4063, z: 1664, heading: eighth + 0.01), "rounds up to +X")
+    XCTAssertFalse(accepts(x: 4063, z: 1664, heading: eighth - 0.01), "rounds down to +Z")
+  }
+
+  func testTheOtherPlaneWantsTheOtherPairOfHeadings() {
+    let wall = UndergroundFixture.doorway(plane: "xy", x: 3072, z: 4096)
+    func accepts(heading: Double) -> Bool {
+      predicate.accepts(wall, at: SIMD3(3200, 128, 4063), heading: heading)
+    }
+
+    XCTAssertTrue(accepts(heading: 0))
+    XCTAssertTrue(accepts(heading: .pi))
+    XCTAssertFalse(accepts(heading: .pi / 2))
+  }
+
+  func testTheFirstDoorwayInRecordOrderWins() {
+    // The Reference Build stops at the first command that matches, so two Doorways
+    // that overlap are not ambiguous — the earlier one is the answer.
+    let room = UndergroundFixture.room(
+      doorways: [
+        UndergroundFixture.doorway(index: 0, destination: .room(48)),
+        UndergroundFixture.doorway(index: 1, destination: .room(49)),
+      ]
+    )
+
+    let found = predicate.doorway(
+      in: room, at: SIMD3(4063, 128, 1664), heading: facingTheWall
+    )
+
+    XCTAssertEqual(found?.index, 0)
+  }
+
+  func testNothingIsFoundStandingInTheMiddleOfARoom() {
+    let room = UndergroundFixture.room(doorways: [doorway])
+
+    XCTAssertNil(
+      predicate.doorway(in: room, at: SIMD3(2000, 128, 2000), heading: facingTheWall)
+    )
+  }
+
+  // MARK: - Locks
+
+  func testAnUnlockedDoorwayOpensForAnEmptyHandedPlayer() {
+    XCTAssertTrue(predicate.opens(doorway, carrying: { _ in false }))
+  }
+
+  func testALockedDoorwayWantsItsOwnKeyAndNoOther() {
+    let locked = UndergroundFixture.doorway(shape: 9, lock: .init(class: 9, requiresObject: 0x11))
+
+    XCTAssertFalse(predicate.opens(locked, carrying: { _ in false }))
+    XCTAssertFalse(predicate.opens(locked, carrying: { $0 == 0x12 }))
+    XCTAssertTrue(predicate.opens(locked, carrying: { $0 == 0x11 }))
+  }
+
+  func testTheSkeletonKeyOpensEveryLock() {
+    let skeleton = UndergroundFixture.rules.skeletonKeySlot
+    for shape in 9...15 {
+      let locked = UndergroundFixture.doorway(
+        shape: shape, lock: .init(class: shape, requiresObject: shape + 8)
+      )
+      XCTAssertTrue(predicate.opens(locked, carrying: { $0 == skeleton }), "shape \(shape)")
+    }
+  }
+}
+
 /// Walking underground, through the session that owns it.
 final class UndergroundWalkTests: XCTestCase {
   private let flight = FlightFixture.model()
@@ -172,6 +306,166 @@ final class UndergroundWalkTests: XCTestCase {
 
     XCTAssertEqual(session.game.wallContact, 0)
     XCTAssertTrue(events.allSatisfy { if case .wall = $0 { return false } else { return true } })
+  }
+
+  // MARK: - Through a Doorway
+
+  /// A session in Room 3 with its real first Doorway, and the player already standing
+  /// in the Doorway's window a little way off the wall.
+  private func atADoorway(
+    _ doorways: [Payload.RoomsDocument.Room.Doorway] = [UndergroundFixture.doorway()],
+    heading: Double = .pi / 2,
+    carrying: Set<Int> = []
+  ) -> GameplaySession {
+    var session = GameplaySession(
+      content: .init(
+        objects: carrying.map {
+          ObjectPlacement(
+            slot: $0, id: "object-instance:\($0)", model: "m", origin: SIMD3(0, 0, 0),
+            vertices: [], edges: [], detailCube: 65536, drawsFarAsPoint: true,
+            orientation: .identity, placement: "room", withinWorld: true, room: 3, stateFlags: 0
+          )
+        },
+        cellSize: 65536, interaction: nil, flight: flight, underground: nil,
+        rooms: [3: UndergroundFixture.room(doorways: doorways)],
+        doorwayRules: UndergroundFixture.rules
+      ),
+      player: PlayerState(position: SIMD3(4040, 0, 1664), heading: heading)
+    )
+    session.teleport(to: .room(3))
+    for slot in carrying { session.carry(slot) }
+    return session
+  }
+
+  /// Walk until a Doorway is taken, and stop there. Tests about the moment of arrival
+  /// need to stop at it: keep walking and the player leaves the arrival point behind,
+  /// which is what walking is for.
+  private func walkUntilArrival(_ session: inout GameplaySession) -> Bool {
+    session.intent = Intent(walk: 1)
+    for _ in 0..<600 {
+      let events = session.advance(by: 1.0 / 60).events
+      if events.contains(where: { if case .arrived = $0 { return true } else { return false } }) {
+        return true
+      }
+    }
+    return false
+  }
+
+  func testWalkingIntoTheWallAtADoorwayEntersTheRoomBeyond() {
+    var session = atADoorway()
+
+    let events = walk(&session, seconds: 1)
+
+    XCTAssertEqual(session.location, Location.room(48))
+    XCTAssertTrue(events.contains(.arrived(.room(48))))
+  }
+
+  func testStandingInADoorwayWithoutTouchingTheWallGoesNowhere() {
+    // The gate that looks removable. The player is inside the Doorway's own window
+    // and facing it; what they have not done is walk into the wall.
+    var session = atADoorway()
+
+    for _ in 0..<60 { _ = session.advance(by: 1.0 / 60) }
+
+    XCTAssertEqual(session.location, Location.room(3))
+  }
+
+  func testFacingAlongTheWallGoesNowhereEvenPressedAgainstIt() {
+    // Pinned against the far wall, which reports contact every frame, so the only
+    // thing refusing this is the heading.
+    var session = atADoorway(heading: 0)
+    session.teleport(to: .room(3))
+    _ = walk(&session, seconds: 1)
+
+    XCTAssertEqual(session.location, Location.room(3))
+  }
+
+  func testArrivalIsWhereTheDecoderSaidAndTheAltitudeIsUntouched() {
+    var session = atADoorway()
+    let altitude = session.game.player.position.y
+
+    XCTAssertTrue(walkUntilArrival(&session))
+
+    XCTAssertEqual(session.game.player.position.x, 512)
+    XCTAssertEqual(session.game.player.position.z, 1664)
+    XCTAssertEqual(session.game.player.position.y, altitude, "a Doorway writes no altitude")
+  }
+
+  func testALockedDoorwayRefusesAndSaysSo() {
+    var session = atADoorway([
+      UndergroundFixture.doorway(shape: 9, lock: .init(class: 9, requiresObject: 0x11))
+    ])
+
+    _ = walk(&session, seconds: 1)
+
+    XCTAssertEqual(session.location, Location.room(3), "and the wall still stops them")
+  }
+
+  func testCarryingTheKeyOpensThatSameDoorway() {
+    var session = atADoorway(
+      [UndergroundFixture.doorway(shape: 9, lock: .init(class: 9, requiresObject: 0x11))],
+      carrying: [0x11]
+    )
+
+    _ = walk(&session, seconds: 1)
+
+    XCTAssertEqual(session.location, Location.room(48))
+  }
+
+  func testTheSkeletonKeyOpensADoorwayWhoseOwnKeyIsElsewhere() {
+    var session = atADoorway(
+      [UndergroundFixture.doorway(shape: 12, lock: .init(class: 12, requiresObject: 0x14))],
+      carrying: [UndergroundFixture.rules.skeletonKeySlot]
+    )
+
+    _ = walk(&session, seconds: 1)
+
+    XCTAssertEqual(session.location, Location.room(48))
+  }
+
+  func testATransitionInstallsBothInterlocksSoTheDoorwayDoesNotHandThePlayerBack() {
+    var session = atADoorway()
+    XCTAssertTrue(walkUntilArrival(&session))
+
+    XCTAssertEqual(session.location, Location.room(48))
+    XCTAssertEqual(session.game.transitionCooldown, 10)
+    XCTAssertEqual(session.game.stepInterlock, 2)
+  }
+
+  func testTheStepInterlockDoesNotRunDownWhileThePlayerStandsStill() {
+    // Time cannot spend it, only walking can. That is what stops a player who
+    // arrived facing a Doorway from being taken back through it by standing there.
+    var session = atADoorway()
+    XCTAssertTrue(walkUntilArrival(&session))
+    let interlock = session.game.stepInterlock
+
+    session.intent = .idle
+    for _ in 0..<120 { _ = session.advance(by: 1.0 / 60) }
+
+    XCTAssertEqual(session.game.stepInterlock, interlock)
+    XCTAssertEqual(session.game.transitionCooldown, 0, "though the transition does expire")
+  }
+
+  func testALinkWithNoReturnDoorwayLeavesThePlayerWhereItPutThem() {
+    // One-way links are real and are not repaired: Room 48 here has no Doorway back,
+    // so walking into that wall does nothing at all.
+    var session = atADoorway()
+    _ = walk(&session, seconds: 1)
+    XCTAssertEqual(session.location, Location.room(48))
+
+    _ = walk(&session, seconds: 5)
+
+    XCTAssertEqual(session.location, Location.room(48), "and no reverse was invented")
+  }
+
+  func testTheOneDoorwayOutOfTheUndergroundReachesTheSurface() {
+    var session = atADoorway([UndergroundFixture.doorway(destination: .surface, arrival: nil)])
+
+    XCTAssertTrue(walkUntilArrival(&session))
+
+    XCTAssertEqual(session.location, Location.surface)
+    XCTAssertEqual(session.game.player.position.x, Double(UndergroundFixture.rules.surfaceExit.x))
+    XCTAssertEqual(session.game.player.position.z, Double(UndergroundFixture.rules.surfaceExit.z))
   }
 
   func testLeavingAWallAndReturningSoundsItAgain() {

@@ -212,6 +212,20 @@ public struct GameState: Sendable, Equatable {
   /// Whether the wall should sound: contact now, and none last frame.
   public var wallThud: Bool { wallContact != 0 && wallContactLatch == 0 }
 
+  /// Reference frames left in the transition a Doorway starts, counting down.
+  ///
+  /// While it runs, no Doorway can be taken. It is world time and not script time:
+  /// the Reference Build counts it in the frame loop, so slowing the scripts down for
+  /// legibility must not slow this down with them.
+  public var transitionCooldown: Double = 0
+  /// Walking frames left before another Doorway can be taken, counting down only
+  /// while the player is actually walking.
+  ///
+  /// This is the interlock that matters. Arrival puts the player *inside* the Doorway
+  /// on the other side, so without a gate that a stationary player cannot run down
+  /// they would be handed straight back through it.
+  public var stepInterlock: Double = 0
+
   public init(
     player: PlayerState,
     elapsed: Double = 0,
@@ -370,6 +384,12 @@ public enum GameCore {
     _ state: GameState, intent: Intent, dt: Double, flight: FlightModel,
     containment: Containment? = nil
   ) -> GameState {
+    // The transition counts down in the frame loop rather than in either mover, so it
+    // runs whether the player is walking, flying or standing still.
+    var state = state
+    state.transitionCooldown = Swift.max(
+      0, state.transitionCooldown - dt * flight.limits.referenceFrameRate
+    )
     // On foot the Reference Build does not run the control loop at all: `MOVE`
     // dispatches to its own routine whenever the player is out of a craft or
     // underground. Only a craft reaches the Craft Parameter Blocks (ADR 0016).
@@ -486,6 +506,12 @@ public enum GameCore {
       // will look for a Doorway at all.
       result.wallContactLatch = state.wallContact
       result.wallContact = containment.clamp(&player.position)
+      // The step interlock runs down inside the walk integrator, so it stalls while
+      // the player stands still — which is the whole point of it being steps rather
+      // than time.
+      if intent.walk != 0 {
+        result.stepInterlock = Swift.max(0, result.stepInterlock - frames)
+      }
     } else {
       player.position.x = clampToWorld(player.position.x, extent: flight.limits.groundExtent)
       player.position.z = clampToWorld(player.position.z, extent: flight.limits.groundExtent)

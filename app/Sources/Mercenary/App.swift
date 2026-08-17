@@ -26,6 +26,9 @@ enum Entry {
       if let options = try FlightTrace.options(from: arguments) {
         exit(FlightTrace.run(options))
       }
+      if let options = try RoomTrace.options(from: arguments) {
+        exit(RoomTrace.run(options))
+      }
     } catch {
       FileHandle.standardError.write(Data("error: \(error)\n".utf8))
       FileHandle.standardError.write(Data(Self.usage.utf8))
@@ -51,6 +54,8 @@ enum Entry {
                                [--press KEY@SECONDS] [--board SLOT@SECONDS]
                                [--walk-to SLOT | --take SLOT]
       mercenary --flight-trace [--craft SLOT] [--notch N] [--seconds N] [--poweramp]
+      mercenary --room-trace   [--room ID] [--at X,Z] [--walk DEGREES@SECONDS]
+                               [--carry SLOT] [--output PATH]
 
     """
 }

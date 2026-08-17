@@ -311,6 +311,7 @@ class RoomsTests(unittest.TestCase):
         "nearMargin": 0x20,
         "farMargin": 0xDF,
         "wallThudSound": 0x14,
+        "surfaceExit": {"x": 0x0867C0, "y": 0x40F880, "z": 0x087000},
         "stepInterlock": 2,
         "transitionColours": [0x00, 0x0B, 0x0C],
         "worldFlipInputRemap": [0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7, 12, 13, 14, 15],

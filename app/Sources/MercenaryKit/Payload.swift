@@ -384,6 +384,21 @@ public enum Payload {
       /// therefore `cells * 256 - (256 - farMargin)` away.
       public var farMargin: Int
       public var wallThudSound: Int
+      /// Where the one Doorway out of the underground puts the player: a fixed
+      /// position, not one derived from where they went down.
+      ///
+      /// Only `x` and `z` are acted on. `y` is carried because it is part of the same
+      /// nine bytes, and left alone because it is far above anything a walker
+      /// occupies and the Reference Build installs a mover here that we do not model.
+      public var surfaceExit: Position
+
+      /// A whole position, all three axes. A Doorway's own `Point` is horizontal
+      /// because a Doorway never writes an altitude; this one does.
+      public struct Position: Codable, Sendable, Equatable {
+        public var x: Int
+        public var y: Int
+        public var z: Int
+      }
       /// How many walking steps must pass after a transition before another Doorway
       /// can be taken. Without it the player bounces straight back through the
       /// Doorway they arrived in, because arrival puts them inside it.

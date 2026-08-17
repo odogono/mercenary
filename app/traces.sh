@@ -33,3 +33,6 @@ run opening-board-fiat --benson-trace --script 0 --seconds 60  --board 1@3
 # The control loop, with and without the poweramp that changes one craft's ceiling.
 run flight-craft1      --flight-trace --craft 1 --notch 10 --seconds 30
 run flight-poweramp    --flight-trace --craft 1 --notch 10 --seconds 30 --poweramp
+# Walking the underground: through a Doorway and back, which exercises the whole
+# gate — wall contact, both interlocks, the predicate and arrival.
+run room-3-and-back    --room-trace --room 3 --at 2048,1664 --walk 90@8 --walk 270@4
