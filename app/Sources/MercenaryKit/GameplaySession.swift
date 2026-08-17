@@ -101,7 +101,7 @@ public struct GameplaySession: Sendable {
   ///
   /// Without scripts there is nothing to share the stream with, so the session keeps
   /// its own state seeded the same way; with them, the roll comes off theirs.
-  private var ownRandomState: UInt64 = 0x2C69_2ED8_1B7F_0A31
+  private var ownRandomState: UInt64
 
   private mutating func nextRandom(below count: Int) -> Int {
     guard count > 0 else { return 0 }
@@ -117,8 +117,12 @@ public struct GameplaySession: Sendable {
   /// Immutable; the carried bit is projected from ``residence`` on top of these.
   private let baseFlags: [Int: UInt8]
 
-  public init(content: Content, player: PlayerState, scripts: BensonSession? = nil) {
+  public init(
+    content: Content, player: PlayerState, scripts: BensonSession? = nil,
+    randomSeed: UInt64 = 0x2C69_2ED8_1B7F_0A31
+  ) {
     self.content = content
+    self.ownRandomState = randomSeed
     var game = GameState(player: player)
     if let flight = content.flight {
       game.player.position.y = flight.groundAltitude
@@ -723,20 +727,6 @@ public struct GameplaySession: Sendable {
   /// has moved so a renderer needs no second lookup.
   var sceneResidence: [Int: Residence] {
     Dictionary(uniqueKeysWithValues: content.objects.map { ($0.slot, residence(of: $0.slot)) })
-  }
-
-  /// Object slots the game has taken out of the world, which the renderer needs so
-  /// a boarded craft stops being drawn and reappears when it is left.
-  public var hiddenSlots: Set<Int> {
-    Set(
-      content.objects.map(\.slot).filter {
-        residence(of: $0).hostRoom == BensonHostState.outOfTheWorld
-      }
-    )
-  }
-
-  public var displacedObjects: [Int: SIMD3<Double>] {
-    residence.compactMapValues(\.displacement)
   }
 
   /// The throttle as a notch on the decoded ladder, or 0 when it is shut.

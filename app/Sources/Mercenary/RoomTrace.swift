@@ -25,10 +25,13 @@ enum RoomTrace {
     /// Object slots to start out carrying, for the locked and dark Rooms.
     var carrying: [Int] = []
     var output: URL?
+    /// The random stream's seed, so the Room that picks at random can be made to pick
+    /// something else without the trace stopping being reproducible.
+    var seed: UInt64 = 0x2C69_2ED8_1B7F_0A31
   }
 
   static let knownFlags: Set<String> = [
-    "--room-trace", "--room", "--at", "--walk", "--carry", "--output",
+    "--room-trace", "--room", "--at", "--walk", "--carry", "--seed", "--output",
   ]
 
   static func options(from arguments: [String]) throws -> Options? {
@@ -59,6 +62,9 @@ enum RoomTrace {
       }
       options.carrying.append(slot)
     }
+    if let seed = try arguments.int("--seed", expected: "a seed") {
+      options.seed = UInt64(bitPattern: Int64(seed))
+    }
     options.output = arguments.isPresent("--output")
       ? try arguments.output(default: "") : nil
     return options
@@ -86,7 +92,8 @@ enum RoomTrace {
         let program = try BensonProgram(document: document)
         scripts = BensonSession(
           program: program, text: TextTable(document: text),
-          tunables: settings.bensonTunables(framesPerTick: program.framesPerTick)
+          tunables: settings.bensonTunables(framesPerTick: program.framesPerTick),
+          randomSeed: options.seed
         )
       }
       var session = GameplaySession(
@@ -97,7 +104,8 @@ enum RoomTrace {
           )
         ),
         player: OpeningScene.player,
-        scripts: scripts
+        scripts: scripts,
+        randomSeed: options.seed
       )
       session.teleport(to: .room(options.room))
       // The middle of the Room, which is where the lift leaves the player.

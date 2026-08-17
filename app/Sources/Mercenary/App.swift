@@ -55,7 +55,7 @@ enum Entry {
                                [--walk-to SLOT | --take SLOT]
       mercenary --flight-trace [--craft SLOT] [--notch N] [--seconds N] [--poweramp]
       mercenary --room-trace   [--room ID] [--at X,Z] [--walk DEGREES@SECONDS]
-                               [--carry SLOT] [--output PATH]
+                               [--carry SLOT] [--seed N] [--output PATH]
 
     """
 }
