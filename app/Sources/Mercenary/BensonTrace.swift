@@ -1,4 +1,5 @@
 import Foundation
+import MercenaryCLI
 import MercenaryKit
 
 /// Runs a Benson Script against the real Data Payload and prints what it says.
@@ -23,47 +24,61 @@ enum BensonTrace {
     var walkAction: InteractionAction = .board
   }
 
-  static func options(from arguments: [String]) -> Options? {
-    guard arguments.contains("--benson-trace") else { return nil }
+  static let knownFlags: Set<String> = [
+    "--benson-trace", "--script", "--seconds", "--time-scale", "--press", "--board",
+    "--walk-to", "--take",
+  ]
+
+  static func options(from arguments: [String]) throws -> Options? {
+    let arguments = Arguments(arguments)
+    guard arguments.isPresent("--benson-trace") else { return nil }
+    try arguments.rejectUnknownFlags(besides: knownFlags)
     var options = Options()
-    var index = 0
-    while index < arguments.count {
-      let argument = arguments[index]
-      let value = index + 1 < arguments.count ? arguments[index + 1] : nil
-      switch argument {
-      case "--script":
-        options.script = value.flatMap(Int.init) ?? options.script
-      case "--seconds":
-        options.seconds = value.flatMap(Double.init) ?? options.seconds
-      case "--time-scale":
-        options.timeScale = value.flatMap(Double.init) ?? options.timeScale
-      case "--press":
-        if let parsed = split(value) {
-          options.presses.append((key: BensonKey(rawValue: "key" + parsed.name.uppercased()), at: parsed.at))
-        }
-      case "--board":
-        if let parsed = split(value), let craft = Int(parsed.name) {
-          options.boarding.append((craft: craft, at: parsed.at))
-        }
-      case "--walk-to":
-        options.walkTo = value.flatMap(Int.init)
-      case "--take":
-        options.walkTo = value.flatMap(Int.init)
-        options.walkAction = .take
-      default:
-        break
+    if let script = try arguments.int("--script", expected: "a script id") { options.script = script }
+    if let seconds = try arguments.double("--seconds") { options.seconds = seconds }
+    options.timeScale = try arguments.double("--time-scale") ?? options.timeScale
+    for value in try arguments.values(of: "--press", expected: "a key, as name@seconds") {
+      let when = try split(value, flag: "--press")
+      options.presses.append(
+        (key: BensonKey(rawValue: "key" + when.name.uppercased()), at: when.at)
+      )
+    }
+    for value in try arguments.values(of: "--board", expected: "a craft, as slot@seconds") {
+      let when = try split(value, flag: "--board")
+      guard let craft = Int(when.name) else {
+        throw Arguments.Failure.notAnInteger(flag: "--board", value: when.name)
       }
-      index += 1
+      options.boarding.append((craft: craft, at: when.at))
+    }
+    if let slot = try arguments.int("--walk-to", expected: "an object slot") {
+      options.walkTo = slot
+    }
+    if let slot = try arguments.int("--take", expected: "an object slot") {
+      options.walkTo = slot
+      options.walkAction = .take
     }
     return options
   }
 
   /// Parses `name@seconds`.
-  private static func split(_ value: String?) -> (name: String, at: Double)? {
-    guard let value else { return nil }
+  ///
+  /// The separator is checked rather than assumed: writing `name:seconds` used to
+  /// parse as "name, at zero", which looked like it had worked and silently ran a
+  /// different scenario.
+  private static func split(_ value: String, flag: String) throws -> (name: String, at: Double) {
     let parts = value.split(separator: "@", maxSplits: 1)
-    guard let name = parts.first else { return nil }
-    return (String(name), parts.count > 1 ? Double(parts[1]) ?? 0 : 0)
+    guard let name = parts.first, !name.isEmpty else {
+      throw Arguments.Failure.missingValue(flag: flag, expected: "a value before the @")
+    }
+    guard parts.count == 2 else {
+      // Deliberately not echoing what was written back as the example: the mistake
+      // here is the separator, and "written any:2@seconds" reads as advice to keep it.
+      throw Arguments.Failure.missingValue(flag: flag, expected: "a time, written NAME@SECONDS")
+    }
+    guard let at = Double(parts[1]) else {
+      throw Arguments.Failure.notANumber(flag: flag, value: String(parts[1]))
+    }
+    return (String(name), at)
   }
 
   static func run(_ options: Options) -> Int32 {

@@ -48,6 +48,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `app/traces.sh` is new, and emits the deterministic traces a behaviour-neutral
   change is checked against. Trace output is payload-derived and gitignored per ADR
   0019, so it is regenerated and diffed rather than committed.
+### Fixed
+
+- Make every headless command take `--output`, and refuse an invocation it does not
+  understand instead of guessing. There were three conventions for saying where to
+  write: `--render-frame` took a path as the token after the flag, the contact sheets
+  took one as the flag's own value, and the single-subject inspectors took `--out`.
+  All three were documented, so none of them was wrong exactly — but the failure mode
+  when you mixed them up was silence. `--render-frame --output frame.png` wrote a file
+  literally named `--output` into the working directory and reported success;
+  `--inspect-room 3 --output r.png` ignored the flag and wrote to the default path;
+  and a `--press` operand written `name:seconds` instead of `name@seconds` became "at
+  zero seconds" with no complaint, quietly running a different scenario than the one
+  asked for. Every one of those looked like it had worked, which is the actual defect
+  — the inconsistency was only how you got there.
+  So one `--output` everywhere, matching what the lab's own commands already use; a
+  named per-command default under `/tmp` when it is left out, printed in the JSON
+  summary so nothing lands somewhere unexpected; and strict reading throughout. A
+  flag's value must be present, must not be another flag, and must parse as the kind
+  of thing the flag wants. A command that claims the invocation rejects any flag it
+  does not have, and suggests the nearest one it does, so `--out` now says "did you
+  mean --output?" rather than silently doing something else. Usage errors exit 2 and
+  print the usage; nothing writes a file on a bad line.
+  The reader lives in a new `MercenaryCLI` target rather than in `MercenaryKit`,
+  because reading a command line is host tooling and the kit is the surface a browser
+  implementation has to reproduce (ADR 0019). Being its own target means it has tests:
+  every case in `ArgumentsTests` is one of the mistakes the lenient version accepted.
+  Two of `app/traces.sh`'s scenarios were written with the wrong separator and had
+  therefore been running something else — "press any key at zero seconds" rather than
+  "any at two, `y` at six". They are corrected here, which is what the strict reader
+  is for: the same mistake is now a refusal rather than a quiet substitution. It also
+  means those traces now exercise a *matched* key press and a boarding at a non-zero
+  time, neither of which any trace had reached before.
 
 ### Added
 

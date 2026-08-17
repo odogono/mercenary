@@ -28,8 +28,8 @@ run() {
 # The opening loop, three ways in: walking to the Dart and boarding it, answering
 # the script's question by hand, and boarding by fiat.
 run opening-walk-board --benson-trace --script 0 --seconds 240 --walk-to 1
-run opening-press      --benson-trace --script 0 --seconds 240 --press any:2 --press y:6
-run opening-board-fiat --benson-trace --script 0 --seconds 60  --board 1:3
+run opening-press      --benson-trace --script 0 --seconds 240 --press any@2 --press y@6
+run opening-board-fiat --benson-trace --script 0 --seconds 60  --board 1@3
 # The control loop, with and without the poweramp that changes one craft's ceiling.
 run flight-craft1      --flight-trace --craft 1 --notch 10 --seconds 30
 run flight-poweramp    --flight-trace --craft 1 --notch 10 --seconds 30 --poweramp

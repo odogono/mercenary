@@ -1,4 +1,5 @@
 import Foundation
+import MercenaryCLI
 import MercenaryKit
 
 /// Fly a craft without a window, so the control loop can be checked against the
@@ -15,17 +16,19 @@ enum FlightTrace {
     var poweramp: Bool
   }
 
-  static func options(from arguments: [String]) -> Options? {
-    guard arguments.contains("--flight-trace") else { return nil }
-    func value(_ flag: String) -> String? {
-      guard let at = arguments.firstIndex(of: flag), arguments.count > at + 1 else { return nil }
-      return arguments[at + 1]
-    }
+  static let knownFlags: Set<String> = [
+    "--flight-trace", "--craft", "--notch", "--seconds", "--poweramp",
+  ]
+
+  static func options(from arguments: [String]) throws -> Options? {
+    let arguments = Arguments(arguments)
+    guard arguments.isPresent("--flight-trace") else { return nil }
+    try arguments.rejectUnknownFlags(besides: knownFlags)
     return Options(
-      craft: value("--craft").flatMap { Int($0) } ?? 1,
-      notch: value("--notch").flatMap { Int($0) } ?? 10,
-      seconds: value("--seconds").flatMap { Double($0) } ?? 30,
-      poweramp: arguments.contains("--poweramp")
+      craft: try arguments.int("--craft", expected: "a craft slot") ?? 1,
+      notch: try arguments.int("--notch", expected: "a throttle notch") ?? 10,
+      seconds: try arguments.double("--seconds") ?? 30,
+      poweramp: arguments.isPresent("--poweramp")
     )
   }
 
