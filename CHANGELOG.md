@@ -90,7 +90,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Reference Build's captured X/Z 559104 crash position, in the centre of the wreck,
   rather than at the former staged overview 12,000 units south. Craft that have been
   flown and left now use their live landing position for drawing and boarding instead
-  of snapping invisibly back to their immutable payload position. Leaving also
+  of snapping invisibly back to their immutable payload position. The live overlay
+  moves X/Z only, preserving the model's ground-resting Y instead of raising it by
+  the player/craft simulation altitude. Leaving also
   restores the captured 128-unit on-foot eye height and keeps it through later
   walking frames; the decoded 63-unit touchdown altitude remains craft-only.
   The lift's tall-box appearance was an extraction defect, not a scale judgment:

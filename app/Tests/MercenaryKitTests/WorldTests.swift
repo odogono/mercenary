@@ -398,9 +398,12 @@ final class VisibilitySelectorTests: XCTestCase {
       afterLeaving.detailedObjects,
       onFoot.detailedObjects
     )
+    let originalCraft = try XCTUnwrap(onFoot.segments.last)
     let movedCraft = try XCTUnwrap(afterLeaving.segments.last)
     XCTAssertGreaterThan(movedCraft.a.x, 3_000)
     XCTAssertGreaterThan(movedCraft.a.z, 3_000)
+    XCTAssertEqual(movedCraft.a.y, originalCraft.a.y)
+    XCTAssertEqual(movedCraft.b.y, originalCraft.b.y)
   }
 
   // MARK: - Underground rooms

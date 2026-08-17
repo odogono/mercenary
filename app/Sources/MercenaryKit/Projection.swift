@@ -298,7 +298,7 @@ public struct VisibilitySelector: Sendable {
     var detailed = 0
     if includeObjects {
       for object in world.objects where object.isDrawable && !hidden.contains(object.slot) {
-        let placed = moved[object.slot].map { object.moved(to: $0) } ?? object
+        let placed = moved[object.slot].map { object.movedHorizontally(to: $0) } ?? object
         if placed.isDetailed(from: position) {
           segments.append(contentsOf: placed.segments)
           detailed += 1
