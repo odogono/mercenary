@@ -9,6 +9,8 @@ from pathlib import Path
 
 from c64lab.core import LabError
 from c64lab.geometry import (
+    _resolve_room_arrivals,
+    _require_room_pair_tables,
     _surface_y,
     canonical_digest,
     core_dataset_digest,
@@ -225,6 +227,225 @@ class UndergroundRoomTests(unittest.TestCase):
         self.assertEqual(expanded["vertices"][9]["position"], [0x0630, 0x40, 0x0700])
         self.assertEqual(expanded["edges"][-1]["indices"], [8, 9])
 
+    def test_a_dollar_eighty_terminator_marks_the_room_dark(self) -> None:
+        # The setup routine tests one byte for both, so darkness is the terminator
+        # rather than a field of its own.
+        dark = decode_room_record(bytes([1, 2, 3, 4, 5, 0x11, 0x22, 0x33, 0x44, 0x80]), address=0x3000)
+        lit = decode_room_record(bytes([1, 2, 3, 4, 5, 0x11, 0x22, 0x33, 0x44, 0x00]), address=0x3000)
+
+        self.assertTrue(dark["dark"])
+        self.assertFalse(lit["dark"])
+
+    def test_the_commands_middle_bits_are_the_destinations_arrival_index(self) -> None:
+        room = decode_room_record(bytes([1, 2, 3, 4, 5, 0x62, 0x2A, 0x03, 0x04, 0]), address=0x3000)
+        command = room["commands"][0]
+
+        # $62: plane bit clear, shape 2, and bits 4-6 holding 6.
+        self.assertEqual(command["arrivalCommandIndex"], 6)
+        self.assertEqual(command["primitiveIndex"], 2)
+        self.assertEqual(command["plane"], "xy")
+        self.assertEqual(command["linkedRoom"], 0x2A)
+        self.assertEqual(command["uncertainties"], [])
+
+    def test_entry_is_a_script_or_a_message_but_never_both(self) -> None:
+        # header[1] >> 3 carries the index and header[2]'s top bit chooses which of
+        # the two it is, so the two readings are alternatives in the Reference Build.
+        script = decode_room_record(bytes([1, 9 << 3, 0x80, 4, 5, 0]), address=0x3000)
+        message = decode_room_record(bytes([1, 9 << 3, 0x00, 4, 5, 0]), address=0x3000)
+        neither = decode_room_record(bytes([1, 0x07, 0x80, 4, 5, 0]), address=0x3000)
+
+        self.assertEqual(script["entry"], {"script": 9})
+        self.assertEqual(message["entry"], {"message": 9})
+        self.assertIsNone(neither["entry"])
+
+    def test_a_special_record_carries_two_alternates_past_its_terminator(self) -> None:
+        raw = bytes([0x83, 1, 3, 0, 10, 0x97, 0x8D, 3, 1, 0, 0x8D, 0x10, 0x56, 0x00])
+
+        room = decode_room_record(raw, address=0x3800)
+
+        self.assertEqual(room["specialSetup"]["selector"], "previousRoom")
+        self.assertEqual(
+            [(entry["room"], entry["arrivalCommandIndex"]) for entry in room["specialSetup"]["alternates"]],
+            [(0x8D, 1), (0x56, 0)],
+        )
+        # The pair table is inside the record, so the round trip has to carry it.
+        self.assertEqual(encode_room_record(room), raw)
+        self.assertEqual(room["runtimeSpan"], [0x3800, 0x380D])
+
+    def test_the_random_record_carries_eight_alternates(self) -> None:
+        raw = bytes([0x83, 1, 3, 0, 13, 0x26, 0x14, 1, 3, 0]) + bytes(
+            [0x14, 0x00, 0x3D, 0x10, 0x2E, 0x00, 0x21, 0x50, 0x70, 0x10, 0x04, 0x10, 0x06, 0x30, 0x68, 0x00]
+        )
+
+        room = decode_room_record(raw, address=0x375E, special_pairs=8, special_selector="random")
+
+        self.assertEqual(room["specialSetup"]["selector"], "random")
+        self.assertEqual(len(room["specialSetup"]["alternates"]), 8)
+        self.assertEqual(room["specialSetup"]["alternates"][3], {
+            "geometryIdentity": "room-record:375e:alternate:03",
+            "room": 0x21,
+            "arrivalCommandIndex": 5,
+            # Pair 3 sits at record offset 16, which is where AND #$0E / ADC #$0A
+            # lands its fourth selector value.
+            "provenanceRefs": ["span:376e-376f"],
+        })
+        self.assertEqual(encode_room_record(room), raw)
+
+    def test_an_ordinary_record_carries_no_alternates(self) -> None:
+        room = decode_room_record(bytes([0x03, 1, 3, 0, 10, 0x97, 0x8D, 3, 1, 0]), address=0x3800)
+        self.assertIsNone(room["specialSetup"])
+
+    def test_rejects_an_alternate_that_is_not_a_bare_arrival_index(self) -> None:
+        # A pair byte is a pre-shifted $70 value; anything else means the record is
+        # not the shape the patch at $9133 splices into.
+        raw = bytes([0x83, 1, 3, 0, 10, 0x97, 0x8D, 3, 1, 0, 0x8D, 0x11, 0x56, 0x00])
+        with self.assertRaisesRegex(LabError, "not a bare arrival index"):
+            decode_room_record(raw, address=0x3800)
+
+    def test_rejects_an_alternate_naming_a_room_that_does_not_exist(self) -> None:
+        raw = bytes([0x83, 1, 3, 0, 10, 0x97, 0x8D, 3, 1, 0, 0xC0, 0x10, 0x56, 0x00])
+        with self.assertRaisesRegex(LabError, "does not exist"):
+            decode_room_record(raw, address=0x3800)
+
+    def test_rejects_an_unknown_special_selector(self) -> None:
+        raw = bytes([0x83, 1, 3, 0, 10, 0x97, 0x8D, 3, 1, 0, 0x8D, 0x10, 0x56, 0x00])
+        with self.assertRaisesRegex(LabError, "Unknown special-setup selector"):
+            decode_room_record(raw, address=0x3800, special_selector="whenever")
+
+    def test_rejects_a_special_record_truncated_before_its_pair_table(self) -> None:
+        raw = bytes([0x83, 1, 3, 0, 10, 0x97, 0x8D, 3, 1, 0, 0x8D])
+        with self.assertRaisesRegex(LabError, "pair table"):
+            decode_room_record(raw, address=0x3800)
+
+
+class RoomPairTableTests(unittest.TestCase):
+    """Both record shapes are asserted, because the region tiles exactly.
+
+    Reading the wrong number of pairs would consume a neighbour's header rather
+    than fail, so the shapes cannot be left to trust.
+    """
+
+    @staticmethod
+    def record(address, selector, pairs):
+        return {
+            "geometryIdentity": f"room-record:{address:04x}",
+            "runtimeAddress": address,
+            "specialSetup": {
+                "selector": selector,
+                "alternates": [{"room": 1, "arrivalCommandIndex": 0} for _ in range(pairs)],
+            },
+        }
+
+    def ordinary(self, address):
+        return {"geometryIdentity": f"room-record:{address:04x}", "runtimeAddress": address, "specialSetup": None}
+
+    def test_accepts_one_random_record_and_the_rest_by_previous_room(self) -> None:
+        _require_room_pair_tables(
+            [self.record(0x375E, "random", 8), self.record(0x3778, "previousRoom", 2), self.ordinary(0x3000)]
+        )
+
+    def test_rejects_a_second_random_record(self) -> None:
+        with self.assertRaisesRegex(LabError, "Exactly one Room record"):
+            _require_room_pair_tables([self.record(0x375E, "random", 8), self.record(0x3778, "random", 8)])
+
+    def test_rejects_no_random_record_at_all(self) -> None:
+        with self.assertRaisesRegex(LabError, "Exactly one Room record"):
+            _require_room_pair_tables([self.record(0x3778, "previousRoom", 2)])
+
+    def test_rejects_a_random_record_with_the_narrow_table(self) -> None:
+        with self.assertRaisesRegex(LabError, "carries 2 alternates rather than 8"):
+            _require_room_pair_tables([self.record(0x375E, "random", 2)])
+
+    def test_rejects_a_previous_room_record_with_the_wide_table(self) -> None:
+        with self.assertRaisesRegex(LabError, "carries 8 alternates rather than 2"):
+            _require_room_pair_tables(
+                [self.record(0x375E, "random", 8), self.record(0x3778, "previousRoom", 8)]
+            )
+
+    def test_rejects_special_records_an_ordinary_one_sits_between(self) -> None:
+        with self.assertRaisesRegex(LabError, "not contiguous"):
+            _require_room_pair_tables(
+                [
+                    self.record(0x3000, "random", 8),
+                    self.ordinary(0x3010),
+                    self.record(0x3020, "previousRoom", 2),
+                ]
+            )
+
+
+class RoomArrivalTests(unittest.TestCase):
+    """Where a Doorway puts the player, resolved the way the Room setup does."""
+
+    @staticmethod
+    def image(records):
+        ram = bytearray(0x10000)
+        for room_id, (pointer, raw) in records.items():
+            ram[0x2300 + room_id] = pointer & 0xFF
+            ram[0x23C0 + room_id] = pointer >> 8
+            ram[pointer : pointer + len(raw)] = raw
+        return bytes(ram)
+
+    def resolve(self, records, room_ids=None):
+        ram = self.image(records)
+        slots = {}
+        for room_id, (pointer, _) in records.items():
+            slots.setdefault(pointer, []).append(room_id)
+        decoded = [
+            decode_room_record(ram[pointer:], address=pointer) for pointer in sorted(slots)
+        ]
+        _resolve_room_arrivals(decoded, slots, ram)
+        return {record["runtimeAddress"]: record for record in decoded}
+
+    def test_arrival_comes_from_the_destinations_own_command(self) -> None:
+        # Room 1's Doorway names room 2's command 1, whose x is $22 and z is $33 and
+        # whose plane bit is clear, so the low bytes are $80 and $00.
+        records = {
+            1: (0x3000, bytes([1, 0, 0, 4, 5, 0x12, 0x02, 0x07, 0x08, 0])),
+            2: (0x3010, bytes([1, 0, 0, 4, 5, 0x02, 0x01, 0x11, 0x12, 0x02, 0x01, 0x22, 0x33, 0])),
+        }
+        resolved = self.resolve(records)
+        command = resolved[0x3000]["commands"][0]
+
+        self.assertEqual(command["arrivalCommandIndex"], 1)
+        self.assertEqual(command["destination"], {"room": 2})
+        self.assertEqual(command["arrival"], {"x": 0x2280, "z": 0x3300})
+        self.assertTrue(command["arrivalWithinDestination"])
+
+    def test_a_rotated_destination_command_swaps_the_low_bytes(self) -> None:
+        records = {
+            1: (0x3000, bytes([1, 0, 0, 4, 5, 0x02, 0x02, 0x07, 0x08, 0])),
+            2: (0x3010, bytes([1, 0, 0, 4, 5, 0x82, 0x01, 0x22, 0x33, 0])),
+        }
+        resolved = self.resolve(records)
+
+        # The destination's own plane bit is set, so z takes $80 and x takes $00.
+        self.assertEqual(resolved[0x3000]["commands"][0]["arrival"], {"x": 0x2200, "z": 0x3380})
+
+    def test_a_surface_doorway_resolves_to_no_arrival_at_all(self) -> None:
+        records = {1: (0x3000, bytes([1, 0, 0, 4, 5, 0x82, 0x00, 0x00, 0x06, 0]))}
+        command = self.resolve(records)[0x3000]["commands"][0]
+
+        self.assertEqual(command["destination"], {"surface": True})
+        self.assertIsNone(command["arrival"])
+        self.assertTrue(command["arrivalWithinDestination"])
+
+    def test_an_index_past_the_destination_reads_on_rather_than_being_repaired(self) -> None:
+        # One Doorway in the Reference Build names an index its destination does not
+        # have. The setup routine reads past that record's terminator and lands the
+        # player outside the Room; resolving from the bytes reproduces that instead
+        # of quietly correcting the index.
+        records = {
+            1: (0x3000, bytes([1, 0, 0, 4, 5, 0x22, 0x02, 0x07, 0x08, 0])),
+            2: (0x3010, bytes([1, 0, 0, 4, 5, 0x02, 0x01, 0x11, 0x12, 0])),
+        }
+        resolved = self.resolve(records)
+        command = resolved[0x3000]["commands"][0]
+
+        self.assertFalse(command["arrivalWithinDestination"])
+        self.assertIn("arrival-index-past-destination", command["uncertainties"])
+        # Offset 4*2 + 7 = 15, two past room 2's ten-byte record.
+        self.assertEqual(command["arrival"], {"x": 0x0080, "z": 0x0000})
+
 
 class DatasetContractTests(unittest.TestCase):
     def test_digest_is_independent_of_mapping_order(self) -> None:
@@ -270,8 +491,8 @@ class DatasetContractTests(unittest.TestCase):
             },
             "underground": {
                 "rooms": [
-                    {"geometryIdentity": "room:02", "roomId": 2, "hasPortal": True, "edgeCount": 1},
-                    {"geometryIdentity": "room:01", "roomId": 1, "hasPortal": True, "edgeCount": 1},
+                    {"geometryIdentity": "room:02", "roomId": 2, "hasDoorway": True, "edgeCount": 1},
+                    {"geometryIdentity": "room:01", "roomId": 1, "hasDoorway": True, "edgeCount": 1},
                 ]
             },
         }

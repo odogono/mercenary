@@ -9,9 +9,19 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from .core import LabError, verify_run_artifacts
+from .navigation import (
+    ARRIVAL_INDEX_MASK,
+    ARRIVAL_INDEX_SHIFT,
+    PLANE_MASK,
+    SHAPE_MASK,
+    SPECIAL_PAIRS_PREVIOUS,
+    SPECIAL_PAIRS_RANDOM,
+    decode_navigation_rules,
+    lock_for,
+)
 
 
-DECODER_VERSION = 4
+DECODER_VERSION = 5
 LAB_ROOT = Path(__file__).resolve().parents[1]
 WORK_ROOT = LAB_ROOT / "work"
 REPOSITORY_ROOT = LAB_ROOT.parents[1]
@@ -158,8 +168,12 @@ def encode_surface_structure(structure: dict[str, Any]) -> bytes:
 def encode_room_record(room: dict[str, Any]) -> bytes:
     encoded = bytearray(room["header"])
     for command in room["commands"]:
-        encoded.extend((command["opcode"], command["linkedRoomOrBehaviour"], command["xMiddle"], command["zMiddle"]))
+        encoded.extend((command["opcode"], command["linkedRoom"], command["xMiddle"], command["zMiddle"]))
     encoded.append(room["terminator"])
+    special = room.get("specialSetup")
+    if special:
+        for alternate in special["alternates"]:
+            encoded.extend((alternate["room"], alternate["arrivalCommandIndex"] << ARRIVAL_INDEX_SHIFT))
     return bytes(encoded)
 
 
@@ -330,7 +344,28 @@ def decode_surface_structure(data: bytes, *, address: int) -> dict[str, Any]:
     return result
 
 
-def decode_room_record(data: bytes, *, address: int) -> dict[str, Any]:
+def decode_room_record(
+    data: bytes,
+    *,
+    address: int,
+    special_pairs: int = SPECIAL_PAIRS_PREVIOUS,
+    special_selector: str = "previousRoom",
+) -> dict[str, Any]:
+    """One Room record: its header, its Doorway commands, and its terminator.
+
+    The terminator says two things at once. Zero ends the record; ``$80`` ends it
+    *and* marks the Room dark, because the setup routine tests the same byte for
+    both and falls through to the end after clearing the Room's colours. Darkness
+    is therefore not a separate field in the Reference Build's data and is not
+    decoded from anywhere else — it is this byte.
+
+    A command's byte packs three fields. Bit 7 is the plane, the low nibble is the
+    door's shape and its lock class at once, and bits 4-6 name which of the
+    *destination* Room's own commands the player arrives in. That last field is
+    the only part of a record the engine ever rewrites at runtime, and the
+    special-setup families carry the values it rewrites them to in a table past
+    the terminator.
+    """
     _need(data, 6, f"underground room at ${address:04X}")
     header = list(data[:5])
     position = 5
@@ -350,16 +385,49 @@ def decode_room_record(data: bytes, *, address: int) -> dict[str, Any]:
             {
                 "geometryIdentity": f"room-record:{address:04x}:command:{len(commands):02x}",
                 "opcode": opcode,
-                "primitiveIndex": opcode & 0x0F,
-                "plane": "zy" if opcode & 0x80 else "xy",
-                "linkedRoomOrBehaviour": raw[1],
+                "primitiveIndex": opcode & SHAPE_MASK,
+                "plane": "zy" if opcode & PLANE_MASK else "xy",
+                "arrivalCommandIndex": (opcode & ARRIVAL_INDEX_MASK) >> ARRIVAL_INDEX_SHIFT,
+                "linkedRoom": raw[1],
                 "xMiddle": raw[2],
                 "zMiddle": raw[3],
                 "rawHex": raw.hex(),
                 "provenanceRefs": [f"span:{address:04x}-{address + position - 1:04x}"],
-                "uncertainties": ["opcode-high-bits", "linked-room-or-behaviour"],
+                "uncertainties": [],
             }
         )
+    special = None
+    if header[0] & 0x80:
+        if special_selector not in {"random", "previousRoom"}:
+            raise LabError(f"Unknown special-setup selector {special_selector!r}")
+        _need(data, position + special_pairs * 2, f"underground room pair table at ${address:04X}")
+        alternates = []
+        for index in range(special_pairs):
+            room_byte, index_byte = data[position], data[position + 1]
+            if index_byte & ~ARRIVAL_INDEX_MASK & 0xFF:
+                raise LabError(
+                    f"Room record ${address:04X} pair {index} carries {index_byte:#04x}, "
+                    "which is not a bare arrival index"
+                )
+            if room_byte >= 192:
+                raise LabError(f"Room record ${address:04X} pair {index} names Room {room_byte}, which does not exist")
+            alternates.append(
+                {
+                    "geometryIdentity": f"room-record:{address:04x}:alternate:{index:02x}",
+                    "room": room_byte,
+                    "arrivalCommandIndex": (index_byte & ARRIVAL_INDEX_MASK) >> ARRIVAL_INDEX_SHIFT,
+                    "provenanceRefs": [f"span:{address + position:04x}-{address + position + 1:04x}"],
+                }
+            )
+            position += 2
+        special = {"selector": special_selector, "alternates": alternates}
+    entry_value = header[1] >> 3
+    if entry_value == 0:
+        entry = None
+    elif header[2] & 0x80:
+        entry = {"script": entry_value}
+    else:
+        entry = {"message": entry_value}
     consumed = data[:position]
     result = {
         "geometryIdentity": f"room-record:{address:04x}",
@@ -369,6 +437,9 @@ def decode_room_record(data: bytes, *, address: int) -> dict[str, Any]:
         "header": header,
         "commands": commands,
         "terminator": terminator,
+        "dark": terminator == 0x80,
+        "entry": entry,
+        "specialSetup": special,
         "reconstructedHex": "",
         "decoderVersion": DECODER_VERSION,
         "uncertainties": [],
@@ -482,6 +553,83 @@ def expand_room(room: dict[str, Any], templates: list[dict[str, Any]], *, expans
     return {"vertices": vertices, "edges": edges, "bounds": bounds}
 
 
+def _require_room_pair_tables(room_records: list[dict[str, Any]]) -> None:
+    """Confirm the special-setup records are the two shapes the engine reads.
+
+    The record region tiles exactly, so reading the wrong number of pairs would
+    quietly consume a neighbour's header instead of failing. Both shapes are
+    therefore asserted rather than trusted, and so is the fact that exactly one
+    record uses the wider one.
+    """
+    special = [record for record in room_records if record.get("specialSetup")]
+    random_records = [record for record in special if record["specialSetup"]["selector"] == "random"]
+    if len(random_records) != 1:
+        raise LabError(
+            f"Exactly one Room record should select an alternate at random, found {len(random_records)}"
+        )
+    for record in special:
+        expected = SPECIAL_PAIRS_RANDOM if record["specialSetup"]["selector"] == "random" else SPECIAL_PAIRS_PREVIOUS
+        found = len(record["specialSetup"]["alternates"])
+        if found != expected:
+            raise LabError(
+                f"Room record {record['geometryIdentity']} carries {found} alternates rather than {expected}"
+            )
+    ordered = sorted(record["runtimeAddress"] for record in special)
+    if ordered != list(range(ordered[0], ordered[0] + len(ordered))) and len(ordered) > 1:
+        # Contiguity is by record rather than by byte: the addresses ascend without
+        # an ordinary record between them.
+        addresses = sorted(record["runtimeAddress"] for record in room_records)
+        first, last = addresses.index(ordered[0]), addresses.index(ordered[-1])
+        if last - first != len(ordered) - 1:
+            raise LabError("The special-setup Room records are not contiguous in the record region")
+
+
+def _resolve_room_arrivals(room_records: list[dict[str, Any]], room_slots: dict[int, list[int]], ram: bytes) -> None:
+    """Place the player for every Doorway, the way the Room setup does.
+
+    Bits 4-6 of a command name one of the *destination* Room's commands, and the
+    setup routine turns that into a byte offset into the destination's record —
+    ``4n + 7`` — then reads the x byte, the z byte, and that command's own plane
+    bit, which supplies the two low bytes. Altitude is never written.
+
+    The offset is taken against the record rather than against the decoded command
+    list, because one Doorway in our image names an index the destination does not
+    have and the engine reads past its terminator into the next record. Resolving
+    from the raw bytes reproduces where the player actually lands instead of
+    inventing a repair.
+    """
+    pointer_for_room = {
+        room_id: pointer for pointer, room_ids in room_slots.items() for room_id in room_ids
+    }
+    command_counts = {
+        record["runtimeAddress"]: len(record["commands"]) for record in room_records
+    }
+    for record in room_records:
+        for command in record["commands"]:
+            target = command["linkedRoom"]
+            if target == 0:
+                # Zero is the surface to the Room setup, which never reads the index.
+                command["destination"] = {"surface": True}
+                command["arrival"] = None
+                command["arrivalWithinDestination"] = True
+                continue
+            pointer = pointer_for_room[target]
+            index = command["arrivalCommandIndex"]
+            offset = 4 * index + 7
+            _need(ram, pointer + offset + 2, f"arrival for {command['geometryIdentity']}")
+            plane_bit = ram[pointer + offset - 2] & PLANE_MASK
+            command["destination"] = {"room": target}
+            command["arrival"] = {
+                "x": (ram[pointer + offset] << 8) | (plane_bit ^ PLANE_MASK),
+                "z": (ram[pointer + offset + 1] << 8) | plane_bit,
+            }
+            command["arrivalWithinDestination"] = index < command_counts[pointer]
+            if not command["arrivalWithinDestination"]:
+                command["uncertainties"] = sorted(
+                    set(command["uncertainties"]) | {"arrival-index-past-destination"}
+                )
+
+
 def validate_curation(curation: dict[str, Any], identities: Iterable[str]) -> None:
     if curation.get("schemaVersion") != 1 or not isinstance(curation.get("names"), list):
         raise LabError("Curated Name overlay must have schemaVersion 1 and a names array")
@@ -507,7 +655,7 @@ def validate_curation(curation: dict[str, Any], identities: Iterable[str]) -> No
 
 def select_comparison_subjects(dataset: dict[str, Any]) -> dict[str, str]:
     surfaces = [cell for cell in dataset["surface"]["cells"] if cell.get("hasStructure") and cell.get("roadCount", 0) > 0]
-    rooms = [room for room in dataset["underground"]["rooms"] if room.get("hasPortal") and room.get("edgeCount", 0) > 0]
+    rooms = [room for room in dataset["underground"]["rooms"] if room.get("hasDoorway") and room.get("edgeCount", 0) > 0]
     vehicles = [
         instance
         for instance in dataset["objects"]["instances"]
@@ -519,7 +667,7 @@ def select_comparison_subjects(dataset: dict[str, Any]) -> dict[str, str]:
     if not surfaces:
         raise LabError("No surface cell satisfies the road-and-structure comparison rule")
     if not rooms:
-        raise LabError("No underground room satisfies the portal comparison rule")
+        raise LabError("No underground room satisfies the Doorway comparison rule")
     if not vehicles:
         raise LabError("No rotatable vehicle has a verified Curated Name")
     if len(orbitals) != 1:
@@ -773,12 +921,24 @@ def build_dataset(ram: bytes, source: dict[str, Any], curation: dict[str, Any] |
         pointer = ram[0x2300 + room_id] | ram[0x23C0 + room_id] << 8
         room_slots.setdefault(pointer, []).append(room_id)
     templates = decode_primitive_templates(ram)
+    navigation_rules = decode_navigation_rules(ram)
     room_records: list[dict[str, Any]] = []
     for pointer in sorted(room_slots):
-        record = decode_room_record(ram[pointer:], address=pointer)
+        # Only the random Room reads a wider pair table, and it is the routine's own
+        # immediate that says which Room that is, so the record shape follows the
+        # engine rather than a hardcoded id.
+        is_random = navigation_rules["randomRoom"] in room_slots[pointer]
+        record = decode_room_record(
+            ram[pointer:],
+            address=pointer,
+            special_pairs=SPECIAL_PAIRS_RANDOM if is_random else SPECIAL_PAIRS_PREVIOUS,
+            special_selector="random" if is_random else "previousRoom",
+        )
         record["pointerRoomIds"] = room_slots[pointer]
         record["provenanceRefs"] = [f"span:{record['runtimeSpan'][0]:04x}-{record['runtimeSpan'][1]:04x}"]
         room_records.append(record)
+    _require_room_pair_tables(room_records)
+    _resolve_room_arrivals(room_records, room_slots, ram)
     for record in room_records:
         record["overlapsWith"] = [
             other["geometryIdentity"]
@@ -799,7 +959,7 @@ def build_dataset(ram: bytes, source: dict[str, Any], curation: dict[str, Any] |
                 "roomId": room_id,
                 "record": record["geometryIdentity"],
                 "recordPointer": pointer,
-                "hasPortal": any(command["linkedRoomOrBehaviour"] != 0 for command in record["commands"]),
+                "hasDoorway": bool(record["commands"]),
                 "edgeCount": len(expanded["edges"]),
                 "expanded": expanded,
                 "provenanceRefs": ["span:2300-247f", record["geometryIdentity"]],
@@ -867,14 +1027,18 @@ def build_dataset(ram: bytes, source: dict[str, Any], curation: dict[str, Any] |
         },
     }
     underground = {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "primitiveTemplates": templates,
         "records": room_records,
         "rooms": rooms,
+        "navigationRules": navigation_rules,
         "transformContract": {
             "positiveOpcodePlane": "xy",
             "negativeOpcodePlane": "zy",
             "placement": "command xMiddle/zMiddle plus primitive low-byte coordinates",
+            "arrival": navigation_rules["arrivalContract"],
+            "doorwayPredicate": navigation_rules["predicate"],
+            "darkness": "a $80 terminator marks the Room dark unless the photon emitter is carried or present in it",
             "cameraPipeline": ["room-expansion", "camera-relative-translation", "camera-yaw", "perspective", "clip", "ordered-line-draw"],
         },
     }
@@ -898,6 +1062,19 @@ def build_dataset(ram: bytes, source: dict[str, Any], curation: dict[str, Any] |
         "roomIds": len(rooms),
         "roomRecords": len(room_records),
         "roomCommands": sum(len(record["commands"]) for record in room_records),
+        "darkRoomRecords": sum(1 for record in room_records if record["dark"]),
+        "roomEntryScripts": sum(1 for record in room_records if (record["entry"] or {}).get("script") is not None),
+        "roomEntryMessages": sum(1 for record in room_records if (record["entry"] or {}).get("message") is not None),
+        "specialSetupRecords": sum(1 for record in room_records if record["specialSetup"]),
+        "specialSetupAlternates": sum(
+            len(record["specialSetup"]["alternates"]) for record in room_records if record["specialSetup"]
+        ),
+        "lockedRoomCommands": sum(
+            1
+            for record in room_records
+            for command in record["commands"]
+            if lock_for(command["primitiveIndex"], navigation_rules)
+        ),
     }
     expected = {
         "objectSlots": 64,
@@ -909,6 +1086,12 @@ def build_dataset(ram: bytes, source: dict[str, Any], curation: dict[str, Any] |
         "roomIds": 192,
         "roomRecords": 174,
         "roomCommands": 427,
+        "darkRoomRecords": 20,
+        "roomEntryScripts": 23,
+        "roomEntryMessages": 9,
+        "specialSetupRecords": 22,
+        "specialSetupAlternates": 50,
+        "lockedRoomCommands": 53,
     }
     if counts != expected:
         raise LabError(f"World Geometry Dataset aggregate counts differ from the evidence contract: {counts!r}")
