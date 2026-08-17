@@ -121,7 +121,7 @@ public struct Inspector: Sendable {
       let spans = bounds(for: .room(id: id)).map { $0.max - $0.min } ?? .zero
       return Row(
         subject: String(format: "room %02X", id),
-        detail: room.portals.isEmpty ? "sealed" : "\(room.portals.count) linked",
+        detail: room.doorways.isEmpty ? "sealed" : "\(room.doorways.count) linked",
         vertices: room.segments.count * 2,
         edges: room.segments.count,
         spans: spans,

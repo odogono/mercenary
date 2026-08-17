@@ -6,12 +6,12 @@ import XCTest
 /// the shapes are what matter.
 enum PayloadFixture {
   static let manifest = """
-    {"schemaVersion":5,"sourceDatasetId":"world-geometry-test","sourceCoreDigest":"\(String(repeating: "a", count: 64))",
-     "decoderVersion":4,"counts":{"cells":2,"models":1,"instances":2}}
+    {"schemaVersion":\(Payload.supportedSchemaVersion),"sourceDatasetId":"world-geometry-test","sourceCoreDigest":"\(String(repeating: "a", count: 64))",
+     "decoderVersion":\(Payload.supportedDecoderVersion),"counts":{"cells":2,"models":1,"instances":2}}
     """
 
   static let world = """
-    {"schemaVersion":5,"grid":{"cellsPerAxis":4,"cellSize":1000},
+    {"schemaVersion":\(Payload.supportedSchemaVersion),"grid":{"cellsPerAxis":4,"cellSize":1000},
      "bounds":{"min":[0,0,0],"max":[4000,500,4000]},
      "roadAltitudeLookup":[0,1],
      "roadCells":[
@@ -23,7 +23,7 @@ enum PayloadFixture {
     """
 
   static let surface = """
-    {"schemaVersion":5,"cells":[
+    {"schemaVersion":\(Payload.supportedSchemaVersion),"cells":[
       {"cell":0,"grid":[0,0],"structure":"surface-structure:test",
        "vertices":[
          {"kind":"world-point","position":[0,0,0]},
@@ -38,7 +38,7 @@ enum PayloadFixture {
     """
 
   static let objects = """
-    {"schemaVersion":5,
+    {"schemaVersion":\(Payload.supportedSchemaVersion),
      "models":[{"id":"object-model:test","vertices":[[-10,-100,-10],[10,-100,-10]],
                 "edges":[[0,1]]}],
      "instances":[
@@ -50,14 +50,34 @@ enum PayloadFixture {
         "visibility":{"detailCubePerAxis":65536,"farRepresentation":"point"}}]}
     """
 
+  static let doorwayRules = """
+    {"depthHalfWindow":64,"alongWallBias":40,"headingRounding":2,"lockBoundary":8,
+     "keySlotBias":8,"skeletonKeySlot":48,"photonEmitterSlot":16,"lockedMessage":0,
+     "darkMessage":1,"lineColour":1,"cooldownFrames":10,"worldFlipCooldownFrames":31,
+     "randomRoom":114,"worldFlipRoom":127}
+    """
+
   static let rooms = """
     {"schemaVersion":\(Payload.supportedSchemaVersion),
+     "doorwayRules":\(doorwayRules),
      "rooms":[
        {"room":0,"vertices":[[0,0,0],[4096,0,0],[4096,1024,0]],"edges":[[0,1],[1,2]],
-        "bounds":{"min":[0,0,0],"max":[4096,1024,0]},"palette":{"background":6,"foreground":14},"hasPortal":true,
-        "portals":[{"linked":88,"plane":"zy","xMiddle":16,"zMiddle":12}]},
+        "bounds":{"min":[0,0,0],"max":[4096,1024,0]},"palette":{"background":6,"foreground":14},
+        "dark":false,"entry":{"message":9},"specialSetup":null,
+        "doorways":[{"index":0,"shape":9,"plane":"zy","position":{"x":4096,"z":3072},
+          "destination":{"room":88},"arrivalCommandIndex":1,"arrival":{"x":2176,"z":256},
+          "arrivalWithinDestination":true,"lock":{"class":9,"requiresObject":17}}]},
        {"room":1,"vertices":[[0,0,0],[512,0,0]],"edges":[[0,1]],
-        "bounds":{"min":[0,0,0],"max":[512,0,0]},"palette":{"background":0,"foreground":1},"hasPortal":false,"portals":[]}]}
+        "bounds":{"min":[0,0,0],"max":[512,0,0]},"palette":{"background":0,"foreground":1},
+        "dark":true,"entry":null,"specialSetup":null,"doorways":[]},
+       {"room":2,"vertices":[[0,0,0],[768,0,0]],"edges":[[0,1]],
+        "bounds":{"min":[0,0,0],"max":[768,0,0]},"palette":{"background":0,"foreground":7},
+        "dark":false,"entry":{"script":23},
+        "specialSetup":{"selector":"previousRoom","alternates":[
+          {"room":86,"arrivalCommandIndex":0},{"room":86,"arrivalCommandIndex":0}]},
+        "doorways":[{"index":0,"shape":2,"plane":"xy","position":{"x":0,"z":768},
+          "destination":{"surface":true},"arrivalCommandIndex":0,"arrival":null,
+          "arrivalWithinDestination":true,"lock":null}]}]}
     """
 
   static let underground = """
@@ -188,22 +208,34 @@ final class PayloadTests: XCTestCase {
   func testAFutureSchemaIsRejectedRatherThanMisread() throws {
     try PayloadFixture.write(
       into: directory,
-      world: PayloadFixture.world.replacingOccurrences(of: "\"schemaVersion\":5", with: "\"schemaVersion\":6")
+      world: PayloadFixture.world.replacingOccurrences(
+        of: "\"schemaVersion\":\(Payload.supportedSchemaVersion)",
+        with: "\"schemaVersion\":\(Payload.supportedSchemaVersion + 1)"
+      )
     )
 
     XCTAssertThrowsError(try Payload.load(from: directory)) { error in
-      XCTAssertEqual(error as? Payload.LoadError, .unsupportedSchema("world.json", 6))
+      XCTAssertEqual(
+        error as? Payload.LoadError,
+        .unsupportedSchema("world.json", Payload.supportedSchemaVersion + 1)
+      )
     }
   }
 
-  func testSchemaFourRequiresAReexport() throws {
+  func testAStaleSchemaRequiresAReexport() throws {
     try PayloadFixture.write(
       into: directory,
-      manifest: PayloadFixture.manifest.replacingOccurrences(of: "\"schemaVersion\":5", with: "\"schemaVersion\":4")
+      manifest: PayloadFixture.manifest.replacingOccurrences(
+        of: "\"schemaVersion\":\(Payload.supportedSchemaVersion)",
+        with: "\"schemaVersion\":\(Payload.supportedSchemaVersion - 1)"
+      )
     )
 
     XCTAssertThrowsError(try Payload.load(from: directory)) { error in
-      XCTAssertEqual(error as? Payload.LoadError, .unsupportedSchema("manifest.json", 4))
+      XCTAssertEqual(
+        error as? Payload.LoadError,
+        .unsupportedSchema("manifest.json", Payload.supportedSchemaVersion - 1)
+      )
     }
   }
 
@@ -211,12 +243,13 @@ final class PayloadTests: XCTestCase {
     try PayloadFixture.write(
       into: directory,
       manifest: PayloadFixture.manifest.replacingOccurrences(
-        of: "\"decoderVersion\":4", with: "\"decoderVersion\":3"
+        of: "\"decoderVersion\":\(Payload.supportedDecoderVersion)",
+        with: "\"decoderVersion\":\(Payload.supportedDecoderVersion - 1)"
       )
     )
 
     XCTAssertThrowsError(try Payload.load(from: directory)) { error in
-      XCTAssertEqual(error as? Payload.LoadError, .unsupportedDecoder(3))
+      XCTAssertEqual(error as? Payload.LoadError, .unsupportedDecoder(Payload.supportedDecoderVersion - 1))
     }
   }
 

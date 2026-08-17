@@ -23,6 +23,7 @@ from .geometry import (
     load_json,
     verify_dataset,
 )
+from .navigation import lock_for
 from .benson import decode_benson
 from .flight import decode_flight
 from .interaction import decode_interaction
@@ -30,7 +31,7 @@ from .underground import decode_underground
 from .text import decode_text
 
 
-PAYLOAD_SCHEMA_VERSION = 5
+PAYLOAD_SCHEMA_VERSION = 6
 PAYLOAD_ROOT = Path(__file__).resolve().parents[3] / "payload"
 CELLS_PER_AXIS = 16
 CELL_SIZE = 0x10000
@@ -135,14 +136,24 @@ def build_rooms(underground: dict[str, Any]) -> dict[str, Any]:
     expands a room's drawing commands into points before drawing anything, and the
     dataset has already done that, so this only has to carry the result across.
 
-    A room's ``portals`` are the commands whose linked byte names another room. The
-    Reference Build packs a room link and a behaviour into that one byte and the
-    dataset does not claim to know which is which, so both readings travel and the
-    app decides — the uncertainty is carried rather than resolved here.
+    A **Doorway** is one opening belonging to one Room, and its **Room Link** is the
+    directed destination it names. Both travel here already resolved: the decoder has
+    settled the destination, the lock class, and where the player arrives, so the app
+    never sees a raw opcode. Doorways are written out per Room rather than per record
+    even though nineteen Rooms share one record, because a Doorway belongs to a Room
+    and the duplication is cheaper than making the app resolve the sharing.
+
+    Every Room Link is directed and one-way links are real: nothing here pairs a
+    Doorway with a Doorway in the other direction, and no reverse link is invented.
     """
     # A room names its record by identity rather than carrying it, and several
     # rooms share one record, so the commands are looked up rather than inlined.
     records = {record["geometryIdentity"]: record for record in underground.get("records", [])}
+    rules = underground.get("navigationRules")
+    _require(
+        isinstance(rules, dict) and "lockBoundary" in rules,
+        "The underground dataset carries no navigation rules; re-extract it",
+    )
     rooms: list[dict[str, Any]] = []
     for room in underground["rooms"]:
         expanded = room.get("expanded")
@@ -173,15 +184,26 @@ def build_rooms(underground: dict[str, Any]) -> dict[str, Any]:
             and 0 <= background <= 15 and 0 <= foreground <= 15,
             f"Room {room['roomId']} palette is outside the C64 colour range",
         )
-        portals = [
-            {
-                "linked": command["linkedRoomOrBehaviour"],
-                "plane": command["plane"],
-                "xMiddle": command["xMiddle"],
-                "zMiddle": command["zMiddle"],
-            }
-            for command in record.get("commands", [])
-        ]
+        doorways = []
+        for index, command in enumerate(record.get("commands", [])):
+            _require(
+                isinstance(command.get("destination"), dict) and "arrival" in command,
+                f"Room {room['roomId']} doorway {index} has no resolved destination; re-extract the dataset",
+            )
+            doorways.append(
+                {
+                    "index": index,
+                    "shape": command["primitiveIndex"],
+                    "plane": command["plane"],
+                    "position": {"x": command["xMiddle"] << 8, "z": command["zMiddle"] << 8},
+                    "destination": dict(command["destination"]),
+                    "arrivalCommandIndex": command["arrivalCommandIndex"],
+                    "arrival": dict(command["arrival"]) if command["arrival"] else None,
+                    "arrivalWithinDestination": bool(command["arrivalWithinDestination"]),
+                    "lock": lock_for(command["primitiveIndex"], rules),
+                }
+            )
+        special = record.get("specialSetup")
         rooms.append(
             {
                 "room": room["roomId"],
@@ -189,12 +211,62 @@ def build_rooms(underground: dict[str, Any]) -> dict[str, Any]:
                 "edges": edges,
                 "bounds": {"min": list(bounds["min"]), "max": list(bounds["max"])},
                 "palette": {"background": background, "foreground": foreground},
-                "hasPortal": bool(room.get("hasPortal")),
-                "portals": portals,
+                "dark": bool(record.get("dark")),
+                "entry": dict(record["entry"]) if record.get("entry") else None,
+                "specialSetup": (
+                    {
+                        "selector": special["selector"],
+                        "alternates": [
+                            {"room": alternate["room"], "arrivalCommandIndex": alternate["arrivalCommandIndex"]}
+                            for alternate in special["alternates"]
+                        ],
+                    }
+                    if special
+                    else None
+                ),
+                "doorways": doorways,
             }
         )
     _require(bool(rooms), "The underground dataset carries no rooms")
-    return {"schemaVersion": PAYLOAD_SCHEMA_VERSION, "rooms": rooms}
+    return {
+        "schemaVersion": PAYLOAD_SCHEMA_VERSION,
+        "doorwayRules": _doorway_rules(rules),
+        "rooms": rooms,
+    }
+
+
+#: The navigation rules the app needs, which is not everything the decode records:
+#: the dataset keeps the site prose and the masks it used to read the fields, and
+#: only the values that govern behaviour travel.
+_DOORWAY_RULE_FIELDS = (
+    "depthHalfWindow",
+    "alongWallBias",
+    "headingRounding",
+    "lockBoundary",
+    "keySlotBias",
+    "skeletonKeySlot",
+    "photonEmitterSlot",
+    "lockedMessage",
+    "darkMessage",
+    "lineColour",
+    "cooldownFrames",
+    "worldFlipCooldownFrames",
+    "randomRoom",
+    "worldFlipRoom",
+)
+
+
+def _doorway_rules(rules: dict[str, Any]) -> dict[str, Any]:
+    """Traversal constants, every one an immediate read out of the Reference Build.
+
+    ``lineColour`` is the odd one here and belongs to no Doorway: it is the third of
+    the three colours darkness clears, and there is no per-Room source for it — every
+    Room setup stores the same immediate — so it rides with the rules rather than
+    pretending to be part of a Room's palette.
+    """
+    missing = [name for name in _DOORWAY_RULE_FIELDS if name not in rules]
+    _require(not missing, f"The dataset's navigation rules are missing {missing!r}")
+    return {name: rules[name] for name in _DOORWAY_RULE_FIELDS}
 
 
 def render_room_map_svg(rooms: list[dict[str, Any]]) -> tuple[str, dict[str, int]]:
@@ -205,12 +277,13 @@ def render_room_map_svg(rooms: list[dict[str, Any]]) -> tuple[str, dict[str, int
     there is instead is each room's own plan, laid out in a grid, with its links
     written on it, which is what makes a topology mistake visible.
 
-    A link's target is drawn differently when the target does not link back. All of
-    them land on real room ids and most reciprocate, which is the evidence that the
-    byte really is a room link rather than the behaviour it might equally have been;
-    the one-way ones are the cases worth looking at.
+    A Doorway is drawn differently when the room it leads to has no Doorway back.
+    These counts are per Doorway, not per link: two openings between the same pair of
+    rooms are two Doorways and one Room Link, and the single Doorway onto the surface
+    is counted here but is not a Room Link at all. The payload manifest counts links
+    instead, which is why its one-way total is the smaller of the two.
     """
-    links = {room["room"]: [portal["linked"] for portal in room["portals"]] for room in rooms}
+    links = {room["room"]: [_link_target(door) for door in room["doorways"]] for room in rooms}
     known = set(links)
 
     columns = 12
@@ -235,8 +308,9 @@ def render_room_map_svg(rooms: list[dict[str, Any]]) -> tuple[str, dict[str, int
         '.w{stroke:#cfe0f5;stroke-width:1.2;fill:none}'
         '.d{fill:#5ad18a}.o{fill:#e0913f}</style>',
         f'<text class="id" x="{pad}" y="24">underground rooms: {len(rooms)}</text>',
-        f'<text x="{pad}" y="43" font-size="11">{total} links, {total - one_way} reciprocal, '
-        f'{one_way} one-way &#183; a green doorway links both ways, an orange one does not</text>',
+        f'<text x="{pad}" y="43" font-size="11">{total} doorways, {total - one_way} answered, '
+        f'{one_way} unanswered &#183; a green doorway leads to a room with a doorway '
+        f'back, an orange one does not</text>',
         f'<text x="{pad}" y="60" font-size="11">each tile is one room seen from above in its own '
         f'coordinates, so a corridor reads as a line; labels are the rooms linked to</text>',
     ]
@@ -265,11 +339,11 @@ def render_room_map_svg(rooms: list[dict[str, Any]]) -> tuple[str, dict[str, int
             parts.append(f'<line class="w" x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}"/>')
 
         parts.append(f'<text class="id" x="{pad}" y="13">{room["room"]:02X}</text>')
-        for order, portal in enumerate(room["portals"]):
-            target = portal["linked"]
+        for order, door in enumerate(room["doorways"]):
+            target = _link_target(door)
             mutual = target in known and room["room"] in links[target]
-            # The doorway's own position within the room, in middle bytes.
-            x, y = place(portal["xMiddle"] << 8, portal["zMiddle"] << 8)
+            # The doorway's own position within the room.
+            x, y = place(door["position"]["x"], door["position"]["z"])
             parts.append(
                 f'<rect class="{"d" if mutual else "o"}" x="{x - 2.5:.1f}" y="{y - 2.5:.1f}" width="5" height="5"/>'
             )
@@ -280,8 +354,18 @@ def render_room_map_svg(rooms: list[dict[str, Any]]) -> tuple[str, dict[str, int
         parts.append("</g>")
 
     parts.append("</svg>")
-    counts = {"rooms": len(rooms), "links": total, "oneWayLinks": one_way}
+    counts = {"rooms": len(rooms), "doorways": total, "unansweredDoorways": one_way}
     return "\n".join(parts), counts
+
+
+def _link_target(door: dict[str, Any]) -> int:
+    """A Doorway's destination as a room id, with the surface reading as zero.
+
+    Only the checking maps use this. They draw the underground as rooms and links,
+    and the one Doorway that leads outside has no tile to point at, so it keeps the
+    id the Reference Build itself uses for the surface.
+    """
+    return int(door["destination"].get("room", 0))
 
 
 #: Which way a doorway on each wall leads, in room steps.
@@ -299,8 +383,8 @@ def _doorways(room: dict[str, Any]) -> list[tuple[str, int]]:
     """
     high = room["bounds"]["max"]
     found: list[tuple[str, int]] = []
-    for portal in room["portals"]:
-        x, z = portal["xMiddle"] << 8, portal["zMiddle"] << 8
+    for door in room["doorways"]:
+        x, z = door["position"]["x"], door["position"]["z"]
         walls = []
         if x == 0:
             walls.append("west")
@@ -311,7 +395,7 @@ def _doorways(room: dict[str, Any]) -> list[tuple[str, int]]:
         if z == high[2]:
             walls.append("south")
         for wall in walls:
-            found.append((wall, portal["linked"]))
+            found.append((wall, _link_target(door)))
     return found
 
 
@@ -332,9 +416,9 @@ def _lay_out(rooms: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
     by_id = {room["room"]: room for room in rooms}
     ways = {
         room["room"]: [
-            (wall, portal["linked"], portal["xMiddle"] << 8, portal["zMiddle"] << 8)
-            for portal in room["portals"]
-            for wall, target in [(w, t) for w, t in _doorways(room) if t == portal["linked"]][:1]
+            (wall, _link_target(door), door["position"]["x"], door["position"]["z"])
+            for door in room["doorways"]
+            for wall, target in [(w, t) for w, t in _doorways(room) if t == _link_target(door)][:1]
         ]
         for room in rooms
     }
@@ -410,7 +494,7 @@ def render_room_plan_svg(rooms: list[dict[str, Any]]) -> tuple[str, dict[str, in
     """
     laid, overlaps = _lay_out(rooms)
     doors = {entry["room"]["room"]: _doorways(entry["room"]) for entry in laid}
-    links = {room["room"]: [portal["linked"] for portal in room["portals"]] for room in rooms}
+    links = {room["room"]: [_link_target(door) for door in room["doorways"]] for room in rooms}
     known = set(links)
 
     groups: dict[int, list[dict[str, Any]]] = {}
@@ -629,6 +713,56 @@ def capture_counts(documents: dict[str, Any]) -> dict[str, int]:
     }
 
 
+#: What the Reference Build's own underground adds up to, asserted on every export.
+#:
+#: ``oneWayRoomLinks`` is the number the issue put at 83. Our own image says 82
+#: Room-to-Room links go unanswered, plus the single Doorway to the surface, for
+#: which reciprocity is undefined because the surface is not a Room. Both readings
+#: are defensible and the two are counted apart here so the number does not depend
+#: on which one a reader has in mind. Fifty-seven of the 82 come from the one record
+#: nineteen Rooms share, which is why this looks like a decode fault and is not one.
+ROOM_LINK_CONTRACT = {
+    "doorways": 481,
+    "lockedDoorways": 53,
+    "darkRooms": 20,
+    "roomLinks": 478,
+    "oneWayRoomLinks": 82,
+    "surfaceDoorways": 1,
+    "unresolvedArrivals": 1,
+}
+
+
+def _room_link_counts(rooms: list[dict[str, Any]]) -> dict[str, int]:
+    """What the exported Doorways add up to, recorded in the payload manifest.
+
+    ``oneWayRoomLinks`` counts distinct Room-to-Room links whose destination does
+    not link back. The one Doorway that leads to the surface is counted on its own
+    instead: reciprocity is a relation between two Rooms, and the surface is not a
+    Room, so folding it in would make the number depend on a definition rather than
+    on the data.
+    """
+    targets: dict[int, set[int]] = {}
+    surface = 0
+    for room in rooms:
+        for door in room["doorways"]:
+            if "room" in door["destination"]:
+                targets.setdefault(room["room"], set()).add(door["destination"]["room"])
+            else:
+                surface += 1
+    links = {(source, target) for source, group in targets.items() for target in group}
+    return {
+        "doorways": sum(len(room["doorways"]) for room in rooms),
+        "lockedDoorways": sum(1 for room in rooms for door in room["doorways"] if door["lock"]),
+        "darkRooms": sum(1 for room in rooms if room["dark"]),
+        "roomLinks": len(links),
+        "oneWayRoomLinks": sum(1 for source, target in links if source not in targets.get(target, ())),
+        "surfaceDoorways": surface,
+        "unresolvedArrivals": sum(
+            1 for room in rooms for door in room["doorways"] if not door["arrivalWithinDestination"]
+        ),
+    }
+
+
 def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict[str, Any]:
     """Write the Data Payload for one verified World Geometry Dataset.
 
@@ -664,6 +798,11 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
         path.write_text(json.dumps(document, separators=(",", ":"), sort_keys=True) + "\n", encoding="utf-8")
         files.append({"path": name, "sha256": file_hash(path), "size": path.stat().st_size})
 
+    links = _room_link_counts(documents["rooms.json"]["rooms"])
+    _require(
+        links == ROOM_LINK_CONTRACT,
+        f"Exported Doorways differ from the evidence contract: {links!r}",
+    )
     surface_document = documents["surface.json"]
     counts = {
         "cells": len(surface_document["cells"]),
@@ -676,6 +815,7 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
         "instances": len(documents["objects.json"]["instances"]),
         "rooms": len(documents["rooms.json"]["rooms"]),
         "roomEdges": sum(len(room["edges"]) for room in documents["rooms.json"]["rooms"]),
+        **links,
         **capture_counts(documents),
     }
     payload_manifest = {

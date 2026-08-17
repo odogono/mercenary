@@ -131,13 +131,123 @@ public enum Payload {
         public var foreground: Int
       }
 
-      /// A way through to somewhere else, or a behaviour — the Reference Build packs
-      /// both into one byte and the decode does not claim to know which is which.
-      public struct Portal: Codable, Sendable, Equatable {
-        public var linked: Int
+      /// One opening in this room's wall, and the directed Room Link it carries.
+      ///
+      /// A Doorway belongs to exactly one room. Two rooms that face each other have
+      /// two Doorways and two Room Links, which is why a one-way link needs no
+      /// special case: the room on the other side simply has no Doorway back. The
+      /// decoder resolved every field here, so nothing in the app reads an opcode.
+      public struct Doorway: Codable, Sendable, Equatable {
+        /// Where a Doorway leads. The surface is not a room, so it is its own case
+        /// rather than a room id of zero.
+        public enum Destination: Sendable, Equatable {
+          case room(Int)
+          case surface
+        }
+
+        /// What a Doorway demands before it opens: a lock class, and the object slot
+        /// that satisfies it. The skeleton key overrides every one of them.
+        public struct Lock: Codable, Sendable, Equatable {
+          public var `class`: Int
+          public var requiresObject: Int
+        }
+
+        public struct Point: Codable, Sendable, Equatable {
+          public var x: Int
+          public var z: Int
+        }
+
+        public var index: Int
+        /// The door's shape, which is also its lock class when it has one.
+        public var shape: Int
         public var plane: String
-        public var xMiddle: Int
-        public var zMiddle: Int
+        public var position: Point
+        public var destination: Destination
+        /// Which of the destination room's own Doorways the player arrives in.
+        public var arrivalCommandIndex: Int
+        /// Where the player lands, already resolved. Absent for the surface, which
+        /// the Reference Build places from its own start position instead.
+        public var arrival: Point?
+        /// False for the one Doorway whose arrival index names a Doorway its
+        /// destination does not have; the Reference Build reads past that room's
+        /// record and lands the player outside it.
+        public var arrivalWithinDestination: Bool
+        public var lock: Lock?
+
+        private enum CodingKeys: String, CodingKey {
+          case index, shape, plane, position, destination, arrivalCommandIndex, arrival
+          case arrivalWithinDestination, lock
+        }
+
+        private struct DestinationBox: Codable {
+          var room: Int?
+          var surface: Bool?
+        }
+
+        public init(from decoder: Swift.Decoder) throws {
+          let values = try decoder.container(keyedBy: CodingKeys.self)
+          index = try values.decode(Int.self, forKey: .index)
+          shape = try values.decode(Int.self, forKey: .shape)
+          plane = try values.decode(String.self, forKey: .plane)
+          position = try values.decode(Point.self, forKey: .position)
+          arrivalCommandIndex = try values.decode(Int.self, forKey: .arrivalCommandIndex)
+          arrival = try values.decodeIfPresent(Point.self, forKey: .arrival)
+          arrivalWithinDestination = try values.decode(Bool.self, forKey: .arrivalWithinDestination)
+          lock = try values.decodeIfPresent(Lock.self, forKey: .lock)
+          let box = try values.decode(DestinationBox.self, forKey: .destination)
+          switch (box.room, box.surface) {
+          case (let id?, nil): destination = .room(id)
+          case (nil, true): destination = .surface
+          default:
+            throw DecodingError.dataCorruptedError(
+              forKey: .destination,
+              in: values,
+              debugDescription: "A Doorway must name exactly one of a room or the surface"
+            )
+          }
+        }
+
+        public func encode(to encoder: Swift.Encoder) throws {
+          var values = encoder.container(keyedBy: CodingKeys.self)
+          try values.encode(index, forKey: .index)
+          try values.encode(shape, forKey: .shape)
+          try values.encode(plane, forKey: .plane)
+          try values.encode(position, forKey: .position)
+          try values.encode(arrivalCommandIndex, forKey: .arrivalCommandIndex)
+          try values.encodeIfPresent(arrival, forKey: .arrival)
+          try values.encode(arrivalWithinDestination, forKey: .arrivalWithinDestination)
+          try values.encodeIfPresent(lock, forKey: .lock)
+          switch destination {
+          case .room(let id): try values.encode(DestinationBox(room: id, surface: nil), forKey: .destination)
+          case .surface: try values.encode(DestinationBox(room: nil, surface: true), forKey: .destination)
+          }
+        }
+      }
+
+      /// What entering a room sets off. The Reference Build chooses between these two
+      /// on one header bit, so they are alternatives rather than independent fields.
+      public enum Entry: Sendable, Equatable {
+        case script(Int)
+        case message(Int)
+      }
+
+      /// A room whose one Doorway the Reference Build rewrites on arrival, and the
+      /// destinations it rewrites it to.
+      public struct SpecialSetup: Codable, Sendable, Equatable {
+        public enum Selector: String, Codable, Sendable {
+          /// Chosen at random on every arrival.
+          case random
+          /// Chosen by which room the player came from.
+          case previousRoom
+        }
+
+        public struct Alternate: Codable, Sendable, Equatable {
+          public var room: Int
+          public var arrivalCommandIndex: Int
+        }
+
+        public var selector: Selector
+        public var alternates: [Alternate]
       }
 
       public struct Bounds: Codable, Sendable, Equatable {
@@ -151,11 +261,92 @@ public enum Payload {
       public var edges: [[Int]]
       public var bounds: Bounds
       public var palette: Palette
-      public var hasPortal: Bool
-      public var portals: [Portal]
+      /// Dark unless the photon emitter is carried or lying in this room. In the
+      /// Reference Build this is the record's terminator rather than a field of its
+      /// own, which is why every other room states it too.
+      public var dark: Bool
+      public var entry: Entry?
+      public var specialSetup: SpecialSetup?
+      public var doorways: [Doorway]
+
+      private enum CodingKeys: String, CodingKey {
+        case room, vertices, edges, bounds, palette, dark, entry, specialSetup, doorways
+      }
+
+      private struct EntryBox: Codable {
+        var script: Int?
+        var message: Int?
+      }
+
+      public init(from decoder: Swift.Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        room = try values.decode(Int.self, forKey: .room)
+        vertices = try values.decode([[Int]].self, forKey: .vertices)
+        edges = try values.decode([[Int]].self, forKey: .edges)
+        bounds = try values.decode(Bounds.self, forKey: .bounds)
+        palette = try values.decode(Palette.self, forKey: .palette)
+        dark = try values.decode(Bool.self, forKey: .dark)
+        specialSetup = try values.decodeIfPresent(SpecialSetup.self, forKey: .specialSetup)
+        doorways = try values.decode([Doorway].self, forKey: .doorways)
+        switch try values.decodeIfPresent(EntryBox.self, forKey: .entry) {
+        case nil: entry = nil
+        case .some(let box):
+          switch (box.script, box.message) {
+          case (let script?, nil): entry = .script(script)
+          case (nil, let message?): entry = .message(message)
+          default:
+            throw DecodingError.dataCorruptedError(
+              forKey: .entry,
+              in: values,
+              debugDescription: "A room's entry must be exactly one of a script or a message"
+            )
+          }
+        }
+      }
+
+      public func encode(to encoder: Swift.Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(room, forKey: .room)
+        try values.encode(vertices, forKey: .vertices)
+        try values.encode(edges, forKey: .edges)
+        try values.encode(bounds, forKey: .bounds)
+        try values.encode(palette, forKey: .palette)
+        try values.encode(dark, forKey: .dark)
+        try values.encodeIfPresent(specialSetup, forKey: .specialSetup)
+        try values.encode(doorways, forKey: .doorways)
+        switch entry {
+        case nil: break
+        case .script(let script): try values.encode(EntryBox(script: script, message: nil), forKey: .entry)
+        case .message(let message): try values.encode(EntryBox(script: nil, message: message), forKey: .entry)
+        }
+      }
+    }
+
+    /// The traversal constants, every one an immediate read out of the Reference
+    /// Build rather than a number chosen here.
+    ///
+    /// ``lineColour`` belongs to no Doorway: it is the third of the three colours
+    /// darkness clears, and no room carries it, because every room setup stores the
+    /// same immediate.
+    public struct DoorwayRules: Codable, Sendable, Equatable {
+      public var depthHalfWindow: Int
+      public var alongWallBias: Int
+      public var headingRounding: Int
+      public var lockBoundary: Int
+      public var keySlotBias: Int
+      public var skeletonKeySlot: Int
+      public var photonEmitterSlot: Int
+      public var lockedMessage: Int
+      public var darkMessage: Int
+      public var lineColour: Int
+      public var cooldownFrames: Int
+      public var worldFlipCooldownFrames: Int
+      public var randomRoom: Int
+      public var worldFlipRoom: Int
     }
 
     public var schemaVersion: Int
+    public var doorwayRules: DoorwayRules
     public var rooms: [Room]
 
     public func room(_ id: Int) -> Room? {
@@ -289,8 +480,8 @@ public enum Payload {
     }
   }
 
-  public static let supportedSchemaVersion = 5
-  public static let supportedDecoderVersion = 4
+  public static let supportedSchemaVersion = 6
+  public static let supportedDecoderVersion = 5
   /// The text document carries its own version, because its format is
   /// independent of the geometry documents and changes on its own schedule.
   public static let supportedTextSchemaVersion = 1
