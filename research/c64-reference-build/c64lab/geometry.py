@@ -21,7 +21,7 @@ from .navigation import (
 )
 
 
-DECODER_VERSION = 6
+DECODER_VERSION = 7
 LAB_ROOT = Path(__file__).resolve().parents[1]
 WORK_ROOT = LAB_ROOT / "work"
 REPOSITORY_ROOT = LAB_ROOT.parents[1]
@@ -608,8 +608,10 @@ def _resolve_room_arrivals(room_records: list[dict[str, Any]], room_slots: dict[
         for command in record["commands"]:
             target = command["linkedRoom"]
             if target == 0:
-                # Zero is the surface to the Room setup, which never reads the index.
-                command["destination"] = {"surface": True}
+                # Zero is not Room zero. Room setup branches on it before it reads any
+                # record and leaves the underground entirely, at the colony craft's own
+                # position; the arrival index is never read on that path.
+                command["destination"] = {"colonyCraft": True}
                 command["arrival"] = None
                 command["arrivalWithinDestination"] = True
                 continue
@@ -640,7 +642,7 @@ def _resolve_room_arrivals(room_records: list[dict[str, Any]], room_slots: dict[
         for alternate in setup["alternates"]:
             target = alternate["room"]
             if target == 0:
-                alternate["destination"] = {"surface": True}
+                alternate["destination"] = {"colonyCraft": True}
                 alternate["arrival"] = None
                 alternate["arrivalWithinDestination"] = True
                 continue
@@ -1055,7 +1057,7 @@ def build_dataset(ram: bytes, source: dict[str, Any], curation: dict[str, Any] |
         },
     }
     underground = {
-        "schemaVersion": 3,
+        "schemaVersion": 4,
         "primitiveTemplates": templates,
         "records": room_records,
         "rooms": rooms,

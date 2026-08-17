@@ -49,7 +49,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Containment margins, both interlocks, the wall sound, the transition colour ramp, the
   world-flip input remap and the fixed position that leaves the underground, all read
   from our own image behind opcode fingerprints into `doorwayRules`. Payload schema 6 →
-  7, geometry decoder 5 → 6, underground document 2 → 3.
+  8, geometry decoder 5 → 7, underground dataset document 2 → 4.
+- Identify the destination of the one Doorway that leaves the underground: it is the
+  **colony craft**, object slot `$3F`. The Doorway copies a fixed nine-byte position over
+  the player's coordinates, and that position is the craft's own — the same surface cell,
+  64 units past its hull's x face, `$240` below its underside — while the mover it
+  installs is the one the engine installs when the player leaves that object's bounding
+  box. Slot `$3F` is the highest thing in the world by two orders of magnitude.
+  This answers a question `docs/research/c64-geometry-encoding.md` left open: slot `$3F`
+  was recorded as an "orbital-station candidate" pending "an observed encounter or
+  authoritative text/behaviour correlation", and a Doorway arriving at its hull is that
+  correlation. The remaining 63 slots are untouched by it.
+  The Doorway's destination was called `surface` on a guess, and the guess is now
+  falsified, so the name goes with it: `destination: {colonyCraft: true}`,
+  `colonyCraftArrival`, `colonyCraftSlot`, `colonyCraftDoorways`, and a `Room Link` whose
+  definition no longer says "the surface". The export asserts the arrival and the object
+  agree — within a cell, and that slot still being the highest thing in the world — so
+  this name cannot drift from what it describes the way the last one did.
+  We place the player at the craft's cell on the ground rather than at its altitude:
+  arriving at the ship is the escape route, which this issue puts out of scope, and the
+  mover installed there is one we do not have. That is a known difference, asserted by a
+  test that checks the altitude is *not* adopted rather than left to look like a bug.
 
 ### Fixed
 

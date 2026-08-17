@@ -4,7 +4,7 @@
   "type": "object",
   "required": ["schemaVersion", "primitiveTemplates", "records", "rooms", "navigationRules"],
   "properties": {
-    "schemaVersion": {"const": 3},
+    "schemaVersion": {"const": 4},
     "primitiveTemplates": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
     "records": {"type": "array", "items": {"$ref": "#/$defs/record"}},
     "rooms": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
@@ -49,7 +49,7 @@
                       "destination": {
                         "oneOf": [
                           {"type": "object", "required": ["room"], "additionalProperties": false, "properties": {"room": {"type": "integer", "minimum": 1, "maximum": 191}}},
-                          {"type": "object", "required": ["surface"], "additionalProperties": false, "properties": {"surface": {"const": true}}}
+                          {"type": "object", "required": ["colonyCraft"], "additionalProperties": false, "properties": {"colonyCraft": {"const": true}}}
                         ]
                       },
                       "arrival": {
@@ -82,7 +82,7 @@
               "destination": {
                 "oneOf": [
                   {"type": "object", "required": ["room"], "additionalProperties": false, "properties": {"room": {"type": "integer", "minimum": 1, "maximum": 191}}},
-                  {"type": "object", "required": ["surface"], "additionalProperties": false, "properties": {"surface": {"const": true}}}
+                  {"type": "object", "required": ["colonyCraft"], "additionalProperties": false, "properties": {"colonyCraft": {"const": true}}}
                 ]
               },
               "arrival": {
@@ -99,7 +99,7 @@
     },
     "navigationRules": {
       "type": "object",
-      "required": ["predicate", "arrivalContract", "traversalGate", "containmentContract", "lockBoundary", "keySlotBias", "skeletonKeySlot", "photonEmitterSlot", "lineColour", "randomRoom", "worldFlipRoom", "nearMargin", "farMargin", "wallThudSound", "surfaceExit", "stepInterlock", "transitionColours", "worldFlipInputRemap"],
+      "required": ["predicate", "arrivalContract", "traversalGate", "containmentContract", "lockBoundary", "keySlotBias", "skeletonKeySlot", "photonEmitterSlot", "lineColour", "randomRoom", "worldFlipRoom", "nearMargin", "farMargin", "wallThudSound", "colonyCraftArrival", "colonyCraftSlot", "stepInterlock", "transitionColours", "worldFlipInputRemap"],
       "properties": {
         "predicate": {"type": "string"},
         "arrivalContract": {"type": "string"},
@@ -108,7 +108,8 @@
         "nearMargin": {"type": "integer", "minimum": 0, "maximum": 255},
         "farMargin": {"type": "integer", "minimum": 0, "maximum": 255},
         "wallThudSound": {"type": "integer", "minimum": 0, "maximum": 255},
-        "surfaceExit": {
+        "colonyCraftSlot": {"type": "integer", "minimum": 0, "maximum": 63},
+        "colonyCraftArrival": {
           "type": "object",
           "required": ["x", "y", "z"],
           "additionalProperties": false,

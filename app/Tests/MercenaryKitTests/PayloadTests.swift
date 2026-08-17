@@ -55,7 +55,7 @@ enum PayloadFixture {
      "keySlotBias":8,"skeletonKeySlot":48,"photonEmitterSlot":16,"lockedMessage":0,
      "darkMessage":1,"lineColour":1,"cooldownFrames":10,"worldFlipCooldownFrames":31,
      "randomRoom":114,"worldFlipRoom":127,
-     "nearMargin":32,"farMargin":223,"wallThudSound":20,"surfaceExit":{"x":550848,"y":4257920,"z":552960},"stepInterlock":2,
+     "nearMargin":32,"farMargin":223,"wallThudSound":20,"colonyCraftArrival":{"x":550848,"y":4257920,"z":552960},"colonyCraftSlot":63,"stepInterlock":2,
      "transitionColours":[0,11,12,15,1,1,1,15,12,11,0,2,4,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8],
      "worldFlipInputRemap":[0,1,2,3,8,9,10,11,4,5,6,7,12,13,14,15]}
     """
@@ -82,7 +82,7 @@ enum PayloadFixture {
           {"room":86,"arrivalCommandIndex":0,"destination":{"room":86},
            "arrival":{"x":128,"z":256},"arrivalWithinDestination":true}]},
         "doorways":[{"index":0,"shape":2,"plane":"xy","position":{"x":0,"z":768},
-          "destination":{"surface":true},"arrivalCommandIndex":0,"arrival":null,
+          "destination":{"colonyCraft":true},"arrivalCommandIndex":0,"arrival":null,
           "arrivalWithinDestination":true,"lock":null}]}]}
     """
 

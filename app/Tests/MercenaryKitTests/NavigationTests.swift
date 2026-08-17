@@ -11,7 +11,8 @@ enum UndergroundFixture {
     keySlotBias: 8, skeletonKeySlot: 0x30, photonEmitterSlot: 0x10, lockedMessage: 0,
     darkMessage: 1, lineColour: 1, cooldownFrames: 0x0A, worldFlipCooldownFrames: 0x1F,
     randomRoom: 0x72, worldFlipRoom: 0x7F, nearMargin: 0x20, farMargin: 0xDF,
-    wallThudSound: 0x14, surfaceExit: .init(x: 0x0867C0, y: 0x40F880, z: 0x087000),
+    wallThudSound: 0x14,
+    colonyCraftArrival: .init(x: 0x0867C0, y: 0x40F880, z: 0x087000), colonyCraftSlot: 0x3F,
     stepInterlock: 2,
     transitionColours: [
       0, 11, 12, 15, 1, 1, 1, 15, 12, 11, 0, 2, 4, 8, 8, 8,
@@ -462,14 +463,19 @@ final class UndergroundWalkTests: XCTestCase {
     XCTAssertEqual(session.location, Location.room(48), "and no reverse was invented")
   }
 
-  func testTheOneDoorwayOutOfTheUndergroundReachesTheSurface() {
-    var session = atADoorway([UndergroundFixture.doorway(destination: .surface, arrival: nil)])
+  func testTheOneDoorwayOutOfTheUndergroundReachesTheColonyCraftsCell() {
+    var session = atADoorway([UndergroundFixture.doorway(destination: .colonyCraft, arrival: nil)])
 
     XCTAssertTrue(walkUntilArrival(&session))
 
+    // Out of the underground and at the craft's own cell. Not at its altitude: that
+    // is the escape route, and this asserts the difference so nobody reads the
+    // horizontal-only placement as an oversight.
+    let arrival = UndergroundFixture.rules.colonyCraftArrival
     XCTAssertEqual(session.location, Location.surface)
-    XCTAssertEqual(session.game.player.position.x, Double(UndergroundFixture.rules.surfaceExit.x))
-    XCTAssertEqual(session.game.player.position.z, Double(UndergroundFixture.rules.surfaceExit.z))
+    XCTAssertEqual(session.game.player.position.x, Double(arrival.x))
+    XCTAssertEqual(session.game.player.position.z, Double(arrival.z))
+    XCTAssertNotEqual(session.game.player.position.y, Double(arrival.y))
   }
 
   // MARK: - What a Room says and shows when you arrive

@@ -46,7 +46,7 @@ explicit about which is which:
 
 - **83 unanswered Doorways.** Per command, out of 481. This is what `lab geometry
   rooms-svg` reports and draws in a different colour, because a Doorway is what the
-  map draws. It includes the single Doorway onto the surface.
+  map draws. It includes the single Doorway out of the underground.
 - **82 one-way Room Links.** Per distinct room-to-room pair, out of 478. This is what
   the payload manifest reports. It excludes the surface Doorway, because reciprocity
   is a relation between two rooms and the surface is not a room. Room `$9B` and room
@@ -117,7 +117,7 @@ before anything is drawn, which it has to: several arrivals land exactly on a wa
 just outside one. Room 3's first Doorway lands the player at x `0` in room 48, which is
 32 units outside it.
 
-### One Doorway leads out of the underground
+### One Doorway leads out of the underground, to the colony craft
 
 The single command with `linked == 0` is not a link to room `$00`. `$90C0` branches on
 the destination being zero before it reads any record, and that path is not a room: it
@@ -126,11 +126,35 @@ different mover (`$A9 = 9` through `$9D99`), and copies nine bytes from `$90ED` 
 player's three coordinates.
 
 Those nine bytes are `C0 67 08 80 F8 40 00 70 08` — x `$0867C0`, y `$40F880`,
-z `$087000`. The horizontal pair is the middle of surface cell 8:8, which is the cell
-the lift serves. The vertical value is far above anything a walker occupies, and the
-mover this path installs is one we do not model, so **it is exported and not
-interpreted**: the app takes the horizontal pair and leaves altitude alone, and that is
-a stated deviation rather than a reading.
+z `$087000`. **That is the colony craft.** Object slot `$3F` sits at `X=$087000
+Y=$40FCC0 Z=$087000`, and the arrival is offset from it by `(-$840, -$440, 0)`: the same
+cell, 64 units past the hull's own x face, `$240` below its underside. Slot `$3F` is the
+highest thing in the world by two orders of magnitude — the next highest object is at
+`$8001`, five hundred times lower.
+
+Three things agree on the identification:
+
+* the position, which is what settles it;
+* `docs/research/c64-geometry-encoding.md`, which recorded slot `$3F` at exactly that
+  position as an "orbital-station candidate" and said the name should wait for "an
+  observed encounter or authoritative text/behaviour correlation" — a Doorway that puts
+  the player at its hull is that correlation;
+* the mover, which is the same one `$A1DF` installs when the player leaves the craft's
+  bounding box, and that box test at `$A13D` is what this note used to call "the orbital
+  transition". The Reference Disassembly names it `COLONY_CRAFT_LA13D`, which
+  corroborates rather than originates.
+
+The export asserts the arrival and the object agree — within a cell, and that slot still
+being the highest thing in the world — so the name cannot drift away from what it
+describes.
+
+**What we do instead, and why.** The app takes the horizontal pair and leaves altitude
+alone. Walking out of the underground and finding yourself at the ship is the escape
+route, which #65 puts out of scope, and the mover installed there is one we do not have.
+So the player lands at the craft's cell on the ground rather than four million units up.
+That is a known difference from the Reference Build, recorded here, in the payload's own
+doc comment, and in the test that asserts the altitude is *not* adopted — rather than
+left to be discovered as a bug.
 
 ### The terminator is also the darkness flag
 

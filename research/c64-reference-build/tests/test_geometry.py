@@ -447,11 +447,15 @@ class RoomArrivalTests(unittest.TestCase):
         self.assertEqual(alternates[1]["arrival"], {"x": 0x2280, "z": 0x3300})
         self.assertTrue(all(entry["arrivalWithinDestination"] for entry in alternates))
 
-    def test_a_surface_doorway_resolves_to_no_arrival_at_all(self) -> None:
+    def test_the_doorway_out_of_the_underground_resolves_to_no_arrival_index(self) -> None:
+        # A destination of zero is not room zero: Room setup branches out before it
+        # reads any record and never consults the arrival index, so there is nothing
+        # for this to resolve. Where the player *does* land is a fixed position in the
+        # navigation rules rather than anything derived from the Doorway.
         records = {1: (0x3000, bytes([1, 0, 0, 4, 5, 0x82, 0x00, 0x00, 0x06, 0]))}
         command = self.resolve(records)[0x3000]["commands"][0]
 
-        self.assertEqual(command["destination"], {"surface": True})
+        self.assertEqual(command["destination"], {"colonyCraft": True})
         self.assertIsNone(command["arrival"])
         self.assertTrue(command["arrivalWithinDestination"])
 

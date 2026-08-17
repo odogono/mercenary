@@ -43,12 +43,16 @@ One opening belonging to a single Room, carrying the Room Link it leads along, w
 _Avoid_: Portal, door, exit, connection
 
 **Room Link**:
-The directed connection a Doorway leads along, from the Room that owns the Doorway to one destination — another Room, or the surface. A Room Link in one direction implies nothing about the other direction.
+The directed connection a Doorway leads along, from the Room that owns the Doorway to one destination — another Room, or out of the underground to the Colony Craft. A Room Link in one direction implies nothing about the other direction.
 _Avoid_: Edge, adjacency, neighbour, two-way link
 
 **Rewired Room**:
 A Room whose Doorway leads somewhere chosen on arrival rather than somewhere fixed, from a set of alternatives the Room carries; which alternative applies is decided either at random or by the Room the player arrived from.
 _Avoid_: Teleporter, dynamic exit, patched room
+
+**Colony Craft**:
+The vessel high above the middle of the surface, and the destination of the one Doorway that leads out of the underground rather than to another Room; leaving Targ aboard it is beyond the current scope, so the player is placed at its position on the ground rather than at its altitude.
+_Avoid_: Orbital station, mothership, the surface
 
 **Wall Contact**:
 The state of having been pushed back inside a Room by its own bounds on the current frame, counted per axis; it is the precondition for taking a Doorway, not merely a consequence of arriving at one.

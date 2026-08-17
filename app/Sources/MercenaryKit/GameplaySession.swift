@@ -402,13 +402,14 @@ public struct GameplaySession: Sendable {
         game.player.position.x = Double(arrival.x)
         game.player.position.z = Double(arrival.z)
       }
-    case .surface:
-      // The one Doorway that leaves the underground, at the fixed position the
-      // Reference Build copies over the player's own. Its altitude is not adopted —
-      // see ``Payload/RoomsDocument/DoorwayRules/surfaceExit``.
+    case .colonyCraft:
+      // The one Doorway that leaves the underground. It puts the player at the colony
+      // craft, and we place them at its cell but not at its altitude: four million
+      // units up is the escape route, which this work does not implement. A known
+      // difference, stated here rather than smoothed over.
       game.room = nil
-      game.player.position.x = Double(rules.surfaceExit.x)
-      game.player.position.z = Double(rules.surfaceExit.z)
+      game.player.position.x = Double(rules.colonyCraftArrival.x)
+      game.player.position.z = Double(rules.colonyCraftArrival.z)
     }
     // Set for every accepted Doorway, at $8585, whatever the Room on the far side is.
     game.stepInterlock = Double(rules.stepInterlock)

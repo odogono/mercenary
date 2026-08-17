@@ -106,12 +106,20 @@ WORLD_FLIP_INPUT_FLAG = 0x80
 #: over the player's three coordinates. Those nine bytes are the arrival, and they
 #: are a fixed position rather than anything derived from where the player was.
 #:
-#: Only the horizontal pair is acted on by the app. The vertical value is exported
-#: with the others and left uninterpreted: it is far above anything a walker
-#: occupies, and the mover this path installs is one we do not model, so adopting a
-#: reading of it would be a guess in the middle of otherwise-decoded data.
-SURFACE_EXIT_SITE = 0x90D3
-SURFACE_EXIT_FLAG_SITE = 0x90C2
+#: The position is the **colony craft**, which is object slot ``$3F`` — the highest
+#: thing in the world by two orders of magnitude, at ``X=$087000 Y=$40FCC0
+#: Z=$087000``. The arrival is offset from it by ``(-$840, -$440, 0)``: the same cell,
+#: 64 units past the hull's own x face and ``$240`` below its underside. The mover this
+#: path installs is the same one ``$A1DF`` installs when the player leaves the craft's
+#: box, and that box test is what our notes had called "the orbital transition".
+#:
+#: This settles a question the geometry research left open: slot ``$3F`` was recorded
+#: as an "orbital-station candidate" pending a behavioural correlation before the name
+#: could be assigned. A Doorway that puts the player at its hull is that correlation.
+COLONY_CRAFT_ARRIVAL_SITE = 0x90D3
+COLONY_CRAFT_FLAG_SITE = 0x90C2
+#: The object slot the arrival is at, for the invariant that keeps the two in step.
+COLONY_CRAFT_SLOT = 0x3F
 
 #: Darkness, and the colour it clears that no Room carries.
 DARK_COMMAND_TEST_SITE = 0x91EE
@@ -226,10 +234,10 @@ def require_navigation(ram: bytes) -> None:
         (LINE_COLOUR_SITE, (0xA9,), "Room setup does not store an immediate line colour"),
         (WORLD_FLIP_ROUTINE, (0xA5, WORLD_FLIP_PARITY_FLAG, 0x49, 0x01, 0x85, WORLD_FLIP_PARITY_FLAG), "the world flip does not toggle a parity flag"),
         (WORLD_FLIP_COOLDOWN_SITE, (0xA9,), "the world flip does not install its own cooldown"),
-        (SURFACE_EXIT_FLAG_SITE, (0x86, 0xA8, 0x86, 0xCD), "leaving the underground does not clear the flag that says the player is in it"),
+        (COLONY_CRAFT_FLAG_SITE, (0x86, 0xA8, 0x86, 0xCD), "leaving the underground does not clear the flag that says the player is in it"),
         # Nine bytes, counted down from index eight, into the three coordinates.
-        (SURFACE_EXIT_SITE, (0xA2, 0x08, 0xBD), "leaving the underground does not copy a fixed position over the player's own"),
-        (SURFACE_EXIT_SITE + 5, (0x95, 0x72), "the fixed position is not written over the player's coordinates"),
+        (COLONY_CRAFT_ARRIVAL_SITE, (0xA2, 0x08, 0xBD), "leaving the underground does not copy a fixed position over the player's own"),
+        (COLONY_CRAFT_ARRIVAL_SITE + 5, (0x95, 0x72), "the fixed position is not written over the player's coordinates"),
         (CONTAINMENT_ROUTINE, (0xA9, 0x00, 0x85, 0xAE), "containment does not begin by clearing a clamp count"),
         (WALL_THUD_SITE, (0xA9,), "wall contact does not play an immediate sound"),
         (
@@ -357,7 +365,7 @@ def decode_navigation_rules(ram: bytes) -> dict[str, Any]:
         key_slot_bias + SHAPE_MASK < 64,
         "The key table's highest lock class would index past the object state flags",
     )
-    exit_table = ram[SURFACE_EXIT_SITE + 3] | (ram[SURFACE_EXIT_SITE + 4] << 8)
+    exit_table = ram[COLONY_CRAFT_ARRIVAL_SITE + 3] | (ram[COLONY_CRAFT_ARRIVAL_SITE + 4] << 8)
     exit_bytes = ram[exit_table : exit_table + 9]
 
     def coordinate(axis: int) -> int:
@@ -365,7 +373,7 @@ def decode_navigation_rules(ram: bytes) -> dict[str, Any]:
         value = low | (middle << 8) | (high << 16)
         return value - 0x1000000 if high & 0x80 else value
 
-    surface_exit = {
+    colony_craft_arrival = {
         "x": coordinate(0),
         "y": coordinate(1),
         "z": coordinate(2),
@@ -407,7 +415,8 @@ def decode_navigation_rules(ram: bytes) -> dict[str, Any]:
         "nearMargin": near_margin,
         "farMargin": far_margin,
         "wallThudSound": _immediate(ram, WALL_THUD_SITE, 0xA9, "wall contact does not play an immediate sound"),
-        "surfaceExit": surface_exit,
+        "colonyCraftArrival": colony_craft_arrival,
+        "colonyCraftSlot": COLONY_CRAFT_SLOT,
         "stepInterlock": _immediate(ram, STEP_INTERLOCK_SITE, 0xA9, "a transition does not reload an immediate step interlock"),
         "transitionColours": transition_colours,
         "worldFlipInputRemap": remap,

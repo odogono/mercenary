@@ -463,12 +463,14 @@ final class VisibilitySelectorTests: XCTestCase {
     XCTAssertEqual(Set(special.specialSetup?.alternates.map(\.room) ?? []), [86])
   }
 
-  func testADoorwayToTheSurfaceIsNotARoomLink() throws {
+  func testTheDoorwayOutOfTheUndergroundIsNotARoomLink() throws {
     let world = World(bundle: try bundle())
     let doorway = try XCTUnwrap(world.rooms[2]?.doorways.first)
 
-    XCTAssertEqual(doorway.destination, .surface)
-    XCTAssertNil(doorway.arrival, "the surface places the player from its own start position")
+    XCTAssertEqual(doorway.destination, .colonyCraft)
+    XCTAssertNil(
+      doorway.arrival, "it has a fixed position of its own rather than a resolved arrival"
+    )
   }
 
   func testARoomsCentreIsTheMiddleOfItsOwnBounds() throws {

@@ -33,8 +33,8 @@ at 82 on every payload export.
 **Two numbers, both correct.** The checking map reports **83 unanswered Doorways**
 out of 481, counted per command; the payload manifest reports **82 one-way Room
 Links** out of 478, counted per distinct room pair. The map's total includes the one
-Doorway onto the surface, for which reciprocity is undefined, and counts room `$9B`
-and room `$9D`'s two mutual Doorways twice. Either number is defensible; they are
+Doorway out of the underground, for which reciprocity is undefined, and counts room
+`$9B` and room `$9D`'s two mutual Doorways twice. Either number is defensible; they are
 kept apart so neither has to be qualified.
 
 ## PQ-0002 — One Doorway lands the player outside the room it leads to

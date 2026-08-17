@@ -88,7 +88,8 @@ TABLES = {
              0x00, 0x02, 0x04, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
              0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08),
     # The fixed position leaving the underground puts the player at, three
-    # little-endian 24-bit coordinates: the middle of surface cell 8,8.
+    # little-endian 24-bit coordinates: the colony craft, in surface cell 8,8 and four
+    # million units up.
     0x90ED: (0xC0, 0x67, 0x08, 0x80, 0xF8, 0x40, 0x00, 0x70, 0x08),
     # Bits 2 and 3 of the input byte swapped, which is turn-left and turn-right.
     0xA17B: (0x00, 0x01, 0x02, 0x03, 0x08, 0x09, 0x0A, 0x0B,
@@ -202,11 +203,15 @@ class NavigationRuleTests(unittest.TestCase):
 
     def test_the_one_way_out_of_the_underground_is_a_fixed_position(self) -> None:
         # Not derived from where the player was: nine bytes copied over all three
-        # coordinates. The horizontal pair is the middle of the cell the lift serves.
-        self.assertEqual(self.rules["surfaceExit"]["x"], 0x0867C0)
-        self.assertEqual(self.rules["surfaceExit"]["z"], 0x087000)
-        self.assertEqual(self.rules["surfaceExit"]["x"] // 0x10000, 8)
-        self.assertEqual(self.rules["surfaceExit"]["z"] // 0x10000, 8)
+        # coordinates, and all three matter. This is the colony craft's own position —
+        # cell 8:8, and four million units up, which is why the vertical value looked
+        # like a misread until the object table was compared against it.
+        self.assertEqual(self.rules["colonyCraftArrival"]["x"], 0x0867C0)
+        self.assertEqual(self.rules["colonyCraftArrival"]["y"], 0x40F880)
+        self.assertEqual(self.rules["colonyCraftArrival"]["z"], 0x087000)
+        self.assertEqual(self.rules["colonyCraftArrival"]["x"] // 0x10000, 8)
+        self.assertEqual(self.rules["colonyCraftArrival"]["z"] // 0x10000, 8)
+        self.assertEqual(self.rules["colonyCraftSlot"], 0x3F)
 
     def test_the_way_out_is_read_from_the_table_the_copy_names(self) -> None:
         # Rather than from a constant here that happens to agree with it.
@@ -214,7 +219,9 @@ class NavigationRuleTests(unittest.TestCase):
         ram[0x90D3 + 3] = 0xF0
         ram[0x90F0 : 0x90F0 + 9] = bytes(9)
 
-        self.assertEqual(decode_navigation_rules(ram)["surfaceExit"], {"x": 0, "y": 0, "z": 0})
+        self.assertEqual(
+            decode_navigation_rules(ram)["colonyCraftArrival"], {"x": 0, "y": 0, "z": 0}
+        )
 
     def test_a_room_is_bounded_by_two_margins_the_same_on_both_axes(self) -> None:
         self.assertEqual(self.rules["nearMargin"], 0x20)
