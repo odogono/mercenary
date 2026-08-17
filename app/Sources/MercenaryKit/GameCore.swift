@@ -42,13 +42,18 @@ public struct Intent: Sendable, Equatable {
 /// `limits` is either a host bound or a tuning knob, and none of it changes what
 /// the loop computes from the decoded parameters.
 public struct FlightModel: Sendable, Equatable {
+  /// Captured Reference Build eye height used by the opening and on-foot view.
+  public static let referenceWalkingEyeAltitude: Double = 128
+
   public var document: Payload.FlightDocument
   public var limits: ControlLimits
 
   /// One angle unit in radians. The Reference Build's turn is 1024 units.
   public let radiansPerUnit: Double
-  /// Eye height on foot: the tuning knob's, or the Reference Build's own.
+  /// Eye height on foot: the tuning knob's, or the captured Reference Build height.
   public let groundAltitude: Double
+  /// Decoded altitude where a craft settles after touchdown.
+  let touchdownAltitude: Double
   /// The decoded on-foot step, already scaled by the tuning knob.
   let walkStep: Double
   /// The decoded on-foot turn, in angle units per frame, likewise scaled.
@@ -60,7 +65,8 @@ public struct FlightModel: Sendable, Equatable {
     self.radiansPerUnit = 2 * Double.pi / Double(document.rules.angleUnitsPerTurn)
     self.walkStep = document.walk.step * limits.speedScale
     self.walkTurn = Double(document.walk.turnStep) * limits.turnScale
-    self.groundAltitude = limits.groundAltitude ?? Double(document.rules.groundAltitude)
+    self.groundAltitude = limits.groundAltitude ?? Self.referenceWalkingEyeAltitude
+    self.touchdownAltitude = Double(document.rules.groundAltitude)
   }
 
   public var rules: Payload.FlightDocument.Rules { document.rules }
@@ -122,8 +128,8 @@ public struct ControlLimits: Sendable, Equatable {
   /// keys to notches and changes nothing about the ladder itself.
   public var throttleFloorNotch: Int
   public var groundExtent: Double
-  /// Eye height on foot. Defaults to the Reference Build's own ground altitude,
-  /// which the payload carries, and is here so it can be judged separately.
+  /// Eye height on foot. Defaults to the captured Reference Build height and is
+  /// here so it can be judged separately.
   public var groundAltitude: Double?
 
   public init(
@@ -278,7 +284,7 @@ public enum GameCore {
     result.player.position.x = position.x
     result.player.position.z = position.z
     result.player.heading = heading
-    settleOnGround(&result, flight: flight)
+    settleOnGround(&result, altitude: flight.touchdownAltitude)
     return result
   }
 
@@ -326,19 +332,19 @@ public enum GameCore {
   public static func leave(_ state: GameState, flight: FlightModel) -> GameState {
     var result = state
     result.craft = nil
-    settleOnGround(&result, flight: flight)
+    settleOnGround(&result, altitude: flight.groundAltitude)
     return result
   }
 
-  /// Stop everything and stand on the ground, which both crossings of the craft
-  /// door share: boarding and leaving alike begin from rest.
-  private static func settleOnGround(_ state: inout GameState, flight: FlightModel) {
+  /// Stop everything at the supplied craft or walking altitude. Both crossings
+  /// of the craft door begin from rest, but their vertical positions differ.
+  private static func settleOnGround(_ state: inout GameState, altitude: Double) {
     state.throttle = 0
     state.player.yawVelocity = 0
     state.player.speed = 0
     state.player.pitch = 0
     state.player.roll = 0
-    state.player.position.y = flight.groundAltitude
+    state.player.position.y = altitude
     state.mode = .grounded
   }
 
@@ -485,7 +491,7 @@ public enum GameCore {
     case .flying where result.player.position.y < band:
       result.mode = .grounded
       result.touchdown = verdict(pitch: result.player.pitch, descentRate: descentRate, rules: rules)
-      result.player.position.y = flight.groundAltitude
+      result.player.position.y = flight.touchdownAltitude
       result.player.roll = 0
       // Touchdown forces pitch back to level when it is past it.
       if rawPitch(result.player.pitch, rules: rules) > Double(rules.levelPitch) {

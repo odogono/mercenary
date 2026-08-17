@@ -90,7 +90,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Reference Build's captured X/Z 559104 crash position, in the centre of the wreck,
   rather than at the former staged overview 12,000 units south. Craft that have been
   flown and left now use their live landing position for drawing and boarding instead
-  of snapping invisibly back to their immutable payload position.
+  of snapping invisibly back to their immutable payload position. Leaving also
+  restores the captured 128-unit on-foot eye height and keeps it through later
+  walking frames; the decoded 63-unit touchdown altitude remains craft-only.
   The lift's tall-box appearance was an extraction defect, not a scale judgment:
   extended surface heights perform one discarded `ASL` before three `ASL`/`ROL`
   pairs. Geometry decoder 4 restores the five lift structures' levels from

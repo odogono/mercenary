@@ -6,6 +6,6 @@ public enum OpeningScene {
   /// height. The player begins in the centre of the wreck rather than at a staged
   /// overview of the airstrip.
   public static let player = PlayerState(
-    position: SIMD3(focus.x, 128, focus.z), heading: 0, pitch: 0
+    position: SIMD3(focus.x, FlightModel.referenceWalkingEyeAltitude, focus.z), heading: 0, pitch: 0
   )
 }
