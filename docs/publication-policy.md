@@ -9,8 +9,9 @@ implements this policy through allowlisted diagnostics, per-artifact candidate
 clearance records, SBOM and dependency evidence, and an explicit non-publishing
 release gate.
 
-The repository remains private during research. One maintainer may perform both
-Reference Build research and Independent Implementation work; the project does
+The repository and its Git history are permanently private research artifacts
+(ADR 0017), not candidates for a future public source release. One maintainer may
+perform both Reference Build research and Independent Implementation work; the project does
 not represent this as a personnel clean room. The Independent Implementation
 must nevertheless be newly authored from documented functional findings and
 must not incorporate or mechanically translate original program code, as
@@ -18,15 +19,21 @@ required by [ADR 0002](adr/0002-separate-rom-research-from-implementation.md).
 
 ## Private research boundary
 
-Restricted Material stays outside Git in ignored paths. Supplied media belongs
+Restricted Material stays outside Git in ignored paths, with one deliberate
+exception: the unlicensed Reference Disassembly is retained as a reviewed,
+provenance-bound snapshot under `research/reference-disassembly/`. It is documentation
+only and is never a build input, runtime dependency, code-generation source, or Data
+Payload source. Supplied media belongs
 under `roms/`, generated laboratory evidence under
 `research/c64-reference-build/work/`, and other restricted work under
-`restricted/`. This includes ROMs, disk or tape images, memory dumps, snapshots,
-screenshots, disassembly or decompiler output, copied machine code, exact decoded
-tables, and uncleared Reconstructed Payloads.
+`restricted/`. Apart from the named Reference Disassembly snapshot, this includes
+ROMs, disk or tape images, memory dumps, snapshots, screenshots, other disassembly
+or decompiler output, copied machine code, exact decoded tables, and uncleared
+Reconstructed Payloads.
 
 Research Provenance may point to Restricted Material without moving that
-material into Git. A private repository, an ignored path, or a provenance record
+material into Git. A private repository, an ignored path, a tracked private snapshot,
+or a provenance record
 reduces accidental disclosure; none establishes that publication is permitted.
 Analytical notes, hashes, labels, and offsets may remain tracked while the
 repository is private, but they are Reference Build-specific research and must
@@ -109,7 +116,8 @@ downloads before a fresh review.
 
 ## Publication checklist
 
-Before making the repository public or distributing any source, media, or build:
+The repository must not be made public or included in a source release. Before
+distributing any media or application build:
 
 1. Identify the exact candidate commit, archive, or application build and every
    publication surface.
@@ -117,9 +125,9 @@ Before making the repository public or distributing any source, media, or build:
    under the two tiers above.
 3. Confirm that no ignored input or work artifact is tracked and inspect the
    candidate contents, metadata, logs, and documentation for Restricted Material.
-4. Before changing repository visibility, inspect every Git ref and historical
-   blob. If Restricted Material was committed, preserve it privately, purge it
-   from all public-bound history, and require a clean clone before continuing.
+   The tracked Reference Disassembly must never enter the candidate.
+4. Confirm that repository visibility is still private and that the distribution
+   process cannot include the repository, its Git history, or a source archive.
 5. Confirm that original source and dependencies have appropriate licences and
    that public-facing names and presentation are neutral or expressly cleared.
 6. Obtain and record written qualified-counsel clearance for every
