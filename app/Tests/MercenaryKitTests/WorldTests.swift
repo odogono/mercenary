@@ -420,15 +420,55 @@ final class VisibilitySelectorTests: XCTestCase {
     XCTAssertEqual(room.segments[0].b, SIMD3(4096, 0, 0))
   }
 
-  func testARoomCarriesItsBoundsAndItsLinks() throws {
+  func testARoomCarriesItsBoundsAndItsDoorways() throws {
     let world = World(bundle: try bundle())
     let linked = try XCTUnwrap(world.rooms[0])
     let sealed = try XCTUnwrap(world.rooms[1])
 
     XCTAssertEqual(linked.bounds.max, SIMD3(4096, 1024, 0))
-    XCTAssertEqual(linked.portals.count, 1)
-    XCTAssertEqual(linked.portals.first?.linked, 88)
-    XCTAssertTrue(sealed.portals.isEmpty)
+    XCTAssertEqual(linked.doorways.count, 1)
+    XCTAssertEqual(linked.doorways.first?.destination, .room(88))
+    XCTAssertTrue(sealed.doorways.isEmpty)
+  }
+
+  func testADoorwayCarriesItsResolvedArrivalAndLock() throws {
+    // The decoder resolves both, so nothing here reads an opcode or looks the
+    // destination up: a Doorway already knows where the player lands.
+    let world = World(bundle: try bundle())
+    let room = try XCTUnwrap(world.rooms[0])
+    let doorway = try XCTUnwrap(room.doorways.first)
+
+    XCTAssertEqual(doorway.arrival, .init(x: 2176, z: 256))
+    XCTAssertEqual(doorway.arrivalCommandIndex, 1)
+    XCTAssertTrue(doorway.arrivalWithinDestination)
+    XCTAssertEqual(doorway.lock, .init(class: 9, requiresObject: 17))
+    XCTAssertEqual(doorway.shape, doorway.lock?.class, "a door's shape is also its lock class")
+  }
+
+  func testARoomCarriesDarknessEntryAndSpecialSetup() throws {
+    let world = World(bundle: try bundle())
+    let lit = try XCTUnwrap(world.rooms[0])
+    let dark = try XCTUnwrap(world.rooms[1])
+    let special = try XCTUnwrap(world.rooms[2])
+
+    XCTAssertFalse(lit.dark)
+    XCTAssertEqual(lit.entry, .message(9))
+    XCTAssertTrue(dark.dark)
+    XCTAssertNil(dark.entry)
+    XCTAssertEqual(special.entry, .script(23))
+    XCTAssertEqual(special.specialSetup?.selector, .previousRoom)
+    XCTAssertEqual(special.specialSetup?.alternates.count, 2)
+    // Both alternates naming one room is what makes the world flip skippable:
+    // arriving from that room matches both and the record is left alone.
+    XCTAssertEqual(Set(special.specialSetup?.alternates.map(\.room) ?? []), [86])
+  }
+
+  func testADoorwayToTheSurfaceIsNotARoomLink() throws {
+    let world = World(bundle: try bundle())
+    let doorway = try XCTUnwrap(world.rooms[2]?.doorways.first)
+
+    XCTAssertEqual(doorway.destination, .surface)
+    XCTAssertNil(doorway.arrival, "the surface places the player from its own start position")
   }
 
   func testARoomsCentreIsTheMiddleOfItsOwnBounds() throws {

@@ -117,7 +117,7 @@ enum InspectCommand {
             title: "room \(id)"))
         print(
           "{\"status\":\"inspected\",\"output\":\"\(url.path)\","
-            + "\"edges\":\(room.segments.count),\"portals\":\(room.portals.count)}")
+            + "\"edges\":\(room.segments.count),\"doorways\":\(room.doorways.count)}")
       case .roomSheet(let url):
         let rooms = world.rooms.keys.sorted().compactMap { world.rooms[$0] }
         try contactSheet(

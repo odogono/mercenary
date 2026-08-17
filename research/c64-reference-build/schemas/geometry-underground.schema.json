@@ -2,12 +2,102 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://mercenary.invalid/schemas/geometry-underground.schema.json",
   "type": "object",
-  "required": ["schemaVersion", "primitiveTemplates", "records", "rooms"],
+  "required": ["schemaVersion", "primitiveTemplates", "records", "rooms", "navigationRules"],
   "properties": {
-    "schemaVersion": {"const": 1},
+    "schemaVersion": {"const": 2},
     "primitiveTemplates": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
-    "records": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
-    "rooms": {"type": "array", "items": {"$ref": "#/$defs/entity"}}
+    "records": {"type": "array", "items": {"$ref": "#/$defs/record"}},
+    "rooms": {"type": "array", "items": {"$ref": "#/$defs/entity"}},
+    "navigationRules": {"$ref": "#/$defs/navigationRules"}
   },
-  "$defs": {"entity": {"type": "object", "required": ["geometryIdentity", "provenanceRefs"], "properties": {"geometryIdentity": {"type": "string"}, "provenanceRefs": {"type": "array", "items": {"type": "string"}}}}}
+  "$defs": {
+    "entity": {"type": "object", "required": ["geometryIdentity", "provenanceRefs"], "properties": {"geometryIdentity": {"type": "string"}, "provenanceRefs": {"type": "array", "items": {"type": "string"}}}},
+    "record": {
+      "type": "object",
+      "required": ["geometryIdentity", "provenanceRefs", "commands", "terminator", "dark", "entry", "specialSetup"],
+      "properties": {
+        "geometryIdentity": {"type": "string"},
+        "provenanceRefs": {"type": "array", "items": {"type": "string"}},
+        "terminator": {"enum": [0, 128]},
+        "dark": {"type": "boolean"},
+        "entry": {
+          "oneOf": [
+            {"type": "null"},
+            {"type": "object", "required": ["script"], "additionalProperties": false, "properties": {"script": {"type": "integer", "minimum": 1}}},
+            {"type": "object", "required": ["message"], "additionalProperties": false, "properties": {"message": {"type": "integer", "minimum": 1}}}
+          ]
+        },
+        "specialSetup": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "required": ["selector", "alternates"],
+              "additionalProperties": false,
+              "properties": {
+                "selector": {"enum": ["random", "previousRoom"]},
+                "alternates": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["geometryIdentity", "room", "arrivalCommandIndex", "provenanceRefs"],
+                    "properties": {
+                      "geometryIdentity": {"type": "string"},
+                      "room": {"type": "integer", "minimum": 0, "maximum": 191},
+                      "arrivalCommandIndex": {"type": "integer", "minimum": 0, "maximum": 7},
+                      "provenanceRefs": {"type": "array", "items": {"type": "string"}}
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["geometryIdentity", "opcode", "primitiveIndex", "plane", "arrivalCommandIndex", "linkedRoom", "destination", "arrival", "arrivalWithinDestination", "provenanceRefs"],
+            "properties": {
+              "geometryIdentity": {"type": "string"},
+              "opcode": {"type": "integer", "minimum": 1, "maximum": 255},
+              "primitiveIndex": {"type": "integer", "minimum": 0, "maximum": 15},
+              "plane": {"enum": ["xy", "zy"]},
+              "arrivalCommandIndex": {"type": "integer", "minimum": 0, "maximum": 7},
+              "linkedRoom": {"type": "integer", "minimum": 0, "maximum": 191},
+              "arrivalWithinDestination": {"type": "boolean"},
+              "destination": {
+                "oneOf": [
+                  {"type": "object", "required": ["room"], "additionalProperties": false, "properties": {"room": {"type": "integer", "minimum": 1, "maximum": 191}}},
+                  {"type": "object", "required": ["surface"], "additionalProperties": false, "properties": {"surface": {"const": true}}}
+                ]
+              },
+              "arrival": {
+                "oneOf": [
+                  {"type": "null"},
+                  {"type": "object", "required": ["x", "z"], "additionalProperties": false, "properties": {"x": {"type": "integer", "minimum": 0}, "z": {"type": "integer", "minimum": 0}}}
+                ]
+              },
+              "provenanceRefs": {"type": "array", "items": {"type": "string"}}
+            }
+          }
+        }
+      }
+    },
+    "navigationRules": {
+      "type": "object",
+      "required": ["predicate", "arrivalContract", "lockBoundary", "keySlotBias", "skeletonKeySlot", "photonEmitterSlot", "lineColour", "randomRoom", "worldFlipRoom"],
+      "properties": {
+        "predicate": {"type": "string"},
+        "arrivalContract": {"type": "string"},
+        "lockBoundary": {"type": "integer", "minimum": 0, "maximum": 15},
+        "keySlotBias": {"type": "integer", "minimum": 0, "maximum": 63},
+        "skeletonKeySlot": {"type": "integer", "minimum": 0, "maximum": 63},
+        "photonEmitterSlot": {"type": "integer", "minimum": 0, "maximum": 63},
+        "lineColour": {"type": "integer", "minimum": 0, "maximum": 15},
+        "randomRoom": {"type": "integer", "minimum": 0, "maximum": 191},
+        "worldFlipRoom": {"type": "integer", "minimum": 0, "maximum": 191}
+      }
+    }
+  }
 }

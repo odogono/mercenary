@@ -209,9 +209,12 @@ public struct Room: Sendable, Equatable {
   public var segments: [Segment]
   public var bounds: (min: SIMD3<Float>, max: SIMD3<Float>)
   public var palette: Payload.RoomsDocument.Room.Palette
-  /// Ways through to somewhere else, or behaviours — the Reference Build packs both
-  /// into one byte, so which of the two a given entry is stays undecided here.
-  public var portals: [Payload.RoomsDocument.Room.Portal]
+  /// This room's own openings, each carrying the directed Room Link it leads along.
+  public var doorways: [Payload.RoomsDocument.Room.Doorway]
+  /// Dark unless the photon emitter is carried or lying in this room.
+  public var dark: Bool
+  public var entry: Payload.RoomsDocument.Room.Entry?
+  public var specialSetup: Payload.RoomsDocument.Room.SpecialSetup?
 
   public var centre: SIMD3<Float> { (bounds.min + bounds.max) / 2 }
 
@@ -243,7 +246,10 @@ public struct Room: Sendable, Equatable {
     }
     bounds = (corner(room.bounds.min), corner(room.bounds.max))
     palette = room.palette
-    portals = room.portals
+    doorways = room.doorways
+    dark = room.dark
+    entry = room.entry
+    specialSetup = room.specialSetup
   }
 }
 

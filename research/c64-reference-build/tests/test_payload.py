@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -11,6 +12,10 @@ sys.path.insert(0, str(LAB_ROOT))
 
 from c64lab.core import LabError
 from c64lab.payload import (
+    PAYLOAD_SCHEMA_VERSION,
+    ROOM_LINK_CONTRACT,
+    _doorway_rules,
+    _room_link_counts,
     build_rooms,
     render_room_map_svg,
     render_room_plan_svg,
@@ -23,6 +28,12 @@ from c64lab.payload import (
     export_payload,
     require_current_geometry_decoder,
 )
+from c64lab.geometry import DECODER_VERSION
+from c64lab.benson import BENSON_SCHEMA_VERSION
+from c64lab.flight import FLIGHT_SCHEMA_VERSION
+from c64lab.interaction import INTERACTION_SCHEMA_VERSION
+from c64lab.text import TEXT_SCHEMA_VERSION
+from c64lab.underground import UNDERGROUND_SCHEMA_VERSION
 
 
 def _surface() -> dict:
@@ -279,24 +290,62 @@ class PayloadOutputGuardTests(unittest.TestCase):
 class RoomsTests(unittest.TestCase):
     """The underground rooms, carried across from the verified dataset."""
 
-    @staticmethod
-    def dataset(rooms=None, records=None):
+    #: The rules a real dataset always carries, so build_rooms has a lock boundary
+    #: and a key bias to resolve locks against.
+    RULES = {
+        "depthHalfWindow": 0x40,
+        "alongWallBias": 0x28,
+        "headingRounding": 2,
+        "lockBoundary": 8,
+        "keySlotBias": 8,
+        "skeletonKeySlot": 0x30,
+        "photonEmitterSlot": 0x10,
+        "lockedMessage": 0,
+        "darkMessage": 1,
+        "lineColour": 1,
+        "cooldownFrames": 0x0A,
+        "worldFlipCooldownFrames": 0x1F,
+        "randomRoom": 0x72,
+        "worldFlipRoom": 0x7F,
+    }
+
+    @classmethod
+    def command(cls, **overrides):
+        command = {
+            "opcode": 0x92,
+            "primitiveIndex": 2,
+            "plane": "zy",
+            "arrivalCommandIndex": 1,
+            "linkedRoom": 88,
+            "xMiddle": 16,
+            "zMiddle": 12,
+            "destination": {"room": 88},
+            "arrival": {"x": 0x0880, "z": 0x0100},
+            "arrivalWithinDestination": True,
+        }
+        command.update(overrides)
+        return command
+
+    @classmethod
+    def dataset(cls, rooms=None, records=None, rules=None):
         return {
-            "schemaVersion": 1,
+            "schemaVersion": 2,
+            "navigationRules": dict(cls.RULES if rules is None else rules),
             "records": records if records is not None else [
                 {
                     "geometryIdentity": "room-record:3000",
                     "header": [16, 4, 16, 6, 14],
-                    "commands": [
-                        {"linkedRoomOrBehaviour": 88, "plane": "zy", "xMiddle": 16, "zMiddle": 12}
-                    ],
+                    "dark": False,
+                    "entry": None,
+                    "specialSetup": None,
+                    "commands": [cls.command()],
                 }
             ],
             "rooms": rooms if rooms is not None else [
                 {
                     "roomId": 0,
                     "record": "room-record:3000",
-                    "hasPortal": True,
+                    "hasDoorway": True,
                     "edgeCount": 1,
                     "expanded": {
                         "vertices": [{"position": [0, 0, 0]}, {"position": [4096, 0, 0]}],
@@ -320,8 +369,22 @@ class RoomsTests(unittest.TestCase):
         # Several rooms share one record, so a room names it by identity.
         room = build_rooms(self.dataset())["rooms"][0]
 
-        self.assertEqual(room["hasPortal"], True)
-        self.assertEqual(room["portals"], [{"linked": 88, "plane": "zy", "xMiddle": 16, "zMiddle": 12}])
+        self.assertEqual(
+            room["doorways"],
+            [
+                {
+                    "index": 0,
+                    "shape": 2,
+                    "plane": "zy",
+                    "position": {"x": 16 << 8, "z": 12 << 8},
+                    "destination": {"room": 88},
+                    "arrivalCommandIndex": 1,
+                    "arrival": {"x": 0x0880, "z": 0x0100},
+                    "arrivalWithinDestination": True,
+                    "lock": None,
+                }
+            ],
+        )
 
     def test_carries_background_and_foreground_from_the_record_header(self) -> None:
         room = build_rooms(self.dataset())["rooms"][0]
@@ -376,9 +439,14 @@ class RoomMapTests(unittest.TestCase):
                 "vertices": [[0, 0, 0], [4096, 0, 0], [4096, 0, 4096]],
                 "edges": [[0, 1], [1, 2]],
                 "bounds": {"min": [0, 0, 0], "max": [4096, 1024, 4096]},
-                "hasPortal": bool(links),
-                "portals": [
-                    {"linked": link, "plane": "xy", "xMiddle": 8, "zMiddle": 8} for link in links
+                "doorways": [
+                    {
+                        "index": index,
+                        "plane": "xy",
+                        "position": {"x": 8 << 8, "z": 8 << 8},
+                        "destination": {"room": link},
+                    }
+                    for index, link in enumerate(links)
                 ],
             }
 
@@ -389,9 +457,9 @@ class RoomMapTests(unittest.TestCase):
         _, counts = render_room_map_svg(self.rooms())
 
         self.assertEqual(counts["rooms"], 3)
-        self.assertEqual(counts["links"], 4)
+        self.assertEqual(counts["doorways"], 4)
         # 1 -> 2 is not answered by 2 -> 1, and 2 -> 0 is not answered by 0 -> 2.
-        self.assertEqual(counts["oneWayLinks"], 2)
+        self.assertEqual(counts["unansweredDoorways"], 2)
 
     def test_draws_one_tile_per_room_and_says_what_it_is_showing(self) -> None:
         svg, _ = render_room_map_svg(self.rooms())
@@ -400,7 +468,7 @@ class RoomMapTests(unittest.TestCase):
         self.assertTrue(svg.rstrip().endswith("</svg>"))
         self.assertEqual(svg.count("<g transform="), 3)
         self.assertIn("underground rooms: 3", svg)
-        self.assertIn("4 links, 2 reciprocal, 2 one-way", svg)
+        self.assertIn("4 doorways, 2 answered, 2 unanswered", svg)
 
     def test_marks_a_one_way_doorway_differently_from_a_mutual_one(self) -> None:
         svg, _ = render_room_map_svg(self.rooms())
@@ -411,7 +479,7 @@ class RoomMapTests(unittest.TestCase):
 
     def test_a_room_with_no_doorways_still_gets_a_tile(self) -> None:
         rooms = self.rooms()
-        rooms[2]["portals"] = []
+        rooms[2]["doorways"] = []
         svg, counts = render_room_map_svg(rooms)
 
         self.assertEqual(counts["rooms"], 3)
@@ -422,16 +490,20 @@ class RoomPlanTests(unittest.TestCase):
     """Laying the rooms out by their doorways, which is inference and not a read."""
 
     @staticmethod
-    def room(identifier, portals, high=4096):
+    def room(identifier, doorways, high=4096):
         return {
             "room": identifier,
             "vertices": [[0, 0, 0], [high, 0, 0]],
             "edges": [[0, 1]],
             "bounds": {"min": [0, 0, 0], "max": [high, 1024, high]},
-            "hasPortal": bool(portals),
-            "portals": [
-                {"linked": link, "plane": "xy", "xMiddle": x, "zMiddle": z}
-                for link, x, z in portals
+            "doorways": [
+                {
+                    "index": index,
+                    "plane": "xy",
+                    "position": {"x": x << 8, "z": z << 8},
+                    "destination": {"room": link},
+                }
+                for index, (link, x, z) in enumerate(doorways)
             ],
         }
 
@@ -486,6 +558,236 @@ class RoomPlanTests(unittest.TestCase):
             if 'width="' in part
         }
         self.assertEqual(len(widths), 2)
+
+
+class DoorwayExportTests(unittest.TestCase):
+    """What a Doorway looks like once the decoder has resolved everything."""
+
+    def rooms(self, **overrides):
+        return build_rooms(RoomsTests.dataset(**overrides))["rooms"]
+
+    def test_a_doorway_carries_its_resolved_destination_and_arrival(self) -> None:
+        door = self.rooms()[0]["doorways"][0]
+
+        self.assertEqual(door["destination"], {"room": 88})
+        self.assertEqual(door["arrival"], {"x": 0x0880, "z": 0x0100})
+        self.assertEqual(door["arrivalCommandIndex"], 1)
+        self.assertTrue(door["arrivalWithinDestination"])
+
+    def test_a_doorway_is_identified_by_its_room_and_its_index(self) -> None:
+        # Nineteen Rooms share one record, so a Doorway's identity is where it sits
+        # rather than which record it came from. Provenance stays in the dataset.
+        doors = self.rooms()[0]["doorways"]
+
+        self.assertEqual([door["index"] for door in doors], list(range(len(doors))))
+        self.assertNotIn("geometryIdentity", doors[0])
+
+    def test_a_locked_doorways_class_is_its_shape_and_names_one_object(self) -> None:
+        records = [
+            {
+                "geometryIdentity": "room-record:3000",
+                "header": [16, 4, 16, 6, 14],
+                "dark": False,
+                "entry": None,
+                "specialSetup": None,
+                "commands": [
+                    RoomsTests.command(opcode=0x99, primitiveIndex=9),
+                    RoomsTests.command(opcode=0x92, primitiveIndex=2),
+                ],
+            }
+        ]
+        doors = self.rooms(records=records)[0]["doorways"]
+
+        self.assertEqual(doors[0]["lock"], {"class": 9, "requiresObject": 0x11})
+        self.assertEqual(doors[0]["lock"]["class"], doors[0]["shape"])
+        self.assertIsNone(doors[1]["lock"], "a shape below the boundary is not a lock")
+
+    def test_darkness_entry_and_special_setup_travel_with_the_room(self) -> None:
+        records = [
+            {
+                "geometryIdentity": "room-record:3000",
+                "header": [16, 4, 16, 6, 14],
+                "dark": True,
+                "entry": {"script": 23},
+                "specialSetup": {
+                    "selector": "previousRoom",
+                    "alternates": [
+                        {"geometryIdentity": "x", "room": 86, "arrivalCommandIndex": 0, "provenanceRefs": []},
+                        {"geometryIdentity": "y", "room": 86, "arrivalCommandIndex": 0, "provenanceRefs": []},
+                    ],
+                },
+                "commands": [RoomsTests.command()],
+            }
+        ]
+        room = self.rooms(records=records)[0]
+
+        self.assertTrue(room["dark"])
+        self.assertEqual(room["entry"], {"script": 23})
+        self.assertEqual(room["specialSetup"]["selector"], "previousRoom")
+        # The payload drops the dataset's provenance, keeping only what a jump needs.
+        self.assertEqual(
+            room["specialSetup"]["alternates"],
+            [{"room": 86, "arrivalCommandIndex": 0}, {"room": 86, "arrivalCommandIndex": 0}],
+        )
+
+    def test_a_room_link_to_the_surface_is_not_a_room_id_of_zero(self) -> None:
+        records = [
+            {
+                "geometryIdentity": "room-record:3000",
+                "header": [16, 4, 16, 6, 14],
+                "dark": False,
+                "entry": None,
+                "specialSetup": None,
+                "commands": [
+                    RoomsTests.command(
+                        linkedRoom=0, destination={"surface": True}, arrival=None
+                    )
+                ],
+            }
+        ]
+        door = self.rooms(records=records)[0]["doorways"][0]
+
+        self.assertEqual(door["destination"], {"surface": True})
+        self.assertIsNone(door["arrival"])
+
+    def test_rejects_a_dataset_extracted_before_the_rules_existed(self) -> None:
+        dataset = RoomsTests.dataset()
+        del dataset["navigationRules"]
+        with self.assertRaisesRegex(LabError, "no navigation rules"):
+            build_rooms(dataset)
+
+    def test_rejects_a_command_whose_destination_was_never_resolved(self) -> None:
+        records = [
+            {
+                "geometryIdentity": "room-record:3000",
+                "header": [16, 4, 16, 6, 14],
+                "dark": False,
+                "entry": None,
+                "specialSetup": None,
+                "commands": [{"primitiveIndex": 2, "plane": "zy", "xMiddle": 1, "zMiddle": 1}],
+            }
+        ]
+        with self.assertRaisesRegex(LabError, "no resolved destination"):
+            build_rooms(RoomsTests.dataset(records=records))
+
+
+class DoorwayRulesTests(unittest.TestCase):
+    """Traversal constants ride in the payload rather than as app literals."""
+
+    def test_carries_every_rule_the_app_needs(self) -> None:
+        rules = _doorway_rules(RoomsTests.RULES)
+
+        self.assertEqual(rules, RoomsTests.RULES)
+
+    def test_drops_the_prose_and_masks_the_decode_used(self) -> None:
+        rules = _doorway_rules({**RoomsTests.RULES, "predicate": "...", "planeMask": 0x80})
+
+        self.assertNotIn("predicate", rules)
+        self.assertNotIn("planeMask", rules)
+
+    def test_rejects_rules_missing_a_field(self) -> None:
+        incomplete = {name: value for name, value in RoomsTests.RULES.items() if name != "lineColour"}
+        with self.assertRaisesRegex(LabError, "lineColour"):
+            _doorway_rules(incomplete)
+
+    def test_the_exported_document_carries_the_rules_beside_the_rooms(self) -> None:
+        document = build_rooms(RoomsTests.dataset())
+
+        self.assertEqual(document["schemaVersion"], PAYLOAD_SCHEMA_VERSION)
+        self.assertEqual(document["doorwayRules"]["lineColour"], 1)
+
+
+class RoomLinkCountTests(unittest.TestCase):
+    """Reciprocity is a relation between two Rooms, so the surface is counted apart."""
+
+    @staticmethod
+    def room(identifier, targets):
+        return {
+            "room": identifier,
+            "doorways": [
+                {
+                    "destination": {"room": target} if target is not None else {"surface": True},
+                    "lock": None,
+                    "arrivalWithinDestination": True,
+                }
+                for target in targets
+            ],
+            "dark": False,
+        }
+
+    def test_counts_a_one_way_link_as_one_way(self) -> None:
+        counts = _room_link_counts([self.room(0, [1]), self.room(1, [0, 2]), self.room(2, [0])])
+
+        self.assertEqual(counts["doorways"], 4)
+        self.assertEqual(counts["roomLinks"], 4)
+        # 1 -> 2 is not answered, and 2 -> 0 is not answered either.
+        self.assertEqual(counts["oneWayRoomLinks"], 2)
+
+    def test_two_doorways_between_the_same_rooms_are_one_link(self) -> None:
+        # Room 0 having two openings onto room 1 is two Doorways and one Room Link,
+        # which is why the two are counted separately rather than assumed equal.
+        counts = _room_link_counts([self.room(0, [1, 1]), self.room(1, [0])])
+
+        self.assertEqual(counts["doorways"], 3)
+        self.assertEqual(counts["roomLinks"], 2)
+        self.assertEqual(counts["oneWayRoomLinks"], 0)
+
+    def test_a_surface_doorway_is_never_a_one_way_link(self) -> None:
+        counts = _room_link_counts([self.room(0, [None])])
+
+        self.assertEqual(counts["surfaceDoorways"], 1)
+        self.assertEqual(counts["roomLinks"], 0)
+        self.assertEqual(counts["oneWayRoomLinks"], 0)
+
+    def test_counts_dark_rooms_locks_and_unresolved_arrivals(self) -> None:
+        rooms = [self.room(0, [1]), self.room(1, [0])]
+        rooms[0]["dark"] = True
+        rooms[0]["doorways"][0]["lock"] = {"class": 9, "requiresObject": 0x11}
+        rooms[1]["doorways"][0]["arrivalWithinDestination"] = False
+
+        counts = _room_link_counts(rooms)
+
+        self.assertEqual(counts["darkRooms"], 1)
+        self.assertEqual(counts["lockedDoorways"], 1)
+        self.assertEqual(counts["unresolvedArrivals"], 1)
+
+    def test_the_evidence_contract_names_the_same_fields_the_count_produces(self) -> None:
+        counts = _room_link_counts([self.room(0, [1]), self.room(1, [0])])
+
+        self.assertEqual(set(counts), set(ROOM_LINK_CONTRACT))
+
+
+class SwiftConstantParityTests(unittest.TestCase):
+    """The app restates every payload version by hand, so drift is a real risk.
+
+    This issue bumps six of them at once. Learning about a mismatch from a runtime
+    "unsupported schema" error mid-playthrough is the worst place to learn it.
+    """
+
+    SOURCE = LAB_ROOT.parents[1] / "app" / "Sources" / "MercenaryKit" / "Payload.swift"
+
+    def swift_constant(self, name: str) -> int:
+        text = self.SOURCE.read_text(encoding="utf-8")
+        match = re.search(rf"supported{name}\s*=\s*(\d+)", text)
+        self.assertIsNotNone(match, f"app/Sources/MercenaryKit/Payload.swift declares no supported{name}")
+        return int(match.group(1))
+
+    def test_the_app_expects_the_schema_this_export_writes(self) -> None:
+        self.assertEqual(self.swift_constant("SchemaVersion"), PAYLOAD_SCHEMA_VERSION)
+
+    def test_the_app_expects_the_decoder_this_export_requires(self) -> None:
+        self.assertEqual(self.swift_constant("DecoderVersion"), DECODER_VERSION)
+
+    def test_the_app_expects_each_capture_documents_own_schema(self) -> None:
+        for name, version in (
+            ("TextSchemaVersion", TEXT_SCHEMA_VERSION),
+            ("BensonSchemaVersion", BENSON_SCHEMA_VERSION),
+            ("InteractionSchemaVersion", INTERACTION_SCHEMA_VERSION),
+            ("FlightSchemaVersion", FLIGHT_SCHEMA_VERSION),
+            ("UndergroundSchemaVersion", UNDERGROUND_SCHEMA_VERSION),
+        ):
+            with self.subTest(constant=name):
+                self.assertEqual(self.swift_constant(name), version)
 
 
 if __name__ == "__main__":
