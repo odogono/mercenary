@@ -187,13 +187,11 @@ final class WalkaboutModel {
       }
       var session = GameplaySession(
         content: GameplaySession.Content(
-          objects: world.objects,
-          cellSize: Double(world.cellSize),
-          interaction: bundle.interaction.map(Interaction.init(document:)),
+          world: world,
+          bundle: bundle,
           flight: bundle.flight.map {
             settings.flight.model(for: $0, groundExtent: Double(world.groundExtent))
-          },
-          underground: bundle.underground
+          }
         ),
         player: OpeningScene.player,
         scripts: scripts
@@ -247,6 +245,11 @@ final class WalkaboutModel {
       case .touchdown, .arrived:
         // The session has already applied these; the tone alongside them is the
         // only thing a shell has to say about them today.
+        break
+      case .wall:
+        // Deliberately silent: the wall's sound is one of the Reference Build's
+        // per-frame SID effects, and audio is out of scope here. The event fires
+        // correctly, so this is the only line that has to change to hear it.
         break
       }
     }

@@ -34,19 +34,46 @@ public struct GameplaySession: Sendable {
     public var interaction: Interaction?
     public var flight: FlightModel?
     public var underground: Payload.UndergroundDocument?
+    /// The Rooms, by their own identifiers. A Room is what bounds the player and
+    /// carries the Doorways they can leave it through.
+    public var rooms: [Int: Room]
+    /// How a Doorway is taken and how a Room contains the player.
+    public var doorwayRules: Payload.RoomsDocument.DoorwayRules?
 
     public init(
       objects: [ObjectPlacement] = [],
       cellSize: Double = 65536,
       interaction: Interaction? = nil,
       flight: FlightModel? = nil,
-      underground: Payload.UndergroundDocument? = nil
+      underground: Payload.UndergroundDocument? = nil,
+      rooms: [Int: Room] = [:],
+      doorwayRules: Payload.RoomsDocument.DoorwayRules? = nil
     ) {
       self.objects = objects
       self.cellSize = cellSize
       self.interaction = interaction
       self.flight = flight
       self.underground = underground
+      self.rooms = rooms
+      self.doorwayRules = doorwayRules
+    }
+
+    /// Everything a session needs that comes straight out of a loaded payload.
+    ///
+    /// The shells built this field by field, which meant every new piece of decoded
+    /// content had to be remembered in three places — and a shell that forgot one
+    /// did not fail, it just quietly played a game missing that rule. `flight` stays
+    /// a parameter because the tuning knobs shape it before it gets here.
+    public init(world: World, bundle: Payload.Bundle, flight: FlightModel?) {
+      self.init(
+        objects: world.objects,
+        cellSize: Double(world.cellSize),
+        interaction: bundle.interaction.map(Interaction.init(document:)),
+        flight: flight,
+        underground: bundle.underground,
+        rooms: world.rooms,
+        doorwayRules: world.doorwayRules
+      )
     }
   }
 
@@ -378,7 +405,12 @@ public struct GameplaySession: Sendable {
   public mutating func advance(by seconds: Double) -> (snapshot: SessionSnapshot, events: [PresentationEvent]) {
     var events: [PresentationEvent] = []
     if let flight = content.flight, seconds > 0 {
-      game = GameCore.step(game, intent: intent, dt: seconds, flight: flight)
+      game = GameCore.step(
+        game, intent: intent, dt: seconds, flight: flight, containment: containment
+      )
+      if game.wallThud, let rules = content.doorwayRules {
+        events.append(.wall(sound: rules.wallThudSound))
+      }
       if let touchdown = game.touchdown {
         events.append(.tone)
         events.append(.touchdown(touchdown))
@@ -448,6 +480,16 @@ public struct GameplaySession: Sendable {
   // MARK: - Internals
 
   private var interaction: Interaction? { content.interaction }
+
+  /// The walls of the Room the player is in, when they are in one. Nil on the
+  /// surface, and nil for a Room the payload does not carry, which leaves walking
+  /// bounded by the world rather than by nothing.
+  var containment: Containment? {
+    guard case .room(let id) = location, let room = content.rooms[id],
+      let rules = content.doorwayRules
+    else { return nil }
+    return Containment(room: room, rules: rules)
+  }
 
   /// Push the typed state through to the host without running anything, for the
   /// transitions that change what a script would see outside an interpreter step.

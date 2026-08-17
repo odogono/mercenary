@@ -184,6 +184,24 @@ public enum Payload {
           var surface: Bool?
         }
 
+        /// Spelled out because the sum-typed `destination` means this type writes its
+        /// own `Codable`, which suppresses the memberwise one a test would use.
+        public init(
+          index: Int, shape: Int, plane: String, position: Point, destination: Destination,
+          arrivalCommandIndex: Int, arrival: Point?, arrivalWithinDestination: Bool = true,
+          lock: Lock? = nil
+        ) {
+          self.index = index
+          self.shape = shape
+          self.plane = plane
+          self.position = position
+          self.destination = destination
+          self.arrivalCommandIndex = arrivalCommandIndex
+          self.arrival = arrival
+          self.arrivalWithinDestination = arrivalWithinDestination
+          self.lock = lock
+        }
+
         public init(from decoder: Swift.Decoder) throws {
           let values = try decoder.container(keyedBy: CodingKeys.self)
           index = try values.decode(Int.self, forKey: .index)
@@ -276,6 +294,23 @@ public enum Payload {
       private struct EntryBox: Codable {
         var script: Int?
         var message: Int?
+      }
+
+      /// As with a Doorway: the sum-typed `entry` means the memberwise one is gone.
+      public init(
+        room: Int, vertices: [[Int]], edges: [[Int]], bounds: Bounds, palette: Palette,
+        dark: Bool = false, entry: Entry? = nil, specialSetup: SpecialSetup? = nil,
+        doorways: [Doorway] = []
+      ) {
+        self.room = room
+        self.vertices = vertices
+        self.edges = edges
+        self.bounds = bounds
+        self.palette = palette
+        self.dark = dark
+        self.entry = entry
+        self.specialSetup = specialSetup
+        self.doorways = doorways
       }
 
       public init(from decoder: Swift.Decoder) throws {

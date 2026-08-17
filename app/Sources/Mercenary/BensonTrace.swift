@@ -100,14 +100,12 @@ enum BensonTrace {
       let world = World(bundle: bundle)
       var session = GameplaySession(
         content: GameplaySession.Content(
-          objects: world.objects,
-          cellSize: Double(world.cellSize),
-          interaction: bundle.interaction.map(Interaction.init(document:)),
+          world: world,
+          bundle: bundle,
           // Walking runs on the craft parameters too, so without them nothing moves.
           flight: bundle.flight.map { parameters in
             settings.flight.model(for: parameters, groundExtent: Double(world.groundExtent))
-          },
-          underground: bundle.underground
+          }
         ),
         player: OpeningScene.player,
         scripts: BensonSession(

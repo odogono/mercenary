@@ -202,6 +202,15 @@ public struct GameState: Sendable, Equatable {
   /// before it decides anything else — underground, the on-foot mover runs whatever
   /// the player is standing in.
   public var room: Int?
+  /// How many axes the Room's walls had to move the player back along this frame.
+  /// Nonzero is wall contact, which is what a Doorway is opened by.
+  public var wallContact: Int = 0
+  /// The same count from the frame before, which is the only thing that keeps the
+  /// wall from sounding once a frame for as long as the player leans on it.
+  public var wallContactLatch: Int = 0
+
+  /// Whether the wall should sound: contact now, and none last frame.
+  public var wallThud: Bool { wallContact != 0 && wallContactLatch == 0 }
 
   public init(
     player: PlayerState,
@@ -237,14 +246,23 @@ public enum GameCore {
   /// several bounded steps instead of one teleport through the world.
   public static let maximumStep: Double = 1.0 / 30.0
 
-  public static func step(_ state: GameState, intent: Intent, dt: Double, flight: FlightModel) -> GameState {
+  /// Advance the world by `dt`.
+  ///
+  /// `containment` is the Room the player is walking inside, when they are in one. It
+  /// is passed in rather than looked up because this is a pure function of what it is
+  /// given, and because a Room's walls are the only thing underground that the
+  /// surface's own world bounds cannot express.
+  public static func step(
+    _ state: GameState, intent: Intent, dt: Double, flight: FlightModel,
+    containment: Containment? = nil
+  ) -> GameState {
     guard dt.isFinite, dt > 0 else { return state }
     var result = state
     result.touchdown = nil
     var remaining = dt
     while remaining > 0 {
       let slice = Swift.min(remaining, maximumStep)
-      result = integrate(result, intent: intent, dt: slice, flight: flight)
+      result = integrate(result, intent: intent, dt: slice, flight: flight, containment: containment)
       remaining -= slice
     }
     return result
@@ -349,13 +367,14 @@ public enum GameCore {
   }
 
   private static func integrate(
-    _ state: GameState, intent: Intent, dt: Double, flight: FlightModel
+    _ state: GameState, intent: Intent, dt: Double, flight: FlightModel,
+    containment: Containment? = nil
   ) -> GameState {
     // On foot the Reference Build does not run the control loop at all: `MOVE`
     // dispatches to its own routine whenever the player is out of a craft or
     // underground. Only a craft reaches the Craft Parameter Blocks (ADR 0016).
     guard state.craft != nil, state.room == nil else {
-      return walk(state, intent: intent, dt: dt, flight: flight)
+      return walk(state, intent: intent, dt: dt, flight: flight, containment: containment)
     }
     var result = state
     var player = result.player
@@ -444,7 +463,8 @@ public enum GameCore {
   /// It cannot change altitude, because the routine it comes from has no vertical
   /// term at all — which is also why a walker can never leave the ground.
   private static func walk(
-    _ state: GameState, intent: Intent, dt: Double, flight: FlightModel
+    _ state: GameState, intent: Intent, dt: Double, flight: FlightModel,
+    containment: Containment? = nil
   ) -> GameState {
     var result = state
     var player = result.player
@@ -458,12 +478,20 @@ public enum GameCore {
     // flipping the sign bit of the one value rather than keeping two.
     let advance = intent.walk * flight.walkStep
       * (intent.running ? flight.limits.runMultiplier : 1) * frames
-    player.position.x = clampToWorld(
-      player.position.x + sin(player.heading) * advance, extent: flight.limits.groundExtent
-    )
-    player.position.z = clampToWorld(
-      player.position.z + cos(player.heading) * advance, extent: flight.limits.groundExtent
-    )
+    player.position.x += sin(player.heading) * advance
+    player.position.z += cos(player.heading) * advance
+    if let containment {
+      // Inside a Room the walls are the bound, and touching one is recorded rather
+      // than merely obeyed: the count is what the traversal path asks for before it
+      // will look for a Doorway at all.
+      result.wallContactLatch = state.wallContact
+      result.wallContact = containment.clamp(&player.position)
+    } else {
+      player.position.x = clampToWorld(player.position.x, extent: flight.limits.groundExtent)
+      player.position.z = clampToWorld(player.position.z, extent: flight.limits.groundExtent)
+      result.wallContactLatch = 0
+      result.wallContact = 0
+    }
     player.position.y = flight.groundAltitude
     // None of the craft's dynamics survive stepping out of one.
     player.yawVelocity = 0

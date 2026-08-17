@@ -158,4 +158,11 @@ public enum PresentationEvent: Sendable, Equatable {
   case touchdown(Touchdown)
   /// The lift arrived somewhere.
   case arrived(Location)
+  /// The player walked into a Room's wall, carrying the sound the Reference Build
+  /// made of it. Once per contact, not once per frame of leaning on it.
+  ///
+  /// Nothing plays it yet — per-frame audio is out of scope for this work — but the
+  /// event is where the fidelity is: it fires exactly when the Reference Build's own
+  /// latch fires, which is also the moment a Doorway is looked for.
+  case wall(sound: Int)
 }
