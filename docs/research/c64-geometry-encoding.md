@@ -209,6 +209,10 @@ Ordinary points use two bytes, `qx` and `qz`:
 - `qx & $3F` and `qz & $3F` encode within-cell X and Z. Code 0 maps to middle byte `$00`, code 63 maps to `$FF`, and codes 1-62 map to `$61-$9E`.
 - `((qx >> 6) << 2) | (qz >> 6)` is a four-bit height code.
 - Height code 15 escapes to an additional byte, permitting extended height.
+- An extended byte below `$80` is the Y middle byte directly. A byte at or above
+  `$80` is decoded as `(byte & $7F) << 4`: the routine performs one `ASL` whose
+  carry is discarded, followed by three `ASL`/`ROL` pairs. Geometry decoder 4
+  corrects the earlier missing first shift.
 - The cell's X/Z nibbles provide the high position bytes, yielding 24-bit world points.
 
 Some small records deliberately reference synthetic/shared point indices such as `$1F-$21` which are initialized outside the local record. An extractor must reproduce those initializer points before validating indices; rejecting every edge above `highest_point_index` would incorrectly reject valid records.

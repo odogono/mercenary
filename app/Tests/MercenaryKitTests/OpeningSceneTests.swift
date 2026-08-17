@@ -6,10 +6,10 @@ final class OpeningSceneTests: XCTestCase {
   func testOpeningSceneStartsInCellEightEightFacingTheReferenceCheckpoint() {
     let player = OpeningScene.player
 
-    XCTAssertEqual(player.position, SIMD3(559_104, 128, 547_104))
+    XCTAssertEqual(player.position, SIMD3(559_104, 128, 559_104))
     XCTAssertEqual(Int(player.position.x) >> 16, 8)
     XCTAssertEqual(Int(player.position.z) >> 16, 8)
-    XCTAssertGreaterThan(OpeningScene.focus.z, player.position.z)
+    XCTAssertEqual(OpeningScene.focus.z, player.position.z)
     XCTAssertEqual(player.heading, 0)
     XCTAssertEqual(player.pitch, 0)
   }

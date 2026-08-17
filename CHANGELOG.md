@@ -86,6 +86,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Apply the maintainer's opening-loop playthrough findings. Play now begins at the
+  Reference Build's captured X/Z 559104 crash position, in the centre of the wreck,
+  rather than at the former staged overview 12,000 units south. Craft that have been
+  flown and left now use their live landing position for drawing and boarding instead
+  of snapping invisibly back to their immutable payload position.
+  The lift's tall-box appearance was an extraction defect, not a scale judgment:
+  extended surface heights perform one discarded `ASL` before three `ASL`/`ROL`
+  pairs. Geometry decoder 4 restores the five lift structures' levels from
+  1072/1120/1168 to 96/192/288, and stale decoder-3 payloads are rejected.
 - Walk on foot the way the Reference Build does, which is not through the control
   loop at all. `MOVE` (`$A165`) dispatches: with the underground flag set, or with
   the craft byte's top bit set — which is what being on foot means — control goes to

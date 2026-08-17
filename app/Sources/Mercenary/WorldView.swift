@@ -31,7 +31,7 @@ struct WorldView: View {
 
     let visible = model.selector.visible(
       in: world, from: model.state.player.position, elapsed: model.state.elapsed,
-      hidden: model.hiddenSlots, room: model.state.room
+      hidden: model.hiddenSlots, moved: model.landedCraft, room: model.state.room
     )
     var paths: [Ink: Path] = [:]
     var drawn = 0

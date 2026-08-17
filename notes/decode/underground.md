@@ -68,6 +68,11 @@ and a hangar is entered by a different mechanism — the box test below — so `
 most likely a hangar. Not proven, but the tables are unambiguous about what they
 hold.
 
+All five cells share surface structure `$E9A7`. Its three raised lift levels use
+extended height bytes and decode to Y 96, 192, and 288. Geometry decoder 3 missed
+the routine's initial discard shift and produced 1072, 1120, and 1168 instead,
+turning the low lift into a tall box; decoder 4 fixes that extraction error.
+
 ## Laying the rooms out
 
 Rooms carry no coordinates, but a layout can be walked out of the doorways, because

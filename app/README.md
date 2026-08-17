@@ -130,7 +130,7 @@ spot-checks, and for looking at a scene from a machine that cannot open a window
 
 ```sh
 app/.build/debug/mercenary --render-frame /tmp/frame.png \
-  --x 559104 --z 547104 --eye 128 --heading 0 --pitch 0
+  --x 559104 --z 559104 --eye 128 --heading 0 --pitch 0
 ```
 
 `--heading`, `--pitch` and `--roll` are degrees; `--x`, `--z`, `--eye` are world

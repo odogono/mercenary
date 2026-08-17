@@ -60,7 +60,7 @@ final class WalkaboutModel {
 
   /// Where a craft was left, so it is drawn where the player got out of it rather
   /// than back where the payload first placed it.
-  private var landedCraft: [Int: SIMD3<Double>] = [:]
+  private(set) var landedCraft: [Int: SIMD3<Double>] = [:]
   private var pressed: Set<UInt16> = []
   private var running = false
   private var ticker: Timer?
@@ -234,7 +234,9 @@ final class WalkaboutModel {
       .filter(\.isDrawable)
       .filter { session.hostState.objectRooms[$0.slot] != BensonHostState.outOfTheWorld }
       .map {
-        Interaction.Candidate(slot: $0.slot, position: SIMD3<Double>($0.origin))
+        Interaction.Candidate(
+          slot: $0.slot, position: landedCraft[$0.slot] ?? SIMD3<Double>($0.origin)
+        )
       }
 
     var host = session.hostState
@@ -248,8 +250,9 @@ final class WalkaboutModel {
       // as the Reference Build did, and swaps in its Craft Parameter Block.
       if case .boarded = outcome, let craft = world.objects.first(where: { $0.slot == slot }),
         let flight {
+        let position = landedCraft[slot] ?? SIMD3<Double>(craft.origin)
         state = GameCore.board(
-          state, craft: slot, at: SIMD3(Double(craft.origin.x), 0, Double(craft.origin.z)),
+          state, craft: slot, at: SIMD3(position.x, 0, position.z),
           heading: Self.heading(of: craft), flight: flight
         )
       }

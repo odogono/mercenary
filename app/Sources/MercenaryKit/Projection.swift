@@ -258,9 +258,10 @@ public struct VisibilitySelector: Sendable {
   /// `hidden` names object slots the game has taken out of the world — a craft
   /// the player has boarded, or anything picked up. The payload's room byte only
   /// says where a thing started; what is out of the world now is live state.
+  /// `moved` overlays the current position of craft that have been flown and left.
   public func visible(
     in world: World, from position: SIMD3<Double>, elapsed: Double = 0, hidden: Set<Int> = [],
-    room: Int? = nil
+    moved: [Int: SIMD3<Double>] = [:], room: Int? = nil
   ) -> Visible {
     // Underground the Reference Build draws one room and nothing else: no cell ring,
     // no roads, no surface objects. A room is its own world.
@@ -297,11 +298,12 @@ public struct VisibilitySelector: Sendable {
     var detailed = 0
     if includeObjects {
       for object in world.objects where object.isDrawable && !hidden.contains(object.slot) {
-        if object.isDetailed(from: position) {
-          segments.append(contentsOf: object.segments)
+        let placed = moved[object.slot].map { object.moved(to: $0) } ?? object
+        if placed.isDetailed(from: position) {
+          segments.append(contentsOf: placed.segments)
           detailed += 1
-        } else if object.drawsFarAsPoint {
-          points.append(object.origin)
+        } else if placed.drawsFarAsPoint {
+          points.append(placed.origin)
         }
       }
     }

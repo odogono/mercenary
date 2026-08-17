@@ -66,6 +66,17 @@ public struct ObjectPlacement: Sendable, Equatable {
       && abs(Double(origin.y) - position.y) <= cube
       && abs(Double(origin.z) - position.z) <= cube
   }
+
+  /// Return this instance at its current live position rather than its immutable
+  /// payload position. Boarding and leaving move craft without mutating the world.
+  public func moved(to position: SIMD3<Double>) -> ObjectPlacement {
+    var result = self
+    let destination = SIMD3<Float>(Float(position.x), Float(position.y), Float(position.z))
+    let displacement = destination - origin
+    result.origin = destination
+    result.vertices = vertices.map { $0 + displacement }
+    return result
+  }
 }
 
 /// One full surface map line decoded from a road-table endpoint pair.
