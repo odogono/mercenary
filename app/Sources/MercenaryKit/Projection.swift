@@ -77,6 +77,13 @@ public struct Camera: Sendable, Equatable {
   public let verticalFieldOfView: Double
   public let nearPlane: Double
   public let farPlane: Double
+  /// Whether the view is mirrored left for right.
+  ///
+  /// One underground Room turns this on. It is applied in camera space rather than by
+  /// negating anything in the world, because that is where the Reference Build applies
+  /// it — a single `EOR` on the parity flag at eight sites in the transform — and
+  /// because mirroring the world itself would mirror the objects in it too.
+  public let mirrored: Bool
 
   /// The camera's angles as sines and cosines, taken once here rather than per
   /// vertex: a camera is built once a frame and then asked to transform every
@@ -96,7 +103,8 @@ public struct Camera: Sendable, Equatable {
     roll: Double = 0,
     verticalFieldOfView: Double = ReferenceViewport(size: CGSize(width: 160, height: 136)).verticalFieldOfView,
     nearPlane: Double = 24,
-    farPlane: Double = 320_000
+    farPlane: Double = 320_000,
+    mirrored: Bool = false
   ) {
     self.position = position
     self.heading = heading
@@ -105,6 +113,7 @@ public struct Camera: Sendable, Equatable {
     self.verticalFieldOfView = verticalFieldOfView
     self.nearPlane = nearPlane
     self.farPlane = farPlane
+    self.mirrored = mirrored
     self.sinHeading = sin(heading)
     self.cosHeading = cos(heading)
     self.sinPitch = sin(pitch)
@@ -116,9 +125,10 @@ public struct Camera: Sendable, Equatable {
     self.cosRoll = cos(-roll)
   }
 
-  public init(player: PlayerState) {
+  public init(player: PlayerState, mirrored: Bool = false) {
     self.init(
-      position: player.position, heading: player.heading, pitch: player.pitch, roll: player.roll
+      position: player.position, heading: player.heading, pitch: player.pitch, roll: player.roll,
+      mirrored: mirrored
     )
   }
 
@@ -136,7 +146,8 @@ public struct Camera: Sendable, Equatable {
       Double(world.z) - position.z
     )
     // Yaw about the vertical axis, with heading measured clockwise from +Z.
-    let x = relative.x * cosHeading - relative.z * sinHeading
+    let yawed = relative.x * cosHeading - relative.z * sinHeading
+    let x = mirrored ? -yawed : yawed
     let forward = relative.x * sinHeading + relative.z * cosHeading
     let pitched = relative.y * cosPitch - forward * sinPitch
     let z = relative.y * sinPitch + forward * cosPitch
@@ -255,20 +266,34 @@ public struct VisibilitySelector: Sendable {
   /// presentation adaptation; the Reference Build expands only the current
   /// structure. Objects retain their separate decoded detail-cube rule.
   ///
-  /// `hidden` names object slots the game has taken out of the world — a craft
-  /// the player has boarded, or anything picked up. The payload's room byte only
-  /// says where a thing started; what is out of the world now is live state.
-  /// `moved` overlays the current position of craft that have been flown and left.
+  /// `residence` is where objects have got to. The payload's placement only says
+  /// where a thing started: a craft that has been flown is somewhere else, one being
+  /// flown is nowhere, and anything picked up is in the player's hands. It replaced
+  /// three separate overlays — hidden slots, moved positions, and room membership —
+  /// which were all views of this one value and could disagree.
   public func visible(
-    in world: World, from position: SIMD3<Double>, elapsed: Double = 0, hidden: Set<Int> = [],
-    moved: [Int: SIMD3<Double>] = [:], room: Int? = nil
+    in world: World, from position: SIMD3<Double>, elapsed: Double = 0,
+    residence: [Int: Residence] = [:], room: Int? = nil
   ) -> Visible {
     // Underground the Reference Build draws one room and nothing else: no cell ring,
-    // no roads, no surface objects. A room is its own world.
+    // no roads, no surface objects. A room is its own world — but the things standing
+    // in that room are drawn, by the same rules that draw the things on the surface.
     if let room {
-      return Visible(
-        segments: world.rooms[room]?.segments ?? [], points: [], detailedObjects: 0
-      )
+      var segments = world.rooms[room]?.segments ?? []
+      var points: [SIMD3<Float>] = []
+      var detailed = 0
+      if includeObjects {
+        for object in world.objects
+        where object.isDrawable(in: .room(room), residence: residence[object.slot]) {
+          if object.isDetailed(from: position) {
+            segments.append(contentsOf: object.segments)
+            detailed += 1
+          } else if object.drawsFarAsPoint {
+            points.append(object.origin)
+          }
+        }
+      }
+      return Visible(segments: segments, points: points, detailedObjects: detailed)
     }
     let column = Int((position.x / Double(world.cellSize)).rounded(.down))
     let row = Int((position.z / Double(world.cellSize)).rounded(.down))
@@ -297,8 +322,10 @@ public struct VisibilitySelector: Sendable {
     var points: [SIMD3<Float>] = []
     var detailed = 0
     if includeObjects {
-      for object in world.objects where object.isDrawable && !hidden.contains(object.slot) {
-        let placed = moved[object.slot].map { object.movedHorizontally(to: $0) } ?? object
+      for object in world.objects
+      where object.isDrawable(in: .surface, residence: residence[object.slot]) {
+        let placed = residence[object.slot]?.displacement
+          .map { object.movedHorizontally(to: $0) } ?? object
         if placed.isDetailed(from: position) {
           segments.append(contentsOf: placed.segments)
           detailed += 1

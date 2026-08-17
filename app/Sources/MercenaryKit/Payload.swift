@@ -138,11 +138,16 @@ public enum Payload {
       /// special case: the room on the other side simply has no Doorway back. The
       /// decoder resolved every field here, so nothing in the app reads an opcode.
       public struct Doorway: Codable, Sendable, Equatable {
-        /// Where a Doorway leads. The surface is not a room, so it is its own case
-        /// rather than a room id of zero.
+        /// Where a Doorway leads.
+        ///
+        /// One Doorway in the underground leads out of it, and the Reference Build
+        /// spells that as a destination of zero — which is *not* room zero: Room setup
+        /// branches on it before it reads any record. Where it goes instead is the
+        /// colony craft, four million units above surface cell 8:8, which is why this
+        /// is its own case rather than a room id.
         public enum Destination: Sendable, Equatable {
           case room(Int)
-          case surface
+          case colonyCraft
         }
 
         /// What a Doorway demands before it opens: a lock class, and the object slot
@@ -165,8 +170,8 @@ public enum Payload {
         public var destination: Destination
         /// Which of the destination room's own Doorways the player arrives in.
         public var arrivalCommandIndex: Int
-        /// Where the player lands, already resolved. Absent for the surface, which
-        /// the Reference Build places from its own start position instead.
+        /// Where the player lands, already resolved. Absent for the Doorway out of the
+        /// underground, which has a fixed position of its own in ``DoorwayRules``.
         public var arrival: Point?
         /// False for the one Doorway whose arrival index names a Doorway its
         /// destination does not have; the Reference Build reads past that room's
@@ -181,7 +186,25 @@ public enum Payload {
 
         private struct DestinationBox: Codable {
           var room: Int?
-          var surface: Bool?
+          var colonyCraft: Bool?
+        }
+
+        /// Spelled out because the sum-typed `destination` means this type writes its
+        /// own `Codable`, which suppresses the memberwise one a test would use.
+        public init(
+          index: Int, shape: Int, plane: String, position: Point, destination: Destination,
+          arrivalCommandIndex: Int, arrival: Point?, arrivalWithinDestination: Bool = true,
+          lock: Lock? = nil
+        ) {
+          self.index = index
+          self.shape = shape
+          self.plane = plane
+          self.position = position
+          self.destination = destination
+          self.arrivalCommandIndex = arrivalCommandIndex
+          self.arrival = arrival
+          self.arrivalWithinDestination = arrivalWithinDestination
+          self.lock = lock
         }
 
         public init(from decoder: Swift.Decoder) throws {
@@ -195,14 +218,14 @@ public enum Payload {
           arrivalWithinDestination = try values.decode(Bool.self, forKey: .arrivalWithinDestination)
           lock = try values.decodeIfPresent(Lock.self, forKey: .lock)
           let box = try values.decode(DestinationBox.self, forKey: .destination)
-          switch (box.room, box.surface) {
+          switch (box.room, box.colonyCraft) {
           case (let id?, nil): destination = .room(id)
-          case (nil, true): destination = .surface
+          case (nil, true): destination = .colonyCraft
           default:
             throw DecodingError.dataCorruptedError(
               forKey: .destination,
               in: values,
-              debugDescription: "A Doorway must name exactly one of a room or the surface"
+              debugDescription: "A Doorway must name exactly one of a room or the colony craft"
             )
           }
         }
@@ -218,8 +241,9 @@ public enum Payload {
           try values.encode(arrivalWithinDestination, forKey: .arrivalWithinDestination)
           try values.encodeIfPresent(lock, forKey: .lock)
           switch destination {
-          case .room(let id): try values.encode(DestinationBox(room: id, surface: nil), forKey: .destination)
-          case .surface: try values.encode(DestinationBox(room: nil, surface: true), forKey: .destination)
+          case .room(let id): try values.encode(DestinationBox(room: id, colonyCraft: nil), forKey: .destination)
+          case .colonyCraft:
+            try values.encode(DestinationBox(room: nil, colonyCraft: true), forKey: .destination)
           }
         }
       }
@@ -241,14 +265,97 @@ public enum Payload {
           case previousRoom
         }
 
+        /// One rewrite: where the Room's first Doorway leads once it is applied, and
+        /// where in that Room the player lands.
+        ///
+        /// Both travel resolved, as a Doorway's do, because the Reference Build's
+        /// rewrite changes the destination *and* the arrival index together and
+        /// chasing the second across Rooms at runtime is exactly what the decode is
+        /// for. The fields are named as a Doorway's are so the two read alike.
         public struct Alternate: Codable, Sendable, Equatable {
           public var room: Int
           public var arrivalCommandIndex: Int
+          public var destination: Doorway.Destination
+          public var arrival: Doorway.Point?
+          public var arrivalWithinDestination: Bool
+
+          private enum CodingKeys: String, CodingKey {
+            case room, arrivalCommandIndex, destination, arrival, arrivalWithinDestination
+          }
+
+          private struct DestinationBox: Codable {
+            var room: Int?
+            var colonyCraft: Bool?
+          }
+
+          public init(from decoder: Swift.Decoder) throws {
+            let values = try decoder.container(keyedBy: CodingKeys.self)
+            room = try values.decode(Int.self, forKey: .room)
+            arrivalCommandIndex = try values.decode(Int.self, forKey: .arrivalCommandIndex)
+            arrival = try values.decodeIfPresent(Doorway.Point.self, forKey: .arrival)
+            arrivalWithinDestination = try values.decode(
+              Bool.self, forKey: .arrivalWithinDestination
+            )
+            let box = try values.decode(DestinationBox.self, forKey: .destination)
+            switch (box.room, box.colonyCraft) {
+            case (let id?, nil): destination = .room(id)
+            case (nil, true): destination = .colonyCraft
+            default:
+              throw DecodingError.dataCorruptedError(
+                forKey: .destination,
+                in: values,
+                debugDescription: "An alternate must name exactly one of a room or the colony craft"
+              )
+            }
+          }
+
+          public func encode(to encoder: Swift.Encoder) throws {
+            var values = encoder.container(keyedBy: CodingKeys.self)
+            try values.encode(room, forKey: .room)
+            try values.encode(arrivalCommandIndex, forKey: .arrivalCommandIndex)
+            try values.encodeIfPresent(arrival, forKey: .arrival)
+            try values.encode(arrivalWithinDestination, forKey: .arrivalWithinDestination)
+            switch destination {
+            case .room(let id):
+              try values.encode(DestinationBox(room: id, colonyCraft: nil), forKey: .destination)
+            case .colonyCraft:
+              try values.encode(DestinationBox(room: nil, colonyCraft: true), forKey: .destination)
+            }
+          }
+
+          public init(
+            room: Int, arrivalCommandIndex: Int, destination: Doorway.Destination,
+            arrival: Doorway.Point?, arrivalWithinDestination: Bool = true
+          ) {
+            self.room = room
+            self.arrivalCommandIndex = arrivalCommandIndex
+            self.destination = destination
+            self.arrival = arrival
+            self.arrivalWithinDestination = arrivalWithinDestination
+          }
+        }
+
+        /// The Doorway this Room's first one becomes once an alternate is applied.
+        ///
+        /// The rewrite is a two-field edit to a command already in the record, so it
+        /// is expressed as one here too: everything about the Doorway stays as it was
+        /// except where it leads and where it puts the player.
+        public static func rewrite(
+          _ doorway: Doorway, as alternate: Alternate
+        ) -> Doorway {
+          var rewritten = doorway
+          rewritten.destination = alternate.destination
+          rewritten.arrivalCommandIndex = alternate.arrivalCommandIndex
+          rewritten.arrival = alternate.arrival
+          rewritten.arrivalWithinDestination = alternate.arrivalWithinDestination
+          return rewritten
         }
 
         public var selector: Selector
         public var alternates: [Alternate]
       }
+
+
 
       public struct Bounds: Codable, Sendable, Equatable {
         public var min: [Int]
@@ -276,6 +383,23 @@ public enum Payload {
       private struct EntryBox: Codable {
         var script: Int?
         var message: Int?
+      }
+
+      /// As with a Doorway: the sum-typed `entry` means the memberwise one is gone.
+      public init(
+        room: Int, vertices: [[Int]], edges: [[Int]], bounds: Bounds, palette: Palette,
+        dark: Bool = false, entry: Entry? = nil, specialSetup: SpecialSetup? = nil,
+        doorways: [Doorway] = []
+      ) {
+        self.room = room
+        self.vertices = vertices
+        self.edges = edges
+        self.bounds = bounds
+        self.palette = palette
+        self.dark = dark
+        self.entry = entry
+        self.specialSetup = specialSetup
+        self.doorways = doorways
       }
 
       public init(from decoder: Swift.Decoder) throws {
@@ -343,6 +467,44 @@ public enum Payload {
       public var worldFlipCooldownFrames: Int
       public var randomRoom: Int
       public var worldFlipRoom: Int
+      /// How far from the near wall a Room can be walked, in position units.
+      public var nearMargin: Int
+      /// The furthest low byte the last cell of a Room allows; the far wall is
+      /// therefore `cells * 256 - (256 - farMargin)` away.
+      public var farMargin: Int
+      public var wallThudSound: Int
+      /// Where the one Doorway out of the underground puts the player: a fixed
+      /// position, not one derived from where they went down.
+      ///
+      /// It is the colony craft — object slot ``colonyCraftSlot``, the highest thing in
+      /// the world by two orders of magnitude — offset to just outside its hull. The
+      /// export asserts the two agree, so this name cannot drift from what it names.
+      ///
+      /// Only `x` and `z` are acted on, and that is a **known difference from the
+      /// Reference Build** rather than an unexplained one: the altitude is four million
+      /// units up and the mover installed there belongs to the escape route, which this
+      /// work does not implement.
+      public var colonyCraftArrival: Position
+      /// The object slot the arrival is at.
+      public var colonyCraftSlot: Int
+
+      /// A whole position, all three axes. A Doorway's own `Point` is horizontal
+      /// because a Doorway never writes an altitude; this one does.
+      public struct Position: Codable, Sendable, Equatable {
+        public var x: Int
+        public var y: Int
+        public var z: Int
+      }
+      /// How many walking steps must pass after a transition before another Doorway
+      /// can be taken. Without it the player bounces straight back through the
+      /// Doorway they arrived in, because arrival puts them inside it.
+      public var stepInterlock: Int
+      /// The border colour each frame of a transition shows, indexed by the frames
+      /// remaining. Index zero is never read: at zero the Room's own colour returns.
+      public var transitionColours: [Int]
+      /// The input byte a flipped world reads instead of the one that arrived. It is
+      /// its own inverse, and it swaps the two turn bits.
+      public var worldFlipInputRemap: [Int]
     }
 
     public var schemaVersion: Int
@@ -480,8 +642,8 @@ public enum Payload {
     }
   }
 
-  public static let supportedSchemaVersion = 6
-  public static let supportedDecoderVersion = 5
+  public static let supportedSchemaVersion = 8
+  public static let supportedDecoderVersion = 7
   /// The text document carries its own version, because its format is
   /// independent of the geometry documents and changes on its own schedule.
   public static let supportedTextSchemaVersion = 1

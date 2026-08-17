@@ -15,6 +15,7 @@ from c64lab.payload import (
     PAYLOAD_SCHEMA_VERSION,
     ROOM_LINK_CONTRACT,
     _doorway_rules,
+    _DOORWAY_RULE_FIELDS,
     _room_link_counts,
     build_rooms,
     render_room_map_svg,
@@ -307,6 +308,14 @@ class RoomsTests(unittest.TestCase):
         "worldFlipCooldownFrames": 0x1F,
         "randomRoom": 0x72,
         "worldFlipRoom": 0x7F,
+        "nearMargin": 0x20,
+        "farMargin": 0xDF,
+        "wallThudSound": 0x14,
+        "colonyCraftArrival": {"x": 0x0867C0, "y": 0x40F880, "z": 0x087000},
+        "colonyCraftSlot": 0x3F,
+        "stepInterlock": 2,
+        "transitionColours": [0x00, 0x0B, 0x0C],
+        "worldFlipInputRemap": [0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7, 12, 13, 14, 15],
     }
 
     @classmethod
@@ -329,7 +338,7 @@ class RoomsTests(unittest.TestCase):
     @classmethod
     def dataset(cls, rooms=None, records=None, rules=None):
         return {
-            "schemaVersion": 2,
+            "schemaVersion": 3,
             "navigationRules": dict(cls.RULES if rules is None else rules),
             "records": records if records is not None else [
                 {
@@ -612,8 +621,12 @@ class DoorwayExportTests(unittest.TestCase):
                 "specialSetup": {
                     "selector": "previousRoom",
                     "alternates": [
-                        {"geometryIdentity": "x", "room": 86, "arrivalCommandIndex": 0, "provenanceRefs": []},
-                        {"geometryIdentity": "y", "room": 86, "arrivalCommandIndex": 0, "provenanceRefs": []},
+                        {"geometryIdentity": "x", "room": 86, "arrivalCommandIndex": 0, "provenanceRefs": [],
+                         "destination": {"room": 86}, "arrival": {"x": 0x0880, "z": 0x0100},
+                         "arrivalWithinDestination": True},
+                        {"geometryIdentity": "y", "room": 87, "arrivalCommandIndex": 1, "provenanceRefs": [],
+                         "destination": {"room": 87}, "arrival": {"x": 0x0300, "z": 0x0480},
+                         "arrivalWithinDestination": True},
                     ],
                 },
                 "commands": [RoomsTests.command()],
@@ -625,9 +638,16 @@ class DoorwayExportTests(unittest.TestCase):
         self.assertEqual(room["entry"], {"script": 23})
         self.assertEqual(room["specialSetup"]["selector"], "previousRoom")
         # The payload drops the dataset's provenance, keeping only what a jump needs.
+        # The payload keeps what a rewrite needs — where the first Doorway now leads
+        # and where in that Room the player lands — and drops the provenance.
         self.assertEqual(
             room["specialSetup"]["alternates"],
-            [{"room": 86, "arrivalCommandIndex": 0}, {"room": 86, "arrivalCommandIndex": 0}],
+            [
+                {"room": 86, "arrivalCommandIndex": 0, "destination": {"room": 86},
+                 "arrival": {"x": 0x0880, "z": 0x0100}, "arrivalWithinDestination": True},
+                {"room": 87, "arrivalCommandIndex": 1, "destination": {"room": 87},
+                 "arrival": {"x": 0x0300, "z": 0x0480}, "arrivalWithinDestination": True},
+            ],
         )
 
     def test_a_room_link_to_the_surface_is_not_a_room_id_of_zero(self) -> None:
@@ -735,7 +755,7 @@ class RoomLinkCountTests(unittest.TestCase):
     def test_a_surface_doorway_is_never_a_one_way_link(self) -> None:
         counts = _room_link_counts([self.room(0, [None])])
 
-        self.assertEqual(counts["surfaceDoorways"], 1)
+        self.assertEqual(counts["colonyCraftDoorways"], 1)
         self.assertEqual(counts["roomLinks"], 0)
         self.assertEqual(counts["oneWayRoomLinks"], 0)
 
@@ -777,6 +797,17 @@ class SwiftConstantParityTests(unittest.TestCase):
 
     def test_the_app_expects_the_decoder_this_export_requires(self) -> None:
         self.assertEqual(self.swift_constant("DecoderVersion"), DECODER_VERSION)
+
+    def test_the_app_declares_every_doorway_rule_this_export_writes(self) -> None:
+        # A rule the app does not declare is not an error anywhere: the export writes
+        # it, the decode ignores it, and the behaviour it was meant to govern stays
+        # whatever it already was. That is the silent-drift class this whole file
+        # exists to close, so the field names are checked and not just the versions.
+        text = self.SOURCE.read_text(encoding="utf-8")
+        rules = text.split("struct DoorwayRules", 1)[1].split("\n  }", 1)[0]
+        declared = set(re.findall(r"public var (\w+)", rules))
+
+        self.assertEqual(set(_DOORWAY_RULE_FIELDS) - declared, set())
 
     def test_the_app_expects_each_capture_documents_own_schema(self) -> None:
         for name, version in (

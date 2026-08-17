@@ -44,8 +44,27 @@ public struct ObjectPlacement: Sendable, Equatable {
   public var room: Int
   public var stateFlags: Int
 
-  /// Whether this instance belongs in the surface scene.
-  public var isDrawable: Bool { placement == "surface" && withinWorld }
+  /// Whether this instance belongs in the scene the player is looking at.
+  ///
+  /// A room object is drawn when the player is in its room, by the same detail-cube
+  /// and point-collapse rules a surface object gets: the Reference Build has one
+  /// object drawing path and asks only which objects are present. Before this, the
+  /// payload's placement was the whole answer and every one of the fifty-five room
+  /// objects was undrawable, so the underground was furniture-free.
+  ///
+  /// `residence` is where the object has got to, when something has moved it. Nil
+  /// means it is still where the payload put it.
+  public func isDrawable(in location: Location, residence: Residence? = nil) -> Bool {
+    switch residence ?? (placement == "surface" ? .surface(at: nil) : .room(room)) {
+    case .carried, .gone:
+      // In the player's hands, or out of the world with the craft they are flying.
+      return false
+    case .surface:
+      return location == .surface && withinWorld
+    case .room(let id):
+      return location == .room(id)
+    }
+  }
 
   public static func == (a: ObjectPlacement, b: ObjectPlacement) -> Bool {
     a.slot == b.slot && a.vertices == b.vertices && a.edges.elementsEqual(b.edges, by: ==)
@@ -263,6 +282,10 @@ public struct World: Sendable, Equatable {
   public var deferredEdges: Int
   /// The underground rooms, by their own identifiers.
   public var rooms: [Int: Room]
+  /// How a Doorway is taken and how a Room contains the player. Every value is an
+  /// immediate the decoder read out of the Reference Build, so nothing that consumes
+  /// them needs a constant of its own.
+  public var doorwayRules: Payload.RoomsDocument.DoorwayRules
   /// Altitude-indexed square extent used to select road-table cells.
   public var roadAltitudeLookup: [Int]
 
@@ -337,6 +360,7 @@ public struct World: Sendable, Equatable {
     self.rooms = Dictionary(
       uniqueKeysWithValues: bundle.rooms.rooms.map { ($0.room, Room(document: $0)) }
     )
+    self.doorwayRules = bundle.rooms.doorwayRules
 
     self.roadAltitudeLookup = bundle.world.roadAltitudeLookup
     var mapLinesByCell: [Int: [SurfaceMapLine]] = [:]

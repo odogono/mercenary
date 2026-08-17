@@ -31,7 +31,7 @@ from .underground import decode_underground
 from .text import decode_text
 
 
-PAYLOAD_SCHEMA_VERSION = 6
+PAYLOAD_SCHEMA_VERSION = 8
 PAYLOAD_ROOT = Path(__file__).resolve().parents[3] / "payload"
 CELLS_PER_AXIS = 16
 CELL_SIZE = 0x10000
@@ -216,8 +216,20 @@ def build_rooms(underground: dict[str, Any]) -> dict[str, Any]:
                 "specialSetup": (
                     {
                         "selector": special["selector"],
+                        # Each alternate travels resolved, exactly as a Doorway does:
+                        # the rewrite changes where the first Doorway leads *and*
+                        # where in that Room the player lands, so both are settled
+                        # here rather than chased across Rooms at runtime.
                         "alternates": [
-                            {"room": alternate["room"], "arrivalCommandIndex": alternate["arrivalCommandIndex"]}
+                            {
+                                "room": alternate["room"],
+                                "arrivalCommandIndex": alternate["arrivalCommandIndex"],
+                                "destination": alternate["destination"],
+                                "arrival": alternate.get("arrival"),
+                                "arrivalWithinDestination": alternate.get(
+                                    "arrivalWithinDestination", True
+                                ),
+                            }
                             for alternate in special["alternates"]
                         ],
                     }
@@ -253,6 +265,14 @@ _DOORWAY_RULE_FIELDS = (
     "worldFlipCooldownFrames",
     "randomRoom",
     "worldFlipRoom",
+    "nearMargin",
+    "farMargin",
+    "wallThudSound",
+    "colonyCraftArrival",
+    "colonyCraftSlot",
+    "stepInterlock",
+    "transitionColours",
+    "worldFlipInputRemap",
 )
 
 
@@ -279,7 +299,7 @@ def render_room_map_svg(rooms: list[dict[str, Any]]) -> tuple[str, dict[str, int
 
     A Doorway is drawn differently when the room it leads to has no Doorway back.
     These counts are per Doorway, not per link: two openings between the same pair of
-    rooms are two Doorways and one Room Link, and the single Doorway onto the surface
+    rooms are two Doorways and one Room Link, and the single Doorway out of the underground
     is counted here but is not a Room Link at all. The payload manifest counts links
     instead, which is why its one-way total is the smaller of the two.
     """
@@ -359,11 +379,11 @@ def render_room_map_svg(rooms: list[dict[str, Any]]) -> tuple[str, dict[str, int
 
 
 def _link_target(door: dict[str, Any]) -> int:
-    """A Doorway's destination as a room id, with the surface reading as zero.
+    """A Doorway's destination as a room id, with the way out reading as zero.
 
     Only the checking maps use this. They draw the underground as rooms and links,
     and the one Doorway that leads outside has no tile to point at, so it keeps the
-    id the Reference Build itself uses for the surface.
+    zero the Reference Build itself branches on.
     """
     return int(door["destination"].get("room", 0))
 
@@ -716,8 +736,8 @@ def capture_counts(documents: dict[str, Any]) -> dict[str, int]:
 #: What the Reference Build's own underground adds up to, asserted on every export.
 #:
 #: ``oneWayRoomLinks`` is the number the issue put at 83. Our own image says 82
-#: Room-to-Room links go unanswered, plus the single Doorway to the surface, for
-#: which reciprocity is undefined because the surface is not a Room. Both readings
+#: Room-to-Room links go unanswered, plus the single Doorway out of the underground, for
+#: which reciprocity is undefined because the colony craft is not a Room. Both readings
 #: are defensible and the two are counted apart here so the number does not depend
 #: on which one a reader has in mind. Fifty-seven of the 82 come from the one record
 #: nineteen Rooms share, which is why this looks like a decode fault and is not one.
@@ -727,7 +747,7 @@ ROOM_LINK_CONTRACT = {
     "darkRooms": 20,
     "roomLinks": 478,
     "oneWayRoomLinks": 82,
-    "surfaceDoorways": 1,
+    "colonyCraftDoorways": 1,
     "unresolvedArrivals": 1,
 }
 
@@ -736,19 +756,19 @@ def _room_link_counts(rooms: list[dict[str, Any]]) -> dict[str, int]:
     """What the exported Doorways add up to, recorded in the payload manifest.
 
     ``oneWayRoomLinks`` counts distinct Room-to-Room links whose destination does
-    not link back. The one Doorway that leads to the surface is counted on its own
-    instead: reciprocity is a relation between two Rooms, and the surface is not a
-    Room, so folding it in would make the number depend on a definition rather than
+    not link back. The one Doorway that leaves the underground is counted on its own
+    instead: reciprocity is a relation between two Rooms, and the colony craft is not
+    a Room, so folding it in would make the number depend on a definition rather than
     on the data.
     """
     targets: dict[int, set[int]] = {}
-    surface = 0
+    out_of_the_underground = 0
     for room in rooms:
         for door in room["doorways"]:
             if "room" in door["destination"]:
                 targets.setdefault(room["room"], set()).add(door["destination"]["room"])
             else:
-                surface += 1
+                out_of_the_underground += 1
     links = {(source, target) for source, group in targets.items() for target in group}
     return {
         "doorways": sum(len(room["doorways"]) for room in rooms),
@@ -756,11 +776,56 @@ def _room_link_counts(rooms: list[dict[str, Any]]) -> dict[str, int]:
         "darkRooms": sum(1 for room in rooms if room["dark"]),
         "roomLinks": len(links),
         "oneWayRoomLinks": sum(1 for source, target in links if source not in targets.get(target, ())),
-        "surfaceDoorways": surface,
+        "colonyCraftDoorways": out_of_the_underground,
         "unresolvedArrivals": sum(
             1 for room in rooms for door in room["doorways"] if not door["arrivalWithinDestination"]
         ),
     }
+
+
+#: How far the arrival may be from the colony craft's own position and still be
+#: called the colony craft's. Its model is $800 wide either side of centre and $200
+#: tall, and the arrival sits $840 out in x and $440 below, so one cell of tolerance
+#: is generous while still failing if either value ever drifted somewhere else.
+COLONY_CRAFT_TOLERANCE = CELL_SIZE
+
+
+def require_colony_craft_arrival(rooms: dict[str, Any], objects: dict[str, Any]) -> None:
+    """Confirm the way out of the underground really is at the colony craft.
+
+    The destination of the one non-Room Doorway was called "the surface" until the
+    arrival position was compared against the object table, at which point it turned
+    out to be object slot ``$3F`` — the highest thing in the world by two orders of
+    magnitude, and the vessel the game is about escaping on. This keeps the naming
+    honest: it is an assertion about two independently decoded tables agreeing, so a
+    future extraction that moved either would fail here rather than quietly leave a
+    name that no longer describes anything.
+    """
+    rules = rooms["doorwayRules"]
+    arrival = rules["colonyCraftArrival"]
+    slot = rules["colonyCraftSlot"]
+    craft = next(
+        (instance for instance in objects["instances"] if instance["slot"] == slot), None
+    )
+    _require(
+        craft is not None,
+        f"The colony craft's arrival names object slot {slot:#04x}, which the payload does not place",
+    )
+    offsets = [
+        abs(craft["position"][index] - arrival[axis])
+        for index, axis in enumerate(("x", "y", "z"))
+    ]
+    _require(
+        max(offsets) <= COLONY_CRAFT_TOLERANCE,
+        f"The way out of the underground lands {offsets!r} from object slot {slot:#04x}, "
+        "which is too far for that object to be what it arrives at",
+    )
+    highest = max(instance["position"][1] for instance in objects["instances"])
+    _require(
+        craft["position"][1] == highest,
+        f"Object slot {slot:#04x} is no longer the highest thing in the world, so the "
+        "reasoning that identified it as the colony craft no longer holds",
+    )
 
 
 def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict[str, Any]:
@@ -803,6 +868,7 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
         links == ROOM_LINK_CONTRACT,
         f"Exported Doorways differ from the evidence contract: {links!r}",
     )
+    require_colony_craft_arrival(documents["rooms.json"], documents["objects.json"])
     surface_document = documents["surface.json"]
     counts = {
         "cells": len(surface_document["cells"]),

@@ -6,6 +6,80 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Make the underground navigable (#65, PR 3 of 3). Walking into a Doorway now enters
+  the Room it leads to, with the locks, entry reactions, darkness, live Room objects,
+  rewired Rooms and mirrored world the Reference Build has.
+  The traversal gate is implemented in the Reference Build's own order, and two parts
+  of it look removable and are not. A Doorway is only looked for on a frame where the
+  Room's walls had to push the player back, so walking into a wall *is* how a door is
+  opened and standing in a Doorway turning around does nothing. And the facing test
+  accepts square-on to the wall in either direction, including facing away from it,
+  which it can afford to because which way the player is pushing is already settled by
+  which wall they hit. Both have tests named after the surprise rather than the
+  mechanism.
+  There are two interlocks and only one is general. The step interlock counts down
+  only while the player walks, which is what stops arrival — which places them *inside*
+  the Doorway on the far side — from handing them straight back. The transition
+  cooldown, the one that also drives a colour ramp, is installed inside the
+  special-setup branch that an ordinary Room skips entirely, so most transitions have
+  no cooldown at all.
+  Twenty-two Rooms rewrite their own first Doorway before it can be used: one picks at
+  random from eight destinations, the other twenty-one by the Room the player came
+  from, three ways rather than as a match. The third way is that if both stored pairs
+  name where the player came from, nothing is rewritten and nothing else in that
+  branch runs — which is the whole of PQ-0003, and Room `$7F` has exactly two ways in,
+  so it is half that Room's observable behaviour rather than a curiosity.
+  All fifty-five Room objects were undrawable and unreachable, because one rule asked
+  whether an object's placement was "surface" and no Room object's is. They now get
+  full parity with surface objects: same detail cube, same orientation, same collapse
+  to a point. The three overlays the renderers took for live object state — hidden
+  slots, moved positions, room membership — are replaced by the one `Residence` value
+  all three were views of, finishing at the renderer's edge the collapse PR 2 made
+  inside the session.
+  Darkness is literal: all three colours zeroed, nothing drawn, and *"ITS VERY DARK IN
+  HERE"* (PQ-0004). How a Room looks is now a session fact rather than a property of
+  the Room, since it depends on where the photon emitter has got to, and both
+  renderers take it off the snapshot so neither decides for itself what dark means.
+- `--room-trace`, a deterministic walk through the underground from a named Room along
+  a named sequence of legs, reporting every Doorway taken, every wall touched, and
+  everything the Rooms said. Four of its scenarios are golden traces, including the
+  world flip and its bypass entered from the two Rooms that reach it.
+- Containment margins, both interlocks, the wall sound, the transition colour ramp, the
+  world-flip input remap and the fixed position that leaves the underground, all read
+  from our own image behind opcode fingerprints into `doorwayRules`. Payload schema 6 →
+  8, geometry decoder 5 → 7, underground dataset document 2 → 4.
+- Identify the destination of the one Doorway that leaves the underground: it is the
+  **colony craft**, object slot `$3F`. The Doorway copies a fixed nine-byte position over
+  the player's coordinates, and that position is the craft's own — the same surface cell,
+  64 units past its hull's x face, `$240` below its underside — while the mover it
+  installs is the one the engine installs when the player leaves that object's bounding
+  box. Slot `$3F` is the highest thing in the world by two orders of magnitude.
+  This answers a question `docs/research/c64-geometry-encoding.md` left open: slot `$3F`
+  was recorded as an "orbital-station candidate" pending "an observed encounter or
+  authoritative text/behaviour correlation", and a Doorway arriving at its hull is that
+  correlation. The remaining 63 slots are untouched by it.
+  The Doorway's destination was called `surface` on a guess, and the guess is now
+  falsified, so the name goes with it: `destination: {colonyCraft: true}`,
+  `colonyCraftArrival`, `colonyCraftSlot`, `colonyCraftDoorways`, and a `Room Link` whose
+  definition no longer says "the surface". The export asserts the arrival and the object
+  agree — within a cell, and that slot still being the highest thing in the world — so
+  this name cannot drift from what it describes the way the last one did.
+  We place the player at the craft's cell on the ground rather than at its altitude:
+  arriving at the ship is the escape route, which this issue puts out of scope, and the
+  mover installed there is one we do not have. That is a known difference, asserted by a
+  test that checks the altitude is *not* adopted rather than left to look like a bug.
+
+### Fixed
+
+- Two claims in merged documentation, both mine. `docs/preserved-quirks.md` said the
+  world flip "complements bit 6 of every live entity's state byte" — it walks the
+  carried-inventory list, indexes it with the wrong register, and nothing reads bit 6
+  at all, so the write is unobservable and is deliberately not implemented.
+  `notes/decode/underground.md` described `$F0` as the re-trigger interlock; it is the
+  wrong one of the two and it does not run for ordinary transitions.
+
 ### Changed
 
 - Make one `GameplaySession` the authority for everything that changes during play

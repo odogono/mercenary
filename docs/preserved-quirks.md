@@ -33,8 +33,8 @@ at 82 on every payload export.
 **Two numbers, both correct.** The checking map reports **83 unanswered Doorways**
 out of 481, counted per command; the payload manifest reports **82 one-way Room
 Links** out of 478, counted per distinct room pair. The map's total includes the one
-Doorway onto the surface, for which reciprocity is undefined, and counts room `$9B`
-and room `$9D`'s two mutual Doorways twice. Either number is defensible; they are
+Doorway out of the underground, for which reciprocity is undefined, and counts room
+`$9B` and room `$9D`'s two mutual Doorways twice. Either number is defensible; they are
 kept apart so neither has to be qualified.
 
 ## PQ-0002 — One Doorway lands the player outside the room it leads to
@@ -65,9 +65,18 @@ times out of 427 and the exception is the point.
 ## PQ-0003 — Arriving at the world-flip room from one particular room does not flip the world
 
 **What.** Entering room `$7F` flips the world: `$9353` toggles a one-bit parity flag
-folded into the coordinate and facing transform, complements bit 6 of every live
-entity's state byte, and installs a longer transition. But arriving from room `$56`
-does not flip anything.
+that negates camera-space X at eight sites in the transform and remaps the input byte
+through a table swapping its two turn bits, and installs a longer transition. But
+arriving from room `$56` does not flip anything.
+
+**Correction to an earlier version of this record.** It said the flip "complements bit
+6 of every live entity's state byte". That was wrong on both counts, and it was mine.
+The loop walks the **carried-inventory list** at `$BEB1`, whose length is `$EB`, not
+the object table; and it indexes that list with one register while reading the state
+byte with another, so which bytes it touches does not correspond to what it is
+counting. Nothing in the image reads bit 6 of a state byte at all. So the complement
+is unobservable, and it is deliberately **not implemented** — reproducing a write that
+nothing can see would be reproducing our reading of a bug rather than the bug.
 
 **Why.** The flip's compare sits after the special-setup pair patch and is only
 reached when a pair was actually applied. Selection is three-way: matching the first
@@ -81,3 +90,36 @@ skip.
 flow (an equality test on both), and either would have to be altered to remove it.
 The pairs are exported as they are, and the three-way selection is implemented as
 three-way rather than as a match, so the behaviour follows without being special-cased.
+
+**Both ways in, from the payload.** Room `$7F` is reachable from exactly two rooms:
+`$56` and `$90`. So the quirk is not a theoretical branch — it is half of the
+observable behaviour of that room, and both halves are golden traces
+(`room-flip`, `room-flip-bypassed`):
+
+    from room 144 →  through a doorway into room(127), mirrored · the world is mirrored
+    from room  86 →  through a doorway into room(127)
+
+## PQ-0004 — A dark room shows nothing at all, including the way out
+
+**What.** A room whose record ends in `$80` is dark unless the photon emitter is
+carried or lying in that room. Dark does not mean dim: `$91FE-$9204` zeroes all three
+colours the draw code uses, so the room draws as a cleared backdrop with no walls, no
+furniture, and no Doorways — not even the one the player just came through. The
+message *"ITS VERY DARK IN HERE"* is the only thing the game offers.
+
+**Why it reads as a bug.** A renderer that produces an empty frame looks broken, and
+the obvious repair — outline the walls faintly, or keep the Doorways visible — is
+exactly the change that would make the emitter optional. Twenty rooms are dark, and
+several of them are on the way to somewhere.
+
+**What our image says.** The line colour is not a per-room value: every room setup
+stores the same immediate at `$9399`, and that store happens at `$9162`, *before*
+darkness zeroes it at `$9200`. So darkness has the last word on all three colours, and
+a dark room is black rather than black-with-lines. The gate is exactly `$80` — a `$00`
+terminator is never dark — and the emitter is looked for in two places: the carried
+list (`$941A`) and the objects present in the room (`$9425`).
+
+**Why it is not repaired.** The emitter is a real object in a real room and finding it
+is a puzzle. An **Accommodation** is available later if playtesting says the darkness
+is unfair rather than tense — showing the Doorways only, say — but it would be a
+settings-gated change with the maintainer's approval, not a quiet improvement.

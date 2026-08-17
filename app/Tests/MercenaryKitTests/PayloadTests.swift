@@ -54,7 +54,10 @@ enum PayloadFixture {
     {"depthHalfWindow":64,"alongWallBias":40,"headingRounding":2,"lockBoundary":8,
      "keySlotBias":8,"skeletonKeySlot":48,"photonEmitterSlot":16,"lockedMessage":0,
      "darkMessage":1,"lineColour":1,"cooldownFrames":10,"worldFlipCooldownFrames":31,
-     "randomRoom":114,"worldFlipRoom":127}
+     "randomRoom":114,"worldFlipRoom":127,
+     "nearMargin":32,"farMargin":223,"wallThudSound":20,"colonyCraftArrival":{"x":550848,"y":4257920,"z":552960},"colonyCraftSlot":63,"stepInterlock":2,
+     "transitionColours":[0,11,12,15,1,1,1,15,12,11,0,2,4,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8],
+     "worldFlipInputRemap":[0,1,2,3,8,9,10,11,4,5,6,7,12,13,14,15]}
     """
 
   static let rooms = """
@@ -74,9 +77,12 @@ enum PayloadFixture {
         "bounds":{"min":[0,0,0],"max":[768,0,0]},"palette":{"background":0,"foreground":7},
         "dark":false,"entry":{"script":23},
         "specialSetup":{"selector":"previousRoom","alternates":[
-          {"room":86,"arrivalCommandIndex":0},{"room":86,"arrivalCommandIndex":0}]},
+          {"room":86,"arrivalCommandIndex":0,"destination":{"room":86},
+           "arrival":{"x":128,"z":256},"arrivalWithinDestination":true},
+          {"room":86,"arrivalCommandIndex":0,"destination":{"room":86},
+           "arrival":{"x":128,"z":256},"arrivalWithinDestination":true}]},
         "doorways":[{"index":0,"shape":2,"plane":"xy","position":{"x":0,"z":768},
-          "destination":{"surface":true},"arrivalCommandIndex":0,"arrival":null,
+          "destination":{"colonyCraft":true},"arrivalCommandIndex":0,"arrival":null,
           "arrivalWithinDestination":true,"lock":null}]}]}
     """
 
@@ -310,6 +316,54 @@ final class PayloadTests: XCTestCase {
     try PayloadFixture.write(into: directory)
 
     XCTAssertNil(try Payload.load(from: directory).underground)
+  }
+
+  // MARK: - The rules navigation is built on
+
+  func testCarriesTheRulesThatBoundARoomAndTakeADoorway() throws {
+    try PayloadFixture.write(into: directory)
+
+    let rules = try Payload.load(from: directory).rooms.doorwayRules
+
+    XCTAssertEqual(rules.nearMargin, 32)
+    XCTAssertEqual(rules.farMargin, 223)
+    XCTAssertEqual(rules.stepInterlock, 2)
+    XCTAssertEqual(rules.wallThudSound, 20)
+  }
+
+  func testTheTwoMarginsDescribeTheSameWallAtBothEndsOfARoom() throws {
+    try PayloadFixture.write(into: directory)
+    let rules = try Payload.load(from: directory).rooms.doorwayRules
+
+    // The near margin is a whole position and the far one is a low byte, which is
+    // easy to mistake for an asymmetry. Written as distances from each wall they are
+    // 32 and 33 — near enough the same that a Room is not lopsided, and different
+    // enough that hard-coding one of them for both would be wrong.
+    let cells = 7
+    let near = rules.nearMargin
+    let far = (cells - 1) * 256 + rules.farMargin
+
+    XCTAssertEqual(near, 32)
+    XCTAssertEqual(cells * 256 - far, 33)
+  }
+
+  func testATransitionHasAColourForEveryFrameItCanLast() throws {
+    try PayloadFixture.write(into: directory)
+    let rules = try Payload.load(from: directory).rooms.doorwayRules
+
+    XCTAssertEqual(rules.transitionColours.count, rules.worldFlipCooldownFrames)
+    XCTAssertTrue(rules.transitionColours.allSatisfy { (0..<16).contains($0) })
+  }
+
+  func testTheWorldFlipSwapsTheTurnBitsAndIsItsOwnInverse() throws {
+    try PayloadFixture.write(into: directory)
+    let remap = try Payload.load(from: directory).rooms.doorwayRules.worldFlipInputRemap
+
+    XCTAssertEqual(remap.count, 16)
+    for input in 0..<16 {
+      XCTAssertEqual(remap[input], input & 0b0011 | (input & 0b0100) << 1 | (input & 0b1000) >> 1)
+      XCTAssertEqual(remap[remap[input]], input)
+    }
   }
 }
 

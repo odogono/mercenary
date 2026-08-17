@@ -193,14 +193,29 @@ final class DetailAndRoadTests: XCTestCase {
     XCTAssertFalse(object.isDetailed(from: SIMD3(0, 0, 0)))
   }
 
-  func testDrawableExcludesRoomsAndParkedInstances() {
+  func testAnObjectIsDrawnWhereItLivesAndNowhereElse() {
     var inRoom = placement(origin: .zero)
     inRoom.placement = "room"
+    inRoom.room = 48
     var parked = placement(origin: .zero)
     parked.withinWorld = false
 
-    XCTAssertTrue(placement(origin: .zero).isDrawable)
-    XCTAssertFalse(inRoom.isDrawable)
-    XCTAssertFalse(parked.isDrawable)
+    XCTAssertTrue(placement(origin: .zero).isDrawable(in: .surface))
+    XCTAssertFalse(placement(origin: .zero).isDrawable(in: .room(48)))
+    // The fifty-five room objects used to fail this outright, which is why the
+    // underground had no furniture in it.
+    XCTAssertTrue(inRoom.isDrawable(in: .room(48)))
+    XCTAssertFalse(inRoom.isDrawable(in: .room(3)))
+    XCTAssertFalse(inRoom.isDrawable(in: .surface))
+    XCTAssertFalse(parked.isDrawable(in: .surface))
+  }
+
+  func testWhatHasMovedIsDrawnWhereItIsNowRatherThanWhereItStarted() {
+    let object = placement(origin: .zero)
+
+    XCTAssertFalse(object.isDrawable(in: .surface, residence: .carried))
+    XCTAssertFalse(object.isDrawable(in: .surface, residence: .gone))
+    XCTAssertTrue(object.isDrawable(in: .room(3), residence: .room(3)))
+    XCTAssertFalse(object.isDrawable(in: .surface, residence: .room(3)))
   }
 }

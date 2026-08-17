@@ -58,9 +58,7 @@ enum FlightTrace {
       // The session owns the state even here, so a trace cannot drift from the
       // game: this drives the same transitions the interactive path does.
       var session = GameplaySession(
-        content: GameplaySession.Content(
-          objects: world.objects, cellSize: Double(world.cellSize), flight: flight
-        ),
+        content: GameplaySession.Content(world: world, bundle: bundle, flight: flight),
         player: OpeningScene.player
       )
       session.board(craft: options.craft)

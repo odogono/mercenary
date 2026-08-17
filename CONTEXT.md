@@ -43,12 +43,36 @@ One opening belonging to a single Room, carrying the Room Link it leads along, w
 _Avoid_: Portal, door, exit, connection
 
 **Room Link**:
-The directed connection a Doorway leads along, from the Room that owns the Doorway to one destination — another Room, or the surface. A Room Link in one direction implies nothing about the other direction.
+The directed connection a Doorway leads along, from the Room that owns the Doorway to one destination — another Room, or out of the underground to the Colony Craft. A Room Link in one direction implies nothing about the other direction.
 _Avoid_: Edge, adjacency, neighbour, two-way link
 
 **Rewired Room**:
 A Room whose Doorway leads somewhere chosen on arrival rather than somewhere fixed, from a set of alternatives the Room carries; which alternative applies is decided either at random or by the Room the player arrived from.
 _Avoid_: Teleporter, dynamic exit, patched room
+
+**Colony Craft**:
+The vessel high above the middle of the surface, and the destination of the one Doorway that leads out of the underground rather than to another Room; leaving Targ aboard it is beyond the current scope, so the player is placed at its position on the ground rather than at its altitude.
+_Avoid_: Orbital station, mothership, the surface
+
+**Wall Contact**:
+The state of having been pushed back inside a Room by its own bounds on the current frame, counted per axis; it is the precondition for taking a Doorway, not merely a consequence of arriving at one.
+_Avoid_: Collision, blocked, wall hit
+
+**Step Interlock**:
+The number of walking steps that must pass after arriving somewhere before another Doorway can be taken; it counts only while the player is walking, so it cannot be spent by standing still.
+_Avoid_: Cooldown, debounce, timer
+
+**Room Transition**:
+The interval after arriving in a Rewired Room during which no Doorway can be taken and the border shows a colour from the transition ramp; ordinary arrivals have none.
+_Avoid_: Fade, loading, teleport delay
+
+**Indoor Scene**:
+How the Room the player is in looks at this moment — its two backdrop colours, the colour its wireframe is drawn in, and whether it is dark — which depends on play rather than on the Room alone.
+_Avoid_: Room palette, lighting, theme
+
+**Flipped World**:
+The state in which the world is mirrored left for right, entered and left by arriving in one particular Room; the mirror applies to the view and to the controls together, so the player steers mirrored as well as seeing mirrored.
+_Avoid_: Inverted, reversed room, mirror mode
 
 **Host Callout**:
 The explicit seam through which a Benson Script reaches the engine, comprising the named engine state it may read and write and the effects it may ask the host to perform; it is the only path between game logic and the rest of the app, and the boundary an eventual scripting layer replaces.

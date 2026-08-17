@@ -142,17 +142,17 @@ final class WorldTests: XCTestCase {
     XCTAssertEqual(raised.count, 1)
   }
 
-  func testEveryInstanceIsPlacedButOnlySurfaceOnesAreDrawable() throws {
+  func testEveryInstanceIsPlacedAndEachIsDrawnWhereItLives() throws {
     let world = World(bundle: try bundle())
 
-    // Both instances are inspectable; only the surface one is drawn.
+    // Both instances are inspectable; each is drawn in the one place it belongs.
     XCTAssertEqual(world.objects.count, 2)
-    XCTAssertEqual(world.objects.filter(\.isDrawable).count, 1)
+    XCTAssertEqual(world.objects.filter { $0.isDrawable(in: .surface) }.count, 1)
   }
 
   func testAPlacedModelRestsOnItsInstanceHeight() throws {
     let world = World(bundle: try bundle())
-    let drawable = try XCTUnwrap(world.objects.first(where: \.isDrawable))
+    let drawable = try XCTUnwrap(world.objects.first(where: { $0.isDrawable(in: .surface) }))
     let lowest = try XCTUnwrap(drawable.vertices.map(\.y).min())
 
     // The fixture model spans -100...-60 and its instance sits at y = 0, so
@@ -162,7 +162,7 @@ final class WorldTests: XCTestCase {
 
   func testAPlacedModelKeepsItsHorizontalOffsetFromTheInstance() throws {
     let world = World(bundle: try bundle())
-    let xs = try XCTUnwrap(world.objects.first(where: \.isDrawable)).vertices.map(\.x)
+    let xs = try XCTUnwrap(world.objects.first(where: { $0.isDrawable(in: .surface) })).vertices.map(\.x)
 
     // Instance at x = 500, model spans -10...10.
     XCTAssertEqual(xs.min(), 490)
@@ -380,14 +380,14 @@ final class VisibilitySelectorTests: XCTestCase {
     // craft the player is sitting in goes on being drawn beside them.
     let world = World(bundle: try bundle())
     let selector = VisibilitySelector()
-    let slot = try XCTUnwrap(world.objects.first(where: \.isDrawable)).slot
+    let slot = try XCTUnwrap(world.objects.first(where: { $0.isDrawable(in: .surface) })).slot
     let original = SIMD3<Double>(500, 128, 500)
     let landing = SIMD3<Double>(3_500, 128, 3_500)
 
     let onFoot = selector.visible(in: world, from: original)
-    let aboard = selector.visible(in: world, from: original, hidden: [slot])
+    let aboard = selector.visible(in: world, from: original, residence: [slot: .gone])
     let afterLeaving = selector.visible(
-      in: world, from: landing, moved: [slot: landing]
+      in: world, from: landing, residence: [slot: .surface(at: landing)]
     )
 
     XCTAssertLessThan(
@@ -463,12 +463,14 @@ final class VisibilitySelectorTests: XCTestCase {
     XCTAssertEqual(Set(special.specialSetup?.alternates.map(\.room) ?? []), [86])
   }
 
-  func testADoorwayToTheSurfaceIsNotARoomLink() throws {
+  func testTheDoorwayOutOfTheUndergroundIsNotARoomLink() throws {
     let world = World(bundle: try bundle())
     let doorway = try XCTUnwrap(world.rooms[2]?.doorways.first)
 
-    XCTAssertEqual(doorway.destination, .surface)
-    XCTAssertNil(doorway.arrival, "the surface places the player from its own start position")
+    XCTAssertEqual(doorway.destination, .colonyCraft)
+    XCTAssertNil(
+      doorway.arrival, "it has a fixed position of its own rather than a resolved arrival"
+    )
   }
 
   func testARoomsCentreIsTheMiddleOfItsOwnBounds() throws {

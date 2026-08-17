@@ -41,7 +41,7 @@ final class WalkaboutModel {
   private(set) var snapshot = SessionSnapshot(
     player: OpeningScene.player, location: .surface, occupancy: .onFoot, mode: .grounded,
     throttle: 0, throttleNotch: 0, elapsed: 0, message: "", credits: 0,
-    isScriptRunning: false, hiddenSlots: [], displacedObjects: [:]
+    isScriptRunning: false, residence: [:]
   )
   private(set) var framesPerSecond: Double = 0
   private(set) var visibleLines: Int = 0
@@ -187,13 +187,11 @@ final class WalkaboutModel {
       }
       var session = GameplaySession(
         content: GameplaySession.Content(
-          objects: world.objects,
-          cellSize: Double(world.cellSize),
-          interaction: bundle.interaction.map(Interaction.init(document:)),
+          world: world,
+          bundle: bundle,
           flight: bundle.flight.map {
             settings.flight.model(for: $0, groundExtent: Double(world.groundExtent))
-          },
-          underground: bundle.underground
+          }
         ),
         player: OpeningScene.player,
         scripts: scripts
@@ -248,6 +246,15 @@ final class WalkaboutModel {
         // The session has already applied these; the tone alongside them is the
         // only thing a shell has to say about them today.
         break
+      case .worldFlipped:
+        // The view and the controls both come off the snapshot, so there is nothing
+        // for a shell to do about this beyond drawing the next frame.
+        break
+      case .wall:
+        // Deliberately silent: the wall's sound is one of the Reference Build's
+        // per-frame SID effects, and audio is out of scope here. The event fires
+        // correctly, so this is the only line that has to change to hear it.
+        break
       }
     }
     if browsingTable == nil {
@@ -263,8 +270,6 @@ final class WalkaboutModel {
   }
 
   var throttleNotch: Int { snapshot.throttleNotch }
-  var hiddenSlots: Set<Int> { snapshot.hiddenSlots }
-  var displacedObjects: [Int: SIMD3<Double>] { snapshot.displacedObjects }
 
   private func currentIntent() -> Intent {
     func axis(_ positive: UInt16, _ negative: UInt16) -> Double {

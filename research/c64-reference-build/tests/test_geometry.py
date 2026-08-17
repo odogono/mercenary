@@ -421,11 +421,41 @@ class RoomArrivalTests(unittest.TestCase):
         # The destination's own plane bit is set, so z takes $80 and x takes $00.
         self.assertEqual(resolved[0x3000]["commands"][0]["arrival"], {"x": 0x2200, "z": 0x3380})
 
-    def test_a_surface_doorway_resolves_to_no_arrival_at_all(self) -> None:
+    def test_a_special_records_alternates_are_resolved_like_its_commands(self) -> None:
+        # The rewrite at $9127 changes the first command's destination *and* its
+        # arrival index together, so an alternate needs the same resolution a command
+        # gets. Room 1 is a special record whose two alternates name room 2's
+        # commands 0 and 1.
+        records = {
+            1: (
+                0x3800,
+                bytes([0x81, 0, 0, 4, 5, 0x02, 0x02, 0x07, 0x08, 0, 0x02, 0x00, 0x56, 0x10]),
+            ),
+            2: (
+                0x3810,
+                bytes([1, 0, 0, 4, 5, 0x02, 0x01, 0x11, 0x12, 0x02, 0x01, 0x22, 0x33, 0]),
+            ),
+            0x56: (0x3810, None),
+        }
+        records[0x56] = (0x3810, records[2][1])
+        resolved = self.resolve(records)
+        alternates = resolved[0x3800]["specialSetup"]["alternates"]
+
+        self.assertEqual(alternates[0]["destination"], {"room": 2})
+        self.assertEqual(alternates[0]["arrival"], {"x": 0x1180, "z": 0x1200})
+        self.assertEqual(alternates[1]["destination"], {"room": 0x56})
+        self.assertEqual(alternates[1]["arrival"], {"x": 0x2280, "z": 0x3300})
+        self.assertTrue(all(entry["arrivalWithinDestination"] for entry in alternates))
+
+    def test_the_doorway_out_of_the_underground_resolves_to_no_arrival_index(self) -> None:
+        # A destination of zero is not room zero: Room setup branches out before it
+        # reads any record and never consults the arrival index, so there is nothing
+        # for this to resolve. Where the player *does* land is a fixed position in the
+        # navigation rules rather than anything derived from the Doorway.
         records = {1: (0x3000, bytes([1, 0, 0, 4, 5, 0x82, 0x00, 0x00, 0x06, 0]))}
         command = self.resolve(records)[0x3000]["commands"][0]
 
-        self.assertEqual(command["destination"], {"surface": True})
+        self.assertEqual(command["destination"], {"colonyCraft": True})
         self.assertIsNone(command["arrival"])
         self.assertTrue(command["arrivalWithinDestination"])
 

@@ -46,7 +46,7 @@ explicit about which is which:
 
 - **83 unanswered Doorways.** Per command, out of 481. This is what `lab geometry
   rooms-svg` reports and draws in a different colour, because a Doorway is what the
-  map draws. It includes the single Doorway onto the surface.
+  map draws. It includes the single Doorway out of the underground.
 - **82 one-way Room Links.** Per distinct room-to-room pair, out of 478. This is what
   the payload manifest reports. It excludes the surface Doorway, because reciprocity
   is a relation between two rooms and the surface is not a room. Room `$9B` and room
@@ -61,6 +61,100 @@ reason this looks like a decode fault on first reading and is not one. See
 sliver are corridors connecting them.** Confirmed by eye against the rendered
 contact sheet, and it explains the two shapes without any of it being a decode
 error: a corridor is a chamber with one axis collapsed.
+
+### Walking into a wall is how a Doorway is opened
+
+The gate at `$8570` is five things in order, and the order *is* the behaviour:
+
+```
+JSR $939E     containment — clamp both axes, count how many had to move
+BEQ done      nothing clamped? the frame is over. No Doorway is even considered.
+LDA $B1
+BNE done      the step interlock is still counting
+JSR $9437     the door predicate, which begins by testing the $F0 cooldown
+BCC done      no Doorway accepted
+JSR $90BE     Room setup: patch, place, palette, greet
+LDA #$02
+STA $B1       reload the step interlock
+```
+
+Two of these look removable and are not.
+
+**The wall-contact precondition.** Standing inside a Doorway and turning around does
+nothing whatever; the player has to push into the wall on that same frame. This is not
+an optimisation — it is what makes a Doorway a thing you walk *through* rather than a
+trigger volume you can be nudged into.
+
+**Two interlocks, and only one of them is general.** `$B1` is set for every accepted
+Doorway and counts down inside the walk integrator (`$A243`), so it stalls while the
+player stands still. That is the one that matters: arrival puts the player *inside* the
+Doorway on the far side, and a gate they could spend by waiting would hand them
+straight back. `$F0` is different — it is installed at `$913D`, which is inside the
+special-setup branch that `$9108` skips for an ordinary room. **So an ordinary room
+transition has no cooldown at all**, and `$F0` is really the special-room transition:
+the thing that blocks Doorways *and* drives the colour ramp at `$BB7E`.
+
+An earlier note here described `$F0` as the re-trigger interlock. It is the wrong one
+of the two, and it does not run for most transitions.
+
+### Containment, and where a room's walls are
+
+`$939E` bounds each horizontal axis against the room's extent in whole cells, clamping
+rather than blocking — which is what lets a player slide along a wall instead of
+sticking to it. Written as distances: the player may stand from **32** units in from
+the near wall to **33** short of the far one. Written as the bytes, which is how it is
+implemented: below `$20` clamps to `$20`, and at the last cell with a low byte at or
+past `$DF` clamps to that cell plus `$DF`.
+
+The two are not symmetric in one respect worth knowing: standing exactly on the near
+margin passes the test, and standing on the far margin does not. So leaning on the far
+wall reports contact every frame while leaning on the near wall reports it once.
+
+Each axis it moves is counted, and a nonzero count is wall contact. `$9411` plays sound
+`$14` only when the previous frame's count was zero — the latch is `$F8` — which is the
+difference between one thud and sixty. Room setup calls containment itself at `$9226`,
+before anything is drawn, which it has to: several arrivals land exactly on a wall or
+just outside one. Room 3's first Doorway lands the player at x `0` in room 48, which is
+32 units outside it.
+
+### One Doorway leads out of the underground, to the colony craft
+
+The single command with `linked == 0` is not a link to room `$00`. `$90C0` branches on
+the destination being zero before it reads any record, and that path is not a room: it
+clears the underground flag, restores the surface palette from `$B27D`, installs a
+different mover (`$A9 = 9` through `$9D99`), and copies nine bytes from `$90ED` over the
+player's three coordinates.
+
+Those nine bytes are `C0 67 08 80 F8 40 00 70 08` — x `$0867C0`, y `$40F880`,
+z `$087000`. **That is the colony craft.** Object slot `$3F` sits at `X=$087000
+Y=$40FCC0 Z=$087000`, and the arrival is offset from it by `(-$840, -$440, 0)`: the same
+cell, 64 units past the hull's own x face, `$240` below its underside. Slot `$3F` is the
+highest thing in the world by two orders of magnitude — the next highest object is at
+`$8001`, five hundred times lower.
+
+Three things agree on the identification:
+
+* the position, which is what settles it;
+* `docs/research/c64-geometry-encoding.md`, which recorded slot `$3F` at exactly that
+  position as an "orbital-station candidate" and said the name should wait for "an
+  observed encounter or authoritative text/behaviour correlation" — a Doorway that puts
+  the player at its hull is that correlation;
+* the mover, which is the same one `$A1DF` installs when the player leaves the craft's
+  bounding box, and that box test at `$A13D` is what this note used to call "the orbital
+  transition". The Reference Disassembly names it `COLONY_CRAFT_LA13D`, which
+  corroborates rather than originates.
+
+The export asserts the arrival and the object agree — within a cell, and that slot still
+being the highest thing in the world — so the name cannot drift away from what it
+describes.
+
+**What we do instead, and why.** The app takes the horizontal pair and leaves altitude
+alone. Walking out of the underground and finding yourself at the ship is the escape
+route, which #65 puts out of scope, and the mover installed there is one we do not have.
+So the player lands at the craft's cell on the ground rather than four million units up.
+That is a known difference from the Reference Build, recorded here, in the payload's own
+doc comment, and in the test that asserts the altitude is *not* adopted — rather than
+left to be discovered as a bug.
 
 ### The terminator is also the darkness flag
 
@@ -138,10 +232,23 @@ Room `$72`'s own baked-in default is a ninth combination absent from its table.
 `$9141` compares the target room against `$7F` and calls `$9353`, which is the only
 `E0 7F` in the image that is code. The flip toggles `$F1`, a one-bit world parity flag
 written nowhere else and folded into the coordinate and facing transform as `EOR $F1`
-at eight sites, with a bit-2/bit-3 nibble-swap remap through the table at `$A17B`. It
-also complements bit 6 of every live entity's `$29C0` byte and installs a longer
-transition, `$F0 = $1F` instead of `$0A`. It is **not** an in-place table negation:
-there is no `EOR #$FF` and no `SEC/SBC` sweep over coordinate tables.
+at eight sites, and remaps the input byte through the table at `$A17B`. It installs a
+longer transition, `$F0 = $1F` instead of `$0A`. It is **not** an in-place table
+negation: there is no `EOR #$FF` and no `SEC/SBC` sweep over coordinate tables.
+
+The input remap is the half that makes it playable rather than merely strange.
+`$A165` reads `$F1` and, when it is set, replaces `$80` with `$A17B[$80]`. The table is
+`00 01 02 03 08 09 0A 0B 04 05 06 07 0C 0D 0E 0F` — bits 2 and 3 swapped, and those two
+bits are turn-left and turn-right at `$A1AC` and `$A1C1`. So a mirrored world is also
+steered mirrored, and the table is its own inverse, which is what makes flipping twice
+put the controls back rather than merely appear to.
+
+**An earlier version of this note claimed the flip complements bit 6 of every live
+entity's `$29C0` byte.** It does not, and the error was mine. The loop walks the
+carried-inventory list at `$BEB1` with `$EB` as its length, not the object table, and
+it indexes that list with a different register from the one it reads the state byte
+with. No reader of bit 6 exists anywhere in the image, so the write is unobservable and
+is deliberately not implemented.
 
 The compare sits *after* the pair-patch block and is only reached when a pair was
 actually applied. Room `$7F`'s two pairs are identical — both name room `$56` — so

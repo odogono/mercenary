@@ -34,19 +34,46 @@ public struct GameplaySession: Sendable {
     public var interaction: Interaction?
     public var flight: FlightModel?
     public var underground: Payload.UndergroundDocument?
+    /// The Rooms, by their own identifiers. A Room is what bounds the player and
+    /// carries the Doorways they can leave it through.
+    public var rooms: [Int: Room]
+    /// How a Doorway is taken and how a Room contains the player.
+    public var doorwayRules: Payload.RoomsDocument.DoorwayRules?
 
     public init(
       objects: [ObjectPlacement] = [],
       cellSize: Double = 65536,
       interaction: Interaction? = nil,
       flight: FlightModel? = nil,
-      underground: Payload.UndergroundDocument? = nil
+      underground: Payload.UndergroundDocument? = nil,
+      rooms: [Int: Room] = [:],
+      doorwayRules: Payload.RoomsDocument.DoorwayRules? = nil
     ) {
       self.objects = objects
       self.cellSize = cellSize
       self.interaction = interaction
       self.flight = flight
       self.underground = underground
+      self.rooms = rooms
+      self.doorwayRules = doorwayRules
+    }
+
+    /// Everything a session needs that comes straight out of a loaded payload.
+    ///
+    /// The shells built this field by field, which meant every new piece of decoded
+    /// content had to be remembered in three places — and a shell that forgot one
+    /// did not fail, it just quietly played a game missing that rule. `flight` stays
+    /// a parameter because the tuning knobs shape it before it gets here.
+    public init(world: World, bundle: Payload.Bundle, flight: FlightModel?) {
+      self.init(
+        objects: world.objects,
+        cellSize: Double(world.cellSize),
+        interaction: bundle.interaction.map(Interaction.init(document:)),
+        flight: flight,
+        underground: bundle.underground,
+        rooms: world.rooms,
+        doorwayRules: world.doorwayRules
+      )
     }
   }
 
@@ -63,12 +90,39 @@ public struct GameplaySession: Sendable {
   /// the payload carries scripts.
   public private(set) var scripts: BensonSession?
 
+  /// Rooms whose first Doorway their own setup has rewritten, and what to.
+  ///
+  /// The Reference Build does this by writing over the record in place, so the rewrite
+  /// persists until the next arrival rewrites it again — which means it is state, and
+  /// state belongs here rather than in the immutable Rooms the payload loaded.
+  public private(set) var rewired: [Int: Payload.RoomsDocument.Room.SpecialSetup.Alternate] = [:]
+
+  /// A random draw for the Room that needs one, from the session's one stream.
+  ///
+  /// Without scripts there is nothing to share the stream with, so the session keeps
+  /// its own state seeded the same way; with them, the roll comes off theirs.
+  private var ownRandomState: UInt64
+
+  private mutating func nextRandom(below count: Int) -> Int {
+    guard count > 0 else { return 0 }
+    if var scripts {
+      let byte = scripts.nextRandomByte()
+      self.scripts = scripts
+      return Int(byte) % count
+    }
+    return Int(BensonMachine.nextRandom(&ownRandomState)) % count
+  }
+
   /// The state flags each object starts with, which scripts and the take rules read.
   /// Immutable; the carried bit is projected from ``residence`` on top of these.
   private let baseFlags: [Int: UInt8]
 
-  public init(content: Content, player: PlayerState, scripts: BensonSession? = nil) {
+  public init(
+    content: Content, player: PlayerState, scripts: BensonSession? = nil,
+    randomSeed: UInt64 = 0x2C69_2ED8_1B7F_0A31
+  ) {
     self.content = content
+    self.ownRandomState = randomSeed
     var game = GameState(player: player)
     if let flight = content.flight {
       game.player.position.y = flight.groundAltitude
@@ -195,10 +249,13 @@ public struct GameplaySession: Sendable {
     for action: InteractionAction, only slot: Int? = nil
   ) -> (Interaction.Outcome, [PresentationEvent]) {
     guard let interaction, scripts != nil else { return (.nothingInReach, []) }
+    // Reachable is the same question as drawable: the Reference Build looks through
+    // the objects present where the player is. That is what makes the fifty-five room
+    // objects reachable now — they were excluded here by the same rule that kept them
+    // from being drawn.
     let candidates = content.objects
       .filter { slot == nil || $0.slot == slot }
-      .filter(\.isDrawable)
-      .filter { residence(of: $0.slot).hostRoom != BensonHostState.outOfTheWorld }
+      .filter { $0.isDrawable(in: location, residence: residence[$0.slot]) }
       .map { object in
         Interaction.Candidate(
           slot: object.slot,
@@ -261,6 +318,7 @@ public struct GameplaySession: Sendable {
   @discardableResult
   public mutating func rideLift() -> [PresentationEvent]? {
     guard let flight = content.flight, let underground = content.underground else { return nil }
+    let previousRoom = location.hostValue
     switch location {
     case .room(let room):
       guard let entrance = underground.entrances.first(where: { $0.room == room }) else { return nil }
@@ -280,10 +338,176 @@ public struct GameplaySession: Sendable {
       else { return nil }
       game = GameCore.enter(game, entrance: entrance, lift: underground.lift, flight: flight)
     }
-    // Changing room changes what a script sees, which before this was the one
-    // transition that never reached the Host Callout.
+    // The lift calls the same Room setup a Doorway does ($A2E0 and $857E both reach
+    // $90BE), so arriving by lift greets the player, applies darkness, and rewrites a
+    // special Room exactly as walking in would.
+    return [.tone, .arrived(location)] + settleIntoTheRoom(leaving: previousRoom)
+  }
+
+  // MARK: - Walking through a Doorway
+
+  /// Everything the walking path does once the player has moved, in the Reference
+  /// Build's own order (`$8570`).
+  ///
+  /// The order is the behaviour, so it is worth reading as a list:
+  ///
+  /// 1. containment must have clamped an axis — no wall contact, no Doorway;
+  /// 2. the step interlock must have run down;
+  /// 3. the transition cooldown must have expired;
+  /// 4. the first Doorway in record order the player stands in and faces wins;
+  /// 5. its lock must open, or the refusal is a message and nothing else;
+  /// 6. only then does anyone go anywhere.
+  ///
+  /// Steps 1 and 2 are the ones that look removable and are not. Without 1 a player
+  /// standing in a Doorway is moved by merely turning around; without 2 they are
+  /// handed straight back through the Doorway they arrived in, because arrival puts
+  /// them inside it.
+  private mutating func traverse() -> [PresentationEvent] {
+    guard case .room(let id) = location, let room = content.rooms[id],
+      let rules = content.doorwayRules,
+      game.wallContact != 0,
+      game.stepInterlock <= 0,
+      game.transitionCooldown <= 0
+    else { return [] }
+    let predicate = DoorwayPredicate(rules: rules)
+    guard
+      let doorway = predicate.doorway(
+        in: doorways(of: room), at: game.player.position, heading: game.player.heading
+      )
+    else { return [] }
+    guard predicate.opens(doorway, carrying: { residence(of: $0).isCarried }) else {
+      // A locked Doorway is a message and a wall. The player is already stopped by
+      // containment, so refusing takes no further doing.
+      show(message: rules.lockedMessage)
+      return []
+    }
+    return take(doorway, rules: rules)
+  }
+
+  /// Go through a Doorway that has already been accepted.
+  private mutating func take(
+    _ doorway: Payload.RoomsDocument.Room.Doorway, rules: Payload.RoomsDocument.DoorwayRules
+  ) -> [PresentationEvent] {
+    // Which Room the player is leaving, which is what the previous-Room families
+    // choose their rewrite by. The Reference Build keeps it in one byte and writes it
+    // at the end of the same routine, so it is always the Room before this one.
+    let previousRoom = location.hostValue
+    switch doorway.destination {
+    case .room(let destination):
+      game.room = destination
+      // The decoder resolved where in the destination the player lands, so there is
+      // no cross-Room index to chase here. Altitude is deliberately untouched: the
+      // Reference Build writes only the two horizontal coordinates.
+      if let arrival = doorway.arrival {
+        game.player.position.x = Double(arrival.x)
+        game.player.position.z = Double(arrival.z)
+      }
+    case .colonyCraft:
+      // The one Doorway that leaves the underground. It puts the player at the colony
+      // craft, and we place them at its cell but not at its altitude: four million
+      // units up is the escape route, which this work does not implement. A known
+      // difference, stated here rather than smoothed over.
+      game.room = nil
+      game.player.position.x = Double(rules.colonyCraftArrival.x)
+      game.player.position.z = Double(rules.colonyCraftArrival.z)
+    }
+    // Set for every accepted Doorway, at $8585, whatever the Room on the far side is.
+    game.stepInterlock = Double(rules.stepInterlock)
+    return [.arrived(location)] + settleIntoTheRoom(leaving: previousRoom)
+  }
+
+  /// The two Room families that rewrite their own first Doorway before the player can
+  /// use it, and the transition that goes with doing so.
+  ///
+  /// Worth being exact about what is *inside* this branch, because it is more than it
+  /// looks: `$9108` skips the whole of it for an ordinary Room. The transition cooldown
+  /// — the one that stops any Doorway being taken, and shows a colour while it runs —
+  /// is installed **here**, so an ordinary Room transition has none at all and only
+  /// the step interlock holds the player. So is the world flip.
+  ///
+  /// The previous-Room choice is three-way rather than a match: the first pair unless
+  /// the player came from the Room it names, then the second unless they came from that
+  /// one too — and if both name where the player came from, **no rewrite happens and
+  /// nothing else in here runs either**. That last case is not a curiosity: Room `$7F`'s
+  /// two pairs both name Room `$56`, so arriving there from `$56` skips the flip.
+  private mutating func applySpecialSetup(
+    previousRoom: Int, rules: Payload.RoomsDocument.DoorwayRules
+  ) -> [PresentationEvent] {
+    guard case .room(let id) = location, let room = content.rooms[id],
+      let setup = room.specialSetup
+    else { return [] }
+    guard let alternate = choose(setup, previousRoom: previousRoom) else { return [] }
+    rewired[id] = alternate
+    // Entering the flipped Room installs a longer transition than any other.
+    let flips = id == rules.worldFlipRoom
+    game.transitionCooldown = Double(
+      flips ? rules.worldFlipCooldownFrames : rules.cooldownFrames
+    )
+    guard flips else { return [] }
+    game.worldFlipped.toggle()
+    return [.worldFlipped(game.worldFlipped)]
+  }
+
+  /// A Room's Doorways as they are now, which for the two special families is not
+  /// quite as the payload loaded them.
+  ///
+  /// Only the first Doorway is ever rewritten, and only where it leads. Its shape,
+  /// plane and position — everything the predicate tests — are the record's own.
+  func doorways(of room: Room) -> [Payload.RoomsDocument.Room.Doorway] {
+    guard let alternate = rewired[room.id], let first = room.doorways.first else {
+      return room.doorways
+    }
+    var doorways = room.doorways
+    doorways[0] = Payload.RoomsDocument.Room.SpecialSetup.rewrite(first, as: alternate)
+    return doorways
+  }
+
+  /// Which rewrite applies, or nil when none does.
+  private mutating func choose(
+    _ setup: Payload.RoomsDocument.Room.SpecialSetup, previousRoom: Int
+  ) -> Payload.RoomsDocument.Room.SpecialSetup.Alternate? {
+    switch setup.selector {
+    case .random:
+      // On the session's one seeded stream, so a scenario that visits the random Room
+      // is still reproducible. The Reference Build's own selector reaches eight pairs.
+      guard !setup.alternates.isEmpty else { return nil }
+      return setup.alternates[nextRandom(below: setup.alternates.count)]
+    case .previousRoom:
+      guard let first = setup.alternates.first else { return nil }
+      if first.room != previousRoom { return first }
+      guard setup.alternates.count > 1 else { return nil }
+      let second = setup.alternates[1]
+      return second.room == previousRoom ? nil : second
+    }
+  }
+
+  /// Everything Room setup does once the player is in the new Location.
+  ///
+  /// Shared by every way of arriving — a Doorway, the lift, or a debug placement —
+  /// because in the Reference Build they all call the same routine, and a Room that
+  /// only greeted people who came through a Doorway would be a difference we invented.
+  @discardableResult
+  private mutating func settleIntoTheRoom(leaving previousRoom: Int) -> [PresentationEvent] {
+    // A Room change is a change in what a script sees, so it has to reach the Host
+    // Callout before anything reads it.
     republishHostState()
-    return [.tone, .arrived(location)]
+    // The two special families rewrite their own first Doorway before anyone can use
+    // it. This happens on every arrival because it happens inside the routine every
+    // arrival calls — including the lift's, which really does trip the world flip.
+    let events = content.doorwayRules.map {
+      applySpecialSetup(previousRoom: previousRoom, rules: $0)
+    } ?? []
+    // Room setup runs containment itself, before anything is drawn ($9226). It has to:
+    // several arrivals land exactly on a wall, or a little outside one, and without
+    // this the player would be drawn there for a frame before being pulled back. The
+    // contact it reports is kept rather than cleared, which is what stops the wall
+    // sounding a second time for a bump the player did not make.
+    game.wallContactLatch = game.wallContact
+    game.wallContact = containment.map { $0.clamp(&game.player.position) } ?? 0
+    if case .room(let id) = location, let room = content.rooms[id], let rules = content.doorwayRules {
+      react(arrivingIn: room, rules: rules)
+    }
+    return events
   }
 
   /// Put the player somewhere directly, without a lift to take them there.
@@ -292,7 +516,73 @@ public struct GameplaySession: Sendable {
   /// the rare states — one-way, locked, dark, random and flipped — that a normal
   /// playthrough may not visit.
   public mutating func teleport(to location: Location) {
+    let previousRoom = self.location.hostValue
     game.room = location.room
+    // A debug placement stands in for arriving, so it arrives: the Room greets the
+    // player, darkness applies, and a special Room rewrites itself. Otherwise a
+    // scenario that starts in a dark Room would start in a lit one, and one that
+    // starts in the random Room would find it unrewired.
+    settleIntoTheRoom(leaving: previousRoom)
+  }
+
+  // MARK: - What a Room looks like, and what it says when you arrive
+
+  /// The Room as it looks right now, or nil on the surface.
+  public var indoorScene: IndoorScene? {
+    guard case .room(let id) = location, let room = content.rooms[id],
+      let rules = content.doorwayRules
+    else { return nil }
+    return IndoorScene(room: room, rules: rules, emitter: residence(of: rules.photonEmitterSlot))
+  }
+
+  /// Whether a Room the payload marks dark is dark for this player.
+  func isDark(_ room: Room) -> Bool {
+    guard let rules = content.doorwayRules else { return false }
+    return IndoorScene(
+      room: room, rules: rules, emitter: residence(of: rules.photonEmitterSlot)
+    ).dark
+  }
+
+  /// What a Room says when the player arrives in it.
+  ///
+  /// The order is the Reference Build's and it decides one case that is otherwise
+  /// arbitrary: darkness queues its message first, and then the header's own reaction
+  /// runs. So a Room that is both dark and carries an entry *message* shows the entry
+  /// message — it overwrote the pending one — while a dark Room with an entry *script*
+  /// still says it is dark, because starting a script does not touch that byte.
+  private mutating func react(arrivingIn room: Room, rules: Payload.RoomsDocument.DoorwayRules) {
+    var pending: Int? = isDark(room) ? rules.darkMessage : nil
+    switch room.entry {
+    case .script(let id):
+      // A script that is already running is not restarted, as the Reference Build's
+      // own starter refuses.
+      start(script: id)
+    case .message(let index):
+      pending = index
+    case nil:
+      break
+    }
+    if let pending { show(message: pending) }
+  }
+
+  /// Stand the player somewhere in the Location they are already in, and optionally
+  /// turn them.
+  ///
+  /// For bounded debug scenarios only, alongside ``teleport(to:)``. It deliberately
+  /// does not clear the interlocks: a scenario that wants to start mid-transition can
+  /// say so, and one that does not is starting from rest anyway.
+  public mutating func place(at position: SIMD3<Double>, facing heading: Double? = nil) {
+    game.player.position = position
+    if let heading { game.player.heading = heading }
+  }
+
+  /// Put an object in the player's hands without their having reached for it.
+  ///
+  /// For bounded debug scenarios only, alongside ``teleport(to:)``: the locked, dark
+  /// and flipped states all turn on what is being carried, and reaching for each key
+  /// where it lies is a playthrough rather than a scenario.
+  public mutating func carry(_ slot: Int) {
+    residence[slot] = .carried
     republishHostState()
   }
 
@@ -378,7 +668,18 @@ public struct GameplaySession: Sendable {
   public mutating func advance(by seconds: Double) -> (snapshot: SessionSnapshot, events: [PresentationEvent]) {
     var events: [PresentationEvent] = []
     if let flight = content.flight, seconds > 0 {
-      game = GameCore.step(game, intent: intent, dt: seconds, flight: flight)
+      // A flipped world reads the input byte through a table that swaps the two turn
+      // bits, so turning left turns right. The table is in the payload and asserted to
+      // be exactly that swap; on a signed intent the swap is a negation.
+      var intent = intent
+      if game.worldFlipped { intent.turn = -intent.turn }
+      game = GameCore.step(
+        game, intent: intent, dt: seconds, flight: flight, containment: containment
+      )
+      if game.wallThud, let rules = content.doorwayRules {
+        events.append(.wall(sound: rules.wallThudSound))
+      }
+      events.append(contentsOf: traverse())
       if let touchdown = game.touchdown {
         events.append(.tone)
         events.append(.touchdown(touchdown))
@@ -417,23 +718,16 @@ public struct GameplaySession: Sendable {
       message: scripts?.messageText ?? "",
       credits: scripts?.credits ?? 0,
       isScriptRunning: scripts?.isRunning ?? false,
-      hiddenSlots: hiddenSlots,
-      displacedObjects: displacedObjects
+      residence: sceneResidence,
+      indoor: indoorScene,
+      worldFlipped: game.worldFlipped
     )
   }
 
-  /// Object slots the game has taken out of the world, which the renderer needs so
-  /// a boarded craft stops being drawn and reappears when it is left.
-  public var hiddenSlots: Set<Int> {
-    Set(
-      content.objects.map(\.slot).filter {
-        residence(of: $0).hostRoom == BensonHostState.outOfTheWorld
-      }
-    )
-  }
-
-  public var displacedObjects: [Int: SIMD3<Double>] {
-    residence.compactMapValues(\.displacement)
+  /// Where every object the payload placed has got to, filled in for the ones nothing
+  /// has moved so a renderer needs no second lookup.
+  var sceneResidence: [Int: Residence] {
+    Dictionary(uniqueKeysWithValues: content.objects.map { ($0.slot, residence(of: $0.slot)) })
   }
 
   /// The throttle as a notch on the decoded ladder, or 0 when it is shut.
@@ -448,6 +742,16 @@ public struct GameplaySession: Sendable {
   // MARK: - Internals
 
   private var interaction: Interaction? { content.interaction }
+
+  /// The walls of the Room the player is in, when they are in one. Nil on the
+  /// surface, and nil for a Room the payload does not carry, which leaves walking
+  /// bounded by the world rather than by nothing.
+  var containment: Containment? {
+    guard case .room(let id) = location, let room = content.rooms[id],
+      let rules = content.doorwayRules
+    else { return nil }
+    return Containment(room: room, rules: rules)
+  }
 
   /// Push the typed state through to the host without running anything, for the
   /// transitions that change what a script would see outside an interpreter step.

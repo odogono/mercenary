@@ -31,3 +31,4 @@ __pycache__/
 # (ADR 0019).
 /web/dist/
 /web/node_modules/
+.DS_Store

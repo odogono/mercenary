@@ -380,6 +380,13 @@ public enum BensonMachine {
   }
 
   /// A small deterministic generator, so a seeded state replays exactly.
+  ///
+  /// One generator for the whole session, as the Reference Build has one: the engine's
+  /// own Room setup draws from it too, which is why this is reachable from outside.
+  static func nextRandom(_ state: inout UInt64) -> UInt8 {
+    next(&state)
+  }
+
   private static func next(_ state: inout UInt64) -> UInt8 {
     state = state &+ 0x9E37_79B9_7F4A_7C15
     var z = state

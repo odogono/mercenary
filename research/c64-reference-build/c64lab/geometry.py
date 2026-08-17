@@ -21,7 +21,7 @@ from .navigation import (
 )
 
 
-DECODER_VERSION = 5
+DECODER_VERSION = 7
 LAB_ROOT = Path(__file__).resolve().parents[1]
 WORK_ROOT = LAB_ROOT / "work"
 REPOSITORY_ROOT = LAB_ROOT.parents[1]
@@ -608,8 +608,10 @@ def _resolve_room_arrivals(room_records: list[dict[str, Any]], room_slots: dict[
         for command in record["commands"]:
             target = command["linkedRoom"]
             if target == 0:
-                # Zero is the surface to the Room setup, which never reads the index.
-                command["destination"] = {"surface": True}
+                # Zero is not Room zero. Room setup branches on it before it reads any
+                # record and leaves the underground entirely, at the colony craft's own
+                # position; the arrival index is never read on that path.
+                command["destination"] = {"colonyCraft": True}
                 command["arrival"] = None
                 command["arrivalWithinDestination"] = True
                 continue
@@ -628,6 +630,34 @@ def _resolve_room_arrivals(room_records: list[dict[str, Any]], room_slots: dict[
                 command["uncertainties"] = sorted(
                     set(command["uncertainties"]) | {"arrival-index-past-destination"}
                 )
+
+    # The special-setup families rewrite their own first command's destination *and*
+    # its arrival index before anyone walks through it, so each alternate needs the
+    # same resolution the commands got. Without it the app would have to chase a
+    # cross-Room index at runtime, which is the one thing this decode exists to avoid.
+    for record in room_records:
+        setup = record.get("specialSetup")
+        if not setup:
+            continue
+        for alternate in setup["alternates"]:
+            target = alternate["room"]
+            if target == 0:
+                alternate["destination"] = {"colonyCraft": True}
+                alternate["arrival"] = None
+                alternate["arrivalWithinDestination"] = True
+                continue
+            pointer = pointer_for_room[target]
+            offset = 4 * alternate["arrivalCommandIndex"] + 7
+            _need(ram, pointer + offset + 2, f"arrival for {alternate['geometryIdentity']}")
+            plane_bit = ram[pointer + offset - 2] & PLANE_MASK
+            alternate["destination"] = {"room": target}
+            alternate["arrival"] = {
+                "x": (ram[pointer + offset] << 8) | (plane_bit ^ PLANE_MASK),
+                "z": (ram[pointer + offset + 1] << 8) | plane_bit,
+            }
+            alternate["arrivalWithinDestination"] = (
+                alternate["arrivalCommandIndex"] < command_counts[pointer]
+            )
 
 
 def validate_curation(curation: dict[str, Any], identities: Iterable[str]) -> None:
@@ -1027,7 +1057,7 @@ def build_dataset(ram: bytes, source: dict[str, Any], curation: dict[str, Any] |
         },
     }
     underground = {
-        "schemaVersion": 2,
+        "schemaVersion": 4,
         "primitiveTemplates": templates,
         "records": room_records,
         "rooms": rooms,

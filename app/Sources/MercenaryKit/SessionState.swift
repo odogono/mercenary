@@ -91,6 +91,50 @@ public enum Residence: Sendable, Equatable {
   }
 }
 
+/// How the Room the player is in looks right now.
+///
+/// This is a session fact rather than a property of the Room: darkness depends on
+/// where the photon emitter is, which changes during play. Both renderers take the
+/// scene from here so that neither has to decide for itself what dark means.
+public struct IndoorScene: Sendable, Equatable {
+  /// The two colours the indoor backdrop alternates between.
+  public var background: Int
+  public var foreground: Int
+  /// The colour the Room's wireframe is drawn in. Global in the Reference Build —
+  /// every Room setup stores the same value — which is why no Room carries it.
+  public var lineColour: Int
+  /// Whether the Room is dark *now*. Nothing is drawn in a dark Room; the three
+  /// colours above are all zero, which is the Reference Build's own way of saying it.
+  public var dark: Bool
+
+  public init(background: Int, foreground: Int, lineColour: Int, dark: Bool) {
+    self.background = background
+    self.foreground = foreground
+    self.lineColour = lineColour
+    self.dark = dark
+  }
+
+  /// How a Room looks, given where the photon emitter has got to.
+  ///
+  /// One implementation, because both renderers ask and the answer must not differ
+  /// between them: a Room the payload marks dark is dark unless the emitter is in the
+  /// player's hands or lying in that same Room. Darkness zeroes all three colours
+  /// together, which is the Reference Build's own way of saying nothing is visible.
+  public init(
+    room: Room, rules: Payload.RoomsDocument.DoorwayRules, emitter: Residence
+  ) {
+    let lit = emitter.isCarried || emitter.hostRoom == room.id
+    if room.dark && !lit {
+      self.init(background: 0, foreground: 0, lineColour: 0, dark: true)
+    } else {
+      self.init(
+        background: room.palette.background, foreground: room.palette.foreground,
+        lineColour: rules.lineColour, dark: false
+      )
+    }
+  }
+}
+
 /// One consistent description of a session, for whoever is drawing it.
 ///
 /// Both renderers consume this rather than reading the session's parts, so the
@@ -110,10 +154,14 @@ public struct SessionSnapshot: Sendable, Equatable {
   public var credits: Int
   /// Whether a script currently owns the message line.
   public var isScriptRunning: Bool
-  /// Slots the game has taken out of the world, so the renderer stops drawing them.
-  public var hiddenSlots: Set<Int>
-  /// Objects that are no longer where the payload put them.
-  public var displacedObjects: [Int: SIMD3<Double>]
+  /// Where objects have got to, for whoever is drawing them. One value rather than
+  /// the two derived views it used to carry — the slots taken out of the world, and
+  /// the positions of those that had moved — which were both readings of this.
+  public var residence: [Int: Residence]
+  /// The Room as it looks now, or nil on the surface.
+  public var indoor: IndoorScene?
+  /// Whether the world is mirrored left for right, which both renderers must obey.
+  public var worldFlipped: Bool
 
   public init(
     player: PlayerState,
@@ -126,8 +174,9 @@ public struct SessionSnapshot: Sendable, Equatable {
     message: String,
     credits: Int,
     isScriptRunning: Bool,
-    hiddenSlots: Set<Int>,
-    displacedObjects: [Int: SIMD3<Double>]
+    residence: [Int: Residence],
+    indoor: IndoorScene? = nil,
+    worldFlipped: Bool = false
   ) {
     self.player = player
     self.location = location
@@ -139,8 +188,9 @@ public struct SessionSnapshot: Sendable, Equatable {
     self.message = message
     self.credits = credits
     self.isScriptRunning = isScriptRunning
-    self.hiddenSlots = hiddenSlots
-    self.displacedObjects = displacedObjects
+    self.residence = residence
+    self.indoor = indoor
+    self.worldFlipped = worldFlipped
   }
 }
 
@@ -158,4 +208,13 @@ public enum PresentationEvent: Sendable, Equatable {
   case touchdown(Touchdown)
   /// The lift arrived somewhere.
   case arrived(Location)
+  /// The player walked into a Room's wall, carrying the sound the Reference Build
+  /// made of it. Once per contact, not once per frame of leaning on it.
+  ///
+  /// Nothing plays it yet — per-frame audio is out of scope for this work — but the
+  /// event is where the fidelity is: it fires exactly when the Reference Build's own
+  /// latch fires, which is also the moment a Doorway is looked for.
+  case wall(sound: Int)
+  /// The world was mirrored left for right, or put back.
+  case worldFlipped(Bool)
 }

@@ -137,7 +137,10 @@ final class GameplaySessionTests: XCTestCase {
     XCTAssertEqual(host?.inventory, [5])
     XCTAssertEqual(host?.objectRooms[5], BensonHostState.outOfTheWorld)
     XCTAssertEqual((host?.objectFlags[5] ?? 0) & 0x80, 0x80, "the carried bit follows too")
-    XCTAssertEqual(session.hiddenSlots, [5], "and the renderer stops drawing it")
+    XCTAssertFalse(
+      object(5).isDrawable(in: session.location, residence: session.residence(of: 5)),
+      "and the renderer stops drawing it"
+    )
   }
 
   func testAnObjectStartsWhereThePayloadPutIt() {
@@ -145,7 +148,7 @@ final class GameplaySessionTests: XCTestCase {
 
     XCTAssertEqual(session.residence(of: 2), .surface(at: nil))
     XCTAssertEqual(session.residence(of: 3), Residence.room(9), "a room instance belongs to its room")
-    XCTAssertTrue(session.displacedObjects.isEmpty, "nothing has been moved yet")
+    XCTAssertNil(session.residence(of: 3).displacement, "nothing has been moved yet")
   }
 
   func testTheSnapshotAndTheHostNeverDisagreeAboutWhatIsHidden() {
@@ -158,7 +161,10 @@ final class GameplaySessionTests: XCTestCase {
         room == BensonHostState.outOfTheWorld ? slot : nil
       }
     )
-    XCTAssertEqual(session.snapshot.hiddenSlots, hiddenAccordingToHost)
+    let hiddenInTheSnapshot = Set(
+      session.snapshot.residence.filter { $0.value.hostRoom == BensonHostState.outOfTheWorld }.keys
+    )
+    XCTAssertEqual(hiddenInTheSnapshot, hiddenAccordingToHost)
   }
 
   // MARK: - One update, everything or nothing
