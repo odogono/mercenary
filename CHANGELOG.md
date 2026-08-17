@@ -6,6 +6,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Make one `GameplaySession` the authority for everything that changes during play
+  (#65, PR 2 of 3; ADR 0018, superseding ADR 0008). The pose, Location, Occupancy,
+  Object Residence, the running script and its host state, and the message line all
+  live in one place, and the shell above it keeps no game state at all — it
+  translates keys into intents, calls `advance`, and draws the `SessionSnapshot` it
+  gets back.
+  This started as tidying and turned out to be a defect fix. `GameState.room` and
+  `BensonHostState.currentRoom` both held the player's room with different sentinels
+  for the surface, and nothing outside a script ever wrote the second one: boarding
+  kept its equivalent pair in step only because `Interaction` happened to write both
+  halves, while riding the lift wrote the typed room and nothing else. So from the
+  moment a player went underground, `inrm` — five uses across the payload's 51
+  scripts — compared against a stale zero and answered as though they were still on
+  the surface. It had not bitten because the opening loop ends at the Dart, which is
+  exactly what PR 3 changes: entry scripts are scripts that fire on room entry.
+  The Host Callout's byte-wide variables are therefore projected from the typed state
+  on the way in and read back on the way out, rather than stored beside it. Two owners
+  kept in step by whoever remembers is a defect generator, not a discipline problem,
+  and the same shape had produced four descriptions of where an object is — a
+  room-membership map, an inventory set, a carried flag bit, and a dictionary of
+  parked-craft positions in the AppKit layer — two of which said the same thing and
+  could disagree. Those are one `Residence` value now.
+  A script that writes one of those variables moves what it names, because the
+  Reference Build has one variable per fact and its engine reads what the script
+  wrote. No script in the payload writes either of the two describing the player, so
+  nothing observable changes; the only host write the content actually makes is one
+  object's room, and that reconciles into its Residence.
+  There is no setter for host state any more. Reaching, boarding, leaving and riding
+  the lift are methods that move everything or nothing — a setter is what let boarding
+  become three statements that could half-happen.
+  The Trace Oracle stops being a second implementation. The interactive shell and
+  `--benson-trace` each carried their own copy of the reach-attempt-describe sequence,
+  `--benson-trace` called a boarding method the live app never called, and the crash
+  path that puts a pilot out of a wrecked craft lived only in the shell, so a trace of
+  a crash showed the player still flying. Both drive the same session now, and
+  `--flight-trace` with them. The frame capture and the inspector are untouched: they
+  hold no gameplay state, so there was nothing there to unify.
+  `app/traces.sh` is new, and emits the deterministic traces a behaviour-neutral
+  change is checked against. Trace output is payload-derived and gitignored per ADR
+  0019, so it is regenerated and diffed rather than committed.
+
 ### Added
 
 - Decode the underground into Doorways and directed Room Links, and resolve

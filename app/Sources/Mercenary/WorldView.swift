@@ -22,16 +22,16 @@ struct WorldView: View {
   }
 
   private func draw(context: GraphicsContext, size: CGSize) {
-    let camera = Camera(player: model.state.player)
-    if model.state.room == nil {
+    let camera = Camera(player: model.snapshot.player)
+    if model.snapshot.location == .surface {
       drawGround(context: context, size: size, camera: camera)
-    } else if let roomID = model.state.room, let room = world.rooms[roomID] {
+    } else if let roomID = model.snapshot.location.room, let room = world.rooms[roomID] {
       drawIndoorBackdrop(context: context, size: size, room: room)
     }
 
     let visible = model.selector.visible(
-      in: world, from: model.state.player.position, elapsed: model.state.elapsed,
-      hidden: model.hiddenSlots, moved: model.landedCraft, room: model.state.room
+      in: world, from: model.snapshot.player.position, elapsed: model.snapshot.elapsed,
+      hidden: model.hiddenSlots, moved: model.displacedObjects, room: model.snapshot.location.room
     )
     var paths: [Ink: Path] = [:]
     var drawn = 0
@@ -141,7 +141,7 @@ private struct StatusStrip: View {
   let world: World
 
   var body: some View {
-    let player = model.state.player
+    let player = model.snapshot.player
     let column = Int(player.position.x / Double(world.cellSize))
     let row = Int(player.position.z / Double(world.cellSize))
     HStack(spacing: 18) {
@@ -151,14 +151,14 @@ private struct StatusStrip: View {
       // What the player is in, and the readouts that only mean anything aboard.
       Text(model.craftName)
         .foregroundStyle(SceneStyle.interfaceAccent)
-      if let room = model.state.room {
+      if let room = model.snapshot.location.room {
         Text("ROOM \(room, specifier: "%02d")")
           .foregroundStyle(SceneStyle.interfaceAccent)
       }
-      if model.state.craft != nil {
+      if model.snapshot.occupancy != .onFoot {
         Text("ALT \(Int(player.position.y))")
         Text("THR \(model.throttleNotch)")
-        Text(model.state.mode == .flying ? "FLYING" : "GROUNDED")
+        Text(model.snapshot.mode == .flying ? "FLYING" : "GROUNDED")
       }
       Spacer()
       Text("\(model.visibleLines) LINES")

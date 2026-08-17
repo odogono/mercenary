@@ -52,14 +52,19 @@ enum FlightTrace {
       guard parameters.blocks.indices.contains(options.craft) else {
         return fail("no craft in slot \(options.craft)")
       }
-      var state = GameCore.board(
-        GameState(player: OpeningScene.player), craft: options.craft,
-        at: OpeningScene.player.position, heading: 0, flight: flight
+      // The session owns the state even here, so a trace cannot drift from the
+      // game: this drives the same transitions the interactive path does.
+      var session = GameplaySession(
+        content: GameplaySession.Content(
+          objects: world.objects, cellSize: Double(world.cellSize), flight: flight
+        ),
+        player: OpeningScene.player
       )
-      state.poweramp = options.poweramp
-      state = GameCore.throttle(state, notch: options.notch, rules: parameters.rules)
+      session.board(craft: options.craft)
+      session.fitPoweramp(options.poweramp)
+      session.throttle(notch: options.notch)
 
-      let block = flight.block(for: state)
+      let block = flight.block(for: session.game)
       print(
         "flying slot \(options.craft) (\(block.handler.rawValue)) at notch \(options.notch)"
           + (options.poweramp ? " with a poweramp" : "")
@@ -73,7 +78,7 @@ enum FlightTrace {
       let step = 1.0 / 60.0
       let cruise = Double(parameters.rules.ceilingUnit) / 16
       var elapsed = 0.0
-      var mode = state.mode
+      var mode = session.game.mode
       var reported = -1.0
       var leg = Leg.climbing
       var legStarted = 0.0
@@ -83,7 +88,7 @@ enum FlightTrace {
         legStarted = elapsed
         // Throttle back for the descent, as a pilot would before landing.
         if next == .descending {
-          state = GameCore.throttle(state, notch: max(1, options.notch - 4), rules: parameters.rules)
+          session.throttle(notch: max(1, options.notch - 4))
         }
         print(String(format: "%6.2f  · %@", elapsed, next.rawValue))
       }
@@ -92,8 +97,8 @@ enum FlightTrace {
       while elapsed < options.seconds && flying {
         let held = elapsed - legStarted
         switch leg {
-        case .climbing where state.player.position.y >= cruise: enter(.levelling)
-        case .levelling where abs(state.player.pitch) < 0.02 && held > 1: enter(.turning)
+        case .climbing where session.game.player.position.y >= cruise: enter(.levelling)
+        case .levelling where abs(session.game.player.pitch) < 0.02 && held > 1: enter(.turning)
         case .turning where held > 4: enter(.descending)
         default: break
         }
@@ -106,32 +111,33 @@ enum FlightTrace {
         }
         // Fly toward the leg's attitude rather than holding a stick down, so the
         // trace shows an attitude being held and not one running away.
-        let error = attitude - state.player.pitch
+        let error = attitude - session.game.player.pitch
         let pitch: Double = abs(error) < 0.01 ? 0 : (error > 0 ? 1 : -1)
-        state = GameCore.step(
-          state, intent: Intent(turn: leg == .turning ? 1 : 0, pitch: pitch), dt: step, flight: flight
-        )
+        session.intent = Intent(turn: leg == .turning ? 1 : 0, pitch: pitch)
+        let update = session.advance(by: step)
 
-        if state.mode != mode {
-          mode = state.mode
+        if session.game.mode != mode {
+          mode = session.game.mode
           print(String(format: "%6.2f  → %@", elapsed, mode == .flying ? "airborne" : "on the ground"))
         }
-        if let touchdown = state.touchdown {
+        for event in update.events {
+          guard case .touchdown(let touchdown) = event else { continue }
           print(String(format: "%6.2f  → %@", elapsed, String(describing: touchdown)))
-          print(line(elapsed, state))
+          print(line(elapsed, session.game))
           flying = false
         }
         if elapsed - reported >= 1 {
           reported = elapsed
-          print(line(elapsed, state))
+          print(line(elapsed, session.game))
         }
         elapsed += step
       }
-      print(line(elapsed, state))
+      print(line(elapsed, session.game))
       print(
         "{\"status\":\"flown\",\"craft\":\(options.craft),"
-          + "\"mode\":\"\(state.mode == .flying ? "flying" : "grounded")\","
-          + "\"altitude\":\(Int(state.player.position.y)),\"speed\":\(Int(state.player.speed))}")
+          + "\"mode\":\"\(session.game.mode == .flying ? "flying" : "grounded")\","
+          + "\"altitude\":\(Int(session.game.player.position.y)),"
+          + "\"speed\":\(Int(session.game.player.speed))}")
       return 0
     } catch {
       return fail(String(describing: error))
