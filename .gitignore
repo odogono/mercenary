@@ -22,3 +22,12 @@ __pycache__/
 
 # Swift build products for the app.
 /app/.build/
+
+# Golden traces emitted by the Trace Oracle. Derived from the Data Payload and
+# therefore never tracked (ADR 0019).
+/traces/
+
+# Web build products. A bundled browser build embeds payload-derived data
+# (ADR 0019).
+/web/dist/
+/web/node_modules/
