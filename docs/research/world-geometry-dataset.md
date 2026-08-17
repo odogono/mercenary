@@ -22,9 +22,10 @@ Canonical values remain integers in their Reference Build widths and units:
 - surface data retains shared structures, line operations, rotated inputs,
   synthetic-index relationships, all 256 cell expansions, both road segments,
   bounds, and the altitude LOD table; and
-- underground data retains overlapping records, all raw commands and uncertain
-  behaviour bytes, the complete 16-entry primitive lookup, boundary geometry,
-  all 192 room expansions, portal relationships, and bounds.
+- underground data retains overlapping records, all raw commands, the complete
+  16-entry primitive lookup, boundary geometry, all 192 room expansions, Doorways
+  with their resolved Room Links and arrival positions, the special-setup Rooms'
+  alternates, and bounds.
 
 Every source definition includes raw bytes and its runtime span. Every derived
 vertex and edge has a Geometry Identity and provenance references. Verification

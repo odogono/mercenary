@@ -8,6 +8,53 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Decode the underground into Doorways and directed Room Links, and resolve
+  everything a traversal needs before the app sees it (#65, PR 1 of 3). A `Doorway`
+  belongs to one Room and carries the directed `Room Link` it leads along, its lock,
+  and where it puts the player; `Portal` is gone from the payload, the app, and the
+  glossary. Doorways travel per Room rather than per record even though nineteen Rooms
+  share one record, so nothing in the app resolves that sharing.
+  The opcode is now fully accounted for, and the field that was missing turned out to
+  be the one the navigation work needed most. Bits 4-6 were carried as
+  `opcode-high-bits` uncertainty and are the **arrival command index**: they name
+  which of the *destination* Room's own Doorways the player arrives in. The decoder
+  resolves that into an absolute arrival position, so no cross-Room index lookup
+  happens in the app at all. Altitude is untouched by a room transition, which is what
+  the Reference Build does — it never writes one.
+  Darkness cost one bit rather than a decode pass: a record's `$80` terminator ends it
+  *and* marks the Room dark, so the twenty dark Rooms were already in our data and
+  were being discarded. The photon-emitter gate, the third colour darkness clears, and
+  the *"ITS VERY DARK IN HERE"* message index all travel now. That third colour has no
+  per-Room source — every Room setup stores the same immediate — so it rides in
+  `doorwayRules` as one global `lineColour` rather than pretending to be part of a
+  Room's palette.
+  Entry reactions travel as a tagged union, absent or a script or a message, because
+  the Reference Build chooses between the two on one header bit and two independent
+  fields would let the payload express a state the original cannot reach. `$F7` turned
+  out to be a pending message index rather than opaque state, which is what named the
+  second arm.
+  The 22 special-setup records no longer drop 100 bytes on the floor. Their trailing
+  `(room, arrival index)` pair tables are decoded and exported, which turns "the record
+  rewrites itself at runtime" from behaviour to emulate into data to read. The table
+  comes in two sizes — eight pairs for the random Room and two for the other
+  twenty-one — and both are asserted, because the record region tiles exactly and
+  reading the wrong count would consume a neighbour's header instead of failing.
+  Locks resolve to object slots read out of our own image: the key table is indexed by
+  the raw shape nibble, so the seven lock classes want slots `$11..$17`, with `$30` as
+  the skeleton key. 53 of the 481 Doorways are locked.
+  Two one-way link totals circulate and both are right, so they are now counted apart
+  and named for what they measure: 83 unanswered *Doorways* out of 481 on the checking
+  map, and 82 one-way *Room Links* out of 478 in the payload manifest. The difference
+  is the single Doorway onto the surface, for which reciprocity is undefined, and one
+  pair of Rooms with two mutual Doorways. Both are asserted on every export.
+  `docs/preserved-quirks.md` is new and records the three behaviours a future reader
+  would otherwise take for decode faults: the one-way links, the one Doorway that
+  lands the player outside the Room it leads to, and the world flip that does not
+  happen when you arrive from one particular Room.
+  Geometry decoder 4 → 5 and the five core payload schemas 5 → 6. The app restates
+  every payload version by hand and this changes six of them at once, so a Python test
+  now reads `Payload.swift` and asserts the two sides agree — the alternative was
+  finding out from an "unsupported schema" error mid-playthrough.
 - Carry the underground rooms into the Data Payload and render them. All 192 rooms
   were already being decoded into the verified dataset — points, edges, bounds, and
   the commands that link one room to another — and then thrown away, because

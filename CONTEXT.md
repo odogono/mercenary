@@ -18,6 +18,18 @@ _Avoid_: Game script, event code, AI logic, bytecode dump
 The set of values that makes one craft handle as it does—its control routine and its rates, limits, and gains—re-extracted into the Data Payload as plain numbers and selected by the craft the player currently occupies; a landed craft taxis on a block of its own, while a player on foot runs a separate fixed-step mover rather than this loop (ADR 0016).
 _Avoid_: Flight profile, craft config, tuning block, vehicle stats
 
+**Doorway**:
+One opening belonging to a single Room, carrying the Room Link it leads along, whatever it demands before it opens, and where in the destination it puts the player; two Rooms that face each other have a Doorway each rather than sharing one.
+_Avoid_: Portal, door, exit, connection
+
+**Room Link**:
+The directed connection a Doorway leads along, from the Room that owns the Doorway to one destination — another Room, or the surface. A Room Link in one direction implies nothing about the other direction.
+_Avoid_: Edge, adjacency, neighbour, two-way link
+
+**Rewired Room**:
+A Room whose Doorway leads somewhere chosen on arrival rather than somewhere fixed, from a set of alternatives the Room carries; which alternative applies is decided either at random or by the Room the player arrived from.
+_Avoid_: Teleporter, dynamic exit, patched room
+
 **Host Callout**:
 The explicit seam through which a Benson Script reaches the engine, comprising the named engine state it may read and write and the effects it may ask the host to perform; it is the only path between game logic and the rest of the app, and the boundary an eventual scripting layer replaces.
 _Avoid_: Script API, engine hooks, bridge

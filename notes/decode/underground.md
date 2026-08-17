@@ -12,25 +12,141 @@ indices mean nothing outside that room, and there is no cell ring and no distanc
 culling of the kind the surface needs — one room is drawn at a time.
 
 Room records live behind a pointer table and are **shared**: several rooms name the
-same record, so a room refers to its record by identity rather than carrying it.
-Each command in a record names a primitive from a table of sixteen templates, a
-plane (`xy` or `zy`, selected by the opcode's top bit), a middle-byte position, and
-one further byte.
+same record, so a room refers to its record by identity rather than carrying it. One
+record (`$3000`) is shared by nineteen room ids — `$00`, `$01`, and `$AF..$BF` — and
+every other record belongs to one room, which is where both command totals come
+from: `192 = 173 + 19`, and `427 + 3×18 = 481`.
 
-**That further byte is a room link.** It was carried as possibly-a-behaviour until
-the map made it checkable: all 481 of them land on real room ids, none is a
-self-link, and 398 reciprocate. A behaviour byte would not hit a valid room id every
-single time. Both readings still travel in the payload, since a given command could
-in principle mean the other thing, but the weight of evidence is settled.
+Each command in a record is one **Doorway**. Its opcode packs three fields and the
+whole byte is now accounted for:
 
-The 83 that do not reciprocate are the interesting ones — one-way doors, or the lift,
-or that other reading in those particular commands. `lab geometry rooms-svg` draws
-them in a different colour so they can be found by eye.
+| bits | field |
+| --- | --- |
+| 7 | plane, `xy` when clear and `zy` when set |
+| 4-6 | the **arrival command index** in the destination room |
+| 0-3 | the door's shape, which is also its lock class |
+
+**Bits 4-6 were the last unexplained field and they are not a coordinate.** They name
+which of the *destination* room's own commands the player arrives in: `$94C8` folds
+them into the record offset `4n + 7`, and `$9148` reads the x byte, the z byte, and
+that command's own plane bit from there. So arrival is `x = destX*256 + (plane ? $00 :
+$80)` and `z = destZ*256 + (plane ? $80 : $00)`, and **no y is written at all** —
+altitude survives a room transition untouched. Three things settle the reading: 426 of
+427 commands hold an index the destination actually has, the maximum commands per
+record is eight and three bits address exactly eight, and the runtime patch at `$9133`
+does `AND #$8F / ORA` — splicing into precisely this mask and nothing else. There is
+no `AND #$70` anywhere else in the image.
+
+**The linked byte is a room link, and `$00` means the surface.** All 481 land on real
+room ids, none is a self-link, and the decoder now records the destination as a room
+or the surface rather than leaving both readings to travel.
+
+Two counts of one-way links circulate and both are right, so it is worth being
+explicit about which is which:
+
+- **83 unanswered Doorways.** Per command, out of 481. This is what `lab geometry
+  rooms-svg` reports and draws in a different colour, because a Doorway is what the
+  map draws. It includes the single Doorway onto the surface.
+- **82 one-way Room Links.** Per distinct room-to-room pair, out of 478. This is what
+  the payload manifest reports. It excludes the surface Doorway, because reciprocity
+  is a relation between two rooms and the surface is not a room. Room `$9B` and room
+  `$9D` each have two Doorways onto the other, which is two Doorways and one link —
+  the other place the two totals part company.
+
+Fifty-seven of the 82 come from the one record nineteen rooms share, which is the
+reason this looks like a decode fault on first reading and is not one. See
+`docs/preserved-quirks.md`.
 
 **Most rooms are uniform 4096 × 1024 × 4096 chambers; the ones that decode to a
 sliver are corridors connecting them.** Confirmed by eye against the rendered
 contact sheet, and it explains the two shapes without any of it being a decode
 error: a corridor is a chamber with one axis collapsed.
+
+### The terminator is also the darkness flag
+
+A record ends on `$00` or `$80`, and `$80` means one more thing. `$91EA` tests the
+same byte three ways: zero ends the record, positive is a command, and `$80` exactly
+clears all three room colours — gated on the photon emitter — and *then* ends it. So
+darkness is not a field anywhere in the Reference Build's data; it is which terminator
+a record carries. **Twenty records are dark.** The gate is object slot `$10`, and
+either holding it (`$941A`, the carried list at `$BEB1`) or it lying in the room
+(`$9425`, the room list at `$2981`) is enough.
+
+Darkness clears `$C2`, `$C4`, and `$C5`. Only two of those come from a room: header
+byte 3 is the background (`$C4`) and byte 4 the foreground (`$C5`). **`$C2` has no
+per-room source at all** — `$9399` stores the immediate `1` on every room setup — so it
+travels in the payload as one global `lineColour` rather than as a third palette entry.
+The draw code reads the three as a triple into `($A3, $A5, $A6)` for three raster
+bands, and only `$C4` is the restore source when the transition timer expires, which is
+the other reason to believe `$C4`/`$C5` are the room-varying pair.
+
+### Entry reactions, and the two header bits that were masked away
+
+`header[1] >> 3` is an index, nonzero on 32 records with 23 distinct values in 2..29,
+and `header[2]`'s top bit chooses what it means: set, and the index starts a Benson
+script; clear, and it is stored to `$F7`. **`$F7` is not opaque state** — `$AEE8` does
+`LDX $F7 / BEQ / JSR $8DAA`, the message routine, and darkness stores `1` there, which
+is the index of *"ITS VERY DARK IN HERE"*. So the second arm is an entry message.
+
+The two are alternatives in the Reference Build's own control flow, so the payload
+carries them as a tagged union rather than as two fields that could both be set.
+Twenty-three records run a script, nine queue a message.
+
+### Locks and keys
+
+`$9437` masks the shape nibble and compares it against `$08`: below that a Doorway
+always opens, and at or above it the nibble indexes `$29C8`. That table is indexed by
+the **raw** nibble, so the object a lock wants is the nibble plus eight — the seven
+lock classes `9..F` want object slots `$11..$17`. Bit 7 of `$29C0 + slot` means the
+player is holding it, the same idiom `interaction.py` already reads for the antigrav
+and the kitchen sink. `$29F0` — slot `$30` — is the skeleton key and overrides every
+lock. A refusal plays message `0`, `"LOCKED"`.
+
+**53 of the 481 Doorways are locked.** Nibbles `0` and `8` never occur, so the `$08`
+boundary is one class wider than the world uses and slot `$10` is never a door key.
+
+Worth knowing before the lock work: slot `$30` has the fixed flag, and the take
+routine at `$980B` only clears that while the kitchen sink (slot `$2F`) is held — the
+skeleton key is behind another puzzle rather than lying around.
+
+### The two special-setup families
+
+Twenty-two records have `header[0]`'s top bit set, and they are exactly rooms
+`$72..$87`. The Reference Build rewrites their single command before use, and the
+values it rewrites it to sit past the terminator in a table of `(room, arrival index)`
+pairs. The table comes in two sizes and the difference is arithmetic, not convention:
+
+| | records | trailing bytes | pairs | record size |
+| --- | --- | --- | --- | --- |
+| room `$72` | 1 | 16 | 8 | 26 |
+| rooms `$73..$87` | 21 | 4 | 2 | 14 |
+
+Room `$72` selects at random with `AND #$0E`, which keeps three bits and therefore
+reaches eight offsets from `10` to `24`, the last pair's second byte landing on `25`.
+The other twenty-one select on the room the player came from, and the selection is
+**three-way** rather than a match: if `$CD` differs from the byte at offset 10, pair 0
+is used; if it matches that but not offset 12, pair 1 is used; and if it matches
+**both**, no patch happens at all and the record's stored default stands. All 100
+trailing bytes decode, every pair byte is a bare `$70` value, and none overlaps the
+next record's header — the record region tiles exactly, so getting this wrong would
+read a neighbour rather than fail.
+
+Room `$72`'s own baked-in default is a ninth combination absent from its table.
+
+### The world flip, and how to miss it
+
+`$9141` compares the target room against `$7F` and calls `$9353`, which is the only
+`E0 7F` in the image that is code. The flip toggles `$F1`, a one-bit world parity flag
+written nowhere else and folded into the coordinate and facing transform as `EOR $F1`
+at eight sites, with a bit-2/bit-3 nibble-swap remap through the table at `$A17B`. It
+also complements bit 6 of every live entity's `$29C0` byte and installs a longer
+transition, `$F0 = $1F` instead of `$0A`. It is **not** an in-place table negation:
+there is no `EOR #$FF` and no `SEC/SBC` sweep over coordinate tables.
+
+The compare sits *after* the pair-patch block and is only reached when a pair was
+actually applied. Room `$7F`'s two pairs are identical — both name room `$56` — so
+arriving from room `$56` matches both, takes the "no patch" branch, and **skips the
+flip entirely**. See `docs/preserved-quirks.md`.
 
 ## The lift is the way in and out
 
