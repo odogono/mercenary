@@ -60,7 +60,7 @@ final class WalkaboutModel {
 
   /// Where a craft was left, so it is drawn where the player got out of it rather
   /// than back where the payload first placed it.
-  private var landedCraft: [Int: SIMD3<Double>] = [:]
+  private(set) var landedCraft: [Int: SIMD3<Double>] = [:]
   private var pressed: Set<UInt16> = []
   private var running = false
   private var ticker: Timer?
@@ -82,7 +82,7 @@ final class WalkaboutModel {
     static let b: UInt16 = 11
     static let t: UInt16 = 17
     static let l: UInt16 = 37
-    static let g: UInt16 = 5
+    static let e: UInt16 = 14
     static let space: UInt16 = 49
     static let minus: UInt16 = 27
     static let equal: UInt16 = 24
@@ -234,7 +234,9 @@ final class WalkaboutModel {
       .filter(\.isDrawable)
       .filter { session.hostState.objectRooms[$0.slot] != BensonHostState.outOfTheWorld }
       .map {
-        Interaction.Candidate(slot: $0.slot, position: SIMD3<Double>($0.origin))
+        Interaction.Candidate(
+          slot: $0.slot, position: landedCraft[$0.slot] ?? SIMD3<Double>($0.origin)
+        )
       }
 
     var host = session.hostState
@@ -248,8 +250,9 @@ final class WalkaboutModel {
       // as the Reference Build did, and swaps in its Craft Parameter Block.
       if case .boarded = outcome, let craft = world.objects.first(where: { $0.slot == slot }),
         let flight {
+        let position = landedCraft[slot] ?? SIMD3<Double>(craft.origin)
         state = GameCore.board(
-          state, craft: slot, at: SIMD3(Double(craft.origin.x), 0, Double(craft.origin.z)),
+          state, craft: slot, at: SIMD3(position.x, 0, position.z),
           heading: Self.heading(of: craft), flight: flight
         )
       }
@@ -308,9 +311,9 @@ final class WalkaboutModel {
 
   /// Ride the lift, in whichever direction the player is going.
   ///
-  /// The Reference Build's lift is a ride whose arrival flips a flag; what is not yet
-  /// decoded is what *starts* it. Until that is read, this stands in for the trigger
-  /// so the rooms can be walked — and it still refuses anywhere there is no lift.
+  /// The Reference Build's lift is a ride whose arrival flips a flag. Its animation is
+  /// outside this opening-loop closeout, so this keeps the decoded arrival-state change
+  /// while still refusing anywhere there is no lift.
   private func takeTheLift() {
     guard let flight, let underground, case .ready(let world, _) = load else { return }
     if let room = state.room {
@@ -430,7 +433,7 @@ final class WalkaboutModel {
       case Key.b where interaction != nil: reach(for: .board)
       case Key.t where interaction != nil: reach(for: .take)
       case Key.l where state.craft != nil: leaveCraft()
-      case Key.g: takeTheLift()
+      case Key.e: takeTheLift()
       default:
         pressed.insert(event.keyCode)
         // Any key tells the scripts the player is there; only some are matched.

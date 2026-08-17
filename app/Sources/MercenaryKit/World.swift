@@ -66,6 +66,19 @@ public struct ObjectPlacement: Sendable, Equatable {
       && abs(Double(origin.y) - position.y) <= cube
       && abs(Double(origin.z) - position.z) <= cube
   }
+
+  /// Return this instance at its current live horizontal position rather than its
+  /// immutable payload position. A landed craft keeps the model's ground-resting
+  /// Y; the player's simulation altitude is an eye/touchdown coordinate, not an
+  /// object placement height.
+  public func movedHorizontally(to position: SIMD3<Double>) -> ObjectPlacement {
+    var result = self
+    let destination = SIMD3<Float>(Float(position.x), origin.y, Float(position.z))
+    let displacement = destination - origin
+    result.origin = destination
+    result.vertices = vertices.map { $0 + displacement }
+    return result
+  }
 }
 
 /// One full surface map line decoded from a road-table endpoint pair.
@@ -195,6 +208,7 @@ public struct Room: Sendable, Equatable {
   public var id: Int
   public var segments: [Segment]
   public var bounds: (min: SIMD3<Float>, max: SIMD3<Float>)
+  public var palette: Payload.RoomsDocument.Room.Palette
   /// Ways through to somewhere else, or behaviours — the Reference Build packs both
   /// into one byte, so which of the two a given entry is stays undecided here.
   public var portals: [Payload.RoomsDocument.Room.Portal]
@@ -202,7 +216,7 @@ public struct Room: Sendable, Equatable {
   public var centre: SIMD3<Float> { (bounds.min + bounds.max) / 2 }
 
   public static func == (a: Room, b: Room) -> Bool {
-    a.id == b.id && a.segments == b.segments
+    a.id == b.id && a.segments == b.segments && a.palette == b.palette
   }
 
   init(document room: Payload.RoomsDocument.Room) {
@@ -228,6 +242,7 @@ public struct Room: Sendable, Equatable {
       )
     }
     bounds = (corner(room.bounds.min), corner(room.bounds.max))
+    palette = room.palette
     portals = room.portals
   }
 }

@@ -70,6 +70,13 @@ TRIGGER_PAD_X_SITE = 0xB410
 TRIGGER_PAD_Z_SITE = 0xB418
 TRIGGER_PAD_SHIFT = 2
 TRIGGER_SEARCH_SITE = 0xB41C
+#: Presentation dispatch and setup sites, asserted against our own RAM image.
+TRIGGER_KEY_SITE = 0xB3F6
+TRIGGER_KEY_CODE = 0x0E
+INDOOR_BRANCH_SITE = 0xAFC3
+INDOOR_CLEAR_SITE = 0xB197
+ROOM_BACKGROUND_STORE_SITE = 0x91DB
+ROOM_FOREGROUND_STORE_SITE = 0x91E5
 #: Which state each direction starts the lift in.
 DESCEND_STATE = 0x80
 ASCEND_STATE = 0x01
@@ -78,9 +85,47 @@ ASCEND_STATE = 0x01
 CELLS_PER_AXIS = 16
 
 
+def require_indoor_presentation(ram: bytes) -> None:
+    """Confirm the E dispatch and decoded room-screen routine fingerprints."""
+    require(len(ram) == 65536, "Indoor presentation decode requires a 64 KiB RAM image")
+    checks = (
+        (
+            TRIGGER_KEY_SITE,
+            (0xC0, TRIGGER_KEY_CODE, 0xF0, 0x03, 0x4C),
+            "lift dispatch is not the E-key compare",
+        ),
+        (
+            INDOOR_BRANCH_SITE,
+            (0xA5, UNDERGROUND_FLAG, 0xF0, 0x03, 0x4C, 0x97, 0xB1),
+            "underground flag does not branch to the indoor clear",
+        ),
+        (
+            INDOOR_CLEAR_SITE,
+            (0xA9, 0xAA, 0xA2, 0xF8),
+            "indoor clear does not begin with the $AA bitmap fill",
+        ),
+        (
+            ROOM_BACKGROUND_STORE_SITE,
+            (0x85, 0xC4),
+            "room setup does not load the background palette byte",
+        ),
+        (
+            ROOM_FOREGROUND_STORE_SITE,
+            (0x85, 0xC5),
+            "room setup does not load the foreground palette byte",
+        ),
+    )
+    for address, expected, complaint in checks:
+        require(
+            tuple(ram[address:address + len(expected)]) == expected,
+            f"Reference Build {complaint}",
+        )
+
+
 def _require_engine(ram: bytes) -> None:
     """Confirm the lift is the one these rules were read from."""
     require(len(ram) == 65536, "Underground decode requires a 64 KiB physical RAM image")
+    require_indoor_presentation(ram)
     checks = (
         (LIFT_ROUTINE, (0xA5, 0xCB), "the lift does not begin by reading its own position"),
         (LIFT_SURFACED_SITE, (0x85, UNDERGROUND_FLAG), "surfacing does not clear the underground flag"),

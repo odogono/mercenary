@@ -67,8 +67,7 @@ public struct Settings: Codable, Sendable, Equatable {
     /// The notch the lowest throttle key selects. The decoded ladder spans 512 to
     /// 1, so starting part way up is what makes all ten keys do something.
     public var throttleFloorNotch: Int
-    /// Eye height on foot. Absent means the Reference Build's own ground
-    /// altitude, which the payload carries.
+    /// Eye height on foot. Absent means the captured Reference Build height.
     public var groundAltitude: Double?
 
     // Each knob's default is the control loop's own, so it lives once, on

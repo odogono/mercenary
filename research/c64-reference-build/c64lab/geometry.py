@@ -11,7 +11,7 @@ from typing import Any, Iterable
 from .core import LabError, verify_run_artifacts
 
 
-DECODER_VERSION = 3
+DECODER_VERSION = 4
 LAB_ROOT = Path(__file__).resolve().parents[1]
 WORK_ROOT = LAB_ROOT / "work"
 REPOSITORY_ROOT = LAB_ROOT.parents[1]
@@ -606,7 +606,9 @@ def _surface_y(height_code: int, extended: int | None) -> tuple[int, int]:
     if extended < 0x80:
         return 0, extended
     accumulator = height_code
-    value = extended
+    # The first ASL only clears the escape/sign bit. Its carry is deliberately
+    # discarded before the three ASL/ROL pairs build the 11-bit height.
+    value = (extended << 1) & 0xFF
     for _ in range(3):
         carry = bool(value & 0x80)
         value = (value << 1) & 0xFF

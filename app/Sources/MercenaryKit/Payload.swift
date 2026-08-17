@@ -126,6 +126,11 @@ public enum Payload {
   /// indices mean nothing outside it.
   public struct RoomsDocument: Codable, Sendable, Equatable {
     public struct Room: Codable, Sendable, Equatable {
+      public struct Palette: Codable, Sendable, Equatable {
+        public var background: Int
+        public var foreground: Int
+      }
+
       /// A way through to somewhere else, or a behaviour — the Reference Build packs
       /// both into one byte and the decode does not claim to know which is which.
       public struct Portal: Codable, Sendable, Equatable {
@@ -145,6 +150,7 @@ public enum Payload {
       /// `[startIndex, endIndex]` pairs into this room's own vertices.
       public var edges: [[Int]]
       public var bounds: Bounds
+      public var palette: Palette
       public var hasPortal: Bool
       public var portals: [Portal]
     }
@@ -283,8 +289,8 @@ public enum Payload {
     }
   }
 
-  public static let supportedSchemaVersion = 4
-  public static let supportedDecoderVersion = 3
+  public static let supportedSchemaVersion = 5
+  public static let supportedDecoderVersion = 4
   /// The text document carries its own version, because its format is
   /// independent of the geometry documents and changes on its own schedule.
   public static let supportedTextSchemaVersion = 1

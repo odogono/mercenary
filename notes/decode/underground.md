@@ -1,8 +1,8 @@
 # Underground: rooms, corridors, and the lift
 
 Decode notes for the underground half of the world. The rooms were decoded during
-the geometry work and carried into the Data Payload later; the lift was read while
-scoping the building-entry step and is not implemented yet.
+the geometry work and carried into the Data Payload later; the lift and the indoor
+presentation were read while closing the opening play loop.
 
 ## Rooms
 
@@ -68,6 +68,11 @@ and a hangar is entered by a different mechanism — the box test below — so `
 most likely a hangar. Not proven, but the tables are unambiguous about what they
 hold.
 
+All five cells share surface structure `$E9A7`. Its three raised lift levels use
+extended height bytes and decode to Y 96, 192, and 288. Geometry decoder 3 missed
+the routine's initial discard shift and produced 1072, 1120, and 1168 instead,
+turning the low lift into a tall box; decoder 4 fixes that extraction error.
+
 ## Laying the rooms out
 
 Rooms carry no coordinates, but a layout can be walked out of the doorways, because
@@ -95,23 +100,24 @@ enough to be worth chasing one at a time rather than explaining away.
 
 `lab geometry rooms-plan-svg` draws it.
 
-## Still unread
+## Lift dispatch and indoor presentation
 
-* **How the lift is invoked.** Its *conditions* are read, at `$B404`: the player must
+* **The lift is invoked by E.** `$B3F6` compares the keyboard result with `$0E`, the
+  Reference Build's `E` key, before entering the handler containing `$B404`. Its
+  remaining conditions are unchanged: the player must
   be on foot, and standing on the lift's pad — the position's middle byte shifted down
   two and compared against `$1C`, so middle bytes `$70` to `$73` on both axes, a small
   square near the middle of the cell. Surfacing puts the player at `$71`, the pad's own
   middle, so arriving leaves them able to go straight back. A search then walks the
   same destination tables backwards to find which site they are standing in, and the
   lift starts with `$CA` set to `$80` going down or `$01` going up.
-  What is *not* read is how `$B404` is reached: nothing in the image refers to it, so
-  it is dispatched from a table, and whether that means a key or simply walking onto
-  the pad is still open. The app applies every condition above and uses a key for the
-  last step.
-* **The indoor screen.** The surface setup calls `DRAW_SCREEN_OUTDOOR` (`$AF6E`), so
-  there is an indoor counterpart and a room is plainly not drawn against sky and
-  ground. That routine has not been read, so the app encloses the view in a
-  placeholder rather than claiming a colour.
+* **The indoor screen is a decoded `$AA` bitmap fill.** `$AFC3` branches on the
+  underground flag to `CLEAR_SCREEN_INDOOR` at `$B197`, which fills the bitmap with
+  `$AA`. Bit 7 is drawn first, so the 320 bitmap columns alternate foreground then
+  background across the full Game Surface. Room setup loads background and
+  foreground from bytes 3 and 4 of the room-record header, storing them through the
+  palette sites at `$91DB` and `$91E5`. Shared room records consequently share the
+  same palette.
 
 ## Not the way in
 

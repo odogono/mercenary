@@ -67,12 +67,10 @@ and thirty lines of disassembly settled it. Go to the ROM first.
 
 ## Opening presentation at 8:8
 
-The app's opening pose remains a Mac Adaptation presentation choice: X 559104,
-Y 400, Z 547104, looking north with a neutral pitch. It is 12,000 world units
-south of the scene focus, keeping the airstrip, inverted pyramid, Dart and wreck
-inside cell 8:8 and visible under the decoded projection. The focal values and
-axis ratio are Reference Build behaviour; this particular camera placement is
-not claimed as decoded initial state.
+The app now starts at the Reference Build's captured crash position: X/Z 559104,
+Y 128, looking north with a neutral pitch. The previous staged overview was a Mac
+Adaptation 12,000 world units south of that point; it made the whole airstrip easy
+to inspect, but incorrectly moved the player away from the centre of the wreck.
 
 ## Roads and the cell 8:8 airstrip
 

@@ -286,6 +286,7 @@ class RoomsTests(unittest.TestCase):
             "records": records if records is not None else [
                 {
                     "geometryIdentity": "room-record:3000",
+                    "header": [16, 4, 16, 6, 14],
                     "commands": [
                         {"linkedRoomOrBehaviour": 88, "plane": "zy", "xMiddle": 16, "zMiddle": 12}
                     ],
@@ -322,10 +323,35 @@ class RoomsTests(unittest.TestCase):
         self.assertEqual(room["hasPortal"], True)
         self.assertEqual(room["portals"], [{"linked": 88, "plane": "zy", "xMiddle": 16, "zMiddle": 12}])
 
-    def test_a_room_whose_record_is_missing_simply_has_no_links(self) -> None:
-        room = build_rooms(self.dataset(records=[]))["rooms"][0]
+    def test_carries_background_and_foreground_from_the_record_header(self) -> None:
+        room = build_rooms(self.dataset())["rooms"][0]
 
-        self.assertEqual(room["portals"], [])
+        self.assertEqual(room["palette"], {"background": 6, "foreground": 14})
+
+    def test_rooms_sharing_a_record_share_its_palette(self) -> None:
+        rooms = self.dataset()["rooms"]
+        second = dict(rooms[0], roomId=1)
+        document = build_rooms(self.dataset(rooms=[rooms[0], second]))
+
+        self.assertEqual(document["rooms"][0]["palette"], document["rooms"][1]["palette"])
+
+    def test_rejects_a_record_header_without_both_palette_bytes(self) -> None:
+        dataset = self.dataset()
+        dataset["records"][0]["header"] = [16, 4, 16, 6]
+
+        with self.assertRaisesRegex(LabError, "header"):
+            build_rooms(dataset)
+
+    def test_rejects_a_palette_index_outside_the_c64_range(self) -> None:
+        dataset = self.dataset()
+        dataset["records"][0]["header"][4] = 16
+
+        with self.assertRaisesRegex(LabError, "palette"):
+            build_rooms(dataset)
+
+    def test_a_room_whose_record_is_missing_is_rejected(self) -> None:
+        with self.assertRaisesRegex(LabError, "missing record"):
+            build_rooms(self.dataset(records=[]))
 
     def test_refuses_an_edge_outside_a_rooms_own_point_space(self) -> None:
         dataset = self.dataset()

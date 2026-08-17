@@ -74,10 +74,21 @@ enum FrameCapture {
     context.translateBy(x: 0, y: size.height)
     context.scaleBy(x: 1, y: -1)
 
-    context.setFillColor(color(room == nil ? ScenePalette.sky : ScenePalette.enclosed))
-    context.fill(CGRect(origin: .zero, size: size))
-
-    if room == nil {
+    if let roomID = room, let indoor = world.rooms[roomID] {
+      let backdrop = IndoorBackdrop(
+        background: indoor.palette.background, foreground: indoor.palette.foreground
+      )
+      let scale = size.width / CGFloat(IndoorBackdrop.columnCount)
+      for column in 0..<IndoorBackdrop.columnCount {
+        guard let fill = backdrop.color(atColumn: column) else { continue }
+        let x0 = CGFloat(column) * scale
+        let x1 = CGFloat(column + 1) * scale
+        context.setFillColor(color(fill))
+        context.fill(CGRect(x: x0, y: 0, width: x1 - x0, height: size.height))
+      }
+    } else {
+      context.setFillColor(color(ScenePalette.sky))
+      context.fill(CGRect(origin: .zero, size: size))
       let (ground, lean) = camera.groundFill(size: size)
       context.setFillColor(color(ScenePalette.ground))
       context.saveGState()

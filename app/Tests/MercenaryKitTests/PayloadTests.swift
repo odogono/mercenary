@@ -6,12 +6,12 @@ import XCTest
 /// the shapes are what matter.
 enum PayloadFixture {
   static let manifest = """
-    {"schemaVersion":4,"sourceDatasetId":"world-geometry-test","sourceCoreDigest":"\(String(repeating: "a", count: 64))",
-     "decoderVersion":3,"counts":{"cells":2,"models":1,"instances":2}}
+    {"schemaVersion":5,"sourceDatasetId":"world-geometry-test","sourceCoreDigest":"\(String(repeating: "a", count: 64))",
+     "decoderVersion":4,"counts":{"cells":2,"models":1,"instances":2}}
     """
 
   static let world = """
-    {"schemaVersion":4,"grid":{"cellsPerAxis":4,"cellSize":1000},
+    {"schemaVersion":5,"grid":{"cellsPerAxis":4,"cellSize":1000},
      "bounds":{"min":[0,0,0],"max":[4000,500,4000]},
      "roadAltitudeLookup":[0,1],
      "roadCells":[
@@ -23,7 +23,7 @@ enum PayloadFixture {
     """
 
   static let surface = """
-    {"schemaVersion":4,"cells":[
+    {"schemaVersion":5,"cells":[
       {"cell":0,"grid":[0,0],"structure":"surface-structure:test",
        "vertices":[
          {"kind":"world-point","position":[0,0,0]},
@@ -38,7 +38,7 @@ enum PayloadFixture {
     """
 
   static let objects = """
-    {"schemaVersion":4,
+    {"schemaVersion":5,
      "models":[{"id":"object-model:test","vertices":[[-10,-100,-10],[10,-100,-10]],
                 "edges":[[0,1]]}],
      "instances":[
@@ -54,10 +54,10 @@ enum PayloadFixture {
     {"schemaVersion":\(Payload.supportedSchemaVersion),
      "rooms":[
        {"room":0,"vertices":[[0,0,0],[4096,0,0],[4096,1024,0]],"edges":[[0,1],[1,2]],
-        "bounds":{"min":[0,0,0],"max":[4096,1024,0]},"hasPortal":true,
+        "bounds":{"min":[0,0,0],"max":[4096,1024,0]},"palette":{"background":6,"foreground":14},"hasPortal":true,
         "portals":[{"linked":88,"plane":"zy","xMiddle":16,"zMiddle":12}]},
        {"room":1,"vertices":[[0,0,0],[512,0,0]],"edges":[[0,1]],
-        "bounds":{"min":[0,0,0],"max":[512,0,0]},"hasPortal":false,"portals":[]}]}
+        "bounds":{"min":[0,0,0],"max":[512,0,0]},"palette":{"background":0,"foreground":1},"hasPortal":false,"portals":[]}]}
     """
 
   static let underground = """
@@ -129,6 +129,8 @@ final class PayloadTests: XCTestCase {
     XCTAssertEqual(bundle.surface.cells.count, 2)
     XCTAssertEqual(bundle.objects.models.count, 1)
     XCTAssertEqual(bundle.objects.instances.count, 2)
+    XCTAssertEqual(bundle.rooms.rooms[0].palette.background, 6)
+    XCTAssertEqual(bundle.rooms.rooms[0].palette.foreground, 14)
   }
 
   func testLoadsFlightParametersWhenTheExportCarriesThem() throws {
@@ -186,22 +188,22 @@ final class PayloadTests: XCTestCase {
   func testAFutureSchemaIsRejectedRatherThanMisread() throws {
     try PayloadFixture.write(
       into: directory,
-      world: PayloadFixture.world.replacingOccurrences(of: "\"schemaVersion\":4", with: "\"schemaVersion\":5")
+      world: PayloadFixture.world.replacingOccurrences(of: "\"schemaVersion\":5", with: "\"schemaVersion\":6")
     )
 
     XCTAssertThrowsError(try Payload.load(from: directory)) { error in
-      XCTAssertEqual(error as? Payload.LoadError, .unsupportedSchema("world.json", 5))
+      XCTAssertEqual(error as? Payload.LoadError, .unsupportedSchema("world.json", 6))
     }
   }
 
-  func testSchemaThreeRequiresAReexport() throws {
+  func testSchemaFourRequiresAReexport() throws {
     try PayloadFixture.write(
       into: directory,
-      manifest: PayloadFixture.manifest.replacingOccurrences(of: "\"schemaVersion\":4", with: "\"schemaVersion\":3")
+      manifest: PayloadFixture.manifest.replacingOccurrences(of: "\"schemaVersion\":5", with: "\"schemaVersion\":4")
     )
 
     XCTAssertThrowsError(try Payload.load(from: directory)) { error in
-      XCTAssertEqual(error as? Payload.LoadError, .unsupportedSchema("manifest.json", 3))
+      XCTAssertEqual(error as? Payload.LoadError, .unsupportedSchema("manifest.json", 4))
     }
   }
 
@@ -209,12 +211,12 @@ final class PayloadTests: XCTestCase {
     try PayloadFixture.write(
       into: directory,
       manifest: PayloadFixture.manifest.replacingOccurrences(
-        of: "\"decoderVersion\":3", with: "\"decoderVersion\":2"
+        of: "\"decoderVersion\":4", with: "\"decoderVersion\":3"
       )
     )
 
     XCTAssertThrowsError(try Payload.load(from: directory)) { error in
-      XCTAssertEqual(error as? Payload.LoadError, .unsupportedDecoder(2))
+      XCTAssertEqual(error as? Payload.LoadError, .unsupportedDecoder(3))
     }
   }
 

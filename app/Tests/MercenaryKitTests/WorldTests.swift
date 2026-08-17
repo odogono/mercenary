@@ -23,6 +23,13 @@ final class WorldTests: XCTestCase {
     XCTAssertEqual(first.centre, SIMD3(500, 0, 500))
   }
 
+  func testRoomPalettePropagatesIntoTheWorld() throws {
+    let room = try XCTUnwrap(World(bundle: try bundle()).rooms[0])
+
+    XCTAssertEqual(room.palette.background, 6)
+    XCTAssertEqual(room.palette.foreground, 14)
+  }
+
   func testInkCodesBecomeInkCases() throws {
     let world = World(bundle: try bundle())
     let cell = try XCTUnwrap(world.cell(column: 0, row: 0))
@@ -367,27 +374,36 @@ final class VisibilitySelectorTests: XCTestCase {
     XCTAssertEqual(visible.segments.filter { $0.ink == Ink.black }.count, 0)
   }
 
-  func testABoardedCraftIsNotDrawnAndReappearsWhenLeft() throws {
+  func testABoardedCraftIsNotDrawnAndReappearsAtItsLandingPositionWhenLeft() throws {
     // The payload's room byte only says where a thing started. What is out of the
     // world *now* is live state, so the renderer has to be told — otherwise the
     // craft the player is sitting in goes on being drawn beside them.
     let world = World(bundle: try bundle())
     let selector = VisibilitySelector()
     let slot = try XCTUnwrap(world.objects.first(where: \.isDrawable)).slot
-    let here = SIMD3<Double>(33_792, 128, 33_792)
+    let original = SIMD3<Double>(500, 128, 500)
+    let landing = SIMD3<Double>(3_500, 128, 3_500)
 
-    let onFoot = selector.visible(in: world, from: here)
-    let aboard = selector.visible(in: world, from: here, hidden: [slot])
-    let afterLeaving = selector.visible(in: world, from: here, hidden: [])
+    let onFoot = selector.visible(in: world, from: original)
+    let aboard = selector.visible(in: world, from: original, hidden: [slot])
+    let afterLeaving = selector.visible(
+      in: world, from: landing, moved: [slot: landing]
+    )
 
     XCTAssertLessThan(
       aboard.segments.count + aboard.points.count,
       onFoot.segments.count + onFoot.points.count
     )
     XCTAssertEqual(
-      afterLeaving.segments.count + afterLeaving.points.count,
-      onFoot.segments.count + onFoot.points.count
+      afterLeaving.detailedObjects,
+      onFoot.detailedObjects
     )
+    let originalCraft = try XCTUnwrap(onFoot.segments.last)
+    let movedCraft = try XCTUnwrap(afterLeaving.segments.last)
+    XCTAssertGreaterThan(movedCraft.a.x, 3_000)
+    XCTAssertGreaterThan(movedCraft.a.z, 3_000)
+    XCTAssertEqual(movedCraft.a.y, originalCraft.a.y)
+    XCTAssertEqual(movedCraft.b.y, originalCraft.b.y)
   }
 
   // MARK: - Underground rooms

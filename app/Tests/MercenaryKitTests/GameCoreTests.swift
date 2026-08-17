@@ -220,7 +220,7 @@ final class GameCoreTests: XCTestCase {
     }
 
     XCTAssertEqual(state.mode, .grounded)
-    XCTAssertEqual(state.player.position.y, Double(flight.rules.groundAltitude), accuracy: 1e-9)
+    XCTAssertEqual(state.player.position.y, flight.groundAltitude, accuracy: 1e-9)
   }
 
   func testTurningRightIsTurningLeftNegated() {
@@ -423,16 +423,17 @@ final class GameCoreTests: XCTestCase {
     XCTAssertEqual(boarded.mode, .grounded)
   }
 
-  func testLeavingPutsThePlayerBackOnTheWalkingBlockAtGroundLevel() {
+  func testLeavingRestoresTheOpeningEyeHeightAndWalkingKeepsIt() {
     var state = flying()
     state.player.roll = 0.4
-    let out = GameCore.leave(state, flight: flight)
+    let left = GameCore.leave(state, flight: flight)
+    let walked = GameCore.step(left, intent: Intent(walk: 1), dt: 1.0 / 60.0, flight: flight)
 
-    XCTAssertNil(out.craft)
-    XCTAssertNil(out.craft)
-    XCTAssertEqual(out.player.position.y, Double(flight.rules.groundAltitude), accuracy: 1e-9)
-    XCTAssertEqual(out.player.roll, 0)
-    XCTAssertEqual(out.mode, .grounded)
+    XCTAssertNil(left.craft)
+    XCTAssertEqual(left.player.position.y, OpeningScene.player.position.y, accuracy: 1e-9)
+    XCTAssertEqual(walked.player.position.y, OpeningScene.player.position.y, accuracy: 1e-9)
+    XCTAssertEqual(left.player.roll, 0)
+    XCTAssertEqual(left.mode, .grounded)
   }
 
   func testACraftBanksIntoItsTurnButAWalkerNeverRolls() {
@@ -463,7 +464,7 @@ final class GameCoreTests: XCTestCase {
     state.player.position.y = 999_999
     let settled = GameCore.step(state, intent: .idle, dt: 1.0 / 60.0, flight: flight)
 
-    XCTAssertEqual(settled.player.position.y, Double(flight.rules.groundAltitude), accuracy: 1e-9)
+    XCTAssertEqual(settled.player.position.y, flight.groundAltitude, accuracy: 1e-9)
   }
 
   func testTheGroundAltitudeCanBeOverriddenForFeelWithoutTouchingTheDecode() {
@@ -574,7 +575,7 @@ final class GameCoreTests: XCTestCase {
       )
     }
 
-    XCTAssertEqual(state.player.position.y, Double(flight.rules.groundAltitude), accuracy: 1e-9)
+    XCTAssertEqual(state.player.position.y, flight.groundAltitude, accuracy: 1e-9)
     XCTAssertEqual(state.mode, .grounded)
     XCTAssertEqual(state.player.pitch, 0)
   }

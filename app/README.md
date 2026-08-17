@@ -45,7 +45,7 @@ Discovery walks up from the working directory looking for `payload/manifest.json
 | `1`…`9`, `0` | Throttle, in a craft: ten keys onto the decoded notch ladder |
 | `-` / `=` | Halve and double the throttle |
 | `Space` | Shut the throttle aboard; on foot, skip the message |
-| `G` | Ride the lift, where there is one — stands in for an undecoded trigger |
+| `E` | Ride the lift, where there is one |
 | `[` / `]` | Page through the decoded messages |
 
 The cursor keys are the whole movement surface, as the original's stick was. Aboard
@@ -130,7 +130,7 @@ spot-checks, and for looking at a scene from a machine that cannot open a window
 
 ```sh
 app/.build/debug/mercenary --render-frame /tmp/frame.png \
-  --x 559104 --z 547104 --eye 128 --heading 0 --pitch 0
+  --x 559104 --z 559104 --eye 128 --heading 0 --pitch 0
 ```
 
 `--heading`, `--pitch` and `--roll` are degrees; `--x`, `--z`, `--eye` are world

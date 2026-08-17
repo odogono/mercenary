@@ -9,6 +9,7 @@ from pathlib import Path
 
 from c64lab.core import LabError
 from c64lab.geometry import (
+    _surface_y,
     canonical_digest,
     core_dataset_digest,
     decode_object_model,
@@ -51,6 +52,13 @@ class NumericTests(unittest.TestCase):
             "endGrid": [2, 1],
         }])
         self.assertEqual(decoded["runtimeSpan"], [0x902A, 0x902F])
+
+    def test_extended_surface_height_discards_the_first_shift_carry(self) -> None:
+        # The routine performs one ASL before the three ASL/ROL pairs. The lift's
+        # $86 byte is therefore $0060 high, not $0430.
+        low, middle = _surface_y(15, 0x86)
+
+        self.assertEqual((low, middle), (0x60, 0x00))
 
 
 class RoadNetworkSVGTests(unittest.TestCase):
