@@ -18,6 +18,26 @@ _Avoid_: Game script, event code, AI logic, bytecode dump
 The set of values that makes one craft handle as it does—its control routine and its rates, limits, and gains—re-extracted into the Data Payload as plain numbers and selected by the craft the player currently occupies; a landed craft taxis on a block of its own, while a player on foot runs a separate fixed-step mover rather than this loop (ADR 0016).
 _Avoid_: Flight profile, craft config, tuning block, vehicle stats
 
+**Gameplay Session**:
+The single owner of one play session's Session State, through which every change to it passes; it presents the Host Callout's view of that state rather than keeping a second copy, and hands out a Session Snapshot for anything that draws.
+_Avoid_: Game manager, world state, controller, store
+
+**Location**:
+Which space the player occupies — the surface, or one identified Room. The surface is a Location in its own right and not a Room.
+_Avoid_: Position, place, level, zone
+
+**Occupancy**:
+What the player is currently inside, being either on foot or aboard one identified craft.
+_Avoid_: Vehicle state, mount, mode
+
+**Object Residence**:
+Where one object currently is: somewhere on the surface, in a Room, carried by the player, or out of the world; and, when it has been moved from where the Data Payload placed it, the place it was left.
+_Avoid_: Object position, inventory flag, room membership
+
+**Session Snapshot**:
+One consistent description of a Gameplay Session at a single moment, complete enough to draw from and to compare against another, which every renderer consumes instead of reading the session's parts.
+_Avoid_: View model, game state, render state
+
 **Doorway**:
 One opening belonging to a single Room, carrying the Room Link it leads along, whatever it demands before it opens, and where in the destination it puts the player; two Rooms that face each other have a Doorway each rather than sharing one.
 _Avoid_: Portal, door, exit, connection

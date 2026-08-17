@@ -80,23 +80,28 @@ enum BensonTrace {
       let settings = try Settings.load()
       var tunables = settings.bensonTunables(framesPerTick: program.framesPerTick)
       if let timeScale = options.timeScale { tunables.timeScale = timeScale }
-      var session = BensonSession(
-        program: program, text: TextTable(document: text), tunables: tunables
+      // Walking to something needs the world the player walks through, and the
+      // rules for reaching it once there.
+      let world = World(bundle: bundle)
+      var session = GameplaySession(
+        content: GameplaySession.Content(
+          objects: world.objects,
+          cellSize: Double(world.cellSize),
+          interaction: bundle.interaction.map(Interaction.init(document:)),
+          // Walking runs on the craft parameters too, so without them nothing moves.
+          flight: bundle.flight.map { parameters in
+            settings.flight.model(for: parameters, groundExtent: Double(world.groundExtent))
+          },
+          underground: bundle.underground
+        ),
+        player: OpeningScene.player,
+        scripts: BensonSession(
+          program: program, text: TextTable(document: text), tunables: tunables
+        )
       )
       guard session.start(script: options.script) else {
         return fail("script \(options.script) would not start")
       }
-
-      // Walking to something needs the world the player walks through, and the
-      // rules for reaching it once there.
-      let world = World(bundle: bundle)
-      // Walking runs on the craft parameters too, so without them nothing moves.
-      let flight = bundle.flight.map { parameters in
-        settings.flight.model(for: parameters, groundExtent: Double(world.groundExtent))
-      }
-      var game = GameState(player: OpeningScene.player)
-      if let flight { game.player.position.y = flight.groundAltitude }
-      let interaction = bundle.interaction.map(Interaction.init(document:))
       let target = options.walkTo.flatMap { slot in
         world.objects.first { $0.slot == slot }
       }
@@ -115,7 +120,7 @@ enum BensonTrace {
       var shown = ""
       var presses = options.presses.sorted { $0.at < $1.at }
       var boarding = options.boarding.sorted { $0.at < $1.at }
-      print("script \(options.script), \(program.instructions.count) instructions, \(session.credits) credits")
+      print("script \(options.script), \(program.instructions.count) instructions, \(session.snapshot.credits) credits")
 
       while elapsed < options.seconds {
         while let next = presses.first, next.at <= elapsed {
@@ -130,55 +135,41 @@ enum BensonTrace {
         }
 
         // Walk toward the target and reach for it on arrival, so the whole loop
-        // is exercised rather than the boarding being asserted from outside.
-        if let target, let interaction, !reached {
+        // is exercised rather than the boarding being asserted from outside. The
+        // reaching itself is the session's, so this exercises the same path the
+        // interactive shell takes rather than a second copy of it.
+        if let target, !reached {
           let position = SIMD3<Double>(target.origin)
-          let candidate = Interaction.Candidate(slot: target.slot, position: position)
-          let range = options.walkAction == .board ? interaction.boardRange : interaction.takeRange
-          if interaction.isWithinReach(candidate, of: game.player.position, range: range) {
-            var host = session.hostState
-            let outcome = interaction.attempt(
-              options.walkAction, from: game.player.position, among: [candidate], host: &host
-            )
-            session.hostState = host
-            reached = true
-            print(String(format: "%7.2f  » %@", elapsed, String(describing: outcome)))
-            switch outcome {
-            case .took(let slot), .boarded(let slot):
-              session.describe(interaction.description(of: slot, flags: host.objectFlags[slot] ?? 0))
-            case .tooHeavy:
-              session.show(message: interaction.tooHeavyMessage)
-            default:
-              break
-            }
+          let (outcome, _) = session.reach(for: options.walkAction, only: target.slot)
+          if outcome == .nothingInReach {
+            session.intent = steer(from: session.game.player, to: position)
           } else {
-            if let flight {
-              game = GameCore.step(
-                game, intent: steer(from: game.player, to: position), dt: step, flight: flight
-              )
-            }
+            reached = true
+            session.intent = .idle
+            print(String(format: "%7.2f  » %@", elapsed, String(describing: outcome)))
           }
         }
 
-        for effect in session.advance(by: step) {
+        for event in session.advance(by: step).events {
+          guard case .script(let effect) = event else { continue }
           print(String(format: "%7.2f  · %@", elapsed, String(describing: effect)))
         }
         // Report each message as it starts, so the trace reads as the sequence of
         // things said rather than as a per-frame log.
-        if let text = session.ticker?.text, text != shown {
+        if let text = session.scripts?.ticker?.text, text != shown {
           shown = text
           print(String(format: "%7.2f  %@", elapsed, text.isEmpty ? "[blank line]" : text))
         }
         elapsed += step
-        if !session.isRunning { break }
+        if session.scripts?.isRunning != true { break }
       }
 
       print(
-        session.isRunning
+        session.scripts?.isRunning == true
           ? String(format: "%7.2f  [still running — parked, waiting on the player]", elapsed)
           : String(format: "%7.2f  [script finished]", elapsed)
       )
-      print("credits \(session.credits)")
+      print("credits \(session.snapshot.credits)")
       return 0
     } catch {
       return fail(String(describing: error))
