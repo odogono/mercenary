@@ -307,9 +307,9 @@ public struct GameplaySession: Sendable {
       else { return nil }
       game = GameCore.enter(game, entrance: entrance, lift: underground.lift, flight: flight)
     }
-    // Changing room changes what a script sees, which before this was the one
-    // transition that never reached the Host Callout.
-    republishHostState()
+    // The lift calls the same Room setup a Doorway does ($A2E0 and $857E both reach
+    // $90BE), so arriving by lift greets the player and applies darkness too.
+    settleIntoTheRoom()
     return [.tone, .arrived(location)]
   }
 
@@ -377,22 +377,29 @@ public struct GameplaySession: Sendable {
     }
     game.transitionCooldown = Double(rules.cooldownFrames)
     game.stepInterlock = Double(rules.stepInterlock)
+    settleIntoTheRoom()
+    return [.arrived(location)]
+  }
+
+  /// Everything Room setup does once the player is in the new Location.
+  ///
+  /// Shared by every way of arriving — a Doorway, the lift, or a debug placement —
+  /// because in the Reference Build they all call the same routine, and a Room that
+  /// only greeted people who came through a Doorway would be a difference we invented.
+  private mutating func settleIntoTheRoom() {
+    // A Room change is a change in what a script sees, so it has to reach the Host
+    // Callout before anything reads it.
+    republishHostState()
     // Room setup runs containment itself, before anything is drawn ($9226). It has to:
     // several arrivals land exactly on a wall, or a little outside one, and without
     // this the player would be drawn there for a frame before being pulled back. The
     // contact it reports is kept rather than cleared, which is what stops the wall
     // sounding a second time for a bump the player did not make.
-    if let walls = containment {
-      game.wallContactLatch = game.wallContact
-      game.wallContact = walls.clamp(&game.player.position)
-    } else {
-      game.wallContactLatch = game.wallContact
-      game.wallContact = 0
+    game.wallContactLatch = game.wallContact
+    game.wallContact = containment.map { $0.clamp(&game.player.position) } ?? 0
+    if case .room(let id) = location, let room = content.rooms[id], let rules = content.doorwayRules {
+      react(arrivingIn: room, rules: rules)
     }
-    // A Room change is a change in what a script sees, so it has to reach the Host
-    // Callout before anything reads it.
-    republishHostState()
-    return [.arrived(location)]
   }
 
   /// Put the player somewhere directly, without a lift to take them there.
@@ -402,7 +409,50 @@ public struct GameplaySession: Sendable {
   /// playthrough may not visit.
   public mutating func teleport(to location: Location) {
     game.room = location.room
-    republishHostState()
+    // A debug placement stands in for arriving, so it arrives: the Room greets the
+    // player and darkness applies. Otherwise a scenario that starts in a dark Room
+    // would start in a lit one.
+    settleIntoTheRoom()
+  }
+
+  // MARK: - What a Room looks like, and what it says when you arrive
+
+  /// The Room as it looks right now, or nil on the surface.
+  public var indoorScene: IndoorScene? {
+    guard case .room(let id) = location, let room = content.rooms[id],
+      let rules = content.doorwayRules
+    else { return nil }
+    return IndoorScene(room: room, rules: rules, emitter: residence(of: rules.photonEmitterSlot))
+  }
+
+  /// Whether a Room the payload marks dark is dark for this player.
+  func isDark(_ room: Room) -> Bool {
+    guard let rules = content.doorwayRules else { return false }
+    return IndoorScene(
+      room: room, rules: rules, emitter: residence(of: rules.photonEmitterSlot)
+    ).dark
+  }
+
+  /// What a Room says when the player arrives in it.
+  ///
+  /// The order is the Reference Build's and it decides one case that is otherwise
+  /// arbitrary: darkness queues its message first, and then the header's own reaction
+  /// runs. So a Room that is both dark and carries an entry *message* shows the entry
+  /// message — it overwrote the pending one — while a dark Room with an entry *script*
+  /// still says it is dark, because starting a script does not touch that byte.
+  private mutating func react(arrivingIn room: Room, rules: Payload.RoomsDocument.DoorwayRules) {
+    var pending: Int? = isDark(room) ? rules.darkMessage : nil
+    switch room.entry {
+    case .script(let id):
+      // A script that is already running is not restarted, as the Reference Build's
+      // own starter refuses.
+      start(script: id)
+    case .message(let index):
+      pending = index
+    case nil:
+      break
+    }
+    if let pending { show(message: pending) }
   }
 
   /// Stand the player somewhere in the Location they are already in, and optionally
@@ -554,7 +604,8 @@ public struct GameplaySession: Sendable {
       credits: scripts?.credits ?? 0,
       isScriptRunning: scripts?.isRunning ?? false,
       hiddenSlots: hiddenSlots,
-      displacedObjects: displacedObjects
+      displacedObjects: displacedObjects,
+      indoor: indoorScene
     )
   }
 

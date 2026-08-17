@@ -23,10 +23,17 @@ struct WorldView: View {
 
   private func draw(context: GraphicsContext, size: CGSize) {
     let camera = Camera(player: model.snapshot.player)
-    if model.snapshot.location == .surface {
+    if let indoor = model.snapshot.indoor {
+      drawIndoorBackdrop(context: context, size: size, indoor: indoor)
+      // A dark Room draws nothing at all. Not dimmed and not outlined: the Reference
+      // Build zeroes the three colours it draws with, so there is nothing to see
+      // until the photon emitter turns up.
+      if indoor.dark {
+        Task { @MainActor in model.report(visibleLines: 0, points: 0) }
+        return
+      }
+    } else {
       drawGround(context: context, size: size, camera: camera)
-    } else if let roomID = model.snapshot.location.room, let room = world.rooms[roomID] {
-      drawIndoorBackdrop(context: context, size: size, room: room)
     }
 
     let visible = model.selector.visible(
@@ -61,9 +68,9 @@ struct WorldView: View {
     Task { @MainActor in model.report(visibleLines: drawn, points: visible.points.count) }
   }
 
-  private func drawIndoorBackdrop(context: GraphicsContext, size: CGSize, room: Room) {
+  private func drawIndoorBackdrop(context: GraphicsContext, size: CGSize, indoor: IndoorScene) {
     let backdrop = IndoorBackdrop(
-      background: room.palette.background, foreground: room.palette.foreground
+      background: indoor.background, foreground: indoor.foreground
     )
     let scale = size.width / CGFloat(IndoorBackdrop.columnCount)
     for column in 0..<IndoorBackdrop.columnCount {

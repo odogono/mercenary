@@ -38,8 +38,19 @@ enum FrameCapture {
       let visible = selector.visible(
         in: world, from: options.position, elapsed: options.elapsed, room: options.room
       )
+      // A still has no session behind it, so where the photon emitter is comes
+      // straight from the payload's own placement — which is where it is at the start
+      // of a game, and the honest answer for a render nobody has played up to.
+      let indoor = options.room.flatMap { world.rooms[$0] }.map { room in
+        IndoorScene(
+          room: room, rules: world.doorwayRules,
+          emitter: world.objects.first { $0.slot == world.doorwayRules.photonEmitterSlot }
+            .map { $0.room == 0 ? Residence.surface(at: nil) : .room($0.room) }
+            ?? .surface(at: nil)
+        )
+      }
       let (image, drawn) = render(
-        world: world, camera: camera, visible: visible, size: options.size, room: options.room
+        world: world, camera: camera, visible: visible, size: options.size, indoor: indoor
       )
       try write(image, to: options.output)
       let summary = """
@@ -58,7 +69,7 @@ enum FrameCapture {
 
   private static func render(
     world: World, camera: Camera, visible: VisibilitySelector.Visible, size: CGSize,
-    room: Int? = nil
+    indoor: IndoorScene? = nil
   ) -> (CGImage, Int) {
     let width = Int(size.width)
     let height = Int(size.height)
@@ -75,9 +86,9 @@ enum FrameCapture {
     context.translateBy(x: 0, y: size.height)
     context.scaleBy(x: 1, y: -1)
 
-    if let roomID = room, let indoor = world.rooms[roomID] {
+    if let indoor {
       let backdrop = IndoorBackdrop(
-        background: indoor.palette.background, foreground: indoor.palette.foreground
+        background: indoor.background, foreground: indoor.foreground
       )
       let scale = size.width / CGFloat(IndoorBackdrop.columnCount)
       for column in 0..<IndoorBackdrop.columnCount {
@@ -96,6 +107,12 @@ enum FrameCapture {
       if lean != 0 { context.concatenate(Camera.leanTransform(lean, size: size)) }
       context.fill(ground)
       context.restoreGState()
+    }
+
+    // A dark Room is empty, not dim: the Reference Build zeroes every colour it draws
+    // with, so there is nothing on the screen but the cleared backdrop.
+    if indoor?.dark == true {
+      return (context.makeImage()!, 0)
     }
 
     var drawn = 0

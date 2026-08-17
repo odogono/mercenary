@@ -468,6 +468,131 @@ final class UndergroundWalkTests: XCTestCase {
     XCTAssertEqual(session.game.player.position.z, Double(UndergroundFixture.rules.surfaceExit.z))
   }
 
+  // MARK: - What a Room says and shows when you arrive
+
+  /// A session whose Doorway leads into `destination`, so what that Room does on
+  /// arrival can be watched.
+  private func leadingInto(
+    _ destination: Room, carrying: Set<Int> = [], scripts: BensonSession? = nil
+  ) -> GameplaySession {
+    var session = GameplaySession(
+      content: .init(
+        objects: [], cellSize: 65536, interaction: nil, flight: flight, underground: nil,
+        rooms: [
+          3: UndergroundFixture.room(doorways: [UndergroundFixture.doorway(destination: .room(48))]),
+          48: destination,
+        ],
+        doorwayRules: UndergroundFixture.rules
+      ),
+      player: PlayerState(position: SIMD3(4040, 0, 1664), heading: .pi / 2),
+      scripts: scripts
+    )
+    session.teleport(to: .room(3))
+    for slot in carrying { session.carry(slot) }
+    return session
+  }
+
+  func testARoomWithAnEntryMessageSaysItOnArrival() {
+    var session = leadingInto(
+      UndergroundFixture.room(48, entry: .message(5)),
+      scripts: BensonSession(
+        program: BensonProgram(instructions: [.ret], entries: [0], decimalSeeds: [:]),
+        text: BensonFixture.text
+      )
+    )
+
+    XCTAssertTrue(walkUntilArrival(&session))
+
+    // The line reveals over time, so what is asserted is the message that started.
+    XCTAssertEqual(session.scripts?.ticker?.text, BensonFixture.text.message(5))
+  }
+
+  func testADarkRoomIsBlackAndSaysSo() {
+    var session = leadingInto(
+      UndergroundFixture.room(48, dark: true),
+      scripts: BensonSession(
+        program: BensonProgram(instructions: [.ret], entries: [0], decimalSeeds: [:]),
+        text: BensonFixture.text
+      )
+    )
+
+    XCTAssertTrue(walkUntilArrival(&session))
+
+    let indoor = try? XCTUnwrap(session.snapshot.indoor)
+    XCTAssertEqual(indoor?.dark, true)
+    XCTAssertEqual(indoor?.background, 0)
+    XCTAssertEqual(indoor?.foreground, 0)
+    XCTAssertEqual(indoor?.lineColour, 0, "the line colour goes with the other two")
+    XCTAssertEqual(
+      session.scripts?.ticker?.text,
+      BensonFixture.text.message(UndergroundFixture.rules.darkMessage)
+    )
+  }
+
+  func testCarryingThePhotonEmitterLightsADarkRoom() {
+    var session = leadingInto(
+      UndergroundFixture.room(48, dark: true),
+      carrying: [UndergroundFixture.rules.photonEmitterSlot]
+    )
+
+    XCTAssertTrue(walkUntilArrival(&session))
+
+    XCTAssertEqual(session.snapshot.indoor?.dark, false)
+    XCTAssertEqual(session.snapshot.indoor?.foreground, 14, "the Room's own colours are back")
+  }
+
+  func testAnEmitterLyingInTheRoomLightsItJustAsWell() {
+    // The Reference Build looks in both places: what is carried, and what is here.
+    var session = GameplaySession(
+      content: .init(
+        objects: [
+          ObjectPlacement(
+            slot: UndergroundFixture.rules.photonEmitterSlot, id: "emitter", model: "m",
+            origin: SIMD3(0, 0, 0), vertices: [], edges: [], detailCube: 65536,
+            drawsFarAsPoint: true, orientation: .identity, placement: "room",
+            withinWorld: true, room: 48, stateFlags: 0
+          )
+        ],
+        cellSize: 65536, interaction: nil, flight: flight, underground: nil,
+        rooms: [48: UndergroundFixture.room(48, dark: true)],
+        doorwayRules: UndergroundFixture.rules
+      ),
+      player: PlayerState(position: SIMD3(500, 0, 500), heading: 0)
+    )
+    session.teleport(to: .room(48))
+
+    XCTAssertEqual(session.snapshot.indoor?.dark, false)
+  }
+
+  func testAnEmitterInSomeOtherRoomDoesNotHelp() {
+    var session = GameplaySession(
+      content: .init(
+        objects: [
+          ObjectPlacement(
+            slot: UndergroundFixture.rules.photonEmitterSlot, id: "emitter", model: "m",
+            origin: SIMD3(0, 0, 0), vertices: [], edges: [], detailCube: 65536,
+            drawsFarAsPoint: true, orientation: .identity, placement: "room",
+            withinWorld: true, room: 3, stateFlags: 0
+          )
+        ],
+        cellSize: 65536, interaction: nil, flight: flight, underground: nil,
+        rooms: [48: UndergroundFixture.room(48, dark: true)],
+        doorwayRules: UndergroundFixture.rules
+      ),
+      player: PlayerState(position: SIMD3(500, 0, 500), heading: 0)
+    )
+    session.teleport(to: .room(48))
+
+    XCTAssertEqual(session.snapshot.indoor?.dark, true)
+  }
+
+  func testTheSurfaceHasNoIndoorSceneAtAll() {
+    var session = atADoorway()
+    session.teleport(to: .surface)
+
+    XCTAssertNil(session.snapshot.indoor)
+  }
+
   func testLeavingAWallAndReturningSoundsItAgain() {
     // A large Room, so backing away from one wall does not arrive at the other.
     var session = session()

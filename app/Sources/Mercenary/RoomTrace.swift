@@ -78,6 +78,17 @@ enum RoomTrace {
       guard let start = world.rooms[options.room] else {
         return fail("no room \(options.room) in this payload")
       }
+      // Scripts come along because a Room's entry reaction is half of what arriving
+      // in one does, and without them the trace would show the Doorways and none of
+      // what the Rooms said.
+      var scripts: BensonSession?
+      if let document = bundle.benson, let text = bundle.text {
+        let program = try BensonProgram(document: document)
+        scripts = BensonSession(
+          program: program, text: TextTable(document: text),
+          tunables: settings.bensonTunables(framesPerTick: program.framesPerTick)
+        )
+      }
       var session = GameplaySession(
         content: GameplaySession.Content(
           world: world, bundle: bundle,
@@ -85,7 +96,8 @@ enum RoomTrace {
             for: parameters, groundExtent: Double(world.groundExtent)
           )
         ),
-        player: OpeningScene.player
+        player: OpeningScene.player,
+        scripts: scripts
       )
       session.teleport(to: .room(options.room))
       // The middle of the Room, which is where the lift leaves the player.
@@ -131,8 +143,9 @@ enum RoomTrace {
               break
             }
           }
-          let message = session.snapshot.message
-          if !message.isEmpty, message != lastMessage {
+          // The whole message as it starts, rather than a line per character
+          // revealed: this is a record of what was said, not of the typing.
+          if let message = session.scripts?.ticker?.text, message != lastMessage {
             lastMessage = message
             say(String(format: "%7.2f  %@", elapsed, message))
           }
