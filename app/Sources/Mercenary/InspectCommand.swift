@@ -1,6 +1,7 @@
 import CoreGraphics
 import Foundation
 import ImageIO
+import MercenaryCLI
 import MercenaryKit
 import UniformTypeIdentifiers
 
@@ -19,31 +20,49 @@ enum InspectCommand {
     case roomSheet(URL)
   }
 
-  static func mode(from arguments: [String]) -> Mode? {
-    func value(_ flag: String) -> String? {
-      guard let at = arguments.firstIndex(of: flag), arguments.count > at + 1 else { return nil }
-      return arguments[at + 1]
-    }
-    let output = URL(fileURLWithPath: value("--out") ?? "/tmp/mercenary-inspect.png")
-    if let sheet = value("--inspect-objects") {
-      return .objectSheet(URL(fileURLWithPath: sheet))
-    }
-    if let sheet = value("--inspect-structures") {
-      return .structureSheet(URL(fileURLWithPath: sheet))
-    }
-    if let slot = value("--inspect-object").flatMap({ Int($0, radix: 10) }) {
-      return .object(slot: slot, output: output, inSitu: arguments.contains("--in-situ"))
-    }
-    if let index = value("--inspect-cell").flatMap({ Int($0, radix: 10) }) {
+  /// Every flag these modes accept, so anything else is refused by name.
+  static let knownFlags: Set<String> = [
+    "--inspect-objects", "--inspect-structures", "--inspect-rooms",
+    "--inspect-object", "--inspect-cell", "--inspect-room",
+    "--output", "--in-situ",
+  ]
+
+  /// The subject flags, and what each writes to when `--output` is not given.
+  private static let subjects: [(flag: String, fallback: String)] = [
+    ("--inspect-objects", "/tmp/mercenary-objects.png"),
+    ("--inspect-structures", "/tmp/mercenary-structures.png"),
+    ("--inspect-rooms", "/tmp/mercenary-rooms.png"),
+    ("--inspect-object", "/tmp/mercenary-object.png"),
+    ("--inspect-cell", "/tmp/mercenary-cell.png"),
+    ("--inspect-room", "/tmp/mercenary-room.png"),
+  ]
+
+  static func mode(from arguments: [String]) throws -> Mode? {
+    let arguments = Arguments(arguments)
+    guard let subject = subjects.first(where: { arguments.isPresent($0.flag) }) else { return nil }
+    try arguments.rejectUnknownFlags(besides: knownFlags)
+    let output = try arguments.output(default: subject.fallback)
+    switch subject.flag {
+    case "--inspect-objects": return .objectSheet(output)
+    case "--inspect-structures": return .structureSheet(output)
+    case "--inspect-rooms": return .roomSheet(output)
+    case "--inspect-object":
+      let slot = try require(arguments.int(subject.flag, expected: "an object slot"), subject.flag)
+      return .object(slot: slot, output: output, inSitu: arguments.isPresent("--in-situ"))
+    case "--inspect-cell":
+      let index = try require(arguments.int(subject.flag, expected: "a cell index"), subject.flag)
       return .cell(index: index, output: output)
-    }
-    if let sheet = value("--inspect-rooms") {
-      return .roomSheet(URL(fileURLWithPath: sheet))
-    }
-    if let id = value("--inspect-room").flatMap({ Int($0, radix: 10) }) {
+    default:
+      let id = try require(arguments.int(subject.flag, expected: "a room id"), subject.flag)
       return .room(id: id, output: output)
     }
-    return nil
+  }
+
+  private static func require(_ value: Int?, _ flag: String) throws -> Int {
+    guard let value else {
+      throw Arguments.Failure.missingValue(flag: flag, expected: "a number")
+    }
+    return value
   }
 
   static func run(_ mode: Mode) -> Int32 {

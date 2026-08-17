@@ -11,7 +11,11 @@ let package = Package(
   ],
   targets: [
     .target(name: "MercenaryKit"),
-    .executableTarget(name: "Mercenary", dependencies: ["MercenaryKit"]),
+    // Host tooling, deliberately outside the kit: reading a command line is not
+    // part of the surface a browser implementation has to reproduce.
+    .target(name: "MercenaryCLI"),
+    .executableTarget(name: "Mercenary", dependencies: ["MercenaryKit", "MercenaryCLI"]),
     .testTarget(name: "MercenaryKitTests", dependencies: ["MercenaryKit"]),
+    .testTarget(name: "MercenaryCLITests", dependencies: ["MercenaryCLI"]),
   ]
 )

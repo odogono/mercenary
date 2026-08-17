@@ -74,13 +74,16 @@ Renders a subject in isolation with its decoded numbers, so "some geometry looks
 wrong" becomes a named defect. Contact sheets cover all 64 object slots and one
 representative cell for each of the 98 unique surface structures.
 
+Every command writes where `--output` says. Left out, each writes to a name of its
+own under `/tmp` and prints where it went, so nothing lands somewhere unexpected.
+
 ```sh
-app/.build/debug/mercenary --inspect-objects /tmp/sheet.png   # 64 tiles + table
-app/.build/debug/mercenary --inspect-structures /tmp/structures.png # 98 tiles + table
-app/.build/debug/mercenary --inspect-object 3 --out /tmp/o.png [--in-situ]
-app/.build/debug/mercenary --inspect-cell 72 --out /tmp/c.png
-app/.build/debug/mercenary --inspect-rooms /tmp/rooms.png      # all 192 underground rooms
-app/.build/debug/mercenary --inspect-room 2 --out /tmp/r.png
+app/.build/debug/mercenary --inspect-objects    --output /tmp/sheet.png      # 64 tiles + table
+app/.build/debug/mercenary --inspect-structures --output /tmp/structures.png # 98 tiles + table
+app/.build/debug/mercenary --inspect-object 3   --output /tmp/o.png [--in-situ]
+app/.build/debug/mercenary --inspect-cell 72    --output /tmp/c.png
+app/.build/debug/mercenary --inspect-rooms      --output /tmp/rooms.png      # all 192 rooms
+app/.build/debug/mercenary --inspect-room 2     --output /tmp/r.png
 ```
 
 For checking the rooms' topology rather than their look, the lab draws a map of all
@@ -129,7 +132,7 @@ Renders one frame to a PNG with no window. Useful for side-by-side fidelity
 spot-checks, and for looking at a scene from a machine that cannot open a window.
 
 ```sh
-app/.build/debug/mercenary --render-frame /tmp/frame.png \
+app/.build/debug/mercenary --render-frame --output /tmp/frame.png \
   --x 559104 --z 559104 --eye 128 --heading 0 --pitch 0
 ```
 

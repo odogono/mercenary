@@ -1,6 +1,7 @@
 import CoreGraphics
 import Foundation
 import ImageIO
+import MercenaryCLI
 import MercenaryKit
 import UniformTypeIdentifiers
 
@@ -146,23 +147,24 @@ enum FrameCapture {
   }
 
   /// Parse `--render-frame <path>` plus optional camera overrides.
-  static func options(from arguments: [String]) -> Options? {
-    guard let index = arguments.firstIndex(of: "--render-frame"), arguments.count > index + 1 else {
-      return nil
-    }
-    var options = Options(output: URL(fileURLWithPath: arguments[index + 1]))
-    func value(_ flag: String) -> Double? {
-      guard let at = arguments.firstIndex(of: flag), arguments.count > at + 1 else { return nil }
-      return Double(arguments[at + 1])
-    }
-    if let x = value("--x") { options.position.x = x }
-    if let z = value("--z") { options.position.z = z }
-    if let y = value("--eye") { options.position.y = y }
-    if let heading = value("--heading") { options.heading = heading * .pi / 180 }
-    if let pitch = value("--pitch") { options.pitch = pitch * .pi / 180 }
-    if let roll = value("--roll") { options.roll = roll * .pi / 180 }
-    if let elapsed = value("--time") { options.elapsed = max(0, elapsed) }
-    if let room = value("--room") { options.room = Int(room) }
+  static let knownFlags: Set<String> = [
+    "--render-frame", "--output", "--x", "--z", "--eye", "--heading", "--pitch",
+    "--roll", "--time", "--room",
+  ]
+
+  static func options(from arguments: [String]) throws -> Options? {
+    let arguments = Arguments(arguments)
+    guard arguments.isPresent("--render-frame") else { return nil }
+    try arguments.rejectUnknownFlags(besides: knownFlags)
+    var options = Options(output: try arguments.output(default: "/tmp/mercenary-frame.png"))
+    if let x = try arguments.double("--x") { options.position.x = x }
+    if let z = try arguments.double("--z") { options.position.z = z }
+    if let y = try arguments.double("--eye") { options.position.y = y }
+    if let heading = try arguments.double("--heading") { options.heading = heading * .pi / 180 }
+    if let pitch = try arguments.double("--pitch") { options.pitch = pitch * .pi / 180 }
+    if let roll = try arguments.double("--roll") { options.roll = roll * .pi / 180 }
+    if let elapsed = try arguments.double("--time") { options.elapsed = max(0, elapsed) }
+    if let room = try arguments.int("--room", expected: "a room id") { options.room = room }
     return options
   }
 }
