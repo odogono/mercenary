@@ -154,10 +154,10 @@ public struct SessionSnapshot: Sendable, Equatable {
   public var credits: Int
   /// Whether a script currently owns the message line.
   public var isScriptRunning: Bool
-  /// Slots the game has taken out of the world, so the renderer stops drawing them.
-  public var hiddenSlots: Set<Int>
-  /// Objects that are no longer where the payload put them.
-  public var displacedObjects: [Int: SIMD3<Double>]
+  /// Where objects have got to, for whoever is drawing them. One value rather than
+  /// the two derived views it used to carry — the slots taken out of the world, and
+  /// the positions of those that had moved — which were both readings of this.
+  public var residence: [Int: Residence]
   /// The Room as it looks now, or nil on the surface.
   public var indoor: IndoorScene?
   /// Whether the world is mirrored left for right, which both renderers must obey.
@@ -174,8 +174,7 @@ public struct SessionSnapshot: Sendable, Equatable {
     message: String,
     credits: Int,
     isScriptRunning: Bool,
-    hiddenSlots: Set<Int>,
-    displacedObjects: [Int: SIMD3<Double>],
+    residence: [Int: Residence],
     indoor: IndoorScene? = nil,
     worldFlipped: Bool = false
   ) {
@@ -189,8 +188,7 @@ public struct SessionSnapshot: Sendable, Equatable {
     self.message = message
     self.credits = credits
     self.isScriptRunning = isScriptRunning
-    self.hiddenSlots = hiddenSlots
-    self.displacedObjects = displacedObjects
+    self.residence = residence
     self.indoor = indoor
     self.worldFlipped = worldFlipped
   }

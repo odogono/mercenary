@@ -38,7 +38,7 @@ struct WorldView: View {
 
     let visible = model.selector.visible(
       in: world, from: model.snapshot.player.position, elapsed: model.snapshot.elapsed,
-      hidden: model.hiddenSlots, moved: model.displacedObjects, room: model.snapshot.location.room
+      residence: model.snapshot.residence, room: model.snapshot.location.room
     )
     var paths: [Ink: Path] = [:]
     var drawn = 0

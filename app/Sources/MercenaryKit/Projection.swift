@@ -266,20 +266,34 @@ public struct VisibilitySelector: Sendable {
   /// presentation adaptation; the Reference Build expands only the current
   /// structure. Objects retain their separate decoded detail-cube rule.
   ///
-  /// `hidden` names object slots the game has taken out of the world — a craft
-  /// the player has boarded, or anything picked up. The payload's room byte only
-  /// says where a thing started; what is out of the world now is live state.
-  /// `moved` overlays the current position of craft that have been flown and left.
+  /// `residence` is where objects have got to. The payload's placement only says
+  /// where a thing started: a craft that has been flown is somewhere else, one being
+  /// flown is nowhere, and anything picked up is in the player's hands. It replaced
+  /// three separate overlays — hidden slots, moved positions, and room membership —
+  /// which were all views of this one value and could disagree.
   public func visible(
-    in world: World, from position: SIMD3<Double>, elapsed: Double = 0, hidden: Set<Int> = [],
-    moved: [Int: SIMD3<Double>] = [:], room: Int? = nil
+    in world: World, from position: SIMD3<Double>, elapsed: Double = 0,
+    residence: [Int: Residence] = [:], room: Int? = nil
   ) -> Visible {
     // Underground the Reference Build draws one room and nothing else: no cell ring,
-    // no roads, no surface objects. A room is its own world.
+    // no roads, no surface objects. A room is its own world — but the things standing
+    // in that room are drawn, by the same rules that draw the things on the surface.
     if let room {
-      return Visible(
-        segments: world.rooms[room]?.segments ?? [], points: [], detailedObjects: 0
-      )
+      var segments = world.rooms[room]?.segments ?? []
+      var points: [SIMD3<Float>] = []
+      var detailed = 0
+      if includeObjects {
+        for object in world.objects
+        where object.isDrawable(in: .room(room), residence: residence[object.slot]) {
+          if object.isDetailed(from: position) {
+            segments.append(contentsOf: object.segments)
+            detailed += 1
+          } else if object.drawsFarAsPoint {
+            points.append(object.origin)
+          }
+        }
+      }
+      return Visible(segments: segments, points: points, detailedObjects: detailed)
     }
     let column = Int((position.x / Double(world.cellSize)).rounded(.down))
     let row = Int((position.z / Double(world.cellSize)).rounded(.down))
@@ -308,8 +322,10 @@ public struct VisibilitySelector: Sendable {
     var points: [SIMD3<Float>] = []
     var detailed = 0
     if includeObjects {
-      for object in world.objects where object.isDrawable && !hidden.contains(object.slot) {
-        let placed = moved[object.slot].map { object.movedHorizontally(to: $0) } ?? object
+      for object in world.objects
+      where object.isDrawable(in: .surface, residence: residence[object.slot]) {
+        let placed = residence[object.slot]?.displacement
+          .map { object.movedHorizontally(to: $0) } ?? object
         if placed.isDetailed(from: position) {
           segments.append(contentsOf: placed.segments)
           detailed += 1

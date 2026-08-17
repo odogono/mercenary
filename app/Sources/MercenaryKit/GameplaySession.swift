@@ -245,10 +245,13 @@ public struct GameplaySession: Sendable {
     for action: InteractionAction, only slot: Int? = nil
   ) -> (Interaction.Outcome, [PresentationEvent]) {
     guard let interaction, scripts != nil else { return (.nothingInReach, []) }
+    // Reachable is the same question as drawable: the Reference Build looks through
+    // the objects present where the player is. That is what makes the fifty-five room
+    // objects reachable now — they were excluded here by the same rule that kept them
+    // from being drawn.
     let candidates = content.objects
       .filter { slot == nil || $0.slot == slot }
-      .filter(\.isDrawable)
-      .filter { residence(of: $0.slot).hostRoom != BensonHostState.outOfTheWorld }
+      .filter { $0.isDrawable(in: location, residence: residence[$0.slot]) }
       .map { object in
         Interaction.Candidate(
           slot: object.slot,
@@ -710,11 +713,16 @@ public struct GameplaySession: Sendable {
       message: scripts?.messageText ?? "",
       credits: scripts?.credits ?? 0,
       isScriptRunning: scripts?.isRunning ?? false,
-      hiddenSlots: hiddenSlots,
-      displacedObjects: displacedObjects,
+      residence: sceneResidence,
       indoor: indoorScene,
       worldFlipped: game.worldFlipped
     )
+  }
+
+  /// Where every object the payload placed has got to, filled in for the ones nothing
+  /// has moved so a renderer needs no second lookup.
+  var sceneResidence: [Int: Residence] {
+    Dictionary(uniqueKeysWithValues: content.objects.map { ($0.slot, residence(of: $0.slot)) })
   }
 
   /// Object slots the game has taken out of the world, which the renderer needs so

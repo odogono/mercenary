@@ -41,7 +41,7 @@ final class WalkaboutModel {
   private(set) var snapshot = SessionSnapshot(
     player: OpeningScene.player, location: .surface, occupancy: .onFoot, mode: .grounded,
     throttle: 0, throttleNotch: 0, elapsed: 0, message: "", credits: 0,
-    isScriptRunning: false, hiddenSlots: [], displacedObjects: [:]
+    isScriptRunning: false, residence: [:]
   )
   private(set) var framesPerSecond: Double = 0
   private(set) var visibleLines: Int = 0
@@ -270,8 +270,6 @@ final class WalkaboutModel {
   }
 
   var throttleNotch: Int { snapshot.throttleNotch }
-  var hiddenSlots: Set<Int> { snapshot.hiddenSlots }
-  var displacedObjects: [Int: SIMD3<Double>] { snapshot.displacedObjects }
 
   private func currentIntent() -> Intent {
     func axis(_ positive: UInt16, _ negative: UInt16) -> Double {

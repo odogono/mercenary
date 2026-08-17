@@ -121,6 +121,7 @@ enum RoomTrace {
         say("carrying \(options.carrying.map(String.init).joined(separator: ", "))")
       }
       say(describe(session, in: world))
+      say(objects(session, in: world))
 
       let step = 1.0 / 60
       var elapsed: Double = 0
@@ -169,6 +170,19 @@ enum RoomTrace {
     } catch {
       return fail(String(describing: error))
     }
+  }
+
+  /// What is standing in the Room with the player. Room objects were undrawable and
+  /// unreachable before this work, so a trace that did not name them would not show
+  /// the difference.
+  private static func objects(_ session: GameplaySession, in world: World) -> String {
+    let here = world.objects.filter {
+      $0.isDrawable(in: session.location, residence: session.snapshot.residence[$0.slot])
+    }
+    guard !here.isEmpty else { return "          nothing else here" }
+    return "          here: "
+      + here.map { String(format: "slot %d at %.0f,%.0f", $0.slot, $0.origin.x, $0.origin.z) }
+        .joined(separator: "; ")
   }
 
   private static func describe(_ session: GameplaySession, in world: World) -> String {

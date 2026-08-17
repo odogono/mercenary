@@ -158,7 +158,10 @@ final class GameplaySessionTests: XCTestCase {
         room == BensonHostState.outOfTheWorld ? slot : nil
       }
     )
-    XCTAssertEqual(session.snapshot.hiddenSlots, hiddenAccordingToHost)
+    let hiddenInTheSnapshot = Set(
+      session.snapshot.residence.filter { $0.value.hostRoom == BensonHostState.outOfTheWorld }.keys
+    )
+    XCTAssertEqual(hiddenInTheSnapshot, hiddenAccordingToHost)
   }
 
   // MARK: - One update, everything or nothing
