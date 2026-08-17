@@ -246,6 +246,10 @@ final class WalkaboutModel {
         // The session has already applied these; the tone alongside them is the
         // only thing a shell has to say about them today.
         break
+      case .worldFlipped:
+        // The view and the controls both come off the snapshot, so there is nothing
+        // for a shell to do about this beyond drawing the next frame.
+        break
       case .wall:
         // Deliberately silent: the wall's sound is one of the Reference Build's
         // per-frame SID effects, and audio is out of scope here. The event fires

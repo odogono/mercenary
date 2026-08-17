@@ -139,6 +139,8 @@ enum RoomTrace {
               say(describe(session, in: world))
             case .wall(let sound):
               say(String(format: "%7.2f  · wall (sound %d)", elapsed, sound))
+            case .worldFlipped(let flipped):
+              say(String(format: "%7.2f  · the world is %@", elapsed, flipped ? "mirrored" : "back"))
             default:
               break
             }
@@ -172,11 +174,14 @@ enum RoomTrace {
   private static func describe(_ session: GameplaySession, in world: World) -> String {
     let player = session.game.player
     let where_ = session.location.room.map { "room \($0)" } ?? "the surface"
-    let dark = session.location.room.flatMap { world.rooms[$0] }?.dark == true ? ", dark" : ""
+    let dark = session.snapshot.indoor?.dark == true ? ", dark" : ""
+    let mirrored = session.snapshot.worldFlipped ? ", mirrored" : ""
+    let rewired = session.location.room.flatMap { session.rewired[$0] }
+      .map { ", first doorway now leads to room \($0.room)" } ?? ""
     return String(
-      format: "          at %.0f, %.0f facing %.0f° in %@%@",
+      format: "          at %.0f, %.0f facing %.0f° in %@%@%@%@",
       player.position.x, player.position.z,
-      player.heading * 180 / .pi, where_, dark
+      player.heading * 180 / .pi, where_, dark, mirrored, rewired
     )
   }
 

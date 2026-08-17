@@ -77,6 +77,13 @@ public struct Camera: Sendable, Equatable {
   public let verticalFieldOfView: Double
   public let nearPlane: Double
   public let farPlane: Double
+  /// Whether the view is mirrored left for right.
+  ///
+  /// One underground Room turns this on. It is applied in camera space rather than by
+  /// negating anything in the world, because that is where the Reference Build applies
+  /// it — a single `EOR` on the parity flag at eight sites in the transform — and
+  /// because mirroring the world itself would mirror the objects in it too.
+  public let mirrored: Bool
 
   /// The camera's angles as sines and cosines, taken once here rather than per
   /// vertex: a camera is built once a frame and then asked to transform every
@@ -96,7 +103,8 @@ public struct Camera: Sendable, Equatable {
     roll: Double = 0,
     verticalFieldOfView: Double = ReferenceViewport(size: CGSize(width: 160, height: 136)).verticalFieldOfView,
     nearPlane: Double = 24,
-    farPlane: Double = 320_000
+    farPlane: Double = 320_000,
+    mirrored: Bool = false
   ) {
     self.position = position
     self.heading = heading
@@ -105,6 +113,7 @@ public struct Camera: Sendable, Equatable {
     self.verticalFieldOfView = verticalFieldOfView
     self.nearPlane = nearPlane
     self.farPlane = farPlane
+    self.mirrored = mirrored
     self.sinHeading = sin(heading)
     self.cosHeading = cos(heading)
     self.sinPitch = sin(pitch)
@@ -116,9 +125,10 @@ public struct Camera: Sendable, Equatable {
     self.cosRoll = cos(-roll)
   }
 
-  public init(player: PlayerState) {
+  public init(player: PlayerState, mirrored: Bool = false) {
     self.init(
-      position: player.position, heading: player.heading, pitch: player.pitch, roll: player.roll
+      position: player.position, heading: player.heading, pitch: player.pitch, roll: player.roll,
+      mirrored: mirrored
     )
   }
 
@@ -136,7 +146,8 @@ public struct Camera: Sendable, Equatable {
       Double(world.z) - position.z
     )
     // Yaw about the vertical axis, with heading measured clockwise from +Z.
-    let x = relative.x * cosHeading - relative.z * sinHeading
+    let yawed = relative.x * cosHeading - relative.z * sinHeading
+    let x = mirrored ? -yawed : yawed
     let forward = relative.x * sinHeading + relative.z * cosHeading
     let pitched = relative.y * cosPitch - forward * sinPitch
     let z = relative.y * sinPitch + forward * cosPitch

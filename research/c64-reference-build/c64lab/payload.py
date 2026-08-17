@@ -216,8 +216,20 @@ def build_rooms(underground: dict[str, Any]) -> dict[str, Any]:
                 "specialSetup": (
                     {
                         "selector": special["selector"],
+                        # Each alternate travels resolved, exactly as a Doorway does:
+                        # the rewrite changes where the first Doorway leads *and*
+                        # where in that Room the player lands, so both are settled
+                        # here rather than chased across Rooms at runtime.
                         "alternates": [
-                            {"room": alternate["room"], "arrivalCommandIndex": alternate["arrivalCommandIndex"]}
+                            {
+                                "room": alternate["room"],
+                                "arrivalCommandIndex": alternate["arrivalCommandIndex"],
+                                "destination": alternate["destination"],
+                                "arrival": alternate.get("arrival"),
+                                "arrivalWithinDestination": alternate.get(
+                                    "arrivalWithinDestination", True
+                                ),
+                            }
                             for alternate in special["alternates"]
                         ],
                     }

@@ -423,13 +423,17 @@ final class UndergroundWalkTests: XCTestCase {
     XCTAssertEqual(session.location, Location.room(48))
   }
 
-  func testATransitionInstallsBothInterlocksSoTheDoorwayDoesNotHandThePlayerBack() {
+  func testAnOrdinaryTransitionInstallsTheStepInterlockAndNoCooldownAtAll() {
+    // The cooldown lives inside the special-setup branch, which $9108 skips outright
+    // for an ordinary Room. So walking between two ordinary Rooms is held only by the
+    // step interlock, and there is no pause and no flash. Asserted because it is
+    // surprising: two interlocks exist, but only one of them is general.
     var session = atADoorway()
     XCTAssertTrue(walkUntilArrival(&session))
 
     XCTAssertEqual(session.location, Location.room(48))
-    XCTAssertEqual(session.game.transitionCooldown, 10)
     XCTAssertEqual(session.game.stepInterlock, 2)
+    XCTAssertEqual(session.game.transitionCooldown, 0)
   }
 
   func testTheStepInterlockDoesNotRunDownWhileThePlayerStandsStill() {
@@ -591,6 +595,184 @@ final class UndergroundWalkTests: XCTestCase {
     session.teleport(to: .surface)
 
     XCTAssertNil(session.snapshot.indoor)
+  }
+
+  // MARK: - The Rooms that rewrite their own Doorway
+
+  private func alternate(
+    room: Int, index: Int = 0, arrival: (x: Int, z: Int) = (600, 600)
+  ) -> Payload.RoomsDocument.Room.SpecialSetup.Alternate {
+    .init(
+      room: room, arrivalCommandIndex: index, destination: .room(room),
+      arrival: .init(x: arrival.x, z: arrival.z)
+    )
+  }
+
+  /// A session in which Room 48 is one of the special families, reached by walking
+  /// through Room 3's Doorway. Room 48's own first Doorway is what gets rewritten.
+  private func special(
+    _ setup: Payload.RoomsDocument.Room.SpecialSetup, id: Int = 48, from: Int = 3
+  ) -> GameplaySession {
+    var session = GameplaySession(
+      content: .init(
+        objects: [], cellSize: 65536, interaction: nil, flight: flight, underground: nil,
+        rooms: [
+          from: UndergroundFixture.room(
+            from, doorways: [UndergroundFixture.doorway(destination: .room(id))]
+          ),
+          id: Room(
+            document: Payload.RoomsDocument.Room(
+              room: id, vertices: [[0, 0, 0], [4096, 1024, 4096]], edges: [[0, 1]],
+              bounds: .init(min: [0, 0, 0], max: [4096, 1024, 4096]),
+              palette: .init(background: 6, foreground: 14), specialSetup: setup,
+              doorways: [UndergroundFixture.doorway(destination: .room(99))]
+            )
+          ),
+        ],
+        doorwayRules: UndergroundFixture.rules
+      ),
+      player: PlayerState(position: SIMD3(4040, 0, 1664), heading: .pi / 2)
+    )
+    session.teleport(to: .room(from))
+    return session
+  }
+
+  func testThePreviousRoomFamilyTakesTheFirstPairWhenItNamesSomewhereElse() {
+    var session = special(
+      .init(selector: .previousRoom, alternates: [alternate(room: 20), alternate(room: 21)])
+    )
+
+    XCTAssertTrue(walkUntilArrival(&session))
+
+    XCTAssertEqual(session.rewired[48]?.room, 20)
+  }
+
+  func testThePreviousRoomFamilyFallsToTheSecondPairWhenTheFirstNamesWhereYouCameFrom() {
+    var session = special(
+      .init(selector: .previousRoom, alternates: [alternate(room: 3), alternate(room: 21)])
+    )
+
+    XCTAssertTrue(walkUntilArrival(&session))
+
+    XCTAssertEqual(session.rewired[48]?.room, 21)
+  }
+
+  func testWhenBothPairsNameWhereYouCameFromNothingIsRewrittenAtAll() {
+    // Not "keep the first" and not "keep the second": the Reference Build branches out
+    // of the whole setup, so the Room's own stored Doorway stands and everything else
+    // in that branch — the transition and the flip — is skipped with it.
+    var session = special(
+      .init(selector: .previousRoom, alternates: [alternate(room: 3), alternate(room: 3)])
+    )
+
+    XCTAssertTrue(walkUntilArrival(&session))
+
+    XCTAssertNil(session.rewired[48])
+    XCTAssertEqual(session.game.transitionCooldown, 0)
+  }
+
+  func testTheRandomRoomReachesAllEightOfItsPairs() {
+    // Eight pairs, not two: the selector's AND #$0E keeps three bits. A version that
+    // only ever reached the first two would pass every other test in this file.
+    var session = special(
+      .init(selector: .random, alternates: (10...17).map { alternate(room: $0) })
+    )
+    var seen: Set<Int> = []
+
+    for _ in 0..<200 where seen.count < 8 {
+      // Back to the Room next door and in again, so each visit draws from the same
+      // stream where it left off rather than from a fresh session's first number.
+      session.teleport(to: .room(3))
+      session.place(at: SIMD3(4040, session.game.player.position.y, 1664), facing: .pi / 2)
+      XCTAssertTrue(walkUntilArrival(&session))
+      seen.insert(session.rewired[48]?.room ?? -1)
+    }
+
+    XCTAssertEqual(seen, Set(10...17))
+  }
+
+  func testTheRandomRoomIsReproducibleForAGivenSession() {
+    var first = special(.init(selector: .random, alternates: (10...17).map { alternate(room: $0) }))
+    var second = special(.init(selector: .random, alternates: (10...17).map { alternate(room: $0) }))
+
+    XCTAssertTrue(walkUntilArrival(&first))
+    XCTAssertTrue(walkUntilArrival(&second))
+
+    XCTAssertEqual(first.rewired[48]?.room, second.rewired[48]?.room)
+  }
+
+  func testARewrittenDoorwayLeadsWhereTheRewriteSaysAndNotWhereTheRecordDid() {
+    var session = special(
+      .init(selector: .previousRoom, alternates: [alternate(room: 20), alternate(room: 21)])
+    )
+    XCTAssertTrue(walkUntilArrival(&session))
+    XCTAssertEqual(session.location, Location.room(48))
+
+    // Room 48's stored Doorway leads to 99; its rewrite leads to 20.
+    session.place(at: SIMD3(4040, session.game.player.position.y, 1664), facing: .pi / 2)
+    XCTAssertTrue(walkUntilArrival(&session))
+
+    XCTAssertEqual(session.location, Location.room(20))
+  }
+
+  // MARK: - The flipped world
+
+  func testArrivingInTheFlipRoomMirrorsTheWorld() {
+    var session = special(
+      .init(selector: .previousRoom, alternates: [alternate(room: 20), alternate(room: 21)]),
+      id: UndergroundFixture.rules.worldFlipRoom
+    )
+
+    let flipped = walkUntilArrival(&session)
+
+    XCTAssertTrue(flipped)
+    XCTAssertTrue(session.game.worldFlipped)
+    XCTAssertTrue(session.snapshot.worldFlipped)
+  }
+
+  func testTheFlipRoomInstallsItsOwnLongerTransition() {
+    var session = special(
+      .init(selector: .previousRoom, alternates: [alternate(room: 20), alternate(room: 21)]),
+      id: UndergroundFixture.rules.worldFlipRoom
+    )
+
+    XCTAssertTrue(walkUntilArrival(&session))
+
+    XCTAssertEqual(
+      session.game.transitionCooldown, Double(UndergroundFixture.rules.worldFlipCooldownFrames)
+    )
+  }
+
+  func testComingFromTheRoomBothPairsNameSkipsTheFlipEntirely() {
+    // The Preserved Quirk. Room $7F's two pairs both name Room $56, so arriving from
+    // $56 matches both, the setup branches out before the flip test, and the world
+    // stays as it was. It is reachable and testable, not theoretical.
+    var session = special(
+      .init(selector: .previousRoom, alternates: [alternate(room: 86), alternate(room: 86)]),
+      id: UndergroundFixture.rules.worldFlipRoom,
+      from: 86
+    )
+
+    XCTAssertTrue(walkUntilArrival(&session))
+
+    XCTAssertEqual(session.location, Location.room(UndergroundFixture.rules.worldFlipRoom))
+    XCTAssertFalse(session.game.worldFlipped, "arriving from $56 does not flip")
+  }
+
+  func testAFlippedWorldTurnsTheOtherWay() {
+    var session = special(
+      .init(selector: .previousRoom, alternates: [alternate(room: 20), alternate(room: 21)]),
+      id: UndergroundFixture.rules.worldFlipRoom
+    )
+    XCTAssertTrue(walkUntilArrival(&session))
+    let heading = session.game.player.heading
+
+    session.intent = Intent(turn: 1)
+    for _ in 0..<30 { _ = session.advance(by: 1.0 / 60) }
+
+    XCTAssertLessThan(
+      session.game.player.heading, heading, "turning right in a mirrored world turns left"
+    )
   }
 
   func testLeavingAWallAndReturningSoundsItAgain() {

@@ -620,8 +620,12 @@ class DoorwayExportTests(unittest.TestCase):
                 "specialSetup": {
                     "selector": "previousRoom",
                     "alternates": [
-                        {"geometryIdentity": "x", "room": 86, "arrivalCommandIndex": 0, "provenanceRefs": []},
-                        {"geometryIdentity": "y", "room": 86, "arrivalCommandIndex": 0, "provenanceRefs": []},
+                        {"geometryIdentity": "x", "room": 86, "arrivalCommandIndex": 0, "provenanceRefs": [],
+                         "destination": {"room": 86}, "arrival": {"x": 0x0880, "z": 0x0100},
+                         "arrivalWithinDestination": True},
+                        {"geometryIdentity": "y", "room": 87, "arrivalCommandIndex": 1, "provenanceRefs": [],
+                         "destination": {"room": 87}, "arrival": {"x": 0x0300, "z": 0x0480},
+                         "arrivalWithinDestination": True},
                     ],
                 },
                 "commands": [RoomsTests.command()],
@@ -633,9 +637,16 @@ class DoorwayExportTests(unittest.TestCase):
         self.assertEqual(room["entry"], {"script": 23})
         self.assertEqual(room["specialSetup"]["selector"], "previousRoom")
         # The payload drops the dataset's provenance, keeping only what a jump needs.
+        # The payload keeps what a rewrite needs — where the first Doorway now leads
+        # and where in that Room the player lands — and drops the provenance.
         self.assertEqual(
             room["specialSetup"]["alternates"],
-            [{"room": 86, "arrivalCommandIndex": 0}, {"room": 86, "arrivalCommandIndex": 0}],
+            [
+                {"room": 86, "arrivalCommandIndex": 0, "destination": {"room": 86},
+                 "arrival": {"x": 0x0880, "z": 0x0100}, "arrivalWithinDestination": True},
+                {"room": 87, "arrivalCommandIndex": 1, "destination": {"room": 87},
+                 "arrival": {"x": 0x0300, "z": 0x0480}, "arrivalWithinDestination": True},
+            ],
         )
 
     def test_a_room_link_to_the_surface_is_not_a_room_id_of_zero(self) -> None:

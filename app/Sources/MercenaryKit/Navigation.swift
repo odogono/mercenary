@@ -91,9 +91,18 @@ public struct DoorwayPredicate: Sendable {
   /// Record order matters: the Reference Build takes the first command that matches
   /// and stops, so two Doorways that overlap resolve to the earlier one.
   public func doorway(
+    in doorways: [Payload.RoomsDocument.Room.Doorway], at position: SIMD3<Double>,
+    heading: Double
+  ) -> Payload.RoomsDocument.Room.Doorway? {
+    doorways.first { accepts($0, at: position, heading: heading) }
+  }
+
+  /// The Doorways a Room started with. Callers that can see a rewritten one should
+  /// pass their own list instead.
+  public func doorway(
     in room: Room, at position: SIMD3<Double>, heading: Double
   ) -> Payload.RoomsDocument.Room.Doorway? {
-    room.doorways.first { accepts($0, at: position, heading: heading) }
+    doorway(in: room.doorways, at: position, heading: heading)
   }
 
   /// Every test `$9437` applies to one command, in its order.

@@ -77,7 +77,10 @@ enum PayloadFixture {
         "bounds":{"min":[0,0,0],"max":[768,0,0]},"palette":{"background":0,"foreground":7},
         "dark":false,"entry":{"script":23},
         "specialSetup":{"selector":"previousRoom","alternates":[
-          {"room":86,"arrivalCommandIndex":0},{"room":86,"arrivalCommandIndex":0}]},
+          {"room":86,"arrivalCommandIndex":0,"destination":{"room":86},
+           "arrival":{"x":128,"z":256},"arrivalWithinDestination":true},
+          {"room":86,"arrivalCommandIndex":0,"destination":{"room":86},
+           "arrival":{"x":128,"z":256},"arrivalWithinDestination":true}]},
         "doorways":[{"index":0,"shape":2,"plane":"xy","position":{"x":0,"z":768},
           "destination":{"surface":true},"arrivalCommandIndex":0,"arrival":null,
           "arrivalWithinDestination":true,"lock":null}]}]}

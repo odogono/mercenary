@@ -259,14 +259,97 @@ public enum Payload {
           case previousRoom
         }
 
+        /// One rewrite: where the Room's first Doorway leads once it is applied, and
+        /// where in that Room the player lands.
+        ///
+        /// Both travel resolved, as a Doorway's do, because the Reference Build's
+        /// rewrite changes the destination *and* the arrival index together and
+        /// chasing the second across Rooms at runtime is exactly what the decode is
+        /// for. The fields are named as a Doorway's are so the two read alike.
         public struct Alternate: Codable, Sendable, Equatable {
           public var room: Int
           public var arrivalCommandIndex: Int
+          public var destination: Doorway.Destination
+          public var arrival: Doorway.Point?
+          public var arrivalWithinDestination: Bool
+
+          private enum CodingKeys: String, CodingKey {
+            case room, arrivalCommandIndex, destination, arrival, arrivalWithinDestination
+          }
+
+          private struct DestinationBox: Codable {
+            var room: Int?
+            var surface: Bool?
+          }
+
+          public init(from decoder: Swift.Decoder) throws {
+            let values = try decoder.container(keyedBy: CodingKeys.self)
+            room = try values.decode(Int.self, forKey: .room)
+            arrivalCommandIndex = try values.decode(Int.self, forKey: .arrivalCommandIndex)
+            arrival = try values.decodeIfPresent(Doorway.Point.self, forKey: .arrival)
+            arrivalWithinDestination = try values.decode(
+              Bool.self, forKey: .arrivalWithinDestination
+            )
+            let box = try values.decode(DestinationBox.self, forKey: .destination)
+            switch (box.room, box.surface) {
+            case (let id?, nil): destination = .room(id)
+            case (nil, true): destination = .surface
+            default:
+              throw DecodingError.dataCorruptedError(
+                forKey: .destination,
+                in: values,
+                debugDescription: "An alternate must name exactly one of a room or the surface"
+              )
+            }
+          }
+
+          public func encode(to encoder: Swift.Encoder) throws {
+            var values = encoder.container(keyedBy: CodingKeys.self)
+            try values.encode(room, forKey: .room)
+            try values.encode(arrivalCommandIndex, forKey: .arrivalCommandIndex)
+            try values.encodeIfPresent(arrival, forKey: .arrival)
+            try values.encode(arrivalWithinDestination, forKey: .arrivalWithinDestination)
+            switch destination {
+            case .room(let id):
+              try values.encode(DestinationBox(room: id, surface: nil), forKey: .destination)
+            case .surface:
+              try values.encode(DestinationBox(room: nil, surface: true), forKey: .destination)
+            }
+          }
+
+          public init(
+            room: Int, arrivalCommandIndex: Int, destination: Doorway.Destination,
+            arrival: Doorway.Point?, arrivalWithinDestination: Bool = true
+          ) {
+            self.room = room
+            self.arrivalCommandIndex = arrivalCommandIndex
+            self.destination = destination
+            self.arrival = arrival
+            self.arrivalWithinDestination = arrivalWithinDestination
+          }
+        }
+
+        /// The Doorway this Room's first one becomes once an alternate is applied.
+        ///
+        /// The rewrite is a two-field edit to a command already in the record, so it
+        /// is expressed as one here too: everything about the Doorway stays as it was
+        /// except where it leads and where it puts the player.
+        public static func rewrite(
+          _ doorway: Doorway, as alternate: Alternate
+        ) -> Doorway {
+          var rewritten = doorway
+          rewritten.destination = alternate.destination
+          rewritten.arrivalCommandIndex = alternate.arrivalCommandIndex
+          rewritten.arrival = alternate.arrival
+          rewritten.arrivalWithinDestination = alternate.arrivalWithinDestination
+          return rewritten
         }
 
         public var selector: Selector
         public var alternates: [Alternate]
       }
+
+
 
       public struct Bounds: Codable, Sendable, Equatable {
         public var min: [Int]

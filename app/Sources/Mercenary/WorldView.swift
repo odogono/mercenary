@@ -22,7 +22,7 @@ struct WorldView: View {
   }
 
   private func draw(context: GraphicsContext, size: CGSize) {
-    let camera = Camera(player: model.snapshot.player)
+    let camera = Camera(player: model.snapshot.player, mirrored: model.snapshot.worldFlipped)
     if let indoor = model.snapshot.indoor {
       drawIndoorBackdrop(context: context, size: size, indoor: indoor)
       // A dark Room draws nothing at all. Not dimmed and not outlined: the Reference

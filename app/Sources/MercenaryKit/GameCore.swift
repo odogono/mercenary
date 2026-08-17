@@ -225,6 +225,14 @@ public struct GameState: Sendable, Equatable {
   /// on the other side, so without a gate that a stationary player cannot run down
   /// they would be handed straight back through it.
   public var stepInterlock: Double = 0
+  /// Whether the world is mirrored left for right.
+  ///
+  /// One Room toggles this on arrival, and the Reference Build keeps it as a single
+  /// bit read in two quite different places: the coordinate transform, where it
+  /// negates camera-space X, and the input byte, where it swaps the two turn bits. Both
+  /// are needed — mirroring the view without the controls would leave the player
+  /// steering the wrong way for a reason they could not see.
+  public var worldFlipped = false
 
   public init(
     player: PlayerState,

@@ -160,6 +160,8 @@ public struct SessionSnapshot: Sendable, Equatable {
   public var displacedObjects: [Int: SIMD3<Double>]
   /// The Room as it looks now, or nil on the surface.
   public var indoor: IndoorScene?
+  /// Whether the world is mirrored left for right, which both renderers must obey.
+  public var worldFlipped: Bool
 
   public init(
     player: PlayerState,
@@ -174,7 +176,8 @@ public struct SessionSnapshot: Sendable, Equatable {
     isScriptRunning: Bool,
     hiddenSlots: Set<Int>,
     displacedObjects: [Int: SIMD3<Double>],
-    indoor: IndoorScene? = nil
+    indoor: IndoorScene? = nil,
+    worldFlipped: Bool = false
   ) {
     self.player = player
     self.location = location
@@ -189,6 +192,7 @@ public struct SessionSnapshot: Sendable, Equatable {
     self.hiddenSlots = hiddenSlots
     self.displacedObjects = displacedObjects
     self.indoor = indoor
+    self.worldFlipped = worldFlipped
   }
 }
 
@@ -213,4 +217,6 @@ public enum PresentationEvent: Sendable, Equatable {
   /// event is where the fidelity is: it fires exactly when the Reference Build's own
   /// latch fires, which is also the moment a Doorway is looked for.
   case wall(sound: Int)
+  /// The world was mirrored left for right, or put back.
+  case worldFlipped(Bool)
 }

@@ -629,6 +629,34 @@ def _resolve_room_arrivals(room_records: list[dict[str, Any]], room_slots: dict[
                     set(command["uncertainties"]) | {"arrival-index-past-destination"}
                 )
 
+    # The special-setup families rewrite their own first command's destination *and*
+    # its arrival index before anyone walks through it, so each alternate needs the
+    # same resolution the commands got. Without it the app would have to chase a
+    # cross-Room index at runtime, which is the one thing this decode exists to avoid.
+    for record in room_records:
+        setup = record.get("specialSetup")
+        if not setup:
+            continue
+        for alternate in setup["alternates"]:
+            target = alternate["room"]
+            if target == 0:
+                alternate["destination"] = {"surface": True}
+                alternate["arrival"] = None
+                alternate["arrivalWithinDestination"] = True
+                continue
+            pointer = pointer_for_room[target]
+            offset = 4 * alternate["arrivalCommandIndex"] + 7
+            _need(ram, pointer + offset + 2, f"arrival for {alternate['geometryIdentity']}")
+            plane_bit = ram[pointer + offset - 2] & PLANE_MASK
+            alternate["destination"] = {"room": target}
+            alternate["arrival"] = {
+                "x": (ram[pointer + offset] << 8) | (plane_bit ^ PLANE_MASK),
+                "z": (ram[pointer + offset + 1] << 8) | plane_bit,
+            }
+            alternate["arrivalWithinDestination"] = (
+                alternate["arrivalCommandIndex"] < command_counts[pointer]
+            )
+
 
 def validate_curation(curation: dict[str, Any], identities: Iterable[str]) -> None:
     if curation.get("schemaVersion") != 1 or not isinstance(curation.get("names"), list):

@@ -31,6 +31,16 @@ public struct BensonSession: Sendable {
     self.host = BensonHostState(seeding: program)
   }
 
+  /// Draw the next byte from the one random stream.
+  ///
+  /// The Reference Build has a single two-byte generator that both the scripts and the
+  /// engine's own Room setup call, so sharing it here is the faithful arrangement
+  /// rather than a shortcut: visiting the random Room really does change what the next
+  /// script roll produces.
+  public mutating func nextRandomByte() -> UInt8 {
+    BensonMachine.nextRandom(&state.randomState)
+  }
+
   /// Start a script, if none is running.
   @discardableResult
   public mutating func start(script: Int) -> Bool {

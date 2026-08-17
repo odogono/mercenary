@@ -36,3 +36,9 @@ run flight-poweramp    --flight-trace --craft 1 --notch 10 --seconds 30 --powera
 # Walking the underground: through a Doorway and back, which exercises the whole
 # gate — wall contact, both interlocks, the predicate and arrival.
 run room-3-and-back    --room-trace --room 3 --at 2048,1664 --walk 90@8 --walk 270@4
+# The rare states, which a playthrough reaches only after a long walk with the right
+# keys. The last two are the same Room entered from its two sides: from Room 144 the
+# world flips, from Room 86 it does not, because Room 127's pairs both name Room 86.
+run room-random        --room-trace --room 114 --walk 0@4
+run room-flip          --room-trace --room 144 --at 600,384 --walk 270@6 --walk 90@6
+run room-flip-bypassed --room-trace --room 86  --at 1000,384 --walk 270@6 --walk 90@6
