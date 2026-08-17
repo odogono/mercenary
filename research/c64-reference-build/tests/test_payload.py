@@ -15,6 +15,7 @@ from c64lab.payload import (
     PAYLOAD_SCHEMA_VERSION,
     ROOM_LINK_CONTRACT,
     _doorway_rules,
+    _DOORWAY_RULE_FIELDS,
     _room_link_counts,
     build_rooms,
     render_room_map_svg,
@@ -307,6 +308,12 @@ class RoomsTests(unittest.TestCase):
         "worldFlipCooldownFrames": 0x1F,
         "randomRoom": 0x72,
         "worldFlipRoom": 0x7F,
+        "nearMargin": 0x20,
+        "farMargin": 0xDF,
+        "wallThudSound": 0x14,
+        "stepInterlock": 2,
+        "transitionColours": [0x00, 0x0B, 0x0C],
+        "worldFlipInputRemap": [0, 1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7, 12, 13, 14, 15],
     }
 
     @classmethod
@@ -329,7 +336,7 @@ class RoomsTests(unittest.TestCase):
     @classmethod
     def dataset(cls, rooms=None, records=None, rules=None):
         return {
-            "schemaVersion": 2,
+            "schemaVersion": 3,
             "navigationRules": dict(cls.RULES if rules is None else rules),
             "records": records if records is not None else [
                 {
@@ -777,6 +784,17 @@ class SwiftConstantParityTests(unittest.TestCase):
 
     def test_the_app_expects_the_decoder_this_export_requires(self) -> None:
         self.assertEqual(self.swift_constant("DecoderVersion"), DECODER_VERSION)
+
+    def test_the_app_declares_every_doorway_rule_this_export_writes(self) -> None:
+        # A rule the app does not declare is not an error anywhere: the export writes
+        # it, the decode ignores it, and the behaviour it was meant to govern stays
+        # whatever it already was. That is the silent-drift class this whole file
+        # exists to close, so the field names are checked and not just the versions.
+        text = self.SOURCE.read_text(encoding="utf-8")
+        rules = text.split("struct DoorwayRules", 1)[1].split("\n  }", 1)[0]
+        declared = set(re.findall(r"public var (\w+)", rules))
+
+        self.assertEqual(set(_DOORWAY_RULE_FIELDS) - declared, set())
 
     def test_the_app_expects_each_capture_documents_own_schema(self) -> None:
         for name, version in (

@@ -21,7 +21,7 @@ from .navigation import (
 )
 
 
-DECODER_VERSION = 5
+DECODER_VERSION = 6
 LAB_ROOT = Path(__file__).resolve().parents[1]
 WORK_ROOT = LAB_ROOT / "work"
 REPOSITORY_ROOT = LAB_ROOT.parents[1]
@@ -1027,7 +1027,7 @@ def build_dataset(ram: bytes, source: dict[str, Any], curation: dict[str, Any] |
         },
     }
     underground = {
-        "schemaVersion": 2,
+        "schemaVersion": 3,
         "primitiveTemplates": templates,
         "records": room_records,
         "rooms": rooms,

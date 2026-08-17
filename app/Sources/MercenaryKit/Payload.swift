@@ -343,6 +343,22 @@ public enum Payload {
       public var worldFlipCooldownFrames: Int
       public var randomRoom: Int
       public var worldFlipRoom: Int
+      /// How far from the near wall a Room can be walked, in position units.
+      public var nearMargin: Int
+      /// The furthest low byte the last cell of a Room allows; the far wall is
+      /// therefore `cells * 256 - (256 - farMargin)` away.
+      public var farMargin: Int
+      public var wallThudSound: Int
+      /// How many walking steps must pass after a transition before another Doorway
+      /// can be taken. Without it the player bounces straight back through the
+      /// Doorway they arrived in, because arrival puts them inside it.
+      public var stepInterlock: Int
+      /// The border colour each frame of a transition shows, indexed by the frames
+      /// remaining. Index zero is never read: at zero the Room's own colour returns.
+      public var transitionColours: [Int]
+      /// The input byte a flipped world reads instead of the one that arrived. It is
+      /// its own inverse, and it swaps the two turn bits.
+      public var worldFlipInputRemap: [Int]
     }
 
     public var schemaVersion: Int
@@ -480,8 +496,8 @@ public enum Payload {
     }
   }
 
-  public static let supportedSchemaVersion = 6
-  public static let supportedDecoderVersion = 5
+  public static let supportedSchemaVersion = 7
+  public static let supportedDecoderVersion = 6
   /// The text document carries its own version, because its format is
   /// independent of the geometry documents and changes on its own schedule.
   public static let supportedTextSchemaVersion = 1

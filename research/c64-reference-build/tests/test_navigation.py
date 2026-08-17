@@ -55,12 +55,45 @@ SITES = {
     0x9497: (0xC9, 0x08),
     0x949B: (0xAA, 0xBD, 0xC8, 0x29),
     0x94C6: (0xA5, 0x09, 0x4A, 0x4A, 0x29, 0x1C, 0x18, 0x69, 0x07),
+    # A walking frame's ordered gate: containment, the step interlock, the predicate,
+    # then setup. Written out whole because the order is the behaviour.
+    0x8570: (0x20, 0x9E, 0x93, 0xF0, 0x14, 0xA5, 0xB1, 0xD0, 0x10,
+             0x20, 0x37, 0x94, 0x90, 0x0B, 0x20, 0xBE, 0x90),
+    0x8585: (0xA9, 0x02, 0x85, 0xB1),
+    0x939E: (0xA9, 0x00, 0x85, 0xAE),
+    0x93AA: (0xC9, 0x20),
+    0x93AE: (0xA9, 0x20),
+    0x93C3: (0xC9, 0x20),
+    0x93C7: (0xA9, 0x20),
+    0x93DE: (0xC9, 0xDF),
+    0x93E8: (0xA9, 0xDF),
+    0x93F8: (0xC9, 0xDF),
+    0x9402: (0xA9, 0xDF),
+    0x9411: (0xA9, 0x14, 0x20, 0x58, 0xB9, 0x68, 0x85, 0xF8),
+    0xA165: (0xA5, 0xF1, 0xF0, 0x07, 0xA6, 0x80, 0xBD, 0x7B, 0xA1, 0x85, 0x80),
+    0xA243: (0xA5, 0xB1, 0xF0, 0x02, 0xC6, 0xB1),
+    0xAFA8: (0xA5, 0xF0, 0xF0, 0x11, 0xC6, 0xF0, 0xD0, 0x07, 0xA5, 0xC4, 0x85, 0xA5),
+    0xAFB7: (0xAA, 0xBD, 0x7E, 0xBB, 0x85, 0xA5),
+}
+
+#: The two tables the rules carry wholesale rather than as an immediate. They are
+#: data, not opcodes, so they live apart from the fingerprints: a wrong byte here is
+#: caught by what the table has to be, not by what instruction sits at its address.
+TABLES = {
+    # Read downwards by the countdown: the long transition fades orange to black,
+    # then both lengths run the same grey-white-grey flash.
+    0xBB7E: (0x00, 0x0B, 0x0C, 0x0F, 0x01, 0x01, 0x01, 0x0F, 0x0C, 0x0B,
+             0x00, 0x02, 0x04, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
+             0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08),
+    # Bits 2 and 3 of the input byte swapped, which is turn-left and turn-right.
+    0xA17B: (0x00, 0x01, 0x02, 0x03, 0x08, 0x09, 0x0A, 0x0B,
+             0x04, 0x05, 0x06, 0x07, 0x0C, 0x0D, 0x0E, 0x0F),
 }
 
 
 def image() -> bytearray:
     ram = bytearray(65536)
-    for address, opcodes in SITES.items():
+    for address, opcodes in list(SITES.items()) + list(TABLES.items()):
         ram[address : address + len(opcodes)] = bytes(opcodes)
     return ram
 
@@ -161,6 +194,80 @@ class NavigationRuleTests(unittest.TestCase):
         ram[SKELETON_KEY_SITE + 2] = 0x40
         with self.assertRaisesRegex(LabError, "outside the object state flags"):
             decode_navigation_rules(ram)
+
+    def test_a_room_is_bounded_by_two_margins_the_same_on_both_axes(self) -> None:
+        self.assertEqual(self.rules["nearMargin"], 0x20)
+        self.assertEqual(self.rules["farMargin"], 0xDF)
+
+    def test_the_far_margin_leaves_one_more_unit_than_the_near_one(self) -> None:
+        # The derived form of the same two bytes, asserted here so the app can be
+        # written as the literal arithmetic without anybody having to trust that the
+        # walls are where they look: a Room of n cells is walkable over
+        # [32, n*256 - 33], which is 33 from the far wall and 32 from the near.
+        cells = 7
+        near = self.rules["nearMargin"]
+        far = (cells - 1) * 256 + self.rules["farMargin"]
+        self.assertEqual(near, 32)
+        self.assertEqual(cells * 256 - far, 33)
+
+    def test_traversal_needs_wall_contact_and_a_spent_interlock(self) -> None:
+        # This is the counterintuitive one, and the reason it is spelled out: the
+        # Reference Build only looks for a Doorway on a frame where containment had
+        # to move the player. Walking into the wall is how a door is opened.
+        self.assertIn("clamped none", self.rules["traversalGate"])
+        self.assertIn("step interlock", self.rules["traversalGate"])
+        self.assertEqual(self.rules["stepInterlock"], 2)
+        self.assertEqual(self.rules["wallThudSound"], 0x14)
+
+    def test_the_transition_shows_one_colour_per_frame_it_lasts(self) -> None:
+        colours = self.rules["transitionColours"]
+        # One entry per frame the longest transition can be in. Index zero is never
+        # read — reaching zero restores the Room's own colour instead.
+        self.assertEqual(len(colours), self.rules["worldFlipCooldownFrames"])
+        self.assertTrue(all(colour < 16 for colour in colours))
+        # An ordinary transition only ever sees the tail, counting down from nine.
+        ordinary = list(reversed(colours[1 : self.rules["cooldownFrames"]]))
+        self.assertEqual(ordinary, [0x0B, 0x0C, 0x0F, 0x01, 0x01, 0x01, 0x0F, 0x0C, 0x0B])
+
+    def test_the_world_flip_swaps_the_two_turn_bits_and_nothing_else(self) -> None:
+        remap = self.rules["worldFlipInputRemap"]
+        for value in range(16):
+            expected = value & 0b0011
+            expected |= (value & 0b0100) << 1
+            expected |= (value & 0b1000) >> 1
+            self.assertEqual(remap[value], expected, f"input {value:#06b}")
+
+    def test_rejects_an_input_remap_that_is_not_its_own_inverse(self) -> None:
+        ram = image()
+        # A three-cycle: still a permutation, so only the involution check catches it.
+        ram[0xA17B + 4], ram[0xA17B + 5], ram[0xA17B + 6] = 0x09, 0x0A, 0x08
+        with self.assertRaisesRegex(LabError, "not its own inverse"):
+            decode_navigation_rules(ram)
+
+    def test_rejects_an_input_remap_that_loses_an_input(self) -> None:
+        ram = image()
+        ram[0xA17B + 4] = 0x00
+        with self.assertRaisesRegex(LabError, "not a permutation"):
+            decode_navigation_rules(ram)
+
+    def test_rejects_a_transition_table_that_is_not_colours(self) -> None:
+        ram = image()
+        ram[0xBB7E + 3] = 0x7F
+        with self.assertRaisesRegex(LabError, "not\n?\\s*colours|are not "):
+            decode_navigation_rules(ram)
+
+    def test_rejects_containment_that_bounds_the_two_axes_differently(self) -> None:
+        ram = image()
+        ram[0x93C3 + 1] = 0x40
+        with self.assertRaisesRegex(LabError, "bounded differently"):
+            require_navigation(ram)
+
+    def test_rejects_containment_that_clamps_somewhere_it_does_not_test(self) -> None:
+        ram = image()
+        for site in (0x93AE, 0x93C7):
+            ram[site + 1] = 0x21
+        with self.assertRaisesRegex(LabError, "near margin"):
+            require_navigation(ram)
 
     def test_records_the_predicate_and_the_arrival_contract_as_prose(self) -> None:
         # The accepted region depends on the command's plane bit, so it is the app's

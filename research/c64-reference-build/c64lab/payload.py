@@ -31,7 +31,7 @@ from .underground import decode_underground
 from .text import decode_text
 
 
-PAYLOAD_SCHEMA_VERSION = 6
+PAYLOAD_SCHEMA_VERSION = 7
 PAYLOAD_ROOT = Path(__file__).resolve().parents[3] / "payload"
 CELLS_PER_AXIS = 16
 CELL_SIZE = 0x10000
@@ -253,6 +253,12 @@ _DOORWAY_RULE_FIELDS = (
     "worldFlipCooldownFrames",
     "randomRoom",
     "worldFlipRoom",
+    "nearMargin",
+    "farMargin",
+    "wallThudSound",
+    "stepInterlock",
+    "transitionColours",
+    "worldFlipInputRemap",
 )
 
 

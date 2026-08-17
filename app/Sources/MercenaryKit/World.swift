@@ -263,6 +263,10 @@ public struct World: Sendable, Equatable {
   public var deferredEdges: Int
   /// The underground rooms, by their own identifiers.
   public var rooms: [Int: Room]
+  /// How a Doorway is taken and how a Room contains the player. Every value is an
+  /// immediate the decoder read out of the Reference Build, so nothing that consumes
+  /// them needs a constant of its own.
+  public var doorwayRules: Payload.RoomsDocument.DoorwayRules
   /// Altitude-indexed square extent used to select road-table cells.
   public var roadAltitudeLookup: [Int]
 
@@ -337,6 +341,7 @@ public struct World: Sendable, Equatable {
     self.rooms = Dictionary(
       uniqueKeysWithValues: bundle.rooms.rooms.map { ($0.room, Room(document: $0)) }
     )
+    self.doorwayRules = bundle.rooms.doorwayRules
 
     self.roadAltitudeLookup = bundle.world.roadAltitudeLookup
     var mapLinesByCell: [Int: [SurfaceMapLine]] = [:]

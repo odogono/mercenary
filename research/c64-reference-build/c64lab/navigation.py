@@ -62,6 +62,42 @@ WORLD_FLIP_TEST_SITE = 0x9141
 ARRIVAL_PLACEMENT_SITE = 0x9148
 ARRIVAL_LOW_BYTE_SITE = 0x915A
 
+#: Keeping the player inside the Room, and the gate that makes a Doorway reachable.
+#:
+#: ``$939E`` clamps both horizontal axes and returns how many axes it had to move.
+#: The traversal path at ``$8570`` treats that count as its own precondition: a
+#: frame in which nothing was clamped never looks for a Doorway at all. Walking
+#: through a wall is therefore not incidental to traversal, it *is* traversal, and
+#: the two constants below are what a wall is made of.
+CONTAINMENT_ROUTINE = 0x939E
+
+#: Per axis, the four immediates that bound it: the near test and the value it
+#: clamps to, then the far test and its clamp. The two axes are read separately and
+#: then required to agree, so a misread on one is caught by the other rather than
+#: quietly halving the Room.
+CONTAINMENT_SITES = (
+    (0x93AA, 0x93AE, 0x93DE, 0x93E8),  # X, against the extent held at $0440
+    (0x93C3, 0x93C7, 0x93F8, 0x9402),  # Z, against the extent held at $0540
+)
+WALL_THUD_SITE = 0x9411
+WALL_CONTACT_LATCH = 0xF8
+SOUND_ROUTINE = 0xB958
+
+#: The ordered gate a walking frame passes to take a Doorway.
+TRAVERSAL_GATE_SITE = 0x8570
+STEP_INTERLOCK_SITE = 0x8585
+STEP_INTERLOCK_FLAG = 0xB1
+STEP_INTERLOCK_DECREMENT_SITE = 0xA243
+
+#: The transition: a frame countdown, and the border colour each frame of it shows.
+COOLDOWN_TICK_SITE = 0xAFA8
+TRANSITION_COLOUR_TABLE_SITE = 0xAFB7
+
+#: The flip's other half — the input byte is remapped through a table, so left and
+#: right swap without the walk code knowing anything about it.
+WORLD_FLIP_INPUT_SITE = 0xA165
+WORLD_FLIP_INPUT_FLAG = 0x80
+
 #: Darkness, and the colour it clears that no Room carries.
 DARK_COMMAND_TEST_SITE = 0x91EE
 PHOTON_SEARCH_SITE = 0x91F2
@@ -111,10 +147,34 @@ ARRIVAL_CONTRACT = (
     "complement. Altitude is not written."
 )
 
+#: What a walking frame must do to take a Doorway, from $8570-$8587.
+TRAVERSAL_GATE_CONTRACT = (
+    "containment runs first and reports how many axes it had to clamp; if it "
+    "clamped none, the frame is over and no Doorway is considered. Then the step "
+    "interlock must have run down to zero. Only then is the door predicate asked, "
+    "and only a Doorway it accepts arrives anywhere. A transition reloads the step "
+    "interlock, so the player must walk that many further steps before the Doorway "
+    "they arrived in can be taken back."
+)
+
+#: How the player is kept inside a Room, from $939E-$9419.
+CONTAINMENT_CONTRACT = (
+    "each horizontal axis is a 16-bit position against a Room extent counted in "
+    "whole cells. Below the near margin, or negative, the axis is set to the near "
+    "margin. At or past the far margin — high byte at the last cell with a low byte "
+    "over the far clamp, or beyond that cell — the axis is set to the last cell plus "
+    "the far clamp. Each axis clamped is counted; a nonzero count is wall contact. "
+    "The thud sounds only on a frame whose predecessor had no contact."
+)
+
 
 def _immediate(ram: bytes, site: int, opcode: int, complaint: str) -> int:
     require(ram[site] == opcode, f"Reference Build {complaint}")
     return ram[site + 1]
+
+
+def _jsr(address: int) -> tuple[int, int, int]:
+    return (0x20, address & 0xFF, address >> 8)
 
 
 def require_navigation(ram: bytes) -> None:
@@ -151,6 +211,54 @@ def require_navigation(ram: bytes) -> None:
         (LINE_COLOUR_SITE, (0xA9,), "Room setup does not store an immediate line colour"),
         (WORLD_FLIP_ROUTINE, (0xA5, WORLD_FLIP_PARITY_FLAG, 0x49, 0x01, 0x85, WORLD_FLIP_PARITY_FLAG), "the world flip does not toggle a parity flag"),
         (WORLD_FLIP_COOLDOWN_SITE, (0xA9,), "the world flip does not install its own cooldown"),
+        (CONTAINMENT_ROUTINE, (0xA9, 0x00, 0x85, 0xAE), "containment does not begin by clearing a clamp count"),
+        (WALL_THUD_SITE, (0xA9,), "wall contact does not play an immediate sound"),
+        (
+            TRAVERSAL_GATE_SITE,
+            _jsr(CONTAINMENT_ROUTINE) + (0xF0,),
+            "a walking frame does not gate traversal on containment having clamped an axis",
+        ),
+        (
+            TRAVERSAL_GATE_SITE + 5,
+            (0xA5, STEP_INTERLOCK_FLAG, 0xD0),
+            "a walking frame does not gate traversal on the step interlock",
+        ),
+        (
+            TRAVERSAL_GATE_SITE + 9,
+            _jsr(DOORWAY_ROUTINE) + (0x90,),
+            "a walking frame does not ask the door predicate once past both gates",
+        ),
+        (
+            TRAVERSAL_GATE_SITE + 14,
+            _jsr(ROOM_SETUP_ROUTINE),
+            "an accepted Doorway does not run Room setup",
+        ),
+        (STEP_INTERLOCK_SITE, (0xA9,), "a transition does not reload an immediate step interlock"),
+        (
+            STEP_INTERLOCK_SITE + 2,
+            (0x85, STEP_INTERLOCK_FLAG),
+            "the reloaded step interlock is not the one traversal reads",
+        ),
+        (
+            STEP_INTERLOCK_DECREMENT_SITE,
+            (0xA5, STEP_INTERLOCK_FLAG, 0xF0, 0x02, 0xC6, STEP_INTERLOCK_FLAG),
+            "the step interlock does not count down inside the walk integrator",
+        ),
+        (
+            COOLDOWN_TICK_SITE,
+            (0xA5, 0xF0, 0xF0, 0x11, 0xC6, 0xF0, 0xD0, 0x07, 0xA5, 0xC4, 0x85, 0xA5),
+            "the transition cooldown does not count down a frame and then restore the Room's colour",
+        ),
+        (
+            TRANSITION_COLOUR_TABLE_SITE,
+            (0xAA, 0xBD),
+            "a transition frame does not take its colour from a table indexed by the countdown",
+        ),
+        (
+            WORLD_FLIP_INPUT_SITE,
+            (0xA5, WORLD_FLIP_PARITY_FLAG, 0xF0, 0x07, 0xA6, WORLD_FLIP_INPUT_FLAG, 0xBD),
+            "the world flip does not remap the input byte through a table",
+        ),
     )
     for address, expected, complaint in checks:
         found = tuple(ram[address : address + len(expected)])
@@ -176,6 +284,41 @@ def require_navigation(ram: bytes) -> None:
             f"Darkness searches ${target:04X} rather than the {complaint} routine at ${routine:04X}",
         )
 
+    require(
+        tuple(ram[WALL_THUD_SITE + 2 : WALL_THUD_SITE + 5]) == _jsr(SOUND_ROUTINE),
+        f"Wall contact does not reach the sound routine at ${SOUND_ROUTINE:04X}",
+    )
+    require(
+        tuple(ram[WALL_THUD_SITE + 6 : WALL_THUD_SITE + 8]) == (0x85, WALL_CONTACT_LATCH),
+        "Containment does not latch this frame's contact for the next one to read",
+    )
+
+    # Both axes are bounded by the same four immediates. Reading them separately and
+    # requiring agreement means a misread lands as a failure rather than as a Room
+    # the player can only half cross.
+    axes = [
+        tuple(ram[site + 1] for site in sites) for sites in CONTAINMENT_SITES
+    ]
+    for sites in CONTAINMENT_SITES:
+        for site, opcode in zip(sites, (0xC9, 0xA9, 0xC9, 0xA9)):
+            require(
+                ram[site] == opcode,
+                f"Containment's bound at ${site:04X} is not the immediate read here",
+            )
+    require(
+        len(set(axes)) == 1,
+        f"The two horizontal axes are bounded differently: {axes!r}",
+    )
+    near_test, near_clamp, far_test, far_clamp = axes[0]
+    require(
+        near_test == near_clamp,
+        f"Containment tests the near margin at ${near_test:02X} but clamps to ${near_clamp:02X}",
+    )
+    require(
+        far_test == far_clamp,
+        f"Containment tests the far margin at ${far_test:02X} but clamps to ${far_clamp:02X}",
+    )
+
 
 def decode_navigation_rules(ram: bytes) -> dict[str, Any]:
     """The immediates and table slots that govern Doorway traversal."""
@@ -195,9 +338,46 @@ def decode_navigation_rules(ram: bytes) -> dict[str, Any]:
         key_slot_bias + SHAPE_MASK < 64,
         "The key table's highest lock class would index past the object state flags",
     )
+    near_margin = ram[CONTAINMENT_SITES[0][0] + 1]
+    far_margin = ram[CONTAINMENT_SITES[0][2] + 1]
+    world_flip_cooldown = _immediate(ram, WORLD_FLIP_COOLDOWN_SITE, 0xA9, "the world flip does not install an immediate cooldown")
+    colour_table = ram[TRANSITION_COLOUR_TABLE_SITE + 2] | (ram[TRANSITION_COLOUR_TABLE_SITE + 3] << 8)
+    input_remap = ram[WORLD_FLIP_INPUT_SITE + 7] | (ram[WORLD_FLIP_INPUT_SITE + 8] << 8)
+    # The countdown indexes the table directly, and it never reads index zero
+    # because reaching zero takes the restore path instead. One entry per frame the
+    # longest transition can be in, therefore, and no more: bytes past that are not
+    # part of this table and exporting them would invite somebody to use them.
+    transition_colours = list(ram[colour_table : colour_table + world_flip_cooldown])
+    require(
+        len(transition_colours) == world_flip_cooldown,
+        "The transition colour table runs off the end of the image",
+    )
+    require(
+        all(colour < 16 for colour in transition_colours),
+        f"The transition colour table at ${colour_table:04X} holds values that are not "
+        f"colours: {transition_colours!r}",
+    )
+    remap = list(ram[input_remap : input_remap + 16])
+    require(
+        sorted(remap) == list(range(16)),
+        f"The world-flip input remap at ${input_remap:04X} is not a permutation: {remap!r}",
+    )
+    require(
+        all(remap[remap[value]] == value for value in range(16)),
+        "The world-flip input remap is not its own inverse, so flipping twice would "
+        "not restore the controls",
+    )
     return {
         "predicate": DOORWAY_PREDICATE,
         "arrivalContract": ARRIVAL_CONTRACT,
+        "traversalGate": TRAVERSAL_GATE_CONTRACT,
+        "containmentContract": CONTAINMENT_CONTRACT,
+        "nearMargin": near_margin,
+        "farMargin": far_margin,
+        "wallThudSound": _immediate(ram, WALL_THUD_SITE, 0xA9, "wall contact does not play an immediate sound"),
+        "stepInterlock": _immediate(ram, STEP_INTERLOCK_SITE, 0xA9, "a transition does not reload an immediate step interlock"),
+        "transitionColours": transition_colours,
+        "worldFlipInputRemap": remap,
         "planeMask": PLANE_MASK,
         "shapeMask": SHAPE_MASK,
         "arrivalIndexMask": ARRIVAL_INDEX_MASK,
