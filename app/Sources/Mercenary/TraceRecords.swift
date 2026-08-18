@@ -11,9 +11,12 @@ import MercenaryKit
 /// implementation has to reproduce, and the browser reads these files rather than
 /// writing them.
 enum TraceRecords {
-  /// Bumped when a record's shape changes in a way a replay must notice. A trace whose
-  /// schema a replay does not know is refused rather than half-read.
-  static let schemaVersion = 1
+  /// Bumped when a record's or header's shape changes in a way a replay must notice. A trace
+  /// whose schema a replay does not know is refused rather than half-read.
+  ///
+  /// 2: a header carries only the tuning its own emitter consumes, and no settings digest, so
+  /// a tuning change leaves the traces it cannot reach byte-identical.
+  static let schemaVersion = 2
 }
 
 // MARK: - The clock

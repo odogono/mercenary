@@ -110,14 +110,53 @@ extension TraceFile {
     public var description: String {
       switch (expected, actual) {
       case (.some(let expected), .some(let actual)):
-        return "line \(line) differs\n  was: \(expected)\n  now: \(actual)"
+        let (was, now) = Self.around(theFirstDifferenceBetween: expected, and: actual)
+        return "line \(line) differs\n  was: \(was)\n  now: \(now)"
       case (.some(let expected), .none):
-        return "line \(line) is missing\n  was: \(expected)"
+        return "line \(line) is missing\n  was: \(Self.readable(expected))"
       case (.none, .some(let actual)):
-        return "line \(line) is new\n  now: \(actual)"
+        return "line \(line) is new\n  now: \(Self.readable(actual))"
       case (.none, .none):
         return "line \(line) differs"
       }
+    }
+
+    /// A record short enough to read, with the rest accounted for rather than dropped.
+    ///
+    /// A header can be kilobytes on one line, and printing it whole buries the answer the
+    /// report exists to give. Truncating says so and gives the length, so a reader knows to
+    /// diff the file itself rather than wondering whether the line ended there.
+    static func readable(_ line: String, limit: Int = 220) -> String {
+      guard line.count > limit else { return line }
+      return line.prefix(limit) + "… (\(line.count) characters; diff the file for the rest)"
+    }
+
+    /// The two lines windowed on the character where they first disagree.
+    ///
+    /// Truncating from the start is worse than useless on a long line: the difference is
+    /// usually deep in it, so both halves of the report come out looking identical and the
+    /// reader learns nothing. Centring on the first differing character shows the difference
+    /// itself, which is the whole reason the line is being printed.
+    static func around(
+      theFirstDifferenceBetween expected: String, and actual: String, window: Int = 90
+    ) -> (was: String, now: String) {
+      let was = Array(expected)
+      let now = Array(actual)
+      var at = 0
+      while at < was.count, at < now.count, was[at] == now[at] { at += 1 }
+      // Short enough to read whole: show it whole, since context beats a window.
+      guard max(was.count, now.count) > window * 2 else { return (expected, actual) }
+      let from = max(0, at - window / 2)
+      func clip(_ characters: [Character]) -> String {
+        guard from < characters.count else { return "(line ends before here)" }
+        let text = String(characters[from..<min(characters.count, from + window)])
+        return (from > 0 ? "…" : "") + text
+          + (from + window < characters.count ? "…" : "")
+      }
+      return (
+        was: "\(clip(was))  [at character \(at) of \(was.count)]",
+        now: "\(clip(now))  [at character \(at) of \(now.count)]"
+      )
     }
   }
 

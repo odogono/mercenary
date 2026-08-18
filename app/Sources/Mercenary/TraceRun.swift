@@ -108,28 +108,75 @@ struct TraceRun {
   ///
   /// Resolved rather than copied verbatim, because a settings file may name only what it
   /// changes: a verbatim copy of a file that omits `timeScale` would not record the time
-  /// scale the run actually used, which is the one number most likely to explain why a
-  /// trace moved. The file's own digest is recorded beside it for provenance.
+  /// scale the run actually used, which is the one number most likely to explain why a trace
+  /// moved. This full form goes in the manifest, with the file's own digest beside it.
   var settingsValue: TraceValue {
     .object([
       "digest": settingsDigest.map { .string($0) } ?? .null,
-      "message": .object([
-        "holdSeconds": .double(settings.message.holdSeconds),
-        "charactersPerSecond": .double(settings.message.charactersPerSecond),
-      ]),
-      "scripts": .object([
-        "timeScale": .double(settings.scripts.timeScale),
-        "instructionBudget": .int(settings.scripts.instructionBudget),
-      ]),
-      "flight": .object([
-        "referenceFrameRate": .double(settings.flight.referenceFrameRate),
-        "turnScale": .double(settings.flight.turnScale),
-        "pitchScale": .double(settings.flight.pitchScale),
-        "speedScale": .double(settings.flight.speedScale),
-        "throttleFloorNotch": .int(settings.flight.throttleFloorNotch),
-        "runMultiplier": .double(settings.flight.runMultiplier),
-        "groundAltitude": settings.flight.groundAltitude.map { .double($0) } ?? .null,
-      ]),
+      "message": messageSettings,
+      "scripts": scriptSettings,
+      "flight": flightSettings,
+    ])
+  }
+
+  /// The tuning *this* emitter's run actually depends on, and nothing else.
+  ///
+  /// Narrowed per emitter because the alternative made every trace lie about what could
+  /// affect it. With the whole settings block in every header, changing the script time scale
+  /// reported all thirty-seven files as differing — including the decode trace, which reads no
+  /// setting at all — and the difference it reported was line 1, so the *behavioural*
+  /// divergence in the traces that genuinely moved was hidden behind a header nobody could
+  /// read. A header that lists only what the emitter consumes makes "this file changed" mean
+  /// something: a tuning change now leaves the traces it cannot reach byte-identical.
+  ///
+  /// The settings file's digest is deliberately *not* here. It changes whenever any value
+  /// changes, which would reintroduce exactly the problem this solves; it lives in the
+  /// manifest, which is the right place to record what the run as a whole was.
+  func settingsValue(for emitter: TraceEmitter) -> TraceValue? {
+    var members: [(key: String, value: TraceValue)] = []
+    // Anything that builds a FlightModel reads the flight knobs — walking included, since
+    // walking runs on the craft control loop (ADR 0016).
+    switch emitter {
+    case .flight, .gameCore, .session, .navigation:
+      members.append((key: "flight", value: flightSettings))
+    case .decode, .projection, .benson:
+      break
+    }
+    // Anything that runs scripts reads the script clock and the message pacing, because the
+    // message line is what paces the interpreter.
+    switch emitter {
+    case .benson, .session, .navigation:
+      members.append((key: "scripts", value: scriptSettings))
+      members.append((key: "message", value: messageSettings))
+    case .decode, .projection, .flight, .gameCore:
+      break
+    }
+    return members.isEmpty ? nil : .object(members)
+  }
+
+  private var messageSettings: TraceValue {
+    .object([
+      "holdSeconds": .double(settings.message.holdSeconds),
+      "charactersPerSecond": .double(settings.message.charactersPerSecond),
+    ])
+  }
+
+  private var scriptSettings: TraceValue {
+    .object([
+      "timeScale": .double(settings.scripts.timeScale),
+      "instructionBudget": .int(settings.scripts.instructionBudget),
+    ])
+  }
+
+  private var flightSettings: TraceValue {
+    .object([
+      "referenceFrameRate": .double(settings.flight.referenceFrameRate),
+      "turnScale": .double(settings.flight.turnScale),
+      "pitchScale": .double(settings.flight.pitchScale),
+      "speedScale": .double(settings.flight.speedScale),
+      "throttleFloorNotch": .int(settings.flight.throttleFloorNotch),
+      "runMultiplier": .double(settings.flight.runMultiplier),
+      "groundAltitude": settings.flight.groundAltitude.map { .double($0) } ?? .null,
     ])
   }
 
@@ -148,9 +195,11 @@ struct TraceRun {
       (key: "id", value: .string(scenario.id)),
       (key: "note", value: .string(scenario.note)),
       (key: "payload", value: payloadIdentity),
-      (key: "settings", value: settingsValue),
       (key: "scenario", value: TraceScenarioRecords.value(scenario)),
     ]
+    if let settings = settingsValue(for: scenario.emitter) {
+      members.append((key: "settings", value: settings))
+    }
     if let dt { members.append((key: "dt", value: .double(dt))) }
     return .object(members + extra)
   }

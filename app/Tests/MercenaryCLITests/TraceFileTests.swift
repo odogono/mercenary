@@ -112,4 +112,40 @@ final class TraceFileTests: XCTestCase {
     XCTAssertEqual(written.sha256, TraceFile.digest(trace.bytes))
     XCTAssertEqual(try Data(contentsOf: url), trace.bytes)
   }
+
+  /// A header is one line of kilobytes, so truncating it from the start showed the reader two
+  /// identical-looking prefixes and taught them nothing. The window has to follow the
+  /// difference, because that is the only part of the line worth printing.
+  func testALongLineIsWindowedOnTheFirstDifference() {
+    let shared = String(repeating: "a", count: 400)
+    let (was, now) = TraceFile.Divergence.around(
+      theFirstDifferenceBetween: shared + #""timeScale":6}"# + shared,
+      and: shared + #""timeScale":7}"# + shared)
+
+    XCTAssertTrue(was.contains(#""timeScale":6"#), "the window must show the difference: \(was)")
+    XCTAssertTrue(now.contains(#""timeScale":7"#), "the window must show the difference: \(now)")
+    // The shared run continues through `"timeScale":`, so the first difference is the digit
+    // at 412 — 400 shared characters plus the twelve of the key.
+    XCTAssertTrue(was.contains("at character 412"), "and say where it is: \(was)")
+    XCTAssertTrue(was.hasPrefix("…") && was.hasSuffix("…  [at character 412 of 814]"))
+  }
+
+  /// A line short enough to read whole is shown whole: a window would lose context that
+  /// costs nothing to keep.
+  func testAShortLineIsNotWindowed() {
+    let (was, now) = TraceFile.Divergence.around(
+      theFirstDifferenceBetween: #"{"step":1,"speed":2}"#, and: #"{"step":1,"speed":3}"#)
+    XCTAssertEqual(was, #"{"step":1,"speed":2}"#)
+    XCTAssertEqual(now, #"{"step":1,"speed":3}"#)
+  }
+
+  /// One line being a prefix of the other still has a first differing character — the point
+  /// where the shorter one ran out.
+  func testAPrefixDiffersAtItsEnd() {
+    let long = String(repeating: "b", count: 300)
+    let (was, now) = TraceFile.Divergence.around(
+      theFirstDifferenceBetween: long, and: long + "tail-that-is-new")
+    XCTAssertTrue(was.contains("at character 300 of 300"), was)
+    XCTAssertTrue(now.contains("tail-that-is-new"), now)
+  }
 }

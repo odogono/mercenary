@@ -27,7 +27,9 @@ writes what a person reads and `--trace` writes what a comparison reads, and a c
 may be given both. Nothing infers one from the other's file extension.
 
 `--verify` re-emits every selected scenario in memory and compares the bytes against what is
-on disk, reporting the first differing line. Nothing is written, so a failed check cannot
+on disk, reporting the first differing line — windowed on the character where the two lines
+first disagree, since a header is one line of kilobytes and truncating it from the start
+would show two identical-looking prefixes. Nothing is written, so a failed check cannot
 leave a half-file behind for the next run to compare against. It also rebuilds the manifest
 and compares that, which is a second check on the same claim: the manifest carries every
 trace's digest, so a trace compared against a file the manifest never described would still
@@ -81,6 +83,25 @@ Files live at `traces/<emitter>/<id>.jsonl`, with `traces/manifest.json` for the
 Keys are sorted by the writer, always, so no dictionary's iteration order can reach a
 file. Numeric keys sort as numbers, so slot 9 precedes slot 10. `-` is the removal key in
 a delta and cannot collide with a field, because every field is a name or a number.
+
+### Settings in a header
+
+A header carries only the tuning **its own emitter consumes**, and no settings digest:
+
+| Emitter | Settings in its header |
+|---|---|
+| `decode`, `projection` | none — they read no setting |
+| `flight`, `game-core` | `flight` |
+| `benson` | `scripts`, `message` |
+| `session`, `navigation` | `flight`, `scripts`, `message` |
+
+This is narrowed deliberately. With the whole settings block in every header, changing the
+script time scale reported *all thirty-seven files* as differing — including the decode trace,
+which reads no setting at all — and the difference reported was line 1, so the behavioural
+divergence in the traces that genuinely moved was hidden behind a header change. Narrowed, the
+same edit moves eighteen files and leaves nineteen byte-identical, which is a true statement
+about what that setting can reach. The settings file's digest is in the manifest rather than
+each header for the same reason: it changes whenever any value changes.
 
 ### The clock
 
@@ -184,6 +205,14 @@ step. Script 1 traced for two minutes is 3.5 million records of `jmp 94`. A trac
 stopped early *silently* would compare clean against a port that stopped early for a
 different reason.
 
+## Schema versions
+
+`traceSchemaVersion` is in every header and in the manifest. A replay that does not know a
+version refuses the trace rather than half-reading it.
+
+- **1** — the original shape.
+- **2** — a header carries only its own emitter's settings, and no settings digest.
+
 ## `traces/manifest.json`
 
 Records what the run as a whole was, so a moved trace's first question — the code, the
@@ -197,7 +226,8 @@ payload, or the tuning? — is answered by a diff:
 - `settings`: the tuned values **as resolved**, plus the settings file's digest. Resolved
   rather than copied verbatim, because a settings file may name only what it changes and a
   verbatim copy of a file that omits `timeScale` would not record the time scale the run
-  used — the number most likely to explain why a trace moved.
+  used — the number most likely to explain why a trace moved. The *full* set lives here;
+  a trace header carries only its own emitter's share (below).
 - `dt`, `scenarios` (a count per emitter), and `files`: per trace its `emitter`, `id`,
   relative `path`, `sha256`, `size` and `records`.
 
