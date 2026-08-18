@@ -19,6 +19,7 @@ The TOS pin is Hatari's bundled EmuTOS 2.06. Real TOS 1.04 is not required for t
 - Capture: `research/damocles-st/lab capture --checkpoint title-screen`.
 - Observe: `research/damocles-st/lab observe --scenario research/damocles-st/scenarios/title-smoke.json`.
 - First world (post-title load for mapping notes): `research/damocles-st/lab observe --scenario research/damocles-st/scenarios/first-world.json`.
+- Deadline clock (idle dual capture for #81): `research/damocles-st/lab observe --scenario research/damocles-st/scenarios/deadline-clock.json`.
 - Verify: `research/damocles-st/lab verify --run research/damocles-st/work/<run-id>`.
 - Reproduce: `research/damocles-st/lab reproduce`.
 - Hatari integration (launches the emulator twice): `DAMOCLAB_INTEGRATION=1 python3 -m unittest research.damocles-st.tests.test_integration -v` from the lab tree, or `DAMOCLAB_INTEGRATION=1 python3 -m unittest discover -s research/damocles-st/tests -v`.

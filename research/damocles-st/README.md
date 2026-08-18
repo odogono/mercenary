@@ -15,6 +15,7 @@ research/damocles-st/lab reproduce
 research/damocles-st/lab capture --checkpoint title-screen
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/title-smoke.json
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/first-world.json
+research/damocles-st/lab observe --scenario research/damocles-st/scenarios/deadline-clock.json
 research/damocles-st/lab verify --run research/damocles-st/work/<run-id>
 python3 -m unittest discover -s research/damocles-st/tests -v
 ```

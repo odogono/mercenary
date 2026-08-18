@@ -206,17 +206,20 @@ Owned by this ticket as topology; dynamics stay with #81.
   VOID is present in the roster before the player goes there.
 
 So “in space” is a first-class named place in the celestial roster, not merely
-a flight mode word. How occupancy and motion behave there is #81.
+a flight mode word. How occupancy and motion behave there is covered in
+[#81](https://github.com/odogono/mercenary/issues/81) /
+`docs/research/damocles-script-motion-time.md`.
 
 ## Boundary handoff to #81
 
-| #80 (this note) | #81 |
+| #80 (this note) | #81 ([damocles-script-motion-time.md](damocles-script-motion-time.md)) |
 |---|---|
 | Celestial roster, VOID, place labels, interior-as-building, object labels | Script VM (if any), occupancy, craft control, orbital/flight motion, time / comet deadline |
 | Where the player *can be* | How the player *moves and ages* while there |
 
 Do not extend Targ **Occupancy** / Craft Parameter Block conclusions from this
-note alone.
+note alone. #81’s inventory note keeps those findings research-local.
+
 
 ## Implications for #82 (shape signals only)
 

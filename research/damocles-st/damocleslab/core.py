@@ -102,6 +102,7 @@ def validate_scenario(scenario: dict[str, Any]) -> None:
     require(isinstance(actions, list) and bool(actions), "Scenario actions must be a non-empty list")
     allowed = {"wait_vbls", "keypress", "capture"}
     capture_count = 0
+    prefixes: set[str] = set()
     for index, action in enumerate(actions):
         require(isinstance(action, dict), f"Scenario action {index} must be an object")
         action_type = action.get("type")
@@ -121,7 +122,15 @@ def validate_scenario(scenario: dict[str, Any]) -> None:
             artifacts = action.get("artifacts")
             require(isinstance(artifacts, list) and bool(artifacts), f"Scenario action {index} capture empty")
             require(set(artifacts) <= {"ram", "registers", "display"}, f"Scenario action {index} unknown artifact")
-    require(capture_count == 1, "Observation scenarios must contain exactly one capture action")
+            prefix = action.get("prefix", "observed")
+            require(isinstance(prefix, str) and bool(prefix), f"Scenario action {index} capture prefix invalid")
+            require(
+                bool(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,31}", prefix)),
+                f"Scenario action {index} capture prefix invalid",
+            )
+            require(prefix not in prefixes, f"Scenario action {index} capture prefix {prefix!r} reused")
+            prefixes.add(prefix)
+    require(1 <= capture_count <= 2, "Observation scenarios must contain one or two capture actions")
 
 
 def validate_run_manifest(manifest: dict[str, Any]) -> None:

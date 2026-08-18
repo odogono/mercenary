@@ -26,9 +26,13 @@ runtime state, and replay one bounded input scenario.
 
 `--cmd-fifo` accepts newline-separated host commands. Useful ones:
 
-- `hatari-event keypress <ascii-or-scancode>`
-- `hatari-stop` / `hatari-debug <debugger command>`
+- `hatari-event keypress <ascii-or-scancode>` (also `keydown` / `keyup`; no joystick direction event)
+- `hatari-stop` / `hatari-cont` / `hatari-debug <debugger command>`
 - `hatari-debug quit`
+
+Mid-scenario captures use `hatari-stop`, debugger dumps, then `hatari-cont`; the
+final capture ends with `hatari-debug quit`. Scenario JSON may declare one or
+two `capture` actions with distinct `prefix` values (see `deadline-clock.json`).
 
 Do not backslash-escape debugger arguments. Keep a FIFO writer open only while
 sending a batch, then close it so Hatari can exit.

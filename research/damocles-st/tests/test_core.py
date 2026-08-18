@@ -88,13 +88,31 @@ class ScenarioValidationTests(unittest.TestCase):
         validate_scenario(json.loads(path.read_text(encoding="utf-8")))
 
     def test_rejects_missing_capture(self) -> None:
-        with self.assertRaisesRegex(LabError, "exactly one capture"):
+        with self.assertRaisesRegex(LabError, "one or two capture"):
             validate_scenario(
                 {
                     "schemaVersion": 1,
                     "name": "bad",
                     "checkpoint": "title-screen",
                     "actions": [{"type": "keypress", "key": 57}],
+                }
+            )
+
+    def test_accepts_deadline_clock_two_captures(self) -> None:
+        path = Path(__file__).resolve().parents[1] / "scenarios" / "deadline-clock.json"
+        validate_scenario(json.loads(path.read_text(encoding="utf-8")))
+
+    def test_rejects_reused_capture_prefix(self) -> None:
+        with self.assertRaisesRegex(LabError, "prefix"):
+            validate_scenario(
+                {
+                    "schemaVersion": 1,
+                    "name": "bad",
+                    "checkpoint": "title-screen",
+                    "actions": [
+                        {"type": "capture", "prefix": "observed-t0", "artifacts": ["ram"]},
+                        {"type": "capture", "prefix": "observed-t0", "artifacts": ["ram"]},
+                    ],
                 }
             )
 

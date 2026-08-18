@@ -378,8 +378,16 @@ def observe(
                 raise LabError(f"Hatari did not create command FIFO {fifo}")
 
             observe_dump = run_directory / "observe-dump.txt"
+            capture_actions = [action for action in scenario["actions"] if action["type"] == "capture"]
             observe_dump.write_text(
-                render_dump_script(run_directory=run_directory, prefix="observed"),
+                "\n".join(
+                    render_dump_script(
+                        run_directory=run_directory,
+                        prefix=str(action.get("prefix", "observed")),
+                    ).rstrip("\n")
+                    for action in capture_actions
+                )
+                + "\n",
                 encoding="utf-8",
             )
             with fifo.open("w", encoding="utf-8") as fifo_handle:
@@ -391,22 +399,36 @@ def observe(
                         _fifo_send(fifo_handle, [f"hatari-event keypress {action['key']}"])
                         time.sleep(0.1)
                     elif action_type == "capture":
-                        dump = observe_dump.resolve()
-                        _fifo_send(
-                            fifo_handle,
-                            [
-                                "hatari-stop",
-                                f"hatari-debug logfile {dump.parent}/observed.registers.log",
-                                "hatari-debug r",
-                                f"hatari-debug savebin {dump.parent}/observed.ram 0 $100000",
-                                f"hatari-debug screenshot {dump.parent}/observed.png",
-                                "hatari-debug quit",
-                            ],
-                        )
+                        prefix = str(action.get("prefix", "observed"))
+                        is_final = action is capture_actions[-1]
+                        dump_parent = run_directory.resolve()
+                        commands = [
+                            "hatari-stop",
+                            f"hatari-debug logfile {dump_parent}/{prefix}.registers.log",
+                            "hatari-debug r",
+                            f"hatari-debug savebin {dump_parent}/{prefix}.ram 0 $100000",
+                            f"hatari-debug screenshot {dump_parent}/{prefix}.png",
+                        ]
+                        commands.append("hatari-debug quit" if is_final else "hatari-cont")
+                        _fifo_send(fifo_handle, commands)
+                        artifact_deadline = time.time() + 15
+                        while time.time() < artifact_deadline:
+                            if (run_directory / f"{prefix}.ram").is_file() or (
+                                run_directory / f"{prefix}.png"
+                            ).is_file():
+                                break
+                            if process.poll() is not None:
+                                break
+                            time.sleep(0.05)
+                        if not is_final:
+                            time.sleep(0.2)
 
             deadline = time.time() + 15
+            final_prefix = str(capture_actions[-1].get("prefix", "observed"))
             while time.time() < deadline:
-                if (run_directory / "observed.png").is_file() or (run_directory / "observed.ram").is_file():
+                if (run_directory / f"{final_prefix}.png").is_file() or (
+                    run_directory / f"{final_prefix}.ram"
+                ).is_file():
                     break
                 if process.poll() is not None:
                     break
@@ -433,20 +455,34 @@ def observe(
                 pass
 
     generated: list[tuple[str, str]] = []
-    if (run_directory / "observed.ram").is_file():
-        generated.append(("observed-ram", "observed.ram"))
-    if (run_directory / "observed.png").is_file():
-        generated.append(("observed-display", "observed.png"))
-    if (run_directory / "observed.registers.log").is_file():
-        generated.append(("observed-register-log", "observed.registers.log"))
-        try:
-            observed_registers = parse_register_log(
-                (run_directory / "observed.registers.log").read_text(encoding="utf-8", errors="replace")
-            )
-            write_json(run_directory / "observed-registers.json", observed_registers)
-            generated.append(("observed-registers", "observed-registers.json"))
-        except LabError:
-            pass
+    capture_prefixes = [
+        str(action.get("prefix", "observed"))
+        for action in scenario["actions"]
+        if action["type"] == "capture"
+    ]
+    for prefix in capture_prefixes:
+        role_prefix = "observed" if prefix == "observed" else prefix
+        if (run_directory / f"{prefix}.ram").is_file():
+            generated.append((f"{role_prefix}-ram", f"{prefix}.ram"))
+        if (run_directory / f"{prefix}.png").is_file():
+            generated.append((f"{role_prefix}-display", f"{prefix}.png"))
+        if (run_directory / f"{prefix}.registers.log").is_file():
+            generated.append((f"{role_prefix}-register-log", f"{prefix}.registers.log"))
+            try:
+                observed_registers = parse_register_log(
+                    (run_directory / f"{prefix}.registers.log").read_text(
+                        encoding="utf-8", errors="replace"
+                    )
+                )
+                registers_name = (
+                    "observed-registers.json"
+                    if prefix == "observed"
+                    else f"{prefix}.registers.json"
+                )
+                write_json(run_directory / registers_name, observed_registers)
+                generated.append((f"{role_prefix}-registers", registers_name))
+            except LabError:
+                pass
     generated.extend(
         [
             ("observation-hatari-log", "hatari-observe.log"),
@@ -455,7 +491,10 @@ def observe(
             ("observation-dump-script", "observe-dump.txt"),
         ]
     )
-    if not any(role.startswith("observed-") for role, _ in generated):
+    if not any(
+        (run_directory / f"{prefix}.ram").is_file() or (run_directory / f"{prefix}.png").is_file()
+        for prefix in capture_prefixes
+    ):
         raise LabError(f"Observe produced no observed artifacts; see {observe_log}")
 
     manifest["scenario"] = {

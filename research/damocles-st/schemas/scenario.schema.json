@@ -14,7 +14,11 @@
         "type": "object",
         "required": ["type"],
         "properties": {
-          "type": { "enum": ["wait_vbls", "keypress", "capture"] }
+          "type": { "enum": ["wait_vbls", "keypress", "capture"] },
+          "prefix": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]{0,31}$"
+          }
         }
       }
     }
