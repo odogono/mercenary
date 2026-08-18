@@ -155,16 +155,28 @@ A validated arrangement of the world view, status information, and prompts withi
 _Avoid_: Layout mode, aspect mode
 
 **Initial Release**:
-The complete *Mercenary: Escape from Targ* experience delivered by this effort, with extension seams for *The Second City* but without that expansion's content.
-_Avoid_: Mercenary 1, base game, Damocles
+The complete *Mercenary: Escape from Targ* experience delivered by this effort, with extension seams for *The Second City* but without that expansion's content; Damocles is out of Initial Release scope and waits until after *The Second City* (ADR 0021).
+_Avoid_: Mercenary 1, base game, Damocles, multi-title release
 
 **The Second City**:
 The Commodore 64 expansion of *Mercenary: Escape from Targ*, and the only expansion this remake's Initial Release leaves a Content Overlay seam for.
 _Avoid_: Mercenary 2, Damocles, mission disk
 
 **Damocles**:
-Novagen's 16-bit sequel (*Mercenary II*), set in the Gamma System after the player has left Targ; a different title from this remake, not a Content Overlay, and not *The Second City* (ADR 0020).
-_Avoid_: Mercenary 2 (for The Second City), expansion, mission disk
+Novagen's 16-bit sequel (*Mercenary II*), set in the Gamma System after the player has left Targ; not a Content Overlay and not *The Second City*; in programme scope after *The Second City* inside one multi-title Independent Implementation (ADR 0021).
+_Avoid_: Mercenary 2 (for The Second City), expansion, mission disk, second Independent Implementation
+
+**Gamma System**:
+Damocles's multi-body setting as Confirmed in Working-Authority Evidence: a named celestial roster (including DAMOCLES and VOID), packed place labels, and object catalogues — not Targ Location as surface-or-Room.
+_Avoid_: Targ world, Location (for Damocles bodies), solar system pack
+
+**Damocles Script**:
+A program from Damocles's successor 16-bit bytecode VM Confirmed in the Working Authority, distinct from a Benson Script and from the C64 Benson encoding (ADR 0015).
+_Avoid_: Benson Script (for Damocles), game script, ST bytecode dump
+
+**Filled Presentation**:
+Damocles's filled-polygon, palette-driven world view Confirmed in Working-Authority Evidence; a future Game Surface mode for Damocles, not the current wireframe line-list Game Surface (ADR 0019).
+_Avoid_: Wireframe view, remastered graphics, Departure Record
 
 **Working Authority**:
 The Damocles Atari ST program image, together with its pinned laboratory machine and TOS configuration, used as the authority for Damocles research; distinct from the C64 Reference Build.
@@ -199,8 +211,8 @@ The authoritative ordered history of committed Game Semantics outcomes from whic
 _Avoid_: Input recording, debug log, event telemetry
 
 **Independent Implementation**:
-New native application code written without incorporating or mechanically translating the Reference Build's program code, intended to support public distribution.
-_Avoid_: Source port, ROM wrapper
+New application code written without incorporating or mechanically translating the Reference Build's or Working Authority's program code, intended to support public distribution; this programme's destination is one multi-title Independent Implementation that can host *Escape from Targ* and later Damocles (ADR 0021), not a separate Damocles remake body.
+_Avoid_: Source port, ROM wrapper, second Independent Implementation (for Damocles)
 
 **World Geometry Dataset**:
 A lossless, provenance-backed representation of the Reference Build's object models, vertices, edges, instances, transforms, coordinate systems, layouts, bounds, identities, and visibility rules.

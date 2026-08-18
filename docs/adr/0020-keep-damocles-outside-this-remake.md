@@ -1,5 +1,7 @@
 # Keep Damocles outside this remake's engine and product
 
+**Status:** Superseded by [ADR 0021](0021-unify-mercenary-titles-in-one-independent-implementation.md). Kept as the research-phase decision that isolated Damocles recon from the live Targ engine; ADR 0021 replaces the long-term “outside this remake's engine” architecture with one multi-title Independent Implementation after *The Second City*.
+
 This remake's product is *Escape from Targ* (the Initial Release) and then *The Second City*. Damocles is a later 16-bit sequel that shares Novagen's first-person, Benson, objects, and walk-or-fly language but not this Targ-shaped runtime, so it is not a Content Overlay, not a reason to generalise Gameplay Session into a multi-title engine, and not a candidate for mechanical translation of ST/Amiga or MDDClone code (ADR 0002). Offline ST and Amiga images may be read as Restricted Material, including a Hatari laboratory and mapping notes, without starting a second Independent Implementation. Any such remake waits until after *The Second City*.
 
 ## Considered Options
