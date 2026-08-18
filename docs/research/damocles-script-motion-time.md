@@ -175,11 +175,11 @@ Damocles seam *would* need to census — not types to add to `MercenaryKit`.
 
 ## What was tried and left Unresolved
 
-- Full script ISA / dispatch-table decode
-- Walk-versus-boarded RAM word and board/leave observe (blocked on joystick FIFO)
-- VOID / deep-space flight and near-c time dilation
-- Impact-clock RAM cell(s)
-- Craft control-rate / orbital-parameter blocks
+- Full script ISA / dispatch-table decode — follow-on [#85](https://github.com/odogono/mercenary/issues/85)
+- Walk-versus-boarded RAM word and board/leave observe (blocked on joystick FIFO) — follow-on [#86](https://github.com/odogono/mercenary/issues/86)
+- VOID / deep-space flight and near-c time dilation — [#86](https://github.com/odogono/mercenary/issues/86)
+- Impact-clock RAM cell(s) — may fall out of [#86](https://github.com/odogono/mercenary/issues/86) once locomotion scenarios exist
+- Craft control-rate / orbital-parameter blocks — [#86](https://github.com/odogono/mercenary/issues/86)
 
 ## Provenance summary
 
