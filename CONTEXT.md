@@ -166,6 +166,14 @@ _Avoid_: Mercenary 2, Damocles, mission disk
 Novagen's 16-bit sequel (*Mercenary II*), set in the Gamma System after the player has left Targ; a different title from this remake, not a Content Overlay, and not *The Second City* (ADR 0020).
 _Avoid_: Mercenary 2 (for The Second City), expansion, mission disk
 
+**Working Authority**:
+The Damocles Atari ST program image, together with its pinned laboratory machine and TOS configuration, used as the authority for Damocles research; distinct from the C64 Reference Build.
+_Avoid_: Reference Build (for Damocles), canonical ST ROM
+
+**Working-Authority Evidence**:
+Behaviour observed in the running Working Authority, or data decoded directly from it; when Damocles sources disagree, this outranks manuals and other 16-bit editions for that research programme, and is not Authoritative Evidence.
+_Avoid_: Authoritative Evidence (for Damocles), port behaviour, manual intent
+
 **Content Set** (historical):
 The complete immutable definition selected for a playable experience, resolved and validated before a session begins.
 _Avoid_: Content pack, campaign, resource bundle

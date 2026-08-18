@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "logicalName": "Damocles ST Working Authority (Novagen UK STX)",
+  "programImage": {
+    "relativePath": "atarist/damocles_-_mercenary_ii_novagen_software_(uk).stx",
+    "filename": "damocles_-_mercenary_ii_novagen_software_(uk).stx",
+    "size": 1031930,
+    "hashes": {
+      "sha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+      "sha1": "5bf78139959994c983efa40af1c82395beb38001",
+      "md5": "98ffc5a6c9fcb43fa4d24a69b41ade99"
+    }
+  },
+  "tosImage": {
+    "relativePath": "atarist/tos/emutos206.img",
+    "filename": "emutos206.img",
+    "size": 1048576,
+    "kind": "emutos",
+    "reportedVersion": "2.06",
+    "hashes": {
+      "sha256": "154803e3ff4851f3dc358b91b16d6b6110d187a81d8132ecb665af49878939d5",
+      "sha1": "5c82272b04b9d0e85fb53b09ef28724649daf01e",
+      "md5": "f187a26efd62d040b93e468a21b67b61"
+    },
+    "note": "Pinned TOS for this laboratory. Title-screen reproduce succeeded on this image; swap only if a later mapping ticket shows an EmuTOS-specific mismatch."
+  },
+  "authority": "working-authority",
+  "qualification": "Observations from this laboratory are Working-Authority Evidence, not Authoritative Evidence. Authoritative Evidence remains bound to the C64 Reference Build."
+}

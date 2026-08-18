@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Damocles ST observation scenario",
+  "type": "object",
+  "required": ["schemaVersion", "name", "checkpoint", "actions"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "checkpoint": { "const": "title-screen" },
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": { "enum": ["wait_vbls", "keypress", "capture"] }
+        }
+      }
+    }
+  }
+}

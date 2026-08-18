@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "name": "title-smoke",
+  "checkpoint": "title-screen",
+  "description": "From the Damocles title screen, press Space once, wait briefly, and capture display evidence.",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 200
+    },
+    {
+      "type": "capture",
+      "artifacts": ["display", "registers", "ram"]
+    }
+  ]
+}

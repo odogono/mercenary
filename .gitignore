@@ -13,6 +13,10 @@
 /research/c64-reference-build/work/
 /research/c64-reference-build/.venv/
 
+# Generated Damocles ST laboratory artifacts may contain ROM-derived data.
+/research/damocles-st/work/
+/research/damocles-st/.venv/
+
 # Python development artifacts.
 __pycache__/
 *.py[cod]

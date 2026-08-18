@@ -1,6 +1,6 @@
 # Damocles gap
 
-Research spike: size the gap between this Faithful Remake of *Mercenary: Escape from Targ* and Novagen's sequel *Damocles* (*Mercenary II*). This is not a decode, not Authoritative Evidence from a running Damocles build, and not a product commitment (ADR 0020).
+Research spike: size the gap between this Faithful Remake of *Mercenary: Escape from Targ* and Novagen's sequel *Damocles* (*Mercenary II*). This is not a decode, not Working-Authority Evidence from a running Damocles build, and not a product commitment (ADR 0020). Authoritative Evidence remains bound to the C64 Reference Build.
 
 ## Spike decisions
 
@@ -47,7 +47,7 @@ Damocles is an evolved Novagen engine, not a second data pack for this one.
 | 64 object slots, 8 craft, 51 Benson Scripts in the current payload | Larger object/city set, 28-bit world coordinates in the finished ST engine |
 | C64 Reference Build and VICE lab | ST/Amiga only; 8-bit versions cancelled |
 
-Secondary sources for the Damocles column: the [Damocles Wikipedia article](https://en.wikipedia.org/wiki/Damocles_(video_game)), the [Lemon Amiga manual transcription](https://www.lemonamiga.com/doc/damocles-mercenary-2/416), and the [Mercenary Site notes on the 1987 ST demo](http://mercenarysite.free.fr/damodemo.htm). None of these is Authoritative Evidence. The Targ column is this repo's decoded payload and glossary.
+Secondary sources for the Damocles column: the [Damocles Wikipedia article](https://en.wikipedia.org/wiki/Damocles_(video_game)), the [Lemon Amiga manual transcription](https://www.lemonamiga.com/doc/damocles-mercenary-2/416), and the [Mercenary Site notes on the 1987 ST demo](http://mercenarysite.free.fr/damodemo.htm). None of these is Working-Authority Evidence. The Targ column is this repo's decoded payload and glossary.
 
 ## What would transfer if a remake were ever started
 
@@ -69,7 +69,7 @@ What would not transfer: the C64 lab and extractors; `Location` as surface-or-Ro
 | `roms/atarist/Mercenary III.STX` | Out of scope (later title) |
 | `roms/atarist/Mercenary - Escape From Targ (1986)(Novasoft).stx` | ST Mercenary 1; not the C64 Reference Build |
 
-There is no Damocles disassembly snapshot, lab, extractor, or payload in the tracked tree.
+The Hatari laboratory for the ST Working Authority lives at `research/damocles-st/`. There is no Damocles disassembly snapshot, extractor, or payload in the tracked tree.
 
 ## After this spike
 

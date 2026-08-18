@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Damocles ST Working Authority identity",
+  "type": "object",
+  "required": ["schemaVersion", "logicalName", "programImage", "tosImage", "authority"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "logicalName": { "type": "string" },
+    "programImage": { "$ref": "#/$defs/image" },
+    "tosImage": { "$ref": "#/$defs/image" },
+    "authority": { "const": "working-authority" }
+  },
+  "$defs": {
+    "image": {
+      "type": "object",
+      "required": ["relativePath", "filename", "size", "hashes"],
+      "properties": {
+        "relativePath": { "type": "string" },
+        "filename": { "type": "string" },
+        "size": { "type": "integer", "minimum": 1 },
+        "hashes": {
+          "type": "object",
+          "required": ["sha256"],
+          "properties": {
+            "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+          }
+        }
+      }
+    }
+  }
+}
