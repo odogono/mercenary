@@ -74,6 +74,11 @@ manual transcription. Search hypotheses only.
 
 ### Script VM — Unresolved (no bytecode census); message system Partially confirmed
 
+**Superseded for existence:** [#85](https://github.com/odogono/mercenary/issues/85) /
+[`damocles-script-isa.md`](damocles-script-isa.md) confirms a **successor
+bytecode VM** (16-bit opcodes in `$070000+`, live PC at `$00781E`). The
+paragraphs below remain the #81 inventory snapshot.
+
 **What was sought:** a table-driven or bytecode interpreter comparable to the
 C64 **Benson Script** machine (`notes/decode/benson-scripts.md`).
 
@@ -87,7 +92,7 @@ C64 **Benson Script** machine (`notes/decode/benson-scripts.md`).
 - The string `BENSON` at `$073595` sits in Novagen office easter-egg text
   (“BRUCE BENSON … CONFIDENTIAL FILE”), not beside an interpreter.
 
-**Classification:** Damocles clearly has a **scripted message / prompt surface**
+**Classification (#81):** Damocles clearly has a **scripted message / prompt surface**
 (Benson-as-persona in fiction and UI). Whether logic is still a **bytecode VM**,
 a native 68k state machine, or a hybrid is **Unresolved** in this pass. Do not
 call these **Benson Scripts** until an opcode or dispatch table is shown.
@@ -175,7 +180,7 @@ Damocles seam *would* need to census — not types to add to `MercenaryKit`.
 
 ## What was tried and left Unresolved
 
-- Full script ISA / dispatch-table decode — follow-on [#85](https://github.com/odogono/mercenary/issues/85)
+- Full script ISA / dispatch-table decode — follow-on [#85](https://github.com/odogono/mercenary/issues/85); **existence answered** in `damocles-script-isa.md` (successor VM); full semantics still open
 - Walk-versus-boarded RAM word and board/leave observe (blocked on joystick FIFO) — follow-on [#86](https://github.com/odogono/mercenary/issues/86)
 - VOID / deep-space flight and near-c time dilation — [#86](https://github.com/odogono/mercenary/issues/86)
 - Impact-clock RAM cell(s) — may fall out of [#86](https://github.com/odogono/mercenary/issues/86) once locomotion scenarios exist
