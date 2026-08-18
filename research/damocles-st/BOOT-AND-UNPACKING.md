@@ -28,5 +28,9 @@ EmuTOS-specific mismatch.
 The laboratory checkpoint `title-screen` is that chain: break at `$68582`, wait
 `VBL+1400`, then dump RAM, registers, and a cropped PNG.
 
-Space (ST scancode 57) is a valid bounded input at this checkpoint. Further
-decode of what Space does belongs to later mapping tickets, not this laboratory.
+Space (ST scancode 57) is a valid bounded input at this checkpoint. After Space
+and a long wait (scenario `first-world.json`), the Working Authority leaves the
+title loop, unpacks world tables into RAM, and reaches a starting outdoor view
+whose panel names a celestial body (observed: ERIS). That post-title state is
+the reproducible entry for Gamma System layout hunts; see
+`docs/research/damocles-gamma-system.md`.

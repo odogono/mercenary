@@ -18,6 +18,7 @@ The TOS pin is Hatari's bundled EmuTOS 2.06. Real TOS 1.04 is not required for t
 - Environment check: `research/damocles-st/lab doctor`.
 - Capture: `research/damocles-st/lab capture --checkpoint title-screen`.
 - Observe: `research/damocles-st/lab observe --scenario research/damocles-st/scenarios/title-smoke.json`.
+- First world (post-title load for mapping notes): `research/damocles-st/lab observe --scenario research/damocles-st/scenarios/first-world.json`.
 - Verify: `research/damocles-st/lab verify --run research/damocles-st/work/<run-id>`.
 - Reproduce: `research/damocles-st/lab reproduce`.
 - Hatari integration (launches the emulator twice): `DAMOCLAB_INTEGRATION=1 python3 -m unittest research.damocles-st.tests.test_integration -v` from the lab tree, or `DAMOCLAB_INTEGRATION=1 python3 -m unittest discover -s research/damocles-st/tests -v`.
@@ -39,7 +40,8 @@ Pure validation and protocol encoding receive unit tests. A local integration te
 - Always validate the STX and TOS images before emulator launch, bind Hatari to a host timeout, capture the effective tool version, and hash every generated artifact.
 - Never commit STX, TOS, RAM dumps, snapshots, or screenshots.
 - Do not touch `MercenaryKit`, the Targ Data Payload, or the Game Surface.
-- Do not decode filled polygons, the Gamma System, or the script/motion/time model.
+- Do not build a Damocles Data Payload, extractor, or schema in this laboratory.
+- Reproducible checkpoints and observation scenarios that expose world tables for mapping notes (#79–#81) are allowed. Filled-polygon decode, Gamma System inventory, and script/motion/time findings belong in `docs/research/` notes, not in a payload.
 
 ## Success criteria
 

@@ -83,6 +83,10 @@ class ScenarioValidationTests(unittest.TestCase):
             }
         )
 
+    def test_accepts_checked_in_first_world_scenario(self) -> None:
+        path = Path(__file__).resolve().parents[1] / "scenarios" / "first-world.json"
+        validate_scenario(json.loads(path.read_text(encoding="utf-8")))
+
     def test_rejects_missing_capture(self) -> None:
         with self.assertRaisesRegex(LabError, "exactly one capture"):
             validate_scenario(
