@@ -38,11 +38,59 @@ public enum TraceEmitter: String, Sendable, Equatable, CaseIterable, Comparable,
 /// to emit is host tooling. The browser reads the traces; it never reads this.
 public struct TraceScenarios: Sendable, Equatable, Decodable {
   public var schemaVersion: Int
+  /// When the maintainer accepted the behaviour this set pins, and what they accepted it
+  /// against. Absent until somebody has.
+  public var accepted: Acceptance?
   public var scenarios: [TraceScenario]
 
-  public init(schemaVersion: Int, scenarios: [TraceScenario]) {
+  public init(schemaVersion: Int, accepted: Acceptance? = nil, scenarios: [TraceScenario]) {
     self.schemaVersion = schemaVersion
+    self.accepted = accepted
     self.scenarios = scenarios
+  }
+
+  /// A maintainer's sign-off, recorded rather than remembered.
+  ///
+  /// #66 asks that a Golden Trace pin behaviour that has been signed off rather than
+  /// behaviour under construction, which makes the acceptance a fact about the repository and
+  /// not about a conversation. It is here rather than in `/traces/` because the traces are
+  /// derived and gitignored: the thing worth tracking is *that* a set was accepted, against
+  /// which extraction, on which date.
+  ///
+  /// Recorded against the payload's own `sourceCoreDigest`, because a sign-off cannot outlive
+  /// the thing it was given for. Re-export the payload and these traces change; the
+  /// acceptance is then a statement about a payload nobody is running any more, and
+  /// ``isStale(against:)`` says so rather than letting it look current.
+  public struct Acceptance: Sendable, Equatable, Decodable {
+    /// The date the maintainer accepted the set, as `YYYY-MM-DD`.
+    public var on: String
+    /// The `sourceCoreDigest` of the payload the accepted traces were emitted from.
+    public var payloadCoreDigest: String
+    /// The trace schema the accepted traces were written in.
+    public var traceSchemaVersion: Int
+    /// What was actually reviewed, in the maintainer's own terms.
+    public var note: String
+
+    enum Keys: String, CodingKey, CaseIterable {
+      case on, payloadCoreDigest, traceSchemaVersion, note
+    }
+
+    public init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: Keys.self)
+      try TraceScenarioKeys.refuseUnknown(
+        in: decoder, known: Keys.names, context: "the acceptance record")
+      on = try container.decode(String.self, forKey: .on)
+      payloadCoreDigest = try container.decode(String.self, forKey: .payloadCoreDigest)
+      traceSchemaVersion = try container.decode(Int.self, forKey: .traceSchemaVersion)
+      note = try container.decodeIfPresent(String.self, forKey: .note) ?? ""
+    }
+
+    /// Whether this sign-off was given for a different payload or a different trace schema
+    /// than the one in front of us.
+    public func isStale(against payloadCoreDigest: String, traceSchemaVersion: Int) -> Bool {
+      self.payloadCoreDigest != payloadCoreDigest
+        || self.traceSchemaVersion != traceSchemaVersion
+    }
   }
 
   public enum LoadError: Error, CustomStringConvertible, Equatable {

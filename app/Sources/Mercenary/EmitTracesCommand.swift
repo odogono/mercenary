@@ -10,7 +10,9 @@ import MercenaryKit
 /// asks for: that the same payload, settings and inputs produce byte-identical files.
 enum EmitTracesCommand {
   /// Bumped when the manifest's own shape changes.
-  static let manifestVersion = 1
+  ///
+  /// 2: records the maintainer's acceptance of the scenario set, or `null` if there is none.
+  static let manifestVersion = 2
 
   struct Options {
     var only: TraceEmitter?
@@ -79,6 +81,28 @@ enum EmitTracesCommand {
       let selected = catalogue.selected(emitter: options.only, id: options.scenario)
       guard !selected.isEmpty else {
         throw Failure.nothingSelected(emitter: options.only, id: options.scenario)
+      }
+
+      // Whether a maintainer has accepted what this set pins, and whether that acceptance
+      // still applies. Said before anything is written, because it changes what the files
+      // that follow are worth.
+      switch catalogue.accepted {
+      case .none:
+        print(
+          "note: no acceptance recorded in \(TraceScenarioLocator.fileName), so these traces "
+            + "pin behaviour nobody has signed off (#66, ADR 0016)")
+      case .some(let accepted)
+      where accepted.isStale(
+        against: run.bundle.manifest.sourceCoreDigest,
+        traceSchemaVersion: TraceRecords.schemaVersion):
+        print(
+          "note: the acceptance of \(accepted.on) was given for payload "
+            + "\(accepted.payloadCoreDigest.prefix(16))… at trace schema "
+            + "\(accepted.traceSchemaVersion); this is payload "
+            + "\(run.bundle.manifest.sourceCoreDigest.prefix(16))… at schema "
+            + "\(TraceRecords.schemaVersion), so it no longer covers what is being emitted")
+      case .some(let accepted):
+        print("accepted \(accepted.on) — \(accepted.note)")
       }
 
       // Emit everything first, whether writing or verifying, so both paths run exactly the
@@ -203,6 +227,17 @@ enum EmitTracesCommand {
       (key: "payload", value: run.payloadIdentity),
       (key: "settings", value: run.settingsValue),
       (key: "dt", value: .double(TraceRun.dt)),
+      (
+        key: "accepted",
+        value: catalogue.accepted.map { accepted in
+          .object([
+            "on": .string(accepted.on),
+            "payloadCoreDigest": .string(accepted.payloadCoreDigest),
+            "traceSchemaVersion": .int(accepted.traceSchemaVersion),
+            "note": .string(accepted.note),
+          ])
+        } ?? .null
+      ),
       (
         key: "scenarios",
         value: .object(

@@ -186,6 +186,78 @@ final class TraceScenariosTests: XCTestCase {
     XCTAssertTrue(TraceEmitter.decode < TraceEmitter.projection)
     XCTAssertTrue(TraceEmitter.benson < TraceEmitter.session)
   }
+
+  // MARK: - The maintainer's sign-off
+
+  /// #66 asks that a Golden Trace pin behaviour that has been signed off. That makes the
+  /// acceptance a fact about the repository rather than about a conversation, so it is read
+  /// and checked like everything else here.
+  func testAnAcceptanceIsRead() throws {
+    let catalogue = try load(
+      """
+      {"schemaVersion": 1,
+       "accepted": {"on": "2026-08-18", "payloadCoreDigest": "abc", "traceSchemaVersion": 2,
+                    "note": "the initial set"},
+       "scenarios": [{"emitter": "decode", "id": "payload"}]}
+      """)
+    XCTAssertEqual(catalogue.accepted?.on, "2026-08-18")
+    XCTAssertEqual(catalogue.accepted?.payloadCoreDigest, "abc")
+    XCTAssertEqual(catalogue.accepted?.traceSchemaVersion, 2)
+  }
+
+  func testNoAcceptanceIsTheHonestDefault() throws {
+    let catalogue = try load(
+      #"{"schemaVersion": 1, "scenarios": [{"emitter": "decode", "id": "payload"}]}"#)
+    XCTAssertNil(catalogue.accepted, "a set nobody has signed off must not look accepted")
+  }
+
+  /// A sign-off cannot outlive what it was given for: re-export the payload and the traces
+  /// change, so the acceptance is a statement about a payload nobody is running any more.
+  func testAnAcceptanceGoesStaleWithThePayload() throws {
+    let accepted = try XCTUnwrap(
+      try load(
+        """
+        {"schemaVersion": 1,
+         "accepted": {"on": "2026-08-18", "payloadCoreDigest": "abc", "traceSchemaVersion": 2,
+                      "note": ""},
+         "scenarios": [{"emitter": "decode", "id": "payload"}]}
+        """
+      ).accepted)
+
+    XCTAssertFalse(accepted.isStale(against: "abc", traceSchemaVersion: 2))
+    XCTAssertTrue(
+      accepted.isStale(against: "def", traceSchemaVersion: 2), "a re-exported payload")
+    XCTAssertTrue(
+      accepted.isStale(against: "abc", traceSchemaVersion: 3), "a changed record shape")
+  }
+
+  func testAnUnknownFieldInTheAcceptanceIsRefused() {
+    XCTAssertThrowsError(
+      try load(
+        """
+        {"schemaVersion": 1,
+         "accepted": {"on": "2026-08-18", "payloadCoreDigest": "abc", "traceSchemaVersion": 2,
+                      "approvedBy": "someone"},
+         "scenarios": []}
+        """)
+    ) { error in
+      XCTAssertTrue(String(describing: error).contains("approvedBy"), "\(error)")
+    }
+  }
+
+  /// The date and the digest are the whole point, so neither may be left out.
+  func testAnAcceptanceMustSayWhenAndAgainstWhat() {
+    XCTAssertThrowsError(
+      try load(
+        """
+        {"schemaVersion": 1, "accepted": {"on": "2026-08-18"}, "scenarios": []}
+        """)
+    ) { error in
+      XCTAssertTrue(
+        String(describing: error).contains("payloadCoreDigest"),
+        "the missing field should be named: \(error)")
+    }
+  }
 }
 
 /// Same shape as ``SettingsLocator``, and tested the same way: with an injected

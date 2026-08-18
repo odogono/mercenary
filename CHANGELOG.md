@@ -65,6 +65,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   388 MB. Traces are bounded by an instruction limit that **says so in a final record**;
   a trace that stopped early silently would compare clean against a port that stopped
   early for a different reason.
+  The catalogue carries the maintainer's sign-off as data: the date, the payload digest it was
+  given against, and the schema it covers. #66 asks that a trace pin behaviour that has been
+  signed off, which makes the acceptance a fact about the repository rather than about a
+  conversation — and a perishable one, so a payload re-export or a schema bump makes
+  `--emit-traces` report that the acceptance no longer covers what it is emitting instead of
+  letting a stale one pass for current. A set with no acceptance says so too.
   The scenario catalogue is `trace-scenarios.json` at the repository root, tracked and
   hand-edited beside `settings.json`, so a diff to it is the visible moment a maintainer
   accepted a new scenario (ADR 0016). Not `verification/`, which ADR 0014 froze. It is read

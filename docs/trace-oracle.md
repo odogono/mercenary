@@ -12,6 +12,25 @@ set of scenarios is therefore itself a record: `trace-scenarios.json` at the rep
 root is tracked and hand-edited, and a diff to it is the visible moment a maintainer
 accepted a new one (ADR 0016).
 
+## The sign-off
+
+The catalogue carries an `accepted` block — the date, the `sourceCoreDigest` of the payload
+the accepted traces came from, the trace schema they were written in, and what was reviewed:
+
+```json
+"accepted": { "on": "2026-08-18", "payloadCoreDigest": "7b0cbf0f…",
+              "traceSchemaVersion": 2, "note": "…" }
+```
+
+It is recorded rather than remembered, because "these traces pin signed-off behaviour" is a
+claim about the repository and not about a conversation. It is also *perishable*: a sign-off
+cannot outlive what it was given for. Re-export the payload or change the record shape and
+`--emit-traces` says the acceptance no longer covers what is being emitted, instead of letting
+a stale one look current. With no `accepted` block at all it says that too.
+
+The manifest records the acceptance with everything else, so `--verify` checks it: editing the
+sign-off makes `manifest.json` differ, which is the intended behaviour rather than a nuisance.
+
 ## Emitting
 
 ```sh

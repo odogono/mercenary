@@ -1,5 +1,11 @@
 {
   "schemaVersion": 1,
+  "accepted": {
+    "on": "2026-08-18",
+    "payloadCoreDigest": "7b0cbf0f34c99fbcf8081e8fc152bc490fb4d4d1d9b1be4d9ec9481441d3949c",
+    "traceSchemaVersion": 2,
+    "note": "The initial set, signed off by the maintainer when #66 landed. Covers all seven emitters against the payload named here. A payload re-export or a trace schema bump makes this acceptance stale rather than current, and --emit-traces says so."
+  },
   "scenarios": [
     {
       "emitter": "decode",
