@@ -1,0 +1,449 @@
+{
+  "schemaVersion": 1,
+  "accepted": {
+    "on": "2026-08-18",
+    "payloadCoreDigest": "7b0cbf0f34c99fbcf8081e8fc152bc490fb4d4d1d9b1be4d9ec9481441d3949c",
+    "traceSchemaVersion": 2,
+    "note": "The initial set, signed off by the maintainer when #66 landed. Covers all seven emitters against the payload named here. A payload re-export or a trace schema bump makes this acceptance stale rather than current, and --emit-traces says so."
+  },
+  "scenarios": [
+    {
+      "emitter": "decode",
+      "id": "payload",
+      "note": "The whole decoded payload: craft parameters, control-loop rules, and every object, cell, surface structure and Room as the world builder resolved them."
+    },
+    {
+      "emitter": "projection",
+      "id": "opening-view",
+      "note": "What the player sees at the crash site the game opens on, looking north.",
+      "x": 559104,
+      "z": 559104,
+      "eye": 128,
+      "heading": 0
+    },
+    {
+      "emitter": "projection",
+      "id": "opening-view-turned",
+      "note": "The same standing position turned 135 degrees, so a different set of cells is culled in.",
+      "x": 559104,
+      "z": 559104,
+      "eye": 128,
+      "heading": 135
+    },
+    {
+      "emitter": "projection",
+      "id": "high-altitude",
+      "note": "Nose down from height, which puts the horizon and the ground fill in play together.",
+      "x": 559104,
+      "z": 559104,
+      "eye": 20000,
+      "heading": 45,
+      "pitch": -25
+    },
+    {
+      "emitter": "projection",
+      "id": "banked",
+      "note": "Rolled, so the ground fill leans and the lean transform is pinned with it.",
+      "x": 32000,
+      "z": 32000,
+      "eye": 400,
+      "heading": 45,
+      "roll": 20
+    },
+    {
+      "emitter": "projection",
+      "id": "room-3",
+      "note": "An underground Room, drawn with its indoor backdrop rather than sky and ground.",
+      "room": 3,
+      "x": 2048,
+      "z": 2048,
+      "eye": 128,
+      "heading": 90
+    },
+    {
+      "emitter": "projection",
+      "id": "room-5-dark",
+      "note": "A dark Room. Nothing is drawn at all, so this trace has no line records — which is the claim, not an omission.",
+      "room": 5,
+      "x": 2048,
+      "z": 2048,
+      "eye": 128,
+      "heading": 90
+    },
+    {
+      "emitter": "flight",
+      "id": "craft-0-standard",
+      "note": "The standard control handler, flown through a full circuit.",
+      "craft": 0,
+      "notch": 10,
+      "seconds": 30
+    },
+    {
+      "emitter": "flight",
+      "id": "craft-1-standard",
+      "note": "The player's first craft without a poweramp fitted, as the pair for the poweramp trace.",
+      "craft": 1,
+      "notch": 10,
+      "seconds": 30
+    },
+    {
+      "emitter": "flight",
+      "id": "craft-1-poweramp",
+      "note": "The one craft-conditioned bonus in the game: the same craft with a poweramp, which scales its throttle and lifts its ceiling.",
+      "craft": 1,
+      "notch": 10,
+      "seconds": 30,
+      "poweramp": true
+    },
+    {
+      "emitter": "flight",
+      "id": "craft-2-sinking",
+      "note": "The sinking handler, which has its own lift behaviour.",
+      "craft": 2,
+      "notch": 10,
+      "seconds": 30
+    },
+    {
+      "emitter": "flight",
+      "id": "craft-7-slot7",
+      "note": "The handler only the eighth craft dispatches through.",
+      "craft": 7,
+      "notch": 10,
+      "seconds": 30
+    },
+    {
+      "emitter": "flight",
+      "id": "craft-3-standard",
+      "note": "Craft slot 3, which dispatches through the standard handler. #66 asks for the flight trace per craft, so every boardable slot has one.",
+      "craft": 3,
+      "notch": 10,
+      "seconds": 30
+    },
+    {
+      "emitter": "flight",
+      "id": "craft-4-standard",
+      "note": "Craft slot 4, which dispatches through the standard handler. #66 asks for the flight trace per craft, so every boardable slot has one.",
+      "craft": 4,
+      "notch": 10,
+      "seconds": 30
+    },
+    {
+      "emitter": "flight",
+      "id": "craft-5-sinking",
+      "note": "Craft slot 5, which dispatches through the sinking handler. #66 asks for the flight trace per craft, so every boardable slot has one.",
+      "craft": 5,
+      "notch": 10,
+      "seconds": 30
+    },
+    {
+      "emitter": "flight",
+      "id": "craft-6-standard",
+      "note": "Craft slot 6, which dispatches through the standard handler. #66 asks for the flight trace per craft, so every boardable slot has one.",
+      "craft": 6,
+      "notch": 10,
+      "seconds": 30
+    },
+    {
+      "emitter": "game-core",
+      "id": "surface-walk",
+      "note": "Walking the surface on foot from the opening position: a stride, a turn on the spot, a stride while turning, a run, and a step of standing still.",
+      "legs": [
+        {
+          "walk": 1,
+          "seconds": 4
+        },
+        {
+          "turn": 1,
+          "seconds": 2
+        },
+        {
+          "walk": 1,
+          "turn": 1,
+          "seconds": 4
+        },
+        {
+          "walk": 1,
+          "running": true,
+          "seconds": 2
+        },
+        {
+          "seconds": 1
+        }
+      ]
+    },
+    {
+      "emitter": "game-core",
+      "id": "room-walk",
+      "note": "The same mover underground, where walking is bounded by the Room's own walls.",
+      "room": 3,
+      "legs": [
+        {
+          "walk": 1,
+          "seconds": 3
+        },
+        {
+          "turn": -1,
+          "seconds": 2
+        },
+        {
+          "walk": 1,
+          "seconds": 3
+        }
+      ]
+    },
+    {
+      "emitter": "game-core",
+      "id": "craft-1-throttle-ladder",
+      "note": "A craft held level while the throttle sits on one notch, which is the mover without the circuit's feedback anywhere near it.",
+      "craft": 1,
+      "notch": 6,
+      "legs": [
+        {
+          "pitch": 1,
+          "seconds": 3
+        },
+        {
+          "seconds": 5
+        },
+        {
+          "turn": 1,
+          "seconds": 4
+        }
+      ]
+    },
+    {
+      "emitter": "benson",
+      "id": "script-0-parked",
+      "script": 0,
+      "seconds": 120,
+      "note": "The opening script with no input at all. It plays its messages and parks in the routine that waits for a keypress, which is where a new game leaves it."
+    },
+    {
+      "emitter": "benson",
+      "id": "script-0-answered",
+      "script": 0,
+      "seconds": 120,
+      "presses": [
+        {
+          "key": "y",
+          "at": 20
+        }
+      ],
+      "note": "The same opening released by a keypress at twenty seconds, after which it runs on far enough to reach this trace's instruction limit and say so in its last record. The keypress is recorded as an input at the step it was applied, so a replay presses at the same step."
+    },
+    {
+      "emitter": "benson",
+      "id": "script-3-plain",
+      "script": 3,
+      "seconds": 120,
+      "note": "A script that loads object slot 29 and Room 136 into the object and room registers and then tests them. With a default Host Callout it takes the sixteen-instruction path."
+    },
+    {
+      "emitter": "benson",
+      "id": "script-3-object-in-room",
+      "script": 3,
+      "seconds": 120,
+      "host": {
+        "objectRooms": {
+          "29": 136
+        }
+      },
+      "note": "The same script told that object 29 is in Room 136, which is what its `inrm` test asks. It follows the plain trace for eleven instructions and diverges on the twelfth, running eighteen in total against the plain trace's sixteen."
+    },
+    {
+      "emitter": "benson",
+      "id": "script-3-carried",
+      "script": 3,
+      "seconds": 120,
+      "host": {
+        "carrying": [
+          29
+        ],
+        "objectRooms": {
+          "29": 255
+        }
+      },
+      "note": "The same script with object 29 in the player's hands, which its `tsti` test asks about. It diverges on the eighth instruction — earlier than the room test, because the inventory test comes first — and runs twelve in total."
+    },
+    {
+      "emitter": "benson",
+      "id": "script-3-flagged",
+      "script": 3,
+      "seconds": 120,
+      "host": {
+        "objectRooms": {
+          "29": 136
+        },
+        "objectFlags": {
+          "29": 255
+        }
+      },
+      "note": "The same script with object 29's flag byte set, which its `tsto` test reads. It diverges on the seventh instruction and runs nine in total, stopping soonest of the four, so the three tests are pinned in the order the script applies them."
+    },
+    {
+      "emitter": "benson",
+      "id": "script-3-write-before-test",
+      "script": 3,
+      "seconds": 120,
+      "writes": [
+        {
+          "at": 2,
+          "objectRooms": {
+            "29": 136
+          }
+        }
+      ],
+      "note": "The same fact arriving as a scheduled Host Callout write two seconds in, before the test runs. The instruction path matches script-3-object-in-room exactly, which is what makes the write schedule a real input rather than a convenience."
+    },
+    {
+      "emitter": "benson",
+      "id": "script-3-write-after-test",
+      "script": 3,
+      "seconds": 120,
+      "writes": [
+        {
+          "at": 30,
+          "objectRooms": {
+            "29": 136
+          }
+        }
+      ],
+      "note": "The same write arriving thirty seconds in, after the test has already run. The instruction path is identical to the plain trace, which pins that *when* the world tells the interpreter something is part of the behaviour and not incidental."
+    },
+    {
+      "emitter": "benson",
+      "id": "script-1-parked",
+      "script": 1,
+      "seconds": 120,
+      "note": "A script that draws a random byte, branches on it, and then ends on a jump to itself. The self-jump is why traces need an instruction limit: the interpreter spends its whole budget on that one jump every step, so this trace stops at its limit and says so in its last record."
+    },
+    {
+      "emitter": "session",
+      "id": "opening",
+      "note": "The whole opening loop: world, craft parameters, interaction rules and scripts together, with the player answering the question it asks.",
+      "script": 0,
+      "seconds": 120,
+      "presses": [
+        {
+          "key": "y",
+          "at": 8
+        }
+      ]
+    },
+    {
+      "emitter": "session",
+      "id": "opening-walk-to-craft",
+      "note": "Boarding by walking to a craft and reaching for it, rather than by boarding from outside, so the interaction rules are in the trace too.",
+      "script": 0,
+      "seconds": 120,
+      "walkTo": 1
+    },
+    {
+      "emitter": "navigation",
+      "id": "world-flip-from-144",
+      "note": "Walking into Room 127 from Room 144, which mirrors the world left for right. The trace shows the arrival and the flip on the same step.",
+      "room": 144,
+      "at": {
+        "x": 640,
+        "z": 384
+      },
+      "legs": [
+        {
+          "heading": 270,
+          "seconds": 3
+        }
+      ]
+    },
+    {
+      "emitter": "navigation",
+      "id": "world-flip-from-86",
+      "note": "The same Room entered from the other of its two ways in, and the world does not flip. Both of Room 127's stored alternates name Room 86, so arriving from 86 rewrites nothing — and the flip sits inside the branch that skips with it. That is PQ-0003, and since Room 127 has exactly two ways in it is half of that Room's observable behaviour.",
+      "room": 86,
+      "at": {
+        "x": 1024,
+        "z": 384
+      },
+      "legs": [
+        {
+          "heading": 270,
+          "seconds": 3
+        }
+      ]
+    },
+    {
+      "emitter": "navigation",
+      "id": "dark-room-5",
+      "note": "A dark Room, whose header shows all three colours zeroed and nothing drawable (PQ-0004). The walk leaves it through the one Doorway that leads somewhere lit (Room 111) and comes back, so darkness is pinned turning off and on again rather than only at the start. Room 5's other two Doorways lead to Rooms 80 and 73, which are dark as well.",
+      "room": 5,
+      "at": {
+        "x": 872,
+        "z": 300
+      },
+      "legs": [
+        {
+          "heading": 0,
+          "seconds": 4
+        },
+        {
+          "heading": 180,
+          "seconds": 4
+        }
+      ]
+    },
+    {
+      "emitter": "navigation",
+      "id": "locked-room-2-refused",
+      "note": "Walking into a locked Doorway empty-handed. The wall sounds and the player stays in Room 2: no arrival anywhere in this trace, which is the refusal.",
+      "room": 2,
+      "at": {
+        "x": 512,
+        "z": 1664
+      },
+      "legs": [
+        {
+          "heading": 270,
+          "seconds": 3
+        }
+      ]
+    },
+    {
+      "emitter": "navigation",
+      "id": "locked-room-2-opened",
+      "note": "The same Doorway carrying object 17, which is what it asks for. The Doorway opens and the walk carries on into Room 74 and beyond.",
+      "room": 2,
+      "at": {
+        "x": 512,
+        "z": 1664
+      },
+      "carrying": [
+        17
+      ],
+      "legs": [
+        {
+          "heading": 270,
+          "seconds": 3
+        }
+      ]
+    },
+    {
+      "emitter": "navigation",
+      "id": "random-room-114",
+      "note": "The Room that rewrites its own first Doorway by picking at random from eight destinations. On the default seed it picks Room 46; the seed is recorded in the header, so a different pick is a different scenario rather than a flaky trace.",
+      "room": 114,
+      "at": {
+        "x": 360,
+        "z": 300
+      },
+      "legs": [
+        {
+          "heading": 0,
+          "seconds": 3
+        },
+        {
+          "heading": 180,
+          "seconds": 3
+        }
+      ]
+    }
+  ]
+}

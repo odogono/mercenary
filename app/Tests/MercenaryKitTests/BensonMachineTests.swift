@@ -15,7 +15,8 @@ final class BensonMachineTests: XCTestCase {
     _ instructions: [BensonProgram.Instruction],
     host: BensonHostState = .init(),
     state: BensonState = .init(),
-    tunables: BensonTunables = .init()
+    tunables: BensonTunables = .init(),
+    observer: BensonObserver? = nil
   ) -> BensonMachine.Advance {
     let program = program(instructions)
     guard let started = BensonMachine.start(script: 0, of: program, state: state, host: host) else {
@@ -23,7 +24,8 @@ final class BensonMachineTests: XCTestCase {
       return .init(state: state, host: host, effects: [], executed: 0)
     }
     return BensonMachine.run(
-      started.state, host: started.host, program: program, text: text, tunables: tunables
+      started.state, host: started.host, program: program, text: text, tunables: tunables,
+      observer: observer
     )
   }
 
@@ -491,5 +493,120 @@ final class BensonMachineTests: XCTestCase {
     advance = BensonMachine.run(state, host: hostState, program: program, text: text)
     XCTAssertEqual(advance.effects, [.scriptFinished])
     XCTAssertFalse(advance.host.isScriptRunning)
+  }
+
+  // MARK: - Watching an execution
+
+  /// The observer exists so the Trace Oracle can record an execution
+  /// instruction-by-instruction (ADR 0019). Its whole value rests on the traced run
+  /// being the same run, so that is the first thing asserted.
+  func testWatchingChangesNothingAboutWhatRuns() throws {
+    let instructions: [BensonProgram.Instruction] = [
+      .loadDecimal(decimal: 8, value: 9000),
+      .setFlags(mask: 0x01),
+      .addDecimal(decimal: 8, value: 1),
+      .ret,
+    ]
+    let unwatched = running(instructions)
+    var seen = 0
+    let watched = running(instructions, observer: { _ in seen += 1 })
+
+    XCTAssertEqual(watched.state, unwatched.state)
+    XCTAssertEqual(watched.host, unwatched.host)
+    XCTAssertEqual(watched.effects, unwatched.effects)
+    XCTAssertEqual(watched.executed, unwatched.executed)
+    XCTAssertEqual(seen, unwatched.executed, "one report per instruction run")
+  }
+
+  func testEachInstructionIsReportedOnceInOrderWithWhereItWas() throws {
+    var steps: [BensonStep] = []
+    let advance = running(
+      [.clearTickCounter, .setFlags(mask: 0x01), .jump(3), .ret],
+      observer: { steps.append($0) }
+    )
+
+    XCTAssertEqual(steps.count, advance.executed)
+    XCTAssertEqual(steps.map(\.pc), [0, 1, 2, 3])
+    XCTAssertEqual(steps.map(\.instruction), [
+      .clearTickCounter, .setFlags(mask: 0x01), .jump(3), .ret,
+    ])
+  }
+
+  /// Each report brackets its own instruction: what went in, and what came out. This
+  /// is what stands in for recording the reads, so a gap here would be a hole in the
+  /// trace rather than a missing convenience.
+  func testTheStateEitherSideBracketsTheInstruction() throws {
+    var steps: [BensonStep] = []
+    _ = running(
+      [.loadDecimal(decimal: 8, value: 9000), .addDecimal(decimal: 8, value: 500), .ret],
+      observer: { steps.append($0) }
+    )
+
+    XCTAssertEqual(steps[0].hostBefore.decimal(8), 0)
+    XCTAssertEqual(steps[0].hostAfter.decimal(8), 9000)
+    XCTAssertEqual(steps[1].hostBefore.decimal(8), 9000, "each step starts where the last ended")
+    XCTAssertEqual(steps[1].hostAfter.decimal(8), 9500)
+    // The program counter either side is how a taken branch shows up.
+    XCTAssertEqual(steps[0].stateBefore.pc, 0)
+    XCTAssertEqual(steps[0].stateAfter.pc, 1)
+  }
+
+  /// Which way a test branched, without a second description of what the test reads.
+  func testATakenBranchShowsAsTheProgramCounterMoving() throws {
+    var steps: [BensonStep] = []
+    _ = running(
+      [
+        .testFlags(mask: 0x01, .init(branchOn: true, branch: .jump(2))),
+        .setFlags(mask: 0x80),
+        .ret,
+      ],
+      observer: { steps.append($0) }
+    )
+
+    XCTAssertEqual(steps[0].stateAfter.pc, 2, "no bit set, so the branch was taken over pc 1")
+    XCTAssertEqual(steps.map(\.pc), [0, 2], "and pc 1 never ran")
+  }
+
+  /// Effects are attributed to the instruction that produced them, not accumulated —
+  /// a trace that handed every step the run's whole effect list would say the last
+  /// instruction played every message.
+  func testEffectsAreAttributedToTheInstructionThatEmittedThem() throws {
+    var steps: [BensonStep] = []
+    _ = running(
+      [.sound(symbol: "voice1Frequency", value: 40), .clearTickCounter, .ret],
+      observer: { steps.append($0) }
+    )
+
+    XCTAssertEqual(steps[0].effects, [.sound(symbol: "voice1Frequency", value: 40)])
+    XCTAssertEqual(steps[1].effects, [], "an instruction that emitted nothing reports nothing")
+    XCTAssertEqual(steps[2].effects, [.scriptFinished])
+  }
+
+  /// A message blocks the interpreter, and the report says so — which is what tells a
+  /// reader why the next instruction is on a later step rather than this one.
+  func testABlockingInstructionIsReportedAsBlocked() throws {
+    var steps: [BensonStep] = []
+    _ = running([.messageIndexed(.immediate(1)), .ret], observer: { steps.append($0) })
+
+    XCTAssertEqual(steps.count, 1, "the run stopped at the message")
+    XCTAssertTrue(steps[0].blocked)
+    XCTAssertTrue(steps[0].hostAfter.messagePlaying)
+    XCTAssertFalse(steps[0].hostBefore.messagePlaying)
+  }
+
+  /// The session owns the clock and the message pacing, so an instruction trace has to
+  /// be taken through it rather than around it.
+  func testASessionReportsTheInstructionsItRuns() throws {
+    let program = program([
+      .loadDecimal(decimal: 8, value: 9000), .clearTickCounter, .ret,
+    ])
+    var session = BensonSession(program: program, text: text)
+    session.start(script: 0)
+
+    var steps: [BensonStep] = []
+    session.advance(by: 1.0 / 60.0, observer: { steps.append($0) })
+
+    XCTAssertEqual(steps.map(\.pc), [0, 1, 2])
+    XCTAssertEqual(session.host.decimal(8), 9000)
   }
 }

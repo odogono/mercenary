@@ -114,6 +114,14 @@ _Avoid_: Web UI, page chrome, wrapper
 The macOS implementation together with the deterministic traces it emits, held as the equivalence authority that the canonical browser implementation must reproduce (ADR 0019).
 _Avoid_: Golden master, reference app, source of truth
 
+**Golden Trace**:
+One deterministic, full-precision record of a run the maintainer has accepted, emitted by the Trace Oracle for the canonical implementation to reproduce. Derived from the Data Payload, and therefore never tracked.
+_Avoid_: Snapshot, baseline, fixture, expected output
+
+**Trace Scenario**:
+A named, reviewable description of one run a Golden Trace is emitted from: which emitter, what inputs, and the state it starts in.
+_Avoid_: Test case, trace config, run spec
+
 **Game Semantics**:
 The fidelity-governed rules and state transitions that determine outcomes and meaningful future state from Semantic Actions and time, independently of the Native Shell and Mac Adaptations.
 _Avoid_: Game logic, gameplay layer

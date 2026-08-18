@@ -11,6 +11,16 @@ import UniformTypeIdentifiers
 /// geometry looks wrong" becomes a named defect. The contact sheet puts every
 /// object on one page, which is the fastest way to spot a malformed model.
 enum InspectCommand {
+  /// A mode, plus where to write a Golden Trace of the decode if one was asked for.
+  ///
+  /// The trace is the same whichever subject was inspected: it is the whole decoded
+  /// payload, because that is the unit the browser port's first replay gate compares
+  /// (#68) and because a decode has no camera and no subject to narrow it to.
+  struct Invocation {
+    var mode: Mode
+    var trace: URL?
+  }
+
   enum Mode {
     case objectSheet(URL)
     case structureSheet(URL)
@@ -24,7 +34,7 @@ enum InspectCommand {
   static let knownFlags: Set<String> = [
     "--inspect-objects", "--inspect-structures", "--inspect-rooms",
     "--inspect-object", "--inspect-cell", "--inspect-room",
-    "--output", "--in-situ",
+    "--output", "--in-situ", "--trace",
   ]
 
   /// The subject flags, and what each writes to when `--output` is not given.
@@ -37,24 +47,27 @@ enum InspectCommand {
     ("--inspect-room", "/tmp/mercenary-room.png"),
   ]
 
-  static func mode(from arguments: [String]) throws -> Mode? {
+  static func mode(from arguments: [String]) throws -> Invocation? {
     let arguments = Arguments(arguments)
     guard let subject = subjects.first(where: { arguments.isPresent($0.flag) }) else { return nil }
     try arguments.rejectUnknownFlags(besides: knownFlags)
     let output = try arguments.output(default: subject.fallback)
+    let trace = try arguments.trace()
+    func invocation(_ mode: Mode) -> Invocation { Invocation(mode: mode, trace: trace) }
     switch subject.flag {
-    case "--inspect-objects": return .objectSheet(output)
-    case "--inspect-structures": return .structureSheet(output)
-    case "--inspect-rooms": return .roomSheet(output)
+    case "--inspect-objects": return invocation(.objectSheet(output))
+    case "--inspect-structures": return invocation(.structureSheet(output))
+    case "--inspect-rooms": return invocation(.roomSheet(output))
     case "--inspect-object":
       let slot = try require(arguments.int(subject.flag, expected: "an object slot"), subject.flag)
-      return .object(slot: slot, output: output, inSitu: arguments.isPresent("--in-situ"))
+      return invocation(
+        .object(slot: slot, output: output, inSitu: arguments.isPresent("--in-situ")))
     case "--inspect-cell":
       let index = try require(arguments.int(subject.flag, expected: "a cell index"), subject.flag)
-      return .cell(index: index, output: output)
+      return invocation(.cell(index: index, output: output))
     default:
       let id = try require(arguments.int(subject.flag, expected: "a room id"), subject.flag)
-      return .room(id: id, output: output)
+      return invocation(.room(id: id, output: output))
     }
   }
 
@@ -65,7 +78,8 @@ enum InspectCommand {
     return value
   }
 
-  static func run(_ mode: Mode) -> Int32 {
+  static func run(_ invocation: Invocation) -> Int32 {
+    let mode = invocation.mode
     guard let directory = PayloadLocator.locate() else {
       FileHandle.standardError.write(Data("error: no Data Payload found\n".utf8))
       return 1
@@ -146,6 +160,13 @@ enum InspectCommand {
         print(
           "{\"status\":\"inspected\",\"output\":\"\(url.path)\",\"rooms\":\(rooms.count),"
             + "\"roomEdges\":\(rooms.reduce(0) { $0 + $1.segments.count })}")
+      }
+      if let output = invocation.trace {
+        let run = try TraceRun()
+        let scenario = TraceScenario(
+          emitter: .decode, id: "payload", note: "written by --inspect-*", body: .decode)
+        try DecodeTrace.emit(run, scenario: scenario).write(to: output)
+        print("wrote \(output.path)")
       }
       return 0
     } catch {

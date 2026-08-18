@@ -92,6 +92,35 @@ public struct BensonState: Sendable, Equatable {
   var map: Int { register(Self.mapRegister) }
 }
 
+/// One executed instruction, for a caller that needs to watch rather than to run.
+///
+/// The Trace Oracle's Benson trace is instruction-by-instruction (ADR 0019), and there
+/// is no honest way to assemble that from outside: running with a budget of one
+/// instruction would trace a *different* execution, because the budget is what stands in
+/// for the frame boundary the original interpreter had for free.
+///
+/// What an instruction read is deliberately not reported. It would need a second
+/// description of every opcode, kept in step with the first and duplicated by anything
+/// reproducing the trace, to say what the operands already say. The state either side of
+/// the step is here instead, so every value the instruction could have consulted is
+/// available — and where a test went is visible in ``stateAfter``'s program counter.
+public struct BensonStep: Sendable {
+  /// Where the instruction was, which is its identity in a decoded program.
+  public var pc: Int
+  public var instruction: BensonProgram.Instruction
+  public var stateBefore: BensonState
+  public var stateAfter: BensonState
+  public var hostBefore: BensonHostState
+  public var hostAfter: BensonHostState
+  /// Only what this instruction appended, not the run's accumulated effects.
+  public var effects: [BensonEffect]
+  /// Whether the instruction ended the interpreter's turn.
+  public var blocked: Bool
+}
+
+/// Told about each executed instruction, in order.
+public typealias BensonObserver = (BensonStep) -> Void
+
 /// Runs Benson Scripts against the Host Callout.
 ///
 /// The Reference Build advanced one instruction per video frame, so a script's
@@ -130,12 +159,17 @@ public enum BensonMachine {
   }
 
   /// Advance the running script until it blocks, finishes, or spends its budget.
+  ///
+  /// `observer` is told about each instruction as it runs. It cannot change anything —
+  /// it is handed values — so a traced run and an untraced one execute identically,
+  /// which is the property that makes the trace worth having.
   public static func run(
     _ state: BensonState,
     host: BensonHostState,
     program: BensonProgram,
     text: TextTable,
-    tunables: BensonTunables = .init()
+    tunables: BensonTunables = .init(),
+    observer: BensonObserver? = nil
   ) -> Advance {
     var state = state
     var host = host
@@ -159,9 +193,23 @@ public enum BensonMachine {
         break
       }
       executed += 1
+      let instruction = program.instructions[pc]
+      // Captured only when somebody is watching, so an ordinary run pays nothing.
+      let before = observer.map { _ in (state: state, host: host, effects: effects.count) }
       let outcome = step(
-        program.instructions[pc], at: pc, state: &state, host: &host, text: text, effects: &effects
+        instruction, at: pc, state: &state, host: &host, text: text, effects: &effects
       )
+      if let observer, let before {
+        observer(
+          BensonStep(
+            pc: pc, instruction: instruction,
+            stateBefore: before.state, stateAfter: state,
+            hostBefore: before.host, hostAfter: host,
+            effects: Array(effects[before.effects...]),
+            blocked: outcome == .blocked
+          )
+        )
+      }
       if outcome == .blocked { break }
     }
     return Advance(state: state, host: host, effects: effects, executed: executed)

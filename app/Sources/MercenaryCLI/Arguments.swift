@@ -92,6 +92,19 @@ public struct Arguments: Sendable {
     return URL(fileURLWithPath: path)
   }
 
+  /// Where a command should write its Golden Trace, from `--trace`, or nil for none.
+  ///
+  /// Deliberately a second flag rather than a mode of `--output`. The two write different
+  /// artifacts for different readers — a report for a person, a trace for a comparison —
+  /// and a command may be asked for both at once. Switching on a path's extension is
+  /// precisely the kind of guess this type refuses to make.
+  public func trace() throws -> URL? {
+    guard let path = try string("--trace", expected: "a path to write a trace to") else {
+      return nil
+    }
+    return URL(fileURLWithPath: path)
+  }
+
   /// Refuse any flag this command does not have.
   ///
   /// Only called once a command has claimed the invocation, because the entry point
