@@ -57,7 +57,7 @@ enum ScriptTrace {
         throw Arguments.Failure.missingValue(
           flag: "--press", expected: "a key and a time, written NAME@SECONDS")
       }
-      var press = TraceScenario.Benson.Press()
+      var press = TraceScenario.Press()
       // `any` is the keypress with no code, which the opening reads as intent to walk.
       press.key = name == "any" ? nil : String(name)
       press.at = at
@@ -168,7 +168,7 @@ enum ScriptTrace {
       }
       while let next = writes.first, next.at <= elapsed {
         writes.removeFirst()
-        session.hostState = apply(next, to: session.hostState)
+        session.hostState = try apply(next, to: session.hostState)
         try trace.record(
           .object([
             "step": .int(stepIndex), "elapsed": .double(elapsed),
@@ -233,39 +233,52 @@ enum ScriptTrace {
     ])
   }
 
+  /// Apply what a scenario says about the world, refusing anything it cannot mean.
+  ///
+  /// Both the initial Host Callout and a scheduled write set the same fields, so they share
+  /// this. Bad values are refused rather than skipped: `objectRooms` is keyed by slot as a
+  /// string because JSON has no integer keys, and a key that is not a number — or a flag
+  /// byte that will not fit in one — is a mistake in the catalogue. Skipping it would trace
+  /// a *different* host state and report success, which is the failure the strict reading in
+  /// ``TraceScenarioKeys`` and ``Arguments`` exists to prevent.
   private static func apply(
-    _ host: TraceScenario.Benson.Host, to state: BensonHostState
+    room: Int?, craft: Int?, carrying: [Int]?, objectRooms: [String: Int]?,
+    objectFlags: [String: Int]?, to state: BensonHostState
   ) throws -> BensonHostState {
     var state = state
-    state.currentRoom = host.room
-    state.boardedCraft = host.craft ?? BensonHostState.onFoot
-    state.inventory = Set(host.carrying)
-    for (slot, room) in host.objectRooms {
-      guard let slot = Int(slot) else { continue }
+    if let room { state.currentRoom = room }
+    if let craft { state.boardedCraft = craft }
+    if let carrying { state.inventory = Set(carrying) }
+    for (key, room) in objectRooms ?? [:] {
+      guard let slot = Int(key) else { throw TraceRun.Failure.badSlotKey(key, field: "objectRooms") }
       state.objectRooms[slot] = room
     }
-    for (slot, flags) in host.objectFlags {
-      guard let slot = Int(slot), let byte = UInt8(exactly: flags) else { continue }
+    for (key, flags) in objectFlags ?? [:] {
+      guard let slot = Int(key) else { throw TraceRun.Failure.badSlotKey(key, field: "objectFlags") }
+      guard let byte = UInt8(exactly: flags) else {
+        throw TraceRun.Failure.badFlagByte(flags, slot: slot)
+      }
       state.objectFlags[slot] = byte
     }
     return state
   }
 
   private static func apply(
+    _ host: TraceScenario.Benson.Host, to state: BensonHostState
+  ) throws -> BensonHostState {
+    // The initial host says where everything is from nothing, so "on foot" is spelled out
+    // rather than left as whatever a fresh host happened to hold.
+    try apply(
+      room: host.room, craft: host.craft ?? BensonHostState.onFoot, carrying: host.carrying,
+      objectRooms: host.objectRooms, objectFlags: host.objectFlags, to: state)
+  }
+
+  private static func apply(
     _ write: TraceScenario.Benson.Write, to state: BensonHostState
-  ) -> BensonHostState {
-    var state = state
-    if let room = write.room { state.currentRoom = room }
-    if let craft = write.craft { state.boardedCraft = craft }
-    if let carrying = write.carrying { state.inventory = Set(carrying) }
-    for (slot, room) in write.objectRooms ?? [:] {
-      guard let slot = Int(slot) else { continue }
-      state.objectRooms[slot] = room
-    }
-    for (slot, flags) in write.objectFlags ?? [:] {
-      guard let slot = Int(slot), let byte = UInt8(exactly: flags) else { continue }
-      state.objectFlags[slot] = byte
-    }
-    return state
+  ) throws -> BensonHostState {
+    // A write changes only what it names, which is what makes it a write and not a reset.
+    try apply(
+      room: write.room, craft: write.craft, carrying: write.carrying,
+      objectRooms: write.objectRooms, objectFlags: write.objectFlags, to: state)
   }
 }

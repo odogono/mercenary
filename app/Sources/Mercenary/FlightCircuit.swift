@@ -1,3 +1,4 @@
+import MercenaryCLI
 import MercenaryKit
 
 /// The circuit ``FlightTrace`` flies: a take-off run, a climb, a turn, and a descent back
@@ -51,6 +52,23 @@ struct FlightCircuit {
     leg = next
     legStarted = elapsed
     return next
+  }
+
+  /// Set a craft up and say what was done to it, so the printed report and the Golden Trace
+  /// board, fit and throttle identically.
+  ///
+  /// The commands are an *input*: a replay that boarded a different craft or opened the
+  /// throttle to a different notch would diverge from the first step, so they belong in the
+  /// trace beside the intents rather than being implied by the scenario.
+  static func prepare(
+    _ session: inout GameplaySession, craft: Int, notch: Int, poweramp: Bool
+  ) -> TraceValue {
+    session.board(craft: craft)
+    session.fitPoweramp(poweramp)
+    session.throttle(notch: notch)
+    return .object([
+      "board": .int(craft), "throttle": .int(notch), "poweramp": .bool(poweramp),
+    ])
   }
 
   /// Fly toward the leg's attitude rather than holding a stick down, so a trace shows an

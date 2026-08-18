@@ -77,9 +77,8 @@ enum FlightTrace {
         content: GameplaySession.Content(world: world, bundle: bundle, flight: flight),
         player: OpeningScene.player
       )
-      session.board(craft: options.craft)
-      session.fitPoweramp(options.poweramp)
-      session.throttle(notch: options.notch)
+      let setup = FlightCircuit.prepare(
+        &session, craft: options.craft, notch: options.notch, poweramp: options.poweramp)
 
       let block = flight.block(for: session.game)
       print(
@@ -105,19 +104,24 @@ enum FlightTrace {
         ? nil
         : try CoreTrace.Recorder(
           run: try TraceRun(), scenario: options.scenario, session: session)
+      try recorder?.command(setup, elapsed: elapsed)
       print(String(format: "%6.2f  · %@", elapsed, circuit.leg.rawValue))
 
       while elapsed < options.seconds && flying {
         if let entered = circuit.enterNextLeg(at: elapsed, player: session.game.player) {
           // Throttle back for the descent, as a pilot would before landing.
-          if entered == .descending { session.throttle(notch: circuit.landingNotch) }
+          if entered == .descending {
+            session.throttle(notch: circuit.landingNotch)
+            try recorder?.command(
+              .object(["throttle": .int(circuit.landingNotch)]), elapsed: elapsed)
+          }
           print(String(format: "%6.2f  · %@", elapsed, entered.rawValue))
         }
 
         session.intent = circuit.intent(for: session.game.player)
         let update = session.advance(by: step)
         try recorder?.record(
-          session: session, events: update.events, elapsed: elapsed,
+          session: session, events: update.events,
           note: TraceValue.object(["leg": .string(circuit.leg.rawValue)]))
 
         if session.game.mode != mode {
@@ -170,17 +174,12 @@ enum FlightTrace {
       content: GameplaySession.Content(world: run.world, bundle: run.bundle, flight: flight),
       player: OpeningScene.player
     )
-    session.board(craft: body.craft)
-    session.fitPoweramp(body.poweramp)
-    session.throttle(notch: body.notch)
+    let setup = FlightCircuit.prepare(
+      &session, craft: body.craft, notch: body.notch, poweramp: body.poweramp)
 
     var circuit = FlightCircuit(rules: parameters.rules, notch: body.notch)
     var recorder = try CoreTrace.Recorder(run: run, scenario: scenario, session: session)
-    try recorder.command(
-      .object([
-        "board": .int(body.craft), "throttle": .int(body.notch),
-        "poweramp": .bool(body.poweramp),
-      ]), elapsed: 0)
+    try recorder.command(setup, elapsed: 0)
 
     let step = TraceRun.dt
     var elapsed = 0.0
@@ -196,7 +195,7 @@ enum FlightTrace {
       session.intent = circuit.intent(for: session.game.player)
       let update = session.advance(by: step)
       try recorder.record(
-        session: session, events: update.events, elapsed: elapsed,
+        session: session, events: update.events,
         note: .object(["leg": .string(circuit.leg.rawValue)]))
       if update.events.contains(where: { if case .touchdown = $0 { true } else { false } }) {
         flying = false

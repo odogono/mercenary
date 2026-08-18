@@ -106,9 +106,41 @@
       "seconds": 30
     },
     {
+      "emitter": "flight",
+      "id": "craft-3-standard",
+      "note": "Craft slot 3, which dispatches through the standard handler. #66 asks for the flight trace per craft, so every boardable slot has one.",
+      "craft": 3,
+      "notch": 10,
+      "seconds": 30
+    },
+    {
+      "emitter": "flight",
+      "id": "craft-4-standard",
+      "note": "Craft slot 4, which dispatches through the standard handler. #66 asks for the flight trace per craft, so every boardable slot has one.",
+      "craft": 4,
+      "notch": 10,
+      "seconds": 30
+    },
+    {
+      "emitter": "flight",
+      "id": "craft-5-sinking",
+      "note": "Craft slot 5, which dispatches through the sinking handler. #66 asks for the flight trace per craft, so every boardable slot has one.",
+      "craft": 5,
+      "notch": 10,
+      "seconds": 30
+    },
+    {
+      "emitter": "flight",
+      "id": "craft-6-standard",
+      "note": "Craft slot 6, which dispatches through the standard handler. #66 asks for the flight trace per craft, so every boardable slot has one.",
+      "craft": 6,
+      "notch": 10,
+      "seconds": 30
+    },
+    {
       "emitter": "game-core",
       "id": "surface-walk",
-      "note": "Walking the surface on foot from the opening position: a turn, a stride, and a stride while turning.",
+      "note": "Walking the surface on foot from the opening position: a stride, a turn on the spot, a stride while turning, a run, and a step of standing still.",
       "legs": [
         {
           "walk": 1,
@@ -210,7 +242,7 @@
           "29": 136
         }
       },
-      "note": "The same script told that object 29 is in Room 136, which is what its `inrm` test asks. It diverges from the plain trace at the eleventh instruction and runs two further ones."
+      "note": "The same script told that object 29 is in Room 136, which is what its `inrm` test asks. It follows the plain trace for eleven instructions and diverges on the twelfth, running eighteen in total against the plain trace's sixteen."
     },
     {
       "emitter": "benson",
@@ -225,7 +257,7 @@
           "29": 255
         }
       },
-      "note": "The same script with object 29 in the player's hands, which its `tsti` test asks about. It diverges at the seventh instruction — earlier than the room test, because the inventory test comes first."
+      "note": "The same script with object 29 in the player's hands, which its `tsti` test asks about. It diverges on the eighth instruction — earlier than the room test, because the inventory test comes first — and runs twelve in total."
     },
     {
       "emitter": "benson",
@@ -240,7 +272,7 @@
           "29": 255
         }
       },
-      "note": "The same script with object 29's flag byte set, which its `tsto` test reads. It diverges at the sixth instruction and stops soonest of the four, so the three tests are pinned in the order the script applies them."
+      "note": "The same script with object 29's flag byte set, which its `tsto` test reads. It diverges on the seventh instruction and runs nine in total, stopping soonest of the four, so the three tests are pinned in the order the script applies them."
     },
     {
       "emitter": "benson",
@@ -255,7 +287,7 @@
           }
         }
       ],
-      "note": "The same fact arriving as a scheduled Host Callout write two seconds in, before the test runs. The path matches script-3-object-in-room, which is what makes the write schedule a real input rather than a convenience."
+      "note": "The same fact arriving as a scheduled Host Callout write two seconds in, before the test runs. The instruction path matches script-3-object-in-room exactly, which is what makes the write schedule a real input rather than a convenience."
     },
     {
       "emitter": "benson",
@@ -270,7 +302,7 @@
           }
         }
       ],
-      "note": "The same write arriving thirty seconds in, after the test has already run. The path is identical to the plain trace, which pins that *when* the world tells the interpreter something is part of the behaviour and not incidental."
+      "note": "The same write arriving thirty seconds in, after the test has already run. The instruction path is identical to the plain trace, which pins that *when* the world tells the interpreter something is part of the behaviour and not incidental."
     },
     {
       "emitter": "benson",
@@ -335,20 +367,20 @@
     {
       "emitter": "navigation",
       "id": "dark-room-5",
-      "note": "A dark Room, whose header shows all three colours zeroed and nothing drawable (PQ-0004). The walk leaves it for a lit Room and comes back, so the darkness is pinned on the way in as well as at the start.",
+      "note": "A dark Room, whose header shows all three colours zeroed and nothing drawable (PQ-0004). The walk leaves it through the one Doorway that leads somewhere lit (Room 111) and comes back, so darkness is pinned turning off and on again rather than only at the start. Room 5's other two Doorways lead to Rooms 80 and 73, which are dark as well.",
       "room": 5,
       "at": {
-        "x": 2048,
-        "z": 1152
+        "x": 872,
+        "z": 300
       },
       "legs": [
         {
-          "heading": 90,
-          "seconds": 3
+          "heading": 0,
+          "seconds": 4
         },
         {
-          "heading": 270,
-          "seconds": 2
+          "heading": 180,
+          "seconds": 4
         }
       ]
     },

@@ -26,9 +26,13 @@ invocation beside its printed report. The report is unchanged either way: `--out
 writes what a person reads and `--trace` writes what a comparison reads, and a command
 may be given both. Nothing infers one from the other's file extension.
 
-`--verify` re-emits into a temporary directory and compares bytes, reporting the first
-differing line. A partial run neither writes nor checks `traces/manifest.json`, because a
-manifest describing part of the set would claim to describe all of it.
+`--verify` re-emits every selected scenario in memory and compares the bytes against what is
+on disk, reporting the first differing line. Nothing is written, so a failed check cannot
+leave a half-file behind for the next run to compare against. It also rebuilds the manifest
+and compares that, which is a second check on the same claim: the manifest carries every
+trace's digest, so a trace compared against a file the manifest never described would still
+be caught. A partial run neither writes nor checks `traces/manifest.json`, because a manifest
+describing part of the set would claim to describe all of it.
 
 ## Two claims, kept apart
 
@@ -91,8 +95,13 @@ a delta and cannot collide with a field, because every field is a name or a numb
 ### Inputs are recorded, not reimplemented
 
 Every behavioural record carries the **input applied at that step**, and inputs that are
-not intents — boarding, a throttle notch, a keypress, a facing — get their own `command`
-record at the step they were applied.
+not intents — a scheduled boarding, a throttle notch, a keypress, a facing — get their own
+`command` record at the step they were applied.
+
+An *outcome* is not an input, and is not recorded as a command. Boarding reached by walking
+to a craft and reaching for it is recorded as a `note` on the step it happened, because the
+input was the intent to walk: a replay that fed the recorded intents would reach the craft
+by itself, and a `command` telling it to board would let a broken interaction rule pass.
 
 This matters because the drivers are feedback loops rather than input scripts. The flight
 circuit corrects toward an attitude it reads back off the craft; the opening rehearsal

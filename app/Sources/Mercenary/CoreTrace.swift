@@ -47,7 +47,7 @@ enum CoreTrace {
     /// rather than the port's mover. Recording the intent that was actually applied makes
     /// a replay a pure function of the trace.
     mutating func record(
-      session: GameplaySession, events: [PresentationEvent], elapsed: Double,
+      session: GameplaySession, events: [PresentationEvent],
       input: TraceValue? = nil, note: TraceValue? = nil
     ) throws {
       let state = Self.state(of: session)
@@ -133,8 +133,7 @@ enum CoreTrace {
         session.intent = intent
         let update = session.advance(by: step)
         try recorder.record(
-          session: session, events: update.events, elapsed: elapsed,
-          note: .object(["leg": .int(index + 1)]))
+          session: session, events: update.events, note: .object(["leg": .int(index + 1)]))
         elapsed += step
         remaining -= step
       }

@@ -14,22 +14,29 @@ import MercenaryKit
 ///
 /// The trace records the intent this produces on each step, so a replay never has to own
 /// any of it.
-enum Rehearsal {
-  /// Where a rehearsal's output goes. Both closures are optional in effect — the printed
-  /// report supplies `say`, the trace supplies `step` and `command`, and either may be
-  /// absent without the drive behaving differently.
-  struct Sink {
-    var say: (String) -> Void = { _ in }
-    var step:
-      (_ session: GameplaySession, _ events: [PresentationEvent], _ elapsed: Double,
-        _ note: TraceValue?) throws -> Void = { _, _, _, _ in }
-    var command: (_ command: TraceValue, _ elapsed: Double) throws -> Void = { _, _ in }
-  }
+/// Where a driven run's output goes.
+///
+/// One shape for every driver here — the opening rehearsal and the underground walk — because
+/// the three things a driver has to say are the same in both: a line for a person, a step for
+/// a trace, and an input that was not an intent. Two shapes for one clump meant two call sites
+/// to keep in step for no difference.
+///
+/// Every closure is optional in effect: the printed report supplies `say`, the trace supplies
+/// `step` and `command`, and either may be absent without the drive behaving differently.
+struct TraceSink {
+  var say: (String) -> Void = { _ in }
+  var step:
+    (_ session: GameplaySession, _ events: [PresentationEvent], _ note: TraceValue?) throws ->
+      Void = { _, _, _ in }
+  var command: (_ command: TraceValue, _ elapsed: Double) throws -> Void = { _, _ in }
+}
 
+enum Rehearsal {
   /// Drive the session to the end of the scenario, and say where the clock got to.
   @discardableResult
   static func drive(
-    _ session: inout GameplaySession, options: BensonTrace.Options, world: World, sink: Sink
+    _ session: inout GameplaySession, options: BensonTrace.Options, world: World,
+    sink: TraceSink
   ) throws -> Double {
     let target = options.walkTo.flatMap { slot in world.objects.first { $0.slot == slot } }
     var reached = false
@@ -79,8 +86,10 @@ enum Rehearsal {
         sink.say(String(format: "%7.2f  · %@", elapsed, String(describing: effect)))
       }
       try sink.step(
-        session, update.events, elapsed,
-        outcome.flatMap { $0 == .nothingInReach ? nil : .object(["reached": .string("\($0)")]) })
+        session, update.events,
+        outcome.flatMap {
+          $0 == .nothingInReach ? nil : .object(["reached": TraceRecords.value($0)])
+        })
 
       // Report each message as it starts, so the report reads as the sequence of things
       // said rather than as a per-frame log.

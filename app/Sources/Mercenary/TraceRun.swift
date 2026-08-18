@@ -48,6 +48,8 @@ struct TraceRun {
     case noObject(Int)
     case scriptWouldNotStart(Int)
     case unknownKey(String)
+    case badSlotKey(String, field: String)
+    case badFlagByte(Int, slot: Int)
 
     var description: String {
       switch self {
@@ -59,6 +61,10 @@ struct TraceRun {
       case .noObject(let slot): return "no object in slot \(slot)"
       case .scriptWouldNotStart(let id): return "script \(id) would not start"
       case .unknownKey(let name): return "'\(name)' is not a key any script tests"
+      case .badSlotKey(let key, let field):
+        return "\(field) is keyed by object slot, and '\(key)' is not a slot number"
+      case .badFlagByte(let value, let slot):
+        return "object \(slot)'s flags are one byte, and \(value) does not fit in one"
       }
     }
   }

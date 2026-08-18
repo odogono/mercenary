@@ -98,6 +98,36 @@ extension TraceRecords {
     residence.mapValues(value)
   }
 
+  /// The three orientation bytes, named.
+  ///
+  /// Written out rather than reflected. `String(describing:)` would spell this
+  /// `Orientation(z: 0, x: 0, y: 32)`, whose field order is Swift's struct layout: a port
+  /// cannot reproduce that string, and reordering the struct would rewrite every record
+  /// that carries one.
+  static func value(_ orientation: Orientation) -> TraceValue {
+    .object([
+      "z": .int(orientation.z), "x": .int(orientation.x), "y": .int(orientation.y),
+    ])
+  }
+
+  /// What reaching for something did.
+  ///
+  /// Enumerated rather than reflected, for the same reason as ``value(_:)-9orientation``:
+  /// a case name and its associated value are a shape, and `String(describing:)` turns
+  /// them into a Swift-specific spelling nothing else can reproduce.
+  static func value(_ outcome: Interaction.Outcome) -> TraceValue {
+    switch outcome {
+    case .took(let slot): return .object(["took": .int(slot)])
+    case .boarded(let slot): return .object(["boarded": .int(slot)])
+    case .nothingInReach: return .string("nothingInReach")
+    case .fixedInPlace(let slot): return .object(["fixedInPlace": .int(slot)])
+    case .tooHeavy(let slot): return .object(["tooHeavy": .int(slot)])
+    case .handsFull: return .string("handsFull")
+    case .notACraft(let slot): return .object(["notACraft": .int(slot)])
+    case .alreadyAboard: return .string("alreadyAboard")
+    }
+  }
+
   static func value(_ scene: IndoorScene) -> TraceValue {
     .object([
       "background": .int(scene.background),

@@ -84,7 +84,7 @@ enum DecodeTrace {
           "room": .int(object.room),
           "detailCube": .float(object.detailCube),
           "drawsFarAsPoint": .bool(object.drawsFarAsPoint),
-          "orientation": .string(String(describing: object.orientation)),
+          "orientation": TraceRecords.value(object.orientation),
           "withinWorld": .bool(object.withinWorld),
           "stateFlags": .int(object.stateFlags),
           "vertices": .int(object.vertices.count),

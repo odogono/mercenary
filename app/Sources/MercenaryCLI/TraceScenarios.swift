@@ -28,10 +28,14 @@ public enum TraceEmitter: String, Sendable, Equatable, CaseIterable, Comparable,
 
 /// The signed-off list of what gets traced.
 ///
-/// Tracked, and hand-edited, for the reason ADR 0016 gives about recording fixtures from
-/// the walk that gets approved: a trace pins behaviour a maintainer has accepted, so the
-/// set of scenarios is itself a reviewable record and a diff to this file is the visible
-/// moment a new one was accepted. The traces are derived and gitignored; this is not.
+/// Tracked, and hand-edited, for the reason ADR 0016 gives about recording a walk that has
+/// been approved rather than one under construction: a Golden Trace pins behaviour a
+/// maintainer has accepted, so the set of Trace Scenarios is itself a reviewable record and
+/// a diff to this file is the visible moment a new one was accepted. The traces are derived
+/// and gitignored; this is not.
+/// Deliberately in `MercenaryCLI` rather than the kit, for the reason ``Arguments`` gives:
+/// the kit is the surface a browser implementation has to reproduce, and a catalogue of runs
+/// to emit is host tooling. The browser reads the traces; it never reads this.
 public struct TraceScenarios: Sendable, Equatable, Decodable {
   public var schemaVersion: Int
   public var scenarios: [TraceScenario]
@@ -182,16 +186,20 @@ public struct TraceScenario: Sendable, Equatable {
     public init() {}
   }
 
+  /// A key pressed at a named time.
+  ///
+  /// Shared by the interpreter and the whole-session rehearsal, which schedule keypresses
+  /// the same way. Two copies meant two decoders to keep in step for no difference.
+  public struct Press: Sendable, Equatable {
+    /// A key name, or nil for "any key", which the opening reads as intent to walk.
+    public var key: String?
+    public var at: Double = 0
+
+    public init() {}
+  }
+
   /// The interpreter with no world behind it.
   public struct Benson: Sendable, Equatable {
-    public struct Press: Sendable, Equatable {
-      /// A key name, or nil for "any key", which the opening reads as intent to walk.
-      public var key: String?
-      public var at: Double = 0
-
-      public init() {}
-    }
-
     /// A change the world would have made to the Host Callout, applied at a named time.
     ///
     /// Without these, the tests a script runs against engine state — which Room, which
@@ -223,7 +231,7 @@ public struct TraceScenario: Sendable, Equatable {
     public var script: Int = 0
     public var seconds: Double = 240
     public var timeScale: Double?
-    public var presses: [Press] = []
+    public var presses: [TraceScenario.Press] = []
     public var host = Host()
     public var writes: [Write] = []
     /// How many instructions this trace may record before it stops.
@@ -244,13 +252,6 @@ public struct TraceScenario: Sendable, Equatable {
 
   /// The whole opening rehearsal: world, craft parameters and scripts together.
   public struct Session: Sendable, Equatable {
-    public struct Press: Sendable, Equatable {
-      public var key: String?
-      public var at: Double = 0
-
-      public init() {}
-    }
-
     public struct Boarding: Sendable, Equatable {
       public var craft: Int = 1
       public var at: Double = 0
@@ -261,7 +262,7 @@ public struct TraceScenario: Sendable, Equatable {
     public var script: Int = 0
     public var seconds: Double = 240
     public var timeScale: Double?
-    public var presses: [Press] = []
+    public var presses: [TraceScenario.Press] = []
     public var boarding: [Boarding] = []
     /// An object slot to walk to and reach for, rather than boarding by fiat.
     public var walkTo: Int?
@@ -303,7 +304,7 @@ public struct TraceScenario: Sendable, Equatable {
 // MARK: - Decoding
 //
 // Every field has a default, so a scenario names only what it changes — which is the
-// arrangement ``Settings`` uses, and for the same reason. It needs writing out by hand
+// arrangement the kit's `Settings` uses, and for the same reason. It needs writing out by hand
 // because a synthesized `Decodable` does not consult a property's default: it reports the
 // key as missing instead, so a scenario would have to spell out every field it does not
 // care about. The known-key lists are derived from the coding keys rather than written
@@ -317,17 +318,16 @@ extension TraceScenario.Projection: Decodable {
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: Keys.self)
-    let defaults = Self()
     self.init()
-    width = try container.decodeIfPresent(Double.self, forKey: .width) ?? defaults.width
-    height = try container.decodeIfPresent(Double.self, forKey: .height) ?? defaults.height
-    x = try container.decodeIfPresent(Double.self, forKey: .x) ?? defaults.x
-    z = try container.decodeIfPresent(Double.self, forKey: .z) ?? defaults.z
-    eye = try container.decodeIfPresent(Double.self, forKey: .eye) ?? defaults.eye
-    heading = try container.decodeIfPresent(Double.self, forKey: .heading) ?? defaults.heading
-    pitch = try container.decodeIfPresent(Double.self, forKey: .pitch) ?? defaults.pitch
-    roll = try container.decodeIfPresent(Double.self, forKey: .roll) ?? defaults.roll
-    time = try container.decodeIfPresent(Double.self, forKey: .time) ?? defaults.time
+    width = try container.decodeIfPresent(Double.self, forKey: .width) ?? width
+    height = try container.decodeIfPresent(Double.self, forKey: .height) ?? height
+    x = try container.decodeIfPresent(Double.self, forKey: .x) ?? x
+    z = try container.decodeIfPresent(Double.self, forKey: .z) ?? z
+    eye = try container.decodeIfPresent(Double.self, forKey: .eye) ?? eye
+    heading = try container.decodeIfPresent(Double.self, forKey: .heading) ?? heading
+    pitch = try container.decodeIfPresent(Double.self, forKey: .pitch) ?? pitch
+    roll = try container.decodeIfPresent(Double.self, forKey: .roll) ?? roll
+    time = try container.decodeIfPresent(Double.self, forKey: .time) ?? time
     room = try container.decodeIfPresent(Int.self, forKey: .room)
   }
 }
@@ -339,12 +339,11 @@ extension TraceScenario.Flight: Decodable {
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: Keys.self)
-    let defaults = Self()
     self.init()
-    craft = try container.decodeIfPresent(Int.self, forKey: .craft) ?? defaults.craft
-    notch = try container.decodeIfPresent(Int.self, forKey: .notch) ?? defaults.notch
-    seconds = try container.decodeIfPresent(Double.self, forKey: .seconds) ?? defaults.seconds
-    poweramp = try container.decodeIfPresent(Bool.self, forKey: .poweramp) ?? defaults.poweramp
+    craft = try container.decodeIfPresent(Int.self, forKey: .craft) ?? craft
+    notch = try container.decodeIfPresent(Int.self, forKey: .notch) ?? notch
+    seconds = try container.decodeIfPresent(Double.self, forKey: .seconds) ?? seconds
+    poweramp = try container.decodeIfPresent(Bool.self, forKey: .poweramp) ?? poweramp
   }
 }
 
@@ -356,13 +355,12 @@ extension TraceScenario.GameCore.Leg: Decodable {
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: Keys.self)
     try TraceScenarioKeys.refuseUnknown(in: decoder, known: Keys.names, context: "a game-core leg")
-    let defaults = Self()
     self.init()
-    turn = try container.decodeIfPresent(Double.self, forKey: .turn) ?? defaults.turn
-    pitch = try container.decodeIfPresent(Double.self, forKey: .pitch) ?? defaults.pitch
-    walk = try container.decodeIfPresent(Double.self, forKey: .walk) ?? defaults.walk
-    running = try container.decodeIfPresent(Bool.self, forKey: .running) ?? defaults.running
-    seconds = try container.decodeIfPresent(Double.self, forKey: .seconds) ?? defaults.seconds
+    turn = try container.decodeIfPresent(Double.self, forKey: .turn) ?? turn
+    pitch = try container.decodeIfPresent(Double.self, forKey: .pitch) ?? pitch
+    walk = try container.decodeIfPresent(Double.self, forKey: .walk) ?? walk
+    running = try container.decodeIfPresent(Bool.self, forKey: .running) ?? running
+    seconds = try container.decodeIfPresent(Double.self, forKey: .seconds) ?? seconds
   }
 }
 
@@ -373,9 +371,8 @@ extension TraceScenario.GameCore: Decodable {
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: Keys.self)
-    let defaults = Self()
     self.init()
-    legs = try container.decodeIfPresent([Leg].self, forKey: .legs) ?? defaults.legs
+    legs = try container.decodeIfPresent([Leg].self, forKey: .legs) ?? legs
     craft = try container.decodeIfPresent(Int.self, forKey: .craft)
     notch = try container.decodeIfPresent(Int.self, forKey: .notch)
     room = try container.decodeIfPresent(Int.self, forKey: .room)
@@ -383,7 +380,7 @@ extension TraceScenario.GameCore: Decodable {
   }
 }
 
-extension TraceScenario.Benson.Press: Decodable {
+extension TraceScenario.Press: Decodable {
   enum Keys: String, CodingKey, CaseIterable {
     case key, at
   }
@@ -393,7 +390,7 @@ extension TraceScenario.Benson.Press: Decodable {
     try TraceScenarioKeys.refuseUnknown(in: decoder, known: Keys.names, context: "a keypress")
     self.init()
     key = try container.decodeIfPresent(String.self, forKey: .key)
-    at = try container.decodeIfPresent(Double.self, forKey: .at) ?? 0
+    at = try container.decodeIfPresent(Double.self, forKey: .at) ?? at
   }
 }
 
@@ -423,15 +420,14 @@ extension TraceScenario.Benson.Host: Decodable {
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: Keys.self)
     try TraceScenarioKeys.refuseUnknown(in: decoder, known: Keys.names, context: "a synthetic host")
-    let defaults = Self()
     self.init()
-    room = try container.decodeIfPresent(Int.self, forKey: .room) ?? defaults.room
+    room = try container.decodeIfPresent(Int.self, forKey: .room) ?? room
     craft = try container.decodeIfPresent(Int.self, forKey: .craft)
-    carrying = try container.decodeIfPresent([Int].self, forKey: .carrying) ?? defaults.carrying
+    carrying = try container.decodeIfPresent([Int].self, forKey: .carrying) ?? carrying
     objectRooms =
-      try container.decodeIfPresent([String: Int].self, forKey: .objectRooms) ?? defaults.objectRooms
+      try container.decodeIfPresent([String: Int].self, forKey: .objectRooms) ?? objectRooms
     objectFlags =
-      try container.decodeIfPresent([String: Int].self, forKey: .objectFlags) ?? defaults.objectFlags
+      try container.decodeIfPresent([String: Int].self, forKey: .objectFlags) ?? objectFlags
   }
 }
 
@@ -442,30 +438,15 @@ extension TraceScenario.Benson: Decodable {
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: Keys.self)
-    let defaults = Self()
     self.init()
-    script = try container.decodeIfPresent(Int.self, forKey: .script) ?? defaults.script
-    seconds = try container.decodeIfPresent(Double.self, forKey: .seconds) ?? defaults.seconds
+    script = try container.decodeIfPresent(Int.self, forKey: .script) ?? script
+    seconds = try container.decodeIfPresent(Double.self, forKey: .seconds) ?? seconds
     timeScale = try container.decodeIfPresent(Double.self, forKey: .timeScale)
-    presses = try container.decodeIfPresent([Press].self, forKey: .presses) ?? defaults.presses
-    host = try container.decodeIfPresent(Host.self, forKey: .host) ?? defaults.host
-    writes = try container.decodeIfPresent([Write].self, forKey: .writes) ?? defaults.writes
+    presses = try container.decodeIfPresent([TraceScenario.Press].self, forKey: .presses) ?? presses
+    host = try container.decodeIfPresent(Host.self, forKey: .host) ?? host
+    writes = try container.decodeIfPresent([Write].self, forKey: .writes) ?? writes
     maxInstructions =
-      try container.decodeIfPresent(Int.self, forKey: .maxInstructions) ?? defaults.maxInstructions
-  }
-}
-
-extension TraceScenario.Session.Press: Decodable {
-  enum Keys: String, CodingKey, CaseIterable {
-    case key, at
-  }
-
-  public init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: Keys.self)
-    try TraceScenarioKeys.refuseUnknown(in: decoder, known: Keys.names, context: "a keypress")
-    self.init()
-    key = try container.decodeIfPresent(String.self, forKey: .key)
-    at = try container.decodeIfPresent(Double.self, forKey: .at) ?? 0
+      try container.decodeIfPresent(Int.self, forKey: .maxInstructions) ?? maxInstructions
   }
 }
 
@@ -490,15 +471,14 @@ extension TraceScenario.Session: Decodable {
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: Keys.self)
-    let defaults = Self()
     self.init()
-    script = try container.decodeIfPresent(Int.self, forKey: .script) ?? defaults.script
-    seconds = try container.decodeIfPresent(Double.self, forKey: .seconds) ?? defaults.seconds
+    script = try container.decodeIfPresent(Int.self, forKey: .script) ?? script
+    seconds = try container.decodeIfPresent(Double.self, forKey: .seconds) ?? seconds
     timeScale = try container.decodeIfPresent(Double.self, forKey: .timeScale)
-    presses = try container.decodeIfPresent([Press].self, forKey: .presses) ?? defaults.presses
-    boarding = try container.decodeIfPresent([Boarding].self, forKey: .boarding) ?? defaults.boarding
+    presses = try container.decodeIfPresent([TraceScenario.Press].self, forKey: .presses) ?? presses
+    boarding = try container.decodeIfPresent([Boarding].self, forKey: .boarding) ?? boarding
     walkTo = try container.decodeIfPresent(Int.self, forKey: .walkTo)
-    take = try container.decodeIfPresent(Bool.self, forKey: .take) ?? defaults.take
+    take = try container.decodeIfPresent(Bool.self, forKey: .take) ?? take
   }
 }
 
@@ -523,12 +503,11 @@ extension TraceScenario.Navigation: Decodable {
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: Keys.self)
-    let defaults = Self()
     self.init()
-    room = try container.decodeIfPresent(Int.self, forKey: .room) ?? defaults.room
+    room = try container.decodeIfPresent(Int.self, forKey: .room) ?? room
     at = try container.decodeIfPresent(TraceScenario.Position.self, forKey: .at)
-    legs = try container.decodeIfPresent([Leg].self, forKey: .legs) ?? defaults.legs
-    carrying = try container.decodeIfPresent([Int].self, forKey: .carrying) ?? defaults.carrying
+    legs = try container.decodeIfPresent([Leg].self, forKey: .legs) ?? legs
+    carrying = try container.decodeIfPresent([Int].self, forKey: .carrying) ?? carrying
     seed = try container.decodeIfPresent(Int.self, forKey: .seed)
   }
 }
@@ -635,11 +614,12 @@ public enum TraceScenarioKeys {
   }
 }
 
-/// Finds the scenario catalogue, exactly as ``SettingsLocator`` finds the settings.
+/// Finds the scenario catalogue, exactly as the kit's `SettingsLocator` finds the settings.
 ///
 /// Same shape on purpose: both are tracked, hand-edited files the app reads out of the
 /// repository it lives in, and two different discovery rules for two files sitting beside
-/// each other would be a trap.
+/// each other would be a trap. The duplication is deliberate — copying twenty lines is the
+/// price of this target not depending on the kit.
 public enum TraceScenarioLocator {
   public static let environmentKey = "MERCENARY_TRACE_SCENARIOS"
   public static let fileName = "trace-scenarios.json"

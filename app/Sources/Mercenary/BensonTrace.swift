@@ -31,7 +31,7 @@ enum BensonTrace {
       body.seconds = seconds
       body.timeScale = timeScale
       body.presses = presses.map {
-        var press = TraceScenario.Session.Press()
+        var press = TraceScenario.Press()
         // Written back as the name the flag takes, not the engine's own `keyY`.
         press.key = $0.key.map { String($0.rawValue.dropFirst(3)) }
         press.at = $0.at
@@ -154,15 +154,15 @@ enum BensonTrace {
           )
         )
       }
-      var sink = Rehearsal.Sink()
+      var sink = TraceSink()
       sink.say = { print($0) }
       var recorder: CoreTrace.Recorder? =
         options.trace == nil
         ? nil
         : try CoreTrace.Recorder(
           run: try TraceRun(), scenario: options.scenario, session: session)
-      sink.step = { session, events, elapsed, note in
-        try recorder?.record(session: session, events: events, elapsed: elapsed, note: note)
+      sink.step = { session, events, note in
+        try recorder?.record(session: session, events: events, note: note)
       }
       sink.command = { command, elapsed in
         try recorder?.command(command, elapsed: elapsed)
@@ -196,14 +196,14 @@ enum BensonTrace {
   static func emit(
     _ run: TraceRun, scenario: TraceScenario, body: TraceScenario.Session
   ) throws -> TraceFile {
-    guard try run.scripts(timeScale: body.timeScale) != nil else {
+    guard let scripts = try run.scripts(timeScale: body.timeScale) else {
       throw TraceRun.Failure.noScripts
     }
     let world = run.world
     var session = GameplaySession(
       content: GameplaySession.Content(world: world, bundle: run.bundle, flight: run.flight),
       player: OpeningScene.player,
-      scripts: try run.scripts(timeScale: body.timeScale)
+      scripts: scripts
     )
     guard session.start(script: body.script) else {
       throw TraceRun.Failure.scriptWouldNotStart(body.script)
@@ -229,9 +229,9 @@ enum BensonTrace {
     }
 
     var recorder = try CoreTrace.Recorder(run: run, scenario: scenario, session: session)
-    var sink = Rehearsal.Sink()
-    sink.step = { session, events, elapsed, note in
-      try recorder.record(session: session, events: events, elapsed: elapsed, note: note)
+    var sink = TraceSink()
+    sink.step = { session, events, note in
+      try recorder.record(session: session, events: events, note: note)
     }
     sink.command = { command, elapsed in
       try recorder.command(command, elapsed: elapsed)

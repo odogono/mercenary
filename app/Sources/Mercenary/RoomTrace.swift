@@ -146,7 +146,6 @@ enum RoomTrace {
       for slot in options.carrying { session.carry(slot) }
 
       var lines: [String] = []
-      var lastMessage = ""
       func say(_ line: String) {
         lines.append(line)
       }
@@ -163,12 +162,13 @@ enum RoomTrace {
         ? nil
         : try CoreTrace.Recorder(
           run: try TraceRun(), scenario: options.scenario, session: session)
-      let elapsed = try walk(
-        &session, options: options, world: world, say: say,
-        step: { session, events, elapsed, note in
-          try recorder?.record(session: session, events: events, elapsed: elapsed, note: note)
-        },
-        command: { command, elapsed in try recorder?.command(command, elapsed: elapsed) })
+      var sink = TraceSink()
+      sink.say = say
+      sink.step = { session, events, note in
+        try recorder?.record(session: session, events: events, note: note)
+      }
+      sink.command = { command, elapsed in try recorder?.command(command, elapsed: elapsed) }
+      let elapsed = try walk(&session, options: options, world: world, sink: sink)
 
       say(String(format: "%7.2f  [finished]", elapsed))
       say(describe(session, in: world))
@@ -198,29 +198,24 @@ enum RoomTrace {
   /// on the session's one seeded stream.
   @discardableResult
   static func walk(
-    _ session: inout GameplaySession, options: Options, world: World,
-    say: (String) -> Void,
-    step record:
-      (_ session: GameplaySession, _ events: [PresentationEvent], _ elapsed: Double,
-        _ note: TraceValue?) throws -> Void = { _, _, _, _ in },
-    command: (_ command: TraceValue, _ elapsed: Double) throws -> Void = { _, _ in }
+    _ session: inout GameplaySession, options: Options, world: World, sink: TraceSink
   ) throws -> Double {
     let step = TraceRun.dt
     var elapsed: Double = 0
     var lastMessage = ""
     if !options.carrying.isEmpty {
-      try command(
+      try sink.command(
         .object(["carry": .array(options.carrying.sorted().map { .int($0) })]), elapsed)
     }
     for (index, leg) in options.legs.enumerated() {
       session.place(at: session.game.player.position, facing: leg.heading * .pi / 180)
-      say(
+      sink.say(
         String(
           format: "%7.2f  » leg %d: heading %.0f for %.1fs", elapsed, index + 1, leg.heading,
           leg.seconds))
       // Facing is an input, not an outcome: a replay has to turn the player the same way
       // before it walks, or every step after this diverges.
-      try command(
+      try sink.command(
         .object(["face": .double(leg.heading * .pi / 180), "leg": .int(index + 1)]), elapsed)
       var remaining = leg.seconds
       session.intent = Intent(walk: 1)
@@ -229,24 +224,24 @@ enum RoomTrace {
         for event in update.events {
           switch event {
           case .arrived(let location):
-            say(
+            sink.say(
               String(
                 format: "%7.2f  · through a doorway into %@", elapsed, String(describing: location)))
-            say(describe(session, in: world))
+            sink.say(describe(session, in: world))
           case .wall(let sound):
-            say(String(format: "%7.2f  · wall (sound %d)", elapsed, sound))
+            sink.say(String(format: "%7.2f  · wall (sound %d)", elapsed, sound))
           case .worldFlipped(let flipped):
-            say(String(format: "%7.2f  · the world is %@", elapsed, flipped ? "mirrored" : "back"))
+            sink.say(String(format: "%7.2f  · the world is %@", elapsed, flipped ? "mirrored" : "back"))
           default:
             break
           }
         }
-        try record(session, update.events, elapsed, .object(["leg": .int(index + 1)]))
+        try sink.step(session, update.events, .object(["leg": .int(index + 1)]))
         // The whole message as it starts, rather than a line per character revealed: this
         // is a record of what was said, not of the typing.
         if let message = session.scripts?.ticker?.text, message != lastMessage {
           lastMessage = message
-          say(String(format: "%7.2f  %@", elapsed, message))
+          sink.say(String(format: "%7.2f  %@", elapsed, message))
         }
         elapsed += step
         remaining -= step
@@ -284,12 +279,12 @@ enum RoomTrace {
     for slot in options.carrying { session.carry(slot) }
 
     var recorder = try CoreTrace.Recorder(run: run, scenario: scenario, session: session)
-    try walk(
-      &session, options: options, world: world, say: { _ in },
-      step: { session, events, elapsed, note in
-        try recorder.record(session: session, events: events, elapsed: elapsed, note: note)
-      },
-      command: { command, elapsed in try recorder.command(command, elapsed: elapsed) })
+    var sink = TraceSink()
+    sink.step = { session, events, note in
+      try recorder.record(session: session, events: events, note: note)
+    }
+    sink.command = { command, elapsed in try recorder.command(command, elapsed: elapsed) }
+    try walk(&session, options: options, world: world, sink: sink)
     return recorder.trace
   }
 

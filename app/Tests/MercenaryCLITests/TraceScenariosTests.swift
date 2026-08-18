@@ -1,6 +1,6 @@
 import XCTest
 
-@testable import MercenaryKit
+@testable import MercenaryCLI
 
 /// The catalogue is read the way a command line is read: strictly. A scenario file is the
 /// same kind of instruction, and the failure it must not have is the one ``Arguments`` was

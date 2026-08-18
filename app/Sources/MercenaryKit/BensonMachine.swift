@@ -92,14 +92,6 @@ public struct BensonState: Sendable, Equatable {
   var map: Int { register(Self.mapRegister) }
 }
 
-/// Runs Benson Scripts against the Host Callout.
-///
-/// The Reference Build advanced one instruction per video frame, so a script's
-/// pace came partly from the hardware. Here a script runs until something
-/// genuinely blocks it — a message playing, or a wait for the clock — which
-/// leaves the pacing to the message line and the scripts' own waits, both of
-/// which the original meant. See ``BensonTunables/instructionBudget`` for the
-/// one case where the frame boundary still has to be stood in for.
 /// One executed instruction, for a caller that needs to watch rather than to run.
 ///
 /// The Trace Oracle's Benson trace is instruction-by-instruction (ADR 0019), and there
@@ -129,6 +121,14 @@ public struct BensonStep: Sendable {
 /// Told about each executed instruction, in order.
 public typealias BensonObserver = (BensonStep) -> Void
 
+/// Runs Benson Scripts against the Host Callout.
+///
+/// The Reference Build advanced one instruction per video frame, so a script's
+/// pace came partly from the hardware. Here a script runs until something
+/// genuinely blocks it — a message playing, or a wait for the clock — which
+/// leaves the pacing to the message line and the scripts' own waits, both of
+/// which the original meant. See ``BensonTunables/instructionBudget`` for the
+/// one case where the frame boundary still has to be stood in for.
 public enum BensonMachine {
   /// The result of advancing a script.
   public struct Advance: Sendable, Equatable {
