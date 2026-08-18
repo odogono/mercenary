@@ -156,7 +156,15 @@ _Avoid_: Layout mode, aspect mode
 
 **Initial Release**:
 The complete *Mercenary: Escape from Targ* experience delivered by this effort, with extension seams for *The Second City* but without that expansion's content.
-_Avoid_: Mercenary 1, base game
+_Avoid_: Mercenary 1, base game, Damocles
+
+**The Second City**:
+The Commodore 64 expansion of *Mercenary: Escape from Targ*, and the only expansion this remake's Initial Release leaves a Content Overlay seam for.
+_Avoid_: Mercenary 2, Damocles, mission disk
+
+**Damocles**:
+Novagen's 16-bit sequel (*Mercenary II*), set in the Gamma System after the player has left Targ; a different title from this remake, not a Content Overlay, and not *The Second City* (ADR 0020).
+_Avoid_: Mercenary 2 (for The Second City), expansion, mission disk
 
 **Content Set** (historical):
 The complete immutable definition selected for a playable experience, resolved and validated before a session begins.
