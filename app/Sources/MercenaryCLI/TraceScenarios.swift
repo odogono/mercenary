@@ -4,9 +4,11 @@ import Foundation
 ///
 /// The order is the port's own dependency order (ADR 0019, #68): each emitter observes
 /// only modules at or below its own layer, so a replay gate can go green before the
-/// layers above it exist. `decode` needs the payload and the world; `benson` needs the
+/// layers above it exist. `math` observes no kit module at all, only the platform's
+/// elementary functions; `decode` needs the payload and the world; `benson` needs the
 /// interpreter and no world at all; `session` and `navigation` need everything.
 public enum TraceEmitter: String, Sendable, Equatable, CaseIterable, Comparable, Decodable {
+  case math
   case decode
   case projection
   case flight
@@ -167,6 +169,7 @@ public struct TraceScenario: Sendable, Equatable {
   }
 
   public enum Body: Sendable, Equatable {
+    case math(Math)
     /// The whole payload, which needs no scenario of its own.
     case decode
     case projection(Projection)
@@ -175,6 +178,20 @@ public struct TraceScenario: Sendable, Equatable {
     case benson(Benson)
     case session(Session)
     case navigation(Navigation)
+  }
+
+  /// How densely to sample the elementary functions the kit calls.
+  ///
+  /// The domains themselves live in the emitter rather than here, because they are derived
+  /// from what the kit's own wrappers can produce rather than chosen: a scenario that could
+  /// name an arbitrary angle would invite pinning one no `wrap` can return, which is work
+  /// the port would owe for a case that cannot arise.
+  public struct Math: Sendable, Equatable {
+    /// Samples per uniform sweep. The landmark and discrete sets are added whatever this is,
+    /// so a small number still pins the quadrant boundaries and `tan`'s pole.
+    public var samples: Int = 256
+
+    public init() {}
   }
 
   /// A camera pose, and the viewport its screen lines are resolved against.
@@ -358,6 +375,18 @@ public struct TraceScenario: Sendable, Equatable {
 // care about. The known-key lists are derived from the coding keys rather than written
 // twice, since a hand-kept copy that drifted would silently re-open the hole that
 // ``TraceScenarioKeys`` exists to close.
+
+extension TraceScenario.Math: Decodable {
+  enum Keys: String, CodingKey, CaseIterable {
+    case samples
+  }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: Keys.self)
+    self.init()
+    samples = try container.decodeIfPresent(Int.self, forKey: .samples) ?? samples
+  }
+}
 
 extension TraceScenario.Projection: Decodable {
   enum Keys: String, CodingKey, CaseIterable {
@@ -591,6 +620,10 @@ extension TraceScenario: Decodable {
     let shared = Keys.names
     let context = "a \(emitter.rawValue) scenario"
     switch emitter {
+    case .math:
+      try TraceScenarioKeys.refuseUnknown(
+        in: decoder, known: shared + Math.Keys.names, context: context)
+      body = .math(try Math(from: decoder))
     case .decode:
       try TraceScenarioKeys.refuseUnknown(in: decoder, known: shared, context: context)
       body = .decode

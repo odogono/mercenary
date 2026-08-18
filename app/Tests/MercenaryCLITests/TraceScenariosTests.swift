@@ -32,6 +32,7 @@ final class TraceScenariosTests: XCTestCase {
     let catalogue = try load(
       """
       {"schemaVersion": 1, "scenarios": [
+        {"emitter": "math", "id": "elementary", "samples": 64},
         {"emitter": "decode", "id": "payload"},
         {"emitter": "projection", "id": "pose", "room": 3, "heading": 90},
         {"emitter": "flight", "id": "craft", "craft": 2},
@@ -43,13 +44,39 @@ final class TraceScenariosTests: XCTestCase {
       """)
     XCTAssertEqual(
       catalogue.scenarios.map(\.emitter),
-      [.decode, .projection, .flight, .gameCore, .benson, .session, .navigation])
-    guard case .gameCore(let core) = catalogue.scenarios[3].body else { return XCTFail("a core body") }
+      [.math, .decode, .projection, .flight, .gameCore, .benson, .session, .navigation])
+    guard case .math(let math) = catalogue.scenarios[0].body else { return XCTFail("a math body") }
+    XCTAssertEqual(math.samples, 64)
+    guard case .gameCore(let core) = catalogue.scenarios[4].body else { return XCTFail("a core body") }
     XCTAssertEqual(core.legs.count, 1)
     XCTAssertEqual(core.legs[0].walk, 1)
-    guard case .benson(let benson) = catalogue.scenarios[4].body else { return XCTFail("a benson body") }
+    guard case .benson(let benson) = catalogue.scenarios[5].body else { return XCTFail("a benson body") }
     XCTAssertEqual(benson.host.room, 3)
   }
+
+  /// The math emitter's own body, which is one field and a default.
+  func testAMathScenarioDefaultsItsSampleCount() throws {
+    let catalogue = try load(
+      #"{"schemaVersion": 1, "scenarios": [{"emitter": "math", "id": "elementary"}]}"#)
+    guard case .math(let body) = catalogue.scenarios[0].body else { return XCTFail("a math body") }
+    XCTAssertEqual(body.samples, 256)
+  }
+
+  /// Read as strictly as every other body. The sample count is the only thing a math
+  /// scenario may say: the domains are derived from what the kit's own wrappers can produce
+  /// rather than chosen, so a scenario naming its own angles is a scenario claiming a
+  /// guarantee the port was never asked for.
+  func testAMathScenarioRefusesADomainItDoesNotOwn() {
+    XCTAssertThrowsError(
+      try load(
+        #"{"schemaVersion": 1, "scenarios": [{"emitter": "math", "id": "e", "angles": [1]}]}"#)
+    ) { error in
+      XCTAssertTrue(
+        String(describing: error).contains("angles"),
+        "the error should name the field: \(error)")
+    }
+  }
+
 
   /// The whole point of reading this strictly.
   func testAMisspelledFieldIsRefusedByName() {
@@ -182,7 +209,8 @@ final class TraceScenariosTests: XCTestCase {
   func testEmittersAreOrderedByTheirDependencies() {
     XCTAssertEqual(
       TraceEmitter.allCases,
-      [.decode, .projection, .flight, .gameCore, .benson, .session, .navigation])
+      [.math, .decode, .projection, .flight, .gameCore, .benson, .session, .navigation])
+    XCTAssertTrue(TraceEmitter.math < TraceEmitter.decode)
     XCTAssertTrue(TraceEmitter.decode < TraceEmitter.projection)
     XCTAssertTrue(TraceEmitter.benson < TraceEmitter.session)
   }
