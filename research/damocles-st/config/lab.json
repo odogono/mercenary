@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "machineModel": "st",
+  "memsizeMiB": 1,
+  "minimumHatariVersion": "2.6.0",
+  "minimumPythonVersion": "3.13",
+  "hatariBinary": "hatari",
+  "hostTimeoutSeconds": 120,
+  "fastForward": true,
+  "statusbar": false,
+  "checkpoints": {
+    "title-screen": {
+      "pc": 427394,
+      "pcHex": "0x68582",
+      "extraVbls": 1400,
+      "description": "First title-loop hit at $68582, then 1400 additional VBLs so the Damocles title screen is painted and waiting for input.",
+      "stableRamRanges": [
+        ["0x3b000", "0x3c000"],
+        ["0x60000", "0x6aa00"]
+      ]
+    }
+  }
+}
