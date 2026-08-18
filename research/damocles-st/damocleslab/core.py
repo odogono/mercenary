@@ -91,6 +91,56 @@ def parse_register_log(text: str) -> dict[str, Any]:
     return registers
 
 
+_STICK_DIRECTIONS = {
+    "up": 72,
+    "down": 80,
+    "left": 75,
+    "right": 77,
+    "fire": 29,
+}
+
+# Damocles decodes the joystick-1 IKBD packet into a direction bitmask soft-copy
+# at $79C2 (ACIA handler at $05555C-$055574). Poking this byte via the debugger
+# drives locomotion headlessly; the joystick-0/mouse copy at $79C0 does not.
+# Confirmed by work/joy-softcopy-poke-20260818T143019Z-3016de12 ($79C2 alone:
+# 63516 viewport pixel diffs) vs joy-softcopy-poke-20260818T142615Z-8d1804dc
+# ($79C0 alone: 0 diffs). Bitmask is active-high (Hatari IKBD joystick bits).
+JOYSTICK1_SOFTCOPY = 0x79C2
+_STICK_BITMASKS = {
+    "up": 0x01,
+    "down": 0x02,
+    "left": 0x04,
+    "right": 0x08,
+    "fire": 0x80,
+}
+
+
+def format_hatari_key(key: str | int) -> str:
+    """Render a scenario key as a hatari-event argument."""
+    if isinstance(key, int):
+        return str(key)
+    return key
+
+
+def resolve_stick_key(direction: str) -> int:
+    require(direction in _STICK_DIRECTIONS, f"Unknown stick direction {direction!r}")
+    return _STICK_DIRECTIONS[direction]
+
+
+def resolve_stick_bitmask(direction: str) -> int:
+    """Return the Damocles joystick-1 direction bitmask for a scenario direction."""
+    require(direction in _STICK_BITMASKS, f"Unknown stick direction {direction!r}")
+    return _STICK_BITMASKS[direction]
+
+
+def _validate_key_field(key: Any, *, label: str) -> None:
+    require(isinstance(key, (str, int)), f"{label} key invalid")
+    if isinstance(key, str):
+        require(bool(key) and len(key) <= 32, f"{label} key text invalid")
+    else:
+        require(0 <= key <= 127, f"{label} scancode invalid")
+
+
 def validate_scenario(scenario: dict[str, Any]) -> None:
     require(scenario.get("schemaVersion") == 1, "Scenario schemaVersion must be 1")
     require(isinstance(scenario.get("name"), str) and bool(scenario["name"]), "Scenario name is required")
@@ -98,11 +148,17 @@ def validate_scenario(scenario: dict[str, Any]) -> None:
         scenario.get("checkpoint") == "title-screen",
         "Scenario checkpoint must be title-screen",
     )
+    joy_keys_port = scenario.get("joyKeysPort")
+    require(
+        joy_keys_port is None or joy_keys_port in (0, 1),
+        "Scenario joyKeysPort must be 0 or 1 when present",
+    )
     actions = scenario.get("actions")
     require(isinstance(actions, list) and bool(actions), "Scenario actions must be a non-empty list")
-    allowed = {"wait_vbls", "keypress", "capture"}
+    allowed = {"wait_vbls", "keypress", "keydown", "keyup", "stick_hold", "capture"}
     capture_count = 0
     prefixes: set[str] = set()
+    uses_stick = False
     for index, action in enumerate(actions):
         require(isinstance(action, dict), f"Scenario action {index} must be an object")
         action_type = action.get("type")
@@ -110,13 +166,20 @@ def validate_scenario(scenario: dict[str, Any]) -> None:
         if action_type == "wait_vbls":
             count = action.get("count")
             require(isinstance(count, int) and 0 < count <= 100000, f"Scenario action {index} wait_vbls invalid")
-        elif action_type == "keypress":
-            key = action.get("key")
-            require(isinstance(key, (str, int)), f"Scenario action {index} keypress key invalid")
-            if isinstance(key, str):
-                require(bool(key) and len(key) <= 32, f"Scenario action {index} key text invalid")
-            else:
-                require(0 <= key <= 127, f"Scenario action {index} scancode invalid")
+        elif action_type in {"keypress", "keydown", "keyup"}:
+            _validate_key_field(action.get("key"), label=f"Scenario action {index} {action_type}")
+        elif action_type == "stick_hold":
+            uses_stick = True
+            direction = action.get("direction")
+            require(
+                isinstance(direction, str) and direction in _STICK_DIRECTIONS,
+                f"Scenario action {index} stick_hold direction invalid",
+            )
+            count = action.get("vbls")
+            require(
+                isinstance(count, int) and 0 < count <= 100000,
+                f"Scenario action {index} stick_hold vbls invalid",
+            )
         elif action_type == "capture":
             capture_count += 1
             artifacts = action.get("artifacts")
@@ -131,6 +194,9 @@ def validate_scenario(scenario: dict[str, Any]) -> None:
             require(prefix not in prefixes, f"Scenario action {index} capture prefix {prefix!r} reused")
             prefixes.add(prefix)
     require(1 <= capture_count <= 2, "Observation scenarios must contain one or two capture actions")
+    # stick_hold drives locomotion by memwriting the joystick-1 soft-copy at
+    # $79C2, so it needs no host keyboard-to-joystick remapping (joyKeysPort).
+    _ = uses_stick
 
 
 def validate_run_manifest(manifest: dict[str, Any]) -> None:

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "name": "approach-spaceport-pad",
+  "checkpoint": "title-screen",
+  "description": "Enter the starting outdoor world at Eris Capital City Spaceport (07/08), back up onto the white pad so the pyramid and cyan-windowed building are in frame, then capture. Working-Authority Evidence for controlled outdoor locomotion near enterable-looking buildings (#79). Interior entry was not achieved this pass.",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "prefix": "observed-t0",
+      "artifacts": ["display", "registers", "ram"]
+    },
+    {
+      "type": "stick_hold",
+      "direction": "down",
+      "vbls": 1500
+    },
+    {
+      "type": "stick_hold",
+      "direction": "up",
+      "vbls": 800
+    },
+    {
+      "type": "capture",
+      "prefix": "observed-t1",
+      "artifacts": ["display", "registers", "ram"]
+    }
+  ]
+}

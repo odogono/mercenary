@@ -77,7 +77,7 @@ The Hatari laboratory for the ST Working Authority lives at `research/damocles-s
 
 - [#77](https://github.com/odogono/mercenary/issues/77) — map (research, not a remake)
 - [#78](https://github.com/odogono/mercenary/issues/78) — Hatari laboratory for the ST working authority
-- [#79](https://github.com/odogono/mercenary/issues/79) — filled-polygon presentation (blocked by #78)
+- [#79](https://github.com/odogono/mercenary/issues/79) — filled-polygon presentation (blocked by #78); inventory note: `docs/research/damocles-filled-polygons.md`
 - [#80](https://github.com/odogono/mercenary/issues/80) — Gamma System world (blocked by #78); inventory note: `docs/research/damocles-gamma-system.md`
 - [#81](https://github.com/odogono/mercenary/issues/81) — script VM and occupancy/flight/space/time (blocked by #78); inventory note: `docs/research/damocles-script-motion-time.md`
 - [#85](https://github.com/odogono/mercenary/issues/85) — bytecode script ISA (follow-on from #81); inventory note: `docs/research/damocles-script-isa.md`

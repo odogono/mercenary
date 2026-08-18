@@ -14,8 +14,11 @@ from .core import (
     compare_reproducible_runs,
     file_hash,
     extract_stable_ram,
+    format_hatari_key,
     parse_ram_ranges,
     parse_register_log,
+    JOYSTICK1_SOFTCOPY,
+    resolve_stick_bitmask,
     stable_registers,
     validate_image,
     validate_run_manifest,
@@ -336,6 +339,7 @@ def observe(
     wait_script.write_text(render_vbl_wait_script(dump_script=on_title, extra_vbls=extra_vbls), encoding="utf-8")
     parse_script.write_text(render_title_capture_script(next_script=wait_script, pc=pc), encoding="utf-8")
 
+    joy_keys_port = scenario.get("joyKeysPort")
     command = build_hatari_command(
         hatari_binary=hatari_binary,
         tos=tos_path,
@@ -346,6 +350,7 @@ def observe(
         fast_forward=bool(config.get("fastForward", True)),
         statusbar=bool(config.get("statusbar", False)),
         cmd_fifo=fifo,
+        joy_keys_port=joy_keys_port,
     )
     env = os.environ.copy()
     env.update(headless_env())
@@ -396,8 +401,52 @@ def observe(
                     if action_type == "wait_vbls":
                         time.sleep(max(0.05, action["count"] / 2000.0))
                     elif action_type == "keypress":
-                        _fifo_send(fifo_handle, [f"hatari-event keypress {action['key']}"])
+                        key = format_hatari_key(action["key"])
+                        _fifo_send(fifo_handle, [f"hatari-event keypress {key}"])
                         time.sleep(0.1)
+                    elif action_type == "keydown":
+                        key = format_hatari_key(action["key"])
+                        _fifo_send(fifo_handle, [f"hatari-event keydown {key}"])
+                        time.sleep(0.05)
+                    elif action_type == "keyup":
+                        key = format_hatari_key(action["key"])
+                        _fifo_send(fifo_handle, [f"hatari-event keyup {key}"])
+                        time.sleep(0.05)
+                    elif action_type == "stick_hold":
+                        # FIFO scancode injection never reaches Damocles' joystick
+                        # decode, so hold locomotion by memwriting the joystick-1
+                        # direction soft-copy at $79C2 and refilling it in bursts
+                        # (a fresh IKBD packet could otherwise clear it).
+                        bitmask = resolve_stick_bitmask(str(action["direction"]))
+                        addr = JOYSTICK1_SOFTCOPY
+                        remaining = int(action["vbls"])
+                        burst_vbls = 2000
+                        while remaining > 0:
+                            if process.poll() is not None:
+                                break
+                            chunk = min(burst_vbls, remaining)
+                            _fifo_send(
+                                fifo_handle,
+                                [
+                                    "hatari-stop",
+                                    "hatari-debug setopt hex",
+                                    f"hatari-debug w ${addr:x} {bitmask:02x}",
+                                    "hatari-cont",
+                                ],
+                            )
+                            time.sleep(max(0.05, chunk / 2000.0))
+                            remaining -= chunk
+                        if process.poll() is None:
+                            _fifo_send(
+                                fifo_handle,
+                                [
+                                    "hatari-stop",
+                                    "hatari-debug setopt hex",
+                                    f"hatari-debug w ${addr:x} 00",
+                                    "hatari-cont",
+                                ],
+                            )
+                            time.sleep(0.1)
                     elif action_type == "capture":
                         prefix = str(action.get("prefix", "observed"))
                         is_final = action is capture_actions[-1]

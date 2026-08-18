@@ -47,10 +47,13 @@ def build_hatari_command(
     fast_forward: bool,
     statusbar: bool,
     cmd_fifo: Path | None = None,
+    joy_keys_port: int | None = None,
     extra_args: list[str] | None = None,
 ) -> list[str]:
     if memsize_mib <= 0:
         raise LabError("Hatari memsize must be positive")
+    if joy_keys_port is not None and joy_keys_port not in (0, 1):
+        raise LabError("Keyboard-mapped joystick port must be 0 or 1")
     command = [
         str(hatari_binary),
         "--tos",
@@ -76,6 +79,8 @@ def build_hatari_command(
         "--crop",
         "true",
     ]
+    if joy_keys_port is not None:
+        command.extend([f"--joy{joy_keys_port}", "keys"])
     if fast_forward:
         command.extend(["--fast-forward", "true"])
     if cmd_fifo is not None:

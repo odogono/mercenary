@@ -12,17 +12,24 @@ sys.path.insert(0, str(LAB_ROOT))
 
 from damocleslab.core import (  # noqa: E402
     LabError,
+    JOYSTICK1_SOFTCOPY,
     compare_reproducible_runs,
     extract_stable_ram,
     parse_ram_ranges,
     parse_register_log,
+    resolve_stick_bitmask,
     stable_registers,
     validate_image,
     validate_run_manifest,
     validate_scenario,
     verify_run_artifacts,
 )
-from damocleslab.runtime import render_dump_script, render_title_capture_script, render_vbl_wait_script  # noqa: E402
+from damocleslab.runtime import (  # noqa: E402
+    build_hatari_command,
+    render_dump_script,
+    render_title_capture_script,
+    render_vbl_wait_script,
+)
 from damocleslab.toolchain import parse_hatari_version  # noqa: E402
 
 
@@ -101,6 +108,33 @@ class ScenarioValidationTests(unittest.TestCase):
     def test_accepts_deadline_clock_two_captures(self) -> None:
         path = Path(__file__).resolve().parents[1] / "scenarios" / "deadline-clock.json"
         validate_scenario(json.loads(path.read_text(encoding="utf-8")))
+
+    def test_accepts_walk_toward_building_stick_hold(self) -> None:
+        path = Path(__file__).resolve().parents[1] / "scenarios" / "walk-toward-building.json"
+        validate_scenario(json.loads(path.read_text(encoding="utf-8")))
+
+    def test_accepts_approach_spaceport_pad(self) -> None:
+        path = Path(__file__).resolve().parents[1] / "scenarios" / "approach-spaceport-pad.json"
+        validate_scenario(json.loads(path.read_text(encoding="utf-8")))
+
+    def test_accepts_outdoor_palette(self) -> None:
+        path = Path(__file__).resolve().parents[1] / "scenarios" / "outdoor-palette.json"
+        validate_scenario(json.loads(path.read_text(encoding="utf-8")))
+
+    def test_accepts_stick_hold_without_joy_keys_port(self) -> None:
+        # stick_hold drives locomotion by memwriting the $79C2 joystick-1
+        # soft-copy, so it no longer depends on host keyboard-to-joystick mapping.
+        validate_scenario(
+            {
+                "schemaVersion": 1,
+                "name": "stick-no-joykeys",
+                "checkpoint": "title-screen",
+                "actions": [
+                    {"type": "stick_hold", "direction": "up", "vbls": 100},
+                    {"type": "capture", "artifacts": ["display"]},
+                ],
+            }
+        )
 
     def test_rejects_reused_capture_prefix(self) -> None:
         with self.assertRaisesRegex(LabError, "prefix"):
@@ -182,6 +216,56 @@ class RuntimeScriptTests(unittest.TestCase):
             dump_script = render_dump_script(run_directory=Path(directory), prefix="title-screen")
             self.assertIn("savebin", dump_script)
             self.assertIn("screenshot", dump_script)
+
+    def test_joy1_keys_adds_hatari_flag(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            parse = Path(directory) / "parse.txt"
+            parse.write_text("c\n", encoding="utf-8")
+            tos = Path(directory) / "tos.img"
+            disk = Path(directory) / "disk.stx"
+            tos.write_bytes(b"tos")
+            disk.write_bytes(b"stx")
+            command = build_hatari_command(
+                hatari_binary=Path("hatari"),
+                tos=tos,
+                disk_a=disk,
+                machine_model="st",
+                memsize_mib=1,
+                parse_script=parse,
+                fast_forward=True,
+                statusbar=False,
+                joy_keys_port=1,
+            )
+            self.assertIn("--joy1", command)
+            self.assertEqual(command[command.index("--joy1") + 1], "keys")
+            without = build_hatari_command(
+                hatari_binary=Path("hatari"),
+                tos=tos,
+                disk_a=disk,
+                machine_model="st",
+                memsize_mib=1,
+                parse_script=parse,
+                fast_forward=True,
+                statusbar=False,
+            )
+            self.assertNotIn("--joy0", without)
+            self.assertNotIn("--joy1", without)
+
+
+class StickBitmaskTests(unittest.TestCase):
+    def test_maps_directions_to_ikbd_joystick_bits(self) -> None:
+        self.assertEqual(resolve_stick_bitmask("up"), 0x01)
+        self.assertEqual(resolve_stick_bitmask("down"), 0x02)
+        self.assertEqual(resolve_stick_bitmask("left"), 0x04)
+        self.assertEqual(resolve_stick_bitmask("right"), 0x08)
+        self.assertEqual(resolve_stick_bitmask("fire"), 0x80)
+
+    def test_softcopy_address_is_joystick_one(self) -> None:
+        self.assertEqual(JOYSTICK1_SOFTCOPY, 0x79C2)
+
+    def test_rejects_unknown_direction(self) -> None:
+        with self.assertRaisesRegex(LabError, "direction"):
+            resolve_stick_bitmask("diagonal")
 
 
 class VersionTests(unittest.TestCase):

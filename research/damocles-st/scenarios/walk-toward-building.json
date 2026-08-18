@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "name": "walk-toward-building",
+  "checkpoint": "title-screen",
+  "description": "Enter the starting outdoor world, capture, then walk forward by holding the joystick-1 direction (memwrite of the $79C2 soft-copy, not host key remapping) and capture again. Working-Authority Evidence for filled-polygon view change under controlled locomotion and interior/window probes (#79).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "prefix": "observed-t0",
+      "artifacts": ["display", "registers", "ram"]
+    },
+    {
+      "type": "stick_hold",
+      "direction": "up",
+      "vbls": 30000
+    },
+    {
+      "type": "capture",
+      "prefix": "observed-t1",
+      "artifacts": ["display", "registers", "ram"]
+    }
+  ]
+}

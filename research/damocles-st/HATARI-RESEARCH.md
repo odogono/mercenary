@@ -26,16 +26,94 @@ runtime state, and replay one bounded input scenario.
 
 `--cmd-fifo` accepts newline-separated host commands. Useful ones:
 
-- `hatari-event keypress <ascii-or-scancode>` (also `keydown` / `keyup`; no joystick direction event)
+- `hatari-event keypress <ascii-or-scancode>` (also `keydown` / `keyup`)
 - `hatari-stop` / `hatari-cont` / `hatari-debug <debugger command>`
 - `hatari-debug quit`
 
+### Driving Damocles locomotion headlessly (solved)
+
+**Locomotion works by memwriting Damocles's joystick-1 direction soft-copy at
+`$79C2`.** No host keyboard-to-joystick mapping and no `hatari-event joy…`
+(Hatari has none) are needed.
+
+`stick_hold` under `observe` now freezes with `hatari-stop`, writes the
+direction bitmask with `hatari-debug w $79c2 <bits>`, `hatari-cont`, and refills
+in ~2000-VBL bursts for the hold duration (a fresh IKBD packet could otherwise
+clear it), then writes `$00` to release. Bitmask is active-high IKBD joystick
+bits: up `$01`, down `$02`, left `$04`, right `$08`, fire `$80`.
+
+Cited run `work/observe-walk-toward-building-20260818T143508Z-c60e2391`
+(`walk-toward-building.json`, hold up 30,000 VBLs): the camera walks forward off
+the road onto open ground and the NAV coordinate advances `07-08` → `07-11`.
+
+Near-building outdoor pose (still exterior): scenario
+`approach-spaceport-pad.json` (`down` 1500 then `up` 800) reaches the white
+pad facing the pyramid and cyan-windowed spaceport building — cited
+`work/observe-approach-spaceport-pad-20260818T152751Z-9ebdb1a1`. Multi-step
+recon uses `scripts/enter-building-probe.py`.
+
+### Save-states: pin destinations, not input traces (solved)
+
+Doorway entry via automated or replayed input never aligned — recorded stick +
+key timelines (`scripts/record-play.py`) drift over long run segments even with
+the `R` run toggle faithfully injected (`hatari-event keydown/keyup 19` is
+confirmed effective). The reliable pattern is **`hatari-debug statesave` at the
+destination** and `--memstate <file>` to boot straight back into it:
+
+- `snapshots/eris-spaceport-onfoot.sav` — on-foot at the Eris spaceport,
+  skipping the ~3-minute intro (made by `record-play.py snapshot`).
+- `snapshots/interior-window.sav` — standing inside the spaceport building at a
+  window (human walk from the on-foot snapshot via `record-play.py record
+  --memstate … --snapshot-out …`, which `statesave`s on Ctrl-C).
+
+`--memstate` restores in a few seconds under the normal launch contract; give
+it ~5 s settle before the first capture. Interior evidence lives in
+`work/interior-window-observe-20260818T171923Z-2da8247f` and
+`work/interior-window-ram-20260818T172346Z-e3772e4d`.
+
+#### How the address was found
+
+Damocles's IKBD ACIA handler (`$05555C`–`$055574`) decodes joystick packets:
+header `$FE` → joystick-0/mouse data to `$79C0`; header `$FF` → joystick-1 data
+to `$79C2`; other bytes → keyboard scancode to `$5558C`. The movement code at
+`$01Exxx`/`$02xxxx` reads the joystick soft-copy. Isolation runs:
+
+| Poke | Viewport pixel diffs | Verdict |
+|---|---|---|
+| `$79C2` = `$01` (`joy-softcopy-poke-20260818T143019Z-3016de12`) | **63516** | walks forward |
+| `$79C0` = `$01` (`joy-softcopy-poke-20260818T142615Z-8d1804dc`) | 0 | no movement |
+| both (`joy-softcopy-poke-20260818T142425Z-19851185`) | 63516 | walks forward |
+
+So Damocles reads its game controller on **joystick port 1** (`$79C2`), matching
+ST convention; port 0 (`$79C0`) is the mouse/shared copy the engine ignores for
+walking. Script: `research/damocles-st/scripts/joy-softcopy-poke.py`.
+
+#### What did not work (kept for the record)
+
+- FIFO `hatari-event keydown/keyup/keypress` injects ST IKBD **scancodes**
+  (`IKBD_PressSTKey`); it never calls `Joy_KeyDown`, so `Joy_GetStickData()`
+  stays idle. `--joy1 keys` only remaps **host** SDL keys, which the FIFO does
+  not emit. Confirmed negative at port 1 in
+  `work/observe-walk-toward-building-20260818T141006Z-f1b459cc` (0 viewport
+  diffs). `joyKeysPort` is therefore no longer required by `stick_hold`.
+- Poking the IKBD **scancode queue** at `$61CC` (word count) / `$61CE` (bytes)
+  sticks (`joy-debugger-poke.py`, verified `poke-verify.bin`) but does **not**
+  move the outdoor camera (`work/joy-debugger-poke-20260818T124048Z-bb02de4a`,
+  0 viewport diffs) — walking is joystick-driven, not keyboard-driven.
+
+Scenario helper action:
+
+- `{"type": "stick_hold", "direction": "up"|"down"|"left"|"right"|"fire", "vbls": N}`
+
 Mid-scenario captures use `hatari-stop`, debugger dumps, then `hatari-cont`; the
 final capture ends with `hatari-debug quit`. Scenario JSON may declare one or
-two `capture` actions with distinct `prefix` values (see `deadline-clock.json`).
+two `capture` actions with distinct `prefix` values (see `deadline-clock.json`,
+`outdoor-palette.json`, `walk-toward-building.json`).
 
-Do not backslash-escape debugger arguments. Keep a FIFO writer open only while
-sending a batch, then close it so Hatari can exit.
+Do not backslash-escape debugger arguments. Keep a FIFO writer open for the
+whole observe session (closing it early can abort in-debugger parse chains).
+Avoid interactive `m` memdumps over FIFO — they can page and stall automation;
+use `savebin` of a small window instead.
 
 ## What this lab does not do
 

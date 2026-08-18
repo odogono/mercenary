@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "name": "outdoor-palette",
+  "checkpoint": "title-screen",
+  "description": "Enter the starting outdoor world, capture once, wait idle, capture again. Working-Authority Evidence for day/night palette or shading drift (#79).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "prefix": "observed-t0",
+      "artifacts": ["display", "registers", "ram"]
+    },
+    {
+      "type": "wait_vbls",
+      "count": 40000
+    },
+    {
+      "type": "capture",
+      "prefix": "observed-t1",
+      "artifacts": ["display", "registers", "ram"]
+    }
+  ]
+}
