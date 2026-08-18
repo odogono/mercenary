@@ -35,5 +35,9 @@ sending a batch, then close it so Hatari can exit.
 
 ## What this lab does not do
 
-No filled-polygon decode, no Gamma System map, no script VM census, and no
-second Independent Implementation. Those are #79–#82.
+No Damocles Data Payload, extractor, or schema. No second Independent
+Implementation. Mapping tickets (#79–#81) may add reproducible checkpoints and
+observation scenarios so Working-Authority Evidence for filled polygons, the
+Gamma System layout, and script/motion/time can be cited from `docs/research/`
+notes. Those decode findings stay in the notes; this tree keeps hashes,
+configs, schemas, and lab prose only.

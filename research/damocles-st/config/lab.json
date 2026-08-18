@@ -5,7 +5,7 @@
   "minimumHatariVersion": "2.6.0",
   "minimumPythonVersion": "3.13",
   "hatariBinary": "hatari",
-  "hostTimeoutSeconds": 120,
+  "hostTimeoutSeconds": 240,
   "fastForward": true,
   "statusbar": false,
   "checkpoints": {

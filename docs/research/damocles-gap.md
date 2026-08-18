@@ -78,7 +78,7 @@ The Hatari laboratory for the ST Working Authority lives at `research/damocles-s
 - [#77](https://github.com/odogono/mercenary/issues/77) — map (research, not a remake)
 - [#78](https://github.com/odogono/mercenary/issues/78) — Hatari laboratory for the ST working authority
 - [#79](https://github.com/odogono/mercenary/issues/79) — filled-polygon presentation (blocked by #78)
-- [#80](https://github.com/odogono/mercenary/issues/80) — Gamma System world (blocked by #78)
+- [#80](https://github.com/odogono/mercenary/issues/80) — Gamma System world (blocked by #78); inventory note: `docs/research/damocles-gamma-system.md`
 - [#81](https://github.com/odogono/mercenary/issues/81) — script VM and occupancy/flight/space/time (blocked by #78)
 - [#82](https://github.com/odogono/mercenary/issues/82) — is a second Independent Implementation the right shape? (blocked by #79, #80, #81)
 

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "name": "first-world",
+  "checkpoint": "title-screen",
+  "description": "From the Damocles title screen, press Space once, wait long enough for the starting world view to load (panel shows a body name such as ERIS), then capture RAM/registers/display. Working-Authority Evidence for Gamma System layout hunts (#80).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "artifacts": ["display", "registers", "ram"]
+    }
+  ]
+}
