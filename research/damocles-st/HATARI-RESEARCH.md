@@ -71,6 +71,16 @@ it ~5 s settle before the first capture. Interior evidence lives in
 `work/interior-window-observe-20260818T171923Z-2da8247f` and
 `work/interior-window-ram-20260818T172346Z-e3772e4d`.
 
+Occupancy / craft poses for #86 (same pattern):
+
+- `snapshots/boarded-car.sav` — aboard the V.I.P. limo (key held)
+- `snapshots/boarded-limo.sav` — limo after number-key speed changes
+- `snapshots/left-limo.sav` — on foot again after Space then `L`, key still held
+
+Take is **Right Shift + Up** (not `T`). Board `B`, leave `L`. Number keys set
+the panel speed field beside `ERIS`. Walk-versus-boarded soft word: `$7A8E`
+(`1` on foot, `0` boarded) — see `docs/research/damocles-walk-board-flight.md`.
+
 #### How the address was found
 
 Damocles's IKBD ACIA handler (`$05555C`–`$055574`) decodes joystick packets:

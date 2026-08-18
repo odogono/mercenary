@@ -66,7 +66,7 @@ manual transcription. Search hypotheses only.
 | Hypothesis | Status | Working-Authority Evidence |
 |---|---|---|
 | 1987 ST demo still carried Mercenary Benson programs; final ST may keep a successor VM | **Unresolved (VM)** | No `SCRIPT` / `INTERPRETER` strings; sole `BENSON` hit is a character name in an easter-egg file (`$073595`), not an interpreter label. Message bank + `(OK?)` prompts exist (see Script VM). |
-| Walk with joystick; board with `B` near craft while holding matching key; leave with `L` | **Unresolved (automation)** | Craft and key catalogues confirmed in RAM (#80 handoff). Hatari `--cmd-fifo` exposes `hatari-event keypress` only — no joystick direction event — so walk-near boarding was not reproduced in-lab. |
+| Walk with joystick; board with `B` near craft while holding matching key; leave with `L` | **Superseded — Confirmed in #86** | See [`damocles-walk-board-flight.md`](damocles-walk-board-flight.md): `$79C2` locomotion, Shift+Up take, `B`/`L` board/leave, walk flag `$7A8E`. |
 | Panel clock counts down to Damocles impact; near-c flight accelerates Eris time | **Partially confirmed** | Standing-still dual capture shows the panel clock counting down (see Time). Near-c dilation not tested (no spaceflight reach in this pass). |
 | Orbital mechanics beyond Craft Parameter Blocks | **Unresolved** | Craft names/keys present; no control-rate block decoded; VOID dynamics not entered. |
 
@@ -181,10 +181,10 @@ Damocles seam *would* need to census — not types to add to `MercenaryKit`.
 ## What was tried and left Unresolved
 
 - Full script ISA / dispatch-table decode — follow-on [#85](https://github.com/odogono/mercenary/issues/85); **existence answered** in `damocles-script-isa.md` (successor VM); full semantics still open
-- Walk-versus-boarded RAM word and board/leave observe (blocked on joystick FIFO) — follow-on [#86](https://github.com/odogono/mercenary/issues/86)
-- VOID / deep-space flight and near-c time dilation — [#86](https://github.com/odogono/mercenary/issues/86)
-- Impact-clock RAM cell(s) — may fall out of [#86](https://github.com/odogono/mercenary/issues/86) once locomotion scenarios exist
-- Craft control-rate / orbital-parameter blocks — [#86](https://github.com/odogono/mercenary/issues/86)
+- Walk-versus-boarded RAM word and board/leave observe — **answered** in [#86](https://github.com/odogono/mercenary/issues/86) / `damocles-walk-board-flight.md` (walk flag `$7A8E`; VOID / velocity binary / clock-under-flight still Fog there)
+- VOID / deep-space flight and near-c time dilation — still open under #86 residual Fog
+- Impact-clock RAM cell(s) — still Unresolved
+- Craft control-rate / orbital-parameter blocks — partial (number-key panel speed in #86); tables Unresolved
 
 ## Provenance summary
 
