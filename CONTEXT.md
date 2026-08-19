@@ -26,6 +26,10 @@ _Avoid_: Game manager, world state, controller, store
 Which space the player occupies — the surface, or one identified Room. The surface is a Location in its own right and not a Room.
 _Avoid_: Position, place, level, zone
 
+**Room**:
+One enclosed underground space, with its own wireframe, its own local coordinates and its own openings, shown on its own — the Reference Build draws one Room at a time rather than a neighbourhood. The surface is not a Room.
+_Avoid_: Level, chamber, interior, zone, area
+
 **Occupancy**:
 What the player is currently inside, being either on foot or aboard one identified craft.
 _Avoid_: Vehicle state, mount, mode
@@ -225,6 +229,38 @@ _Avoid_: Mesh dump, model pack
 **Geometry Identity**:
 A stable, Research Provenance-backed identity for an entity in the World Geometry Dataset that remains valid when its interpretation or name changes.
 _Avoid_: Object name, canonical name
+
+**Pose**:
+Where a Camera is and how it is turned at one moment — a position, a heading, a pitch and a roll — named on its own so a single view can be asked for, recorded and compared without a session behind it.
+_Avoid_: Position, viewpoint, snapshot, camera state
+
+**Camera**:
+What turns the world into a view for one Pose, together with the near and far limits of what is worth drawing.
+_Avoid_: View, eye, transform, matrix
+
+**Reference Viewport**:
+The Reference Build's own screen geometry — its logical extent, its centre, and the fact that its display makes each logical horizontal coordinate two pixels wide — kept whatever size the window is, so the view keeps the original's proportions rather than the window's.
+_Avoid_: Screen size, resolution, canvas, aspect ratio
+
+**Ink**:
+Which of the wireframe's two drawing passes a line belongs to, dim or bright; the Reference Build splits a structure's edges between them and the difference is part of the visual language rather than a shading effect.
+_Avoid_: Colour, brightness, shade, layer
+
+**Screen Line**:
+One world segment after projection: two screen coordinates and the Ink it is drawn in. It says what to draw and nothing about how to draw it.
+_Avoid_: Edge, stroke, vector, polyline
+
+**Far Point**:
+An object far enough away to be shown as a single point rather than its wireframe, which is how the original represented distance.
+_Avoid_: Dot, sprite, level of detail, billboard
+
+**Map Lines**:
+The surface's roads and runways, selected for a position and an altitude from the Reference Build's own tables rather than from the structures standing near the player.
+_Avoid_: Roads, terrain, ground detail, map overlay
+
+**Visibility Selector**:
+What decides which of the world's geometry is worth projecting for one Pose, before anything is projected: the structures around the player, the Map Lines for where they are, and the objects present — or, underground, one Room and the things standing in it.
+_Avoid_: Culler, frustum culling, scene graph, filter
 
 **Curated Name**:
 A human game-world label attached to a Geometry Identity, marked verified when supported by Authoritative Evidence and candidate when its interpretation remains uncertain.
