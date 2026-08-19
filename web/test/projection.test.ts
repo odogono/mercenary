@@ -124,6 +124,14 @@ const lineValue = (line: ScreenLine): TraceValue => ({
   y2: line.y2
 });
 
+/// Whether the trace says this pose is a dark Room, in which case the pipeline is not run at
+/// all and there is nothing to project.
+const isDark = (header: TraceObject): boolean => {
+  const backdrop = header['backdrop'] as TraceObject;
+  const indoor = backdrop['indoor'] as TraceObject | undefined;
+  return indoor?.['dark'] === true;
+};
+
 /// The backdrop the trace records: sky and ground outdoors, the indoor scene underground.
 const backdropValue = (
   camera: Camera,
@@ -285,13 +293,8 @@ describe('the projection Replay Gate', () => {
         );
         // A dark Room draws nothing at all, so the pipeline is not run: the selector's
         // candidates above are the claim, and the absence of lines here is the rest of it.
-        const dark =
-          (
-            (trace.header['backdrop'] as TraceObject)['indoor'] as
-              TraceObject | undefined
-          )?.['dark'] === true;
         const produced: ScreenLine[] = [];
-        if (!dark) {
+        if (!isDark(trace.header)) {
           for (const segment of seen.segments) {
             const line = camera.projectSegment(segment, size);
             if (line !== undefined) {
@@ -319,12 +322,7 @@ describe('the projection Replay Gate', () => {
         const recorded = trace.records.filter(
           record => record['kind'] === 'point'
         );
-        const dark =
-          (
-            (trace.header['backdrop'] as TraceObject)['indoor'] as
-              TraceObject | undefined
-          )?.['dark'] === true;
-        const produced = dark
+        const produced = isDark(trace.header)
           ? []
           : seen.points
               .map(origin => camera.projectPoint(origin, size))

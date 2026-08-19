@@ -71,8 +71,8 @@ const channels = (colour: RGB8): [number, number, number] => [
 ];
 
 /// The four corners of the ground fill, leaned about the view's centre, as two triangles.
-const groundVertices = (rect: Rect, lean: AffineTransform): Float32Array => {
-  const corner = (x: number, y: number): Point => transformed(lean, { x, y });
+const groundVertices = (rect: Rect, leaned: AffineTransform): Float32Array => {
+  const corner = (x: number, y: number): Point => transformed(leaned, { x, y });
   const topLeft = corner(rect.x, rect.y);
   const topRight = corner(rect.x + rect.width, rect.y);
   const bottomRight = corner(rect.x + rect.width, rect.y + rect.height);
@@ -118,7 +118,10 @@ const pointVertices = (points: readonly Point[]): Float32Array => {
 
 export interface FrameContent {
   readonly blackInk: readonly ScreenLine[];
-  readonly ground: { readonly lean: AffineTransform; readonly rect: Rect };
+  readonly ground: {
+    readonly leaned: AffineTransform;
+    readonly rect: Rect;
+  };
   readonly points: readonly Point[];
   readonly whiteInk: readonly ScreenLine[];
 }
@@ -163,7 +166,7 @@ export const drawFrame = (
 
   draw(
     gl.TRIANGLES,
-    groundVertices(content.ground.rect, content.ground.lean),
+    groundVertices(content.ground.rect, content.ground.leaned),
     ScenePalette.ground
   );
   draw(gl.LINES, lineVertices(content.blackInk), ScenePalette.blackInk);

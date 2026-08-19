@@ -128,11 +128,6 @@ export const horizontalFocalLength = (size: Size): number =>
   ReferenceViewport.horizontalPixelScale *
   viewportScale(size);
 
-export const verticalFocalLength = (size: Size): number =>
-  ReferenceViewport.focalPixels *
-  ReferenceViewport.verticalRatioScale *
-  viewportScale(size);
-
 /// Vertical field of view implied by the reference frustum. A constant, because it is a
 /// property of the frustum rather than of any window the frustum is shown in.
 export const REFERENCE_VERTICAL_FIELD_OF_VIEW =
@@ -356,8 +351,15 @@ export class Camera {
 }
 
 /// Leaning the ground fill means turning it about the view's centre.
+///
+/// Composed in the order `CGAffineTransform`'s builders compose in, but not bit-identical to
+/// what CoreGraphics produces: its own concatenation fuses a multiply and an add, so the two
+/// translations come out about one unit in the last place apart. Nothing pins this — a Golden
+/// Trace records the lean angle, not the matrix — and the difference moves the corner of an
+/// 8320-pixel quad by a fraction of nothing. It is written down because a reader who measured
+/// it deserves to find it already known rather than think the port had drifted.
 export const leanTransform = (roll: number, size: Size): AffineTransform => {
-  const centre = { x: size.width / 2, y: size.height / 2 };
+  const centre = viewportCentre(size);
   const rotation: AffineTransform = {
     a: cos(roll),
     b: sin(roll),
@@ -386,9 +388,6 @@ export interface Visible {
 
 export interface VisibilityOptions {
   readonly elapsed?: number;
-  readonly includeObjects?: boolean;
-  readonly includeRoads?: boolean;
-  readonly includeStructures?: boolean;
   /// Where objects have got to, by slot. The payload's placement only says where a thing
   /// started: a craft that has been flown is somewhere else, one being flown is nowhere, and
   /// anything picked up is in the player's hands.
@@ -414,9 +413,6 @@ export const visible = (
 ): Visible => {
   const elapsed = options.elapsed ?? 0;
   const residence = options.residence;
-  const includeObjects = options.includeObjects ?? true;
-  const includeRoads = options.includeRoads ?? true;
-  const includeStructures = options.includeStructures ?? true;
   const segments: Segment[] = [];
   const points: Vector3[] = [];
   let detailedObjects = 0;
@@ -429,19 +425,17 @@ export const visible = (
     if (here !== undefined) {
       segments.push(...here.segments);
     }
-    if (includeObjects) {
-      for (const object of world.objects) {
-        if (
-          !isDrawable(object, room(options.room), residence?.get(object.slot))
-        ) {
-          continue;
-        }
-        if (isDetailed(object, position)) {
-          segments.push(...objectSegments(object));
-          detailedObjects += 1;
-        } else if (object.drawsFarAsPoint) {
-          points.push(object.origin);
-        }
+    for (const object of world.objects) {
+      if (
+        !isDrawable(object, room(options.room), residence?.get(object.slot))
+      ) {
+        continue;
+      }
+      if (isDetailed(object, position)) {
+        segments.push(...objectSegments(object));
+        detailedObjects += 1;
+      } else if (object.drawsFarAsPoint) {
+        points.push(object.origin);
       }
     }
     return { detailedObjects, points, segments };
@@ -449,47 +443,39 @@ export const visible = (
 
   const column = Math.floor(position.x / world.cellSize);
   const row = Math.floor(position.z / world.cellSize);
-  if (includeStructures) {
-    const radius = 1;
-    const firstColumn = Math.max(0, column - radius);
-    const lastColumn = Math.min(world.cellsPerAxis - 1, column + radius);
-    const firstRow = Math.max(0, row - radius);
-    const lastRow = Math.min(world.cellsPerAxis - 1, row + radius);
-    if (firstColumn <= lastColumn && firstRow <= lastRow) {
-      for (let selectedRow = firstRow; selectedRow <= lastRow; selectedRow++) {
-        for (
-          let selectedColumn = firstColumn;
-          selectedColumn <= lastColumn;
-          selectedColumn++
-        ) {
-          const cell = world.cell(selectedColumn, selectedRow);
-          if (cell !== undefined && cell.index !== 0) {
-            segments.push(...cell.segments(elapsed));
-          }
-        }
+  const radius = 1;
+  const firstColumn = Math.max(0, column - radius);
+  const lastColumn = Math.min(world.cellsPerAxis - 1, column + radius);
+  const firstRow = Math.max(0, row - radius);
+  const lastRow = Math.min(world.cellsPerAxis - 1, row + radius);
+  for (let selectedRow = firstRow; selectedRow <= lastRow; selectedRow++) {
+    for (
+      let selectedColumn = firstColumn;
+      selectedColumn <= lastColumn;
+      selectedColumn++
+    ) {
+      const cell = world.cell(selectedColumn, selectedRow);
+      if (cell !== undefined && cell.index !== 0) {
+        segments.push(...cell.segments(elapsed));
       }
     }
   }
 
-  if (includeRoads) {
-    segments.push(...world.mapSegments(position));
-  }
+  segments.push(...world.mapSegments(position));
 
-  if (includeObjects) {
-    for (const object of world.objects) {
-      const where = residence?.get(object.slot);
-      if (!isDrawable(object, SURFACE, where)) {
-        continue;
-      }
-      const moved = where === undefined ? undefined : displacement(where);
-      const placed =
-        moved === undefined ? object : movedHorizontally(object, moved);
-      if (isDetailed(placed, position)) {
-        segments.push(...objectSegments(placed));
-        detailedObjects += 1;
-      } else if (placed.drawsFarAsPoint) {
-        points.push(placed.origin);
-      }
+  for (const object of world.objects) {
+    const where = residence?.get(object.slot);
+    if (!isDrawable(object, SURFACE, where)) {
+      continue;
+    }
+    const moved = where === undefined ? undefined : displacement(where);
+    const placed =
+      moved === undefined ? object : movedHorizontally(object, moved);
+    if (isDetailed(placed, position)) {
+      segments.push(...objectSegments(placed));
+      detailedObjects += 1;
+    } else if (placed.drawsFarAsPoint) {
+      points.push(placed.origin);
     }
   }
 

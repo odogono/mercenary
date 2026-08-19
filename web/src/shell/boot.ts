@@ -68,7 +68,7 @@ try {
   const ground = camera.groundFill(size);
   drawFrame(canvas, {
     blackInk,
-    ground: { lean: leanTransform(ground.lean, size), rect: ground.rect },
+    ground: { leaned: leanTransform(ground.lean, size), rect: ground.rect },
     points,
     whiteInk
   });

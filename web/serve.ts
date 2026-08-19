@@ -69,7 +69,7 @@ const server = Bun.serve({
     // browser runs the same files the tests import. Stripping is not bundling: the import
     // specifiers keep their `.ts` extensions and the browser fetches each module from here in
     // turn, which is why there is still no build step and nothing that produces a deployable
-    // bundle (ADR 0004).
+    // bundle — the thing ADR 0019 gitignores and ADR 0004 gates.
     const candidate = join(import.meta.dir, url.pathname);
     if (candidate.startsWith(import.meta.dir)) {
       const file = Bun.file(candidate);

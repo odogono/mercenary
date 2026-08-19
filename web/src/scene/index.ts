@@ -12,6 +12,11 @@ import { hostRoom, type Residence, type Room } from '../world/index.ts';
 /// The session module (#94) is where an `IndoorScene` will eventually come from, since
 /// darkness depends on where the photon emitter has got to. What lives here is the resolution
 /// rule itself, which both renderers ask and which must not differ between them.
+///
+/// Of the palette, only `ScenePalette` has a caller today — the demo page draws its four
+/// colours. The C64 table is here because an indoor scene names its colours by index into it
+/// and the renderer that resolves them is #95; drawing the backdrop is that issue's, not this
+/// one's.
 
 /// An eight-bit sRGB colour, as both renderers name it.
 export interface RGB8 {
@@ -58,32 +63,10 @@ export const C64_PALETTE: readonly RGB8[] = [
 export const c64Colour = (index: number): RGB8 | undefined =>
   C64_PALETTE[index];
 
-/// The Reference Build clears an indoor bitmap with `$AA`: foreground bit first, then
-/// background, alternating through all 320 bitmap columns.
+/// How many bitmap columns an indoor backdrop alternates across. The Reference Build clears
+/// the bitmap with `$AA` — foreground bit first, then background — and a projection Golden
+/// Trace records the count alongside the scene, which is the whole of why it is here.
 export const INDOOR_BACKDROP_COLUMNS = 320;
-
-export interface IndoorBackdrop {
-  readonly background: RGB8;
-  readonly foreground: RGB8;
-}
-
-export const indoorBackdrop = (
-  background: number,
-  foreground: number
-): IndoorBackdrop => ({
-  background: c64Colour(background) ?? ScenePalette.blackInk,
-  foreground: c64Colour(foreground) ?? ScenePalette.whiteInk
-});
-
-export const backdropColumnColour = (
-  backdrop: IndoorBackdrop,
-  column: number
-): RGB8 | undefined => {
-  if (column < 0 || column >= INDOOR_BACKDROP_COLUMNS) {
-    return undefined;
-  }
-  return column % 2 === 0 ? backdrop.foreground : backdrop.background;
-};
 
 /// How the Room the player is in looks right now.
 ///
