@@ -23,7 +23,7 @@ agree after an OS update. The kit reaches for exactly five of them — the sines
 cosines in `Projection`, `Orientation`, `World` and both movers, `atan` for the
 reference frustum's field of view, `tan` for the horizon, and `pow` in
 `ControlLoop.settle` and the decimal registers — so the exposure is small, bounded, and
-sitting directly under the two heaviest replay gates.
+sitting directly under the two heaviest Replay Gates.
 
 Left alone, that exposure fails in the worst available way. A one-bit disagreement in
 `pow` does not present as a message about `pow`: `ControlLoop.settle` raises a damping

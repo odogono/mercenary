@@ -1,3 +1,4 @@
+import { toFloat32 } from "../math/index.ts"
 import type { Vector3 } from "../orientation/index.ts"
 import { isIdentity } from "../orientation/index.ts"
 import type { ObjectPlacement, Room, Segment, World, WorldCell } from "./index.ts"
@@ -42,9 +43,9 @@ const spansOf = (segments: readonly Segment[]): Vector3 => {
   // A subtraction of two binary32 values, narrowed where the kit narrows: `SIMD3<Float>`
   // subtraction produces a `Float`.
   return {
-    x: Math.fround(high.x - low.x),
-    y: Math.fround(high.y - low.y),
-    z: Math.fround(high.z - low.z),
+    x: toFloat32(high.x - low.x),
+    y: toFloat32(high.y - low.y),
+    z: toFloat32(high.z - low.z),
   }
 }
 

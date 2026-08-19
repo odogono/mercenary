@@ -21,8 +21,10 @@ const bundle: Bundle = await load(async (name) => {
   try {
     return await readPayloadFile(name)
   } catch {
-    // Absence, which the loader distinguishes from failure: five of the ten documents are
-    // optional. A document that exists but cannot be read still throws from the reader.
+    // Absence: five of the ten documents are optional, so a missing file is not a failure.
+    // This flattens a genuine read error into absence as well, which is the right trade for
+    // a gate — the documents it asserts on are all required, so a lost one fails downstream
+    // as a missing document rather than passing quietly.
     return undefined
   }
 })

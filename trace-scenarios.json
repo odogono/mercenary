@@ -10,7 +10,7 @@
     {
       "emitter": "math",
       "id": "elementary",
-      "note": "What libm returned for the five elementary functions the kit calls: sin, cos and tan over the angles its wrappers can produce, atan over the frustum's range and out to saturation, and pow over the damping grid ControlLoop.settle uses and the decimal registers' powers of a hundred. Pins the platform the TypeScript port's own deterministic implementations are checked against (ADR 0022)."
+      "note": "What libm returned for the five elementary functions the kit calls: sin, cos and tan over the angles its wrappers can produce, atan over the frustum's range and out to saturation, and pow over the damping grid ControlLoop.settle uses and the decimal registers' powers of a hundred. Grades the platform the TypeScript port delegates to, which is what measuring these samples settled (ADR 0022)."
     },
     {
       "emitter": "decode",

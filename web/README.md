@@ -10,9 +10,10 @@ bun run typecheck # tsc --noEmit
 bun run dev       # http://localhost:5173
 ```
 
-Both `bun test` and `bun run dev` read the gitignored `/payload/` and `/traces/` from the
-repository root. Neither is in Git — both are derived from the Reference Build. If they are
-missing, emit them first:
+Both read the gitignored `/payload/` from the repository root, and `bun test` reads the
+gitignored `/traces/` beside it — the dev server has no use for a Golden Trace and does not
+serve one. Neither directory is in Git; both are derived from the Reference Build. If they
+are missing, emit them first:
 
 ```sh
 cd ../app && swift run mercenary --emit-traces

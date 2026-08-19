@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   TypeScript strict with `typescript` as its only dependency, `bun test` for the gates and a
   `Bun.serve` dev server that serves the page and the gitignored `/payload/` from the repository
   root. Bun replaces the Vite, npm and Vitest #68 named — one tool covers all three roles, which
-  holds ADR 0019's no-general-purpose-dependency line tighter than the original scaffold did.
+  holds ADR 0001's no-general-purpose-engine line tighter than the original scaffold did.
   The **Replay Gate** harness is the reusable part: it locates the payload and traces by walking
   up as `PayloadLocator` does, parses JSON Lines, folds the recorded structural deltas forward,
   and compares parsed values with `Object.is` — bit-for-bit, and never bytes, because Swift and

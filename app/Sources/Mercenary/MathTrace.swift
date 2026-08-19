@@ -11,9 +11,13 @@ import MercenaryKit
 /// where that run happens to have called them.
 ///
 /// That is not enough for the browser port. Neither libm nor a JavaScript engine's `Math`
-/// is bit-guaranteed, so a TypeScript implementation carries its own deterministic
-/// versions (ADR 0022) rather than calling `Math.sin`. This trace is what those are
-/// checked against, and it exists for error locality: a one-bit disagreement in `pow`
+/// is bit-guaranteed, so the arithmetic under every Replay Gate has to be measured rather
+/// than assumed. Measuring it is what settled how the port gets it: ADR 0022 planned a
+/// deterministic implementation of its own and its correction header records the reversal —
+/// the platform reproduces this trace exactly, a correctly rounded implementation does not,
+/// so `web/src/math/` delegates through a named seam and this trace grades the platform.
+/// That makes it a canary: an update that moves a last bit turns it red before any
+/// simulation is standing. It also exists for error locality: a one-bit disagreement in `pow`
 /// reached through a flight trace presents as a divergence at step four hundred of a
 /// craft's descent, while here it presents as `pow` disagreeing at a named pair.
 ///
@@ -32,7 +36,7 @@ enum MathTrace {
 
     // No clock: like `decode`, this is a set of facts rather than a run, so there is no
     // step to key on and no dt to feed. The domain sizes are recorded so a replay can
-    // say "this trace pinned 562 angles" without counting lines.
+    // say "this trace pinned 548 angles" without counting lines.
     try trace.header(
       run.header(
         for: scenario, dt: nil, includesPayload: false,
