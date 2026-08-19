@@ -8,6 +8,58 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The browser implementation's foundation and its first two Replay Gates #90. `web/` is Bun +
+  TypeScript strict with `typescript` as its only dependency, `bun test` for the gates and a
+  `Bun.serve` dev server that serves the page and the gitignored `/payload/` from the repository
+  root. Bun replaces the Vite, npm and Vitest #68 named — one tool covers all three roles, which
+  holds ADR 0001's no-general-purpose-engine line tighter than the original scaffold did.
+  The **Replay Gate** harness is the reusable part: it locates the payload and traces by walking
+  up as `PayloadLocator` does, parses JSON Lines, folds the recorded structural deltas forward,
+  and compares parsed values with `Object.is` — bit-for-bit, and never bytes, because Swift and
+  JavaScript spell the same `double` differently and a byte comparison would fail on formatting
+  rather than on behaviour. A missing Golden Trace or payload **fails** rather than skipping: a
+  module without a passing replay is not ported, and a gate that goes green when its evidence is
+  absent reports the one thing that cannot be true.
+  Ported behind it: `payload` (an async read seam, hand-written per-document validators that
+  refuse a renamed field by path rather than coercing it, and the six independent schema-version
+  constants), `text`, `orientation` and `world`, with `Inspector`'s row projections — which #68
+  put out of scope and the decode gate turns out to need, since the trace records one row per
+  object, cell, structure and Room. The **decode** gate replays all 687 records, and the
+  **math** gate the 2,147 beneath it.
+  The Float32 discipline is the part worth keeping in mind. Geometry is binary32 in the kit, so
+  every span in the trace is a binary32 quantity written at full double precision; carrying
+  double precision through the port produces a world that is slightly more accurate and does not
+  reproduce. Removing a single narrowing point moves `object row 0`'s x span from
+  893.78320312500000 to 893.78295898437500, which is what the gate reports.
+- A `math` emitter, measuring the arithmetic under every Replay Gate #89, ADR 0022. The kit calls
+  five library functions — the sines and cosines in `Projection`, `Orientation`, `World` and
+  both movers, `atan` for the reference frustum, `tan` for the horizon, and `pow` in
+  `ControlLoop.settle` and the decimal registers — and IEEE 754 pins none of them to a last
+  bit. Since ADR 0019 makes a Replay Gate the instrument a ported module is believed on, that
+  gate is only as sound as the arithmetic beneath it, so the TypeScript port carries its own
+  implementations and the Oracle records what Apple's libm returned. This is bought for error
+  locality: a one-bit disagreement in `pow` reached through a flight trace presents as a craft
+  that matched for four hundred steps and then drifted, which looks exactly like a misported
+  control loop, whereas here it presents as `pow` disagreeing at a named base and exponent
+  before any simulation is standing. `math` sits beneath `decode` in the emitter ladder
+  because it observes no kit module at all.
+  Its domain is bounded deliberately: every angle that reaches these functions in play has
+  been through `GameCore.wrap`, `GameCore.wrapPitch` or `Orientation.radians`, so the samples
+  sweep two turns either side of zero, add the 256 discrete angles a payload byte can produce,
+  the quadrant boundaries, `tan`'s pole and the floats either side of it, the signed zero and
+  the denormal floor — and stop. Pinning `sin(1e300)` would oblige the port to reproduce a
+  full Payne–Hanek reduction for an angle no wrapper in the kit can return.
+  The emitter paid for itself the day it landed, and inverted its own decision. A hand-rolled
+  double-double layer was written, reproduced `pow` exactly, and disagreed with libm on 279 of
+  the other 1,920 samples by one or two units in the last place — and checking those against
+  exact arithmetic showed the hand-rolled value was the correctly rounded one every time.
+  Apple's libm is not correctly rounded, so being right is not the same as reproducing it, and
+  no principled implementation reproduces a proprietary rounding error. The platform matches
+  libm on all 2,147 samples, so the port delegates to it through a named seam and the gate
+  becomes a canary: an update that moves a bit turns it red before any simulation is standing.
+  Without the emitter those 1-ULP differences would have surfaced first in the `flight` gate,
+  as a craft that matched for hundreds of steps and then drifted — where every instinct points
+  at the control loop rather than at `sin`.
 - Golden trace emitters, making the Swift app the **Trace Oracle** #66. Seven emitters
   write deterministic, full-precision JSON Lines that the browser port must reproduce to be
   believed (ADR 0019): `decode`, `projection`, `flight`, `game-core`, `benson`, `session`
@@ -159,6 +211,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Trace schema 3: an emitter that reads no payload carries no payload identity in its
+  header. `math` observes only the platform's elementary functions, so recording which
+  extraction its run belonged to would make a payload re-export report that trace as
+  differing — the same false signal that narrowing settings per emitter was introduced to
+  remove. This is a schema bump rather than a quiet addition because a replay written for
+  schema 2 would expect `payload` in every header, even though the change reaches only
+  `math`'s own. The other thirty-six traces are byte-identical apart from the version they
+  name, and the maintainer's acceptance correctly reports itself as no longer covering what
+  is emitted until it is renewed.
 - Make one `GameplaySession` the authority for everything that changes during play
   (#65, PR 2 of 3; ADR 0018, superseding ADR 0008). The pose, Location, Occupancy,
   Object Residence, the running script and its host state, and the message line all

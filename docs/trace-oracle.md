@@ -62,7 +62,9 @@ settings and the same inputs produce byte-identical files. That is what `--verif
 asserts and what #66 asks for.
 
 **Cross-language equivalence is a claim about values.** A TypeScript replay parses the
-JSON and compares numbers **bit-for-bit against the recorded ones**. It must not compare
+JSON and compares numbers **bit-for-bit against the recorded ones**. That gate is only as
+sound as the arithmetic beneath it, which is why `math` is the gate under all the others
+(ADR 0022). It must not compare
 bytes: Swift and JavaScript do not spell the same `double` the same way, so a byte
 comparison across languages would fail on formatting rather than on behaviour, and
 "fixing" the replay to compare bytes would be a step backwards.
@@ -109,7 +111,7 @@ A header carries only the tuning **its own emitter consumes**, and no settings d
 
 | Emitter | Settings in its header |
 |---|---|
-| `decode`, `projection` | none — they read no setting |
+| `math`, `decode`, `projection` | none — they read no setting |
 | `flight`, `game-core` | `flight` |
 | `benson` | `scripts`, `message` |
 | `session`, `navigation` | `flight`, `scripts`, `message` |
@@ -166,6 +168,7 @@ its own dependencies ported.
 
 | Emitter | Needs ported | What one record is |
 |---|---|---|
+| `math` | nothing — the platform only | one elementary function at one argument |
 | `decode` | payload, text, world | one decoded subject |
 | `projection` | + projection | one screen line, or one far point |
 | `flight` | + gameCore, flight, orientation | one fixed step of a circuit |
@@ -173,6 +176,33 @@ its own dependencies ported.
 | `benson` | benson trio, text — **no world** | one executed instruction |
 | `session` | everything | one fixed step of the whole loop |
 | `navigation` | everything + rooms | one fixed step of an underground walk |
+
+### `math`
+
+Beneath everything, and the first gate that has to go green. The kit calls five library
+functions — `sin`, `cos` and `tan` in `Projection`, `Orientation`, `World` and both movers,
+`atan` for the reference frustum's field of view, `pow` in `ControlLoop.settle` and the
+decimal registers — and IEEE 754 pins none of them to a last bit. The port delegates to the
+platform's, and this is what the platform is checked against — a canary rather than a
+specification, since a JavaScript engine that matches the recorded libm today is not obliged
+to after an update (ADR 0022).
+
+No clock and no `dt`. Records are `unary` (`fn`, `x`, `value`) and `binary` (`fn`, `x`, `y`,
+`value`), grouped by function rather than interleaved by argument, so the first differing
+line names the function that disagrees rather than the argument two of them share.
+
+**The domain is bounded on purpose.** Every angle that reaches these functions in play has
+been through `GameCore.wrap`, `GameCore.wrapPitch` or `Orientation.radians`, so the samples
+sweep two turns either side of zero, add the 256 discrete angles a payload byte can produce,
+the quadrant boundaries, `tan`'s pole and the floats either side of it, the signed zero and
+the denormal floor, and stop. Pinning `sin(1e300)` would oblige the port to reproduce a full
+Payne–Hanek argument reduction for an angle no wrapper in the kit can return. The excursions
+reach a thousand radians, which is far enough to prove an implementation reduces its argument
+at all. A value outside the domain is a bug in the caller, not a gap in the trace.
+
+**Its header carries no payload identity**, because it reads no payload — the same reasoning
+that narrowed settings per emitter. Recording the digest would make a re-export report this
+trace as differing. The payload's identity is in the manifest either way.
 
 ### `decode`
 
@@ -231,6 +261,9 @@ version refuses the trace rather than half-reading it.
 
 - **1** — the original shape.
 - **2** — a header carries only its own emitter's settings, and no settings digest.
+- **3** — an emitter that reads no payload carries no payload identity either. A replay
+  written for 2 would expect `payload` in every header, so this is a bump rather than a quiet
+  addition, even though it changes only `math`'s own header.
 
 ## `traces/manifest.json`
 
@@ -266,3 +299,6 @@ happens to live.
   refused by name, because a scenario is the same kind of instruction as a command line
   and a misspelled `craft` would otherwise trace the default craft and report success.
 - `Mercenary/Trace*.swift`, `Mercenary/*Trace*.swift` — the emitters and the record shapes.
+  `MathTrace.swift` holds the sample domains, which are derived from what the kit's own
+  wrappers can produce rather than chosen — which is why a scenario may set only how densely
+  they are swept.

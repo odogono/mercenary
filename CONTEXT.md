@@ -122,6 +122,10 @@ _Avoid_: Snapshot, baseline, fixture, expected output
 A named, reviewable description of one run a Golden Trace is emitted from: which emitter, what inputs, and the state it starts in.
 _Avoid_: Test case, trace config, run spec
 
+**Replay Gate**:
+The check one ported module must pass before the next is ported: it drives the module from a Golden Trace's recorded inputs and requires every asserted value to equal the recorded one exactly. It compares parsed values rather than file bytes, because two languages spell the same number differently and a byte comparison would fail on spelling rather than on behaviour. A module whose gate is not green is not ported.
+_Avoid_: Byte comparison, snapshot test, golden master test, regression test
+
 **Game Semantics**:
 The fidelity-governed rules and state transitions that determine outcomes and meaningful future state from Semantic Actions and time, independently of the Native Shell and Mac Adaptations.
 _Avoid_: Game logic, gameplay layer

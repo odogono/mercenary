@@ -139,7 +139,7 @@ struct TraceRun {
     switch emitter {
     case .flight, .gameCore, .session, .navigation:
       members.append((key: "flight", value: flightSettings))
-    case .decode, .projection, .benson:
+    case .math, .decode, .projection, .benson:
       break
     }
     // Anything that runs scripts reads the script clock and the message pacing, because the
@@ -148,7 +148,7 @@ struct TraceRun {
     case .benson, .session, .navigation:
       members.append((key: "scripts", value: scriptSettings))
       members.append((key: "message", value: messageSettings))
-    case .decode, .projection, .flight, .gameCore:
+    case .math, .decode, .projection, .flight, .gameCore:
       break
     }
     return members.isEmpty ? nil : .object(members)
@@ -185,8 +185,14 @@ struct TraceRun {
   /// `extra` is where an emitter puts the starting state a replay needs before it can
   /// apply a single delta — the whole of the slot-keyed collections, or the decoded
   /// program, depending on the emitter.
+  ///
+  /// `includesPayload` is off for an emitter that reads no payload. Recording which
+  /// extraction such a run belonged to would make a re-export report its trace as
+  /// differing, which is the same false signal that narrowing settings per emitter was
+  /// introduced to remove: a header should carry what could actually change its records.
+  /// The payload's identity is in the manifest either way, so nothing stops being recorded.
   func header(
-    for scenario: TraceScenario, dt: Double? = Self.dt,
+    for scenario: TraceScenario, dt: Double? = Self.dt, includesPayload: Bool = true,
     extra: [(key: String, value: TraceValue)] = []
   ) -> TraceValue {
     var members: [(key: String, value: TraceValue)] = [
@@ -194,9 +200,9 @@ struct TraceRun {
       (key: "emitter", value: .string(scenario.emitter.rawValue)),
       (key: "id", value: .string(scenario.id)),
       (key: "note", value: .string(scenario.note)),
-      (key: "payload", value: payloadIdentity),
       (key: "scenario", value: TraceScenarioRecords.value(scenario)),
     ]
+    if includesPayload { members.append((key: "payload", value: payloadIdentity)) }
     if let settings = settingsValue(for: scenario.emitter) {
       members.append((key: "settings", value: settings))
     }
@@ -213,6 +219,8 @@ struct TraceRun {
 enum TraceScenarioRecords {
   static func value(_ scenario: TraceScenario) -> TraceValue {
     switch scenario.body {
+    case .math(let body):
+      return .object(["samples": .int(body.samples)])
     case .decode:
       return .object([])
     case .projection(let body):

@@ -16,7 +16,11 @@ enum TraceRecords {
   ///
   /// 2: a header carries only the tuning its own emitter consumes, and no settings digest, so
   /// a tuning change leaves the traces it cannot reach byte-identical.
-  static let schemaVersion = 2
+  /// 3: an emitter that reads no payload carries no payload identity either, for the same
+  /// reason — `math` observes only the platform's elementary functions, so a payload
+  /// re-export must not report its trace as differing. A replay written for 2 would expect
+  /// `payload` in every header, which is why this is a bump rather than a quiet addition.
+  static let schemaVersion = 3
 }
 
 // MARK: - The clock

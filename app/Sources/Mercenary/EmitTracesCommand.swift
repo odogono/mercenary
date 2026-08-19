@@ -195,6 +195,8 @@ enum EmitTracesCommand {
   /// Drive whichever emitter a scenario names.
   static func emit(_ run: TraceRun, scenario: TraceScenario) throws -> TraceFile {
     switch scenario.body {
+    case .math(let body):
+      return try MathTrace.emit(run, scenario: scenario, body: body)
     case .decode:
       return try DecodeTrace.emit(run, scenario: scenario)
     case .projection(let body):

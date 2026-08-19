@@ -3,10 +3,15 @@
   "accepted": {
     "on": "2026-08-18",
     "payloadCoreDigest": "7b0cbf0f34c99fbcf8081e8fc152bc490fb4d4d1d9b1be4d9ec9481441d3949c",
-    "traceSchemaVersion": 2,
-    "note": "The initial set, signed off by the maintainer when #66 landed. Covers all seven emitters against the payload named here. A payload re-export or a trace schema bump makes this acceptance stale rather than current, and --emit-traces says so."
+    "traceSchemaVersion": 3,
+    "note": "Eight emitters against the payload named here, at trace schema 3. Renewed when the math emitter landed (#89): the previous sign-off covered seven emitters at schema 2 and stopped describing what is emitted. The math trace was reviewed by measurement rather than by eye \u2014 the platform reproduces every one of its 2,147 samples, and a hand-rolled correctly-rounded implementation reproduced 1,868 of them, which is the evidence recorded in ADR 0022. A payload re-export or a schema bump makes this acceptance stale rather than current, and --emit-traces says so."
   },
   "scenarios": [
+    {
+      "emitter": "math",
+      "id": "elementary",
+      "note": "What libm returned for the five elementary functions the kit calls: sin, cos and tan over the angles its wrappers can produce, atan over the frustum's range and out to saturation, and pow over the damping grid ControlLoop.settle uses and the decimal registers' powers of a hundred. Grades the platform the TypeScript port delegates to, which is what measuring these samples settled (ADR 0022)."
+    },
     {
       "emitter": "decode",
       "id": "payload",
