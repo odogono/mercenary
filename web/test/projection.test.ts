@@ -10,6 +10,11 @@ import {
   type Visible
 } from '../src/projection/index.ts';
 import { INDOOR_BACKDROP_COLUMNS, indoorScene } from '../src/scene/index.ts';
+import {
+  parseTrace,
+  type TraceObject,
+  type TraceValue
+} from '../src/trace/index.ts';
 import { Ink, World, type Residence } from '../src/world/index.ts';
 import {
   expectRecordedPayload,
@@ -17,11 +22,6 @@ import {
   readTraceText
 } from './replay/artifacts.ts';
 import { expectIdentical } from './replay/compare.ts';
-import {
-  parseTrace,
-  type TraceObject,
-  type TraceValue
-} from './replay/trace.ts';
 
 /// The projection Replay Gate: one camera pose in, a list of screen lines out.
 ///

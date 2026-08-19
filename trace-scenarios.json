@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "accepted": {
-    "on": "2026-08-18",
+    "on": "2026-08-19",
     "payloadCoreDigest": "7b0cbf0f34c99fbcf8081e8fc152bc490fb4d4d1d9b1be4d9ec9481441d3949c",
     "traceSchemaVersion": 3,
-    "note": "Eight emitters against the payload named here, at trace schema 3. Renewed when the math emitter landed (#89): the previous sign-off covered seven emitters at schema 2 and stopped describing what is emitted. The math trace was reviewed by measurement rather than by eye \u2014 the platform reproduces every one of its 2,147 samples, and a hand-rolled correctly-rounded implementation reproduced 1,868 of them, which is the evidence recorded in ADR 0022. A payload re-export or a schema bump makes this acceptance stale rather than current, and --emit-traces says so."
+    "note": "Eight emitters against the payload named here, at trace schema 3. Renewed for #92 when room-walk was replaced by a same-Room scenario: the previous walk took a Doorway and therefore depended on GameplaySession.traverse and DoorwayPredicate, which belong to a later Replay Gate. The replacement was reviewed to remain in Room 3, produce two wall events, and produce no arrival. The math trace remains accepted by the measurement recorded in ADR 0022. A payload re-export or a schema bump makes this acceptance stale rather than current, and --emit-traces says so."
   },
   "scenarios": [
     {
@@ -179,7 +179,7 @@
     {
       "emitter": "game-core",
       "id": "room-walk",
-      "note": "The same mover underground, where walking is bounded by the Room's own walls.",
+      "note": "The same mover underground, bounded by Room 3's walls without ever taking a Doorway: this gate ports Containment, while GameplaySession.traverse and DoorwayPredicate belong to the later session gate (#94).",
       "room": 3,
       "legs": [
         {
@@ -187,12 +187,23 @@
           "seconds": 3
         },
         {
-          "turn": -1,
-          "seconds": 2
+          "turn": 1,
+          "seconds": 1.6
         },
         {
           "walk": 1,
-          "seconds": 3
+          "seconds": 2
+        },
+        {
+          "turn": 1,
+          "seconds": 0.8
+        },
+        {
+          "walk": 1,
+          "seconds": 2
+        },
+        {
+          "seconds": 1
         }
       ]
     },

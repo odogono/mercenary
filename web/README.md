@@ -16,10 +16,12 @@ not bundling: import specifiers keep their `.ts` extensions and each module is f
 disk in turn, so there is still nothing here that produces a deployable bundle — the thing
 ADR 0019 gitignores and ADR 0004 gates.
 
-Both read the gitignored `/payload/` from the repository root, and `bun test` reads the
-gitignored `/traces/` beside it — the dev server has no use for a Golden Trace and does not
-serve one. Neither directory is in Git; both are derived from the Reference Build. If they
-are missing, emit them first:
+Both read the gitignored `/payload/` from the repository root, and both read the gitignored
+`/traces/` beside it: `bun test` grades every ported module against the Golden Traces, and
+the dev server hands the page the traces it flies — by `emitter/id`, against the Trace
+Scenarios listed in `trace-scenarios.json`, and nothing else under that directory. Neither
+directory is in Git; both are derived from the Reference Build. If they are missing, emit them
+first:
 
 ```sh
 cd ../app && swift run mercenary --emit-traces
@@ -27,7 +29,8 @@ cd ../app && swift run mercenary --emit-traces
 
 A Replay Gate whose Golden Trace or payload file is absent **fails**. It does not skip: a
 module without a passing replay is not ported, and a gate that quietly passes when its
-evidence is missing is worse than no gate.
+evidence is missing is worse than no gate. The page is the one exception, because it grades
+nothing: with no trace to fly it holds its fixed pose and names the command that emits one.
 
 ## What is here
 
@@ -42,11 +45,35 @@ evidence is missing is worse than no gate.
   kit modules. `src/projection/` is where world space becomes screen lines; its pixel space is
   **Y-down**, as the Reference Build computes it and as a Golden Trace records it, and the one
   place Y is flipped is the vertex shader that maps pixels to clip space.
-- `src/shell/` — the page. Throwaway until #95: it loads the payload, projects one fixed pose
-  and draws it once, so a browser frame can be held beside a raster in `../docs/frames/` and
-  judged by eye (ADR 0011).
-- `test/replay/` — the Replay Gate harness: locate artifacts, parse JSON Lines, fold the
-  recorded deltas forward, compare values bit-for-bit, and check that the payload on disk is
+- `src/settings/` — the tuning, read through an injectable seam that mirrors
+  `Settings.load(at:read:)`. A trace header carries only its own emitter's settings, so the
+  `flight` and `game-core` replays assert the port resolved the same numbers the recording was
+  made with rather than defaults that happen to be close.
+- `src/flight/` — the craft Mover's control loop: `settle` and the two fixed points it settles
+  towards, the Craft Parameter Block a craft's handling is selected from, the flight modes and
+  the touchdown verdict. `settle` is the port's heaviest consumer of `pow`, which is where
+  `src/math/` stops being theoretical.
+- `src/gameCore/` — the step both Movers run under: the intent, the player and game state, the
+  control limits and flight model resolved for the craft in hand, the angle wrapping, and the
+  subdivision that takes a long frame as several short steps rather than one long one. The
+  on-foot Mover lives here, and it is a fixed step rather than a Craft Parameter Block (ADR
+  0016).
+- `src/navigation/` — `Containment`, and only that: the Room bounds a player on foot is pushed
+  back inside of, which `src/gameCore/` needs. The navigation emitter itself is underground and
+  beyond M4.
+- `src/shell/` — the page. Throwaway until #95: it loads the payload, draws one fixed pose so a
+  browser frame can be held beside a raster in `../docs/frames/` and judged by eye (ADR 0011),
+  then plays the poses recorded in the `flight/craft-1-standard` Golden Trace on
+  `requestAnimationFrame`, paced by the step the trace was recorded at. Nothing is simulated
+  and nothing is steered: every pose on screen is one a Replay Gate has already compared
+  bit-for-bit against the Trace Oracle.
+- `src/trace/` — reading a Golden Trace and folding its recorded deltas forward. In `src/`
+  rather than beside the tests because there are two readers: the Replay Gates fold a whole
+  state to grade it, and the page folds the player out of a flight trace to fly it. A second
+  reader in the page would be the copy that half-reads a bumped schema without failing.
+- `test/replay/` — the Replay Gate harness: locate artifacts, run the gate protocol both Movers
+  are graded by (`moverGate.ts`, shared by the `flight` and `game-core` gates),
+  compare values bit-for-bit, and check that the payload on disk is
   the one a trace was recorded from.
 
 Nothing here is a mechanical translation of the Swift implementation or of the Reference

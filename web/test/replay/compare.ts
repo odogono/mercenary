@@ -1,4 +1,4 @@
-import type { TraceValue } from './trace.ts';
+import type { TraceValue } from '../../src/trace/index.ts';
 
 /// Comparing a ported module's answer against what the Trace Oracle recorded.
 ///

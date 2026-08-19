@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
+import { apply, parseTrace } from '../src/trace/index.ts';
 import { readTraceText } from './replay/artifacts.ts';
 import { firstDifference } from './replay/compare.ts';
-import { apply, parseTrace } from './replay/trace.ts';
 
 /// The harness has to be right before anything it grades can be believed.
 ///

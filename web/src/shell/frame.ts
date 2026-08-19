@@ -123,49 +123,65 @@ export interface FrameContent {
   readonly whiteInk: readonly ScreenLine[];
 }
 
-/// Draw one frame, in the order the headless renderer draws it: sky, ground, the dim ink pass,
-/// the bright one, then the far points.
-export const drawFrame = (
-  canvas: HTMLCanvasElement,
-  content: FrameContent
-): void => {
-  const gl = canvas.getContext('webgl2', { antialias: false });
-  if (gl === null) {
-    throw new Error('this browser has no WebGL2 context to draw into');
-  }
-  const program = linked(gl);
-  gl.useProgram(program);
-  gl.viewport(0, 0, canvas.width, canvas.height);
-  gl.uniform2f(
-    gl.getUniformLocation(program, 'viewport'),
-    canvas.width,
-    canvas.height
-  );
-  const ink = gl.getUniformLocation(program, 'ink');
-  const pixel = gl.getAttribLocation(program, 'pixel');
-  const buffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.enableVertexAttribArray(pixel);
-  gl.vertexAttribPointer(pixel, 2, gl.FLOAT, false, 0, 0);
+/// The context, program and buffer one canvas draws every frame through.
+///
+/// A class rather than a function that sets all this up per call, because the page went from
+/// drawing one frame to drawing one per `requestAnimationFrame`: compiling the two shaders,
+/// linking, re-querying the locations and creating a buffer on each of those is both the most
+/// expensive thing in the frame and a leak, since WebGL objects are not collected with the
+/// closure that made them. Everything that does not change between frames is resolved once here,
+/// and `draw` does only the work that does.
+export class Renderer {
+  private readonly canvas: HTMLCanvasElement;
+  private readonly gl: WebGL2RenderingContext;
+  private readonly ink: WebGLUniformLocation | null;
+  private readonly viewport: WebGLUniformLocation | null;
 
-  const draw = (mode: number, vertices: Float32Array, colour: RGB8): void => {
+  constructor(canvas: HTMLCanvasElement) {
+    const gl = canvas.getContext('webgl2', { antialias: false });
+    if (gl === null) {
+      throw new Error('this browser has no WebGL2 context to draw into');
+    }
+    const program = linked(gl);
+    gl.useProgram(program);
+    this.ink = gl.getUniformLocation(program, 'ink');
+    this.viewport = gl.getUniformLocation(program, 'viewport');
+    const pixel = gl.getAttribLocation(program, 'pixel');
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.enableVertexAttribArray(pixel);
+    gl.vertexAttribPointer(pixel, 2, gl.FLOAT, false, 0, 0);
+    this.canvas = canvas;
+    this.gl = gl;
+  }
+
+  private pass(mode: number, vertices: Float32Array, colour: RGB8): void {
     if (vertices.length === 0) {
       return;
     }
-    gl.uniform3f(ink, ...channels(colour));
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STREAM_DRAW);
-    gl.drawArrays(mode, 0, vertices.length / 2);
-  };
+    this.gl.uniform3f(this.ink, ...channels(colour));
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STREAM_DRAW);
+    this.gl.drawArrays(mode, 0, vertices.length / 2);
+  }
 
-  gl.clearColor(...channels(ScenePalette.sky), 1);
-  gl.clear(gl.COLOR_BUFFER_BIT);
+  /// Draw one frame, in the order the headless renderer draws it: sky, ground, the dim ink pass,
+  /// the bright one, then the far points.
+  draw(content: FrameContent): void {
+    const gl = this.gl;
+    // The canvas is sized once by the caller, but the viewport is read here so a resize between
+    // frames needs nothing else to be rebuilt.
+    gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    gl.uniform2f(this.viewport, this.canvas.width, this.canvas.height);
 
-  draw(
-    gl.TRIANGLES,
-    groundVertices(content.ground, content.size),
-    ScenePalette.ground
-  );
-  draw(gl.LINES, lineVertices(content.blackInk), ScenePalette.blackInk);
-  draw(gl.LINES, lineVertices(content.whiteInk), ScenePalette.whiteInk);
-  draw(gl.POINTS, pointVertices(content.points), ScenePalette.whiteInk);
-};
+    gl.clearColor(...channels(ScenePalette.sky), 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    this.pass(
+      gl.TRIANGLES,
+      groundVertices(content.ground, content.size),
+      ScenePalette.ground
+    );
+    this.pass(gl.LINES, lineVertices(content.blackInk), ScenePalette.blackInk);
+    this.pass(gl.LINES, lineVertices(content.whiteInk), ScenePalette.whiteInk);
+    this.pass(gl.POINTS, pointVertices(content.points), ScenePalette.whiteInk);
+  }
+}
