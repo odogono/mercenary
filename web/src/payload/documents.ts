@@ -231,6 +231,56 @@ export interface TextDocument {
   readonly words: readonly Word[];
 }
 
+/// Where control goes when a conditional's branch is taken.
+export interface BensonBranch {
+  readonly kind: string;
+  readonly target: number;
+}
+
+/// One instruction in the payload's flat list. Fields present depend on `op`.
+export interface BensonInstruction {
+  readonly a?: number;
+  readonly b?: number;
+  readonly base?: number;
+  readonly branchOn?: boolean;
+  readonly byte?: number;
+  readonly craft?: number;
+  readonly decimal?: number;
+  readonly from?: number;
+  readonly index?: number;
+  readonly into?: number;
+  readonly key?: string;
+  readonly mask?: number;
+  readonly mode?: string;
+  readonly onTaken?: BensonBranch;
+  readonly op: string;
+  readonly register?: number;
+  readonly slot?: number;
+  readonly source?: string;
+  readonly symbol?: string;
+  readonly target?: number;
+  readonly ticks?: number;
+  readonly to?: number;
+  readonly tokens?: readonly Token[];
+  readonly value?: number;
+}
+
+export interface BensonScript {
+  readonly entry: number;
+  readonly id: number;
+}
+
+/// The Reference Build's game-logic programs, re-encoded by the export tool (ADR 0015).
+export interface BensonDocument {
+  readonly counts: Readonly<Record<string, number>>;
+  /// Decimal registers play starts with, keyed by slot as JSON strings.
+  readonly decimalSeeds: Readonly<Record<string, number>>;
+  readonly framesPerTick: number;
+  readonly instructions: readonly BensonInstruction[];
+  readonly schemaVersion: number;
+  readonly scripts: readonly BensonScript[];
+}
+
 /// The control routines a block may dispatch through. The export refuses any address it cannot
 /// name, so this set is closed.
 export type Handler = 'standard' | 'sinking' | 'slot7' | 'tumble' | 'descent';
@@ -298,18 +348,18 @@ export interface FlightDocument {
 
 /// A document the port checks the version of but does not yet read the body of.
 ///
-/// The Benson, interaction and underground documents belong to later stages of the port
-/// (#93, #94), and reading their bodies now would mean writing validators for shapes nothing
-/// consumes yet. Their `schemaVersion` is still checked, so a stale one is refused rather than
-/// tolerated — which is the guarantee the loader owes — and the raw body is kept so nothing is
-/// silently dropped on the way through.
+/// Interaction and underground belong to later stages of the port (#94), and reading their
+/// bodies now would mean writing validators for shapes nothing consumes yet. Their
+/// `schemaVersion` is still checked, so a stale one is refused rather than tolerated — which
+/// is the guarantee the loader owes — and the raw body is kept so nothing is silently dropped
+/// on the way through.
 export interface UnreadDocument {
   readonly body: Readonly<Record<string, unknown>>;
   readonly schemaVersion: number;
 }
 
 export interface Bundle {
-  readonly benson?: UnreadDocument;
+  readonly benson?: BensonDocument;
   readonly flight?: FlightDocument;
   readonly interaction?: UnreadDocument;
   readonly manifest: Manifest;

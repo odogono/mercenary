@@ -91,7 +91,7 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     check('text.json', text.schemaVersion, SUPPORTED_TEXT_SCHEMA_VERSION);
   }
 
-  const benson = await present(read, 'benson.json', readers.unread);
+  const benson = await present(read, 'benson.json', readers.benson);
   if (benson !== undefined) {
     check('benson.json', benson.schemaVersion, SUPPORTED_BENSON_SCHEMA_VERSION);
     if (text === undefined) {

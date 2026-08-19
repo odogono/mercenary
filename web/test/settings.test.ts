@@ -22,6 +22,7 @@ import {
   readTraceText,
   repositoryRoot
 } from './replay/artifacts.ts';
+import { scriptSettingsValue } from './replay/bensonGate.ts';
 import { expectIdentical } from './replay/compare.ts';
 import { flightSettingsValue } from './replay/moverGate.ts';
 
@@ -299,6 +300,10 @@ describe('the tracked settings, against the traces recorded with them', () => {
       scenario.emitter === 'flight' || scenario.emitter === 'game-core'
   );
 
+  const benson = catalogue.scenarios.filter(
+    scenario => scenario.emitter === 'benson'
+  );
+
   const tracked = loadSettings(
     readFileSync(join(repositoryRoot, SETTINGS_FILE_NAME), 'utf8')
   );
@@ -332,6 +337,27 @@ describe('the tracked settings, against the traces recorded with them', () => {
       );
       // Only its own emitter's block, so a header gaining another one is noticed here.
       expect(Object.keys(settings)).toEqual(['flight']);
+    });
+  }
+
+  test('the catalogue names the nine benson traces this covers', () => {
+    expect(benson.length).toBe(9);
+  });
+
+  for (const scenario of benson) {
+    test(`${scenario.emitter}/${scenario.id} was recorded with this tuning`, async () => {
+      const header = parseTraceHeader(
+        await readTraceText(scenario.emitter, scenario.id),
+        scenario.emitter,
+        scenario.id
+      );
+      const settings = header['settings'] as TraceObject;
+      expectIdentical(
+        settings,
+        scriptSettingsValue(tracked),
+        `${scenario.emitter}/${scenario.id} settings`
+      );
+      expect(Object.keys(settings).sort()).toEqual(['message', 'scripts']);
     });
   }
 });

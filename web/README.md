@@ -47,8 +47,9 @@ nothing: with no trace to fly it holds its fixed pose and names the command that
   place Y is flipped is the vertex shader that maps pixels to clip space.
 - `src/settings/` — the tuning, read through an injectable seam that mirrors
   `Settings.load(at:read:)`. A trace header carries only its own emitter's settings, so the
-  `flight` and `game-core` replays assert the port resolved the same numbers the recording was
-  made with rather than defaults that happen to be close.
+  `flight` and `game-core` replays assert the flight block, and the `benson` replay asserts
+  the `message` and `scripts` blocks: each replay checks the port resolved the same numbers
+  the recording was made with rather than defaults that happen to be close.
 - `src/flight/` — the craft Mover's control loop: `settle` and the two fixed points it settles
   towards, the Craft Parameter Block a craft's handling is selected from, the flight modes and
   the touchdown verdict. `settle` is the port's heaviest consumer of `pow`, which is where
@@ -61,6 +62,10 @@ nothing: with no trace to fly it holds its fixed pose and names the command that
 - `src/navigation/` — `Containment`, and only that: the Room bounds a player on foot is pushed
   back inside of, which `src/gameCore/` needs. The navigation emitter itself is underground and
   beyond M4.
+- `src/benson/` — the Benson interpreter: the program, the machine, the Host Callout, the
+  session that clocks it, and the message line. No world. The `benson` Replay Gate grades it
+  against nine traces, including two that end because the instruction limit tripped rather
+  than because the script did.
 - `src/shell/` — the page. Throwaway until #95: it loads the payload, draws one fixed pose so a
   browser frame can be held beside a raster in `../docs/frames/` and judged by eye (ADR 0011),
   then plays the poses recorded in the `flight/craft-1-standard` Golden Trace on
@@ -72,8 +77,8 @@ nothing: with no trace to fly it holds its fixed pose and names the command that
   state to grade it, and the page folds the player out of a flight trace to fly it. A second
   reader in the page would be the copy that half-reads a bumped schema without failing.
 - `test/replay/` — the Replay Gate harness: locate artifacts, run the gate protocol both Movers
-  are graded by (`moverGate.ts`, shared by the `flight` and `game-core` gates),
-  compare values bit-for-bit, and check that the payload on disk is
+  are graded by (`moverGate.ts`, shared by the `flight` and `game-core` gates), run the benson
+  gate (`bensonGate.ts`), compare values bit-for-bit, and check that the payload on disk is
   the one a trace was recorded from.
 
 Nothing here is a mechanical translation of the Swift implementation or of the Reference

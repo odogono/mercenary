@@ -115,6 +115,70 @@ export const parseTrace = (
 export const isObject = (value: TraceValue | undefined): value is TraceObject =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+/// What to write to turn `before` into `after`, or `undefined` when nothing moved.
+///
+/// Two objects diff member by member. Anything else that differs is written whole, because a
+/// partial update only means something for a shape whose members are named. `apply` undoes
+/// this exactly.
+export const changes = (
+  before: TraceValue,
+  after: TraceValue
+): TraceValue | undefined => {
+  if (firstEqual(before, after)) {
+    return undefined;
+  }
+  if (!isObject(before) || !isObject(after)) {
+    return after;
+  }
+  const members: TraceObject = {};
+  for (const [key, value] of Object.entries(after)) {
+    if (!(key in before)) {
+      members[key] = value;
+      continue;
+    }
+    const change = changes(before[key]!, value);
+    if (change !== undefined) {
+      members[key] = change;
+    }
+  }
+  const removed = Object.keys(before)
+    .filter(key => !(key in after))
+    .sort();
+  if (removed.length > 0) {
+    members[REMOVAL_KEY] = removed;
+  }
+  return Object.keys(members).length === 0 ? undefined : members;
+};
+
+const firstEqual = (left: TraceValue, right: TraceValue): boolean => {
+  if (typeof left === 'number' || typeof right === 'number') {
+    return Object.is(left, right);
+  }
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (
+      !Array.isArray(left) ||
+      !Array.isArray(right) ||
+      left.length !== right.length
+    ) {
+      return false;
+    }
+    return left.every((item, i) => firstEqual(item, right[i]!));
+  }
+  if (isObject(left) && isObject(right)) {
+    const keys = new Set([...Object.keys(left), ...Object.keys(right)]);
+    for (const key of keys) {
+      if (!(key in left) || !(key in right)) {
+        return false;
+      }
+      if (!firstEqual(left[key]!, right[key]!)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return left === right;
+};
+
 /// Fold one recorded change forward, returning the state it produces.
 ///
 /// Objects merge member by member and recurse; anything else replaces wholesale, because a

@@ -8,6 +8,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The Benson interpreter, behind its own Replay Gate #93. Nine traces, no world: the program,
+  the machine, the Host Callout, the session that clocks it, and the message line. The
+  **benson** gate grades 44,328 records across those scenarios, including two that end because
+  the instruction limit tripped rather than because the script did — `script-0-answered` and
+  `script-1-parked` finish on a `stopped` record that **says so**. A silent early stop would
+  compare clean against a port that stopped early for a different reason, which is the same
+  property the Oracle already encoded when it bounded a parked jump-to-self.
+  The session mutates in place and an instruction observer records what `ScriptTrace` records.
+  There is no honest way to assemble that from outside: running with a one-instruction budget
+  traces a *different* execution, because the budget stands in for the frame boundary the
+  original interpreter had for free. Each record carries what changed (`changes` is the inverse
+  of the existing `apply`), so a replay is a pure function of the trace plus the presses and
+  writes the header already named.
+  Reveal counts Unicode code points, not UTF-16 units and not grapheme clusters. A surrogate
+  pair is one character on the message line; a combining mark is not. The first four bytes of
+  `nextRandomByte` from the session seed are `[90, 147, 164, 143]`. The machine's own default
+  seed is a different constant; mixing the two is a green gate against the wrong stream, and
+  the dual-stream session RNG that would make that mix possible is still #94.
+  The payload reader now types the Benson document and refuses a renamed field by path, and
+  the settings seam asserts the `message` and `scripts` blocks the header carried. Gameplay
+  session, Interaction, and flying a script from the page are out of scope: a module without
+  a passing replay is not ported, and this one now has one.
 - The browser implementation's foundation and its first two Replay Gates #90. `web/` is Bun +
   TypeScript strict with `typescript` as its only dependency, `bun test` for the gates and a
   `Bun.serve` dev server that serves the page and the gitignored `/payload/` from the repository

@@ -1,3 +1,4 @@
+import type { BensonTunables } from '../benson/index.ts';
 import {
   flightModel as buildFlightModel,
   controlLimits,
@@ -20,12 +21,8 @@ import type { FlightDocument } from '../payload/documents.ts';
 /// written out the same way, because the alternative — a deep merge over untyped objects —
 /// would accept a misspelled field as a new one and change nothing.
 ///
-/// All three of the kit's blocks are read, though only `flight` has a consumer at this stage of
-/// the port: the tracked `settings.json` names `message` and `scripts` too, and a loader that
-/// ignored them would take a typo in either without a word and then have to grow the strictness
-/// back when the script machine arrives (#93). What is deliberately not here is the kit's
-/// `bensonTunables(framesPerTick:)`, which assembles those two blocks into the shape the
-/// interpreter takes — there is nothing to assemble it for yet.
+/// All three of the kit's blocks are read. `bensonTunables(framesPerTick)` assembles the
+/// `message` and `scripts` blocks into the shape the interpreter takes.
 
 export const SETTINGS_FILE_NAME = 'settings.json';
 
@@ -308,6 +305,19 @@ export const flightModel = (
   groundExtent: number
 ): FlightModel =>
   buildFlightModel(document, flightLimits(flight, groundExtent));
+
+/// Script pacing built from these settings, for one payload's tick length.
+export const bensonTunables = (
+  settings: Settings,
+  framesPerTick: number
+): BensonTunables => ({
+  framesPerSecond: 50,
+  framesPerTick,
+  instructionBudget: settings.scripts.instructionBudget,
+  messageCharactersPerSecond: settings.message.charactersPerSecond,
+  messageHoldSeconds: settings.message.holdSeconds,
+  timeScale: settings.scripts.timeScale
+});
 
 /// Load a settings document, or the defaults when there is none.
 ///
