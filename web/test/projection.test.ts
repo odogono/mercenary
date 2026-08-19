@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
 import type { Bundle } from '../src/payload/documents.ts';
-import { load } from '../src/payload/load.ts';
 import {
   Camera,
+  projectFrame,
   visible,
   type ScreenLine,
   type Size,
@@ -12,15 +12,11 @@ import {
 import { INDOOR_BACKDROP_COLUMNS, indoorScene } from '../src/scene/index.ts';
 import { Ink, World, type Residence } from '../src/world/index.ts';
 import {
-  payloadDirectory,
-  readPayloadFile,
+  expectRecordedPayload,
+  loadPayload,
   readTraceText
 } from './replay/artifacts.ts';
-import {
-  describeDifference,
-  expectIdentical,
-  firstDifference
-} from './replay/compare.ts';
+import { expectIdentical } from './replay/compare.ts';
 import {
   parseTrace,
   type TraceObject,
@@ -38,13 +34,7 @@ import {
 /// every coordinate below is a binary32 quantity written at full binary64 precision; a port
 /// carrying doubles to the screen reproduces none of them.
 
-const bundle: Bundle = await load(async name => {
-  try {
-    return await readPayloadFile(name);
-  } catch {
-    return undefined;
-  }
-});
+const bundle: Bundle = await loadPayload();
 
 const world = new World(bundle);
 
@@ -166,31 +156,8 @@ const backdropValue = (
 
 describe('the payload this gate runs against', () => {
   test('is the extraction the traces were recorded from', () => {
-    // Asserted before anything is compared, because every divergence below would otherwise
-    // have two possible explanations and this rules one of them out in a line.
-    for (const [id, trace] of traces) {
-      const recorded = trace.header['payload'] as TraceObject;
-      const difference = firstDifference(
-        {
-          decoderVersion: recorded['decoderVersion']!,
-          schemaVersion: recorded['schemaVersion']!,
-          sourceCoreDigest: recorded['sourceCoreDigest']!,
-          sourceDatasetId: recorded['sourceDatasetId']!
-        },
-        {
-          decoderVersion: bundle.manifest.decoderVersion,
-          schemaVersion: bundle.manifest.schemaVersion,
-          sourceCoreDigest: bundle.manifest.sourceCoreDigest,
-          sourceDatasetId: bundle.manifest.sourceDatasetId
-        }
-      );
-      if (difference !== null) {
-        throw new Error(
-          `the payload in ${payloadDirectory()} is not the one ${id} was recorded from — ` +
-            `${describeDifference(difference)}\n` +
-            're-emit the traces: cd app && swift run mercenary --emit-traces'
-        );
-      }
+    for (const trace of traces.values()) {
+      expectRecordedPayload(trace, bundle);
     }
   });
 });
@@ -231,6 +198,11 @@ describe('the projection Replay Gate', () => {
       elapsed: scenario.time,
       ...(scenario.room === undefined ? {} : { room: scenario.room })
     });
+    // A dark Room draws nothing at all, so the pipeline is not run: the selector's candidates
+    // are the claim, and the absence of lines and points is the rest of it.
+    const frame = isDark(trace.header)
+      ? { lines: [], points: [] }
+      : projectFrame(camera, seen, size);
 
     describe(id, () => {
       test('the camera the pose resolves to', () => {
@@ -291,28 +263,13 @@ describe('the projection Replay Gate', () => {
         const recorded = trace.records.filter(
           record => record['kind'] === 'line'
         );
-        // A dark Room draws nothing at all, so the pipeline is not run: the selector's
-        // candidates above are the claim, and the absence of lines here is the rest of it.
-        const produced: ScreenLine[] = [];
-        if (!isDark(trace.header)) {
-          for (const segment of seen.segments) {
-            const line = camera.projectSegment(segment, size);
-            if (line !== undefined) {
-              produced.push(line);
-            }
-          }
-        }
-        expect(produced.length).toBe(recorded.length);
+        expect(frame.lines.length).toBe(recorded.length);
         for (const [index, record] of recorded.entries()) {
           // The recorded index counts only the lines that survived clipping, and points
           // count separately from zero.
           expectIdentical(
             record,
-            {
-              index,
-              kind: 'line',
-              line: lineValue(produced[index]!)
-            },
+            { index, kind: 'line', line: lineValue(frame.lines[index]!) },
             `${id} line ${index}`
           );
         }
@@ -322,19 +279,14 @@ describe('the projection Replay Gate', () => {
         const recorded = trace.records.filter(
           record => record['kind'] === 'point'
         );
-        const produced = isDark(trace.header)
-          ? []
-          : seen.points
-              .map(origin => camera.projectPoint(origin, size))
-              .filter(point => point !== undefined);
-        expect(produced.length).toBe(recorded.length);
+        expect(frame.points.length).toBe(recorded.length);
         for (const [index, record] of recorded.entries()) {
           expectIdentical(
             record,
             {
               index,
               kind: 'point',
-              point: { x: produced[index]!.x, y: produced[index]!.y }
+              point: { x: frame.points[index]!.x, y: frame.points[index]!.y }
             },
             `${id} point ${index}`
           );

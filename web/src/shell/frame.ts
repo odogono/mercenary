@@ -1,9 +1,10 @@
 import {
+  leanTransform,
   transformed,
-  type AffineTransform,
   type Point,
   type Rect,
-  type ScreenLine
+  type ScreenLine,
+  type Size
 } from '../projection/index.ts';
 import { ScenePalette, type RGB8 } from '../scene/index.ts';
 
@@ -71,26 +72,22 @@ const channels = (colour: RGB8): [number, number, number] => [
 ];
 
 /// The four corners of the ground fill, leaned about the view's centre, as two triangles.
-const groundVertices = (rect: Rect, leaned: AffineTransform): Float32Array => {
-  const corner = (x: number, y: number): Point => transformed(leaned, { x, y });
+const groundVertices = (
+  ground: { lean: number; rect: Rect },
+  size: Size
+): Float32Array => {
+  const lean = leanTransform(ground.lean, size);
+  const { rect } = ground;
+  const corner = (x: number, y: number): Point => transformed(lean, { x, y });
   const topLeft = corner(rect.x, rect.y);
   const topRight = corner(rect.x + rect.width, rect.y);
   const bottomRight = corner(rect.x + rect.width, rect.y + rect.height);
   const bottomLeft = corner(rect.x, rect.y + rect.height);
-  return new Float32Array([
-    topLeft.x,
-    topLeft.y,
-    topRight.x,
-    topRight.y,
-    bottomRight.x,
-    bottomRight.y,
-    topLeft.x,
-    topLeft.y,
-    bottomRight.x,
-    bottomRight.y,
-    bottomLeft.x,
-    bottomLeft.y
-  ]);
+  return new Float32Array(
+    [topLeft, topRight, bottomRight, topLeft, bottomRight, bottomLeft].flatMap(
+      point => [point.x, point.y]
+    )
+  );
 };
 
 const lineVertices = (lines: readonly ScreenLine[]): Float32Array => {
@@ -118,11 +115,11 @@ const pointVertices = (points: readonly Point[]): Float32Array => {
 
 export interface FrameContent {
   readonly blackInk: readonly ScreenLine[];
-  readonly ground: {
-    readonly leaned: AffineTransform;
-    readonly rect: Rect;
-  };
+  /// The ground fill exactly as the camera described it: a rectangle in unrolled screen space
+  /// and the angle to lean it by.
+  readonly ground: { readonly lean: number; readonly rect: Rect };
   readonly points: readonly Point[];
+  readonly size: Size;
   readonly whiteInk: readonly ScreenLine[];
 }
 
@@ -160,13 +157,12 @@ export const drawFrame = (
     gl.drawArrays(mode, 0, vertices.length / 2);
   };
 
-  const sky = channels(ScenePalette.sky);
-  gl.clearColor(sky[0], sky[1], sky[2], 1);
+  gl.clearColor(...channels(ScenePalette.sky), 1);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
   draw(
     gl.TRIANGLES,
-    groundVertices(content.ground.rect, content.ground.leaned),
+    groundVertices(content.ground, content.size),
     ScenePalette.ground
   );
   draw(gl.LINES, lineVertices(content.blackInk), ScenePalette.blackInk);

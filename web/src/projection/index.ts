@@ -11,7 +11,8 @@ import {
   type Ink,
   type Residence,
   type Segment,
-  type World
+  type World,
+  type Location as WorldLocation
 } from '../world/index.ts';
 
 /// Perspective projection from world space to view pixels, and what is worth projecting.
@@ -98,16 +99,18 @@ export interface ScreenLine {
 /// floating-point projection adds six exponent steps to X/Z, multiplying that ratio by 64. Y
 /// receives one additional exponent step, so its ratio is multiplied by 128 before either axis
 /// is added to the centre.
+const LOGICAL_WIDTH = 160;
+const HORIZONTAL_PIXEL_SCALE = 2;
+
 export const ReferenceViewport = {
   /// Perspective scale in reference pixels, decoded from FOCUS `$18` as 2^6.
   focalPixels: 64,
   height: 136,
-  horizontalPixelScale: 2,
-  logicalCentre: { x: 80, y: 68 },
-  logicalWidth: 160,
+  horizontalPixelScale: HORIZONTAL_PIXEL_SCALE,
   /// The point pipeline increments the Y exponent once before perspective.
   verticalRatioScale: 2,
-  width: 320
+  /// The physical playfield: each logical column is two pixels wide.
+  width: LOGICAL_WIDTH * HORIZONTAL_PIXEL_SCALE
 } as const;
 
 /// Uniform scale from physical reference pixels to view pixels.
@@ -266,9 +269,13 @@ export class Camera {
   groundFill(size: Size): { lean: number; rect: Rect } {
     const edge = this.horizon(size);
     const reach = (size.width + size.height) * 2;
-    const rect: Rect = this.isInverted
-      ? { height: reach, width: reach * 2, x: -reach, y: edge - reach }
-      : { height: reach, width: reach * 2, x: -reach, y: edge };
+    const rect: Rect = {
+      height: reach,
+      width: reach * 2,
+      x: -reach,
+      // Inverted, the ground is above the horizon rather than below it.
+      y: this.isInverted ? edge - reach : edge
+    };
     return { lean: -this.roll, rect };
   }
 
@@ -377,6 +384,14 @@ export const leanTransform = (roll: number, size: Size): AffineTransform => {
   );
 };
 
+/// Append in place. `push(...source)` spreads into an argument list, which has a ceiling a
+/// cell's geometry could reach; this does not.
+const append = <T>(into: T[], source: readonly T[]): void => {
+  for (const item of source) {
+    into.push(item);
+  }
+};
+
 /// What the renderer should draw this frame: line segments plus any objects reduced to a
 /// single point by the detail rule.
 export interface Visible {
@@ -420,24 +435,33 @@ export const visible = (
   // Underground the Reference Build draws one room and nothing else: no cell ring, no roads,
   // no surface objects. A room is its own world — but the things standing in that room are
   // drawn, by the same rules that draw the things on the surface.
+  /// The object rule, which is the same rule on the surface and underground: the things
+  /// present are drawn by their own detail-cube rule, and collapse to a point beyond it. Only
+  /// where they are differs, so only that is a parameter.
+  const appendObjects = (location: WorldLocation): void => {
+    for (const object of world.objects) {
+      const where = residence?.get(object.slot);
+      if (!isDrawable(object, location, where)) {
+        continue;
+      }
+      const moved = where === undefined ? undefined : displacement(where);
+      const placed =
+        moved === undefined ? object : movedHorizontally(object, moved);
+      if (isDetailed(placed, position)) {
+        append(segments, objectSegments(placed));
+        detailedObjects += 1;
+      } else if (placed.drawsFarAsPoint) {
+        points.push(placed.origin);
+      }
+    }
+  };
+
   if (options.room !== undefined) {
     const here = world.rooms.get(options.room);
     if (here !== undefined) {
-      segments.push(...here.segments);
+      append(segments, here.segments);
     }
-    for (const object of world.objects) {
-      if (
-        !isDrawable(object, room(options.room), residence?.get(object.slot))
-      ) {
-        continue;
-      }
-      if (isDetailed(object, position)) {
-        segments.push(...objectSegments(object));
-        detailedObjects += 1;
-      } else if (object.drawsFarAsPoint) {
-        points.push(object.origin);
-      }
-    }
+    appendObjects(room(options.room));
     return { detailedObjects, points, segments };
   }
 
@@ -456,28 +480,41 @@ export const visible = (
     ) {
       const cell = world.cell(selectedColumn, selectedRow);
       if (cell !== undefined && cell.index !== 0) {
-        segments.push(...cell.segments(elapsed));
+        append(segments, cell.segments(elapsed));
       }
     }
   }
 
-  segments.push(...world.mapSegments(position));
-
-  for (const object of world.objects) {
-    const where = residence?.get(object.slot);
-    if (!isDrawable(object, SURFACE, where)) {
-      continue;
-    }
-    const moved = where === undefined ? undefined : displacement(where);
-    const placed =
-      moved === undefined ? object : movedHorizontally(object, moved);
-    if (isDetailed(placed, position)) {
-      segments.push(...objectSegments(placed));
-      detailedObjects += 1;
-    } else if (placed.drawsFarAsPoint) {
-      points.push(placed.origin);
-    }
-  }
+  append(segments, world.mapSegments(position));
+  appendObjects(SURFACE);
 
   return { detailedObjects, points, segments };
+};
+
+/// Everything one Pose resolves to: the lines to stroke, in pipeline order, and the far points.
+///
+/// The order is the claim a projection Golden Trace makes, so this is the one traversal — the
+/// Replay Gate grades this function and the browser runs it. A renderer that wants its lines
+/// grouped by ink groups them afterwards; batching is a choice about draw calls and not a
+/// property of the projection.
+export const projectFrame = (
+  camera: Camera,
+  seen: Visible,
+  size: Size
+): { lines: ScreenLine[]; points: Point[] } => {
+  const lines: ScreenLine[] = [];
+  for (const segment of seen.segments) {
+    const line = camera.projectSegment(segment, size);
+    if (line !== undefined) {
+      lines.push(line);
+    }
+  }
+  const points: Point[] = [];
+  for (const origin of seen.points) {
+    const point = camera.projectPoint(origin, size);
+    if (point !== undefined) {
+      points.push(point);
+    }
+  }
+  return { lines, points };
 };

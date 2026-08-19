@@ -1,10 +1,9 @@
 import { fetchReader, load } from '../payload/load.ts';
 import {
   Camera,
-  leanTransform,
+  projectFrame,
   visible,
-  type Point,
-  type ScreenLine,
+  type CameraFields,
   type Size
 } from '../projection/index.ts';
 import { Ink, World } from '../world/index.ts';
@@ -22,10 +21,11 @@ import { drawFrame } from './frame.ts';
 /// is one the projection Replay Gate has already compared bit-for-bit against the Trace Oracle.
 /// The same pose against a different viewport is a different trace, so the canvas is 1280×800.
 const OPENING_VIEW = {
-  heading: 0,
-  pitch: 0,
-  position: { x: 559_104, y: 128, z: 559_104 },
-  roll: 0,
+  camera: {
+    heading: 0,
+    pitch: 0,
+    position: { x: 559_104, y: 128, z: 559_104 }
+  } satisfies CameraFields,
   size: { height: 800, width: 1280 } satisfies Size
 };
 
@@ -41,42 +41,25 @@ try {
   const size = OPENING_VIEW.size;
   canvas.width = size.width;
   canvas.height = size.height;
-  const camera = new Camera({
-    heading: OPENING_VIEW.heading,
-    pitch: OPENING_VIEW.pitch,
-    position: OPENING_VIEW.position,
-    roll: OPENING_VIEW.roll
-  });
-  const seen = visible(world, OPENING_VIEW.position);
+  const camera = new Camera(OPENING_VIEW.camera);
+  const seen = visible(world, OPENING_VIEW.camera.position);
+  const { lines, points } = projectFrame(camera, seen, size);
 
-  const blackInk: ScreenLine[] = [];
-  const whiteInk: ScreenLine[] = [];
-  for (const segment of seen.segments) {
-    const line = camera.projectSegment(segment, size);
-    if (line !== undefined) {
-      (line.ink === Ink.black ? blackInk : whiteInk).push(line);
-    }
-  }
-  const points: Point[] = [];
-  for (const origin of seen.points) {
-    const point = camera.projectPoint(origin, size);
-    if (point !== undefined) {
-      points.push(point);
-    }
-  }
-
-  const ground = camera.groundFill(size);
+  // The headless renderer strokes the dim ink and then the bright one, so the demo does too.
+  // Which pass a line belongs to is the projection's answer; how many draw calls that costs is
+  // the renderer's, and neither is pinned by a trace.
   drawFrame(canvas, {
-    blackInk,
-    ground: { leaned: leanTransform(ground.lean, size), rect: ground.rect },
+    blackInk: lines.filter(line => line.ink === Ink.black),
+    ground: camera.groundFill(size),
     points,
-    whiteInk
+    size,
+    whiteInk: lines.filter(line => line.ink === Ink.white)
   });
 
   status.textContent =
     `${bundle.manifest.sourceDatasetId} — the opening view of Targ. ` +
     `${seen.segments.length} candidate segments projected to ` +
-    `${blackInk.length + whiteInk.length} lines, with ` +
+    `${lines.length} lines, with ` +
     `${points.length} drawn as a far point; horizon at ` +
     `${camera.horizon(size).toFixed(1)}px.`;
 } catch (error) {
