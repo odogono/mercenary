@@ -78,6 +78,10 @@ _Avoid_: Fade, loading, teleport delay
 How the Room the player is in looks at this moment — its two backdrop colours, the colour its wireframe is drawn in, and whether it is dark — which depends on play rather than on the Room alone.
 _Avoid_: Room palette, lighting, theme
 
+**PresentationEvent**:
+Something that happened in a Gameplay Session which only presentation should answer — a tone, a script effect, a touchdown, an arrival, Wall Contact, or a world flip — while Session State remains the session's own.
+_Avoid_: sound event, UI notification, side effect
+
 **Flipped World**:
 The state in which the world is mirrored left for right, entered and left by arriving in one particular Room; the mirror applies to the view and to the controls together, so the player steers mirrored as well as seeing mirrored.
 _Avoid_: Inverted, reversed room, mirror mode

@@ -175,12 +175,17 @@ export interface Position3 {
 /// How a Doorway is taken and how a Room contains the player. Every value is an immediate the
 /// decoder read out of the Reference Build, so nothing that consumes them needs a constant.
 export interface DoorwayRules {
+  readonly alongWallBias: number;
   readonly colonyCraftArrival: Position3;
   readonly colonyCraftSlot: number;
   readonly cooldownFrames: number;
   readonly darkMessage: number;
+  readonly depthHalfWindow: number;
   readonly farMargin: number;
+  readonly headingRounding: number;
+  readonly keySlotBias: number;
   readonly lineColour: number;
+  readonly lockBoundary: number;
   readonly lockedMessage: number;
   readonly nearMargin: number;
   readonly photonEmitterSlot: number;
@@ -346,27 +351,65 @@ export interface FlightDocument {
   readonly walk: Walk;
 }
 
-/// A document the port checks the version of but does not yet read the body of.
-///
-/// Interaction and underground belong to later stages of the port (#94), and reading their
-/// bodies now would mean writing validators for shapes nothing consumes yet. Their
-/// `schemaVersion` is still checked, so a stale one is refused rather than tolerated — which
-/// is the guarantee the loader owes — and the raw body is kept so nothing is silently dropped
-/// on the way through.
-export interface UnreadDocument {
-  readonly body: Readonly<Record<string, unknown>>;
+export interface InteractionDocument {
+  readonly boardKey: number;
+  readonly boardRange: number;
+  readonly carriedMask: number;
+  readonly counts: Readonly<Record<string, number>>;
+  readonly craftSlotBound: number;
+  readonly descriptionMask: number;
+  readonly fixedMask: number;
+  readonly heavyMask: number;
+  readonly inventoryLimit: number;
+  readonly rangeUnit: number;
+  readonly removedFromWorld: number;
+  readonly schemaVersion: number;
+  readonly takeKey: number;
+  readonly takeRange: number;
+  readonly tooHeavyMessage: number;
+}
+
+export interface UndergroundEntrance {
+  readonly cell: readonly number[];
+  readonly room: number;
+  readonly site: number;
+}
+
+export interface UndergroundPad {
+  readonly shift: number;
+  readonly x: number;
+  readonly z: number;
+}
+
+export interface UndergroundLift {
+  readonly altitudeWrap: number;
+  readonly altitudeWrapSubtract: number;
+  readonly ascendRate: number;
+  readonly descendRate: number;
+  readonly floor: number;
+  readonly submergeAt: number;
+  readonly submergeMiddle: number;
+  readonly surfaceAt: number;
+  readonly surfaceMiddle: number;
+}
+
+export interface UndergroundDocument {
+  readonly counts: Readonly<Record<string, number>>;
+  readonly entrances: readonly UndergroundEntrance[];
+  readonly lift: UndergroundLift;
+  readonly pad: UndergroundPad;
   readonly schemaVersion: number;
 }
 
 export interface Bundle {
   readonly benson?: BensonDocument;
   readonly flight?: FlightDocument;
-  readonly interaction?: UnreadDocument;
+  readonly interaction?: InteractionDocument;
   readonly manifest: Manifest;
   readonly objects: ObjectsDocument;
   readonly rooms: RoomsDocument;
   readonly surface: SurfaceDocument;
   readonly text?: TextDocument;
-  readonly underground?: UnreadDocument;
+  readonly underground?: UndergroundDocument;
   readonly world: WorldDocument;
 }

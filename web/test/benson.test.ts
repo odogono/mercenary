@@ -147,13 +147,14 @@ describe('MessageTicker reveal counting', () => {
 describe('the interpreter random stream', () => {
   test('splitmix64 from the session seed produces a stable first byte', () => {
     // BensonSession's default seed, 0x2C692ED81B7F0A31 — not BensonState.defaultSeed.
-    const state = new BensonState(DEFAULT_SESSION_SEED);
-    expect([
-      nextRandom(state),
-      nextRandom(state),
-      nextRandom(state),
-      nextRandom(state)
-    ]).toEqual([90, 147, 164, 143]);
+    let state = new BensonState(DEFAULT_SESSION_SEED);
+    const bytes: number[] = [];
+    for (let i = 0; i < 4; i++) {
+      const rolled = nextRandom(state);
+      bytes.push(rolled.byte);
+      state = rolled.state;
+    }
+    expect(bytes).toEqual([90, 147, 164, 143]);
   });
 
   test('names both default seeds so they cannot be mixed', () => {

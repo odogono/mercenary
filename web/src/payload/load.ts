@@ -102,7 +102,7 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     }
   }
 
-  const interaction = await present(read, 'interaction.json', readers.unread);
+  const interaction = await present(read, 'interaction.json', readers.interaction);
   if (interaction !== undefined) {
     check(
       'interaction.json',
@@ -116,7 +116,7 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     check('flight.json', flight.schemaVersion, SUPPORTED_FLIGHT_SCHEMA_VERSION);
   }
 
-  const underground = await present(read, 'underground.json', readers.unread);
+  const underground = await present(read, 'underground.json', readers.underground);
   if (underground !== undefined) {
     check(
       'underground.json',

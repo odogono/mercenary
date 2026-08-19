@@ -12,7 +12,9 @@ import type { Vector3 } from '../orientation/index.ts';
 import type {
   Block,
   FlightDocument,
-  FlightRules
+  FlightRules,
+  UndergroundEntrance,
+  UndergroundLift
 } from '../payload/documents.ts';
 
 /// The simulation. A pure function of state, intent and elapsed time.
@@ -26,12 +28,9 @@ import type {
 /// `integrate` selects between them. Every arithmetic order below is the kit's, down to which side
 /// of a product a tuning scale is applied on, because a replay compares values rather than shapes.
 ///
-/// The kit's `GameCore.enter` and `GameCore.surface` are deliberately not here. Both read the
-/// underground document's entrances and lifts, and neither is a mover: they put the player where
-/// the lift ride would have left them, which is the session stage of the port (#94). Porting
-/// them now would mean a validator for a document shape nothing consumes yet, and the twelve
-/// movement traces do not need one — a scenario that starts underground sets `room` on the state
-/// it starts from, as its trace header does.
+/// `enter` and `surface` are not movers: they put the player where a lift ride would have left
+/// them. `GameplaySession.rideLift` is the caller. Movement traces that start underground still
+/// set `room` on the state they start from, as their trace headers do.
 
 const TURN = 2 * Math.PI;
 
@@ -425,6 +424,60 @@ export const board = (
 /// Leave the craft, which puts the player back on the walking block.
 export const leave = (state: GameState, flight: FlightModel): GameState =>
   settleOnGround({ ...state, craft: undefined }, flight.groundAltitude);
+
+/// Take the lift down into a room. Puts the player where the ride would have left them.
+export const enter = (
+  state: GameState,
+  entrance: UndergroundEntrance,
+  lift: UndergroundLift,
+  flight: FlightModel
+): GameState => {
+  const middle = lift.submergeMiddle << 8;
+  return {
+    ...state,
+    craft: undefined,
+    mode: 'grounded',
+    player: {
+      heading: state.player.heading,
+      pitch: 0,
+      position: { x: middle, y: flight.groundAltitude, z: middle },
+      roll: 0,
+      speed: 0,
+      yawVelocity: 0
+    },
+    room: entrance.room,
+    throttle: 0
+  };
+};
+
+/// Take the lift back up, onto the surface cell it serves.
+export const surface = (
+  state: GameState,
+  entrance: UndergroundEntrance,
+  lift: UndergroundLift,
+  cellSize: number,
+  flight: FlightModel
+): GameState => {
+  const middle = lift.surfaceMiddle << 8;
+  const column = entrance.cell[0] ?? 0;
+  const row = entrance.cell.length === 2 ? entrance.cell[1]! : 0;
+  return {
+    ...state,
+    mode: 'grounded',
+    player: {
+      ...state.player,
+      pitch: state.player.pitch,
+      position: {
+        x: column * cellSize + middle,
+        y: flight.groundAltitude,
+        z: row * cellSize + middle
+      },
+      speed: 0,
+      yawVelocity: 0
+    },
+    room: undefined
+  };
+};
 
 /// Whether a touchdown was a landing or a crash: descent rate, then pitch.
 const verdict = (

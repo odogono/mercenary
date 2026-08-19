@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The Gameplay Session, behind its own Replay Gate #94. Interaction, DoorwayPredicate, Indoor
+  Backdrop lookup, and a mutable `GameplaySession` that projects typed Location / Occupancy /
+  Object Residence into a new Host Callout, reconciles script writes, and `advance`s movers,
+  scripts, and the message line together. The **session** gate grades `session/opening` and
+  `session/opening-walk-to-craft` bit-for-bit; boarding on the walk-to trace is a recorded note,
+  not a command the replay injects. Host Callout and interpreter registers are persistent
+  values (ADR 0023): every write returns a new `BensonHostState` / `BensonState`, so
+  `acrossTheCallout` cannot alias. `BensonSession` and `GameplaySession` remain mutable owners
+  that replace those values. With scripts, `nextRandom` comes off persistent `BensonState`;
+  without, a session-owned stream with the same seeds as Swift — the dual-stream mix #93 named.
+  The payload reader now types `interaction.json` and `underground.json`. The page is still
+  throwaway: nothing in `web/src/shell/` is wired to the session (#95).
 - The Benson interpreter, behind its own Replay Gate #93. Nine traces, no world: the program,
   the machine, the Host Callout, the session that clocks it, and the message line. The
   **benson** gate grades 44,328 records across those scenarios, including two that end because
@@ -25,7 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   pair is one character on the message line; a combining mark is not. The first four bytes of
   `nextRandomByte` from the session seed are `[90, 147, 164, 143]`. The machine's own default
   seed is a different constant; mixing the two is a green gate against the wrong stream, and
-  the dual-stream session RNG that would make that mix possible is still #94.
+  the dual-stream session RNG that would make that mix possible is #94.
   The payload reader now types the Benson document and refuses a renamed field by path, and
   the settings seam asserts the `message` and `scripts` blocks the header carried. Gameplay
   session, Interaction, and flying a script from the page are out of scope: a module without

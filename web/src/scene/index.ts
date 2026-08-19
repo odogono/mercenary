@@ -9,9 +9,8 @@ import { hostRoom, type Residence, type Room } from '../world/index.ts';
 /// way. The palette tables come with it because the demo page has to draw those colours and
 /// there is no sense in a second, hardcoded copy of them.
 ///
-/// The session module (#94) is where an `IndoorScene` will eventually come from, since
-/// darkness depends on where the photon emitter has got to. What lives here is the resolution
-/// rule itself, which both renderers ask and which must not differ between them.
+/// `GameplaySession` asks for an `IndoorScene`; what lives here is the resolution rule itself,
+/// which both renderers ask and which must not differ between them.
 ///
 /// Of the palette, only `ScenePalette` has a caller today — the demo page draws its four
 /// colours. The C64 table is here because an indoor scene names its colours by index into it
@@ -67,6 +66,26 @@ export const c64Colour = (index: number): RGB8 | undefined =>
 /// the bitmap with `$AA` — foreground bit first, then background — and a projection Golden
 /// Trace records the count alongside the scene, which is the whole of why it is here.
 export const INDOOR_BACKDROP_COLUMNS = 320;
+
+/// The Reference Build clears an indoor bitmap with `$AA`: foreground bit first, then
+/// background, alternating through all 320 bitmap columns.
+export class IndoorBackdrop {
+  static readonly columnCount = INDOOR_BACKDROP_COLUMNS;
+  readonly background: RGB8;
+  readonly foreground: RGB8;
+
+  constructor(background: number, foreground: number) {
+    this.background = c64Colour(background) ?? ScenePalette.blackInk;
+    this.foreground = c64Colour(foreground) ?? ScenePalette.whiteInk;
+  }
+
+  colorAtColumn(column: number): RGB8 | undefined {
+    if (column < 0 || column >= IndoorBackdrop.columnCount) {
+      return undefined;
+    }
+    return column % 2 === 0 ? this.foreground : this.background;
+  }
+}
 
 /// How the Room the player is in looks right now.
 ///

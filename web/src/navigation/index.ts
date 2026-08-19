@@ -1,5 +1,5 @@
 import type { Vector3 } from '../orientation/index.ts';
-import type { DoorwayRules } from '../payload/documents.ts';
+import type { Doorway, DoorwayRules } from '../payload/documents.ts';
 import type { Room } from '../world/index.ts';
 
 /// What a Room's walls do, and how walking into one is the first half of walking through a
@@ -14,8 +14,8 @@ import type { Room } from '../world/index.ts';
 /// standing in, and it is the sort of thing a later reader would take for a bug and remove, so it
 /// is stated here and asserted by name in the tests.
 ///
-/// The predicate that reads a Doorway, and the traversal that takes one, belong to the session
-/// gate rather than this one: the Mover needs the walls and nothing else (#94).
+/// The predicate that reads a Doorway lives here with the walls; the Mover still only needs
+/// the walls, and the six underground navigation traces are a later gate.
 
 /// The bounds of one Room, as the literal byte arithmetic the Reference Build does.
 ///
@@ -84,4 +84,71 @@ const axis = (
     return { contact: 1, value: farBound };
   }
   return { contact: 0, value };
+};
+
+/// Whether the player is standing in a Doorway and facing it.
+///
+/// This is `$9437` written out as the same byte arithmetic it does. Positions are raw
+/// Reference Build units throughout: 256 to a cell, no scaling.
+export class DoorwayPredicate {
+  readonly rules: DoorwayRules;
+
+  constructor(rules: DoorwayRules) {
+    this.rules = rules;
+  }
+
+  /// The first Doorway in the Room's own order the player could walk through.
+  /// Record order matters: the Reference Build takes the first command that matches.
+  doorway(
+    doorways: readonly Doorway[],
+    position: Vector3,
+    heading: number
+  ): Doorway | undefined {
+    return doorways.find(opening => this.accepts(opening, position, heading));
+  }
+
+  doorwayInRoom(room: Room, position: Vector3, heading: number): Doorway | undefined {
+    return this.doorway(room.doorways, position, heading);
+  }
+
+  accepts(doorway: Doorway, position: Vector3, heading: number): boolean {
+    const plane = doorway.plane === 'zy' ? 0x80 : 0x00;
+    const x = Math.floor(position.x);
+    const z = Math.floor(position.z);
+    if (x < 0 || z < 0) {
+      return false;
+    }
+    if ((x + plane) >> 8 !== doorway.position.x >> 8) {
+      return false;
+    }
+    if ((z + (plane ^ 0x80)) >> 8 !== doorway.position.z >> 8) {
+      return false;
+    }
+    if (signBit(z - this.rules.depthHalfWindow, plane) !== 1) {
+      return false;
+    }
+    if (signBit(x - this.rules.alongWallBias, plane) !== 0) {
+      return false;
+    }
+    return faces(plane, heading);
+  }
+
+  /// The skeleton key opens everything, and it is tested before the lock class is even read.
+  opens(doorway: Doorway, carrying: (slot: number) => boolean): boolean {
+    if (carrying(this.rules.skeletonKeySlot)) {
+      return true;
+    }
+    if (doorway.lock === undefined) {
+      return true;
+    }
+    return carrying(doorway.lock.requiresObject);
+  }
+}
+
+const signBit = (value: number, plane: number): number =>
+  ((value & 0xff) ^ plane) >> 7 & 1;
+
+const faces = (plane: number, heading: number): boolean => {
+  const quarter = Math.round(heading / (Math.PI / 2)) & 3;
+  return (quarter & 1) === (plane === 0 ? 0 : 1);
 };

@@ -264,6 +264,7 @@ const rooms = (r: Reader, value: unknown): Doc.RoomsDocument => {
   ): number => asInt(r, holder[key], `${at}.${key}`);
   return {
     doorwayRules: {
+      alongWallBias: int(rules, 'alongWallBias', 'doorwayRules'),
       colonyCraftArrival: {
         x: int(arrival, 'x', 'doorwayRules.colonyCraftArrival'),
         y: int(arrival, 'y', 'doorwayRules.colonyCraftArrival'),
@@ -272,8 +273,12 @@ const rooms = (r: Reader, value: unknown): Doc.RoomsDocument => {
       colonyCraftSlot: int(rules, 'colonyCraftSlot', 'doorwayRules'),
       cooldownFrames: int(rules, 'cooldownFrames', 'doorwayRules'),
       darkMessage: int(rules, 'darkMessage', 'doorwayRules'),
+      depthHalfWindow: int(rules, 'depthHalfWindow', 'doorwayRules'),
       farMargin: int(rules, 'farMargin', 'doorwayRules'),
+      headingRounding: int(rules, 'headingRounding', 'doorwayRules'),
+      keySlotBias: int(rules, 'keySlotBias', 'doorwayRules'),
       lineColour: int(rules, 'lineColour', 'doorwayRules'),
+      lockBoundary: int(rules, 'lockBoundary', 'doorwayRules'),
       lockedMessage: int(rules, 'lockedMessage', 'doorwayRules'),
       nearMargin: int(rules, 'nearMargin', 'doorwayRules'),
       photonEmitterSlot: int(rules, 'photonEmitterSlot', 'doorwayRules'),
@@ -582,11 +587,62 @@ const flight = (r: Reader, value: unknown): Doc.FlightDocument => {
   };
 };
 
-/// A document whose version is checked and whose body is kept unread (see `UnreadDocument`).
-const unread = (r: Reader, value: unknown): Doc.UnreadDocument => {
+const interaction = (r: Reader, value: unknown): Doc.InteractionDocument => {
   const o = asObject(r, value, '$');
   return {
-    body: o,
+    boardKey: asInt(r, o['boardKey'], 'boardKey'),
+    boardRange: asInt(r, o['boardRange'], 'boardRange'),
+    carriedMask: asInt(r, o['carriedMask'], 'carriedMask'),
+    counts: intMap(r, o['counts'], 'counts'),
+    craftSlotBound: asInt(r, o['craftSlotBound'], 'craftSlotBound'),
+    descriptionMask: asInt(r, o['descriptionMask'], 'descriptionMask'),
+    fixedMask: asInt(r, o['fixedMask'], 'fixedMask'),
+    heavyMask: asInt(r, o['heavyMask'], 'heavyMask'),
+    inventoryLimit: asInt(r, o['inventoryLimit'], 'inventoryLimit'),
+    rangeUnit: asInt(r, o['rangeUnit'], 'rangeUnit'),
+    removedFromWorld: asInt(r, o['removedFromWorld'], 'removedFromWorld'),
+    schemaVersion: asInt(r, o['schemaVersion'], 'schemaVersion'),
+    takeKey: asInt(r, o['takeKey'], 'takeKey'),
+    takeRange: asInt(r, o['takeRange'], 'takeRange'),
+    tooHeavyMessage: asInt(r, o['tooHeavyMessage'], 'tooHeavyMessage')
+  };
+};
+
+const underground = (r: Reader, value: unknown): Doc.UndergroundDocument => {
+  const o = asObject(r, value, '$');
+  const pad = asObject(r, o['pad'], 'pad');
+  const lift = asObject(r, o['lift'], 'lift');
+  return {
+    counts: intMap(r, o['counts'], 'counts'),
+    entrances: asArray(r, o['entrances'], 'entrances').map((raw, i) => {
+      const at = `entrances[${i}]`;
+      const e = asObject(r, raw, at);
+      return {
+        cell: intArray(r, e['cell'], `${at}.cell`),
+        room: asInt(r, e['room'], `${at}.room`),
+        site: asInt(r, e['site'], `${at}.site`)
+      };
+    }),
+    lift: {
+      altitudeWrap: asInt(r, lift['altitudeWrap'], 'lift.altitudeWrap'),
+      altitudeWrapSubtract: asInt(
+        r,
+        lift['altitudeWrapSubtract'],
+        'lift.altitudeWrapSubtract'
+      ),
+      ascendRate: asInt(r, lift['ascendRate'], 'lift.ascendRate'),
+      descendRate: asInt(r, lift['descendRate'], 'lift.descendRate'),
+      floor: asInt(r, lift['floor'], 'lift.floor'),
+      submergeAt: asInt(r, lift['submergeAt'], 'lift.submergeAt'),
+      submergeMiddle: asInt(r, lift['submergeMiddle'], 'lift.submergeMiddle'),
+      surfaceAt: asInt(r, lift['surfaceAt'], 'lift.surfaceAt'),
+      surfaceMiddle: asInt(r, lift['surfaceMiddle'], 'lift.surfaceMiddle')
+    },
+    pad: {
+      shift: asInt(r, pad['shift'], 'pad.shift'),
+      x: asInt(r, pad['x'], 'pad.x'),
+      z: asInt(r, pad['z'], 'pad.z')
+    },
     schemaVersion: asInt(r, o['schemaVersion'], 'schemaVersion')
   };
 };
@@ -594,11 +650,12 @@ const unread = (r: Reader, value: unknown): Doc.UnreadDocument => {
 export const readers = {
   benson,
   flight,
+  interaction,
   manifest,
   objects,
   rooms,
   surface,
   text,
-  unread,
+  underground,
   world
 };
