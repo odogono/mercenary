@@ -1,4 +1,4 @@
-import type { TraceValue } from "./trace.ts"
+import type { TraceValue } from './trace.ts';
 
 /// Comparing a ported module's answer against what the Trace Oracle recorded.
 ///
@@ -13,27 +13,29 @@ import type { TraceValue } from "./trace.ts"
 /// clearest possible failure.
 
 export interface Difference {
+  readonly actual: TraceValue | undefined;
+  readonly expected: TraceValue | undefined;
   /// Where in the record the two disagree, as a readable path.
-  readonly path: string
-  readonly expected: TraceValue | undefined
-  readonly actual: TraceValue | undefined
+  readonly path: string;
 }
 
 const describe = (value: TraceValue | undefined): string => {
-  if (value === undefined) return "absent"
-  if (typeof value === "number") {
-    // Full precision and the sign of a zero, which is the whole point of comparing this way.
-    return Object.is(value, -0) ? "-0" : value.toPrecision(17)
+  if (value === undefined) {
+    return 'absent';
   }
-  return JSON.stringify(value)
-}
+  if (typeof value === 'number') {
+    // Full precision and the sign of a zero, which is the whole point of comparing this way.
+    return Object.is(value, -0) ? '-0' : value.toPrecision(17);
+  }
+  return JSON.stringify(value);
+};
 
 export const describeDifference = (difference: Difference): string =>
   `${difference.path}: expected ${describe(difference.expected)}, ` +
-  `got ${describe(difference.actual)}`
+  `got ${describe(difference.actual)}`;
 
 const isObject = (value: TraceValue): value is { [key: string]: TraceValue } =>
-  typeof value === "object" && value !== null && !Array.isArray(value)
+  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /// The first place two values disagree, or null when they are identical.
 ///
@@ -42,35 +44,57 @@ const isObject = (value: TraceValue): value is { [key: string]: TraceValue } =>
 export const firstDifference = (
   expected: TraceValue | undefined,
   actual: TraceValue | undefined,
-  path = "$",
+  path = '$'
 ): Difference | null => {
   if (expected === undefined || actual === undefined) {
-    return Object.is(expected, actual) ? null : { path, expected, actual }
+    return Object.is(expected, actual) ? null : { actual, expected, path };
   }
-  if (typeof expected === "number" || typeof actual === "number") {
-    return Object.is(expected, actual) ? null : { path, expected, actual }
+  if (typeof expected === 'number' || typeof actual === 'number') {
+    return Object.is(expected, actual) ? null : { actual, expected, path };
   }
   if (Array.isArray(expected) || Array.isArray(actual)) {
-    if (!Array.isArray(expected) || !Array.isArray(actual)) return { path, expected, actual }
-    if (expected.length !== actual.length) return { path: `${path}.length`, expected: expected.length, actual: actual.length }
-    for (let i = 0; i < expected.length; i++) {
-      const difference = firstDifference(expected[i], actual[i], `${path}[${i}]`)
-      if (difference !== null) return difference
+    if (!Array.isArray(expected) || !Array.isArray(actual)) {
+      return { actual, expected, path };
     }
-    return null
+    if (expected.length !== actual.length) {
+      return {
+        actual: actual.length,
+        expected: expected.length,
+        path: `${path}.length`
+      };
+    }
+    for (let i = 0; i < expected.length; i++) {
+      const difference = firstDifference(
+        expected[i],
+        actual[i],
+        `${path}[${i}]`
+      );
+      if (difference !== null) {
+        return difference;
+      }
+    }
+    return null;
   }
   if (isObject(expected) && isObject(actual)) {
     // Every key on both sides, in a stable order, so a member present on one side only is
     // reported as absent rather than skipped.
-    const keys = [...new Set([...Object.keys(expected), ...Object.keys(actual)])].sort()
+    const keys = [
+      ...new Set([...Object.keys(expected), ...Object.keys(actual)])
+    ].sort();
     for (const key of keys) {
-      const difference = firstDifference(expected[key], actual[key], `${path}.${key}`)
-      if (difference !== null) return difference
+      const difference = firstDifference(
+        expected[key],
+        actual[key],
+        `${path}.${key}`
+      );
+      if (difference !== null) {
+        return difference;
+      }
     }
-    return null
+    return null;
   }
-  return Object.is(expected, actual) ? null : { path, expected, actual }
-}
+  return Object.is(expected, actual) ? null : { actual, expected, path };
+};
 
 /// Compare, and throw with the first disagreement when there is one.
 ///
@@ -80,10 +104,10 @@ export const firstDifference = (
 export const expectIdentical = (
   expected: TraceValue | undefined,
   actual: TraceValue | undefined,
-  context: string,
+  context: string
 ): void => {
-  const difference = firstDifference(expected, actual)
+  const difference = firstDifference(expected, actual);
   if (difference !== null) {
-    throw new Error(`${context} diverged — ${describeDifference(difference)}`)
+    throw new Error(`${context} diverged — ${describeDifference(difference)}`);
   }
-}
+};

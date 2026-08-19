@@ -21,11 +21,11 @@
 /// a proprietary rounding error. The `math` Golden Trace therefore grades the platform rather
 /// than a replacement for it, and it is a canary: if an update ever moves a last bit, that
 /// gate goes red before any simulation is standing, and this module is where the answer goes.
-export const sin = (x: number): number => Math.sin(x)
-export const cos = (x: number): number => Math.cos(x)
-export const tan = (x: number): number => Math.tan(x)
-export const atan = (x: number): number => Math.atan(x)
-export const pow = (x: number, y: number): number => Math.pow(x, y)
+export const sin = (x: number): number => Math.sin(x);
+export const cos = (x: number): number => Math.cos(x);
+export const tan = (x: number): number => Math.tan(x);
+export const atan = (x: number): number => Math.atan(x);
+export const pow = (x: number, y: number): number => Math.pow(x, y);
 
 /// Narrow to binary32, at the boundaries the Swift implementation narrows at.
 ///
@@ -34,4 +34,4 @@ export const pow = (x: number, y: number): number => Math.pow(x, y)
 /// `0.10000000149011612`. A projection that carried double precision through to the screen
 /// would not reproduce them. IEEE 754 does pin this conversion, so unlike the functions above
 /// there is nothing to measure; the name is here so a call site says why it is narrowing.
-export const toFloat32 = (x: number): number => Math.fround(x)
+export const toFloat32 = (x: number): number => Math.fround(x);

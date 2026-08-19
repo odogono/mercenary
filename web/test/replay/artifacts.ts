@@ -1,5 +1,5 @@
-import { existsSync } from "node:fs"
-import { dirname, join, resolve } from "node:path"
+import { existsSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 
 /// Finding the two things a Replay Gate needs, neither of which is in Git.
 ///
@@ -13,56 +13,63 @@ import { dirname, join, resolve } from "node:path"
 /// ported, and a gate that quietly passes when its evidence is absent is worse than no gate:
 /// it reports the one thing that cannot be true.
 
-const MARKER = "trace-scenarios.json"
+const MARKER = 'trace-scenarios.json';
 
 const findRepositoryRoot = (): string => {
-  let directory = import.meta.dir
+  let directory = import.meta.dir;
   for (;;) {
-    if (existsSync(join(directory, MARKER))) return directory
-    const parent = dirname(directory)
+    if (existsSync(join(directory, MARKER))) {
+      return directory;
+    }
+    const parent = dirname(directory);
     if (parent === directory) {
       throw new Error(
-        `no ${MARKER} found above ${import.meta.dir}, so the repository root is unknown`,
-      )
+        `no ${MARKER} found above ${import.meta.dir}, so the repository root is unknown`
+      );
     }
-    directory = parent
+    directory = parent;
   }
-}
+};
 
-export const repositoryRoot = findRepositoryRoot()
+export const repositoryRoot = findRepositoryRoot();
 
 /// The payload directory, honouring the same override the Swift side reads.
 export const payloadDirectory = (): string => {
-  const override = process.env["MERCENARY_PAYLOAD"]
-  if (override !== undefined && override !== "") return resolve(override)
-  return join(repositoryRoot, "payload")
-}
+  const override = process.env['MERCENARY_PAYLOAD'];
+  if (override !== undefined && override !== '') {
+    return resolve(override);
+  }
+  return join(repositoryRoot, 'payload');
+};
 
-export const tracesDirectory = (): string => join(repositoryRoot, "traces")
+export const tracesDirectory = (): string => join(repositoryRoot, 'traces');
 
 const EMIT_HINT =
-  "emit it with: cd app && swift run mercenary --emit-traces\n" +
-  "(Golden Traces are derived from the Data Payload and are never tracked — ADR 0019)"
+  'emit it with: cd app && swift run mercenary --emit-traces\n' +
+  '(Golden Traces are derived from the Data Payload and are never tracked — ADR 0019)';
 
 /// One Golden Trace's bytes, or a failure that says what to run.
-export const readTraceText = async (emitter: string, id: string): Promise<string> => {
-  const path = join(tracesDirectory(), emitter, `${id}.jsonl`)
-  const file = Bun.file(path)
+export const readTraceText = async (
+  emitter: string,
+  id: string
+): Promise<string> => {
+  const path = join(tracesDirectory(), emitter, `${id}.jsonl`);
+  const file = Bun.file(path);
   if (!(await file.exists())) {
-    throw new Error(`no Golden Trace at ${path}\n${EMIT_HINT}`)
+    throw new Error(`no Golden Trace at ${path}\n${EMIT_HINT}`);
   }
-  return await file.text()
-}
+  return await file.text();
+};
 
 /// One payload document's bytes, or a failure that says what to run.
 export const readPayloadFile = async (name: string): Promise<string> => {
-  const path = join(payloadDirectory(), name)
-  const file = Bun.file(path)
+  const path = join(payloadDirectory(), name);
+  const file = Bun.file(path);
   if (!(await file.exists())) {
     throw new Error(
       `no ${name} in ${payloadDirectory()}\n` +
-        "export it with: cd lab && ... payload export  (the Data Payload is never tracked)",
-    )
+        'export it with: cd lab && ... payload export  (the Data Payload is never tracked)'
+    );
   }
-  return await file.text()
-}
+  return await file.text();
+};
