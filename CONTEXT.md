@@ -18,6 +18,10 @@ _Avoid_: Game script, event code, AI logic, bytecode dump
 The set of values that makes one craft handle as it does—its control routine and its rates, limits, and gains—re-extracted into the Data Payload as plain numbers and selected by the craft the player currently occupies; a landed craft taxis on a block of its own, while a player on foot runs a separate fixed-step mover rather than this loop (ADR 0016).
 _Avoid_: Flight profile, craft config, tuning block, vehicle stats
 
+**Mover**:
+One of the two movement routines the Reference Build has, selected by Occupancy: the control loop a craft is flown by, running over its Craft Parameter Block, or the fixed step and fixed turn a player takes on foot. Underground it is always the on-foot one, whatever the surface would have selected. There are two because the original has two, so a third would be a departure rather than a port (ADR 0016).
+_Avoid_: Movement system, physics, character controller, integrator
+
 **Gameplay Session**:
 The single owner of one play session's Session State, through which every change to it passes; it presents the Host Callout's view of that state rather than keeping a second copy, and hands out a Session Snapshot for anything that draws.
 _Avoid_: Game manager, world state, controller, store
