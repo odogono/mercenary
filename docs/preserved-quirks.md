@@ -123,3 +123,58 @@ list (`$941A`) and the objects present in the room (`$9425`).
 is a puzzle. An **Accommodation** is available later if playtesting says the darkness
 is unfair rather than tense — showing the Doorways only, say — but it would be a
 settings-gated change with the maintainer's approval, not a quiet improvement.
+
+## PQ-0005 — A player against a far Room wall reports contact on every frame
+
+**What.** `Containment` bounds a player on foot inside a Room, and its two compares are
+not symmetric. The near bound passes when the position *equals* the margin; the far
+bound fails when the position equals it. So a player walking into a near wall reports
+contact once and then stands quietly against it, while a player pinned against a far
+wall reports contact on every frame for as long as they lean on it.
+
+**Why it reads as a bug.** The asymmetry looks like an off-by-one, and the obvious
+repair — make both compares `>` — is a one-character change that a reader would make
+with confidence. Two axes make it worse: a corner reports two contacts, so a player in
+a far corner reports two every frame.
+
+**What our image says.** The two compares are the literal readings of the Reference
+Build's own tests. The near test is "in bounds if the position is at or past the near
+margin"; the far test is "in bounds if the low byte is *below* the far margin", which a
+position sitting exactly on the margin fails. They are different instructions, not one
+instruction applied twice, and the far bound is built from the last whole cell plus the
+margin rather than from the extent directly.
+
+**Why it is not repaired.** Wall contact is what a Doorway is opened by, and the count
+is what the traversal path reads before it will look for one at all. Making the far
+wall report once would change which frames can take a Doorway, which is a change to
+navigation rather than to a bound — and the repeating count is already load-bearing in
+the other direction, because `wallContactLatch` holds the previous frame's count
+precisely so the wall sounds once rather than every frame while the player leans on it.
+Asserted by name in `web/test/containment.test.ts`.
+
+## PQ-0006 — A craft landing nose-up never crashes, however steep
+
+**What.** A touchdown is judged on descent rate first and pitch second. The pitch test
+is written in the Reference Build's ten-bit angle units, where level is half a turn and
+larger values are nose down, and it compares against a nose-down threshold only. A
+craft touching down nose-*up* has to wrap past a half turn before the comparison can
+fire, so a steep nose-up attitude lands where the mirror-image nose-down attitude
+crashes.
+
+**Why it reads as a bug.** "Crashes if the nose is too far from level" is the rule a
+reader expects, and taking the absolute distance from level would be the natural
+repair. It also looks like an asymmetry introduced by the port's radian representation
+rather than one the original had.
+
+**What our image says.** The engine tests one side directly. `rawPitch` reconstructs
+the ten-bit value the tests were written around, and the threshold is a single
+comparison against the nose-down side; nothing reads the nose-up side at all. The
+descent-rate test is unconditional and comes first, so a craft falling fast enough
+still crashes whichever way its nose points.
+
+**Why it is not repaired.** Symmetrising the test would make some landings that
+currently succeed into crashes, which is a change to how the game plays rather than to
+how it is decoded — and the nose-up escape is reachable deliberately, because pitch
+wraps over the top rather than clamping, so a craft can be flown right over and back.
+Asserted in `web/test/mover.test.ts` as "the pitch tests are written around level being
+half a turn".

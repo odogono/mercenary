@@ -1,4 +1,5 @@
 import {
+  REFERENCE_OPENING_POSITION,
   board,
   gameState,
   intent,
@@ -13,6 +14,7 @@ import { Containment } from '../../src/navigation/index.ts';
 import type { Bundle } from '../../src/payload/documents.ts';
 import { indoorScene, type IndoorScene } from '../../src/scene/index.ts';
 import { flightModel, type Settings } from '../../src/settings/index.ts';
+import type { TraceObject, TraceValue } from '../../src/trace/index.ts';
 import {
   SURFACE,
   World,
@@ -20,7 +22,6 @@ import {
   type Location,
   type Residence
 } from '../../src/world/index.ts';
-import type { TraceObject, TraceValue } from './trace.ts';
 
 /// Test-side stand-in for the part of GameplaySession that the mover emitters use.
 ///
@@ -35,13 +36,22 @@ export class MoverReplay {
   readonly location: Location;
   readonly indoor: IndoorScene | undefined;
   private state: ReturnType<typeof gameState>;
+  private readonly residenceTable: TraceValue;
 
-  constructor(bundle: Bundle, settings: Settings, header: TraceObject) {
+  /// The world is passed in rather than built here. It is read-only from a driver's point of
+  /// view, and building it walks every surface cell of Targ — which both gates would otherwise
+  /// pay for twice per trace.
+  constructor(
+    bundle: Bundle,
+    world: World,
+    settings: Settings,
+    header: TraceObject
+  ) {
     const document = bundle.flight;
     if (document === undefined) {
       throw new Error('a mover replay needs flight.json');
     }
-    this.world = new World(bundle);
+    this.world = world;
     this.flight = flightModel(
       settings.flight,
       document,
@@ -56,15 +66,16 @@ export class MoverReplay {
       ])
     );
 
-    // OpeningScene.swift: every mover emitter starts at the captured crash position.
+    // OpeningScene.swift: every mover emitter starts at the captured crash position, at
+    // whatever eye height the settings resolved to.
     this.state = gameState({
       player: playerState({
         heading: 0,
         pitch: 0,
         position: {
-          x: 559_104,
+          x: REFERENCE_OPENING_POSITION.x,
           y: this.flight.groundAltitude,
-          z: 559_104
+          z: REFERENCE_OPENING_POSITION.z
         }
       })
     });
@@ -148,6 +159,15 @@ export class MoverReplay {
     if (typeof notch === 'number') {
       this.state = throttle(this.state, notch, this.flight.rules);
     }
+
+    // Nothing after setup moves an object, so the table every snapshot reports is shaped once
+    // here rather than rebuilt for each of the run's several hundred steps.
+    this.residenceTable = Object.fromEntries(
+      [...this.residence].map(([slot, where]) => [
+        String(slot),
+        residenceValue(where)
+      ])
+    );
   }
 
   get elapsed(): number {
@@ -226,23 +246,10 @@ export class MoverReplay {
       occupancy:
         this.state.craft === undefined ? 'onFoot' : { craft: this.state.craft },
       player: {
-        heading: this.state.player.heading,
-        pitch: this.state.player.pitch,
-        position: {
-          x: this.state.player.position.x,
-          y: this.state.player.position.y,
-          z: this.state.player.position.z
-        },
-        roll: this.state.player.roll,
-        speed: this.state.player.speed,
-        yawVelocity: this.state.player.yawVelocity
+        ...this.state.player,
+        position: { ...this.state.player.position }
       },
-      residence: Object.fromEntries(
-        [...this.residence].map(([slot, where]) => [
-          String(slot),
-          residenceValue(where)
-        ])
-      ),
+      residence: this.residenceTable,
       throttle: this.state.throttle,
       throttleNotch: throttleNotch(
         this.state.throttle,

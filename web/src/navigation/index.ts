@@ -14,8 +14,8 @@ import type { Room } from '../world/index.ts';
 /// standing in, and it is the sort of thing a later reader would take for a bug and remove, so it
 /// is stated here and asserted by name in the tests.
 ///
-/// The predicate that reads a Doorway, and the traversal that takes one, belong to the navigation
-/// gate rather than this one: the mover needs the walls and nothing else (#93).
+/// The predicate that reads a Doorway, and the traversal that takes one, belong to the session
+/// gate rather than this one: the Mover needs the walls and nothing else (#94).
 
 /// The bounds of one Room, as the literal byte arithmetic the Reference Build does.
 ///

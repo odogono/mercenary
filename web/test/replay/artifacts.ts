@@ -3,8 +3,8 @@ import { dirname, join, resolve } from 'node:path';
 
 import type { Bundle } from '../../src/payload/documents.ts';
 import { load } from '../../src/payload/load.ts';
+import type { Trace, TraceObject } from '../../src/trace/index.ts';
 import { describeDifference, firstDifference } from './compare.ts';
-import type { Trace, TraceObject } from './trace.ts';
 
 /// Finding the two things a Replay Gate needs, neither of which is in Git.
 ///

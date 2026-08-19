@@ -16,13 +16,14 @@ import {
   loadSettings,
   type FlightSettings
 } from '../src/settings/index.ts';
+import { parseTraceHeader, type TraceObject } from '../src/trace/index.ts';
 import {
   loadPayload,
   readTraceText,
   repositoryRoot
 } from './replay/artifacts.ts';
 import { expectIdentical } from './replay/compare.ts';
-import { parseTrace, type TraceObject } from './replay/trace.ts';
+import { flightSettingsValue } from './replay/moverGate.ts';
 
 /// What the settings port owes its callers.
 ///
@@ -238,12 +239,12 @@ if (flightDocument === undefined) {
 /// The eye height an on-foot trace starts at, read out of the trace rather than restated as a
 /// literal here. The captured height belongs to the Reference Build, so the Oracle's record of it
 /// is the authority; a literal would still pass if the capture were ever re-measured.
-const walkTrace = parseTrace(
+const walkHeader = parseTraceHeader(
   await readTraceText('game-core', 'surface-walk'),
   'game-core',
   'surface-walk'
 );
-const walkInitial = walkTrace.header['initial'] as TraceObject;
+const walkInitial = walkHeader['initial'] as TraceObject;
 const recordedAltitude = (
   (walkInitial['player'] as TraceObject)['position'] as TraceObject
 )['y'];
@@ -273,18 +274,6 @@ describe('the flight model the flight block produces', () => {
     const flight = loadSettings('{"flight": {"groundAltitude": 96}}').flight;
     expect(flightModel(flight, document, 4096).groundAltitude).toBe(96);
   });
-});
-
-/// The flight block as a trace header spells it: an unnamed eye height is recorded `null`, because
-/// JSON has no way to write a key that is absent and a header records every field it has.
-const asRecorded = (flight: FlightSettings): TraceObject => ({
-  groundAltitude: flight.groundAltitude ?? null,
-  pitchScale: flight.pitchScale,
-  referenceFrameRate: flight.referenceFrameRate,
-  runMultiplier: flight.runMultiplier,
-  speedScale: flight.speedScale,
-  throttleFloorNotch: flight.throttleFloorNotch,
-  turnScale: flight.turnScale
 });
 
 /// The tuning every mover gate runs against, checked against what was recorded with it.
@@ -330,15 +319,15 @@ describe('the tracked settings, against the traces recorded with them', () => {
 
   for (const scenario of movers) {
     test(`${scenario.emitter}/${scenario.id} was recorded with this tuning`, async () => {
-      const trace = parseTrace(
+      const header = parseTraceHeader(
         await readTraceText(scenario.emitter, scenario.id),
         scenario.emitter,
         scenario.id
       );
-      const settings = trace.header['settings'] as TraceObject;
+      const settings = header['settings'] as TraceObject;
       expectIdentical(
         settings['flight'],
-        asRecorded(tracked.flight),
+        flightSettingsValue(tracked.flight),
         `${scenario.emitter}/${scenario.id} settings.flight`
       );
       // Only its own emitter's block, so a header gaining another one is noticed here.

@@ -1,5 +1,12 @@
 /// Reading a Golden Trace, and folding its deltas forward.
 ///
+/// In `src` rather than beside the tests because there are two readers, not one: the Replay Gates
+/// fold a whole state to grade it, and the browser page folds the player out of a flight trace to
+/// fly it. A second reader in the page would mean the schema version, the JSON Lines split and the
+/// fold semantics written twice, and the copy that is not a gate is exactly the one that would
+/// half-read a bumped schema without failing. Nothing here touches a filesystem or a test runner —
+/// locating an artifact is `test/replay/artifacts.ts`, and grading one is `test/replay/compare.ts`.
+///
 /// JSON Lines: the first line is the header, every line after it is one record. A record
 /// carries `changed`, a recursive structural diff against the previous state rather than the
 /// state itself, because the collections in the game state dwarf what moves on any one step.
@@ -37,6 +44,44 @@ const REMOVAL_KEY = '-';
 /// change without a reader silently misinterpreting it.
 export const SUPPORTED_SCHEMA_VERSION = 3;
 
+/// The header alone, without parsing the records.
+///
+/// A trace's records dwarf its header — twelve of them are a couple of megabytes — and a caller
+/// that only wants what the run was configured with should not pay to parse every step of it.
+/// The same schema and identity checks apply, because a header is the thing they are about.
+export const parseTraceHeader = (
+  text: string,
+  emitter: string,
+  id: string
+): TraceObject => {
+  const end = text.indexOf('\n');
+  const first = end < 0 ? text : text.slice(0, end);
+  if (first.length === 0) {
+    throw new Error(`${emitter}/${id} is empty`);
+  }
+  return checkedHeader(JSON.parse(first) as TraceObject, emitter, id);
+};
+
+const checkedHeader = (
+  header: TraceObject,
+  emitter: string,
+  id: string
+): TraceObject => {
+  const version = header['schemaVersion'];
+  if (version !== SUPPORTED_SCHEMA_VERSION) {
+    throw new Error(
+      `${emitter}/${id} is trace schema ${String(version)}, and this reader reads ` +
+        `${SUPPORTED_SCHEMA_VERSION}`
+    );
+  }
+  if (header['emitter'] !== emitter || header['id'] !== id) {
+    throw new Error(
+      `${emitter}/${id} says it is ${String(header['emitter'])}/${String(header['id'])}`
+    );
+  }
+  return header;
+};
+
 export const parseTrace = (
   text: string,
   emitter: string,
@@ -46,19 +91,11 @@ export const parseTrace = (
   if (lines.length === 0) {
     throw new Error(`${emitter}/${id} is empty`);
   }
-  const header = JSON.parse(lines[0]!) as TraceObject;
-  const version = header['schemaVersion'];
-  if (version !== SUPPORTED_SCHEMA_VERSION) {
-    throw new Error(
-      `${emitter}/${id} is trace schema ${String(version)}, and this harness reads ` +
-        `${SUPPORTED_SCHEMA_VERSION}`
-    );
-  }
-  if (header['emitter'] !== emitter || header['id'] !== id) {
-    throw new Error(
-      `${emitter}/${id} says it is ${String(header['emitter'])}/${String(header['id'])}`
-    );
-  }
+  const header = checkedHeader(
+    JSON.parse(lines[0]!) as TraceObject,
+    emitter,
+    id
+  );
   const records = lines.slice(1).map((line, index) => {
     try {
       return JSON.parse(line) as TraceObject;
@@ -71,7 +108,11 @@ export const parseTrace = (
   return { emitter, header, id, records };
 };
 
-const isObject = (value: TraceValue): value is TraceObject =>
+/// Whether a trace value is a named shape, and so has members to read or merge.
+///
+/// Exported because every reader needs it before it can index a value: `apply` merges member by
+/// member, and the page has to reach `player.position` through two of them.
+export const isObject = (value: TraceValue | undefined): value is TraceObject =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /// Fold one recorded change forward, returning the state it produces.

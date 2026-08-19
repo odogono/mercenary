@@ -6,6 +6,11 @@ import type {
   FlightRules,
   Walk
 } from '../src/payload/documents.ts';
+import {
+  parseTrace,
+  type TraceObject,
+  type TraceValue
+} from '../src/trace/index.ts';
 import { World } from '../src/world/index.ts';
 import { Inspector, type Row } from '../src/world/inspector.ts';
 import {
@@ -14,11 +19,6 @@ import {
   readTraceText
 } from './replay/artifacts.ts';
 import { expectIdentical } from './replay/compare.ts';
-import {
-  parseTrace,
-  type TraceObject,
-  type TraceValue
-} from './replay/trace.ts';
 
 /// The decode Replay Gate: payload to world, before anything projects or moves.
 ///

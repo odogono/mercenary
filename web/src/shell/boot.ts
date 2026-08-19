@@ -1,3 +1,4 @@
+import { REFERENCE_OPENING_POSITION } from '../gameCore/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { fetchReader, load } from '../payload/load.ts';
 import {
@@ -5,10 +6,18 @@ import {
   projectFrame,
   visible,
   type CameraFields,
+  type ScreenLine,
   type Size
 } from '../projection/index.ts';
+import {
+  foldStates,
+  isObject,
+  parseTrace,
+  type TraceObject,
+  type TraceValue
+} from '../trace/index.ts';
 import { Ink, World } from '../world/index.ts';
-import { drawFrame } from './frame.ts';
+import { Renderer } from './frame.ts';
 
 /// Targ, drawn in a browser tab: one fixed pose, and then a recorded flight over it.
 ///
@@ -33,7 +42,7 @@ const OPENING_VIEW = {
   camera: {
     heading: 0,
     pitch: 0,
-    position: { x: 559_104, y: 128, z: 559_104 }
+    position: REFERENCE_OPENING_POSITION
   } satisfies CameraFields,
   size: { height: 800, width: 1280 } satisfies Size
 };
@@ -41,11 +50,6 @@ const OPENING_VIEW = {
 /// The one trace the page flies. The dev server serves the flight traces by scenario id, so
 /// this is the id and not a path.
 const FLYTHROUGH = { emitter: 'flight', id: 'craft-1-standard' } as const;
-
-/// The trace schema this page reads. It reads one branch of the state rather than all of it,
-/// but a schema it does not know is still refused rather than half-read, for the reason the
-/// Replay Gate harness refuses one.
-const TRACE_SCHEMA_VERSION = 3;
 
 const EMIT_HINT =
   'from the repository root: cd app && swift run mercenary --emit-traces';
@@ -71,12 +75,7 @@ interface Flythrough {
   readonly poses: readonly RecordedPose[];
 }
 
-type Fields = Record<string, unknown>;
-
-const isFields = (value: unknown): value is Fields =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
-const numberAt = (fields: Fields, key: string): number => {
+const numberAt = (fields: TraceObject, key: string): number => {
   const value = fields[key];
   if (typeof value !== 'number') {
     throw new Error(
@@ -86,11 +85,12 @@ const numberAt = (fields: Fields, key: string): number => {
   return value;
 };
 
-const poseOf = (player: Fields): RecordedPose => {
-  const position = player['position'];
-  if (!isFields(position)) {
-    throw new Error('a recorded player state has no position');
+const poseOf = (state: TraceValue): RecordedPose => {
+  const player = isObject(state) ? state['player'] : undefined;
+  if (!isObject(player) || !isObject(player['position'])) {
+    throw new Error('a recorded state has no player position');
   }
+  const position = player['position'];
   return {
     heading: numberAt(player, 'heading'),
     pitch: numberAt(player, 'pitch'),
@@ -104,79 +104,22 @@ const poseOf = (player: Fields): RecordedPose => {
   };
 };
 
-/// Merge one record's `player` over the player state so far.
+/// The poses one Golden Trace flew, read through the same reader the Replay Gates use.
 ///
-/// A trace record carries `changed`, a structural diff against the step before, so a pose has
-/// to be folded forward rather than read off. Only `position` nests inside the player, so this
-/// merges one level and no deeper. It is deliberately **not** the Replay Gate's fold: that one
-/// is recursive because it reconstructs the whole game state to grade it, and it lives with the
-/// tests. This needs enough of the shape to move a Camera, and importing a test harness into
-/// the page to get it would tie the page to the gate.
-const foldPlayer = (player: Fields, change: Fields): Fields => {
-  const position = change['position'];
-  if (!isFields(position)) {
-    return { ...player, ...change };
-  }
-  const before = player['position'];
-  return {
-    ...player,
-    ...change,
-    position: { ...(isFields(before) ? before : {}), ...position }
-  };
-};
-
-/// Fold the recorded poses out of one Golden Trace's bytes.
-///
-/// JSON Lines: the header carries the state the run started in, and records with `input` are
-/// simulation steps. Command records share a step number but do not advance time, so they are
-/// skipped. A step whose record changed nothing repeats the pose before it, which is what standing
-/// still looks like and is left in rather than collapsed, so a step here is a step there.
+/// `foldStates` returns one state per record, so the poses are picked out of it by the records
+/// that are simulation steps: a command record shares a step number and does not advance time.
+/// A step whose record changed nothing repeats the pose before it, which is what standing still
+/// looks like and is left in rather than collapsed, so a step here is a step there.
 const flownPoses = (text: string): Flythrough => {
-  const lines = text.split('\n').filter(line => line.length > 0);
-  if (lines.length === 0) {
-    throw new Error('the trace is empty');
-  }
-  const header: unknown = JSON.parse(lines[0]!);
-  if (!isFields(header)) {
-    throw new Error('the trace header is not an object');
-  }
-  if (header['schemaVersion'] !== TRACE_SCHEMA_VERSION) {
-    throw new Error(
-      `the trace is schema ${String(header['schemaVersion'])}, and this page ` +
-        `reads ${TRACE_SCHEMA_VERSION}`
-    );
-  }
-  if (
-    header['emitter'] !== FLYTHROUGH.emitter ||
-    header['id'] !== FLYTHROUGH.id
-  ) {
-    throw new Error(
-      `the trace says it is ${String(header['emitter'])}/${String(header['id'])}`
-    );
-  }
-  const initial = header['initial'];
-  const first = isFields(initial) ? initial['player'] : undefined;
-  if (!isFields(first)) {
-    throw new Error('the trace header has no initial player state');
-  }
-  let player = first;
-  const poses: RecordedPose[] = [];
-  for (const line of lines.slice(1)) {
-    const record: unknown = JSON.parse(line);
-    if (!isFields(record) || !isFields(record['input'])) {
-      continue;
-    }
-    const changed = record['changed'];
-    const change = isFields(changed) ? changed['player'] : undefined;
-    if (isFields(change)) {
-      player = foldPlayer(player, change);
-    }
-    poses.push(poseOf(player));
-  }
+  const trace = parseTrace(text, FLYTHROUGH.emitter, FLYTHROUGH.id);
+  const states = foldStates(trace);
+  const poses = states
+    .filter((_, index) => isObject(trace.records[index]?.['input']))
+    .map(poseOf);
   if (poses.length === 0) {
     throw new Error('the trace records no steps');
   }
-  return { dt: numberAt(header, 'dt'), poses };
+  return { dt: numberAt(trace.header, 'dt'), poses };
 };
 
 /// The recorded poses, or the reason there are none. Absence is ordinary — a Golden Trace is
@@ -212,6 +155,8 @@ interface Drawn {
   readonly segments: number;
 }
 
+const renderer = new Renderer(canvas);
+
 const draw = (world: World, pose: CameraFields): Drawn => {
   const camera = new Camera(pose);
   const seen = visible(world, pose.position);
@@ -219,13 +164,19 @@ const draw = (world: World, pose: CameraFields): Drawn => {
 
   // The headless renderer strokes the dim ink and then the bright one, so the demo does too.
   // Which pass a line belongs to is the projection's answer; how many draw calls that costs is
-  // the renderer's, and neither is pinned by a trace.
-  drawFrame(canvas, {
-    blackInk: lines.filter(line => line.ink === Ink.black),
+  // the renderer's, and neither is pinned by a trace. Split in one walk rather than two filters,
+  // because this runs once per displayed frame rather than once per page.
+  const blackInk: ScreenLine[] = [];
+  const whiteInk: ScreenLine[] = [];
+  for (const line of lines) {
+    (line.ink === Ink.black ? blackInk : whiteInk).push(line);
+  }
+  renderer.draw({
+    blackInk,
     ground: camera.groundFill(size),
     points,
     size,
-    whiteInk: lines.filter(line => line.ink === Ink.white)
+    whiteInk
   });
 
   return {
@@ -236,22 +187,28 @@ const draw = (world: World, pose: CameraFields): Drawn => {
   };
 };
 
+/// The part of the status line that is the same whichever pose was drawn.
+const describe = (drawn: Drawn): string =>
+  `${drawn.segments} candidate segments projected to ${drawn.lines} lines, ` +
+  `with ${drawn.points} drawn as a far point; horizon at ` +
+  `${drawn.horizon.toFixed(1)}px.`;
+
 try {
+  // The trace and the payload are unrelated fetches, so the trace is asked for before the
+  // payload is awaited rather than after it. The opening pose is still drawn first — only the
+  // two round trips overlap, not the draws.
+  const pending = flythrough();
   const bundle = await load(
     fetchReader(new URL('/payload/', location.href).href)
   );
   const world = new World(bundle);
   const dataset = bundle.manifest.sourceDatasetId;
 
-  const opening = draw(world, OPENING_VIEW.camera);
   status.textContent =
     `${dataset} — the opening view of Targ. ` +
-    `${opening.segments} candidate segments projected to ` +
-    `${opening.lines} lines, with ` +
-    `${opening.points} drawn as a far point; horizon at ` +
-    `${opening.horizon.toFixed(1)}px.`;
+    describe(draw(world, OPENING_VIEW.camera));
 
-  const flown = await flythrough();
+  const flown = await pending;
   if (flown instanceof Error) {
     // The fixed pose stays on screen. A page that blanked because an untracked artifact was
     // not there would read as broken rather than as unemitted, and the one thing the reader
@@ -271,14 +228,11 @@ try {
       if (index !== shown) {
         shown = index;
         const pose = flown.poses[index]!;
-        const drawn = draw(world, pose);
         status.textContent =
           `${dataset} — flying ${FLYTHROUGH.emitter}/${FLYTHROUGH.id}, ` +
           `${(index * flown.dt).toFixed(1)}s of ${duration.toFixed(1)}s at the ` +
           `recorded rate. Altitude ${pose.position.y.toFixed(0)}, speed ` +
-          `${pose.speed.toFixed(0)}; ${drawn.segments} candidate segments ` +
-          `projected to ${drawn.lines} lines, with ${drawn.points} drawn as a ` +
-          `far point; horizon at ${drawn.horizon.toFixed(1)}px.`;
+          `${pose.speed.toFixed(0)}; ${describe(draw(world, pose))}`;
       }
       requestAnimationFrame(play);
     };

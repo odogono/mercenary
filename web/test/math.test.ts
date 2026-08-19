@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
 import { atan, cos, pow, sin, tan, toFloat32 } from '../src/math/index.ts';
+import { parseTrace } from '../src/trace/index.ts';
 import { readTraceText } from './replay/artifacts.ts';
 import { describeDifference, firstDifference } from './replay/compare.ts';
-import { parseTrace } from './replay/trace.ts';
 
 /// The gate beneath every other gate (ADR 0022).
 ///

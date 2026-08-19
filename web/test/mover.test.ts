@@ -190,7 +190,7 @@ describe('properties that hold whatever the block', () => {
   });
 
   test('a stalled frame is a run of bounded slices rather than one leap', () => {
-    // Two thirtieths is exactly two of the longest slice the integrator will take, so a step of
+    // Two thirtieths is exactly two of the longest slice a Mover will take, so a step of
     // it has to come out bit-for-bit identical to taking those two slices by hand. A different
     // bound, or no bound at all, would integrate the filters over a different set of steps.
     const input = intent({ turn: 1 });

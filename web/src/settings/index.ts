@@ -221,16 +221,10 @@ const optionalNumber = (
   source: Record<string, unknown>,
   key: string,
   path: string
-): number | undefined => {
-  const value = source[key];
-  if (unnamed(value)) {
-    return undefined;
-  }
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return refuse(`${path} should be a finite number, and is ${shown(value)}`);
-  }
-  return value;
-};
+): number | undefined =>
+  // Delegates rather than restating the check and its wording: once the field is named, the
+  // fallback `number` would return is unreachable, so what it is cannot matter.
+  unnamed(source[key]) ? undefined : number(source, key, path, 0);
 
 const readFlight = (value: unknown): FlightSettings => {
   const source = block(value, 'flight');

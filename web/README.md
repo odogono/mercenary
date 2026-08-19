@@ -18,9 +18,10 @@ ADR 0019 gitignores and ADR 0004 gates.
 
 Both read the gitignored `/payload/` from the repository root, and both read the gitignored
 `/traces/` beside it: `bun test` grades every ported module against the Golden Traces, and
-the dev server hands the page the flight traces it flies — by scenario id, against the list in
-`trace-scenarios.json`, and nothing else under that directory. Neither directory is in Git;
-both are derived from the Reference Build. If they are missing, emit them first:
+the dev server hands the page the traces it flies — by `emitter/id`, against the Trace
+Scenarios listed in `trace-scenarios.json`, and nothing else under that directory. Neither
+directory is in Git; both are derived from the Reference Build. If they are missing, emit them
+first:
 
 ```sh
 cd ../app && swift run mercenary --emit-traces
@@ -66,8 +67,13 @@ nothing: with no trace to fly it holds its fixed pose and names the command that
   `requestAnimationFrame`, paced by the step the trace was recorded at. Nothing is simulated
   and nothing is steered: every pose on screen is one a Replay Gate has already compared
   bit-for-bit against the Trace Oracle.
-- `test/replay/` — the Replay Gate harness: locate artifacts, parse JSON Lines, fold the
-  recorded deltas forward, compare values bit-for-bit, and check that the payload on disk is
+- `src/trace/` — reading a Golden Trace and folding its recorded deltas forward. In `src/`
+  rather than beside the tests because there are two readers: the Replay Gates fold a whole
+  state to grade it, and the page folds the player out of a flight trace to fly it. A second
+  reader in the page would be the copy that half-reads a bumped schema without failing.
+- `test/replay/` — the Replay Gate harness: locate artifacts, run the gate protocol both Movers
+  are graded by (`moverGate.ts`, shared by the `flight` and `game-core` gates),
+  compare values bit-for-bit, and check that the payload on disk is
   the one a trace was recorded from.
 
 Nothing here is a mechanical translation of the Swift implementation or of the Reference

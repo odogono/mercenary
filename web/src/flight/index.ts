@@ -25,7 +25,12 @@ export type FlightMode = 'flying' | 'grounded';
 /// Spelled as the trace spells it, for the same reason as `FlightMode`.
 export type Touchdown = 'crashed' | 'landed';
 
-/// The block for a boarded craft slot, or walking when nothing is boarded.
+/// The block for a boarded craft slot, or the block after the craft when nothing is boarded.
+///
+/// That fallback is **not** the on-foot walk: ADR 0016's correction withdraws that reading. It is
+/// the block touchdown installs so a landed craft taxis differently from one in the air, which is
+/// why the payload still calls it `walkingBlock` and why nothing in `src` reaches it yet — the
+/// on-foot Mover never asks for a block at all. It is kept because the taxi path is what will ask.
 ///
 /// A slot the document has no block for is a refusal rather than a reading past the end: the kit
 /// subscripts its own array here, which traps, and quietly flying on a block that is not there

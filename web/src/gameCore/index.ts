@@ -28,7 +28,7 @@ import type {
 ///
 /// The kit's `GameCore.enter` and `GameCore.surface` are deliberately not here. Both read the
 /// underground document's entrances and lifts, and neither is a mover: they put the player where
-/// the lift ride would have left them, which is the navigation stage of the port (#93). Porting
+/// the lift ride would have left them, which is the session stage of the port (#94). Porting
 /// them now would mean a validator for a document shape nothing consumes yet, and the twelve
 /// movement traces do not need one — a scenario that starts underground sets `room` on the state
 /// it starts from, as its trace header does.
@@ -38,8 +38,20 @@ const TURN = 2 * Math.PI;
 /// Captured Reference Build eye height, used by the opening and the on-foot view.
 export const REFERENCE_WALKING_EYE_ALTITUDE = 128;
 
-/// Longest step the integrator will take at once. A stalled frame becomes several bounded steps
-/// instead of one teleport through the world.
+/// Where the Reference Build's opening leaves the player: the captured crash position, at the
+/// captured eye height.
+///
+/// One exported capture rather than the literal at each site, because the page draws its fixed
+/// pose from it and every mover emitter starts its run from it — two spellings of one recorded
+/// fact could disagree about where the game begins.
+export const REFERENCE_OPENING_POSITION: Vector3 = {
+  x: 559_104,
+  y: REFERENCE_WALKING_EYE_ALTITUDE,
+  z: 559_104
+};
+
+/// Longest step either Mover will be advanced by at once. A stalled frame becomes several bounded
+/// steps instead of one teleport through the world.
 export const MAXIMUM_STEP = 1 / 30;
 
 /// A device-independent movement intent for one simulation step.
@@ -56,10 +68,10 @@ export interface Intent {
   readonly turn: number;
   /// On foot only: how hard the player is walking.
   ///
-  /// A Mac Adaptation of the throttle. Walking in the Reference Build ran on the same persistent
-  /// throttle a craft uses, which on a keyboard would mean the player keeps walking after letting
-  /// go, so on foot the throttle follows the key instead. The dynamics are still the walking
-  /// block's.
+  /// A held axis rather than a persistent setting, because there is no on-foot throttle for it to
+  /// be: the Reference Build walks by a fixed step held at `$AA/$AB` and never reaches a Craft
+  /// Parameter Block (ADR 0016). It scales that decoded step directly, so letting go stops the
+  /// player rather than leaving a notch selected.
   readonly walk: number;
 }
 
@@ -438,15 +450,11 @@ const transition = (
   const rules = flight.rules;
   const band = rules.groundBand;
   const player = state.player;
-  let result = state;
-  if (
-    state.mode === 'grounded' &&
-    state.craft !== undefined &&
-    player.position.y >= band
-  ) {
-    result = { ...state, mode: 'flying' };
-  } else if (state.mode === 'flying' && player.position.y < band) {
-    result = {
+  if (state.mode === 'grounded' && player.position.y >= band) {
+    return { ...state, mode: 'flying' };
+  }
+  if (state.mode === 'flying' && player.position.y < band) {
+    return {
       ...state,
       mode: 'grounded',
       player: {
@@ -460,16 +468,7 @@ const transition = (
       touchdown: verdict(player.pitch, descentRate, rules)
     };
   }
-  if (result.mode === 'grounded' && result.craft === undefined) {
-    return {
-      ...result,
-      player: {
-        ...result.player,
-        position: { ...result.player.position, y: flight.groundAltitude }
-      }
-    };
-  }
-  return result;
+  return state;
 };
 
 /// The on-foot mover: a fixed step and a fixed turn, with no velocity to build and none to shed.
@@ -500,13 +499,15 @@ const walk = (
     flight.walkStep *
     (intent.running ? flight.limits.runMultiplier : 1) *
     frames;
+  // The altitude is the walking eye height throughout: the routine this comes from has no
+  // vertical term, so there is nothing to carry through the clamp.
   const stepped: Vector3 = {
     x: player.position.x + sin(heading) * advance,
-    y: player.position.y,
+    y: flight.groundAltitude,
     z: player.position.z + cos(heading) * advance
   };
 
-  let position = stepped;
+  let position: Vector3;
   let wallContact = 0;
   let wallContactLatch = 0;
   let stepInterlock = state.stepInterlock;
@@ -524,7 +525,7 @@ const walk = (
     const contained = containment.clamp(stepped);
     wallContact = contained.contacts;
     position = contained.position;
-    // The step interlock runs down inside the walk integrator, so it stalls while the player
+    // The step interlock runs down inside the on-foot Mover, so it stalls while the player
     // stands still — which is the whole point of it being steps rather than time.
     if (intent.walk !== 0) {
       stepInterlock = Math.max(0, stepInterlock - frames);
@@ -539,7 +540,7 @@ const walk = (
       heading,
       // None of the craft's dynamics survive stepping out of one.
       pitch: 0,
-      position: { ...position, y: flight.groundAltitude },
+      position,
       roll: 0,
       speed: intent.walk * flight.walkStep,
       yawVelocity: 0
@@ -613,12 +614,11 @@ const integrate = (
   );
 
   // Pitch is a direct step with no filter, and only where the block allows one: the sinking craft
-  // have their pitch step zeroed so they cannot be pitched. Only a craft leaves the ground — on
-  // foot the walking block would otherwise qualify on speed alone, since the take-off gate is a
-  // speed and nothing else.
+  // have their pitch step zeroed so they cannot be pitched. The take-off gate is a speed and
+  // nothing else, which it can afford to be because only a craft reaches this loop at all — a
+  // walker cannot leave the ground however fast they move, since `walk` has no vertical term.
   const mayLeaveTheGround =
-    counted.craft !== undefined &&
-    (counted.mode === 'flying' || Math.abs(speed) >= rules.takeoffSpeed);
+    counted.mode === 'flying' || Math.abs(speed) >= rules.takeoffSpeed;
   let pitch = player.pitch;
   if (!mayLeaveTheGround) {
     // Below the take-off run the loop pins pitch level, as it does on foot.
@@ -667,12 +667,12 @@ const integrate = (
 
   const moved: GameState = {
     ...counted,
-    elapsed: state.elapsed + dt,
+    elapsed: counted.elapsed + dt,
     player: { heading, pitch, position: { x, y, z }, roll, speed, yawVelocity }
   };
   // The verdict on a touchdown is about how fast the craft was going down, so the rate is what
   // crosses the boundary rather than the step it came from.
-  return transition(moved, frames > 0 ? Math.abs(climb) / frames : 0, flight);
+  return transition(moved, Math.abs(climb) / frames, flight);
 };
 
 /// Advance the world by `dt`.
@@ -693,7 +693,8 @@ export const step = (
   if (!Number.isFinite(dt) || dt <= 0) {
     return state;
   }
-  let result: GameState = { ...state, touchdown: undefined };
+  let result: GameState =
+    state.touchdown === undefined ? state : { ...state, touchdown: undefined };
   let remaining = dt;
   while (remaining > 0) {
     const slice = Math.min(remaining, MAXIMUM_STEP);

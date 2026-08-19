@@ -179,7 +179,7 @@
     {
       "emitter": "game-core",
       "id": "room-walk",
-      "note": "The same mover underground, bounded by Room 3's walls without ever taking a Doorway: this gate ports Containment, while GameplaySession.traverse and DoorwayPredicate belong to the later navigation gate.",
+      "note": "The same mover underground, bounded by Room 3's walls without ever taking a Doorway: this gate ports Containment, while GameplaySession.traverse and DoorwayPredicate belong to the later session gate (#94).",
       "room": 3,
       "legs": [
         {
