@@ -10,6 +10,12 @@ bun run typecheck # tsc --noEmit
 bun run dev       # http://localhost:5173
 ```
 
+The dev server serves the page and strips the types from each `.ts` module as it hands it
+over, so the browser runs the same files the tests import. That is not a build step and it is
+not bundling: import specifiers keep their `.ts` extensions and each module is fetched from
+disk in turn, so there is still nothing here that produces a deployable bundle — the thing
+ADR 0019 gitignores and ADR 0004 gates.
+
 Both read the gitignored `/payload/` from the repository root, and `bun test` reads the
 gitignored `/traces/` beside it — the dev server has no use for a Golden Trace and does not
 serve one. Neither directory is in Git; both are derived from the Reference Build. If they
@@ -32,9 +38,16 @@ evidence is missing is worse than no gate.
   recorded from. It matches on all 2,147 samples today; if an update ever moves a bit, that
   gate goes red first and this module is where the answer goes.
 - `src/payload/` — the Data Payload: types, validators, and the async loader.
-- `src/text/`, `src/orientation/`, `src/world/` — the ported kit modules.
+- `src/text/`, `src/orientation/`, `src/world/`, `src/projection/`, `src/scene/` — the ported
+  kit modules. `src/projection/` is where world space becomes screen lines; its pixel space is
+  **Y-down**, as the Reference Build computes it and as a Golden Trace records it, and the one
+  place Y is flipped is the vertex shader that maps pixels to clip space.
+- `src/shell/` — the page. Throwaway until #95: it loads the payload, projects one fixed pose
+  and draws it once, so a browser frame can be held beside a raster in `../docs/frames/` and
+  judged by eye (ADR 0011).
 - `test/replay/` — the Replay Gate harness: locate artifacts, parse JSON Lines, fold the
-  recorded deltas forward, compare values bit-for-bit.
+  recorded deltas forward, compare values bit-for-bit, and check that the payload on disk is
+  the one a trace was recorded from.
 
 Nothing here is a mechanical translation of the Swift implementation or of the Reference
 Build. Both are read for understanding; neither is copied (ADR 0002, ADR 0014, ADR 0019).

@@ -17,16 +17,25 @@
       main {
         display: grid;
         place-items: center;
+        gap: 1rem;
         height: 100%;
       }
       p {
         max-width: 46rem;
         line-height: 1.6;
       }
+      canvas {
+        display: block;
+        max-width: 100%;
+        /* The projection is computed for this viewport, so the canvas keeps its shape and
+           the browser only scales what is already drawn. */
+        aspect-ratio: 1280 / 800;
+      }
     </style>
   </head>
   <body>
     <main>
+      <canvas id="frame" width="1280" height="800"></canvas>
       <p id="status">Loading the Data Payload…</p>
     </main>
     <script type="module" src="/src/shell/boot.ts"></script>

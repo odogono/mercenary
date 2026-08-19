@@ -1,6 +1,11 @@
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
+import type { Bundle } from '../../src/payload/documents.ts';
+import { load } from '../../src/payload/load.ts';
+import { describeDifference, firstDifference } from './compare.ts';
+import type { Trace, TraceObject } from './trace.ts';
+
 /// Finding the two things a Replay Gate needs, neither of which is in Git.
 ///
 /// The Data Payload and the Golden Traces are both derived from the Reference Build and both
@@ -72,4 +77,50 @@ export const readPayloadFile = async (name: string): Promise<string> => {
     );
   }
   return await file.text();
+};
+
+/// The Data Payload as a gate reads it: absence is not failure.
+///
+/// Five of the ten documents are optional, so a missing file is not a failure. This flattens a
+/// genuine read error into absence as well, which is the right trade for a gate — the documents
+/// every gate asserts on are required, so a lost one fails downstream as a missing document
+/// rather than passing quietly.
+export const loadPayload = async (): Promise<Bundle> =>
+  load(async name => {
+    try {
+      return await readPayloadFile(name);
+    } catch {
+      return undefined;
+    }
+  });
+
+/// Assert that the payload on disk is the one a trace was recorded from.
+///
+/// Every gate does this before it compares anything, because otherwise each divergence has two
+/// possible explanations — a misported module, or a payload that has moved under it — and this
+/// rules one of them out in a line. The Oracle records the payload's own provenance in each
+/// trace header verbatim.
+export const expectRecordedPayload = (trace: Trace, bundle: Bundle): void => {
+  const recorded = trace.header['payload'] as TraceObject;
+  const difference = firstDifference(
+    {
+      decoderVersion: recorded['decoderVersion']!,
+      schemaVersion: recorded['schemaVersion']!,
+      sourceCoreDigest: recorded['sourceCoreDigest']!,
+      sourceDatasetId: recorded['sourceDatasetId']!
+    },
+    {
+      decoderVersion: bundle.manifest.decoderVersion,
+      schemaVersion: bundle.manifest.schemaVersion,
+      sourceCoreDigest: bundle.manifest.sourceCoreDigest,
+      sourceDatasetId: bundle.manifest.sourceDatasetId
+    }
+  );
+  if (difference !== null) {
+    throw new Error(
+      `the payload in ${payloadDirectory()} is not the one ` +
+        `${trace.emitter}/${trace.id} was recorded from — ` +
+        `${describeDifference(difference)}\n${EMIT_HINT}`
+    );
+  }
 };

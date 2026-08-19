@@ -36,6 +36,8 @@ if (!existsSync(join(payload, 'manifest.json'))) {
   process.exit(1);
 }
 
+const transpiler = new Bun.Transpiler({ loader: 'ts' });
+
 const server = Bun.serve({
   development: true,
   async fetch(request) {
@@ -63,12 +65,20 @@ const server = Bun.serve({
       });
     }
 
-    // Source is served straight from disk; Bun transpiles the TypeScript on the way out, so the
-    // browser runs the same files the tests import.
+    // Source is served straight from disk, with the types stripped on the way out, so the
+    // browser runs the same files the tests import. Stripping is not bundling: the import
+    // specifiers keep their `.ts` extensions and the browser fetches each module from here in
+    // turn, which is why there is still no build step and nothing that produces a deployable
+    // bundle — the thing ADR 0019 gitignores and ADR 0004 gates.
     const candidate = join(import.meta.dir, url.pathname);
     if (candidate.startsWith(import.meta.dir)) {
       const file = Bun.file(candidate);
       if (await file.exists()) {
+        if (candidate.endsWith('.ts')) {
+          return new Response(transpiler.transformSync(await file.text()), {
+            headers: { 'content-type': 'text/javascript; charset=utf-8' }
+          });
+        }
         return new Response(file);
       }
     }

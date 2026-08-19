@@ -32,11 +32,38 @@ export type Location =
   { readonly kind: 'surface' } | { readonly id: number; readonly kind: 'room' };
 
 /// Where one object currently is, when something has moved it from where the payload put it.
+///
+/// On the surface a position displaces the object from where the payload put it, which is what
+/// happens to a craft the player parks somewhere else; its absence means the object is still
+/// where the payload placed it.
 export type Residence =
-  | { readonly kind: 'surface' }
+  | { readonly at?: Vector3; readonly kind: 'surface' }
   | { readonly id: number; readonly kind: 'room' }
   | { readonly kind: 'carried' }
   | { readonly kind: 'gone' };
+
+/// How the Host Callout's room-membership table names a Residence: the surface is room zero
+/// there, and anything out of the world is `$FF`. Both constants belong to the interaction
+/// module the port has not reached yet (#93, #94); they are written here because the indoor
+/// scene needs the answer now, and a second spelling of them later would be the trap.
+const SURFACE_HOST_ROOM = 0;
+const OUT_OF_THE_WORLD_HOST_ROOM = 0xff;
+
+export const hostRoom = (residence: Residence): number => {
+  switch (residence.kind) {
+    case 'surface':
+      return SURFACE_HOST_ROOM;
+    case 'room':
+      return residence.id;
+    case 'carried':
+    case 'gone':
+      return OUT_OF_THE_WORLD_HOST_ROOM;
+  }
+};
+
+/// Where this object has been moved to, if it has been.
+export const displacement = (residence: Residence): Vector3 | undefined =>
+  residence.kind === 'surface' ? residence.at : undefined;
 
 export const SURFACE: Location = { kind: 'surface' };
 export const room = (id: number): Location => ({ id, kind: 'room' });

@@ -100,9 +100,10 @@ enum ProjectionTrace {
     guard indoor?.dark != true else { return trace }
 
     // Pipeline order, which is the order the visibility selector produced the segments in
-    // — objects, then cells, then the map lines. The renderer batches these by ink into
-    // two passes; that is a renderer's choice about draw calls and not a property of the
-    // projection, so it is not what gets pinned here.
+    // — the cell ring, then the map lines, then the objects, and underground the Room's own
+    // wireframe and then its objects. Objects are appended last in both paths. The renderer
+    // batches these by ink into two passes; that is a renderer's choice about draw calls and
+    // not a property of the projection, so it is not what gets pinned here.
     var index = 0
     for segment in visible.segments {
       guard let line = camera.project(segment: segment, size: size) else { continue }

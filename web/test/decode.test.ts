@@ -6,19 +6,14 @@ import type {
   FlightRules,
   Walk
 } from '../src/payload/documents.ts';
-import { load } from '../src/payload/load.ts';
 import { World } from '../src/world/index.ts';
 import { Inspector, type Row } from '../src/world/inspector.ts';
 import {
-  payloadDirectory,
-  readPayloadFile,
+  expectRecordedPayload,
+  loadPayload,
   readTraceText
 } from './replay/artifacts.ts';
-import {
-  describeDifference,
-  expectIdentical,
-  firstDifference
-} from './replay/compare.ts';
+import { expectIdentical } from './replay/compare.ts';
 import {
   parseTrace,
   type TraceObject,
@@ -38,17 +33,7 @@ const trace = parseTrace(
   'payload'
 );
 
-const bundle: Bundle = await load(async name => {
-  try {
-    return await readPayloadFile(name);
-  } catch {
-    // Absence: five of the ten documents are optional, so a missing file is not a failure.
-    // This flattens a genuine read error into absence as well, which is the right trade for
-    // a gate — the documents it asserts on are all required, so a lost one fails downstream
-    // as a missing document rather than passing quietly.
-    return undefined;
-  }
-});
+const bundle: Bundle = await loadPayload();
 
 const world = new World(bundle);
 const inspector = new Inspector(world);
@@ -105,31 +90,7 @@ const walkValue = (walk: Walk): TraceValue => ({
 
 describe('the payload this gate runs against', () => {
   test('is the extraction the trace was recorded from', () => {
-    // Asserted before anything is compared, because every divergence below would otherwise have
-    // two possible explanations and this rules one of them out in a line. The Oracle records the
-    // payload's own provenance in the header verbatim.
-    const recorded = trace.header['payload'] as TraceObject;
-    const difference = firstDifference(
-      {
-        decoderVersion: recorded['decoderVersion']!,
-        schemaVersion: recorded['schemaVersion']!,
-        sourceCoreDigest: recorded['sourceCoreDigest']!,
-        sourceDatasetId: recorded['sourceDatasetId']!
-      },
-      {
-        decoderVersion: bundle.manifest.decoderVersion,
-        schemaVersion: bundle.manifest.schemaVersion,
-        sourceCoreDigest: bundle.manifest.sourceCoreDigest,
-        sourceDatasetId: bundle.manifest.sourceDatasetId
-      }
-    );
-    if (difference !== null) {
-      throw new Error(
-        `the payload in ${payloadDirectory()} is not the one this trace was recorded from — ` +
-          `${describeDifference(difference)}\n` +
-          're-emit the traces: cd app && swift run mercenary --emit-traces'
-      );
-    }
+    expectRecordedPayload(trace, bundle);
   });
 });
 
