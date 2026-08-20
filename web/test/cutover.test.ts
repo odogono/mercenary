@@ -17,11 +17,11 @@ describe('browser canonical cutover', () => {
     expect(ignoreRules).not.toContain('/app/');
   });
 
-  test('identifies the browser milestone as 0.5.0', async () => {
+  test('identifies the game-typefaces milestone as 0.6.0', async () => {
     const packageDocument = await Bun.file(
       join(repositoryRoot, 'web', 'package.json')
     ).json();
 
-    expect(packageDocument.version).toBe('0.5.0');
+    expect(packageDocument.version).toBe('0.6.0');
   });
 });

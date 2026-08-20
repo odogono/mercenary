@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Extracted Mercenary and Damocles web typefaces (#105). A deterministic research exporter
+  validates complete laboratory runs, reproduces source glyphs as grid-aligned WOFF2 outlines,
+  and records provenance and hashes in the ignored Data Payload. The Browser Shell now loads and
+  verifies both required faces, applies them to user-visible text, and provides a persistent
+  Mercenary/Damocles selector that does not leak arrow-key input into gameplay. Typography review
+  sheets, independently authored printable-ASCII fallbacks, restricted-output enforcement, and
+  cross-browser regression coverage support visual and technical review without tracking extracted
+  material.
 - Browser opening-loop parity and canonical cutover (#69). The accepted Swift Trace Oracle
   drives the purchased Dart
   from the crash site to lift site 1 at grid 09:06 without injecting boarding, position,

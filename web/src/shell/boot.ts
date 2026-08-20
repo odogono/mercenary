@@ -5,6 +5,7 @@ import { Renderer } from './frame.ts';
 import { BrowserControlProfile } from './input.ts';
 import { createWalkabout, requiredSettings } from './session.ts';
 import { installSuspensionHandlers } from './suspension.ts';
+import { installTypefaceSelector, loadTypography } from './typography.ts';
 
 const VIEWPORT = { height: 800, width: 1280 } as const;
 
@@ -13,6 +14,7 @@ const canvas = document.getElementById('frame') as HTMLCanvasElement;
 const message = document.getElementById('message')!;
 const credits = document.getElementById('credits')!;
 const status = document.getElementById('status')!;
+const typeface = document.getElementById('typeface') as HTMLSelectElement;
 const failure = document.getElementById('failure')!;
 
 canvas.width = VIEWPORT.width;
@@ -69,11 +71,20 @@ const statusText = (
 };
 
 try {
-  // Payload and settings are independent localhost reads, so neither waits behind the other.
+  // Payload, settings and typography are independent localhost reads, so none waits behind
+  // another.
   const [bundle, settingsText] = await Promise.all([
     load(fetchReader(new URL('/payload/', location.href).href)),
-    requiredText(new URL('/settings.json', location.href))
+    requiredText(new URL('/settings.json', location.href)),
+    loadTypography()
   ]);
+  let storage: Storage | undefined;
+  try {
+    storage = window.localStorage;
+  } catch {
+    storage = undefined;
+  }
+  installTypefaceSelector(typeface, document.documentElement, storage);
   const settings = requiredSettings(settingsText);
   const { session, world } = createWalkabout(bundle, settings);
   const renderer = new Renderer(canvas);
@@ -109,13 +120,20 @@ try {
     controls.releaseAll();
     clock.reset();
   };
+  typeface.addEventListener('focus', release);
   installSuspensionHandlers(window, document, release);
   window.addEventListener('keydown', event => {
+    if (document.activeElement === typeface) {
+      return;
+    }
     if (controls.keyDown(event)) {
       event.preventDefault();
     }
   });
   window.addEventListener('keyup', event => {
+    if (document.activeElement === typeface) {
+      return;
+    }
     if (controls.keyUp(event)) {
       event.preventDefault();
     }

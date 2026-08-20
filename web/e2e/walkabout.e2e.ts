@@ -40,6 +40,48 @@ test('the live opening loop renders, walks and releases held input', async ({
   await expect(page.locator('#status')).toContainText('ON FOOT');
   await expect(page.locator('#comms')).toHaveAttribute('aria-live', 'off');
   await expect(page.locator('#comms')).not.toHaveAttribute('role', 'status');
+  const typeface = page.locator('#typeface');
+  await expect(typeface).toBeEnabled();
+  await expect(typeface).toHaveValue('mercenary');
+  expect(
+    await page.evaluate(() => document.fonts.check('16px "Mercenary Pixel"'))
+  ).toBe(true);
+  expect(
+    await page.evaluate(() => getComputedStyle(document.body).fontFamily)
+  ).toContain('Mercenary Pixel');
+
+  await testInfo.attach('mercenary-browser-shell-type', {
+    body: await page.locator('#status-row').screenshot(),
+    contentType: 'image/png'
+  });
+  await typeface.selectOption('damocles');
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-font-face',
+    'damocles'
+  );
+  expect(
+    await page.evaluate(() => getComputedStyle(document.body).fontFamily)
+  ).toContain('Damocles Interface');
+  await testInfo.attach('damocles-browser-shell-type', {
+    body: await page.locator('#status-row').screenshot(),
+    contentType: 'image/png'
+  });
+
+  await page.reload();
+  await expect(surface).toHaveAttribute('data-state', 'ready');
+  await expect(typeface).toHaveValue('damocles');
+  await typeface.focus();
+  const selectorPosition = {
+    x: await canvas.getAttribute('data-x'),
+    z: await canvas.getAttribute('data-z')
+  };
+  await page.keyboard.press('ArrowUp');
+  await waitForFrames(page, 8);
+  expect({
+    x: await canvas.getAttribute('data-x'),
+    z: await canvas.getAttribute('data-z')
+  }).toEqual(selectorPosition);
+  await typeface.evaluate(element => element.blur());
 
   const colours = await page.evaluate(
     () =>
