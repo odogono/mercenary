@@ -178,3 +178,34 @@ how it is decoded — and the nose-up escape is reachable deliberately, because 
 wraps over the top rather than clamping, so a craft can be flown right over and back.
 Asserted in `web/test/mover.test.ts` as "the pitch tests are written around level being
 half a turn".
+
+## PQ-0007 — A Doorway opens whether the player faces it or walks backwards into it
+
+**What.** Walking into a Room's wall is the first half of taking a Doorway, and the second half
+asks whether the player is square-on to that wall. The Reference Build answers by rounding the
+heading to the nearest quarter turn and comparing a *single bit* of the result against the
+Doorway's plane bit. One bit distinguishes the two axes and nothing else, so it accepts the
+player facing the wall and the player facing directly away from it equally. A player reversing
+into a Doorway goes through it.
+
+**Why it reads as a bug.** "Face the door to go through it" is the rule a reader expects, and the
+repair looks like a one-line strengthening of the comparison to test the direction as well as the
+axis. Nothing in the surrounding code hints that the loose test is intentional.
+
+**What our image says.** It is intentional, and the reason is upstream: which way the player is
+pushing has already been settled by *which wall they hit*. Containment reports contact only on the
+axis the player actually crossed, so by the time a Doorway is looked for, the direction of travel
+is established and the plane bit only has to confirm the axis. Testing the direction again would
+be testing the same fact twice.
+
+The rounding bias the routine adds is two whole quarter-turns, which cannot change the bit being
+tested; it exists for a presentation value computed further down from the same byte. That is why
+the decoded `headingRounding` is not consulted by this test, which is deliberate rather than an
+oversight — the field is decoded because the document carries it, not because this predicate wants
+it.
+
+**Why it is not repaired.** Requiring the player to face the Doorway would make some crossings that
+currently work impossible, which is a change to how the game plays rather than to how it is
+decoded — and it would double up a test Containment has already performed. Asserted in
+`web/test/doorway.test.ts`, where a heading of a quarter turn and one of three quarter turns —
+opposite directions along one axis — are both accepted.

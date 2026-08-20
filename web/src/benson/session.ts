@@ -1,3 +1,4 @@
+import type { Description as InteractionDescription } from '../interaction/index.ts';
 import type { TextTable } from '../text/index.ts';
 import { BensonHostState, type BensonEffect } from './host.ts';
 import {
@@ -39,7 +40,9 @@ export class BensonSession {
   }
 
   nextRandomByte(): number {
-    return nextRandom(this.state);
+    const rolled = nextRandom(this.state);
+    this.state = rolled.state;
+    return rolled.byte;
   }
 
   start(script: number): boolean {
@@ -58,11 +61,14 @@ export class BensonSession {
   }
 
   press(key: BensonKey | undefined): void {
-    this.host.engineFlags =
-      (this.host.engineFlags | BensonHostState.inputDetected) & 0xff;
-    if (key !== undefined) {
-      this.host.pendingKey = key;
-    }
+    // `pendingKey` is passed straight through: `with` keeps the field it already has when the
+    // patch leaves it undefined, so a keyless press does not clear a held key. Clearing one is
+    // `withoutPendingKey`, deliberately a different call.
+    this.host = this.host.with({
+      engineFlags:
+        (this.host.engineFlags | BensonHostState.inputDetected) & 0xff,
+      pendingKey: key
+    });
   }
 
   get isRunning(): boolean {
@@ -89,7 +95,7 @@ export class BensonSession {
     if (this.ticker !== undefined) {
       this.ticker.advance(seconds);
       if (this.ticker.isFinished) {
-        this.host.messagePlaying = false;
+        this.host = this.host.with({ messagePlaying: false });
       }
     }
 
@@ -98,7 +104,9 @@ export class BensonSession {
     const framesPerTick = Math.max(1, this.tunables.framesPerTick);
     while (this.frames >= framesPerTick) {
       this.frames -= framesPerTick;
-      this.host.tickCounter += 1;
+      this.host = this.host.with({
+        tickCounter: this.host.tickCounter + 1
+      });
     }
 
     const advance = BensonMachine.run(
@@ -128,7 +136,7 @@ export class BensonSession {
   }
 
   board(craft: number): void {
-    this.host.boardedCraft = craft;
+    this.host = this.host.with({ boardedCraft: craft });
   }
 
   private beginMessage(composed: string): void {
@@ -144,7 +152,7 @@ export class BensonSession {
 
   showText(composed: string): void {
     this.beginMessage(composed);
-    this.host.messagePlaying = true;
+    this.host = this.host.with({ messagePlaying: true });
   }
 
   showMessage(index: number): void {
@@ -155,11 +163,16 @@ export class BensonSession {
     this.showText(composed);
   }
 
-  get hostState(): BensonHostState {
-    return this.host;
-  }
-
-  set hostState(value: BensonHostState) {
-    this.host = value;
+  describe(description: InteractionDescription): void {
+    switch (description.kind) {
+      case 'none':
+        break;
+      case 'message':
+        this.showMessage(description.index);
+        break;
+      case 'script':
+        this.start(description.id);
+        break;
+    }
   }
 }

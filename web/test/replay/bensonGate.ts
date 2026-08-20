@@ -29,7 +29,7 @@ import {
 } from './bensonReplay.ts';
 import { expectIdentical } from './compare.ts';
 
-export const scriptSettingsValue = (resolved: Settings): TraceValue => ({
+export const scriptSettingsValue = (resolved: Settings) => ({
   message: {
     charactersPerSecond: resolved.message.charactersPerSecond,
     holdSeconds: resolved.message.holdSeconds

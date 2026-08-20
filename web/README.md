@@ -44,12 +44,14 @@ nothing: with no trace to fly it holds its fixed pose and names the command that
 - `src/text/`, `src/orientation/`, `src/world/`, `src/projection/`, `src/scene/` — the ported
   kit modules. `src/projection/` is where world space becomes screen lines; its pixel space is
   **Y-down**, as the Reference Build computes it and as a Golden Trace records it, and the one
-  place Y is flipped is the vertex shader that maps pixels to clip space.
+  place Y is flipped is the vertex shader that maps pixels to clip space. `src/scene/` holds
+  the Indoor Scene resolver and the Indoor Backdrop column lookup; still no renderer.
 - `src/settings/` — the tuning, read through an injectable seam that mirrors
   `Settings.load(at:read:)`. A trace header carries only its own emitter's settings, so the
-  `flight` and `game-core` replays assert the flight block, and the `benson` replay asserts
-  the `message` and `scripts` blocks: each replay checks the port resolved the same numbers
-  the recording was made with rather than defaults that happen to be close.
+  `flight` and `game-core` replays assert the flight block, the `benson` replay asserts the
+  `message` and `scripts` blocks, and the `session` replay asserts all three: each replay
+  checks the port resolved the same numbers the recording was made with rather than defaults
+  that happen to be close.
 - `src/flight/` — the craft Mover's control loop: `settle` and the two fixed points it settles
   towards, the Craft Parameter Block a craft's handling is selected from, the flight modes and
   the touchdown verdict. `settle` is the port's heaviest consumer of `pow`, which is where
@@ -59,13 +61,24 @@ nothing: with no trace to fly it holds its fixed pose and names the command that
   subdivision that takes a long frame as several short steps rather than one long one. The
   on-foot Mover lives here, and it is a fixed step rather than a Craft Parameter Block (ADR
   0016).
-- `src/navigation/` — `Containment`, and only that: the Room bounds a player on foot is pushed
-  back inside of, which `src/gameCore/` needs. The navigation emitter itself is underground and
-  beyond M4.
+- `src/navigation/` — `Containment` (the Room bounds a player on foot is pushed back inside of,
+  which `src/gameCore/` needs) and `DoorwayPredicate` (`$9437` byte arithmetic, first matching
+  Doorway in record order, and `opens`). The six underground navigation traces are not this
+  gate.
+- `src/interaction/` — document-backed reach, candidates, outcomes, and object-conditioned
+  predicates. `attempt` / `leave` return `{ host, outcome }` rather than mutating a shared
+  Host Callout.
 - `src/benson/` — the Benson interpreter: the program, the machine, the Host Callout, the
-  session that clocks it, and the message line. No world. The `benson` Replay Gate grades it
-  against nine traces, including two that end because the instruction limit tripped rather
-  than because the script did.
+  session that clocks it, and the message line. `BensonHostState` and `BensonState` are
+  persistent (each write a new value; ADR 0023). `BensonSession` is still a mutable owner that
+  replaces those values. The `benson` Replay Gate grades it against nine traces, including two
+  that end because the instruction limit tripped rather than because the script did. No world.
+- `src/session/` — the Gameplay Session: occupancy, the Host Callout projection, Semantic
+  Actions, `advance`, and PresentationEvents. A mutable class, like `BensonSession`. With
+  scripts, `nextRandom` comes off persistent `BensonState`; without, a session-owned stream
+  with the same seeds as Swift. The `session` Replay Gate grades the opening loop
+  (`session/opening` and `session/opening-walk-to-craft`); walk-to boarding is a note on the
+  trace, not a command the replay injects. The page is still un-wired (#95).
 - `src/shell/` — the page. Throwaway until #95: it loads the payload, draws one fixed pose so a
   browser frame can be held beside a raster in `../docs/frames/` and judged by eye (ADR 0011),
   then plays the poses recorded in the `flight/craft-1-standard` Golden Trace on
@@ -78,8 +91,10 @@ nothing: with no trace to fly it holds its fixed pose and names the command that
   reader in the page would be the copy that half-reads a bumped schema without failing.
 - `test/replay/` — the Replay Gate harness: locate artifacts, run the gate protocol both Movers
   are graded by (`moverGate.ts`, shared by the `flight` and `game-core` gates), run the benson
-  gate (`bensonGate.ts`), compare values bit-for-bit, and check that the payload on disk is
-  the one a trace was recorded from.
+  gate (`bensonGate.ts`) and the session gate (`sessionGate.ts`), compare values bit-for-bit,
+  and check that the payload on disk is the one a trace was recorded from. `MoverReplay`
+  remains the driver for the flight and game-core gates; those traces are not folded onto
+  `GameplaySession`.
 
 Nothing here is a mechanical translation of the Swift implementation or of the Reference
 Build. Both are read for understanding; neither is copied (ADR 0002, ADR 0014, ADR 0019).

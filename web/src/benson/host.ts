@@ -15,8 +15,32 @@ export type BensonEffect =
 
 const DECIMAL_SCALES = [1_000_000, 10_000, 100, 1] as const;
 
+export interface BensonHostFields {
+  readonly attackingShip: boolean;
+  readonly boardedCraft: number;
+  readonly canLiftAnything: boolean;
+  readonly canTakeAnything: boolean;
+  readonly currentRoom: number;
+  readonly decimals: readonly number[];
+  readonly destroyedBlocks: ReadonlySet<number>;
+  readonly engineFlags: number;
+  readonly gameComplete: boolean;
+  readonly inventory: ReadonlySet<number>;
+  readonly messageInterval: number;
+  readonly messagePlaying: boolean;
+  readonly objectFlags: ReadonlyMap<number, number>;
+  readonly objectRooms: ReadonlyMap<number, number>;
+  readonly pendingKey: BensonKey | undefined;
+  readonly shipInbound: number;
+  readonly signedRegister: number;
+  readonly tickCounter: number;
+}
+
 /// The engine state a Benson Script is allowed to see — the complete Host Callout surface.
-export class BensonHostState {
+///
+/// Persistent: every write returns a new value (ADR 0023). Collections that did not
+/// change are shared by reference.
+export class BensonHostState implements BensonHostFields {
   /// On foot. Slot 0 is a real ship, so this is a sentinel rather than zero.
   static readonly onFoot = 0x80;
   static readonly outOfTheWorld = 0xff;
@@ -27,81 +51,127 @@ export class BensonHostState {
   static readonly decimalLimit = 100_000_000;
   static readonly defaultMessageInterval = 125;
 
-  attackingShip: boolean;
-  boardedCraft: number;
-  canLiftAnything: boolean;
-  canTakeAnything: boolean;
-  currentRoom: number;
-  decimals: number[];
-  destroyedBlocks: Set<number>;
-  engineFlags: number;
-  gameComplete: boolean;
-  inventory: Set<number>;
-  messageInterval: number;
-  messagePlaying: boolean;
-  objectFlags: Map<number, number>;
-  objectRooms: Map<number, number>;
-  pendingKey: BensonKey | undefined;
-  shipInbound: number;
-  signedRegister: number;
-  tickCounter: number;
+  readonly attackingShip: boolean;
+  readonly boardedCraft: number;
+  readonly canLiftAnything: boolean;
+  readonly canTakeAnything: boolean;
+  readonly currentRoom: number;
+  readonly decimals: readonly number[];
+  readonly destroyedBlocks: ReadonlySet<number>;
+  readonly engineFlags: number;
+  readonly gameComplete: boolean;
+  readonly inventory: ReadonlySet<number>;
+  readonly messageInterval: number;
+  readonly messagePlaying: boolean;
+  readonly objectFlags: ReadonlyMap<number, number>;
+  readonly objectRooms: ReadonlyMap<number, number>;
+  readonly pendingKey: BensonKey | undefined;
+  readonly shipInbound: number;
+  readonly signedRegister: number;
+  readonly tickCounter: number;
 
-  constructor() {
-    this.engineFlags = 0;
-    this.messagePlaying = false;
-    this.pendingKey = undefined;
-    this.tickCounter = 0;
-    this.messageInterval = BensonHostState.defaultMessageInterval;
-    this.currentRoom = 0;
-    this.boardedCraft = BensonHostState.onFoot;
-    this.decimals = Array.from(
+  constructor(fields: Partial<BensonHostFields> = {}) {
+    this.engineFlags = fields.engineFlags ?? 0;
+    this.messagePlaying = fields.messagePlaying ?? false;
+    this.pendingKey = fields.pendingKey;
+    this.tickCounter = fields.tickCounter ?? 0;
+    this.messageInterval =
+      fields.messageInterval ?? BensonHostState.defaultMessageInterval;
+    this.currentRoom = fields.currentRoom ?? 0;
+    this.boardedCraft = fields.boardedCraft ?? BensonHostState.onFoot;
+    this.decimals =
+      fields.decimals ??
+      Array.from({ length: BensonHostState.decimalCount }, () => 0);
+    this.objectRooms = fields.objectRooms ?? new Map();
+    this.objectFlags = fields.objectFlags ?? new Map();
+    this.inventory = fields.inventory ?? new Set();
+    this.destroyedBlocks = fields.destroyedBlocks ?? new Set();
+    this.canLiftAnything = fields.canLiftAnything ?? false;
+    this.canTakeAnything = fields.canTakeAnything ?? false;
+    this.attackingShip = fields.attackingShip ?? false;
+    this.gameComplete = fields.gameComplete ?? false;
+    this.shipInbound = fields.shipInbound ?? 0;
+    this.signedRegister = fields.signedRegister ?? 0;
+  }
+
+  /// Seeds are applied by slot index, not Map insertion order — Swift's dictionary
+  /// walk is unspecified, and a JS `Map` would hide a real dependency.
+  static seeding(program: BensonProgram): BensonHostState {
+    const decimals = Array.from(
       { length: BensonHostState.decimalCount },
       () => 0
     );
-    this.objectRooms = new Map();
-    this.objectFlags = new Map();
-    this.inventory = new Set();
-    this.destroyedBlocks = new Set();
-    this.canLiftAnything = false;
-    this.canTakeAnything = false;
-    this.attackingShip = false;
-    this.gameComplete = false;
-    this.shipInbound = 0;
-    this.signedRegister = 0;
-  }
-
-  static seeding(program: BensonProgram): BensonHostState {
-    const host = new BensonHostState();
-    for (const [slot, value] of Object.entries(program.decimalSeeds)) {
-      const index = Number(slot);
-      if (index >= 0 && index < host.decimals.length) {
-        host.decimals[index] = value;
+    for (let slot = 0; slot < decimals.length; slot++) {
+      const value = program.decimalSeeds[slot];
+      if (value !== undefined) {
+        decimals[slot] = value;
       }
     }
-    return host;
+    return new BensonHostState({ decimals });
   }
 
-  clone(): BensonHostState {
-    const copy = new BensonHostState();
-    copy.engineFlags = this.engineFlags;
-    copy.messagePlaying = this.messagePlaying;
-    copy.pendingKey = this.pendingKey;
-    copy.tickCounter = this.tickCounter;
-    copy.messageInterval = this.messageInterval;
-    copy.currentRoom = this.currentRoom;
-    copy.boardedCraft = this.boardedCraft;
-    copy.decimals = this.decimals.slice();
-    copy.objectRooms = new Map(this.objectRooms);
-    copy.objectFlags = new Map(this.objectFlags);
-    copy.inventory = new Set(this.inventory);
-    copy.destroyedBlocks = new Set(this.destroyedBlocks);
-    copy.canLiftAnything = this.canLiftAnything;
-    copy.canTakeAnything = this.canTakeAnything;
-    copy.attackingShip = this.attackingShip;
-    copy.gameComplete = this.gameComplete;
-    copy.shipInbound = this.shipInbound;
-    copy.signedRegister = this.signedRegister;
-    return copy;
+  with(patch: Partial<BensonHostFields>): BensonHostState {
+    return new BensonHostState({
+      attackingShip: patch.attackingShip ?? this.attackingShip,
+      boardedCraft: patch.boardedCraft ?? this.boardedCraft,
+      canLiftAnything: patch.canLiftAnything ?? this.canLiftAnything,
+      canTakeAnything: patch.canTakeAnything ?? this.canTakeAnything,
+      currentRoom: patch.currentRoom ?? this.currentRoom,
+      decimals: patch.decimals ?? this.decimals,
+      destroyedBlocks: patch.destroyedBlocks ?? this.destroyedBlocks,
+      engineFlags: patch.engineFlags ?? this.engineFlags,
+      gameComplete: patch.gameComplete ?? this.gameComplete,
+      inventory: patch.inventory ?? this.inventory,
+      messageInterval: patch.messageInterval ?? this.messageInterval,
+      messagePlaying: patch.messagePlaying ?? this.messagePlaying,
+      objectFlags: patch.objectFlags ?? this.objectFlags,
+      objectRooms: patch.objectRooms ?? this.objectRooms,
+      pendingKey:
+        patch.pendingKey !== undefined ? patch.pendingKey : this.pendingKey,
+      shipInbound: patch.shipInbound ?? this.shipInbound,
+      signedRegister: patch.signedRegister ?? this.signedRegister,
+      tickCounter: patch.tickCounter ?? this.tickCounter
+    });
+  }
+
+  /// `with({ pendingKey: undefined })` cannot clear the key: `??` would keep the
+  /// old one. This is the write that means "no key held".
+  withoutPendingKey(): BensonHostState {
+    // The eighteen fields written out rather than spread, for the reason `BensonState.withPc`
+    // gives: spreading a class instance enumerates it and the constructor then re-reads what it
+    // was handed, which measured about thirteen times the cost over a record this wide.
+    return new BensonHostState({
+      attackingShip: this.attackingShip,
+      boardedCraft: this.boardedCraft,
+      canLiftAnything: this.canLiftAnything,
+      canTakeAnything: this.canTakeAnything,
+      currentRoom: this.currentRoom,
+      decimals: this.decimals,
+      destroyedBlocks: this.destroyedBlocks,
+      engineFlags: this.engineFlags,
+      gameComplete: this.gameComplete,
+      inventory: this.inventory,
+      messageInterval: this.messageInterval,
+      messagePlaying: this.messagePlaying,
+      objectFlags: this.objectFlags,
+      objectRooms: this.objectRooms,
+      pendingKey: undefined,
+      shipInbound: this.shipInbound,
+      signedRegister: this.signedRegister,
+      tickCounter: this.tickCounter
+    });
+  }
+
+  withObjectRoom(slot: number, room: number): BensonHostState {
+    const objectRooms = new Map(this.objectRooms);
+    objectRooms.set(slot, room);
+    return this.with({ objectRooms });
+  }
+
+  withObjectFlag(slot: number, flags: number): BensonHostState {
+    const objectFlags = new Map(this.objectFlags);
+    objectFlags.set(slot, flags & 0xff);
+    return this.with({ objectFlags });
   }
 
   get isScriptRunning(): boolean {
@@ -145,53 +215,40 @@ export class BensonHostState {
     return this.objectFlags.get(symbol.objectFlags) ?? 0;
   }
 
-  write(symbol: BensonSymbol, value: number): void {
+  write(symbol: BensonSymbol, value: number): BensonHostState {
     if (typeof symbol === 'string') {
       switch (symbol) {
         case 'engineFlags':
-          this.engineFlags = value & 0xff;
-          return;
+          return this.with({ engineFlags: value & 0xff });
         case 'currentRoom':
-          this.currentRoom = value;
-          return;
+          return this.with({ currentRoom: value });
         case 'boardedCraft':
-          this.boardedCraft = value;
-          return;
+          return this.with({ boardedCraft: value });
         case 'inputKey':
-          if (value === 0) {
-            this.pendingKey = undefined;
-          }
-          return;
+          return value === 0 ? this.withoutPendingKey() : this;
         case 'signedRegister':
-          this.signedRegister = value;
-          return;
+          return this.with({ signedRegister: value });
         case 'messageInterval':
-          this.messageInterval = value;
-          return;
+          return this.with({ messageInterval: value });
         case 'attackingShip':
-          this.attackingShip = value !== 0;
-          return;
+          return this.with({ attackingShip: value !== 0 });
         case 'gameComplete':
-          this.gameComplete = value !== 0;
-          return;
+          return this.with({ gameComplete: value !== 0 });
         case 'shipInbound':
-          this.shipInbound = value;
-          return;
+          return this.with({ shipInbound: value });
       }
     }
     if ('decimalByte' in symbol) {
-      this.setDecimalByte(
+      return this.setDecimalByte(
         symbol.decimalByte.decimal,
         symbol.decimalByte.byte,
         value
       );
-      return;
     }
     if ('objectRoom' in symbol) {
-      this.objectRooms.set(symbol.objectRoom, value);
-      return;
+      return this.withObjectRoom(symbol.objectRoom, value);
     }
-    this.objectFlags.set(symbol.objectFlags, value & 0xff);
+    return this.withObjectFlag(symbol.objectFlags, value);
   }
 
   decimalByte(slot: number, byte: number): number {
@@ -206,26 +263,38 @@ export class BensonHostState {
     return Math.trunc(value / scale) % 100;
   }
 
-  setDecimalByte(slot: number, byte: number, pair: number): void {
+  setDecimalByte(slot: number, byte: number, pair: number): BensonHostState {
     if (slot < 0 || slot >= this.decimals.length || byte < 0 || byte > 3) {
-      return;
+      return this;
     }
     const scale = DECIMAL_SCALES[byte];
     const value = this.decimals[slot];
     if (scale === undefined || value === undefined) {
-      return;
+      return this;
     }
     const existing = Math.trunc(value / scale) % 100;
-    this.decimals[slot] = value + ((pair % 100) - existing) * scale;
+    const decimals = this.decimals.slice();
+    decimals[slot] = value + ((pair % 100) - existing) * scale;
+    return this.with({ decimals });
   }
 
-  addDecimal(slot: number, value: number): void {
+  addDecimal(slot: number, value: number): BensonHostState {
     if (slot < 0 || slot >= this.decimals.length) {
-      return;
+      return this;
     }
     const limit = BensonHostState.decimalLimit;
-    this.decimals[slot] =
-      (((this.decimals[slot]! + value) % limit) + limit) % limit;
+    const decimals = this.decimals.slice();
+    decimals[slot] = (((this.decimals[slot]! + value) % limit) + limit) % limit;
+    return this.with({ decimals });
+  }
+
+  withDecimal(slot: number, value: number): BensonHostState {
+    if (slot < 0 || slot >= this.decimals.length) {
+      return this;
+    }
+    const decimals = this.decimals.slice();
+    decimals[slot] = value;
+    return this.with({ decimals });
   }
 
   decimal(slot: number): number {

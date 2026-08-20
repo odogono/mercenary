@@ -1,3 +1,4 @@
+import { OUT_OF_THE_WORLD, SURFACE_ROOM } from '../interaction/index.ts';
 import { cos, sin, toFloat32 } from '../math/index.ts';
 import {
   IDENTITY,
@@ -42,24 +43,21 @@ export type Residence =
   | { readonly kind: 'carried' }
   | { readonly kind: 'gone' };
 
-/// How the Host Callout's room-membership table names a Residence: the surface is room zero
-/// there, and anything out of the world is `$FF`. Both constants belong to the interaction
-/// module the port has not reached yet (#93, #94); they are written here because the indoor
-/// scene needs the answer now, and a second spelling of them later would be the trap.
-const SURFACE_HOST_ROOM = 0;
-const OUT_OF_THE_WORLD_HOST_ROOM = 0xff;
-
+/// How the Host Callout's room-membership table names a Residence.
 export const hostRoom = (residence: Residence): number => {
   switch (residence.kind) {
     case 'surface':
-      return SURFACE_HOST_ROOM;
+      return SURFACE_ROOM;
     case 'room':
       return residence.id;
     case 'carried':
     case 'gone':
-      return OUT_OF_THE_WORLD_HOST_ROOM;
+      return OUT_OF_THE_WORLD;
   }
 };
+
+export const isCarried = (residence: Residence): boolean =>
+  residence.kind === 'carried';
 
 /// Where this object has been moved to, if it has been.
 export const displacement = (residence: Residence): Vector3 | undefined =>
@@ -68,7 +66,13 @@ export const displacement = (residence: Residence): Vector3 | undefined =>
 export const SURFACE: Location = { kind: 'surface' };
 export const room = (id: number): Location => ({ id, kind: 'room' });
 
-const sameLocation = (a: Location, b: Location): boolean =>
+export const locationHostValue = (location: Location): number =>
+  location.kind === 'surface' ? SURFACE_ROOM : location.id;
+
+export const locationFromHost = (value: number): Location =>
+  value === SURFACE_ROOM ? SURFACE : room(value);
+
+export const sameLocation = (a: Location, b: Location): boolean =>
   a.kind === b.kind &&
   (a.kind !== 'room' || b.kind !== 'room' || a.id === b.id);
 

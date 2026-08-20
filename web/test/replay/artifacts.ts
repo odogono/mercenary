@@ -85,14 +85,24 @@ export const readPayloadFile = async (name: string): Promise<string> => {
 /// genuine read error into absence as well, which is the right trade for a gate — the documents
 /// every gate asserts on are required, so a lost one fails downstream as a missing document
 /// rather than passing quietly.
-export const loadPayload = async (): Promise<Bundle> =>
-  load(async name => {
+///
+/// Read once for the whole run. Seven gates ask for it at import time, and re-reading eight
+/// hundred kilobytes and re-running every validator six more times measures — while the payload
+/// cannot have changed, and `expectRecordedPayload` already makes every gate assert it graded
+/// against the same extraction. The promise is cached rather than the value so that concurrent
+/// callers share one read instead of racing to start their own.
+let payload: Promise<Bundle> | undefined;
+
+export const loadPayload = (): Promise<Bundle> => {
+  payload ??= load(async name => {
     try {
       return await readPayloadFile(name);
     } catch {
       return undefined;
     }
   });
+  return payload;
+};
 
 /// Assert that the payload on disk is the one a trace was recorded from.
 ///

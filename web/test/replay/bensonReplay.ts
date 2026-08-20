@@ -32,7 +32,7 @@ export const sessionSnapshot = (session: BensonSession): TraceValue => ({
   }
 });
 
-const sortedSlots = (map: Map<number, number>): TraceObject => {
+const sortedSlots = (map: ReadonlyMap<number, number>): TraceObject => {
   const out: TraceObject = {};
   for (const slot of [...map.keys()].sort((a, b) => a - b)) {
     out[String(slot)] = map.get(slot)!;
@@ -107,24 +107,27 @@ export const applyHost = (
   patch: HostPatch,
   initial: boolean
 ): BensonHostState => {
-  const next = host.clone();
+  let next = host;
   if (patch.room !== undefined && patch.room !== null) {
-    next.currentRoom = patch.room;
+    next = next.with({ currentRoom: patch.room });
   }
   if (initial) {
-    next.boardedCraft = patch.craft ?? BensonHostState.onFoot;
+    next = next.with({ boardedCraft: patch.craft ?? BensonHostState.onFoot });
   } else if (patch.craft !== undefined && patch.craft !== null) {
-    next.boardedCraft = patch.craft;
+    next = next.with({ boardedCraft: patch.craft });
   }
   if (patch.carrying !== undefined && patch.carrying !== null) {
-    next.inventory = new Set(patch.carrying);
+    next = next.with({ inventory: new Set(patch.carrying) });
   }
   if (patch.objectRooms !== undefined && patch.objectRooms !== null) {
+    const objectRooms = new Map(next.objectRooms);
     for (const [key, room] of Object.entries(patch.objectRooms)) {
-      next.objectRooms.set(parseSlotKey(key, 'objectRooms'), room);
+      objectRooms.set(parseSlotKey(key, 'objectRooms'), room);
     }
+    next = next.with({ objectRooms });
   }
   if (patch.objectFlags !== undefined && patch.objectFlags !== null) {
+    const objectFlags = new Map(next.objectFlags);
     for (const [key, flags] of Object.entries(patch.objectFlags)) {
       const slot = parseSlotKey(key, 'objectFlags');
       if (!Number.isInteger(flags) || flags < 0 || flags > 255) {
@@ -132,8 +135,9 @@ export const applyHost = (
           `object ${slot}'s flags are one byte, and ${flags} does not fit in one`
         );
       }
-      next.objectFlags.set(slot, flags);
+      objectFlags.set(slot, flags);
     }
+    next = next.with({ objectFlags });
   }
   return next;
 };
@@ -253,7 +257,7 @@ export const emitRecords = (
     while (writeAt < writes.length && writes[writeAt]!.at <= elapsed) {
       const write = writes[writeAt]!;
       writeAt += 1;
-      session.hostState = applyHost(session.hostState, write, false);
+      session.host = applyHost(session.host, write, false);
       records.push({
         elapsed,
         input: { hostWrite: writeValue(write) },
@@ -315,7 +319,7 @@ export const prepareSession = (
   scenario: BensonScenario
 ): BensonSession => {
   const session = new BensonSession(program, text, tunables);
-  session.hostState = applyHost(session.hostState, scenario.host, true);
+  session.host = applyHost(session.host, scenario.host, true);
   if (!session.start(scenario.script)) {
     throw new Error(`script ${scenario.script} would not start`);
   }
