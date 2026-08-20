@@ -18,5 +18,5 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src", "test", "serve.ts"]
+  "include": ["src", "test", "e2e", "playwright.config.ts", "serve.ts"]
 }

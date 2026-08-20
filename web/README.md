@@ -9,7 +9,7 @@ bun install
 bunx playwright install chromium # once, for the browser gate
 bun test                       # every ported module's Replay Gate and shell unit tests
 bun run test:e2e               # live localhost walkabout in Chromium
-bun run typecheck              # tsc --noEmit
+bun run typecheck              # strict checks for source, Bun tests and Playwright
 bun run dev                    # http://localhost:5173
 ```
 
@@ -86,7 +86,9 @@ is absent.
   Control Profile, a bounded 60 Hz fixed-step clock, and the owned WebGL2 renderer. It starts
   the opening Benson Script on the captured surface Pose, consumes only Session Snapshots for
   presentation, keeps the Reference Viewport at 1280×800, and draws surface or Indoor Scene
-  batches without a general-purpose engine (ADR 0024).
+  batches without a general-purpose engine (ADR 0024). Modifier chords and browser-reserved
+  keys pass through untouched; blur and hidden-page transitions release held Movement Intent
+  and reset the fixed-step clock.
 - `src/trace/` — reading a Golden Trace and folding its recorded deltas forward for the Replay
   Gates. It remains in `src/` because the trace schema and state fold are implementation code,
   even though the live page no longer plays a recording.

@@ -17,7 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   surface, lit-Room and dark-Room presentation are covered by Bun tests, while a Playwright
   Chromium gate exercises the real localhost walkabout and attaches its opening frame for
   maintainer review. ADR 0024 records the main-thread session decision and supersedes ADR 0007's
-  non-main runtime.
+  non-main runtime. Follow-up coverage pins the actual WebGL command order and the complete
+  Control Profile; full chord lifecycles and browser-reserved keys pass through untouched.
 - The Gameplay Session, behind its own Replay Gate #94. Interaction, DoorwayPredicate, Indoor
   Backdrop lookup, and a mutable `GameplaySession` that projects typed Location / Occupancy /
   Object Residence into a new Host Callout, reconciles script writes, and `advance`s movers,

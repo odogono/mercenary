@@ -23,6 +23,15 @@ describe('the Browser Shell fixed-step clock', () => {
     expect(steps).toEqual([STEP]);
   });
 
+  test('advances once for a 60 Hz display callback', () => {
+    const clock = new FixedStepClock();
+    const steps: number[] = [];
+
+    clock.frame(0, step => steps.push(step));
+    expect(clock.frame(1000 / 60, step => steps.push(step))).toBe(1);
+    expect(steps).toEqual([STEP]);
+  });
+
   test('advances twice for a 30 Hz display callback and always supplies 1/60', () => {
     const clock = new FixedStepClock();
     const steps: number[] = [];

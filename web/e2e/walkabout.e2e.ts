@@ -38,6 +38,8 @@ test('the live opening loop renders, walks and releases held input', async ({
   await expect(canvas).toHaveAttribute('height', '800');
   await expect(page.locator('#credits')).toContainText('CREDITS');
   await expect(page.locator('#status')).toContainText('ON FOOT');
+  await expect(page.locator('#comms')).toHaveAttribute('aria-live', 'off');
+  await expect(page.locator('#comms')).not.toHaveAttribute('role', 'status');
 
   const colours = await page.evaluate(
     () =>
@@ -108,18 +110,41 @@ test('the live opening loop renders, walks and releases held input', async ({
     });
   });
 
-  const chordsPassed = await page.evaluate(() =>
-    (['metaKey', 'ctrlKey', 'altKey'] as const).map(modifier =>
-      window.dispatchEvent(
+  const chordsPassed = await page.evaluate(() => {
+    const events: KeyboardEvent[] = [];
+    for (const modifier of ['metaKey', 'ctrlKey', 'altKey'] as const) {
+      events.push(
         new KeyboardEvent('keydown', {
           bubbles: true,
           cancelable: true,
           code: 'KeyB',
           [modifier]: true
+        }),
+        new KeyboardEvent('keyup', {
+          bubbles: true,
+          cancelable: true,
+          code: 'KeyB'
         })
-      )
-    )
-  );
-  expect(chordsPassed).toEqual([true, true, true]);
+      );
+    }
+    return events.map(event => window.dispatchEvent(event));
+  });
+  expect(chordsPassed).toEqual([true, true, true, true, true, true]);
+
+  for (const width of [320, 768, 1024, 1440]) {
+    await page.setViewportSize({ height: 900, width });
+    const layout = await page.evaluate(() => {
+      const canvas = document.querySelector<HTMLCanvasElement>('#frame')!;
+      const bounds = canvas.getBoundingClientRect();
+      return {
+        canvasRatio: bounds.width / bounds.height,
+        documentWidth: document.documentElement.scrollWidth,
+        viewportWidth: innerWidth
+      };
+    });
+    expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
+    expect(layout.canvasRatio).toBeCloseTo(1280 / 800, 5);
+  }
+
   expect(errors).toEqual([]);
 });
