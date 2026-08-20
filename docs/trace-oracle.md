@@ -1,5 +1,7 @@
 # The Trace Oracle
 
+> **Frozen authority.** The live macOS implementation was retired in issue #69 after opening-loop parity was accepted. This historical contract remains unchanged below; its implementation is recoverable at the annotated `trace-oracle-last-good` tag, which is now the equivalence authority.
+
 The macOS application is the reference implementation until the browser reaches the
 opening loop, and the deterministic traces it emits are what the canonical TypeScript
 implementation must reproduce to be believed (ADR 0019). This document is the contract

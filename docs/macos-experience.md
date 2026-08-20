@@ -1,5 +1,7 @@
 # macOS Experience Contract v1
 
+> **Superseded and frozen.** This is a historical implementation-contract record retained after the browser became canonical in issue #69. Its contents below are intentionally unchanged; ADR 0019 and `trace-oracle-last-good` govern the cutover.
+
 Status: accepted for implementation; comparative evidence pending
 
 Decision ticket: [#9 — Prototype the authentic macOS experience](https://github.com/odogono/mercenary/issues/9)

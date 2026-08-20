@@ -74,6 +74,7 @@ describe('missing evidence', () => {
     const attempt = readTraceText('math', 'no-such-scenario');
     await expect(attempt).rejects.toThrow(/no Golden Trace at/);
     await expect(attempt).rejects.toThrow(/--emit-traces/);
+    await expect(attempt).rejects.toThrow(/trace-oracle-last-good/);
   });
 
   test('a trace from an unknown schema is refused rather than half-read', () => {

@@ -38,7 +38,7 @@ const findRepositoryRoot = (): string => {
 
 export const repositoryRoot = findRepositoryRoot();
 
-/// The payload directory, honouring the same override the Swift side reads.
+/// The payload directory, honouring the override the frozen Trace Oracle reads.
 export const payloadDirectory = (): string => {
   const override = process.env['MERCENARY_PAYLOAD'];
   if (override !== undefined && override !== '') {
@@ -50,7 +50,8 @@ export const payloadDirectory = (): string => {
 export const tracesDirectory = (): string => join(repositoryRoot, 'traces');
 
 const EMIT_HINT =
-  'emit it with: cd app && swift run mercenary --emit-traces\n' +
+  'regenerate it with --emit-traces from the frozen trace-oracle-last-good tag; ' +
+  'see web/README.md\n' +
   '(Golden Traces are derived from the Data Payload and are never tracked — ADR 0019)';
 
 /// One Golden Trace's bytes, or a failure that says what to run.

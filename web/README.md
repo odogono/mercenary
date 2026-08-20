@@ -1,8 +1,8 @@
 # The browser implementation
 
-The canonical codebase for the Faithful Remake (ADR 0019). The macOS application in
-`../app/` remains the Trace Oracle while this browser implementation owns the live opening
-loop.
+The canonical codebase for the Faithful Remake (ADR 0019). The live macOS implementation has
+been retired; its final accepted state is frozen at the annotated
+`trace-oracle-last-good` tag for regenerating Golden Traces.
 
 ```sh
 bun install
@@ -22,10 +22,22 @@ ADR 0019 gitignores and ADR 0004 gates.
 The tests and page both read the gitignored `/payload/` from the repository root. Replay Gates
 also read the gitignored `/traces/`, while the live page reads the tracked `/settings.json` and
 advances its own Gameplay Session. The payload and traces are derived from the Reference Build
-and never tracked. If they are missing, emit them first:
+and never tracked. If they are missing, use a temporary worktree to run the frozen Trace
+Oracle. `MERCENARY_PAYLOAD` points it at this checkout's canonical payload, so the ignored
+traces are regenerated in this checkout's `/traces/` directory beside that payload:
 
 ```sh
-cd ../app && swift run mercenary --emit-traces
+repository_root="$(git rev-parse --show-toplevel)"
+oracle_worktree="$(mktemp -d "${TMPDIR:-/tmp}/mercenary-trace-oracle.XXXXXX")"
+git worktree add --detach "$oracle_worktree" trace-oracle-last-good
+(
+  cd "$oracle_worktree"
+  MERCENARY_PAYLOAD="$repository_root/payload" \
+    swift run --package-path app mercenary --emit-traces
+  MERCENARY_PAYLOAD="$repository_root/payload" \
+    swift run --package-path app mercenary --emit-traces --verify
+)
+git worktree remove "$oracle_worktree"
 ```
 
 A Replay Gate whose Golden Trace or payload file is absent **fails**. It does not skip: a

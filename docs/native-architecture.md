@@ -1,5 +1,7 @@
 # Native Simulation and Rendering Architecture v1
 
+> **Superseded and frozen.** This is a historical implementation-contract record retained after the browser became canonical in issue #69. Its contents below are intentionally unchanged; ADR 0019 and `trace-oracle-last-good` govern the cutover.
+
 Status: accepted for implementation; executable validation pending
 
 Decision ticket: [#10 — Choose the native simulation and rendering architecture](https://github.com/odogono/mercenary/issues/10)

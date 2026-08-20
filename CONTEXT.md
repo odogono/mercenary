@@ -1,8 +1,8 @@
 # Mercenary Remake
 
-This context defines the shared language for recreating Novagen's *Mercenary: Escape from Targ* as a browser game, with a native macOS implementation serving as its Trace Oracle until the browser reaches the opening loop (see ADR 0019).
+This context defines the shared language for recreating Novagen's *Mercenary: Escape from Targ* as a browser game. The browser implementation is canonical; the accepted macOS implementation is frozen at `trace-oracle-last-good` as the Trace Oracle (see ADR 0019).
 
-Terms marked **(historical)** describe the frozen verification-era records (see ADR 0014). They remain accurate for reading those records but no new records of their kind are created.
+Terms marked **(historical)** name concepts retained only for reading frozen project records. They remain accurate for those records but are not used for new implementation work; ADR 0014 governs the verification-era terms among them.
 
 ## Language
 
@@ -99,19 +99,19 @@ The Commodore 64 edition of *Mercenary: Escape from Targ*, used as the authority
 _Avoid_: Canonical ROM, original version
 
 **Faithful Remake**:
-A recreation evaluated by the Fidelity Contract that preserves the Reference Build's world, geometry, mechanics, progression, economy, encounters, and wireframe visual language, except for necessary least-divergent alternatives accepted through public Departure Records, while fitting naturally into macOS.
+A recreation evaluated by the Fidelity Contract that preserves the Reference Build's world, geometry, mechanics, progression, economy, encounters, and wireframe visual language, except for necessary least-divergent alternatives accepted through public Departure Records, while fitting naturally into the Browser Shell.
 _Avoid_: Port, remaster, emulator
 
-**Mac Adaptation**:
-A separable host-platform accommodation—such as input, display scaling, windowing, audio plumbing, or save handling—that remains within the applicable Acceptance Envelopes and does not alter the preserved semantic baseline.
+**Mac Adaptation (historical)**:
+A separable macOS-platform accommodation—such as input, display scaling, windowing, audio plumbing, or save handling—that remained within the applicable Acceptance Envelopes and did not alter the preserved semantic baseline.
 _Avoid_: Gameplay improvement, modernization
 
 **Game Surface**:
 The game-owned presentation region containing the world view, status information, prompts, and gameplay feedback whose observable behaviour is governed by the Fidelity Contract.
 _Avoid_: Viewport, game UI
 
-**Native Shell**:
-The macOS-owned experience surrounding the Game Surface, including windows, menus, settings, help, file interaction, and host feedback.
+**Native Shell (historical)**:
+The macOS-owned experience that surrounded the Game Surface, including windows, menus, settings, help, file interaction, and host feedback.
 _Avoid_: Host UI, Mac shell
 
 **Web Adaptation**:
@@ -123,7 +123,7 @@ The browser-owned experience surrounding the Game Surface, including the page, i
 _Avoid_: Web UI, page chrome, wrapper
 
 **Trace Oracle**:
-The macOS implementation together with the deterministic traces it emits, held as the equivalence authority that the canonical browser implementation must reproduce (ADR 0019).
+The accepted macOS implementation frozen at the annotated `trace-oracle-last-good` tag, together with the deterministic traces it regenerates, held as the tagged equivalence authority that the canonical browser implementation must reproduce rather than as a live implementation (ADR 0019).
 _Avoid_: Golden master, reference app, source of truth
 
 **Golden Trace**:
@@ -139,7 +139,7 @@ The check one ported module must pass before the next is ported: it drives the m
 _Avoid_: Byte comparison, snapshot test, golden master test, regression test
 
 **Game Semantics**:
-The fidelity-governed rules and state transitions that determine outcomes and meaningful future state from Semantic Actions and time, independently of the Native Shell and Mac Adaptations.
+The fidelity-governed rules and state transitions that determine outcomes and meaningful future state from Semantic Actions and time, independently of the Browser Shell and Web Adaptations.
 _Avoid_: Game logic, gameplay layer
 
 **Movement Intent**:
@@ -167,7 +167,7 @@ A named set of device-specific bindings that maps physical controls to Movement 
 _Avoid_: Keymap, input profile
 
 **Accommodation**:
-An optional Mac Adaptation that improves access through equivalent input or redundant presentation without changing Game Semantics or player-relevant timing.
+An optional Web Adaptation that improves access through equivalent input or redundant presentation without changing Game Semantics or player-relevant timing.
 _Avoid_: Assist mode, accessibility mode
 
 **Display Composition**:
