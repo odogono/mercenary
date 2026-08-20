@@ -4,7 +4,12 @@ import nkzw from '@nkzw/eslint-config';
 
 export default [
   {
-    ignores: ['**/dist/*', '**/coverage/*']
+    ignores: [
+      '**/dist/*',
+      '**/coverage/*',
+      '**/playwright-report/*',
+      '**/test-results/*'
+    ]
   },
   ...nkzw,
   {

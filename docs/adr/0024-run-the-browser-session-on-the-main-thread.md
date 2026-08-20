@@ -1,0 +1,3 @@
+# Run the browser session on the main thread
+
+The canonical browser implementation will own its Gameplay Session on the window thread and advance it from `requestAnimationFrame` through a bounded fixed-step accumulator. This supersedes ADR 0007's non-main runtime: the post-pivot Swift artifact already chose the simpler same-thread boundary, fixed 1/60-second steps and Replay Gates preserve deterministic Game Semantics, and discarding suspended time prevents display stalls from becoming unbounded simulation bursts; the accepted cost is that a future move to a Worker will require an explicit Session Snapshot and PresentationEvent handoff.

@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- M4.6 Browser Walkabout (#95). The Browser Shell now loads the Data Payload and tracked
+  settings into a live Gameplay Session at the Opening Scene, advances it through a bounded
+  60 Hz fixed-step clock, and renders each Session Snapshot through the owned WebGL2 surface.
+  The complete browser Control Profile supports held Movement Intent and contextual Semantic
+  Actions, releases input across focus suspension, and suppresses repeated actions. The fixed
+  Reference Viewport now includes the message, credits and Swift-equivalent status strips;
+  surface, lit-Room and dark-Room presentation are covered by Bun tests, while a Playwright
+  Chromium gate exercises the real localhost walkabout and attaches its opening frame for
+  maintainer review. ADR 0024 records the main-thread session decision and supersedes ADR 0007's
+  non-main runtime.
 - The Gameplay Session, behind its own Replay Gate #94. Interaction, DoorwayPredicate, Indoor
   Backdrop lookup, and a mutable `GameplaySession` that projects typed Location / Occupancy /
   Object Residence into a new Host Callout, reconciles script writes, and `advance`s movers,

@@ -1,3 +1,7 @@
+---
+status: superseded by ADR-0024
+---
+
 # Decouple Game Semantics from Metal presentation
 
 The Initial Release will run Game Semantics in a deterministic, non-main serial runtime that consumes Semantic Actions and publishes immutable Game Surface snapshots plus ordered events. A hybrid renderer will keep scene membership, primitive ordering, and level-of-detail selection on the CPU while Metal performs evidence-derived integer projection, clipping, and native-resolution presentation against a CPU oracle; the runtime will receive one eagerly validated immutable resource graph.

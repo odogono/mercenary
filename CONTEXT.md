@@ -142,9 +142,13 @@ _Avoid_: Byte comparison, snapshot test, golden master test, regression test
 The fidelity-governed rules and state transitions that determine outcomes and meaningful future state from Semantic Actions and time, independently of the Native Shell and Mac Adaptations.
 _Avoid_: Game logic, gameplay layer
 
+**Movement Intent**:
+The device-independent held request sampled by a Mover on each simulation step — turning, pitching, walking and running — distinct from persistent state and from a one-shot Semantic Action.
+_Avoid_: Key state, held Semantic Action, control event
+
 **Semantic Action**:
-A device-independent player intent whose availability, conflicts, ordering, rate limits, and outcomes are governed by Behavior Cases.
-_Avoid_: Key press, button press, scan code
+A device-independent one-shot player command whose availability, conflicts, ordering, rate limits, and outcomes are governed by Behavior Cases.
+_Avoid_: Movement Intent, key press, button press, scan code
 
 **Semantic Mode**:
 An evidence-backed Game Semantics state class that determines which Semantic Actions are available, how they conflict, which transitions they cause, and their timing, independently of device bindings and Geometry Identity.
@@ -159,7 +163,7 @@ A fidelity-governed rule whose outcome depends on which Geometry Identity is inv
 _Avoid_: Object rule, per-object logic
 
 **Control Profile**:
-A named set of device-specific bindings that maps physical controls to Semantic Actions.
+A named set of device-specific bindings that maps physical controls to Movement Intent and Semantic Actions.
 _Avoid_: Keymap, input profile
 
 **Accommodation**:
