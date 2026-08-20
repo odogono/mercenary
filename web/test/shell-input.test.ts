@@ -127,7 +127,18 @@ describe('the browser Control Profile', () => {
     profile.keyDown(input('BracketLeft'));
     profile.keyDown(input('BracketRight'));
     setOccupancy({ kind: 'aboard', slot: 4 });
-    for (const code of ['Digit1', 'Digit2', 'Digit0']) {
+    for (const code of [
+      'Digit1',
+      'Digit2',
+      'Digit3',
+      'Digit4',
+      'Digit5',
+      'Digit6',
+      'Digit7',
+      'Digit8',
+      'Digit9',
+      'Digit0'
+    ]) {
       profile.keyDown(input(code));
     }
     profile.keyDown(input('Minus'));
@@ -140,6 +151,13 @@ describe('the browser Control Profile', () => {
       { page: 1 },
       { notch: 1 },
       { notch: 2 },
+      { notch: 3 },
+      { notch: 4 },
+      { notch: 5 },
+      { notch: 6 },
+      { notch: 7 },
+      { notch: 8 },
+      { notch: 9 },
       { notch: 10 },
       { throttleStep: -1 },
       { throttleStep: 1 }
@@ -169,6 +187,17 @@ describe('the browser Control Profile', () => {
     expect(calls).toEqual([{ press: BensonKey.y }, { press: undefined }]);
   });
 
+  test('repeated keydowns do not repeat Semantic Actions', () => {
+    const { calls, profile, setOccupancy } = harness();
+
+    profile.keyDown(input('KeyB'));
+    profile.keyDown(input('KeyB', { repeat: true }));
+    setOccupancy({ kind: 'aboard', slot: 1 });
+    profile.keyDown(input('Digit4'));
+    profile.keyDown(input('Digit4', { repeat: true }));
+    expect(calls).toEqual([{ reach: 'board' }, { notch: 4 }]);
+  });
+
   test('Meta, Control and Alt chords pass through without changing input', () => {
     const { calls, profile } = harness();
 
@@ -182,6 +211,40 @@ describe('the browser Control Profile', () => {
       walk: 0
     });
     expect(calls).toEqual([]);
+  });
+
+  test('every key-up belonging to a browser chord passes through', () => {
+    const { profile } = harness();
+
+    expect(profile.keyDown(input('KeyB', { ctrlKey: true }))).toBeFalse();
+    expect(profile.keyUp(input('ControlLeft'))).toBeFalse();
+    expect(profile.keyUp(input('KeyB'))).toBeFalse();
+  });
+
+  test('browser-reserved unmodified keys pass through without reaching scripts', () => {
+    const { calls, profile } = harness();
+
+    for (const code of [
+      'Tab',
+      'Escape',
+      'F5',
+      'BrowserBack',
+      'BrowserForward'
+    ]) {
+      expect(profile.keyDown(input(code))).toBeFalse();
+      expect(profile.keyDown(input(code, { repeat: true }))).toBeFalse();
+      expect(profile.keyUp(input(code))).toBeFalse();
+    }
+    expect(calls).toEqual([]);
+  });
+
+  test('a held Movement Intent key consumes its release', () => {
+    const { profile } = harness();
+
+    profile.keyDown(input('ArrowUp'));
+
+    expect(profile.keyUp(input('ArrowUp'))).toBeTrue();
+    expect(profile.intent.walk).toBe(0);
   });
 
   test('releasing all keys clears held movement and running', () => {

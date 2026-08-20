@@ -4,6 +4,7 @@ import { FixedStepClock } from './clock.ts';
 import { Renderer } from './frame.ts';
 import { BrowserControlProfile } from './input.ts';
 import { createWalkabout, requiredSettings } from './session.ts';
+import { installSuspensionHandlers } from './suspension.ts';
 
 const VIEWPORT = { height: 800, width: 1280 } as const;
 
@@ -23,6 +24,12 @@ const requiredText = async (url: URL): Promise<string> => {
     throw new Error(`${url.pathname} answered HTTP ${response.status}`);
   }
   return await response.text();
+};
+
+const updateText = (element: HTMLElement, value: string): void => {
+  if (element.textContent !== value) {
+    element.textContent = value;
+  }
 };
 
 const occupation = (snapshot: SessionSnapshot): string =>
@@ -102,12 +109,7 @@ try {
     controls.releaseAll();
     clock.reset();
   };
-  window.addEventListener('blur', release);
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      release();
-    }
-  });
+  installSuspensionHandlers(window, document, release);
   window.addEventListener('keydown', event => {
     if (controls.keyDown(event)) {
       event.preventDefault();
@@ -123,13 +125,11 @@ try {
     const drawn = renderer.draw(world, snapshot, VIEWPORT);
     const player = snapshot.player;
 
-    message.textContent = snapshot.message === '' ? '—' : snapshot.message;
-    credits.textContent = `${snapshot.credits} CREDITS`;
-    status.textContent = statusText(
-      snapshot,
-      world.cellSize,
-      drawn,
-      framesPerSecond
+    updateText(message, snapshot.message === '' ? '—' : snapshot.message);
+    updateText(credits, `${snapshot.credits} CREDITS`);
+    updateText(
+      status,
+      statusText(snapshot, world.cellSize, drawn, framesPerSecond)
     );
     surface.dataset['state'] = 'ready';
     canvas.dataset['lines'] = String(drawn.lines);

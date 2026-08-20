@@ -136,9 +136,9 @@ const stripVertices = (size: Size, parity: 0 | 1): Float32Array => {
   return new Float32Array(vertices);
 };
 
-export type DrawMode = 'lines' | 'points' | 'triangles';
+type DrawMode = 'lines' | 'points' | 'triangles';
 
-export interface DrawBatch {
+interface DrawBatch {
   readonly colour: RGB8;
   readonly mode: DrawMode;
   readonly vertices: Float32Array;

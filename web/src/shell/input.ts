@@ -30,6 +30,43 @@ export interface ControlProfileActions {
 const browserChord = (key: BrowserKey): boolean =>
   key.altKey || key.ctrlKey || key.metaKey;
 
+const HELD_CONTROLS = new Set([
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'ShiftLeft',
+  'ShiftRight'
+]);
+
+const PUNCTUATION_CODES = new Set([
+  'Backquote',
+  'Backslash',
+  'BracketLeft',
+  'BracketRight',
+  'Comma',
+  'Equal',
+  'IntlBackslash',
+  'IntlRo',
+  'IntlYen',
+  'Minus',
+  'Period',
+  'Quote',
+  'Semicolon',
+  'Slash'
+]);
+
+const ordinaryCode = (code: string): boolean =>
+  /^Key[A-Z]$/.test(code) ||
+  /^Digit\d$/.test(code) ||
+  /^Numpad(?:\d|Add|Comma|Decimal|Divide|Equal|Multiply|Subtract)$/.test(
+    code
+  ) ||
+  PUNCTUATION_CODES.has(code);
+
+const handledCode = (code: string): boolean =>
+  code === 'Space' || HELD_CONTROLS.has(code) || ordinaryCode(code);
+
 const axis = (
   held: ReadonlySet<string>,
   positive: string,
@@ -69,11 +106,10 @@ export class BrowserControlProfile {
     if (browserChord(key)) {
       return false;
     }
-    if (key.repeat) {
-      return true;
-    }
-
     const aboard = this.actions.occupancy().kind === 'aboard';
+    if (key.repeat) {
+      return handledCode(key.code);
+    }
     if (aboard) {
       const notch = throttleNotch(key.code);
       if (notch !== undefined) {
@@ -90,6 +126,12 @@ export class BrowserControlProfile {
       case 'ShiftLeft':
       case 'ShiftRight':
         this.held.add(key.code);
+        break;
+      case 'ArrowDown':
+      case 'ArrowLeft':
+      case 'ArrowRight':
+      case 'ArrowUp':
+        this.holdAndPress(key.code);
         break;
       case 'BracketLeft':
         this.actions.page(-1);
@@ -121,6 +163,9 @@ export class BrowserControlProfile {
         this.actions.rideLift();
         break;
       default:
+        if (!ordinaryCode(key.code)) {
+          return false;
+        }
         this.holdAndPress(key.code);
         break;
     }
@@ -128,8 +173,8 @@ export class BrowserControlProfile {
   }
 
   keyUp(key: BrowserKey): boolean {
-    this.held.delete(key.code);
-    return !browserChord(key);
+    const wasHeld = this.held.delete(key.code);
+    return wasHeld && !browserChord(key);
   }
 
   releaseAll(): void {
