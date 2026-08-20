@@ -1,5 +1,11 @@
 {
   "schemaVersion": 1,
+  "accepted": {
+    "on": "2026-08-20",
+    "payloadCoreDigest": "7b0cbf0f34c99fbcf8081e8fc152bc490fb4d4d1d9b1be4d9ec9481441d3949c",
+    "traceSchemaVersion": 3,
+    "note": "Opening-loop parity accepted for #69 after the maintainer completed the browser, Swift app, and Reference Build comparison from crash site through the purchased Dart, lift site 1 at 09:06, and the Room-1 Indoor Scene, with no material differences reported. Verdict: https://github.com/odogono/mercenary/issues/69#issuecomment-5356467924"
+  },
   "scenarios": [
     {
       "emitter": "math",
