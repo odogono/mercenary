@@ -1,13 +1,16 @@
 # The browser implementation
 
 The canonical codebase for the Faithful Remake (ADR 0019). The macOS application in
-`../app/` is the Trace Oracle until this reaches the opening loop.
+`../app/` remains the Trace Oracle while this browser implementation owns the live opening
+loop.
 
 ```sh
 bun install
-bun test          # every ported module's Replay Gate
-bun run typecheck # tsc --noEmit
-bun run dev       # http://localhost:5173
+bunx playwright install chromium # once, for the browser gate
+bun test                       # every ported module's Replay Gate and shell unit tests
+bun run test:e2e               # live localhost walkabout in Chromium
+bun run typecheck              # tsc --noEmit
+bun run dev                    # http://localhost:5173
 ```
 
 The dev server serves the page and strips the types from each `.ts` module as it hands it
@@ -16,12 +19,10 @@ not bundling: import specifiers keep their `.ts` extensions and each module is f
 disk in turn, so there is still nothing here that produces a deployable bundle — the thing
 ADR 0019 gitignores and ADR 0004 gates.
 
-Both read the gitignored `/payload/` from the repository root, and both read the gitignored
-`/traces/` beside it: `bun test` grades every ported module against the Golden Traces, and
-the dev server hands the page the traces it flies — by `emitter/id`, against the Trace
-Scenarios listed in `trace-scenarios.json`, and nothing else under that directory. Neither
-directory is in Git; both are derived from the Reference Build. If they are missing, emit them
-first:
+The tests and page both read the gitignored `/payload/` from the repository root. Replay Gates
+also read the gitignored `/traces/`, while the live page reads the tracked `/settings.json` and
+advances its own Gameplay Session. The payload and traces are derived from the Reference Build
+and never tracked. If they are missing, emit them first:
 
 ```sh
 cd ../app && swift run mercenary --emit-traces
@@ -29,8 +30,9 @@ cd ../app && swift run mercenary --emit-traces
 
 A Replay Gate whose Golden Trace or payload file is absent **fails**. It does not skip: a
 module without a passing replay is not ported, and a gate that quietly passes when its
-evidence is missing is worse than no gate. The page is the one exception, because it grades
-nothing: with no trace to fly it holds its fixed pose and names the command that emits one.
+evidence is missing is worse than no gate. The page also fails visibly rather than presenting
+a partial walkabout when its required flight, text, Benson, interaction, or settings document
+is absent.
 
 ## What is here
 
@@ -45,7 +47,8 @@ nothing: with no trace to fly it holds its fixed pose and names the command that
   kit modules. `src/projection/` is where world space becomes screen lines; its pixel space is
   **Y-down**, as the Reference Build computes it and as a Golden Trace records it, and the one
   place Y is flipped is the vertex shader that maps pixels to clip space. `src/scene/` holds
-  the Indoor Scene resolver and the Indoor Backdrop column lookup; still no renderer.
+  the Indoor Scene resolver and the Indoor Backdrop column lookup consumed by the WebGL2
+  renderer.
 - `src/settings/` — the tuning, read through an injectable seam that mirrors
   `Settings.load(at:read:)`. A trace header carries only its own emitter's settings, so the
   `flight` and `game-core` replays assert the flight block, the `benson` replay asserts the
@@ -78,23 +81,25 @@ nothing: with no trace to fly it holds its fixed pose and names the command that
   scripts, `nextRandom` comes off persistent `BensonState`; without, a session-owned stream
   with the same seeds as Swift. The `session` Replay Gate grades the opening loop
   (`session/opening` and `session/opening-walk-to-craft`); walk-to boarding is a note on the
-  trace, not a command the replay injects. The page is still un-wired (#95).
-- `src/shell/` — the page. Throwaway until #95: it loads the payload, draws one fixed pose so a
-  browser frame can be held beside a raster in `../docs/frames/` and judged by eye (ADR 0011),
-  then plays the poses recorded in the `flight/craft-1-standard` Golden Trace on
-  `requestAnimationFrame`, paced by the step the trace was recorded at. Nothing is simulated
-  and nothing is steered: every pose on screen is one a Replay Gate has already compared
-  bit-for-bit against the Trace Oracle.
-- `src/trace/` — reading a Golden Trace and folding its recorded deltas forward. In `src/`
-  rather than beside the tests because there are two readers: the Replay Gates fold a whole
-  state to grade it, and the page folds the player out of a flight trace to fly it. A second
-  reader in the page would be the copy that half-reads a bumped schema without failing.
+  trace, not a command the replay injects.
+- `src/shell/` — the live Browser Shell: required payload/settings composition, the browser
+  Control Profile, a bounded 60 Hz fixed-step clock, and the owned WebGL2 renderer. It starts
+  the opening Benson Script on the captured surface Pose, consumes only Session Snapshots for
+  presentation, keeps the Reference Viewport at 1280×800, and draws surface or Indoor Scene
+  batches without a general-purpose engine (ADR 0024).
+- `src/trace/` — reading a Golden Trace and folding its recorded deltas forward for the Replay
+  Gates. It remains in `src/` because the trace schema and state fold are implementation code,
+  even though the live page no longer plays a recording.
 - `test/replay/` — the Replay Gate harness: locate artifacts, run the gate protocol both Movers
   are graded by (`moverGate.ts`, shared by the `flight` and `game-core` gates), run the benson
   gate (`bensonGate.ts`) and the session gate (`sessionGate.ts`), compare values bit-for-bit,
   and check that the payload on disk is the one a trace was recorded from. `MoverReplay`
   remains the driver for the flight and game-core gates; those traces are not folded onto
   `GameplaySession`.
+- `e2e/` — the Chromium walkabout gate. Playwright starts the real localhost server, checks the
+  WebGL framebuffer palette, walks from the Opening Scene, verifies focus loss releases held
+  input and browser chords pass through, and attaches an untracked opening screenshot for
+  maintainer review rather than treating cross-platform pixels as authoritative (ADR 0011).
 
 Nothing here is a mechanical translation of the Swift implementation or of the Reference
 Build. Both are read for understanding; neither is copied (ADR 0002, ADR 0014, ADR 0019).

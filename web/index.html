@@ -2,41 +2,131 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Mercenary — Escape from Targ</title>
     <style>
+      :root {
+        color-scheme: dark;
+        --accent: #61c8ff;
+        --border: #2d7697;
+        --panel: #07151d;
+        --status: #b7cad2;
+        --text: #f4f7f8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       html,
       body {
+        min-height: 100%;
         margin: 0;
-        height: 100%;
         background: #000;
-        color: #cfcfcf;
-        font:
-          13px ui-monospace,
-          monospace;
       }
-      main {
+
+      body {
         display: grid;
         place-items: center;
-        gap: 1rem;
-        height: 100%;
+        color: var(--text);
+        font:
+          600 clamp(0.65rem, 1.2vw, 0.8125rem) / 1.35 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          Monaco,
+          Consolas,
+          monospace;
       }
-      p {
-        max-width: 46rem;
-        line-height: 1.6;
+
+      main {
+        width: 100%;
       }
+
+      #game-surface {
+        width: min(100%, 1280px);
+        margin-inline: auto;
+        overflow: hidden;
+        background: var(--panel);
+        border-block: 1px solid var(--border);
+      }
+
       canvas {
         display: block;
-        max-width: 100%;
-        /* The projection is computed for this viewport, so the canvas keeps its shape and
-           the browser only scales what is already drawn. */
+        width: 100%;
         aspect-ratio: 1280 / 800;
+        background: #000;
+      }
+
+      #comms,
+      #status {
+        display: flex;
+        min-height: 2rem;
+        align-items: center;
+        padding: 0.4rem 0.75rem;
+        border-top: 1px solid var(--border);
+      }
+
+      #comms {
+        gap: 1rem;
+        color: var(--text);
+      }
+
+      #message {
+        overflow: hidden;
+        flex: 1;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      #credits {
+        flex: none;
+        color: var(--accent);
+      }
+
+      #status {
+        min-height: 1.75rem;
+        color: var(--status);
+        font-size: 0.85em;
+        white-space: normal;
+      }
+
+      #failure {
+        width: min(calc(100% - 2rem), 60rem);
+        margin: 1rem auto 0;
+        padding: 1rem;
+        color: #ffd7d7;
+        background: #2b0909;
+        border: 1px solid #8e3030;
+        white-space: pre-wrap;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      @media (min-width: 1282px) {
+        #game-surface {
+          border-inline: 1px solid var(--border);
+        }
       }
     </style>
   </head>
   <body>
-    <main>
-      <canvas id="frame" width="1280" height="800"></canvas>
-      <p id="status">Loading the Data Payload…</p>
+    <main aria-label="Mercenary Browser Shell">
+      <section id="game-surface" data-state="loading" aria-label="Game Surface">
+        <canvas
+          id="frame"
+          width="1280"
+          height="800"
+          aria-label="Wireframe view of Targ"
+        ></canvas>
+        <div id="comms" role="status" aria-live="polite">
+          <span id="message">Loading the Data Payload…</span>
+          <span id="credits"></span>
+        </div>
+        <div id="status">STARTING SESSION</div>
+      </section>
+      <p id="failure" role="alert" hidden></p>
     </main>
     <script type="module" src="/src/shell/boot.ts"></script>
   </body>

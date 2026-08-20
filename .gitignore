@@ -36,4 +36,6 @@ __pycache__/
 /web/dist/
 /web/node_modules/
 /web/.eslintcache
+/web/playwright-report/
+/web/test-results/
 .DS_Store

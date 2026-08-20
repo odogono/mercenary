@@ -3,3 +3,5 @@ dist
 coverage
 bun.lock
 .eslintcache
+playwright-report
+test-results

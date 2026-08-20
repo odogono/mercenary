@@ -1,20 +1,19 @@
 import {
+  Camera,
   leanTransform,
+  projectFrame,
   transformed,
+  visible,
   type Point,
   type Rect,
   type ScreenLine,
   type Size
 } from '../projection/index.ts';
-import { ScenePalette, type RGB8 } from '../scene/index.ts';
+import { IndoorBackdrop, ScenePalette, type RGB8 } from '../scene/index.ts';
+import type { SessionSnapshot } from '../session/index.ts';
+import { Ink, type World } from '../world/index.ts';
 
-/// A throwaway WebGL2 line list, standing up the first browser pixels.
-///
-/// Deliberately the smallest thing that can draw one frame: no scene graph, no engine, no
-/// dependency (ADR 0019 — the renderer is a line list owned outright). The real one is #95,
-/// which owns the two-pass ink renderer, the indoor backdrop, timing and input. What this has
-/// to earn is the WebGL2 assumption underneath all of that, and it earns it by putting a frame
-/// on screen that a maintainer can hold beside a `FrameCapture` PNG.
+/// The owned WebGL2 renderer has no scene graph, engine or runtime dependency (ADR 0019).
 ///
 /// **Y is flipped here and nowhere else.** The projection is in Y-down pixel space, as the
 /// Reference Build computes it and as the Golden Traces record it. Clip space is Y-up, so the
@@ -113,15 +112,122 @@ const pointVertices = (points: readonly Point[]): Float32Array => {
   return out;
 };
 
-export interface FrameContent {
-  readonly blackInk: readonly ScreenLine[];
-  /// The ground fill exactly as the camera described it: a rectangle in unrolled screen space
-  /// and the angle to lean it by.
-  readonly ground: { readonly lean: number; readonly rect: Rect };
-  readonly points: readonly Point[];
-  readonly size: Size;
-  readonly whiteInk: readonly ScreenLine[];
+const stripVertices = (size: Size, parity: 0 | 1): Float32Array => {
+  const vertices: number[] = [];
+  const width = size.width / IndoorBackdrop.columnCount;
+  for (let column = parity; column < IndoorBackdrop.columnCount; column += 2) {
+    const left = column * width;
+    const right = (column + 1) * width;
+    vertices.push(
+      left,
+      0,
+      right,
+      0,
+      right,
+      size.height,
+      left,
+      0,
+      right,
+      size.height,
+      left,
+      size.height
+    );
+  }
+  return new Float32Array(vertices);
+};
+
+export type DrawMode = 'lines' | 'points' | 'triangles';
+
+export interface DrawBatch {
+  readonly colour: RGB8;
+  readonly mode: DrawMode;
+  readonly vertices: Float32Array;
 }
+
+export interface FramePlan {
+  readonly batches: readonly DrawBatch[];
+  readonly clear: RGB8;
+  readonly lines: number;
+  readonly points: number;
+  readonly size: Size;
+}
+
+const addBatch = (
+  batches: DrawBatch[],
+  mode: DrawMode,
+  vertices: Float32Array,
+  colour: RGB8
+): void => {
+  if (vertices.length > 0) {
+    batches.push({ colour, mode, vertices });
+  }
+};
+
+/// Resolve one Session Snapshot into the ordered primitive batches WebGL2 should draw.
+///
+/// This is deliberately pure. Golden Traces already grade selection and projection; this plan
+/// makes the presentation boundary independently inspectable without a DOM or graphics driver.
+export const planFrame = (
+  world: World,
+  snapshot: SessionSnapshot,
+  size: Size
+): FramePlan => {
+  const indoor = snapshot.indoor;
+  if (indoor?.dark === true) {
+    return {
+      batches: [],
+      clear: ScenePalette.blackInk,
+      lines: 0,
+      points: 0,
+      size
+    };
+  }
+
+  const camera = new Camera({
+    ...snapshot.player,
+    mirrored: snapshot.worldFlipped
+  });
+  const seen = visible(world, snapshot.player.position, {
+    elapsed: snapshot.elapsed,
+    residence: snapshot.residence,
+    ...(snapshot.location.kind === 'room' ? { room: snapshot.location.id } : {})
+  });
+  const projected = projectFrame(camera, seen, size);
+  const blackInk: ScreenLine[] = [];
+  const whiteInk: ScreenLine[] = [];
+  for (const line of projected.lines) {
+    (line.ink === Ink.black ? blackInk : whiteInk).push(line);
+  }
+
+  const batches: DrawBatch[] = [];
+  if (indoor === undefined) {
+    addBatch(
+      batches,
+      'triangles',
+      groundVertices(camera.groundFill(size), size),
+      ScenePalette.ground
+    );
+  } else {
+    const backdrop = new IndoorBackdrop(indoor.background, indoor.foreground);
+    addBatch(batches, 'triangles', stripVertices(size, 0), backdrop.foreground);
+    addBatch(batches, 'triangles', stripVertices(size, 1), backdrop.background);
+  }
+  addBatch(batches, 'lines', lineVertices(blackInk), ScenePalette.blackInk);
+  addBatch(batches, 'lines', lineVertices(whiteInk), ScenePalette.whiteInk);
+  addBatch(
+    batches,
+    'points',
+    pointVertices(projected.points),
+    ScenePalette.whiteInk
+  );
+  return {
+    batches,
+    clear: indoor === undefined ? ScenePalette.sky : ScenePalette.blackInk,
+    lines: projected.lines.length,
+    points: projected.points.length,
+    size
+  };
+};
 
 /// The context, program and buffer one canvas draws every frame through.
 ///
@@ -154,34 +260,43 @@ export class Renderer {
     this.gl = gl;
   }
 
-  private pass(mode: number, vertices: Float32Array, colour: RGB8): void {
-    if (vertices.length === 0) {
-      return;
-    }
-    this.gl.uniform3f(this.ink, ...channels(colour));
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STREAM_DRAW);
-    this.gl.drawArrays(mode, 0, vertices.length / 2);
+  private pass(batch: DrawBatch): void {
+    const modes: Record<DrawMode, number> = {
+      lines: this.gl.LINES,
+      points: this.gl.POINTS,
+      triangles: this.gl.TRIANGLES
+    };
+    this.gl.uniform3f(this.ink, ...channels(batch.colour));
+    this.gl.bufferData(
+      this.gl.ARRAY_BUFFER,
+      batch.vertices,
+      this.gl.STREAM_DRAW
+    );
+    this.gl.drawArrays(modes[batch.mode], 0, batch.vertices.length / 2);
   }
 
-  /// Draw one frame, in the order the headless renderer draws it: sky, ground, the dim ink pass,
-  /// the bright one, then the far points.
-  draw(content: FrameContent): void {
+  /// Draw one Session Snapshot and return the counts the status strip reports.
+  draw(
+    world: World,
+    snapshot: SessionSnapshot,
+    size: Size
+  ): {
+    readonly lines: number;
+    readonly points: number;
+  } {
+    const plan = planFrame(world, snapshot, size);
     const gl = this.gl;
     // The canvas is sized once by the caller, but the viewport is read here so a resize between
     // frames needs nothing else to be rebuilt.
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-    gl.uniform2f(this.viewport, this.canvas.width, this.canvas.height);
+    gl.uniform2f(this.viewport, plan.size.width, plan.size.height);
+    gl.lineWidth(1);
 
-    gl.clearColor(...channels(ScenePalette.sky), 1);
+    gl.clearColor(...channels(plan.clear), 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
-
-    this.pass(
-      gl.TRIANGLES,
-      groundVertices(content.ground, content.size),
-      ScenePalette.ground
-    );
-    this.pass(gl.LINES, lineVertices(content.blackInk), ScenePalette.blackInk);
-    this.pass(gl.LINES, lineVertices(content.whiteInk), ScenePalette.whiteInk);
-    this.pass(gl.POINTS, pointVertices(content.points), ScenePalette.whiteInk);
+    for (const batch of plan.batches) {
+      this.pass(batch);
+    }
+    return { lines: plan.lines, points: plan.points };
   }
 }
