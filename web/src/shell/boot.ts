@@ -1,5 +1,6 @@
 import { fetchReader, load } from '../payload/load.ts';
 import type { SessionSnapshot } from '../session/index.ts';
+import { targOrreryFor } from '../sky/index.ts';
 import { FixedStepClock } from './clock.ts';
 import { Renderer } from './frame.ts';
 import { BrowserControlProfile } from './input.ts';
@@ -87,7 +88,8 @@ try {
   installTypefaceSelector(typeface, document.documentElement, storage);
   const settings = requiredSettings(settingsText);
   const { session, world } = createWalkabout(bundle, settings);
-  const renderer = new Renderer(canvas);
+  const orrery = targOrreryFor(settings.presentation);
+  const renderer = new Renderer(canvas, orrery);
   const clock = new FixedStepClock();
   let snapshot = session.snapshot;
   let framesPerSecond = 0;

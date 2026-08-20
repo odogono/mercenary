@@ -14,5 +14,16 @@
     "speedScale": 1,
     "throttleFloorNotch": 3,
     "runMultiplier": 3
+  },
+  "presentation": {
+    "preset": "enhanced",
+    "sky": {
+      "dayLengthMinutes": 24,
+      "latitudeDegrees": 34,
+      "obliquityDegrees": 21,
+      "yearDays": 96,
+      "starCount": 450,
+      "starSeed": 1985
+    }
   }
 }

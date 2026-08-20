@@ -61,6 +61,10 @@ is absent.
   place Y is flipped is the vertex shader that maps pixels to clip space. `src/scene/` holds
   the Indoor Scene resolver and the Indoor Backdrop column lookup consumed by the WebGL2
   renderer.
+- `src/sky/` — the pure Targ Orrery, its seeded Star Sphere and the projection of one Sky State
+  into immutable direction-space batches. Enhanced presentation advances it from elapsed
+  Gameplay Session time; Authentic presentation and every Indoor Scene omit it entirely (ADR
+  0025).
 - `src/settings/` — the tuning, read through an injectable seam that mirrors
   `Settings.load(at:read:)`. A trace header carries only its own emitter's settings, so the
   `flight` and `game-core` replays assert the flight block, the `benson` replay asserts the
@@ -100,9 +104,11 @@ is absent.
   Control Profile, a bounded 60 Hz fixed-step clock, and the owned WebGL2 renderer. It starts
   the opening Benson Script on the captured surface Pose, consumes only Session Snapshots for
   presentation, keeps the Reference Viewport at 1280×800, and draws surface or Indoor Scene
-  batches without a general-purpose engine (ADR 0024). Modifier chords and browser-reserved
-  keys pass through untouched; blur and hidden-page transitions release held Movement Intent
-  and reset the fixed-step clock.
+  batches without a general-purpose engine (ADR 0024). In the Enhanced Presentation Preset it
+  also owns the optional sky shader and draws its blended batches before the unchanged scene
+  passes; Authentic keeps the original renderer path. Modifier chords and browser-reserved keys
+  pass through untouched; blur and hidden-page transitions release held Movement Intent and
+  reset the fixed-step clock.
 - `src/trace/` — reading a Golden Trace and folding its recorded deltas forward for the Replay
   Gates. It remains in `src/` because the trace schema and state fold are implementation code,
   even though the live page no longer plays a recording.

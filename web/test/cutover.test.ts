@@ -17,11 +17,11 @@ describe('browser canonical cutover', () => {
     expect(ignoreRules).not.toContain('/app/');
   });
 
-  test('identifies the game-typefaces milestone as 0.6.0', async () => {
+  test('identifies the Targ Orrery milestone as 0.7.0', async () => {
     const packageDocument = await Bun.file(
       join(repositoryRoot, 'web', 'package.json')
     ).json();
 
-    expect(packageDocument.version).toBe('0.6.0');
+    expect(packageDocument.version).toBe('0.7.0');
   });
 });

@@ -11,6 +11,13 @@ import {
 } from '../projection/index.ts';
 import { IndoorBackdrop, ScenePalette, type RGB8 } from '../scene/index.ts';
 import type { SessionSnapshot } from '../session/index.ts';
+import {
+  SKY_VERTEX_FIELDS,
+  buildSkyFrame,
+  type SkyBatch,
+  type SkyFrame
+} from '../sky/frame.ts';
+import { skyStateAt, type TargOrrery } from '../sky/index.ts';
 import { Ink, type World } from '../world/index.ts';
 
 /// The owned WebGL2 renderer has no scene graph, engine or runtime dependency (ADR 0019).
@@ -39,6 +46,53 @@ void main() {
   colour = vec4(ink, 1.0);
 }`;
 
+const SKY_VERTEX_SHADER = `#version 300 es
+in vec2 pixel;
+in vec2 disc;
+in float opacity;
+uniform vec2 viewport;
+out vec2 localDisc;
+out float localOpacity;
+void main() {
+  vec2 clip = vec2(
+    pixel.x / viewport.x * 2.0 - 1.0,
+    1.0 - pixel.y / viewport.y * 2.0
+  );
+  gl_Position = vec4(clip, 0.0, 1.0);
+  gl_PointSize = 2.0;
+  localDisc = disc;
+  localOpacity = opacity;
+}`;
+
+const SKY_FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+uniform vec3 litInk;
+uniform vec3 darkInk;
+uniform float phaseCosine;
+uniform float phased;
+uniform float pointPass;
+in vec2 localDisc;
+in float localOpacity;
+out vec4 colour;
+void main() {
+  if (pointPass > 0.5) {
+    colour = vec4(litInk, localOpacity);
+    return;
+  }
+  float radius = length(localDisc);
+  float edge = max(fwidth(radius), 0.0001);
+  float coverage = 1.0 - smoothstep(1.0 - edge, 1.0, radius);
+  float illuminated = 1.0;
+  if (phased > 0.5) {
+    float surface = sqrt(max(0.0, 1.0 - dot(localDisc, localDisc)));
+    float across = sqrt(max(0.0, 1.0 - phaseCosine * phaseCosine));
+    float light = localDisc.x * across + surface * phaseCosine;
+    float feather = max(fwidth(light), 0.0001);
+    illuminated = smoothstep(-feather, feather, light);
+  }
+  colour = vec4(mix(darkInk, litInk, illuminated), localOpacity * coverage);
+}`;
+
 const compile = (
   gl: WebGL2RenderingContext,
   type: number,
@@ -53,15 +107,50 @@ const compile = (
   return shader;
 };
 
-const linked = (gl: WebGL2RenderingContext): WebGLProgram => {
+const linked = (
+  gl: WebGL2RenderingContext,
+  vertexSource: string,
+  fragmentSource: string
+): WebGLProgram => {
   const program = gl.createProgram()!;
-  gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, VERTEX_SHADER));
-  gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER));
+  gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, vertexSource));
+  gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, fragmentSource));
   gl.linkProgram(program);
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
     throw new Error(`program: ${gl.getProgramInfoLog(program) ?? 'no log'}`);
   }
   return program;
+};
+
+interface SkyPipeline {
+  readonly buffer: WebGLBuffer;
+  readonly darkInk: WebGLUniformLocation | null;
+  readonly disc: number;
+  readonly litInk: WebGLUniformLocation | null;
+  readonly opacity: number;
+  readonly phaseCosine: WebGLUniformLocation | null;
+  readonly phased: WebGLUniformLocation | null;
+  readonly pixel: number;
+  readonly pointPass: WebGLUniformLocation | null;
+  readonly program: WebGLProgram;
+  readonly viewport: WebGLUniformLocation | null;
+}
+
+const skyPipeline = (gl: WebGL2RenderingContext): SkyPipeline => {
+  const program = linked(gl, SKY_VERTEX_SHADER, SKY_FRAGMENT_SHADER);
+  return {
+    buffer: gl.createBuffer()!,
+    darkInk: gl.getUniformLocation(program, 'darkInk'),
+    disc: gl.getAttribLocation(program, 'disc'),
+    litInk: gl.getUniformLocation(program, 'litInk'),
+    opacity: gl.getAttribLocation(program, 'opacity'),
+    phaseCosine: gl.getUniformLocation(program, 'phaseCosine'),
+    phased: gl.getUniformLocation(program, 'phased'),
+    pixel: gl.getAttribLocation(program, 'pixel'),
+    pointPass: gl.getUniformLocation(program, 'pointPass'),
+    program,
+    viewport: gl.getUniformLocation(program, 'viewport')
+  };
 };
 
 const channels = (colour: RGB8): [number, number, number] => [
@@ -150,6 +239,7 @@ export interface FramePlan {
   readonly lines: number;
   readonly points: number;
   readonly size: Size;
+  readonly sky?: SkyFrame;
 }
 
 const addBatch = (
@@ -170,7 +260,8 @@ const addBatch = (
 export const planFrame = (
   world: World,
   snapshot: SessionSnapshot,
-  size: Size
+  size: Size,
+  orrery?: TargOrrery
 ): FramePlan => {
   const indoor = snapshot.indoor;
   if (indoor?.dark === true) {
@@ -220,20 +311,36 @@ export const planFrame = (
     pointVertices(projected.points),
     ScenePalette.whiteInk
   );
+  const sky =
+    orrery === undefined || snapshot.location.kind !== 'surface'
+      ? undefined
+      : buildSkyFrame(
+          skyStateAt(orrery, snapshot.elapsed),
+          {
+            heading: snapshot.player.heading,
+            mirrored: snapshot.worldFlipped,
+            pitch: snapshot.player.pitch,
+            roll: snapshot.player.roll
+          },
+          size
+        );
   return {
     batches,
-    clear: indoor === undefined ? ScenePalette.sky : ScenePalette.blackInk,
+    clear:
+      sky?.clear ??
+      (indoor === undefined ? ScenePalette.sky : ScenePalette.blackInk),
     lines: projected.lines.length,
     points: projected.points.length,
-    size
+    size,
+    ...(sky === undefined ? {} : { sky })
   };
 };
 
 /// The context, program and buffer one canvas draws every frame through.
 ///
 /// A class rather than a function that sets all this up per call, because the page went from
-/// drawing one frame to drawing one per `requestAnimationFrame`: compiling the two shaders,
-/// linking, re-querying the locations and creating a buffer on each of those is both the most
+/// drawing one frame to drawing one per `requestAnimationFrame`: compiling shaders, linking,
+/// re-querying the locations and creating a buffer on each of those is both the most
 /// expensive thing in the frame and a leak, since WebGL objects are not collected with the
 /// closure that made them. Everything that does not change between frames is resolved once here,
 /// and `draw` does only the work that does.
@@ -241,23 +348,34 @@ export class Renderer {
   private readonly canvas: HTMLCanvasElement;
   private readonly gl: WebGL2RenderingContext;
   private readonly ink: WebGLUniformLocation | null;
+  private readonly orrery: TargOrrery | undefined;
+  private readonly pixel: number;
+  private readonly program: WebGLProgram;
+  private readonly sceneBuffer: WebGLBuffer;
+  private readonly sky: SkyPipeline | undefined;
   private readonly viewport: WebGLUniformLocation | null;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, orrery?: TargOrrery) {
     const gl = canvas.getContext('webgl2', { antialias: false });
     if (gl === null) {
       throw new Error('this browser has no WebGL2 context to draw into');
     }
-    const program = linked(gl);
+    const program = linked(gl, VERTEX_SHADER, FRAGMENT_SHADER);
     gl.useProgram(program);
     this.ink = gl.getUniformLocation(program, 'ink');
     this.viewport = gl.getUniformLocation(program, 'viewport');
     const pixel = gl.getAttribLocation(program, 'pixel');
-    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    const sceneBuffer = gl.createBuffer()!;
+    gl.bindBuffer(gl.ARRAY_BUFFER, sceneBuffer);
     gl.enableVertexAttribArray(pixel);
     gl.vertexAttribPointer(pixel, 2, gl.FLOAT, false, 0, 0);
     this.canvas = canvas;
     this.gl = gl;
+    this.orrery = orrery;
+    this.pixel = pixel;
+    this.program = program;
+    this.sceneBuffer = sceneBuffer;
+    this.sky = orrery === undefined ? undefined : skyPipeline(gl);
   }
 
   private pass(batch: DrawBatch): void {
@@ -275,6 +393,66 @@ export class Renderer {
     this.gl.drawArrays(modes[batch.mode], 0, batch.vertices.length / 2);
   }
 
+  private skyPass(frame: SkyFrame, size: Size): void {
+    const sky = this.sky;
+    if (sky === undefined) {
+      return;
+    }
+    const gl = this.gl;
+    const stride = SKY_VERTEX_FIELDS * Float32Array.BYTES_PER_ELEMENT;
+    gl.useProgram(sky.program);
+    gl.bindBuffer(gl.ARRAY_BUFFER, sky.buffer);
+    gl.uniform2f(sky.viewport, size.width, size.height);
+    gl.enableVertexAttribArray(sky.pixel);
+    gl.enableVertexAttribArray(sky.disc);
+    gl.enableVertexAttribArray(sky.opacity);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    for (const batch of frame.batches) {
+      this.skyBatch(batch, stride, sky);
+    }
+    gl.disable(gl.BLEND);
+    gl.disableVertexAttribArray(sky.disc);
+    gl.disableVertexAttribArray(sky.opacity);
+    gl.useProgram(this.program);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.sceneBuffer);
+    gl.enableVertexAttribArray(this.pixel);
+    gl.vertexAttribPointer(this.pixel, 2, gl.FLOAT, false, 0, 0);
+  }
+
+  private skyBatch(batch: SkyBatch, stride: number, sky: SkyPipeline): void {
+    const gl = this.gl;
+    const dark = batch.darkColour ?? batch.litColour;
+    gl.bufferData(gl.ARRAY_BUFFER, batch.vertices, gl.STREAM_DRAW);
+    gl.vertexAttribPointer(sky.pixel, 2, gl.FLOAT, false, stride, 0);
+    gl.vertexAttribPointer(
+      sky.disc,
+      2,
+      gl.FLOAT,
+      false,
+      stride,
+      2 * Float32Array.BYTES_PER_ELEMENT
+    );
+    gl.vertexAttribPointer(
+      sky.opacity,
+      1,
+      gl.FLOAT,
+      false,
+      stride,
+      4 * Float32Array.BYTES_PER_ELEMENT
+    );
+    gl.uniform3f(sky.litInk, ...channels(batch.litColour));
+    gl.uniform3f(sky.darkInk, ...channels(dark));
+    gl.uniform1f(sky.phaseCosine, batch.phaseCosine);
+    gl.uniform1f(sky.phased, batch.darkColour === undefined ? 0 : 1);
+    gl.uniform1f(sky.pointPass, batch.kind === 'stars' ? 1 : 0);
+    gl.drawArrays(
+      batch.mode === 'points' ? gl.POINTS : gl.TRIANGLE_FAN,
+      0,
+      batch.vertices.length / SKY_VERTEX_FIELDS
+    );
+  }
+
   /// Draw one Session Snapshot and return the counts the status strip reports.
   draw(
     world: World,
@@ -284,7 +462,7 @@ export class Renderer {
     readonly lines: number;
     readonly points: number;
   } {
-    const plan = planFrame(world, snapshot, size);
+    const plan = planFrame(world, snapshot, size, this.orrery);
     const gl = this.gl;
     // The canvas is sized once by the caller, but the viewport is read here so a resize between
     // frames needs nothing else to be rebuilt.
@@ -294,6 +472,10 @@ export class Renderer {
 
     gl.clearColor(...channels(plan.clear), 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
+    if (plan.sky !== undefined) {
+      this.skyPass(plan.sky, plan.size);
+      gl.uniform2f(this.viewport, plan.size.width, plan.size.height);
+    }
     for (const batch of plan.batches) {
       this.pass(batch);
     }

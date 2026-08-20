@@ -19,6 +19,77 @@ const waitForFrames = async (page: Page, count: number): Promise<void> => {
   );
 };
 
+test('Authentic preserves the pinned initial canvas pixels', async ({
+  page
+}, testInfo) => {
+  await page.route('**/settings.json', async route => {
+    const response = await route.fetch();
+    const settings = (await response.json()) as {
+      presentation: { preset: string };
+    };
+    settings.presentation.preset = 'authentic';
+    await route.fulfill({ json: settings, response });
+  });
+  await page.addInitScript(() => {
+    let pending: FrameRequestCallback | undefined;
+    window.requestAnimationFrame = callback => {
+      pending = callback;
+      return 1;
+    };
+    Object.defineProperty(window, '__drawFrozenInitialFrame', {
+      value: (): void => pending?.(0)
+    });
+  });
+
+  await page.goto('/');
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-state',
+    'ready'
+  );
+  await testInfo.attach('authentic-initial-frame', {
+    body: await page.locator('#frame').screenshot(),
+    contentType: 'image/png'
+  });
+  const digest = await page.evaluate(async () => {
+    const draw = (
+      window as unknown as Window & { __drawFrozenInitialFrame: () => void }
+    ).__drawFrozenInitialFrame;
+    draw();
+    const canvas = document.querySelector<HTMLCanvasElement>('#frame')!;
+    const gl = canvas.getContext('webgl2')!;
+    const pixels = new Uint8Array(canvas.width * canvas.height * 4);
+    gl.readPixels(
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      pixels
+    );
+    // WebGL reads bottom-up; canonical raw RGBA follows the canvas' top-down row order.
+    const rgba = new Uint8Array(pixels.length);
+    const rowBytes = canvas.width * 4;
+    for (let row = 0; row < canvas.height; row += 1) {
+      rgba.set(
+        pixels.subarray(
+          (canvas.height - row - 1) * rowBytes,
+          (canvas.height - row) * rowBytes
+        ),
+        row * rowBytes
+      );
+    }
+    const hash = await crypto.subtle.digest('SHA-256', rgba);
+    return [...new Uint8Array(hash)]
+      .map(byte => byte.toString(16).padStart(2, '0'))
+      .join('');
+  });
+
+  expect(digest).toBe(
+    '44288778d13180746a53bbe1d5bf06553ce02caab3fa7a997dad378f53d0cda0'
+  );
+});
+
 test('the live opening loop renders, walks and releases held input', async ({
   page
 }, testInfo) => {
@@ -112,6 +183,8 @@ test('the live opening loop renders, walks and releases held input', async ({
   expect(colours).toContain('96,160,224');
   expect(colours).toContain('0,128,0');
   expect(colours).toContain('255,255,255');
+  expect(colours).toContain('16,24,32');
+  expect(colours).toContain('184,200,216');
 
   await testInfo.attach('m4.6-opening-view', {
     body: await canvas.screenshot(),

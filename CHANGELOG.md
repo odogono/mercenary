@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Targ day/night Orrery (#99). The Browser Shell now resolves an Enhanced Presentation Preset
+  by default and renders an elapsed-session-driven sun, two phased moons, deterministic Star
+  Sphere, and smooth twilight behind outdoor scenes without changing Gameplay Session state,
+  world lighting, or Replay Gates. Tracked sky settings control the solar day, latitude,
+  obliquity, year, and deterministic stars; the Authentic preset preserves the previous renderer
+  and its pinned Chromium pixels. The optional sky pass reuses the existing Camera for roll,
+  wrapped pitch, inversion, and Flipped World mirroring, remains suppressed indoors, and restores
+  the unchanged scene-pass command sequence after straight-alpha celestial drawing. Pure Orrery,
+  projection, settings, renderer, and Chromium coverage pins the orbital model, visual ordering,
+  outdoor boundary, and Authentic compatibility; documented dusk and night frames record the
+  Enhanced opening-airstrip presentation.
 - Extracted Mercenary and Damocles web typefaces (#105). A deterministic research exporter
   validates complete laboratory runs, reproduces source glyphs as grid-aligned WOFF2 outlines,
   and records provenance and hashes in the ignored Data Payload. The Browser Shell now loads and

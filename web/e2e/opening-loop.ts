@@ -1,6 +1,7 @@
 import { fetchReader, load } from '../src/payload/load.ts';
 import { Renderer } from '../src/shell/frame.ts';
 import { createWalkabout, requiredSettings } from '../src/shell/session.ts';
+import { targOrreryFor } from '../src/sky/index.ts';
 import {
   foldStates,
   parseTrace,
@@ -37,11 +38,10 @@ try {
   ]);
   const trace = parseTrace(traceText, 'session', TRACE_ID);
   const expected = foldStates(trace);
-  const { session, world } = createWalkabout(
-    bundle,
-    requiredSettings(settingsText)
-  );
-  const renderer = new Renderer(canvas);
+  const settings = requiredSettings(settingsText);
+  const { session, world } = createWalkabout(bundle, settings);
+  const orrery = targOrreryFor(settings.presentation);
+  const renderer = new Renderer(canvas, orrery);
   const milestones = ['initial'];
   const scenario = trace.header['scenario'] as TraceObject;
   const walkTo = scenario['walkTo'];
