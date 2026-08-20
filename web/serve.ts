@@ -1,6 +1,8 @@
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
+import { payloadResponse } from './src/server/payload.ts';
+
 /// The development server. Localhost only, and deliberately so.
 ///
 /// A hosted build serves payload-derived data to every visitor, which is publication of a
@@ -79,20 +81,9 @@ const server = Bun.serve({
       return new Response('not found', { status: 404 });
     }
 
-    if (url.pathname.startsWith('/payload/')) {
-      const name = url.pathname.slice('/payload/'.length);
-      // Only the documents the loader asks for, by name. A path that could reach outside the
-      // payload directory would make a dev server a file server.
-      if (!/^[a-z]+\.json$/.test(name)) {
-        return new Response('not found', { status: 404 });
-      }
-      const file = Bun.file(join(payload, name));
-      if (!(await file.exists())) {
-        return new Response('not found', { status: 404 });
-      }
-      return new Response(file, {
-        headers: { 'content-type': 'application/json' }
-      });
+    const payloadAsset = await payloadResponse(url.pathname, payload);
+    if (payloadAsset !== undefined) {
+      return payloadAsset;
     }
 
     if (url.pathname === '/settings.json') {

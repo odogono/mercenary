@@ -43,8 +43,10 @@ Pure validation and protocol encoding receive unit tests. A local integration te
 
 - Always validate the STX and TOS images before emulator launch, bind Hatari to a host timeout, capture the effective tool version, and hash every generated artifact.
 - Never commit STX, TOS, RAM dumps, snapshots, or screenshots.
-- Do not touch `MercenaryKit`, the Targ Data Payload, or the Game Surface.
-- Do not build a Damocles Data Payload, extractor, or schema in this laboratory.
+- Do not touch `MercenaryKit`, the Targ gameplay documents, or the Game Surface.
+- Do not build a Damocles gameplay Data Payload, extractor, or schema in this laboratory. The
+  typography-only exception in ADR 0021 may consume verified display evidence through the
+  cross-title typography exporter; its generated glyph data and WOFF2 remain ignored.
 - Reproducible checkpoints and observation scenarios that expose world tables for mapping notes (#79–#81) are allowed. Filled-polygon decode, Gamma System inventory, and script/motion/time findings belong in `docs/research/` notes, not in a payload.
 
 ## Success criteria

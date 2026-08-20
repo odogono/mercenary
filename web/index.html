@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-font-face="mercenary">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -12,6 +12,12 @@
         --panel: #07151d;
         --status: #b7cad2;
         --text: #f4f7f8;
+        --shell-font-family: 'Mercenary Pixel';
+        --shell-font-size: 16px;
+      }
+
+      :root[data-font-face='damocles'] {
+        --shell-font-family: 'Damocles Interface';
       }
 
       * {
@@ -29,13 +35,12 @@
         display: grid;
         place-items: center;
         color: var(--text);
-        font:
-          600 clamp(0.65rem, 1.2vw, 0.8125rem) / 1.35 ui-monospace,
-          SFMono-Regular,
-          Menlo,
-          Monaco,
-          Consolas,
-          monospace;
+        font-family: var(--shell-font-family);
+        font-size: var(--shell-font-size);
+        font-style: normal;
+        font-weight: 400;
+        font-synthesis: none;
+        line-height: 1.5;
       }
 
       main {
@@ -58,16 +63,16 @@
       }
 
       #comms,
-      #status {
+      #status-row {
         display: flex;
         min-height: 2rem;
         align-items: center;
-        padding: 0.4rem 0.75rem;
+        padding: 8px 12px;
         border-top: 1px solid var(--border);
       }
 
       #comms {
-        gap: 1rem;
+        gap: 16px;
         color: var(--text);
       }
 
@@ -83,11 +88,36 @@
         color: var(--accent);
       }
 
-      #status {
+      #status-row {
+        flex-wrap: wrap;
+        gap: 8px 16px;
         min-height: 1.75rem;
         color: var(--status);
-        font-size: 0.85em;
         white-space: normal;
+      }
+
+      #status {
+        min-width: 0;
+        flex: 1 1 20rem;
+      }
+
+      #typeface-control {
+        display: flex;
+        flex: none;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+      }
+
+      #typeface {
+        max-width: 100%;
+        padding: 4px 24px 4px 8px;
+        color: var(--text);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 0;
+        font: inherit;
+        font-synthesis: none;
       }
 
       #failure {
@@ -109,6 +139,12 @@
           border-inline: 1px solid var(--border);
         }
       }
+
+      @media (max-width: 480px) {
+        :root {
+          --shell-font-size: 8px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -124,7 +160,16 @@
           <span id="message">Loading the Data Payload…</span>
           <span id="credits"></span>
         </div>
-        <div id="status">STARTING SESSION</div>
+        <div id="status-row">
+          <div id="status">STARTING SESSION</div>
+          <label id="typeface-control" for="typeface">
+            <span>TYPEFACE</span>
+            <select id="typeface" disabled>
+              <option value="mercenary">MERCENARY</option>
+              <option value="damocles">DAMOCLES</option>
+            </select>
+          </label>
+        </div>
       </section>
       <p id="failure" role="alert" hidden></p>
     </main>
