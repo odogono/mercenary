@@ -6,8 +6,15 @@ import { controlLimits } from '../src/gameCore/index.ts';
 import {
   DEFAULT_MESSAGE_CHARACTERS_PER_SECOND,
   DEFAULT_MESSAGE_HOLD_SECONDS,
+  DEFAULT_PRESENTATION_PRESET,
   DEFAULT_SCRIPT_INSTRUCTION_BUDGET,
   DEFAULT_SCRIPT_TIME_SCALE,
+  DEFAULT_SKY_DAY_LENGTH_MINUTES,
+  DEFAULT_SKY_LATITUDE_DEGREES,
+  DEFAULT_SKY_OBLIQUITY_DEGREES,
+  DEFAULT_SKY_STAR_COUNT,
+  DEFAULT_SKY_STAR_SEED,
+  DEFAULT_SKY_YEAR_DAYS,
   SETTINGS_FILE_NAME,
   SettingsError,
   defaultSettings,
@@ -56,6 +63,20 @@ describe('settings that are not there', () => {
     expect(scripts.timeScale).toBe(DEFAULT_SCRIPT_TIME_SCALE);
     expect(scripts.instructionBudget).toBe(DEFAULT_SCRIPT_INSTRUCTION_BUDGET);
   });
+
+  test('the presentation defaults to the authored Enhanced Targ sky', () => {
+    expect(defaultSettings().presentation).toEqual({
+      preset: DEFAULT_PRESENTATION_PRESET,
+      sky: {
+        dayLengthMinutes: DEFAULT_SKY_DAY_LENGTH_MINUTES,
+        latitudeDegrees: DEFAULT_SKY_LATITUDE_DEGREES,
+        obliquityDegrees: DEFAULT_SKY_OBLIQUITY_DEGREES,
+        starCount: DEFAULT_SKY_STAR_COUNT,
+        starSeed: DEFAULT_SKY_STAR_SEED,
+        yearDays: DEFAULT_SKY_YEAR_DAYS
+      }
+    });
+  });
 });
 
 describe('a document that names only what it changes', () => {
@@ -89,6 +110,113 @@ describe('a document that names only what it changes', () => {
   test('reads a null field as absent, as an omitted one', () => {
     const settings = loadSettings('{"message": {"holdSeconds": null}}');
     expect(settings.message.holdSeconds).toBe(DEFAULT_MESSAGE_HOLD_SECONDS);
+  });
+
+  test('merges a named sky field without losing its authored neighbours', () => {
+    const settings = loadSettings(
+      '{"presentation":{"preset":"authentic","sky":{"starCount":12}}}'
+    );
+    expect(settings.presentation.preset).toBe('authentic');
+    expect(settings.presentation.sky.starCount).toBe(12);
+    expect(settings.presentation.sky.starSeed).toBe(DEFAULT_SKY_STAR_SEED);
+  });
+});
+
+describe('the Presentation Preset and Targ sky settings', () => {
+  test('accept both named presets', () => {
+    expect(
+      loadSettings('{"presentation":{"preset":"authentic"}}').presentation
+        .preset
+    ).toBe('authentic');
+    expect(
+      loadSettings('{"presentation":{"preset":"enhanced"}}').presentation.preset
+    ).toBe('enhanced');
+  });
+
+  test('refuse a preset the Browser Shell does not know', () => {
+    expect(() =>
+      loadSettings('{"presentation":{"preset":"cinematic"}}')
+    ).toThrow(SettingsError);
+  });
+
+  for (const document of [
+    '{"presentation":false}',
+    '{"presentation":{"preset":1}}',
+    '{"presentation":{"sky":[]}}',
+    '{"presentation":{"sky":{"dayLengthMinutes":"24"}}}'
+  ]) {
+    test(`refuses the invalid typed document ${document}`, () => {
+      expect(() => loadSettings(document)).toThrow(SettingsError);
+    });
+  }
+
+  for (const [field, value] of [
+    ['dayLengthMinutes', 0],
+    ['dayLengthMinutes', -1],
+    ['yearDays', 0],
+    ['latitudeDegrees', -90.01],
+    ['latitudeDegrees', 90.01],
+    ['obliquityDegrees', -0.01],
+    ['obliquityDegrees', 90.01],
+    ['starCount', -1],
+    ['starCount', 10_001],
+    ['starCount', 1.5],
+    ['starSeed', -1],
+    ['starSeed', 0x01_00_00_00_00],
+    ['starSeed', 1.5]
+  ] as const) {
+    test(`refuses presentation.sky.${field} = ${value}`, () => {
+      expect(() =>
+        loadSettings(
+          JSON.stringify({ presentation: { sky: { [field]: value } } })
+        )
+      ).toThrow(SettingsError);
+    });
+  }
+
+  for (const [name, boundaries] of [
+    [
+      'lower',
+      {
+        dayLengthMinutes: Number.MIN_VALUE,
+        latitudeDegrees: -90,
+        obliquityDegrees: 0,
+        starCount: 0,
+        starSeed: 0,
+        yearDays: Number.MIN_VALUE
+      }
+    ],
+    [
+      'upper',
+      {
+        dayLengthMinutes: Number.MAX_VALUE,
+        latitudeDegrees: 90,
+        obliquityDegrees: 90,
+        starCount: 10_000,
+        starSeed: 0xff_ff_ff_ff,
+        yearDays: Number.MAX_VALUE
+      }
+    ]
+  ] as const) {
+    test(`accepts every inclusive ${name} sky boundary`, () => {
+      expect(
+        loadSettings(
+          JSON.stringify({
+            presentation: {
+              sky: boundaries
+            }
+          })
+        ).presentation.sky
+      ).toEqual(boundaries);
+    });
+  }
+
+  test('validates named sky values even when the preset is Authentic', () => {
+    expect(() =>
+      loadSettings(
+        '{"presentation":{"preset":"authentic","sky":{"starCount":-1}}}'
+      )
+    ).toThrow(SettingsError);
   });
 });
 
@@ -320,6 +448,14 @@ describe('the tracked settings, against the traces recorded with them', () => {
     expect(tracked.flight.throttleFloorNotch).not.toBe(
       defaultSettings().flight.throttleFloorNotch
     );
+  });
+
+  test('the tracked file explicitly records the Enhanced sky defaults', () => {
+    const source = JSON.parse(
+      readFileSync(join(repositoryRoot, SETTINGS_FILE_NAME), 'utf8')
+    ) as { readonly presentation?: unknown };
+    expect(source.presentation).toBeDefined();
+    expect(tracked.presentation).toEqual(defaultSettings().presentation);
   });
 
   for (const scenario of movers) {

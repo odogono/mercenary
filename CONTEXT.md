@@ -122,6 +122,18 @@ _Avoid_: Browser hack, web tweak, responsive mode
 The browser-owned experience surrounding the Game Surface, including the page, its canvas, controls help, settings, and host feedback.
 _Avoid_: Web UI, page chrome, wrapper
 
+**Presentation Preset**:
+The Browser Shell's named choice between Authentic presentation, which retains the accepted Reference Build appearance, and Enhanced presentation, which admits explicitly authored visual additions without changing Game Semantics.
+_Avoid_: Graphics mode, theme, sky toggle
+
+**Targ Orrery**:
+The deterministic Enhanced-presentation model of Targ's sun, two moons, twilight and night, advancing only with elapsed time in one Gameplay Session.
+_Avoid_: World clock, day/night system, recovered sky
+
+**Star Sphere**:
+The fixed seeded arrangement of stars belonging to the Targ Orrery, seen turning at the sidereal rate rather than regenerated from frame to frame.
+_Avoid_: Random stars, particle field, space backdrop
+
 **Trace Oracle**:
 The accepted macOS implementation frozen at the annotated `trace-oracle-last-good` tag, together with the deterministic traces it regenerates, held as the tagged equivalence authority that the canonical browser implementation must reproduce rather than as a live implementation (ADR 0019).
 _Avoid_: Golden master, reference app, source of truth

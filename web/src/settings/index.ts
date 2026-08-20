@@ -21,8 +21,9 @@ import type { FlightDocument } from '../payload/documents.ts';
 /// written out the same way, because the alternative — a deep merge over untyped objects —
 /// would accept a misspelled field as a new one and change nothing.
 ///
-/// All three of the kit's blocks are read. `bensonTunables(framesPerTick)` assembles the
-/// `message` and `scripts` blocks into the shape the interpreter takes.
+/// The three ported kit blocks remain joined by one presentation block owned by the Browser
+/// Shell. `bensonTunables(framesPerTick)` assembles `message` and `scripts` into the shape the
+/// interpreter takes; presentation never crosses that boundary.
 
 export const SETTINGS_FILE_NAME = 'settings.json';
 
@@ -87,9 +88,26 @@ export interface FlightSettings {
   readonly turnScale: number;
 }
 
+export type PresentationPreset = 'authentic' | 'enhanced';
+
+export interface SkySettings {
+  readonly dayLengthMinutes: number;
+  readonly latitudeDegrees: number;
+  readonly obliquityDegrees: number;
+  readonly starCount: number;
+  readonly starSeed: number;
+  readonly yearDays: number;
+}
+
+export interface PresentationSettings {
+  readonly preset: PresentationPreset;
+  readonly sky: SkySettings;
+}
+
 export interface Settings {
   readonly flight: FlightSettings;
   readonly message: MessageSettings;
+  readonly presentation: PresentationSettings;
   readonly scripts: ScriptSettings;
 }
 
@@ -103,6 +121,13 @@ export const DEFAULT_MESSAGE_HOLD_SECONDS = 3;
 
 export const DEFAULT_SCRIPT_TIME_SCALE = 6;
 export const DEFAULT_SCRIPT_INSTRUCTION_BUDGET = 512;
+export const DEFAULT_PRESENTATION_PRESET: PresentationPreset = 'enhanced';
+export const DEFAULT_SKY_DAY_LENGTH_MINUTES = 24;
+export const DEFAULT_SKY_LATITUDE_DEGREES = 34;
+export const DEFAULT_SKY_OBLIQUITY_DEGREES = 21;
+export const DEFAULT_SKY_YEAR_DAYS = 96;
+export const DEFAULT_SKY_STAR_COUNT = 450;
+export const DEFAULT_SKY_STAR_SEED = 1985;
 
 /// Each flight knob's default is the control loop's own.
 ///
@@ -168,6 +193,29 @@ const integer = (
   }
   if (typeof value !== 'number' || !Number.isInteger(value)) {
     return refuse(`${path} should be an integer, and is ${shown(value)}`);
+  }
+  return value;
+};
+
+const inRange = (
+  value: number,
+  path: string,
+  minimum: number,
+  maximum: number
+): number => {
+  if (value < minimum || value > maximum) {
+    return refuse(
+      `${path} should be between ${minimum} and ${maximum}, and is ${shown(value)}`
+    );
+  }
+  return value;
+};
+
+const positive = (value: number, path: string): number => {
+  if (value <= 0) {
+    return refuse(
+      `${path} should be greater than zero, and is ${shown(value)}`
+    );
   }
   return value;
 };
@@ -272,9 +320,93 @@ const readFlight = (value: unknown): FlightSettings => {
   };
 };
 
+const readSky = (value: unknown): SkySettings => {
+  const source = block(value, 'presentation.sky');
+  return {
+    dayLengthMinutes: positive(
+      number(
+        source,
+        'dayLengthMinutes',
+        'presentation.sky.dayLengthMinutes',
+        DEFAULT_SKY_DAY_LENGTH_MINUTES
+      ),
+      'presentation.sky.dayLengthMinutes'
+    ),
+    latitudeDegrees: inRange(
+      number(
+        source,
+        'latitudeDegrees',
+        'presentation.sky.latitudeDegrees',
+        DEFAULT_SKY_LATITUDE_DEGREES
+      ),
+      'presentation.sky.latitudeDegrees',
+      -90,
+      90
+    ),
+    obliquityDegrees: inRange(
+      number(
+        source,
+        'obliquityDegrees',
+        'presentation.sky.obliquityDegrees',
+        DEFAULT_SKY_OBLIQUITY_DEGREES
+      ),
+      'presentation.sky.obliquityDegrees',
+      0,
+      90
+    ),
+    starCount: inRange(
+      integer(
+        source,
+        'starCount',
+        'presentation.sky.starCount',
+        DEFAULT_SKY_STAR_COUNT
+      ),
+      'presentation.sky.starCount',
+      0,
+      10_000
+    ),
+    starSeed: inRange(
+      integer(
+        source,
+        'starSeed',
+        'presentation.sky.starSeed',
+        DEFAULT_SKY_STAR_SEED
+      ),
+      'presentation.sky.starSeed',
+      0,
+      0xff_ff_ff_ff
+    ),
+    yearDays: positive(
+      number(
+        source,
+        'yearDays',
+        'presentation.sky.yearDays',
+        DEFAULT_SKY_YEAR_DAYS
+      ),
+      'presentation.sky.yearDays'
+    )
+  };
+};
+
+const readPresentation = (value: unknown): PresentationSettings => {
+  const source = block(value, 'presentation');
+  const namedPreset = source['preset'];
+  let preset: PresentationPreset = DEFAULT_PRESENTATION_PRESET;
+  if (!unnamed(namedPreset)) {
+    if (namedPreset !== 'authentic' && namedPreset !== 'enhanced') {
+      return refuse(
+        `presentation.preset should be "authentic" or "enhanced", and is ${shown(namedPreset)}`
+      );
+    }
+    preset = namedPreset;
+  }
+  return { preset, sky: readSky(source['sky']) };
+};
+
 export const defaultSettings = (): Settings => ({
   flight: readFlight(undefined),
   message: readMessage(undefined),
+  presentation: readPresentation(undefined),
   scripts: readScripts(undefined)
 });
 
@@ -350,6 +482,7 @@ export const loadSettings = (text: string | undefined): Settings => {
   return {
     flight: readFlight(source['flight']),
     message: readMessage(source['message']),
+    presentation: readPresentation(source['presentation']),
     scripts: readScripts(source['scripts'])
   };
 };
