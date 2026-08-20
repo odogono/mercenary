@@ -1,4 +1,3 @@
-import { parseBensonKey, type BensonKey } from '../../src/benson/index.ts';
 import type { Intent } from '../../src/gameCore/index.ts';
 import {
   type Occupancy,
@@ -105,13 +104,3 @@ export const intentFromRecord = (input: TraceObject): Intent => ({
   turn: input['turn'] as number,
   walk: input['walk'] as number
 });
-
-export const keyFromCommand = (value: TraceValue): BensonKey | undefined => {
-  if (value === 'any' || value === null) {
-    return undefined;
-  }
-  if (typeof value !== 'string') {
-    return undefined;
-  }
-  return parseBensonKey(value) ?? parseBensonKey(`key${value.toUpperCase()}`);
-};

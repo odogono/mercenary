@@ -22,6 +22,7 @@ enum BensonTrace {
     /// An object slot to walk to and reach for, rather than boarding by fiat.
     var walkTo: Int?
     var walkAction: InteractionAction = .board
+    var openingLoop: TraceScenario.Session.OpeningLoop?
     /// Where to write a Golden Trace of the same rehearsal, when one was asked for.
     var trace: URL?
 
@@ -45,6 +46,7 @@ enum BensonTrace {
       }
       body.walkTo = walkTo
       body.take = walkAction == .take
+      body.openingLoop = openingLoop
       return TraceScenario(
         emitter: .session, id: "script-\(script)", note: "written by --benson-trace",
         body: .session(body))
@@ -224,8 +226,15 @@ enum BensonTrace {
     options.boarding = body.boarding.map { (craft: $0.craft, at: $0.at) }
     options.walkTo = body.walkTo
     options.walkAction = body.take ? .take : .board
+    options.openingLoop = body.openingLoop
     if let slot = body.walkTo, world.objects.first(where: { $0.slot == slot }) == nil {
       throw TraceRun.Failure.noObject(slot)
+    }
+    if let openingLoop = body.openingLoop {
+      guard
+        run.bundle.underground?.entrances.contains(where: { $0.site == openingLoop.liftSite })
+          == true
+      else { throw TraceRun.Failure.noLift(openingLoop.liftSite) }
     }
 
     var recorder = try CoreTrace.Recorder(run: run, scenario: scenario, session: session)

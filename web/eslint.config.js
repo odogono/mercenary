@@ -33,7 +33,7 @@ export default [
     }
   },
   {
-    files: ['serve.ts'],
+    files: ['serve.ts', 'e2e/opening-loop.ts'],
     rules: {
       'no-console': 'off'
     }

@@ -17,5 +17,9 @@ let package = Package(
     .executableTarget(name: "Mercenary", dependencies: ["MercenaryKit", "MercenaryCLI"]),
     .testTarget(name: "MercenaryKitTests", dependencies: ["MercenaryKit"]),
     .testTarget(name: "MercenaryCLITests", dependencies: ["MercenaryCLI"]),
+    .testTarget(
+      name: "MercenaryTests",
+      dependencies: ["Mercenary", "MercenaryCLI", "MercenaryKit"]
+    ),
   ]
 )

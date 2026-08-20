@@ -324,6 +324,16 @@ public struct TraceScenario: Sendable, Equatable {
       public init() {}
     }
 
+    /// The authentic route that carries the opening beyond boarding: fly to one decoded lift
+    /// site, land, leave the craft and descend. The craft itself remains `walkTo`, because the
+    /// replay has to earn boarding through the same reach rule as the shorter rehearsal.
+    public struct OpeningLoop: Sendable, Equatable {
+      public var liftSite: Int = 1
+      public var notch: Int = 10
+
+      public init() {}
+    }
+
     public var script: Int = 0
     public var seconds: Double = 240
     public var timeScale: Double?
@@ -333,6 +343,7 @@ public struct TraceScenario: Sendable, Equatable {
     public var walkTo: Int?
     /// `take` rather than `board`, for a scenario that picks something up.
     public var take: Bool = false
+    public var openingLoop: OpeningLoop?
 
     public init() {}
   }
@@ -541,9 +552,32 @@ extension TraceScenario.Session.Boarding: Decodable {
   }
 }
 
+extension TraceScenario.Session.OpeningLoop: Decodable {
+  enum Keys: String, CodingKey, CaseIterable {
+    case liftSite, notch
+  }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: Keys.self)
+    try TraceScenarioKeys.refuseUnknown(
+      in: decoder, known: Keys.names, context: "an opening loop")
+    self.init()
+    liftSite = try container.decode(Int.self, forKey: .liftSite)
+    notch = try container.decode(Int.self, forKey: .notch)
+    guard liftSite > 0 else {
+      throw DecodingError.dataCorruptedError(
+        forKey: .liftSite, in: container, debugDescription: "liftSite must be positive")
+    }
+    guard (1...10).contains(notch) else {
+      throw DecodingError.dataCorruptedError(
+        forKey: .notch, in: container, debugDescription: "notch must be between 1 and 10")
+    }
+  }
+}
+
 extension TraceScenario.Session: Decodable {
   enum Keys: String, CodingKey, CaseIterable {
-    case script, seconds, timeScale, presses, boarding, walkTo, take
+    case script, seconds, timeScale, presses, boarding, walkTo, take, openingLoop
   }
 
   public init(from decoder: Decoder) throws {
@@ -556,6 +590,12 @@ extension TraceScenario.Session: Decodable {
     boarding = try container.decodeIfPresent([Boarding].self, forKey: .boarding) ?? boarding
     walkTo = try container.decodeIfPresent(Int.self, forKey: .walkTo)
     take = try container.decodeIfPresent(Bool.self, forKey: .take) ?? take
+    openingLoop = try container.decodeIfPresent(OpeningLoop.self, forKey: .openingLoop)
+    if openingLoop != nil && walkTo == nil {
+      throw DecodingError.dataCorruptedError(
+        forKey: .walkTo, in: container,
+        debugDescription: "walkTo is required when openingLoop is present")
+    }
   }
 }
 

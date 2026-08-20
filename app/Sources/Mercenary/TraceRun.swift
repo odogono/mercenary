@@ -46,6 +46,7 @@ struct TraceRun {
     case noRoom(Int)
     case noCraft(Int)
     case noObject(Int)
+    case noLift(Int)
     case scriptWouldNotStart(Int)
     case unknownKey(String)
     case badSlotKey(String, field: String)
@@ -59,6 +60,7 @@ struct TraceRun {
       case .noRoom(let id): return "no room \(id) in this payload"
       case .noCraft(let slot): return "no craft in slot \(slot)"
       case .noObject(let slot): return "no object in slot \(slot)"
+      case .noLift(let site): return "no lift site \(site) in this payload"
       case .scriptWouldNotStart(let id): return "script \(id) would not start"
       case .unknownKey(let name): return "'\(name)' is not a key any script tests"
       case .badSlotKey(let key, let field):
@@ -278,19 +280,30 @@ enum TraceScenarioRecords {
         "maxInstructions": .int(body.maxInstructions),
       ])
     case .session(let body):
-      return .object([
-        "script": .int(body.script),
-        "seconds": .double(body.seconds),
-        "timeScale": body.timeScale.map { .double($0) } ?? .null,
-        "presses": .array(
+      var members: [(key: String, value: TraceValue)] = [
+        (key: "script", value: .int(body.script)),
+        (key: "seconds", value: .double(body.seconds)),
+        (key: "timeScale", value: body.timeScale.map { .double($0) } ?? .null),
+        (key: "presses", value: .array(
           body.presses.map {
             .object(["key": $0.key.map { .string($0) } ?? .null, "at": .double($0.at)])
-          }),
-        "boarding": .array(
-          body.boarding.map { .object(["craft": .int($0.craft), "at": .double($0.at)]) }),
-        "walkTo": body.walkTo.map { .int($0) } ?? .null,
-        "take": .bool(body.take),
-      ])
+          })),
+        (key: "boarding", value: .array(
+          body.boarding.map { .object(["craft": .int($0.craft), "at": .double($0.at)]) })),
+        (key: "walkTo", value: body.walkTo.map { .int($0) } ?? .null),
+        (key: "take", value: .bool(body.take)),
+      ]
+      if let openingLoop = body.openingLoop {
+        members.append(
+          (
+            key: "openingLoop",
+            value: .object([
+              "liftSite": .int(openingLoop.liftSite), "notch": .int(openingLoop.notch),
+            ])))
+      } else {
+        members.append((key: "openingLoop", value: .null))
+      }
+      return .object(members)
     case .navigation(let body):
       return .object([
         "room": .int(body.room),
