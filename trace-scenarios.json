@@ -1,11 +1,5 @@
 {
   "schemaVersion": 1,
-  "accepted": {
-    "on": "2026-08-19",
-    "payloadCoreDigest": "7b0cbf0f34c99fbcf8081e8fc152bc490fb4d4d1d9b1be4d9ec9481441d3949c",
-    "traceSchemaVersion": 3,
-    "note": "Eight emitters against the payload named here, at trace schema 3. Renewed for #92 when room-walk was replaced by a same-Room scenario: the previous walk took a Doorway and therefore depended on GameplaySession.traverse and DoorwayPredicate, which belong to a later Replay Gate. The replacement was reviewed to remain in Room 3, produce two wall events, and produce no arrival. The math trace remains accepted by the measurement recorded in ADR 0022. A payload re-export or a schema bump makes this acceptance stale rather than current, and --emit-traces says so."
-  },
   "scenarios": [
     {
       "emitter": "math",
@@ -336,23 +330,41 @@
     {
       "emitter": "session",
       "id": "opening",
-      "note": "The whole opening loop: world, craft parameters, interaction rules and scripts together, with the player answering the question it asks.",
+      "note": "The opening status report and purchase conversation, with the player answering the question it asks. This localized trace deliberately stops before walking or boarding.",
       "script": 0,
       "seconds": 120,
       "presses": [
         {
           "key": "y",
-          "at": 8
+          "at": 74
         }
       ]
     },
     {
       "emitter": "session",
       "id": "opening-walk-to-craft",
-      "note": "Boarding by walking to a craft and reaching for it, rather than by boarding from outside, so the interaction rules are in the trace too.",
+      "note": "Boarding by walking to the Dart and reaching for it, rather than by boarding from outside. This localized trace stops aboard the grounded craft.",
       "script": 0,
       "seconds": 120,
       "walkTo": 1
+    },
+    {
+      "emitter": "session",
+      "id": "opening-loop",
+      "note": "The parity bar end to end: accept the 5,000-credit Dart purchase, walk and reach to board it, take off, fly to lift site 1 at grid 09:06, land, leave, walk onto the lift pad and descend into Room 1.",
+      "script": 0,
+      "seconds": 360,
+      "presses": [
+        {
+          "key": "y",
+          "at": 74
+        }
+      ],
+      "walkTo": 1,
+      "openingLoop": {
+        "liftSite": 1,
+        "notch": 10
+      }
     },
     {
       "emitter": "navigation",

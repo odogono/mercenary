@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Opening-loop parity candidate (#69). The Swift Trace Oracle now drives the purchased Dart
+  from the crash site to lift site 1 at grid 09:06 without injecting boarding, position,
+  credits, or Room state, and records the throttle, shutdown, leave-craft, and ride-lift
+  Semantic Actions in `session/opening-loop`. The shared TypeScript Session command decoder
+  refuses direct board and teleport commands; Bun replays all 6,291 records bit-for-bit while
+  earning boarding through the real reach rule. A Playwright-only localhost harness performs
+  the same replay in Chromium through `createWalkabout` and the WebGL renderer and checks the
+  initial surface, airborne, touchdown, and final Room-1 Indoor Scene milestones. Acceptance
+  remains intentionally unset until the maintainer records the browser/Swift/Reference Build
+  comparison required by #69.
 - M4.6 Browser Walkabout (#95). The Browser Shell now loads the Data Payload and tracked
   settings into a live Gameplay Session at the Opening Scene, advances it through a bounded
   60 Hz fixed-step clock, and renders each Session Snapshot through the owned WebGL2 surface.

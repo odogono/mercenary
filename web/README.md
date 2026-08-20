@@ -79,9 +79,11 @@ is absent.
 - `src/session/` — the Gameplay Session: occupancy, the Host Callout projection, Semantic
   Actions, `advance`, and PresentationEvents. A mutable class, like `BensonSession`. With
   scripts, `nextRandom` comes off persistent `BensonState`; without, a session-owned stream
-  with the same seeds as Swift. The `session` Replay Gate grades the opening loop
-  (`session/opening` and `session/opening-walk-to-craft`); walk-to boarding is a note on the
-  trace, not a command the replay injects.
+  with the same seeds as Swift. The `session` Replay Gate keeps `session/opening` and
+  `session/opening-walk-to-craft` as localized diagnostics and grades the full route with
+  `session/opening-loop`: purchase, authentic reach-to-board, flight, touchdown, leaving the
+  Dart, the surface lift action, and arrival in Room 1. Reach-to-board is retried from the
+  recorded Movement Intents; it is never a command the replay injects.
 - `src/shell/` — the live Browser Shell: required payload/settings composition, the browser
   Control Profile, a bounded 60 Hz fixed-step clock, and the owned WebGL2 renderer. It starts
   the opening Benson Script on the captured surface Pose, consumes only Session Snapshots for
@@ -98,10 +100,13 @@ is absent.
   and check that the payload on disk is the one a trace was recorded from. `MoverReplay`
   remains the driver for the flight and game-core gates; those traces are not folded onto
   `GameplaySession`.
-- `e2e/` — the Chromium walkabout gate. Playwright starts the real localhost server, checks the
-  WebGL framebuffer palette, walks from the Opening Scene, verifies focus loss releases held
-  input and browser chords pass through, and attaches an untracked opening screenshot for
-  maintainer review rather than treating cross-platform pixels as authoritative (ADR 0011).
+- `e2e/` — the Chromium gates. Playwright starts the real localhost server, checks the WebGL
+  framebuffer palette, walks from the Opening Scene, verifies focus loss releases held input
+  and browser chords pass through, and attaches an untracked opening screenshot for maintainer
+  review rather than treating cross-platform pixels as authoritative (ADR 0011). An endpoint
+  enabled only by the Playwright server also replays `session/opening-loop` through
+  `createWalkabout`, the real Gameplay Session and WebGL renderer, comparing all 6,291 records
+  bit-for-bit and rendering its surface, airborne, touchdown and Room-1 milestones.
 
 Nothing here is a mechanical translation of the Swift implementation or of the Reference
 Build. Both are read for understanding; neither is copied (ADR 0002, ADR 0014, ADR 0019).

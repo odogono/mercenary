@@ -27,6 +27,7 @@ const findRepositoryRoot = (): string => {
 
 const root = findRepositoryRoot();
 const payload = process.env['MERCENARY_PAYLOAD'] ?? join(root, 'payload');
+const e2e = process.env['MERCENARY_E2E'] === '1';
 
 if (!existsSync(join(payload, 'manifest.json'))) {
   console.error(
@@ -42,6 +43,41 @@ const server = Bun.serve({
   development: true,
   async fetch(request) {
     const url = new URL(request.url);
+
+    if (e2e && url.pathname === '/__e2e__/opening-loop') {
+      return new Response(
+        Bun.file(join(import.meta.dir, 'e2e/opening-loop.html')),
+        {
+          headers: { 'content-type': 'text/html; charset=utf-8' }
+        }
+      );
+    }
+
+    if (e2e && url.pathname === '/__e2e__/opening-loop.ts') {
+      const file = Bun.file(join(import.meta.dir, 'e2e/opening-loop.ts'));
+      return new Response(transpiler.transformSync(await file.text()), {
+        headers: { 'content-type': 'text/javascript; charset=utf-8' }
+      });
+    }
+
+    if (e2e && url.pathname === '/__e2e__/session/opening-loop.jsonl') {
+      const file = Bun.file(join(root, 'traces/session/opening-loop.jsonl'));
+      if (!(await file.exists())) {
+        return new Response('opening-loop trace is required\n', {
+          status: 404
+        });
+      }
+      return new Response(file, {
+        headers: { 'content-type': 'application/x-ndjson; charset=utf-8' }
+      });
+    }
+
+    if (
+      !e2e &&
+      (url.pathname.startsWith('/e2e/') || url.pathname.startsWith('/test/'))
+    ) {
+      return new Response('not found', { status: 404 });
+    }
 
     if (url.pathname.startsWith('/payload/')) {
       const name = url.pathname.slice('/payload/'.length);

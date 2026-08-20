@@ -37,6 +37,7 @@ sign-off makes `manifest.json` differ, which is the intended behaviour rather th
 swift run mercenary --emit-traces                       # regenerate the whole set
 swift run mercenary --emit-traces --only flight         # one emitter
 swift run mercenary --emit-traces --scenario opening    # one scenario
+swift run mercenary --emit-traces --scenario opening-loop # the full parity route
 swift run mercenary --emit-traces --verify              # re-emit and compare
 ```
 
@@ -144,6 +145,9 @@ An *outcome* is not an input, and is not recorded as a command. Boarding reached
 to a craft and reaching for it is recorded as a `note` on the step it happened, because the
 input was the intent to walk: a replay that fed the recorded intents would reach the craft
 by itself, and a `command` telling it to board would let a broken interaction rule pass.
+The full opening-loop trace records only discrete actions the player can genuinely take:
+keypress, throttle-notch selection, throttle shutdown, leaving the craft, and riding the
+surface lift. Direct boarding and teleportation are refused by the replay decoder.
 
 This matters because the drivers are feedback loops rather than input scripts. The flight
 circuit corrects toward an attitude it reads back off the craft; the opening rehearsal

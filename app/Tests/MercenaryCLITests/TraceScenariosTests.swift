@@ -54,6 +54,74 @@ final class TraceScenariosTests: XCTestCase {
     XCTAssertEqual(benson.host.room, 3)
   }
 
+  func testAnOpeningLoopNamesItsLiftAndThrottleBesideTheCraftItWalksTo() throws {
+    let catalogue = try load(
+      """
+      {"schemaVersion": 1, "scenarios": [
+        {"emitter": "session", "id": "opening-loop", "walkTo": 1,
+         "openingLoop": {"liftSite": 1, "notch": 10}}
+      ]}
+      """)
+    guard case .session(let body) = catalogue.scenarios[0].body else {
+      return XCTFail("a session body")
+    }
+    XCTAssertEqual(body.walkTo, 1)
+    XCTAssertEqual(body.openingLoop?.liftSite, 1)
+    XCTAssertEqual(body.openingLoop?.notch, 10)
+  }
+
+  func testAnOpeningLoopRequiresACraftToWalkTo() {
+    XCTAssertThrowsError(
+      try load(
+        """
+        {"schemaVersion": 1, "scenarios": [
+          {"emitter": "session", "id": "opening-loop",
+           "openingLoop": {"liftSite": 1, "notch": 10}}
+        ]}
+        """)) { error in
+      XCTAssertTrue(String(describing: error).contains("walkTo"), "\(error)")
+    }
+  }
+
+  func testAnOpeningLoopRefusesAThrottleNotchOutsideTheDecodedLadder() {
+    XCTAssertThrowsError(
+      try load(
+        """
+        {"schemaVersion": 1, "scenarios": [
+          {"emitter": "session", "id": "opening-loop", "walkTo": 1,
+           "openingLoop": {"liftSite": 1, "notch": 11}}
+        ]}
+        """)) { error in
+      XCTAssertTrue(String(describing: error).contains("notch"), "\(error)")
+    }
+  }
+
+  func testAnOpeningLoopRefusesAnInvalidLiftSite() {
+    XCTAssertThrowsError(
+      try load(
+        """
+        {"schemaVersion": 1, "scenarios": [
+          {"emitter": "session", "id": "opening-loop", "walkTo": 1,
+           "openingLoop": {"liftSite": 0, "notch": 10}}
+        ]}
+        """)) { error in
+      XCTAssertTrue(String(describing: error).contains("liftSite"), "\(error)")
+    }
+  }
+
+  func testAnOpeningLoopRefusesAnUnknownRouteField() {
+    XCTAssertThrowsError(
+      try load(
+        """
+        {"schemaVersion": 1, "scenarios": [
+          {"emitter": "session", "id": "opening-loop", "walkTo": 1,
+           "openingLoop": {"liftSite": 1, "notch": 10, "building": 1}}
+        ]}
+        """)) { error in
+      XCTAssertTrue(String(describing: error).contains("building"), "\(error)")
+    }
+  }
+
   /// The math emitter's own body, which is one field and a default.
   func testAMathScenarioDefaultsItsSampleCount() throws {
     let catalogue = try load(

@@ -21,6 +21,7 @@ import {
   type Trace,
   type TraceObject
 } from '../../src/trace/index.ts';
+import { applySessionTraceCommand } from '../../src/trace/session.ts';
 import { World } from '../../src/world/index.ts';
 import {
   expectRecordedPayload,
@@ -34,7 +35,6 @@ import { flightSettingsValue } from './moverGate.ts';
 import {
   eventValue,
   intentFromRecord,
-  keyFromCommand,
   snapshotValue
 } from './sessionReplay.ts';
 
@@ -117,24 +117,7 @@ export const sessionGate = async (gate: SessionGate): Promise<void> => {
       expect(record['step']).toBe(nextStep);
       const command = record['command'];
       if (command !== undefined) {
-        const press = (command as TraceObject)['press'];
-        if (press !== undefined) {
-          session.press(keyFromCommand(press));
-        }
-        // Boarding is deliberately **not** obeyed from a command.
-        //
-        // The Oracle records reaching a craft as a `note`, because the input was the intent to
-        // walk: a replay fed the recorded intents has to arrive at the craft and reach for it by
-        // itself. A gate that boarded because a command said to would let a broken interaction
-        // rule pass, which is the one thing this trace exists to catch — so a board command is a
-        // refusal rather than an instruction. Neither trace carries one today; this is here so
-        // that a re-emitted trace which did could not quietly downgrade the gate.
-        if ((command as TraceObject)['board'] !== undefined) {
-          throw new Error(
-            `${trace.id} step ${nextStep}: the session gate will not board from a command — ` +
-              'reaching a craft is a note the replay has to earn (#94)'
-          );
-        }
+        applySessionTraceCommand(session, command);
         continue;
       }
 

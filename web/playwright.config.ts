@@ -12,7 +12,8 @@ export default defineConfig({
   },
   webServer: {
     command: 'bun run dev',
-    reuseExistingServer: process.env['CI'] === undefined,
+    env: { MERCENARY_E2E: '1' },
+    reuseExistingServer: false,
     stderr: 'pipe',
     stdout: 'pipe',
     url: 'http://127.0.0.1:5173'
