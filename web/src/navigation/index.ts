@@ -15,7 +15,8 @@ import type { Room } from '../world/index.ts';
 /// is stated here and asserted by name in the tests.
 ///
 /// The predicate that reads a Doorway lives here with the walls; the Mover still only needs
-/// the walls, and the six underground navigation traces are a later gate.
+/// the walls. The navigation Replay Gate grades both through the Gameplay Session against the
+/// six underground Golden Traces.
 
 /// The bounds of one Room, as the literal byte arithmetic the Reference Build does.
 ///

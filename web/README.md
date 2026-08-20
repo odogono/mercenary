@@ -68,9 +68,9 @@ is absent.
 - `src/settings/` — the tuning, read through an injectable seam that mirrors
   `Settings.load(at:read:)`. A trace header carries only its own emitter's settings, so the
   `flight` and `game-core` replays assert the flight block, the `benson` replay asserts the
-  `message` and `scripts` blocks, and the `session` replay asserts all three: each replay
-  checks the port resolved the same numbers the recording was made with rather than defaults
-  that happen to be close.
+  `message` and `scripts` blocks, and the `session` and `navigation` replays assert all three:
+  each replay checks the port resolved the same numbers the recording was made with rather
+  than defaults that happen to be close.
 - `src/flight/` — the craft Mover's control loop: `settle` and the two fixed points it settles
   towards, the Craft Parameter Block a craft's handling is selected from, the flight modes and
   the touchdown verdict. `settle` is the port's heaviest consumer of `pow`, which is where
@@ -82,8 +82,9 @@ is absent.
   0016).
 - `src/navigation/` — `Containment` (the Room bounds a player on foot is pushed back inside of,
   which `src/gameCore/` needs) and `DoorwayPredicate` (`$9437` byte arithmetic, first matching
-  Doorway in record order, and `opens`). The six underground navigation traces are not this
-  gate.
+  Doorway in record order, and `opens`). The `navigation` Replay Gate drives the Gameplay
+  Session through all six underground traces, covering dark Rooms, locked Doorways, deterministic
+  rewiring, and both observable entries into Room 127 that govern the Flipped World.
 - `src/interaction/` — document-backed reach, candidates, outcomes, and object-conditioned
   predicates. `attempt` / `leave` return `{ host, outcome }` rather than mutating a shared
   Host Callout.
@@ -98,8 +99,9 @@ is absent.
   with the same seeds as Swift. The `session` Replay Gate keeps `session/opening` and
   `session/opening-walk-to-craft` as localized diagnostics and grades the full route with
   `session/opening-loop`: purchase, authentic reach-to-board, flight, touchdown, leaving the
-  Dart, the surface lift action, and arrival in Room 1. Reach-to-board is retried from the
-  recorded Movement Intents; it is never a command the replay injects.
+  Dart, the surface lift action, and arrival in Room 1. The focused `navigation` adapter uses
+  the same Gameplay Session replay protocol for underground setup and walking. Reach-to-board
+  is retried from the recorded Movement Intents; it is never a command the replay injects.
 - `src/shell/` — the live Browser Shell: required payload/settings composition, the browser
   Control Profile, a bounded 60 Hz fixed-step clock, and the owned WebGL2 renderer. It starts
   the opening Benson Script on the captured surface Pose, consumes only Session Snapshots for
@@ -113,11 +115,11 @@ is absent.
   Gates. It remains in `src/` because the trace schema and state fold are implementation code,
   even though the live page no longer plays a recording.
 - `test/replay/` — the Replay Gate harness: locate artifacts, run the gate protocol both Movers
-  are graded by (`moverGate.ts`, shared by the `flight` and `game-core` gates), run the benson
-  gate (`bensonGate.ts`) and the session gate (`sessionGate.ts`), compare values bit-for-bit,
-  and check that the payload on disk is the one a trace was recorded from. `MoverReplay`
-  remains the driver for the flight and game-core gates; those traces are not folded onto
-  `GameplaySession`.
+  are graded by (`moverGate.ts`, shared by the `flight` and `game-core` gates), run the Benson
+  gate, and run the shared Gameplay Session protocol through focused `session` and `navigation`
+  adapters. Every gate compares values bit-for-bit and checks that the payload on disk is the
+  one its traces were recorded from. `MoverReplay` remains the driver for the flight and
+  game-core gates; those traces are not folded onto `GameplaySession`.
 - `e2e/` — the Chromium gates. Playwright starts the real localhost server, checks the WebGL
   framebuffer palette, walks from the Opening Scene, verifies focus loss releases held input
   and browser chords pass through, and attaches an untracked opening screenshot for maintainer

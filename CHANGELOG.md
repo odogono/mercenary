@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Underground navigation Replay Gate (#108). A focused `navigation` adapter reconstructs the
+  Trace Oracle's Room, Pose, deterministic seed, and carried Object Residence setup, then grades
+  all 1,577 records across the six frozen underground Golden Traces through the real Gameplay
+  Session. The gate pins dark-to-lit-to-dark traversal, locked-Doorway refusal and key-assisted
+  passage, deterministic Room 114 rewiring, and both Room 127 entry outcomes. Session and
+  navigation now share one exact-step replay protocol while retaining separate strict command
+  vocabularies; missing evidence, mismatched payload or settings, malformed commands, initial
+  setup drift, and any Session Snapshot or PresentationEvent divergence all fail loudly.
 - Targ day/night Orrery (#99). The Browser Shell now resolves an Enhanced Presentation Preset
   by default and renders an elapsed-session-driven sun, two phased moons, deterministic Star
   Sphere, and smooth twilight behind outdoor scenes without changing Gameplay Session state,
