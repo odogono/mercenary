@@ -257,7 +257,7 @@ export const emitRecords = (
     while (writeAt < writes.length && writes[writeAt]!.at <= elapsed) {
       const write = writes[writeAt]!;
       writeAt += 1;
-      session.hostState = applyHost(session.hostState, write, false);
+      session.host = applyHost(session.host, write, false);
       records.push({
         elapsed,
         input: { hostWrite: writeValue(write) },
@@ -319,7 +319,7 @@ export const prepareSession = (
   scenario: BensonScenario
 ): BensonSession => {
   const session = new BensonSession(program, text, tunables);
-  session.hostState = applyHost(session.hostState, scenario.host, true);
+  session.host = applyHost(session.host, scenario.host, true);
   if (!session.start(scenario.script)) {
     throw new Error(`script ${scenario.script} would not start`);
   }

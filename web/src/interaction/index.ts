@@ -16,13 +16,13 @@ export interface Candidate {
 }
 
 export type Outcome =
-  | { readonly slot: number; readonly kind: 'took' }
-  | { readonly slot: number; readonly kind: 'boarded' }
+  | { readonly kind: 'took'; readonly slot: number }
+  | { readonly kind: 'boarded'; readonly slot: number }
   | { readonly kind: 'nothingInReach' }
-  | { readonly slot: number; readonly kind: 'fixedInPlace' }
-  | { readonly slot: number; readonly kind: 'tooHeavy' }
+  | { readonly kind: 'fixedInPlace'; readonly slot: number }
+  | { readonly kind: 'tooHeavy'; readonly slot: number }
   | { readonly kind: 'handsFull' }
-  | { readonly slot: number; readonly kind: 'notACraft' }
+  | { readonly kind: 'notACraft'; readonly slot: number }
   | { readonly kind: 'alreadyAboard' };
 
 export type Description =
@@ -62,11 +62,7 @@ export class Interaction {
 
   /// Whether an object is within reach on every axis. Reach is a cube whose edge is a
   /// whole number of range units rather than a smooth distance.
-  isWithinReach(
-    candidate: Candidate,
-    player: Vector3,
-    range: number
-  ): boolean {
+  isWithinReach(candidate: Candidate, player: Vector3, range: number): boolean {
     const limit = range * this.rangeUnit + (this.rangeUnit - 1);
     const dx = Math.abs(candidate.position.x - player.x);
     const dy = Math.abs(candidate.position.y - player.y);
@@ -110,7 +106,10 @@ export class Interaction {
       }
       const flags = host.objectFlags.get(candidate.slot) ?? 0;
       if (!host.canTakeAnything && (flags & this.fixedMask) !== 0) {
-        return { host, outcome: { kind: 'fixedInPlace', slot: candidate.slot } };
+        return {
+          host,
+          outcome: { kind: 'fixedInPlace', slot: candidate.slot }
+        };
       }
       if (!host.canLiftAnything && (flags & this.heavyMask) !== 0) {
         return { host, outcome: { kind: 'tooHeavy', slot: candidate.slot } };
@@ -147,9 +146,10 @@ export class Interaction {
     };
   }
 
-  leave(
-    host: BensonHostState
-  ): { readonly host: BensonHostState; readonly slot: number | undefined } {
+  leave(host: BensonHostState): {
+    readonly host: BensonHostState;
+    readonly slot: number | undefined;
+  } {
     const slot = host.boardedCraft;
     if (slot === BensonHostState.onFoot) {
       return { host, slot: undefined };

@@ -107,10 +107,6 @@ export class DoorwayPredicate {
     return doorways.find(opening => this.accepts(opening, position, heading));
   }
 
-  doorwayInRoom(room: Room, position: Vector3, heading: number): Doorway | undefined {
-    return this.doorway(room.doorways, position, heading);
-  }
-
   accepts(doorway: Doorway, position: Vector3, heading: number): boolean {
     const plane = doorway.plane === 'zy' ? 0x80 : 0x00;
     const x = Math.floor(position.x);
@@ -146,8 +142,19 @@ export class DoorwayPredicate {
 }
 
 const signBit = (value: number, plane: number): number =>
-  ((value & 0xff) ^ plane) >> 7 & 1;
+  (((value & 0xff) ^ plane) >> 7) & 1;
 
+/// Whether the player is square-on to the wall.
+///
+/// The Reference Build rounds the heading to the nearest quarter turn and compares one bit of it
+/// against the plane bit. That accepts facing the wall *and* facing directly away from it, which
+/// sounds like a bug and is not: which way the player is pushing is already settled by their
+/// having hit this wall rather than another (PQ-0007).
+///
+/// The rounding bias the routine adds is two whole quarter-turns, which cannot change the bit
+/// being tested — it is there for a presentation value computed from the same byte further down.
+/// So the decoded `headingRounding` is not consulted here, and that is deliberate rather than
+/// forgotten.
 const faces = (plane: number, heading: number): boolean => {
   const quarter = Math.round(heading / (Math.PI / 2)) & 3;
   return (quarter & 1) === (plane === 0 ? 0 : 1);

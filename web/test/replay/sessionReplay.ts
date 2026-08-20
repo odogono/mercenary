@@ -1,17 +1,12 @@
-import {
-  parseBensonKey,
-  type BensonKey
-} from '../../src/benson/index.ts';
+import { parseBensonKey, type BensonKey } from '../../src/benson/index.ts';
 import type { Intent } from '../../src/gameCore/index.ts';
-import type { Outcome } from '../../src/interaction/index.ts';
 import {
-  GameplaySession,
   type Occupancy,
   type PresentationEvent,
   type SessionSnapshot
 } from '../../src/session/index.ts';
-import type { Location, Residence } from '../../src/world/index.ts';
 import type { TraceObject, TraceValue } from '../../src/trace/index.ts';
+import type { Location, Residence } from '../../src/world/index.ts';
 import { effectValue } from './bensonReplay.ts';
 
 export const locationValue = (location: Location): TraceValue =>
@@ -41,27 +36,6 @@ export const residenceValue = (residence: Residence): TraceValue => {
   }
 };
 
-export const outcomeValue = (outcome: Outcome): TraceValue => {
-  switch (outcome.kind) {
-    case 'took':
-      return { took: outcome.slot };
-    case 'boarded':
-      return { boarded: outcome.slot };
-    case 'nothingInReach':
-      return 'nothingInReach';
-    case 'fixedInPlace':
-      return { fixedInPlace: outcome.slot };
-    case 'tooHeavy':
-      return { tooHeavy: outcome.slot };
-    case 'handsFull':
-      return 'handsFull';
-    case 'notACraft':
-      return { notACraft: outcome.slot };
-    case 'alreadyAboard':
-      return 'alreadyAboard';
-  }
-};
-
 export const eventValue = (event: PresentationEvent): TraceValue => {
   if (event === 'tone') {
     return 'tone';
@@ -81,22 +55,19 @@ export const eventValue = (event: PresentationEvent): TraceValue => {
   return { worldFlipped: event.worldFlipped };
 };
 
-export const snapshotValue = (
-  snapshot: SessionSnapshot,
-  game: GameplaySession['game']
-): TraceValue => {
+export const snapshotValue = (snapshot: SessionSnapshot): TraceValue => {
   const residence: TraceObject = {};
   for (const [slot, where] of snapshot.residence) {
     residence[String(slot)] = residenceValue(where);
   }
   return {
     core: {
-      poweramp: game.poweramp,
-      stepInterlock: game.stepInterlock,
-      touchdown: game.touchdown ?? null,
-      transitionCooldown: game.transitionCooldown,
-      wallContact: game.wallContact,
-      wallContactLatch: game.wallContactLatch
+      poweramp: snapshot.core.poweramp,
+      stepInterlock: snapshot.core.stepInterlock,
+      touchdown: snapshot.core.touchdown ?? null,
+      transitionCooldown: snapshot.core.transitionCooldown,
+      wallContact: snapshot.core.wallContact,
+      wallContactLatch: snapshot.core.wallContactLatch
     },
     credits: snapshot.credits,
     indoor:

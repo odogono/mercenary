@@ -1,3 +1,4 @@
+import type { BensonEffect } from '../benson/host.ts';
 import {
   BensonHostState,
   BensonSession,
@@ -6,7 +7,6 @@ import {
   nextRandom,
   type BensonKey
 } from '../benson/index.ts';
-import type { BensonEffect } from '../benson/host.ts';
 import type { Touchdown } from '../flight/index.ts';
 import {
   IDLE,
@@ -16,10 +16,10 @@ import {
   gameState,
   leave as leaveCraftCore,
   playerState,
-  step,
-  surface,
   throttle as setThrottle,
+  step,
   throttleStep as stepThrottle,
+  surface,
   wallThud,
   type FlightModel,
   type GameState,
@@ -58,14 +58,46 @@ import {
   type World
 } from '../world/index.ts';
 
+/// The Gameplay Session: the one owner of a play session's Session State (ADR 0018).
+///
+/// Every discrete change to that state passes through a Semantic Action: `reach`, `leaveCraft`,
+/// `rideLift`, `teleport`, `place`, `carry`, `board`, `throttleNotchValue`, `throttleStep`,
+/// `fitPoweramp`, `shutThrottle`, `press`, `skipMessage`, `start`, `show`, `describe`. Each moves
+/// everything or nothing, which is what ADR 0018 asks of them.
+///
+/// Two things are deliberately not actions. `intent` is a held input rather than an event, so a
+/// caller assigns it and `advance` reads whatever it says at the time — that is the shape a
+/// keyboard has. `game` is public because the Mover's own state is `gameCore`'s to define and
+/// this class only carries it. Neither is `readonly` yet, so the single-owner rule is a
+/// convention here rather than something the type enforces; tightening that is worth doing when
+/// the shell lands a second caller (#95).
+///
+/// **The Host Callout is projected, not stored.** The interpreter reads its own flat
+/// `BensonHostState` of bytes, and this module owns the typed Location, Occupancy and Object
+/// Residence those bytes stand for. `project` writes the typed state down into a fresh Host
+/// Callout, `reconcile` reads a script's writes back up into typed state, and
+/// `acrossTheCallout` is the two of them around one interpreter call. There is deliberately no
+/// second copy: the bytes are derived on the way in and consumed on the way out, so a script and
+/// the session cannot hold divergent ideas of where the player is. Both values are persistent
+/// (ADR 0023), so a projection cannot alias the state it came from.
+///
+/// What a script may change is therefore narrower than what it can write, and `reconcile` is
+/// where that is decided — a byte the session owns outright is read back, one it does not is
+/// dropped. That asymmetry is the point of the seam rather than an omission in it.
+///
+/// The two Movers are `gameCore`'s and are not re-implemented here: `advance` hands them the
+/// intent and the Room's walls, then turns what came back — a touchdown, wall contact, a Doorway
+/// taken — into PresentationEvents for the caller to sound and draw. Session State stays the
+/// session's own; a PresentationEvent is what only presentation should answer.
+
 export type Occupancy =
   | { readonly kind: 'onFoot' }
   | { readonly kind: 'aboard'; readonly slot: number };
 
-export const occupancyHostValue = (occupancy: Occupancy): number =>
+const occupancyHostValue = (occupancy: Occupancy): number =>
   occupancy.kind === 'onFoot' ? BensonHostState.onFoot : occupancy.slot;
 
-export const occupancyFromHost = (value: number): Occupancy =>
+const occupancyFromHost = (value: number): Occupancy =>
   value === BensonHostState.onFoot
     ? { kind: 'onFoot' }
     : { kind: 'aboard', slot: value };
@@ -79,7 +111,23 @@ export type PresentationEvent =
   | { readonly worldFlipped: boolean };
 
 export interface SessionSnapshot {
+  /// The Mover's own bookkeeping for this moment.
+  ///
+  /// Carried here rather than left on `game` because a Session Snapshot is the thing a renderer
+  /// or a Replay Gate compares "instead of reading the session's parts" (CONTEXT.md), and
+  /// without these six a caller comparing two snapshots had to reach past the Snapshot for the
+  /// rest — which is the shape that sentence rules out. The names are the Trace Oracle's, since
+  /// they are what a recorded `core` block is keyed by.
+  readonly core: {
+    readonly poweramp: boolean;
+    readonly stepInterlock: number;
+    readonly touchdown: Touchdown | undefined;
+    readonly transitionCooldown: number;
+    readonly wallContact: number;
+    readonly wallContactLatch: number;
+  };
   readonly credits: number;
+  readonly elapsed: number;
   readonly indoor: IndoorScene | undefined;
   readonly isScriptRunning: boolean;
   readonly location: Location;
@@ -91,7 +139,6 @@ export interface SessionSnapshot {
   readonly throttle: number;
   readonly throttleNotch: number;
   readonly worldFlipped: boolean;
-  readonly elapsed: number;
 }
 
 export const openingPlayer = (): PlayerState =>
@@ -154,6 +201,12 @@ const rewriteDoorway = (doorway: Doorway, alternate: Alternate): Doorway => {
 
 const TWO_PI = 2 * Math.PI;
 
+/// A craft's heading, from the orientation bytes the payload carries for it.
+///
+/// Those bytes count 256 to a turn, which is the object tables' own unit and not the 1024 the
+/// control loop's angles use. The half turn is the models' own facing: a craft's nose points
+/// along decreasing Z when its orientation byte is zero, while a heading of zero looks along
+/// increasing Z, so boarding one without this put the player in it back to front.
 const craftHeading = (craft: ObjectPlacement): number => {
   const turn = ((craft.orientation.y & 0xff) / 256) * TWO_PI;
   return (turn + Math.PI) % TWO_PI;
@@ -207,7 +260,7 @@ export class GameplaySession {
     this.objectsBySlot = objectsBySlot;
     this.baseFlags = flags;
     if (this.scripts !== undefined) {
-      this.scripts.hostState = this.project(this.scripts.hostState);
+      this.scripts.host = this.project(this.scripts.host);
     }
   }
 
@@ -303,15 +356,16 @@ export class GameplaySession {
   }
 
   private acrossTheCallout<T>(
-    body: (
-      host: BensonHostState
-    ) => { readonly host: BensonHostState; readonly result: T }
+    body: (host: BensonHostState) => {
+      readonly host: BensonHostState;
+      readonly result: T;
+    }
   ): T | undefined {
     if (this.scripts === undefined) {
       return undefined;
     }
-    const { host, result } = body(this.project(this.scripts.hostState));
-    this.scripts.hostState = host;
+    const { host, result } = body(this.project(this.scripts.host));
+    this.scripts.host = host;
     this.reconcile(host);
     return result;
   }
@@ -320,13 +374,16 @@ export class GameplaySession {
     if (this.scripts === undefined) {
       return;
     }
-    this.scripts.hostState = this.project(this.scripts.hostState);
+    this.scripts.host = this.project(this.scripts.host);
   }
 
   reach(
     action: InteractionAction,
     only?: number
-  ): { readonly events: readonly PresentationEvent[]; readonly outcome: Outcome } {
+  ): {
+    readonly events: readonly PresentationEvent[];
+    readonly outcome: Outcome;
+  } {
     const interaction = this.content.interaction;
     if (interaction === undefined || this.scripts === undefined) {
       return { events: [], outcome: { kind: 'nothingInReach' } };
@@ -354,7 +411,8 @@ export class GameplaySession {
       if (outcome.kind === 'boarded' && this.content.flight !== undefined) {
         const craft = this.objectsBySlot.get(outcome.slot);
         if (craft !== undefined) {
-          const at = displacement(this.residenceOf(outcome.slot)) ?? craft.origin;
+          const at =
+            displacement(this.residenceOf(outcome.slot)) ?? craft.origin;
           this.game = boardCraft(
             this.game,
             outcome.slot,
@@ -417,12 +475,24 @@ export class GameplaySession {
         flight
       );
     } else {
-      const column = Math.trunc(this.game.player.position.x / this.content.cellSize);
-      const row = Math.trunc(this.game.player.position.z / this.content.cellSize);
+      const column = Math.trunc(
+        this.game.player.position.x / this.content.cellSize
+      );
+      const row = Math.trunc(
+        this.game.player.position.z / this.content.cellSize
+      );
       if (
         this.occupancy.kind !== 'onFoot' ||
-        !padCovers(underground.pad, this.game.player.position.x, this.content.cellSize) ||
-        !padCovers(underground.pad, this.game.player.position.z, this.content.cellSize)
+        !padCovers(
+          underground.pad,
+          this.game.player.position.x,
+          this.content.cellSize
+        ) ||
+        !padCovers(
+          underground.pad,
+          this.game.player.position.z,
+          this.content.cellSize
+        )
       ) {
         return undefined;
       }
@@ -437,7 +507,11 @@ export class GameplaySession {
       }
       this.game = enter(this.game, entrance, underground.lift, flight);
     }
-    return ['tone', { arrived: this.location }, ...this.settleIntoTheRoom(previousRoom)];
+    return [
+      'tone',
+      { arrived: this.location },
+      ...this.settleIntoTheRoom(previousRoom)
+    ];
   }
 
   private traverse(): PresentationEvent[] {
@@ -503,7 +577,10 @@ export class GameplaySession {
         stepInterlock: rules.stepInterlock
       };
     }
-    return [{ arrived: this.location }, ...this.settleIntoTheRoom(previousRoom)];
+    return [
+      { arrived: this.location },
+      ...this.settleIntoTheRoom(previousRoom)
+    ];
   }
 
   private applySpecialSetup(
@@ -607,7 +684,10 @@ export class GameplaySession {
   }
 
   get indoor(): IndoorScene | undefined {
-    if (this.location.kind !== 'room' || this.content.doorwayRules === undefined) {
+    if (
+      this.location.kind !== 'room' ||
+      this.content.doorwayRules === undefined
+    ) {
       return undefined;
     }
     const here = this.content.rooms.get(this.location.id);
@@ -621,11 +701,20 @@ export class GameplaySession {
     );
   }
 
+  /// What a Room says when the player arrives in it.
+  ///
+  /// The order is the Reference Build's, and it decides one case that is otherwise arbitrary:
+  /// darkness queues its message first, and then the header's own reaction runs. So a Room that
+  /// is both dark and carries an entry *message* shows the entry message — it overwrote the
+  /// pending one — while a dark Room with an entry *script* still says it is dark, because
+  /// starting a script does not touch that byte. See PQ-0004 for the darkness itself.
   private react(room: Room, rules: DoorwayRules): void {
     let pending: number | undefined = this.indoor?.dark
       ? rules.darkMessage
       : undefined;
     if (room.entry !== undefined && 'script' in room.entry) {
+      // A script that is already running is not restarted, as the Reference Build's own
+      // starter refuses.
       this.start(room.entry.script);
     } else if (room.entry !== undefined && 'message' in room.entry) {
       pending = room.entry.message;
@@ -731,21 +820,22 @@ export class GameplaySession {
         this.containment
       );
       if (wallThud(this.game) && this.content.doorwayRules !== undefined) {
-        events.push({ wall: { sound: this.content.doorwayRules.wallThudSound } });
+        events.push({
+          wall: { sound: this.content.doorwayRules.wallThudSound }
+        });
       }
       events.push(...this.traverse());
       if (this.game.touchdown !== undefined) {
-        events.push('tone');
-        events.push({ touchdown: this.game.touchdown });
+        events.push('tone', { touchdown: this.game.touchdown });
         if (this.game.touchdown === 'crashed') {
           this.game = leaveCraftCore(this.game, this.content.flight);
         }
       }
     }
     if (this.scripts !== undefined && seconds > 0) {
-      this.scripts.hostState = this.project(this.scripts.hostState);
+      this.scripts.host = this.project(this.scripts.host);
       const effects = this.scripts.advance(seconds);
-      this.reconcile(this.scripts.hostState);
+      this.reconcile(this.scripts.host);
       for (const effect of effects) {
         events.push({ script: effect });
       }
@@ -755,6 +845,14 @@ export class GameplaySession {
 
   get snapshot(): SessionSnapshot {
     return {
+      core: {
+        poweramp: this.game.poweramp,
+        stepInterlock: this.game.stepInterlock,
+        touchdown: this.game.touchdown,
+        transitionCooldown: this.game.transitionCooldown,
+        wallContact: this.game.wallContact,
+        wallContactLatch: this.game.wallContactLatch
+      },
       credits: this.scripts?.credits ?? 0,
       elapsed: this.game.elapsed,
       indoor: this.indoor,
@@ -771,7 +869,7 @@ export class GameplaySession {
     };
   }
 
-  get sceneResidence(): Map<number, Residence> {
+  private get sceneResidence(): Map<number, Residence> {
     const out = new Map<number, Residence>();
     for (const object of this.content.objects) {
       out.set(object.slot, this.residenceOf(object.slot));
@@ -791,7 +889,10 @@ export class GameplaySession {
   }
 
   get containment(): Containment | undefined {
-    if (this.location.kind !== 'room' || this.content.doorwayRules === undefined) {
+    if (
+      this.location.kind !== 'room' ||
+      this.content.doorwayRules === undefined
+    ) {
       return undefined;
     }
     const here = this.content.rooms.get(this.location.id);

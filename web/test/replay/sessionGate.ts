@@ -4,16 +4,16 @@ import { describe, expect, test } from 'bun:test';
 import { BensonProgram, BensonSession } from '../../src/benson/index.ts';
 import type { Bundle } from '../../src/payload/documents.ts';
 import {
+  GameplaySession,
+  openingPlayer,
+  sessionContent
+} from '../../src/session/index.ts';
+import {
   bensonTunables,
   flightModel,
   loadSettings,
   type Settings
 } from '../../src/settings/index.ts';
-import {
-  GameplaySession,
-  openingPlayer,
-  sessionContent
-} from '../../src/session/index.ts';
 import { TextTable } from '../../src/text/index.ts';
 import {
   foldStates,
@@ -121,9 +121,19 @@ export const sessionGate = async (gate: SessionGate): Promise<void> => {
         if (press !== undefined) {
           session.press(keyFromCommand(press));
         }
-        const craft = (command as TraceObject)['board'];
-        if (typeof craft === 'number') {
-          session.board(craft);
+        // Boarding is deliberately **not** obeyed from a command.
+        //
+        // The Oracle records reaching a craft as a `note`, because the input was the intent to
+        // walk: a replay fed the recorded intents has to arrive at the craft and reach for it by
+        // itself. A gate that boarded because a command said to would let a broken interaction
+        // rule pass, which is the one thing this trace exists to catch — so a board command is a
+        // refusal rather than an instruction. Neither trace carries one today; this is here so
+        // that a re-emitted trace which did could not quietly downgrade the gate.
+        if ((command as TraceObject)['board'] !== undefined) {
+          throw new Error(
+            `${trace.id} step ${nextStep}: the session gate will not board from a command — ` +
+              'reaching a craft is a note the replay has to earn (#94)'
+          );
         }
         continue;
       }
@@ -145,7 +155,7 @@ export const sessionGate = async (gate: SessionGate): Promise<void> => {
       );
       expectIdentical(
         expected[index],
-        snapshotValue(snapshot, session.game),
+        snapshotValue(snapshot),
         `${trace.id} step ${nextStep}`
       );
       expectIdentical(
@@ -189,7 +199,7 @@ export const sessionGate = async (gate: SessionGate): Promise<void> => {
           const session = sessionFor(trace);
           expectIdentical(
             trace.header['initial'],
-            snapshotValue(session.snapshot, session.game),
+            snapshotValue(session.snapshot),
             `${id} initial`
           );
         });

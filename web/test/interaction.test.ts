@@ -24,7 +24,10 @@ const document: InteractionDocument = {
 
 const interaction = new Interaction(document);
 const origin = { x: 0, y: 0, z: 0 };
-const candidate = (slot: number, position: { x: number; y: number; z: number }): Candidate => ({
+const candidate = (
+  slot: number,
+  position: { x: number; y: number; z: number }
+): Candidate => ({
   position,
   slot
 });
@@ -32,21 +35,32 @@ const candidate = (slot: number, position: { x: number; y: number; z: number }):
 describe('reach', () => {
   test('is a cube rather than a radius', () => {
     expect(
-      interaction.isWithinReach(candidate(20, { x: 400, y: 400, z: 400 }), origin, 2)
+      interaction.isWithinReach(
+        candidate(20, { x: 400, y: 400, z: 400 }),
+        origin,
+        2
+      )
     ).toBeTrue();
   });
 
   test('board reaches further than take', () => {
     const object = candidate(20, { x: 600, y: 0, z: 0 });
-    expect(interaction.isWithinReach(object, origin, interaction.takeRange)).toBeFalse();
-    expect(interaction.isWithinReach(object, origin, interaction.boardRange)).toBeTrue();
+    expect(
+      interaction.isWithinReach(object, origin, interaction.takeRange)
+    ).toBeFalse();
+    expect(
+      interaction.isWithinReach(object, origin, interaction.boardRange)
+    ).toBeTrue();
   });
 
   test('the nearest candidate wins', () => {
     const { outcome } = interaction.attempt(
       'take',
       origin,
-      [candidate(20, { x: 400, y: 0, z: 0 }), candidate(21, { x: 100, y: 0, z: 0 })],
+      [
+        candidate(20, { x: 400, y: 0, z: 0 }),
+        candidate(21, { x: 100, y: 0, z: 0 })
+      ],
       new BensonHostState()
     );
     expect(outcome).toEqual({ kind: 'took', slot: 21 });
@@ -129,7 +143,10 @@ describe('boarding', () => {
 describe('what an object says', () => {
   test('the description bits choose between a script and a message', () => {
     expect(interaction.description(1, 0x04)).toEqual({ id: 1, kind: 'script' });
-    expect(interaction.description(25, 0x08)).toEqual({ index: 25, kind: 'message' });
+    expect(interaction.description(25, 0x08)).toEqual({
+      index: 25,
+      kind: 'message'
+    });
     expect(interaction.description(30, 0)).toEqual({ kind: 'none' });
   });
 });

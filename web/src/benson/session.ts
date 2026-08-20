@@ -61,10 +61,13 @@ export class BensonSession {
   }
 
   press(key: BensonKey | undefined): void {
+    // `pendingKey` is passed straight through: `with` keeps the field it already has when the
+    // patch leaves it undefined, so a keyless press does not clear a held key. Clearing one is
+    // `withoutPendingKey`, deliberately a different call.
     this.host = this.host.with({
       engineFlags:
         (this.host.engineFlags | BensonHostState.inputDetected) & 0xff,
-      ...(key !== undefined ? { pendingKey: key } : {})
+      pendingKey: key
     });
   }
 
@@ -171,13 +174,5 @@ export class BensonSession {
         this.start(description.id);
         break;
     }
-  }
-
-  get hostState(): BensonHostState {
-    return this.host;
-  }
-
-  set hostState(value: BensonHostState) {
-    this.host = value;
   }
 }

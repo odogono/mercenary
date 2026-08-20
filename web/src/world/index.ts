@@ -1,3 +1,4 @@
+import { OUT_OF_THE_WORLD, SURFACE_ROOM } from '../interaction/index.ts';
 import { cos, sin, toFloat32 } from '../math/index.ts';
 import {
   IDENTITY,
@@ -6,7 +7,6 @@ import {
   type Orientation,
   type Vector3
 } from '../orientation/index.ts';
-import { OUT_OF_THE_WORLD, SURFACE_ROOM } from '../interaction/index.ts';
 import type * as Doc from '../payload/documents.ts';
 
 /// The render-ready world, derived from a payload Bundle.

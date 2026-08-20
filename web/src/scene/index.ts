@@ -1,5 +1,10 @@
 import type { DoorwayRules } from '../payload/documents.ts';
-import { hostRoom, type Residence, type Room } from '../world/index.ts';
+import {
+  hostRoom,
+  isCarried,
+  type Residence,
+  type Room
+} from '../world/index.ts';
 
 /// The colours a frame is drawn with, and how a Room looks right now.
 ///
@@ -112,7 +117,7 @@ export const indoorScene = (
   rules: DoorwayRules,
   emitter: Residence
 ): IndoorScene => {
-  const lit = emitter.kind === 'carried' || hostRoom(emitter) === room.id;
+  const lit = isCarried(emitter) || hostRoom(emitter) === room.id;
   if (room.dark && !lit) {
     return { background: 0, dark: true, foreground: 0, lineColour: 0 };
   }

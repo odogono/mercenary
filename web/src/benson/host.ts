@@ -137,7 +137,29 @@ export class BensonHostState implements BensonHostFields {
   /// `with({ pendingKey: undefined })` cannot clear the key: `??` would keep the
   /// old one. This is the write that means "no key held".
   withoutPendingKey(): BensonHostState {
-    return new BensonHostState({ ...this, pendingKey: undefined });
+    // The eighteen fields written out rather than spread, for the reason `BensonState.withPc`
+    // gives: spreading a class instance enumerates it and the constructor then re-reads what it
+    // was handed, which measured about thirteen times the cost over a record this wide.
+    return new BensonHostState({
+      attackingShip: this.attackingShip,
+      boardedCraft: this.boardedCraft,
+      canLiftAnything: this.canLiftAnything,
+      canTakeAnything: this.canTakeAnything,
+      currentRoom: this.currentRoom,
+      decimals: this.decimals,
+      destroyedBlocks: this.destroyedBlocks,
+      engineFlags: this.engineFlags,
+      gameComplete: this.gameComplete,
+      inventory: this.inventory,
+      messageInterval: this.messageInterval,
+      messagePlaying: this.messagePlaying,
+      objectFlags: this.objectFlags,
+      objectRooms: this.objectRooms,
+      pendingKey: undefined,
+      shipInbound: this.shipInbound,
+      signedRegister: this.signedRegister,
+      tickCounter: this.tickCounter
+    });
   }
 
   withObjectRoom(slot: number, room: number): BensonHostState {

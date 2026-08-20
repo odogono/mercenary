@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 
-import { C64_PALETTE, IndoorBackdrop, ScenePalette } from '../src/scene/index.ts';
+import {
+  C64_PALETTE,
+  IndoorBackdrop,
+  ScenePalette
+} from '../src/scene/index.ts';
 
 describe('IndoorBackdrop', () => {
   test('alternates foreground then background for 320 columns', () => {

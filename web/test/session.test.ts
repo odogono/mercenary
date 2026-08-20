@@ -1,9 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import {
-  BensonProgram,
-  BensonSession
-} from '../src/benson/index.ts';
+import { BensonProgram, BensonSession } from '../src/benson/index.ts';
 import { playerState } from '../src/gameCore/index.ts';
 import type { BensonInstruction } from '../src/payload/documents.ts';
 import { GameplaySession, type SessionContent } from '../src/session/index.ts';
@@ -32,7 +29,10 @@ await sessionGate({
   title: 'the session Replay Gate'
 });
 
-const raw = (op: string, fields: Partial<BensonInstruction> = {}): BensonInstruction => ({
+const raw = (
+  op: string,
+  fields: Partial<BensonInstruction> = {}
+): BensonInstruction => ({
   op,
   ...fields
 });
@@ -57,7 +57,7 @@ const scripts = (): BensonSession => {
 };
 
 const content = (): SessionContent => ({
-  cellSize: 65536,
+  cellSize: 65_536,
   doorwayRules: undefined,
   flight: undefined,
   interaction: undefined,

@@ -59,9 +59,15 @@ describe('DoorwayPredicate', () => {
     expect(accepts(4063, 1728)).toBeFalse();
   });
 
-  test('only a heading square-on to the wall opens it', () => {
+  test("the wall's axis opens it, facing it or facing away (PQ-0007)", () => {
+    // A quarter turn and three quarter turns are opposite directions along one axis, and both
+    // open the Doorway: the test is one bit, so it distinguishes the axis and nothing else.
+    // Deliberate rather than a loose comparison — which way the player is pushing was already
+    // settled by which wall they hit. Do not tighten this without reading PQ-0007.
     expect(accepts(4063, 1664, Math.PI / 2)).toBeTrue();
     expect(accepts(4063, 1664, (3 * Math.PI) / 2)).toBeTrue();
+
+    // The other axis is refused, which is the half of the test that does carry information.
     expect(accepts(4063, 1664, 0)).toBeFalse();
     expect(accepts(4063, 1664, Math.PI)).toBeFalse();
   });
@@ -83,6 +89,8 @@ describe('DoorwayPredicate', () => {
     });
     expect(predicate.opens(locked, () => false)).toBeFalse();
     expect(predicate.opens(locked, slot => slot === 20)).toBeTrue();
-    expect(predicate.opens(locked, slot => slot === rules.skeletonKeySlot)).toBeTrue();
+    expect(
+      predicate.opens(locked, slot => slot === rules.skeletonKeySlot)
+    ).toBeTrue();
   });
 });

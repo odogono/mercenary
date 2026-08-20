@@ -96,16 +96,68 @@ export const firstDifference = (
   return Object.is(expected, actual) ? null : { actual, expected, path };
 };
 
+/// Whether two values are identical, without working out where they differ.
+///
+/// The same walk as `firstDifference` and the same notion of identity, but it allocates nothing:
+/// no path strings, no merged-and-sorted key sets. That matters because on a passing run — which
+/// is every run a gate is asked to certify — the answer is always "identical", so every path
+/// string `firstDifference` builds is built to be thrown away. A whole-session gate grades tens
+/// of thousands of records, each a snapshot carrying a sixty-four entry residence table.
+///
+/// Kept deliberately as a second walk rather than a flag on the first: the reported path is what
+/// makes a divergence readable, and threading "do not bother" through the recursion is how that
+/// stops being trustworthy.
+const same = (
+  expected: TraceValue | undefined,
+  actual: TraceValue | undefined
+): boolean => {
+  if (expected === undefined || actual === undefined) {
+    return Object.is(expected, actual);
+  }
+  if (typeof expected === 'number' || typeof actual === 'number') {
+    return Object.is(expected, actual);
+  }
+  if (Array.isArray(expected) || Array.isArray(actual)) {
+    if (
+      !Array.isArray(expected) ||
+      !Array.isArray(actual) ||
+      expected.length !== actual.length
+    ) {
+      return false;
+    }
+    return expected.every((value, index) => same(value, actual[index]));
+  }
+  if (isObject(expected) && isObject(actual)) {
+    const expectedKeys = Object.keys(expected);
+    // A key count on both sides plus a hit for each of one side's keys covers a member present
+    // on one side only, which is what the sorted union in `firstDifference` is there for.
+    if (expectedKeys.length !== Object.keys(actual).length) {
+      return false;
+    }
+    return expectedKeys.every(
+      key => key in actual && same(expected[key], actual[key])
+    );
+  }
+  return Object.is(expected, actual);
+};
+
 /// Compare, and throw with the first disagreement when there is one.
 ///
 /// One assertion per gate rather than one per value: a flight trace is eighteen hundred
 /// records, and a test framework reporting eighteen hundred passing assertions buries the
 /// single line that matters.
+///
+/// The cheap walk decides, and `firstDifference` is asked only once it has found something — so a
+/// passing gate never pays for a path it will not print, and a failing one reports exactly what
+/// it always did.
 export const expectIdentical = (
   expected: TraceValue | undefined,
   actual: TraceValue | undefined,
   context: string
 ): void => {
+  if (same(expected, actual)) {
+    return;
+  }
   const difference = firstDifference(expected, actual);
   if (difference !== null) {
     throw new Error(`${context} diverged — ${describeDifference(difference)}`);

@@ -63,6 +63,25 @@ const present = async <T>(
   return onto({ name }, parse(name, body));
 };
 
+/// Await every read, then re-raise the first failure by position rather than by finishing time.
+///
+/// `Promise.all` reports whichever promise rejected first, which for ten concurrent reads is a
+/// race. The documents are ordered by how fundamental they are, and a caller missing several
+/// should be told about the most fundamental one, the same way the sequential reads told them.
+const inOrder = async <T extends readonly unknown[]>(
+  reads: readonly [...{ [K in keyof T]: Promise<T[K]> }]
+): Promise<T> => {
+  const settled = await Promise.allSettled(reads);
+  for (const outcome of settled) {
+    if (outcome.status === 'rejected') {
+      throw outcome.reason;
+    }
+  }
+  return settled.map(
+    outcome => (outcome as PromiseFulfilledResult<unknown>).value
+  ) as unknown as T;
+};
+
 const check = (name: string, version: number, supported: number): void => {
   if (version !== supported) {
     fail({ kind: 'unsupportedSchema', name, version });
@@ -70,11 +89,40 @@ const check = (name: string, version: number, supported: number): void => {
 };
 
 export const load = async (read: ReadDocument): Promise<Bundle> => {
-  const manifest = await required(read, 'manifest.json', readers.manifest);
-  const world = await required(read, 'world.json', readers.world);
-  const surface = await required(read, 'surface.json', readers.surface);
-  const objects = await required(read, 'objects.json', readers.objects);
-  const rooms = await required(read, 'rooms.json', readers.rooms);
+  // All ten documents are asked for at once and then checked in order.
+  //
+  // The read seam is a `fetch` in the browser (ADR 0011), so awaiting each document before
+  // asking for the next made startup ten serialised round trips before the first frame. They
+  // are independent files, so the requests overlap.
+  //
+  // `inOrder` rather than a bare `Promise.all`, because which failure a caller is told about is
+  // part of this function's contract and `Promise.all` rejects with whichever read lost the
+  // race. Settling them all and then re-raising by position reports exactly what the sequential
+  // version reported — the earliest document in this list that could not be read — whatever
+  // order the reads happen to finish in.
+  const [
+    manifest,
+    world,
+    surface,
+    objects,
+    rooms,
+    text,
+    benson,
+    interaction,
+    flight,
+    underground
+  ] = await inOrder([
+    required(read, 'manifest.json', readers.manifest),
+    required(read, 'world.json', readers.world),
+    required(read, 'surface.json', readers.surface),
+    required(read, 'objects.json', readers.objects),
+    required(read, 'rooms.json', readers.rooms),
+    present(read, 'text.json', readers.text),
+    present(read, 'benson.json', readers.benson),
+    present(read, 'interaction.json', readers.interaction),
+    present(read, 'flight.json', readers.flight),
+    present(read, 'underground.json', readers.underground)
+  ]);
 
   // The five geometry documents share one version, because they are one extraction.
   check('manifest.json', manifest.schemaVersion, SUPPORTED_SCHEMA_VERSION);
@@ -86,12 +134,10 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     fail({ kind: 'unsupportedDecoder', version: manifest.decoderVersion });
   }
 
-  const text = await present(read, 'text.json', readers.text);
   if (text !== undefined) {
     check('text.json', text.schemaVersion, SUPPORTED_TEXT_SCHEMA_VERSION);
   }
 
-  const benson = await present(read, 'benson.json', readers.benson);
   if (benson !== undefined) {
     check('benson.json', benson.schemaVersion, SUPPORTED_BENSON_SCHEMA_VERSION);
     if (text === undefined) {
@@ -102,7 +148,6 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     }
   }
 
-  const interaction = await present(read, 'interaction.json', readers.interaction);
   if (interaction !== undefined) {
     check(
       'interaction.json',
@@ -111,12 +156,10 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     );
   }
 
-  const flight = await present(read, 'flight.json', readers.flight);
   if (flight !== undefined) {
     check('flight.json', flight.schemaVersion, SUPPORTED_FLIGHT_SCHEMA_VERSION);
   }
 
-  const underground = await present(read, 'underground.json', readers.underground);
   if (underground !== undefined) {
     check(
       'underground.json',
