@@ -5,6 +5,8 @@ import { targOrreryFor } from '../sky/index.ts';
 import { FixedStepClock } from './clock.ts';
 import { Renderer } from './frame.ts';
 import { BrowserControlProfile } from './input.ts';
+import { createPreferences, effectivePresentation } from './preferences.ts';
+import { routeKey, type RouterState, type ShellLayer } from './router.ts';
 import { installSaveControls } from './saves.ts';
 import {
   createWalkabout,
@@ -100,11 +102,16 @@ try {
   }
   installTypefaceSelector(typeface, document.documentElement, storage);
   const settings = requiredSettings(settingsText);
+  // Player presentation choices overlay the tracked tuning document. They never reach the
+  // blocks that identify a Save, so changing one cannot make an existing Save unloadable.
+  const preferences = createPreferences({ storage, surface });
   const environment = saveEnvironment(bundle, settings);
   const initial = createWalkabout(bundle, settings);
   let session = initial.session;
   let world = initial.world;
-  const orrery = targOrreryFor(settings.presentation);
+  const orrery = targOrreryFor(
+    effectivePresentation(settings.presentation, preferences.current())
+  );
   const renderer = new Renderer(canvas, orrery);
   const clock = new FixedStepClock();
   let snapshot = session.snapshot;
@@ -141,26 +148,45 @@ try {
   };
   typeface.addEventListener('focus', release);
   installSuspensionHandlers(window, document, release);
+
+  // One predicate decides whether shell chrome owns the keyboard, so each new surface joins the
+  // list instead of adding another special case at the listener.
+  const chromeFocus = (): boolean =>
+    document.activeElement === typeface ||
+    saveControls.contains(document.activeElement);
+  const layer: ShellLayer = 'none';
+  const routerState = (): RouterState => ({
+    chromeFocus: chromeFocus(),
+    console: 'closed',
+    layer
+  });
+
   window.addEventListener('keydown', event => {
-    if (
-      document.activeElement === typeface ||
-      saveControls.contains(document.activeElement)
-    ) {
-      return;
-    }
-    if (controls.keyDown(event)) {
-      event.preventDefault();
+    switch (routeKey(routerState(), event)) {
+      case 'browser':
+      case 'chrome':
+        return;
+      case 'escape':
+        // The System Menu arrives in a later slice. Escape reaches no Control Profile action
+        // today, so there is nothing to hold back.
+        return;
+      case 'console-toggle':
+      case 'game':
+        // The Shell Console arrives in a later slice. Until it does, its key keeps its existing
+        // Control Profile behaviour rather than going dead.
+        if (controls.keyDown(event)) {
+          event.preventDefault();
+        }
     }
   });
   window.addEventListener('keyup', event => {
+    // Key releases always reach the Control Profile: a key held when chrome took focus must
+    // not stay held forever.
+    const route = routeKey(routerState(), event);
     if (
-      document.activeElement === typeface ||
-      saveControls.contains(document.activeElement)
+      controls.keyUp(event) &&
+      (route === 'game' || route === 'console-toggle')
     ) {
-      controls.keyUp(event);
-      return;
-    }
-    if (controls.keyUp(event)) {
       event.preventDefault();
     }
   });
