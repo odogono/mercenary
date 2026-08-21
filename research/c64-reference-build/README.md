@@ -21,6 +21,18 @@ research/c64-reference-build/lab verify --run research/c64-reference-build/work/
 python3 -m unittest discover -s research/c64-reference-build/tests -v
 ```
 
+### Endgame mechanics
+
+The endgame decoder reads the native drop, fire, destruction, hostile-craft,
+orbital-region, and terminal-presentation rules from a verified interactive
+capture. It asserts the surrounding instruction shapes before reporting any
+value; Benson Scripts remain the separate source for progression logic.
+
+```sh
+research/c64-reference-build/lab endgame decode \
+  --run research/c64-reference-build/work/<interactive-run>
+```
+
 ### World Geometry Dataset
 
 The geometry commands consume only a verified, conditioned `interactive`
