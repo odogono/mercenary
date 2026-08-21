@@ -103,9 +103,19 @@ export const effectivePresentation = (
     ? settings
     : { ...settings, preset: preferences.presentationPreset };
 
+/// What one edit to the preferences may say.
+///
+/// The preset is spelled with `undefined` allowed rather than merely optional, because handing
+/// the choice back to the tuning document is itself a choice a player can make.
+export interface PreferencesChange {
+  readonly composition?: Composition;
+  readonly panelRendition?: PanelRendition;
+  readonly presentationPreset?: PresentationSettings['preset'] | undefined;
+}
+
 export interface PreferencesStore {
   readonly current: () => Preferences;
-  readonly update: (change: Partial<Preferences>) => Preferences;
+  readonly update: (change: PreferencesChange) => Preferences;
 }
 
 /// Own the live preferences: one place that narrows, persists, and applies them.

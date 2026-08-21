@@ -44,7 +44,7 @@ export class SaveSlots {
   }
 }
 
-const ALL_SLOTS = [1, 2, 3] as const;
+export const ALL_SLOTS = [1, 2, 3] as const;
 
 /// What one slot holds, as far as any chooser needs to know.
 ///

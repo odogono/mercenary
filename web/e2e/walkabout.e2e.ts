@@ -35,6 +35,29 @@ const useComposition = async (
   }, composition);
 };
 
+/// Open a System Menu page the way a player does.
+const openPage = async (
+  page: Page,
+  goto: 'saves' | 'settings'
+): Promise<void> => {
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-layer',
+    'menu'
+  );
+  await page.locator(`button[data-goto="${goto}"]`).click();
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-layer',
+    goto
+  );
+};
+
+const slotButton = (page: Page, slot: number, action: string) =>
+  page.locator(`.slot-row[data-slot="${slot}"] [data-action="${action}"]`);
+
+const slotDetail = (page: Page, slot: number) =>
+  page.locator(`.slot-row[data-slot="${slot}"] .slot-detail`);
+
 test('the Benson Panel is the default composition and tracks the session', async ({
   page
 }, testInfo) => {
@@ -199,21 +222,23 @@ test('the live opening loop renders, walks and releases held input', async ({
   await expect(page.locator('#status')).toContainText('ON FOOT');
   await expect(page.locator('#comms')).toHaveAttribute('aria-live', 'off');
   await expect(page.locator('#comms')).not.toHaveAttribute('role', 'status');
-  const typeface = page.locator('#typeface');
-  await expect(typeface).toBeEnabled();
-  await expect(typeface).toHaveValue('mercenary');
   expect(
     await page.evaluate(() => document.fonts.check('16px "Mercenary Pixel"'))
   ).toBe(true);
   expect(
     await page.evaluate(() => getComputedStyle(document.body).fontFamily)
   ).toContain('Mercenary Pixel');
-
   await testInfo.attach('mercenary-browser-shell-type', {
     body: await page.locator('#status-row').screenshot(),
     contentType: 'image/png'
   });
-  await typeface.selectOption('damocles');
+
+  // The typeface is chosen on the settings page now that the status row is only a readout.
+  await openPage(page, 'settings');
+  const typefaceChoice = page.locator(
+    '[data-setting="typeface"] button[value="damocles"]'
+  );
+  await typefaceChoice.click();
   await expect(page.locator('html')).toHaveAttribute(
     'data-font-face',
     'damocles'
@@ -222,14 +247,31 @@ test('the live opening loop renders, walks and releases held input', async ({
     await page.evaluate(() => getComputedStyle(document.body).fontFamily)
   ).toContain('Damocles Interface');
   await testInfo.attach('damocles-browser-shell-type', {
-    body: await page.locator('#status-row').screenshot(),
+    body: await page.locator('#page-settings').screenshot(),
     contentType: 'image/png'
   });
+  await expect(typefaceChoice).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-layer',
+    'none'
+  );
 
   await page.reload();
   await expect(surface).toHaveAttribute('data-state', 'ready');
-  await expect(typeface).toHaveValue('damocles');
-  await typeface.focus();
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-font-face',
+    'damocles'
+  );
+  await openPage(page, 'settings');
+  await expect(
+    page.locator('[data-setting="typeface"] button[value="damocles"]')
+  ).toHaveAttribute('aria-pressed', 'true');
+  await page
+    .locator('[data-setting="typeface"] button[value="damocles"]')
+    .focus();
+  // A focused chrome control must never produce Movement Intent.
   const selectorPosition = {
     x: await canvas.getAttribute('data-x'),
     z: await canvas.getAttribute('data-z')
@@ -240,7 +282,10 @@ test('the live opening loop renders, walks and releases held input', async ({
     x: await canvas.getAttribute('data-x'),
     z: await canvas.getAttribute('data-z')
   }).toEqual(selectorPosition);
-  await typeface.evaluate(element => element.blur());
+  // Leave the chrome the way a player does, and the world resumes.
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');
+  await expect(surface).toHaveAttribute('data-layer', 'none');
 
   const colours = await page.evaluate(
     () =>
@@ -334,27 +379,31 @@ test('the live opening loop renders, walks and releases held input', async ({
   });
   expect(chordsPassed).toEqual([true, true, true, true, true, true]);
 
+  // The Save chooser is the widest chrome the shell has, so it is the one to measure.
+  await openPage(page, 'saves');
   for (const width of [320, 768, 1024, 1440]) {
     await page.setViewportSize({ height: 900, width });
     const layout = await page.evaluate(() => {
       const canvas = document.querySelector<HTMLCanvasElement>('#frame')!;
       const bounds = canvas.getBoundingClientRect();
-      const saveBounds = document
-        .querySelector('#save-controls')!
+      const rowBounds = document
+        .querySelector('.slot-row')!
         .getBoundingClientRect();
       return {
         canvasRatio: bounds.width / bounds.height,
         documentWidth: document.documentElement.scrollWidth,
-        saveLeft: saveBounds.left,
-        saveRight: saveBounds.right,
+        rowLeft: rowBounds.left,
+        rowRight: rowBounds.right,
         viewportWidth: innerWidth
       };
     });
     expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
-    expect(layout.saveLeft).toBeGreaterThanOrEqual(0);
-    expect(layout.saveRight).toBeLessThanOrEqual(layout.viewportWidth);
+    expect(layout.rowLeft).toBeGreaterThanOrEqual(0);
+    expect(layout.rowRight).toBeLessThanOrEqual(layout.viewportWidth);
     expect(layout.canvasRatio).toBeCloseTo(1280 / 800, 5);
   }
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');
 
   expect(errors).toEqual([]);
 });
@@ -383,9 +432,9 @@ test('a Save restores the same playable moment after a full reload', async ({
   await page.keyboard.up('ArrowUp');
   const saved = await position();
 
-  await page.locator('#save-session').click();
-  await expect(page.locator('#message')).toContainText('SAVED SLOT 1');
-  await expect(page.locator('#save-slot')).toHaveValue('1');
+  await openPage(page, 'saves');
+  await slotButton(page, 1, 'save').click();
+  await expect(slotDetail(page, 1)).toContainText('SURFACE');
 
   await page.reload();
   await expect(page.locator('#game-surface')).toHaveAttribute(
@@ -393,24 +442,73 @@ test('a Save restores the same playable moment after a full reload', async ({
     'ready'
   );
   expect(await position()).toEqual(opening);
-  await expect(page.locator('#save-slot option:checked')).toContainText(
-    'SURFACE'
-  );
 
-  await page.locator('#load-session').click();
-  await expect(page.locator('#message')).toContainText('LOADED SLOT 1');
+  await openPage(page, 'saves');
+  await expect(slotDetail(page, 1)).toContainText('SURFACE');
+  await slotButton(page, 1, 'load').click();
+  // Restoring is a new moment to play, so the chrome steps out of the way by itself.
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-layer',
+    'none'
+  );
   expect(await position()).toEqual(saved);
 
-  await page.locator('#save-session').click();
-  await expect(page.locator('#save-session')).toHaveText('CONFIRM SAVE');
-  await page.locator('#save-session').click();
-  await expect(page.locator('#message')).toContainText('SAVED SLOT 1');
+  // Overwriting and clearing each cost two presses.
+  await openPage(page, 'saves');
+  await slotButton(page, 1, 'save').click();
+  await expect(slotButton(page, 1, 'save')).toHaveText('CONFIRM');
+  await slotButton(page, 1, 'save').click();
+  await expect(slotButton(page, 1, 'save')).toHaveText('SAVE');
 
-  await page.locator('#delete-save').click();
-  await expect(page.locator('#delete-save')).toHaveText('CONFIRM DELETE');
-  await page.locator('#delete-save').click();
-  await expect(page.locator('#message')).toContainText('DELETED SLOT 1');
-  await expect(page.locator('#save-slot option:checked')).toContainText(
-    'EMPTY'
-  );
+  await slotButton(page, 1, 'delete').click();
+  await expect(slotButton(page, 1, 'delete')).toHaveText('CONFIRM');
+  await slotButton(page, 1, 'delete').click();
+  await expect(slotDetail(page, 1)).toHaveText('EMPTY');
+  // Nothing to load or clear from an empty slot.
+  await expect(slotButton(page, 1, 'load')).toBeDisabled();
+  await expect(slotButton(page, 1, 'delete')).toBeDisabled();
+});
+
+test('the System Menu pauses the session it covers', async ({ page }) => {
+  await page.goto('/');
+  const surface = page.locator('#game-surface');
+  const canvas = page.locator('#frame');
+  await expect(surface).toHaveAttribute('data-state', 'ready');
+
+  await page.keyboard.press('Escape');
+  await expect(surface).toHaveAttribute('data-layer', 'menu');
+  const held = await canvas.getAttribute('data-z');
+  // Arrows belong to the menu while it is open, so the player cannot walk behind it.
+  await page.keyboard.press('ArrowUp');
+  await page.waitForTimeout(300);
+  expect(await canvas.getAttribute('data-z')).toBe(held);
+
+  await page.keyboard.press('Escape');
+  await expect(surface).toHaveAttribute('data-layer', 'none');
+  await page.keyboard.down('ArrowUp');
+  await expect.poll(async () => canvas.getAttribute('data-z')).not.toBe(held);
+  await page.keyboard.up('ArrowUp');
+});
+
+test('the settings page changes the composition it names', async ({ page }) => {
+  await page.goto('/');
+  const surface = page.locator('#game-surface');
+  await expect(surface).toHaveAttribute('data-state', 'ready');
+  await expect(surface).toHaveAttribute('data-composition', 'panel');
+
+  await openPage(page, 'settings');
+  await page
+    .locator('[data-setting="composition"] button[value="strip"]')
+    .click();
+  await expect(surface).toHaveAttribute('data-composition', 'strip');
+  await page
+    .locator('[data-setting="rendition"] button[value="damocles"]')
+    .click();
+  await expect(surface).toHaveAttribute('data-rendition', 'damocles');
+
+  // The choice outlives the page it was made on.
+  await page.reload();
+  await expect(surface).toHaveAttribute('data-state', 'ready');
+  await expect(surface).toHaveAttribute('data-composition', 'strip');
+  await expect(surface).toHaveAttribute('data-rendition', 'damocles');
 });
