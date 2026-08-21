@@ -1,7 +1,8 @@
-import type {
-  PresentationPreset,
-  PresentationSettings
+import {
+  isPresentationPreset,
+  type PresentationSettings
 } from '../settings/index.ts';
+import type { ReadStorage, WriteStorage } from './storage.ts';
 
 /// Which visual treatment the Benson Panel wears.
 export type PanelRendition = 'targ' | 'damocles';
@@ -20,7 +21,7 @@ export interface Preferences {
   readonly composition: Composition;
   readonly panelRendition: PanelRendition;
   /// Absent means "whatever the tuning document says".
-  readonly presentationPreset?: PresentationPreset;
+  readonly presentationPreset?: PresentationSettings['preset'];
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -28,22 +29,11 @@ export const DEFAULT_PREFERENCES: Preferences = {
   panelRendition: 'targ'
 };
 
-interface ReadStorage {
-  getItem(key: string): string | null;
-}
-
-interface WriteStorage {
-  setItem(key: string, value: string): void;
-}
-
 const isRendition = (value: unknown): value is PanelRendition =>
   value === 'targ' || value === 'damocles';
 
 const isComposition = (value: unknown): value is Composition =>
   value === 'panel' || value === 'strip';
-
-const isPreset = (value: unknown): value is PresentationPreset =>
-  value === 'authentic' || value === 'enhanced';
 
 /// Narrow whatever was stored to a usable set of preferences.
 ///
@@ -62,7 +52,8 @@ export const validatePreferences = (value: unknown): Preferences => {
     panelRendition: isRendition(source['panelRendition'])
       ? source['panelRendition']
       : DEFAULT_PREFERENCES.panelRendition,
-    ...(isPreset(preset) ? { presentationPreset: preset } : {})
+    // Spread rather than assign: an absent preset must stay absent, not become `undefined`.
+    ...(isPresentationPreset(preset) ? { presentationPreset: preset } : {})
   };
 };
 
@@ -128,7 +119,17 @@ export const createPreferences = (options: {
   return {
     current: () => preferences,
     update: change => {
-      preferences = validatePreferences({ ...preferences, ...change });
+      const next = validatePreferences({ ...preferences, ...change });
+      // Selecting what is already selected must not pay for a synchronous write, and must not
+      // announce a change that later slices answer by rebuilding the renderer.
+      if (
+        next.composition === preferences.composition &&
+        next.panelRendition === preferences.panelRendition &&
+        next.presentationPreset === preferences.presentationPreset
+      ) {
+        return preferences;
+      }
+      preferences = next;
       applyPreferences(options.surface, preferences);
       writePreferences(options.storage, preferences);
       options.onChange?.(preferences);

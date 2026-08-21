@@ -6,7 +6,7 @@ import { FixedStepClock } from './clock.ts';
 import { Renderer } from './frame.ts';
 import { BrowserControlProfile } from './input.ts';
 import { createPreferences, effectivePresentation } from './preferences.ts';
-import { routeKey, type RouterState, type ShellLayer } from './router.ts';
+import { routeKey, type RouterState } from './router.ts';
 import { installSaveControls } from './saves.ts';
 import {
   createWalkabout,
@@ -24,7 +24,6 @@ const message = document.getElementById('message')!;
 const credits = document.getElementById('credits')!;
 const status = document.getElementById('status')!;
 const typeface = document.getElementById('typeface') as HTMLSelectElement;
-const saveControls = document.getElementById('save-controls')!;
 const saveSlot = document.getElementById('save-slot') as HTMLSelectElement;
 const saveButton = document.getElementById('save-session') as HTMLButtonElement;
 const loadButton = document.getElementById('load-session') as HTMLButtonElement;
@@ -149,26 +148,24 @@ try {
   typeface.addEventListener('focus', release);
   installSuspensionHandlers(window, document, release);
 
-  // One predicate decides whether shell chrome owns the keyboard, so each new surface joins the
-  // list instead of adding another special case at the listener.
+  // Chrome roots declare themselves in the markup, so a new surface owns its keys by carrying
+  // the attribute rather than by being named here.
   const chromeFocus = (): boolean =>
-    document.activeElement === typeface ||
-    saveControls.contains(document.activeElement);
-  const layer: ShellLayer = 'none';
+    document.activeElement?.closest('[data-shell-chrome]') != null;
   const routerState = (): RouterState => ({
     chromeFocus: chromeFocus(),
     console: 'closed',
-    layer
+    layer: 'none'
   });
 
   window.addEventListener('keydown', event => {
     switch (routeKey(routerState(), event)) {
       case 'browser':
       case 'chrome':
-        return;
+      // The System Menu arrives in a later slice, and Escape reaches no Control Profile action
+      // today, so there is nothing to hold back.
+      // falls through
       case 'escape':
-        // The System Menu arrives in a later slice. Escape reaches no Control Profile action
-        // today, so there is nothing to hold back.
         return;
       case 'console-toggle':
       case 'game':
@@ -180,13 +177,13 @@ try {
     }
   });
   window.addEventListener('keyup', event => {
-    // Key releases always reach the Control Profile: a key held when chrome took focus must
-    // not stay held forever.
+    // Key releases always reach the Control Profile first: a key held when chrome took focus
+    // must not stay held forever. Only a release it actually consumed needs routing.
+    if (!controls.keyUp(event)) {
+      return;
+    }
     const route = routeKey(routerState(), event);
-    if (
-      controls.keyUp(event) &&
-      (route === 'game' || route === 'console-toggle')
-    ) {
+    if (route === 'game' || route === 'console-toggle') {
       event.preventDefault();
     }
   });

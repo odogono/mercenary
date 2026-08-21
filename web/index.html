@@ -226,7 +226,12 @@
         </div>
         <div id="status-row">
           <div id="status">STARTING SESSION</div>
-          <div id="save-controls" role="group" aria-label="Saved sessions">
+          <div
+            id="save-controls"
+            data-shell-chrome
+            role="group"
+            aria-label="Saved sessions"
+          >
             <label for="save-slot">
               <span>SAVE</span>
               <select id="save-slot" aria-label="Save slot">
@@ -239,7 +244,7 @@
             <button id="load-session" type="button">LOAD</button>
             <button id="delete-save" type="button">DELETE</button>
           </div>
-          <label id="typeface-control" for="typeface">
+          <label id="typeface-control" data-shell-chrome for="typeface">
             <span>TYPEFACE</span>
             <select id="typeface" disabled>
               <option value="mercenary">MERCENARY</option>

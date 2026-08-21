@@ -1,4 +1,4 @@
-import type { BrowserKey } from './input.ts';
+import { browserChord, type BrowserKey } from './input.ts';
 
 /// A key press as the router sees it.
 ///
@@ -18,6 +18,8 @@ export type ShellLayer = 'none' | 'menu' | 'settings' | 'saves';
 export interface RouterState {
   /// Whether a form control inside shell chrome currently holds focus.
   readonly chromeFocus: boolean;
+  /// Whether the Shell Console is down. Independent of `layer`: the console opens over an
+  /// open overlay rather than replacing it.
   readonly console: 'open' | 'closed';
   readonly layer: ShellLayer;
 }
@@ -37,6 +39,10 @@ export type KeyRoute =
 const consoleKey = (key: RoutedKey): boolean =>
   key.code === 'Backquote' || key.key === '`';
 
+/// Whether any shell chrome currently holds the keyboard away from the Game Surface.
+export const chromeHasKeyboard = (state: RouterState): boolean =>
+  state.console === 'open' || state.layer !== 'none' || state.chromeFocus;
+
 /// Decide where one key press goes, without touching the DOM.
 ///
 /// Order matters and is the whole point of this function:
@@ -45,7 +51,7 @@ const consoleKey = (key: RoutedKey): boolean =>
 /// drives the layer stack; then anything typed while chrome owns the keyboard; and only then
 /// the Game Surface.
 export const routeKey = (state: RouterState, key: RoutedKey): KeyRoute => {
-  if (key.altKey || key.ctrlKey || key.metaKey) {
+  if (browserChord(key)) {
     return 'browser';
   }
   if (consoleKey(key)) {
@@ -54,12 +60,8 @@ export const routeKey = (state: RouterState, key: RoutedKey): KeyRoute => {
   if (key.code === 'Escape') {
     return key.repeat ? 'chrome' : 'escape';
   }
-  if (state.console === 'open' || state.layer !== 'none' || state.chromeFocus) {
+  if (chromeHasKeyboard(state)) {
     return 'chrome';
   }
   return 'game';
 };
-
-/// Whether any shell chrome currently holds the keyboard away from the Game Surface.
-export const chromeHasKeyboard = (state: RouterState): boolean =>
-  state.console === 'open' || state.layer !== 'none' || state.chromeFocus;

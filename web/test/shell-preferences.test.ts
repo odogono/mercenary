@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { Bundle } from '../src/payload/documents.ts';
 import { defaultSettings } from '../src/settings/index.ts';
 import {
   DEFAULT_PREFERENCES,
@@ -13,6 +12,9 @@ import {
   type Preferences
 } from '../src/shell/preferences.ts';
 import { saveEnvironment } from '../src/shell/session.ts';
+import { loadPayload } from './replay/artifacts.ts';
+
+const bundle = await loadPayload();
 
 const memoryStorage = () => {
   const entries = new Map<string, string>();
@@ -39,16 +41,6 @@ const hostileStorage = (): Storage =>
 
 const surface = () =>
   ({ dataset: {} as Record<string, string> }) as unknown as HTMLElement;
-
-const bundle = (): Bundle =>
-  ({
-    manifest: {
-      decoderVersion: 'test-decoder',
-      schemaVersion: 1,
-      sourceCoreDigest: 'digest',
-      sourceDatasetId: 'dataset'
-    }
-  }) as unknown as Bundle;
 
 describe('browser shell preferences', () => {
   test('default to the Benson Panel in its Targ rendition', () => {
@@ -147,8 +139,8 @@ describe('browser shell preferences', () => {
     // Preferences reach presentation only. If they ever touched flight, message or scripts,
     // a player changing a setting would make their own Saves unloadable.
     const settings = defaultSettings();
-    const before = saveEnvironment(bundle(), settings);
-    const after = saveEnvironment(bundle(), {
+    const before = saveEnvironment(bundle, settings);
+    const after = saveEnvironment(bundle, {
       ...settings,
       presentation: effectivePresentation(settings.presentation, {
         ...DEFAULT_PREFERENCES,
