@@ -110,6 +110,46 @@ test('the Benson Panel is the default composition and tracks the session', async
   });
 });
 
+test('neither rendition overflows the frame it is drawn in', async ({
+  page
+}) => {
+  await page.goto('/');
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-state',
+    'ready'
+  );
+
+  // Both renditions are authored to one height, and the frame above them is sized for that
+  // height alone — so anything hanging below the panel is invisible to the player.
+  for (const rendition of ['targ', 'damocles'] as const) {
+    await openPage(page, 'settings');
+    await page
+      .locator(`[data-setting="rendition"] button[value="${rendition}"]`)
+      .click();
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#game-surface')).toHaveAttribute(
+      'data-rendition',
+      rendition
+    );
+
+    const spill = await page.evaluate(() => {
+      const panel = document.querySelector('#benson-panel')!;
+      const floor = panel.getBoundingClientRect().bottom;
+      const below = [...panel.querySelectorAll('*')].filter(
+        element => element.getBoundingClientRect().bottom > floor + 0.5
+      );
+      return {
+        below: below.map(element => element.id || element.className),
+        pageOverflows:
+          document.documentElement.scrollHeight > window.innerHeight
+      };
+    });
+    expect(spill.below, `${rendition} spills below the panel`).toEqual([]);
+    expect(spill.pageOverflows, `${rendition} overflows the page`).toBe(false);
+  }
+});
+
 test('the panel scales to every supported width without overflowing', async ({
   page
 }) => {

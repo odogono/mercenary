@@ -57,16 +57,18 @@
 
       /* The world view and the Benson Panel are one authored frame, scaled together and
          letterboxed, rather than a view that fills the window with a gadget beneath it. */
+      /* The frame is scaled to fit the window, so its height budget must exclude the shell's own
+         edges: the two border lines above and below the Game Surface. */
       #frame-stack {
         display: grid;
-        width: min(100%, calc(100dvh * 1280 / 970));
+        width: min(100%, calc((100dvh - 2px) * 1280 / 970));
         margin-inline: auto;
         aspect-ratio: 1280 / 970;
         grid-template-rows: 800fr 170fr;
       }
 
       #game-surface[data-composition='strip'] #frame-stack {
-        width: min(100%, calc(100dvh * 1280 / 800));
+        width: min(100%, calc((100dvh - 2px) * 1280 / 800));
         aspect-ratio: 1280 / 800;
         grid-template-rows: 1fr;
       }
@@ -456,12 +458,14 @@
       }
 
       /* --- Damocles rendition --------------------------------------------- */
+      /* Both renditions are authored to the same height, because the frame above them is sized
+         once for the composition rather than per rendition. */
       #panel-damocles {
         display: grid;
-        height: 200px;
-        padding: 8px 12px 10px;
-        gap: 8px;
-        grid-template-rows: 38px 1fr;
+        height: 170px;
+        padding: 6px 10px 8px;
+        gap: 6px;
+        grid-template-rows: 34px 1fr;
       }
 
       #damocles-message-bar {
@@ -483,10 +487,17 @@
         white-space: nowrap;
       }
 
+      /* A grid row of 1fr still refuses to shrink below its content, so the body and every
+         column that flexes inside it say so explicitly. */
       #damocles-body {
         display: grid;
+        min-height: 0;
         gap: 8px;
         grid-template-columns: 16px 372px 1fr 300px 16px;
+      }
+
+      #damocles-body > * {
+        min-height: 0;
       }
 
       .tp-gauge {
@@ -515,9 +526,10 @@
 
       #damocles-nav {
         display: flex;
+        min-height: 0;
         flex-direction: column;
-        gap: 12px;
-        padding: 12px;
+        gap: 8px;
+        padding: 8px;
         background: var(--nav-face);
         border-radius: 10px;
         box-shadow:
@@ -570,9 +582,10 @@
 
       #damocles-nav .nav-stack {
         display: flex;
+        min-height: 0;
         flex: 1;
         flex-direction: column;
-        gap: 12px;
+        gap: 8px;
       }
 
       #damocles-nav .nav-foot {
@@ -616,15 +629,17 @@
 
       #damocles-right {
         display: flex;
+        min-height: 0;
         flex-direction: column;
-        gap: 12px;
+        gap: 8px;
       }
 
       #damocles-inventory {
         display: grid;
+        min-height: 0;
         flex: 1;
-        gap: 10px;
-        padding: 12px;
+        gap: 8px;
+        padding: 8px;
         background: var(--inv-face);
         border-radius: 10px;
         box-shadow:
@@ -650,12 +665,14 @@
 
       #damocles-inventory .inventory-stack {
         display: flex;
+        min-height: 0;
         flex-direction: column;
-        gap: 10px;
+        gap: 6px;
       }
 
       #inventory-window {
         display: flex;
+        min-height: 0;
         flex: 1;
         align-items: center;
         justify-content: center;
@@ -700,11 +717,11 @@
       }
 
       #damocles-clock {
-        padding: 4px 12px 2px;
+        padding: 2px 8px 1px;
         background: var(--clock-bg);
-        border-radius: 5px;
+        border-radius: 4px;
         color: var(--clock-ink);
-        font-size: 22px;
+        font-size: 18px;
         letter-spacing: 0.1em;
         text-shadow: 2px 0 0 currentcolor;
       }
