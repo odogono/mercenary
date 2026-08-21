@@ -20,6 +20,10 @@ test('Chromium replays the recorded opening loop bit-for-bit and renders its mil
     'data-milestones',
     'initial,airborne,touchdown,room-1'
   );
+  await expect(surface).toHaveAttribute(
+    'data-save-restores',
+    'airborne,room-1'
+  );
   await expect(surface).toHaveAttribute('data-credits', '4000');
   await expect(surface).toHaveAttribute('data-grid', '09:06');
   await expect(surface).toHaveAttribute('data-location', 'room-1');
@@ -53,5 +57,31 @@ test('Chromium replays the recorded opening loop bit-for-bit and renders its mil
   expect(colours).toContain('171,60,101');
   expect(colours).toContain('234,121,163');
   expect(colours).toContain('255,255,255');
+
+  await page.goto('/');
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-state',
+    'ready'
+  );
+  await page.reload();
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-state',
+    'ready'
+  );
+  await page.locator('#save-slot').selectOption('2');
+  await expect(page.locator('#save-slot option:checked')).toContainText(
+    'SURFACE'
+  );
+  await page.locator('#load-session').click();
+  await expect(page.locator('#message')).toContainText('LOADED SLOT 2');
+  await expect(page.locator('#status')).toContainText('FLYING');
+
+  await page.locator('#save-slot').selectOption('3');
+  await expect(page.locator('#save-slot option:checked')).toContainText(
+    'ROOM 01'
+  );
+  await page.locator('#load-session').click();
+  await expect(page.locator('#message')).toContainText('LOADED SLOT 3');
+  await expect(page.locator('#status')).toContainText('ROOM 01');
   expect(errors).toEqual([]);
 });

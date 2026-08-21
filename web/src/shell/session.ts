@@ -5,6 +5,7 @@ import {
   openingPlayer,
   sessionContent
 } from '../session/index.ts';
+import type { SaveEnvironment, SaveSnapshot } from '../session/save.ts';
 import {
   bensonTunables,
   flightModel,
@@ -26,6 +27,31 @@ export const requiredSettings = (text: string | undefined): Settings => {
   return loadSettings(text);
 };
 
+export const saveEnvironment = (
+  bundle: Bundle,
+  settings: Settings
+): SaveEnvironment => ({
+  payload: {
+    bensonSchemaVersion: bundle.benson?.schemaVersion ?? 0,
+    decoderVersion: bundle.manifest.decoderVersion,
+    flightSchemaVersion: bundle.flight?.schemaVersion ?? 0,
+    interactionSchemaVersion: bundle.interaction?.schemaVersion ?? 0,
+    schemaVersion: bundle.manifest.schemaVersion,
+    sourceCoreDigest: bundle.manifest.sourceCoreDigest,
+    sourceDatasetId: bundle.manifest.sourceDatasetId,
+    textSchemaVersion: bundle.text?.schemaVersion ?? 0,
+    undergroundSchemaVersion: bundle.underground?.schemaVersion ?? null
+  },
+  settings: {
+    flight: {
+      ...settings.flight,
+      groundAltitude: settings.flight.groundAltitude ?? null
+    },
+    message: { ...settings.message },
+    scripts: { ...settings.scripts }
+  }
+});
+
 /// Assemble the one live opening loop the Browser Shell presents.
 ///
 /// The payload schema permits several documents to be absent for research and inspection
@@ -33,7 +59,8 @@ export const requiredSettings = (text: string | undefined): Settings => {
 /// surface whose advertised controls or opening script could not work.
 export const createWalkabout = (
   bundle: Bundle,
-  settings: Settings
+  settings: Settings,
+  restore?: SaveSnapshot
 ): Walkabout => {
   if (bundle.flight === undefined) {
     throw new Error('flight.json is required by the browser walkabout');
@@ -61,12 +88,12 @@ export const createWalkabout = (
     bundle.flight,
     world.groundExtent
   );
-  const session = new GameplaySession(
-    sessionContent(world, bundle, flight),
-    openingPlayer(),
-    scripts
-  );
-  if (!session.start(0)) {
+  const content = sessionContent(world, bundle, flight);
+  const session =
+    restore === undefined
+      ? new GameplaySession(content, openingPlayer(), scripts)
+      : GameplaySession.restore(content, scripts, restore);
+  if (restore === undefined && !session.start(0)) {
     throw new Error('the opening Benson Script could not start');
   }
   return { session, world };

@@ -43,8 +43,16 @@ Where one object currently is: somewhere on the surface, in a Room, carried by t
 _Avoid_: Object position, inventory flag, room membership
 
 **Session Snapshot**:
-One consistent description of a Gameplay Session at a single moment, complete enough to draw from and to compare against another, which every renderer consumes instead of reading the session's parts.
-_Avoid_: View model, game state, render state
+One consistent presentation-facing description of a Gameplay Session at a single moment, complete enough to draw from and to compare against another, which every renderer consumes instead of reading the session's parts; it is not the restore-complete Save Snapshot.
+_Avoid_: View model, game state, render state, Save Snapshot
+
+**Save**:
+A player-created record kept by the Browser Shell, containing one Save Snapshot together with the identity needed to decide whether it can be restored into the current game.
+_Avoid_: Save file, checkpoint, autosave
+
+**Save Snapshot**:
+The complete serializable description of one Gameplay Session's Session State at a single moment, sufficient to restore the same playable moment and deterministic future behaviour.
+_Avoid_: Session Snapshot, runtime snapshot, game data
 
 **Doorway**:
 One opening belonging to a single Room, carrying the Room Link it leads along, whatever it demands before it opens, and where in the destination it puts the player; two Rooms that face each other have a Doorway each rather than sharing one.
@@ -236,7 +244,7 @@ _Avoid_: Plugin, official expansion
 
 **Session State**:
 The complete set of mutable, future-affecting Game Semantics values for one play session.
-_Avoid_: Save file, runtime snapshot, game data
+_Avoid_: Save, Save Snapshot, runtime snapshot, game data
 
 **Transition Log** (historical):
 The authoritative ordered history of committed Game Semantics outcomes from which Session State is derived.

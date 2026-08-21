@@ -1,4 +1,9 @@
 import type { Description as InteractionDescription } from '../interaction/index.ts';
+import {
+  decodeRandomState,
+  encodeRandomState,
+  type BensonSaveSnapshot
+} from '../session/save.ts';
 import type { TextTable } from '../text/index.ts';
 import { BensonHostState, type BensonEffect } from './host.ts';
 import {
@@ -15,6 +20,14 @@ import { MessageTicker } from './ticker.ts';
 
 /// Session construction uses this seed. A bare `BensonState` uses `BensonState.defaultSeed`.
 export const DEFAULT_SESSION_SEED = 0x2c_69_2e_d8_1b_7f_0a_31n;
+
+const sortedSet = (values: ReadonlySet<number>): number[] =>
+  [...values].sort((a, b) => a - b);
+
+const sortedEntries = (
+  values: ReadonlyMap<number, number>
+): readonly (readonly [number, number])[] =>
+  [...values.entries()].sort(([a], [b]) => a - b);
 
 /// One running Benson Script, its host state, and the message line it drives.
 export class BensonSession {
@@ -174,5 +187,91 @@ export class BensonSession {
         this.start(description.id);
         break;
     }
+  }
+
+  captureSaveSnapshot(): BensonSaveSnapshot {
+    return {
+      frames: this.frames,
+      host: {
+        attackingShip: this.host.attackingShip,
+        boardedCraft: this.host.boardedCraft,
+        canLiftAnything: this.host.canLiftAnything,
+        canTakeAnything: this.host.canTakeAnything,
+        currentRoom: this.host.currentRoom,
+        decimals: [...this.host.decimals],
+        destroyedBlocks: sortedSet(this.host.destroyedBlocks),
+        engineFlags: this.host.engineFlags,
+        gameComplete: this.host.gameComplete,
+        inventory: sortedSet(this.host.inventory),
+        messageInterval: this.host.messageInterval,
+        messagePlaying: this.host.messagePlaying,
+        objectFlags: sortedEntries(this.host.objectFlags),
+        objectRooms: sortedEntries(this.host.objectRooms),
+        pendingKey: this.host.pendingKey ?? null,
+        shipInbound: this.host.shipInbound,
+        signedRegister: this.host.signedRegister,
+        tickCounter: this.host.tickCounter
+      },
+      state: {
+        callStack: [...this.state.callStack],
+        pc: this.state.pc ?? null,
+        randomState: encodeRandomState(this.state.randomState),
+        registers: [...this.state.registers],
+        resumeAfterTick: this.state.resumeAfterTick ?? null
+      },
+      ticker: this.ticker?.captureSaveSnapshot() ?? null
+    };
+  }
+
+  static restore(
+    program: BensonProgram,
+    text: TextTable,
+    tunables: BensonTunables,
+    snapshot: BensonSaveSnapshot
+  ): BensonSession {
+    const instructionCount = program.instructions.length;
+    if (
+      snapshot.state.pc !== null &&
+      (snapshot.state.pc < 0 || snapshot.state.pc >= instructionCount)
+    ) {
+      throw new Error(
+        `Save Snapshot program counter ${snapshot.state.pc} is outside the Benson program`
+      );
+    }
+    for (const address of snapshot.state.callStack) {
+      if (address < 0 || address > instructionCount) {
+        throw new Error(
+          `Save Snapshot call-stack address ${address} is outside the Benson program`
+        );
+      }
+    }
+    const framesPerTick = Math.max(1, tunables.framesPerTick);
+    if (snapshot.frames >= framesPerTick) {
+      throw new Error(
+        `Save Snapshot fractional script timing ${snapshot.frames} is outside its tick`
+      );
+    }
+    const session = new BensonSession(program, text, tunables);
+    session.state = new BensonState({
+      callStack: snapshot.state.callStack,
+      pc: snapshot.state.pc ?? undefined,
+      randomState: decodeRandomState(snapshot.state.randomState),
+      registers: snapshot.state.registers,
+      resumeAfterTick: snapshot.state.resumeAfterTick ?? undefined
+    });
+    session.host = new BensonHostState({
+      ...snapshot.host,
+      destroyedBlocks: new Set(snapshot.host.destroyedBlocks),
+      inventory: new Set(snapshot.host.inventory),
+      objectFlags: new Map(snapshot.host.objectFlags),
+      objectRooms: new Map(snapshot.host.objectRooms),
+      pendingKey: snapshot.host.pendingKey ?? undefined
+    });
+    session.frames = snapshot.frames;
+    session.ticker =
+      snapshot.ticker === null
+        ? undefined
+        : MessageTicker.restore(snapshot.ticker);
+    return session;
   }
 }

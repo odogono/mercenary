@@ -120,6 +120,44 @@
         font-synthesis: none;
       }
 
+      #save-controls {
+        display: flex;
+        flex: none;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+      }
+
+      #save-controls label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      #save-controls select,
+      #save-controls button {
+        min-height: 2rem;
+        padding: 4px 8px;
+        color: var(--text);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 0;
+        font: inherit;
+        font-synthesis: none;
+      }
+
+      #save-controls button:focus-visible,
+      #save-controls select:focus-visible,
+      #typeface:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      #save-controls button:disabled,
+      #save-controls select:disabled {
+        opacity: 0.55;
+      }
+
       #failure {
         width: min(calc(100% - 2rem), 60rem);
         margin: 1rem auto 0;
@@ -144,6 +182,27 @@
         :root {
           --shell-font-size: 8px;
         }
+
+        #status,
+        #save-controls {
+          flex: 1 1 100%;
+          min-width: 0;
+        }
+
+        #save-controls label {
+          min-width: 0;
+          flex: 1 1 100%;
+        }
+
+        #save-controls select {
+          width: 100%;
+          min-width: 0;
+        }
+
+        #save-controls button {
+          min-width: 0;
+          flex: 1 1 0;
+        }
       }
     </style>
   </head>
@@ -156,12 +215,30 @@
           height="800"
           aria-label="Wireframe view of Targ"
         ></canvas>
-        <div id="comms" aria-label="Communications" aria-live="off">
+        <div
+          id="comms"
+          role="group"
+          aria-label="Communications"
+          aria-live="off"
+        >
           <span id="message">Loading the Data Payload…</span>
           <span id="credits"></span>
         </div>
         <div id="status-row">
           <div id="status">STARTING SESSION</div>
+          <div id="save-controls" role="group" aria-label="Saved sessions">
+            <label for="save-slot">
+              <span>SAVE</span>
+              <select id="save-slot" aria-label="Save slot">
+                <option value="1">SLOT 1 — EMPTY</option>
+                <option value="2">SLOT 2 — EMPTY</option>
+                <option value="3">SLOT 3 — EMPTY</option>
+              </select>
+            </label>
+            <button id="save-session" type="button">SAVE</button>
+            <button id="load-session" type="button">LOAD</button>
+            <button id="delete-save" type="button">DELETE</button>
+          </div>
           <label id="typeface-control" for="typeface">
             <span>TYPEFACE</span>
             <select id="typeface" disabled>

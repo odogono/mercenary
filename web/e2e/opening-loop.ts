@@ -1,6 +1,12 @@
 import { fetchReader, load } from '../src/payload/load.ts';
+import { SAVE_SCHEMA_VERSION, encodeSave } from '../src/session/save.ts';
 import { Renderer } from '../src/shell/frame.ts';
-import { createWalkabout, requiredSettings } from '../src/shell/session.ts';
+import { SaveSlots, type SaveSlot } from '../src/shell/saves.ts';
+import {
+  createWalkabout,
+  requiredSettings,
+  saveEnvironment
+} from '../src/shell/session.ts';
 import { targOrreryFor } from '../src/sky/index.ts';
 import {
   foldStates,
@@ -39,7 +45,11 @@ try {
   const trace = parseTrace(traceText, 'session', TRACE_ID);
   const expected = foldStates(trace);
   const settings = requiredSettings(settingsText);
-  const { session, world } = createWalkabout(bundle, settings);
+  const initial = createWalkabout(bundle, settings);
+  let session = initial.session;
+  const { world } = initial;
+  const environment = saveEnvironment(bundle, settings);
+  const slots = new SaveSlots(localStorage);
   const orrery = targOrreryFor(settings.presentation);
   const renderer = new Renderer(canvas, orrery);
   const milestones = ['initial'];
@@ -48,6 +58,33 @@ try {
   const dt = trace.header['dt'] as number;
   let reached = typeof walkTo !== 'number';
   let nextStep = 0;
+  const saveRestores: string[] = [];
+
+  const saveAndRestore = (slot: SaveSlot, milestone: string): void => {
+    const before = session.captureSaveSnapshot();
+    const savedAt = new Date().toISOString();
+    const location = session.location;
+    const encoded = encodeSave({
+      environment,
+      location,
+      savedAt,
+      schemaVersion: SAVE_SCHEMA_VERSION,
+      snapshot: before
+    });
+    slots.write(slot, encoded);
+    session = createWalkabout(bundle, settings, before).session;
+    const restored = encodeSave({
+      environment,
+      location: session.location,
+      savedAt,
+      schemaVersion: SAVE_SCHEMA_VERSION,
+      snapshot: session.captureSaveSnapshot()
+    });
+    if (restored !== encoded) {
+      throw new Error(`${milestone} Save restore changed the snapshot`);
+    }
+    saveRestores.push(milestone);
+  };
 
   expectIdentical(
     trace.header['initial'],
@@ -100,6 +137,7 @@ try {
     ) {
       renderer.draw(world, snapshot, VIEWPORT);
       milestones.push('airborne');
+      saveAndRestore(2, 'airborne');
     }
     if (
       events.some(
@@ -117,6 +155,7 @@ try {
       renderer.draw(world, snapshot, VIEWPORT);
       if (!milestones.includes('room-1')) {
         milestones.push('room-1');
+        saveAndRestore(3, 'room-1');
       }
     }
     nextStep += 1;
@@ -135,6 +174,7 @@ try {
   }
 
   surface.dataset['milestones'] = milestones.join(',');
+  surface.dataset['saveRestores'] = saveRestores.join(',');
   surface.dataset['credits'] = String(final.credits);
   const dart = final.residence.get(1);
   if (dart?.kind !== 'surface' || dart.at === undefined) {

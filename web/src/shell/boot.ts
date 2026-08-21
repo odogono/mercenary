@@ -1,10 +1,16 @@
+import { IDLE } from '../gameCore/index.ts';
 import { fetchReader, load } from '../payload/load.ts';
 import type { SessionSnapshot } from '../session/index.ts';
 import { targOrreryFor } from '../sky/index.ts';
 import { FixedStepClock } from './clock.ts';
 import { Renderer } from './frame.ts';
 import { BrowserControlProfile } from './input.ts';
-import { createWalkabout, requiredSettings } from './session.ts';
+import { installSaveControls } from './saves.ts';
+import {
+  createWalkabout,
+  requiredSettings,
+  saveEnvironment
+} from './session.ts';
 import { installSuspensionHandlers } from './suspension.ts';
 import { installTypefaceSelector, loadTypography } from './typography.ts';
 
@@ -16,6 +22,13 @@ const message = document.getElementById('message')!;
 const credits = document.getElementById('credits')!;
 const status = document.getElementById('status')!;
 const typeface = document.getElementById('typeface') as HTMLSelectElement;
+const saveControls = document.getElementById('save-controls')!;
+const saveSlot = document.getElementById('save-slot') as HTMLSelectElement;
+const saveButton = document.getElementById('save-session') as HTMLButtonElement;
+const loadButton = document.getElementById('load-session') as HTMLButtonElement;
+const deleteButton = document.getElementById(
+  'delete-save'
+) as HTMLButtonElement;
 const failure = document.getElementById('failure')!;
 
 canvas.width = VIEWPORT.width;
@@ -87,7 +100,10 @@ try {
   }
   installTypefaceSelector(typeface, document.documentElement, storage);
   const settings = requiredSettings(settingsText);
-  const { session, world } = createWalkabout(bundle, settings);
+  const environment = saveEnvironment(bundle, settings);
+  const initial = createWalkabout(bundle, settings);
+  let session = initial.session;
+  let world = initial.world;
   const orrery = targOrreryFor(settings.presentation);
   const renderer = new Renderer(canvas, orrery);
   const clock = new FixedStepClock();
@@ -121,11 +137,15 @@ try {
   const release = (): void => {
     controls.releaseAll();
     clock.reset();
+    session.intent = IDLE;
   };
   typeface.addEventListener('focus', release);
   installSuspensionHandlers(window, document, release);
   window.addEventListener('keydown', event => {
-    if (document.activeElement === typeface) {
+    if (
+      document.activeElement === typeface ||
+      saveControls.contains(document.activeElement)
+    ) {
       return;
     }
     if (controls.keyDown(event)) {
@@ -133,7 +153,11 @@ try {
     }
   });
   window.addEventListener('keyup', event => {
-    if (document.activeElement === typeface) {
+    if (
+      document.activeElement === typeface ||
+      saveControls.contains(document.activeElement)
+    ) {
+      controls.keyUp(event);
       return;
     }
     if (controls.keyUp(event)) {
@@ -141,11 +165,36 @@ try {
     }
   });
 
+  const persistence = installSaveControls({
+    capture: () => ({
+      location: session.location,
+      snapshot: session.captureSaveSnapshot()
+    }),
+    elements: {
+      deleteButton,
+      loadButton,
+      saveButton,
+      slot: saveSlot
+    },
+    environment,
+    release,
+    restore: savedSnapshot => {
+      const restored = createWalkabout(bundle, settings, savedSnapshot);
+      session = restored.session;
+      world = restored.world;
+      snapshot = session.snapshot;
+    },
+    storage,
+    storageEvents: window
+  });
+
   const publish = (): void => {
     const drawn = renderer.draw(world, snapshot, VIEWPORT);
     const player = snapshot.player;
 
-    updateText(message, snapshot.message === '' ? '—' : snapshot.message);
+    const publishedMessage = persistence.message(snapshot.message);
+    updateText(message, publishedMessage.text);
+    message.dataset['source'] = publishedMessage.source;
     updateText(credits, `${snapshot.credits} CREDITS`);
     updateText(
       status,

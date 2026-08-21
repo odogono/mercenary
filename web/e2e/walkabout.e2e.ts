@@ -251,15 +251,77 @@ test('the live opening loop renders, walks and releases held input', async ({
     const layout = await page.evaluate(() => {
       const canvas = document.querySelector<HTMLCanvasElement>('#frame')!;
       const bounds = canvas.getBoundingClientRect();
+      const saveBounds = document
+        .querySelector('#save-controls')!
+        .getBoundingClientRect();
       return {
         canvasRatio: bounds.width / bounds.height,
         documentWidth: document.documentElement.scrollWidth,
+        saveLeft: saveBounds.left,
+        saveRight: saveBounds.right,
         viewportWidth: innerWidth
       };
     });
     expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
+    expect(layout.saveLeft).toBeGreaterThanOrEqual(0);
+    expect(layout.saveRight).toBeLessThanOrEqual(layout.viewportWidth);
     expect(layout.canvasRatio).toBeCloseTo(1280 / 800, 5);
   }
 
   expect(errors).toEqual([]);
+});
+
+test('a Save restores the same playable moment after a full reload', async ({
+  page
+}) => {
+  await page.goto('/');
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-state',
+    'ready'
+  );
+  const canvas = page.locator('#frame');
+  const position = async (): Promise<{
+    x: string | null;
+    z: string | null;
+  }> => ({
+    x: await canvas.getAttribute('data-x'),
+    z: await canvas.getAttribute('data-z')
+  });
+  const opening = await position();
+
+  await page.keyboard.down('ArrowUp');
+  await expect.poll(async () => (await position()).z).not.toBe(opening.z);
+  await page.keyboard.up('ArrowUp');
+  const saved = await position();
+
+  await page.locator('#save-session').click();
+  await expect(page.locator('#message')).toContainText('SAVED SLOT 1');
+  await expect(page.locator('#save-slot')).toHaveValue('1');
+
+  await page.reload();
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-state',
+    'ready'
+  );
+  expect(await position()).toEqual(opening);
+  await expect(page.locator('#save-slot option:checked')).toContainText(
+    'SURFACE'
+  );
+
+  await page.locator('#load-session').click();
+  await expect(page.locator('#message')).toContainText('LOADED SLOT 1');
+  expect(await position()).toEqual(saved);
+
+  await page.locator('#save-session').click();
+  await expect(page.locator('#save-session')).toHaveText('CONFIRM SAVE');
+  await page.locator('#save-session').click();
+  await expect(page.locator('#message')).toContainText('SAVED SLOT 1');
+
+  await page.locator('#delete-save').click();
+  await expect(page.locator('#delete-save')).toHaveText('CONFIRM DELETE');
+  await page.locator('#delete-save').click();
+  await expect(page.locator('#message')).toContainText('DELETED SLOT 1');
+  await expect(page.locator('#save-slot option:checked')).toContainText(
+    'EMPTY'
+  );
 });
