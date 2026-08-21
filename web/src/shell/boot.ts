@@ -6,6 +6,8 @@ import { locationText } from '../world/index.ts';
 import { FixedStepClock } from './clock.ts';
 import { Renderer } from './frame.ts';
 import { BrowserControlProfile } from './input.ts';
+import { objectNamesOf, panelViewModel, type PanelContext } from './panel.ts';
+import { installPanel, installPanelScale } from './panelView.ts';
 import { createPreferences, effectivePresentation } from './preferences.ts';
 import { routeKey, type RouterState } from './router.ts';
 import { installSaveControls } from './saves.ts';
@@ -32,6 +34,26 @@ const deleteButton = document.getElementById(
   'delete-save'
 ) as HTMLButtonElement;
 const failure = document.getElementById('failure')!;
+const panelRoot = document.getElementById('benson-panel')!;
+const panelScale = document.getElementById('panel-scale')!;
+
+const panelElements = {
+  damoclesCompass: document.getElementById(
+    'damocles-compass-canvas'
+  ) as HTMLCanvasElement,
+  damoclesElevation: document.getElementById(
+    'damocles-elevation-canvas'
+  ) as HTMLCanvasElement,
+  fields: panelRoot.querySelectorAll<HTMLElement>('[data-field]'),
+  lamps: panelRoot.querySelectorAll<HTMLElement>('[data-lamp]'),
+  root: surface,
+  targCompass: document.getElementById(
+    'targ-compass-canvas'
+  ) as HTMLCanvasElement,
+  targElevation: document.getElementById(
+    'targ-elevation-canvas'
+  ) as HTMLCanvasElement
+};
 
 canvas.width = VIEWPORT.width;
 canvas.height = VIEWPORT.height;
@@ -109,6 +131,7 @@ try {
   const initial = createWalkabout(bundle, settings);
   let session = initial.session;
   let world = initial.world;
+  let names = objectNamesOf(world.objects);
   const orrery = targOrreryFor(
     effectivePresentation(settings.presentation, preferences.current())
   );
@@ -206,15 +229,28 @@ try {
       const restored = createWalkabout(bundle, settings, savedSnapshot);
       session = restored.session;
       world = restored.world;
+      names = objectNamesOf(world.objects);
       snapshot = session.snapshot;
     },
     storage,
     storageEvents: window
   });
 
+  installPanelScale(panelRoot, panelScale, (target, onResize) => {
+    new ResizeObserver(onResize).observe(target);
+  });
+  const panel = installPanel(panelElements);
+  const panelContext = (): PanelContext => ({
+    cellSize: world.cellSize,
+    dayLengthMinutes: settings.presentation.sky.dayLengthMinutes,
+    // Object names are fixed content, so they are gathered once per world rather than per frame.
+    objectNames: names
+  });
+
   const publish = (): void => {
     const drawn = renderer.draw(world, snapshot, VIEWPORT);
     const player = snapshot.player;
+    panel.draw(panelViewModel(snapshot, panelContext()));
 
     const publishedMessage = persistence.message(snapshot.message);
     updateText(message, publishedMessage.text);
