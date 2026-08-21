@@ -76,20 +76,26 @@ test('Chromium replays the recorded opening loop bit-for-bit and renders its mil
     'data-state',
     'ready'
   );
-  await page.locator('#save-slot').selectOption('2');
-  await expect(page.locator('#save-slot option:checked')).toContainText(
-    'SURFACE'
-  );
-  await page.locator('#load-session').click();
-  await expect(page.locator('#message')).toContainText('LOADED SLOT 2');
+  const openSaves = async (): Promise<void> => {
+    await page.keyboard.press('Escape');
+    await page.locator('button[data-goto="saves"]').click();
+    await expect(page.locator('#game-surface')).toHaveAttribute(
+      'data-layer',
+      'saves'
+    );
+  };
+  await openSaves();
+  await expect(
+    page.locator('.slot-row[data-slot="2"] .slot-detail')
+  ).toContainText('SURFACE');
+  await page.locator('.slot-row[data-slot="2"] [data-action="load"]').click();
   await expect(page.locator('#status')).toContainText('FLYING');
 
-  await page.locator('#save-slot').selectOption('3');
-  await expect(page.locator('#save-slot option:checked')).toContainText(
-    'ROOM 01'
-  );
-  await page.locator('#load-session').click();
-  await expect(page.locator('#message')).toContainText('LOADED SLOT 3');
+  await openSaves();
+  await expect(
+    page.locator('.slot-row[data-slot="3"] .slot-detail')
+  ).toContainText('ROOM 01');
+  await page.locator('.slot-row[data-slot="3"] [data-action="load"]').click();
   await expect(page.locator('#status')).toContainText('ROOM 01');
   expect(errors).toEqual([]);
 });

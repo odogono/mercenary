@@ -6,18 +6,26 @@ import { locationText } from '../world/index.ts';
 import { FixedStepClock } from './clock.ts';
 import { Renderer } from './frame.ts';
 import { BrowserControlProfile } from './input.ts';
+import { escapeFrom, installSystemMenu } from './menu.ts';
 import { objectNamesOf, panelViewModel, type PanelContext } from './panel.ts';
 import { installPanel, installPanelScale } from './panelView.ts';
 import { createPreferences, effectivePresentation } from './preferences.ts';
 import { routeKey, type RouterState } from './router.ts';
-import { installSaveControls } from './saves.ts';
+import { installSaveChooser } from './saveChooser.ts';
+import { ALL_SLOTS, createSavePersistence, slotStorageKey } from './saves.ts';
 import {
   createWalkabout,
   requiredSettings,
   saveEnvironment
 } from './session.ts';
+import { installSettingsView } from './settingsView.ts';
+import { installStorageWatch } from './storage.ts';
 import { installSuspensionHandlers } from './suspension.ts';
-import { installTypefaceSelector, loadTypography } from './typography.ts';
+import {
+  applyTypeface,
+  loadTypography,
+  readTypefacePreference
+} from './typography.ts';
 
 const VIEWPORT = { height: 800, width: 1280 } as const;
 
@@ -26,14 +34,12 @@ const canvas = document.getElementById('frame') as HTMLCanvasElement;
 const message = document.getElementById('message')!;
 const credits = document.getElementById('credits')!;
 const status = document.getElementById('status')!;
-const typeface = document.getElementById('typeface') as HTMLSelectElement;
-const saveSlot = document.getElementById('save-slot') as HTMLSelectElement;
-const saveButton = document.getElementById('save-session') as HTMLButtonElement;
-const loadButton = document.getElementById('load-session') as HTMLButtonElement;
-const deleteButton = document.getElementById(
-  'delete-save'
-) as HTMLButtonElement;
 const failure = document.getElementById('failure')!;
+const chromePages = {
+  menu: document.getElementById('page-menu')!,
+  saves: document.getElementById('page-saves')!,
+  settings: document.getElementById('page-settings')!
+};
 const panelRoot = document.getElementById('benson-panel')!;
 const panelScale = document.getElementById('panel-scale')!;
 
@@ -122,7 +128,8 @@ try {
   } catch {
     storage = undefined;
   }
-  installTypefaceSelector(typeface, document.documentElement, storage);
+  // The typeface is applied before anything is drawn; the settings page owns changing it.
+  applyTypeface(document.documentElement, readTypefacePreference(storage));
   const settings = requiredSettings(settingsText);
   // Player presentation choices overlay the tracked tuning document. They never reach the
   // blocks that identify a Save, so changing one cannot make an existing Save unloadable.
@@ -169,8 +176,13 @@ try {
     clock.reset();
     session.intent = IDLE;
   };
-  typeface.addEventListener('focus', release);
   installSuspensionHandlers(window, document, release);
+
+  const menu = installSystemMenu({
+    pages: chromePages,
+    release,
+    surface
+  });
 
   // Chrome roots declare themselves in the markup, so a new surface owns its keys by carrying
   // the attribute rather than by being named here.
@@ -179,17 +191,18 @@ try {
   const routerState = (): RouterState => ({
     chromeFocus: chromeFocus(),
     console: 'closed',
-    layer: 'none'
+    layer: menu.layer()
   });
 
   window.addEventListener('keydown', event => {
     switch (routeKey(routerState(), event)) {
       case 'browser':
       case 'chrome':
-      // The System Menu arrives in a later slice, and Escape reaches no Control Profile action
-      // today, so there is nothing to hold back.
-      // falls through
+        return;
       case 'escape':
+        // Escape both enters and leaves the chrome, so the menu decides where it goes.
+        menu.show(escapeFrom(menu.layer()));
+        event.preventDefault();
         return;
       case 'console-toggle':
       case 'game':
@@ -212,17 +225,11 @@ try {
     }
   });
 
-  const persistence = installSaveControls({
+  const persistence = createSavePersistence({
     capture: () => ({
       location: session.location,
       snapshot: session.captureSaveSnapshot()
     }),
-    elements: {
-      deleteButton,
-      loadButton,
-      saveButton,
-      slot: saveSlot
-    },
     environment,
     release,
     restore: savedSnapshot => {
@@ -231,9 +238,22 @@ try {
       world = restored.world;
       names = objectNamesOf(world.objects);
       snapshot = session.snapshot;
+      // A restored Save is a new moment to play, so the menu steps out of the way.
+      menu.show('none');
     },
-    storage,
-    storageEvents: window
+    storage
+  });
+  installStorageWatch(
+    window,
+    ALL_SLOTS.map(slotStorageKey),
+    persistence.dismiss
+  );
+  installSaveChooser({ page: chromePages.saves, persistence });
+  installSettingsView({
+    page: chromePages.settings,
+    preferences,
+    root: document.documentElement,
+    storage
   });
 
   installPanelScale(panelRoot, panelScale, (target, onResize) => {
@@ -269,10 +289,16 @@ try {
 
   publish();
   const frame = (timestamp: number): void => {
-    clock.frame(timestamp, seconds => {
-      session.intent = controls.intent;
-      snapshot = session.advance(seconds).snapshot;
-    });
+    // The System Menu pauses the session rather than hiding it: the frame keeps being drawn, so
+    // the player can see what they are about to return to, but no time passes.
+    if (menu.layer() === 'none') {
+      clock.frame(timestamp, seconds => {
+        session.intent = controls.intent;
+        snapshot = session.advance(seconds).snapshot;
+      });
+    } else {
+      clock.reset();
+    }
 
     if (lastFrame !== undefined) {
       frameCount += 1;

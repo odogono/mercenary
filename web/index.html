@@ -57,16 +57,18 @@
 
       /* The world view and the Benson Panel are one authored frame, scaled together and
          letterboxed, rather than a view that fills the window with a gadget beneath it. */
+      /* The frame is scaled to fit the window, so its height budget must exclude the shell's own
+         edges: the two border lines above and below the Game Surface. */
       #frame-stack {
         display: grid;
-        width: min(100%, calc(100dvh * 1280 / 970));
+        width: min(100%, calc((100dvh - 2px) * 1280 / 970));
         margin-inline: auto;
         aspect-ratio: 1280 / 970;
         grid-template-rows: 800fr 170fr;
       }
 
       #game-surface[data-composition='strip'] #frame-stack {
-        width: min(100%, calc(100dvh * 1280 / 800));
+        width: min(100%, calc((100dvh - 2px) * 1280 / 800));
         aspect-ratio: 1280 / 800;
         grid-template-rows: 1fr;
       }
@@ -456,12 +458,14 @@
       }
 
       /* --- Damocles rendition --------------------------------------------- */
+      /* Both renditions are authored to the same height, because the frame above them is sized
+         once for the composition rather than per rendition. */
       #panel-damocles {
         display: grid;
-        height: 200px;
-        padding: 8px 12px 10px;
-        gap: 8px;
-        grid-template-rows: 38px 1fr;
+        height: 170px;
+        padding: 6px 10px 8px;
+        gap: 6px;
+        grid-template-rows: 34px 1fr;
       }
 
       #damocles-message-bar {
@@ -483,10 +487,17 @@
         white-space: nowrap;
       }
 
+      /* A grid row of 1fr still refuses to shrink below its content, so the body and every
+         column that flexes inside it say so explicitly. */
       #damocles-body {
         display: grid;
+        min-height: 0;
         gap: 8px;
         grid-template-columns: 16px 372px 1fr 300px 16px;
+      }
+
+      #damocles-body > * {
+        min-height: 0;
       }
 
       .tp-gauge {
@@ -515,9 +526,10 @@
 
       #damocles-nav {
         display: flex;
+        min-height: 0;
         flex-direction: column;
-        gap: 12px;
-        padding: 12px;
+        gap: 8px;
+        padding: 8px;
         background: var(--nav-face);
         border-radius: 10px;
         box-shadow:
@@ -570,9 +582,10 @@
 
       #damocles-nav .nav-stack {
         display: flex;
+        min-height: 0;
         flex: 1;
         flex-direction: column;
-        gap: 12px;
+        gap: 8px;
       }
 
       #damocles-nav .nav-foot {
@@ -616,15 +629,17 @@
 
       #damocles-right {
         display: flex;
+        min-height: 0;
         flex-direction: column;
-        gap: 12px;
+        gap: 8px;
       }
 
       #damocles-inventory {
         display: grid;
+        min-height: 0;
         flex: 1;
-        gap: 10px;
-        padding: 12px;
+        gap: 8px;
+        padding: 8px;
         background: var(--inv-face);
         border-radius: 10px;
         box-shadow:
@@ -650,12 +665,14 @@
 
       #damocles-inventory .inventory-stack {
         display: flex;
+        min-height: 0;
         flex-direction: column;
-        gap: 10px;
+        gap: 6px;
       }
 
       #inventory-window {
         display: flex;
+        min-height: 0;
         flex: 1;
         align-items: center;
         justify-content: center;
@@ -700,13 +717,164 @@
       }
 
       #damocles-clock {
-        padding: 4px 12px 2px;
+        padding: 2px 8px 1px;
         background: var(--clock-bg);
-        border-radius: 5px;
+        border-radius: 4px;
         color: var(--clock-ink);
-        font-size: 22px;
+        font-size: 18px;
         letter-spacing: 0.1em;
         text-shadow: 2px 0 0 currentcolor;
+      }
+
+      /* ---------------------------------------------------------------------
+         SYSTEM MENU, SETTINGS AND SAVE CHOOSER — Browser Shell chrome over a
+         paused Game Surface, wearing the panel's own token layer.
+         ------------------------------------------------------------------ */
+      #game-surface {
+        position: relative;
+      }
+
+      #shell-chrome {
+        position: absolute;
+        z-index: 2;
+        display: none;
+        inset: 0;
+        place-items: center;
+        background: rgb(6 6 6 / 55%);
+      }
+
+      #game-surface:not([data-layer='none']) #shell-chrome {
+        display: grid;
+      }
+
+      .chrome-page {
+        display: none;
+        min-width: 320px;
+        max-width: min(92%, 560px);
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+        font-family: var(--panel-font);
+      }
+
+      #game-surface[data-layer='menu'] #page-menu,
+      #game-surface[data-layer='settings'] #page-settings,
+      #game-surface[data-layer='saves'] #page-saves {
+        display: flex;
+      }
+
+      .chrome-title {
+        margin: 0;
+        padding-bottom: 4px;
+        color: var(--label-ink);
+        font-size: 15px;
+        letter-spacing: 0.18em;
+        text-align: center;
+      }
+
+      .chrome-label {
+        color: var(--label-ink);
+        font-size: 12px;
+        letter-spacing: 0.06em;
+      }
+
+      .chrome-button {
+        padding: 7px 10px 6px;
+        background: var(--lcd-bg);
+        border: 2px solid var(--cell-border);
+        border-radius: 4px;
+        color: var(--lcd-ink);
+        font-family: inherit;
+        font-size: 14px;
+        letter-spacing: 0.12em;
+        cursor: pointer;
+      }
+
+      .chrome-button:disabled {
+        cursor: default;
+        opacity: 0.35;
+      }
+
+      .chrome-button:focus-visible {
+        outline: 2px solid var(--lamp-on);
+        outline-offset: 2px;
+      }
+
+      /* The current choice is lit rather than merely darker, so it reads at a glance. */
+      .chrome-button[aria-pressed='true'] {
+        background: var(--lamp-on);
+        color: #1a1206;
+      }
+
+      .chrome-button.armed {
+        background: var(--lamp-on);
+        color: #1a1206;
+      }
+
+      .setting-row {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 132px 1fr;
+        align-items: center;
+      }
+
+      .setting-choices {
+        display: flex;
+        gap: 4px;
+      }
+
+      .setting-choices .chrome-button {
+        flex: 1;
+        padding: 5px 4px 4px;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+      }
+
+      #slot-rows {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .slot-row {
+        display: grid;
+        gap: 5px;
+        grid-template-columns: 1fr auto auto auto;
+        align-items: center;
+      }
+
+      .slot-description {
+        display: flex;
+        min-width: 0;
+        overflow: hidden;
+        gap: 8px;
+        padding: 6px 8px 5px;
+        background: var(--lcd-bg);
+        border: 2px solid var(--cell-border);
+        border-radius: 4px;
+        color: var(--lcd-ink);
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+      }
+
+      .slot-name {
+        flex: none;
+      }
+
+      .slot-detail {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .slot-detail.refused {
+        color: #e86a4a;
+      }
+
+      .slot-row .chrome-button {
+        padding: 5px 7px 4px;
+        font-size: 10px;
+        letter-spacing: 0.06em;
       }
     </style>
   </head>
@@ -867,31 +1035,67 @@
         </div>
         <div id="status-row">
           <div id="status">STARTING SESSION</div>
+        </div>
+
+        <div id="shell-chrome" data-shell-chrome>
           <div
-            id="save-controls"
-            data-shell-chrome
-            role="group"
-            aria-label="Saved sessions"
+            id="page-menu"
+            class="chrome-page bezel"
+            role="dialog"
+            aria-label="System Menu"
           >
-            <label for="save-slot">
-              <span>SAVE</span>
-              <select id="save-slot" aria-label="Save slot">
-                <option value="1">SLOT 1 — EMPTY</option>
-                <option value="2">SLOT 2 — EMPTY</option>
-                <option value="3">SLOT 3 — EMPTY</option>
-              </select>
-            </label>
-            <button id="save-session" type="button">SAVE</button>
-            <button id="load-session" type="button">LOAD</button>
-            <button id="delete-save" type="button">DELETE</button>
+            <p class="chrome-title">BENSON G9-ST SYSTEM</p>
+            <button class="chrome-button" type="button" data-goto="settings">
+              SETTINGS
+            </button>
+            <button class="chrome-button" type="button" data-goto="saves">
+              SAVE / LOAD
+            </button>
+            <button class="chrome-button" type="button" data-goto="none">
+              RESUME
+            </button>
           </div>
-          <label id="typeface-control" data-shell-chrome for="typeface">
-            <span>TYPEFACE</span>
-            <select id="typeface" disabled>
-              <option value="mercenary">MERCENARY</option>
-              <option value="damocles">DAMOCLES</option>
-            </select>
-          </label>
+
+          <div
+            id="page-settings"
+            class="chrome-page bezel"
+            role="dialog"
+            aria-label="Settings"
+          >
+            <p class="chrome-title">SETTINGS</p>
+            <div class="setting-row">
+              <span class="chrome-label">PANEL RENDITION</span>
+              <div class="setting-choices" data-setting="rendition"></div>
+            </div>
+            <div class="setting-row">
+              <span class="chrome-label">COMPOSITION</span>
+              <div class="setting-choices" data-setting="composition"></div>
+            </div>
+            <div class="setting-row">
+              <span class="chrome-label">TYPEFACE</span>
+              <div class="setting-choices" data-setting="typeface"></div>
+            </div>
+            <div class="setting-row">
+              <span class="chrome-label">SKY PRESET</span>
+              <div class="setting-choices" data-setting="sky"></div>
+            </div>
+            <button class="chrome-button" type="button" data-goto="menu">
+              BACK
+            </button>
+          </div>
+
+          <div
+            id="page-saves"
+            class="chrome-page bezel"
+            role="dialog"
+            aria-label="Save and load"
+          >
+            <p class="chrome-title">SAVE / LOAD</p>
+            <div id="slot-rows" data-slot-rows></div>
+            <button class="chrome-button" type="button" data-goto="menu">
+              BACK
+            </button>
+          </div>
         </div>
       </section>
       <p id="failure" role="alert" hidden></p>
