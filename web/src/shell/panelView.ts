@@ -27,7 +27,7 @@ export interface PanelElements extends PanelCanvases {
 const PITCH_PIXELS_PER_DEGREE = 4;
 /// Ten degrees is a readable step wide, so the window holds about three graduations as the
 /// original's does rather than a crowd of them.
-const COMPASS_PIXELS_PER_DEGREE = 3;
+const COMPASS_PIXELS_PER_DEGREE = 4;
 const DAMOCLES_PIXELS_PER_DEGREE = 0.28;
 const QUARTER_LETTERS = ['N', 'E', 'S', 'W'] as const;
 
