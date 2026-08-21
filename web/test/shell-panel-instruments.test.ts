@@ -14,13 +14,16 @@ interface Fill {
 const recorder = (width: number, height: number) => {
   const fills: Fill[] = [];
   const styles: string[] = [];
+  const texts: { readonly text: string; readonly y: number }[] = [];
   const context = {
     fillRect: (x: number, y: number, w: number, h: number) => {
       fills.push({ height: h, width: w, x, y });
       styles.push(String(context.fillStyle));
     },
     fillStyle: '',
-    fillText: () => {},
+    fillText: (text: string, _x: number, y: number) => {
+      texts.push({ text, y });
+    },
     font: '',
     imageSmoothingEnabled: true,
     textAlign: '',
@@ -39,7 +42,8 @@ const recorder = (width: number, height: number) => {
       const at = styles.indexOf(token);
       return at === -1 ? undefined : fills[at];
     },
-    root
+    root,
+    texts
   };
 };
 
@@ -48,6 +52,16 @@ const originalGetComputedStyle = globalThis.getComputedStyle;
 globalThis.getComputedStyle = (() => ({
   getPropertyValue: (name: string) => name
 })) as unknown as typeof originalGetComputedStyle;
+
+interface Painted {
+  readonly texts: { readonly text: string; readonly y: number }[];
+}
+
+/// Where a graduation was printed, if it was in view at all.
+const rowOf = (shot: Painted, label: string): number | undefined =>
+  shot.texts.find(at => at.text === label)?.y;
+
+const labels = (shot: Painted): string[] => shot.texts.map(at => at.text);
 
 describe('the elevation gauge', () => {
   test('splits sky over ground at the middle when level', () => {
@@ -86,6 +100,33 @@ describe('the elevation gauge', () => {
     drawElevation(canvas, root, -10);
 
     expect(bandOf('--gauge-sky')!.height).toBeLessThan(58);
+  });
+
+  test('scrolls its graduations with the reading, like the compass', () => {
+    const level = recorder(62, 116);
+    drawElevation(level.canvas, level.root, 0);
+    const climbing = recorder(62, 116);
+    drawElevation(climbing.canvas, climbing.root, 10);
+
+    // The nought is on the tape, so it travels down the window as the nose rises.
+    expect(rowOf(level, '00')).toBeDefined();
+    expect(rowOf(climbing, '00')!).toBeGreaterThan(rowOf(level, '00')!);
+    // The reading itself sits at the centre, whatever it is.
+    expect(rowOf(climbing, '10')).toBeCloseTo(58, 0);
+    expect(rowOf(level, '00')).toBeCloseTo(58, 0);
+  });
+
+  test('brings further graduations into view as the tape scrolls', () => {
+    const level = recorder(62, 116);
+    drawElevation(level.canvas, level.root, 0);
+    const steep = recorder(62, 116);
+    drawElevation(steep.canvas, steep.root, 30);
+
+    expect(labels(level)).toContain('00');
+    expect(labels(level)).toContain('-10');
+    expect(labels(steep)).toContain('30');
+    // A tape shows its neighbourhood, not the whole scale at once.
+    expect(labels(steep)).not.toContain('00');
   });
 
   test('never paints past its own frame, however steep the climb', () => {

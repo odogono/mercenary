@@ -22,7 +22,9 @@ export interface PanelElements extends PanelCanvases {
   readonly root: HTMLElement;
 }
 
-const PITCH_PIXELS_PER_DEGREE = 1.6;
+/// The gauge shows roughly fifteen degrees either side of the reading, so its window holds the
+/// ten, nought and minus-ten graduations the original does rather than a whole quadrant.
+const PITCH_PIXELS_PER_DEGREE = 4;
 const COMPASS_PIXELS_PER_DEGREE = 1.4;
 const DAMOCLES_PIXELS_PER_DEGREE = 0.28;
 const QUARTER_LETTERS = ['N', 'E', 'S', 'W'] as const;
@@ -45,11 +47,11 @@ const surfaceOf = (canvas: HTMLCanvasElement): Surface | undefined => {
 const tokenOf = (root: HTMLElement, name: string): string =>
   getComputedStyle(root).getPropertyValue(name).trim() || '#000';
 
-/// The artificial horizon: the world tilts, the instrument does not.
+/// The artificial horizon: a tape that scrolls, like the compass laid on its side.
 ///
-/// The sky-over-ground boundary is the reading — it rides up and down with pitch against fixed
-/// graduations, the way an attitude indicator works. A needle drawn over a static background
-/// would be a different instrument that happens to show the same number.
+/// The graduations ride with the reading rather than standing still, so climbing scrolls the
+/// numbers down through the window exactly as turning scrolls the compass across it. The
+/// sky-over-ground boundary is the nought on that tape, which is why it moves too.
 export const drawElevation = (
   canvas: HTMLCanvasElement,
   root: HTMLElement,
@@ -60,11 +62,10 @@ export const drawElevation = (
     return;
   }
   const { context, height, width } = surface;
-  // Nose up puts more sky in view, so the horizon falls.
-  const horizon = Math.max(
-    0,
-    Math.min(height, height / 2 + pitchDegrees * PITCH_PIXELS_PER_DEGREE)
-  );
+  // Where a given elevation sits in the window: the current reading is at the centre.
+  const rowOf = (value: number): number =>
+    height / 2 - (value - pitchDegrees) * PITCH_PIXELS_PER_DEGREE;
+  const horizon = Math.max(0, Math.min(height, rowOf(0)));
   context.fillStyle = tokenOf(root, '--gauge-sky');
   context.fillRect(0, 0, width, horizon);
   context.fillStyle = tokenOf(root, '--gauge-ground');
@@ -73,15 +74,26 @@ export const drawElevation = (
   context.font = '8px "Mercenary Pixel", monospace';
   context.textAlign = 'center';
   context.textBaseline = 'middle';
-  for (const [label, fraction] of [
-    ['10', 0.18],
-    ['00', 0.5],
-    ['-10', 0.82]
-  ] as const) {
-    const y = Math.round(height * fraction);
-    context.fillRect(1, y, 5, 1);
-    context.fillRect(width - 6, y, 5, 1);
-    context.fillText(label, width / 2, y);
+  const span = height / 2 / PITCH_PIXELS_PER_DEGREE;
+  const first = Math.ceil((pitchDegrees - span) / 5) * 5;
+  for (let mark = first; mark <= pitchDegrees + span; mark += 5) {
+    const y = Math.round(rowOf(mark));
+    if (y < 1 || y > height - 1) {
+      continue;
+    }
+    const labelled = ((mark % 10) + 10) % 10 === 0;
+    const tick = labelled ? 5 : 3;
+    context.fillRect(1, y, tick, 1);
+    context.fillRect(width - 1 - tick, y, tick, 1);
+    if (labelled) {
+      // Two digits, as the panel's graduations are printed: nought reads 00.
+      const sign = mark < 0 ? '-' : '';
+      context.fillText(
+        `${sign}${String(Math.abs(mark)).padStart(2, '0')}`,
+        width / 2,
+        y
+      );
+    }
   }
 };
 
@@ -132,19 +144,24 @@ export const drawDamoclesElevation = (
     return;
   }
   const { context, height, width } = surface;
-  const horizon = Math.max(
-    0,
-    Math.min(height, height / 2 + pitchDegrees * PITCH_PIXELS_PER_DEGREE)
-  );
+  const rowOf = (value: number): number =>
+    height / 2 - (value - pitchDegrees) * PITCH_PIXELS_PER_DEGREE;
+  const horizon = Math.max(0, Math.min(height, rowOf(0)));
   context.fillStyle = tokenOf(root, '--gauge-sky');
   context.fillRect(0, 0, width, horizon);
   context.fillStyle = tokenOf(root, '--gauge-ground');
   context.fillRect(0, horizon, width, height - horizon);
   const ink = tokenOf(root, '--nav-ink');
   context.fillStyle = ink;
-  for (let y = 4; y < height - 4; y += 7) {
-    context.fillRect(1, y, 2, 2);
-    context.fillRect(width - 3, y, 2, 2);
+  // The graduations scroll with the reading here too, as square dots rather than dashes.
+  const span = height / 2 / PITCH_PIXELS_PER_DEGREE;
+  const firstMark = Math.ceil((pitchDegrees - span) / 5) * 5;
+  for (let mark = firstMark; mark <= pitchDegrees + span; mark += 5) {
+    const y = Math.round(rowOf(mark));
+    if (y >= 1 && y <= height - 3) {
+      context.fillRect(1, y, 2, 2);
+      context.fillRect(width - 3, y, 2, 2);
+    }
   }
   const boxTop = Math.round(height / 2) - 6;
   context.fillRect(0, boxTop + 5, 5, 2);
