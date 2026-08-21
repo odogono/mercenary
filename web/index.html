@@ -55,10 +55,26 @@
         border-block: 1px solid var(--border);
       }
 
+      /* The world view and the Benson Panel are one authored frame, scaled together and
+         letterboxed, rather than a view that fills the window with a gadget beneath it. */
+      #frame-stack {
+        display: grid;
+        width: min(100%, calc(100dvh * 1280 / 970));
+        margin-inline: auto;
+        aspect-ratio: 1280 / 970;
+        grid-template-rows: 800fr 170fr;
+      }
+
+      #game-surface[data-composition='strip'] #frame-stack {
+        width: min(100%, calc(100dvh * 1280 / 800));
+        aspect-ratio: 1280 / 800;
+        grid-template-rows: 1fr;
+      }
+
       canvas {
         display: block;
         width: 100%;
-        aspect-ratio: 1280 / 800;
+        height: 100%;
         background: #000;
       }
 
@@ -204,17 +220,642 @@
           flex: 1 1 0;
         }
       }
+
+      /* ---------------------------------------------------------------------
+         BENSON PANEL — authored instrument panel (ADR 0027). Tokens first:
+         base values are the Targ rendition, [data-rendition='damocles']
+         restyles them, and the canvases read them at draw time.
+         ------------------------------------------------------------------ */
+      #game-surface {
+        --panel-face: #c2a878;
+        --panel-face-dark: #a68c5c;
+        --panel-hi: #eadfba;
+        --panel-lo: #574424;
+        --lcd-bg: #f4f4f4;
+        --lcd-ink: #121212;
+        --cell-border: #121212;
+        --msg-bg: #efe6c6;
+        --msg-ink: #121212;
+        --label-ink: #3c2f16;
+        --lamp-off: #2e2818;
+        --lamp-on: #e8c33c;
+        --gauge-sky: #7ab2dc;
+        --gauge-ground: #74ac48;
+        --gauge-face: #e8e8e8;
+        --gauge-ink: #141414;
+        --panel-font: 'Mercenary Pixel', 'Courier New', monospace;
+      }
+
+      #game-surface[data-rendition='damocles'] {
+        --panel-face: #9aa0a0;
+        --panel-face-dark: #7e8484;
+        --panel-hi: #ced4d4;
+        --panel-lo: #43484a;
+        --lcd-bg: #060606;
+        --lcd-ink: #3ecf3e;
+        --cell-border: #9aa0a0;
+        --msg-bg: #060606;
+        --msg-ink: #3ecf3e;
+        --label-ink: #2c3032;
+        --lamp-off: #2c3032;
+        --gauge-sky: #a9c6dc;
+        --gauge-ground: #9dbd85;
+        --gauge-face: #cfe4f2;
+        --panel-font: 'Damocles Interface', 'Courier New', monospace;
+        --nav-face: #86987e;
+        --nav-lcd: #c9d8ba;
+        --nav-ink: #1c2414;
+        --inv-face: #8fb0c8;
+        --inv-lcd: #cfe4f2;
+        --inv-ink: #16303e;
+        --clock-bg: #e8a685;
+        --clock-ink: #301408;
+      }
+
+      /* Which Display Composition is shown. The panel is the default; the classic strip
+         preserves the prior bare frame for anyone who wants the readouts. */
+      #game-surface[data-composition='panel'] #status-row,
+      #game-surface[data-composition='panel'] #comms {
+        display: none;
+      }
+      #game-surface[data-composition='strip'] #benson-panel {
+        display: none;
+      }
+      #game-surface[data-rendition='targ'] .rendition-damocles,
+      #game-surface[data-rendition='damocles'] .rendition-targ {
+        display: none !important;
+      }
+
+      #benson-panel {
+        overflow: hidden;
+        padding: 0;
+        background: #101010;
+        font-family: var(--panel-font);
+        user-select: none;
+      }
+
+      /* One authored frame, scaled as a whole so the instruments keep their proportions at every
+         width rather than reflowing into a different panel. The ratio is a number CSS cannot
+         divide two lengths to reach, so the shell measures the panel and sets it. */
+      #panel-scale {
+        width: 1280px;
+        transform-origin: top left;
+        scale: var(--panel-scale, 1);
+      }
+
+      .bezel {
+        background: var(--panel-face);
+        border-radius: 8px;
+        box-shadow:
+          inset 3px 3px 0 var(--panel-hi),
+          inset -3px -3px 0 var(--panel-lo);
+      }
+
+      .inset {
+        background: var(--panel-face-dark);
+        border-radius: 7px;
+        box-shadow:
+          inset 3px 3px 0 var(--panel-lo),
+          inset -3px -3px 0 var(--panel-hi);
+      }
+
+      .lcd {
+        display: flex;
+        gap: 3px;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 6px;
+        background: var(--lcd-bg);
+        border-radius: 4px;
+        color: var(--lcd-ink);
+        font-size: 20px;
+        letter-spacing: 0.14em;
+      }
+
+      .lamp {
+        width: 17px;
+        height: 17px;
+        background: var(--lamp-off);
+        border-radius: 3px;
+        box-shadow: inset 2px 2px 0 rgb(0 0 0 / 60%);
+      }
+
+      .lamp.on {
+        background: var(--lamp-on);
+        box-shadow: 0 0 8px var(--lamp-on);
+      }
+
+      .plabel {
+        color: var(--label-ink);
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .instrument-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        image-rendering: pixelated;
+      }
+
+      /* --- Targ rendition ------------------------------------------------- */
+      #panel-targ {
+        display: grid;
+        height: 170px;
+        padding: 8px 12px 10px;
+        gap: 8px;
+        grid-template-columns: 118px 1fr 142px;
+      }
+
+      #panel-targ .column {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        align-items: center;
+        padding: 6px;
+      }
+
+      /* Each instrument is named on the floor of its own bezel, as the panel names them. */
+      #panel-targ .column .plabel {
+        margin-top: auto;
+        font-size: 12px;
+      }
+
+      #targ-elevation {
+        width: 54px;
+        height: 108px;
+        overflow: hidden;
+        border-radius: 5px;
+      }
+
+      #panel-targ .instruments {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      #panel-targ .instrument {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        align-items: center;
+        padding: 7px;
+      }
+
+      #panel-targ .instrument .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      /* The caption is printed on the panel's floor, so the message box takes the slack rather
+         than leaving a gap beneath the label. */
+      #panel-targ .middle {
+        display: flex;
+        height: 100%;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      #panel-targ .middle .caption {
+        margin-top: auto;
+      }
+
+      /* The message box is part of the panel's face, so it holds its height in silence rather
+         than collapsing between things Benson has to say. */
+      #panel-message {
+        display: flex;
+        height: 40px;
+        overflow: hidden;
+        align-items: center;
+        justify-content: center;
+        padding: 2px 6px 0;
+        margin-inline: 8px;
+        background: var(--msg-bg);
+        border-radius: 5px;
+        color: var(--msg-ink);
+        font-size: 24px;
+        letter-spacing: 0.1em;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      #targ-compass-slot {
+        width: 108px;
+        height: 13px;
+        margin-bottom: 4px;
+      }
+
+      #targ-compass {
+        width: 116px;
+        height: 78px;
+        overflow: hidden;
+        border-radius: 5px;
+      }
+
+      /* --- Damocles rendition --------------------------------------------- */
+      #panel-damocles {
+        display: grid;
+        height: 200px;
+        padding: 8px 12px 10px;
+        gap: 8px;
+        grid-template-rows: 38px 1fr;
+      }
+
+      #damocles-message-bar {
+        padding: 6px;
+      }
+
+      #damocles-message {
+        display: flex;
+        height: 100%;
+        overflow: hidden;
+        align-items: center;
+        justify-content: center;
+        background: var(--msg-bg);
+        border-radius: 3px;
+        color: var(--msg-ink);
+        font-size: 19px;
+        letter-spacing: 0.14em;
+        text-shadow: 2px 0 0 currentcolor;
+        white-space: nowrap;
+      }
+
+      #damocles-body {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 16px 372px 1fr 300px 16px;
+      }
+
+      .tp-gauge {
+        position: relative;
+        border-radius: 6px;
+      }
+
+      .tp-gauge .fill {
+        position: absolute;
+        right: 6px;
+        bottom: 6px;
+        left: 6px;
+        background: #d8d8d8;
+        border-radius: 2px;
+      }
+
+      .tp-gauge .tp-label {
+        position: absolute;
+        right: 0;
+        bottom: -2px;
+        left: 0;
+        color: var(--label-ink);
+        font-size: 16px;
+        text-align: center;
+      }
+
+      #damocles-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px;
+        background: var(--nav-face);
+        border-radius: 10px;
+        box-shadow:
+          inset 4px 4px 0 var(--panel-hi),
+          inset -4px -4px 0 var(--panel-lo);
+      }
+
+      #damocles-nav > .nav-row {
+        flex: 1;
+      }
+
+      #damocles-nav .nav-lower {
+        display: flex;
+        flex: 2;
+        gap: 10px;
+      }
+
+      .nav-lcd {
+        display: flex;
+        overflow: hidden;
+        align-items: center;
+        justify-content: center;
+        padding: 2px 4px;
+        background: var(--nav-lcd);
+        border: 3px solid #3f463c;
+        border-radius: 6px;
+        color: var(--nav-ink);
+        font-size: 15px;
+        text-shadow: 2px 0 0 currentcolor;
+        white-space: nowrap;
+      }
+
+      #damocles-nav .nav-row {
+        display: flex;
+        gap: 10px;
+      }
+
+      #damocles-nav .nav-row > .nav-lcd {
+        flex: 1;
+      }
+
+      #damocles-elevation {
+        width: 42px;
+        overflow: hidden;
+        align-self: stretch;
+        border: 4px solid #3f463c;
+        border-radius: 8px;
+        flex: none;
+      }
+
+      #damocles-nav .nav-stack {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      #damocles-nav .nav-foot {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      #damocles-nav .nav-foot .plabel {
+        font-size: 15px;
+        letter-spacing: 0.12em;
+        text-shadow: 2px 0 0 currentcolor;
+      }
+
+      #damocles-compass {
+        width: 114px;
+        height: 27px;
+        overflow: hidden;
+        border: 4px solid #3f463c;
+        border-radius: 8px;
+      }
+
+      #damocles-aux {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #060606;
+        border-radius: 8px;
+        box-shadow:
+          inset 4px 4px 0 var(--panel-lo),
+          inset -4px -4px 0 var(--panel-hi);
+      }
+
+      #damocles-aux .aux-title {
+        color: #b8bec2;
+        font-size: 32px;
+        letter-spacing: 0.06em;
+        text-shadow: 4px 4px 0 #3a4046;
+      }
+
+      #damocles-right {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      #damocles-inventory {
+        display: grid;
+        flex: 1;
+        gap: 10px;
+        padding: 12px;
+        background: var(--inv-face);
+        border-radius: 10px;
+        box-shadow:
+          inset 4px 4px 0 var(--panel-hi),
+          inset -4px -4px 0 var(--panel-lo);
+        grid-template-columns: 20px 1fr;
+      }
+
+      #inventory-capacity {
+        position: relative;
+        background: var(--inv-lcd);
+        border: 2px solid var(--panel-lo);
+        border-radius: 4px;
+      }
+
+      #inventory-capacity .fill {
+        position: absolute;
+        right: 2px;
+        bottom: 2px;
+        left: 2px;
+        background: var(--inv-ink);
+      }
+
+      #damocles-inventory .inventory-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      #inventory-window {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        justify-content: center;
+        background: var(--inv-lcd);
+        border: 2px solid var(--panel-lo);
+        border-radius: 4px;
+        color: var(--inv-ink);
+        font-size: 19px;
+        letter-spacing: 0.12em;
+        text-shadow: 2px 0 0 currentcolor;
+      }
+
+      #damocles-inventory .inventory-foot {
+        display: flex;
+        overflow: hidden;
+        gap: 10px;
+        align-items: center;
+      }
+
+      #inventory-cash {
+        padding: 2px 6px;
+        background: var(--inv-lcd);
+        border: 2px solid var(--panel-lo);
+        border-radius: 4px;
+        color: var(--inv-ink);
+        font-size: 15px;
+        text-shadow: 2px 0 0 currentcolor;
+        white-space: nowrap;
+      }
+
+      #damocles-inventory .inventory-foot .plabel {
+        color: var(--inv-lcd);
+        font-size: 16px;
+        letter-spacing: 0.06em;
+      }
+
+      #damocles-foot {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: flex-end;
+      }
+
+      #damocles-clock {
+        padding: 4px 12px 2px;
+        background: var(--clock-bg);
+        border-radius: 5px;
+        color: var(--clock-ink);
+        font-size: 22px;
+        letter-spacing: 0.1em;
+        text-shadow: 2px 0 0 currentcolor;
+      }
     </style>
   </head>
   <body>
     <main aria-label="Mercenary Browser Shell">
       <section id="game-surface" data-state="loading" aria-label="Game Surface">
-        <canvas
-          id="frame"
-          width="1280"
-          height="800"
-          aria-label="Wireframe view of Targ"
-        ></canvas>
+        <div id="frame-stack">
+          <canvas
+            id="frame"
+            width="1280"
+            height="800"
+            aria-label="Wireframe view of Targ"
+          ></canvas>
+          <div id="benson-panel" aria-label="Benson Panel">
+            <div id="panel-scale">
+              <section id="panel-targ" class="rendition-targ bezel">
+                <div class="column bezel">
+                  <div id="targ-elevation">
+                    <canvas
+                      id="targ-elevation-canvas"
+                      class="instrument-canvas"
+                      width="54"
+                      height="108"
+                    ></canvas>
+                  </div>
+                  <div class="plabel">ELEVATION</div>
+                </div>
+
+                <div class="middle">
+                  <div class="instruments">
+                    <div class="instrument bezel">
+                      <div class="row">
+                        <span class="lamp" data-lamp="groundLamp"></span>
+                        <span class="lcd" data-field="locationLabel"></span>
+                      </div>
+                      <div class="plabel">LOCATION</div>
+                    </div>
+                    <div class="instrument bezel">
+                      <div class="row">
+                        <span class="lamp" data-lamp="runLamp"></span>
+                        <span class="lcd" data-field="altitude"></span>
+                      </div>
+                      <div class="plabel">ALTITUDE</div>
+                    </div>
+                    <div class="instrument bezel">
+                      <div class="row">
+                        <span class="lamp" data-lamp="attackLamp"></span>
+                        <span class="lcd" data-field="speed"></span>
+                      </div>
+                      <div class="plabel">SPEED</div>
+                    </div>
+                  </div>
+                  <div id="panel-message" data-field="message"></div>
+                  <div class="plabel caption">BENSON G9-ST</div>
+                </div>
+
+                <div class="column bezel">
+                  <div id="targ-compass-slot" class="inset"></div>
+                  <div id="targ-compass">
+                    <canvas
+                      id="targ-compass-canvas"
+                      class="instrument-canvas"
+                      width="116"
+                      height="78"
+                    ></canvas>
+                  </div>
+                  <div class="plabel">COMPASS</div>
+                </div>
+              </section>
+
+              <section id="panel-damocles" class="rendition-damocles bezel">
+                <div id="damocles-message-bar" class="inset">
+                  <div id="damocles-message" data-field="message"></div>
+                </div>
+                <div id="damocles-body">
+                  <div class="tp-gauge inset">
+                    <div class="fill" style="height: 34%"></div>
+                    <div class="tp-label">T</div>
+                  </div>
+
+                  <div id="damocles-nav">
+                    <div class="nav-row">
+                      <div class="nav-lcd" data-field="locationName"></div>
+                      <div class="nav-lcd" data-field="speedLabel"></div>
+                    </div>
+                    <div class="nav-lower">
+                      <div id="damocles-elevation">
+                        <canvas
+                          id="damocles-elevation-canvas"
+                          class="instrument-canvas"
+                          width="42"
+                          height="84"
+                        ></canvas>
+                      </div>
+                      <div class="nav-stack">
+                        <div class="nav-row">
+                          <div class="nav-lcd" data-field="locationLabel"></div>
+                          <div class="nav-lcd" data-field="altitude"></div>
+                          <div class="nav-lcd" data-field="heading"></div>
+                        </div>
+                        <div class="nav-foot">
+                          <div class="plabel">NAVIGATION</div>
+                          <div id="damocles-compass">
+                            <canvas
+                              id="damocles-compass-canvas"
+                              class="instrument-canvas"
+                              width="114"
+                              height="27"
+                            ></canvas>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div id="damocles-aux">
+                    <span class="aux-title">TARG</span>
+                  </div>
+
+                  <div id="damocles-right">
+                    <div id="damocles-inventory">
+                      <div id="inventory-capacity">
+                        <div class="fill" style="height: 4%"></div>
+                      </div>
+                      <div class="inventory-stack">
+                        <div id="inventory-window" data-field="inventory"></div>
+                        <div class="inventory-foot">
+                          <span id="inventory-cash" data-field="cash"></span>
+                          <span class="plabel">INVENTORY</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div id="damocles-foot">
+                      <span class="lamp" data-lamp="groundLamp"></span>
+                      <span class="lamp" data-lamp="attackLamp"></span>
+                      <span class="lamp" data-lamp="runLamp"></span>
+                      <span id="damocles-clock" data-field="clock"></span>
+                    </div>
+                  </div>
+
+                  <div class="tp-gauge inset">
+                    <div class="fill" style="height: 52%"></div>
+                    <div class="tp-label">P</div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
         <div
           id="comms"
           role="group"

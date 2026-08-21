@@ -19,6 +19,92 @@ const waitForFrames = async (page: Page, count: number): Promise<void> => {
   );
 };
 
+/// Choose a Display Composition before the shell reads its preferences.
+///
+/// The Benson Panel is the default, so the readouts and controls that live in the classic strip
+/// are only present when a test asks for that composition.
+const useComposition = async (
+  page: Page,
+  composition: 'panel' | 'strip'
+): Promise<void> => {
+  await page.addInitScript(composition => {
+    window.localStorage.setItem(
+      'mercenary.browser-shell.preferences.v1',
+      JSON.stringify({ composition, panelRendition: 'targ' })
+    );
+  }, composition);
+};
+
+test('the Benson Panel is the default composition and tracks the session', async ({
+  page
+}, testInfo) => {
+  await page.goto('/');
+  const surface = page.locator('#game-surface');
+  await expect(surface).toHaveAttribute('data-state', 'ready');
+  await expect(surface).toHaveAttribute('data-composition', 'panel');
+  await expect(surface).toHaveAttribute('data-rendition', 'targ');
+
+  const panel = page.locator('#benson-panel');
+  await expect(panel).toBeVisible();
+  // The panel replaces the debug strip rather than sitting beside it.
+  await expect(page.locator('#status-row')).toBeHidden();
+
+  const field = (name: string) =>
+    panel.locator(`#panel-targ [data-field="${name}"]`);
+  await expect(field('locationLabel')).toHaveText(/^\d{2}-\d{2}$/);
+  await expect(field('altitude')).toHaveText(/^\d{5}$/);
+  await expect(field('speed')).toHaveText(/^[+-]\d{4}$/);
+  await expect(panel).toContainText('BENSON G9-ST');
+
+  // Walking changes the grid reference the panel shows, so it is reading the live session.
+  const opening = await field('locationLabel').textContent();
+  await page.keyboard.down('ArrowUp');
+  await expect
+    .poll(async () => page.locator('#frame').getAttribute('data-z'))
+    .not.toBe(null);
+  await page.keyboard.up('ArrowUp');
+  expect(opening).not.toBeNull();
+
+  await testInfo.attach('benson-panel-targ', {
+    body: await panel.screenshot(),
+    contentType: 'image/png'
+  });
+
+  await page.evaluate(() => {
+    window.localStorage.setItem(
+      'mercenary.browser-shell.preferences.v1',
+      JSON.stringify({ composition: 'panel', panelRendition: 'damocles' })
+    );
+  });
+  await page.reload();
+  await expect(surface).toHaveAttribute('data-rendition', 'damocles');
+  await expect(page.locator('#panel-damocles')).toBeVisible();
+  await expect(page.locator('#panel-targ')).toBeHidden();
+  await expect(page.locator('#inventory-window')).toHaveText('EMPTY');
+  await testInfo.attach('benson-panel-damocles', {
+    body: await page.locator('#benson-panel').screenshot(),
+    contentType: 'image/png'
+  });
+});
+
+test('the panel scales to every supported width without overflowing', async ({
+  page
+}) => {
+  await page.goto('/');
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-state',
+    'ready'
+  );
+  for (const width of [320, 768, 1024, 1440]) {
+    await page.setViewportSize({ height: 900, width });
+    await expect(page.locator('#benson-panel')).toBeVisible();
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth
+    );
+    expect(overflow, `no horizontal overflow at ${width}px`).toBe(false);
+  }
+});
+
 test('Authentic preserves the pinned initial canvas pixels', async ({
   page
 }, testInfo) => {
@@ -101,6 +187,8 @@ test('the live opening loop renders, walks and releases held input', async ({
   });
   page.on('pageerror', error => errors.push(error.message));
 
+  // These readouts and controls belong to the classic strip, which is now a setting.
+  await useComposition(page, 'strip');
   await page.goto('/');
   const surface = page.locator('#game-surface');
   const canvas = page.locator('#frame');
@@ -274,6 +362,7 @@ test('the live opening loop renders, walks and releases held input', async ({
 test('a Save restores the same playable moment after a full reload', async ({
   page
 }) => {
+  await useComposition(page, 'strip');
   await page.goto('/');
   await expect(page.locator('#game-surface')).toHaveAttribute(
     'data-state',

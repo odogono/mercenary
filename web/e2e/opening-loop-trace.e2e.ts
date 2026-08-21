@@ -58,6 +58,14 @@ test('Chromium replays the recorded opening loop bit-for-bit and renders its mil
   expect(colours).toContain('234,121,163');
   expect(colours).toContain('255,255,255');
 
+  // The Saves this gate exercises are reached through the classic strip's controls, which the
+  // Benson Panel replaces by default.
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'mercenary.browser-shell.preferences.v1',
+      JSON.stringify({ composition: 'strip', panelRendition: 'targ' })
+    );
+  });
   await page.goto('/');
   await expect(page.locator('#game-surface')).toHaveAttribute(
     'data-state',
