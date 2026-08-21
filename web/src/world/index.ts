@@ -39,7 +39,7 @@ export type Location =
 /// where the payload placed it.
 export type Residence =
   | { readonly at?: Vector3; readonly kind: 'surface' }
-  | { readonly id: number; readonly kind: 'room' }
+  | { readonly at?: Vector3; readonly id: number; readonly kind: 'room' }
   | { readonly kind: 'carried' }
   | { readonly kind: 'gone' };
 
@@ -61,7 +61,9 @@ export const isCarried = (residence: Residence): boolean =>
 
 /// Where this object has been moved to, if it has been.
 export const displacement = (residence: Residence): Vector3 | undefined =>
-  residence.kind === 'surface' ? residence.at : undefined;
+  residence.kind === 'surface' || residence.kind === 'room'
+    ? residence.at
+    : undefined;
 
 export const SURFACE: Location = { kind: 'surface' };
 export const room = (id: number): Location => ({ id, kind: 'room' });
@@ -157,7 +159,10 @@ export const isDrawable = (
       // In the player's hands, or out of the world with the craft they are flying.
       return false;
     case 'surface':
-      return sameLocation(location, SURFACE) && object.withinWorld;
+      return (
+        sameLocation(location, SURFACE) &&
+        (where.at !== undefined || object.withinWorld)
+      );
     case 'room':
       return sameLocation(location, room(where.id));
   }
@@ -176,15 +181,12 @@ export const isDetailed = (
   );
 };
 
-/// This instance at a live horizontal position rather than its immutable payload position.
-///
-/// A landed craft keeps the model's ground-resting Y: the player's simulation altitude is an
-/// eye or touchdown coordinate, not an object placement height.
-export const movedHorizontally = (
+/// This instance at a live full position rather than its immutable payload position.
+export const movedTo = (
   object: ObjectPlacement,
   position: { x: number; y: number; z: number }
 ): ObjectPlacement => {
-  const destination = vector(position.x, object.origin.y, position.z);
+  const destination = vector(position.x, position.y, position.z);
   const dx = toFloat32(destination.x - object.origin.x);
   const dy = toFloat32(destination.y - object.origin.y);
   const dz = toFloat32(destination.z - object.origin.z);

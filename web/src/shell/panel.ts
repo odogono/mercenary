@@ -1,5 +1,5 @@
 import type { SessionSnapshot } from '../session/index.ts';
-import { isCarried, locationText } from '../world/index.ts';
+import { locationText } from '../world/index.ts';
 
 /// What the Benson Panel needs beyond a Session Snapshot.
 ///
@@ -68,15 +68,14 @@ export const timeOfDay = (
   ].join('-');
 };
 
-/// Which objects the player is carrying, in slot order, named for the inventory window.
+/// Which objects the player is carrying, in acquisition order, named for the inventory window.
 export const carriedNames = (
   snapshot: SessionSnapshot,
   objectNames: ReadonlyMap<number, string>
 ): readonly string[] =>
-  [...snapshot.residence.entries()]
-    .filter(([, residence]) => isCarried(residence))
-    .map(([slot]) => objectNames.get(slot) ?? `OBJECT ${digits(slot, 2)}`)
-    .sort((a, b) => a.localeCompare(b));
+  snapshot.carriedStack.map(
+    slot => objectNames.get(slot) ?? `OBJECT ${digits(slot, 2)}`
+  );
 
 export const panelViewModel = (
   snapshot: SessionSnapshot,

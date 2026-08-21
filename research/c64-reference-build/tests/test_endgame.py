@@ -53,6 +53,8 @@ class Builder:
         self.ram[0x991B:0x9925] = bytes(
             [0xA5, 0xCD, 0x99, 0x40, 0x29, 0xA5, 0x72, 0x99, 0x80, 0x28]
         )
+        self.ram[0x980B:0x980E] = bytes([0xAD, 0xEF, 0x29])
+        self.ram[0x9817:0x981A] = bytes([0xAD, 0xDB, 0x29])
 
         self.ram[FIRE_CALL_SITE:FIRE_CALL_SITE + 5] = bytes([0xA9, 0x30, 0x20, 0x6A, 0x88])
         self.ram[FIRE_ROUTINE:FIRE_ROUTINE + 36] = bytes(
@@ -217,6 +219,12 @@ class DecodeTests(unittest.TestCase):
         self.assertEqual(drop["carriedMask"], 0x80)
         self.assertEqual(drop["carriedExemptionSlot"], 56)
         self.assertTrue(drop["copiesCurrentRoomAndPosition"])
+
+    def test_decodes_the_two_take_override_identities(self) -> None:
+        overrides = decode_endgame(Builder().build())["controls"]["takeOverrides"]
+
+        self.assertEqual(overrides["sinkSlot"], 47)
+        self.assertEqual(overrides["antigravSlot"], 27)
 
     def test_decodes_fire_and_site_destruction(self) -> None:
         combat = decode_endgame(Builder().build())["combat"]
@@ -398,6 +406,15 @@ class GuardTests(unittest.TestCase):
 
         with self.assertRaisesRegex(LabError, "drop key dispatch"):
             decode_endgame(builder.build())
+
+    def test_rejects_changed_take_override_fingerprints(self) -> None:
+        for address, complaint in ((0x980B, "Sink override"), (0x9817, "Antigrav override")):
+            with self.subTest(address=address):
+                builder = Builder()
+                builder.ram[address] = 0xEA
+
+                with self.assertRaisesRegex(LabError, complaint):
+                    decode_endgame(builder.build())
 
     def test_rejects_a_changed_projectile_target_order(self) -> None:
         builder = Builder()

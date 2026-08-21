@@ -42,6 +42,10 @@ _Avoid_: Vehicle state, mount, mode
 Where one object currently is: somewhere on the surface, in a Room, carried by the player, or out of the world; and, when it has been moved from where the Data Payload placed it, the place it was left.
 _Avoid_: Object position, inventory flag, room membership
 
+**Carried Stack**:
+The ordered objects the player carries, from earliest to most recently acquired; its tail is the next object a Drop removes.
+_Avoid_: Ordered inventory, carry order, inventory list
+
 **Session Snapshot**:
 One consistent presentation-facing description of a Gameplay Session at a single moment, complete enough to draw from and to compare against another, which every renderer consumes instead of reading the session's parts; it is not the restore-complete Save Snapshot.
 _Avoid_: View model, game state, render state, Save Snapshot

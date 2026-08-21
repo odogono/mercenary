@@ -26,6 +26,8 @@ OBJECT_FLAGS_BASE = 0x29C0
 DROP_EXEMPTION_FLAGS_SITE = 0x29F8
 DROP_INVENTORY_SITE = 0x9907
 DROP_CARRIED_MASK_SITE = 0x9913
+SINK_OVERRIDE_SITE = 0x980B
+ANTIGRAV_OVERRIDE_SITE = 0x9817
 
 # Fire, projectile update, world damage, and hostile-craft behavior.
 FIRE_CALL_SITE = 0x85E1
@@ -216,6 +218,8 @@ def _require_engine(ram: bytes) -> None:
         (DROP_INVENTORY_SITE, (0xA6, 0xEB, 0xF0), "drop does not reject an empty inventory"),
         (DROP_INVENTORY_SITE + 4, (0xC6, 0xEB, 0xBC, 0xB0, 0xBE), "drop does not select the inventory tail"),
         (DROP_CARRIED_MASK_SITE, (0x29,), "drop does not clear an immediate carried mask"),
+        (SINK_OVERRIDE_SITE, (0xAD, 0xEF, 0x29), "take does not read the Sink override"),
+        (ANTIGRAV_OVERRIDE_SITE, (0xAD, 0xDB, 0x29), "take does not read the Antigrav override"),
         (0x9915, (0x99, 0xC0, 0x29), "drop does not persist the changed object flags"),
         (0x991B, (0xA5, 0xCD, 0x99, 0x40, 0x29), "drop does not copy the current room"),
         (0x9920, (0xA5, 0x72, 0x99, 0x80, 0x28), "drop does not copy the current position"),
@@ -469,6 +473,8 @@ def decode_endgame(ram: bytes) -> dict[str, Any]:
     drop_key = ram[DROP_DISPATCH + 1]
     carried_mask = ram[DROP_CARRIED_MASK_SITE + 1] ^ 0xFF
     carried_exemption_slot = DROP_EXEMPTION_FLAGS_SITE - OBJECT_FLAGS_BASE
+    sink_slot = (ram[SINK_OVERRIDE_SITE + 1] | (ram[SINK_OVERRIDE_SITE + 2] << 8)) - OBJECT_FLAGS_BASE
+    antigrav_slot = (ram[ANTIGRAV_OVERRIDE_SITE + 1] | (ram[ANTIGRAV_OVERRIDE_SITE + 2] << 8)) - OBJECT_FLAGS_BASE
 
     fire_slot = ram[FIRE_ROUTINE + 16]
     target_slots = [ram[0x8782 + 1], ram[0x878E + 1]]
@@ -484,6 +490,10 @@ def decode_endgame(ram: bytes) -> dict[str, Any]:
     return {
         "schemaVersion": ENDGAME_SCHEMA_VERSION,
         "controls": {
+            "takeOverrides": {
+                "sinkSlot": sink_slot,
+                "antigravSlot": antigrav_slot,
+            },
             "drop": {
                 "keyCode": drop_key,
                 "inventorySelection": "last-in-first-out",

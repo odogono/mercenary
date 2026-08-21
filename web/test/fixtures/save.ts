@@ -9,6 +9,7 @@ export const environment: SaveEnvironment = {
   payload: {
     bensonSchemaVersion: 1,
     decoderVersion: 7,
+    endgameSchemaVersion: 2,
     flightSchemaVersion: 3,
     interactionSchemaVersion: 1,
     schemaVersion: 8,

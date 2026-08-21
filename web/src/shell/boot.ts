@@ -162,6 +162,7 @@ try {
   };
 
   const controls = new BrowserControlProfile({
+    drop: () => performAndRefresh(() => session.drop()),
     leaveCraft: () => performAndRefresh(() => session.leaveCraft()),
     occupancy: () => snapshot.occupancy,
     // The live Benson Script owns the message line. Bracket paging remains a Control Profile

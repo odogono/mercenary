@@ -113,6 +113,7 @@ describe('the Benson Panel view model', () => {
     ).toBe('EMPTY');
 
     const carrying = snapshotOf({
+      carriedStack: [9, 3],
       residence: new Map([
         [3, { kind: 'carried' }],
         [9, { kind: 'carried' }]
@@ -120,11 +121,12 @@ describe('the Benson Panel view model', () => {
     });
     const model = panelViewModel(carrying, context({ objectNames: names }));
     expect(model.inventoryFill).toBe(2);
-    expect(carriedNames(carrying, names)).toEqual(['KEY', 'PHOTON-CANNON']);
+    expect(carriedNames(carrying, names)).toEqual(['PHOTON-CANNON', 'KEY']);
   });
 
   test('names an object the payload did not name, rather than showing nothing', () => {
     const carrying = snapshotOf({
+      carriedStack: [5],
       residence: new Map([[5, { kind: 'carried' }]])
     });
 
@@ -133,6 +135,7 @@ describe('the Benson Panel view model', () => {
 
   test('counts only what is carried as inventory', () => {
     const mixed = snapshotOf({
+      carriedStack: [1],
       residence: new Map([
         [1, { kind: 'carried' }],
         [2, { id: 4, kind: 'room' }],

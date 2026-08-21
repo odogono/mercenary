@@ -24,11 +24,6 @@ export const DEFAULT_SESSION_SEED = 0x2c_69_2e_d8_1b_7f_0a_31n;
 const sortedSet = (values: ReadonlySet<number>): number[] =>
   [...values].sort((a, b) => a - b);
 
-const sortedEntries = (
-  values: ReadonlyMap<number, number>
-): readonly (readonly [number, number])[] =>
-  [...values.entries()].sort(([a], [b]) => a - b);
-
 /// One running Benson Script, its host state, and the message line it drives.
 export class BensonSession {
   readonly program: BensonProgram;
@@ -202,11 +197,8 @@ export class BensonSession {
         destroyedBlocks: sortedSet(this.host.destroyedBlocks),
         engineFlags: this.host.engineFlags,
         gameComplete: this.host.gameComplete,
-        inventory: sortedSet(this.host.inventory),
         messageInterval: this.host.messageInterval,
         messagePlaying: this.host.messagePlaying,
-        objectFlags: sortedEntries(this.host.objectFlags),
-        objectRooms: sortedEntries(this.host.objectRooms),
         pendingKey: this.host.pendingKey ?? null,
         shipInbound: this.host.shipInbound,
         signedRegister: this.host.signedRegister,
@@ -262,9 +254,6 @@ export class BensonSession {
     session.host = new BensonHostState({
       ...snapshot.host,
       destroyedBlocks: new Set(snapshot.host.destroyedBlocks),
-      inventory: new Set(snapshot.host.inventory),
-      objectFlags: new Map(snapshot.host.objectFlags),
-      objectRooms: new Map(snapshot.host.objectRooms),
       pendingKey: snapshot.host.pendingKey ?? undefined
     });
     session.frames = snapshot.frames;

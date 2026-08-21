@@ -5,7 +5,7 @@ import {
   displacement,
   isDetailed,
   isDrawable,
-  movedHorizontally,
+  movedTo,
   objectSegments,
   room,
   type Ink,
@@ -445,8 +445,7 @@ export const visible = (
         continue;
       }
       const moved = where === undefined ? undefined : displacement(where);
-      const placed =
-        moved === undefined ? object : movedHorizontally(object, moved);
+      const placed = moved === undefined ? object : movedTo(object, moved);
       if (isDetailed(placed, position)) {
         append(segments, objectSegments(placed));
         detailedObjects += 1;

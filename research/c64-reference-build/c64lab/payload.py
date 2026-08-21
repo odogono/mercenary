@@ -26,6 +26,7 @@ from .geometry import (
 from .navigation import lock_for
 from .benson import decode_benson
 from .flight import decode_flight
+from .endgame import decode_endgame
 from .interaction import decode_interaction
 from .underground import decode_underground
 from .text import decode_text
@@ -720,7 +721,14 @@ def build_objects(objects: dict[str, Any]) -> dict[str, Any]:
 #: Documents decoded from a capture rather than from the geometry dataset. Each
 #: reports its own counts, so they are prefixed to keep one document's totals
 #: from colliding with another's as more of them arrive.
-CAPTURE_DOCUMENTS = ("text.json", "benson.json", "interaction.json", "flight.json", "underground.json")
+CAPTURE_DOCUMENTS = (
+    "text.json",
+    "benson.json",
+    "interaction.json",
+    "flight.json",
+    "underground.json",
+    "endgame.json",
+)
 
 
 def capture_counts(documents: dict[str, Any]) -> dict[str, int]:
@@ -856,6 +864,7 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
         documents["interaction.json"] = decode_interaction(ram)
         documents["flight.json"] = decode_flight(ram)
         documents["underground.json"] = decode_underground(ram)
+        documents["endgame.json"] = decode_endgame(ram)
     resolved.mkdir(parents=True, exist_ok=True)
     files: list[dict[str, Any]] = []
     for name, document in documents.items():

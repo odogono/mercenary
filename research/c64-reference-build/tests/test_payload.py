@@ -250,6 +250,7 @@ class CaptureCountsTests(unittest.TestCase):
                 "text.json": {"counts": {"messages": 64}},
                 "benson.json": {"counts": {"scripts": 51, "instructions": 494}},
                 "flight.json": {"counts": {"flightBlocks": 11}},
+                "endgame.json": {"counts": {"objectHitTargets": 2}},
             }
         )
 
@@ -260,6 +261,7 @@ class CaptureCountsTests(unittest.TestCase):
                 "benson.scripts": 51,
                 "benson.instructions": 494,
                 "flight.flightBlocks": 11,
+                "endgame.objectHitTargets": 2,
             },
         )
 

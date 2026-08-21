@@ -61,7 +61,7 @@ export interface GameplaySessionGate extends GameplaySessionTraceSet {
   readonly applyCommand: (
     session: GameplaySession,
     command: TraceValue
-  ) => void;
+  ) => TraceValue | void;
   readonly createSession: (
     context: GameplaySessionGateContext,
     trace: Trace
@@ -154,7 +154,12 @@ export const gameplaySessionGate = async (
           session.snapshot.elapsed,
           `${trace.id} command elapsed ${nextStep}`
         );
-        gate.applyCommand(session, command);
+        const outcome = gate.applyCommand(session, command);
+        expectIdentical(
+          record['outcome'],
+          outcome as TraceValue | undefined,
+          `${trace.id} command outcome ${nextStep}`
+        );
         continue;
       }
 

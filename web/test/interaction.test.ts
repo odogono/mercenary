@@ -22,7 +22,10 @@ const document: InteractionDocument = {
   tooHeavyMessage: 2
 };
 
-const interaction = new Interaction(document);
+const interaction = new Interaction(document, {
+  antigravSlot: 27,
+  sinkSlot: 47
+});
 const origin = { x: 0, y: 0, z: 0 };
 const candidate = (
   slot: number,
@@ -107,6 +110,48 @@ describe('taking', () => {
     );
     expect(outcome).toEqual({ kind: 'handsFull' });
     expect(host.inventory.has(20)).toBeFalse();
+  });
+
+  test('the Sink bypasses fixed and heavy checks but not capacity', () => {
+    const flags = interaction.fixedMask | interaction.heavyMask;
+    const carryingSink = new BensonHostState({ inventory: new Set([47]) })
+      .withObjectFlag(47, interaction.carriedMask)
+      .withObjectFlag(20, flags);
+
+    expect(
+      interaction.attempt('take', origin, [candidate(20, origin)], carryingSink)
+        .outcome
+    ).toEqual({ kind: 'took', slot: 20 });
+
+    const full = new Set([47, 100, 101, 102, 103, 104, 105, 106, 107, 108]);
+    expect(
+      interaction.attempt(
+        'take',
+        origin,
+        [candidate(20, origin)],
+        new BensonHostState({ inventory: full }).withObjectFlag(20, flags)
+      ).outcome
+    ).toEqual({ kind: 'handsFull' });
+  });
+
+  test('the Antigrav bypasses heavy but not fixed', () => {
+    const carryingAntigrav = new BensonHostState({ inventory: new Set([27]) })
+      .withObjectFlag(27, interaction.carriedMask)
+      .withObjectFlag(20, interaction.heavyMask);
+    expect(
+      interaction.attempt(
+        'take',
+        origin,
+        [candidate(20, origin)],
+        carryingAntigrav
+      ).outcome
+    ).toEqual({ kind: 'took', slot: 20 });
+
+    const fixed = carryingAntigrav.withObjectFlag(20, interaction.fixedMask);
+    expect(
+      interaction.attempt('take', origin, [candidate(20, origin)], fixed)
+        .outcome
+    ).toEqual({ kind: 'fixedInPlace', slot: 20 });
   });
 });
 

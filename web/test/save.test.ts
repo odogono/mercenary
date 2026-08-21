@@ -2,8 +2,10 @@ import { describe, expect, test } from 'bun:test';
 
 import { BensonProgram, BensonSession } from '../src/benson/index.ts';
 import { playerState } from '../src/gameCore/index.ts';
+import { Interaction } from '../src/interaction/index.ts';
+import { IDENTITY } from '../src/orientation/index.ts';
 import type { BensonInstruction } from '../src/payload/documents.ts';
-import { GameplaySession } from '../src/session/index.ts';
+import { GameplaySession, type SessionContent } from '../src/session/index.ts';
 import {
   SAVE_JSON_CODE_UNIT_LIMIT,
   SAVE_SCHEMA_VERSION,
@@ -13,6 +15,7 @@ import {
   type SaveEnvelope
 } from '../src/session/save.ts';
 import { TextTable } from '../src/text/index.ts';
+import type { ObjectPlacement } from '../src/world/index.ts';
 import { emptyContent, environment } from './fixtures/save.ts';
 
 const content = emptyContent();
@@ -41,6 +44,53 @@ const text = new TextTable({
 
 const scripts = (): BensonSession => new BensonSession(program, text);
 
+const placedObject: ObjectPlacement = {
+  detailCube: 1024,
+  drawsFarAsPoint: true,
+  edges: [],
+  id: 'parcel',
+  model: 'test',
+  orientation: IDENTITY,
+  origin: { x: 10, y: 20, z: 30 },
+  placement: 'surface',
+  room: 0,
+  slot: 20,
+  stateFlags: 4,
+  vertices: [],
+  withinWorld: true
+};
+
+const objectContent = (): SessionContent => ({
+  ...emptyContent(),
+  dropRules: {
+    carriedExemptionSlot: 56,
+    carriedMask: 0x80,
+    copiesCurrentRoomAndPosition: true,
+    emptyInventory: 'return',
+    inventorySelection: 'last-carried',
+    keyCode: 0x12,
+    requiresCarriedExemptionOrFlightState: true
+  },
+  interaction: new Interaction({
+    boardKey: 0x1c,
+    boardRange: 2,
+    carriedMask: 0x80,
+    counts: {},
+    craftSlotBound: 8,
+    descriptionMask: 0x0c,
+    fixedMask: 0x10,
+    heavyMask: 0x20,
+    inventoryLimit: 10,
+    rangeUnit: 256,
+    removedFromWorld: 0xff,
+    schemaVersion: 1,
+    takeKey: 0x16,
+    takeRange: 1,
+    tooHeavyMessage: 2
+  }),
+  objects: [placedObject]
+});
+
 const envelope = (session: GameplaySession): SaveEnvelope => ({
   environment,
   location: { id: 3, kind: 'room' },
@@ -50,6 +100,22 @@ const envelope = (session: GameplaySession): SaveEnvelope => ({
 });
 
 describe('a Save Snapshot', () => {
+  test('uses schema v2 and stores object authority only at the session level', () => {
+    const gameplay = new GameplaySession(
+      content,
+      playerState({ position: { x: 0, y: 0, z: 0 } }),
+      scripts()
+    );
+    const snapshot = gameplay.captureSaveSnapshot();
+
+    expect(SAVE_SCHEMA_VERSION).toBe(2);
+    expect(snapshot).toHaveProperty('carriedStack');
+    expect(snapshot).toHaveProperty('objectFlags');
+    expect(snapshot.benson!.host).not.toHaveProperty('inventory');
+    expect(snapshot.benson!.host).not.toHaveProperty('objectFlags');
+    expect(snapshot.benson!.host).not.toHaveProperty('objectRooms');
+  });
+
   test('round-trips hidden session state and continues identically', () => {
     const original = new GameplaySession(
       content,
@@ -110,6 +176,56 @@ describe('a Save Snapshot', () => {
         payload: { ...environment.payload, sourceCoreDigest: 'different' }
       })
     ).toThrow('does not match the current environment');
+
+    const v1 = JSON.parse(encodeSave(save));
+    v1.schemaVersion = 1;
+    expect(() => decodeSave(JSON.stringify(v1), environment)).toThrow(
+      'unsupported Save schemaVersion 1'
+    );
+    const unidentified = JSON.parse(encodeSave(save));
+    delete unidentified.environment.payload.endgameSchemaVersion;
+    expect(() => decodeSave(JSON.stringify(unidentified), environment)).toThrow(
+      'endgameSchemaVersion'
+    );
+  });
+
+  test('strictly validates the complete census and carrying agreement before restore', () => {
+    const current = new GameplaySession(
+      objectContent(),
+      playerState({ position: { x: 0, y: 0, z: 0 } }),
+      scripts()
+    );
+    current.carry(20);
+    const snapshot = current.captureSaveSnapshot();
+    const before = current.snapshot;
+
+    expect(() =>
+      GameplaySession.restore(objectContent(), scripts(), {
+        ...snapshot,
+        residence: []
+      })
+    ).toThrow('incomplete or extra object census');
+    expect(() =>
+      GameplaySession.restore(objectContent(), scripts(), {
+        ...snapshot,
+        carriedStack: [20, 20]
+      })
+    ).toThrow('must be unique');
+    expect(() =>
+      GameplaySession.restore(objectContent(), scripts(), {
+        ...snapshot,
+        residence: [[20, { kind: 'surface' }]]
+      })
+    ).toThrow('carrying representations disagree');
+    expect(() =>
+      GameplaySession.restore(objectContent(), scripts(), {
+        ...snapshot,
+        carriedStack: [],
+        objectFlags: [[20, 4]],
+        residence: [[20, { id: 99, kind: 'room' }]]
+      })
+    ).toThrow('missing Room 99');
+    expect(current.snapshot).toEqual(before);
   });
 
   test('bounds input before parsing and refuses impossible ticker progress', () => {

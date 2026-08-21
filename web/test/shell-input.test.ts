@@ -27,6 +27,7 @@ const harness = () => {
   let occupancy: Occupancy = { kind: 'onFoot' };
   const calls: unknown[] = [];
   const actions: ControlProfileActions = {
+    drop: () => calls.push('drop'),
     leaveCraft: () => calls.push('leaveCraft'),
     occupancy: () => occupancy,
     page: delta => calls.push({ page: delta }),
@@ -124,6 +125,7 @@ describe('the browser Control Profile', () => {
     profile.keyDown(input('KeyB'));
     profile.keyDown(input('KeyT'));
     profile.keyDown(input('KeyE'));
+    profile.keyDown(input('KeyD'));
     profile.keyDown(input('BracketLeft'));
     profile.keyDown(input('BracketRight'));
     setOccupancy({ kind: 'aboard', slot: 4 });
@@ -147,6 +149,7 @@ describe('the browser Control Profile', () => {
       { reach: 'board' },
       { reach: 'take' },
       'rideLift',
+      'drop',
       { page: -1 },
       { page: 1 },
       { notch: 1 },
@@ -192,10 +195,12 @@ describe('the browser Control Profile', () => {
 
     profile.keyDown(input('KeyB'));
     profile.keyDown(input('KeyB', { repeat: true }));
+    profile.keyDown(input('KeyD'));
+    profile.keyDown(input('KeyD', { repeat: true }));
     setOccupancy({ kind: 'aboard', slot: 1 });
     profile.keyDown(input('Digit4'));
     profile.keyDown(input('Digit4', { repeat: true }));
-    expect(calls).toEqual([{ reach: 'board' }, { notch: 4 }]);
+    expect(calls).toEqual([{ reach: 'board' }, 'drop', { notch: 4 }]);
   });
 
   test('Meta, Control and Alt chords pass through without changing input', () => {

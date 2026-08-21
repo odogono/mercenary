@@ -34,6 +34,7 @@ export const saveEnvironment = (
   payload: {
     bensonSchemaVersion: bundle.benson?.schemaVersion ?? 0,
     decoderVersion: bundle.manifest.decoderVersion,
+    endgameSchemaVersion: bundle.endgame.schemaVersion,
     flightSchemaVersion: bundle.flight?.schemaVersion ?? 0,
     interactionSchemaVersion: bundle.interaction?.schemaVersion ?? 0,
     schemaVersion: bundle.manifest.schemaVersion,

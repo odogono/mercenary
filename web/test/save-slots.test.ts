@@ -30,6 +30,10 @@ class MemoryStorage implements SlotStorage {
 }
 
 describe('the three Browser Shell save slots', () => {
+  test('keeps the v1 storage keys as stable slot identities', () => {
+    expect(slotStorageKey(2)).toBe('mercenary.browser-shell.save.v1.slot-2');
+  });
+
   test('isolates values and refreshes the latest storage contents', () => {
     const storage = new MemoryStorage();
     const slots = new SaveSlots(storage);
