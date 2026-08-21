@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Three explicit Browser Shell save slots (#109). Versioned bounded JSON Save Snapshots now
+  capture and restore the complete authoritative Gameplay Session, including mover and Object
+  Residence state, Room rewiring, Benson interpreter and message progress, fractional timing,
+  signed zero, and deterministic random-stream continuation. Exact payload and gameplay-setting
+  compatibility, closed decoding, semantic reference validation, atomic replacement, per-slot
+  `localStorage`, overwrite and delete confirmation, cross-tab metadata refresh, and shell-only
+  feedback keep failed or incompatible loads from disturbing the live session. Unit, Replay Gate,
+  and Chromium coverage exercise surface, airborne, and underground reloads; ADR 0026 records the
+  browser JSON and explicit-restoration decision.
 - Underground navigation Replay Gate (#108). A focused `navigation` adapter reconstructs the
   Trace Oracle's Room, Pose, deterministic seed, and carried Object Residence setup, then grades
   all 1,577 records across the six frozen underground Golden Traces through the real Gameplay

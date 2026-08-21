@@ -57,6 +57,11 @@ import {
   type Room,
   type World
 } from '../world/index.ts';
+import {
+  decodeRandomState,
+  encodeRandomState,
+  type SaveSnapshot
+} from './save.ts';
 
 /// The Gameplay Session: the one owner of a play session's Session State (ADR 0018).
 ///
@@ -212,6 +217,72 @@ const craftHeading = (craft: ObjectPlacement): number => {
   return (turn + Math.PI) % TWO_PI;
 };
 
+const samePoint = (
+  left: Alternate['arrival'],
+  right: Alternate['arrival']
+): boolean =>
+  left === right ||
+  (left !== undefined &&
+    right !== undefined &&
+    left.x === right.x &&
+    left.z === right.z);
+
+const sameAlternate = (left: Alternate, right: Alternate): boolean =>
+  left.arrivalCommandIndex === right.arrivalCommandIndex &&
+  left.arrivalWithinDestination === right.arrivalWithinDestination &&
+  left.room === right.room &&
+  samePoint(left.arrival, right.arrival) &&
+  ('colonyCraft' in left.destination
+    ? 'colonyCraft' in right.destination
+    : 'room' in right.destination &&
+      left.destination.room === right.destination.room);
+
+const validateSnapshotReferences = (
+  content: SessionContent,
+  snapshot: SaveSnapshot
+): void => {
+  if (snapshot.game.room !== null && !content.rooms.has(snapshot.game.room)) {
+    throw new Error(
+      `Save Snapshot refers to missing Room ${snapshot.game.room}`
+    );
+  }
+  const objectSlots = new Set(content.objects.map(object => object.slot));
+  if (snapshot.game.craft !== null && !objectSlots.has(snapshot.game.craft)) {
+    throw new Error(
+      `Save Snapshot refers to missing craft slot ${snapshot.game.craft}`
+    );
+  }
+  for (const [slot, residence] of snapshot.residence) {
+    if (!objectSlots.has(slot)) {
+      throw new Error(`Save Snapshot refers to missing object slot ${slot}`);
+    }
+    if (residence.kind === 'room' && !content.rooms.has(residence.id)) {
+      throw new Error(`Save Snapshot refers to missing Room ${residence.id}`);
+    }
+  }
+  for (const [roomId, alternate] of snapshot.rewired) {
+    const room = content.rooms.get(roomId);
+    if (
+      room?.specialSetup === undefined ||
+      !room.specialSetup.alternates.some(candidate =>
+        sameAlternate(candidate, alternate)
+      )
+    ) {
+      throw new Error(
+        `Save Snapshot has an invalid rewired choice for Room ${roomId}`
+      );
+    }
+    if (
+      'room' in alternate.destination &&
+      !content.rooms.has(alternate.destination.room)
+    ) {
+      throw new Error(
+        `Save Snapshot refers to missing Room ${alternate.destination.room}`
+      );
+    }
+  }
+};
+
 /// The one owner of a play session's mutable state (ADR 0018).
 export class GameplaySession {
   readonly content: SessionContent;
@@ -262,6 +333,60 @@ export class GameplaySession {
     if (this.scripts !== undefined) {
       this.scripts.host = this.project(this.scripts.host);
     }
+  }
+
+  captureSaveSnapshot(): SaveSnapshot {
+    return {
+      benson: this.scripts?.captureSaveSnapshot() ?? null,
+      game: {
+        ...this.game,
+        craft: this.game.craft ?? null,
+        room: this.game.room ?? null,
+        touchdown: this.game.touchdown ?? null
+      },
+      randomState: encodeRandomState(this.ownRandomState),
+      residence: [...this.residence.entries()].sort(([a], [b]) => a - b),
+      rewired: [...this.rewired.entries()].sort(([a], [b]) => a - b)
+    };
+  }
+
+  static restore(
+    content: SessionContent,
+    scripts: BensonSession | undefined,
+    snapshot: SaveSnapshot
+  ): GameplaySession {
+    validateSnapshotReferences(content, snapshot);
+    if ((scripts === undefined) !== (snapshot.benson === null)) {
+      throw new Error(
+        'Save Snapshot scripting state does not match the Gameplay Session content'
+      );
+    }
+    const restoredScripts =
+      scripts === undefined || snapshot.benson === null
+        ? undefined
+        : BensonSession.restore(
+            scripts.program,
+            scripts.text,
+            scripts.tunables,
+            snapshot.benson
+          );
+    const session = new GameplaySession(
+      content,
+      snapshot.game.player,
+      restoredScripts,
+      decodeRandomState(snapshot.randomState)
+    );
+    session.game = {
+      ...snapshot.game,
+      craft: snapshot.game.craft ?? undefined,
+      room: snapshot.game.room ?? undefined,
+      touchdown: snapshot.game.touchdown ?? undefined
+    };
+    session.residence = new Map(snapshot.residence);
+    session.rewired = new Map(snapshot.rewired);
+    session.ownRandomState = decodeRandomState(snapshot.randomState);
+    session.republishHostState();
+    return session;
   }
 
   get location(): Location {

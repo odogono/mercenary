@@ -1,3 +1,4 @@
+import type { MessageTickerSaveSnapshot } from '../session/save.ts';
 import { BensonHostState } from './host.ts';
 
 /// Unicode scalar count, not UTF-16 units and not grapheme clusters.
@@ -87,5 +88,26 @@ export class MessageTicker {
   finish(): void {
     this.revealed = this.codePoints;
     this.held = this.holdSeconds;
+  }
+
+  captureSaveSnapshot(): MessageTickerSaveSnapshot {
+    return {
+      charactersPerSecond: this.charactersPerSecond,
+      held: this.held,
+      holdSeconds: this.holdSeconds,
+      revealed: this.revealed,
+      text: this.text
+    };
+  }
+
+  static restore(snapshot: MessageTickerSaveSnapshot): MessageTicker {
+    const ticker = new MessageTicker(
+      snapshot.text,
+      snapshot.charactersPerSecond,
+      snapshot.holdSeconds
+    );
+    ticker.revealed = snapshot.revealed;
+    ticker.held = snapshot.held;
+    return ticker;
   }
 }
