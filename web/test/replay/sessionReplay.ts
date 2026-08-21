@@ -1,3 +1,4 @@
+import { BensonHostState } from '../../src/benson/index.ts';
 import type { Intent } from '../../src/gameCore/index.ts';
 import {
   type Occupancy,
@@ -108,6 +109,40 @@ export const snapshotValue = (snapshot: SessionSnapshot): TraceValue => {
     worldFlipped: snapshot.worldFlipped
   };
 };
+
+/// Project only the fields the frozen Trace Oracle can emit.
+///
+/// M7.1 made the browser Gameplay Session authoritative for complete object flags and carried
+/// order after the Swift implementation was frozen. Those fields remain part of the complete
+/// browser Session Snapshot, but cannot be invented on the oracle side of a Replay Gate.
+export const traceOracleSnapshotValue = (
+  snapshot: SessionSnapshot,
+  legacyRoom255Slots: ReadonlySet<number>
+): TraceValue => {
+  const value = snapshotValue(snapshot) as TraceObject;
+  const residence: TraceObject = {};
+  for (const [slot, where] of snapshot.residence) {
+    residence[String(slot)] =
+      where.kind === 'gone' && legacyRoom255Slots.has(slot)
+        ? { room: 255 }
+        : where.kind === 'room'
+          ? { room: where.id }
+          : residenceValue(where);
+  }
+  delete value['carriedStack'];
+  delete value['objectFlags'];
+  value['residence'] = residence;
+  return value;
+};
+
+export const traceOracleRoom255Slots = (
+  objects: readonly { readonly room: number; readonly slot: number }[]
+): ReadonlySet<number> =>
+  new Set(
+    objects
+      .filter(object => object.room === BensonHostState.outOfTheWorld)
+      .map(object => object.slot)
+  );
 
 export const intentFromRecord = (input: TraceObject): Intent => ({
   pitch: input['pitch'] as number,

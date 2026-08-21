@@ -18,7 +18,8 @@ import { expectIdentical } from '../test/replay/compare.ts';
 import {
   eventValue,
   intentFromRecord,
-  snapshotValue
+  traceOracleRoom255Slots,
+  traceOracleSnapshotValue
 } from '../test/replay/sessionReplay.ts';
 
 const VIEWPORT = { height: 800, width: 1280 } as const;
@@ -47,6 +48,7 @@ try {
   const settings = requiredSettings(settingsText);
   const initial = createWalkabout(bundle, settings);
   let session = initial.session;
+  const legacyRoom255Slots = traceOracleRoom255Slots(session.content.objects);
   const { world } = initial;
   const environment = saveEnvironment(bundle, settings);
   const slots = new SaveSlots(localStorage);
@@ -88,7 +90,7 @@ try {
 
   expectIdentical(
     trace.header['initial'],
-    snapshotValue(session.snapshot),
+    traceOracleSnapshotValue(session.snapshot, legacyRoom255Slots),
     'initial'
   );
   if (
@@ -120,7 +122,7 @@ try {
     expectIdentical(record['elapsed'], snapshot.elapsed, `elapsed ${nextStep}`);
     expectIdentical(
       expected[index],
-      snapshotValue(snapshot),
+      traceOracleSnapshotValue(snapshot, legacyRoom255Slots),
       `step ${nextStep}`
     );
     expectIdentical(

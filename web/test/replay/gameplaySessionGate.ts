@@ -39,7 +39,8 @@ import { flightSettingsValue } from './moverGate.ts';
 import {
   eventValue,
   intentFromRecord,
-  snapshotValue
+  traceOracleRoom255Slots,
+  traceOracleSnapshotValue
 } from './sessionReplay.ts';
 
 export interface GameplaySessionGateContext {
@@ -141,6 +142,7 @@ export const gameplaySessionGate = async (
   const replay = (trace: Trace): void => {
     const expected = foldStates(trace);
     const session = gate.createSession(context, trace);
+    const legacyRoom255Slots = traceOracleRoom255Slots(session.content.objects);
     const beforeStep = gate.prepareSteps?.(session, trace);
     const dt = trace.header['dt'] as number;
     let nextStep = 0;
@@ -173,7 +175,7 @@ export const gameplaySessionGate = async (
       );
       expectIdentical(
         expected[index],
-        snapshotValue(snapshot),
+        traceOracleSnapshotValue(snapshot, legacyRoom255Slots),
         `${trace.id} step ${nextStep}`
       );
       expectIdentical(
@@ -215,9 +217,12 @@ export const gameplaySessionGate = async (
 
         test('reconstructs the emitter setup before the first step', () => {
           const session = gate.createSession(context, trace);
+          const legacyRoom255Slots = traceOracleRoom255Slots(
+            session.content.objects
+          );
           expectIdentical(
             trace.header['initial'],
-            snapshotValue(session.snapshot),
+            traceOracleSnapshotValue(session.snapshot, legacyRoom255Slots),
             `${id} initial`
           );
         });

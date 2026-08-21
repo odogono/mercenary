@@ -272,19 +272,6 @@ const validateSnapshotReferences = (
   }
   const savedResidence = new Map(snapshot.residence);
   const savedFlags = new Map(snapshot.objectFlags);
-  if (
-    snapshot.residence.length !== objectSlots.size ||
-    savedResidence.size !== objectSlots.size ||
-    snapshot.objectFlags.length !== objectSlots.size ||
-    savedFlags.size !== objectSlots.size
-  ) {
-    throw new Error('Save Snapshot has an incomplete or extra object census');
-  }
-  for (const slot of objectSlots) {
-    if (!savedResidence.has(slot) || !savedFlags.has(slot)) {
-      throw new Error(`Save Snapshot is missing object slot ${slot}`);
-    }
-  }
   for (const [slot, residence] of savedResidence) {
     if (!objectSlots.has(slot)) {
       throw new Error(`Save Snapshot refers to missing object slot ${slot}`);
@@ -296,6 +283,19 @@ const validateSnapshotReferences = (
   for (const slot of savedFlags.keys()) {
     if (!objectSlots.has(slot)) {
       throw new Error(`Save Snapshot refers to missing object slot ${slot}`);
+    }
+  }
+  if (
+    snapshot.residence.length !== objectSlots.size ||
+    savedResidence.size !== objectSlots.size ||
+    snapshot.objectFlags.length !== objectSlots.size ||
+    savedFlags.size !== objectSlots.size
+  ) {
+    throw new Error('Save Snapshot has an incomplete or extra object census');
+  }
+  for (const slot of objectSlots) {
+    if (!savedResidence.has(slot) || !savedFlags.has(slot)) {
+      throw new Error(`Save Snapshot is missing object slot ${slot}`);
     }
   }
   if (new Set(snapshot.carriedStack).size !== snapshot.carriedStack.length) {
@@ -696,9 +696,8 @@ export class GameplaySession {
     if (slot === undefined) {
       return undefined;
     }
-    const craft = this.objectsBySlot.get(slot);
     this.residence.set(slot, {
-      at: { x: position.x, y: craft?.origin.y ?? position.y, z: position.z },
+      at: { x: position.x, y: position.y, z: position.z },
       kind: 'surface'
     });
     this.game = leaveCraftCore(this.game, this.content.flight);
