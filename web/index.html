@@ -59,10 +59,10 @@
          letterboxed, rather than a view that fills the window with a gadget beneath it. */
       #frame-stack {
         display: grid;
-        width: min(100%, calc(100dvh * 1280 / 1100));
+        width: min(100%, calc(100dvh * 1280 / 1000));
         margin-inline: auto;
-        aspect-ratio: 1280 / 1100;
-        grid-template-rows: 800fr 300fr;
+        aspect-ratio: 1280 / 1000;
+        grid-template-rows: 800fr 200fr;
       }
 
       #game-surface[data-composition='strip'] #frame-stack {
@@ -305,38 +305,38 @@
 
       .bezel {
         background: var(--panel-face);
-        border-radius: 12px;
+        border-radius: 8px;
         box-shadow:
-          inset 4px 4px 0 var(--panel-hi),
-          inset -4px -4px 0 var(--panel-lo);
+          inset 3px 3px 0 var(--panel-hi),
+          inset -3px -3px 0 var(--panel-lo);
       }
 
       .inset {
         background: var(--panel-face-dark);
-        border-radius: 10px;
+        border-radius: 7px;
         box-shadow:
-          inset 4px 4px 0 var(--panel-lo),
-          inset -4px -4px 0 var(--panel-hi);
+          inset 3px 3px 0 var(--panel-lo),
+          inset -3px -3px 0 var(--panel-hi);
       }
 
       .lcd {
         display: flex;
-        gap: 4px;
+        gap: 3px;
         align-items: center;
         justify-content: center;
-        padding: 6px 8px;
+        padding: 4px 6px;
         background: var(--lcd-bg);
-        border-radius: 6px;
+        border-radius: 4px;
         color: var(--lcd-ink);
-        font-size: 26px;
-        letter-spacing: 0.16em;
+        font-size: 20px;
+        letter-spacing: 0.14em;
       }
 
       .lamp {
-        width: 24px;
-        height: 24px;
+        width: 17px;
+        height: 17px;
         background: var(--lamp-off);
-        border-radius: 4px;
+        border-radius: 3px;
         box-shadow: inset 2px 2px 0 rgb(0 0 0 / 60%);
       }
 
@@ -347,7 +347,7 @@
 
       .plabel {
         color: var(--label-ink);
-        font-size: 18px;
+        font-size: 13px;
         letter-spacing: 0.08em;
         text-align: center;
         white-space: nowrap;
@@ -363,86 +363,92 @@
       /* --- Targ rendition ------------------------------------------------- */
       #panel-targ {
         display: grid;
-        height: 300px;
-        padding: 16px 20px 20px;
-        gap: 16px;
-        grid-template-columns: 168px 1fr 224px;
+        height: 200px;
+        padding: 10px 14px 12px;
+        gap: 10px;
+        grid-template-columns: 132px 1fr 176px;
       }
 
       #panel-targ .column {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 4px;
         align-items: center;
-        padding: 12px;
+        padding: 8px;
       }
 
       #targ-elevation {
-        width: 84px;
-        height: 184px;
+        width: 62px;
+        height: 116px;
         overflow: hidden;
-        border-radius: 6px;
+        border-radius: 5px;
       }
 
       #panel-targ .instruments {
         display: grid;
-        gap: 16px;
+        gap: 10px;
         grid-template-columns: repeat(3, 1fr);
       }
 
       #panel-targ .instrument {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 3px;
         align-items: center;
-        padding: 12px;
+        padding: 7px;
       }
 
       #panel-targ .instrument .row {
         display: flex;
-        gap: 12px;
+        gap: 8px;
         align-items: center;
       }
 
       #panel-targ .middle {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 8px;
       }
 
+      /* The message box is part of the panel's face, so it holds its height in silence rather
+         than collapsing between things Benson has to say. */
       #panel-message {
+        display: flex;
+        height: 34px;
         overflow: hidden;
-        padding: 10px 8px 6px;
-        margin-inline: 12px;
+        align-items: center;
+        justify-content: center;
+        padding: 2px 6px 0;
+        margin-inline: 8px;
         background: var(--msg-bg);
-        border-radius: 6px;
+        border-radius: 5px;
         color: var(--msg-ink);
-        font-size: 30px;
+        font-size: 24px;
         letter-spacing: 0.1em;
         text-align: center;
         white-space: nowrap;
       }
 
       #targ-compass-slot {
-        width: 168px;
-        height: 24px;
-        margin-bottom: 16px;
+        width: 128px;
+        height: 15px;
+        margin-bottom: 8px;
       }
 
       #targ-compass {
-        width: 184px;
-        height: 88px;
+        width: 136px;
+        height: 62px;
         overflow: hidden;
-        border-radius: 6px;
+        border-radius: 5px;
       }
 
       /* --- Damocles rendition --------------------------------------------- */
       #panel-damocles {
         display: grid;
-        height: 300px;
-        padding: 12px 16px 16px;
-        gap: 10px;
-        grid-template-rows: 56px 1fr;
+        height: 200px;
+        padding: 8px 12px 10px;
+        gap: 8px;
+        grid-template-rows: 38px 1fr;
       }
 
       #damocles-message-bar {
@@ -456,9 +462,9 @@
         align-items: center;
         justify-content: center;
         background: var(--msg-bg);
-        border-radius: 4px;
+        border-radius: 3px;
         color: var(--msg-ink);
-        font-size: 26px;
+        font-size: 19px;
         letter-spacing: 0.14em;
         text-shadow: 2px 0 0 currentcolor;
         white-space: nowrap;
@@ -466,8 +472,8 @@
 
       #damocles-body {
         display: grid;
-        gap: 12px;
-        grid-template-columns: 24px 496px 1fr 400px 24px;
+        gap: 8px;
+        grid-template-columns: 16px 372px 1fr 300px 16px;
       }
 
       .tp-gauge {
@@ -521,12 +527,12 @@
         overflow: hidden;
         align-items: center;
         justify-content: center;
-        padding: 4px 6px;
+        padding: 2px 4px;
         background: var(--nav-lcd);
-        border: 4px solid #3f463c;
-        border-radius: 8px;
+        border: 3px solid #3f463c;
+        border-radius: 6px;
         color: var(--nav-ink);
-        font-size: 20px;
+        font-size: 15px;
         text-shadow: 2px 0 0 currentcolor;
         white-space: nowrap;
       }
@@ -541,7 +547,7 @@
       }
 
       #damocles-elevation {
-        width: 56px;
+        width: 42px;
         overflow: hidden;
         align-self: stretch;
         border: 4px solid #3f463c;
@@ -564,14 +570,14 @@
       }
 
       #damocles-nav .nav-foot .plabel {
-        font-size: 20px;
+        font-size: 15px;
         letter-spacing: 0.12em;
         text-shadow: 2px 0 0 currentcolor;
       }
 
       #damocles-compass {
-        width: 152px;
-        height: 36px;
+        width: 114px;
+        height: 27px;
         overflow: hidden;
         border: 4px solid #3f463c;
         border-radius: 8px;
@@ -590,7 +596,7 @@
 
       #damocles-aux .aux-title {
         color: #b8bec2;
-        font-size: 44px;
+        font-size: 32px;
         letter-spacing: 0.06em;
         text-shadow: 4px 4px 0 #3a4046;
       }
@@ -644,7 +650,7 @@
         border: 2px solid var(--panel-lo);
         border-radius: 4px;
         color: var(--inv-ink);
-        font-size: 26px;
+        font-size: 19px;
         letter-spacing: 0.12em;
         text-shadow: 2px 0 0 currentcolor;
       }
@@ -657,12 +663,12 @@
       }
 
       #inventory-cash {
-        padding: 4px 8px;
+        padding: 2px 6px;
         background: var(--inv-lcd);
         border: 2px solid var(--panel-lo);
         border-radius: 4px;
         color: var(--inv-ink);
-        font-size: 20px;
+        font-size: 15px;
         text-shadow: 2px 0 0 currentcolor;
         white-space: nowrap;
       }
@@ -681,11 +687,11 @@
       }
 
       #damocles-clock {
-        padding: 6px 16px 4px;
+        padding: 4px 12px 2px;
         background: var(--clock-bg);
-        border-radius: 6px;
+        border-radius: 5px;
         color: var(--clock-ink);
-        font-size: 30px;
+        font-size: 22px;
         letter-spacing: 0.1em;
         text-shadow: 2px 0 0 currentcolor;
       }
@@ -709,8 +715,8 @@
                     <canvas
                       id="targ-elevation-canvas"
                       class="instrument-canvas"
-                      width="84"
-                      height="184"
+                      width="62"
+                      height="116"
                     ></canvas>
                   </div>
                   <div class="plabel">ELEVATION</div>
@@ -750,8 +756,8 @@
                     <canvas
                       id="targ-compass-canvas"
                       class="instrument-canvas"
-                      width="184"
-                      height="88"
+                      width="136"
+                      height="62"
                     ></canvas>
                   </div>
                   <div class="plabel">COMPASS</div>
@@ -778,8 +784,8 @@
                         <canvas
                           id="damocles-elevation-canvas"
                           class="instrument-canvas"
-                          width="56"
-                          height="112"
+                          width="42"
+                          height="84"
                         ></canvas>
                       </div>
                       <div class="nav-stack">
@@ -794,8 +800,8 @@
                             <canvas
                               id="damocles-compass-canvas"
                               class="instrument-canvas"
-                              width="152"
-                              height="36"
+                              width="114"
+                              height="27"
                             ></canvas>
                           </div>
                         </div>

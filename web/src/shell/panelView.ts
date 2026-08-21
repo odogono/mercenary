@@ -22,7 +22,7 @@ export interface PanelElements extends PanelCanvases {
   readonly root: HTMLElement;
 }
 
-const PITCH_PIXELS_PER_DEGREE = 2.2;
+const PITCH_PIXELS_PER_DEGREE = 1.6;
 const COMPASS_PIXELS_PER_DEGREE = 1.4;
 const DAMOCLES_PIXELS_PER_DEGREE = 0.28;
 const QUARTER_LETTERS = ['N', 'E', 'S', 'W'] as const;
@@ -45,7 +45,11 @@ const surfaceOf = (canvas: HTMLCanvasElement): Surface | undefined => {
 const tokenOf = (root: HTMLElement, name: string): string =>
   getComputedStyle(root).getPropertyValue(name).trim() || '#000';
 
-/// The artificial horizon: sky over ground, with the needle at the current pitch.
+/// The artificial horizon: the world tilts, the instrument does not.
+///
+/// The sky-over-ground boundary is the reading — it rides up and down with pitch against fixed
+/// graduations, the way an attitude indicator works. A needle drawn over a static background
+/// would be a different instrument that happens to show the same number.
 export const drawElevation = (
   canvas: HTMLCanvasElement,
   root: HTMLElement,
@@ -56,29 +60,29 @@ export const drawElevation = (
     return;
   }
   const { context, height, width } = surface;
+  // Nose up puts more sky in view, so the horizon falls.
+  const horizon = Math.max(
+    0,
+    Math.min(height, height / 2 + pitchDegrees * PITCH_PIXELS_PER_DEGREE)
+  );
   context.fillStyle = tokenOf(root, '--gauge-sky');
-  context.fillRect(0, 0, width, height / 2);
+  context.fillRect(0, 0, width, horizon);
   context.fillStyle = tokenOf(root, '--gauge-ground');
-  context.fillRect(0, height / 2, width, height / 2);
-  const ink = tokenOf(root, '--gauge-ink');
-  context.fillStyle = ink;
+  context.fillRect(0, horizon, width, height - horizon);
+  context.fillStyle = tokenOf(root, '--gauge-ink');
   context.font = '8px "Mercenary Pixel", monospace';
   context.textAlign = 'center';
   context.textBaseline = 'middle';
   for (const [label, fraction] of [
-    ['10', 0.16],
+    ['10', 0.18],
     ['00', 0.5],
-    ['-10', 0.84]
+    ['-10', 0.82]
   ] as const) {
     const y = Math.round(height * fraction);
-    context.fillRect(2, y, 7, 1);
-    context.fillRect(width - 9, y, 7, 1);
+    context.fillRect(1, y, 5, 1);
+    context.fillRect(width - 6, y, 5, 1);
     context.fillText(label, width / 2, y);
   }
-  const needle = Math.round(
-    height / 2 - pitchDegrees * PITCH_PIXELS_PER_DEGREE
-  );
-  context.fillRect(1, Math.max(1, Math.min(height - 3, needle)), width - 2, 2);
 };
 
 /// The compass tape: ticks along both edges, degrees down the middle.
@@ -128,10 +132,14 @@ export const drawDamoclesElevation = (
     return;
   }
   const { context, height, width } = surface;
+  const horizon = Math.max(
+    0,
+    Math.min(height, height / 2 + pitchDegrees * PITCH_PIXELS_PER_DEGREE)
+  );
   context.fillStyle = tokenOf(root, '--gauge-sky');
-  context.fillRect(0, 0, width, height / 2);
+  context.fillRect(0, 0, width, horizon);
   context.fillStyle = tokenOf(root, '--gauge-ground');
-  context.fillRect(0, height / 2, width, height / 2);
+  context.fillRect(0, horizon, width, height - horizon);
   const ink = tokenOf(root, '--nav-ink');
   context.fillStyle = ink;
   for (let y = 4; y < height - 4; y += 7) {
