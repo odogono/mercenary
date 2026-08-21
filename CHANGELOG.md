@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Damocles script catalogue (#128). `lab script` decodes the script bank by reachability from its
+  entry table, reaching 497 ops and 98.2% of the code region with nothing undecodable. It resolved
+  the bank into two 64-slot pointer tables (strings at `$070000`, script entries at `$070080` — the
+  Damocles analogue of the C64 Benson entry table), bytecode, and a string pool.
+  `docs/research/damocles-script-catalogue.md` documents every script slot, the system string table,
+  and the authoring idioms: the `(OK?)` prompt shape with its Y/O/N scancodes and timeout re-poll,
+  the bargaining ladder whose figures are packed decimal, delay-as-subroutine pacing, and the
+  suspend-not-block message gate. Script arithmetic is BCD, so a port must reproduce those semantics
+  or prove binary equivalent. Two incidental findings: the original shipped cross-title save import
+  from *Mercenary I* and *The Second City*, and the inline-native escape at slots `$08`/`$09` is
+  unused anywhere in this bank. The decoder is report-only instrumentation and must never become an
+  extractor (ADR 0021).
 - Damocles Script dispatch loop decoded by Working Disassembly (#128). The ST laboratory gained
   three research instruments — `export` for addressed, provenance-bound RAM windows, `xref` for the
   68000 instructions that name one absolute address, and a scenario `disassemble` action driving

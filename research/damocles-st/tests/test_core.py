@@ -26,6 +26,11 @@ from damocleslab.core import (  # noqa: E402
     verify_run_artifacts,
 )
 from damocleslab.laboratory import export  # noqa: E402
+from damocleslab.script import (  # noqa: E402
+    decode_scripts,
+    read_script_table,
+    read_string_table,
+)
 from damocleslab.runtime import (  # noqa: E402
     build_hatari_command,
     render_dump_script,
@@ -314,6 +319,64 @@ class StickBitmaskTests(unittest.TestCase):
     def test_rejects_unknown_direction(self) -> None:
         with self.assertRaisesRegex(LabError, "direction"):
             resolve_stick_bitmask("diagonal")
+
+
+class ScriptDecodeTests(unittest.TestCase):
+    """The decode rests on operand widths read from the handler stubs."""
+
+    def _bank(self, ops: bytes, *, at: int = 0x070100) -> bytes:
+        data = bytearray(0x100000)
+        data[at : at + len(ops)] = ops
+        return bytes(data)
+
+    def test_predicate_ops_carry_a_trailing_branch_target(self) -> None:
+        # $07 if.wait: 2 operand bytes, then the epilogue's 2-byte target. This
+        # is the shape that puts `return` at $072CDE in the delay subroutine.
+        bank = self._bank(bytes.fromhex("0007 0032 2cd8 0005".replace(" ", "")))
+        decode = decode_scripts(bank, start=0x070100, end=0x072D2E, entries=(0x070100,))
+        wait = decode.ops[0x070100]
+        self.assertEqual(wait.op.name, "if.wait")
+        self.assertEqual(wait.size, 6)
+        self.assertEqual(wait.target, 0x072CD8)
+        self.assertEqual(decode.ops[0x070106].op.name, "return")
+
+    def test_message_consumes_text_and_word_aligns(self) -> None:
+        # "AB" + NUL is 3 bytes, so the op must round up to keep the PC even,
+        # putting the next op at $070106 rather than $070105.
+        bank = self._bank(b"\x00\x01AB\x00" + b"\x00" + b"\x00\x05")
+        decode = decode_scripts(bank, start=0x070100, end=0x072D2E, entries=(0x070100,))
+        message = decode.ops[0x070100]
+        self.assertEqual(message.text, "AB")
+        self.assertEqual(message.size, 6)
+        self.assertEqual(decode.ops[0x070106].op.name, "return")
+
+    def test_opcode_is_the_low_six_bits_and_flag_bits_are_kept(self) -> None:
+        # The interpreter tests bit 6 and bit 7 of the fetched word (btst #6/#7
+        # on d1) — $0040 and $0080, not the word's top bits. $00C3 is slot $03
+        # with both set.
+        bank = self._bank(bytes.fromhex("00c303fc"))
+        decode = decode_scripts(bank, start=0x070100, end=0x072D2E, entries=(0x070100,))
+        jump = decode.ops[0x070100]
+        self.assertEqual(jump.opcode, 0x03)
+        self.assertEqual(jump.word & 0x40, 0x40, "bit 6 selects call over jump")
+        self.assertEqual(jump.word & 0x80, 0x80, "bit 7 negates")
+        self.assertEqual(jump.target, 0x0703FC)
+
+    def test_walk_stops_at_return_and_follows_calls(self) -> None:
+        bank = bytearray(self._bank(bytes.fromhex("00040200 0005")))
+        bank[0x070200:0x070202] = bytes.fromhex("0005")  # callee returns
+        decode = decode_scripts(bytes(bank), start=0x070100, end=0x072D2E, entries=(0x070100,))
+        self.assertIn(0x070200, decode.call_targets)
+        self.assertIn(0x070200, decode.ops)
+
+    def test_reads_two_separate_sixty_four_slot_tables(self) -> None:
+        data = bytearray(0x100000)
+        data[0x070000:0x070002] = bytes.fromhex("2d2e")  # string slot $00
+        data[0x070080:0x070082] = bytes.fromhex("0110")  # script slot $00
+        data[0x072D2E:0x072D35] = b"LOCKED\x00"
+        self.assertEqual(read_script_table(bytes(data))[0], 0x070110)
+        address, text = read_string_table(bytes(data))[0]
+        self.assertEqual((address, text), (0x072D2E, "LOCKED"))
 
 
 class DisassemblyExtractionTests(unittest.TestCase):

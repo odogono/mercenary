@@ -18,17 +18,21 @@ These are seam *categories* inferred from Working-Authority Evidence. Confirmed 
 
 Method that transfers without transferring live types: Host Callout pattern, Gameplay Session as sole Session State authority, own extractors into a gitignored Data Payload, Trace Oracle discipline, ADR 0002 (no mechanical translation of Working Authority or MDDClone).
 
-### The script seam has a native escape (#128)
+### The script seam has a native escape, so far unexercised (#128)
 
-The Working Disassembly of the Damocles Script interpreter (`damocles-script-isa.md`) found that opcodes `$08` and `$09` do `jsr (a0)` — **straight into the script stream**. Some script bytes are 68000 code, not bytecode.
+The Working Disassembly of the Damocles Script interpreter (`damocles-script-isa.md`) found that dispatch slots `$08` and `$09` do `jsr (a0)` — **straight into the script stream**. The mechanism to run inline 68000 code as part of a script therefore exists.
 
-This is a constraint on the script seam rather than a decode gap, and it has no Targ analogue: a Benson Script is bytecode all the way down, so "re-encode at export and run our own interpreter" (ADR 0015) covers it completely. For Damocles that method covers only the part of a script that is bytecode. Consequences a future multi-title design has to answer, not this sketch:
+A full decode of the bank then measured how much it is used: **not at all**, in the region that matters. Across 497 ops reached from all 64 script entry slots — 98.2% of the code region `$070100`–`$072D2E` — neither slot appears. So the escape is a latent capability here, not a live constraint. It could still be exercised by scripts outside that region, other banks, or a mission disk; none has been examined.
 
-- A Damocles script extract must **detect** `$08`/`$09` sites rather than assume a uniform stream, or it will mis-parse whatever follows them.
-- Those sites cannot be interpreted by an Independent Implementation at all. The affected script logic has to be **re-authored behind the Host Callout**, which makes the seam partly a rewrite boundary rather than purely a translation boundary — and ADR 0002 forbids the alternative.
-- Scale is unknown: no census exists yet of how many scripts reach an `$08`/`$09`, or what those routines do. Until that is known, any effort estimate for "port the Damocles script VM" is a floor, not a range.
+What that leaves for a future multi-title design:
 
-Separately, the interpreter **suspends itself** on a message gate (`$7BA0`) instead of blocking, so the Damocles message effect is resumable where Targ's is synchronous. A shared Host Callout cannot assume Targ's shape.
+- A Damocles script extract should **detect** `$08`/`$09` rather than assume a uniform stream, because a single occurrence would desynchronise a linear parse. Cheap insurance, not a known problem.
+- If any real script does use them, that logic cannot be interpreted by an Independent Implementation and would have to be **re-authored behind the Host Callout** — ADR 0002 forbids translating it. On current evidence this is contingency, not scope.
+
+Two findings that *are* live constraints:
+
+- The interpreter **suspends itself** on a message gate (`$7BA0`) instead of blocking, so the Damocles message effect is resumable where Targ's is synchronous. A shared Host Callout cannot assume Targ's shape.
+- Script arithmetic is **packed decimal**: slots `$0E` and `$15` run `abcd` over 6-byte BCD fields. A Damocles economy is BCD in the original, so a port has to choose between reproducing BCD semantics and proving binary arithmetic is observationally equivalent.
 
 ## What this sketch must not become yet
 

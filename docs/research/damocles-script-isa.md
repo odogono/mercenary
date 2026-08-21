@@ -216,14 +216,14 @@ rows marked *probable* are single-pass readings that were not re-derived.
 | `$0B` | `$051A7E` | **Key/case**: operand vs `$7B61`; on match `bsr $054848` |
 | `$0C` | `$051A8C` | Predicate on the sign of a `$6FAA` record indexed by `$7C3E` |
 | `$0D` | `$051AA6` | Write 6 bytes into an 8-byte-strided record table at `$7482`, indexed by operand |
-| `$0E` | `$051AE6` | `$7482` record access with an `$00F8` special case calling `$054848` (tail *probable*) |
+| `$0E` | `$051AE6` | **BCD add**: six `abcd` steps over a 6-byte packed-decimal field of a `$7482` record, with an `$00F8` special case calling `$054848` |
 | `$0F` | `$051B16` | Indexed **word write** into the `$7A42` table |
 | `$10` | `$051B28` | `or.w` operand into flag word `$7BD8` — **set flags** |
 | `$11` | `$051B34` | `not`+`and` operand into `$7BD8` — **clear flags** |
 | `$12` | `$051B42` | Predicate on `$7BD8` — **test flags** |
 | `$13` | `$051B50` | Predicate on `$7C40` |
 | `$14` | `$051B5C` | **Indexed message**: bounded (`$01E0`) read from `$7A42`, treat as string pointer, set `$7B98`, bump `$7B9A`, set `$7BA0` = 1 |
-| `$15` | `$051B98` | Copy record fields between three `$7482` entities via scratch at `$7968` (*probable*) |
+| `$15` | `$051B98` | **BCD three-operand**: gathers three `$7482` records, copies one into scratch at `$7968`, then six `abcd` steps — packed-decimal arithmetic between entities |
 | `$16` | `$051BE2` | `add.w` operand into counter `$7BD2` |
 | `$17` | `$051BEE` | Predicate on `$7BD2` vs operand |
 | `$18` | `$051BFC` | Predicate on the word at `$070000` + operand |
@@ -244,6 +244,54 @@ Interpreter state named by the handlers: script PC `$00781E` (low word
 counter `$007B9A`, message gate `$007BA0`, wait counter `$007B9C`, flag word
 `$007BD8`, counter `$007BD2`, key `$007B61`, record table `$007482`, word table
 `$007A42`, bit records `$006FAA`, RNG pointer `$007E18`/`$007E1A`.
+
+### Bank layout and full decode
+
+With the handler census giving correct operand widths — including the branch
+target that predicate ops carry via the shared epilogue, which is what defeated
+the earlier partial parse and left a stray `$000F` — the bank decodes almost
+completely. `lab script` walks it by reachability from its entry table.
+
+What the decoded programs *contain* — the script inventory, the string table,
+and the authoring idioms — is catalogued separately in
+[`damocles-script-catalogue.md`](damocles-script-catalogue.md).
+
+Region 1 of the populated bank (`$070000`–`$07336C`) is four things in order:
+
+| Range | Contents |
+|---|---|
+| `$070000`–`$07007F` | **String table**: 64 bank-relative word pointers into the string pool |
+| `$070080`–`$0700FF` | **Script entry table**: 64 bank-relative word pointers to bytecode — the Damocles analogue of the C64 Benson entry table at `$0800` |
+| `$070100`–`$072D2E` | **Bytecode**, including the timed-delay subroutines from `$072CD6` |
+| `$072D2E`–`$07336C` | **String pool**: NUL-terminated text on a `$32` stride (slot `$00` = `LOCKED`, slot `$01` = `WARNING - OBJECTS LEFT IN CASE!`) |
+
+Two 64-slot tables, not one 128-slot table: the first half's targets are text on
+a regular stride, the second half's are code. Repeated values in either are
+unused slots pointing at a shared target. Decoding past `$072D2E` walks ASCII as
+instructions — a word of two spaces (`$2020`) has `$20` in its low six bits and
+looks like a valid slot — which is how an over-wide region inflates slot `$20`
+and invents `$08`/`$09` sites that are really letters.
+
+Decode of the code region from all 64 entry slots: **497 ops reached, 98.2% of
+the region's 11,310 bytes, nothing undecodable.** That independently corroborates
+the earlier partial parse's 490 ops and 211 message hits. Slot mix, in order:
+`$01` message (206), `$04` call (72), `$03` jump (67), `$0A` if.random (30),
+`$05` return (16), `$0B` if.key (15), `$14` message.indexed (14), `$02`
+reset.wait (13), `$07` if.wait (13), `$19` bank.write (11), `$0D` record.write
+(9), `$11` flags.clear (7), `$0E` record.bcd.add (6), `$12` if.flags (5), `$1C`
+(5), `$10` flags.set (2), `$15` record.bcd.three (2), `$0F` word.write (2),
+`$20` and `$21` (1 each).
+
+**Neither `$08` nor `$09` appears.** The inline-native escape exists in the
+interpreter but no reachable script in this region uses it.
+
+The operand-width table the decode rests on: a plain op consumes its own
+operands; a predicate op consumes those **plus** a trailing 2-byte branch
+target; `$01` consumes NUL-terminated text and word-aligns; `$08`/`$09` consume
+4 bytes of inline code. Widths are read from the handler stubs — for example
+`$07` takes 2 operand bytes and is a predicate, so `$07` at `$072CD8` with
+operand `$0032` and target `$2CD8` puts `return` at `$072CDE`, exactly where the
+earlier hand decode of that delay subroutine put it.
 
 ### What was not required / not done
 
@@ -279,14 +327,17 @@ must not be stretched.
 - Script logic is a **real bytecode payload**, not only string tables — sizing
   a remake must budget for an interpreter + script extract, or for rewriting
   logic behind a new seam after a complete census.
-- Opcodes `$08`/`$09` `jsr (a0)` **straight into the script stream**: some script
-  bytes are 68000 code, not bytecode. Any Damocles script extract must detect
-  those sites, and an Independent Implementation cannot interpret them — the
-  affected scripts need re-authoring behind the new seam. This is the sharpest
-  new constraint from #128 and it has no Targ analogue.
+- Slots `$08`/`$09` `jsr (a0)` **straight into the script stream**, so the
+  interpreter can run inline 68000 code as part of a script. The full decode
+  below found **no reachable use of either slot**, so this is a latent
+  capability rather than a live constraint; an extract should still detect them,
+  because one occurrence would desynchronise a linear parse.
 - The interpreter suspends itself on a message gate (`$7BA0`) rather than
   blocking, so a Damocles Host Callout needs a resumable message effect rather
   than Targ's synchronous one.
+- Script arithmetic is **packed decimal** (`$0E`, `$15` run `abcd` over 6-byte
+  BCD fields), so a port must either reproduce BCD semantics or prove binary
+  arithmetic is observationally equivalent.
 - Method transfer (Host Callout, own extractors, Independent Implementation)
   still holds; C64 `BensonMachine` / ADR 0015 encodings do **not** transfer.
 - Fog item “whether Damocles still has a Benson-like script VM” is answered:

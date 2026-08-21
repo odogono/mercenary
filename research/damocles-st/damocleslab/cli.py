@@ -8,6 +8,7 @@ from typing import Sequence
 
 from .core import LabError
 from .laboratory import capture, doctor, export, observe, reproduce, verify, xref
+from .script import script
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -50,6 +51,21 @@ def _parser() -> argparse.ArgumentParser:
         metavar="START-END",
         help="ad-hoc hex address range, e.g. 0x70000-0x74000 (repeatable)",
     )
+    script_parser = subparsers.add_parser(
+        "script",
+        help="decode the Damocles Script bank into a readable listing",
+    )
+    script_parser.add_argument("--run", required=True, type=Path)
+    script_parser.add_argument("--start", help="region start (default 0x070100)")
+    script_parser.add_argument("--end", help="region end (default 0x07336C)")
+    script_parser.add_argument(
+        "--entry",
+        action="append",
+        dest="entries",
+        metavar="ADDRESS",
+        help="extra entry point to walk from (repeatable)",
+    )
+
     xref_parser = subparsers.add_parser(
         "xref",
         help="report 68000 instructions that name one absolute address",
@@ -83,6 +99,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             result = verify(args.run)
         elif args.command == "reproduce":
             result = reproduce(roms_root=args.roms)
+        elif args.command == "script":
+            result = script(args.run, start=args.start, end=args.end, entries=args.entries)
         elif args.command == "xref":
             result = xref(args.run, address=args.address, source_role=args.source_role)
         elif args.command == "export":
