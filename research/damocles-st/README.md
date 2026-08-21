@@ -16,7 +16,10 @@ research/damocles-st/lab capture --checkpoint title-screen
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/title-smoke.json
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/first-world.json
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/deadline-clock.json
+research/damocles-st/lab observe --scenario research/damocles-st/scenarios/script-dispatch.json
 research/damocles-st/lab verify --run research/damocles-st/work/<run-id>
+research/damocles-st/lab export --run research/damocles-st/work/<run-id> --window script-bank
+research/damocles-st/lab xref --run research/damocles-st/work/<run-id> --address 0x781E
 python3 -m unittest discover -s research/damocles-st/tests -v
 ```
 
@@ -31,6 +34,18 @@ Hard failure on a wrong STX, wrong TOS, missing Hatari, missed title-screen
 checkpoint, or hash mismatch. Acceptance is two independent cold starts with
 equal normalized title-code RAM, stable registers, and display; a self-verifying
 manifest; and a bounded Space-key observation from that checkpoint.
+
+## Working Disassembly commands
+
+`export` cuts addressed RAM windows out of an attested run for external
+analysis; a window's file offset is its ST physical address. `xref` reports the
+68000 instructions that name one absolute address — the cheap way into unknown
+code. A scenario's `disassemble` action produces a listing with Hatari's own
+68000 disassembler at the state the run reached.
+
+All three keep their output inside the gitignored run directory. Any Working
+Disassembly of the Working Authority follows the rules in
+`docs/research/damocles-gap.md`: untracked listings, tracked facts only.
 
 See [`SPEC.md`](SPEC.md), [`BOOT-AND-UNPACKING.md`](BOOT-AND-UNPACKING.md), and
 [`HATARI-RESEARCH.md`](HATARI-RESEARCH.md).

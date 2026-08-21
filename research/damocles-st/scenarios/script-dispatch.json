@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "name": "script-dispatch",
+  "checkpoint": "title-screen",
+  "description": "From the Damocles title screen, press Space once, wait for world load, capture, then disassemble the live 68000 code from $05193E — the dispatch loop reached from $051956, the only instruction in RAM that names the resident script program counter at $00781E (movea.l $781E.w,a0) — through the dispatch table and every handler stub. Working-Authority Evidence for the Damocles Script dispatch loop (#81, #85). The disassembly runs last because Hatari stops consuming FIFO commands after a listing. The listing is untracked Restricted Material; only decoded facts enter research notes.",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "artifacts": ["display", "registers", "ram"]
+    },
+    {
+      "type": "disassemble",
+      "name": "script-dispatch",
+      "start": "0x05193e",
+      "end": "0x051d80"
+    }
+  ]
+}

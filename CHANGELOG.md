@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Damocles Script dispatch loop decoded by Working Disassembly (#128). The ST laboratory gained
+  three research instruments — `export` for addressed, provenance-bound RAM windows, `xref` for the
+  68000 instructions that name one absolute address, and a scenario `disassemble` action driving
+  Hatari's own disassembler at a world-loaded state. `$051956` proved to be the only instruction in
+  the megabyte naming the resident script program counter, leading to the fetch-decode-dispatch loop
+  at `$05193E`, a 37-entry self-relative dispatch table at `$051972`, the bit-6/bit-7 branch
+  encoding, and a first-pass census of every handler with the interpreter state each one touches.
+  That resolves the ISA note's Unresolved dispatch-table item and its unknown Host Callout rows, and
+  surfaces opcodes `$08`/`$09` calling 68000 code inline in the script stream — a constraint with no
+  Targ analogue. `CONTEXT.md` mints **Working Disassembly**; `docs/research/damocles-gap.md` records
+  its rules, keeping listings untracked Restricted Material and only decoded facts in research notes.
+
 - Three explicit Browser Shell save slots (#109). Versioned bounded JSON Save Snapshots now
   capture and restore the complete authoritative Gameplay Session, including mover and Object
   Residence state, Room rewiring, Benson interpreter and message progress, fractional timing,

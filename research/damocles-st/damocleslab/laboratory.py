@@ -11,7 +11,9 @@ from typing import Any
 
 from .core import (
     LabError,
+    parse_hex_int,
     compare_reproducible_runs,
+    extract_disassembly,
     file_hash,
     extract_stable_ram,
     format_hatari_key,
@@ -384,6 +386,9 @@ def observe(
 
             observe_dump = run_directory / "observe-dump.txt"
             capture_actions = [action for action in scenario["actions"] if action["type"] == "capture"]
+            disassemble_actions = [
+                action for action in scenario["actions"] if action["type"] == "disassemble"
+            ]
             observe_dump.write_text(
                 "\n".join(
                     render_dump_script(
@@ -447,9 +452,25 @@ def observe(
                                 ],
                             )
                             time.sleep(0.1)
+                    elif action_type == "disassemble":
+                        # Hatari's own 68000 disassembler reads live memory, so a
+                        # listing needs no external tool and no second address
+                        # space. Every range goes out in one stop/cont batch:
+                        # resuming emulation between listings loses the commands
+                        # that follow. Ranges must carry no spaces around the dash.
+                        start = int(str(action["start"]), 0)
+                        end = int(str(action["end"]), 0)
+                        _fifo_send(
+                            fifo_handle,
+                            ["hatari-stop", f"hatari-debug d ${start:x}-${end:x}"],
+                        )
+                        time.sleep(2.0)
                     elif action_type == "capture":
                         prefix = str(action.get("prefix", "observed"))
-                        is_final = action is capture_actions[-1]
+                        # A disassembly runs last and leaves Hatari unresponsive,
+                        # so the final capture must resume rather than quit and
+                        # let the cleanup below stop the emulator.
+                        is_final = action is capture_actions[-1] and not disassemble_actions
                         dump_parent = run_directory.resolve()
                         commands = [
                             "hatari-stop",
@@ -532,6 +553,19 @@ def observe(
                 generated.append((f"{role_prefix}-registers", registers_name))
             except LabError:
                 pass
+    observe_text = observe_log.read_text(encoding="utf-8", errors="replace")
+    for action in scenario["actions"]:
+        if action["type"] == "disassemble":
+            listing = f"{action['name']}.disasm.log"
+            (run_directory / listing).write_text(
+                extract_disassembly(
+                    observe_text,
+                    start=int(str(action["start"]), 0),
+                    end=int(str(action["end"]), 0),
+                ),
+                encoding="utf-8",
+            )
+            generated.append(("disassembly", listing))
     generated.extend(
         [
             ("observation-hatari-log", "hatari-observe.log"),
@@ -555,3 +589,216 @@ def observe(
     write_json(run_directory / "manifest.json", manifest)
     verify_run_artifacts(run_directory, manifest)
     return run_directory, manifest
+
+
+_OPCODE_FAMILIES = {
+    0x0: "immediate/bit",
+    0x1: "move.b",
+    0x2: "move.l/movea.l",
+    0x3: "move.w/movea.w",
+    0x4: "misc (jmp/jsr/lea/clr/tst)",
+    0x5: "addq/subq/Scc",
+    0x6: "Bcc/bsr",
+    0x7: "moveq",
+    0x8: "or/divu",
+    0x9: "sub/suba",
+    0xA: "line-A",
+    0xB: "cmp/eor",
+    0xC: "and/mulu",
+    0xD: "add/adda",
+    0xE: "shift/rotate",
+    0xF: "line-F",
+}
+
+
+def xref(
+    run_directory: Path,
+    *,
+    address: str,
+    source_role: str | None = None,
+) -> dict[str, Any]:
+    """Report 68000 instructions that name one absolute address.
+
+    Finding the routine that touches a known variable is the cheap way into
+    unknown code: the interpreter must reference its own script program counter,
+    so every candidate site is a doorway into the dispatch loop. This reports
+    addresses only — it emits no disassembly text (docs/research/damocles-gap.md).
+
+    A hit is a word whose effective-address field selects absolute addressing
+    (short `.w` = mode 7 reg 0, long `.l` = mode 7 reg 1) followed by the
+    extension word(s) naming the target. Some hits are coincidental data, so the
+    opcode word and family are reported for triage rather than filtered away.
+    """
+    target = parse_hex_int(address, label="address")
+    manifest = load_json(run_directory / "manifest.json")
+    verify_run_artifacts(run_directory, manifest)
+    ram_artifact = _select_ram_artifact(manifest, source_role)
+    data = (run_directory / ram_artifact["path"]).read_bytes()
+    if len(data) != 0x100000:
+        raise LabError(f"RAM dump must be exactly 1 MiB, got {len(data)}")
+
+    short = target.to_bytes(2, "big") if target < 0x8000 else None
+    long = target.to_bytes(4, "big")
+    hits: list[dict[str, Any]] = []
+    for offset in range(0, len(data) - 6, 2):
+        word = int.from_bytes(data[offset : offset + 2], "big")
+        mode = word & 0x3F
+        if mode == 0x38 and short is not None and data[offset + 2 : offset + 4] == short:
+            addressing = "absolute-short"
+        elif mode == 0x39 and data[offset + 2 : offset + 6] == long:
+            addressing = "absolute-long"
+        else:
+            continue
+        hits.append(
+            {
+                "address": offset,
+                "addressHex": f"0x{offset:06x}",
+                "opcodeWord": f"0x{word:04x}",
+                "family": _OPCODE_FAMILIES[word >> 12],
+                "addressing": addressing,
+            }
+        )
+
+    return {
+        "schemaVersion": 1,
+        "runId": manifest["runId"],
+        "sourceRam": {
+            "role": ram_artifact["role"],
+            "path": ram_artifact["path"],
+            "sha256": ram_artifact["sha256"],
+        },
+        "target": {"address": target, "addressHex": f"0x{target:06x}"},
+        "evidenceClass": "working-authority-evidence",
+        "hitCount": len(hits),
+        "hits": hits,
+    }
+
+
+def _resolve_export_windows(
+    config: dict[str, Any],
+    windows: list[str] | None,
+    ranges: list[str] | None,
+) -> list[tuple[str, int, int, str | None]]:
+    """Resolve requested export windows to (name, start, end, description) tuples."""
+    configured = config.get("exportWindows", {})
+    if not isinstance(configured, dict):
+        raise LabError("lab.json exportWindows must be an object")
+
+    resolved: list[tuple[str, int, int, str | None]] = []
+    for name in windows or []:
+        window = configured.get(name)
+        if window is None:
+            known = ", ".join(sorted(configured)) or "none"
+            raise LabError(f"Unknown export window {name!r}; configured windows: {known}")
+        start, end = parse_ram_ranges([window["range"]], label=f"exportWindows.{name}.range")[0]
+        resolved.append((name, start, end, window.get("description")))
+
+    for spec in ranges or []:
+        parts = spec.split("-")
+        if len(parts) != 2:
+            raise LabError(f"Range must be START-END, got {spec!r}")
+        start, end = parse_ram_ranges([[parts[0], parts[1]]], label=f"range {spec}")[0]
+        resolved.append((f"window-{start:06x}-{end:06x}", start, end, None))
+
+    if not resolved:
+        raise LabError("Nothing to export: pass at least one --window or --range")
+    return resolved
+
+
+RAM_ARTIFACT_ROLES = ("observed-ram", "ram")
+
+
+def _select_ram_artifact(manifest: dict[str, Any], source_role: str | None) -> dict[str, Any]:
+    """Choose which RAM dump a window is cut from.
+
+    An observe run holds two images: the title-screen checkpoint (`ram`) and the
+    state after the scenario ran (`observed-ram`). Windows must default to the
+    later one — the script bank at $070000 is zero-filled at title-screen and
+    only present after world load — so a silent default to `ram` would export
+    empty windows that look like real evidence.
+    """
+    roles = (source_role,) if source_role else RAM_ARTIFACT_ROLES
+    for role in roles:
+        matches = [artifact for artifact in manifest["artifacts"] if artifact["role"] == role]
+        if len(matches) > 1:
+            raise LabError(f"Run has {len(matches)} artifacts with role {role!r}; expected one")
+        if matches:
+            return matches[0]
+    available = sorted({artifact["role"] for artifact in manifest["artifacts"]})
+    raise LabError(
+        f"No RAM artifact with role {' or '.join(repr(role) for role in roles)}; "
+        f"run has: {', '.join(available)}"
+    )
+
+
+def export(
+    run_directory: Path,
+    *,
+    windows: list[str] | None = None,
+    ranges: list[str] | None = None,
+    source_role: str | None = None,
+) -> dict[str, Any]:
+    """Export addressed RAM windows from an attested run for external analysis.
+
+    The RAM dump is a flat 1 MiB image of ST address space, so a file offset is
+    the physical address. Each window is written beside the run it came from —
+    inside the gitignored work tree — with a provenance sidecar, so a Working
+    Disassembly finding can always name the run, image, and command behind an
+    address. See docs/research/damocles-gap.md for the tracking rules.
+    """
+    _, config = load_configuration()
+    manifest = load_json(run_directory / "manifest.json")
+    verify_run_artifacts(run_directory, manifest)
+
+    ram_artifact = _select_ram_artifact(manifest, source_role)
+    data = (run_directory / ram_artifact["path"]).read_bytes()
+    if len(data) != 0x100000:
+        raise LabError(f"RAM dump must be exactly 1 MiB, got {len(data)}")
+
+    requested = _resolve_export_windows(config, windows, ranges)
+    entries: list[dict[str, Any]] = []
+    for name, start, end, description in requested:
+        filename = f"{name}.window.bin"
+        (run_directory / filename).write_bytes(data[start:end])
+        entries.append(
+            {
+                "name": name,
+                "path": filename,
+                "baseAddress": start,
+                "baseAddressHex": f"0x{start:06x}",
+                "endAddressHex": f"0x{end:06x}",
+                "length": end - start,
+                "sha256": file_hash(run_directory / filename),
+                "description": description,
+            }
+        )
+
+    exports = {
+        "schemaVersion": 1,
+        "runId": manifest["runId"],
+        "sourceRam": {
+            "role": ram_artifact["role"],
+            "path": ram_artifact["path"],
+            "sha256": ram_artifact["sha256"],
+        },
+        "authority": manifest["authority"],
+        "scenario": manifest["scenario"],
+        "evidenceClass": "working-authority-evidence",
+        "note": "File offset equals ST physical address; each window starts at baseAddress.",
+        "windows": entries,
+    }
+    write_json(run_directory / "exports.json", exports)
+
+    kept = [
+        artifact
+        for artifact in manifest["artifacts"]
+        if artifact["role"] not in ("export-window", "exports")
+        or artifact["path"] not in {entry["path"] for entry in entries} | {"exports.json"}
+    ]
+    kept.extend(_artifact(run_directory, "export-window", entry["path"]) for entry in entries)
+    kept.append(_artifact(run_directory, "exports", "exports.json"))
+    manifest["artifacts"] = kept
+    validate_run_manifest(manifest)
+    write_json(run_directory / "manifest.json", manifest)
+    verify_run_artifacts(run_directory, manifest)
+    return exports
