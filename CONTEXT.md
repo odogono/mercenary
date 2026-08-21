@@ -142,6 +142,10 @@ _Avoid_: World clock, day/night system, recovered sky
 The fixed seeded arrangement of stars belonging to the Targ Orrery, seen turning at the sidereal rate rather than regenerated from frame to frame.
 _Avoid_: Random stars, particle field, space backdrop
 
+**Interstellar Ship Field**:
+The Reference Build's 21-point respawning visual field shown by the Interstellar Ship's handler during the Escape terminal presentation, distinct from ordinary flight and the authored Targ Star Sphere.
+_Avoid_: Star Sphere, general particle system, ordinary-flight starfield
+
 **Trace Oracle**:
 The accepted macOS implementation frozen at the annotated `trace-oracle-last-good` tag, together with the deterministic traces it regenerates, held as the tagged equivalence authority that the canonical browser implementation must reproduce rather than as a live implementation (ADR 0019).
 _Avoid_: Golden master, reference app, source of truth
