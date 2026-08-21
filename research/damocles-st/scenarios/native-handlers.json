@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "name": "native-handlers",
+  "checkpoint": "title-screen",
+  "description": "From the Damocles title screen, press Space once, wait for world load, capture, then disassemble the live 68000 code from $054700 through $0556FF. This window covers the three native routines the Damocles Script interpreter reaches from its dispatch loop and handlers, left Unresolved by #128 and asked for by #136: $054764 (bsr from $05194C when $7A88 is non-zero), $0547C6 (branch target from $051944 when $7B96 is non-zero), and $054848 (bsr from the key/case handler $0B at $051A7E and from the BCD handler $0E at $051AE6 on the $00F8 special case). The window starts below $054764 and runs far enough past $054848 to contain the routine bodies rather than only their entries. Working-Authority Evidence for #136; relates to #81, #85. Hatari stops consuming FIFO commands after a listing, so the disassembly is the single last action, after the capture. The listing is untracked Restricted Material; only decoded facts enter research notes.",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "artifacts": ["display", "registers", "ram"]
+    },
+    {
+      "type": "disassemble",
+      "name": "native-handlers",
+      "start": "0x054700",
+      "end": "0x0556ff"
+    }
+  ]
+}

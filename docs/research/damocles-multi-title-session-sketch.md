@@ -22,12 +22,14 @@ Method that transfers without transferring live types: Host Callout pattern, Gam
 
 The Working Disassembly of the Damocles Script interpreter (`damocles-script-isa.md`) found that dispatch slots `$08` and `$09` do `jsr (a0)` — **straight into the script stream**. The mechanism to run inline 68000 code as part of a script therefore exists.
 
-A full decode of the bank then measured how much it is used: **not at all**, in the region that matters. Across 497 ops reached from all 64 script entry slots — 98.2% of the code region `$070100`–`$072D2E` — neither slot appears. So the escape is a latent capability here, not a live constraint. It could still be exercised by scripts outside that region, other banks, or a mission disk; none has been examined.
+A full decode of the bank then measured how much it is used: **not at all**, in the region that matters. Across 497 ops reached from all 64 script entry slots — 98.2% of the code region `$070100`–`$072D2E` — neither slot appears. So the escape is a latent capability here, not a live constraint. It could still be exercised by scripts on a mission disk, which has not been examined. Other banks are ruled out for the loaded image: #136 found the 32-bit immediate `$00070080` exactly once in the whole 1 MiB image, inside `$054764`, so there is one script entry table and one instruction that reads it.
 
 What that leaves for a future multi-title design:
 
 - A Damocles script extract should **detect** `$08`/`$09` rather than assume a uniform stream, because a single occurrence would desynchronise a linear parse. Cheap insurance, not a known problem.
 - If any real script does use them, that logic cannot be interpreted by an Independent Implementation and would have to be **re-authored behind the Host Callout** — ADR 0002 forbids translating it. On current evidence this is contingency, not scope.
+
+A third route is now closed: #136 decoded the four native routines the handlers reach (`$054848`, `$054764`, `$0547C6`, `$0004C6B2`). All four are **host effects, not hidden script logic** — a fire-and-forget PSG sound, a pending-script launcher, and a message resume. None of them interprets script bytes, so none of them enlarges the bytecode a port must understand. They enlarge the *effect list* the seam has to offer, which is the cheaper of the two, and they remove the one **does-not-map** row from the Host Callout effect census.
 
 Two findings that *are* live constraints:
 
@@ -39,7 +41,7 @@ Two findings that *are* live constraints:
 - A loaded schema or Content Set for Damocles.
 - A `CONTEXT-MAP.md` split.
 - Generalisation of live Gameplay Session / payload types on the Targ critical path.
-- Glossary entries for Unresolved Fog (VOID / spaceflight dynamics, the native routines Damocles Script handlers call and the `$08`/`$09` census, which record tables hold objects/craft/places, interior doorway graph, solar shade animation, impact-clock RAM cells).
+- Glossary entries for Unresolved Fog (VOID / spaceflight dynamics, which record tables hold objects/craft/places, interior doorway graph, solar shade animation, impact-clock RAM cells).
 
 ## Sequencing
 
