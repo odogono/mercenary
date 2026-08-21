@@ -10,9 +10,9 @@ import { readers } from './read.ts';
 /// The pattern is the kit's own `Settings.load(at:read:)` generalised, which is the seam that
 /// already existed for exactly this reason.
 ///
-/// The load order and every check are the kit's. Five documents are required and share one
-/// schema version; the geometry decoder's version is checked against the manifest; then five
-/// optional documents, each present-or-absent and each carrying a version of its own, because
+/// The load order and every check are the kit's. Five geometry documents share one schema
+/// version, and endgame.json is independently required; the geometry decoder's version is
+/// checked against the manifest; then five optional documents, each present-or-absent and each carrying a version of its own, because
 /// their formats change on their own schedules. `benson.json` without `text.json` is refused,
 /// since a script cannot render its messages without the word table.
 ///
@@ -30,6 +30,7 @@ export const SUPPORTED_BENSON_SCHEMA_VERSION = 1;
 export const SUPPORTED_INTERACTION_SCHEMA_VERSION = 1;
 export const SUPPORTED_FLIGHT_SCHEMA_VERSION = 3;
 export const SUPPORTED_UNDERGROUND_SCHEMA_VERSION = 2;
+export const SUPPORTED_ENDGAME_SCHEMA_VERSION = 2;
 
 const parse = (name: string, body: string): unknown => {
   try {
@@ -89,7 +90,7 @@ const check = (name: string, version: number, supported: number): void => {
 };
 
 export const load = async (read: ReadDocument): Promise<Bundle> => {
-  // All ten documents are asked for at once and then checked in order.
+  // All eleven documents are asked for at once and then checked in order.
   //
   // The read seam is a `fetch` in the browser (ADR 0011), so awaiting each document before
   // asking for the next made startup ten serialised round trips before the first frame. They
@@ -106,6 +107,7 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     surface,
     objects,
     rooms,
+    endgame,
     text,
     benson,
     interaction,
@@ -117,6 +119,7 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     required(read, 'surface.json', readers.surface),
     required(read, 'objects.json', readers.objects),
     required(read, 'rooms.json', readers.rooms),
+    required(read, 'endgame.json', readers.endgame),
     present(read, 'text.json', readers.text),
     present(read, 'benson.json', readers.benson),
     present(read, 'interaction.json', readers.interaction),
@@ -130,6 +133,11 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
   check('surface.json', surface.schemaVersion, SUPPORTED_SCHEMA_VERSION);
   check('objects.json', objects.schemaVersion, SUPPORTED_SCHEMA_VERSION);
   check('rooms.json', rooms.schemaVersion, SUPPORTED_SCHEMA_VERSION);
+  check(
+    'endgame.json',
+    endgame.schemaVersion,
+    SUPPORTED_ENDGAME_SCHEMA_VERSION
+  );
   if (manifest.decoderVersion !== SUPPORTED_DECODER_VERSION) {
     fail({ kind: 'unsupportedDecoder', version: manifest.decoderVersion });
   }
@@ -169,6 +177,7 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
   }
 
   return {
+    endgame,
     manifest,
     objects,
     rooms,
@@ -184,7 +193,7 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
 
 /// A reader that fetches from a base URL, which is how the browser loads the payload.
 ///
-/// A 404 is absence rather than failure, because five of the ten documents are optional and
+/// A 404 is absence rather than failure, because five of the eleven documents are optional and
 /// the loader distinguishes the two. Any other bad status is a failure: a payload served with a
 /// 500 is not a payload without a `flight.json`.
 export const fetchReader =

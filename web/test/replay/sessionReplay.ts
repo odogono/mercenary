@@ -27,7 +27,16 @@ export const residenceValue = (residence: Residence): TraceValue => {
             }
           };
     case 'room':
-      return { room: residence.id };
+      return residence.at === undefined
+        ? { room: residence.id }
+        : {
+            room: {
+              id: residence.id,
+              x: residence.at.x,
+              y: residence.at.y,
+              z: residence.at.z
+            }
+          };
     case 'carried':
       return 'carried';
     case 'gone':
@@ -60,6 +69,7 @@ export const snapshotValue = (snapshot: SessionSnapshot): TraceValue => {
     residence[String(slot)] = residenceValue(where);
   }
   return {
+    carriedStack: [...snapshot.carriedStack],
     core: {
       poweramp: snapshot.core.poweramp,
       stepInterlock: snapshot.core.stepInterlock,
@@ -82,6 +92,7 @@ export const snapshotValue = (snapshot: SessionSnapshot): TraceValue => {
     location: locationValue(snapshot.location),
     message: snapshot.message,
     mode: snapshot.mode,
+    objectFlags: Object.fromEntries(snapshot.objectFlags),
     occupancy: occupancyValue(snapshot.occupancy),
     player: {
       heading: snapshot.player.heading,

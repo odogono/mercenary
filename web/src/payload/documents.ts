@@ -369,6 +369,94 @@ export interface InteractionDocument {
   readonly tooHeavyMessage: number;
 }
 
+export interface EndgameDropRules {
+  readonly carriedExemptionSlot: number;
+  readonly carriedMask: number;
+  readonly copiesCurrentRoomAndPosition: boolean;
+  readonly emptyInventory: string;
+  readonly inventorySelection: string;
+  readonly keyCode: number;
+  readonly requiresCarriedExemptionOrFlightState: boolean;
+}
+
+export interface EndgameTakeOverrides {
+  readonly antigravSlot: number;
+  readonly sinkSlot: number;
+}
+
+export interface EndgameCombat {
+  readonly fire: {
+    readonly directionOffset: number;
+    readonly effectSlot: number;
+    readonly inputActiveValue: number;
+    readonly lifecycleFrames: number;
+    readonly oneActiveShot: boolean;
+    readonly walkingMoverProhibited: boolean;
+  };
+  readonly hostileCraft: {
+    readonly attackingSlot: number;
+    readonly captureClearsAttackingShip: boolean;
+    readonly captureMover: number;
+    readonly captureRemovesSlots: readonly number[];
+    readonly enabledByAttackingShip: boolean;
+    readonly inboundLifecycleFrames: number;
+    readonly inboundSlot: number;
+    readonly surfaceOnly: boolean;
+  };
+  readonly objectHits: {
+    readonly firstTargetMessage: number;
+    readonly secondTargetScript: number;
+    readonly targetSlots: readonly number[];
+  };
+  readonly siteDestruction: {
+    readonly axisWindow: readonly number[];
+    readonly destroyedMask: number;
+    readonly impactFrames: number;
+    readonly projectileSlot: number;
+  };
+}
+
+export interface EndgameInterstellarShipField {
+  readonly colours: Readonly<Record<string, unknown>>;
+  readonly continuationState: readonly unknown[];
+  readonly initialization: Readonly<Record<string, unknown>>;
+  readonly loopOrder: readonly string[];
+  readonly motion: Readonly<Record<string, unknown>>;
+  readonly pointSlots: {
+    readonly count: number;
+    readonly first: number;
+    readonly identity: string;
+    readonly last: number;
+  };
+  readonly projection: Readonly<Record<string, unknown>>;
+  readonly respawn: Readonly<Record<string, unknown>>;
+  readonly storage: Readonly<Record<string, unknown>>;
+}
+
+export interface EndgameDocument {
+  readonly combat: EndgameCombat;
+  readonly controls: {
+    readonly drop: EndgameDropRules;
+    readonly takeOverrides: EndgameTakeOverrides;
+  };
+  readonly counts: Readonly<Record<string, number>>;
+  readonly endingPresentation: {
+    readonly activeValue: number;
+    readonly completedValue: number;
+    readonly dispatch: string;
+    readonly interstellarShipField: EndgameInterstellarShipField;
+    readonly scriptedValue: number;
+  };
+  readonly orbitalTransition: {
+    readonly axisMiddleByteWindow: readonly number[];
+    readonly callSites: readonly number[];
+    readonly cell: readonly number[];
+    readonly minimumAltitudeByte: number;
+    readonly successCarry: string;
+  };
+  readonly schemaVersion: number;
+}
+
 export interface UndergroundEntrance {
   readonly cell: readonly number[];
   readonly room: number;
@@ -403,6 +491,7 @@ export interface UndergroundDocument {
 
 export interface Bundle {
   readonly benson?: BensonDocument;
+  readonly endgame: EndgameDocument;
   readonly flight?: FlightDocument;
   readonly interaction?: InteractionDocument;
   readonly manifest: Manifest;

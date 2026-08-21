@@ -1,6 +1,9 @@
 import { BensonHostState } from '../benson/host.ts';
 import type { Vector3 } from '../orientation/index.ts';
-import type { InteractionDocument } from '../payload/documents.ts';
+import type {
+  EndgameTakeOverrides,
+  InteractionDocument
+} from '../payload/documents.ts';
 
 /// The room a craft belongs to when it is standing on the surface.
 export const SURFACE_ROOM = 0;
@@ -44,8 +47,12 @@ export class Interaction {
   readonly takeKey: number;
   readonly takeRange: number;
   readonly tooHeavyMessage: number;
+  private readonly takeOverrides: EndgameTakeOverrides | undefined;
 
-  constructor(document: InteractionDocument) {
+  constructor(
+    document: InteractionDocument,
+    takeOverrides?: EndgameTakeOverrides
+  ) {
     this.takeKey = document.takeKey;
     this.boardKey = document.boardKey;
     this.takeRange = document.takeRange;
@@ -58,6 +65,7 @@ export class Interaction {
     this.carriedMask = document.carriedMask & 0xff;
     this.descriptionMask = document.descriptionMask & 0xff;
     this.tooHeavyMessage = document.tooHeavyMessage;
+    this.takeOverrides = takeOverrides;
   }
 
   /// Whether an object is within reach on every axis. Reach is a cube whose edge is a
@@ -105,13 +113,28 @@ export class Interaction {
         return { host, outcome: { kind: 'nothingInReach' } };
       }
       const flags = host.objectFlags.get(candidate.slot) ?? 0;
-      if (!host.canTakeAnything && (flags & this.fixedMask) !== 0) {
+      const carriesSink =
+        this.takeOverrides !== undefined &&
+        host.inventory.has(this.takeOverrides.sinkSlot);
+      const carriesAntigrav =
+        this.takeOverrides !== undefined &&
+        host.inventory.has(this.takeOverrides.antigravSlot);
+      if (
+        !host.canTakeAnything &&
+        !carriesSink &&
+        (flags & this.fixedMask) !== 0
+      ) {
         return {
           host,
           outcome: { kind: 'fixedInPlace', slot: candidate.slot }
         };
       }
-      if (!host.canLiftAnything && (flags & this.heavyMask) !== 0) {
+      if (
+        !host.canLiftAnything &&
+        !carriesSink &&
+        !carriesAntigrav &&
+        (flags & this.heavyMask) !== 0
+      ) {
         return { host, outcome: { kind: 'tooHeavy', slot: candidate.slot } };
       }
       if (host.inventory.size >= this.inventoryLimit) {

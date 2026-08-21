@@ -10,7 +10,7 @@ import type {
 } from '../settings/index.ts';
 import type { Location, Residence } from '../world/index.ts';
 
-export const SAVE_SCHEMA_VERSION = 1 as const;
+export const SAVE_SCHEMA_VERSION = 2 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -19,6 +19,7 @@ const SAVE_STRING_CODE_UNIT_LIMIT = 65_536;
 export interface SavePayloadIdentity {
   readonly bensonSchemaVersion: number;
   readonly decoderVersion: number;
+  readonly endgameSchemaVersion: number;
   readonly flightSchemaVersion: number;
   readonly interactionSchemaVersion: number;
   readonly schemaVersion: number;
@@ -52,9 +53,6 @@ export interface BensonHostSaveSnapshot extends Omit<
   'destroyedBlocks' | 'inventory' | 'objectFlags' | 'objectRooms' | 'pendingKey'
 > {
   readonly destroyedBlocks: readonly number[];
-  readonly inventory: readonly number[];
-  readonly objectFlags: readonly (readonly [number, number])[];
-  readonly objectRooms: readonly (readonly [number, number])[];
   readonly pendingKey: BensonKey | null;
 }
 
@@ -85,7 +83,9 @@ export interface GameSaveSnapshot extends Omit<
 
 export interface SaveSnapshot {
   readonly benson: BensonSaveSnapshot | null;
+  readonly carriedStack: readonly number[];
   readonly game: GameSaveSnapshot;
+  readonly objectFlags: readonly (readonly [number, number])[];
   readonly randomState: string;
   readonly residence: readonly (readonly [number, Residence])[];
   readonly rewired: readonly (readonly [number, Alternate])[];
@@ -288,8 +288,16 @@ const residence = (value: unknown, at: string): Residence => {
       exact(value, at, ['kind']);
       return { kind: source['kind'] };
     case 'room': {
-      const out = exact(value, at, ['id', 'kind']);
-      return { id: byte(out['id'], `${at}.id`), kind: 'room' };
+      const fields =
+        source['at'] === undefined ? ['id', 'kind'] : ['at', 'id', 'kind'];
+      const out = exact(value, at, fields);
+      return out['at'] === undefined
+        ? { id: byte(out['id'], `${at}.id`), kind: 'room' }
+        : {
+            at: vector(out['at'], `${at}.at`),
+            id: byte(out['id'], `${at}.id`),
+            kind: 'room'
+          };
     }
     case 'surface': {
       const fields = source['at'] === undefined ? ['kind'] : ['at', 'kind'];
@@ -521,11 +529,8 @@ const bensonHost = (value: unknown, at: string): BensonHostSaveSnapshot => {
     'destroyedBlocks',
     'engineFlags',
     'gameComplete',
-    'inventory',
     'messageInterval',
     'messagePlaying',
-    'objectFlags',
-    'objectRooms',
     'pendingKey',
     'shipInbound',
     'signedRegister',
@@ -540,7 +545,6 @@ const bensonHost = (value: unknown, at: string): BensonHostSaveSnapshot => {
     out['destroyedBlocks'],
     `${at}.destroyedBlocks`
   );
-  const inventory = byteArray(out['inventory'], `${at}.inventory`);
   const decimals = integerArray(out['decimals'], `${at}.decimals`);
   if (decimals.length !== 16) {
     fail(`${at}.decimals must contain 16 integers`);
@@ -548,8 +552,7 @@ const bensonHost = (value: unknown, at: string): BensonHostSaveSnapshot => {
   if (
     destroyedBlocks.some(
       (item, index) => index > 0 && destroyedBlocks[index - 1]! >= item
-    ) ||
-    inventory.some((item, index) => index > 0 && inventory[index - 1]! >= item)
+    )
   ) {
     fail(`${at} sets must be unique and sorted`);
   }
@@ -565,11 +568,8 @@ const bensonHost = (value: unknown, at: string): BensonHostSaveSnapshot => {
     destroyedBlocks,
     engineFlags: byte(out['engineFlags'], `${at}.engineFlags`),
     gameComplete: bool(out['gameComplete'], `${at}.gameComplete`),
-    inventory,
     messageInterval: byte(out['messageInterval'], `${at}.messageInterval`),
     messagePlaying: bool(out['messagePlaying'], `${at}.messagePlaying`),
-    objectFlags: mapEntries(out['objectFlags'], `${at}.objectFlags`),
-    objectRooms: mapEntries(out['objectRooms'], `${at}.objectRooms`),
     pendingKey: pendingKey as BensonKey | null,
     shipInbound: byte(out['shipInbound'], `${at}.shipInbound`),
     signedRegister: integer(out['signedRegister'], `${at}.signedRegister`),
@@ -591,15 +591,23 @@ const benson = (value: unknown, at: string): BensonSaveSnapshot => {
 const snapshot = (value: unknown, at: string): SaveSnapshot => {
   const out = exact(value, at, [
     'benson',
+    'carriedStack',
     'game',
+    'objectFlags',
     'randomState',
     'residence',
     'rewired'
   ]);
+  const carriedStack = byteArray(out['carriedStack'], `${at}.carriedStack`);
+  if (new Set(carriedStack).size !== carriedStack.length) {
+    fail(`${at}.carriedStack members must be unique`);
+  }
   return {
     benson:
       out['benson'] === null ? null : benson(out['benson'], `${at}.benson`),
+    carriedStack,
     game: game(out['game'], `${at}.game`),
+    objectFlags: mapEntries(out['objectFlags'], `${at}.objectFlags`),
     randomState: randomState(out['randomState'], `${at}.randomState`),
     residence: residenceEntries(out['residence'], `${at}.residence`),
     rewired: rewiredEntries(out['rewired'], `${at}.rewired`)
@@ -644,6 +652,7 @@ const environment = (value: unknown, at: string): SaveEnvironment => {
   const payload = exact(out['payload'], `${at}.payload`, [
     'bensonSchemaVersion',
     'decoderVersion',
+    'endgameSchemaVersion',
     'flightSchemaVersion',
     'interactionSchemaVersion',
     'schemaVersion',
@@ -674,6 +683,10 @@ const environment = (value: unknown, at: string): SaveEnvironment => {
       decoderVersion: integer(
         payload['decoderVersion'],
         `${at}.payload.decoderVersion`
+      ),
+      endgameSchemaVersion: integer(
+        payload['endgameSchemaVersion'],
+        `${at}.payload.endgameSchemaVersion`
       ),
       flightSchemaVersion: integer(
         payload['flightSchemaVersion'],

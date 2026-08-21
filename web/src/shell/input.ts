@@ -15,6 +15,7 @@ export interface BrowserKey {
 }
 
 export interface ControlProfileActions {
+  readonly drop: () => void;
   readonly leaveCraft: () => void;
   readonly occupancy: () => Occupancy;
   readonly page: (delta: number) => void;
@@ -173,6 +174,9 @@ export class BrowserControlProfile {
         break;
       case 'KeyE':
         this.actions.rideLift();
+        break;
+      case 'KeyD':
+        this.actions.drop();
         break;
       default:
         if (!ordinaryCode(key.code)) {

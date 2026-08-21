@@ -41,7 +41,8 @@ describe('the Shell Console stays out of traces', () => {
       'throttleNotch',
       'shutThrottle',
       'leaveCraft',
-      'rideLift'
+      'rideLift',
+      'drop'
     ]) {
       expect(() => parseConsoleCommand(recorded, 16)).toThrow(
         `unknown command '${recorded.toLowerCase()}': type help`

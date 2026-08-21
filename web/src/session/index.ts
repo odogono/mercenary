@@ -40,6 +40,7 @@ import type {
   Bundle,
   Doorway,
   DoorwayRules,
+  EndgameDropRules,
   SpecialSetup,
   UndergroundDocument
 } from '../payload/documents.ts';
@@ -65,8 +66,8 @@ import {
 
 /// The Gameplay Session: the one owner of a play session's Session State (ADR 0018).
 ///
-/// Every discrete change to that state passes through a Semantic Action: `reach`, `leaveCraft`,
-/// `rideLift`, `teleport`, `place`, `carry`, `board`, `throttleNotchValue`, `throttleStep`,
+/// Every discrete change to that state passes through a Semantic Action: `reach`, `drop`,
+/// `leaveCraft`, `rideLift`, `teleport`, `place`, `carry`, `board`, `throttleNotchValue`, `throttleStep`,
 /// `fitPoweramp`, `shutThrottle`, `press`, `skipMessage`, `start`, `show`, `describe`. Each moves
 /// everything or nothing, which is what ADR 0018 asks of them.
 ///
@@ -115,7 +116,18 @@ export type PresentationEvent =
   | { readonly wall: { readonly sound: number } }
   | { readonly worldFlipped: boolean };
 
+export type DropOutcome =
+  | { readonly kind: 'dropped'; readonly slot: number }
+  | { readonly kind: 'emptyInventory' }
+  | { readonly kind: 'airborneRefused' };
+
+export interface DropResult {
+  readonly events: readonly PresentationEvent[];
+  readonly outcome: DropOutcome;
+}
+
 export interface SessionSnapshot {
+  readonly carriedStack: readonly number[];
   /// The Mover's own bookkeeping for this moment.
   ///
   /// Carried here rather than left on `game` because a Session Snapshot is the thing a renderer
@@ -138,6 +150,7 @@ export interface SessionSnapshot {
   readonly location: Location;
   readonly message: string;
   readonly mode: GameState['mode'];
+  readonly objectFlags: ReadonlyMap<number, number>;
   readonly occupancy: Occupancy;
   readonly player: PlayerState;
   readonly residence: ReadonlyMap<number, Residence>;
@@ -156,6 +169,7 @@ export const openingPlayer = (): PlayerState =>
 export interface SessionContent {
   readonly cellSize: number;
   readonly doorwayRules: DoorwayRules | undefined;
+  readonly dropRules?: EndgameDropRules;
   readonly flight: FlightModel | undefined;
   readonly interaction: Interaction | undefined;
   readonly objects: readonly ObjectPlacement[];
@@ -170,11 +184,15 @@ export const sessionContent = (
 ): SessionContent => ({
   cellSize: world.cellSize,
   doorwayRules: world.doorwayRules,
+  dropRules: bundle.endgame.controls.drop,
   flight,
   interaction:
     bundle.interaction === undefined
       ? undefined
-      : new Interaction(bundle.interaction),
+      : new Interaction(
+          bundle.interaction,
+          bundle.endgame.controls.takeOverrides
+        ),
   objects: world.objects,
   rooms: world.rooms,
   underground: bundle.underground
@@ -252,12 +270,56 @@ const validateSnapshotReferences = (
       `Save Snapshot refers to missing craft slot ${snapshot.game.craft}`
     );
   }
-  for (const [slot, residence] of snapshot.residence) {
+  const savedResidence = new Map(snapshot.residence);
+  const savedFlags = new Map(snapshot.objectFlags);
+  if (
+    snapshot.residence.length !== objectSlots.size ||
+    savedResidence.size !== objectSlots.size ||
+    snapshot.objectFlags.length !== objectSlots.size ||
+    savedFlags.size !== objectSlots.size
+  ) {
+    throw new Error('Save Snapshot has an incomplete or extra object census');
+  }
+  for (const slot of objectSlots) {
+    if (!savedResidence.has(slot) || !savedFlags.has(slot)) {
+      throw new Error(`Save Snapshot is missing object slot ${slot}`);
+    }
+  }
+  for (const [slot, residence] of savedResidence) {
     if (!objectSlots.has(slot)) {
       throw new Error(`Save Snapshot refers to missing object slot ${slot}`);
     }
     if (residence.kind === 'room' && !content.rooms.has(residence.id)) {
       throw new Error(`Save Snapshot refers to missing Room ${residence.id}`);
+    }
+  }
+  for (const slot of savedFlags.keys()) {
+    if (!objectSlots.has(slot)) {
+      throw new Error(`Save Snapshot refers to missing object slot ${slot}`);
+    }
+  }
+  if (new Set(snapshot.carriedStack).size !== snapshot.carriedStack.length) {
+    throw new Error('Save Snapshot Carried Stack members must be unique');
+  }
+  const carried = new Set(snapshot.carriedStack);
+  const carriedMask =
+    content.interaction?.carriedMask ?? content.dropRules?.carriedMask;
+  for (const slot of snapshot.carriedStack) {
+    if (!objectSlots.has(slot)) {
+      throw new Error(`Save Snapshot carries missing object slot ${slot}`);
+    }
+  }
+  for (const slot of objectSlots) {
+    const inStack = carried.has(slot);
+    const inResidence = savedResidence.get(slot)?.kind === 'carried';
+    const inFlags =
+      carriedMask === undefined
+        ? inStack
+        : ((savedFlags.get(slot) ?? 0) & carriedMask) !== 0;
+    if (inStack !== inResidence || inStack !== inFlags) {
+      throw new Error(
+        `Save Snapshot carrying representations disagree at slot ${slot}`
+      );
     }
   }
   for (const [roomId, alternate] of snapshot.rewired) {
@@ -289,11 +351,12 @@ export class GameplaySession {
   game: GameState;
   intent: Intent = IDLE;
   private residence = new Map<number, Residence>();
+  private objectFlags = new Map<number, number>();
+  private carriedStack: number[] = [];
   scripts: BensonSession | undefined;
   private rewired = new Map<number, Alternate>();
   private ownRandomState: bigint;
   private readonly objectsBySlot: ReadonlyMap<number, ObjectPlacement>;
-  private readonly baseFlags: ReadonlyMap<number, number>;
 
   constructor(
     content: SessionContent,
@@ -319,17 +382,29 @@ export class GameplaySession {
     this.game = game;
     this.scripts = scripts;
     const objectsBySlot = new Map<number, ObjectPlacement>();
-    const flags = new Map<number, number>();
     for (const object of content.objects) {
       if (!objectsBySlot.has(object.slot)) {
         objectsBySlot.set(object.slot, object);
-      }
-      if (!flags.has(object.slot)) {
-        flags.set(object.slot, object.stateFlags & 0xff);
+        const flags = object.stateFlags & 0xff;
+        this.objectFlags.set(object.slot, flags);
+        const carriedMask = this.carriedMask;
+        if (carriedMask !== undefined && (flags & carriedMask) !== 0) {
+          this.residence.set(object.slot, { kind: 'carried' });
+          this.carriedStack.push(object.slot);
+        } else if (object.room === BensonHostState.outOfTheWorld) {
+          this.residence.set(object.slot, { kind: 'gone' });
+        } else if (
+          object.placement === 'surface' ||
+          object.room === SURFACE_ROOM
+        ) {
+          this.residence.set(object.slot, { kind: 'surface' });
+        } else {
+          this.residence.set(object.slot, { id: object.room, kind: 'room' });
+        }
       }
     }
+    this.carriedStack.sort((a, b) => a - b);
     this.objectsBySlot = objectsBySlot;
-    this.baseFlags = flags;
     if (this.scripts !== undefined) {
       this.scripts.host = this.project(this.scripts.host);
     }
@@ -338,12 +413,14 @@ export class GameplaySession {
   captureSaveSnapshot(): SaveSnapshot {
     return {
       benson: this.scripts?.captureSaveSnapshot() ?? null,
+      carriedStack: [...this.carriedStack],
       game: {
         ...this.game,
         craft: this.game.craft ?? null,
         room: this.game.room ?? null,
         touchdown: this.game.touchdown ?? null
       },
+      objectFlags: [...this.objectFlags.entries()].sort(([a], [b]) => a - b),
       randomState: encodeRandomState(this.ownRandomState),
       residence: [...this.residence.entries()].sort(([a], [b]) => a - b),
       rewired: [...this.rewired.entries()].sort(([a], [b]) => a - b)
@@ -382,6 +459,8 @@ export class GameplaySession {
       room: snapshot.game.room ?? undefined,
       touchdown: snapshot.game.touchdown ?? undefined
     };
+    session.carriedStack = [...snapshot.carriedStack];
+    session.objectFlags = new Map(snapshot.objectFlags);
     session.residence = new Map(snapshot.residence);
     session.rewired = new Map(snapshot.rewired);
     session.ownRandomState = decodeRandomState(snapshot.randomState);
@@ -409,75 +488,118 @@ export class GameplaySession {
     return locationFromHost(object.room);
   }
 
+  private get carriedMask(): number | undefined {
+    return (
+      this.content.interaction?.carriedMask ??
+      this.content.dropRules?.carriedMask
+    );
+  }
+
   private project(host: BensonHostState): BensonHostState {
     const objectRooms = new Map<number, number>();
-    const objectFlags = new Map<number, number>();
-    const inventory = new Set<number>();
-    for (const object of this.content.objects) {
-      const where = this.residenceOf(object.slot);
-      objectRooms.set(object.slot, hostRoom(where));
-      let slotFlags = this.baseFlags.get(object.slot) ?? 0;
-      if (this.content.interaction !== undefined) {
-        if (isCarried(where)) {
-          slotFlags |= this.content.interaction.carriedMask;
-        } else {
-          slotFlags &= ~this.content.interaction.carriedMask;
-        }
-      }
-      objectFlags.set(object.slot, slotFlags);
-      if (isCarried(where)) {
-        inventory.add(object.slot);
-      }
+    for (const [slot, where] of this.residence) {
+      objectRooms.set(slot, hostRoom(where));
     }
     return host.with({
       boardedCraft: occupancyHostValue(this.occupancy),
       currentRoom: locationHostValue(this.location),
-      inventory,
-      objectFlags,
+      inventory: new Set(this.carriedStack),
+      objectFlags: new Map(this.objectFlags),
       objectRooms
     });
   }
 
   private reconcile(host: BensonHostState): void {
-    if (host.currentRoom !== locationHostValue(this.location)) {
-      const next = locationFromHost(host.currentRoom);
-      this.game = {
-        ...this.game,
-        room: next.kind === 'surface' ? undefined : next.id
-      };
+    const nextLocation = locationFromHost(host.currentRoom);
+    const nextResidence = new Map<number, Residence>();
+    const nextFlags = new Map<number, number>();
+    const inventory = new Set(host.inventory);
+    const knownSlots = new Set(this.objectsBySlot.keys());
+    if (
+      host.objectFlags.size !== knownSlots.size ||
+      host.objectRooms.size !== knownSlots.size
+    ) {
+      throw new Error('Host Callout has an incomplete or extra object census');
     }
-    if (host.boardedCraft !== occupancyHostValue(this.occupancy)) {
-      const occupancy = occupancyFromHost(host.boardedCraft);
-      this.game = {
-        ...this.game,
-        craft: occupancy.kind === 'onFoot' ? undefined : occupancy.slot
-      };
+    for (const slot of host.objectFlags.keys()) {
+      if (!knownSlots.has(slot)) {
+        throw new Error(`Host Callout refers to missing object slot ${slot}`);
+      }
     }
-    for (const object of this.content.objects) {
-      const slot = object.slot;
+    for (const slot of host.objectRooms.keys()) {
+      if (!knownSlots.has(slot)) {
+        throw new Error(`Host Callout refers to missing object slot ${slot}`);
+      }
+    }
+    for (const slot of inventory) {
+      if (!knownSlots.has(slot)) {
+        throw new Error(`Host Callout carries missing object slot ${slot}`);
+      }
+    }
+    for (const slot of knownSlots) {
       const written = host.objectRooms.get(slot);
-      if (written === undefined) {
-        continue;
+      const flags = host.objectFlags.get(slot);
+      if (written === undefined || flags === undefined) {
+        throw new Error(
+          `Host Callout has an incomplete object census at slot ${slot}`
+        );
       }
       const current = this.residenceOf(slot);
       const carried = host.inventory.has(slot);
-      if (written === hostRoom(current) && carried === isCarried(current)) {
-        continue;
+      const carriedBit =
+        this.carriedMask === undefined
+          ? carried
+          : (flags & this.carriedMask) !== 0;
+      if (
+        carried !== carriedBit ||
+        (carried && written !== BensonHostState.outOfTheWorld)
+      ) {
+        throw new Error(
+          `Host Callout carrying representations disagree at slot ${slot}`
+        );
       }
+      nextFlags.set(slot, flags);
       if (carried) {
-        this.residence.set(slot, { kind: 'carried' });
+        nextResidence.set(slot, { kind: 'carried' });
       } else if (written === BensonHostState.outOfTheWorld) {
-        this.residence.set(slot, { kind: 'gone' });
+        nextResidence.set(slot, { kind: 'gone' });
       } else if (written === SURFACE_ROOM) {
-        const at = displacement(current);
-        this.residence.set(
+        const at = current.kind === 'surface' ? current.at : undefined;
+        nextResidence.set(
           slot,
           at === undefined ? { kind: 'surface' } : { at, kind: 'surface' }
         );
       } else {
-        this.residence.set(slot, { id: written, kind: 'room' });
+        if (!this.content.rooms.has(written)) {
+          throw new Error(`Host Callout refers to missing Room ${written}`);
+        }
+        const at =
+          current.kind === 'room' && current.id === written
+            ? current.at
+            : undefined;
+        nextResidence.set(
+          slot,
+          at === undefined
+            ? { id: written, kind: 'room' }
+            : { at, id: written, kind: 'room' }
+        );
       }
     }
+    const retained = this.carriedStack.filter(slot => inventory.has(slot));
+    const retainedSet = new Set(retained);
+    const introduced = [...inventory]
+      .filter(slot => !retainedSet.has(slot))
+      .sort((a, b) => a - b);
+    const occupancy = occupancyFromHost(host.boardedCraft);
+    const nextGame = {
+      ...this.game,
+      craft: occupancy.kind === 'onFoot' ? undefined : occupancy.slot,
+      room: nextLocation.kind === 'surface' ? undefined : nextLocation.id
+    };
+    this.game = nextGame;
+    this.residence = nextResidence;
+    this.objectFlags = nextFlags;
+    this.carriedStack = [...retained, ...introduced];
   }
 
   private acrossTheCallout<T>(
@@ -490,8 +612,8 @@ export class GameplaySession {
       return undefined;
     }
     const { host, result } = body(this.project(this.scripts.host));
-    this.scripts.host = host;
     this.reconcile(host);
+    this.scripts.host = host;
     return result;
   }
 
@@ -574,7 +696,11 @@ export class GameplaySession {
     if (slot === undefined) {
       return undefined;
     }
-    this.residence.set(slot, { at: position, kind: 'surface' });
+    const craft = this.objectsBySlot.get(slot);
+    this.residence.set(slot, {
+      at: { x: position.x, y: craft?.origin.y ?? position.y, z: position.z },
+      kind: 'surface'
+    });
     this.game = leaveCraftCore(this.game, this.content.flight);
     return { events: ['tone'], slot };
   }
@@ -861,8 +987,49 @@ export class GameplaySession {
   }
 
   carry(slot: number): void {
+    if (!this.objectsBySlot.has(slot)) {
+      throw new Error(`Cannot carry missing object slot ${slot}`);
+    }
+    if (!this.carriedStack.includes(slot)) {
+      this.carriedStack.push(slot);
+    }
     this.residence.set(slot, { kind: 'carried' });
+    const mask = this.carriedMask;
+    if (mask !== undefined) {
+      this.objectFlags.set(slot, (this.objectFlags.get(slot) ?? 0) | mask);
+    }
     this.republishHostState();
+  }
+
+  drop(): DropResult {
+    const slot = this.carriedStack.at(-1);
+    if (slot === undefined) {
+      return { events: [], outcome: { kind: 'emptyInventory' } };
+    }
+    const exemption = this.content.dropRules?.carriedExemptionSlot;
+    if (
+      this.game.mode === 'flying' &&
+      (exemption === undefined || !this.carriedStack.includes(exemption))
+    ) {
+      return { events: [], outcome: { kind: 'airborneRefused' } };
+    }
+    const mask = this.carriedMask ?? 0;
+    const flags = (this.objectFlags.get(slot) ?? 0) & ~mask & 0xff;
+    const position = this.game.player.position;
+    const at = {
+      x: position.x,
+      y: Math.floor(position.y / 0x1_00) * 0x1_00,
+      z: position.z
+    };
+    const where: Residence =
+      this.location.kind === 'surface'
+        ? { at, kind: 'surface' }
+        : { at, id: this.location.id, kind: 'room' };
+    this.carriedStack = this.carriedStack.slice(0, -1);
+    this.objectFlags.set(slot, flags);
+    this.residence.set(slot, where);
+    this.republishHostState();
+    return { events: ['tone'], outcome: { kind: 'dropped', slot } };
   }
 
   board(slot: number): void {
@@ -958,11 +1125,23 @@ export class GameplaySession {
       }
     }
     if (this.scripts !== undefined && seconds > 0) {
-      this.scripts.host = this.project(this.scripts.host);
-      const effects = this.scripts.advance(seconds);
-      this.reconcile(this.scripts.host);
-      for (const effect of effects) {
-        events.push({ script: effect });
+      const before = this.scripts.captureSaveSnapshot();
+      try {
+        this.scripts.host = this.project(this.scripts.host);
+        const effects = this.scripts.advance(seconds);
+        this.reconcile(this.scripts.host);
+        for (const effect of effects) {
+          events.push({ script: effect });
+        }
+      } catch (error) {
+        this.scripts = BensonSession.restore(
+          this.scripts.program,
+          this.scripts.text,
+          this.scripts.tunables,
+          before
+        );
+        this.republishHostState();
+        throw error;
       }
     }
     return { events, snapshot: this.snapshot };
@@ -970,6 +1149,7 @@ export class GameplaySession {
 
   get snapshot(): SessionSnapshot {
     return {
+      carriedStack: [...this.carriedStack],
       core: {
         poweramp: this.game.poweramp,
         stepInterlock: this.game.stepInterlock,
@@ -985,6 +1165,7 @@ export class GameplaySession {
       location: this.location,
       message: this.scripts?.messageText ?? '',
       mode: this.game.mode,
+      objectFlags: new Map(this.objectFlags),
       occupancy: this.occupancy,
       player: this.game.player,
       residence: this.sceneResidence,
@@ -995,11 +1176,7 @@ export class GameplaySession {
   }
 
   private get sceneResidence(): Map<number, Residence> {
-    const out = new Map<number, Residence>();
-    for (const object of this.content.objects) {
-      out.set(object.slot, this.residenceOf(object.slot));
-    }
-    return out;
+    return new Map(this.residence);
   }
 
   get throttleNotch(): number {

@@ -7,7 +7,8 @@ export type SessionTraceCommand =
   | { readonly kind: 'throttleNotch'; readonly notch: number }
   | { readonly kind: 'shutThrottle' }
   | { readonly kind: 'leaveCraft' }
-  | { readonly kind: 'rideLift' };
+  | { readonly kind: 'rideLift' }
+  | { readonly kind: 'drop' };
 
 const FORBIDDEN = new Set(['board', 'teleport']);
 
@@ -48,6 +49,7 @@ export const decodeSessionTraceCommand = (
     case 'shutThrottle':
     case 'leaveCraft':
     case 'rideLift':
+    case 'drop':
       if (operand !== true) {
         throw new Error(`${key} must be true`);
       }
@@ -72,7 +74,7 @@ const commandKey = (key: string | null) => {
 export const applySessionTraceCommand = (
   session: GameplaySession,
   value: TraceValue
-): void => {
+): TraceValue | undefined => {
   const command = decodeSessionTraceCommand(value);
   switch (command.kind) {
     case 'press':
@@ -94,5 +96,12 @@ export const applySessionTraceCommand = (
         throw new Error('the recorded rideLift action was refused');
       }
       break;
+    case 'drop': {
+      const outcome = session.drop().outcome;
+      return outcome.kind === 'dropped'
+        ? { dropped: outcome.slot }
+        : outcome.kind;
+    }
   }
+  return undefined;
 };

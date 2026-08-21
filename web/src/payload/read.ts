@@ -608,6 +608,549 @@ const interaction = (r: Reader, value: unknown): Doc.InteractionDocument => {
   };
 };
 
+const jsonValue = (r: Reader, value: unknown, path: string): unknown => {
+  if (
+    value === null ||
+    typeof value === 'string' ||
+    typeof value === 'boolean'
+  ) {
+    return value;
+  }
+  if (typeof value === 'number') {
+    return asNumber(r, value, path);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item, index) => jsonValue(r, item, `${path}[${index}]`));
+  }
+  const source = asObject(r, value, path);
+  return Object.fromEntries(
+    Object.entries(source).map(([key, item]) => [
+      key,
+      jsonValue(r, item, `${path}.${key}`)
+    ])
+  );
+};
+
+const jsonObject = (
+  r: Reader,
+  value: unknown,
+  path: string
+): Readonly<Record<string, unknown>> =>
+  jsonValue(r, asObject(r, value, path), path) as Readonly<
+    Record<string, unknown>
+  >;
+
+const validateInterstellarShipField = (
+  r: Reader,
+  field: Record<string, unknown>
+): void => {
+  const root = 'endingPresentation.interstellarShipField';
+  const at = (suffix: string): string => `${root}.${suffix}`;
+  const integerTree = (value: unknown, path: string): void => {
+    const branch = asObject(r, value, path);
+    for (const [key, child] of Object.entries(branch)) {
+      const childPath = `${path}.${key}`;
+      if (typeof child === 'object' && child !== null && !Array.isArray(child)) {
+        integerTree(child, childPath);
+      } else {
+        asInt(r, child, childPath);
+      }
+    }
+  };
+  const storage = asObject(r, field['storage'], at('storage'));
+  const components = asObject(
+    r,
+    storage['components'],
+    at('storage.components')
+  );
+  for (const axis of ['x', 'y', 'z']) {
+    const component = asObject(
+      r,
+      components[axis],
+      at(`storage.components.${axis}`)
+    );
+    asInt(
+      r,
+      component['mantissaBase'],
+      at(`storage.components.${axis}.mantissaBase`)
+    );
+    asInt(
+      r,
+      component['exponentBase'],
+      at(`storage.components.${axis}.exponentBase`)
+    );
+  }
+  const screens = asObject(
+    r,
+    storage['screenPositions'],
+    at('storage.screenPositions')
+  );
+  for (const generation of ['current', 'prior']) {
+    const position = asObject(
+      r,
+      screens[generation],
+      at(`storage.screenPositions.${generation}`)
+    );
+    asInt(
+      r,
+      position['xBase'],
+      at(`storage.screenPositions.${generation}.xBase`)
+    );
+    asInt(
+      r,
+      position['yBase'],
+      at(`storage.screenPositions.${generation}.yBase`)
+    );
+  }
+  asInt(r, storage['slotsPerArray'], at('storage.slotsPerArray'));
+
+  const initialization = asObject(
+    r,
+    field['initialization'],
+    at('initialization')
+  );
+  for (const [index, rawStage] of asArray(
+    r,
+    initialization['stages'],
+    at('initialization.stages')
+  ).entries()) {
+    const path = at(`initialization.stages[${index}]`);
+    const stage = asObject(r, rawStage, path);
+    asString(r, stage['name'], `${path}.name`);
+    for (const key of [
+      'priorXYComponents',
+      'reason',
+      'result',
+      'screenClear'
+    ]) {
+      if (stage[key] !== undefined) {
+        asString(r, stage[key], `${path}.${key}`);
+      }
+    }
+    if (stage['writes'] !== undefined) {
+      stringArray(r, stage['writes'], `${path}.writes`);
+    }
+  }
+
+  const motion = asObject(r, field['motion'], at('motion'));
+  asString(r, motion['phaseBranch'], at('motion.phaseBranch'));
+  intArray(r, motion['provenPhaseValues'], at('motion.provenPhaseValues'));
+  for (const key of [
+    'scriptedPhaseDepthDelta',
+    'maturePhaseFirstMultiplier',
+    'maturePhaseLaterMultiplier'
+  ]) {
+    asNumber(r, motion[key], at(`motion.${key}`));
+  }
+  for (const key of [
+    'maturePhaseStopsAtExponent',
+    'accelerationSideStateAddress'
+  ]) {
+    asInt(r, motion[key], at(`motion.${key}`));
+  }
+  asString(
+    r,
+    motion['accelerationSideByteEffect'],
+    at('motion.accelerationSideByteEffect')
+  );
+
+  const projection = asObject(r, field['projection'], at('projection'));
+  for (const axis of ['horizontal', 'vertical']) {
+    const projected = asObject(r, projection[axis], at(`projection.${axis}`));
+    asInt(r, projected['centre'], at(`projection.${axis}.centre`));
+    intArray(r, projected['range'], at(`projection.${axis}.range`));
+  }
+  stringArray(r, projection['invalidity'], at('projection.invalidity'));
+
+  const respawn = asObject(r, field['respawn'], at('respawn'));
+  for (const key of ['lifetime', 'trigger', 'carryIn']) {
+    asString(r, respawn[key], at(`respawn.${key}`));
+  }
+  asInt(r, respawn['randomDraws'], at('respawn.randomDraws'));
+  stringArray(
+    r,
+    respawn['replacesComponents'],
+    at('respawn.replacesComponents')
+  );
+  for (const axis of ['x', 'y']) {
+    const generated = asObject(r, respawn[axis], at(`respawn.${axis}`));
+    intArray(r, generated['draws'], at(`respawn.${axis}.draws`));
+    asInt(r, generated['highMask'], at(`respawn.${axis}.highMask`));
+    asInt(r, generated['highOffset'], at(`respawn.${axis}.highOffset`));
+    intArray(r, generated['range'], at(`respawn.${axis}.range`));
+  }
+  const y = asObject(r, respawn['y'], at('respawn.y'));
+  asInt(r, y['discardedLowDraw'], at('respawn.y.discardedLowDraw'));
+  asString(r, y['conversionLowSource'], at('respawn.y.conversionLowSource'));
+  const z = asObject(r, respawn['z'], at('respawn.z'));
+  for (const key of ['draw', 'exponent', 'step']) {
+    asInt(r, z[key], at(`respawn.z.${key}`));
+  }
+  intArray(r, z['range'], at('respawn.z.range'));
+  const generator = asObject(r, respawn['generator'], at('respawn.generator'));
+  asInt(r, generator['routineAddress'], at('respawn.generator.routineAddress'));
+  for (const key of ['carryIn', 'output', 'recurrence']) {
+    asString(r, generator[key], at(`respawn.generator.${key}`));
+  }
+  const generatorState = asObject(
+    r,
+    generator['state'],
+    at('respawn.generator.state')
+  );
+  for (const key of ['valueAddress', 'stateAddress', 'bytes']) {
+    asInt(r, generatorState[key], at(`respawn.generator.state.${key}`));
+  }
+
+  const colours = asObject(r, field['colours'], at('colours'));
+  for (const key of [
+    'entryDelayLoops',
+    'repeatedDelayLoops',
+    'completedPhaseLoop',
+    'repeatFinalEveryLoops'
+  ]) {
+    asInt(r, colours[key], at(`colours.${key}`));
+  }
+  asString(r, colours['storageQuirk'], at('colours.storageQuirk'));
+  for (const [index, rawEvent] of asArray(
+    r,
+    colours['events'],
+    at('colours.events')
+  ).entries()) {
+    const path = at(`colours.events[${index}]`);
+    const event = asObject(r, rawEvent, path);
+    for (const key of ['loop', 'lineColour', 'screenColour']) {
+      asInt(r, event[key], `${path}.${key}`);
+    }
+    if (event['phaseWrite'] !== null) {
+      asInt(r, event['phaseWrite'], `${path}.phaseWrite`);
+    }
+  }
+
+  for (const [index, rawState] of asArray(
+    r,
+    field['continuationState'],
+    at('continuationState')
+  ).entries()) {
+    const path = at(`continuationState[${index}]`);
+    const state = asObject(r, rawState, path);
+    asString(r, state['name'], `${path}.name`);
+    if (state['addresses'] !== undefined) {
+      intArray(r, state['addresses'], `${path}.addresses`);
+    }
+    if (state['slots'] !== undefined) {
+      asInt(r, state['slots'], `${path}.slots`);
+    }
+    if (state['semanticContinuation'] !== undefined) {
+      asBool(r, state['semanticContinuation'], `${path}.semanticContinuation`);
+    }
+    if (state['storage'] !== undefined) {
+      integerTree(state['storage'], `${path}.storage`);
+    }
+  }
+};
+
+const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
+  const o = asObject(r, value, '$');
+  const controls = asObject(r, o['controls'], 'controls');
+  const drop = asObject(r, controls['drop'], 'controls.drop');
+  const takeOverrides = asObject(
+    r,
+    controls['takeOverrides'],
+    'controls.takeOverrides'
+  );
+  const combat = asObject(r, o['combat'], 'combat');
+  const fire = asObject(r, combat['fire'], 'combat.fire');
+  const hostile = asObject(r, combat['hostileCraft'], 'combat.hostileCraft');
+  const hits = asObject(r, combat['objectHits'], 'combat.objectHits');
+  const destruction = asObject(
+    r,
+    combat['siteDestruction'],
+    'combat.siteDestruction'
+  );
+  const orbital = asObject(r, o['orbitalTransition'], 'orbitalTransition');
+  const ending = asObject(r, o['endingPresentation'], 'endingPresentation');
+  const field = asObject(
+    r,
+    ending['interstellarShipField'],
+    'endingPresentation.interstellarShipField'
+  );
+  const pointSlots = asObject(
+    r,
+    field['pointSlots'],
+    'endingPresentation.interstellarShipField.pointSlots'
+  );
+  validateInterstellarShipField(r, field);
+  return {
+    combat: {
+      fire: {
+        directionOffset: asInt(
+          r,
+          fire['directionOffset'],
+          'combat.fire.directionOffset'
+        ),
+        effectSlot: asInt(r, fire['effectSlot'], 'combat.fire.effectSlot'),
+        inputActiveValue: asInt(
+          r,
+          fire['inputActiveValue'],
+          'combat.fire.inputActiveValue'
+        ),
+        lifecycleFrames: asInt(
+          r,
+          fire['lifecycleFrames'],
+          'combat.fire.lifecycleFrames'
+        ),
+        oneActiveShot: asBool(
+          r,
+          fire['oneActiveShot'],
+          'combat.fire.oneActiveShot'
+        ),
+        walkingMoverProhibited: asBool(
+          r,
+          fire['walkingMoverProhibited'],
+          'combat.fire.walkingMoverProhibited'
+        )
+      },
+      hostileCraft: {
+        attackingSlot: asInt(
+          r,
+          hostile['attackingSlot'],
+          'combat.hostileCraft.attackingSlot'
+        ),
+        captureClearsAttackingShip: asBool(
+          r,
+          hostile['captureClearsAttackingShip'],
+          'combat.hostileCraft.captureClearsAttackingShip'
+        ),
+        captureMover: asInt(
+          r,
+          hostile['captureMover'],
+          'combat.hostileCraft.captureMover'
+        ),
+        captureRemovesSlots: intArray(
+          r,
+          hostile['captureRemovesSlots'],
+          'combat.hostileCraft.captureRemovesSlots'
+        ),
+        enabledByAttackingShip: asBool(
+          r,
+          hostile['enabledByAttackingShip'],
+          'combat.hostileCraft.enabledByAttackingShip'
+        ),
+        inboundLifecycleFrames: asInt(
+          r,
+          hostile['inboundLifecycleFrames'],
+          'combat.hostileCraft.inboundLifecycleFrames'
+        ),
+        inboundSlot: asInt(
+          r,
+          hostile['inboundSlot'],
+          'combat.hostileCraft.inboundSlot'
+        ),
+        surfaceOnly: asBool(
+          r,
+          hostile['surfaceOnly'],
+          'combat.hostileCraft.surfaceOnly'
+        )
+      },
+      objectHits: {
+        firstTargetMessage: asInt(
+          r,
+          hits['firstTargetMessage'],
+          'combat.objectHits.firstTargetMessage'
+        ),
+        secondTargetScript: asInt(
+          r,
+          hits['secondTargetScript'],
+          'combat.objectHits.secondTargetScript'
+        ),
+        targetSlots: intArray(
+          r,
+          hits['targetSlots'],
+          'combat.objectHits.targetSlots'
+        )
+      },
+      siteDestruction: {
+        axisWindow: intArray(
+          r,
+          destruction['axisWindow'],
+          'combat.siteDestruction.axisWindow'
+        ),
+        destroyedMask: asInt(
+          r,
+          destruction['destroyedMask'],
+          'combat.siteDestruction.destroyedMask'
+        ),
+        impactFrames: asInt(
+          r,
+          destruction['impactFrames'],
+          'combat.siteDestruction.impactFrames'
+        ),
+        projectileSlot: asInt(
+          r,
+          destruction['projectileSlot'],
+          'combat.siteDestruction.projectileSlot'
+        )
+      }
+    },
+    controls: {
+      drop: {
+        carriedExemptionSlot: asInt(
+          r,
+          drop['carriedExemptionSlot'],
+          'controls.drop.carriedExemptionSlot'
+        ),
+        carriedMask: asInt(r, drop['carriedMask'], 'controls.drop.carriedMask'),
+        copiesCurrentRoomAndPosition: asBool(
+          r,
+          drop['copiesCurrentRoomAndPosition'],
+          'controls.drop.copiesCurrentRoomAndPosition'
+        ),
+        emptyInventory: asString(
+          r,
+          drop['emptyInventory'],
+          'controls.drop.emptyInventory'
+        ),
+        inventorySelection: asString(
+          r,
+          drop['inventorySelection'],
+          'controls.drop.inventorySelection'
+        ),
+        keyCode: asInt(r, drop['keyCode'], 'controls.drop.keyCode'),
+        requiresCarriedExemptionOrFlightState: asBool(
+          r,
+          drop['requiresCarriedExemptionOrFlightState'],
+          'controls.drop.requiresCarriedExemptionOrFlightState'
+        )
+      },
+      takeOverrides: {
+        antigravSlot: asInt(
+          r,
+          takeOverrides['antigravSlot'],
+          'controls.takeOverrides.antigravSlot'
+        ),
+        sinkSlot: asInt(
+          r,
+          takeOverrides['sinkSlot'],
+          'controls.takeOverrides.sinkSlot'
+        )
+      }
+    },
+    counts: intMap(r, o['counts'], 'counts'),
+    endingPresentation: {
+      activeValue: asInt(
+        r,
+        ending['activeValue'],
+        'endingPresentation.activeValue'
+      ),
+      completedValue: asInt(
+        r,
+        ending['completedValue'],
+        'endingPresentation.completedValue'
+      ),
+      dispatch: asString(r, ending['dispatch'], 'endingPresentation.dispatch'),
+      interstellarShipField: {
+        colours: jsonObject(
+          r,
+          field['colours'],
+          'endingPresentation.interstellarShipField.colours'
+        ),
+        continuationState: asArray(
+          r,
+          field['continuationState'],
+          'endingPresentation.interstellarShipField.continuationState'
+        ).map((item, index) =>
+          jsonValue(
+            r,
+            item,
+            `endingPresentation.interstellarShipField.continuationState[${index}]`
+          )
+        ),
+        initialization: jsonObject(
+          r,
+          field['initialization'],
+          'endingPresentation.interstellarShipField.initialization'
+        ),
+        loopOrder: stringArray(
+          r,
+          field['loopOrder'],
+          'endingPresentation.interstellarShipField.loopOrder'
+        ),
+        motion: jsonObject(
+          r,
+          field['motion'],
+          'endingPresentation.interstellarShipField.motion'
+        ),
+        pointSlots: {
+          count: asInt(
+            r,
+            pointSlots['count'],
+            'endingPresentation.interstellarShipField.pointSlots.count'
+          ),
+          first: asInt(
+            r,
+            pointSlots['first'],
+            'endingPresentation.interstellarShipField.pointSlots.first'
+          ),
+          identity: asString(
+            r,
+            pointSlots['identity'],
+            'endingPresentation.interstellarShipField.pointSlots.identity'
+          ),
+          last: asInt(
+            r,
+            pointSlots['last'],
+            'endingPresentation.interstellarShipField.pointSlots.last'
+          )
+        },
+        projection: jsonObject(
+          r,
+          field['projection'],
+          'endingPresentation.interstellarShipField.projection'
+        ),
+        respawn: jsonObject(
+          r,
+          field['respawn'],
+          'endingPresentation.interstellarShipField.respawn'
+        ),
+        storage: jsonObject(
+          r,
+          field['storage'],
+          'endingPresentation.interstellarShipField.storage'
+        )
+      },
+      scriptedValue: asInt(
+        r,
+        ending['scriptedValue'],
+        'endingPresentation.scriptedValue'
+      )
+    },
+    orbitalTransition: {
+      axisMiddleByteWindow: intArray(
+        r,
+        orbital['axisMiddleByteWindow'],
+        'orbitalTransition.axisMiddleByteWindow'
+      ),
+      callSites: intArray(
+        r,
+        orbital['callSites'],
+        'orbitalTransition.callSites'
+      ),
+      cell: intArray(r, orbital['cell'], 'orbitalTransition.cell'),
+      minimumAltitudeByte: asInt(
+        r,
+        orbital['minimumAltitudeByte'],
+        'orbitalTransition.minimumAltitudeByte'
+      ),
+      successCarry: asString(
+        r,
+        orbital['successCarry'],
+        'orbitalTransition.successCarry'
+      )
+    },
+    schemaVersion: asInt(r, o['schemaVersion'], 'schemaVersion')
+  };
+};
+
 const underground = (r: Reader, value: unknown): Doc.UndergroundDocument => {
   const o = asObject(r, value, '$');
   const pad = asObject(r, o['pad'], 'pad');
@@ -649,6 +1192,7 @@ const underground = (r: Reader, value: unknown): Doc.UndergroundDocument => {
 
 export const readers = {
   benson,
+  endgame,
   flight,
   interaction,
   manifest,

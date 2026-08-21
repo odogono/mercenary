@@ -6,6 +6,7 @@ import {
   applySessionTraceCommand,
   decodeSessionTraceCommand
 } from '../src/trace/session.ts';
+import { snapshotValue } from './replay/sessionReplay.ts';
 
 const onFoot = (): GameplaySession =>
   new GameplaySession(
@@ -40,6 +41,7 @@ describe('a recorded Session command', () => {
     expect(decodeSessionTraceCommand({ rideLift: true })).toEqual({
       kind: 'rideLift'
     });
+    expect(decodeSessionTraceCommand({ drop: true })).toEqual({ kind: 'drop' });
   });
 
   test('refuses setup commands that would fake parity', () => {
@@ -73,5 +75,19 @@ describe('a recorded Session command', () => {
     expect(() =>
       applySessionTraceCommand(onFoot(), { press: 'keyNope' })
     ).toThrow('unknown Benson key');
+  });
+
+  test('returns a serializable Drop outcome, including refusal', () => {
+    expect(applySessionTraceCommand(onFoot(), { drop: true })).toEqual(
+      'emptyInventory'
+    );
+  });
+
+  test('serializes the complete object authority in Session snapshots', () => {
+    expect(snapshotValue(onFoot().snapshot)).toMatchObject({
+      carriedStack: [],
+      objectFlags: {},
+      residence: {}
+    });
   });
 });
