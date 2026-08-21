@@ -67,8 +67,8 @@ A Room whose Doorway leads somewhere chosen on arrival rather than somewhere fix
 _Avoid_: Teleporter, dynamic exit, patched room
 
 **Colony Craft**:
-The vessel high above the middle of the surface, and the destination of the one Doorway that leads out of the underground rather than to another Room; leaving Targ aboard it is beyond the current scope, so the player is placed at its position on the ground rather than at its altitude.
-_Avoid_: Orbital station, mothership, the surface
+The vessel high above the middle of the surface, and the destination of the one Doorway that leads out of the underground rather than to another Room. Reaching it remains part of Targ's play and never loads Damocles.
+_Avoid_: Orbital station, mothership, the surface, Damocles transition
 
 **Wall Contact**:
 The state of having been pushed back inside a Room by its own bounds on the current frame, counted per axis; it is the precondition for taking a Doorway, not merely a consequence of arriving at one.
@@ -161,6 +161,26 @@ _Avoid_: Byte comparison, snapshot test, golden master test, regression test
 **Game Semantics**:
 The fidelity-governed rules and state transitions that determine outcomes and meaningful future state from Semantic Actions and time, independently of the Browser Shell and Web Adaptations.
 _Avoid_: Game logic, gameplay layer
+
+**Mission**:
+A Benson-script-driven assignment offered by one of Targ's factions, comprising an offer, one or more Objectives, and a resulting reward or world-state consequence.
+_Avoid_: Quest, job, Objective
+
+**Objective**:
+One condition within a Mission, such as acquiring, delivering, or destroying something, whose satisfaction advances that Mission.
+_Avoid_: Mission, task, goal
+
+**Ending**:
+A terminal resolution of a Gameplay Session recognised by the Reference Build, being either an Escape or a Defeat.
+_Avoid_: Outcome, game-over state, win state
+
+**Escape**:
+A successful Ending in which the player satisfies one decoded route's craft and world-state requirements and leaves Targ.
+_Avoid_: Win, victory, orbital transition
+
+**Defeat**:
+An unsuccessful Ending produced by a terminal failure recognised by the Reference Build.
+_Avoid_: Loss, Game Over, failure state
 
 **Movement Intent**:
 The device-independent held request sampled by a Mover on each simulation step — turning, pitching, walking and running — distinct from persistent state and from a one-shot Semantic Action.

@@ -9,6 +9,7 @@ from typing import Sequence
 from .core import LabError
 from .laboratory import capture, doctor, observe, reproduce, verify
 from .benson import decode_benson
+from .endgame import census_terminal_dispatches, decode_endgame
 from .interaction import decode_interaction
 from .geometry import (
     compare_geometry,
@@ -212,6 +213,15 @@ def _parser() -> argparse.ArgumentParser:
     benson_decode.add_argument("--run", required=True, type=Path, help="interactive capture to decode scripts from")
     benson_decode.add_argument("--output", type=Path, help="write the document here instead of summarizing it")
 
+    endgame_parser = subparsers.add_parser(
+        "endgame", help="decode native combat, orbital, drop, and terminal rules"
+    )
+    endgame_commands = endgame_parser.add_subparsers(dest="endgame_command", required=True)
+    endgame_decode = endgame_commands.add_parser(
+        "decode", help="decode guarded endgame rules from an interactive capture"
+    )
+    endgame_decode.add_argument("--run", required=True, type=Path)
+
     implementation_parser = subparsers.add_parser("implementation", help="validate production implementation contracts")
     implementation_commands = implementation_parser.add_subparsers(dest="implementation_command", required=True)
     implementation_validate = implementation_commands.add_parser("validate", help="validate schemas, CDDL, and golden vectors")
@@ -286,6 +296,15 @@ def main(argv: Sequence[str] | None = None) -> int:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
                 result = {"status": "decoded", "output": str(arguments.output), "counts": document["counts"]}
+        elif arguments.command == "endgame":
+            ram, source = load_geometry_source(arguments.run)
+            native = decode_endgame(ram)
+            native["terminalCensus"] = census_terminal_dispatches(decode_benson(ram))
+            result = {
+                "status": "decoded",
+                "runId": source["runId"],
+                "endgame": native,
+            }
         elif arguments.command == "implementation":
             result = {"status": "verified", **validate_implementation_contracts(arguments.root)}
         elif arguments.command == "verification":

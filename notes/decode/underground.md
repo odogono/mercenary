@@ -148,13 +148,11 @@ The export asserts the arrival and the object agree — within a cell, and that 
 being the highest thing in the world — so the name cannot drift away from what it
 describes.
 
-**What we do instead, and why.** The app takes the horizontal pair and leaves altitude
-alone. Walking out of the underground and finding yourself at the ship is the escape
-route, which #65 puts out of scope, and the mover installed there is one we do not have.
-So the player lands at the craft's cell on the ground rather than four million units up.
-That is a known difference from the Reference Build, recorded here, in the payload's own
-doc comment, and in the test that asserts the altitude is *not* adopted — rather than
-left to be discovered as a bug.
+**Current app divergence.** The app takes the horizontal pair and leaves altitude
+alone, placing the player at the craft's cell on the ground rather than four million
+units up. M7.5 must replace that obsolete approximation with the decoded altitude,
+mover, and `$A13D` eligibility rules. This is not an Escape by itself and it never
+loads Damocles.
 
 ### The terminator is also the darkness flag
 
@@ -327,13 +325,14 @@ enough to be worth chasing one at a time rather than explaining away.
 
 * **The lift is invoked by E.** `$B3F6` compares the keyboard result with `$0E`, the
   Reference Build's `E` key, before entering the handler containing `$B404`. Its
-  remaining conditions are unchanged: the player must
-  be on foot, and standing on the lift's pad — the position's middle byte shifted down
-  two and compared against `$1C`, so middle bytes `$70` to `$73` on both axes, a small
-  square near the middle of the cell. Surfacing puts the player at `$71`, the pad's own
-  middle, so arriving leaves them able to go straight back. A search then walks the
-  same destination tables backwards to find which site they are standing in, and the
-  lift starts with `$CA` set to `$80` going down or `$01` going up.
+  surface conditions are that the player be on foot and standing on the lift's pad —
+  the position's middle byte shifted down two and compared against `$1C`, so middle
+  bytes `$70` to `$73` on both axes, a small square near the middle of the cell.
+  Surfacing puts the player at `$71`, the pad's own middle, so arriving leaves them
+  able to go straight back. A search then walks the same destination tables backwards
+  to find which site they are standing in, and the lift starts with `$CA` set to `$80`
+  going down or `$01` going up. The indoor path does not test Occupancy: a craft
+  recovered in Room 5 can therefore leave through the lift while still occupied.
 * **The indoor screen is a decoded `$AA` bitmap fill.** `$AFC3` branches on the
   underground flag to `CLEAR_SCREEN_INDOOR` at `$B197`, which fills the bitmap with
   `$AA`. Bit 7 is drawn first, so the 320 bitmap columns alternate foreground then
