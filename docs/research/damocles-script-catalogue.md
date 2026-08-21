@@ -166,7 +166,10 @@ The figures are **packed decimal**: `$0010`, `$0015`, `$0020` are BCD 10, 15 and
 20, matching the text. This is the clearest confirmation that Damocles money is
 BCD — consistent with slots `$0E`/`$15` running `abcd` over 6-byte fields. Note
 the record index `$00F9`, adjacent to the `$00F8` the interpreter special-cases,
-so the high indices look like system rather than world records.
+so the high indices look like system rather than world records. #136 adds a
+detail for #80: the `$00F8` special case in both `$0E` and `$15` does nothing to
+the record itself — it fires the sound effect at `$054848` and falls through to
+the ordinary BCD path.
 
 ### Timed delays are subroutines
 
@@ -182,6 +185,14 @@ while it is set. A script therefore does not wait for its own text; the
 interpreter simply stops running until native code clears the gate. Any port
 needs a resumable message effect for this.
 
+#136 decoded the native side of that gate: the pending message is a source word
+`$7B98` plus the gate `$7BA0`, and the resume path at `$0547C6` is what raises
+them again after a prompt, reloading a display timer at `$0005 23B8`. The same
+shape is used by a system-string helper at `$054820` reading the `$070000`
+table. Scripts also fire a **sound effect** natively — `$0B` on a key match, and
+`$0E`/`$15` on record index `$00F8`, all call `$054848`, which arms a one-shot
+PSG programme and returns at once.
+
 ## Not decoded
 
 - The 5 slots' worth of string-pool tail and the 1.8% of the code region no
@@ -189,7 +200,9 @@ needs a resumable message effect for this.
   either.
 - What each `record.write` index means. `$00F8`/`$00F9` look like system
   records; the rest belongs to #80.
-- The native routines scripts reach indirectly through the interpreter's gates
-  (#136).
-- Whether any script outside this region, or on a mission disk, uses the
-  inline-native slots `$08`/`$09`. Neither appears anywhere in this bank.
+- Whether any script **on a mission disk** uses the inline-native slots
+  `$08`/`$09`. Neither appears anywhere in this bank, and #136 bounded that to
+  the whole loaded image — one script entry table at `$070080`, read by one
+  instruction — but mission-disk media have not been examined. An extract
+  should still detect both slots defensively: one occurrence would
+  desynchronise a linear parse.

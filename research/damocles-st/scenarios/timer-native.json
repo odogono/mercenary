@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "name": "timer-native",
+  "checkpoint": "title-screen",
+  "description": "From the Damocles title screen, press Space once, wait for world load, capture, then disassemble the live 68000 code from $04C400 through $04D3FF. This window covers $0004C6B2, the fourth native routine named Unresolved in docs/research/damocles-script-isa.md and asked for by #136, reported reached from the timer path near $051D62. The window is placed below $04C6B2 so it also covers $0004C556 — the routine address $054848 installs into the vector slot $0004BF54 — and the shared tails at $0004C5EC and $0004C5C6 that this code branches to, keeping the one-level callee chase inside a single pinned listing. It needs a scenario of its own because Hatari allows one listing of at most 0x1000 bytes per run, and this region lies far below the $0547xx cluster covered by scenarios/native-handlers.json. Working-Authority Evidence for #136. The disassembly is the single last action, after the capture. The listing is untracked Restricted Material; only decoded facts enter research notes.",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "artifacts": ["display", "registers", "ram"]
+    },
+    {
+      "type": "disassemble",
+      "name": "timer-native",
+      "start": "0x04c400",
+      "end": "0x04d3ff"
+    }
+  ]
+}

@@ -293,13 +293,117 @@ target; `$01` consumes NUL-terminated text and word-aligns; `$08`/`$09` consume
 operand `$0032` and target `$2CD8` puts `return` at `$072CDE`, exactly where the
 earlier hand decode of that delay subroutine put it.
 
+### The native routines the handlers call (#136)
+
+#128 left the four native addresses the interpreter reaches as Unresolved.
+Working Disassembly of two bounded windows — `$054700`–`$0556FF` and
+`$04C400`–`$04D3FF` — decodes all four. They are **not** one kind of thing:
+two drive the script/message scheduler, two are the sound driver.
+
+**`$054848` — sound-effect trigger (stage 1).** Guarded three times: it returns
+immediately if `$7A0C`, `$7C0C`, or `$0003 3F68` is non-zero. Otherwise it sets
+the tick counter `$7A78` = 3, stores `$0004C556` into the vector slot
+`$0004BF54`, sets `$7C06` = `$0A`, and writes the YM2149 directly — register
+`$0A` (channel C amplitude) ← `$00`.
+
+It is reached from three script handlers: `bsr` at `$051A86` (`$0B` key/case,
+on match), and `jsr` at `$051AEE` (`$0E`) and `$051BAA` (`$15`), both on the
+`$00F8` record-index special case. Five further callers are native, not script:
+`jsr` at `$04D2B2`, `$05097C`, `$05099A` and `jmp` at `$04EB28`, `$04EB3E` — so
+this is a shared engine entry point rather than a script-only one.
+
+**`$0004BF54` — a per-pass sound-step vector.** `$051E0E` does
+`movea.l $0004BF54,a0` and `$051E14` `jsr (a0)`; a sibling slot `$0004BF58` is
+called the same way immediately after. The slot's idle value is `$00051E86`,
+which is a bare `rts`. So `$054848` arms a step to run on the next pass and
+returns at once — a fire-and-forget effect, not a blocking one.
+
+**`$0004C556` — stage 2, the effect body.** Sets `$7A78` = `$0F`, programs the
+envelope period (registers `$0B`/`$0C` ← `$00`/`$1F`) and the channel B tone
+period (`$02`/`$03` ← `$60`/`$00`), then rewrites the mixer (register `$07`)
+from the shadow byte `$7C04`, clearing bit 1 and setting bit 4 — channel B tone
+on, channel B noise off. It branches to the shared tail at `$0004C5EC`, which
+sets
+channel B amplitude (register `$09`) = `$1F` (envelope mode) and envelope shape
+(register `$0D`) = `$09`, then **restores `$0004BF54` to `$00051E86`** and
+returns. The two-stage sequence disarms itself.
+
+**`$0004C6B2` — a sibling effect step in the same driver.** Same shape as
+`$0004C556` with different constants: envelope period registers `$0B`/`$0C` ←
+`$40`/`$00`, channel B tone period `$02`/`$03` ← `$30`/`$00`, the same mixer
+edit, and the same shared tail at `$0004C5EC`. Its only reference in the 1 MiB
+image is `jsr $0004C6B2` at `$051D62`, immediately after `clr.w $7A76` — the
+timer path #136 reported it on.
+
+The window shows at least four more steps of the same family (`$04C5A8`,
+`$04C610`, `$04C630`, `$04C700`), each setting its own `$7A78` and its own PSG
+programme. They split over two tails: those reaching `$0004C5EC` play a **tone**
+on channel B, while those reaching `$0004C5C6` set the noise period (register
+`$06`) and invert the mixer edit — noise on, tone off. So the driver is a small
+bank of short PSG sequences, selected by which one the caller arms or calls.
+
+**`$054764` — pending-script launcher.** Called `bsr` from `$05194C` with
+`D1` ← `$7A88`, the gate the dispatch loop tests. It returns early if bit 6 of
+`$7BD9` is set. Otherwise it clears `$7A88`, indexes a byte table at `$7CB4` by
+`D1`, and returns unless bit 7 of that byte is set. It then sets bit 6 of
+`$7BD9`, and clears bit 7 of the flag byte unless bit 6 of the same byte is set
+— a one-shot / sticky distinction per entry. Finally it reads the script entry
+table: `D1`×2 + `$00070080` → the new script offset, and **pushes the current
+script PC**: `movea.l $6266,a0; move.w $7820,-(a0); move.w D1,$7820;
+move.w a0,$6268`. So `$7A88` names a *pending script* and this routine enters
+it, with `$6266`/`$6268` bounding the script return stack that opcode `$05`
+pops.
+
+**`$0547C6` — message resume.** Reached by `bne.w` **branch**, not a call, from
+`$051948`, so it runs on the dispatch loop's own frame and its `rts` returns to
+the loop's caller. Its first instruction is `bmi.w $0004D7F0`, taken when
+`$7B96` is negative — and `$054800`, at the end of this same routine, is what
+writes `$7B96` = `$8000`. So `$7B96` is tri-state: zero (idle), positive
+(resume here), negative (route to `$04D7F0`). The resume path clears `$7B96`,
+sets `$7BA2` = 2, copies `$7B92` → `$7B98`, reloads the display timer
+(`$0005 23B8` ← `$0005 23BA`, `$0005 23BC` = 1), and **sets `$7BA0` = 1** —
+the gate the dispatch loop checks first at `$05193E`. It closes by re-arming
+`$7B96` = `$8000` when `$7856` = `$83` and `$7126` is negative.
+
+Adjacent in the same window, `$054808`/`$05481A`/`$054820` are a system-string
+display helper built the same way: skip if `$7BA0` is already set, otherwise
+`D1`×2 + `$00070000` (the **system string** table, as against the script table
+at `$070080`) → `$7B98`, reload `$0005 23B8`, set `$7BA0` = 1.
+
+Taken together, `$7B98` is the pending-message source and `$7BA0` its gate,
+raised by three separate producers; `$0005 23B8`/`$23BA` are the message display
+timer and its reload.
+
+### No inline-native escape outside the decoded region (#136 item 2)
+
+The `$08`/`$09` census asked for by #136 was already withdrawn in that issue as
+a decoding artifact. Re-run independently here, `lab script` reaches 497 ops
+from all 64 entry slots over `$070100`–`$072D2E` with **0 undecodable** and
+`inlineNativeSites: []`. Two further checks bound it to the whole loaded image
+rather than to one decode:
+
+- The 32-bit immediate `$00070080` occurs **exactly once** in the 1 MiB image,
+  at `$0547AC`, inside `$054764`. There is one script entry table and one
+  instruction that reads it.
+- `$00781E`, the resident script PC, is named by exactly one instruction
+  (`$051956`), as #128 found.
+
+So within the Working Authority at this checkpoint there is a single script
+bank with a single entry table, and no reachable `$08`/`$09` site. **Mission
+disks are not examined and remain a bounded unknown** — which does not change
+the recommendation: an extract should still detect both slots defensively,
+because one occurrence would desynchronise a linear parse.
+
 ### What was not required / not done
 
 - Pressing `O` on a live `(OK?)` in-lab — not needed once the parked PC and
   decoded streams are in hand.
 - Full ISA document / extractor — out of scope.
 - Semantics of the native routines the handlers call (`$054848`, `$054764`,
-  `$0547C6`, `$0004C6B2`) — Unresolved; each is a separate question.
+  `$0547C6`, `$0004C6B2`) — **Resolved** by #136; see "The native routines the
+  handlers call" above. What those routines *reach* is bounded in turn: the
+  sound driver's remaining steps are catalogued only by shape, and `$04D7F0`
+  (the negative-`$7B96` route out of `$0547C6`) is not decoded.
 - Which `$7482` / `$7A42` / `$6FAA` records correspond to objects, craft, or
   places — Unresolved; that is the Gamma System question (#80), not this one.
 
@@ -309,18 +413,20 @@ Against `BensonHostState` / `BensonEffect` concerns (not field-identical):
 
 | Concern | Damocles evidence | vs Targ Host Callout |
 |---|---|---|
-| Play message | `$0001` inline text | **would-map (concern)** — needs Damocles text encoding |
+| Play message | `$0001` inline text; the pending message is a source word `$7B98` plus the gate `$7BA0`, raised by `$14`, by `$0547C6`, and by the system-string helper at `$054820`, with display timer `$0005 23B8` (#136) | **would-map (concern)** — needs Damocles text encoding; the effect is resumable rather than synchronous |
 | Wait / pacing | `$0007` tick waits; delay subs | **would-map (concern)** — tick unit Unresolved |
-| Key / OK prompt | `$0002` / `$000B` after `(OK?)` | **would-map (concern)** — not proven identical to `pendingKey` |
+| Key / OK prompt | `$0002` / `$000B` after `(OK?)`; on match `$0B` also fires the sound effect at `$054848` (#136) | **would-map (concern)** — not proven identical to `pendingKey`, and the match carries an audible effect as well as a branch |
 | Control flow | `$0003` jmp, `$0004` call, `$0005` ret | **interpreter-local** — not Host Callout fields |
 | Random branch | `$000A` | **would-map (concern)** |
 | Object / craft / room tests | Predicates over `$7482` records (`$0C`, `$21`, `$23`), `$7A42` words (`$14`), and bank words (`$18`); branch via the bit-6/bit-7 epilogue | **would-map (concern)** — needs a Damocles state map before fields can be named |
 | Decimal / flags / inventory writes | Flag word `$7BD8` set/clear/test (`$10`–`$12`), counter `$7BD2` (`$16`, `$17`), record writes (`$0D`, `$15`), bank store (`$19`) | **would-map (concern)** — a flag word plus counters, not Targ's field list |
-| Effects (sound, finished) | No dedicated opcode found; `$08`/`$09` call **native 68k code inline in the script stream** | **does-not-map** — an inline-native escape has no Host Callout equivalent and is the sharpest Independent Implementation problem here |
+| Effects (sound, finished) | No dedicated opcode; scripts fire sound by native call to `$054848` from `$0B` (key match) and from `$0E`/`$15` on record index `$00F8`. It arms a one-shot PSG step through the vector `$0004BF54` and returns immediately (#136) | **would-map (concern)** — a fire-and-forget effect maps to the Targ method, but the effect *identity* is a PSG programme, not a named sound; re-authoring is required either way (ADR 0002) |
 
 A future Damocles Host Callout would need its **own** seam: same *method* as
 Targ, new field list after a full opcode census. Live Targ `BensonHostState`
-must not be stretched.
+must not be stretched. #136 removes the one row that previously read
+**does-not-map**, so no concern in this census is now known to be unmappable in
+principle.
 
 ## Implications for #82
 
@@ -329,9 +435,16 @@ must not be stretched.
   logic behind a new seam after a complete census.
 - Slots `$08`/`$09` `jsr (a0)` **straight into the script stream**, so the
   interpreter can run inline 68000 code as part of a script. The full decode
-  below found **no reachable use of either slot**, so this is a latent
+  below found **no reachable use of either slot**, and #136 bounded that to the
+  whole loaded image (one script table, one reader), so this is a latent
   capability rather than a live constraint; an extract should still detect them,
   because one occurrence would desynchronise a linear parse.
+- The native routines the handlers call are **host effects, not hidden game
+  logic** (#136): a fire-and-forget PSG sound (`$054848`), a pending-script
+  launcher (`$054764`), and a message resume (`$0547C6`). None of them
+  interprets script bytes, so none of them widens the bytecode a port must
+  understand — they widen the *effect list* the seam must offer, which is the
+  cheaper of the two.
 - The interpreter suspends itself on a message gate (`$7BA0`) rather than
   blocking, so a Damocles Host Callout needs a resumable message effect rather
   than Targ's synchronous one.
@@ -356,3 +469,11 @@ must not be stretched.
 | Dispatch loop, table base, 37 entries | Working Disassembly of `$05193E`–`$051D80`; loop listing identical across three independent cold runs |
 | Handler semantics and interpreter state | Same listing; table offsets re-derived from an exported `$050000`–`$054000` window |
 | Working Disassembly pin | `scenarios/script-dispatch.json`, run `observe-script-dispatch-20260821T153758Z-16510c3c` |
+| Native routines `$054764`, `$0547C6`, `$054848` | Working Disassembly of `$054700`–`$0556FF`; `scenarios/native-handlers.json`, run `observe-native-handlers-20260821T162713Z-2a6d1dd4` |
+| Sound driver `$0004C556`, `$0004C6B2` and the shared tail `$0004C5EC` | Working Disassembly of `$04C400`–`$04D3FF`; `scenarios/timer-native.json`, run `observe-timer-native-20260821T163112Z-501efbc6` |
+| Callers of `$054848` (7 absolute sites) | `lab xref --address 0x54848` on run `observe-native-handlers-20260821T162713Z-2a6d1dd4`; the eighth, `$051A86`, is a PC-relative `bsr` and so invisible to `xref` — read from the `script-dispatch` listing |
+| Sole caller of `$0004C6B2` | `lab xref --address 0x4C6B2` → one hit, `$051D62` |
+| `$0004BF54` read at `$051E0E` and `jsr (a0)` at `$051E14`; idle value `$00051E86` is `rts` | Bytes read from `observed.ram` of run `observe-script-dispatch-20260821T163011Z-697e5300` at `$051E00`, `$051E86`, `$04BF54` |
+| Caller side (`$051A86`, `$051AEE`, `$051BAA`, `$051944`, `$05194C`, `$051D62`) re-confirmed | `scenarios/script-dispatch.json`, run `observe-script-dispatch-20260821T163011Z-697e5300` |
+| 497 ops, 0 undecodable, no inline-native sites | `lab script --run observe-script-dispatch-20260821T163011Z-697e5300` |
+| `$00070080` occurs once in the 1 MiB image, at `$0547AC` | Byte scan of `observed.ram`, same run |
