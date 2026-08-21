@@ -495,11 +495,14 @@ browser should preserve those as PresentationEvents but need not add audible
 playback.
 
 Craft slot 7's handler `$AA62` enters the non-returning visual loop at `$AA95`
-when `gameComplete` is nonzero. It clears and redraws the terminal particle/
-starfield field, advances a colour sequence, steps Benson, and calls `READ_INPUT`
-on every loop. `$AC44` advances the state from 1 to 255 after the initial delay
-and colour transitions; the visual loop then continues. There is no transition
-to Damocles, no credits/new-game screen, and no Defeat presentation.
+when `gameComplete` is nonzero. Its 21-point **Interstellar Ship Field** is
+decoded in [escape-starfield.md](escape-starfield.md): the handler clears the
+screen once on entry, then erases prior point pixels and redraws current ones on
+each loop. Respawn is driven by failed depth/projection bounds rather than a
+lifetime. The loop advances a repeated colour sequence, steps Benson, and calls
+`READ_INPUT`; phase 255 is written on loop 114 and the final colour/phase write
+continues every three loops. There is no transition to Damocles, no credits or
+new-game screen, and no Defeat presentation.
 
 Input is therefore sampled rather than globally frozen, but the exact effects of
 leave, drop, Save/load, and Ctrl-Q during terminal presentation require live

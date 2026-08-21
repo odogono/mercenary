@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Sequence
 
 from .core import LabError
-from .laboratory import capture, doctor, observe, reproduce, verify
+from .laboratory import capture, doctor, load_configuration, observe, reproduce, verify
 from .benson import decode_benson
 from .endgame import census_terminal_dispatches, decode_endgame
 from .interaction import decode_interaction
@@ -297,7 +297,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 path.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
                 result = {"status": "decoded", "output": str(arguments.output), "counts": document["counts"]}
         elif arguments.command == "endgame":
-            ram, source = load_geometry_source(arguments.run)
+            reference, _ = load_configuration()
+            ram, source = load_geometry_source(
+                arguments.run,
+                expected_build_sha256=reference["hashes"]["sha256"],
+            )
             native = decode_endgame(ram)
             native["terminalCensus"] = census_terminal_dispatches(decode_benson(ram))
             result = {
