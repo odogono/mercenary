@@ -155,9 +155,10 @@ def validate_scenario(scenario: dict[str, Any]) -> None:
     )
     actions = scenario.get("actions")
     require(isinstance(actions, list) and bool(actions), "Scenario actions must be a non-empty list")
-    allowed = {"wait_vbls", "keypress", "keydown", "keyup", "stick_hold", "capture"}
+    allowed = {"wait_vbls", "keypress", "keydown", "keyup", "stick_hold", "capture", "disassemble"}
     capture_count = 0
     prefixes: set[str] = set()
+    disassembly_names: set[str] = set()
     uses_stick = False
     for index, action in enumerate(actions):
         require(isinstance(action, dict), f"Scenario action {index} must be an object")
@@ -193,10 +194,56 @@ def validate_scenario(scenario: dict[str, Any]) -> None:
             )
             require(prefix not in prefixes, f"Scenario action {index} capture prefix {prefix!r} reused")
             prefixes.add(prefix)
+        elif action_type == "disassemble":
+            # A Working Disassembly reads a bounded range of live code at a state
+            # the run can name; the listing itself stays untracked Restricted
+            # Material (docs/research/damocles-gap.md).
+            start = parse_hex_int(action.get("start"), label=f"Scenario action {index} disassemble start")
+            end = parse_hex_int(action.get("end"), label=f"Scenario action {index} disassemble end")
+            require(start < end, f"Scenario action {index} disassemble start must be below end")
+            require(
+                end - start <= 0x1000,
+                f"Scenario action {index} disassemble range must span at most 0x1000 bytes",
+            )
+            name = action.get("name")
+            require(
+                isinstance(name, str) and bool(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,31}", name)),
+                f"Scenario action {index} disassemble name invalid",
+            )
+            require(name not in disassembly_names, f"Scenario action {index} disassemble name {name!r} reused")
+            disassembly_names.add(name)
     require(1 <= capture_count <= 2, "Observation scenarios must contain one or two capture actions")
+    # Hatari stops consuming FIFO commands after a `d` listing, so a second
+    # disassembly — and any capture behind it — is silently lost. One range per
+    # scenario, widened to cover what you need (see HATARI-RESEARCH.md).
+    require(
+        len(disassembly_names) <= 1,
+        "Observation scenarios must contain at most one disassemble action",
+    )
     # stick_hold drives locomotion by memwriting the joystick-1 soft-copy at
     # $79C2, so it needs no host keyboard-to-joystick remapping (joyKeysPort).
     _ = uses_stick
+
+
+def extract_disassembly(log_text: str, *, start: int, end: int) -> str:
+    """Pull one disassembly listing out of a Hatari stdout log.
+
+    Debugger commands sent over the command FIFO echo to Hatari's stdout rather
+    than to its `logfile`, so the run log is the only place a listing lands.
+    """
+    marker = f"> d ${start:x}-${end:x}"
+    lines = log_text.splitlines()
+    try:
+        first = lines.index(marker) + 1
+    except ValueError:
+        raise LabError(f"No disassembly for ${start:06x}-${end:06x} in the Hatari log") from None
+    listing: list[str] = []
+    for line in lines[first:]:
+        if line.startswith(">") or line.startswith("Returning to emulation"):
+            break
+        listing.append(line)
+    require(bool(listing), f"Disassembly for ${start:06x}-${end:06x} is empty")
+    return "\n".join(listing) + "\n"
 
 
 def validate_run_manifest(manifest: dict[str, Any]) -> None:

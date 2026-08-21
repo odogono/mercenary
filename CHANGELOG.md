@@ -8,6 +8,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Damocles script catalogue (#128). `lab script` decodes the script bank by reachability from its
+  entry table, reaching 497 ops and 98.2% of the code region with nothing undecodable. It resolved
+  the bank into two 64-slot pointer tables (strings at `$070000`, script entries at `$070080` — the
+  Damocles analogue of the C64 Benson entry table), bytecode, and a string pool.
+  `docs/research/damocles-script-catalogue.md` documents every script slot, the system string table,
+  and the authoring idioms: the `(OK?)` prompt shape with its Y/O/N scancodes and timeout re-poll,
+  the bargaining ladder whose figures are packed decimal, delay-as-subroutine pacing, and the
+  suspend-not-block message gate. Script arithmetic is BCD, so a port must reproduce those semantics
+  or prove binary equivalent. Two incidental findings: the original shipped cross-title save import
+  from *Mercenary I* and *The Second City*, and the inline-native escape at slots `$08`/`$09` is
+  unused anywhere in this bank. The decoder is report-only instrumentation and must never become an
+  extractor (ADR 0021).
+- Damocles Script dispatch loop decoded by Working Disassembly (#128). The ST laboratory gained
+  three research instruments — `export` for addressed, provenance-bound RAM windows, `xref` for the
+  68000 instructions that name one absolute address, and a scenario `disassemble` action driving
+  Hatari's own disassembler at a world-loaded state. `$051956` proved to be the only instruction in
+  the megabyte naming the resident script program counter, leading to the fetch-decode-dispatch loop
+  at `$05193E`, a 37-entry self-relative dispatch table at `$051972`, the bit-6/bit-7 branch
+  encoding, and a first-pass census of every handler with the interpreter state each one touches.
+  That resolves the ISA note's Unresolved dispatch-table item and its unknown Host Callout rows, and
+  surfaces opcodes `$08`/`$09` calling 68000 code inline in the script stream — a constraint with no
+  Targ analogue. `CONTEXT.md` mints **Working Disassembly**; `docs/research/damocles-gap.md` records
+  its rules, keeping listings untracked Restricted Material and only decoded facts in research notes.
+
 - Three explicit Browser Shell save slots (#109). Versioned bounded JSON Save Snapshots now
   capture and restore the complete authoritative Gameplay Session, including mover and Object
   Residence state, Room rewiring, Benson interpreter and message progress, fractional timing,

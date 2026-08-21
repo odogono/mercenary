@@ -79,7 +79,14 @@ What would not transfer as-is: the C64 lab and extractors; `Location` as surface
 | `roms/atarist/Mercenary III.STX` | Out of scope for #82 (later title; series aspiration only) |
 | `roms/atarist/Mercenary - Escape From Targ (1986)(Novasoft).stx` | ST Mercenary 1; not the C64 Reference Build |
 
-The Hatari laboratory for the ST Working Authority lives at `research/damocles-st/`. There is no Damocles disassembly snapshot, extractor, or payload in the tracked tree.
+The Hatari laboratory for the ST Working Authority lives at `research/damocles-st/`. There is no Damocles disassembly snapshot, extractor, or payload in the tracked tree, and the **Working Disassembly** rules keep it that way:
+
+- A Working Disassembly is targeted and question-driven: it disassembles only the routines one named research question needs, never the whole program. The first named target is the Damocles Script dispatch loop ([#81](https://github.com/odogono/mercenary/issues/81), [#85](https://github.com/odogono/mercenary/issues/85)), where runtime observation has plateaued on the Unresolved opcode rows in `docs/research/damocles-script-isa.md`.
+- Its subject is the unpacked RAM image at a laboratory checkpoint (e.g. `first-world`), never the packed on-disk STX, so disassembly addresses and runtime evidence share one address space. Contemporary cracking accounts confirm the retail image is heavily protected and packed; the checkpoint sidesteps that.
+- The disassembly text and any analysis project (e.g. Ghidra) are untracked Restricted Material under gitignored paths. Only decoded facts — addresses, structures, semantics — enter tracked research notes, with Research Provenance, exactly as the existing mapping notes already do.
+- Read for structure, never copied or mechanically translated. MDDClone remains the prior-art warning: it rewrote the ST program from debugger disassembly, which is the Independent Implementation boundary this project refuses (ADR 0002).
+
+**Prior art (checked 2026-08-21):** no consumable public annotated disassembly of ST Damocles exists — nothing analogous to Ian McGregor's C64 Mercenary disassembly — so any Working Disassembly is produced here. Two read-only semantic bootstraps exist: [mercenary-reloaded](https://github.com/Eversberg/mercenary-reloaded)'s annotated hook table (`src/mercenary/mercenary2.c`, `render.c`; ~100 commented code addresses in the **Amiga** Damocles binary), and the [Mercenary Site's 1989 ST demo analysis](http://mercenarysite.free.fr/damodemo.htm). Both are unlicensed reference documentation only — never copied, and Amiga addresses do not transfer to the ST image, though the shared 68000 code base means routine semantics largely do.
 
 ## After this spike
 

@@ -8,6 +8,20 @@
   "hostTimeoutSeconds": 240,
   "fastForward": true,
   "statusbar": false,
+  "exportWindows": {
+    "script-bank": {
+      "range": ["0x070000", "0x074000"],
+      "description": "Damocles Script bytecode bank after world load; $070100-$073500 is the region decoded in docs/research/damocles-script-isa.md."
+    },
+    "script-vars": {
+      "range": ["0x007000", "0x008000"],
+      "description": "Low RAM holding the resident script program counter at $00781E and the joystick-1 direction soft-copy at $0079C2."
+    },
+    "title-code": {
+      "range": ["0x060000", "0x06AA00"],
+      "description": "Program code region that stays stable across cold starts at the title-screen checkpoint."
+    }
+  },
   "checkpoints": {
     "title-screen": {
       "pc": 427394,

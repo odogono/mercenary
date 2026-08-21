@@ -262,6 +262,10 @@ _Avoid_: Reference Build (for Damocles), canonical ST ROM
 Behaviour observed in the running Working Authority, or data decoded directly from it; when Damocles sources disagree, this outranks manuals and other 16-bit editions for that research programme, and is not Authoritative Evidence.
 _Avoid_: Authoritative Evidence (for Damocles), port behaviour, manual intent
 
+**Working Disassembly**:
+Targeted, question-driven disassembly of the Working Authority's unpacked program image, produced by this project for one named research question; its text and any analysis project are untracked Restricted Material, and only the decoded facts enter tracked research notes with Research Provenance. Read for structure, never copied or translated (ADR 0002); not the community C64 Reference Disassembly.
+_Avoid_: Reference Disassembly (for Damocles), source code, disassembly snapshot, MDDClone
+
 **Content Set** (historical):
 The complete immutable definition selected for a playable experience, resolved and validated before a session begins.
 _Avoid_: Content pack, campaign, resource bundle

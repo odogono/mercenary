@@ -23,15 +23,19 @@ The TOS pin is Hatari's bundled EmuTOS 2.06. Real TOS 1.04 is not required for t
 - Outdoor palette dual capture (#79): `research/damocles-st/lab observe --scenario research/damocles-st/scenarios/outdoor-palette.json`.
 - Stick walk toward building (#79; drives locomotion by memwriting the joystick-1 soft-copy `$79C2`): `research/damocles-st/lab observe --scenario research/damocles-st/scenarios/walk-toward-building.json`.
 - Approach spaceport pad (#79; near cyan-window building): `research/damocles-st/lab observe --scenario research/damocles-st/scenarios/approach-spaceport-pad.json`.
+- Script dispatch loop (#81, #85; disassembles the script interpreter at the world-load state): `research/damocles-st/lab observe --scenario research/damocles-st/scenarios/script-dispatch.json`.
 - Verify: `research/damocles-st/lab verify --run research/damocles-st/work/<run-id>`.
 - Reproduce: `research/damocles-st/lab reproduce`.
+- Export addressed RAM windows for a Working Disassembly: `research/damocles-st/lab export --run research/damocles-st/work/<run-id> --window script-bank`.
+- Find instructions naming one absolute address: `research/damocles-st/lab xref --run research/damocles-st/work/<run-id> --address 0x781E`.
+- Decode the Damocles Script bank into a readable listing: `research/damocles-st/lab script --run research/damocles-st/work/<run-id>`.
 - Hatari integration (launches the emulator twice): `DAMOCLAB_INTEGRATION=1 python3 -m unittest research.damocles-st.tests.test_integration -v` from the lab tree, or `DAMOCLAB_INTEGRATION=1 python3 -m unittest discover -s research/damocles-st/tests -v`.
 
 ## Structure and style
 
 - `damocleslab/` contains typed Python modules with explicit `LabError` failures at user and process boundaries.
 - `config/working-authority.json` identifies the STX and TOS images by size and multi-hash.
-- `config/lab.json` pins machine model, Hatari version floor, and the title-screen checkpoint.
+- `config/lab.json` pins machine model, Hatari version floor, the title-screen checkpoint, and the named `exportWindows` a Working Disassembly cuts from a RAM dump.
 - `work/` contains all generated artifacts and is ignored by Git.
 - Documentation uses the domain vocabulary in `CONTEXT.md`.
 
@@ -48,6 +52,8 @@ Pure validation and protocol encoding receive unit tests. A local integration te
   typography-only exception in ADR 0021 may consume verified display evidence through the
   cross-title typography exporter; its generated glyph data and WOFF2 remain ignored.
 - Reproducible checkpoints and observation scenarios that expose world tables for mapping notes (#79–#81) are allowed. Filled-polygon decode, Gamma System inventory, and script/motion/time findings belong in `docs/research/` notes, not in a payload.
+- A Working Disassembly is targeted and question-driven: exported windows, `xref` reports, `disassemble` listings, and `script` decodes stay inside the ignored `work/` tree, and only decoded facts reach `docs/research/` notes with provenance. Read for structure, never copy or mechanically translate (ADR 0002). See `docs/research/damocles-gap.md`.
+- `script` is research instrumentation, not an extractor: it may emit a human-readable report only. It must never gain a machine-readable output, a payload writer, or a schema — a Damocles Data Payload stays out of scope until after *The Second City* (ADR 0021).
 
 ## Success criteria
 

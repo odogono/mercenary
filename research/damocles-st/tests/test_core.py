@@ -14,6 +14,7 @@ from damocleslab.core import (  # noqa: E402
     LabError,
     JOYSTICK1_SOFTCOPY,
     compare_reproducible_runs,
+    extract_disassembly,
     extract_stable_ram,
     parse_ram_ranges,
     parse_register_log,
@@ -23,6 +24,12 @@ from damocleslab.core import (  # noqa: E402
     validate_run_manifest,
     validate_scenario,
     verify_run_artifacts,
+)
+from damocleslab.laboratory import export  # noqa: E402
+from damocleslab.script import (  # noqa: E402
+    decode_scripts,
+    read_script_table,
+    read_string_table,
 )
 from damocleslab.runtime import (  # noqa: E402
     build_hatari_command,
@@ -93,6 +100,52 @@ class ScenarioValidationTests(unittest.TestCase):
     def test_accepts_checked_in_first_world_scenario(self) -> None:
         path = Path(__file__).resolve().parents[1] / "scenarios" / "first-world.json"
         validate_scenario(json.loads(path.read_text(encoding="utf-8")))
+
+    def test_accepts_checked_in_script_dispatch_scenario(self) -> None:
+        path = Path(__file__).resolve().parents[1] / "scenarios" / "script-dispatch.json"
+        validate_scenario(json.loads(path.read_text(encoding="utf-8")))
+
+    def _disassemble_scenario(self, action: dict) -> dict:
+        return {
+            "schemaVersion": 1,
+            "name": "wd",
+            "checkpoint": "title-screen",
+            "actions": [action, {"type": "capture", "artifacts": ["ram"]}],
+        }
+
+    def test_rejects_an_unbounded_disassembly_range(self) -> None:
+        # A Working Disassembly is targeted; a whole-program listing is refused.
+        with self.assertRaisesRegex(LabError, "at most"):
+            validate_scenario(
+                self._disassemble_scenario(
+                    {"type": "disassemble", "name": "everything", "start": "0x50000", "end": "0x60000"}
+                )
+            )
+
+    def test_rejects_an_inverted_disassembly_range(self) -> None:
+        with self.assertRaisesRegex(LabError, "below end"):
+            validate_scenario(
+                self._disassemble_scenario(
+                    {"type": "disassemble", "name": "backwards", "start": "0x51a80", "end": "0x51880"}
+                )
+            )
+
+    def test_rejects_a_second_disassembly(self) -> None:
+        # Hatari stops reading the FIFO after a listing, so a second one — and
+        # any capture behind it — would be silently lost.
+        with self.assertRaisesRegex(LabError, "at most one disassemble"):
+            validate_scenario(
+                {
+                    "schemaVersion": 1,
+                    "name": "wd",
+                    "checkpoint": "title-screen",
+                    "actions": [
+                        {"type": "capture", "artifacts": ["ram"]},
+                        {"type": "disassemble", "name": "first", "start": "0x51880", "end": "0x51900"},
+                        {"type": "disassemble", "name": "second", "start": "0x51900", "end": "0x51980"},
+                    ],
+                }
+            )
 
     def test_rejects_missing_capture(self) -> None:
         with self.assertRaisesRegex(LabError, "one or two capture"):
@@ -266,6 +319,183 @@ class StickBitmaskTests(unittest.TestCase):
     def test_rejects_unknown_direction(self) -> None:
         with self.assertRaisesRegex(LabError, "direction"):
             resolve_stick_bitmask("diagonal")
+
+
+class ScriptDecodeTests(unittest.TestCase):
+    """The decode rests on operand widths read from the handler stubs."""
+
+    def _bank(self, ops: bytes, *, at: int = 0x070100) -> bytes:
+        data = bytearray(0x100000)
+        data[at : at + len(ops)] = ops
+        return bytes(data)
+
+    def test_predicate_ops_carry_a_trailing_branch_target(self) -> None:
+        # $07 if.wait: 2 operand bytes, then the epilogue's 2-byte target. This
+        # is the shape that puts `return` at $072CDE in the delay subroutine.
+        bank = self._bank(bytes.fromhex("0007 0032 2cd8 0005".replace(" ", "")))
+        decode = decode_scripts(bank, start=0x070100, end=0x072D2E, entries=(0x070100,))
+        wait = decode.ops[0x070100]
+        self.assertEqual(wait.op.name, "if.wait")
+        self.assertEqual(wait.size, 6)
+        self.assertEqual(wait.target, 0x072CD8)
+        self.assertEqual(decode.ops[0x070106].op.name, "return")
+
+    def test_message_consumes_text_and_word_aligns(self) -> None:
+        # "AB" + NUL is 3 bytes, so the op must round up to keep the PC even,
+        # putting the next op at $070106 rather than $070105.
+        bank = self._bank(b"\x00\x01AB\x00" + b"\x00" + b"\x00\x05")
+        decode = decode_scripts(bank, start=0x070100, end=0x072D2E, entries=(0x070100,))
+        message = decode.ops[0x070100]
+        self.assertEqual(message.text, "AB")
+        self.assertEqual(message.size, 6)
+        self.assertEqual(decode.ops[0x070106].op.name, "return")
+
+    def test_opcode_is_the_low_six_bits_and_flag_bits_are_kept(self) -> None:
+        # The interpreter tests bit 6 and bit 7 of the fetched word (btst #6/#7
+        # on d1) — $0040 and $0080, not the word's top bits. $00C3 is slot $03
+        # with both set.
+        bank = self._bank(bytes.fromhex("00c303fc"))
+        decode = decode_scripts(bank, start=0x070100, end=0x072D2E, entries=(0x070100,))
+        jump = decode.ops[0x070100]
+        self.assertEqual(jump.opcode, 0x03)
+        self.assertEqual(jump.word & 0x40, 0x40, "bit 6 selects call over jump")
+        self.assertEqual(jump.word & 0x80, 0x80, "bit 7 negates")
+        self.assertEqual(jump.target, 0x0703FC)
+
+    def test_walk_stops_at_return_and_follows_calls(self) -> None:
+        bank = bytearray(self._bank(bytes.fromhex("00040200 0005")))
+        bank[0x070200:0x070202] = bytes.fromhex("0005")  # callee returns
+        decode = decode_scripts(bytes(bank), start=0x070100, end=0x072D2E, entries=(0x070100,))
+        self.assertIn(0x070200, decode.call_targets)
+        self.assertIn(0x070200, decode.ops)
+
+    def test_reads_two_separate_sixty_four_slot_tables(self) -> None:
+        data = bytearray(0x100000)
+        data[0x070000:0x070002] = bytes.fromhex("2d2e")  # string slot $00
+        data[0x070080:0x070082] = bytes.fromhex("0110")  # script slot $00
+        data[0x072D2E:0x072D35] = b"LOCKED\x00"
+        self.assertEqual(read_script_table(bytes(data))[0], 0x070110)
+        address, text = read_string_table(bytes(data))[0]
+        self.assertEqual((address, text), (0x072D2E, "LOCKED"))
+
+
+class DisassemblyExtractionTests(unittest.TestCase):
+    LOG = "\n".join(
+        [
+            "command FIFO read error: Resource temporarily unavailable",
+            "> d $51880-$51a80",
+            "00051956 2078 781e                movea.l $0000781e.w [000703fc],a0",
+            "0005195a 3018                     move.w (a0)+,d0",
+            "> quit",
+            "trailing noise",
+        ]
+    )
+
+    def test_extracts_only_the_requested_listing(self) -> None:
+        listing = extract_disassembly(self.LOG, start=0x51880, end=0x51A80)
+        self.assertIn("movea.l $0000781e.w", listing)
+        self.assertNotIn("FIFO", listing)
+        self.assertNotIn("trailing noise", listing)
+
+    def test_rejects_a_missing_listing(self) -> None:
+        with self.assertRaisesRegex(LabError, "No disassembly"):
+            extract_disassembly(self.LOG, start=0x60000, end=0x60010)
+
+
+class ExportWindowTests(unittest.TestCase):
+    """A Working Disassembly needs windows whose addresses and provenance are exact."""
+
+    def _run(self, directory: str) -> Path:
+        run = Path(directory)
+        ram = bytes(range(256)) * (0x100000 // 256)
+        (run / "obs.ram").write_bytes(ram)
+        manifest = {
+            "schemaVersion": 1,
+            "runId": "observe-first-world-r1",
+            "createdAt": "2026-08-21T00:00:00Z",
+            "authority": {"logicalName": "wa", "programSha256": "a" * 64},
+            "toolchain": {"hatariVersion": "2.6.1", "pythonVersion": "3.13.0"},
+            "machine": {"model": "st", "memsizeMiB": 1, "tosSha256": "b" * 64},
+            "scenario": {"name": "first-world", "sha256": "c" * 64},
+            "checkpoint": {"name": "title-screen", "pc": 427394},
+            "artifacts": [
+                {
+                    "role": "ram",
+                    "path": "obs.ram",
+                    "size": len(ram),
+                    "sha256": hashlib.sha256(ram).hexdigest(),
+                }
+            ],
+        }
+        (run / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        return run
+
+    def test_exports_a_named_window_at_its_base_address(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            run = self._run(directory)
+            exports = export(run, windows=["script-vars"])
+            window = exports["windows"][0]
+            self.assertEqual(window["baseAddressHex"], "0x007000")
+            self.assertEqual(window["length"], 0x1000)
+            payload = (run / window["path"]).read_bytes()
+            self.assertEqual(len(payload), 0x1000)
+            # File offset must equal ST physical address, or every cited address is wrong.
+            self.assertEqual(payload[0x81E], 0x81E % 256)
+
+    def test_records_source_ram_and_scenario_provenance(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            run = self._run(directory)
+            exports = export(run, ranges=["0x70000-0x74000"])
+            self.assertEqual(exports["sourceRam"]["path"], "obs.ram")
+            self.assertEqual(exports["scenario"]["name"], "first-world")
+            self.assertEqual(exports["evidenceClass"], "working-authority-evidence")
+            self.assertEqual(exports["windows"][0]["name"], "window-070000-074000")
+
+    def test_keeps_the_manifest_self_verifying_across_repeat_exports(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            run = self._run(directory)
+            export(run, windows=["script-bank"])
+            export(run, windows=["script-bank"])
+            manifest = json.loads((run / "manifest.json").read_text(encoding="utf-8"))
+            windows = [a for a in manifest["artifacts"] if a["role"] == "export-window"]
+            self.assertEqual(len(windows), 1)
+            verify_run_artifacts(run, manifest)
+
+    def test_prefers_the_post_scenario_image_over_the_title_checkpoint(self) -> None:
+        # The script bank is zero-filled at title-screen, so defaulting to the
+        # checkpoint image would export empty windows that look like evidence.
+        with tempfile.TemporaryDirectory() as directory:
+            run = self._run(directory)
+            observed = bytes(0x100000)
+            (run / "observed.ram").write_bytes(observed)
+            manifest = json.loads((run / "manifest.json").read_text(encoding="utf-8"))
+            manifest["artifacts"].append(
+                {
+                    "role": "observed-ram",
+                    "path": "observed.ram",
+                    "size": len(observed),
+                    "sha256": hashlib.sha256(observed).hexdigest(),
+                }
+            )
+            (run / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+            exports = export(run, windows=["script-bank"])
+            self.assertEqual(exports["sourceRam"]["role"], "observed-ram")
+
+            forced = export(run, windows=["script-bank"], source_role="ram")
+            self.assertEqual(forced["sourceRam"]["role"], "ram")
+
+    def test_rejects_an_unknown_window_name(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            run = self._run(directory)
+            with self.assertRaisesRegex(LabError, "Unknown export window"):
+                export(run, windows=["not-a-window"])
+
+    def test_rejects_an_empty_request(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            run = self._run(directory)
+            with self.assertRaisesRegex(LabError, "at least one"):
+                export(run)
 
 
 class VersionTests(unittest.TestCase):

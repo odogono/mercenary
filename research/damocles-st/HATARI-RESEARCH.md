@@ -125,6 +125,26 @@ whole observe session (closing it early can abort in-debugger parse chains).
 Avoid interactive `m` memdumps over FIFO — they can page and stall automation;
 use `savebin` of a small window instead.
 
+### Disassembly over FIFO: one listing, and it must go last (solved)
+
+`d <start>-<end>` is Hatari's own 68000 disassembler, which is why a Working
+Disassembly needs no external tool and no second address space — it reads the
+live machine at the state a scenario reached.
+
+Two constraints, both found the hard way:
+
+- **Output lands on stdout, not in `logfile`.** A FIFO-driven `hatari-debug`
+  echoes to Hatari's stdout — `hatari-observe.log` — even with a debug log
+  open, which leaves the `logfile` target zero-length. `observe` therefore cuts
+  the listing out of the run log afterwards (`extract_disassembly`).
+- **Hatari stops consuming FIFO commands after a listing.** A second `d`, and
+  any `capture` queued behind the first one, are silently lost: no prompt echo,
+  no artifacts. So a scenario carries **at most one** `disassemble` action and
+  places it **last**, after every capture; `validate_scenario` enforces the
+  count and the final capture resumes instead of quitting so the cleanup path
+  stops the emulator. Widen the single range rather than adding a second action
+  (the whole script dispatch loop, table, and handler block fit one `d`).
+
 ## What this lab does not do
 
 No Damocles Data Payload, extractor, or schema. No second Independent
