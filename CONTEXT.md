@@ -194,6 +194,22 @@ _Avoid_: Assist mode, accessibility mode
 A validated arrangement of the world view, status information, and prompts within the Game Surface that preserves their governed information and behaviour.
 _Avoid_: Layout mode, aspect mode
 
+**Benson Panel**:
+The authored instrument-panel Display Composition drawn under the world view, presenting only what the Session Snapshot already carries and never changing play; hand-recreated presentation rather than recovered behaviour (ADR 0027).
+_Avoid_: HUD, status bar, dashboard, cockpit
+
+**Panel Rendition**:
+Which visual treatment the Benson Panel wears — Targ or Damocles — changing chrome and typography only, never the gameplay data beneath; the Damocles treatment stays inside ADR 0021's presentation-only exception.
+_Avoid_: Skin, theme, variant, panel mode
+
+**System Menu**:
+The Browser Shell overlay opened with Escape that pauses stepping and owns the settings page and the Save chooser; shell chrome, never part of the Game Surface.
+_Avoid_: Pause menu, options screen, main menu
+
+**Shell Console**:
+The Browser Shell's slide-down debug command line, whose every mutation routes through the Gameplay Session's semantic actions; a development tool outside the Game Surface and never part of a trace.
+_Avoid_: Cheat console, terminal, dev overlay
+
 **Initial Release**:
 The complete *Mercenary: Escape from Targ* experience delivered by this effort, with extension seams for *The Second City* but without that expansion's content; Damocles is out of Initial Release scope and waits until after *The Second City* (ADR 0021).
 _Avoid_: Mercenary 1, base game, Damocles, multi-title release

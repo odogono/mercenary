@@ -1,0 +1,1221 @@
+<!doctype html>
+<!-- Throwaway prototype for issue #120. Synthetic data only — every value below is
+     invented (PROTOTYPE-ONLY). Panels are recreated by eye; no Restricted Material. -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Browser Experience Mockups — PROTOTYPE-ONLY (issue #120)</title>
+<style>
+/* ==========================================================================
+   TOKEN LAYER — the tuning surface. Base values are the Targ rendition;
+   [data-rendition='damocles'] overrides them. The production shell will copy
+   this exact data-attribute skin pattern.
+   ========================================================================== */
+#frame {
+  /* chrome + bezels */
+  --panel-face: #c2a878;
+  --panel-face-dark: #a68c5c;
+  --panel-hi: #eadfba;
+  --panel-lo: #574424;
+  --panel-gap: #101010;
+  /* readouts */
+  --lcd-bg: #0c0c0c;
+  --lcd-ink: #f4f4f4;
+  --cell-border: #e6e6e6;
+  --msg-bg: #efe6c6;
+  --msg-ink: #121212;
+  --label-ink: #3c2f16;
+  /* lamps + gauges */
+  --lamp-off: #2e2818;
+  --lamp-on: #e8c33c;
+  --gauge-sky: #7ab2dc;
+  --gauge-ground: #74ac48;
+  --gauge-face: #e8e8e8;
+  /* overlay chrome (menu / settings / saves / console) */
+  --overlay-scrim: rgba(6, 6, 6, 0.55);
+  --console-bg: rgba(10, 12, 10, 0.92);
+  --console-ink: #46d846;
+  /* typography */
+  --font-panel: "Mercenary Pixel", "Courier New", monospace;
+}
+#frame[data-rendition="damocles"] {
+  --panel-face: #9aa0a0;
+  --panel-face-dark: #7e8484;
+  --panel-hi: #ced4d4;
+  --panel-lo: #43484a;
+  --lcd-bg: #060606;
+  --lcd-ink: #3ecf3e;
+  --cell-border: #9aa0a0;
+  --msg-bg: #060606;
+  --msg-ink: #3ecf3e;
+  --label-ink: #2c3032;
+  --lamp-off: #2c3032;
+  --lamp-on: #e8c33c;
+  --gauge-face: #cfe4f2;
+  --console-ink: #3ecf3e;
+  --font-panel: "Damocles Interface", "Courier New", monospace;
+  /* damocles-only cluster tints */
+  --nav-face: #86987e;
+  --nav-lcd: #c9d8ba;
+  --nav-ink: #1c2414;
+  --inv-face: #8fb0c8;
+  --inv-lcd: #cfe4f2;
+  --inv-ink: #16303e;
+  --gauge-sky: #a9c6dc;
+  --gauge-ground: #9dbd85;
+  --clock-bg: #e8a685;
+  --clock-ink: #301408;
+}
+#frame[data-typeface="mercenary"] { --font-shell: "Mercenary Pixel", "Courier New", monospace; }
+#frame[data-typeface="damocles"] { --font-shell: "Damocles Interface", "Courier New", monospace; }
+
+@font-face {
+  font-family: "Mercenary Pixel";
+  src: url("/fonts/mercenary.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Damocles Interface";
+  src: url("/fonts/damocles.woff2") format("woff2");
+  font-display: swap;
+}
+
+/* ==========================================================================
+   PAGE SCAFFOLD (not design) — dark stage + obviously-modern mockup chrome
+   ========================================================================== */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #17181a;
+  color: #d8d8d8;
+  font-family: system-ui, sans-serif;
+}
+#mockup-chrome {
+  background: #26282c;
+  border-bottom: 2px dashed #55585e;
+  padding: 8px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+#mockup-chrome strong { color: #9aa0aa; letter-spacing: 0.08em; }
+#mockup-chrome button {
+  background: #3a3d44;
+  color: #e0e0e0;
+  border: 1px solid #55585e;
+  border-radius: 3px;
+  padding: 3px 8px;
+  font: inherit;
+  cursor: pointer;
+}
+#mockup-chrome button:hover { background: #484c55; }
+#font-banner { color: #e8a24a; display: none; }
+#stage {
+  display: flex;
+  justify-content: center;
+  padding: 16px 8px 4px;
+}
+#frame-box { position: relative; } /* JS sizes this to the scaled frame */
+footer {
+  text-align: center;
+  font-size: 11px;
+  color: #71757d;
+  padding: 8px 0 16px;
+}
+
+/* ==========================================================================
+   THE FRAME — one fixed-aspect authentic composition, 640×400 logical px
+   (2× the ST 320×200), uniformly scaled by JS. Everything inside is design.
+   ========================================================================== */
+#frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 640px;
+  height: 400px;
+  transform-origin: top left;
+  background: var(--panel-gap);
+  overflow: hidden;
+  font-family: var(--font-panel);
+  image-rendering: pixelated;
+  user-select: none;
+}
+#viewport {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 248px;
+  overflow: hidden;
+}
+#viewport svg { display: block; width: 100%; height: 100%; }
+#frame[data-rendition="targ"] .dmc-only,
+#frame[data-rendition="damocles"] .targ-only { display: none !important; }
+
+/* classic-strip composition: hide the panel, show the debug strip */
+#frame[data-composition="strip"] #panel-targ,
+#frame[data-composition="strip"] #panel-damocles { display: none !important; }
+#frame[data-composition="strip"] #viewport { height: 368px; }
+#classic-strip {
+  display: none;
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 32px;
+  padding: 8px 10px 0;
+  background: #101010;
+  color: #cfcfcf;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+#frame[data-composition="strip"] #classic-strip { display: block; }
+
+/* --- shared instrument vocabulary ------------------------------------- */
+.bezel {
+  background: var(--panel-face);
+  border-radius: 6px;
+  box-shadow:
+    inset 2px 2px 0 var(--panel-hi),
+    inset -2px -2px 0 var(--panel-lo);
+}
+.inset {
+  background: var(--panel-face-dark);
+  border-radius: 5px;
+  box-shadow:
+    inset 2px 2px 0 var(--panel-lo),
+    inset -2px -2px 0 var(--panel-hi);
+}
+.lcd {
+  background: var(--lcd-bg);
+  border-radius: 3px;
+  box-shadow: inset 1px 1px 0 rgba(0,0,0,0.8), 0 1px 0 var(--panel-hi);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 3px 4px;
+}
+.cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 16px;
+  border: 1px solid var(--cell-border);
+  border-radius: 1px;
+  color: var(--lcd-ink);
+  font-size: 12px;
+  line-height: 1;
+}
+.cell.blank { border-color: transparent; }
+.lamp {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--lamp-off);
+  box-shadow: inset 1px 1px 0 rgba(0,0,0,0.6), 0 1px 0 var(--panel-hi);
+}
+.lamp.on { background: var(--lamp-on); box-shadow: 0 0 4px var(--lamp-on); }
+.plabel {
+  color: var(--label-ink);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* --- Targ panel --------------------------------------------------------- */
+#panel-targ {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 152px;
+  padding: 8px 10px 10px;
+  display: grid;
+  grid-template-columns: 84px 1fr 112px;
+  gap: 8px;
+}
+#panel-targ .col { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px; }
+#elevation-gauge {
+  width: 42px;
+  height: 92px;
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: inset 1px 1px 0 rgba(0,0,0,0.5);
+}
+.instrument-canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+#panel-targ .instruments {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+#panel-targ .instrument { padding: 6px; display: flex; flex-direction: column; gap: 3px; align-items: center; }
+#panel-targ .instrument .row { display: flex; align-items: center; gap: 6px; }
+#panel-targ .middle { display: flex; flex-direction: column; gap: 6px; }
+#message-box {
+  margin: 0 6px;
+  background: var(--msg-bg);
+  color: var(--msg-ink);
+  border-radius: 3px;
+  box-shadow: inset 1px 1px 0 rgba(0,0,0,0.35), 0 1px 0 var(--panel-hi);
+  text-align: center;
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  padding: 5px 4px 3px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+#panel-targ .caption { margin-top: 2px; }
+#compass-slot { width: 84px; height: 12px; margin-bottom: 8px; }
+#compass-window {
+  width: 92px;
+  height: 44px;
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: inset 1px 1px 0 rgba(0,0,0,0.5);
+}
+
+/* --- Damocles panel ------------------------------------------------------ */
+#panel-damocles {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 168px;
+  padding: 6px 8px 8px;
+  display: grid;
+  grid-template-rows: 30px 1fr;
+  gap: 6px;
+}
+#dmc-message-bar { padding: 3px; }
+#dmc-message {
+  height: 100%;
+  background: var(--msg-bg);
+  color: var(--msg-ink);
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+  overflow: hidden;
+}
+#dmc-body {
+  display: grid;
+  grid-template-columns: 12px 248px 1fr 200px 12px;
+  gap: 6px;
+}
+.tp-gauge { position: relative; border-radius: 3px; }
+.tp-gauge .fill { position: absolute; left: 3px; right: 3px; bottom: 3px; background: #d8d8d8; border-radius: 1px; }
+.tp-gauge .tp-label {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--label-ink);
+  font-size: 8px;
+}
+#dmc-nav {
+  background: var(--nav-face);
+  border-radius: 5px;
+  box-shadow: inset 2px 2px 0 var(--panel-hi), inset -2px -2px 0 var(--panel-lo);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 10px;
+}
+#dmc-nav > .nav-row { flex: 1; }
+#dmc-nav .nav-lower { flex: 2; }
+.dmc-lcd {
+  background: var(--nav-lcd);
+  color: var(--nav-ink);
+  border: 2px solid #3f463c;
+  border-radius: 4px;
+  padding: 2px 3px;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 1px 0 0 currentColor; /* fake the ST panel's bold digits */
+}
+#dmc-nav .nav-row { display: flex; gap: 5px; }
+#dmc-nav .nav-row > * { flex: 1; }
+#dmc-nav .nav-lower { display: flex; gap: 5px; }
+#dmc-elevation {
+  width: 30px;
+  align-self: stretch;
+  border: 2px solid #3f463c;
+  border-radius: 4px;
+  overflow: hidden;
+  flex: none;
+}
+#dmc-nav .nav-stack { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+#dmc-nav .nav-stack .nav-row { flex: 1; }
+#dmc-nav .nav-stack .nav-row > .dmc-lcd { flex: 1; }
+#dmc-nav .nav-foot { flex: 1; display: flex; align-items: center; justify-content: space-between; }
+#dmc-nav .nav-foot .plabel { font-size: 10px; letter-spacing: 0.14em; }
+#dmc-compass {
+  width: 76px;
+  height: 18px;
+  border: 2px solid #3f463c;
+  border-radius: 4px;
+  overflow: hidden;
+}
+#dmc-nav .nav-foot .plabel { text-shadow: 1px 0 0 currentColor; }
+#dmc-message, #inv-window, #inv-cash, #dmc-clock { text-shadow: 1px 0 0 currentColor; }
+#dmc-aux {
+  background: #060606;
+  border-radius: 4px;
+  box-shadow: inset 2px 2px 0 var(--panel-lo), inset -2px -2px 0 var(--panel-hi);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#dmc-aux .aux-title {
+  color: #b8bec2;
+  font-size: 22px;
+  letter-spacing: 0.06em;
+  text-shadow: 2px 2px 0 #3a4046;
+}
+#dmc-right { display: flex; flex-direction: column; gap: 6px; }
+#dmc-inventory {
+  background: var(--inv-face);
+  border-radius: 5px;
+  box-shadow: inset 2px 2px 0 var(--panel-hi), inset -2px -2px 0 var(--panel-lo);
+  padding: 6px;
+  display: grid;
+  grid-template-columns: 10px 1fr;
+  gap: 5px;
+  flex: 1;
+}
+#inv-capacity { position: relative; background: var(--inv-lcd); border: 1px solid var(--panel-lo); border-radius: 2px; }
+#inv-capacity .fill { position: absolute; left: 1px; right: 1px; bottom: 1px; background: var(--inv-ink); }
+#dmc-inventory .inv-stack { display: flex; flex-direction: column; gap: 5px; }
+#inv-window {
+  flex: 1;
+  background: var(--inv-lcd);
+  color: var(--inv-ink);
+  border: 1px solid var(--panel-lo);
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+#dmc-inventory .inv-foot { display: flex; align-items: center; gap: 5px; }
+#inv-cash {
+  background: var(--inv-lcd);
+  color: var(--inv-ink);
+  border: 1px solid var(--panel-lo);
+  border-radius: 2px;
+  padding: 2px 4px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+#dmc-inventory .inv-foot { overflow: hidden; }
+#dmc-inventory .inv-foot .plabel { color: var(--inv-lcd); font-size: 8px; letter-spacing: 0.06em; }
+#dmc-foot { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+#dmc-clock {
+  background: var(--clock-bg);
+  color: var(--clock-ink);
+  border-radius: 3px;
+  box-shadow: inset 1px 1px 0 rgba(0,0,0,0.4);
+  padding: 3px 8px 2px;
+  font-size: 15px;
+  letter-spacing: 0.1em;
+}
+
+/* --- overlays: System Menu / Settings / Saves ---------------------------- */
+#overlay-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--overlay-scrim);
+  display: none;
+}
+#frame[data-layer="menu"] #overlay-scrim,
+#frame[data-layer="settings"] #overlay-scrim,
+#frame[data-layer="saves"] #overlay-scrim { display: block; }
+.overlay {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  transform: translate(-50%, -50%);
+  min-width: 300px;
+  padding: 10px;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--font-shell, var(--font-panel));
+}
+#frame[data-layer="menu"] #overlay-menu,
+#frame[data-layer="settings"] #overlay-settings,
+#frame[data-layer="saves"] #overlay-saves { display: flex; }
+.overlay .title {
+  text-align: center;
+  color: var(--label-ink);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  padding: 2px 0 4px;
+}
+.obtn {
+  font-family: inherit;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  background: var(--lcd-bg);
+  color: var(--lcd-ink);
+  border: 1px solid var(--cell-border);
+  border-radius: 3px;
+  padding: 6px 10px 5px;
+  cursor: pointer;
+  text-align: center;
+}
+.obtn:hover, .obtn:focus-visible { outline: 1px dashed var(--cell-border); outline-offset: 1px; }
+.setting-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.setting-row .plabel { text-align: left; font-size: 10px; }
+.seg { display: flex; gap: 3px; }
+.seg .obtn { flex: 1; font-size: 10px; padding: 4px 4px 3px; opacity: 0.55; }
+.seg .obtn[aria-pressed="true"] { opacity: 1; outline: 2px solid var(--lamp-on); }
+.slot-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 5px;
+  align-items: center;
+}
+#overlay-saves { width: 520px; }
+.slot-desc {
+  background: var(--lcd-bg);
+  color: var(--lcd-ink);
+  border: 1px solid var(--cell-border);
+  border-radius: 3px;
+  padding: 6px 8px 5px;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.slot-desc.invalid { color: #e86a4a; }
+.slot-row .obtn { font-size: 9px; padding: 5px 6px 4px; }
+.slot-row .obtn.armed { color: #e8c33c; }
+#saves-note { font-size: 9px; }
+
+/* --- Shell Console -------------------------------------------------------- */
+#console {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 55%;
+  background: var(--console-bg);
+  border-bottom: 2px solid var(--console-ink);
+  transform: translateY(-101%);
+  transition: transform 0.15s ease-out;
+  display: flex;
+  flex-direction: column;
+  padding: 6px 8px;
+  font-family: var(--font-shell, var(--font-panel));
+  font-size: 11px;
+  color: var(--console-ink);
+}
+#frame[data-console="open"] #console { transform: translateY(0); }
+#console-log { flex: 1; overflow-y: auto; white-space: pre-wrap; line-height: 1.5; }
+#console-input-row { display: flex; gap: 6px; align-items: baseline; }
+#console-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+
+<header id="mockup-chrome">
+  <strong>MOCKUP CONTROLS — NOT DESIGN</strong>
+  <button data-jump="panel">Panel</button>
+  <button data-jump="menu">System Menu</button>
+  <button data-jump="settings">Settings</button>
+  <button data-jump="saves">Saves</button>
+  <button data-jump="console">Console</button>
+  <span>|</span>
+  <button id="chrome-rendition">Rendition: TARG</button>
+  <button id="chrome-slots">Cycle slot states</button>
+  <span id="font-banner">payload fonts unavailable — fallback stack in use</span>
+  <span style="margin-left:auto">Esc = menu · ` = console · PROTOTYPE-ONLY (#120)</span>
+</header>
+
+<main id="stage">
+  <div id="frame-box">
+    <div id="frame" data-rendition="targ" data-composition="panel" data-typeface="mercenary" data-layer="none" data-console="closed">
+
+      <div id="viewport">
+        <!-- Independently authored synthetic wireframe — not game geometry -->
+        <svg class="targ-only" viewBox="0 0 640 248" preserveAspectRatio="none" aria-hidden="true">
+          <rect x="0" y="0" width="640" height="118" fill="#3d9450" />
+          <rect x="0" y="118" width="640" height="130" fill="#2c703c" />
+          <g stroke="#e8e8e8" stroke-width="2" fill="none">
+            <line x1="0" y1="118" x2="640" y2="118" />
+            <path d="M 250 118 L 300 70 L 350 118 Z" />
+            <path d="M 420 118 L 420 92 L 505 92 L 505 118" />
+            <path d="M 60 248 L 300 122 M 200 248 L 316 122 M 580 248 L 332 122" />
+          </g>
+        </svg>
+        <svg class="dmc-only" viewBox="0 0 640 232" preserveAspectRatio="none" aria-hidden="true">
+          <rect x="0" y="0" width="640" height="232" fill="#04040c" />
+          <g fill="#e8e8e8">
+            <rect x="60" y="30" width="2" height="2"/><rect x="150" y="90" width="2" height="2"/>
+            <rect x="240" y="24" width="3" height="3"/><rect x="330" y="140" width="2" height="2"/>
+            <rect x="430" y="60" width="2" height="2"/><rect x="540" y="110" width="3" height="3"/>
+            <rect x="600" y="40" width="2" height="2"/><rect x="90" y="180" width="2" height="2"/>
+            <rect x="480" y="190" width="2" height="2"/><rect x="280" y="76" width="2" height="2"/>
+          </g>
+          <g><rect x="200" y="52" width="2" height="2" fill="#e86a4a"/><rect x="500" y="150" width="2" height="2" fill="#6a9ae8"/><rect x="380" y="104" width="2" height="2" fill="#e86a4a"/></g>
+        </svg>
+      </div>
+
+      <div id="classic-strip">GRID 08:08 · X 2048 Z 2048 · HDG 270° · ON FOOT · 0 LINES · 0 PTS · 60 FPS</div>
+
+      <!-- ===================== TARG PANEL ===================== -->
+      <section id="panel-targ" class="targ-only bezel" aria-label="Benson Panel (Targ rendition)">
+        <div class="col bezel">
+          <div id="elevation-gauge">
+            <canvas id="elevation-canvas" class="instrument-canvas" width="42" height="92"></canvas>
+          </div>
+          <div class="plabel">ELEVATION</div>
+        </div>
+
+        <div class="middle">
+          <div class="instruments">
+            <div class="instrument bezel">
+              <div class="row"><span class="lamp" id="lamp-location"></span><span class="lcd" id="lcd-location"></span></div>
+              <div class="plabel">LOCATION</div>
+            </div>
+            <div class="instrument bezel">
+              <div class="row"><span class="lamp" id="lamp-altitude"></span><span class="lcd" id="lcd-altitude"></span></div>
+              <div class="plabel">ALTITUDE</div>
+            </div>
+            <div class="instrument bezel">
+              <div class="row"><span class="lamp" id="lamp-speed"></span><span class="lcd" id="lcd-speed"></span></div>
+              <div class="plabel">SPEED</div>
+            </div>
+          </div>
+          <div id="message-box">CRASH LANDED ON TARG</div>
+          <div class="plabel caption">BENSON G9-ST</div>
+        </div>
+
+        <div class="col bezel">
+          <div id="compass-slot" class="inset"></div>
+          <div id="compass-window">
+            <canvas id="compass-canvas" class="instrument-canvas" width="92" height="44"></canvas>
+          </div>
+          <div class="plabel">COMPASS</div>
+        </div>
+      </section>
+
+      <!-- ===================== DAMOCLES PANEL ===================== -->
+      <section id="panel-damocles" class="dmc-only bezel" aria-label="Benson Panel (Damocles rendition)">
+        <div id="dmc-message-bar" class="inset"><div id="dmc-message">CRASH LANDED ON TARG</div></div>
+        <div id="dmc-body">
+          <div class="tp-gauge inset"><div class="fill" style="height:34%"></div><div class="tp-label">T</div></div>
+
+          <div id="dmc-nav">
+            <div class="nav-row">
+              <div class="dmc-lcd" id="dmc-location-name">TARG</div>
+              <div class="dmc-lcd" id="dmc-speed">+ 000 000 000</div>
+            </div>
+            <div class="nav-lower">
+              <div id="dmc-elevation"><canvas id="dmc-elevation-canvas" class="instrument-canvas" width="26" height="52"></canvas></div>
+              <div class="nav-stack">
+                <div class="nav-row">
+                  <div class="dmc-lcd" id="dmc-coords">08-08-00</div>
+                  <div class="dmc-lcd" id="dmc-altitude">00-00</div>
+                  <div class="dmc-lcd" id="dmc-heading">270°00</div>
+                </div>
+                <div class="nav-foot">
+                  <div class="plabel">NAVIGATION</div>
+                  <div id="dmc-compass">
+                    <canvas id="dmc-compass-canvas" class="instrument-canvas" width="76" height="18"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="dmc-aux"><span class="aux-title">DAMOCLES</span></div>
+
+          <div id="dmc-right">
+            <div id="dmc-inventory">
+              <div id="inv-capacity"><div class="fill" style="height:12%"></div></div>
+              <div class="inv-stack">
+                <div id="inv-window">EMPTY</div>
+                <div class="inv-foot">
+                  <span id="inv-cash">000,000,512.00</span>
+                  <span class="plabel">INVENTORY</span>
+                </div>
+              </div>
+            </div>
+            <div id="dmc-foot">
+              <span class="lamp" id="dmc-lamp-ground"></span>
+              <span class="lamp" id="dmc-lamp-attack"></span>
+              <span class="lamp" id="dmc-lamp-run"></span>
+              <span id="dmc-clock">00-00-00</span>
+            </div>
+          </div>
+
+          <div class="tp-gauge inset"><div class="fill" style="height:52%"></div><div class="tp-label">P</div></div>
+        </div>
+      </section>
+
+      <!-- ===================== OVERLAYS ===================== -->
+      <div id="overlay-scrim"></div>
+
+      <div id="overlay-menu" class="overlay bezel" role="dialog" aria-label="System Menu">
+        <div class="title">BENSON G9-ST SYSTEM</div>
+        <button class="obtn" data-menu="settings">SETTINGS</button>
+        <button class="obtn" data-menu="saves">SAVE / LOAD</button>
+        <button class="obtn" data-menu="resume">RESUME</button>
+      </div>
+
+      <div id="overlay-settings" class="overlay bezel" role="dialog" aria-label="Settings">
+        <div class="title">SETTINGS</div>
+        <div class="setting-row">
+          <div class="plabel">PANEL RENDITION</div>
+          <div class="seg" data-setting="rendition">
+            <button class="obtn" data-value="targ">TARG</button>
+            <button class="obtn" data-value="damocles">DAMOCLES</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="plabel">COMPOSITION</div>
+          <div class="seg" data-setting="composition">
+            <button class="obtn" data-value="panel">BENSON PANEL</button>
+            <button class="obtn" data-value="strip">CLASSIC STRIP</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="plabel">TYPEFACE</div>
+          <div class="seg" data-setting="typeface">
+            <button class="obtn" data-value="mercenary">MERCENARY</button>
+            <button class="obtn" data-value="damocles">DAMOCLES</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="plabel">SKY PRESET</div>
+          <div class="seg" data-setting="sky">
+            <button class="obtn" data-value="default">DEFAULT</button>
+            <button class="obtn" data-value="authentic">AUTHENTIC</button>
+            <button class="obtn" data-value="enhanced">ENHANCED</button>
+          </div>
+        </div>
+        <button class="obtn" data-menu="back">BACK</button>
+      </div>
+
+      <div id="overlay-saves" class="overlay bezel" role="dialog" aria-label="Save and load">
+        <div class="title">SAVE / LOAD</div>
+        <div id="slot-rows"></div>
+        <div id="saves-note" class="plabel">SAVES ARE PROTOTYPE-ONLY FICTION</div>
+        <button class="obtn" data-menu="back">BACK</button>
+      </div>
+
+      <!-- ===================== SHELL CONSOLE ===================== -->
+      <div id="console" aria-label="Shell Console">
+        <div id="console-log"></div>
+        <div id="console-input-row">
+          <span>]</span>
+          <input id="console-input" autocomplete="off" spellcheck="false" aria-label="console command" />
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer>Throwaway mockup for issue #120 · synthetic data only · tune tokens at the top of the &lt;style&gt; block</footer>
+
+<script>
+"use strict";
+/* =========================================================================
+   All state and values below are PROTOTYPE-ONLY synthetic fiction.
+   ========================================================================= */
+const frame = document.getElementById("frame");
+const $ = (id) => document.getElementById(id);
+
+/* ---- synthetic snapshot ------------------------------------------------ */
+const snapshot = {
+  headingDeg: 270,
+  pitchDeg: 0,
+  altitude: 0,
+  speed: 0,
+  credits: 512,
+  elapsed: 4 * 3600 + 23 * 60,
+  gridX: 8,
+  gridY: 8,
+  room: null, // number when underground
+  message: "CRASH LANDED ON TARG",
+  carried: [],
+};
+const MESSAGES = [
+  "CRASH LANDED ON TARG",
+  "GOOD MORNING - I AM BENSON",
+  "I HAVE ACTIVATED YOUR RADAR",
+  "THE CITY IS TO THE NORTH",
+];
+let messageIndex = 0;
+let paused = false;
+
+/* ---- slot fiction ------------------------------------------------------ */
+const SLOT_STATES = [
+  [
+    { state: "saved", where: "SURFACE 08-08", when: "20 AUG 14:32" },
+    { state: "empty" },
+    { state: "invalid", reason: "PAYLOAD MISMATCH" },
+  ],
+  [
+    { state: "saved", where: "ROOM 12", when: "21 AUG 09:05" },
+    { state: "saved", where: "SURFACE 03-11", when: "19 AUG 22:47" },
+    { state: "empty" },
+  ],
+  [
+    { state: "empty" },
+    { state: "empty" },
+    { state: "empty" },
+  ],
+];
+let slotStateIndex = 0;
+let slots = SLOT_STATES[0].map((s) => ({ ...s }));
+const armed = { save: null, delete: null };
+
+/* ---- frame scaling ------------------------------------------------------ */
+const frameBox = document.getElementById("frame-box");
+const rescale = () => {
+  const stage = document.getElementById("stage");
+  const chromeH = document.getElementById("mockup-chrome").offsetHeight;
+  const maxW = stage.clientWidth - 16;
+  const maxH = window.innerHeight - chromeH - 64;
+  const scale = Math.max(0.3, Math.min(maxW / 640, maxH / 400));
+  frame.style.transform = "scale(" + scale + ")";
+  frameBox.style.width = 640 * scale + "px";
+  frameBox.style.height = 400 * scale + "px";
+};
+window.addEventListener("resize", rescale);
+rescale();
+
+/* ---- LCD helpers -------------------------------------------------------- */
+const fillCells = (el, text, count) => {
+  const padded = text.slice(0, count).padStart(count, " ");
+  if (el.dataset.value === padded) return;
+  el.dataset.value = padded;
+  el.replaceChildren(
+    ...[...padded].map((ch) => {
+      const span = document.createElement("span");
+      span.className = ch === " " ? "cell blank" : "cell";
+      span.textContent = ch;
+      return span;
+    }),
+  );
+};
+const pad = (n, w) => String(Math.abs(Math.round(n))).padStart(w, "0");
+
+/* ---- canvas instruments --------------------------------------------------
+   The gauges are drawn on small 2D canvases so ticks, tapes, and needles read
+   like the original instruments rather than styled boxes. Colours come from
+   the token layer at draw time so rendition switches restyle them too. */
+const ctxOf = (id) => {
+  const canvas = $(id);
+  const g = canvas.getContext("2d");
+  g.imageSmoothingEnabled = false;
+  return [g, canvas.width, canvas.height];
+};
+const token = (name) => getComputedStyle(frame).getPropertyValue(name).trim() || "#000";
+
+const drawTargElevation = (pitchDeg) => {
+  const [g, w, h] = ctxOf("elevation-canvas");
+  g.fillStyle = token("--gauge-sky");
+  g.fillRect(0, 0, w, h / 2);
+  g.fillStyle = token("--gauge-ground");
+  g.fillRect(0, h / 2, w, h / 2);
+  g.fillStyle = "#101010";
+  g.font = '8px "Mercenary Pixel", monospace';
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  for (const [value, f] of [["10", 0.16], ["00", 0.5], ["-10", 0.84]]) {
+    const y = Math.round(h * f);
+    g.fillRect(2, y, 7, 1);
+    g.fillRect(w - 9, y, 7, 1);
+    g.fillText(value, w / 2, y);
+  }
+  const needleY = Math.round(h / 2 - pitchDeg * 2.2);
+  g.fillRect(1, Math.max(1, Math.min(h - 3, needleY)), w - 2, 2);
+};
+
+const drawTargCompass = (headingDeg) => {
+  const [g, w, h] = ctxOf("compass-canvas");
+  g.fillStyle = token("--gauge-face");
+  g.fillRect(0, 0, w, h);
+  g.fillStyle = "#141414";
+  g.font = '9px "Mercenary Pixel", monospace';
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  const ppd = 1.4;
+  const range = w / 2 / ppd;
+  for (let d = Math.ceil((headingDeg - range) / 10) * 10; d <= headingDeg + range; d += 10) {
+    const x = Math.round(w / 2 + (d - headingDeg) * ppd);
+    const shown = ((d % 360) + 360) % 360;
+    const major = shown % 30 === 0;
+    const len = major ? 6 : 4;
+    g.fillRect(x, 0, 1, len); // ticks on the top edge...
+    g.fillRect(x, h - len, 1, len); // ...and the bottom edge
+    if (major) g.fillText(String(shown), x, h / 2); // numbers in the centre row
+  }
+  // the original's centre marker is pale, not a black needle
+  g.fillStyle = token("--panel-face-dark");
+  g.fillRect(Math.round(w / 2), 0, 1, h);
+};
+
+const drawDmcElevation = (pitchDeg) => {
+  const [g, w, h] = ctxOf("dmc-elevation-canvas");
+  // sky/ground split, same instrument as the Targ gauge in the muted ST palette
+  g.fillStyle = token("--gauge-sky");
+  g.fillRect(0, 0, w, h / 2);
+  g.fillStyle = token("--gauge-ground");
+  g.fillRect(0, h / 2, w, h / 2);
+  g.fillStyle = token("--nav-ink");
+  for (let y = 4; y < h - 4; y += 7) {
+    g.fillRect(1, y, 2, 2);
+    g.fillRect(w - 3, y, 2, 2);
+  }
+  // centre value box with side dashes, like the reference "-0-"
+  const boxY = Math.round(h / 2) - 6;
+  g.fillRect(0, boxY + 5, 5, 2);
+  g.fillRect(w - 5, boxY + 5, 5, 2);
+  g.fillStyle = token("--nav-lcd");
+  g.fillRect(5, boxY, w - 10, 13);
+  g.strokeStyle = token("--nav-ink");
+  g.lineWidth = 1;
+  g.strokeRect(5.5, boxY + 0.5, w - 11, 12);
+  g.fillStyle = token("--nav-ink");
+  g.font = '9px "Damocles Interface", monospace';
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  g.fillText(String(Math.round(pitchDeg)), w / 2, boxY + 7);
+};
+
+const drawDmcCompass = (headingDeg) => {
+  const [g, w, h] = ctxOf("dmc-compass-canvas");
+  g.fillStyle = token("--nav-lcd");
+  g.fillRect(0, 0, w, h);
+  g.fillStyle = token("--nav-ink");
+  g.font = '10px "Damocles Interface", monospace';
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  const LETTERS = ["N", "E", "S", "W"];
+  const ppd = 0.28; // 90 degrees = ~25px, so the window shows three letters fully
+  const range = w / 2 / ppd;
+  for (let d = Math.ceil((headingDeg - range) / 45) * 45; d <= headingDeg + range; d += 45) {
+    const x = Math.round(w / 2 + (d - headingDeg) * ppd);
+    if (d % 90 === 0) {
+      const index = (((d / 90) % 4) + 4) % 4;
+      g.fillText(LETTERS[index], x, h / 2 + 1);
+      g.fillText(LETTERS[index], x + 1, h / 2 + 1); // double-strike for the bold ST look
+    } else {
+      // separator = square dot pair at the strip edges, like the reference
+      g.fillRect(x - 1, 2, 2, 2);
+      g.fillRect(x - 1, h - 4, 2, 2);
+    }
+  }
+};
+
+/* ---- render ------------------------------------------------------------- */
+const render = () => {
+  const s = snapshot;
+  const locationText = s.room === null ? pad(s.gridX, 2) + "-" + pad(s.gridY, 2) : "RM " + pad(s.room, 2);
+
+  // Targ rendition
+  fillCells($("lcd-location"), locationText, 5);
+  fillCells($("lcd-altitude"), pad(s.altitude, 5), 5);
+  fillCells($("lcd-speed"), (s.speed < 0 ? "-" : "+") + pad(s.speed, 4), 5);
+  $("message-box").textContent = s.message;
+  drawTargElevation(s.pitchDeg);
+  drawTargCompass(s.headingDeg);
+  $("lamp-location").classList.toggle("on", s.room !== null);
+  $("lamp-altitude").classList.toggle("on", s.altitude > 0);
+  $("lamp-speed").classList.toggle("on", s.speed !== 0);
+
+  // Damocles rendition (same Targ data, Damocles dressing)
+  $("dmc-message").textContent = s.message;
+  $("dmc-location-name").textContent = s.room === null ? "TARG" : "ROOM " + pad(s.room, 2);
+  $("dmc-speed").textContent = (s.speed < 0 ? "-" : "+") + " 000 000 " + pad(s.speed, 3);
+  $("dmc-coords").textContent = pad(s.gridX, 2) + "-" + pad(s.gridY, 2) + "-00";
+  $("dmc-altitude").textContent = pad(Math.min(s.altitude, 9999) / 100, 2) + "-" + pad(s.altitude % 100, 2);
+  $("dmc-heading").textContent = pad(s.headingDeg % 360, 3) + "°";
+  drawDmcElevation(s.pitchDeg);
+  drawDmcCompass(s.headingDeg);
+  $("inv-window").textContent = s.carried.length === 0 ? "EMPTY" : s.carried[s.carried.length - 1];
+  document.querySelector("#inv-capacity .fill").style.height = Math.min(100, s.carried.length * 20 + 4) + "%";
+  $("inv-cash").textContent = s.credits.toLocaleString("en-GB", { minimumIntegerDigits: 9, useGrouping: true }).padStart(11, "0") + ".00";
+  // clock = Targ time-of-day (orrery), HH-MM-SS
+  const t = Math.floor(s.elapsed) % 86400;
+  $("dmc-clock").textContent = pad(t / 3600, 2) + "-" + pad((t % 3600) / 60, 2) + "-" + pad(t % 60, 2);
+  $("dmc-lamp-ground").classList.toggle("on", s.altitude > 0 && s.altitude < 40);
+  $("dmc-lamp-run").classList.toggle("on", s.speed > 0 && s.room === null);
+};
+
+/* ---- synthetic tick ------------------------------------------------------ */
+setInterval(() => {
+  if (paused) return;
+  snapshot.headingDeg = (snapshot.headingDeg + 0.4) % 360;
+  snapshot.elapsed += 0.25;
+  if (Math.floor(snapshot.elapsed) % 12 === 0 && snapshot.elapsed % 1 < 0.25) {
+    messageIndex = (messageIndex + 1) % MESSAGES.length;
+    snapshot.message = MESSAGES[messageIndex];
+  }
+  render();
+}, 250);
+render();
+
+/* ---- layers (menu / settings / saves) ------------------------------------ */
+const setLayer = (layer) => {
+  frame.dataset.layer = layer;
+  paused = layer !== "none" || frame.dataset.console === "open";
+  if (layer === "saves") renderSlots();
+  const first = frame.querySelector(
+    layer === "none" ? null : "#overlay-" + layer + " .obtn",
+  );
+  if (first) first.focus();
+  else $("console-input").blur();
+};
+document.querySelectorAll("[data-menu]").forEach((btn) =>
+  btn.addEventListener("click", () => {
+    const to = btn.dataset.menu;
+    setLayer(to === "resume" ? "none" : to === "back" ? "menu" : to);
+  }),
+);
+
+/* ---- settings ------------------------------------------------------------ */
+const settings = { rendition: "targ", composition: "panel", typeface: "mercenary", sky: "default" };
+const applySettings = () => {
+  frame.dataset.rendition = settings.rendition;
+  frame.dataset.composition = settings.composition;
+  frame.dataset.typeface = settings.typeface;
+  $("chrome-rendition").textContent = "Rendition: " + settings.rendition.toUpperCase();
+  document.querySelectorAll(".seg").forEach((seg) => {
+    const key = seg.dataset.setting;
+    seg.querySelectorAll(".obtn").forEach((btn) => {
+      btn.setAttribute("aria-pressed", String(settings[key] === btn.dataset.value));
+    });
+  });
+  render();
+};
+document.querySelectorAll(".seg .obtn").forEach((btn) =>
+  btn.addEventListener("click", () => {
+    settings[btn.closest(".seg").dataset.setting] = btn.dataset.value;
+    applySettings();
+  }),
+);
+applySettings();
+
+/* ---- save chooser ---------------------------------------------------------- */
+const slotDescription = (slot, index) => {
+  if (slot.state === "empty") return "SLOT " + (index + 1) + " · EMPTY";
+  if (slot.state === "invalid") return "SLOT " + (index + 1) + " · INVALID — " + slot.reason;
+  return "SLOT " + (index + 1) + " · " + slot.where + " · " + slot.when;
+};
+const renderSlots = () => {
+  const rows = $("slot-rows");
+  rows.replaceChildren(
+    ...slots.map((slot, i) => {
+      const row = document.createElement("div");
+      row.className = "slot-row";
+      const desc = document.createElement("div");
+      desc.className = "slot-desc" + (slot.state === "invalid" ? " invalid" : "");
+      desc.textContent = slotDescription(slot, i);
+      row.appendChild(desc);
+      for (const action of ["save", "load", "delete"]) {
+        const btn = document.createElement("button");
+        btn.className = "obtn" + (armed[action] === i ? " armed" : "");
+        btn.textContent = armed[action] === i ? "CONFIRM" : action.toUpperCase();
+        btn.disabled =
+          (action === "load" && slot.state !== "saved") ||
+          (action === "delete" && slot.state === "empty");
+        btn.style.opacity = btn.disabled ? "0.3" : "";
+        btn.addEventListener("click", () => slotAction(action, i));
+        row.appendChild(btn);
+      }
+      return row;
+    }),
+  );
+};
+const stamp = () => "21 AUG " + $("dmc-clock").textContent.slice(0, 5).replace("-", ":");
+const slotAction = (action, i) => {
+  const slot = slots[i];
+  if (action === "save") {
+    if (slot.state !== "empty" && armed.save !== i) {
+      armed.save = i;
+      armed.delete = null;
+    } else {
+      slots[i] = { state: "saved", where: snapshot.room === null ? "SURFACE " + pad(snapshot.gridX, 2) + "-" + pad(snapshot.gridY, 2) : "ROOM " + pad(snapshot.room, 2), when: stamp() };
+      armed.save = null;
+    }
+  } else if (action === "delete") {
+    if (armed.delete !== i) {
+      armed.delete = i;
+      armed.save = null;
+    } else {
+      slots[i] = { state: "empty" };
+      armed.delete = null;
+    }
+  } else if (action === "load" && slot.state === "saved") {
+    snapshot.message = "RESTORED — " + slot.where;
+    setLayer("none");
+  }
+  renderSlots();
+};
+
+/* ---- Shell Console ---------------------------------------------------------- */
+const consoleLog = $("console-log");
+const consoleInput = $("console-input");
+const history = [];
+let historyIndex = -1;
+const echo = (text) => {
+  consoleLog.textContent += text + "\n";
+  consoleLog.scrollTop = consoleLog.scrollHeight;
+};
+echo("BENSON SHELL CONSOLE — PROTOTYPE-ONLY");
+echo("TYPE HELP FOR COMMANDS");
+
+const setConsole = (open) => {
+  frame.dataset.console = open ? "open" : "closed";
+  paused = open || frame.dataset.layer !== "none";
+  if (open) consoleInput.focus();
+  else consoleInput.blur();
+};
+
+const runCommand = (line) => {
+  const words = line.trim().toUpperCase().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return;
+  echo("] " + words.join(" "));
+  const [cmd, ...args] = words;
+  if (cmd === "HELP") {
+    echo("  HELP · GOTO <X> <Y> · GOTO ROOM <N> · PANEL <TARG|DAMOCLES>");
+    echo("  SET <RENDITION|COMPOSITION|TYPEFACE|SKY> <VALUE>");
+    echo("  SAVE <SLOT> [CONFIRM] · LOAD <SLOT>");
+  } else if (cmd === "GOTO" && args[0] === "ROOM" && args.length === 2) {
+    snapshot.room = Number(args[1]) || 0;
+    echo("TELEPORTED TO ROOM " + pad(snapshot.room, 2));
+  } else if (cmd === "GOTO" && args.length === 2) {
+    snapshot.room = null;
+    snapshot.gridX = Number(args[0]) || 0;
+    snapshot.gridY = Number(args[1]) || 0;
+    echo("MOVED TO " + pad(snapshot.gridX, 2) + ":" + pad(snapshot.gridY, 2));
+  } else if (cmd === "PANEL" && (args[0] === "TARG" || args[0] === "DAMOCLES")) {
+    settings.rendition = args[0].toLowerCase();
+    applySettings();
+    echo("PANEL RENDITION: " + args[0]);
+  } else if (cmd === "SET" && args.length === 2) {
+    const key = args[0].toLowerCase();
+    if (key in settings) {
+      settings[key] = args[1].toLowerCase();
+      applySettings();
+      echo(args[0] + " = " + args[1]);
+    } else echo("UNKNOWN SETTING: " + args[0]);
+  } else if (cmd === "SAVE" && args.length >= 1) {
+    const i = Number(args[0]) - 1;
+    if (!(i >= 0 && i < 3)) echo("SLOT MUST BE 1-3");
+    else if (slots[i].state !== "empty" && args[1] !== "CONFIRM")
+      echo("SLOT " + args[0] + " OCCUPIED — 'SAVE " + args[0] + " CONFIRM' TO OVERWRITE");
+    else {
+      slotAction("save", i);
+      slotAction("save", i); // arming is a UI concern; console CONFIRM already given
+      echo("SAVED TO SLOT " + args[0]);
+    }
+  } else if (cmd === "LOAD" && args.length === 1) {
+    const i = Number(args[0]) - 1;
+    if (!(i >= 0 && i < 3) || slots[i].state !== "saved")
+      echo(slots[i] && slots[i].state === "invalid" ? "REJECTED — " + slots[i].reason : "NOTHING IN SLOT " + args[0]);
+    else echo("RESTORED — " + slots[i].where);
+  } else {
+    echo("UNKNOWN COMMAND — TYPE HELP");
+  }
+  render();
+};
+
+consoleInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    const line = consoleInput.value;
+    if (line.trim()) {
+      history.push(line.trim());
+      historyIndex = history.length;
+    }
+    consoleInput.value = "";
+    runCommand(line);
+    event.preventDefault();
+  } else if (event.key === "ArrowUp") {
+    if (historyIndex > 0) consoleInput.value = history[--historyIndex];
+    event.preventDefault();
+  } else if (event.key === "ArrowDown") {
+    if (historyIndex < history.length - 1) consoleInput.value = history[++historyIndex];
+    else { historyIndex = history.length; consoleInput.value = ""; }
+    event.preventDefault();
+  }
+});
+
+/* ---- global keys ------------------------------------------------------------ */
+window.addEventListener("keydown", (event) => {
+  if (event.altKey || event.ctrlKey || event.metaKey) return; // browser chords pass through
+  if (event.code === "Backquote" || event.key === "`") {
+    setConsole(frame.dataset.console !== "open");
+    event.preventDefault();
+    return;
+  }
+  if (event.key === "Escape") {
+    if (frame.dataset.console === "open") setConsole(false);
+    else if (frame.dataset.layer === "none") setLayer("menu");
+    else if (frame.dataset.layer === "menu") setLayer("none");
+    else setLayer("menu");
+    event.preventDefault();
+  }
+});
+
+/* ---- mockup chrome ------------------------------------------------------------ */
+document.querySelectorAll("[data-jump]").forEach((btn) =>
+  btn.addEventListener("click", () => {
+    const view = btn.dataset.jump;
+    setConsole(view === "console");
+    setLayer(view === "panel" || view === "console" ? "none" : view);
+  }),
+);
+$("chrome-rendition").addEventListener("click", () => {
+  settings.rendition = settings.rendition === "targ" ? "damocles" : "targ";
+  applySettings();
+});
+$("chrome-slots").addEventListener("click", () => {
+  slotStateIndex = (slotStateIndex + 1) % SLOT_STATES.length;
+  slots = SLOT_STATES[slotStateIndex].map((s) => ({ ...s }));
+  armed.save = null;
+  armed.delete = null;
+  renderSlots();
+  if (frame.dataset.layer !== "saves") setLayer("saves");
+});
+
+/* ---- payload font probe ------------------------------------------------------- */
+Promise.all([
+  document.fonts.load('12px "Mercenary Pixel"'),
+  document.fonts.load('12px "Damocles Interface"'),
+]).then(() => {
+  const ok = document.fonts.check('12px "Mercenary Pixel"') && document.fonts.check('12px "Damocles Interface"');
+  document.getElementById("font-banner").style.display = ok ? "none" : "inline";
+});
+</script>
+</body>
+</html>
