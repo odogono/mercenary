@@ -43,6 +43,13 @@ const HELD_CONTROLS = new Set([
   'ShiftRight'
 ]);
 
+/// Codes the Browser Shell keeps for itself.
+///
+/// The module that classifies keys is the one that should say which are not its own: the Shell
+/// Console's key would otherwise be an ordinary code the Control Profile presses, and the shell
+/// would be relying on the order of a switch elsewhere to get it back.
+export const RESERVED_CODES: ReadonlySet<string> = new Set(['Backquote']);
+
 const PUNCTUATION_CODES = new Set([
   'Backquote',
   'Backslash',
@@ -69,7 +76,8 @@ const ordinaryCode = (code: string): boolean =>
   PUNCTUATION_CODES.has(code);
 
 const handledCode = (code: string): boolean =>
-  code === 'Space' || HELD_CONTROLS.has(code) || ordinaryCode(code);
+  !RESERVED_CODES.has(code) &&
+  (code === 'Space' || HELD_CONTROLS.has(code) || ordinaryCode(code));
 
 const axis = (
   held: ReadonlySet<string>,

@@ -509,6 +509,100 @@ test('a Save restores the same playable moment after a full reload', async ({
   await expect(slotButton(page, 1, 'delete')).toBeDisabled();
 });
 
+test('the Shell Console runs commands over a running world', async ({
+  page
+}) => {
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  const surface = page.locator('#game-surface');
+  const canvas = page.locator('#frame');
+  await expect(surface).toHaveAttribute('data-state', 'ready');
+  await expect(surface).toHaveAttribute('data-console', 'closed');
+
+  await page.keyboard.press('Backquote');
+  await expect(surface).toHaveAttribute('data-console', 'open');
+  const log = page.locator('#console-log');
+  await expect(log).toContainText('type help');
+  // A log announces itself, unlike the game's deliberately silent message line.
+  await expect(log).toHaveAttribute('aria-live', 'polite');
+
+  const input = page.locator('#console-input');
+  await input.type('goto 03 11');
+  await page.keyboard.press('Enter');
+  await expect(log).toContainText('moved to cell 03-11');
+  // The command reached the session, and the panel followed it.
+  await expect(canvas).toHaveAttribute('data-x', /^229/);
+  await expect(
+    page.locator('#panel-targ [data-field="locationLabel"]')
+  ).toHaveText('03-11');
+
+  // Refusals name what was wrong rather than doing something adjacent.
+  await input.type('goto room 0');
+  await page.keyboard.press('Enter');
+  await expect(log).toContainText('is not a Room');
+  await input.type('goto 99 99');
+  await page.keyboard.press('Enter');
+  await expect(log).toContainText('must be from 0 through 15');
+
+  // The world is not paused: walking still works with the console open.
+  const held = await canvas.getAttribute('data-z');
+  await page.keyboard.press('Escape');
+  await expect(surface).toHaveAttribute('data-console', 'closed');
+  await page.keyboard.down('ArrowUp');
+  await expect.poll(async () => canvas.getAttribute('data-z')).not.toBe(held);
+  await page.keyboard.up('ArrowUp');
+
+  expect(errors).toEqual([]);
+});
+
+test('console history recalls without moving the player', async ({ page }) => {
+  await page.goto('/');
+  const canvas = page.locator('#frame');
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-state',
+    'ready'
+  );
+
+  await page.keyboard.press('Backquote');
+  const input = page.locator('#console-input');
+  await input.type('where');
+  await page.keyboard.press('Enter');
+
+  const before = {
+    x: await canvas.getAttribute('data-x'),
+    z: await canvas.getAttribute('data-z')
+  };
+
+  // Both halves of the rule at once: the arrows mean something here, and they still mean nothing
+  // to the player. The console is the first focused control to give them a meaning of their own.
+  await page.keyboard.press('ArrowUp');
+  await expect(input).toHaveValue('where');
+  await page.keyboard.press('ArrowDown');
+  await expect(input).toHaveValue('');
+  await waitForFrames(page, 8);
+  expect({
+    x: await canvas.getAttribute('data-x'),
+    z: await canvas.getAttribute('data-z')
+  }).toEqual(before);
+
+  // Browser chords still belong to the browser, even with the console focused.
+  const chordsPassed = await page.evaluate(() =>
+    ['altKey', 'ctrlKey', 'metaKey'].map(
+      modifier =>
+        !window.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            bubbles: true,
+            cancelable: true,
+            code: 'KeyR',
+            [modifier]: true
+          })
+        ) === false
+    )
+  );
+  expect(chordsPassed).toEqual([true, true, true]);
+});
+
 test('the System Menu pauses the session it covers', async ({ page }) => {
   await page.goto('/');
   const surface = page.locator('#game-surface');
