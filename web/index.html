@@ -876,6 +876,73 @@
         font-size: 10px;
         letter-spacing: 0.06em;
       }
+
+      /* ---------------------------------------------------------------------
+         SHELL CONSOLE — a development tool that slides over a running world.
+         It deliberately does not pause: a command's effect shows in the panel
+         the moment it is typed.
+         ------------------------------------------------------------------ */
+      #game-surface {
+        --console-bg: rgb(10 12 10 / 92%);
+        --console-ink: #46d846;
+      }
+
+      #game-surface[data-rendition='damocles'] {
+        --console-ink: #3ecf3e;
+      }
+
+      #console {
+        position: absolute;
+        z-index: 3;
+        top: 0;
+        right: 0;
+        left: 0;
+        display: flex;
+        height: 55%;
+        flex-direction: column;
+        padding: 8px 12px;
+        background: var(--console-bg);
+        border-bottom: 2px solid var(--console-ink);
+        color: var(--console-ink);
+        font-family: var(--panel-font);
+        font-size: 14px;
+        text-transform: uppercase;
+        transform: translateY(-101%);
+        transition: transform 0.15s ease-out;
+      }
+
+      #game-surface[data-console='open'] #console {
+        transform: translateY(0);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #console {
+          transition: none;
+        }
+      }
+
+      #console-log {
+        overflow-y: auto;
+        flex: 1;
+        line-height: 1.5;
+        white-space: pre-wrap;
+      }
+
+      #console-input-row {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+      }
+
+      #console-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: inherit;
+        font: inherit;
+        letter-spacing: 0.06em;
+        outline: none;
+      }
     </style>
   </head>
   <body>
@@ -1035,6 +1102,20 @@
         </div>
         <div id="status-row">
           <div id="status">STARTING SESSION</div>
+        </div>
+
+        <div id="console" data-shell-chrome aria-label="Shell Console">
+          <div id="console-log" role="log" aria-live="polite"></div>
+          <div id="console-input-row">
+            <span aria-hidden="true">]</span>
+            <input
+              id="console-input"
+              type="text"
+              autocomplete="off"
+              spellcheck="false"
+              aria-label="console command"
+            />
+          </div>
         </div>
 
         <div id="shell-chrome" data-shell-chrome>

@@ -1,4 +1,4 @@
-import { browserChord, type BrowserKey } from './input.ts';
+import { RESERVED_CODES, browserChord, type BrowserKey } from './input.ts';
 
 /// A key press as the router sees it.
 ///
@@ -33,11 +33,12 @@ export type KeyRoute =
 
 /// Recognise the console key across keyboard layouts.
 ///
-/// `Backquote` is where the Doom console key is expected, but layouts that print the glyph on
-/// another physical key are honoured through `key` rather than by claiming more codes: a code
-/// like `IntlBackslash` carries an unrelated glyph on ISO layouts and must keep it.
+/// The reserved code comes from the Control Profile, so the two cannot disagree about which key
+/// the shell keeps. Layouts that print the glyph on another physical key are honoured through
+/// `key` rather than by reserving more codes: a code like `IntlBackslash` carries an unrelated
+/// glyph on ISO layouts and must keep it.
 const consoleKey = (key: RoutedKey): boolean =>
-  key.code === 'Backquote' || key.key === '`';
+  RESERVED_CODES.has(key.code) || key.key === '`';
 
 /// Whether any shell chrome currently holds the keyboard away from the Game Surface.
 export const chromeHasKeyboard = (state: RouterState): boolean =>

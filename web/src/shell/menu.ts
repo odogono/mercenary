@@ -1,18 +1,29 @@
 import type { ShellLayer } from './router.ts';
 
-/// Where Escape takes the System Menu from wherever it is.
+/// What Escape does from wherever the shell is.
 ///
-/// Escape closes what is open and otherwise opens the menu, so one key both enters and leaves
-/// the chrome: from a page it steps back to the menu, and from the menu it returns to play.
-export const escapeFrom = (layer: ShellLayer): ShellLayer => {
+/// Escape closes what is open and otherwise opens the menu, so one key both enters and leaves the
+/// chrome: from a page it steps back to the menu, and from the menu it returns to play. The Shell
+/// Console is checked first because it sits over whatever else is open.
+export type EscapeOutcome =
+  | { readonly kind: 'closeConsole' }
+  | { readonly kind: 'layer'; readonly layer: ShellLayer };
+
+export const escapeFrom = (
+  layer: ShellLayer,
+  console: 'closed' | 'open'
+): EscapeOutcome => {
+  if (console === 'open') {
+    return { kind: 'closeConsole' };
+  }
   switch (layer) {
     case 'none':
-      return 'menu';
+      return { kind: 'layer', layer: 'menu' };
     case 'menu':
-      return 'none';
+      return { kind: 'layer', layer: 'none' };
     case 'saves':
     case 'settings':
-      return 'menu';
+      return { kind: 'layer', layer: 'menu' };
   }
 };
 

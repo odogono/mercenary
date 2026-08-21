@@ -4,6 +4,7 @@ import type { SessionSnapshot } from '../session/index.ts';
 import { targOrreryFor } from '../sky/index.ts';
 import { locationText } from '../world/index.ts';
 import { FixedStepClock } from './clock.ts';
+import { installConsole } from './consoleView.ts';
 import { Renderer } from './frame.ts';
 import { BrowserControlProfile } from './input.ts';
 import { escapeFrom, installSystemMenu } from './menu.ts';
@@ -35,6 +36,11 @@ const message = document.getElementById('message')!;
 const credits = document.getElementById('credits')!;
 const status = document.getElementById('status')!;
 const failure = document.getElementById('failure')!;
+const consoleElements = {
+  input: document.getElementById('console-input') as HTMLInputElement,
+  log: document.getElementById('console-log')!,
+  surface: document.getElementById('game-surface')!
+};
 const chromePages = {
   menu: document.getElementById('page-menu')!,
   saves: document.getElementById('page-saves')!,
@@ -190,39 +196,8 @@ try {
     document.activeElement?.closest('[data-shell-chrome]') != null;
   const routerState = (): RouterState => ({
     chromeFocus: chromeFocus(),
-    console: 'closed',
+    console: shellConsole.isOpen() ? 'open' : 'closed',
     layer: menu.layer()
-  });
-
-  window.addEventListener('keydown', event => {
-    switch (routeKey(routerState(), event)) {
-      case 'browser':
-      case 'chrome':
-        return;
-      case 'escape':
-        // Escape both enters and leaves the chrome, so the menu decides where it goes.
-        menu.show(escapeFrom(menu.layer()));
-        event.preventDefault();
-        return;
-      case 'console-toggle':
-      case 'game':
-        // The Shell Console arrives in a later slice. Until it does, its key keeps its existing
-        // Control Profile behaviour rather than going dead.
-        if (controls.keyDown(event)) {
-          event.preventDefault();
-        }
-    }
-  });
-  window.addEventListener('keyup', event => {
-    // Key releases always reach the Control Profile first: a key held when chrome took focus
-    // must not stay held forever. Only a release it actually consumed needs routing.
-    if (!controls.keyUp(event)) {
-      return;
-    }
-    const route = routeKey(routerState(), event);
-    if (route === 'game' || route === 'console-toggle') {
-      event.preventDefault();
-    }
   });
 
   const persistence = createSavePersistence({
@@ -249,11 +224,67 @@ try {
     persistence.dismiss
   );
   installSaveChooser({ page: chromePages.saves, persistence });
+  const shellConsole = installConsole(
+    consoleElements,
+    {
+      cellSize: () => world.cellSize,
+      cellsPerAxis: () => world.cellsPerAxis,
+      hasRoom: id => world.rooms.has(id),
+      persistence,
+      preferences,
+      session: () => session,
+      typeface: face => {
+        applyTypeface(document.documentElement, face, storage);
+      }
+    },
+    release
+  );
   installSettingsView({
     page: chromePages.settings,
     preferences,
     root: document.documentElement,
     storage
+  });
+
+  window.addEventListener('keydown', event => {
+    switch (routeKey(routerState(), event)) {
+      case 'browser':
+      case 'chrome':
+        return;
+      case 'escape': {
+        // Escape both enters and leaves the chrome, and the console sits over whatever else is
+        // open, so one function decides which of the two it reaches.
+        const outcome = escapeFrom(
+          menu.layer(),
+          shellConsole.isOpen() ? 'open' : 'closed'
+        );
+        if (outcome.kind === 'closeConsole') {
+          shellConsole.close();
+        } else {
+          menu.show(outcome.layer);
+        }
+        event.preventDefault();
+        return;
+      }
+      case 'console-toggle':
+        shellConsole.toggle();
+        event.preventDefault();
+        return;
+      case 'game':
+        if (controls.keyDown(event)) {
+          event.preventDefault();
+        }
+    }
+  });
+  window.addEventListener('keyup', event => {
+    // Key releases always reach the Control Profile first: a key held when chrome took focus
+    // must not stay held forever. Only a release it actually consumed needs routing.
+    if (!controls.keyUp(event)) {
+      return;
+    }
+    if (routeKey(routerState(), event) === 'game') {
+      event.preventDefault();
+    }
   });
 
   installPanelScale(panelRoot, panelScale, (target, onResize) => {

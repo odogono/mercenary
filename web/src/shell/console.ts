@@ -1,0 +1,332 @@
+import type { GameplaySession } from '../session/index.ts';
+import type { PresentationPreset } from '../settings/index.ts';
+import { SURFACE, locationText, room } from '../world/index.ts';
+import type {
+  Composition,
+  PanelRendition,
+  PreferencesStore
+} from './preferences.ts';
+import type { SavePersistence, SaveSlot } from './saves.ts';
+import type { TypefaceId } from './typography.ts';
+
+/// One understood command line.
+///
+/// Parsing is separated from doing so that what the console accepts can be reasoned about without
+/// a session to run it against — the same reason the trace decoder is its own function.
+export type ConsoleCommand =
+  | { readonly kind: 'help' }
+  | { readonly kind: 'where' }
+  | { readonly kind: 'gotoCell'; readonly x: number; readonly z: number }
+  | { readonly kind: 'gotoRoom'; readonly room: number }
+  | { readonly kind: 'set'; readonly setting: SettingChoice }
+  | {
+      readonly confirm: boolean;
+      readonly kind: 'save';
+      readonly slot: SaveSlot;
+    }
+  | { readonly kind: 'load'; readonly slot: SaveSlot };
+
+export type SettingName = 'composition' | 'rendition' | 'sky' | 'typeface';
+
+/// One setting paired with the value it will be set to.
+///
+/// The value is narrowed at parse time, so execution never re-asks what a string means.
+export type SettingChoice =
+  | { readonly name: 'composition'; readonly value: Composition }
+  | { readonly name: 'rendition'; readonly value: PanelRendition }
+  | { readonly name: 'sky'; readonly value: 'document' | PresentationPreset }
+  | { readonly name: 'typeface'; readonly value: TypefaceId };
+
+const COMPOSITIONS: readonly Composition[] = ['panel', 'strip'];
+const RENDITIONS: readonly PanelRendition[] = ['targ', 'damocles'];
+const SKIES: readonly ('document' | PresentationPreset)[] = [
+  'document',
+  'authentic',
+  'enhanced'
+];
+const TYPEFACES: readonly TypefaceId[] = ['mercenary', 'damocles'];
+
+/// Every value each setting accepts, spelled as the settings page spells them.
+///
+/// One vocabulary for both surfaces: a console that renamed a setting would be a second place to
+/// look when a name stops working.
+export const SETTING_VALUES: Readonly<Record<SettingName, readonly string[]>> =
+  {
+    composition: COMPOSITIONS,
+    rendition: RENDITIONS,
+    sky: SKIES,
+    typeface: TYPEFACES
+  };
+
+const SETTING_NAMES = Object.keys(SETTING_VALUES) as readonly SettingName[];
+
+/// Rooms the Data Payload carries. Room zero is the surface's own host value, so it names no Room.
+export const FIRST_ROOM = 1;
+
+const isSettingName = (value: string): value is SettingName =>
+  (SETTING_NAMES as readonly string[]).includes(value);
+
+const integer = (word: string, what: string): number => {
+  if (!/^-?\d+$/.test(word)) {
+    throw new Error(`${what} must be a whole number, and is '${word}'`);
+  }
+  return Number(word);
+};
+
+const oneOf = <T extends string>(
+  allowed: readonly T[],
+  word: string,
+  what: string
+): T => {
+  const match = allowed.find(value => value === word);
+  if (match === undefined) {
+    throw new Error(`${what} takes ${allowed.join(', ')}, and not '${word}'`);
+  }
+  return match;
+};
+
+const SETTING_PARSERS: Readonly<
+  Record<SettingName, (word: string) => SettingChoice>
+> = {
+  composition: word => ({
+    name: 'composition',
+    value: oneOf(COMPOSITIONS, word, 'composition')
+  }),
+  rendition: word => ({
+    name: 'rendition',
+    value: oneOf(RENDITIONS, word, 'rendition')
+  }),
+  sky: word => ({ name: 'sky', value: oneOf(SKIES, word, 'sky') }),
+  typeface: word => ({
+    name: 'typeface',
+    value: oneOf(TYPEFACES, word, 'typeface')
+  })
+};
+
+const cell = (word: string, axis: string, cellsPerAxis: number): number => {
+  const value = integer(word, `a ${axis} cell`);
+  if (value < 0 || value >= cellsPerAxis) {
+    throw new Error(
+      `a ${axis} cell must be from 0 through ${cellsPerAxis - 1}, and is ${value}`
+    );
+  }
+  return value;
+};
+
+const slotOf = (word: string): SaveSlot => {
+  const value = integer(word, 'a slot');
+  if (value !== 1 && value !== 2 && value !== 3) {
+    throw new Error(`a slot must be 1, 2, or 3, and is ${value}`);
+  }
+  return value;
+};
+
+/// Read one command line, or refuse it with the reason.
+///
+/// Nothing is coerced or guessed: an unusable line throws a message naming what was wrong, in the
+/// style the trace decoder established, because a console that quietly did something adjacent to
+/// what was typed would be worse than one that declined. The grid bound comes from the caller, so
+/// the parser is honest about the world it is reading for rather than pinning one payload's shape.
+export const parseConsoleCommand = (
+  line: string,
+  cellsPerAxis: number
+): ConsoleCommand | undefined => {
+  const words = line.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const verb = words[0];
+  if (verb === undefined) {
+    return undefined;
+  }
+  const rest = words.slice(1);
+
+  switch (verb) {
+    case 'help':
+      return { kind: 'help' };
+    case 'where':
+      return { kind: 'where' };
+    case 'goto':
+      if (rest[0] === 'room') {
+        if (rest.length !== 2) {
+          throw new Error('goto room takes one Room');
+        }
+        const id = integer(rest[1]!, 'a Room');
+        if (id < FIRST_ROOM) {
+          throw new Error(
+            `Room ${id} is not a Room: the surface is not one, so Rooms start at ${FIRST_ROOM}`
+          );
+        }
+        return { kind: 'gotoRoom', room: id };
+      }
+      if (rest.length !== 2) {
+        throw new Error('goto takes two cells, or the word room and one Room');
+      }
+      return {
+        kind: 'gotoCell',
+        x: cell(rest[0]!, 'x', cellsPerAxis),
+        z: cell(rest[1]!, 'z', cellsPerAxis)
+      };
+    case 'panel':
+      // An alias: the panel's rendition is a setting like any other.
+      if (rest.length !== 1) {
+        throw new Error('panel takes one rendition');
+      }
+      return { kind: 'set', setting: SETTING_PARSERS.rendition(rest[0]!) };
+    case 'set': {
+      if (rest.length !== 2) {
+        throw new Error('set takes a name and a value');
+      }
+      const name = rest[0]!;
+      if (!isSettingName(name)) {
+        throw new Error(
+          `unknown setting '${name}': try ${SETTING_NAMES.join(', ')}`
+        );
+      }
+      return { kind: 'set', setting: SETTING_PARSERS[name](rest[1]!) };
+    }
+    case 'save':
+      if (rest.length < 1 || rest.length > 2) {
+        throw new Error('save takes a slot, and optionally the word confirm');
+      }
+      if (rest.length === 2 && rest[1] !== 'confirm') {
+        throw new Error(`save takes the word confirm, not '${rest[1]}'`);
+      }
+      return {
+        confirm: rest.length === 2,
+        kind: 'save',
+        slot: slotOf(rest[0]!)
+      };
+    case 'load':
+      if (rest.length !== 1) {
+        throw new Error('load takes a slot');
+      }
+      return { kind: 'load', slot: slotOf(rest[0]!) };
+    default:
+      throw new Error(`unknown command '${verb}': type help`);
+  }
+};
+
+export interface ConsoleDeps {
+  readonly cellSize: () => number;
+  readonly cellsPerAxis: () => number;
+  readonly hasRoom: (id: number) => boolean;
+  readonly persistence: SavePersistence;
+  readonly preferences: PreferencesStore;
+  readonly session: () => GameplaySession;
+  readonly typeface: (face: TypefaceId) => void;
+}
+
+const HELP = [
+  'help · where · goto <x> <z> · goto room <n>',
+  'panel <targ|damocles> · set <name> <value>',
+  `set names: ${SETTING_NAMES.join(', ')}`,
+  'save <slot> [confirm] · load <slot>'
+];
+
+const twoDigits = (value: number): string =>
+  String(Math.trunc(value)).padStart(2, '0');
+
+/// Do what one understood command says, and report what happened.
+///
+/// Every gameplay change goes through the Gameplay Session's own actions, and every preference
+/// through the stores that own it — the console holds no state of its own beyond its transcript.
+export const executeConsoleCommand = (
+  command: ConsoleCommand,
+  deps: ConsoleDeps
+): readonly string[] => {
+  switch (command.kind) {
+    case 'help':
+      return HELP;
+    case 'where': {
+      const snapshot = deps.session().snapshot;
+      const player = snapshot.player;
+      const size = deps.cellSize();
+      return [
+        `${locationText(snapshot.location)} · cell ${twoDigits(player.position.x / size)}-${twoDigits(player.position.z / size)}`,
+        `x ${Math.trunc(player.position.x)} y ${Math.trunc(player.position.y)} z ${Math.trunc(player.position.z)}`,
+        snapshot.occupancy.kind === 'onFoot'
+          ? 'on foot'
+          : `aboard craft ${twoDigits(snapshot.occupancy.slot)}`
+      ];
+    }
+    case 'gotoCell': {
+      const session = deps.session();
+      const size = deps.cellSize();
+      // The surface first: placing alone would move the player inside whatever Room they are in.
+      session.teleport(SURFACE);
+      // The cell's middle, and the altitude they already had — the session would take any number
+      // given to it, including one no play could reach.
+      session.place({
+        x: (command.x + 0.5) * size,
+        y: session.snapshot.player.position.y,
+        z: (command.z + 0.5) * size
+      });
+      return [`moved to cell ${twoDigits(command.x)}-${twoDigits(command.z)}`];
+    }
+    case 'gotoRoom': {
+      if (!deps.hasRoom(command.room)) {
+        return [`there is no Room ${command.room}`];
+      }
+      // Teleporting settles the player inside the Room's own bounds; placing afterwards would
+      // step around that and leave later wall contact disagreeing with the world.
+      const destination = room(command.room);
+      deps.session().teleport(destination);
+      return [`teleported to ${locationText(destination)}`];
+    }
+    case 'set':
+      return [applySetting(command.setting, deps)];
+    case 'save': {
+      const outcome = deps.persistence.save(command.slot);
+      if (outcome.kind === 'failed') {
+        return [`save refused: ${describeOutcome(outcome)}`];
+      }
+      if (outcome.kind === 'done') {
+        return [`saved slot ${command.slot}`];
+      }
+      if (!command.confirm) {
+        // Arming is left cleared, so a press in the chooser cannot finish what was typed here.
+        deps.persistence.disarm();
+        return [
+          `slot ${command.slot} holds a Save: 'save ${command.slot} confirm' to overwrite`
+        ];
+      }
+      const confirmed = deps.persistence.save(command.slot);
+      return confirmed.kind === 'done'
+        ? [`saved slot ${command.slot}`]
+        : [`save refused: ${describeOutcome(confirmed)}`];
+    }
+    case 'load': {
+      const outcome = deps.persistence.load(command.slot);
+      return outcome.kind === 'done'
+        ? [`restored slot ${command.slot}`]
+        : [`load refused: ${describeOutcome(outcome)}`];
+    }
+  }
+};
+
+const describeOutcome = (outcome: {
+  readonly kind: string;
+  readonly reason?: string;
+}): string => outcome.reason ?? outcome.kind;
+
+const applySetting = (setting: SettingChoice, deps: ConsoleDeps): string => {
+  switch (setting.name) {
+    case 'composition':
+      deps.preferences.update({ composition: setting.value });
+      return `composition ${setting.value}`;
+    case 'rendition':
+      deps.preferences.update({ panelRendition: setting.value });
+      return `rendition ${setting.value}`;
+    case 'sky':
+      // The tuning document owns the sky; handing the choice back to it is itself a choice.
+      deps.preferences.update(
+        setting.value === 'document'
+          ? { presentationPreset: undefined }
+          : { presentationPreset: setting.value }
+      );
+      return setting.value === 'document'
+        ? 'sky as tuned'
+        : `sky ${setting.value}`;
+    case 'typeface':
+      deps.typeface(setting.value);
+      return `typeface ${setting.value}`;
+  }
+};

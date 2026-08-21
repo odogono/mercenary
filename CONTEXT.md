@@ -207,7 +207,7 @@ The Browser Shell overlay opened with Escape that pauses stepping and owns the s
 _Avoid_: Pause menu, options screen, main menu
 
 **Shell Console**:
-The Browser Shell's slide-down debug command line, whose every mutation routes through the Gameplay Session's semantic actions; a development tool outside the Game Surface and never part of a trace.
+The Browser Shell's slide-down development command line, reaching the Gameplay Session's own actions and the stores that own each preference and Save rather than the state behind them; alone among Browser Shell surfaces it writes play rather than only presenting it, which is why a session it has touched is no longer reproducible from its inputs and never part of a trace (ADR 0028).
 _Avoid_: Cheat console, terminal, dev overlay
 
 **Initial Release**:

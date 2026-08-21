@@ -51,7 +51,10 @@ Damocles condensed panel-label face (CSS approximation in v1), or advance Damocl
 - `web/src/shell/menu.ts`, `settingsView.ts`, `saveChooser.ts` — System Menu layers.
 - `web/src/shell/saves.ts` — gains a headless `createSavePersistence` core; the chooser and
   the console both drive it.
-- `web/src/shell/console.ts` — `parseConsoleCommand` + `executeConsoleCommand(cmd, deps)`.
+- `web/src/shell/console.ts` — `parseConsoleCommand` + `executeConsoleCommand(cmd, deps)`;
+  `web/src/shell/consoleView.ts` — the overlay, transcript and history.
+- `web/src/shell/input.ts` — `RESERVED_CODES` names the codes the shell keeps, so the Control
+  Profile cannot claim the console's key and the router builds its test from the same constant.
 - Tests in `web/test/shell-*.test.ts`; e2e in `web/e2e/`.
 
 ## Code style
@@ -92,17 +95,37 @@ export type Composition = "panel" | "strip";
 - Saves: three slots, ADR 0026 unchanged; `describe(slot)` surfaces the codec's actual
   reject reason; two-press confirm for overwrite and delete, in the chooser and as
   `save <n> confirm` in the console.
-- Console commands v1: `help`, `goto <x> <y>`, `goto room <n>`, `set <setting> <value>`,
-  `save <slot> [confirm]`, `load <slot>`, `panel <rendition>`. Every mutation goes through
-  GameplaySession semantic actions (`place`, `teleport`) or the preferences/save cores.
-  The console is Browser Shell debug tooling: never part of the Game Surface, never in
-  traces (the Replay Gate already forbids `board`/`teleport`).
+- Console commands v1: `help`, `where`, `goto <x> <z>`, `goto room <n>`,
+  `set <setting> <value>`, `save <slot> [confirm]`, `load <slot>`, `panel <rendition>` (an alias
+  of `set rendition`). The console reaches **three** sinks, and the distinction is worth stating:
+  the Gameplay Session's own actions (`place`, `teleport`) for `goto`; the preference stores for
+  `set` — where `typeface` keeps its own key rather than living in preferences, and
+  `sky document` hands the choice back to the tuning document; and the Save core for
+  `save`/`load`. `load` is a **whole-session replacement** rather than a mutation: it is neither
+  a semantic action nor a preference. The console is a development tool that writes play
+  (ADR 0028): never part of the Game Surface, never in traces.
+- The session validates neither `place` nor `teleport` — `place` accepts any vector and bypasses
+  `Containment`; `teleport` accepts an unknown Room in silence — so refusing unusable input is
+  the console's own work. `goto <x> <z>` takes a grid reference bounded by the world, lands at
+  the cell's middle, teleports to the surface first (placing alone would move the player inside
+  whatever Room they occupy) and keeps the altitude it found. `goto room <n>` refuses Room zero,
+  which names the surface, and any Room the payload lacks; it teleports and does **not** place,
+  so the session's own containment decides where the player lands.
+- `save <n> confirm` presses the Save core twice in one command and leaves nothing armed, so a
+  press in the chooser cannot finish what was typed in the console. If a third surface ever needs
+  confirmation, the shape to adopt is a non-mutating `plan(action, slot) -> {needsConfirmation}`
+  with the expression of it left to each surface.
+- The console does **not** pause the session, so a command's effect is visible in the panel as it
+  is typed. This departs from the mockup, which pauses; the mockup is otherwise authoritative.
+  The console keeps its own transcript, capped so a long session cannot grow it without bound,
+  while the Save core's notice still reaches the message line as it does for the chooser.
 - Key routing order: browser-reserved Alt/Ctrl/Meta chords pass through untouched;
   Backquote toggles the console before the Control Profile sees it; Escape drives the
   layer stack; any open layer or focused form control swallows keys (arrows never become
-  Movement Intent); otherwise keys reach the Control Profile. Keyup always forwards.
-  Opening any layer releases held keys; the menu pauses stepping (draw continues,
-  `clock.reset()` on resume).
+   Movement Intent); otherwise keys reach the Control Profile. Keyup always forwards.
+   Opening any layer — the console included, though it never pauses — releases held
+   keys; the menu pauses stepping (draw continues,
+   `clock.reset()` on resume).
 
 ## Testing strategy
 
