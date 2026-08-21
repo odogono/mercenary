@@ -1,0 +1,67 @@
+import { browserChord, type BrowserKey } from './input.ts';
+
+/// A key press as the router sees it.
+///
+/// The Control Profile identifies keys by physical `code` alone. The router additionally
+/// consults the printed `key`, because the console key's glyph moves between physical codes
+/// across keyboard layouts.
+export interface RoutedKey extends BrowserKey {
+  readonly key?: string;
+}
+
+/// Which Browser Shell chrome currently owns the keyboard.
+///
+/// `none` means the Game Surface has it. Anything else is an open overlay whose own controls
+/// must swallow keys rather than let them reach Movement Intent.
+export type ShellLayer = 'none' | 'menu' | 'settings' | 'saves';
+
+export interface RouterState {
+  /// Whether a form control inside shell chrome currently holds focus.
+  readonly chromeFocus: boolean;
+  /// Whether the Shell Console is down. Independent of `layer`: the console opens over an
+  /// open overlay rather than replacing it.
+  readonly console: 'open' | 'closed';
+  readonly layer: ShellLayer;
+}
+
+/// Where one key press belongs.
+///
+/// `browser` keeps the browser's own chord behaviour; `chrome` gives the key to whichever
+/// overlay or form control owns it; `game` is the only route that reaches the Control Profile.
+export type KeyRoute =
+  'browser' | 'chrome' | 'console-toggle' | 'escape' | 'game';
+
+/// Recognise the console key across keyboard layouts.
+///
+/// `Backquote` is where the Doom console key is expected, but layouts that print the glyph on
+/// another physical key are honoured through `key` rather than by claiming more codes: a code
+/// like `IntlBackslash` carries an unrelated glyph on ISO layouts and must keep it.
+const consoleKey = (key: RoutedKey): boolean =>
+  key.code === 'Backquote' || key.key === '`';
+
+/// Whether any shell chrome currently holds the keyboard away from the Game Surface.
+export const chromeHasKeyboard = (state: RouterState): boolean =>
+  state.console === 'open' || state.layer !== 'none' || state.chromeFocus;
+
+/// Decide where one key press goes, without touching the DOM.
+///
+/// Order matters and is the whole point of this function:
+/// browser-reserved chords first, so no shell feature can swallow them; then the console key,
+/// which would otherwise be consumed as an ordinary Control Profile code; then Escape, which
+/// drives the layer stack; then anything typed while chrome owns the keyboard; and only then
+/// the Game Surface.
+export const routeKey = (state: RouterState, key: RoutedKey): KeyRoute => {
+  if (browserChord(key)) {
+    return 'browser';
+  }
+  if (consoleKey(key)) {
+    return key.repeat ? 'chrome' : 'console-toggle';
+  }
+  if (key.code === 'Escape') {
+    return key.repeat ? 'chrome' : 'escape';
+  }
+  if (chromeHasKeyboard(state)) {
+    return 'chrome';
+  }
+  return 'game';
+};

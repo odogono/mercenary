@@ -388,12 +388,17 @@ const readSky = (value: unknown): SkySettings => {
   };
 };
 
+/// The closed preset vocabulary, narrowed where the vocabulary itself is declared.
+export const isPresentationPreset = (
+  value: unknown
+): value is PresentationPreset => value === 'authentic' || value === 'enhanced';
+
 const readPresentation = (value: unknown): PresentationSettings => {
   const source = block(value, 'presentation');
   const namedPreset = source['preset'];
   let preset: PresentationPreset = DEFAULT_PRESENTATION_PRESET;
   if (!unnamed(namedPreset)) {
-    if (namedPreset !== 'authentic' && namedPreset !== 'enhanced') {
+    if (!isPresentationPreset(namedPreset)) {
       return refuse(
         `presentation.preset should be "authentic" or "enhanced", and is ${shown(namedPreset)}`
       );

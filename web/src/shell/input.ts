@@ -27,7 +27,11 @@ export interface ControlProfileActions {
   readonly throttleStep: (delta: number) => void;
 }
 
-const browserChord = (key: BrowserKey): boolean =>
+/// Whether the browser owns this key press.
+///
+/// Exported so the shell's key router states the same rule by calling it rather than by
+/// re-deriving it: the two must agree, or a reserved chord could be swallowed.
+export const browserChord = (key: BrowserKey): boolean =>
   key.altKey || key.ctrlKey || key.metaKey;
 
 const HELD_CONTROLS = new Set([
