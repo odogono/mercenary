@@ -545,12 +545,42 @@ test('the Shell Console runs commands over a running world', async ({
   await page.keyboard.press('Enter');
   await expect(log).toContainText('must be from 0 through 15');
 
-  // The world is not paused: walking still works with the console open.
+  // Backquote toggles: the same key that opened the console closes it, without typing a glyph,
+  // even though the console's own input holds focus.
+  await page.keyboard.press('Backquote');
+  await expect(surface).toHaveAttribute('data-console', 'closed');
+  await page.keyboard.press('Backquote');
+  await expect(surface).toHaveAttribute('data-console', 'open');
+
+  // Opening releases held keys like any other layer, so nothing keeps walking underneath.
+  await page.keyboard.press('Backquote');
+  await expect(surface).toHaveAttribute('data-console', 'closed');
+  const walking = await canvas.getAttribute('data-z');
+  await page.keyboard.down('ArrowUp');
+  await expect
+    .poll(async () => canvas.getAttribute('data-z'))
+    .not.toBe(walking);
+  await page.keyboard.up('ArrowUp');
+  // Held, this time across the opening itself.
+  await page.keyboard.down('ArrowUp');
   const held = await canvas.getAttribute('data-z');
+  await expect.poll(async () => canvas.getAttribute('data-z')).not.toBe(held);
+  await page.keyboard.press('Backquote');
+  await expect(surface).toHaveAttribute('data-console', 'open');
+  await page.waitForTimeout(300);
+  const stopped = await canvas.getAttribute('data-z');
+  await page.waitForTimeout(150);
+  expect(await canvas.getAttribute('data-z')).toBe(stopped);
+
+  // The held key is genuinely gone: closing again, the same key walks from a standstill.
+  await page.keyboard.up('ArrowUp');
   await page.keyboard.press('Escape');
   await expect(surface).toHaveAttribute('data-console', 'closed');
+  const released = await canvas.getAttribute('data-z');
   await page.keyboard.down('ArrowUp');
-  await expect.poll(async () => canvas.getAttribute('data-z')).not.toBe(held);
+  await expect
+    .poll(async () => canvas.getAttribute('data-z'))
+    .not.toBe(released);
   await page.keyboard.up('ArrowUp');
 
   expect(errors).toEqual([]);
@@ -586,18 +616,18 @@ test('console history recalls without moving the player', async ({ page }) => {
     z: await canvas.getAttribute('data-z')
   }).toEqual(before);
 
-  // Browser chords still belong to the browser, even with the console focused.
+  // Browser chords still belong to the browser, even with the console focused. dispatchEvent
+  // answers false only when a handler cancelled the event, so `true` here means pass-through.
   const chordsPassed = await page.evaluate(() =>
-    ['altKey', 'ctrlKey', 'metaKey'].map(
-      modifier =>
-        !window.dispatchEvent(
-          new KeyboardEvent('keydown', {
-            bubbles: true,
-            cancelable: true,
-            code: 'KeyR',
-            [modifier]: true
-          })
-        ) === false
+    ['altKey', 'ctrlKey', 'metaKey'].map(modifier =>
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          code: 'KeyR',
+          [modifier]: true
+        })
+      )
     )
   );
   expect(chordsPassed).toEqual([true, true, true]);

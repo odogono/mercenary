@@ -122,9 +122,10 @@ export type Composition = "panel" | "strip";
 - Key routing order: browser-reserved Alt/Ctrl/Meta chords pass through untouched;
   Backquote toggles the console before the Control Profile sees it; Escape drives the
   layer stack; any open layer or focused form control swallows keys (arrows never become
-  Movement Intent); otherwise keys reach the Control Profile. Keyup always forwards.
-  Opening any layer releases held keys; the menu pauses stepping (draw continues,
-  `clock.reset()` on resume).
+   Movement Intent); otherwise keys reach the Control Profile. Keyup always forwards.
+   Opening any layer — the console included, though it never pauses — releases held
+   keys; the menu pauses stepping (draw continues,
+   `clock.reset()` on resume).
 
 ## Testing strategy
 

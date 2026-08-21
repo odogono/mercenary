@@ -43,7 +43,7 @@ describe('the Shell Console stays out of traces', () => {
       'leaveCraft',
       'rideLift'
     ]) {
-      expect(() => parseConsoleCommand(recorded)).toThrow(
+      expect(() => parseConsoleCommand(recorded, 16)).toThrow(
         `unknown command '${recorded.toLowerCase()}': type help`
       );
     }

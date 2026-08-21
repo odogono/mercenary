@@ -1,6 +1,11 @@
 import type { GameplaySession } from '../session/index.ts';
+import type { PresentationPreset } from '../settings/index.ts';
 import { SURFACE, locationText, room } from '../world/index.ts';
-import type { PanelRendition, PreferencesStore } from './preferences.ts';
+import type {
+  Composition,
+  PanelRendition,
+  PreferencesStore
+} from './preferences.ts';
 import type { SavePersistence, SaveSlot } from './saves.ts';
 import type { TypefaceId } from './typography.ts';
 
@@ -13,7 +18,7 @@ export type ConsoleCommand =
   | { readonly kind: 'where' }
   | { readonly kind: 'gotoCell'; readonly x: number; readonly z: number }
   | { readonly kind: 'gotoRoom'; readonly room: number }
-  | { readonly kind: 'set'; readonly name: SettingName; readonly value: string }
+  | { readonly kind: 'set'; readonly setting: SettingChoice }
   | {
       readonly confirm: boolean;
       readonly kind: 'save';
@@ -23,22 +28,37 @@ export type ConsoleCommand =
 
 export type SettingName = 'composition' | 'rendition' | 'sky' | 'typeface';
 
+/// One setting paired with the value it will be set to.
+///
+/// The value is narrowed at parse time, so execution never re-asks what a string means.
+export type SettingChoice =
+  | { readonly name: 'composition'; readonly value: Composition }
+  | { readonly name: 'rendition'; readonly value: PanelRendition }
+  | { readonly name: 'sky'; readonly value: 'document' | PresentationPreset }
+  | { readonly name: 'typeface'; readonly value: TypefaceId };
+
+const COMPOSITIONS: readonly Composition[] = ['panel', 'strip'];
+const RENDITIONS: readonly PanelRendition[] = ['targ', 'damocles'];
+const SKIES: readonly ('document' | PresentationPreset)[] = [
+  'document',
+  'authentic',
+  'enhanced'
+];
+const TYPEFACES: readonly TypefaceId[] = ['mercenary', 'damocles'];
+
 /// Every value each setting accepts, spelled as the settings page spells them.
 ///
 /// One vocabulary for both surfaces: a console that renamed a setting would be a second place to
 /// look when a name stops working.
 export const SETTING_VALUES: Readonly<Record<SettingName, readonly string[]>> =
   {
-    composition: ['panel', 'strip'],
-    rendition: ['targ', 'damocles'],
-    sky: ['document', 'authentic', 'enhanced'],
-    typeface: ['mercenary', 'damocles']
+    composition: COMPOSITIONS,
+    rendition: RENDITIONS,
+    sky: SKIES,
+    typeface: TYPEFACES
   };
 
 const SETTING_NAMES = Object.keys(SETTING_VALUES) as readonly SettingName[];
-
-/// The grid the surface is divided into, as the panel and the status strip read it.
-export const GRID_CELLS = 16;
 
 /// Rooms the Data Payload carries. Room zero is the surface's own host value, so it names no Room.
 export const FIRST_ROOM = 1;
@@ -53,11 +73,41 @@ const integer = (word: string, what: string): number => {
   return Number(word);
 };
 
-const cell = (word: string, axis: string): number => {
+const oneOf = <T extends string>(
+  allowed: readonly T[],
+  word: string,
+  what: string
+): T => {
+  const match = allowed.find(value => value === word);
+  if (match === undefined) {
+    throw new Error(`${what} takes ${allowed.join(', ')}, and not '${word}'`);
+  }
+  return match;
+};
+
+const SETTING_PARSERS: Readonly<
+  Record<SettingName, (word: string) => SettingChoice>
+> = {
+  composition: word => ({
+    name: 'composition',
+    value: oneOf(COMPOSITIONS, word, 'composition')
+  }),
+  rendition: word => ({
+    name: 'rendition',
+    value: oneOf(RENDITIONS, word, 'rendition')
+  }),
+  sky: word => ({ name: 'sky', value: oneOf(SKIES, word, 'sky') }),
+  typeface: word => ({
+    name: 'typeface',
+    value: oneOf(TYPEFACES, word, 'typeface')
+  })
+};
+
+const cell = (word: string, axis: string, cellsPerAxis: number): number => {
   const value = integer(word, `a ${axis} cell`);
-  if (value < 0 || value >= GRID_CELLS) {
+  if (value < 0 || value >= cellsPerAxis) {
     throw new Error(
-      `a ${axis} cell must be from 0 through ${GRID_CELLS - 1}, and is ${value}`
+      `a ${axis} cell must be from 0 through ${cellsPerAxis - 1}, and is ${value}`
     );
   }
   return value;
@@ -75,9 +125,11 @@ const slotOf = (word: string): SaveSlot => {
 ///
 /// Nothing is coerced or guessed: an unusable line throws a message naming what was wrong, in the
 /// style the trace decoder established, because a console that quietly did something adjacent to
-/// what was typed would be worse than one that declined.
+/// what was typed would be worse than one that declined. The grid bound comes from the caller, so
+/// the parser is honest about the world it is reading for rather than pinning one payload's shape.
 export const parseConsoleCommand = (
-  line: string
+  line: string,
+  cellsPerAxis: number
 ): ConsoleCommand | undefined => {
   const words = line.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const verb = words[0];
@@ -109,19 +161,15 @@ export const parseConsoleCommand = (
       }
       return {
         kind: 'gotoCell',
-        x: cell(rest[0]!, 'x'),
-        z: cell(rest[1]!, 'z')
+        x: cell(rest[0]!, 'x', cellsPerAxis),
+        z: cell(rest[1]!, 'z', cellsPerAxis)
       };
     case 'panel':
       // An alias: the panel's rendition is a setting like any other.
       if (rest.length !== 1) {
         throw new Error('panel takes one rendition');
       }
-      return {
-        kind: 'set',
-        name: 'rendition',
-        value: settingValue('rendition', rest[0]!)
-      };
+      return { kind: 'set', setting: SETTING_PARSERS.rendition(rest[0]!) };
     case 'set': {
       if (rest.length !== 2) {
         throw new Error('set takes a name and a value');
@@ -132,7 +180,7 @@ export const parseConsoleCommand = (
           `unknown setting '${name}': try ${SETTING_NAMES.join(', ')}`
         );
       }
-      return { kind: 'set', name, value: settingValue(name, rest[1]!) };
+      return { kind: 'set', setting: SETTING_PARSERS[name](rest[1]!) };
     }
     case 'save':
       if (rest.length < 1 || rest.length > 2) {
@@ -156,16 +204,9 @@ export const parseConsoleCommand = (
   }
 };
 
-const settingValue = (name: SettingName, word: string): string => {
-  const allowed = SETTING_VALUES[name];
-  if (!allowed.includes(word)) {
-    throw new Error(`${name} takes ${allowed.join(', ')}, and not '${word}'`);
-  }
-  return word;
-};
-
 export interface ConsoleDeps {
   readonly cellSize: () => number;
+  readonly cellsPerAxis: () => number;
   readonly hasRoom: (id: number) => boolean;
   readonly persistence: SavePersistence;
   readonly preferences: PreferencesStore;
@@ -226,15 +267,16 @@ export const executeConsoleCommand = (
       }
       // Teleporting settles the player inside the Room's own bounds; placing afterwards would
       // step around that and leave later wall contact disagreeing with the world.
-      deps.session().teleport(room(command.room));
-      return [`teleported to ${locationText(room(command.room))}`];
+      const destination = room(command.room);
+      deps.session().teleport(destination);
+      return [`teleported to ${locationText(destination)}`];
     }
     case 'set':
-      return [applySetting(command.name, command.value, deps)];
+      return [applySetting(command.setting, deps)];
     case 'save': {
       const outcome = deps.persistence.save(command.slot);
       if (outcome.kind === 'failed') {
-        return [`save refused: ${outcome.reason}`];
+        return [`save refused: ${describeOutcome(outcome)}`];
       }
       if (outcome.kind === 'done') {
         return [`saved slot ${command.slot}`];
@@ -265,33 +307,26 @@ const describeOutcome = (outcome: {
   readonly reason?: string;
 }): string => outcome.reason ?? outcome.kind;
 
-const applySetting = (
-  name: SettingName,
-  value: string,
-  deps: ConsoleDeps
-): string => {
-  switch (name) {
+const applySetting = (setting: SettingChoice, deps: ConsoleDeps): string => {
+  switch (setting.name) {
     case 'composition':
-      deps.preferences.update({
-        composition: value === 'strip' ? 'strip' : 'panel'
-      });
-      return `composition ${value}`;
+      deps.preferences.update({ composition: setting.value });
+      return `composition ${setting.value}`;
     case 'rendition':
-      deps.preferences.update({ panelRendition: value as PanelRendition });
-      return `rendition ${value}`;
+      deps.preferences.update({ panelRendition: setting.value });
+      return `rendition ${setting.value}`;
     case 'sky':
       // The tuning document owns the sky; handing the choice back to it is itself a choice.
       deps.preferences.update(
-        value === 'document'
+        setting.value === 'document'
           ? { presentationPreset: undefined }
-          : {
-              presentationPreset:
-                value === 'authentic' ? 'authentic' : 'enhanced'
-            }
+          : { presentationPreset: setting.value }
       );
-      return value === 'document' ? 'sky as tuned' : `sky ${value}`;
+      return setting.value === 'document'
+        ? 'sky as tuned'
+        : `sky ${setting.value}`;
     case 'typeface':
-      deps.typeface(value as TypefaceId);
-      return `typeface ${value}`;
+      deps.typeface(setting.value);
+      return `typeface ${setting.value}`;
   }
 };

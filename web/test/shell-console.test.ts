@@ -6,6 +6,7 @@ import {
   SETTING_VALUES,
   executeConsoleCommand,
   parseConsoleCommand,
+  type ConsoleCommand,
   type ConsoleDeps,
   type SettingName
 } from '../src/shell/console.ts';
@@ -15,6 +16,11 @@ import type { TypefaceId } from '../src/shell/typography.ts';
 import { emptyContent } from './fixtures/save.ts';
 
 const CELL = 65_536;
+const CELLS_PER_AXIS = 16;
+
+/// The parser takes its grid bound from the world it reads for; the tests read for Targ's 16×16.
+const parse = (line: string, cellsPerAxis = CELLS_PER_AXIS) =>
+  parseConsoleCommand(line, cellsPerAxis);
 
 const harness = (
   overrides: {
@@ -53,6 +59,7 @@ const harness = (
   } as unknown as SavePersistence;
   const deps: ConsoleDeps = {
     cellSize: () => CELL,
+    cellsPerAxis: () => CELLS_PER_AXIS,
     hasRoom: id => rooms.has(id),
     persistence,
     preferences: {
@@ -69,87 +76,86 @@ const harness = (
 };
 
 const run = (line: string, deps: ConsoleDeps): readonly string[] => {
-  const command = parseConsoleCommand(line);
+  const command = parse(line);
   return command === undefined ? [] : executeConsoleCommand(command, deps);
 };
 
 describe('reading a console command line', () => {
   test('ignores an empty line rather than complaining about it', () => {
-    expect(parseConsoleCommand('')).toBeUndefined();
-    expect(parseConsoleCommand('   ')).toBeUndefined();
+    expect(parse('')).toBeUndefined();
+    expect(parse('   ')).toBeUndefined();
   });
 
   test('does not care about case or spacing', () => {
-    expect(parseConsoleCommand('  GoTo   Room   5 ')).toEqual({
+    expect(parse('  GoTo   Room   5 ')).toEqual({
       kind: 'gotoRoom',
       room: 5
     });
   });
 
   test('names the command it does not know', () => {
-    expect(() => parseConsoleCommand('warp 3')).toThrow(
-      "unknown command 'warp': type help"
-    );
+    expect(() => parse('warp 3')).toThrow("unknown command 'warp': type help");
   });
 
   test('reads a grid reference, and refuses one off the world', () => {
-    expect(parseConsoleCommand('goto 03 11')).toEqual({
+    expect(parse('goto 03 11')).toEqual({
       kind: 'gotoCell',
       x: 3,
       z: 11
     });
-    expect(() => parseConsoleCommand('goto 16 00')).toThrow(
+    expect(() => parse('goto 16 00')).toThrow(
       'a x cell must be from 0 through 15, and is 16'
     );
-    expect(() => parseConsoleCommand('goto 00 -1')).toThrow(
+    expect(() => parse('goto 00 -1')).toThrow(
       'a z cell must be from 0 through 15, and is -1'
+    );
+  });
+
+  test('takes its grid bound from the world it reads for', () => {
+    // The bound is a caller's fact, not the parser's guess about one payload.
+    expect(parse('goto 07 07', 8)).toEqual({
+      kind: 'gotoCell',
+      x: 7,
+      z: 7
+    });
+    expect(() => parse('goto 08 00', 8)).toThrow(
+      'a x cell must be from 0 through 7, and is 8'
     );
   });
 
   test('refuses a grid reference that is not a number, rather than guessing', () => {
     // The session would take any number given to it, so nothing unusable may reach it.
-    expect(() => parseConsoleCommand('goto north 4')).toThrow(
+    expect(() => parse('goto north 4')).toThrow(
       "a x cell must be a whole number, and is 'north'"
     );
-    expect(() => parseConsoleCommand('goto 3.5 4')).toThrow(
-      'must be a whole number'
-    );
-    expect(() => parseConsoleCommand('goto NaN 4')).toThrow(
-      'must be a whole number'
-    );
+    expect(() => parse('goto 3.5 4')).toThrow('must be a whole number');
+    expect(() => parse('goto NaN 4')).toThrow('must be a whole number');
   });
 
   test('counts the words a command needs', () => {
-    expect(() => parseConsoleCommand('goto 3')).toThrow(
+    expect(() => parse('goto 3')).toThrow(
       'goto takes two cells, or the word room and one Room'
     );
     // A bare `goto room` is answered by the more specific message, not the general one.
-    expect(() => parseConsoleCommand('goto room')).toThrow(
-      'goto room takes one Room'
-    );
-    expect(() => parseConsoleCommand('goto room 5 6')).toThrow(
-      'goto room takes one Room'
-    );
-    expect(() => parseConsoleCommand('load')).toThrow('load takes a slot');
-    expect(() => parseConsoleCommand('panel')).toThrow(
-      'panel takes one rendition'
-    );
+    expect(() => parse('goto room')).toThrow('goto room takes one Room');
+    expect(() => parse('goto room 5 6')).toThrow('goto room takes one Room');
+    expect(() => parse('load')).toThrow('load takes a slot');
+    expect(() => parse('panel')).toThrow('panel takes one rendition');
   });
 
   test('refuses Room zero, because the surface is not a Room', () => {
-    expect(() => parseConsoleCommand('goto room 0')).toThrow(
+    expect(() => parse('goto room 0')).toThrow(
       'Room 0 is not a Room: the surface is not one, so Rooms start at 1'
     );
-    expect(() => parseConsoleCommand('goto room -3')).toThrow('is not a Room');
+    expect(() => parse('goto room -3')).toThrow('is not a Room');
   });
 
   test('treats panel as the rendition setting it is', () => {
-    expect(parseConsoleCommand('panel damocles')).toEqual({
+    expect(parse('panel damocles')).toEqual({
       kind: 'set',
-      name: 'rendition',
-      value: 'damocles'
+      setting: { name: 'rendition', value: 'damocles' }
     });
-    expect(() => parseConsoleCommand('panel sideways')).toThrow(
+    expect(() => parse('panel sideways')).toThrow(
       "rendition takes targ, damocles, and not 'sideways'"
     );
   });
@@ -157,39 +163,37 @@ describe('reading a console command line', () => {
   test('accepts every setting the settings page offers, and only those', () => {
     for (const name of Object.keys(SETTING_VALUES) as SettingName[]) {
       for (const value of SETTING_VALUES[name]) {
-        expect(parseConsoleCommand(`set ${name} ${value}`)).toEqual({
+        // The vocabulary is read widened here; the parser returns it narrowed per setting.
+        expect(parse(`set ${name} ${value}`)).toEqual({
           kind: 'set',
-          name,
-          value
-        });
+          setting: { name, value }
+        } as ConsoleCommand);
       }
     }
-    expect(() => parseConsoleCommand('set volume 4')).toThrow(
+    expect(() => parse('set volume 4')).toThrow(
       "unknown setting 'volume': try composition, rendition, sky, typeface"
     );
-    expect(() => parseConsoleCommand('set sky purple')).toThrow(
+    expect(() => parse('set sky purple')).toThrow(
       "sky takes document, authentic, enhanced, and not 'purple'"
     );
-    expect(() => parseConsoleCommand('set sky')).toThrow(
-      'set takes a name and a value'
-    );
+    expect(() => parse('set sky')).toThrow('set takes a name and a value');
   });
 
   test('reads a slot, and only a real one', () => {
-    expect(parseConsoleCommand('save 2')).toEqual({
+    expect(parse('save 2')).toEqual({
       confirm: false,
       kind: 'save',
       slot: 2
     });
-    expect(parseConsoleCommand('save 2 confirm')).toEqual({
+    expect(parse('save 2 confirm')).toEqual({
       confirm: true,
       kind: 'save',
       slot: 2
     });
-    expect(() => parseConsoleCommand('save 4')).toThrow(
+    expect(() => parse('save 4')).toThrow(
       'a slot must be 1, 2, or 3, and is 4'
     );
-    expect(() => parseConsoleCommand('save 2 yes')).toThrow(
+    expect(() => parse('save 2 yes')).toThrow(
       "save takes the word confirm, not 'yes'"
     );
   });

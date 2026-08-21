@@ -12,8 +12,8 @@ export const SCROLLBACK_LINES = 400;
 
 /// Recall of what has been typed, in the order it was typed.
 ///
-/// Held in memory only: a debug console's history is not worth a storage key, and the transcript
-/// it produced is already on screen.
+/// Held in memory only: a development tool's history is not worth a storage key, and the
+/// transcript it produced is already on screen.
 export class CommandHistory {
   private readonly lines: string[] = [];
   private cursor = 0;
@@ -63,10 +63,12 @@ const BANNER = [
 /// Own the Shell Console overlay.
 ///
 /// It deliberately does not pause: the world runs while the console is open, so a command's effect
-/// is visible in the panel the moment it is typed.
+/// is visible in the panel the moment it is typed. `release` empties held input, exactly as any
+/// other layer opening does.
 export const installConsole = (
   elements: ConsoleElements,
-  deps: ConsoleDeps
+  deps: ConsoleDeps,
+  release: () => void
 ): ShellConsole => {
   const history = new CommandHistory();
   let open = false;
@@ -86,7 +88,7 @@ export const installConsole = (
   const run = (line: string): void => {
     print([`] ${line}`]);
     try {
-      const command = parseConsoleCommand(line);
+      const command = parseConsoleCommand(line, deps.cellsPerAxis());
       if (command !== undefined) {
         print(executeConsoleCommand(command, deps));
       }
@@ -99,6 +101,9 @@ export const installConsole = (
     open = next;
     elements.surface.dataset['console'] = open ? 'open' : 'closed';
     if (open) {
+      // The console owns the keyboard while it is down, so a key held as it opened must not
+      // still be held when play resumes.
+      release();
       elements.input.focus();
     } else {
       elements.input.blur();

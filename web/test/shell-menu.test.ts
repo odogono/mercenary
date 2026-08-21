@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { escapeFrom } from '../src/shell/menu.ts';
 
 const layerAfter = (layer: 'none' | 'menu' | 'settings' | 'saves') => {
-  const outcome = escapeFrom(layer);
+  const outcome = escapeFrom(layer, 'closed');
   return outcome.kind === 'layer' ? outcome.layer : undefined;
 };
 

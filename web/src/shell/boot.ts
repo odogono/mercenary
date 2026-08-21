@@ -224,16 +224,21 @@ try {
     persistence.dismiss
   );
   installSaveChooser({ page: chromePages.saves, persistence });
-  const shellConsole = installConsole(consoleElements, {
-    cellSize: () => world.cellSize,
-    hasRoom: id => world.rooms.has(id),
-    persistence,
-    preferences,
-    session: () => session,
-    typeface: face => {
-      applyTypeface(document.documentElement, face, storage);
-    }
-  });
+  const shellConsole = installConsole(
+    consoleElements,
+    {
+      cellSize: () => world.cellSize,
+      cellsPerAxis: () => world.cellsPerAxis,
+      hasRoom: id => world.rooms.has(id),
+      persistence,
+      preferences,
+      session: () => session,
+      typeface: face => {
+        applyTypeface(document.documentElement, face, storage);
+      }
+    },
+    release
+  );
   installSettingsView({
     page: chromePages.settings,
     preferences,

@@ -11,7 +11,7 @@ export type EscapeOutcome =
 
 export const escapeFrom = (
   layer: ShellLayer,
-  console: 'closed' | 'open' = 'closed'
+  console: 'closed' | 'open'
 ): EscapeOutcome => {
   if (console === 'open') {
     return { kind: 'closeConsole' };
