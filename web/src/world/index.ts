@@ -66,6 +66,15 @@ export const displacement = (residence: Residence): Vector3 | undefined =>
 export const SURFACE: Location = { kind: 'surface' };
 export const room = (id: number): Location => ({ id, kind: 'room' });
 
+/// How a Location reads in chrome: the surface, or a two-digit Room.
+///
+/// One spelling, so the status strip, the panel and the Save chooser cannot disagree about
+/// where the player is.
+export const locationText = (location: Location): string =>
+  location.kind === 'surface'
+    ? 'SURFACE'
+    : `ROOM ${String(location.id).padStart(2, '0')}`;
+
 export const locationHostValue = (location: Location): number =>
   location.kind === 'surface' ? SURFACE_ROOM : location.id;
 

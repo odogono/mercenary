@@ -2,14 +2,16 @@ import { describe, expect, test } from 'bun:test';
 
 import { playerState } from '../src/gameCore/index.ts';
 import { GameplaySession } from '../src/session/index.ts';
-import type { SaveEnvironment, SaveSnapshot } from '../src/session/save.ts';
+import type { SaveSnapshot } from '../src/session/save.ts';
 import {
   SaveSlots,
   createSavePersistence,
   slotLabel,
   slotStorageKey,
+  type SavePersistenceOptions,
   type SlotStorage
 } from '../src/shell/saves.ts';
+import { emptyContent, environment } from './fixtures/save.ts';
 
 class MemoryStorage implements SlotStorage {
   readonly values = new Map<string, string>();
@@ -62,57 +64,21 @@ describe('the three Browser Shell save slots', () => {
   });
 });
 
-const environment: SaveEnvironment = {
-  payload: {
-    bensonSchemaVersion: 1,
-    decoderVersion: 7,
-    flightSchemaVersion: 3,
-    interactionSchemaVersion: 1,
-    schemaVersion: 8,
-    sourceCoreDigest: 'core',
-    sourceDatasetId: 'dataset',
-    textSchemaVersion: 1,
-    undergroundSchemaVersion: 2
-  },
-  settings: {
-    flight: {
-      groundAltitude: null,
-      pitchScale: 1,
-      referenceFrameRate: 20,
-      runMultiplier: 3,
-      speedScale: 1,
-      throttleFloorNotch: 1,
-      turnScale: 1
-    },
-    message: { charactersPerSecond: 2, holdSeconds: 3 },
-    scripts: { instructionBudget: 512, timeScale: 6 }
-  }
-};
+// One immutable Snapshot for the whole file: nothing here depends on its identity, and
+// rebuilding a session per captured Save only measures the session builder.
+const SNAPSHOT: SaveSnapshot = new GameplaySession(
+  emptyContent(),
+  playerState({ position: { x: 1000, y: 0, z: 2000 } }),
+  undefined
+).captureSaveSnapshot();
 
-const snapshot = (): SaveSnapshot =>
-  new GameplaySession(
-    {
-      cellSize: 65_536,
-      doorwayRules: undefined,
-      flight: undefined,
-      interaction: undefined,
-      objects: [],
-      rooms: new Map(),
-      underground: undefined
-    },
-    playerState({ position: { x: 1000, y: 0, z: 2000 } }),
-    undefined
-  ).captureSaveSnapshot();
-
-const harness = (
-  overrides: Partial<Parameters<typeof createSavePersistence>[0]> = {}
-) => {
+const harness = (overrides: Partial<SavePersistenceOptions> = {}) => {
   const storage = new MemoryStorage();
   const restored: SaveSnapshot[] = [];
   let released = 0;
   let clock = 0;
   const persistence = createSavePersistence({
-    capture: () => ({ location: { kind: 'surface' }, snapshot: snapshot() }),
+    capture: () => ({ location: { kind: 'surface' }, snapshot: SNAPSHOT }),
     environment,
     now: () => new Date('2026-08-21T09:05:00.000Z'),
     release: () => {
@@ -142,9 +108,12 @@ describe('the Save persistence core', () => {
     expect(persistence.save(2)).toEqual({ kind: 'done' });
 
     const described = persistence.describe(2);
-    expect(described.state).toBe('saved');
-    expect(described.where).toBe('SURFACE');
-    expect(described.savedAt).toEqual(new Date('2026-08-21T09:05:00.000Z'));
+    expect(described).toEqual({
+      savedAt: new Date('2026-08-21T09:05:00.000Z'),
+      slot: 2,
+      state: 'saved',
+      where: 'SURFACE'
+    });
   });
 
   test('costs two presses to overwrite an occupied slot', () => {
@@ -214,7 +183,7 @@ describe('the Save persistence core', () => {
 
     const described = persistence.describe(2);
     expect(described.state).toBe('invalid');
-    expect(described.reason).toBeTruthy();
+    expect(described).toHaveProperty('reason');
     // The refusal reaches the player rather than being flattened to "INVALID".
     expect(persistence.load(2).kind).toBe('failed');
   });
@@ -306,8 +275,8 @@ describe('the Save persistence core', () => {
     expect(slotLabel({ reason: 'why', slot: 2, state: 'invalid' })).toBe(
       'SLOT 2 — INVALID'
     );
-    expect(slotLabel({ slot: 3, state: 'unavailable' })).toBe(
-      'SLOT 3 — UNAVAILABLE'
-    );
+    expect(
+      slotLabel({ reason: 'blocked', slot: 3, state: 'unavailable' })
+    ).toBe('SLOT 3 — UNAVAILABLE');
   });
 });

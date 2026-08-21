@@ -6,8 +6,13 @@ import {
   type SaveEnvironment,
   type SaveSnapshot
 } from '../session/save.ts';
-import type { Location } from '../world/index.ts';
-import type { ReadStorage, RemoveStorage, WriteStorage } from './storage.ts';
+import { locationText, type Location } from '../world/index.ts';
+import {
+  installStorageWatch,
+  type ReadStorage,
+  type RemoveStorage,
+  type WriteStorage
+} from './storage.ts';
 
 export type SaveSlot = 1 | 2 | 3;
 
@@ -39,21 +44,28 @@ export class SaveSlots {
   }
 }
 
-export const ALL_SLOTS = [1, 2, 3] as const;
+const ALL_SLOTS = [1, 2, 3] as const;
 
 /// What one slot holds, as far as any chooser needs to know.
 ///
-/// `invalid` and `unavailable` carry the codec's or the store's own words: a Save is refused
-/// loudly and without migration, so the reason it was refused is the only useful thing to show.
-export type SlotState = 'empty' | 'invalid' | 'saved' | 'unavailable';
+/// A union rather than optional fields: `invalid` and `unavailable` always carry the codec's or
+/// the store's own words — a Save is refused loudly and without migration, so the reason is the
+/// only useful thing to show — and a described Save always has both a place and a time.
+export type SlotDescription =
+  | { readonly slot: SaveSlot; readonly state: 'empty' }
+  | {
+      readonly reason: string;
+      readonly slot: SaveSlot;
+      readonly state: 'invalid' | 'unavailable';
+    }
+  | {
+      readonly savedAt: Date;
+      readonly slot: SaveSlot;
+      readonly state: 'saved';
+      readonly where: string;
+    };
 
-export interface SlotDescription {
-  readonly reason?: string;
-  readonly savedAt?: Date;
-  readonly slot: SaveSlot;
-  readonly state: SlotState;
-  readonly where?: string;
-}
+export type SlotState = SlotDescription['state'];
 
 /// Which action is one press away from happening, and to which slot.
 export interface ArmedAction {
@@ -80,7 +92,6 @@ export interface SavePersistenceOptions {
   readonly release: () => void;
   readonly restore: (snapshot: SaveSnapshot) => void;
   readonly storage: SlotStorage | undefined;
-  readonly storageEvents?: Window;
   readonly time?: () => number;
 }
 
@@ -98,11 +109,6 @@ export interface SavePersistence {
   readonly onChange: (listener: () => void) => void;
   readonly save: (slot: SaveSlot) => SaveOutcome;
 }
-
-const placeOf = (location: Location): string =>
-  location.kind === 'surface'
-    ? 'SURFACE'
-    : `ROOM ${String(location.id).padStart(2, '0')}`;
 
 const reasonOf = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
@@ -138,10 +144,18 @@ export const createSavePersistence = (
     return slots;
   };
   const failed = (action: string, error: unknown): SaveOutcome => {
+    const reason = reasonOf(error);
     armed = undefined;
-    show(`${action} FAILED — ${reasonOf(error)}`.toUpperCase(), true);
+    show(`${action} FAILED — ${reason}`.toUpperCase(), true);
     announce();
-    return { kind: 'failed', reason: reasonOf(error) };
+    return { kind: 'failed', reason };
+  };
+  /// Finish an action that changed something, mirroring `failed`.
+  const done = (text: string): SaveOutcome => {
+    armed = undefined;
+    show(text);
+    announce();
+    return { kind: 'done' };
   };
   const arm = (action: 'delete' | 'save', target: SaveSlot): SaveOutcome => {
     armed = { action, slot: target };
@@ -152,6 +166,11 @@ export const createSavePersistence = (
     );
     announce();
     return { kind: 'armed' };
+  };
+  const clear = (): void => {
+    armed = undefined;
+    notice = undefined;
+    announce();
   };
   const isArmed = (action: 'delete' | 'save', target: SaveSlot): boolean =>
     armed?.action === action && armed.slot === target;
@@ -179,7 +198,7 @@ export const createSavePersistence = (
         savedAt: new Date(saved.savedAt),
         slot: target,
         state: 'saved',
-        where: placeOf(saved.location)
+        where: locationText(saved.location)
       };
     } catch (error) {
       return { reason: reasonOf(error), slot: target, state: 'invalid' };
@@ -198,31 +217,22 @@ export const createSavePersistence = (
         if (!isArmed('delete', target)) {
           return arm('delete', target);
         }
-        armed = undefined;
         store.delete(target);
-        show(`DELETED SLOT ${target}`);
-        announce();
-        return { kind: 'done' };
+        return done(`DELETED SLOT ${target}`);
       } catch (error) {
         return failed('delete', error);
       }
     },
     describe,
+    // Looking away from an armed button cancels it, but leaves any other notice standing.
     disarm: () => {
-      // Looking away from an armed button cancels it, but leaves any other notice standing.
       if (armed !== undefined) {
-        armed = undefined;
-        notice = undefined;
-        announce();
+        clear();
       }
     },
-    dismiss: () => {
-      // Choosing a different slot, or another tab writing one, makes any standing notice stale
-      // — including a sticky failure, which would otherwise outlive what it described.
-      armed = undefined;
-      notice = undefined;
-      announce();
-    },
+    // Choosing a different slot, or another tab writing one, makes any standing notice stale —
+    // including a sticky failure, which would otherwise outlive what it described.
+    dismiss: clear,
     load: target => {
       notice = undefined;
       armed = undefined;
@@ -234,9 +244,7 @@ export const createSavePersistence = (
         const saved = decodeSave(encoded, options.environment);
         options.restore(saved.snapshot);
         options.release();
-        show(`LOADED SLOT ${target}`);
-        announce();
-        return { kind: 'done' };
+        return done(`LOADED SLOT ${target}`);
       } catch (error) {
         return failed('load', error);
       }
@@ -259,7 +267,6 @@ export const createSavePersistence = (
         if (store.read(target) !== null && !isArmed('save', target)) {
           return arm('save', target);
         }
-        armed = undefined;
         options.release();
         const captured = options.capture();
         store.write(
@@ -272,29 +279,12 @@ export const createSavePersistence = (
             snapshot: captured.snapshot
           })
         );
-        show(`SAVED SLOT ${target}`);
-        announce();
-        return { kind: 'done' };
+        return done(`SAVED SLOT ${target}`);
       } catch (error) {
         return failed('save', error);
       }
     }
   };
-};
-
-/// Watch for Saves changed by another tab sharing this storage.
-export const installStorageWatch = (
-  storageEvents: Window,
-  onChange: () => void
-): void => {
-  storageEvents.addEventListener('storage', event => {
-    if (
-      event.key === null ||
-      ALL_SLOTS.some(candidate => event.key === slotStorageKey(candidate))
-    ) {
-      onChange();
-    }
-  });
 };
 
 interface SaveControlElements {
@@ -304,19 +294,25 @@ interface SaveControlElements {
   readonly slot: HTMLSelectElement;
 }
 
+export type SaveControls = Pick<SavePersistence, 'message'>;
+
 interface SaveControlsOptions extends SavePersistenceOptions {
   readonly elements: SaveControlElements;
   readonly storageEvents: Window;
 }
 
-export interface SaveControls {
-  message(gameMessage: string): {
-    readonly source: 'game' | 'shell';
-    readonly text: string;
-  };
-}
+/// How one slot reads in the single line of chrome the select offers.
+///
+/// This belongs to the select, not to the Saves: the chooser renders a slot as separate
+/// elements, so it formats its own parts and this dies with the widget it serves.
+const SLOT_TIME = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit',
+  hour: '2-digit',
+  hour12: false,
+  minute: '2-digit',
+  month: 'short'
+});
 
-/// How one slot reads in a single line of chrome.
 export const slotLabel = (description: SlotDescription): string => {
   const prefix = `SLOT ${description.slot} — `;
   switch (description.state) {
@@ -327,31 +323,29 @@ export const slotLabel = (description: SlotDescription): string => {
     case 'unavailable':
       return `${prefix}UNAVAILABLE`;
     case 'saved':
-      return `${prefix}${description.where} — ${description.savedAt!.toLocaleString(
-        'en-GB',
-        {
-          day: '2-digit',
-          hour: '2-digit',
-          hour12: false,
-          minute: '2-digit',
-          month: 'short'
-        }
-      )}`;
+      return `${prefix}${description.where} — ${SLOT_TIME.format(description.savedAt)}`;
   }
 };
 
 export const installSaveControls = (
-  options: SaveControlsOptions
+  controlOptions: SaveControlsOptions
 ): SaveControls => {
-  const { elements } = options;
-  const persistence = createSavePersistence(options);
+  const { elements } = controlOptions;
+  const persistence = createSavePersistence(controlOptions);
 
   const selectedSlot = (): SaveSlot => Number(elements.slot.value) as SaveSlot;
+  // The three options never change identity, so they are found once rather than per redraw.
+  const options = ALL_SLOTS.map(
+    candidate =>
+      [
+        candidate,
+        elements.slot.querySelector<HTMLOptionElement>(
+          `option[value="${candidate}"]`
+        )!
+      ] as const
+  );
   const refresh = (): void => {
-    for (const candidate of ALL_SLOTS) {
-      const option = elements.slot.querySelector<HTMLOptionElement>(
-        `option[value="${candidate}"]`
-      )!;
+    for (const [candidate, option] of options) {
       option.textContent = slotLabel(persistence.describe(candidate));
     }
     const armed = persistence.armed();
@@ -361,31 +355,26 @@ export const installSaveControls = (
       armed?.action === 'delete' ? 'CONFIRM DELETE' : 'DELETE';
   };
 
-  elements.saveButton.addEventListener('click', () => {
-    persistence.save(selectedSlot());
-    refresh();
-  });
-  elements.loadButton.addEventListener('click', () => {
-    persistence.load(selectedSlot());
-    refresh();
-  });
-  elements.deleteButton.addEventListener('click', () => {
-    persistence.delete(selectedSlot());
-    refresh();
-  });
-
-  const disarm = (): void => {
-    persistence.disarm();
-    refresh();
-  };
-  const dismiss = (): void => {
-    persistence.dismiss();
-    refresh();
-  };
-  elements.saveButton.addEventListener('blur', disarm);
-  elements.deleteButton.addEventListener('blur', disarm);
-  elements.slot.addEventListener('change', dismiss);
-  installStorageWatch(options.storageEvents, dismiss);
+  // The core announces whatever changed, so the caller never has to remember to redraw — and
+  // a press that changed nothing costs no redraw at all.
+  persistence.onChange(refresh);
+  elements.saveButton.addEventListener('click', () =>
+    persistence.save(selectedSlot())
+  );
+  elements.loadButton.addEventListener('click', () =>
+    persistence.load(selectedSlot())
+  );
+  elements.deleteButton.addEventListener('click', () =>
+    persistence.delete(selectedSlot())
+  );
+  elements.saveButton.addEventListener('blur', persistence.disarm);
+  elements.deleteButton.addEventListener('blur', persistence.disarm);
+  elements.slot.addEventListener('change', persistence.dismiss);
+  installStorageWatch(
+    controlOptions.storageEvents,
+    ALL_SLOTS.map(slotStorageKey),
+    persistence.dismiss
+  );
   refresh();
 
   return { message: persistence.message };

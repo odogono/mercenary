@@ -13,3 +13,20 @@ export interface WriteStorage {
 export interface RemoveStorage {
   removeItem(key: string): void;
 }
+
+/// Notice when another tab sharing this storage changes one of the given keys.
+///
+/// A `null` key means the whole store was cleared, which changes every key at once. Saves,
+/// preferences and the typeface all want this, so the keys are the caller's rather than
+/// hardcoded here.
+export const installStorageWatch = (
+  storageEvents: Window,
+  keys: readonly string[],
+  onChange: () => void
+): void => {
+  storageEvents.addEventListener('storage', event => {
+    if (event.key === null || keys.includes(event.key)) {
+      onChange();
+    }
+  });
+};
