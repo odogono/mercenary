@@ -3,17 +3,19 @@ import { describe, expect, test } from 'bun:test';
 import { BensonProgram, BensonSession } from '../src/benson/index.ts';
 import { playerState } from '../src/gameCore/index.ts';
 import type { BensonInstruction } from '../src/payload/documents.ts';
-import { GameplaySession, type SessionContent } from '../src/session/index.ts';
+import { GameplaySession } from '../src/session/index.ts';
 import {
   SAVE_JSON_CODE_UNIT_LIMIT,
   SAVE_SCHEMA_VERSION,
   SaveCodecError,
   decodeSave,
   encodeSave,
-  type SaveEnvelope,
-  type SaveEnvironment
+  type SaveEnvelope
 } from '../src/session/save.ts';
 import { TextTable } from '../src/text/index.ts';
+import { emptyContent, environment } from './fixtures/save.ts';
+
+const content = emptyContent();
 
 const raw = (
   op: string,
@@ -38,43 +40,6 @@ const text = new TextTable({
 });
 
 const scripts = (): BensonSession => new BensonSession(program, text);
-
-const content: SessionContent = {
-  cellSize: 65_536,
-  doorwayRules: undefined,
-  flight: undefined,
-  interaction: undefined,
-  objects: [],
-  rooms: new Map(),
-  underground: undefined
-};
-
-const environment: SaveEnvironment = {
-  payload: {
-    bensonSchemaVersion: 1,
-    decoderVersion: 7,
-    flightSchemaVersion: 3,
-    interactionSchemaVersion: 1,
-    schemaVersion: 8,
-    sourceCoreDigest: 'core',
-    sourceDatasetId: 'dataset',
-    textSchemaVersion: 1,
-    undergroundSchemaVersion: 2
-  },
-  settings: {
-    flight: {
-      groundAltitude: null,
-      pitchScale: 1,
-      referenceFrameRate: 20,
-      runMultiplier: 3,
-      speedScale: 1,
-      throttleFloorNotch: 1,
-      turnScale: 1
-    },
-    message: { charactersPerSecond: 2, holdSeconds: 3 },
-    scripts: { instructionBudget: 512, timeScale: 6 }
-  }
-};
 
 const envelope = (session: GameplaySession): SaveEnvelope => ({
   environment,

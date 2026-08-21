@@ -6,15 +6,17 @@ import {
   type SaveEnvironment,
   type SaveSnapshot
 } from '../session/save.ts';
-import type { Location } from '../world/index.ts';
+import { locationText, type Location } from '../world/index.ts';
+import {
+  installStorageWatch,
+  type ReadStorage,
+  type RemoveStorage,
+  type WriteStorage
+} from './storage.ts';
 
 export type SaveSlot = 1 | 2 | 3;
 
-export interface SlotStorage {
-  getItem(key: string): string | null;
-  removeItem(key: string): void;
-  setItem(key: string, value: string): void;
-}
+export interface SlotStorage extends ReadStorage, RemoveStorage, WriteStorage {}
 
 const slot = (value: number): SaveSlot => {
   if (value !== 1 && value !== 2 && value !== 3) {
@@ -42,94 +44,97 @@ export class SaveSlots {
   }
 }
 
-interface SaveControlElements {
-  readonly deleteButton: HTMLButtonElement;
-  readonly loadButton: HTMLButtonElement;
-  readonly saveButton: HTMLButtonElement;
-  readonly slot: HTMLSelectElement;
+const ALL_SLOTS = [1, 2, 3] as const;
+
+/// What one slot holds, as far as any chooser needs to know.
+///
+/// A union rather than optional fields: `invalid` and `unavailable` always carry the codec's or
+/// the store's own words — a Save is refused loudly and without migration, so the reason is the
+/// only useful thing to show — and a described Save always has both a place and a time.
+export type SlotDescription =
+  | { readonly slot: SaveSlot; readonly state: 'empty' }
+  | {
+      readonly reason: string;
+      readonly slot: SaveSlot;
+      readonly state: 'invalid' | 'unavailable';
+    }
+  | {
+      readonly savedAt: Date;
+      readonly slot: SaveSlot;
+      readonly state: 'saved';
+      readonly where: string;
+    };
+
+export type SlotState = SlotDescription['state'];
+
+/// Which action is one press away from happening, and to which slot.
+export interface ArmedAction {
+  readonly action: 'delete' | 'save';
+  readonly slot: SaveSlot;
 }
 
-interface SaveControlsOptions {
+/// What asking for an action actually did.
+///
+/// `armed` means nothing has happened yet and the same call repeated will do it: overwriting or
+/// clearing a Save always costs two presses.
+export type SaveOutcome =
+  | { readonly kind: 'armed' }
+  | { readonly kind: 'done' }
+  | { readonly kind: 'failed'; readonly reason: string };
+
+export interface SavePersistenceOptions {
   readonly capture: () => {
     readonly location: Location;
     readonly snapshot: SaveSnapshot;
   };
-  readonly elements: SaveControlElements;
   readonly environment: SaveEnvironment;
   readonly now?: () => Date;
   readonly release: () => void;
   readonly restore: (snapshot: SaveSnapshot) => void;
   readonly storage: SlotStorage | undefined;
-  readonly storageEvents: Window;
   readonly time?: () => number;
 }
 
-export interface SaveControls {
-  message(gameMessage: string): {
+export interface SavePersistence {
+  readonly armed: () => ArmedAction | undefined;
+  readonly delete: (slot: SaveSlot) => SaveOutcome;
+  readonly describe: (slot: SaveSlot) => SlotDescription;
+  readonly disarm: () => void;
+  readonly dismiss: () => void;
+  readonly load: (slot: SaveSlot) => SaveOutcome;
+  readonly message: (gameMessage: string) => {
     readonly source: 'game' | 'shell';
     readonly text: string;
   };
+  readonly onChange: (listener: () => void) => void;
+  readonly save: (slot: SaveSlot) => SaveOutcome;
 }
 
-const ALL_SLOTS = [1, 2, 3] as const;
+const reasonOf = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
 
-const labelFor = (slot: SaveSlot, encoded: string | null): string => {
-  if (encoded === null) {
-    return `SLOT ${slot} — EMPTY`;
-  }
-  try {
-    const saved = inspectSave(encoded);
-    const where =
-      saved.location.kind === 'surface'
-        ? 'SURFACE'
-        : `ROOM ${String(saved.location.id).padStart(2, '0')}`;
-    const when = new Date(saved.savedAt).toLocaleString('en-GB', {
-      day: '2-digit',
-      hour: '2-digit',
-      hour12: false,
-      minute: '2-digit',
-      month: 'short'
-    });
-    return `SLOT ${slot} — ${where} — ${when}`;
-  } catch {
-    return `SLOT ${slot} — INVALID`;
-  }
-};
-
-export const installSaveControls = (
-  options: SaveControlsOptions
-): SaveControls => {
-  const { elements } = options;
+/// Own the three Saves: reading, writing, arming, and what to say about each.
+///
+/// Nothing here draws. The chooser, the console and the current controls all ask the same core,
+/// so a Save made one way is described and refused identically the other way.
+export const createSavePersistence = (
+  options: SavePersistenceOptions
+): SavePersistence => {
   const slots =
     options.storage === undefined ? undefined : new SaveSlots(options.storage);
   const now = options.now ?? (() => new Date());
   const time = options.time ?? (() => performance.now());
-  let armed: 'delete' | 'save' | undefined;
+  const listeners: (() => void)[] = [];
+  let armed: ArmedAction | undefined;
   let notice:
     { readonly expires: number | undefined; readonly text: string } | undefined;
 
-  const selectedSlot = (): SaveSlot => Number(elements.slot.value) as SaveSlot;
   const show = (text: string, sticky = false): void => {
     notice = { expires: sticky ? undefined : time() + 2000, text };
   };
-  const clearArmed = (): void => {
-    armed = undefined;
-    elements.saveButton.textContent = 'SAVE';
-    elements.deleteButton.textContent = 'DELETE';
-  };
-  const refresh = (): void => {
-    for (const candidate of ALL_SLOTS) {
-      const option = elements.slot.querySelector<HTMLOptionElement>(
-        `option[value="${candidate}"]`
-      )!;
-      try {
-        option.textContent =
-          slots === undefined
-            ? `SLOT ${candidate} — UNAVAILABLE`
-            : labelFor(candidate, slots.read(candidate));
-      } catch {
-        option.textContent = `SLOT ${candidate} — UNAVAILABLE`;
-      }
+  const announce = (): void => {
+    for (const listener of listeners) {
+      listener();
     }
   };
   const requiredSlots = (): SaveSlots => {
@@ -138,117 +143,112 @@ export const installSaveControls = (
     }
     return slots;
   };
-  const fail = (action: string, error: unknown): void => {
-    const reason = error instanceof Error ? error.message : String(error);
+  const failed = (action: string, error: unknown): SaveOutcome => {
+    const reason = reasonOf(error);
+    armed = undefined;
     show(`${action} FAILED — ${reason}`.toUpperCase(), true);
+    announce();
+    return { kind: 'failed', reason };
   };
-  const beginAction = (): void => {
+  /// Finish an action that changed something, mirroring `failed`.
+  const done = (text: string): SaveOutcome => {
+    armed = undefined;
+    show(text);
+    announce();
+    return { kind: 'done' };
+  };
+  const arm = (action: 'delete' | 'save', target: SaveSlot): SaveOutcome => {
+    armed = { action, slot: target };
+    show(
+      action === 'save'
+        ? `PRESS CONFIRM SAVE TO OVERWRITE SLOT ${target}`
+        : `PRESS CONFIRM DELETE TO CLEAR SLOT ${target}`
+    );
+    announce();
+    return { kind: 'armed' };
+  };
+  const clear = (): void => {
+    armed = undefined;
     notice = undefined;
-    refresh();
+    announce();
   };
+  const isArmed = (action: 'delete' | 'save', target: SaveSlot): boolean =>
+    armed?.action === action && armed.slot === target;
 
-  elements.saveButton.addEventListener('click', () => {
-    beginAction();
-    const selected = selectedSlot();
-    try {
-      const store = requiredSlots();
-      if (store.read(selected) !== null && armed !== 'save') {
-        clearArmed();
-        armed = 'save';
-        elements.saveButton.textContent = 'CONFIRM SAVE';
-        show(`PRESS CONFIRM SAVE TO OVERWRITE SLOT ${selected}`);
-        return;
-      }
-      clearArmed();
-      options.release();
-      const captured = options.capture();
-      store.write(
-        selected,
-        encodeSave({
-          environment: options.environment,
-          location: captured.location,
-          savedAt: now().toISOString(),
-          schemaVersion: SAVE_SCHEMA_VERSION,
-          snapshot: captured.snapshot
-        })
-      );
-      refresh();
-      show(`SAVED SLOT ${selected}`);
-    } catch (error) {
-      clearArmed();
-      fail('save', error);
+  const describe = (target: SaveSlot): SlotDescription => {
+    if (slots === undefined) {
+      return {
+        reason: 'browser storage is unavailable',
+        slot: target,
+        state: 'unavailable'
+      };
     }
-  });
-
-  elements.loadButton.addEventListener('click', () => {
-    beginAction();
-    clearArmed();
-    const selected = selectedSlot();
+    let encoded: string | null;
     try {
-      const encoded = requiredSlots().read(selected);
-      if (encoded === null) {
-        throw new Error(`slot ${selected} is empty`);
-      }
-      const saved = decodeSave(encoded, options.environment);
-      options.restore(saved.snapshot);
-      options.release();
-      show(`LOADED SLOT ${selected}`);
+      encoded = slots.read(target);
     } catch (error) {
-      fail('load', error);
+      return { reason: reasonOf(error), slot: target, state: 'unavailable' };
     }
-  });
-
-  elements.deleteButton.addEventListener('click', () => {
-    beginAction();
-    const selected = selectedSlot();
+    if (encoded === null) {
+      return { slot: target, state: 'empty' };
+    }
     try {
-      const store = requiredSlots();
-      if (store.read(selected) === null) {
-        throw new Error(`slot ${selected} is empty`);
-      }
-      if (armed !== 'delete') {
-        clearArmed();
-        armed = 'delete';
-        elements.deleteButton.textContent = 'CONFIRM DELETE';
-        show(`PRESS CONFIRM DELETE TO CLEAR SLOT ${selected}`);
-        return;
-      }
-      clearArmed();
-      store.delete(selected);
-      refresh();
-      show(`DELETED SLOT ${selected}`);
+      const saved = inspectSave(encoded);
+      return {
+        savedAt: new Date(saved.savedAt),
+        slot: target,
+        state: 'saved',
+        where: locationText(saved.location)
+      };
     } catch (error) {
-      clearArmed();
-      fail('delete', error);
-    }
-  });
-
-  const cancelArmed = (): void => {
-    if (armed !== undefined) {
-      clearArmed();
-      notice = undefined;
+      return { reason: reasonOf(error), slot: target, state: 'invalid' };
     }
   };
-  elements.saveButton.addEventListener('blur', cancelArmed);
-  elements.deleteButton.addEventListener('blur', cancelArmed);
-  elements.slot.addEventListener('change', () => {
-    notice = undefined;
-    clearArmed();
-    refresh();
-  });
-  options.storageEvents.addEventListener('storage', event => {
-    if (
-      event.key === null ||
-      ALL_SLOTS.some(candidate => event.key === slotStorageKey(candidate))
-    ) {
-      clearArmed();
-      notice = undefined;
-      refresh();
-    }
-  });
-  refresh();
 
   return {
+    armed: () => armed,
+    delete: target => {
+      notice = undefined;
+      try {
+        const store = requiredSlots();
+        if (store.read(target) === null) {
+          throw new Error(`slot ${target} is empty`);
+        }
+        if (!isArmed('delete', target)) {
+          return arm('delete', target);
+        }
+        store.delete(target);
+        return done(`DELETED SLOT ${target}`);
+      } catch (error) {
+        return failed('delete', error);
+      }
+    },
+    describe,
+    // Looking away from an armed button cancels it, but leaves any other notice standing.
+    disarm: () => {
+      if (armed !== undefined) {
+        clear();
+      }
+    },
+    // Choosing a different slot, or another tab writing one, makes any standing notice stale —
+    // including a sticky failure, which would otherwise outlive what it described.
+    dismiss: clear,
+    load: target => {
+      notice = undefined;
+      armed = undefined;
+      try {
+        const encoded = requiredSlots().read(target);
+        if (encoded === null) {
+          throw new Error(`slot ${target} is empty`);
+        }
+        const saved = decodeSave(encoded, options.environment);
+        options.restore(saved.snapshot);
+        options.release();
+        return done(`LOADED SLOT ${target}`);
+      } catch (error) {
+        return failed('load', error);
+      }
+    },
     message: gameMessage => {
       if (notice?.expires !== undefined && time() >= notice.expires) {
         notice = undefined;
@@ -256,6 +256,126 @@ export const installSaveControls = (
       return notice === undefined
         ? { source: 'game', text: gameMessage === '' ? '—' : gameMessage }
         : { source: 'shell', text: notice.text };
+    },
+    onChange: listener => {
+      listeners.push(listener);
+    },
+    save: target => {
+      notice = undefined;
+      try {
+        const store = requiredSlots();
+        if (store.read(target) !== null && !isArmed('save', target)) {
+          return arm('save', target);
+        }
+        options.release();
+        const captured = options.capture();
+        store.write(
+          target,
+          encodeSave({
+            environment: options.environment,
+            location: captured.location,
+            savedAt: now().toISOString(),
+            schemaVersion: SAVE_SCHEMA_VERSION,
+            snapshot: captured.snapshot
+          })
+        );
+        return done(`SAVED SLOT ${target}`);
+      } catch (error) {
+        return failed('save', error);
+      }
     }
   };
+};
+
+interface SaveControlElements {
+  readonly deleteButton: HTMLButtonElement;
+  readonly loadButton: HTMLButtonElement;
+  readonly saveButton: HTMLButtonElement;
+  readonly slot: HTMLSelectElement;
+}
+
+export type SaveControls = Pick<SavePersistence, 'message'>;
+
+interface SaveControlsOptions extends SavePersistenceOptions {
+  readonly elements: SaveControlElements;
+  readonly storageEvents: Window;
+}
+
+/// How one slot reads in the single line of chrome the select offers.
+///
+/// This belongs to the select, not to the Saves: the chooser renders a slot as separate
+/// elements, so it formats its own parts and this dies with the widget it serves.
+const SLOT_TIME = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit',
+  hour: '2-digit',
+  hour12: false,
+  minute: '2-digit',
+  month: 'short'
+});
+
+export const slotLabel = (description: SlotDescription): string => {
+  const prefix = `SLOT ${description.slot} — `;
+  switch (description.state) {
+    case 'empty':
+      return `${prefix}EMPTY`;
+    case 'invalid':
+      return `${prefix}INVALID`;
+    case 'unavailable':
+      return `${prefix}UNAVAILABLE`;
+    case 'saved':
+      return `${prefix}${description.where} — ${SLOT_TIME.format(description.savedAt)}`;
+  }
+};
+
+export const installSaveControls = (
+  controlOptions: SaveControlsOptions
+): SaveControls => {
+  const { elements } = controlOptions;
+  const persistence = createSavePersistence(controlOptions);
+
+  const selectedSlot = (): SaveSlot => Number(elements.slot.value) as SaveSlot;
+  // The three options never change identity, so they are found once rather than per redraw.
+  const options = ALL_SLOTS.map(
+    candidate =>
+      [
+        candidate,
+        elements.slot.querySelector<HTMLOptionElement>(
+          `option[value="${candidate}"]`
+        )!
+      ] as const
+  );
+  const refresh = (): void => {
+    for (const [candidate, option] of options) {
+      option.textContent = slotLabel(persistence.describe(candidate));
+    }
+    const armed = persistence.armed();
+    elements.saveButton.textContent =
+      armed?.action === 'save' ? 'CONFIRM SAVE' : 'SAVE';
+    elements.deleteButton.textContent =
+      armed?.action === 'delete' ? 'CONFIRM DELETE' : 'DELETE';
+  };
+
+  // The core announces whatever changed, so the caller never has to remember to redraw — and
+  // a press that changed nothing costs no redraw at all.
+  persistence.onChange(refresh);
+  elements.saveButton.addEventListener('click', () =>
+    persistence.save(selectedSlot())
+  );
+  elements.loadButton.addEventListener('click', () =>
+    persistence.load(selectedSlot())
+  );
+  elements.deleteButton.addEventListener('click', () =>
+    persistence.delete(selectedSlot())
+  );
+  elements.saveButton.addEventListener('blur', persistence.disarm);
+  elements.deleteButton.addEventListener('blur', persistence.disarm);
+  elements.slot.addEventListener('change', persistence.dismiss);
+  installStorageWatch(
+    controlOptions.storageEvents,
+    ALL_SLOTS.map(slotStorageKey),
+    persistence.dismiss
+  );
+  refresh();
+
+  return { message: persistence.message };
 };

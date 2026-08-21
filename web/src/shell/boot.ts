@@ -2,6 +2,7 @@ import { IDLE } from '../gameCore/index.ts';
 import { fetchReader, load } from '../payload/load.ts';
 import type { SessionSnapshot } from '../session/index.ts';
 import { targOrreryFor } from '../sky/index.ts';
+import { locationText } from '../world/index.ts';
 import { FixedStepClock } from './clock.ts';
 import { Renderer } from './frame.ts';
 import { BrowserControlProfile } from './input.ts';
@@ -68,7 +69,7 @@ const statusText = (
     occupation(snapshot)
   ];
   if (snapshot.location.kind === 'room') {
-    fields.push(`ROOM ${String(snapshot.location.id).padStart(2, '0')}`);
+    fields.push(locationText(snapshot.location));
   }
   if (snapshot.occupancy.kind === 'aboard') {
     fields.push(
