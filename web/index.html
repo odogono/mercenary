@@ -231,9 +231,9 @@
         --panel-face-dark: #a68c5c;
         --panel-hi: #eadfba;
         --panel-lo: #574424;
-        --lcd-bg: #0c0c0c;
-        --lcd-ink: #f4f4f4;
-        --cell-border: #e6e6e6;
+        --lcd-bg: #f4f4f4;
+        --lcd-ink: #121212;
+        --cell-border: #121212;
         --msg-bg: #efe6c6;
         --msg-ink: #121212;
         --label-ink: #3c2f16;
@@ -366,20 +366,26 @@
         height: 200px;
         padding: 10px 14px 12px;
         gap: 10px;
-        grid-template-columns: 132px 1fr 176px;
+        grid-template-columns: 124px 1fr 148px;
       }
 
       #panel-targ .column {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 3px;
         align-items: center;
-        padding: 8px;
+        padding: 6px;
+      }
+
+      /* Each instrument is named on the floor of its own bezel, as the panel names them. */
+      #panel-targ .column .plabel {
+        margin-top: auto;
+        font-size: 12px;
       }
 
       #targ-elevation {
-        width: 62px;
-        height: 116px;
+        width: 54px;
+        height: 84px;
         overflow: hidden;
         border-radius: 5px;
       }
@@ -404,10 +410,17 @@
         align-items: center;
       }
 
+      /* The caption is printed on the panel's floor, so the message box takes the slack rather
+         than leaving a gap beneath the label. */
       #panel-targ .middle {
         display: flex;
+        height: 100%;
         flex-direction: column;
         gap: 8px;
+      }
+
+      #panel-targ .middle .caption {
+        margin-top: auto;
       }
 
       /* The message box is part of the panel's face, so it holds its height in silence rather
@@ -430,14 +443,14 @@
       }
 
       #targ-compass-slot {
-        width: 128px;
-        height: 15px;
-        margin-bottom: 8px;
+        width: 112px;
+        height: 14px;
+        margin-bottom: 5px;
       }
 
       #targ-compass {
-        width: 136px;
-        height: 62px;
+        width: 118px;
+        height: 50px;
         overflow: hidden;
         border-radius: 5px;
       }
@@ -715,8 +728,8 @@
                     <canvas
                       id="targ-elevation-canvas"
                       class="instrument-canvas"
-                      width="62"
-                      height="116"
+                      width="54"
+                      height="84"
                     ></canvas>
                   </div>
                   <div class="plabel">ELEVATION</div>
@@ -747,7 +760,7 @@
                     </div>
                   </div>
                   <div id="panel-message" data-field="message"></div>
-                  <div class="plabel">BENSON G9-ST</div>
+                  <div class="plabel caption">BENSON G9-ST</div>
                 </div>
 
                 <div class="column bezel">
@@ -756,8 +769,8 @@
                     <canvas
                       id="targ-compass-canvas"
                       class="instrument-canvas"
-                      width="136"
-                      height="62"
+                      width="118"
+                      height="50"
                     ></canvas>
                   </div>
                   <div class="plabel">COMPASS</div>

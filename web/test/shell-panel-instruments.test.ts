@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { drawElevation } from '../src/shell/panelView.ts';
+import { drawCompass, drawElevation } from '../src/shell/panelView.ts';
 
 interface Fill {
   readonly height: number;
@@ -15,14 +15,16 @@ const recorder = (width: number, height: number) => {
   const fills: Fill[] = [];
   const styles: string[] = [];
   const texts: { readonly text: string; readonly y: number }[] = [];
+  const columns: { readonly text: string; readonly x: number }[] = [];
   const context = {
     fillRect: (x: number, y: number, w: number, h: number) => {
       fills.push({ height: h, width: w, x, y });
       styles.push(String(context.fillStyle));
     },
     fillStyle: '',
-    fillText: (text: string, _x: number, y: number) => {
+    fillText: (text: string, x: number, y: number) => {
       texts.push({ text, y });
+      columns.push({ text, x });
     },
     font: '',
     imageSmoothingEnabled: true,
@@ -37,6 +39,7 @@ const recorder = (width: number, height: number) => {
   const root = {} as HTMLElement;
   return {
     canvas,
+    columns,
     /// The band painted in a given token colour, if any.
     bandOf: (token: string): Fill | undefined => {
       const at = styles.indexOf(token);
@@ -54,12 +57,17 @@ globalThis.getComputedStyle = (() => ({
 })) as unknown as typeof originalGetComputedStyle;
 
 interface Painted {
+  readonly columns?: { readonly text: string; readonly x: number }[];
   readonly texts: { readonly text: string; readonly y: number }[];
 }
 
 /// Where a graduation was printed, if it was in view at all.
 const rowOf = (shot: Painted, label: string): number | undefined =>
   shot.texts.find(at => at.text === label)?.y;
+
+/// Which column a graduation was printed in, for the tape that scrolls sideways.
+const columnOf = (shot: Painted, label: string): number | undefined =>
+  shot.columns?.find(at => at.text === label)?.x;
 
 const labels = (shot: Painted): string[] => shot.texts.map(at => at.text);
 
@@ -123,7 +131,9 @@ describe('the elevation gauge', () => {
     drawElevation(steep.canvas, steep.root, 30);
 
     expect(labels(level)).toContain('00');
-    expect(labels(level)).toContain('-10');
+    // A circular scale, so ten below nought reads three hundred and fifty.
+    expect(labels(level)).toContain('350');
+    expect(labels(level)).not.toContain('-10');
     expect(labels(steep)).toContain('30');
     // A tape shows its neighbourhood, not the whole scale at once.
     expect(labels(steep)).not.toContain('00');
@@ -141,5 +151,36 @@ describe('the elevation gauge', () => {
       expect(sky.height).toBeLessThanOrEqual(116);
       expect(ground.y + ground.height).toBe(116);
     }
+  });
+});
+
+describe('the compass tape', () => {
+  test('reads the heading at the centre, in two digits least', () => {
+    const shot = recorder(118, 50);
+
+    drawCompass(shot.canvas, shot.root, 0);
+
+    expect(rowOf(shot, '00')).toBeDefined();
+    expect(labels(shot)).toContain('350');
+    expect(labels(shot)).not.toContain('-10');
+  });
+
+  test('falls to the right, so ten sits left of the heading and 350 right of it', () => {
+    const shot = recorder(118, 50);
+
+    drawCompass(shot.canvas, shot.root, 0);
+
+    expect(columnOf(shot, '10')!).toBeLessThan(columnOf(shot, '00')!);
+    expect(columnOf(shot, '350')!).toBeGreaterThan(columnOf(shot, '00')!);
+  });
+
+  test('scrolls with the heading rather than standing still', () => {
+    const ahead = recorder(118, 50);
+    drawCompass(ahead.canvas, ahead.root, 0);
+    const turned = recorder(118, 50);
+    drawCompass(turned.canvas, turned.root, 10);
+
+    // Turning towards ten brings it to the centre the nought used to hold.
+    expect(columnOf(turned, '10')).toBeCloseTo(columnOf(ahead, '00')!, 0);
   });
 });

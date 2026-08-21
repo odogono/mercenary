@@ -25,9 +25,20 @@ export interface PanelElements extends PanelCanvases {
 /// The gauge shows roughly fifteen degrees either side of the reading, so its window holds the
 /// ten, nought and minus-ten graduations the original does rather than a whole quadrant.
 const PITCH_PIXELS_PER_DEGREE = 4;
-const COMPASS_PIXELS_PER_DEGREE = 1.4;
+/// Ten degrees is a readable step wide, so the window holds about three graduations as the
+/// original's does rather than a crowd of them.
+const COMPASS_PIXELS_PER_DEGREE = 3;
 const DAMOCLES_PIXELS_PER_DEGREE = 0.28;
 const QUARTER_LETTERS = ['N', 'E', 'S', 'W'] as const;
+
+/// A graduation as the panel prints it: wrapped into one turn, never signed, two digits least.
+///
+/// Both gauges are circular scales, so ten degrees below nought is three hundred and fifty
+/// rather than minus ten.
+const graduation = (degrees: number): string => {
+  const wrapped = ((Math.round(degrees) % 360) + 360) % 360;
+  return String(wrapped).padStart(2, '0');
+};
 
 interface Surface {
   readonly context: CanvasRenderingContext2D;
@@ -86,13 +97,7 @@ export const drawElevation = (
     context.fillRect(1, y, tick, 1);
     context.fillRect(width - 1 - tick, y, tick, 1);
     if (labelled) {
-      // Two digits, as the panel's graduations are printed: nought reads 00.
-      const sign = mark < 0 ? '-' : '';
-      context.fillText(
-        `${sign}${String(Math.abs(mark)).padStart(2, '0')}`,
-        width / 2,
-        y
-      );
+      context.fillText(graduation(mark), width / 2, y);
     }
   }
 };
@@ -114,18 +119,20 @@ export const drawCompass = (
   context.font = '9px "Mercenary Pixel", monospace';
   context.textAlign = 'center';
   context.textBaseline = 'middle';
+  // The scale falls to the right: ten sits left of the current heading and three hundred and
+  // fifty sits right of it.
   const span = width / 2 / COMPASS_PIXELS_PER_DEGREE;
-  const first = Math.ceil((headingDegrees - span) / 10) * 10;
-  for (let mark = first; mark <= headingDegrees + span; mark += 10) {
+  const first = Math.ceil((headingDegrees - span) / 2) * 2;
+  for (let mark = first; mark <= headingDegrees + span; mark += 2) {
     const x = Math.round(
-      width / 2 + (mark - headingDegrees) * COMPASS_PIXELS_PER_DEGREE
+      width / 2 - (mark - headingDegrees) * COMPASS_PIXELS_PER_DEGREE
     );
-    const labelled = ((mark % 30) + 30) % 30 === 0;
-    const length = labelled ? 6 : 4;
+    const labelled = ((mark % 10) + 10) % 10 === 0;
+    const length = labelled ? 7 : 4;
     context.fillRect(x, 0, 1, length);
     context.fillRect(x, height - length, 1, length);
     if (labelled) {
-      context.fillText(String(((mark % 360) + 360) % 360), x, height / 2);
+      context.fillText(graduation(mark), x, height / 2);
     }
   }
   // The original marks the centre faintly rather than with a needle over the numbers.
