@@ -468,6 +468,39 @@ slot 24 takes the restoration path at `$8816`: the destroyed bit is cleared and
 the normal count/reaction dispatch is skipped. `destroyedBlocks` must therefore
 be mutable and saveable, not recomputed from immutable geometry.
 
+The commit path `$87A0-$8832` was read instruction by instruction for M7.3, and
+adds five facts this census did not previously record.
+
+`$87C1-$87C9` reloads the pre-impact byte held in `$FB` and exclusive-ors it with
+the table's current byte, returning when the destroyed bit did not change. That
+is the mechanism behind "do not double-count": a shot at an already-destroyed
+cell still shows its impact but reaches neither counter nor reaction.
+
+`$87D2` shifts the table byte left and branches on the resulting sign, so the
+faction test reads the bit immediately below the destroyed bit. Each faction arm
+carries both an increment and a decrement, selected by the carry the shift left
+behind — the prior destroyed bit. On the commit path that bit is always set by
+the time the arm runs, so the decrement arms describe the inverse transition and
+are not reached by ordinary destruction. Palyar's counter is `$BEBB`; the
+Mechanoid counter is `$BEBC`.
+
+`$87EE-$87FF` computes `$BEBC - $BEBB` — Mechanoid destroyed minus Palyar
+destroyed — and keeps script 10 when that difference is non-negative, otherwise
+complements it and takes script 26. The complement makes the two thresholds
+asymmetric: the Palyar side dispatches once the difference reaches `105`, the
+Mechanoid side once it reaches `-106`.
+
+`$880A-$8811` masks the dispatched cell's low id away and writes the byte back,
+so a reaction fires at most once per cell for the life of a session. A cell that
+is destroyed, restored by the Anti Time Bomb, and destroyed again dispatches
+nothing the second time. The threshold branch at `$87FE` jumps past this wipe,
+so reaching a Gratitude Threshold leaves the struck cell's own reaction intact.
+
+`$8816` saves the pre-impact byte's sign before clearing the destroyed bit, and
+resumes at `$87B9` only when the cell was intact. Restoration therefore never
+touches a counter in either direction, including when it restores a cell that a
+previous shot had genuinely destroyed.
+
 ### Hostile craft
 
 Benson scripts set `attackingShip=1`; native `$8921-$89AF` supplies the encounter.

@@ -231,6 +231,44 @@ class Builder:
             0x25, 0x60,
         )
 
+        # The site commit path: change test, restoration branch, neutral test,
+        # faction counters, threshold, reaction select, wipe, and dispatch.
+        self.ram[0x87A0:0x8833] = bytes(
+            [
+                0x86, 0xF4, 0x8A, 0xEA, 0xA4, 0xB7, 0xC4, 0xF5, 0xD0,
+                0xF0, 0xB9, 0x00, 0x2B, 0x85, 0xF2, 0xAD, 0xD8, 0x29,
+                0x30, 0x62, 0x20, 0xAC, 0x96, 0xD0, 0x07, 0xA5, 0xF4,
+                0xF0, 0x04, 0x4A, 0xB0, 0xDB, 0x60, 0xA5, 0xFB, 0xA4,
+                0xF5, 0x59, 0x00, 0x2B, 0x10, 0xF6, 0xB9, 0x00, 0x2B,
+                0x2C, 0xDD, 0x94, 0xD0, 0xEE, 0x0A, 0x10, 0x0E, 0xB0,
+                0x06, 0xCE, 0xBC, 0xBE, 0x4C, 0xEE, 0x87, 0xEE, 0xBC,
+                0xBE, 0x4C, 0xEE, 0x87, 0xB0, 0x06, 0xCE, 0xBB, 0xBE,
+                0x4C, 0xEE, 0x87, 0xEE, 0xBB, 0xBE, 0xA2, 0x0A, 0xAD,
+                0xBC, 0xBE, 0xED, 0xBB, 0xBE, 0x10, 0x04, 0x49, 0xFF,
+                0xA2, 0x1A, 0xC9, 0x69, 0xB0, 0x12, 0xB9, 0x00, 0x2B,
+                0x29, 0x1F, 0xF0, 0xB9, 0x09, 0x20, 0xAA, 0xB9, 0x00,
+                0x2B, 0x29, 0xE0, 0x99, 0x00, 0x2B, 0x8A, 0x4C, 0x8C,
+                0x8A, 0xA5, 0xFB, 0x08, 0x29, 0x7F, 0x99, 0x00, 0x2B,
+                0x28, 0x10, 0x98, 0x98, 0x20, 0x75, 0x95, 0xA5, 0xF4,
+                0xF0, 0x97, 0x85, 0x08, 0x20, 0xAC, 0x96, 0xC6, 0x08,
+                0xD0, 0xF9, 0x60,
+            ]
+        )
+        # The neutral bit the commit path tests lives in data, not an operand.
+        self.ram[0x94DD] = 0x20
+        # A synthetic city table whose census deliberately differs from the
+        # Reference Build's, so the decoder is proved to scan rather than recite.
+        for cell in range(0x00, 0x14):
+            self.ram[0x2B00 + cell] = 0x20
+        for cell in range(0x14, 0x8C):
+            self.ram[0x2B00 + cell] = 0x40 | 0x03
+        for cell in range(0x8C, 0x100):
+            self.ram[0x2B00 + cell] = 0x02
+        self.ram[0x2B00 + 0x14] = 0x40 | 0x04
+        self.ram[0x2B00 + 0x15] = 0x40 | 0x11
+        self.ram[0x2B00 + 0x16] = 0x40 | 0x11
+        self.ram[0x2B00 + 0x8C] = 0x05
+
     def build(self) -> bytes:
         return bytes(self.ram)
 
@@ -286,6 +324,55 @@ class DecodeTests(unittest.TestCase):
         self.assertEqual(combat["siteDestruction"]["destroyedMask"], 0x80)
         self.assertEqual(combat["siteDestruction"]["axisWindow"], [0x70, 0x90])
         self.assertEqual(combat["objectHits"]["targetSlots"], [15, 0])
+
+    def test_decodes_the_site_table_census_by_scanning_it(self) -> None:
+        sites = decode_endgame(Builder().build())["combat"]["siteDestruction"]
+
+        # The synthetic table's partition, not the Reference Build's.
+        self.assertEqual(
+            sites["initialCounts"],
+            {"mechanoid": 120, "neutral": 20, "palyar": 116},
+        )
+        self.assertEqual(len(sites["initialTable"]), 256)
+        self.assertEqual(sites["initialTable"][0x14], 0x44)
+
+    def test_decodes_every_reaction_id_present_as_a_script(self) -> None:
+        sites = decode_endgame(Builder().build())["combat"]["siteDestruction"]
+        by_id = {row["lowId"]: row for row in sites["reactions"]}
+
+        self.assertEqual(sorted(by_id), [2, 3, 4, 5, 17])
+        self.assertEqual(by_id[2]["script"], 34)
+        self.assertEqual(by_id[3]["script"], 35)
+        self.assertEqual(by_id[4]["cells"], [0x14])
+        self.assertEqual(by_id[17]["cells"], [0x15, 0x16])
+        self.assertEqual(by_id[17]["script"], 49)
+        # Neutral cells carry no reaction, so no row claims them.
+        self.assertTrue(all(cell >= 0x14 for row in by_id.values() for cell in row["cells"]))
+
+    def test_decodes_the_masks_the_commit_path_partitions_a_byte_with(self) -> None:
+        sites = decode_endgame(Builder().build())["combat"]["siteDestruction"]
+
+        self.assertEqual(sites["lowIdMask"], 0x1F)
+        self.assertEqual(sites["neutralMask"], 0x20)
+        self.assertEqual(sites["mechanoidMask"], 0x40)
+        self.assertEqual(sites["destroyedMask"], 0x80)
+        self.assertEqual(sites["reactionWipeMask"], 0xE0)
+        self.assertEqual(sites["reactionDispatchBase"], 0x20)
+        self.assertEqual(sites["restorationKeepMask"], 0x7F)
+        self.assertEqual(sites["restorationSlot"], 24)
+        self.assertTrue(sites["alreadyDestroyedIsInert"])
+
+    def test_decodes_the_faction_threshold_and_its_two_scripts(self) -> None:
+        objective = decode_endgame(Builder().build())["combat"]["siteDestruction"][
+            "factionObjective"
+        ]
+
+        self.assertEqual(objective["comparison"], "mechanoid-minus-palyar")
+        self.assertEqual(objective["threshold"], 105)
+        self.assertEqual(objective["palyarScript"], 10)
+        self.assertEqual(objective["mechanoidScript"], 26)
+        # The negative arm complements before comparing, so it needs one more.
+        self.assertTrue(objective["negativeOnesComplement"])
 
     def test_decodes_the_hostile_craft_capture_transition(self) -> None:
         hostile = decode_endgame(Builder().build())["combat"]["hostileCraft"]
@@ -356,7 +443,7 @@ class DecodeTests(unittest.TestCase):
     def test_reports_a_version_and_bounded_counts(self) -> None:
         document = decode_endgame(Builder().build())
 
-        self.assertEqual(ENDGAME_SCHEMA_VERSION, 3)
+        self.assertEqual(ENDGAME_SCHEMA_VERSION, 4)
         self.assertEqual(document["schemaVersion"], ENDGAME_SCHEMA_VERSION)
         self.assertEqual(
             document["counts"],
@@ -454,6 +541,76 @@ class TerminalCensusTests(unittest.TestCase):
 
 
 class GuardTests(unittest.TestCase):
+    def test_rejects_a_site_commit_that_does_not_test_for_change(self) -> None:
+        builder = Builder()
+        builder.ram[0x87C5] = 0xEA
+
+        with self.assertRaisesRegex(LabError, "destroyed bit did not change"):
+            decode_endgame(builder.build())
+
+    def test_rejects_a_commit_path_that_does_not_branch_to_restoration(self) -> None:
+        builder = Builder()
+        builder.ram[0x87B2] = 0xEA
+
+        with self.assertRaisesRegex(LabError, "restoration while that object is carried"):
+            decode_endgame(builder.build())
+
+    def test_rejects_a_faction_step_that_splits_one_counter(self) -> None:
+        builder = Builder()
+        builder.ram[0x87D8] = 0xBD
+
+        with self.assertRaisesRegex(LabError, "different first counters"):
+            decode_endgame(builder.build())
+
+    def test_rejects_a_threshold_that_reads_other_counters(self) -> None:
+        builder = Builder()
+        builder.ram[0x87F1] = 0xBD
+
+        with self.assertRaisesRegex(LabError, "counters the faction step keeps"):
+            decode_endgame(builder.build())
+
+    def test_rejects_a_wipe_that_does_not_clear_the_dispatched_low_id(self) -> None:
+        builder = Builder()
+        builder.ram[0x880E] = 0xC0
+
+        with self.assertRaisesRegex(LabError, "wipe exactly the low id"):
+            decode_endgame(builder.build())
+
+    def test_rejects_a_restoration_that_clears_more_than_the_destroyed_bit(self) -> None:
+        builder = Builder()
+        builder.ram[0x881A] = 0x3F
+
+        with self.assertRaisesRegex(LabError, "clear exactly the destroyed bit"):
+            decode_endgame(builder.build())
+
+    def test_rejects_masks_that_do_not_partition_a_byte(self) -> None:
+        builder = Builder()
+        builder.ram[0x94DD] = 0x10
+
+        with self.assertRaisesRegex(LabError, "do not partition a byte"):
+            decode_endgame(builder.build())
+
+    def test_rejects_a_city_table_that_has_already_been_played(self) -> None:
+        builder = Builder()
+        builder.ram[0x2B00 + 0x32] |= 0x80
+
+        with self.assertRaisesRegex(LabError, "not an initial state"):
+            decode_endgame(builder.build())
+
+    def test_rejects_a_neutral_cell_carrying_an_unreachable_reaction(self) -> None:
+        builder = Builder()
+        builder.ram[0x2B00 + 0x01] = 0x20 | 0x03
+
+        with self.assertRaisesRegex(LabError, "reaction id it can never dispatch"):
+            decode_endgame(builder.build())
+
+    def test_rejects_a_reaction_id_the_dispatch_table_does_not_reach(self) -> None:
+        builder = Builder()
+        builder.ram[0x2B00 + 0x8D] = 0x01
+
+        with self.assertRaisesRegex(LabError, "dispatch table does not reach"):
+            decode_endgame(builder.build())
+
     def test_requires_a_full_physical_ram_image(self) -> None:
         with self.assertRaisesRegex(LabError, "64 KiB physical RAM"):
             decode_endgame(bytes(1024))

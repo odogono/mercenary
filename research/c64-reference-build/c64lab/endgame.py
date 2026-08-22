@@ -17,7 +17,7 @@ from .flight import decode_float
 from .prng import RANDOM_ROUTINE, RANDOM_STATE, RANDOM_VALUE, decode_reference_prng
 
 
-ENDGAME_SCHEMA_VERSION = 3
+ENDGAME_SCHEMA_VERSION = 4
 
 # Drop key dispatch and native inventory mutation.
 DROP_DISPATCH = 0xB33F
@@ -34,6 +34,25 @@ FIRE_CALL_SITE = 0x85E1
 FIRE_ROUTINE = 0x886A
 PROJECTILE_UPDATE = 0x8690
 HOSTILE_ROUTINE = 0x8921
+
+# Site state, faction counters, and the reaction the commit path dispatches.
+# The 256-byte city table holds, per surface cell, a destroyed bit, a faction
+# or neutral bit, and a low reaction id; the sites below are the committing
+# path that reads it after a shot has already set the destroyed bit.
+SITE_TABLE = 0x2B00
+SITE_TABLE_LENGTH = 0x100
+SITE_COMMIT_READ = 0x87AA
+RESTORATION_TEST_SITE = 0x87AF
+SITE_CHANGE_TEST_SITE = 0x87C1
+NEUTRAL_TEST_SITE = 0x87CA
+FACTION_STEP_SITE = 0x87D2
+PALYAR_COUNTER_SITE = 0x87EB
+MECHANOID_COUNTER_SITE = 0x87DD
+THRESHOLD_SITE = 0x87EE
+REACTION_SELECT_SITE = 0x8800
+REACTION_WIPE_SITE = 0x880A
+REACTION_DISPATCH_SITE = 0x8812
+RESTORATION_SITE = 0x8816
 
 # The hired Interstellar Ship's arrival: called every frame from the main loop,
 # ahead of the branch that would otherwise skip it while the player is indoors.
@@ -315,6 +334,143 @@ def _decode_ship_delivery(ram: bytes) -> dict[str, Any]:
     }
 
 
+def _decode_site_table(ram: bytes) -> dict[str, Any]:
+    """Read the city table's initial state and the reaction census it implies.
+
+    Every mask, counter, script and threshold below is read from the operands of
+    the guarded commit path rather than restated here, and the census is derived
+    by scanning the table rather than transcribed, so a different binary or a
+    played capture fails instead of inheriting these conclusions.
+    """
+    destroyed_mask = ram[0x8763 + 1]
+    low_id_mask = ram[REACTION_SELECT_SITE + 4]
+    dispatch_base = ram[REACTION_SELECT_SITE + 8]
+    wipe_mask = ram[REACTION_WIPE_SITE + 4]
+    restoration_keep_mask = ram[RESTORATION_SITE + 4]
+    neutral_mask_address = ram[NEUTRAL_TEST_SITE + 4] | (ram[NEUTRAL_TEST_SITE + 5] << 8)
+    neutral_mask = ram[neutral_mask_address]
+    # The faction test shifts the byte left and reads the resulting sign, so it
+    # tests the bit immediately below the destroyed bit.
+    mechanoid_mask = destroyed_mask >> 1
+
+    restoration_slot = (
+        ram[RESTORATION_TEST_SITE + 1] | (ram[RESTORATION_TEST_SITE + 2] << 8)
+    ) - OBJECT_FLAGS_BASE
+
+    palyar_counter = ram[PALYAR_COUNTER_SITE + 1] | (ram[PALYAR_COUNTER_SITE + 2] << 8)
+    mechanoid_counter = ram[MECHANOID_COUNTER_SITE + 1] | (ram[MECHANOID_COUNTER_SITE + 2] << 8)
+    _require(
+        palyar_counter != mechanoid_counter,
+        "Faction counters share one address",
+    )
+    for site, counter, complaint in (
+        (PALYAR_COUNTER_SITE - 6, palyar_counter, "second"),
+        (MECHANOID_COUNTER_SITE - 6, mechanoid_counter, "first"),
+    ):
+        decremented = ram[site + 1] | (ram[site + 2] << 8)
+        _require(
+            decremented == counter,
+            f"Faction step increments and decrements different {complaint} counters",
+        )
+    _require(
+        (ram[THRESHOLD_SITE + 3] | (ram[THRESHOLD_SITE + 4] << 8)) == mechanoid_counter
+        and (ram[THRESHOLD_SITE + 6] | (ram[THRESHOLD_SITE + 7] << 8)) == palyar_counter,
+        "Faction threshold does not compare the counters the faction step keeps",
+    )
+
+    _require(
+        wipe_mask == 0xFF ^ low_id_mask,
+        "Reaction dispatch does not wipe exactly the low id it consumed",
+    )
+    _require(
+        restoration_keep_mask == 0xFF ^ destroyed_mask,
+        "Restoration does not clear exactly the destroyed bit",
+    )
+    _require(
+        destroyed_mask | mechanoid_mask | neutral_mask | low_id_mask == 0xFF
+        and destroyed_mask & mechanoid_mask == 0
+        and neutral_mask & (destroyed_mask | mechanoid_mask | low_id_mask) == 0,
+        "City table masks do not partition a byte",
+    )
+    _require(
+        dispatch_base & low_id_mask == 0,
+        "Reaction script base overlaps the low id it is combined with",
+    )
+
+    table = list(ram[SITE_TABLE:SITE_TABLE + SITE_TABLE_LENGTH])
+    _require(
+        len(table) == SITE_TABLE_LENGTH,
+        "City table is not 256 bytes",
+    )
+    _require(
+        not any(byte & destroyed_mask for byte in table),
+        "City table already carries destroyed sites, so this capture is not an initial state",
+    )
+
+    cells_by_low_id: dict[int, list[int]] = {}
+    for cell, byte in enumerate(table):
+        cells_by_low_id.setdefault(byte & low_id_mask, []).append(cell)
+
+    neutral = [cell for cell, byte in enumerate(table) if byte & neutral_mask]
+    mechanoid = [
+        cell
+        for cell, byte in enumerate(table)
+        if byte & mechanoid_mask and not byte & neutral_mask
+    ]
+    palyar = [
+        cell
+        for cell, byte in enumerate(table)
+        if not byte & mechanoid_mask and not byte & neutral_mask
+    ]
+    _require(
+        len(neutral) + len(mechanoid) + len(palyar) == SITE_TABLE_LENGTH,
+        "City table cells do not partition into neutral and the two factions",
+    )
+    _require(
+        all(not table[cell] & low_id_mask for cell in neutral),
+        "A neutral cell carries a reaction id it can never dispatch",
+    )
+    _require(
+        1 not in cells_by_low_id,
+        "City table uses a reaction id the dispatch table does not reach",
+    )
+
+    reactions = [
+        {
+            "cells": sorted(cells),
+            "lowId": low_id,
+            "script": dispatch_base | low_id,
+        }
+        for low_id, cells in sorted(cells_by_low_id.items())
+        if low_id
+    ]
+
+    return {
+        "initialTable": table,
+        "lowIdMask": low_id_mask,
+        "mechanoidMask": mechanoid_mask,
+        "neutralMask": neutral_mask,
+        "reactionDispatchBase": dispatch_base,
+        "reactionWipeMask": wipe_mask,
+        "restorationKeepMask": restoration_keep_mask,
+        "restorationSlot": restoration_slot,
+        "alreadyDestroyedIsInert": True,
+        "initialCounts": {
+            "mechanoid": len(mechanoid),
+            "neutral": len(neutral),
+            "palyar": len(palyar),
+        },
+        "reactions": reactions,
+        "factionObjective": {
+            "comparison": "mechanoid-minus-palyar",
+            "palyarScript": ram[THRESHOLD_SITE + 1],
+            "mechanoidScript": ram[THRESHOLD_SITE + 13],
+            "threshold": ram[THRESHOLD_SITE + 15],
+            "negativeOnesComplement": True,
+        },
+    }
+
+
 def _check(ram: bytes, address: int, expected: tuple[int, ...], complaint: str) -> None:
     found = tuple(ram[address:address + len(expected)])
     _require(found == expected, f"Reference Build {complaint}")
@@ -380,6 +536,36 @@ def _require_engine(ram: bytes) -> None:
         (0x897C, (0xA9, 0x00, 0x8D, 0xF8, 0xBE), "hostile capture does not clear attackingShip"),
         (0x8986, (0xA9, 0x09, 0x85, 0xA9), "hostile capture does not install an immediate mover"),
         (0x898D, (0xA9, 0xFF, 0x8D, 0x4E, 0x29, 0x8D, 0x4F, 0x29), "hostile capture does not remove both hostile slots"),
+        (SITE_COMMIT_READ, (0xB9, 0x00, 0x2B, 0x85), "site commit does not save the struck cell's table byte"),
+        (RESTORATION_TEST_SITE, (0xAD,), "site commit does not read a restoration override's flags"),
+        (RESTORATION_TEST_SITE + 3, (0x30,), "site commit does not branch to restoration while that object is carried"),
+        (SITE_CHANGE_TEST_SITE, (0xA5, 0xFB, 0xA4, 0xF5), "site commit does not reload the pre-impact byte and cell"),
+        (SITE_CHANGE_TEST_SITE + 4, (0x59, 0x00, 0x2B, 0x10), "site commit does not return when the destroyed bit did not change"),
+        (NEUTRAL_TEST_SITE, (0xB9, 0x00, 0x2B, 0x2C), "site commit does not test a neutral bit held in data"),
+        (NEUTRAL_TEST_SITE + 6, (0xD0,), "site commit does not return for a neutral cell"),
+        (FACTION_STEP_SITE, (0x0A, 0x10), "faction step does not shift the table byte to test its faction bit"),
+        (FACTION_STEP_SITE + 3, (0xB0,), "faction step does not branch on the prior destroyed bit"),
+        (MECHANOID_COUNTER_SITE - 6, (0xCE,), "faction step does not decrement its first counter on the inverse transition"),
+        (MECHANOID_COUNTER_SITE, (0xEE,), "faction step does not increment its first counter"),
+        (PALYAR_COUNTER_SITE - 6, (0xCE,), "faction step does not decrement its second counter on the inverse transition"),
+        (PALYAR_COUNTER_SITE, (0xEE,), "faction step does not increment its second counter"),
+        (THRESHOLD_SITE, (0xA2,), "faction threshold does not load an immediate default script"),
+        (THRESHOLD_SITE + 2, (0xAD,), "faction threshold does not read its first counter"),
+        (THRESHOLD_SITE + 5, (0xED,), "faction threshold does not subtract its second counter"),
+        (THRESHOLD_SITE + 8, (0x10, 0x04), "faction threshold does not branch on the sign of that difference"),
+        (THRESHOLD_SITE + 10, (0x49, 0xFF), "faction threshold does not complement a negative difference"),
+        (THRESHOLD_SITE + 12, (0xA2,), "faction threshold does not load an immediate opposing script"),
+        (THRESHOLD_SITE + 14, (0xC9,), "faction threshold is not an immediate comparison"),
+        (THRESHOLD_SITE + 16, (0xB0,), "faction threshold does not dispatch its script once reached"),
+        (REACTION_SELECT_SITE, (0xB9, 0x00, 0x2B, 0x29), "reaction select does not mask a low id out of the table byte"),
+        (REACTION_SELECT_SITE + 5, (0xF0,), "reaction select does not return when a cell has no reaction"),
+        (REACTION_SELECT_SITE + 7, (0x09,), "reaction select does not add an immediate script base"),
+        (REACTION_SELECT_SITE + 9, (0xAA,), "reaction select does not hold its script id in X"),
+        (REACTION_WIPE_SITE, (0xB9, 0x00, 0x2B, 0x29), "reaction dispatch does not mask the table byte again"),
+        (REACTION_WIPE_SITE + 5, (0x99, 0x00, 0x2B), "reaction dispatch does not write the masked byte back"),
+        (REACTION_DISPATCH_SITE, (0x8A, 0x4C), "reaction dispatch does not enter Benson with its script id"),
+        (RESTORATION_SITE, (0xA5, 0xFB, 0x08, 0x29), "restoration does not mask the pre-impact byte behind saved flags"),
+        (RESTORATION_SITE + 5, (0x99, 0x00, 0x2B, 0x28, 0x10), "restoration does not store the cleared byte and resume on the saved sign"),
         (ORBITAL_PREDICATE, (0xA5, 0x74, 0xC9), "orbital predicate does not compare the X cell"),
         (0xA143, (0xA5, 0x7A, 0xC9), "orbital predicate does not compare the Z cell"),
         (0xA149, (0xA5, 0x73, 0x38, 0xE9), "orbital X-axis lower bound is not an immediate subtraction"),
@@ -647,6 +833,7 @@ def decode_endgame(ram: bytes) -> dict[str, Any]:
                 "axisWindow": axis_window,
                 "destroyedMask": ram[0x8763 + 1],
                 "impactFrames": ram[0x8768 + 1],
+                **_decode_site_table(ram),
             },
             "objectHits": {
                 "targetSlots": target_slots,
