@@ -4,6 +4,8 @@ import { playerState } from '../src/gameCore/index.ts';
 import { GameplaySession } from '../src/session/index.ts';
 import {
   applySessionTraceCommand,
+  decodeSessionScenarioLeg,
+  decodeSessionScenarioLegs,
   decodeSessionTraceCommand
 } from '../src/trace/session.ts';
 import { snapshotValue } from './replay/sessionReplay.ts';
@@ -89,5 +91,82 @@ describe('a recorded Session command', () => {
       objectFlags: {},
       residence: {}
     });
+  });
+});
+
+describe('the legs a legal route is built from', () => {
+  test('reads a walk with its heading and effort', () => {
+    expect(
+      decodeSessionScenarioLeg({
+        walk: { running: true, seconds: 2, turn: -1 }
+      })
+    ).toEqual({ kind: 'walk', running: true, seconds: 2, turn: -1 });
+  });
+
+  test('defaults a walk to straight ahead at walking pace', () => {
+    expect(decodeSessionScenarioLeg({ walk: { seconds: 1 } })).toEqual({
+      kind: 'walk',
+      running: false,
+      seconds: 1,
+      turn: 0
+    });
+  });
+
+  test('reads a wait and a reach', () => {
+    expect(decodeSessionScenarioLeg({ wait: 3 })).toEqual({
+      kind: 'wait',
+      seconds: 3
+    });
+    expect(
+      decodeSessionScenarioLeg({ reach: { action: 'board', slot: 1 } })
+    ).toEqual({ action: 'board', kind: 'reach', slot: 1 });
+  });
+
+  test('carries a Session command through unchanged', () => {
+    expect(decodeSessionScenarioLeg({ drop: true })).toEqual({
+      command: { kind: 'drop' },
+      kind: 'command'
+    });
+  });
+
+  test('refuses to be placed anywhere', () => {
+    // Boarding is legal, but only by reaching for it.
+    expect(() => decodeSessionScenarioLeg({ board: 7 })).toThrow(
+      'a legal route will not board'
+    );
+    expect(() => decodeSessionScenarioLeg({ teleport: 16 })).toThrow(
+      'a legal route will not teleport'
+    );
+  });
+
+  test('refuses time that does not pass', () => {
+    expect(() => decodeSessionScenarioLeg({ wait: 0 })).toThrow(
+      'positive number of seconds'
+    );
+    expect(() => decodeSessionScenarioLeg({ walk: { seconds: -1 } })).toThrow(
+      'positive number of seconds'
+    );
+  });
+
+  test('refuses a leg that names more than one step', () => {
+    expect(() => decodeSessionScenarioLeg({ wait: 1, walk: {} })).toThrow(
+      'exactly one step'
+    );
+  });
+
+  test('reads a route in order', () => {
+    expect(
+      decodeSessionScenarioLegs([
+        { walk: { seconds: 1 } },
+        { reach: { action: 'take', slot: 29 } },
+        { drop: true }
+      ]).map(leg => leg.kind)
+    ).toEqual(['walk', 'reach', 'command']);
+  });
+
+  test('refuses a route that is not a list', () => {
+    expect(() => decodeSessionScenarioLegs({ wait: 1 })).toThrow(
+      'must be a list of legs'
+    );
   });
 });
