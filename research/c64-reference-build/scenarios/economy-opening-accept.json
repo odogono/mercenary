@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "name": "economy-opening-accept",
+  "checkpoint": "interactive",
+  "description": "The opening Dart purchase, where the player answers Y inside the purchase poll. Captured for the balance in packed decimal register 8 and the engine flag byte, which is what the browser's own economy tests assert.",
+  "actions": [
+    { "type": "wait_pc", "address": 33911 },
+    { "type": "wait_instructions", "instructions": 60000 },
+    { "type": "key", "petscii": "y" },
+    { "type": "wait_instructions", "instructions": 60000 },
+    { "type": "capture", "artifacts": ["ram", "registers", "display"] }
+  ]
+}
