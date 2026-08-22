@@ -4,7 +4,9 @@ import { SURFACE, locationText, room } from '../world/index.ts';
 import type {
   Composition,
   PanelRendition,
-  PreferencesStore
+  PreferencesStore,
+  WireframeGlow,
+  WireframeWeight
 } from './preferences.ts';
 import type { SavePersistence, SaveSlot } from './saves.ts';
 import type { TypefaceId } from './typography.ts';
@@ -26,18 +28,27 @@ export type ConsoleCommand =
     }
   | { readonly kind: 'load'; readonly slot: SaveSlot };
 
-export type SettingName = 'composition' | 'rendition' | 'sky' | 'typeface';
+export type SettingName =
+  'composition' | 'glow' | 'rendition' | 'sky' | 'typeface' | 'weight';
 
 /// One setting paired with the value it will be set to.
 ///
 /// The value is narrowed at parse time, so execution never re-asks what a string means.
 export type SettingChoice =
   | { readonly name: 'composition'; readonly value: Composition }
+  | { readonly name: 'glow'; readonly value: 'document' | WireframeGlow }
   | { readonly name: 'rendition'; readonly value: PanelRendition }
   | { readonly name: 'sky'; readonly value: 'document' | PresentationPreset }
-  | { readonly name: 'typeface'; readonly value: TypefaceId };
+  | { readonly name: 'typeface'; readonly value: TypefaceId }
+  | { readonly name: 'weight'; readonly value: 'document' | WireframeWeight };
 
 const COMPOSITIONS: readonly Composition[] = ['panel', 'strip'];
+const GLOWS: readonly ('document' | WireframeGlow)[] = [
+  'document',
+  'off',
+  'soft',
+  'bright'
+];
 const RENDITIONS: readonly PanelRendition[] = ['targ', 'damocles'];
 const SKIES: readonly ('document' | PresentationPreset)[] = [
   'document',
@@ -45,6 +56,12 @@ const SKIES: readonly ('document' | PresentationPreset)[] = [
   'enhanced'
 ];
 const TYPEFACES: readonly TypefaceId[] = ['mercenary', 'damocles'];
+const WEIGHTS: readonly ('document' | WireframeWeight)[] = [
+  'document',
+  'fine',
+  'bold',
+  'heavy'
+];
 
 /// Every value each setting accepts, spelled as the settings page spells them.
 ///
@@ -53,9 +70,11 @@ const TYPEFACES: readonly TypefaceId[] = ['mercenary', 'damocles'];
 export const SETTING_VALUES: Readonly<Record<SettingName, readonly string[]>> =
   {
     composition: COMPOSITIONS,
+    glow: GLOWS,
     rendition: RENDITIONS,
     sky: SKIES,
-    typeface: TYPEFACES
+    typeface: TYPEFACES,
+    weight: WEIGHTS
   };
 
 const SETTING_NAMES = Object.keys(SETTING_VALUES) as readonly SettingName[];
@@ -92,6 +111,7 @@ const SETTING_PARSERS: Readonly<
     name: 'composition',
     value: oneOf(COMPOSITIONS, word, 'composition')
   }),
+  glow: word => ({ name: 'glow', value: oneOf(GLOWS, word, 'glow') }),
   rendition: word => ({
     name: 'rendition',
     value: oneOf(RENDITIONS, word, 'rendition')
@@ -100,7 +120,8 @@ const SETTING_PARSERS: Readonly<
   typeface: word => ({
     name: 'typeface',
     value: oneOf(TYPEFACES, word, 'typeface')
-  })
+  }),
+  weight: word => ({ name: 'weight', value: oneOf(WEIGHTS, word, 'weight') })
 };
 
 const cell = (word: string, axis: string, cellsPerAxis: number): number => {
@@ -315,6 +336,21 @@ const applySetting = (setting: SettingChoice, deps: ConsoleDeps): string => {
     case 'rendition':
       deps.preferences.update({ panelRendition: setting.value });
       return `rendition ${setting.value}`;
+    case 'glow':
+      // As with the sky, 'document' hands the choice back to the tuning document.
+      if (setting.value === 'document') {
+        deps.preferences.update({ wireframeGlow: undefined });
+        return 'glow as tuned';
+      }
+      deps.preferences.update({ wireframeGlow: setting.value });
+      return `glow ${setting.value}`;
+    case 'weight':
+      if (setting.value === 'document') {
+        deps.preferences.update({ wireframeWeight: undefined });
+        return 'weight as tuned';
+      }
+      deps.preferences.update({ wireframeWeight: setting.value });
+      return `weight ${setting.value}`;
     case 'sky':
       // The tuning document owns the sky; handing the choice back to it is itself a choice.
       deps.preferences.update(

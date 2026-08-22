@@ -300,7 +300,15 @@ try {
   });
 
   const publish = (): void => {
-    const drawn = renderer.draw(world, snapshot, VIEWPORT);
+    const drawn = renderer.draw(
+      world,
+      snapshot,
+      VIEWPORT,
+      // The player's weight and glow choices are presentation, so they are read per frame the
+      // same way the sky's preset is.
+      effectivePresentation(settings.presentation, preferences.current())
+        .wireframe
+    );
     const player = snapshot.player;
     panel.draw(panelViewModel(snapshot, panelContext()));
 

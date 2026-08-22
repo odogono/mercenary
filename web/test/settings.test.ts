@@ -15,6 +15,8 @@ import {
   DEFAULT_SKY_STAR_COUNT,
   DEFAULT_SKY_STAR_SEED,
   DEFAULT_SKY_YEAR_DAYS,
+  DEFAULT_WIREFRAME_GLOW,
+  DEFAULT_WIREFRAME_THICKNESS,
   SETTINGS_FILE_NAME,
   SettingsError,
   defaultSettings,
@@ -74,6 +76,10 @@ describe('settings that are not there', () => {
         starCount: DEFAULT_SKY_STAR_COUNT,
         starSeed: DEFAULT_SKY_STAR_SEED,
         yearDays: DEFAULT_SKY_YEAR_DAYS
+      },
+      wireframe: {
+        glow: DEFAULT_WIREFRAME_GLOW,
+        thickness: DEFAULT_WIREFRAME_THICKNESS
       }
     });
   });
@@ -217,6 +223,65 @@ describe('the Presentation Preset and Targ sky settings', () => {
         '{"presentation":{"preset":"authentic","sky":{"starCount":-1}}}'
       )
     ).toThrow(SettingsError);
+  });
+});
+
+describe('the Wireframe settings', () => {
+  test('default to the Reference Build hairline with no glow', () => {
+    expect(defaultSettings().presentation.wireframe).toEqual({
+      glow: DEFAULT_WIREFRAME_GLOW,
+      thickness: DEFAULT_WIREFRAME_THICKNESS
+    });
+  });
+
+  test('take the values the document names', () => {
+    expect(
+      loadSettings(
+        '{"presentation":{"wireframe":{"thickness":2.5,"glow":0.4}}}'
+      ).presentation.wireframe
+    ).toEqual({ glow: 0.4, thickness: 2.5 });
+  });
+
+  test('take their defaults for fields a named block omits', () => {
+    expect(
+      loadSettings('{"presentation":{"wireframe":{"glow":0.9}}}').presentation
+        .wireframe
+    ).toEqual({ glow: 0.9, thickness: DEFAULT_WIREFRAME_THICKNESS });
+  });
+
+  test('take their defaults when the block is not named at all', () => {
+    expect(loadSettings('{"presentation":{}}').presentation.wireframe).toEqual(
+      defaultSettings().presentation.wireframe
+    );
+  });
+
+  for (const [field, value] of [
+    ['thickness', 0],
+    ['thickness', 0.99],
+    ['thickness', 4.01],
+    ['thickness', 'bold'],
+    ['glow', -0.01],
+    ['glow', 1.01],
+    ['glow', true]
+  ] as const) {
+    test(`refuses presentation.wireframe.${field} = ${String(value)}`, () => {
+      expect(() =>
+        loadSettings(
+          JSON.stringify({ presentation: { wireframe: { [field]: value } } })
+        )
+      ).toThrow(SettingsError);
+    });
+  }
+
+  test('accepts every inclusive boundary', () => {
+    expect(
+      loadSettings('{"presentation":{"wireframe":{"thickness":4,"glow":1}}}')
+        .presentation.wireframe
+    ).toEqual({ glow: 1, thickness: 4 });
+    expect(
+      loadSettings('{"presentation":{"wireframe":{"thickness":1,"glow":0}}}')
+        .presentation.wireframe
+    ).toEqual({ glow: 0, thickness: 1 });
   });
 });
 

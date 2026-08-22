@@ -46,6 +46,60 @@ void main() {
   colour = vec4(ink, 1.0);
 }`;
 
+/// How far past the core one unit of glow reaches, in pixels.
+const GLOW_SPREAD = 8;
+/// How softly the core's own edge is feathered, in pixels — the antialiasing this context has
+/// otherwise switched off. Shared with the fragment shader below.
+const FEATHER = '0.75';
+
+/// The enhanced ink path draws every line as an expanded screen-space quad rather than a GL
+/// line, because WebGL2 drivers cap `lineWidth` at one pixel. Each instance is one line's two
+/// endpoints; the six corners expand it to two triangles around the segment's axis, extended
+/// past the endpoints so the halo wraps them. `lineSpace` carries how far the fragment sits
+/// from the centre line, in pixels, which is all the shading the fragment shader needs.
+const INK_VERTEX_SHADER = `#version 300 es
+in vec2 corner;
+in vec4 endpoints;
+uniform vec2 viewport;
+uniform float extent;
+out vec2 lineSpace;
+void main() {
+  vec2 span = endpoints.zw - endpoints.xy;
+  float spanLength = max(length(span), 0.0001);
+  vec2 axis = span / spanLength;
+  vec2 across = vec2(-axis.y, axis.x);
+  vec2 centre = (endpoints.xy + endpoints.zw) * 0.5;
+  vec2 place =
+    centre +
+    axis * (corner.x * (spanLength * 0.5 + extent)) +
+    across * (corner.y * extent);
+  vec2 clip = vec2(
+    place.x / viewport.x * 2.0 - 1.0,
+    1.0 - place.y / viewport.y * 2.0
+  );
+  gl_Position = vec4(clip, 0.0, 1.0);
+  lineSpace = vec2(corner.x * (spanLength * 0.5 + extent), corner.y * extent);
+}`;
+
+/// A solid core out to the requested thickness — feathered by roughly a pixel, which is the
+/// antialiasing this context has otherwise switched off — and beyond it a halo of the same ink
+/// fading out over the glow band. Alpha blending rather than additive, so the black dim pass
+/// casts a soft shadow instead of glowing like light.
+const INK_FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+uniform vec3 ink;
+uniform float halfWidth;
+uniform float extent;
+uniform float halo;
+in vec2 lineSpace;
+out vec4 colour;
+void main() {
+  float d = abs(lineSpace.y);
+  float core = 1.0 - smoothstep(halfWidth - ${FEATHER}, halfWidth + ${FEATHER}, d);
+  float falloff = halo * (1.0 - smoothstep(halfWidth, extent, d));
+  colour = vec4(ink, max(core, falloff));
+}`;
+
 const SKY_VERTEX_SHADER = `#version 300 es
 in vec2 pixel;
 in vec2 disc;
@@ -159,6 +213,43 @@ const channels = (colour: RGB8): [number, number, number] => [
   colour.blue / 255
 ];
 
+interface InkPipeline {
+  readonly corner: number;
+  readonly corners: WebGLBuffer;
+  readonly endpoints: WebGLBuffer;
+  readonly endpointsField: number;
+  readonly extent: WebGLUniformLocation | null;
+  readonly halfWidth: WebGLUniformLocation | null;
+  readonly halo: WebGLUniformLocation | null;
+  readonly ink: WebGLUniformLocation | null;
+  readonly program: WebGLProgram;
+  readonly viewport: WebGLUniformLocation | null;
+}
+
+const inkPipeline = (gl: WebGL2RenderingContext): InkPipeline => {
+  const program = linked(gl, INK_VERTEX_SHADER, INK_FRAGMENT_SHADER);
+  // Two triangles' worth of corner signs, one instance of which expands each line.
+  const corners = gl.createBuffer()!;
+  gl.bindBuffer(gl.ARRAY_BUFFER, corners);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array([-1, -1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1]),
+    gl.STATIC_DRAW
+  );
+  return {
+    corner: gl.getAttribLocation(program, 'corner'),
+    corners,
+    endpoints: gl.createBuffer()!,
+    endpointsField: gl.getAttribLocation(program, 'endpoints'),
+    extent: gl.getUniformLocation(program, 'extent'),
+    halfWidth: gl.getUniformLocation(program, 'halfWidth'),
+    halo: gl.getUniformLocation(program, 'halo'),
+    ink: gl.getUniformLocation(program, 'ink'),
+    program,
+    viewport: gl.getUniformLocation(program, 'viewport')
+  };
+};
+
 /// The four corners of the ground fill, leaned about the view's centre, as two triangles.
 const groundVertices = (
   ground: { lean: number; rect: Rect },
@@ -226,6 +317,17 @@ const stripVertices = (size: Size, parity: 0 | 1): Float32Array => {
 };
 
 type DrawMode = 'lines' | 'points' | 'triangles';
+
+/// How thickly to draw wireframe lines, and how much halo they carry.
+///
+/// The defaults are the Reference Build's own presentation; anything else routes line batches
+/// through the expanded-quad pipeline instead of `gl.LINES`.
+export interface InkOptions {
+  readonly glow: number;
+  readonly thickness: number;
+}
+
+export const DEFAULT_INK: InkOptions = { glow: 0, thickness: 1 };
 
 interface DrawBatch {
   readonly colour: RGB8;
@@ -348,6 +450,7 @@ export class Renderer {
   private readonly canvas: HTMLCanvasElement;
   private readonly gl: WebGL2RenderingContext;
   private readonly ink: WebGLUniformLocation | null;
+  private inkPass: InkPipeline | undefined;
   private readonly orrery: TargOrrery | undefined;
   private readonly pixel: number;
   private readonly program: WebGLProgram;
@@ -371,6 +474,9 @@ export class Renderer {
     gl.vertexAttribPointer(pixel, 2, gl.FLOAT, false, 0, 0);
     this.canvas = canvas;
     this.gl = gl;
+    this.ink = gl.getUniformLocation(program, 'ink');
+    // The enhanced pipeline is compiled the first enhanced frame needs it: a player who never
+    // leaves the Reference Build presentation never pays for its shaders either.
     this.orrery = orrery;
     this.pixel = pixel;
     this.program = program;
@@ -391,6 +497,48 @@ export class Renderer {
       this.gl.STREAM_DRAW
     );
     this.gl.drawArrays(modes[batch.mode], 0, batch.vertices.length / 2);
+  }
+
+  /// Draw one line batch through the expanded-quad pipeline.
+  ///
+  /// The endpoints buffer is the same four-floats-per-line layout `pass` streams into
+  /// `gl.LINES`; instancing turns each into the corner-expanded quad instead. The default
+  /// vertex array's state is shared with every other program, so the instance stepping and
+  /// attribute enables this pass asks for are undone before it returns.
+  private enhancedInk(batch: DrawBatch, options: InkOptions, size: Size): void {
+    const gl = this.gl;
+    const ink = (this.inkPass ??= inkPipeline(gl));
+    const halfWidth = options.thickness / 2;
+    gl.useProgram(ink.program);
+    gl.bindBuffer(gl.ARRAY_BUFFER, ink.endpoints);
+    gl.bufferData(gl.ARRAY_BUFFER, batch.vertices, gl.STREAM_DRAW);
+    gl.enableVertexAttribArray(ink.endpointsField);
+    gl.vertexAttribPointer(ink.endpointsField, 4, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribDivisor(ink.endpointsField, 1);
+    gl.bindBuffer(gl.ARRAY_BUFFER, ink.corners);
+    gl.enableVertexAttribArray(ink.corner);
+    gl.vertexAttribPointer(ink.corner, 2, gl.FLOAT, false, 0, 0);
+    gl.uniform2f(ink.viewport, size.width, size.height);
+    gl.uniform3f(ink.ink, ...channels(batch.colour));
+    gl.uniform1f(ink.halfWidth, halfWidth);
+    // The quad always reaches one feather past the core so its antialiased edge has room;
+    // glow spreads it further.
+    gl.uniform1f(
+      ink.extent,
+      halfWidth + Math.max(0.75, GLOW_SPREAD * options.glow)
+    );
+    gl.uniform1f(ink.halo, options.glow);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, batch.vertices.length / 4);
+    gl.disable(gl.BLEND);
+    gl.vertexAttribDivisor(ink.endpointsField, 0);
+    gl.disableVertexAttribArray(ink.endpointsField);
+    gl.disableVertexAttribArray(ink.corner);
+    gl.useProgram(this.program);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.sceneBuffer);
+    gl.enableVertexAttribArray(this.pixel);
+    gl.vertexAttribPointer(this.pixel, 2, gl.FLOAT, false, 0, 0);
   }
 
   private skyPass(frame: SkyFrame, size: Size): void {
@@ -454,10 +602,14 @@ export class Renderer {
   }
 
   /// Draw one Session Snapshot and return the counts the status strip reports.
+  ///
+  /// Ink options beyond the defaults route line batches through the expanded-quad pipeline;
+  /// with the defaults every frame is drawn exactly as it always was.
   draw(
     world: World,
     snapshot: SessionSnapshot,
-    size: Size
+    size: Size,
+    inkOptions: InkOptions = DEFAULT_INK
   ): {
     readonly lines: number;
     readonly points: number;
@@ -476,8 +628,14 @@ export class Renderer {
       this.skyPass(plan.sky, plan.size);
       gl.uniform2f(this.viewport, plan.size.width, plan.size.height);
     }
+    const enhanced =
+      inkOptions.thickness > DEFAULT_INK.thickness || inkOptions.glow > 0;
     for (const batch of plan.batches) {
-      this.pass(batch);
+      if (enhanced && batch.mode === 'lines') {
+        this.enhancedInk(batch, inkOptions, plan.size);
+      } else {
+        this.pass(batch);
+      }
     }
     return { lines: plan.lines, points: plan.points };
   }

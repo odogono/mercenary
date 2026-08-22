@@ -52,11 +52,19 @@ describe('the authored Targ Orrery', () => {
 
     expect(alternate.stars).not.toEqual(orrery.stars);
     expect(
-      targOrreryFor({ preset: 'authentic', sky: defaults })
+      targOrreryFor({
+        preset: 'authentic',
+        sky: defaults,
+        wireframe: { glow: 0, thickness: 1 }
+      })
     ).toBeUndefined();
-    expect(targOrreryFor({ preset: 'enhanced', sky: defaults })?.stars).toEqual(
-      orrery.stars
-    );
+    expect(
+      targOrreryFor({
+        preset: 'enhanced',
+        sky: defaults,
+        wireframe: { glow: 0, thickness: 1 }
+      })?.stars
+    ).toEqual(orrery.stars);
   });
 
   test('starts with the sun up and east and the outer moon in the opening view', () => {

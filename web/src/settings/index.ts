@@ -90,6 +90,18 @@ export interface FlightSettings {
 
 export type PresentationPreset = 'authentic' | 'enhanced';
 
+/// How the wireframe itself is drawn, as the Reference Build drew it unless told otherwise.
+///
+/// A thickness of one pixel and no glow is the decoded presentation; anything else is this
+/// port's own flourish, so both fields keep the authentic values as their defaults and a
+/// document that names neither block changes nothing.
+export interface WireframeSettings {
+  /// How much soft halo each line carries, from none to fully bright.
+  readonly glow: number;
+  /// Line width in pixels, from one (the Reference Build's hairline) to four.
+  readonly thickness: number;
+}
+
 export interface SkySettings {
   readonly dayLengthMinutes: number;
   readonly latitudeDegrees: number;
@@ -102,6 +114,7 @@ export interface SkySettings {
 export interface PresentationSettings {
   readonly preset: PresentationPreset;
   readonly sky: SkySettings;
+  readonly wireframe: WireframeSettings;
 }
 
 export interface Settings {
@@ -128,6 +141,8 @@ export const DEFAULT_SKY_OBLIQUITY_DEGREES = 21;
 export const DEFAULT_SKY_YEAR_DAYS = 96;
 export const DEFAULT_SKY_STAR_COUNT = 450;
 export const DEFAULT_SKY_STAR_SEED = 1985;
+export const DEFAULT_WIREFRAME_THICKNESS = 1;
+export const DEFAULT_WIREFRAME_GLOW = 0;
 
 /// Each flight knob's default is the control loop's own.
 ///
@@ -388,6 +403,34 @@ const readSky = (value: unknown): SkySettings => {
   };
 };
 
+const readWireframe = (value: unknown): WireframeSettings => {
+  const source = block(value, 'presentation.wireframe');
+  return {
+    glow: inRange(
+      number(
+        source,
+        'glow',
+        'presentation.wireframe.glow',
+        DEFAULT_WIREFRAME_GLOW
+      ),
+      'presentation.wireframe.glow',
+      0,
+      1
+    ),
+    thickness: inRange(
+      number(
+        source,
+        'thickness',
+        'presentation.wireframe.thickness',
+        DEFAULT_WIREFRAME_THICKNESS
+      ),
+      'presentation.wireframe.thickness',
+      1,
+      4
+    )
+  };
+};
+
 /// The closed preset vocabulary, narrowed where the vocabulary itself is declared.
 export const isPresentationPreset = (
   value: unknown
@@ -405,7 +448,11 @@ const readPresentation = (value: unknown): PresentationSettings => {
     }
     preset = namedPreset;
   }
-  return { preset, sky: readSky(source['sky']) };
+  return {
+    preset,
+    sky: readSky(source['sky']),
+    wireframe: readWireframe(source['wireframe'])
+  };
 };
 
 export const defaultSettings = (): Settings => ({

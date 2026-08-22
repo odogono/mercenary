@@ -56,7 +56,9 @@ describe('browser shell preferences', () => {
     const preferences: Preferences = {
       composition: 'strip',
       panelRendition: 'damocles',
-      presentationPreset: 'authentic'
+      presentationPreset: 'authentic',
+      wireframeGlow: 'soft',
+      wireframeWeight: 'bold'
     };
     writePreferences(storage, preferences);
     expect(readPreferences(storage)).toEqual(preferences);
@@ -81,6 +83,15 @@ describe('browser shell preferences', () => {
     expect(
       validatePreferences({ presentationPreset: 'cinematic' })
     ).not.toHaveProperty('presentationPreset');
+  });
+
+  test('reject unrecognised wireframe choices instead of passing them through', () => {
+    expect(
+      validatePreferences({ wireframeWeight: 'chunky' })
+    ).not.toHaveProperty('wireframeWeight');
+    expect(
+      validatePreferences({ wireframeGlow: 'blinding' })
+    ).not.toHaveProperty('wireframeGlow');
   });
 
   test('ignore malformed and hostile storage', () => {
@@ -122,7 +133,7 @@ describe('browser shell preferences', () => {
     expect(readPreferences(storage).panelRendition).toBe('damocles');
   });
 
-  test('override only the preset of the tuning document', () => {
+  test('override only presentation of the tuning document', () => {
     const presentation = defaultSettings().presentation;
     expect(effectivePresentation(presentation, DEFAULT_PREFERENCES)).toEqual(
       presentation
@@ -133,6 +144,34 @@ describe('browser shell preferences', () => {
     });
     expect(overridden.preset).toBe('authentic');
     expect(overridden.sky).toEqual(presentation.sky);
+  });
+
+  test('map the named wireframe levels onto the pixels they stand for', () => {
+    const presentation = defaultSettings().presentation;
+    const weighted = effectivePresentation(presentation, {
+      ...DEFAULT_PREFERENCES,
+      wireframeWeight: 'heavy'
+    });
+    expect(weighted.wireframe.thickness).toBe(3);
+    expect(weighted.wireframe.glow).toBe(presentation.wireframe.glow);
+    const glowing = effectivePresentation(presentation, {
+      ...DEFAULT_PREFERENCES,
+      wireframeGlow: 'bright'
+    });
+    expect(glowing.wireframe.glow).toBeCloseTo(0.7);
+    expect(glowing.wireframe.thickness).toBe(presentation.wireframe.thickness);
+    const both = effectivePresentation(presentation, {
+      ...DEFAULT_PREFERENCES,
+      wireframeGlow: 'soft',
+      wireframeWeight: 'bold'
+    });
+    expect(both.wireframe).toEqual({ glow: 0.35, thickness: 2 });
+    // An explicit "off" is a choice, not an absence: it must reach the renderer.
+    const off = effectivePresentation(
+      { ...presentation, wireframe: { ...presentation.wireframe, glow: 1 } },
+      { ...DEFAULT_PREFERENCES, wireframeGlow: 'off' }
+    );
+    expect(off.wireframe.glow).toBe(0);
   });
 
   test('cannot change a Save environment', () => {

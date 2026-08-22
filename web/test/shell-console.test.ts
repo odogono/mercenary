@@ -171,10 +171,13 @@ describe('reading a console command line', () => {
       }
     }
     expect(() => parse('set volume 4')).toThrow(
-      "unknown setting 'volume': try composition, rendition, sky, typeface"
+      "unknown setting 'volume': try composition, glow, rendition, sky, typeface, weight"
     );
     expect(() => parse('set sky purple')).toThrow(
       "sky takes document, authentic, enhanced, and not 'purple'"
+    );
+    expect(() => parse('set weight chunky')).toThrow(
+      "weight takes document, fine, bold, heavy, and not 'chunky'"
     );
     expect(() => parse('set sky')).toThrow('set takes a name and a value');
   });
@@ -268,6 +271,22 @@ describe('doing what a console command says', () => {
 
     expect(run('set sky document', deps)).toEqual(['sky as tuned']);
     expect(changes).toEqual([{ presentationPreset: undefined }]);
+  });
+
+  test('sets the wireframe weight and glow, and hands them back too', () => {
+    const { changes, deps } = harness();
+
+    expect(run('set weight bold', deps)).toEqual(['weight bold']);
+    expect(run('set glow soft', deps)).toEqual(['glow soft']);
+    expect(run('set weight document', deps)).toEqual(['weight as tuned']);
+    expect(run('set glow off', deps)).toEqual(['glow off']);
+
+    expect(changes).toEqual([
+      { wireframeWeight: 'bold' },
+      { wireframeGlow: 'soft' },
+      { wireframeWeight: undefined },
+      { wireframeGlow: 'off' }
+    ]);
   });
 
   test('saves an empty slot outright', () => {

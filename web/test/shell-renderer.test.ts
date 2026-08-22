@@ -73,6 +73,12 @@ const fakeRenderer = (
     disableVertexAttribArray: (_index: number) => undefined,
     drawArrays: (mode: number, _first: number, _count: number) =>
       calls.push(`draw:${String(mode)}`),
+    drawArraysInstanced: (
+      mode: number,
+      _first: number,
+      _count: number,
+      instances: number
+    ) => calls.push(`instanced:${String(mode)}:${String(instances)}`),
     enable: (capability: number) =>
       calls.push(capability === 0x0b_71 ? 'blend:on' : `enable:${capability}`),
     enableVertexAttribArray: (_index: number) => undefined,
@@ -126,6 +132,8 @@ const fakeRenderer = (
     },
     useProgram: (_program: WebGLProgram | null) => undefined,
     VERTEX_SHADER: 0x8b_31,
+    vertexAttribDivisor: (_index: number, divisor: number) =>
+      calls.push(`divisor:${String(divisor)}`),
     vertexAttribPointer: (
       _index: number,
       _size: number,
@@ -145,8 +153,12 @@ const fakeRenderer = (
   const renderer = new Renderer(canvas as unknown as HTMLCanvasElement, orrery);
   return {
     calls,
-    programs,
     renderer,
+    // Read live rather than copied: the enhanced pipeline is compiled lazily, on the first
+    // draw that asks for it.
+    get programs() {
+      return programs;
+    },
     shaderSources,
     uniforms
   };
@@ -271,6 +283,70 @@ describe('a Session Snapshot submitted to WebGL2', () => {
       'buffer',
       'draw:0'
     ]);
+  });
+
+  test('compiles the enhanced ink program only when a draw asks for it', () => {
+    const plain = fakeRenderer();
+    expect(plain.programs).toBe(1);
+    plain.renderer.draw(world, session().snapshot, size);
+    expect(plain.programs).toBe(1);
+
+    const bold = fakeRenderer();
+    bold.renderer.draw(world, session().snapshot, size, {
+      glow: 0,
+      thickness: 2
+    });
+    expect(bold.programs).toBe(2);
+    expect(
+      bold.shaderSources.some(source => source.includes('endpoints'))
+    ).toBeTrue();
+    // The quad must span the whole segment, extended by the extent — expanding by the extent
+    // alone drew every line as a short blob centred on its midpoint.
+    const vertex = bold.shaderSources.find(source =>
+      source.includes('lineSpace')
+    );
+    expect(vertex?.includes('spanLength * 0.5 + extent')).toBeTrue();
+  });
+
+  test('a bold Ink request routes line batches through instanced quads', () => {
+    const { calls, renderer, uniforms } = fakeRenderer();
+
+    renderer.draw(world, session().snapshot, size, {
+      glow: 0,
+      thickness: 2
+    });
+
+    // The two Ink batches become blended instance draws, one instance per line; ground
+    // triangles and Far Points are untouched.
+    const instanced = calls.filter(call => call.startsWith('instanced'));
+    expect(instanced).toHaveLength(2);
+    for (const call of instanced) {
+      expect(call.startsWith('instanced:4:')).toBeTrue();
+    }
+    expect(calls).toContain('blend:on');
+    expect(calls).toContain('divisor:0');
+    expect(calls).toContain('draw:4');
+    expect(calls).toContain('draw:0');
+    // The quad reaches one feather past the two-pixel core even without glow.
+    expect(
+      uniforms.filter(uniform => uniform.name === 'extent')
+    ).toContainEqual({ name: 'extent', values: [1.75] });
+    expect(uniforms).toContainEqual({ name: 'halfWidth', values: [1] });
+  });
+
+  test('a glowing Ink request widens the quad by the glow spread', () => {
+    const { calls, renderer, uniforms } = fakeRenderer();
+
+    renderer.draw(world, session().snapshot, size, {
+      glow: 0.5,
+      thickness: 1
+    });
+
+    expect(calls.filter(call => call.startsWith('instanced'))).toHaveLength(2);
+    expect(
+      uniforms.filter(uniform => uniform.name === 'extent')
+    ).toContainEqual({ name: 'extent', values: [0.5 + 8 * 0.5] });
+    expect(uniforms).toContainEqual({ name: 'halo', values: [0.5] });
   });
 
   test('a lit Room submits both backdrop halves before its Ink', () => {

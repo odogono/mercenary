@@ -4,6 +4,12 @@ import {
 } from '../settings/index.ts';
 import type { ReadStorage, WriteStorage } from './storage.ts';
 
+/// How thick the wireframe's lines are drawn, as named levels rather than raw pixels.
+export type WireframeWeight = 'fine' | 'bold' | 'heavy';
+
+/// How much soft halo each wireframe line carries.
+export type WireframeGlow = 'off' | 'soft' | 'bright';
+
 /// Which visual treatment the Benson Panel wears.
 export type PanelRendition = 'targ' | 'damocles';
 
@@ -22,6 +28,8 @@ export interface Preferences {
   readonly panelRendition: PanelRendition;
   /// Absent means "whatever the tuning document says".
   readonly presentationPreset?: PresentationSettings['preset'];
+  readonly wireframeGlow?: WireframeGlow;
+  readonly wireframeWeight?: WireframeWeight;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -29,11 +37,28 @@ export const DEFAULT_PREFERENCES: Preferences = {
   panelRendition: 'targ'
 };
 
+/// The pixels each named weight and glow level stands for, one vocabulary shared with the
+/// settings page and the console.
+export const WIREFRAME_WEIGHT_PIXELS: Readonly<
+  Record<WireframeWeight, number>
+> = { bold: 2, fine: 1, heavy: 3 };
+export const WIREFRAME_GLOW_AMOUNT: Readonly<Record<WireframeGlow, number>> = {
+  bright: 0.7,
+  off: 0,
+  soft: 0.35
+};
+
 const isRendition = (value: unknown): value is PanelRendition =>
   value === 'targ' || value === 'damocles';
 
 const isComposition = (value: unknown): value is Composition =>
   value === 'panel' || value === 'strip';
+
+const isWeight = (value: unknown): value is WireframeWeight =>
+  value === 'fine' || value === 'bold' || value === 'heavy';
+
+const isGlow = (value: unknown): value is WireframeGlow =>
+  value === 'off' || value === 'soft' || value === 'bright';
 
 /// Narrow whatever was stored to a usable set of preferences.
 ///
@@ -52,8 +77,14 @@ export const validatePreferences = (value: unknown): Preferences => {
     panelRendition: isRendition(source['panelRendition'])
       ? source['panelRendition']
       : DEFAULT_PREFERENCES.panelRendition,
-    // Spread rather than assign: an absent preset must stay absent, not become `undefined`.
-    ...(isPresentationPreset(preset) ? { presentationPreset: preset } : {})
+    // Spread rather than assign: an absent choice must stay absent, not become `undefined`.
+    ...(isPresentationPreset(preset) ? { presentationPreset: preset } : {}),
+    ...(isGlow(source['wireframeGlow'])
+      ? { wireframeGlow: source['wireframeGlow'] as WireframeGlow }
+      : {}),
+    ...(isWeight(source['wireframeWeight'])
+      ? { wireframeWeight: source['wireframeWeight'] as WireframeWeight }
+      : {})
   };
 };
 
@@ -93,24 +124,48 @@ export const applyPreferences = (
 
 /// Compose the presentation block the renderer should use.
 ///
-/// The tuning document remains the baseline and the player may override only its preset. The
-/// sky's own numbers stay authored, and nothing here reaches the blocks that identify a Save.
+/// The tuning document remains the baseline and the player may override its preset and the
+/// wireframe's weight and glow. The sky's own numbers stay authored, and nothing here reaches
+/// the blocks that identify a Save.
 export const effectivePresentation = (
   settings: PresentationSettings,
   preferences: Preferences
-): PresentationSettings =>
-  preferences.presentationPreset === undefined
-    ? settings
-    : { ...settings, preset: preferences.presentationPreset };
+): PresentationSettings => {
+  let presentation = settings;
+  if (preferences.presentationPreset !== undefined) {
+    presentation = { ...presentation, preset: preferences.presentationPreset };
+  }
+  if (preferences.wireframeWeight !== undefined) {
+    presentation = {
+      ...presentation,
+      wireframe: {
+        ...presentation.wireframe,
+        thickness: WIREFRAME_WEIGHT_PIXELS[preferences.wireframeWeight]
+      }
+    };
+  }
+  if (preferences.wireframeGlow !== undefined) {
+    presentation = {
+      ...presentation,
+      wireframe: {
+        ...presentation.wireframe,
+        glow: WIREFRAME_GLOW_AMOUNT[preferences.wireframeGlow]
+      }
+    };
+  }
+  return presentation;
+};
 
 /// What one edit to the preferences may say.
 ///
-/// The preset is spelled with `undefined` allowed rather than merely optional, because handing
-/// the choice back to the tuning document is itself a choice a player can make.
+/// Choices are spelled with `undefined` allowed rather than merely optional, because handing
+/// a choice back to the tuning document is itself a choice a player can make.
 export interface PreferencesChange {
   readonly composition?: Composition;
   readonly panelRendition?: PanelRendition;
   readonly presentationPreset?: PresentationSettings['preset'] | undefined;
+  readonly wireframeGlow?: WireframeGlow | undefined;
+  readonly wireframeWeight?: WireframeWeight | undefined;
 }
 
 export interface PreferencesStore {
@@ -135,7 +190,9 @@ export const createPreferences = (options: {
       if (
         next.composition === preferences.composition &&
         next.panelRendition === preferences.panelRendition &&
-        next.presentationPreset === preferences.presentationPreset
+        next.presentationPreset === preferences.presentationPreset &&
+        next.wireframeGlow === preferences.wireframeGlow &&
+        next.wireframeWeight === preferences.wireframeWeight
       ) {
         return preferences;
       }
