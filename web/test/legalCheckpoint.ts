@@ -146,15 +146,56 @@ export class LegalRoute {
         this.session.intent = before;
         return this;
       }
-      this.session.intent = intent({ turn: this.turnToward(slot), walk: 1 });
+      this.session.intent = intent({
+        turn: this.turnToward(this.positionOf(slot)),
+        walk: 1
+      });
       this.session.advance(STEP);
     }
     this.session.intent = before;
     throw new Error(`slot ${slot} never came within ${action} range`);
   }
 
-  /// Heading is measured from +z toward +x, so a bearing is `atan2(dx, dz)`.
-  private turnToward(slot: number): number {
+  /// Walks through the Doorway that leads to `destination`, and fails if it
+  /// does not open.
+  ///
+  /// Only Movement Intent again: the player has to steer into the opening and
+  /// earn the Wall Contact the Doorway wants, so arriving proves the Doorway
+  /// works rather than asserting that it does.
+  walkThroughTo(destination: number, seconds = 60): this {
+    const here = this.session.location;
+    if (here.kind !== 'room') {
+      throw new Error('Doorways are taken from inside a Room');
+    }
+    const doorway = this.session.content.rooms
+      .get(here.id)
+      ?.doorways?.find(
+        exit =>
+          'room' in exit.destination && exit.destination.room === destination
+      );
+    if (doorway === undefined) {
+      throw new Error(`Room ${here.id} has no Doorway to Room ${destination}`);
+    }
+    const before = this.session.intent;
+    for (let step = 0; step < Math.round(seconds / STEP); step++) {
+      if (
+        this.session.location.kind === 'room' &&
+        this.session.location.id === destination
+      ) {
+        this.session.intent = before;
+        return this;
+      }
+      this.session.intent = intent({
+        turn: this.turnToward(doorway.position),
+        walk: 1
+      });
+      this.session.advance(STEP);
+    }
+    this.session.intent = before;
+    throw new Error(`the Doorway to Room ${destination} never opened`);
+  }
+
+  private positionOf(slot: number): { x: number; z: number } {
     const target = this.session.content.objects.find(
       object => object.slot === slot
     );
@@ -162,10 +203,13 @@ export class LegalRoute {
       throw new Error(`the payload has no slot ${slot}`);
     }
     const moved = this.session.snapshot.residence.get(slot);
-    const at =
-      moved !== undefined && 'at' in moved && moved.at !== undefined
-        ? moved.at
-        : target.origin;
+    return moved !== undefined && 'at' in moved && moved.at !== undefined
+      ? moved.at
+      : target.origin;
+  }
+
+  /// Heading is measured from +z toward +x, so a bearing is `atan2(dx, dz)`.
+  private turnToward(at: { readonly x: number; readonly z: number }): number {
     const player = this.session.snapshot.player;
     const bearing = Math.atan2(
       at.x - player.position.x,
@@ -194,6 +238,21 @@ export class LegalRoute {
       this.session.advance(Math.min(STEP, left));
     }
     return this;
+  }
+
+  /// Advances until no script is running.
+  ///
+  /// A Room's entry script will not start while another is still going, so
+  /// anything that walks out of one Room and into the next has to let the first
+  /// one finish -- exactly as a player would by standing there reading.
+  settle(maxSeconds = 240): this {
+    for (let left = maxSeconds; left > 0; left -= 0.5) {
+      if (this.session.observations().observations['scriptPc'] === -1) {
+        return this;
+      }
+      this.advance(0.5);
+    }
+    throw new Error('a script was still running after waiting it out');
   }
 
   get results(): LegalRun {
