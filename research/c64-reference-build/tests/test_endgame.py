@@ -27,6 +27,12 @@ from c64lab.endgame import (
     HOSTILE_ROUTINE,
     ORBITAL_PREDICATE,
     PROJECTILE_UPDATE,
+    SHIP_DELIVERY_CALL_SITE,
+    SHIP_DELIVERY_DESCEND,
+    SHIP_DELIVERY_INITIALISE,
+    SHIP_DELIVERY_LAND_SITE,
+    SHIP_DELIVERY_ROUTINE,
+    SHIP_DELIVERY_SHIFT_SITE,
     census_terminal_dispatches,
     decode_endgame,
 )
@@ -204,6 +210,26 @@ class Builder:
         self._place(FIELD_COLOUR_TABLE, *invented_colours)
         self._place(0xAC0A, 0x60, 0x00)
         self._place(FIELD_POINT_COUNT_SITE, 0x14, 0x3F, 0x20, 0x38, 0x00, 0x15, 0x03, 0x08, 0x99)
+        self._ship_delivery()
+
+    def _ship_delivery(self) -> None:
+        # $855C-$8564: the Benson step, the delivery call, then the underground
+        # branch the call deliberately sits in front of.
+        self._place(0x855C, 0x20, 0xB2, 0x8A, 0x20, 0x34, 0x86, 0xA5, 0xA8, 0xF0, 0x3B)
+        # $8634-$868F, byte for byte as the Reference Build carries it.
+        self._place(
+            0x8634,
+            0xAD, 0xFF, 0xBE, 0xF0, 0x2A, 0x30, 0x29, 0xAD, 0x87, 0x25,
+            0x85, 0x09, 0xA8, 0xAD, 0xC7, 0x24, 0x85, 0x08, 0xA2, 0x07,
+            0x46, 0x09, 0x66, 0x08, 0xCA, 0xD0, 0xF9, 0x18, 0xE5, 0x08,
+            0x8D, 0xC7, 0x24, 0x98, 0xE5, 0x09, 0x8D, 0x87, 0x25, 0x0D,
+            0xC7, 0x24, 0xD0, 0x03, 0x8D, 0xFF, 0xBE, 0x60, 0xA9, 0x7F,
+            0x8D, 0x87, 0x25, 0x8D, 0xFF, 0xBE, 0xA9, 0x00, 0x8D, 0x47,
+            0x29, 0x8D, 0xC7, 0x24, 0x8D, 0xC7, 0x28, 0x8D, 0x87, 0x28,
+            0x8D, 0x07, 0x29, 0xA9, 0x08, 0x8D, 0x47, 0x25, 0x8D, 0xC7,
+            0x25, 0xA9, 0x99, 0x8D, 0x87, 0x24, 0xA9, 0x8B, 0x8D, 0x07,
+            0x25, 0x60,
+        )
 
     def build(self) -> bytes:
         return bytes(self.ram)
@@ -219,6 +245,31 @@ class DecodeTests(unittest.TestCase):
         self.assertEqual(drop["carriedMask"], 0x80)
         self.assertEqual(drop["carriedExemptionSlot"], 56)
         self.assertTrue(drop["copiesCurrentRoomAndPosition"])
+
+    def test_decodes_where_the_hired_ship_goes(self) -> None:
+        delivery = decode_endgame(Builder().build())["shipDelivery"]
+
+        # The slot is derived from the stores' shared table offset, never named.
+        self.assertEqual(delivery["slot"], 7)
+        self.assertEqual(delivery["cadence"], "every-frame")
+        self.assertEqual(delivery["initialisation"]["room"], 0)
+        self.assertEqual(delivery["initialisation"]["x"], 0x089900)
+        self.assertEqual(delivery["initialisation"]["z"], 0x088B00)
+        self.assertEqual(delivery["initialisation"]["y"], 0x7F0000)
+        self.assertEqual(delivery["landing"]["cell"], [8, 8])
+
+    def test_decodes_how_the_hired_ship_descends(self) -> None:
+        delivery = decode_endgame(Builder().build())["shipDelivery"]
+
+        self.assertEqual(delivery["acceptedMask"], 0x80)
+        self.assertEqual(delivery["descendingValue"], 0x7F)
+        self.assertEqual(delivery["inactiveValue"], 0)
+        self.assertEqual(delivery["descent"]["shift"], 7)
+        self.assertEqual(delivery["descent"]["extraSubtraction"], 1)
+        self.assertEqual(delivery["descent"]["widthBits"], 16)
+        self.assertEqual(delivery["landing"]["predicate"], "sixteen-bit-zero")
+        self.assertTrue(delivery["landing"]["clearsState"])
+        self.assertEqual(delivery["landing"]["framesToLand"], 779)
 
     def test_decodes_the_two_take_override_identities(self) -> None:
         overrides = decode_endgame(Builder().build())["controls"]["takeOverrides"]
@@ -305,9 +356,16 @@ class DecodeTests(unittest.TestCase):
     def test_reports_a_version_and_bounded_counts(self) -> None:
         document = decode_endgame(Builder().build())
 
-        self.assertEqual(ENDGAME_SCHEMA_VERSION, 2)
+        self.assertEqual(ENDGAME_SCHEMA_VERSION, 3)
         self.assertEqual(document["schemaVersion"], ENDGAME_SCHEMA_VERSION)
-        self.assertEqual(document["counts"], {"orbitalCallSites": 3, "objectHitTargets": 2, "interstellarShipFieldPoints": 21})
+        self.assertEqual(
+            document["counts"],
+            {
+                "orbitalCallSites": 3,
+                "objectHitTargets": 2,
+                "interstellarShipFieldPoints": 21,
+            },
+        )
 
 
 class TerminalCensusTests(unittest.TestCase):
@@ -405,6 +463,51 @@ class GuardTests(unittest.TestCase):
         builder.ram[DROP_DISPATCH] = 0xEA
 
         with self.assertRaisesRegex(LabError, "drop key dispatch"):
+            decode_endgame(builder.build())
+
+    def test_rejects_a_ship_delivery_that_is_not_called_every_frame(self) -> None:
+        builder = Builder()
+        builder.ram[SHIP_DELIVERY_CALL_SITE] = 0xEA
+
+        with self.assertRaisesRegex(LabError, "ship delivery every frame"):
+            decode_endgame(builder.build())
+
+    def test_rejects_a_ship_delivery_called_after_the_underground_branch(self) -> None:
+        builder = Builder()
+        builder.ram[SHIP_DELIVERY_CALL_SITE + 3] = 0xEA
+
+        with self.assertRaisesRegex(LabError, "underground branch"):
+            decode_endgame(builder.build())
+
+    def test_rejects_a_changed_ship_descent(self) -> None:
+        for address, complaint in (
+            (SHIP_DELIVERY_ROUTINE, "state byte"),
+            (SHIP_DELIVERY_DESCEND, "altitude high byte"),
+            (SHIP_DELIVERY_DESCEND + 6, "altitude middle byte"),
+            (SHIP_DELIVERY_SHIFT_SITE + 2, "shift its altitude right"),
+            (SHIP_DELIVERY_SHIFT_SITE + 9, "carry deliberately clear"),
+            (SHIP_DELIVERY_LAND_SITE, "both altitude bytes for zero"),
+        ):
+            with self.subTest(address=address):
+                builder = Builder()
+                builder.ram[address] = 0xEA
+
+                with self.assertRaisesRegex(LabError, complaint):
+                    decode_endgame(builder.build())
+
+    def test_rejects_a_ship_delivery_that_writes_across_slots(self) -> None:
+        builder = Builder()
+        # Move one component store to a different slot's entry.
+        builder.ram[0x8688] = 0x88
+
+        with self.assertRaisesRegex(LabError, "writes across slots"):
+            decode_endgame(builder.build())
+
+    def test_rejects_a_ship_that_would_never_start_descending(self) -> None:
+        builder = Builder()
+        builder.ram[SHIP_DELIVERY_INITIALISE + 1] = 0xFF
+
+        with self.assertRaisesRegex(LabError, "descend on a positive state"):
             decode_endgame(builder.build())
 
     def test_rejects_changed_take_override_fingerprints(self) -> None:

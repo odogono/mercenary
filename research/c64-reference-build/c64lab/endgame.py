@@ -17,7 +17,7 @@ from .flight import decode_float
 from .prng import RANDOM_ROUTINE, RANDOM_STATE, RANDOM_VALUE, decode_reference_prng
 
 
-ENDGAME_SCHEMA_VERSION = 2
+ENDGAME_SCHEMA_VERSION = 3
 
 # Drop key dispatch and native inventory mutation.
 DROP_DISPATCH = 0xB33F
@@ -34,6 +34,25 @@ FIRE_CALL_SITE = 0x85E1
 FIRE_ROUTINE = 0x886A
 PROJECTILE_UPDATE = 0x8690
 HOSTILE_ROUTINE = 0x8921
+
+# The hired Interstellar Ship's arrival: called every frame from the main loop,
+# ahead of the branch that would otherwise skip it while the player is indoors.
+SHIP_DELIVERY_CALL_SITE = 0x855F
+SHIP_DELIVERY_ROUTINE = 0x8634
+SHIP_DELIVERY_STATE = 0xBEFF
+SHIP_DELIVERY_DESCEND = 0x863B
+SHIP_DELIVERY_SHIFT_SITE = 0x8646
+SHIP_DELIVERY_LAND_SITE = 0x865B
+SHIP_DELIVERY_INITIALISE = 0x8664
+
+# Object component tables, as `c64lab/geometry.py` reads them. The descent
+# writes through these at the ship's own slot, which is what fixes the slot.
+SHIP_DELIVERY_COMPONENTS = {
+    "x": (0x2880, 0x2480, 0x2540),
+    "y": (0x28C0, 0x24C0, 0x2580),
+    "z": (0x2900, 0x2500, 0x25C0),
+}
+SHIP_DELIVERY_ROOM_TABLE = 0x2940
 
 # The shared predicate used by flying, landing, and the orbital-region mover.
 ORBITAL_PREDICATE = 0xA13D
@@ -203,6 +222,99 @@ def census_terminal_dispatches(benson: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _ship_delivery_slot(ram: bytes) -> int:
+    """The slot every initialisation store addresses, or a failure if they disagree.
+
+    The routine never names a slot: it names sixteen-bit addresses inside the
+    object component tables, and the slot is their common offset.  Deriving it
+    rather than asserting it is what makes the decode fail loudly on a build
+    that delivers a different craft.
+    """
+    stores = {
+        0x8666: SHIP_DELIVERY_COMPONENTS["y"][2],
+        0x866E: SHIP_DELIVERY_ROOM_TABLE,
+        0x8671: SHIP_DELIVERY_COMPONENTS["y"][1],
+        0x8674: SHIP_DELIVERY_COMPONENTS["y"][0],
+        0x8677: SHIP_DELIVERY_COMPONENTS["x"][0],
+        0x867A: SHIP_DELIVERY_COMPONENTS["z"][0],
+        0x867F: SHIP_DELIVERY_COMPONENTS["x"][2],
+        0x8682: SHIP_DELIVERY_COMPONENTS["z"][2],
+        0x8687: SHIP_DELIVERY_COMPONENTS["x"][1],
+        0x868C: SHIP_DELIVERY_COMPONENTS["z"][1],
+    }
+    slots = set()
+    for site, base in stores.items():
+        _check(ram, site, (0x8D,), f"ship delivery does not store through ${site:04X}")
+        target = ram[site + 1] | (ram[site + 2] << 8)
+        _require(target >= base, f"Reference Build ship delivery writes below ${base:04X}")
+        slots.add(target - base)
+    _require(len(slots) == 1, f"Reference Build ship delivery writes across slots {sorted(slots)}")
+    return slots.pop()
+
+
+def _frames_to_land(altitude: int, shift: int) -> int:
+    """How many frames the decoded decay takes to reach the ground.
+
+    Run rather than measured, so it moves with the shift count and the seed
+    instead of having to be maintained alongside them.
+    """
+    frames = 0
+    while altitude:
+        altitude -= (altitude >> shift) + 1
+        frames += 1
+        _require(frames < 1_000_000, "Ship descent does not reach the ground")
+    return frames
+
+
+def _decode_ship_delivery(ram: bytes) -> dict[str, Any]:
+    """Read where the hired ship goes, how fast, and when it has arrived."""
+    slot = _ship_delivery_slot(ram)
+    descending = ram[SHIP_DELIVERY_INITIALISE + 1]
+    _require(descending and not descending & 0x80, "Ship delivery does not descend on a positive state")
+
+    # Every component is stored from an immediate, so the destination is read
+    # out of the loads rather than assumed.
+    _check(ram, 0x867D, (0xA9,), "ship delivery does not load an immediate X/Z high byte")
+    _check(ram, 0x8685, (0xA9,), "ship delivery does not load an immediate X middle byte")
+    _check(ram, 0x868A, (0xA9,), "ship delivery does not load an immediate Z middle byte")
+    cell_byte = ram[0x867E]
+    x_middle = ram[0x8686]
+    z_middle = ram[0x868B]
+    zeroed = ram[SHIP_DELIVERY_INITIALISE + 9]
+    _require(zeroed == 0, "Ship delivery does not clear its low components")
+
+    return {
+        "slot": slot,
+        "cadence": "every-frame",
+        "callSite": SHIP_DELIVERY_CALL_SITE,
+        "inactiveValue": 0,
+        "acceptedMask": 0x80,
+        "descendingValue": descending,
+        "initialisation": {
+            "room": zeroed,
+            "x": (cell_byte << 16) | (x_middle << 8) | zeroed,
+            "y": (descending << 16) | (zeroed << 8) | zeroed,
+            "z": (cell_byte << 16) | (z_middle << 8) | zeroed,
+        },
+        "descent": {
+            "axis": "y",
+            "widthBits": 16,
+            "lowByteHeldAt": zeroed,
+            "shift": ram[SHIP_DELIVERY_SHIFT_SITE + 1],
+            "extraSubtraction": 1,
+        },
+        "landing": {
+            "predicate": "sixteen-bit-zero",
+            "cell": [cell_byte, cell_byte],
+            "clearsState": True,
+            "framesToLand": _frames_to_land(
+                (descending << 8) | zeroed,
+                ram[SHIP_DELIVERY_SHIFT_SITE + 1],
+            ),
+        },
+    }
+
+
 def _check(ram: bytes, address: int, expected: tuple[int, ...], complaint: str) -> None:
     found = tuple(ram[address:address + len(expected)])
     _require(found == expected, f"Reference Build {complaint}")
@@ -223,6 +335,23 @@ def _require_engine(ram: bytes) -> None:
         (0x9915, (0x99, 0xC0, 0x29), "drop does not persist the changed object flags"),
         (0x991B, (0xA5, 0xCD, 0x99, 0x40, 0x29), "drop does not copy the current room"),
         (0x9920, (0xA5, 0x72, 0x99, 0x80, 0x28), "drop does not copy the current position"),
+        (SHIP_DELIVERY_CALL_SITE, (0x20, 0x34, 0x86), "frame loop does not call the ship delivery every frame"),
+        (SHIP_DELIVERY_CALL_SITE + 3, (0xA5, 0xA8), "ship delivery is not called ahead of the underground branch"),
+        (SHIP_DELIVERY_ROUTINE, (0xAD, 0xFF, 0xBE), "ship delivery does not read its state byte"),
+        (SHIP_DELIVERY_ROUTINE + 3, (0xF0,), "ship delivery does not return when no ship is coming"),
+        (SHIP_DELIVERY_ROUTINE + 5, (0x30,), "ship delivery does not branch on the accepted bit"),
+        (SHIP_DELIVERY_DESCEND, (0xAD, 0x87, 0x25, 0x85, 0x09, 0xA8), "ship descent does not read its altitude high byte"),
+        (SHIP_DELIVERY_DESCEND + 6, (0xAD, 0xC7, 0x24, 0x85, 0x08), "ship descent does not read its altitude middle byte"),
+        (SHIP_DELIVERY_SHIFT_SITE, (0xA2,), "ship descent does not load an immediate shift count"),
+        (SHIP_DELIVERY_SHIFT_SITE + 2, (0x46, 0x09, 0x66, 0x08, 0xCA, 0xD0, 0xF9), "ship descent does not shift its altitude right"),
+        (SHIP_DELIVERY_SHIFT_SITE + 9, (0x18, 0xE5, 0x08), "ship descent does not subtract with the carry deliberately clear"),
+        (SHIP_DELIVERY_SHIFT_SITE + 12, (0x8D, 0xC7, 0x24, 0x98, 0xE5, 0x09), "ship descent does not complete a sixteen-bit subtraction"),
+        (SHIP_DELIVERY_LAND_SITE, (0x0D, 0xC7, 0x24, 0xD0), "ship descent does not test both altitude bytes for zero"),
+        (SHIP_DELIVERY_LAND_SITE + 5, (0x8D, 0xFF, 0xBE, 0x60), "ship descent does not clear its state on landing"),
+        (SHIP_DELIVERY_INITIALISE, (0xA9,), "ship delivery does not load an immediate descent altitude"),
+        (SHIP_DELIVERY_INITIALISE + 2, (0x8D, 0x87, 0x25), "ship delivery does not seed the altitude high byte"),
+        (SHIP_DELIVERY_INITIALISE + 5, (0x8D, 0xFF, 0xBE), "ship delivery does not mark itself descending"),
+        (SHIP_DELIVERY_INITIALISE + 8, (0xA9, 0x00), "ship delivery does not zero the components it clears"),
         (FIRE_CALL_SITE, (0xA9,), "frame loop does not load a fire direction offset"),
         (FIRE_CALL_SITE + 2, (0x20, 0x6A, 0x88), "frame loop does not call the fire routine"),
         (FIRE_ROUTINE, (0x85, 0x09, 0xA5, 0x81), "fire does not save its offset and read the action latch"),
@@ -535,6 +664,7 @@ def decode_endgame(ram: bytes) -> dict[str, Any]:
                 "captureRemovesSlots": [ram[0x898D + 3] - 0x40, ram[0x898D + 6] - 0x40],
             },
         },
+        "shipDelivery": _decode_ship_delivery(ram),
         "orbitalTransition": {
             "cell": [ram[ORBITAL_PREDICATE + 3], ram[0xA143 + 3]],
             "axisMiddleByteWindow": [orbital_lower, orbital_lower + orbital_width],

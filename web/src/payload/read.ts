@@ -873,6 +873,14 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
   );
   const orbital = asObject(r, o['orbitalTransition'], 'orbitalTransition');
   const ending = asObject(r, o['endingPresentation'], 'endingPresentation');
+  const delivery = asObject(r, o['shipDelivery'], 'shipDelivery');
+  const descent = asObject(r, delivery['descent'], 'shipDelivery.descent');
+  const initialisation = asObject(
+    r,
+    delivery['initialisation'],
+    'shipDelivery.initialisation'
+  );
+  const landing = asObject(r, delivery['landing'], 'shipDelivery.landing');
   const field = asObject(
     r,
     ending['interstellarShipField'],
@@ -1151,7 +1159,74 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
         'orbitalTransition.successCarry'
       )
     },
-    schemaVersion: asInt(r, o['schemaVersion'], 'schemaVersion')
+    schemaVersion: asInt(r, o['schemaVersion'], 'schemaVersion'),
+    shipDelivery: {
+      acceptedMask: asInt(
+        r,
+        delivery['acceptedMask'],
+        'shipDelivery.acceptedMask'
+      ),
+      cadence: asString(r, delivery['cadence'], 'shipDelivery.cadence'),
+      callSite: asInt(r, delivery['callSite'], 'shipDelivery.callSite'),
+      descendingValue: asInt(
+        r,
+        delivery['descendingValue'],
+        'shipDelivery.descendingValue'
+      ),
+      descent: {
+        axis: asString(r, descent['axis'], 'shipDelivery.descent.axis'),
+        extraSubtraction: asInt(
+          r,
+          descent['extraSubtraction'],
+          'shipDelivery.descent.extraSubtraction'
+        ),
+        lowByteHeldAt: asInt(
+          r,
+          descent['lowByteHeldAt'],
+          'shipDelivery.descent.lowByteHeldAt'
+        ),
+        shift: asInt(r, descent['shift'], 'shipDelivery.descent.shift'),
+        widthBits: asInt(
+          r,
+          descent['widthBits'],
+          'shipDelivery.descent.widthBits'
+        )
+      },
+      inactiveValue: asInt(
+        r,
+        delivery['inactiveValue'],
+        'shipDelivery.inactiveValue'
+      ),
+      initialisation: {
+        room: asInt(
+          r,
+          initialisation['room'],
+          'shipDelivery.initialisation.room'
+        ),
+        x: asInt(r, initialisation['x'], 'shipDelivery.initialisation.x'),
+        y: asInt(r, initialisation['y'], 'shipDelivery.initialisation.y'),
+        z: asInt(r, initialisation['z'], 'shipDelivery.initialisation.z')
+      },
+      landing: {
+        cell: intArray(r, landing['cell'], 'shipDelivery.landing.cell'),
+        clearsState: asBool(
+          r,
+          landing['clearsState'],
+          'shipDelivery.landing.clearsState'
+        ),
+        framesToLand: asInt(
+          r,
+          landing['framesToLand'],
+          'shipDelivery.landing.framesToLand'
+        ),
+        predicate: asString(
+          r,
+          landing['predicate'],
+          'shipDelivery.landing.predicate'
+        )
+      },
+      slot: asInt(r, delivery['slot'], 'shipDelivery.slot')
+    }
   };
 };
 
