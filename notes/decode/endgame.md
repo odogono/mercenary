@@ -330,9 +330,16 @@ room-entry script trigger and the required final Object Residence.
 
 Slots 29, 31, 34, 35, and 43 therefore have mutually exclusive buyers. The
 first completed hand-in sets their claimed bit and makes the alternative script
-return without payment. A Mechanoid hand-in first checks whether captured
-Mechanoid slot 12 is in room 102; if so it refuses all five families until the
-leader is removed (`$104C-$107E`).
+return without payment.
+
+A Mechanoid hand-in first checks where captured Mechanoid slot 12 is, and the
+test runs the way round the messages describe: it proceeds only while slot 12
+**is** in room 102, and otherwise answers "THE MECHANOIDS SAY / PUT BACK OUR
+LEADER" and returns without payment (`$104C-$107E`). Slot 12 starts in room 102,
+so all five Mechanoid rows are open from the beginning and close the moment the
+leader is carried off. That is the trade the pair of rows describes: the Palyar
+pay 250,000 for the leader delivered to room 154, and taking them there costs
+every remaining Mechanoid sale until the leader is put back.
 
 The maximum delivery income is 1,400,000: 600,000 from Palyar-only goods plus
 the higher-paying choice for each shared good. Moving the Pass before the
