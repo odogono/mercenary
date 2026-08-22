@@ -196,8 +196,86 @@ The rental affordability test is intentionally asymmetric: `$0E6F` compares
 only the millions byte, so 999,999 is refused and 1,000,000 is accepted; the
 latter leaves one credit after the debit. A timed-out or rejected hire says to
 call again and changes no progression state. An accepted hire writes
-`shipInbound=$FF` and engine flag `$04`. Native `$8634-$868F` moves slot 7 out of
-room 5, descends it toward surface cell 8:8, and clears `shipInbound` on landing.
+`shipInbound=$FF` and engine flag `$04`. Native `$8634-$868F` then moves slot 7
+out of room 5 and flies it down to surface cell 8:8; it is decoded in full below.
+
+### Ship delivery: the native descent `$8634-$868F`
+
+The main loop calls the descent unconditionally, once per frame: `$855C` steps
+Benson, `$855F` is `jsr $8634`, and only then does `$8562` branch on the
+underground flag. So the ship keeps descending while the player is indoors, in
+another Room, or watching a message.
+
+`shipInbound` at `$BEFF` is three-valued rather than a Boolean:
+
+| Value | Meaning | Native path |
+| --- | --- | --- |
+| `$00` | no delivery in progress | `$8634` `lda`/`beq` returns at `$8663` |
+| bit 7 set (script writes `$FF`) | accepted, not yet started | `$8639` `bmi` takes the one-shot initialisation at `$8664` |
+| positive, nonzero (`$7F`) | descending | falls through to the step at `$863B` |
+
+Initialisation (`$8664-$868F`) performs eleven stores through the object
+component tables at the slot-7 offset — X `$2880/$2480/$2540`, Y
+`$28C0/$24C0/$2580`, Z `$2900/$2500/$25C0`, room `$2940`, all owned by
+`c64lab/geometry.py`:
+
+- room `$2947` <- `$00`, so slot 7 leaves Room 5 for the surface;
+- X <- `$089900` and Z <- `$088B00`, snapping it to surface cell 8:8 in one
+  store rather than flying it across the map;
+- Y <- `$7F0000`;
+- `shipInbound` <- `$7F`.
+
+The descent step (`$863B-$8663`) treats Y high `$2587` and Y mid `$24C7` as one
+16-bit altitude `v`; Y low `$28C7` is written once at initialisation and never
+touched again, so the altitude is always an exact multiple of `$100`. Each frame
+it computes `v >> 7` with a seven-iteration `lsr`/`ror` pair, then subtracts with
+the carry deliberately clear (`$864F` `clc`, `$8650` `sbc`), giving
+
+    v <- v - (v >> 7) - 1
+
+The `-1` is what guarantees progress once `v >> 7` reaches zero. From `$7F00`
+the ship lands after **779 frames**; the first altitudes are `$7F00`, `$7E01`,
+`$7D04`, `$7C09`, `$7B10`, `$7A19`. Landing is a 16-bit zero test: `$865B` ORs
+the two result bytes and, when they are both zero, `$8660` stores that zero into
+`shipInbound`, ending the delivery. Nothing else clears it.
+
+### Prison script 11
+
+Room 81's entry script is the shortest economy script in the graph. It calls the
+one-tick wait helper (`cfr`, a self-branching `wfr 1`, `ret`), plays a single
+message built from word 232, the literal `PRISON` and word 230, clears engine
+flag `$40`, and returns. It moves no object, changes no balance, and sets no
+progression flag; capture and release are handled elsewhere.
+
+### Two shared script latches
+
+Both are load-bearing for the economy scripts and neither is delivery-specific:
+
+- Engine flag `$40` is the script-running latch the interpreter sets on entry.
+  Every economy script clears it on each of its exit paths — the hire clears it
+  at four separate returns — so it marks "a script is running", never progression.
+- Engine flag `$01` is the answered-Y latch the Y-poll helper sets. The hire
+  reads it with `tstf mask 1` immediately after calling the poll, and routes to
+  the affordability test only when it is set; otherwise it says to call again.
+
+### `tsti` tests absence, not presence
+
+The interpreter's test opcodes uniformly answer with the *negative* condition,
+and `tsti` `$0C` is no exception: its handler at `$8B37` loads the object
+register, calls the inventory search at `$941A`, and branches to the
+answer-true target `$8B87` on `bne` -- that is, when the search did **not**
+find the slot. The search leaves Z set only on a match (`cmp $BEB1,x` falling
+through to `rts`), and leaves Z clear when it exhausts the list through `bmi`.
+The same answer-true target is reached by `inrm` when the object is *not* in
+the room (`$8B20`/`$8B22`) and by `tstf` when the flag is *clear* (`$8B33`),
+which pins the polarity of all three against each other.
+
+So `tsti` answers "the object is not carried". The delivery protocol depends on
+it: `382` branches to the hand-in prompt when the answer is false, which is
+exactly the carried case, and `383` then catches the already-in-the-room case.
+Read the other way, no delivery could ever be completed by carrying its object,
+and the Antenna could not activate the rental terminal by being carried into
+Room 16.
 
 ### Delivery Objective table
 
