@@ -166,7 +166,29 @@ const document = {
     minimumAltitudeByte: 252,
     successCarry: 'clear'
   },
-  schemaVersion: 2
+  schemaVersion: 3,
+  shipDelivery: {
+    acceptedMask: 128,
+    cadence: 'every-frame',
+    callSite: 34_143,
+    descendingValue: 127,
+    descent: {
+      axis: 'y',
+      extraSubtraction: 1,
+      lowByteHeldAt: 0,
+      shift: 7,
+      widthBits: 16
+    },
+    inactiveValue: 0,
+    initialisation: { room: 0, x: 563_456, y: 8_323_072, z: 559_872 },
+    landing: {
+      cell: [8, 8],
+      clearsState: true,
+      framesToLand: 779,
+      predicate: 'sixteen-bit-zero'
+    },
+    slot: 7
+  }
 };
 
 const payloadDocuments = (
@@ -260,10 +282,41 @@ describe('the endgame Data Payload document', () => {
     const { ['endgame.json']: _, ...missing } = payloadDocuments();
     await expect(load(readDocuments(missing))).rejects.toThrow('endgame.json');
     await expect(
-      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 3 })))
-    ).rejects.toThrow('unsupported schemaVersion 3');
+      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 2 })))
+    ).rejects.toThrow('unsupported schemaVersion 2');
+    await expect(
+      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 4 })))
+    ).rejects.toThrow('unsupported schemaVersion 4');
     expect((await load(readDocuments(payloadDocuments()))).endgame).toEqual(
       document
+    );
+  });
+});
+
+describe('where a hired Interstellar Ship is sent', () => {
+  test('reads the decoded descent', () => {
+    const delivery = readers.endgame(
+      { name: 'endgame.json' },
+      document
+    ).shipDelivery;
+
+    expect(delivery.slot).toBe(7);
+    expect(delivery.landing.cell).toEqual([8, 8]);
+    expect(delivery.descent.shift).toBe(7);
+    expect(delivery.descendingValue).toBe(127);
+    expect(delivery.acceptedMask).toBe(128);
+  });
+
+  test('is required, and says which field is missing', () => {
+    const { shipDelivery: _, ...without } = document;
+    expect(() => readers.endgame({ name: 'endgame.json' }, without)).toThrow(
+      'shipDelivery'
+    );
+
+    const malformed = structuredClone(document);
+    malformed.shipDelivery.descent.shift = 'seven' as never;
+    expect(() => readers.endgame({ name: 'endgame.json' }, malformed)).toThrow(
+      'shipDelivery.descent.shift'
     );
   });
 });

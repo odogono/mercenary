@@ -41,6 +41,7 @@ import type {
   Doorway,
   DoorwayRules,
   EndgameDropRules,
+  EndgameShipDelivery,
   SpecialSetup,
   UndergroundDocument
 } from '../payload/documents.ts';
@@ -175,6 +176,7 @@ export interface SessionContent {
   readonly interaction: Interaction | undefined;
   readonly objects: readonly ObjectPlacement[];
   readonly rooms: ReadonlyMap<number, Room>;
+  readonly shipDelivery?: EndgameShipDelivery;
   readonly underground: UndergroundDocument | undefined;
 }
 
@@ -196,6 +198,7 @@ export const sessionContent = (
         ),
   objects: world.objects,
   rooms: world.rooms,
+  shipDelivery: bundle.endgame.shipDelivery,
   underground: bundle.underground
 });
 

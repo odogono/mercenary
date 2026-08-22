@@ -433,6 +433,37 @@ export interface EndgameInterstellarShipField {
   readonly storage: Readonly<Record<string, unknown>>;
 }
 
+/// Where a hired Interstellar Ship goes, how it gets there, and when it has
+/// arrived. Native constants only: what makes a ship *become* hired is a Benson
+/// Script's business, and stays there.
+export interface EndgameShipDelivery {
+  readonly acceptedMask: number;
+  readonly cadence: string;
+  readonly callSite: number;
+  readonly descendingValue: number;
+  readonly descent: {
+    readonly axis: string;
+    readonly extraSubtraction: number;
+    readonly lowByteHeldAt: number;
+    readonly shift: number;
+    readonly widthBits: number;
+  };
+  readonly inactiveValue: number;
+  readonly initialisation: {
+    readonly room: number;
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+  };
+  readonly landing: {
+    readonly cell: readonly number[];
+    readonly clearsState: boolean;
+    readonly framesToLand: number;
+    readonly predicate: string;
+  };
+  readonly slot: number;
+}
+
 export interface EndgameDocument {
   readonly combat: EndgameCombat;
   readonly controls: {
@@ -455,6 +486,7 @@ export interface EndgameDocument {
     readonly successCarry: string;
   };
   readonly schemaVersion: number;
+  readonly shipDelivery: EndgameShipDelivery;
 }
 
 export interface UndergroundEntrance {
