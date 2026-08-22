@@ -409,10 +409,36 @@ export interface EndgameCombat {
     readonly targetSlots: readonly number[];
   };
   readonly siteDestruction: {
+    readonly alreadyDestroyedIsInert: boolean;
     readonly axisWindow: readonly number[];
     readonly destroyedMask: number;
+    readonly factionObjective: {
+      readonly comparison: string;
+      readonly mechanoidScript: number;
+      readonly negativeOnesComplement: boolean;
+      readonly palyarScript: number;
+      readonly threshold: number;
+    };
     readonly impactFrames: number;
+    readonly initialCounts: {
+      readonly mechanoid: number;
+      readonly neutral: number;
+      readonly palyar: number;
+    };
+    readonly initialTable: readonly number[];
+    readonly lowIdMask: number;
+    readonly mechanoidMask: number;
+    readonly neutralMask: number;
     readonly projectileSlot: number;
+    readonly reactionDispatchBase: number;
+    readonly reactionWipeMask: number;
+    readonly reactions: readonly {
+      readonly cells: readonly number[];
+      readonly lowId: number;
+      readonly script: number;
+    }[];
+    readonly restorationKeepMask: number;
+    readonly restorationSlot: number;
   };
 }
 

@@ -9,6 +9,7 @@ import {
   asString,
   intArray,
   intArrayArray,
+  intArrayOfLength,
   intMap,
   numberArray,
   optional,
@@ -853,6 +854,9 @@ const validateInterstellarShipField = (
   }
 };
 
+/// The city table has one entry per surface cell.
+const SITE_TABLE_LENGTH = 256;
+
 const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
   const o = asObject(r, value, '$');
   const controls = asObject(r, o['controls'], 'controls');
@@ -870,6 +874,24 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
     r,
     combat['siteDestruction'],
     'combat.siteDestruction'
+  );
+  const objective = asObject(
+    r,
+    destruction['factionObjective'],
+    'combat.siteDestruction.factionObjective'
+  );
+  const counts = asObject(
+    r,
+    destruction['initialCounts'],
+    'combat.siteDestruction.initialCounts'
+  );
+  /// One byte per surface cell: a short table would leave cells unreachable
+  /// rather than fail, so the width is checked here and not inferred later.
+  const siteTable = intArrayOfLength(
+    r,
+    destruction['initialTable'],
+    'combat.siteDestruction.initialTable',
+    SITE_TABLE_LENGTH
   );
   const orbital = asObject(r, o['orbitalTransition'], 'orbitalTransition');
   const ending = asObject(r, o['endingPresentation'], 'endingPresentation');
@@ -982,6 +1004,11 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
         )
       },
       siteDestruction: {
+        alreadyDestroyedIsInert: asBool(
+          r,
+          destruction['alreadyDestroyedIsInert'],
+          'combat.siteDestruction.alreadyDestroyedIsInert'
+        ),
         axisWindow: intArray(
           r,
           destruction['axisWindow'],
@@ -992,15 +1019,108 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
           destruction['destroyedMask'],
           'combat.siteDestruction.destroyedMask'
         ),
+        factionObjective: {
+          comparison: asString(
+            r,
+            objective['comparison'],
+            'combat.siteDestruction.factionObjective.comparison'
+          ),
+          mechanoidScript: asInt(
+            r,
+            objective['mechanoidScript'],
+            'combat.siteDestruction.factionObjective.mechanoidScript'
+          ),
+          negativeOnesComplement: asBool(
+            r,
+            objective['negativeOnesComplement'],
+            'combat.siteDestruction.factionObjective.negativeOnesComplement'
+          ),
+          palyarScript: asInt(
+            r,
+            objective['palyarScript'],
+            'combat.siteDestruction.factionObjective.palyarScript'
+          ),
+          threshold: asInt(
+            r,
+            objective['threshold'],
+            'combat.siteDestruction.factionObjective.threshold'
+          )
+        },
         impactFrames: asInt(
           r,
           destruction['impactFrames'],
           'combat.siteDestruction.impactFrames'
         ),
+        initialCounts: {
+          mechanoid: asInt(
+            r,
+            counts['mechanoid'],
+            'combat.siteDestruction.initialCounts.mechanoid'
+          ),
+          neutral: asInt(
+            r,
+            counts['neutral'],
+            'combat.siteDestruction.initialCounts.neutral'
+          ),
+          palyar: asInt(
+            r,
+            counts['palyar'],
+            'combat.siteDestruction.initialCounts.palyar'
+          )
+        },
+        initialTable: siteTable,
+        lowIdMask: asInt(
+          r,
+          destruction['lowIdMask'],
+          'combat.siteDestruction.lowIdMask'
+        ),
+        mechanoidMask: asInt(
+          r,
+          destruction['mechanoidMask'],
+          'combat.siteDestruction.mechanoidMask'
+        ),
+        neutralMask: asInt(
+          r,
+          destruction['neutralMask'],
+          'combat.siteDestruction.neutralMask'
+        ),
         projectileSlot: asInt(
           r,
           destruction['projectileSlot'],
           'combat.siteDestruction.projectileSlot'
+        ),
+        reactionDispatchBase: asInt(
+          r,
+          destruction['reactionDispatchBase'],
+          'combat.siteDestruction.reactionDispatchBase'
+        ),
+        reactionWipeMask: asInt(
+          r,
+          destruction['reactionWipeMask'],
+          'combat.siteDestruction.reactionWipeMask'
+        ),
+        reactions: asArray(
+          r,
+          destruction['reactions'],
+          'combat.siteDestruction.reactions'
+        ).map((entry, i) => {
+          const at = `combat.siteDestruction.reactions[${i}]`;
+          const row = asObject(r, entry, at);
+          return {
+            cells: intArray(r, row['cells'], `${at}.cells`),
+            lowId: asInt(r, row['lowId'], `${at}.lowId`),
+            script: asInt(r, row['script'], `${at}.script`)
+          };
+        }),
+        restorationKeepMask: asInt(
+          r,
+          destruction['restorationKeepMask'],
+          'combat.siteDestruction.restorationKeepMask'
+        ),
+        restorationSlot: asInt(
+          r,
+          destruction['restorationSlot'],
+          'combat.siteDestruction.restorationSlot'
         )
       }
     },

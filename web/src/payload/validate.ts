@@ -119,6 +119,21 @@ export const intArray = (
     asInt(reader, item, `${path}[${i}]`)
   );
 
+/// A fixed-width table. A short or long one would leave the reader guessing which
+/// entries went missing, so the width is part of the contract rather than a hint.
+export const intArrayOfLength = (
+  reader: Reader,
+  value: unknown,
+  path: string,
+  length: number
+): number[] => {
+  const items = intArray(reader, value, path);
+  if (items.length !== length) {
+    return bad(reader, path, `${length} entries`, items.length);
+  }
+  return items;
+};
+
 export const numberArray = (
   reader: Reader,
   value: unknown,
