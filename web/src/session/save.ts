@@ -10,7 +10,7 @@ import type {
 } from '../settings/index.ts';
 import type { Location, Residence } from '../world/index.ts';
 
-export const SAVE_SCHEMA_VERSION = 2 as const;
+export const SAVE_SCHEMA_VERSION = 3 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -84,6 +84,8 @@ export interface GameSaveSnapshot extends Omit<
 export interface SaveSnapshot {
   readonly benson: BensonSaveSnapshot | null;
   readonly carriedStack: readonly number[];
+  /// The part of a ship-delivery frame that had not elapsed yet.
+  readonly deliveryFrames: number;
   readonly game: GameSaveSnapshot;
   readonly objectFlags: readonly (readonly [number, number])[];
   readonly randomState: string;
@@ -592,6 +594,7 @@ const snapshot = (value: unknown, at: string): SaveSnapshot => {
   const out = exact(value, at, [
     'benson',
     'carriedStack',
+    'deliveryFrames',
     'game',
     'objectFlags',
     'randomState',
@@ -602,10 +605,15 @@ const snapshot = (value: unknown, at: string): SaveSnapshot => {
   if (new Set(carriedStack).size !== carriedStack.length) {
     fail(`${at}.carriedStack members must be unique`);
   }
+  const deliveryFrames = finite(out['deliveryFrames'], `${at}.deliveryFrames`);
+  if (!(deliveryFrames >= 0) || deliveryFrames >= 1) {
+    fail(`${at}.deliveryFrames must be at least 0 and less than 1`);
+  }
   return {
     benson:
       out['benson'] === null ? null : benson(out['benson'], `${at}.benson`),
     carriedStack,
+    deliveryFrames,
     game: game(out['game'], `${at}.game`),
     objectFlags: mapEntries(out['objectFlags'], `${at}.objectFlags`),
     randomState: randomState(out['randomState'], `${at}.randomState`),
