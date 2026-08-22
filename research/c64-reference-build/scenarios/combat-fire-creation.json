@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "name": "combat-fire-creation",
+  "checkpoint": "interactive",
+  "description": "One shot fired from a boarded craft, captured on the frame it is created. The fire routine copies the player's nine position bytes into the projectile's slot and derives one velocity triple per axis from a mantissa/exponent pair with the direction offset added to the exponent, so this capture is what pins the projectile's speed numerically: read the effect lifecycle at $BDAB, the velocity triples at $BDAB/$BDB3/$BDBB, $BDC3/$BDCB/$BDD3 and $BDDB/$BDE3/$BDEB for slot 8, and the player's own component pairs at $4C/$4D, $36/$37 and $50/$51. The browser cannot express the projectile's motion in its own world units until these are read together.",
+  "actions": [
+    { "type": "wait_pc", "address": 33911 },
+    { "type": "wait_instructions", "instructions": 60000 },
+    { "type": "key", "petscii": "y" },
+    { "type": "wait_instructions", "instructions": 60000 },
+    { "type": "key", "petscii": "b" },
+    { "type": "wait_instructions", "instructions": 60000 },
+    { "type": "joystick", "port": 2, "value": 16, "durationInstructions": 20000 },
+    { "type": "wait_pc", "address": 34940 },
+    { "type": "capture", "artifacts": ["ram", "registers"] }
+  ]
+}

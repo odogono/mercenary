@@ -56,6 +56,30 @@ class ScenarioTests(unittest.TestCase):
                 ][0]
                 self.assertIn("ram", capture["artifacts"])
 
+    def test_the_combat_scenarios_capture_ram(self) -> None:
+        # The effect tables, the velocity triples and the city table are all
+        # read out of RAM, so a combat capture without it observes nothing.
+        combat = [p for p in SCENARIOS if p.stem.startswith("combat-")]
+        self.assertTrue(combat)
+        for path in combat:
+            with self.subTest(scenario=path.name):
+                capture = [
+                    a
+                    for a in json.loads(path.read_text())["actions"]
+                    if a["type"] == "capture"
+                ][0]
+                self.assertIn("ram", capture["artifacts"])
+
+    def test_every_scenario_says_what_it_observes(self) -> None:
+        # A scenario is evidence someone else has to interpret, so it carries
+        # the addresses its capture is worth reading at.
+        for path in SCENARIOS:
+            with self.subTest(scenario=path.name):
+                scenario = json.loads(path.read_text())
+                if path.stem.startswith("combat-"):
+                    self.assertIn("description", scenario)
+                    self.assertGreater(len(scenario["description"]), 80)
+
     def test_rejects_a_scenario_with_an_unknown_action(self) -> None:
         broken = json.loads(SCENARIOS[0].read_text())
         broken["actions"] = [{"type": "poke", "address": 0, "value": 0}]

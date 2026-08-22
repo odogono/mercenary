@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "name": "combat-fire-refused-on-foot",
+  "description": "Fire held while on foot, which the fire routine refuses at $8871 by testing the walking mover. Captured to show slot 8's lifecycle at $BDAB still zero and the effect tables untouched, which is the refusal the browser must reproduce without side effects.",
+  "checkpoint": "interactive",
+  "actions": [
+    { "type": "wait_pc", "address": 33911 },
+    { "type": "wait_instructions", "instructions": 60000 },
+    { "type": "joystick", "port": 2, "value": 16, "durationInstructions": 40000 },
+    { "type": "joystick", "port": 2, "value": 0, "durationInstructions": 20000 },
+    { "type": "capture", "artifacts": ["ram", "registers"] }
+  ]
+}
