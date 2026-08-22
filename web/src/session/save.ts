@@ -10,7 +10,7 @@ import type {
 } from '../settings/index.ts';
 import type { Location, Residence } from '../world/index.ts';
 
-export const SAVE_SCHEMA_VERSION = 3 as const;
+export const SAVE_SCHEMA_VERSION = 4 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -52,7 +52,6 @@ export interface BensonHostSaveSnapshot extends Omit<
   BensonHostFields,
   'destroyedBlocks' | 'inventory' | 'objectFlags' | 'objectRooms' | 'pendingKey'
 > {
-  readonly destroyedBlocks: readonly number[];
   readonly pendingKey: BensonKey | null;
 }
 
@@ -81,9 +80,20 @@ export interface GameSaveSnapshot extends Omit<
   readonly touchdown: GameState['touchdown'] | null;
 }
 
+/// The Site Ledger and the counters beside it. The counters are stored rather
+/// than derived because restoration puts a Site back without taking back the
+/// count it caused, so the table cannot imply them.
+export interface CombatSaveSnapshot {
+  readonly mechanoidDestroyed: number;
+  readonly palyarDestroyed: number;
+  readonly siteTable: readonly number[];
+}
+
 export interface SaveSnapshot {
   readonly benson: BensonSaveSnapshot | null;
   readonly carriedStack: readonly number[];
+  /// Absent when the content carries no Sites to destroy.
+  readonly combat: CombatSaveSnapshot | null;
   /// The part of a ship-delivery frame that had not elapsed yet.
   readonly deliveryFrames: number;
   readonly game: GameSaveSnapshot;
@@ -528,7 +538,6 @@ const bensonHost = (value: unknown, at: string): BensonHostSaveSnapshot => {
     'canTakeAnything',
     'currentRoom',
     'decimals',
-    'destroyedBlocks',
     'engineFlags',
     'gameComplete',
     'messageInterval',
@@ -543,20 +552,9 @@ const bensonHost = (value: unknown, at: string): BensonHostSaveSnapshot => {
   if (pendingKey !== null && pendingKey !== 'keyY') {
     fail(`${at}.pendingKey is invalid`);
   }
-  const destroyedBlocks = byteArray(
-    out['destroyedBlocks'],
-    `${at}.destroyedBlocks`
-  );
   const decimals = integerArray(out['decimals'], `${at}.decimals`);
   if (decimals.length !== 16) {
     fail(`${at}.decimals must contain 16 integers`);
-  }
-  if (
-    destroyedBlocks.some(
-      (item, index) => index > 0 && destroyedBlocks[index - 1]! >= item
-    )
-  ) {
-    fail(`${at} sets must be unique and sorted`);
   }
   return {
     attackingShip: bool(out['attackingShip'], `${at}.attackingShip`),
@@ -567,7 +565,6 @@ const bensonHost = (value: unknown, at: string): BensonHostSaveSnapshot => {
     decimals: decimals.map((value, index) =>
       integerInRange(value, `${at}.decimals[${index}]`, 0, 99_999_999)
     ),
-    destroyedBlocks,
     engineFlags: byte(out['engineFlags'], `${at}.engineFlags`),
     gameComplete: bool(out['gameComplete'], `${at}.gameComplete`),
     messageInterval: byte(out['messageInterval'], `${at}.messageInterval`),
@@ -590,10 +587,34 @@ const benson = (value: unknown, at: string): BensonSaveSnapshot => {
   };
 };
 
+/// One Site Ledger byte per surface cell.
+const SITE_TABLE_LENGTH = 256;
+
+const combat = (value: unknown, at: string): CombatSaveSnapshot => {
+  const out = exact(value, at, [
+    'mechanoidDestroyed',
+    'palyarDestroyed',
+    'siteTable'
+  ]);
+  const siteTable = byteArray(out['siteTable'], `${at}.siteTable`);
+  if (siteTable.length !== SITE_TABLE_LENGTH) {
+    fail(`${at}.siteTable must contain ${SITE_TABLE_LENGTH} bytes`);
+  }
+  return {
+    mechanoidDestroyed: byte(
+      out['mechanoidDestroyed'],
+      `${at}.mechanoidDestroyed`
+    ),
+    palyarDestroyed: byte(out['palyarDestroyed'], `${at}.palyarDestroyed`),
+    siteTable
+  };
+};
+
 const snapshot = (value: unknown, at: string): SaveSnapshot => {
   const out = exact(value, at, [
     'benson',
     'carriedStack',
+    'combat',
     'deliveryFrames',
     'game',
     'objectFlags',
@@ -613,6 +634,8 @@ const snapshot = (value: unknown, at: string): SaveSnapshot => {
     benson:
       out['benson'] === null ? null : benson(out['benson'], `${at}.benson`),
     carriedStack,
+    combat:
+      out['combat'] === null ? null : combat(out['combat'], `${at}.combat`),
     deliveryFrames,
     game: game(out['game'], `${at}.game`),
     objectFlags: mapEntries(out['objectFlags'], `${at}.objectFlags`),

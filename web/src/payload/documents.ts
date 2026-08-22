@@ -384,6 +384,40 @@ export interface EndgameTakeOverrides {
   readonly sinkSlot: number;
 }
 
+/// The Sites a shot can destroy, and the rules the commit path follows.
+export interface EndgameSiteDestruction {
+  readonly alreadyDestroyedIsInert: boolean;
+  readonly axisWindow: readonly number[];
+  readonly destroyedMask: number;
+  readonly factionObjective: {
+    readonly comparison: string;
+    readonly mechanoidScript: number;
+    readonly negativeOnesComplement: boolean;
+    readonly palyarScript: number;
+    readonly threshold: number;
+  };
+  readonly impactFrames: number;
+  readonly initialCounts: {
+    readonly mechanoid: number;
+    readonly neutral: number;
+    readonly palyar: number;
+  };
+  readonly initialTable: readonly number[];
+  readonly lowIdMask: number;
+  readonly mechanoidMask: number;
+  readonly neutralMask: number;
+  readonly projectileSlot: number;
+  readonly reactionDispatchBase: number;
+  readonly reactions: readonly {
+    readonly cells: readonly number[];
+    readonly lowId: number;
+    readonly script: number;
+  }[];
+  readonly reactionWipeMask: number;
+  readonly restorationKeepMask: number;
+  readonly restorationSlot: number;
+}
+
 export interface EndgameCombat {
   readonly fire: {
     readonly directionOffset: number;
@@ -408,38 +442,7 @@ export interface EndgameCombat {
     readonly secondTargetScript: number;
     readonly targetSlots: readonly number[];
   };
-  readonly siteDestruction: {
-    readonly alreadyDestroyedIsInert: boolean;
-    readonly axisWindow: readonly number[];
-    readonly destroyedMask: number;
-    readonly factionObjective: {
-      readonly comparison: string;
-      readonly mechanoidScript: number;
-      readonly negativeOnesComplement: boolean;
-      readonly palyarScript: number;
-      readonly threshold: number;
-    };
-    readonly impactFrames: number;
-    readonly initialCounts: {
-      readonly mechanoid: number;
-      readonly neutral: number;
-      readonly palyar: number;
-    };
-    readonly initialTable: readonly number[];
-    readonly lowIdMask: number;
-    readonly mechanoidMask: number;
-    readonly neutralMask: number;
-    readonly projectileSlot: number;
-    readonly reactionDispatchBase: number;
-    readonly reactions: readonly {
-      readonly cells: readonly number[];
-      readonly lowId: number;
-      readonly script: number;
-    }[];
-    readonly reactionWipeMask: number;
-    readonly restorationKeepMask: number;
-    readonly restorationSlot: number;
-  };
+  readonly siteDestruction: EndgameSiteDestruction;
 }
 
 export interface EndgameInterstellarShipField {

@@ -42,6 +42,7 @@ import type {
   DoorwayRules,
   EndgameDropRules,
   EndgameShipDelivery,
+  EndgameSiteDestruction,
   SpecialSetup,
   UndergroundDocument
 } from '../payload/documents.ts';
@@ -65,6 +66,7 @@ import {
   encodeRandomState,
   type SaveSnapshot
 } from './save.ts';
+import { SiteLedger } from './sites.ts';
 
 /// The Gameplay Session: the one owner of a play session's Session State (ADR 0018).
 ///
@@ -177,6 +179,8 @@ export interface SessionContent {
   readonly objects: readonly ObjectPlacement[];
   readonly rooms: ReadonlyMap<number, Room>;
   readonly shipDelivery?: EndgameShipDelivery;
+  /// The Sites a shot can destroy, and the rules the commit path follows.
+  readonly sites?: EndgameSiteDestruction;
   readonly underground: UndergroundDocument | undefined;
 }
 
@@ -199,6 +203,7 @@ export const sessionContent = (
   objects: world.objects,
   rooms: world.rooms,
   shipDelivery: bundle.endgame.shipDelivery,
+  sites: bundle.endgame.combat.siteDestruction,
   underground: bundle.underground
 });
 
@@ -362,6 +367,9 @@ export class GameplaySession {
   private carriedStack: number[] = [];
   scripts: BensonSession | undefined;
   private rewired = new Map<number, Alternate>();
+  /// The Site Ledger, owned here and projected across the Host Callout for the
+  /// scripts to read (ADR 0018). Absent when the content carries no Sites.
+  private sites: SiteLedger | undefined;
   private ownRandomState: bigint;
   private readonly objectsBySlot: ReadonlyMap<number, ObjectPlacement>;
 
@@ -388,6 +396,9 @@ export class GameplaySession {
     }
     this.game = game;
     this.scripts = scripts;
+    if (content.sites !== undefined) {
+      this.sites = new SiteLedger(content.sites);
+    }
     const objectsBySlot = new Map<number, ObjectPlacement>();
     for (const object of content.objects) {
       if (!objectsBySlot.has(object.slot)) {
@@ -421,6 +432,14 @@ export class GameplaySession {
     return {
       benson: this.scripts?.captureSaveSnapshot() ?? null,
       carriedStack: [...this.carriedStack],
+      combat:
+        this.sites === undefined
+          ? null
+          : {
+              mechanoidDestroyed: this.sites.mechanoidDestroyed,
+              palyarDestroyed: this.sites.palyarDestroyed,
+              siteTable: [...this.sites.bytes]
+            },
       deliveryFrames: this.deliveryFrames,
       game: {
         ...this.game,
@@ -473,6 +492,14 @@ export class GameplaySession {
     session.residence = new Map(snapshot.residence);
     session.rewired = new Map(snapshot.rewired);
     session.ownRandomState = decodeRandomState(snapshot.randomState);
+    if (content.sites !== undefined && snapshot.combat !== null) {
+      session.sites = SiteLedger.restore(
+        content.sites,
+        snapshot.combat.siteTable,
+        snapshot.combat.palyarDestroyed,
+        snapshot.combat.mechanoidDestroyed
+      );
+    }
     session.republishHostState();
     return session;
   }
@@ -512,6 +539,7 @@ export class GameplaySession {
     return host.with({
       boardedCraft: occupancyHostValue(this.occupancy),
       currentRoom: locationHostValue(this.location),
+      destroyedBlocks: new Set(this.sites?.destroyedCells() ?? []),
       inventory: new Set(this.carriedStack),
       objectFlags: new Map(this.objectFlags),
       objectRooms
@@ -1244,8 +1272,20 @@ export class GameplaySession {
   /// draw from, and widening it to carry script counters and engine flags would
   /// push them through every renderer and every trace that compares one.
   observations(): SemanticObservations {
+    const sites = this.sites;
     return observationsOf({
       carriedStack: this.carriedStack,
+      ...(sites === undefined
+        ? {}
+        : {
+            combat: {
+              destroyedCells: sites.destroyedCells(),
+              effectLifecycles: new Map<number, number>(),
+              mechanoidDestroyed: sites.mechanoidDestroyed,
+              mover: undefined,
+              palyarDestroyed: sites.palyarDestroyed
+            }
+          }),
       location: this.location,
       objectFlags: this.objectFlags,
       occupancy: this.occupancy,

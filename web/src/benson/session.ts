@@ -194,7 +194,6 @@ export class BensonSession {
         canTakeAnything: this.host.canTakeAnything,
         currentRoom: this.host.currentRoom,
         decimals: [...this.host.decimals],
-        destroyedBlocks: sortedSet(this.host.destroyedBlocks),
         engineFlags: this.host.engineFlags,
         gameComplete: this.host.gameComplete,
         messageInterval: this.host.messageInterval,
@@ -251,9 +250,10 @@ export class BensonSession {
       registers: snapshot.state.registers,
       resumeAfterTick: snapshot.state.resumeAfterTick ?? undefined
     });
+    // The Site Ledger is the session's, and it republishes it after restoring,
+    // so the host starts with nothing destroyed rather than a second copy.
     session.host = new BensonHostState({
       ...snapshot.host,
-      destroyedBlocks: new Set(snapshot.host.destroyedBlocks),
       pendingKey: snapshot.host.pendingKey ?? undefined
     });
     session.frames = snapshot.frames;
