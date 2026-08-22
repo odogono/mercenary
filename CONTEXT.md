@@ -171,12 +171,16 @@ The fidelity-governed rules and state transitions that determine outcomes and me
 _Avoid_: Game logic, gameplay layer
 
 **Mission**:
-A Benson-script-driven assignment offered by one of Targ's factions, comprising an offer, one or more Objectives, and a resulting reward or world-state consequence.
-_Avoid_: Quest, job, Objective
+A Benson-script-driven assignment offered by one of Targ's factions, comprising an offer, one or more Objectives, and a resulting reward or world-state consequence. A Mission is never accepted or declined: there is no such state to hold. It is the durable relationship between a briefing, its Objective predicates, and the consequences the Benson Scripts author, and its progress is legible only in what those scripts already own — Object Residence and flags, credits, engine flags, and Ship Delivery. Hearing a briefing commits the player to nothing, and the two factions' Missions are not exclusive of each other.
+_Avoid_: Quest, job, Objective, accepted Mission, Mission flag
 
 **Objective**:
 One condition within a Mission, such as acquiring, delivering, or destroying something, whose satisfaction advances that Mission.
 _Avoid_: Mission, task, goal
+
+**Ship Delivery**:
+The state of the Interstellar Ship having been hired and being on its way, from the moment the hire is paid for until the craft has come to rest on the surface. It advances on its own while the player does anything else, and it ends only by the ship arriving; nothing the player does cancels it or hurries it.
+_Avoid_: Ship inbound flag, delivery timer, hired Boolean, ETA
 
 **Ending**:
 A terminal resolution of a Gameplay Session recognised by the Reference Build, being either an Escape or a Defeat.
