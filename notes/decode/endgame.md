@@ -277,6 +277,33 @@ Read the other way, no delivery could ever be completed by carrying its object,
 and the Antenna could not activate the rental terminal by being carried into
 Room 16.
 
+### The semantic observation vocabulary
+
+Lab and browser compare through one flat map of scalars, decoded on the lab
+side by `c64lab/semantics.py` and answered on the browser side by
+`GameplaySession.observations()`. Both carry `schemaVersion` 1. The
+observation map itself is untracked, so the tracked contract is this id list:
+
+| Id | Type | Meaning |
+| --- | --- | --- |
+| `room` | integer | current Room, `0` on the surface |
+| `occupancy` | integer | boarded craft slot, or `$80` on foot |
+| `credits` | integer | packed decimal register 8 |
+| `engineFlags` | integer | the engine flag byte |
+| `shipInbound` | integer | the three-valued ship delivery byte |
+| `attackingShip` | boolean | hostile craft state |
+| `gameComplete` | boolean | the Escape latch |
+| `scriptPc` | integer | interpreter program counter, `-1` when no script runs |
+| `scriptStack` | string | call stack, outermost first, comma separated |
+| `messagePlaying` | boolean | whether the message line is busy |
+| `messageText` | string | the revealed message text |
+| `carriedStack` | string | carried slots, earliest first, comma separated |
+| `objectRoom.<slot>` | integer | Room membership in the Host Callout's encoding |
+| `objectFlags.<slot>` | integer | the object's mutable flag byte |
+
+Every payload slot contributes an `objectRoom` and an `objectFlags` entry, in
+ascending slot order, so the same moment always serialises the same way.
+
 ### Delivery Objective table
 
 All sixteen entries use the same guarded hand-in protocol. The room is both the

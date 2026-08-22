@@ -58,6 +58,7 @@ import {
   type Room,
   type World
 } from '../world/index.ts';
+import { observationsOf, type SemanticObservations } from './observations.ts';
 import {
   decodeRandomState,
   encodeRandomState,
@@ -1144,6 +1145,22 @@ export class GameplaySession {
       }
     }
     return { events, snapshot: this.snapshot };
+  }
+
+  /// This session as flat scalars, for comparison against the Reference Build.
+  ///
+  /// Separate from `snapshot` on purpose: a Session Snapshot is what renderers
+  /// draw from, and widening it to carry script counters and engine flags would
+  /// push them through every renderer and every trace that compares one.
+  observations(): SemanticObservations {
+    return observationsOf({
+      carriedStack: this.carriedStack,
+      location: this.location,
+      objectFlags: this.objectFlags,
+      occupancy: this.occupancy,
+      residence: this.residence,
+      scripts: this.scripts
+    });
   }
 
   get snapshot(): SessionSnapshot {
