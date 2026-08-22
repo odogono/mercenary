@@ -474,7 +474,6 @@ export class Renderer {
     gl.vertexAttribPointer(pixel, 2, gl.FLOAT, false, 0, 0);
     this.canvas = canvas;
     this.gl = gl;
-    this.ink = gl.getUniformLocation(program, 'ink');
     // The enhanced pipeline is compiled the first enhanced frame needs it: a player who never
     // leaves the Reference Build presentation never pays for its shaders either.
     this.orrery = orrery;

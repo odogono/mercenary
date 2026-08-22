@@ -1,4 +1,6 @@
 import {
+  DEFAULT_WIREFRAME_GLOW,
+  DEFAULT_WIREFRAME_THICKNESS,
   isPresentationPreset,
   type PresentationSettings
 } from '../settings/index.ts';
@@ -124,9 +126,9 @@ export const applyPreferences = (
 
 /// Compose the presentation block the renderer should use.
 ///
-/// The tuning document remains the baseline and the player may override its preset and the
-/// wireframe's weight and glow. The sky's own numbers stay authored, and nothing here reaches
-/// the blocks that identify a Save.
+/// The preset is resolved first: Authentic always keeps the Reference Build's hairline, while
+/// Enhanced may take the tuning document's wireframe or the player's stored weight and glow.
+/// The sky's own numbers stay authored, and nothing here reaches the blocks that identify a Save.
 export const effectivePresentation = (
   settings: PresentationSettings,
   preferences: Preferences
@@ -134,6 +136,15 @@ export const effectivePresentation = (
   let presentation = settings;
   if (preferences.presentationPreset !== undefined) {
     presentation = { ...presentation, preset: preferences.presentationPreset };
+  }
+  if (presentation.preset === 'authentic') {
+    return {
+      ...presentation,
+      wireframe: {
+        glow: DEFAULT_WIREFRAME_GLOW,
+        thickness: DEFAULT_WIREFRAME_THICKNESS
+      }
+    };
   }
   if (preferences.wireframeWeight !== undefined) {
     presentation = {
