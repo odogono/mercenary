@@ -119,7 +119,21 @@ describe('the semantic observations a Gameplay Session answers with', () => {
     expect(session().observations().schemaVersion).toBe(
       SEMANTIC_OBSERVATION_SCHEMA_VERSION
     );
-    expect(SEMANTIC_OBSERVATION_SCHEMA_VERSION).toBe(1);
+    expect(SEMANTIC_OBSERVATION_SCHEMA_VERSION).toBe(2);
+  });
+
+  test('answers the combat vocabulary a session that has not fought', () => {
+    const { observations } = session().observations();
+
+    // Real values, not placeholders: nothing has been destroyed, no counter
+    // has moved, no Effect Slot is occupied, and no mover is installed over
+    // the craft's own.
+    expect(observations['destroyedCells']).toBe('');
+    expect(observations['palyarDestroyed']).toBe(0);
+    expect(observations['mechanoidDestroyed']).toBe(0);
+    expect(observations['effectLifecycle8']).toBe(0);
+    expect(observations['effectLifecycle14']).toBe(0);
+    expect(observations['mover']).toBe(-1);
   });
 
   test('answers only values the lab can hold', () => {

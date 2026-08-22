@@ -357,7 +357,7 @@ class HeldHostKeyTests(unittest.TestCase):
 class SemanticObservationTests(unittest.TestCase):
     def test_resolves_an_opaque_semantic_boundary(self) -> None:
         observation_map = {
-            "schemaVersion": 1,
+            "schemaVersion": 2,
             "observations": [{"id": "mode", "type": "integer", "bank": "ram", "address": 1, "width": 1}],
             "boundaries": [{"id": "input-sampled", "address": 0x2345}],
         }
@@ -368,7 +368,7 @@ class SemanticObservationTests(unittest.TestCase):
     def test_decodes_integer_boolean_and_enum_observations(self) -> None:
         memory = {"ram": bytes.fromhex("00 34 12 04 02")}
         observation_map = {
-            "schemaVersion": 1,
+            "schemaVersion": 2,
             "observations": [
                 {"id": "position", "type": "integer", "bank": "ram", "address": 1, "width": 2, "endianness": "little"},
                 {"id": "moving", "type": "boolean", "bank": "ram", "address": 3, "width": 1, "mask": 4, "shift": 2},
@@ -387,6 +387,57 @@ class SemanticObservationTests(unittest.TestCase):
             decode_semantic_observations(memory, observation_map),
             {"position": 0x1234, "moving": True, "mode": "SM-0002"},
         )
+
+    def test_decodes_a_flag_table_as_one_cell_list_observation(self) -> None:
+        # A destroyed bit per cell: the observation is the list of cells that
+        # carry it, so one string compares against the browser's own.
+        memory = {"ram": bytes.fromhex("80 00 A0 40 80")}
+        observation_map = {
+            "schemaVersion": 2,
+            "observations": [
+                {"id": "destroyed-cells", "type": "maskedCells", "bank": "ram", "address": 0, "count": 5, "mask": 0x80},
+            ],
+        }
+
+        self.assertEqual(
+            decode_semantic_observations(memory, observation_map),
+            {"destroyed-cells": "00,02,04"},
+        )
+
+    def test_decodes_an_untouched_flag_table_as_an_empty_cell_list(self) -> None:
+        memory = {"ram": bytes.fromhex("00 40 20")}
+        observation_map = {
+            "schemaVersion": 2,
+            "observations": [
+                {"id": "destroyed-cells", "type": "maskedCells", "bank": "ram", "address": 0, "count": 3, "mask": 0x80},
+            ],
+        }
+
+        self.assertEqual(decode_semantic_observations(memory, observation_map), {"destroyed-cells": ""})
+
+    def test_rejects_a_flag_table_that_runs_past_its_bank(self) -> None:
+        memory = {"ram": bytes.fromhex("80 00")}
+        observation_map = {
+            "schemaVersion": 2,
+            "observations": [
+                {"id": "destroyed-cells", "type": "maskedCells", "bank": "ram", "address": 0, "count": 4, "mask": 0x80},
+            ],
+        }
+
+        with self.assertRaisesRegex(LabError, "exceeds bank"):
+            decode_semantic_observations(memory, observation_map)
+
+    def test_rejects_an_observation_map_from_the_previous_schema(self) -> None:
+        memory = {"ram": bytes.fromhex("01")}
+        observation_map = {
+            "schemaVersion": 1,
+            "observations": [
+                {"id": "moving", "type": "boolean", "bank": "ram", "address": 0, "width": 1},
+            ],
+        }
+
+        with self.assertRaisesRegex(LabError, "schemaVersion must be 2"):
+            decode_semantic_observations(memory, observation_map)
 
     def test_applies_mask_shift_and_signed_decoding_before_asserting(self) -> None:
         before = {"speed": -2, "heading": 4, "mode": "SM-0001"}

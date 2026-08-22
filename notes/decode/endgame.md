@@ -281,7 +281,7 @@ Room 16.
 
 Lab and browser compare through one flat map of scalars, decoded on the lab
 side by `c64lab/semantics.py` and answered on the browser side by
-`GameplaySession.observations()`. Both carry `schemaVersion` 1. The
+`GameplaySession.observations()`. Both carry `schemaVersion` 2. The
 observation map itself is untracked, so the tracked contract is this id list:
 
 | Id | Type | Meaning |
@@ -300,9 +300,33 @@ observation map itself is untracked, so the tracked contract is this id list:
 | `carriedStack` | string | carried slots, earliest first, comma separated |
 | `objectRoom.<slot>` | integer | Room membership in the Host Callout's encoding |
 | `objectFlags.<slot>` | integer | the object's mutable flag byte |
+| `destroyedCells` | string | destroyed cells, ascending, two hex digits each, comma separated |
+| `palyarDestroyed` | integer | the Palyar site counter |
+| `mechanoidDestroyed` | integer | the Mechanoid site counter |
+| `mover` | integer | the mover installed over the craft's own, `-1` when none |
+| `effectLifecycle8` | integer | frames left on the player's shot, `0` when idle |
+| `effectLifecycle14` | integer | frames left on the hostile shot, `0` when idle |
 
 Every payload slot contributes an `objectRoom` and an `objectFlags` entry, in
 ascending slot order, so the same moment always serialises the same way.
+
+Schema 2 added the six combat ids and the `maskedCells` observation type they
+needed: the destroyed bits are a table of 256 per-cell flags rather than a
+scalar, and comparing them one cell at a time would have made 256 observations
+out of one fact. The restricted map gains these entries, which cannot be
+tracked with the rest of the contract:
+
+| Id | Bank | Address | Shape |
+| --- | --- | --- | --- |
+| `destroyedCells` | ram | `$2B00` | `maskedCells`, count 256, mask `$80` |
+| `palyarDestroyed` | ram | `$BEBB` | integer, width 1 |
+| `mechanoidDestroyed` | ram | `$BEBC` | integer, width 1 |
+| `mover` | ram | `$00A9` | integer, width 1 |
+| `effectLifecycle8` | ram | `$BDAB` | integer, width 1 |
+| `effectLifecycle14` | ram | `$BDB1` | integer, width 1 |
+
+The two lifecycle addresses are the player-shot and hostile-shot entries of the
+effect table based at `$BDA3`.
 
 ### Delivery Objective table
 
