@@ -3,6 +3,12 @@ import { describe, expect, test } from 'bun:test';
 import { load } from '../src/payload/load.ts';
 import { readers } from '../src/payload/read.ts';
 
+/// A stand-in city table: the reader only owes us its width, and the census
+/// itself is guarded on the lab side where the real table is read.
+const siteTable = Array.from({ length: 256 }, (_, cell) =>
+  cell === 0 ? 32 : cell === 3 ? 18 : cell === 2 ? 67 : 2
+);
+
 const document = {
   combat: {
     fire: {
@@ -29,10 +35,32 @@ const document = {
       targetSlots: [15, 0]
     },
     siteDestruction: {
+      alreadyDestroyedIsInert: true,
       axisWindow: [112, 144],
       destroyedMask: 128,
+      factionObjective: {
+        comparison: 'mechanoid-minus-palyar',
+        mechanoidScript: 26,
+        negativeOnesComplement: true,
+        palyarScript: 10,
+        threshold: 105
+      },
       impactFrames: 16,
-      projectileSlot: 8
+      initialCounts: { mechanoid: 115, neutral: 27, palyar: 114 },
+      initialTable: siteTable,
+      lowIdMask: 31,
+      mechanoidMask: 64,
+      neutralMask: 32,
+      projectileSlot: 8,
+      reactionDispatchBase: 32,
+      reactionWipeMask: 224,
+      reactions: [
+        { cells: [1], lowId: 2, script: 34 },
+        { cells: [2], lowId: 3, script: 35 },
+        { cells: [3], lowId: 18, script: 50 }
+      ],
+      restorationKeepMask: 127,
+      restorationSlot: 24
     }
   },
   controls: {
@@ -166,7 +194,7 @@ const document = {
     minimumAltitudeByte: 252,
     successCarry: 'clear'
   },
-  schemaVersion: 3,
+  schemaVersion: 4,
   shipDelivery: {
     acceptedMask: 128,
     cadence: 'every-frame',
@@ -278,15 +306,43 @@ describe('the endgame Data Payload document', () => {
     );
   });
 
+  test('refuses a city table that does not cover every surface cell', () => {
+    const short = structuredClone(document);
+    short.combat.siteDestruction.initialTable = siteTable.slice(0, 255);
+
+    expect(() => readers.endgame({ name: 'endgame.json' }, short)).toThrow(
+      'combat.siteDestruction.initialTable should be 256 entries'
+    );
+  });
+
+  test('names the reaction row a malformed script sits in', () => {
+    const malformed = structuredClone(document);
+    malformed.combat.siteDestruction.reactions[1].script = 'thirty-five' as never;
+
+    expect(() => readers.endgame({ name: 'endgame.json' }, malformed)).toThrow(
+      'combat.siteDestruction.reactions[1].script'
+    );
+  });
+
+  test('names a malformed faction threshold at its own path', () => {
+    const malformed = structuredClone(document);
+    malformed.combat.siteDestruction.factionObjective.threshold =
+      'one hundred and five' as never;
+
+    expect(() => readers.endgame({ name: 'endgame.json' }, malformed)).toThrow(
+      'combat.siteDestruction.factionObjective.threshold'
+    );
+  });
+
   test('is required and independently versioned by bundle loading', async () => {
     const { ['endgame.json']: _, ...missing } = payloadDocuments();
     await expect(load(readDocuments(missing))).rejects.toThrow('endgame.json');
     await expect(
-      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 2 })))
-    ).rejects.toThrow('unsupported schemaVersion 2');
+      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 3 })))
+    ).rejects.toThrow('unsupported schemaVersion 3');
     await expect(
-      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 4 })))
-    ).rejects.toThrow('unsupported schemaVersion 4');
+      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 5 })))
+    ).rejects.toThrow('unsupported schemaVersion 5');
     expect((await load(readDocuments(payloadDocuments()))).endgame).toEqual(
       document
     );
