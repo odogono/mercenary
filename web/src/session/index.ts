@@ -354,6 +354,9 @@ export class GameplaySession {
   readonly content: SessionContent;
   game: GameState;
   intent: Intent = IDLE;
+
+  /// The fraction of a frame left over from the last ship-delivery step.
+  private deliveryFrames = 0;
   private residence = new Map<number, Residence>();
   private objectFlags = new Map<number, number>();
   private carriedStack: number[] = [];
@@ -418,6 +421,7 @@ export class GameplaySession {
     return {
       benson: this.scripts?.captureSaveSnapshot() ?? null,
       carriedStack: [...this.carriedStack],
+      deliveryFrames: this.deliveryFrames,
       game: {
         ...this.game,
         craft: this.game.craft ?? null,
@@ -464,6 +468,7 @@ export class GameplaySession {
       touchdown: snapshot.game.touchdown ?? undefined
     };
     session.carriedStack = [...snapshot.carriedStack];
+    session.deliveryFrames = snapshot.deliveryFrames;
     session.objectFlags = new Map(snapshot.objectFlags);
     session.residence = new Map(snapshot.residence);
     session.rewired = new Map(snapshot.rewired);
@@ -1147,7 +1152,90 @@ export class GameplaySession {
         throw error;
       }
     }
+    this.advanceShipDelivery(seconds);
     return { events, snapshot: this.snapshot };
+  }
+
+  /// Flies a hired Interstellar Ship down to the surface, a frame at a time.
+  ///
+  /// The Reference Build calls this from the main loop before the branch that
+  /// would skip it underground, so the ship keeps coming while the player is in
+  /// a Room, mid-message, or anywhere else. Nothing here asks a script's
+  /// permission and nothing here is a script's business: the scripts decide
+  /// that a ship was hired, and this is what that decision does next.
+  ///
+  /// The altitude is not stored twice. It is read back out of the ship's own
+  /// Object Residence, which the decoded write always leaves a whole multiple of
+  /// `0x100`, so the only thing this has to carry between frames is the part of
+  /// a frame that has not elapsed yet.
+  private advanceShipDelivery(seconds: number): void {
+    const rules = this.content.shipDelivery;
+    if (rules === undefined || this.scripts === undefined || seconds <= 0) {
+      return;
+    }
+    // The descent is a per-frame Reference Build quantity, like the control
+    // loop's rates and the Room Transition's cooldown, so it advances on the
+    // same reference frame rate they do rather than on a second clock of its
+    // own (ADR 0016). It is deliberately not the scripts' tick clock: the
+    // native routine counts main-loop iterations, not the 50 Hz interrupt.
+    const rate = this.content.flight?.limits.referenceFrameRate;
+    if (rate === undefined) {
+      return;
+    }
+    this.deliveryFrames += seconds * rate;
+    const frames = Math.floor(this.deliveryFrames);
+    this.deliveryFrames -= frames;
+    let moved = false;
+    for (let frame = 0; frame < frames; frame++) {
+      const state = this.scripts.host.shipInbound;
+      if (state === rules.inactiveValue) {
+        break;
+      }
+      moved = true;
+      if ((state & rules.acceptedMask) !== 0) {
+        this.beginShipDelivery(rules);
+        continue;
+      }
+      this.stepShipDelivery(rules);
+    }
+    if (moved) {
+      this.republishHostState();
+    }
+  }
+
+  private beginShipDelivery(rules: EndgameShipDelivery): void {
+    const { initialisation: start } = rules;
+    this.residence.set(rules.slot, {
+      at: { x: start.x, y: start.y, z: start.z },
+      kind: 'surface'
+    });
+    this.scripts!.host = this.scripts!.host.with({
+      shipInbound: rules.descendingValue
+    });
+  }
+
+  private stepShipDelivery(rules: EndgameShipDelivery): void {
+    const where = this.residence.get(rules.slot);
+    const at = where !== undefined ? displacement(where) : undefined;
+    if (at === undefined) {
+      return;
+    }
+    const altitude = at.y >>> 8;
+    const next = Math.max(
+      0,
+      altitude -
+        (altitude >>> rules.descent.shift) -
+        rules.descent.extraSubtraction
+    );
+    this.residence.set(rules.slot, {
+      at: { x: at.x, y: next << 8, z: at.z },
+      kind: 'surface'
+    });
+    if (next === 0) {
+      this.scripts!.host = this.scripts!.host.with({
+        shipInbound: rules.inactiveValue
+      });
+    }
   }
 
   /// This session as flat scalars, for comparison against the Reference Build.
