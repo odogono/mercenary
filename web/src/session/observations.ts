@@ -5,7 +5,7 @@ import type { Occupancy } from './index.ts';
 
 /// The version the lab's observation maps are decoded against
 /// (`c64lab/semantics.py`). The two sides only line up while these agree.
-export const SEMANTIC_OBSERVATION_SCHEMA_VERSION = 1;
+export const SEMANTIC_OBSERVATION_SCHEMA_VERSION = 2;
 
 /// Everything a semantic observation can be. Deliberately the lab's domain and
 /// no wider: it decodes bytes into exactly these three.
@@ -23,8 +23,22 @@ export interface SemanticObservations {
   readonly schemaVersion: number;
 }
 
+/// What a session at war can be asked for. Absent while a session owns no
+/// combat state at all, which reads the same as a session that has not fought.
+export interface CombatObservationSources {
+  /// Cells whose destroyed bit is set, in any order.
+  readonly destroyedCells: Iterable<number>;
+  /// Frames left on each occupied Effect Slot, keyed by slot.
+  readonly effectLifecycles: ReadonlyMap<number, number>;
+  readonly mechanoidDestroyed: number;
+  /// The Craft Parameter Block installed over the occupied craft's own, if any.
+  readonly mover: number | undefined;
+  readonly palyarDestroyed: number;
+}
+
 export interface ObservationSources {
   readonly carriedStack: readonly number[];
+  readonly combat?: CombatObservationSources;
   readonly location: Location;
   readonly objectFlags: ReadonlyMap<number, number>;
   readonly occupancy: Occupancy;
@@ -33,6 +47,23 @@ export interface ObservationSources {
 }
 
 const NO_SCRIPT_PC = -1;
+
+/// No installed mover reads as an absence rather than block zero, which is a
+/// real block a craft can fly on.
+const NO_MOVER = -1;
+
+/// The two Effect Slots a comparison can turn on: the player's shot and the
+/// hostile shot aimed back. The other slots in the table are not lifecycles a
+/// run's outcome turns on.
+const OBSERVED_EFFECT_SLOTS = [8, 14] as const;
+
+/// Cells ascend, and each is two lower-case hex digits, so two runs of the same
+/// moment serialise identically on both sides of a comparison.
+const asCellList = (cells: Iterable<number>): string =>
+  [...cells]
+    .sort((a, b) => a - b)
+    .map(cell => cell.toString(16).padStart(2, '0'))
+    .join(',');
 
 /// Slots ascend so two runs of the same moment serialise identically.
 const bySlot = (slots: Iterable<number>): number[] =>
@@ -47,19 +78,27 @@ export const observationsOf = (
     attackingShip: host?.attackingShip ?? false,
     carriedStack: sources.carriedStack.join(','),
     credits: sources.scripts?.credits ?? 0,
+    destroyedCells: asCellList(sources.combat?.destroyedCells ?? []),
     engineFlags: host?.engineFlags ?? 0,
     gameComplete: host?.gameComplete ?? false,
+    mechanoidDestroyed: sources.combat?.mechanoidDestroyed ?? 0,
     messagePlaying: host?.messagePlaying ?? false,
     messageText: sources.scripts?.messageText ?? '',
+    mover: sources.combat?.mover ?? NO_MOVER,
     occupancy:
       sources.occupancy.kind === 'onFoot'
         ? BensonHostState.onFoot
         : sources.occupancy.slot,
+    palyarDestroyed: sources.combat?.palyarDestroyed ?? 0,
     room: sources.location.kind === 'room' ? sources.location.id : 0,
     scriptPc: state?.pc ?? NO_SCRIPT_PC,
     scriptStack: (state?.callStack ?? []).join(','),
     shipInbound: host?.shipInbound ?? 0
   };
+  for (const slot of OBSERVED_EFFECT_SLOTS) {
+    observations[`effectLifecycle${slot}`] =
+      sources.combat?.effectLifecycles.get(slot) ?? 0;
+  }
   for (const slot of bySlot(sources.residence.keys())) {
     const residence = sources.residence.get(slot)!;
     observations[`objectRoom.${slot}`] = hostRoom(residence);

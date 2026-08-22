@@ -1094,11 +1094,6 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
           destruction['reactionDispatchBase'],
           'combat.siteDestruction.reactionDispatchBase'
         ),
-        reactionWipeMask: asInt(
-          r,
-          destruction['reactionWipeMask'],
-          'combat.siteDestruction.reactionWipeMask'
-        ),
         reactions: asArray(
           r,
           destruction['reactions'],
@@ -1112,6 +1107,11 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
             script: asInt(r, row['script'], `${at}.script`)
           };
         }),
+        reactionWipeMask: asInt(
+          r,
+          destruction['reactionWipeMask'],
+          'combat.siteDestruction.reactionWipeMask'
+        ),
         restorationKeepMask: asInt(
           r,
           destruction['restorationKeepMask'],

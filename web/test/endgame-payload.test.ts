@@ -53,12 +53,12 @@ const document = {
       neutralMask: 32,
       projectileSlot: 8,
       reactionDispatchBase: 32,
-      reactionWipeMask: 224,
       reactions: [
         { cells: [1], lowId: 2, script: 34 },
         { cells: [2], lowId: 3, script: 35 },
         { cells: [3], lowId: 18, script: 50 }
       ],
+      reactionWipeMask: 224,
       restorationKeepMask: 127,
       restorationSlot: 24
     }
@@ -317,7 +317,8 @@ describe('the endgame Data Payload document', () => {
 
   test('names the reaction row a malformed script sits in', () => {
     const malformed = structuredClone(document);
-    malformed.combat.siteDestruction.reactions[1].script = 'thirty-five' as never;
+    malformed.combat.siteDestruction.reactions[1]!.script =
+      'thirty-five' as never;
 
     expect(() => readers.endgame({ name: 'endgame.json' }, malformed)).toThrow(
       'combat.siteDestruction.reactions[1].script'

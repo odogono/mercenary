@@ -431,12 +431,12 @@ export interface EndgameCombat {
     readonly neutralMask: number;
     readonly projectileSlot: number;
     readonly reactionDispatchBase: number;
-    readonly reactionWipeMask: number;
     readonly reactions: readonly {
       readonly cells: readonly number[];
       readonly lowId: number;
       readonly script: number;
     }[];
+    readonly reactionWipeMask: number;
     readonly restorationKeepMask: number;
     readonly restorationSlot: number;
   };

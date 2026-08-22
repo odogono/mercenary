@@ -304,7 +304,7 @@ def run_host_key_bursts(
 
 
 def decode_semantic_observations(memory: Mapping[str, bytes], observation_map: Mapping[str, Any]) -> dict[str, int | bool | str]:
-    _require(observation_map.get("schemaVersion") == 1, "Semantic observation map schemaVersion must be 1")
+    _require(observation_map.get("schemaVersion") == 2, "Semantic observation map schemaVersion must be 2")
     definitions = observation_map.get("observations")
     _require(isinstance(definitions, list) and bool(definitions), "Semantic observation map must contain observations")
     decoded: dict[str, int | bool | str] = {}
@@ -318,8 +318,23 @@ def decode_semantic_observations(memory: Mapping[str, bytes], observation_map: M
         _require(observation_id not in decoded, f"Semantic observation map repeats {observation_id}")
         _require(bank in memory, f"Semantic observation {observation_id} references unavailable bank {bank}")
         _require(isinstance(address, int) and address >= 0, f"Semantic observation {observation_id} has an invalid address")
-        _require(isinstance(width, int) and 1 <= width <= 8, f"Semantic observation {observation_id} width must be 1..8")
         source = memory[bank]
+
+        # A table of per-cell flags is one observation, not one per cell: the
+        # browser answers the same run with the same single string.
+        if definition.get("type") == "maskedCells":
+            count = definition.get("count")
+            mask = definition.get("mask")
+            _require(isinstance(count, int) and count > 0, f"Semantic observation {observation_id} needs a positive cell count")
+            _require(isinstance(mask, int) and mask > 0, f"Semantic observation {observation_id} needs a mask to select cells by")
+            _require(address + count <= len(source), f"Semantic observation {observation_id} exceeds bank {bank}")
+            table = source[address : address + count]
+            decoded[observation_id] = ",".join(
+                f"{cell:02x}" for cell, byte in enumerate(table) if byte & mask
+            )
+            continue
+
+        _require(isinstance(width, int) and 1 <= width <= 8, f"Semantic observation {observation_id} width must be 1..8")
         _require(address + width <= len(source), f"Semantic observation {observation_id} exceeds bank {bank}")
         endianness = definition.get("endianness", "little")
         _require(endianness in {"little", "big"}, f"Semantic observation {observation_id} has invalid endianness")
