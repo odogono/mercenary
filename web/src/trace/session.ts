@@ -12,6 +12,113 @@ export type SessionTraceCommand =
 
 const FORBIDDEN = new Set(['board', 'teleport']);
 
+/// One step of a journey the player could actually make.
+///
+/// A Session command is a single instant; a leg is a stretch of play, so these
+/// carry the walking and the waiting that get the player from one place to the
+/// next. `board` and `teleport` stay refused here for the same reason the gate
+/// refuses them: arriving somewhere by being placed there proves nothing about
+/// whether the route exists. Boarding is reachable, but only as `reach`, which
+/// has to satisfy the same proximity rule play does.
+export type SessionScenarioLeg =
+  | {
+      readonly kind: 'walk';
+      readonly running: boolean;
+      readonly seconds: number;
+      readonly turn: number;
+    }
+  | { readonly kind: 'wait'; readonly seconds: number }
+  | {
+      readonly action: 'board' | 'take';
+      readonly kind: 'reach';
+      readonly slot: number;
+    }
+  | { readonly command: SessionTraceCommand; readonly kind: 'command' };
+
+const positiveSeconds = (
+  operand: TraceValue | undefined,
+  name: string
+): number => {
+  if (
+    typeof operand !== 'number' ||
+    !(operand > 0) ||
+    !Number.isFinite(operand)
+  ) {
+    throw new Error(`${name} must be a positive number of seconds`);
+  }
+  return operand;
+};
+
+export const decodeSessionScenarioLeg = (
+  value: TraceValue
+): SessionScenarioLeg => {
+  if (!isObject(value)) {
+    throw new Error('a Session leg must be an object');
+  }
+  const object = value as TraceObject;
+  const keys = Object.keys(object);
+  for (const key of keys) {
+    if (FORBIDDEN.has(key)) {
+      throw new Error(`a legal route will not ${key}`);
+    }
+  }
+  if (keys.length !== 1) {
+    throw new Error('a Session leg must name exactly one step');
+  }
+  const key = keys[0]!;
+  const operand = object[key];
+  switch (key) {
+    case 'walk': {
+      if (!isObject(operand)) {
+        throw new Error('walk must describe how long and which way');
+      }
+      const walk = operand as TraceObject;
+      const turn = walk['turn'] ?? 0;
+      const running = walk['running'] ?? false;
+      if (typeof turn !== 'number' || turn < -1 || turn > 1) {
+        throw new Error('walk turn must be between -1 and 1');
+      }
+      if (typeof running !== 'boolean') {
+        throw new Error('walk running must be a boolean');
+      }
+      return {
+        kind: 'walk',
+        running,
+        seconds: positiveSeconds(walk['seconds'], 'walk'),
+        turn
+      };
+    }
+    case 'wait':
+      return { kind: 'wait', seconds: positiveSeconds(operand, 'wait') };
+    case 'reach': {
+      if (!isObject(operand)) {
+        throw new Error('reach must name a slot and an action');
+      }
+      const reach = operand as TraceObject;
+      const slot = reach['slot'];
+      const action = reach['action'];
+      if (!Number.isInteger(slot) || typeof slot !== 'number' || slot < 0) {
+        throw new Error('reach must name an object slot');
+      }
+      if (action !== 'take' && action !== 'board') {
+        throw new Error("reach action must be 'take' or 'board'");
+      }
+      return { action, kind: 'reach', slot };
+    }
+    default:
+      return { command: decodeSessionTraceCommand(value), kind: 'command' };
+  }
+};
+
+export const decodeSessionScenarioLegs = (
+  value: TraceValue
+): SessionScenarioLeg[] => {
+  if (!Array.isArray(value)) {
+    throw new Error('a legal route must be a list of legs');
+  }
+  return value.map(leg => decodeSessionScenarioLeg(leg));
+};
+
 export const decodeSessionTraceCommand = (
   value: TraceValue
 ): SessionTraceCommand => {
