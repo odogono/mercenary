@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "name": "combat-fire-in-flight",
+  "checkpoint": "interactive",
+  "description": "The same shot several frames later, so the per-frame integration can be read against the velocity the creation capture pins. Slot 8's position tables are $2880/$2480/$2540, $28C0/$24C0/$2580 and $2900/$2500/$25C0; its remaining lifecycle is $BDAB. Together with combat-fire-creation this answers whether the effect advance applies any step the velocity triple does not already describe.",
+  "actions": [
+    { "type": "wait_pc", "address": 33911 },
+    { "type": "wait_instructions", "instructions": 60000 },
+    { "type": "key", "petscii": "y" },
+    { "type": "wait_instructions", "instructions": 60000 },
+    { "type": "key", "petscii": "b" },
+    { "type": "wait_instructions", "instructions": 60000 },
+    { "type": "joystick", "port": 2, "value": 16, "durationInstructions": 20000 },
+    { "type": "joystick", "port": 2, "value": 0, "durationInstructions": 40000 },
+    { "type": "capture", "artifacts": ["ram", "registers"] }
+  ]
+}

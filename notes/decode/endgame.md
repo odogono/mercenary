@@ -437,6 +437,33 @@ direction offset `$30`, gives it a 16-frame lifecycle, requests sound 8, and
 updates visible objects. There is no ammunition count, weapon inventory gate,
 target selection UI, health pool, or accumulated damage.
 
+Reading `$886A-$891E` through for M7.3 shows how that vector is built, and what
+remains unread about it. The routine copies the player's nine position bytes at
+`$72-$7A` into the projectile's own position tables, so a shot begins exactly
+where the player is. It then runs the same five instructions three times, once
+per axis, over the component pairs at `$4C/$4D`, `$36/$37` and `$50/$51`: it
+adds the direction offset to the second byte of the pair, calls `$84A7`, and
+stores a three-byte signed result — low, high, and a sign extension of `$00` or
+`$FF` — into `$BDAB`, `$BDB3` and `$BDBB` for the first axis, `$BDC3`, `$BDCB`
+and `$BDD3` for the second, and `$BDDB`, `$BDE3` and `$BDEB` for the third.
+
+`$84A7` is a variable right shift, and it is self-modifying: it takes the second
+byte of the pair, shifts it right twice, requires the result below `$0F`, and
+multiplies it by three to write the branch displacement at `$84C2`, which
+selects how far into a chain of fifteen `LSR`/`ROR` pairs the shift begins.
+`SEC` before the first `ROR` inserts an implicit leading one. The pairs are
+therefore a mantissa and an exponent, four exponent units to a power of two, and
+the direction offset `$30` adds twelve to the shift selector rather than to any
+angle — it scales the player's direction components rather than turning them.
+
+What this does not yet give is the projectile's speed in the browser's own world
+units. The browser re-derives movement in floating point rather than carrying
+the original's packed components, so converting an exponent offset into a
+per-frame step needs the two sides read against each other once. The scenarios
+`combat-fire-creation` and `combat-fire-in-flight` exist to capture exactly
+that, and the browser cannot express projectile motion until they have been
+run.
+
 `$8690-$879A` advances effect slots 8-15. A player shot can do exactly three
 material things:
 
