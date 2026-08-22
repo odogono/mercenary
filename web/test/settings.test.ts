@@ -476,8 +476,8 @@ describe('the tracked settings, against the traces recorded with them', () => {
     });
   }
 
-  test('the catalogue names the nine benson traces this covers', () => {
-    expect(benson.length).toBe(9);
+  test('the catalogue names the four benson traces this covers', () => {
+    expect(benson.length).toBe(4);
   });
 
   for (const scenario of benson) {

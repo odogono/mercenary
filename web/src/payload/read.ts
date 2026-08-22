@@ -650,7 +650,11 @@ const validateInterstellarShipField = (
     const branch = asObject(r, value, path);
     for (const [key, child] of Object.entries(branch)) {
       const childPath = `${path}.${key}`;
-      if (typeof child === 'object' && child !== null && !Array.isArray(child)) {
+      if (
+        typeof child === 'object' &&
+        child !== null &&
+        !Array.isArray(child)
+      ) {
         integerTree(child, childPath);
       } else {
         asInt(r, child, childPath);

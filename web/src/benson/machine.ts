@@ -383,8 +383,11 @@ const step = (
         host
       );
     case 'tsti':
+      // Answers "not carried", like every other test opcode answers its own
+      // negative condition. The native handler branches to its answer-true
+      // target when the inventory search fails; see notes/decode/endgame.md.
       return decided(
-        host.inventory.has(state.object),
+        !host.inventory.has(state.object),
         instruction.condition,
         pc,
         state,
