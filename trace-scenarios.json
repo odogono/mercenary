@@ -68,7 +68,7 @@
     {
       "emitter": "projection",
       "id": "room-5-dark",
-      "note": "A dark Room. Nothing is drawn at all, so this trace has no line records — which is the claim, not an omission.",
+      "note": "A dark Room. Nothing is drawn at all, so this trace has no line records \u2014 which is the claim, not an omission.",
       "room": 5,
       "x": 2048,
       "z": 2048,
@@ -249,40 +249,6 @@
     },
     {
       "emitter": "benson",
-      "id": "script-3-plain",
-      "script": 3,
-      "seconds": 120,
-      "note": "A script that loads object slot 29 and Room 136 into the object and room registers and then tests them. With a default Host Callout it takes the sixteen-instruction path."
-    },
-    {
-      "emitter": "benson",
-      "id": "script-3-object-in-room",
-      "script": 3,
-      "seconds": 120,
-      "host": {
-        "objectRooms": {
-          "29": 136
-        }
-      },
-      "note": "The same script told that object 29 is in Room 136, which is what its `inrm` test asks. It follows the plain trace for eleven instructions and diverges on the twelfth, running eighteen in total against the plain trace's sixteen."
-    },
-    {
-      "emitter": "benson",
-      "id": "script-3-carried",
-      "script": 3,
-      "seconds": 120,
-      "host": {
-        "carrying": [
-          29
-        ],
-        "objectRooms": {
-          "29": 255
-        }
-      },
-      "note": "The same script with object 29 in the player's hands, which its `tsti` test asks about. It diverges on the eighth instruction — earlier than the room test, because the inventory test comes first — and runs twelve in total."
-    },
-    {
-      "emitter": "benson",
       "id": "script-3-flagged",
       "script": 3,
       "seconds": 120,
@@ -295,36 +261,6 @@
         }
       },
       "note": "The same script with object 29's flag byte set, which its `tsto` test reads. It diverges on the seventh instruction and runs nine in total, stopping soonest of the four, so the three tests are pinned in the order the script applies them."
-    },
-    {
-      "emitter": "benson",
-      "id": "script-3-write-before-test",
-      "script": 3,
-      "seconds": 120,
-      "writes": [
-        {
-          "at": 2,
-          "objectRooms": {
-            "29": 136
-          }
-        }
-      ],
-      "note": "The same fact arriving as a scheduled Host Callout write two seconds in, before the test runs. The instruction path matches script-3-object-in-room exactly, which is what makes the write schedule a real input rather than a convenience."
-    },
-    {
-      "emitter": "benson",
-      "id": "script-3-write-after-test",
-      "script": 3,
-      "seconds": 120,
-      "writes": [
-        {
-          "at": 30,
-          "objectRooms": {
-            "29": 136
-          }
-        }
-      ],
-      "note": "The same write arriving thirty seconds in, after the test has already run. The instruction path is identical to the plain trace, which pins that *when* the world tells the interpreter something is part of the behaviour and not incidental."
     },
     {
       "emitter": "benson",
@@ -391,7 +327,7 @@
     {
       "emitter": "navigation",
       "id": "world-flip-from-86",
-      "note": "The same Room entered from the other of its two ways in, and the world does not flip. Both of Room 127's stored alternates name Room 86, so arriving from 86 rewrites nothing — and the flip sits inside the branch that skips with it. That is PQ-0003, and since Room 127 has exactly two ways in it is half of that Room's observable behaviour.",
+      "note": "The same Room entered from the other of its two ways in, and the world does not flip. Both of Room 127's stored alternates name Room 86, so arriving from 86 rewrites nothing \u2014 and the flip sits inside the branch that skips with it. That is PQ-0003, and since Room 127 has exactly two ways in it is half of that Room's observable behaviour.",
       "room": 86,
       "at": {
         "x": 1024,
@@ -478,6 +414,21 @@
           "seconds": 3
         }
       ]
+    }
+  ],
+  "retired": [
+    {
+      "emitter": "benson",
+      "ids": [
+        "script-3-carried",
+        "script-3-object-in-room",
+        "script-3-plain",
+        "script-3-write-after-test",
+        "script-3-write-before-test"
+      ],
+      "on": "2026-08-22",
+      "reason": "Retired in #131. These six traces exercised script 3's hand-in protocol through the `tsti` test, and the Trace Oracle emitted them with that opcode's polarity inverted: it answered \"carried\" where the Reference Build answers \"not carried\". The five listed here recorded the wrong branch and could not be reproduced by a correct interpreter. `script-3-flagged` is unaffected, because its `tsto` test exits before `tsti` runs, and it remains a live scenario. The oracle is frozen and cannot re-emit these, so they are retired rather than re-recorded: Authoritative Evidence outranks it where the two disagree. The predicate order they pinned is now covered by web/test/deliveries.test.ts.",
+      "evidence": "notes/decode/endgame.md, section \"`tsti` tests absence, not presence\""
     }
   ]
 }

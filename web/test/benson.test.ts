@@ -2,6 +2,8 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   BensonError,
+  BensonHostState,
+  BensonMachine,
   BensonProgram,
   BensonState,
   DEFAULT_SESSION_SEED,
@@ -14,24 +16,25 @@ import type {
   BensonDocument,
   BensonInstruction
 } from '../src/payload/documents.ts';
+import { TextTable } from '../src/text/index.ts';
 import type { Trace } from '../src/trace/index.ts';
 import { bensonGate } from './replay/bensonGate.ts';
 
 /// The Benson interpreter's Replay Gate.
 ///
-/// Nine traces, no world: the program, the Host Callout, the message line, and the clock.
+/// Four traces, no world: the program, the Host Callout, the message line, and the clock.
 /// Two of them end in a `stopped` record when the instruction limit trips — that record is
 /// asserted, because a silent early stop would compare clean against a different reason.
+///
+/// Five script-3 traces were retired in #131: the Trace Oracle emitted them with `tsti`
+/// inverted, so they record a branch a correct interpreter cannot take, and the frozen
+/// oracle cannot re-emit them. `trace-scenarios.json` carries the reason, and
+/// `deliveries.test.ts` now covers the predicate order they pinned.
 
 const IDS = [
   'script-0-parked',
   'script-0-answered',
-  'script-3-plain',
-  'script-3-object-in-room',
-  'script-3-carried',
   'script-3-flagged',
-  'script-3-write-before-test',
-  'script-3-write-after-test',
   'script-1-parked'
 ] as const;
 
@@ -63,7 +66,7 @@ await bensonGate({
     }
   },
   ids: IDS,
-  recordCounts: [1353, 21_252, 172, 272, 50, 47, 274, 172, 20_736],
+  recordCounts: [1353, 21_252, 47, 20_736],
   title: 'the benson Replay Gate'
 });
 
@@ -179,5 +182,101 @@ describe('a decoded program', () => {
       expect(instruction.condition.branchOn).toBeTrue();
       expect(instruction.condition.branch).toEqual({ call: 1 });
     }
+  });
+});
+
+/// The test opcodes all answer their own *negative* condition, which is what lets one
+/// `branchOn: false` mean "the object is here" for both `tsti` and `inrm`. Getting `tsti`
+/// backwards silently inverts every delivery and the rental terminal, and it is not the kind
+/// of mistake a trace catches when the oracle shares it — so it is pinned directly.
+const emptyText = new TextTable({
+  counts: {},
+  messages: [],
+  schemaVersion: 1,
+  unresolvedCodes: [],
+  words: []
+});
+
+/// Runs one test opcode and reports the answer it gave, by branching on true into a `setf`.
+const answerOf = (
+  op: string,
+  fields: Record<string, unknown>,
+  host: BensonHostState,
+  object = 29
+): boolean => {
+  // Branch when the answer is true, so where we land reports the answer.
+  const program = BensonProgram.fromDocument(
+    document([
+      raw('loadi', { register: 14, value: object }),
+      raw('loadi', { register: 15, value: 136 }),
+      raw(op, {
+        branchOn: true,
+        onTaken: { kind: 'jmp', target: 4 },
+        ...fields
+      }),
+      raw('ret'),
+      raw('setf', { mask: 8 }),
+      raw('ret')
+    ])
+  );
+  const started = BensonMachine.start(0, program, new BensonState(), host)!;
+  const advance = BensonMachine.run(
+    started.state,
+    started.host,
+    program,
+    emptyText
+  );
+  return (advance.host.engineFlags & 0x08) !== 0;
+};
+
+describe('the polarity of the test opcodes', () => {
+  test('tsti answers true when the object is not carried', () => {
+    expect(
+      answerOf('tsti', {}, new BensonHostState({ inventory: new Set() }))
+    ).toBeTrue();
+    expect(
+      answerOf('tsti', {}, new BensonHostState({ inventory: new Set([29]) }))
+    ).toBeFalse();
+  });
+
+  test('inrm answers true when the object is not in the room', () => {
+    expect(
+      answerOf(
+        'inrm',
+        {},
+        new BensonHostState({ objectRooms: new Map([[29, 1]]) })
+      )
+    ).toBeTrue();
+    expect(
+      answerOf(
+        'inrm',
+        {},
+        new BensonHostState({ objectRooms: new Map([[29, 136]]) })
+      )
+    ).toBeFalse();
+  });
+
+  test('tsto answers true when the flag is clear', () => {
+    expect(
+      answerOf(
+        'tsto',
+        { mask: 1 },
+        new BensonHostState({ objectFlags: new Map([[29, 0]]) })
+      )
+    ).toBeTrue();
+    expect(
+      answerOf(
+        'tsto',
+        { mask: 1 },
+        new BensonHostState({ objectFlags: new Map([[29, 1]]) })
+      )
+    ).toBeFalse();
+  });
+
+  test('tstf answers true when the engine flag is clear', () => {
+    expect(answerOf('tstf', { mask: 2 }, new BensonHostState())).toBeTrue();
+    expect(
+      answerOf('tstf', { mask: 2 }, new BensonHostState({ engineFlags: 2 }))
+    ).toBeFalse();
   });
 });
