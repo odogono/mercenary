@@ -93,6 +93,44 @@ export const installSettingsView = (
         { label: 'AUTHENTIC', value: 'authentic' },
         { label: 'ENHANCED', value: 'enhanced' }
       ]
+    },
+    {
+      // Like the sky, the wireframe's own numbers stay authored; the player chooses among the
+      // named levels or hands the choice back to the document.
+      apply: value => {
+        preferences.update({
+          wireframeWeight:
+            value === PRESET_DEFAULT
+              ? undefined
+              : (value as 'fine' | 'bold' | 'heavy')
+        });
+      },
+      current: () => preferences.current().wireframeWeight ?? PRESET_DEFAULT,
+      name: 'weight',
+      options: [
+        { label: 'AS TUNED', value: PRESET_DEFAULT },
+        { label: 'FINE', value: 'fine' },
+        { label: 'BOLD', value: 'bold' },
+        { label: 'HEAVY', value: 'heavy' }
+      ]
+    },
+    {
+      apply: value => {
+        preferences.update({
+          wireframeGlow:
+            value === PRESET_DEFAULT
+              ? undefined
+              : (value as 'off' | 'soft' | 'bright')
+        });
+      },
+      current: () => preferences.current().wireframeGlow ?? PRESET_DEFAULT,
+      name: 'glow',
+      options: [
+        { label: 'AS TUNED', value: PRESET_DEFAULT },
+        { label: 'OFF', value: 'off' },
+        { label: 'SOFT', value: 'soft' },
+        { label: 'BRIGHT', value: 'bright' }
+      ]
     }
   ];
 
