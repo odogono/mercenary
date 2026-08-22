@@ -40,6 +40,12 @@ git worktree add --detach "$oracle_worktree" trace-oracle-last-good
 git worktree remove "$oracle_worktree"
 ```
 
+`lab payload export` writes only the documents it decodes, so it does not replace
+`payload/typography.json`, `payload/fonts/` or the review sheets beside them — those come from
+the separate exporter in `docs/typography.md`. Export **into** the payload directory rather than
+replacing it; a payload missing `typography.json` still passes every Bun test and fails every
+browser gate, because only the page loads it.
+
 A Replay Gate whose Golden Trace or payload file is absent **fails**. It does not skip: a
 module without a passing replay is not ported, and a gate that quietly passes when its
 evidence is missing is worse than no gate. The page also fails visibly rather than presenting
