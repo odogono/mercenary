@@ -178,6 +178,38 @@ _Avoid_: Quest, job, Objective, accepted Mission, Mission flag
 One condition within a Mission, such as acquiring, delivering, or destroying something, whose satisfaction advances that Mission.
 _Avoid_: Mission, task, goal
 
+**Site**:
+One cell of the city the player can destroy from the air, belonging to the Palyar, occupied by the Mechanoids, or neutral between them; a Site is the unit both factions count, so the surface's other structures are not Sites.
+_Avoid_: Building, target, structure, block
+
+**Site Ledger**:
+The mutable record of what has become of every Site — which are destroyed, and which have already spent their Faction Reaction — carried in a Gameplay Session and in its Save Snapshot rather than recomputed from the world, because play changes it in both directions.
+_Avoid_: Destroyed list, damage map, destroyedBlocks, world state
+
+**Faction Reaction**:
+The Benson Script one Site dispatches when it is destroyed, chosen by that Site rather than by the faction that owned it; most Sites share one of two generic reactions, and a Site spends its reaction the first time it dispatches, so a Site restored and destroyed again reacts only once.
+_Avoid_: Consequence, retaliation, alarm, script trigger
+
+**Gratitude Threshold**:
+The point at which one faction's lead in destroyed Sites is large enough that the other faction thanks the player, dispatching its own Benson Script in place of that Site's Faction Reaction; it is reached at most once in a Gameplay Session, whichever faction reaches it first.
+_Avoid_: Reputation, faction score, reward tier, standing
+
+**Attack State**:
+Whether a hostile craft is presently hunting the player, set by the Benson Scripts and cleared by the encounter ending in either side's favour; it is a single condition rather than a count, so a second attacker cannot be pending behind the first.
+_Avoid_: Aggro, alert level, combat mode, attackingShip
+
+**Effect Slot**:
+One of the fixed places a Gameplay Session keeps something that lives for a set number of frames and then goes — a shot in flight, the mark of an impact, a hostile craft on its way in. There are a fixed number of them, so what a slot holds is also the answer to whether another can begin.
+_Avoid_: Particle, entity, spawn, effect list
+
+**Player Projectile**:
+The single shot the player has in flight, fired only from a craft and only on the surface, which ends by striking something, leaving the world, or outliving its frames; a second cannot be fired while the first is still flying.
+_Avoid_: Bullet, laser, ammunition, weapon
+
+**Hostile Projectile**:
+The shot a hostile craft aims at the player, which ends the same three ways as a Player Projectile and, if it arrives, costs the player their craft or knocks them down on foot — never the Gameplay Session.
+_Avoid_: Enemy fire, damage, hit points
+
 **Ship Delivery**:
 The state of the Interstellar Ship having been hired and being on its way, from the moment the hire is paid for until the craft has come to rest on the surface. It advances on its own while the player does anything else, and it ends only by the ship arriving; nothing the player does cancels it or hurries it.
 _Avoid_: Ship inbound flag, delivery timer, hired Boolean, ETA
