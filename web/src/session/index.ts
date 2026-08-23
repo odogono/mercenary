@@ -306,6 +306,104 @@ const sameAlternate = (left: Alternate, right: Alternate): boolean =>
     : 'room' in right.destination &&
       left.destination.room === right.destination.room);
 
+/// What a restored combat state has to agree with before it is played on.
+///
+/// Two things here cannot be caught by decoding the Save on its own. A shot's
+/// place lives in its Object Residence while whether there *is* a shot lives
+/// beside it, so a Save carrying one without the other would restore a shot
+/// nothing could draw or a mark nothing was flying. And a counter is a byte on
+/// its own, so one standing higher than the Sites that could have moved it
+/// describes a session that could not have happened.
+const validateCombatSnapshot = (
+  content: SessionContent,
+  snapshot: SaveSnapshot
+): void => {
+  const combat = snapshot.combat;
+  const sites = content.sites;
+  if (combat === null) {
+    if (sites !== undefined) {
+      throw new Error(
+        'Save Snapshot has no combat state for a world with Sites'
+      );
+    }
+    return;
+  }
+  if (sites === undefined) {
+    throw new Error(
+      'Save Snapshot carries combat state for a world without Sites'
+    );
+  }
+  if (combat.siteTable.length !== sites.initialTable.length) {
+    throw new Error('Save Snapshot Site Ledger is the wrong size');
+  }
+  // A Site the payload never had cannot have been destroyed, and a counter
+  // cannot have counted more than its faction had to lose.
+  const totals = { mechanoid: 0, palyar: 0 };
+  for (const [cell, byte] of sites.initialTable.entries()) {
+    const saved = combat.siteTable[cell]!;
+    if ((saved & ~sites.destroyedMask & 0xff) > (byte & 0xff)) {
+      throw new Error(`Save Snapshot Site Ledger gained state at cell ${cell}`);
+    }
+    if ((byte & sites.neutralMask) !== 0) {
+      continue;
+    }
+    if ((byte & sites.mechanoidMask) === 0) {
+      totals.palyar += 1;
+    } else {
+      totals.mechanoid += 1;
+    }
+  }
+  if (
+    combat.mechanoidDestroyed > totals.mechanoid ||
+    combat.palyarDestroyed > totals.palyar
+  ) {
+    throw new Error('Save Snapshot faction counter is beyond its Sites');
+  }
+  if (combat.impact !== null && combat.impact.framesLeft > sites.impactFrames) {
+    throw new Error('Save Snapshot impact outlives its own lifecycle');
+  }
+  const agrees = (
+    slot: number | undefined,
+    flying: { readonly framesLeft: number } | null,
+    limit: number | undefined,
+    what: string
+  ): void => {
+    if (slot === undefined) {
+      return;
+    }
+    const where = snapshot.residence.find(([at]) => at === slot)?.[1];
+    const placed = where?.kind === 'surface' && where.at !== undefined;
+    if ((flying !== null) !== placed) {
+      throw new Error(`Save Snapshot ${what} and its place disagree`);
+    }
+    if (flying !== null && limit !== undefined && flying.framesLeft > limit) {
+      throw new Error(`Save Snapshot ${what} outlives its own lifecycle`);
+    }
+  };
+  agrees(
+    content.fire?.effectSlot,
+    combat.playerShot,
+    content.fire?.lifecycleFrames,
+    'Player Projectile'
+  );
+  agrees(
+    content.hostile?.inboundSlot,
+    combat.hostileShot,
+    content.hostile?.inboundLifecycleFrames,
+    'Hostile Projectile'
+  );
+  const blocks = content.flight?.document.blocks;
+  if (
+    snapshot.game.mover !== null &&
+    blocks !== undefined &&
+    !blocks.some(block => block.index === snapshot.game.mover)
+  ) {
+    throw new Error(
+      `Save Snapshot installs missing mover ${snapshot.game.mover}`
+    );
+  }
+};
+
 const validateSnapshotReferences = (
   content: SessionContent,
   snapshot: SaveSnapshot
@@ -373,6 +471,7 @@ const validateSnapshotReferences = (
       );
     }
   }
+  validateCombatSnapshot(content, snapshot);
   for (const [roomId, alternate] of snapshot.rewired) {
     const room = content.rooms.get(roomId);
     if (
