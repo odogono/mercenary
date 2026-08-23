@@ -601,6 +601,19 @@ complements it and takes script 26. The complement makes the two thresholds
 asymmetric: the Palyar side dispatches once the difference reaches `105`, the
 Mechanoid side once it reaches `-106`.
 
+Both have since been reached by flying the route rather than by setting the
+counters, which also settles that the route exists. A craft can only strike a
+Site from below a decoded altitude, and a craft that never raises its nose never
+leaves the ground, so the whole city is bombed from a taxiing craft at full
+throttle. Reaching the Palyar side took 105 destructions and the Mechanoid side
+107, one apart as the complement predicts.
+
+Script 10's reward is the Pass rather than the cash while slot 46 is still in
+room 80: it moves to room 1, credits do not change, and the shared flag is left
+set. Both scripts test that flag one instruction past their entry and both reach
+the same body behind it, so the thanks is a single event however far past either
+threshold a lead goes.
+
 `$880A-$8811` masks the dispatched cell's low id away and writes the byte back,
 so a reaction fires at most once per cell for the life of a session. A cell that
 is destroyed, restored by the Anti Time Bomb, and destroyed again dispatches
