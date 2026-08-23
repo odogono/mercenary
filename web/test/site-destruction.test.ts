@@ -196,6 +196,32 @@ describe('a shot that reaches the city', () => {
   });
 });
 
+describe('a Save taken while a Site is still coming apart', () => {
+  test('carries the impact, the ledger and the counters through', () => {
+    const session = overCell(mechanoidCell);
+    bomb(session);
+    const before = session.observations().observations;
+
+    const restored = GameplaySession.restore(
+      content,
+      session.scripts,
+      session.captureSaveSnapshot()
+    );
+
+    expect(restored.observations().observations).toEqual(before);
+    // Including the refusal the impact is still causing.
+    expect(restored.fire().outcome).toEqual({ kind: 'impactActiveRefused' });
+
+    // And it comes apart on the same frame it would have.
+    restored.advance(rules.impactFrames / 20);
+    session.advance(rules.impactFrames / 20);
+    expect(restored.observations().observations).toEqual(
+      session.observations().observations
+    );
+    expect(restored.fire().outcome).toEqual({ kind: 'fired' });
+  });
+});
+
 describe('a shot that reaches the object it can start a script on', () => {
   const hits = bundle.endgame.combat.objectHits;
   const target = hits.targetSlots.at(-1)!;
