@@ -943,6 +943,7 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
           fire['oneActiveShot'],
           'combat.fire.oneActiveShot'
         ),
+        sound: asInt(r, fire['sound'], 'combat.fire.sound'),
         speedPerFrame: asInt(
           r,
           fire['speedPerFrame'],

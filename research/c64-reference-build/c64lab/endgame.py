@@ -17,7 +17,7 @@ from .flight import decode_float
 from .prng import RANDOM_ROUTINE, RANDOM_STATE, RANDOM_VALUE, decode_reference_prng
 
 
-ENDGAME_SCHEMA_VERSION = 5
+ENDGAME_SCHEMA_VERSION = 6
 
 # Drop key dispatch and native inventory mutation.
 DROP_DISPATCH = 0xB33F
@@ -569,6 +569,7 @@ def _require_engine(ram: bytes) -> None:
         (FIRE_ROUTINE + 11, (0xA5, 0xF4, 0xD0), "fire does not wait for the current impact effect"),
         (FIRE_ROUTINE + 15, (0xA0,), "fire does not select an immediate effect slot"),
         (FIRE_ROUTINE + 22, (0xA9,), "fire does not select an immediate sound effect"),
+        (FIRE_ROUTINE + 24, (0x20,), "fire does not request the sound it selected"),
         (FIRE_ROUTINE + 32, (0xA9,), "fire does not load an immediate lifecycle"),
         (PROJECTILE_UPDATE, (0xA2, 0x0F, 0xBD, 0xA3, 0xBD), "projectile update does not scan the effect table"),
         (0x8701, (0xE0,), "projectile update does not identify an immediate player-shot slot"),
@@ -889,6 +890,7 @@ def decode_endgame(ram: bytes) -> dict[str, Any]:
                 "lifecycleFrames": ram[FIRE_ROUTINE + 33],
                 "directionOffset": ram[FIRE_CALL_SITE + 1],
                 "oneActiveShot": True,
+                "sound": ram[FIRE_ROUTINE + 23],
                 **_decode_shot_speed(ram, ram[FIRE_CALL_SITE + 1]),
             },
             "siteDestruction": {

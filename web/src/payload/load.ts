@@ -30,7 +30,7 @@ export const SUPPORTED_BENSON_SCHEMA_VERSION = 1;
 export const SUPPORTED_INTERACTION_SCHEMA_VERSION = 1;
 export const SUPPORTED_FLIGHT_SCHEMA_VERSION = 3;
 export const SUPPORTED_UNDERGROUND_SCHEMA_VERSION = 2;
-export const SUPPORTED_ENDGAME_SCHEMA_VERSION = 5;
+export const SUPPORTED_ENDGAME_SCHEMA_VERSION = 6;
 
 const parse = (name: string, body: string): unknown => {
   try {

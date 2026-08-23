@@ -418,20 +418,25 @@ export interface EndgameSiteDestruction {
   readonly restorationSlot: number;
 }
 
+/// What firing costs and how far a shot gets.
+export interface EndgameFire {
+  readonly directionOffset: number;
+  readonly effectSlot: number;
+  /// Exponent units to a power of two, which is what makes the direction
+  /// offset a scale rather than a rotation.
+  readonly exponentUnitsPerOctave: number;
+  readonly inputActiveValue: number;
+  readonly lifecycleFrames: number;
+  readonly oneActiveShot: boolean;
+  /// The sound firing asks for, which presentation answers.
+  readonly sound: number;
+  /// World units a shot of full magnitude covers per frame on one axis.
+  readonly speedPerFrame: number;
+  readonly walkingMoverProhibited: boolean;
+}
+
 export interface EndgameCombat {
-  readonly fire: {
-    readonly directionOffset: number;
-    readonly effectSlot: number;
-    /// Exponent units to a power of two, which is what makes the direction
-    /// offset a scale rather than a rotation.
-    readonly exponentUnitsPerOctave: number;
-    readonly inputActiveValue: number;
-    readonly lifecycleFrames: number;
-    readonly oneActiveShot: boolean;
-    /// World units a shot of full magnitude covers per frame on one axis.
-    readonly speedPerFrame: number;
-    readonly walkingMoverProhibited: boolean;
-  };
+  readonly fire: EndgameFire;
   readonly hostileCraft: {
     readonly attackingSlot: number;
     readonly captureClearsAttackingShip: boolean;

@@ -100,7 +100,7 @@ const envelope = (session: GameplaySession): SaveEnvelope => ({
 });
 
 describe('a Save Snapshot', () => {
-  test('uses schema v4 and stores object authority only at the session level', () => {
+  test('uses schema v5 and stores object authority only at the session level', () => {
     const gameplay = new GameplaySession(
       content,
       playerState({ position: { x: 0, y: 0, z: 0 } }),
@@ -108,7 +108,7 @@ describe('a Save Snapshot', () => {
     );
     const snapshot = gameplay.captureSaveSnapshot();
 
-    expect(SAVE_SCHEMA_VERSION).toBe(4);
+    expect(SAVE_SCHEMA_VERSION).toBe(5);
     expect(snapshot).toHaveProperty('carriedStack');
     expect(snapshot).toHaveProperty('deliveryFrames');
     expect(snapshot).toHaveProperty('objectFlags');

@@ -61,6 +61,9 @@ export const eventValue = (event: PresentationEvent): TraceValue => {
   if ('wall' in event) {
     return { wall: { sound: event.wall.sound } };
   }
+  if ('fire' in event) {
+    return { fire: { sound: event.fire.sound } };
+  }
   return { worldFlipped: event.worldFlipped };
 };
 
