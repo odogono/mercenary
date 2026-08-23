@@ -457,18 +457,40 @@ export interface EndgameObjectHits {
   readonly targetSlots: readonly number[];
 }
 
+/// How a hostile craft closes on the player, when it shoots, and what a hit
+/// costs whoever it lands on.
+export interface EndgameHostileCraft {
+  /// How far the attacker turns toward the player each time it re-aims, as a
+  /// right shift of the distance between them.
+  readonly approachAimShift: number;
+  /// The lifecycle an attacker is given between one re-aim and the next. It is
+  /// negative as a byte, which is what holds the encounter off while it closes.
+  readonly approachDelayLifecycle: number;
+  readonly attackingSlot: number;
+  readonly captureClearsAttackingShip: boolean;
+  readonly captureMover: number;
+  readonly captureRemovesSlots: readonly number[];
+  readonly enabledByAttackingShip: boolean;
+  /// How near the player must be before the attacker shoots, in `rangeUnit`s.
+  readonly firingRange: number;
+  readonly hitCubeSize: number;
+  readonly hitSound: number;
+  readonly inboundAimShift: number;
+  readonly inboundLifecycleFrames: number;
+  readonly inboundSlot: number;
+  readonly inboundSound: number;
+  /// The lifecycle the effect advance leaves alone. An attacker's approach ends
+  /// when its own count reaches this, which is what makes the delay finite.
+  readonly parkedLifecycle: number;
+  readonly rangeUnit: number;
+  /// Shown only when the hit takes a craft; on foot there is nothing to lose.
+  readonly shipDestroyedMessage: number;
+  readonly surfaceOnly: boolean;
+}
+
 export interface EndgameCombat {
   readonly fire: EndgameFire;
-  readonly hostileCraft: {
-    readonly attackingSlot: number;
-    readonly captureClearsAttackingShip: boolean;
-    readonly captureMover: number;
-    readonly captureRemovesSlots: readonly number[];
-    readonly enabledByAttackingShip: boolean;
-    readonly inboundLifecycleFrames: number;
-    readonly inboundSlot: number;
-    readonly surfaceOnly: boolean;
-  };
+  readonly hostileCraft: EndgameHostileCraft;
   readonly objectHits: EndgameObjectHits;
   readonly siteDestruction: EndgameSiteDestruction;
 }

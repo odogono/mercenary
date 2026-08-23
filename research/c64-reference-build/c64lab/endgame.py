@@ -17,7 +17,7 @@ from .flight import decode_float
 from .prng import RANDOM_ROUTINE, RANDOM_STATE, RANDOM_VALUE, decode_reference_prng
 
 
-ENDGAME_SCHEMA_VERSION = 8
+ENDGAME_SCHEMA_VERSION = 10
 
 # Drop key dispatch and native inventory mutation.
 DROP_DISPATCH = 0xB33F
@@ -70,6 +70,23 @@ OBJECT_HIT_REMOVES_TARGET_SITE = 0x885A
 # The cube test compares the two bytes above the least significant one, so the
 # size it is given counts in units of 256 rather than in world units.
 OBJECT_HIT_CUBE_COMPARE = 0x99D5
+
+# The hostile encounter: how the attacker closes, when it shoots, and what a
+# hit costs the player.
+HOSTILE_SURFACE_TEST = 0x8927
+HOSTILE_READY_TEST = 0x892B
+HOSTILE_RANGE_SITE = 0x8935
+HOSTILE_SHOT_SOUND_SITE = 0x8945
+HOSTILE_SHOT_AIM_SITE = 0x8954
+HOSTILE_HIT_CUBE_SITE = 0x8967
+HOSTILE_HIT_SOUND_SITE = 0x8981
+HOSTILE_APPROACH_SITE = 0x8998
+HOSTILE_APPROACH_AIM_SITE = 0x899A
+HOSTILE_APPROACH_DELAY_SITE = 0x89A2
+HOSTILE_AIM_ROUTINE = 0x89AF
+# The lifecycle the effect advance leaves alone: a slot parked here neither
+# counts down nor moves, which is where an attacker's approach ends.
+EFFECT_SENTINEL_SITE = 0x8697
 
 SITE_TABLE = 0x2B00
 SITE_TABLE_LENGTH = 0x100
@@ -593,6 +610,7 @@ def _require_engine(ram: bytes) -> None:
         (FIRE_ROUTINE + 24, (0x20,), "fire does not request the sound it selected"),
         (FIRE_ROUTINE + 32, (0xA9,), "fire does not load an immediate lifecycle"),
         (PROJECTILE_UPDATE, (0xA2, 0x0F, 0xBD, 0xA3, 0xBD), "projectile update does not scan the effect table"),
+        (EFFECT_SENTINEL_SITE, (0xC9,), "projectile update does not compare an immediate parked lifecycle"),
         (0x8701, (0xE0,), "projectile update does not identify an immediate player-shot slot"),
         (0x872E, (0xC9,), "site hit does not compare an X-axis lower bound"),
         (0x8732, (0xC9,), "site hit does not compare an X-axis upper bound"),
@@ -634,6 +652,17 @@ def _require_engine(ram: bytes) -> None:
         (OBJECT_HIT_CLEARS_ATTACK_SITE, (0xA9, 0x00, 0x8D, 0xF8, 0xBE), "object collision does not clear attackingShip"),
         (OBJECT_HIT_REMOVES_TARGET_SITE, (0xA9, 0xFF, 0x99, 0x40, 0x29), "object collision does not put its target out of the world"),
         (OBJECT_HIT_CUBE_COMPARE, (0x38, 0x8A, 0xE5, 0x08, 0x98, 0xE5, 0x09), "object collision does not compare its cube above the low byte"),
+        (HOSTILE_SURFACE_TEST, (0xA5, 0xCA, 0xD0), "hostile craft does not return when the player is in a Room"),
+        (HOSTILE_READY_TEST, (0xA2, 0x0F, 0xBD, 0xA3, 0xBD, 0x30), "hostile craft does not wait out a negative lifecycle"),
+        (HOSTILE_RANGE_SITE, (0xA2,), "hostile craft does not select an immediate firing range"),
+        (HOSTILE_SHOT_SOUND_SITE, (0xA9,), "hostile shot does not select an immediate sound"),
+        (HOSTILE_SHOT_AIM_SITE, (0xA0,), "hostile shot does not select an immediate aim shift"),
+        (HOSTILE_HIT_CUBE_SITE, (0xA2,), "hostile shot does not select an immediate hit cube"),
+        (HOSTILE_HIT_SOUND_SITE, (0xA9,), "hostile hit does not select an immediate sound"),
+        (HOSTILE_APPROACH_AIM_SITE, (0xA0,), "hostile approach does not select an immediate aim shift"),
+        (HOSTILE_APPROACH_DELAY_SITE, (0xA9,), "hostile approach does not set an immediate delay"),
+        (HOSTILE_AIM_ROUTINE, (0xA5, 0xD7, 0x0A, 0x66, 0xD7), "hostile aim does not shift its delta toward the player"),
+        (HOSTILE_AIM_ROUTINE + 32, (0xB9, 0xD5, 0x00, 0x49, 0xFF, 0x99, 0xD5, 0x00), "hostile aim does not negate the delta it shifted"),
         (SITE_COMMIT_READ, (0xB9, 0x00, 0x2B, 0x85), "site commit does not save the struck cell's table byte"),
         (RESTORATION_TEST_SITE, (0xAD,), "site commit does not read a restoration override's flags"),
         (RESTORATION_TEST_SITE + 3, (0x30,), "site commit does not branch to restoration while that object is carried"),
@@ -955,6 +984,16 @@ def decode_endgame(ram: bytes) -> dict[str, Any]:
                 "captureClearsAttackingShip": True,
                 "captureMover": ram[0x8986 + 1],
                 "captureRemovesSlots": [ram[0x898D + 3] - 0x40, ram[0x898D + 6] - 0x40],
+                "firingRange": ram[HOSTILE_RANGE_SITE + 1],
+                "rangeUnit": 0x100,
+                "inboundSound": ram[HOSTILE_SHOT_SOUND_SITE + 1],
+                "inboundAimShift": ram[HOSTILE_SHOT_AIM_SITE + 1],
+                "hitCubeSize": ram[HOSTILE_HIT_CUBE_SITE + 1],
+                "hitSound": ram[HOSTILE_HIT_SOUND_SITE + 1],
+                "approachAimShift": ram[HOSTILE_APPROACH_AIM_SITE + 1],
+                "approachDelayLifecycle": ram[HOSTILE_APPROACH_DELAY_SITE + 1],
+                "parkedLifecycle": ram[EFFECT_SENTINEL_SITE + 1],
+                "shipDestroyedMessage": ram[0x8977 + 1],
             },
         },
         "shipDelivery": _decode_ship_delivery(ram),

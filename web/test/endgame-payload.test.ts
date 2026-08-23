@@ -23,13 +23,23 @@ const document = {
       walkingMoverProhibited: true
     },
     hostileCraft: {
+      approachAimShift: 5,
+      approachDelayLifecycle: 173,
       attackingSlot: 15,
       captureClearsAttackingShip: true,
       captureMover: 9,
       captureRemovesSlots: [14, 15],
       enabledByAttackingShip: true,
+      firingRange: 48,
+      hitCubeSize: 4,
+      hitSound: 12,
+      inboundAimShift: 4,
       inboundLifecycleFrames: 32,
       inboundSlot: 14,
+      inboundSound: 8,
+      parkedLifecycle: 127,
+      rangeUnit: 256,
+      shipDestroyedMessage: 48,
       surfaceOnly: true
     },
     objectHits: {
@@ -207,7 +217,7 @@ const document = {
     minimumAltitudeByte: 252,
     successCarry: 'clear'
   },
-  schemaVersion: 8,
+  schemaVersion: 10,
   shipDelivery: {
     acceptedMask: 128,
     cadence: 'every-frame',
@@ -352,11 +362,11 @@ describe('the endgame Data Payload document', () => {
     const { ['endgame.json']: _, ...missing } = payloadDocuments();
     await expect(load(readDocuments(missing))).rejects.toThrow('endgame.json');
     await expect(
-      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 7 })))
-    ).rejects.toThrow('unsupported schemaVersion 7');
-    await expect(
       load(readDocuments(payloadDocuments({ ...document, schemaVersion: 9 })))
     ).rejects.toThrow('unsupported schemaVersion 9');
+    await expect(
+      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 11 })))
+    ).rejects.toThrow('unsupported schemaVersion 11');
     expect((await load(readDocuments(payloadDocuments()))).endgame).toEqual(
       document
     );

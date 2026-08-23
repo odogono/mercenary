@@ -37,6 +37,9 @@ const TURN = 2 * Math.PI;
 /// Captured Reference Build eye height, used by the opening and the on-foot view.
 export const REFERENCE_WALKING_EYE_ALTITUDE = 128;
 
+/// The altitude byte the tumble handler subtracts its drop from.
+const ALTITUDE_MIDDLE_BYTE = 0x1_00;
+
 /// Where the Reference Build's opening leaves the player: the captured crash position, at the
 /// captured eye height.
 ///
@@ -208,6 +211,10 @@ export interface GameState {
   readonly craft: number | undefined;
   readonly elapsed: number;
   readonly mode: FlightMode;
+  /// A Craft Parameter Block installed over the occupied craft's own, which the
+  /// Reference Build does by copying that block's bytes into the live one. Only
+  /// the crash tumble installs one, and reaching the ground clears it.
+  readonly mover: number | undefined;
   readonly player: PlayerState;
   /// Whether a poweramp is fitted, which the Reference Build reads for one craft.
   readonly poweramp: boolean;
@@ -252,6 +259,7 @@ export const gameState = (fields: {
   readonly craft?: number;
   readonly elapsed?: number;
   readonly mode?: FlightMode;
+  readonly mover?: number;
   readonly player: PlayerState;
   readonly poweramp?: boolean;
   readonly room?: number;
@@ -261,6 +269,7 @@ export const gameState = (fields: {
   craft: fields.craft,
   elapsed: fields.elapsed ?? 0,
   mode: fields.mode ?? 'grounded',
+  mover: fields.mover,
   player: fields.player,
   poweramp: fields.poweramp ?? false,
   room: fields.room,
@@ -619,6 +628,54 @@ const walk = (
   };
 };
 
+/// The crash tumble: falling, spinning, and answering nothing.
+///
+/// The Reference Build installs this block over the craft's own and then reads
+/// no input at all — the three angles each advance by their own fixed step and
+/// the altitude falls by its own. Reaching the ground hands over to the same
+/// resolution an ordinary crash reaches, so a tumble ends in play rather than
+/// in an Ending.
+const tumble = (
+  state: GameState,
+  block: Block,
+  flight: FlightModel
+): GameState => {
+  const rates = block.tumble;
+  const frames = 1;
+  if (rates === undefined) {
+    return state;
+  }
+  const player = state.player;
+  const limits = flight.limits;
+  // The handler subtracts its drop from the altitude's middle byte, so a step
+  // is that many of them.
+  const fall = rates.altitudeDrop * ALTITUDE_MIDDLE_BYTE;
+  const y = player.position.y - fall * frames;
+  const step = (units: number): number =>
+    units * frames * flight.radiansPerUnit;
+  const spun: GameState = {
+    ...state,
+    elapsed: state.elapsed,
+    player: {
+      ...player,
+      heading: wrap(player.heading + step(rates.yawStep)),
+      pitch: wrap(player.pitch + step(rates.pitchStep)),
+      position: { ...player.position, y: Math.max(0, y) },
+      roll: wrap(player.roll + step(rates.rollStep))
+    }
+  };
+  if (y > 0) {
+    return spun;
+  }
+  // The ground arrives, and the tumble is over: the same verdict an ordinary
+  // touchdown gets, and the installed block goes with it.
+  return transition(
+    { ...spun, mover: undefined },
+    fall / Math.max(frames, 1),
+    flight
+  );
+};
+
 const integrate = (
   state: GameState,
   intent: Intent,
@@ -643,7 +700,12 @@ const integrate = (
   }
 
   const player = counted.player;
-  const block = blockFor(flight.document, counted.craft);
+  // An installed block replaces the craft's own, which is how the Reference
+  // Build flies a crash: it copies that block's bytes over the live ones.
+  const block = blockFor(flight.document, counted.mover ?? counted.craft);
+  if (block.handler === 'tumble') {
+    return tumble(counted, block, flight);
+  }
   const rules = flight.rules;
   const limits = flight.limits;
   // The decoded parameters are per-frame, so a step is a number of frames.

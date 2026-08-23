@@ -75,6 +75,7 @@ class Builder:
         self.ram[PROJECTILE_UPDATE:PROJECTILE_UPDATE + 8] = bytes(
             [0xA2, 0x0F, 0xBD, 0xA3, 0xBD, 0xF0, 0x71, 0xC9]
         )
+        self.ram[0x8698] = 0x7F
         for site, data in (
             (0x8701, [0xE0, 0x08]),
             (0x872E, [0xC9, 0x70]),
@@ -251,6 +252,20 @@ class Builder:
         self.ram[0x885A:0x885F] = bytes([0xA9, 0xFF, 0x99, 0x40, 0x29])
         self.ram[0x99D5:0x99DC] = bytes([0x38, 0x8A, 0xE5, 0x08, 0x98, 0xE5, 0x09])
 
+        # The hostile encounter: the wait, the range, the two aims, and the hit.
+        self.ram[0x8927:0x892A] = bytes([0xA5, 0xCA, 0xD0])
+        self.ram[0x892B:0x8931] = bytes([0xA2, 0x0F, 0xBD, 0xA3, 0xBD, 0x30])
+        self.ram[0x8935:0x8937] = bytes([0xA2, 0x30])
+        self.ram[0x8945:0x8947] = bytes([0xA9, 0x08])
+        self.ram[0x8954:0x8956] = bytes([0xA0, 0x04])
+        self.ram[0x8967:0x8969] = bytes([0xA2, 0x04])
+        self.ram[0x8977:0x8979] = bytes([0xA2, 0x30])
+        self.ram[0x8981:0x8983] = bytes([0xA9, 0x0C])
+        self.ram[0x899A:0x899C] = bytes([0xA0, 0x05])
+        self.ram[0x89A2:0x89A4] = bytes([0xA9, 0xAD])
+        self.ram[0x89AF:0x89B4] = bytes([0xA5, 0xD7, 0x0A, 0x66, 0xD7])
+        self.ram[0x89CF:0x89D7] = bytes([0xB9, 0xD5, 0x00, 0x49, 0xFF, 0x99, 0xD5, 0x00])
+
         # The fixed-point conversion a shot's speed comes out of: an exponent
         # shifted to an octave count, a bounded self-modified branch into a
         # chain of identical shift pairs, and the implicit leading one.
@@ -359,6 +374,49 @@ class DecodeTests(unittest.TestCase):
         self.assertEqual(combat["siteDestruction"]["destroyedMask"], 0x80)
         self.assertEqual(combat["siteDestruction"]["axisWindow"], [0x70, 0x90])
         self.assertEqual(combat["objectHits"]["targetSlots"], [15, 0])
+
+    def test_decodes_how_a_hostile_craft_closes_and_shoots(self) -> None:
+        hostile = decode_endgame(Builder().build())["combat"]["hostileCraft"]
+
+        # It re-aims in bursts, each one a delay long, and only shoots once the
+        # player is inside a cube compared above the low byte.
+        self.assertEqual(hostile["approachDelayLifecycle"], 0xAD)
+        # The advance parks a slot at $7F, so the delay is the gap up to it.
+        self.assertEqual(hostile["parkedLifecycle"], 0x7F)
+        self.assertEqual(
+            hostile["approachDelayLifecycle"] - hostile["parkedLifecycle"], 46
+        )
+        self.assertEqual(hostile["approachAimShift"], 5)
+        self.assertEqual(hostile["firingRange"], 0x30)
+        self.assertEqual(hostile["rangeUnit"], 0x100)
+        self.assertEqual(hostile["inboundAimShift"], 4)
+        self.assertEqual(hostile["inboundSound"], 8)
+        self.assertEqual(hostile["inboundLifecycleFrames"], 0x20)
+
+    def test_decodes_what_a_hostile_hit_costs_the_player(self) -> None:
+        hostile = decode_endgame(Builder().build())["combat"]["hostileCraft"]
+
+        self.assertEqual(hostile["hitCubeSize"], 4)
+        self.assertEqual(hostile["hitSound"], 0x0C)
+        self.assertEqual(hostile["shipDestroyedMessage"], 0x30)
+        self.assertEqual(hostile["captureMover"], 9)
+        self.assertEqual(hostile["captureRemovesSlots"], [14, 15])
+        self.assertTrue(hostile["captureClearsAttackingShip"])
+
+    def test_rejects_a_hostile_aim_that_does_not_turn_toward_the_player(self) -> None:
+        builder = Builder()
+        builder.ram[0x89D3] = 0xEA
+
+        with self.assertRaisesRegex(LabError, "negate the delta it shifted"):
+            decode_endgame(builder.build())
+
+    def test_rejects_a_hostile_craft_that_runs_underground(self) -> None:
+        builder = Builder()
+        # The room test is still read, but no longer branches away on it.
+        builder.ram[0x8929] = 0xEA
+
+        with self.assertRaisesRegex(LabError, "player is in a Room"):
+            decode_endgame(builder.build())
 
     def test_decodes_what_a_shot_must_be_over_to_count(self) -> None:
         sites = decode_endgame(Builder().build())["combat"]["siteDestruction"]
@@ -560,7 +618,7 @@ class DecodeTests(unittest.TestCase):
     def test_reports_a_version_and_bounded_counts(self) -> None:
         document = decode_endgame(Builder().build())
 
-        self.assertEqual(ENDGAME_SCHEMA_VERSION, 8)
+        self.assertEqual(ENDGAME_SCHEMA_VERSION, 10)
         self.assertEqual(document["schemaVersion"], ENDGAME_SCHEMA_VERSION)
         self.assertEqual(
             document["counts"],
