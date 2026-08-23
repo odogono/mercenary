@@ -231,6 +231,20 @@ class Builder:
             0x25, 0x60,
         )
 
+        # The fixed-point conversion a shot's speed comes out of: an exponent
+        # shifted to an octave count, a bounded self-modified branch into a
+        # chain of identical shift pairs, and the implicit leading one.
+        self.ram[0x84A7:0x84A9] = bytes([0x98, 0x30])
+        self.ram[0x84AA:0x84AC] = bytes([0x4A, 0x4A])
+        self.ram[0x84AC:0x84AE] = bytes([0xC9, 0x0F])
+        self.ram[0x84B5:0x84B8] = bytes([0x8D, 0xC2, 0x84])
+        self.ram[0x84BD:0x84C1] = bytes([0x38, 0x6A, 0x66, 0x06])
+        for step in range(15):
+            self.ram[0x84C3 + step * 3:0x84C6 + step * 3] = bytes([0x4A, 0x66, 0x06])
+        self.ram[0x842B:0x842E] = bytes([0x1D, 0x00, 0x5B])
+        self.ram[0x842F:0x8432] = bytes([0xBD, 0x00, 0x5A])
+        self.ram[0x8895:0x889C] = bytes([0x18, 0x65, 0x09, 0xA8, 0x20, 0xA7, 0x84])
+
         # The site commit path: change test, restoration branch, neutral test,
         # faction counters, threshold, reaction select, wipe, and dispatch.
         self.ram[0x87A0:0x8833] = bytes(
@@ -324,6 +338,45 @@ class DecodeTests(unittest.TestCase):
         self.assertEqual(combat["siteDestruction"]["destroyedMask"], 0x80)
         self.assertEqual(combat["siteDestruction"]["axisWindow"], [0x70, 0x90])
         self.assertEqual(combat["objectHits"]["targetSlots"], [15, 0])
+
+    def test_decodes_the_speed_a_shot_leaves_with(self) -> None:
+        fire = decode_endgame(Builder().build())["combat"]["fire"]
+
+        # Four exponent units to a power of two, so the offset of $30 is twelve
+        # octaves and a component of magnitude one converts to 2^12.
+        self.assertEqual(fire["exponentUnitsPerOctave"], 4)
+        self.assertEqual(fire["directionOffset"], 0x30)
+        self.assertEqual(fire["speedPerFrame"], 4096)
+        # Which puts a shot's whole reach at exactly one cell.
+        self.assertEqual(fire["speedPerFrame"] * fire["lifecycleFrames"], 0x10000)
+
+    def test_rejects_a_conversion_whose_shift_chain_changed_length(self) -> None:
+        builder = Builder()
+        builder.ram[0x84C3 + 14 * 3] = 0xEA
+
+        with self.assertRaisesRegex(LabError, "chain of identical steps"):
+            decode_endgame(builder.build())
+
+    def test_rejects_a_direction_offset_that_is_not_whole_octaves(self) -> None:
+        builder = Builder()
+        builder.ram[0x85E1 + 1] = 0x31
+
+        with self.assertRaisesRegex(LabError, "whole number of octaves"):
+            decode_endgame(builder.build())
+
+    def test_rejects_a_direction_offset_beyond_the_representable_scale(self) -> None:
+        builder = Builder()
+        builder.ram[0x85E1 + 1] = 0x3C
+
+        with self.assertRaisesRegex(LabError, "representable scale"):
+            decode_endgame(builder.build())
+
+    def test_rejects_a_conversion_that_does_not_normalise_its_mantissa(self) -> None:
+        builder = Builder()
+        builder.ram[0x84BD] = 0x18
+
+        with self.assertRaisesRegex(LabError, "implicit leading one"):
+            decode_endgame(builder.build())
 
     def test_decodes_the_site_table_census_by_scanning_it(self) -> None:
         sites = decode_endgame(Builder().build())["combat"]["siteDestruction"]
@@ -443,7 +496,7 @@ class DecodeTests(unittest.TestCase):
     def test_reports_a_version_and_bounded_counts(self) -> None:
         document = decode_endgame(Builder().build())
 
-        self.assertEqual(ENDGAME_SCHEMA_VERSION, 4)
+        self.assertEqual(ENDGAME_SCHEMA_VERSION, 5)
         self.assertEqual(document["schemaVersion"], ENDGAME_SCHEMA_VERSION)
         self.assertEqual(
             document["counts"],

@@ -456,16 +456,49 @@ therefore a mantissa and an exponent, four exponent units to a power of two, and
 the direction offset `$30` adds twelve to the shift selector rather than to any
 angle — it scales the player's direction components rather than turning them.
 
-What this does not yet give is the projectile's speed in the browser's own world
-units. The browser re-derives movement in floating point rather than carrying
-the original's packed components, so converting an exponent offset into a
-per-frame step needs the two sides read against each other once. The scenarios
-`combat-fire-creation` and `combat-fire-in-flight` exist to capture exactly
-that, and the browser cannot express projectile motion until they have been
-run.
+That is enough to give the speed, once the number format is read. The mantissa
+holds `1 + m/256`; the exponent counts four units to a power of two, keeps its
+sign in bit 0, and is negated by one's complement. Both halves are confirmed
+against data rather than argued: the multiply at `$82FA` is logarithmic, and its
+tables at `$5800` and `$5900` are `round(256 * log2(1 + i/256))` and
+`round(256 * (2^(j/256) - 1))` to within one unit across all 256 entries, while
+the angle tables at `$5A00` and `$5B00` decode under this format to a sine
+accurate to 0.0035 — one step of an eight-bit mantissa — saturating to exactly
+one at the quarter turn.
 
-`$8690-$879A` advances effect slots 8-15. A player shot can do exactly three
-material things:
+Converting shifts a normalised sixteen-bit value right by the distance left in a
+chain of fifteen identical shift pairs, so an exponent offset multiplies the
+result by two per octave it is worth. The offset `$30` is twelve octaves, and a
+direction component of magnitude one therefore converts to `4096`. Position and
+velocity are both 24-bit and the browser's world units are the same units — the
+payload's object positions are bit-identical to the engine's own position tables
+— so a shot travels **4096 world units per frame per axis** at full magnitude,
+needing no conversion at all.
+
+Two things corroborate that number. A shot's whole reach is `16 * 4096 = 65536`,
+exactly one high-byte unit, and the high bytes are what the destruction path
+forms its cell index from — a shot reaches precisely one cell. And Poweramp,
+which the browser already implements and holds to a Golden Trace, adds four to
+the throttle exponent at `$9F95`: one octave under this format, which is the
+`throttleScale` of two already exported.
+
+The player's own integrator at `$9FCF` converts without an offset, using the
+speed's own exponent, which is why a shot's speed is absolute rather than
+relative to the craft carrying it.
+
+The three fire scenarios remain worth running, but as corroboration of a decoded
+number rather than as the thing that supplies it.
+
+`$8690-$879A` advances effect slots 8-15, and does so by plain 24-bit addition:
+each axis adds the velocity triple to the position triple, low byte first. There
+is no separate descent step and no per-frame reshaping of the vector, so a shot
+travels in a straight line at constant velocity. The one exception is vertical:
+`$86D8` clamps all three bytes of the second axis to `$FF` when its high byte
+goes negative. A slot whose lifecycle reaches zero is removed by putting its
+object out of the world and refreshing; a lifecycle of `$7F` is a sentinel the
+advance skips.
+
+A player shot can do exactly three material things:
 
 1. enter the central city window and descend to a structure, setting destroyed
    bit `$80` on its cell and starting a 16-frame impact;

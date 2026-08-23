@@ -17,7 +17,7 @@ from .flight import decode_float
 from .prng import RANDOM_ROUTINE, RANDOM_STATE, RANDOM_VALUE, decode_reference_prng
 
 
-ENDGAME_SCHEMA_VERSION = 4
+ENDGAME_SCHEMA_VERSION = 5
 
 # Drop key dispatch and native inventory mutation.
 DROP_DISPATCH = 0xB33F
@@ -39,6 +39,21 @@ HOSTILE_ROUTINE = 0x8921
 # The 256-byte city table holds, per surface cell, a destroyed bit, a faction
 # or neutral bit, and a low reaction id; the sites below are the committing
 # path that reads it after a shot has already set the destroyed bit.
+# How a shot's speed is set. The engine holds direction components as a
+# mantissa and an exponent, and converts one to fixed point by a self-modifying
+# variable shift; the "direction offset" the fire routine adds is an exponent
+# offset, so it chooses the scale rather than turning anything.
+FIXED_POINT_CONVERT = 0x84A7
+FIXED_POINT_OCTAVE_SITE = 0x84AA
+FIXED_POINT_LIMIT_SITE = 0x84AC
+FIXED_POINT_SELF_MODIFY_SITE = 0x84B5
+FIXED_POINT_NORMALISE_SITE = 0x84BD
+FIXED_POINT_CHAIN = 0x84C3
+FIXED_POINT_CHAIN_STEP = (0x4A, 0x66, 0x06)
+ANGLE_EXPONENT_TABLE_SITE = 0x842B
+ANGLE_MANTISSA_TABLE_SITE = 0x842F
+FIRE_VECTOR_SITE = 0x8895
+
 SITE_TABLE = 0x2B00
 SITE_TABLE_LENGTH = 0x100
 SITE_COMMIT_READ = 0x87AA
@@ -334,6 +349,45 @@ def _decode_ship_delivery(ram: bytes) -> dict[str, Any]:
     }
 
 
+def _decode_shot_speed(ram: bytes, direction_offset: int) -> dict[str, Any]:
+    """Read the speed a shot carries from the conversion that sets it.
+
+    The engine's direction components are a mantissa holding `1 + m/256` and an
+    exponent counting a fixed number of units to a power of two. Converting one
+    to fixed point shifts a normalised sixteen-bit value right by the distance
+    left in a chain of shift pairs, so adding a constant to the exponent first
+    multiplies the result by two for every octave that constant is worth. A
+    component of magnitude one therefore converts to exactly that scale, which
+    is the speed a shot leaves with along each axis.
+    """
+    octave_units = 1 << len([
+        site for site in (FIXED_POINT_OCTAVE_SITE, FIXED_POINT_OCTAVE_SITE + 1)
+        if ram[site] == 0x4A
+    ])
+    chain_pairs = ram[FIXED_POINT_LIMIT_SITE + 1]
+    _require(
+        all(
+            tuple(ram[FIXED_POINT_CHAIN + step * 3:FIXED_POINT_CHAIN + step * 3 + 3])
+            == FIXED_POINT_CHAIN_STEP
+            for step in range(chain_pairs)
+        ),
+        "Fixed-point conversion does not shift by a chain of identical steps",
+    )
+    _require(
+        direction_offset % octave_units == 0,
+        "Fire's direction offset is not a whole number of octaves",
+    )
+    octaves = direction_offset // octave_units
+    _require(
+        0 < octaves < chain_pairs,
+        "Fire's direction offset does not select a representable scale",
+    )
+    return {
+        "exponentUnitsPerOctave": octave_units,
+        "speedPerFrame": 1 << octaves,
+    }
+
+
 def _decode_site_table(ram: bytes) -> dict[str, Any]:
     """Read the city table's initial state and the reaction census it implies.
 
@@ -536,6 +590,14 @@ def _require_engine(ram: bytes) -> None:
         (0x897C, (0xA9, 0x00, 0x8D, 0xF8, 0xBE), "hostile capture does not clear attackingShip"),
         (0x8986, (0xA9, 0x09, 0x85, 0xA9), "hostile capture does not install an immediate mover"),
         (0x898D, (0xA9, 0xFF, 0x8D, 0x4E, 0x29, 0x8D, 0x4F, 0x29), "hostile capture does not remove both hostile slots"),
+        (FIXED_POINT_CONVERT, (0x98, 0x30), "fixed-point conversion does not branch on an underflowing exponent"),
+        (FIXED_POINT_OCTAVE_SITE, (0x4A, 0x4A), "fixed-point conversion does not shift its exponent to an octave count"),
+        (FIXED_POINT_LIMIT_SITE, (0xC9,), "fixed-point conversion does not bound its shift selector"),
+        (FIXED_POINT_SELF_MODIFY_SITE, (0x8D, 0xC2, 0x84), "fixed-point conversion does not write its own branch displacement"),
+        (FIXED_POINT_NORMALISE_SITE, (0x38, 0x6A, 0x66, 0x06), "fixed-point conversion does not insert an implicit leading one"),
+        (ANGLE_EXPONENT_TABLE_SITE, (0x1D,), "angle lookup does not read an exponent table"),
+        (ANGLE_MANTISSA_TABLE_SITE, (0xBD,), "angle lookup does not read a mantissa table"),
+        (FIRE_VECTOR_SITE, (0x18, 0x65, 0x09, 0xA8, 0x20, 0xA7, 0x84), "fire does not add its direction offset to an exponent before converting"),
         (SITE_COMMIT_READ, (0xB9, 0x00, 0x2B, 0x85), "site commit does not save the struck cell's table byte"),
         (RESTORATION_TEST_SITE, (0xAD,), "site commit does not read a restoration override's flags"),
         (RESTORATION_TEST_SITE + 3, (0x30,), "site commit does not branch to restoration while that object is carried"),
@@ -827,6 +889,7 @@ def decode_endgame(ram: bytes) -> dict[str, Any]:
                 "lifecycleFrames": ram[FIRE_ROUTINE + 33],
                 "directionOffset": ram[FIRE_CALL_SITE + 1],
                 "oneActiveShot": True,
+                **_decode_shot_speed(ram, ram[FIRE_CALL_SITE + 1]),
             },
             "siteDestruction": {
                 "projectileSlot": ram[0x8701 + 1],
