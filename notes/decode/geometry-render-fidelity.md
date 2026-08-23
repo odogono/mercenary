@@ -72,6 +72,27 @@ Y 128, looking north with a neutral pitch. The previous staged overview was a Ma
 Adaptation 12,000 world units south of that point; it made the whole airstrip easy
 to inspect, but incorrectly moved the player away from the centre of the wreck.
 
+## Surface structures are drawn for more cells than the original drew
+
+`visible()` selects a three-by-three block of cells around the player, so the
+structures in all eight neighbouring cells are drawn. The Reference Build draws
+the structures of the occupied cell alone, which is why its horizon is emptier
+than this one's and why a building appears as the player crosses into its cell
+rather than growing from a distance.
+
+This is worth writing down because it is not only a visual difference. The
+destruction commit path refuses to count or react to a Site struck from over a
+different cell (`notes/decode/endgame.md`), a branch the original's own
+visibility keeps a player away from — you cannot aim at what is not drawn. Here
+a neighbour's building is both drawn and targetable, so that branch is
+reachable, and destroying a building without either faction reacting looks like
+a bug in destruction when it is a consequence of visibility.
+
+Narrowing the selection is a change to accepted behaviour rather than a repair:
+the frozen Trace Oracle selected the same neighbourhood, and a projection Golden
+Trace grades the traversal, so the trace and the selection have to move
+together.
+
 ## Roads and the cell 8:8 airstrip
 
 A capture of the original at the interactive checkpoint reads `LOCA 08-08` with

@@ -522,13 +522,26 @@ the destroyed bit, starts the 16-frame impact, requests sound 4, and spends the
 shot.
 
 And then `$87A4` compares the struck cell against `$B7`, the cell the player is
-themselves over, and returns when they differ. **A Site bombed from over its
-neighbour is destroyed and reported to nobody**: no counter moves, no reaction
+themselves over, and returns when they differ. A Site bombed from over its
+neighbour is destroyed and reported to nobody: no counter moves, no reaction
 dispatches, and because the comparison precedes the restoration test at `$87AF`,
 carrying the Anti Time Bomb does not save it either. The Site's reaction is left
-unspent, so being over it next time still works. A shot covers one cell in its
-lifetime while the band that carries a Site is an eighth of a cell wide, so this
-is reachable in ordinary play rather than a corner case.
+unspent, so being over it next time still works.
+
+On the Reference Build that branch is not somewhere a player can get to. Its
+structures are drawn only for the cell the player occupies, so the building in
+the next cell cannot be seen and therefore cannot be aimed at; the comparison
+reads less like a rule about bombing and more like the engine declining to act
+on a cell it is not currently thinking about. It is implemented because it is
+what the engine does, not because play depends on it.
+
+It *is* reachable in this implementation, and that is a divergence in
+visibility rather than in destruction. `visible()` selects a three-by-three
+block of cells around the player, so a neighbour's structures are both drawn and
+targetable. The frozen Trace Oracle selected the same neighbourhood and a
+projection Golden Trace grades the traversal, so narrowing it to the Reference
+Build's single cell is a change to accepted behaviour and belongs with the
+rest of the visibility work rather than here.
 
 The two object families share the collision helper at `$8833`. It requires the
 target on the surface, tests a cube at `$999A`, and on a hit requests sound

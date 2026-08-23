@@ -152,6 +152,11 @@ describe('a shot that reaches the city', () => {
   });
 
   test('destroys a Site it reaches from over the next cell, and tells nobody', () => {
+    // The Reference Build draws only the cell the player is in, so a player
+    // there could not see the building this shot reaches, let alone aim at it.
+    // The branch is pinned because it is what the engine does, and because this
+    // implementation draws a wider neighbourhood and can therefore reach it.
+    //
     // Standing past this cell's band, pointing along the across axis, so the
     // shot leaves the cell entirely before it reaches a band it can strike.
     const across = mechanoidCell & 0x0f;
