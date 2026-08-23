@@ -1249,6 +1249,7 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
           'controls.drop.requiresCarriedExemptionOrFlightState'
         )
       },
+      powerampSlot: asInt(r, controls['powerampSlot'], 'controls.powerampSlot'),
       takeOverrides: {
         antigravSlot: asInt(
           r,

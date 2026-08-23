@@ -61,6 +61,8 @@ class Builder:
         )
         self.ram[0x980B:0x980E] = bytes([0xAD, 0xEF, 0x29])
         self.ram[0x9817:0x981A] = bytes([0xAD, 0xDB, 0x29])
+        self.ram[0x9F8A:0x9F8D] = bytes([0xAC, 0xDC, 0x29])
+        self.ram[0xA050:0xA053] = bytes([0xAE, 0xDC, 0x29])
 
         self.ram[FIRE_CALL_SITE:FIRE_CALL_SITE + 5] = bytes([0xA9, 0x30, 0x20, 0x6A, 0x88])
         self.ram[FIRE_ROUTINE:FIRE_ROUTINE + 36] = bytes(
@@ -358,6 +360,20 @@ class DecodeTests(unittest.TestCase):
         self.assertTrue(delivery["landing"]["clearsState"])
         self.assertEqual(delivery["landing"]["framesToLand"], 779)
 
+    def test_decodes_the_object_the_flight_overrides_read(self) -> None:
+        controls = decode_endgame(Builder().build())["controls"]
+
+        # The rates belong to the flight rules; this is only which object being
+        # carried turns them on.
+        self.assertEqual(controls["powerampSlot"], 28)
+
+    def test_rejects_flight_overrides_that_read_different_objects(self) -> None:
+        builder = Builder()
+        builder.ram[0xA051] = 0xDB
+
+        with self.assertRaisesRegex(LabError, "different flight overrides"):
+            decode_endgame(builder.build())
+
     def test_decodes_the_two_take_override_identities(self) -> None:
         overrides = decode_endgame(Builder().build())["controls"]["takeOverrides"]
 
@@ -618,7 +634,7 @@ class DecodeTests(unittest.TestCase):
     def test_reports_a_version_and_bounded_counts(self) -> None:
         document = decode_endgame(Builder().build())
 
-        self.assertEqual(ENDGAME_SCHEMA_VERSION, 10)
+        self.assertEqual(ENDGAME_SCHEMA_VERSION, 11)
         self.assertEqual(document["schemaVersion"], ENDGAME_SCHEMA_VERSION)
         self.assertEqual(
             document["counts"],
