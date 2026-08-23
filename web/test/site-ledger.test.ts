@@ -39,7 +39,10 @@ const destroyUntilThanked = (
       continue;
     }
     count += 1;
-    const struck = sites.strike(cell, false);
+    const struck = sites.strike(cell, {
+      playerCell: cell,
+      restorationCarried: false
+    });
     if (struck.kind === 'gratitude') {
       return { at: count, reaction: struck.reaction };
     }
@@ -63,7 +66,10 @@ describe('the Site Ledger a shot commits to', () => {
       rules.reactionDispatchBase |
       (rules.initialTable[mechanoidCell]! & rules.lowIdMask);
 
-    const struck = sites.strike(mechanoidCell, false);
+    const struck = sites.strike(mechanoidCell, {
+      playerCell: mechanoidCell,
+      restorationCarried: false
+    });
 
     expect(struck).toEqual({ kind: 'destroyed', reaction: expected });
     expect(sites.destroyedCells()).toEqual([mechanoidCell]);
@@ -74,7 +80,10 @@ describe('the Site Ledger a shot commits to', () => {
   test('counts a Palyar Site against the other counter', () => {
     const sites = ledger();
 
-    sites.strike(palyarCell, false);
+    sites.strike(palyarCell, {
+      playerCell: palyarCell,
+      restorationCarried: false
+    });
 
     expect(sites.palyarDestroyed).toBe(1);
     expect(sites.mechanoidDestroyed).toBe(0);
@@ -83,7 +92,12 @@ describe('the Site Ledger a shot commits to', () => {
   test('destroys a neutral Site without counting or reacting', () => {
     const sites = ledger();
 
-    expect(sites.strike(neutralCell, false)).toEqual({ kind: 'neutral' });
+    expect(
+      sites.strike(neutralCell, {
+        playerCell: neutralCell,
+        restorationCarried: false
+      })
+    ).toEqual({ kind: 'neutral' });
     // Destroyed all the same: the bit is set, it simply means nothing to anyone.
     expect(sites.destroyedCells()).toEqual([neutralCell]);
     expect(sites.palyarDestroyed).toBe(0);
@@ -92,22 +106,41 @@ describe('the Site Ledger a shot commits to', () => {
 
   test('does not count or react to a Site twice', () => {
     const sites = ledger();
-    sites.strike(mechanoidCell, false);
+    sites.strike(mechanoidCell, {
+      playerCell: mechanoidCell,
+      restorationCarried: false
+    });
 
-    expect(sites.strike(mechanoidCell, false)).toEqual({ kind: 'inert' });
+    expect(
+      sites.strike(mechanoidCell, {
+        playerCell: mechanoidCell,
+        restorationCarried: false
+      })
+    ).toEqual({ kind: 'inert' });
     expect(sites.mechanoidDestroyed).toBe(1);
     expect(sites.destroyedCells()).toEqual([mechanoidCell]);
   });
 
   test('spends a reaction, so a restored Site reacts only once', () => {
     const sites = ledger();
-    const first = sites.strike(palyarCell, false);
+    const first = sites.strike(palyarCell, {
+      playerCell: palyarCell,
+      restorationCarried: false
+    });
     expect(first.kind).toBe('destroyed');
 
     // The Anti Time Bomb puts it back, and the next shot destroys it again.
-    expect(sites.strike(palyarCell, true)).toEqual({ kind: 'restored' });
+    expect(
+      sites.strike(palyarCell, {
+        playerCell: palyarCell,
+        restorationCarried: true
+      })
+    ).toEqual({ kind: 'restored' });
     expect(sites.destroyedCells()).toEqual([]);
-    const again = sites.strike(palyarCell, false);
+    const again = sites.strike(palyarCell, {
+      playerCell: palyarCell,
+      restorationCarried: false
+    });
 
     expect(again).toEqual({ kind: 'destroyed', reaction: undefined });
   });
@@ -115,7 +148,12 @@ describe('the Site Ledger a shot commits to', () => {
   test('restores an intact Site without counting it', () => {
     const sites = ledger();
 
-    expect(sites.strike(mechanoidCell, true)).toEqual({ kind: 'restored' });
+    expect(
+      sites.strike(mechanoidCell, {
+        playerCell: mechanoidCell,
+        restorationCarried: true
+      })
+    ).toEqual({ kind: 'restored' });
     expect(sites.destroyedCells()).toEqual([]);
     expect(sites.mechanoidDestroyed).toBe(0);
     expect(sites.bytes[mechanoidCell]).toBe(rules.initialTable[mechanoidCell]!);
@@ -123,13 +161,52 @@ describe('the Site Ledger a shot commits to', () => {
 
   test('leaves a counter alone when it restores a destroyed Site', () => {
     const sites = ledger();
-    sites.strike(mechanoidCell, false);
+    sites.strike(mechanoidCell, {
+      playerCell: mechanoidCell,
+      restorationCarried: false
+    });
 
-    sites.strike(mechanoidCell, true);
+    sites.strike(mechanoidCell, {
+      playerCell: mechanoidCell,
+      restorationCarried: true
+    });
 
     // Restoration never moves a counter in either direction.
     expect(sites.mechanoidDestroyed).toBe(1);
     expect(sites.destroyedCells()).toEqual([]);
+  });
+
+  test('destroys but does not report a Site struck from over its neighbour', () => {
+    const sites = ledger();
+    const elsewhere = (mechanoidCell + 1) % 256;
+
+    const struck = sites.strike(mechanoidCell, {
+      playerCell: elsewhere,
+      restorationCarried: false
+    });
+
+    // The Site is gone, and neither faction hears about it.
+    expect(struck).toEqual({ kind: 'awayFromPlayer' });
+    expect(sites.destroyedCells()).toEqual([mechanoidCell]);
+    expect(sites.mechanoidDestroyed).toBe(0);
+    // Its reaction is unspent, so being over it next time still works.
+    expect(sites.bytes[mechanoidCell]! & rules.lowIdMask).toBe(
+      rules.initialTable[mechanoidCell]! & rules.lowIdMask
+    );
+  });
+
+  test('does not restore a Site struck from over its neighbour', () => {
+    const sites = ledger();
+    const elsewhere = (mechanoidCell + 1) % 256;
+
+    // The Anti Time Bomb is tested after the cell gate, so it never gets a look.
+    expect(
+      sites.strike(mechanoidCell, {
+        playerCell: elsewhere,
+        restorationCarried: true
+      })
+    ).toEqual({ kind: 'awayFromPlayer' });
+    expect(sites.destroyedCells()).toEqual([mechanoidCell]);
   });
 
   test('dispatches every reaction the census carries', () => {
@@ -137,7 +214,9 @@ describe('the Site Ledger a shot commits to', () => {
       const sites = ledger();
       const cell = row.cells[0]!;
 
-      expect(sites.strike(cell, false)).toEqual({
+      expect(
+        sites.strike(cell, { playerCell: cell, restorationCarried: false })
+      ).toEqual({
         kind: 'destroyed',
         reaction: row.script
       });

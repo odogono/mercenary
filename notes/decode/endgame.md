@@ -511,6 +511,33 @@ the cell is formed from the low nibbles of the high X/Z bytes. Shots outside the
 window, below the world, or beyond their lifecycle are removed without a world
 mutation.
 
+Reading `$871B-$87A8` for M7.3 settles the parts of that the census left open.
+The depth axis supplies the **high** nibble of the cell and the across axis the
+low one, by the same four shifts and mask the player's own cell is formed with
+at `$951D`. A shot must also be low enough: `$871D` requires either a negative
+altitude high byte, or a zero one with a middle byte below `$08`, so a shot
+passing over the city at height strikes nothing. Both cell axes are bounded to
+the city by requiring the upper nibble of each high byte to be clear. A hit sets
+the destroyed bit, starts the 16-frame impact, requests sound 4, and spends the
+shot.
+
+And then `$87A4` compares the struck cell against `$B7`, the cell the player is
+themselves over, and returns when they differ. **A Site bombed from over its
+neighbour is destroyed and reported to nobody**: no counter moves, no reaction
+dispatches, and because the comparison precedes the restoration test at `$87AF`,
+carrying the Anti Time Bomb does not save it either. The Site's reaction is left
+unspent, so being over it next time still works. A shot covers one cell in its
+lifetime while the band that carries a Site is an eighth of a cell wide, so this
+is reachable in ordinary play rather than a corner case.
+
+The two object families share the collision helper at `$8833`. It requires the
+target on the surface, tests a cube at `$999A`, and on a hit requests sound
+`$10`, clears `attackingShip` whichever object was struck, puts the target out
+of the world, and spends the shot. The cube's size is compared at `$99D5`
+against the two bytes above the least significant one, so the `4` it is given
+counts in units of `$100` — a reach of 1024 world units, the same span the
+payload already carries as an object's own detail cube.
+
 ### Site state, reactions, and faction Objectives
 
 The 256-byte city table is at `$2B00-$2BFF`. Its initial closed-world partition

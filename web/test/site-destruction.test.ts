@@ -1,0 +1,246 @@
+import { join } from 'node:path';
+import { describe, expect, test } from 'bun:test';
+
+import { BensonProgram, BensonSession } from '../src/benson/index.ts';
+import { GameplaySession, sessionContent } from '../src/session/index.ts';
+import {
+  bensonTunables,
+  flightModel,
+  loadSettings
+} from '../src/settings/index.ts';
+import { TextTable } from '../src/text/index.ts';
+import { World } from '../src/world/index.ts';
+import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
+
+const bundle = await loadPayload();
+const world = new World(bundle);
+const settings = loadSettings(
+  await Bun.file(join(repositoryRoot, 'settings.json')).text()
+);
+if (bundle.flight === undefined) {
+  throw new Error('the Data Payload is incomplete');
+}
+const content = sessionContent(
+  world,
+  bundle,
+  flightModel(settings.flight, bundle.flight, world.groundExtent)
+);
+const rules = bundle.endgame.combat.siteDestruction;
+const CELL = 0x1_00_00;
+
+if (bundle.benson === undefined || bundle.text === undefined) {
+  throw new Error('the Data Payload is incomplete');
+}
+const program = BensonProgram.fromDocument(bundle.benson);
+const scripts = (): BensonSession =>
+  new BensonSession(
+    program,
+    new TextTable(bundle.text!),
+    bensonTunables(settings, program.framesPerTick)
+  );
+
+/// A craft sitting over one cell, low enough and near enough the middle of it
+/// that a shot fired north crosses the band that carries the cell's Site.
+///
+/// Built rather than flown to: what is under test is the commit path, and the
+/// geometry has to be exact for the test to mean what it says. `fire.test.ts`
+/// is what proves a craft can be reached by playing.
+const overCell = (cell: number, altitude?: number): GameplaySession => {
+  const across = cell & 0x0f;
+  const depth = cell >> 4;
+  const position = {
+    x: across * CELL + 0x70_00,
+    y: 0,
+    z: depth * CELL + 0x70_00
+  };
+  const session = new GameplaySession(
+    content,
+    { heading: 0, pitch: 0, position, roll: 0, speed: 0, yawVelocity: 0 },
+    scripts()
+  );
+  session.board(1);
+  // The constructor puts a craft on the ground, so an altitude under test has
+  // to be set after it rather than asked for.
+  if (altitude !== undefined) {
+    session.game = {
+      ...session.game,
+      player: {
+        ...session.game.player,
+        position: { ...session.game.player.position, y: altitude }
+      }
+    };
+  }
+  return session;
+};
+
+/// Fires and gives the shot the one frame it needs to reach the Site.
+const bomb = (session: GameplaySession): readonly unknown[] => {
+  session.fire();
+  return session.advance(1 / 20).events;
+};
+
+const cellWhere = (predicate: (byte: number) => boolean): number =>
+  rules.initialTable.findIndex(predicate);
+
+const mechanoidCell = cellWhere(
+  byte =>
+    (byte & rules.mechanoidMask) !== 0 &&
+    (byte & rules.neutralMask) === 0 &&
+    (byte & rules.lowIdMask) !== 0
+);
+const neutralCell = cellWhere(byte => (byte & rules.neutralMask) !== 0);
+
+describe('a shot that reaches the city', () => {
+  test('destroys the Site it lands on and asks for the impact', () => {
+    const session = overCell(mechanoidCell);
+
+    const events = bomb(session);
+    const observed = session.observations().observations;
+
+    expect(events).toContainEqual({ impact: { sound: rules.impactSound } });
+    expect(observed['destroyedCells']).toBe(
+      mechanoidCell.toString(16).padStart(2, '0')
+    );
+    expect(observed['mechanoidDestroyed']).toBe(1);
+    // The shot is spent on the Site rather than flying through it.
+    expect(session.residenceOf(rules.projectileSlot).kind).toBe('gone');
+  });
+
+  test('starts the Faction Reaction the Site carries', () => {
+    const session = overCell(mechanoidCell);
+    const expected =
+      rules.reactionDispatchBase |
+      (rules.initialTable[mechanoidCell]! & rules.lowIdMask);
+
+    bomb(session);
+
+    expect(session.observations().observations['scriptPc']).not.toBe(-1);
+    expect(
+      bundle.benson!.scripts.find(script => script.id === expected)
+    ).toBeDefined();
+  });
+
+  test('will not fire again while the impact is still playing', () => {
+    const session = overCell(mechanoidCell);
+    bomb(session);
+
+    expect(session.fire().outcome).toEqual({ kind: 'impactActiveRefused' });
+  });
+
+  test('counts a neutral Site for nobody', () => {
+    const session = overCell(neutralCell);
+
+    bomb(session);
+    const observed = session.observations().observations;
+
+    expect(observed['destroyedCells']).toBe(
+      neutralCell.toString(16).padStart(2, '0')
+    );
+    expect(observed['palyarDestroyed']).toBe(0);
+    expect(observed['mechanoidDestroyed']).toBe(0);
+  });
+
+  test('does not count the same Site twice', () => {
+    const session = overCell(mechanoidCell);
+    bomb(session);
+    // Wait out the impact so firing is allowed again.
+    session.advance(rules.impactFrames / 20);
+
+    bomb(session);
+
+    expect(session.observations().observations['mechanoidDestroyed']).toBe(1);
+  });
+
+  test('destroys a Site it reaches from over the next cell, and tells nobody', () => {
+    // Standing past this cell's band, pointing along the across axis, so the
+    // shot leaves the cell entirely before it reaches a band it can strike.
+    const across = mechanoidCell & 0x0f;
+    const depth = mechanoidCell >> 4;
+    const session = overCell(mechanoidCell);
+    session.game = {
+      ...session.game,
+      player: {
+        ...session.game.player,
+        heading: Math.PI / 2,
+        position: {
+          ...session.game.player.position,
+          x: across * CELL + 40_000,
+          z: depth * CELL + 0x70_00
+        }
+      }
+    };
+    const struck = (depth << 4) | (across + 1);
+
+    session.fire();
+    session.advance(rules.impactFrames / 20);
+    const observed = session.observations().observations;
+
+    // The Site in the next cell is gone, and neither faction was told.
+    expect(observed['destroyedCells']).toBe(
+      struck.toString(16).padStart(2, '0')
+    );
+    expect(observed['mechanoidDestroyed']).toBe(0);
+    expect(observed['palyarDestroyed']).toBe(0);
+  });
+
+  test('passes over the city when it is flying too high', () => {
+    // Above the altitude the hit test allows, and still inside the band.
+    const session = overCell(
+      mechanoidCell,
+      rules.altitudeMidByteLimit * 0x1_00
+    );
+
+    bomb(session);
+
+    expect(session.observations().observations['destroyedCells']).toBe('');
+  });
+});
+
+describe('a shot that reaches the object it can start a script on', () => {
+  const hits = bundle.endgame.combat.objectHits;
+  const target = hits.targetSlots.at(-1)!;
+
+  /// Stands the craft just short of the object, pointing at it, outside the
+  /// city so the Site families cannot claim the shot first.
+  const facingTheObject = (): GameplaySession => {
+    const at = world.objects.find(object => object.slot === target)!.origin;
+    const session = new GameplaySession(
+      content,
+      {
+        heading: 0,
+        pitch: 0,
+        position: { x: at.x, y: at.y, z: at.z - 4096 },
+        roll: 0,
+        speed: 0,
+        yawVelocity: 0
+      },
+      scripts()
+    );
+    session.board(1);
+    session.game = {
+      ...session.game,
+      player: {
+        ...session.game.player,
+        position: { x: at.x, y: at.y, z: at.z - 4096 }
+      }
+    };
+    return session;
+  };
+
+  test('starts the decoded script and puts the object out of the world', () => {
+    const session = facingTheObject();
+    session.scripts!.host = session.scripts!.host.with({ attackingShip: true });
+
+    session.fire();
+    const events = session.advance(1 / 20).events;
+    const observed = session.observations().observations;
+
+    expect(events).toContainEqual({ impact: { sound: hits.sound } });
+    expect(observed[`objectRoom.${target}`]).toBe(0xff);
+    // Any object hit calls off the attack, whichever object it was.
+    expect(observed['attackingShip']).toBeFalse();
+    expect(observed['scriptPc']).not.toBe(-1);
+    // And the shot is spent.
+    expect(session.residenceOf(rules.projectileSlot).kind).toBe('gone');
+  });
+});

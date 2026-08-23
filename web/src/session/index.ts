@@ -43,6 +43,7 @@ import type {
   DoorwayRules,
   EndgameDropRules,
   EndgameFire,
+  EndgameObjectHits,
   EndgameShipDelivery,
   EndgameSiteDestruction,
   SpecialSetup,
@@ -117,6 +118,7 @@ const occupancyFromHost = (value: number): Occupancy =>
 export type PresentationEvent =
   | 'tone'
   | { readonly fire: { readonly sound: number } }
+  | { readonly impact: { readonly sound: number } }
   | { readonly script: BensonEffect }
   | { readonly touchdown: Touchdown }
   | { readonly arrived: Location }
@@ -204,6 +206,8 @@ export interface SessionContent {
   readonly fire?: EndgameFire;
   readonly flight: FlightModel | undefined;
   readonly interaction: Interaction | undefined;
+  /// What a shot does when it reaches one of the two objects it can hit.
+  readonly objectHits?: EndgameObjectHits;
   readonly objects: readonly ObjectPlacement[];
   readonly rooms: ReadonlyMap<number, Room>;
   readonly shipDelivery?: EndgameShipDelivery;
@@ -229,6 +233,7 @@ export const sessionContent = (
           bundle.interaction,
           bundle.endgame.controls.takeOverrides
         ),
+  objectHits: bundle.endgame.combat.objectHits,
   objects: world.objects,
   rooms: world.rooms,
   shipDelivery: bundle.endgame.shipDelivery,
@@ -1279,8 +1284,140 @@ export class GameplaySession {
       }
     }
     this.advanceShipDelivery(seconds);
-    this.advanceCombat(seconds);
+    events.push(...this.advanceCombat(seconds));
     return { events, snapshot: this.snapshot };
+  }
+
+  /// Which Site a position is over, formed the way the Reference Build forms it:
+  /// the depth axis contributes the high nibble and the across axis the low one.
+  private cellAt(
+    at: Vector3,
+    rules: EndgameSiteDestruction
+  ): number | undefined {
+    const across = Math.floor(at.x / 0x1_00_00);
+    const depth = Math.floor(at.z / 0x1_00_00);
+    if (across < 0 || across > 0x0f || depth < 0 || depth > 0x0f) {
+      return undefined;
+    }
+    return rules.cellDepthAxisIsHighNibble
+      ? (depth << 4) | across
+      : (across << 4) | depth;
+  }
+
+  /// Whether a position is inside the band across a cell that carries its Site.
+  private withinTheCity(at: Vector3, rules: EndgameSiteDestruction): boolean {
+    const [lower, upper] = rules.axisWindow;
+    if (lower === undefined || upper === undefined) {
+      return false;
+    }
+    const band = (value: number): boolean => {
+      const middle = Math.floor(Math.abs(value) / 0x1_00) & 0xff;
+      return middle >= lower && middle < upper;
+    };
+    // A shot too high passes over the city rather than into it.
+    const altitude = at.y;
+    const high = Math.floor(altitude / 0x1_00_00);
+    if (altitude >= 0 && high !== 0) {
+      return false;
+    }
+    if (
+      altitude >= 0 &&
+      (Math.floor(altitude / 0x1_00) & 0xff) >= rules.altitudeMidByteLimit
+    ) {
+      return false;
+    }
+    return band(at.x) && band(at.z);
+  }
+
+  /// What the Player Projectile reached this frame, if it reached anything.
+  ///
+  /// The three families are the Reference Build's, in its order: a Site in the
+  /// city, then the hostile craft, then the one object a shot can start a script
+  /// on. A Site is struck wherever the shot is; whether anyone reacts to it is
+  /// the Site Ledger's question, not this one's.
+  private resolveShot(at: Vector3): readonly PresentationEvent[] {
+    const sites = this.content.sites;
+    const hits = this.content.objectHits;
+    const events: PresentationEvent[] = [];
+    if (
+      sites !== undefined &&
+      this.sites !== undefined &&
+      this.withinTheCity(at, sites)
+    ) {
+      const cell = this.cellAt(at, sites);
+      const player = this.cellAt(this.game.player.position, sites);
+      if (cell !== undefined) {
+        const struck = this.sites.strike(cell, {
+          playerCell: player ?? -1,
+          restorationCarried: this.carriedStack.includes(sites.restorationSlot)
+        });
+        this.removeShot();
+        this.impact = { cell, framesLeft: sites.impactFrames };
+        events.push({ impact: { sound: sites.impactSound } });
+        if (struck.kind === 'destroyed' && struck.reaction !== undefined) {
+          this.start(struck.reaction);
+        } else if (struck.kind === 'gratitude') {
+          this.start(struck.reaction);
+        }
+        return events;
+      }
+    }
+    if (hits === undefined) {
+      return events;
+    }
+    for (const [index, slot] of hits.targetSlots.entries()) {
+      if (!this.hitObject(slot, at, hits)) {
+        continue;
+      }
+      events.push({ impact: { sound: hits.sound } });
+      if (hits.clearsAttackState && this.scripts !== undefined) {
+        this.scripts.host = this.scripts.host.with({ attackingShip: false });
+      }
+      this.residence.set(slot, { kind: 'gone' });
+      this.removeShot();
+      // The first target announces itself; the second starts a script.
+      if (index === 0) {
+        this.show(hits.firstTargetMessage);
+      } else {
+        this.start(hits.secondTargetScript);
+      }
+      return events;
+    }
+    return events;
+  }
+
+  /// Whether the shot is inside the cube the Reference Build calls a hit, with
+  /// an object that is on the surface to be hit at all.
+  private hitObject(
+    slot: number,
+    at: Vector3,
+    hits: EndgameObjectHits
+  ): boolean {
+    const where = this.residence.get(slot);
+    if (where === undefined || where.kind !== 'surface') {
+      return false;
+    }
+    const target = where.at ?? this.objectsBySlot.get(slot)?.origin;
+    if (target === undefined) {
+      return false;
+    }
+    // The Reference Build compares the bytes above the least significant one,
+    // so the size it carries counts in `cubeUnit`s rather than world units.
+    const reach = hits.cubeSize * hits.cubeUnit;
+    return (
+      Math.abs(at.x - target.x) < reach &&
+      Math.abs(at.y - target.y) < reach &&
+      Math.abs(at.z - target.z) < reach
+    );
+  }
+
+  /// Takes the Player Projectile out of the air.
+  private removeShot(): void {
+    const slot = this.content.fire?.effectSlot;
+    this.playerShot = undefined;
+    if (slot !== undefined) {
+      this.residence.set(slot, { kind: 'gone' });
+    }
   }
 
   /// Advances what combat has in the air, a frame at a time.
@@ -1293,16 +1430,17 @@ export class GameplaySession {
   /// Nothing here runs underground. The original reaches its combat calls only
   /// on the outdoor path, so a Room is not a place where a shot quietly keeps
   /// travelling.
-  private advanceCombat(seconds: number): void {
+  private advanceCombat(seconds: number): readonly PresentationEvent[] {
     const rules = this.content.fire;
     const rate = this.content.flight?.limits.referenceFrameRate;
+    const events: PresentationEvent[] = [];
     if (
       rules === undefined ||
       rate === undefined ||
       seconds <= 0 ||
       this.location.kind !== 'surface'
     ) {
-      return;
+      return events;
     }
     this.combatFrames += seconds * rate;
     const frames = Math.floor(this.combatFrames);
@@ -1334,20 +1472,24 @@ export class GameplaySession {
         moved = true;
         continue;
       }
+      const next = {
+        x: at.x + shot.velocity.x,
+        y: at.y + shot.velocity.y,
+        z: at.z + shot.velocity.z
+      };
       this.playerShot = { ...shot, framesLeft };
-      this.residence.set(rules.effectSlot, {
-        at: {
-          x: at.x + shot.velocity.x,
-          y: at.y + shot.velocity.y,
-          z: at.z + shot.velocity.z
-        },
-        kind: 'surface'
-      });
+      this.residence.set(rules.effectSlot, { at: next, kind: 'surface' });
       moved = true;
+      // What it reached, if anything, is decided where it arrived.
+      events.push(...this.resolveShot(next));
+      if (this.playerShot === undefined) {
+        break;
+      }
     }
     if (moved) {
       this.republishHostState();
     }
+    return events;
   }
 
   /// Flies a hired Interstellar Ship down to the surface, a frame at a time.
