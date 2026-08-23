@@ -44,6 +44,7 @@ describe('a recorded Session command', () => {
       kind: 'rideLift'
     });
     expect(decodeSessionTraceCommand({ drop: true })).toEqual({ kind: 'drop' });
+    expect(decodeSessionTraceCommand({ fire: true })).toEqual({ kind: 'fire' });
   });
 
   test('refuses setup commands that would fake parity', () => {
@@ -82,6 +83,20 @@ describe('a recorded Session command', () => {
   test('returns a serializable Drop outcome, including refusal', () => {
     expect(applySessionTraceCommand(onFoot(), { drop: true })).toEqual(
       'emptyInventory'
+    );
+  });
+
+  test('records a refused shot rather than failing the route', () => {
+    // A refusal is play the player could have had, so it is recorded and the
+    // scenario carries on; only an impossible route should stop one.
+    expect(applySessionTraceCommand(onFoot(), { fire: true })).toEqual(
+      'unsupported'
+    );
+  });
+
+  test('insists a boolean command is spelled true', () => {
+    expect(() => decodeSessionTraceCommand({ fire: 1 })).toThrow(
+      'fire must be true'
     );
   });
 

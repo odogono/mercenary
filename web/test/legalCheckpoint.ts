@@ -284,4 +284,7 @@ export class LegalRoute {
 type SessionTraceCommandLike =
   | { readonly key: string | null; readonly kind: 'press' }
   | { readonly kind: 'throttleNotch'; readonly notch: number }
-  | { readonly kind: 'drop' | 'leaveCraft' | 'rideLift' | 'shutThrottle' };
+  | {
+      readonly kind:
+        'drop' | 'fire' | 'leaveCraft' | 'rideLift' | 'shutThrottle';
+    };

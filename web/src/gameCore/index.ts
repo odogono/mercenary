@@ -277,6 +277,21 @@ export const gameState = (fields: {
 export const wallThud = (state: GameState): boolean =>
   state.wallContact !== 0 && state.wallContactLatch === 0;
 
+/// The unit direction the player faces.
+///
+/// This is the basis the craft control loop translates along, named so that a
+/// shot and the craft that fired it cannot drift apart: the Reference Build
+/// builds both from the same three components — the pitch cosine times the
+/// heading sine, the pitch sine, and the pitch cosine times the heading cosine.
+export const facing = (player: PlayerState): Vector3 => {
+  const cosPitch = cos(player.pitch);
+  return {
+    x: cosPitch * sin(player.heading),
+    y: sin(player.pitch),
+    z: cosPitch * cos(player.heading)
+  };
+};
+
 /// Whether the Reference Build's one craft-conditioned bonus applies here.
 const hasPoweramp = (flight: FlightModel, state: GameState): boolean =>
   state.poweramp && state.craft === flight.rules.poweramp.craft;
@@ -689,13 +704,13 @@ const integrate = (
 
   // Translation, one axis at a time as the Reference Build did it.
   const advance = speed * frames;
-  const cosPitch = cos(pitch);
+  const direction = facing({ ...player, heading, pitch });
   const x = clampToWorld(
-    player.position.x + cosPitch * sin(heading) * advance,
+    player.position.x + direction.x * advance,
     limits.groundExtent
   );
   const z = clampToWorld(
-    player.position.z + cosPitch * cos(heading) * advance,
+    player.position.z + direction.z * advance,
     limits.groundExtent
   );
 

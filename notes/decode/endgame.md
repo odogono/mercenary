@@ -104,13 +104,13 @@ port 2. The matrix constants are corroborated in
 | answer yes / launch | Y | `$19`, Benson `tstk` | accept purchase/hire and confirm launch |
 | fire | joystick port-2 fire | active-low `$81`, routine `$886A` | projectile, destruction, hostile-craft combat |
 
-The browser Control Profile already projects B, T, L, E, and Y in
-`web/src/shell/input.ts`; it has no drop or fire Semantic Action yet. The later
-implementation must add those actions at the semantics boundary. D is the
-decoded drop binding. Joystick fire is the decoded C64 binding; a browser key or
-controller button is a Control Profile decision, not Benson state and not a raw
-key to leak into Game Semantics. Space is already used for throttle shutoff or
-message skip, so it cannot silently acquire a second meaning.
+The browser Control Profile projects B, T, L, E, Y, D and F in
+`web/src/shell/input.ts`. D is the decoded drop binding. Joystick fire is the
+decoded C64 binding, and F is the Control Profile's choice for it — a Control
+Profile decision, not Benson state and not a raw key to leak into Game
+Semantics. F therefore does not also mark input as detected, which would let
+firing answer a question a script had asked. Space keeps throttle shutoff and
+message skip and acquires no third meaning.
 
 ### Drop
 

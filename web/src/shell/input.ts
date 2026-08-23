@@ -16,6 +16,7 @@ export interface BrowserKey {
 
 export interface ControlProfileActions {
   readonly drop: () => void;
+  readonly fire: () => void;
   readonly leaveCraft: () => void;
   readonly occupancy: () => Occupancy;
   readonly page: (delta: number) => void;
@@ -177,6 +178,12 @@ export class BrowserControlProfile {
         break;
       case 'KeyD':
         this.actions.drop();
+        break;
+      // The Reference Build's fire is the joystick's fire button, never a key
+      // the scripts poll, so this deliberately does not also `press`: marking
+      // input as detected would let firing answer a question a script asked.
+      case 'KeyF':
+        this.actions.fire();
         break;
       default:
         if (!ordinaryCode(key.code)) {

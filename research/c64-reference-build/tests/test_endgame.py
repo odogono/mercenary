@@ -335,6 +335,7 @@ class DecodeTests(unittest.TestCase):
         self.assertEqual(combat["fire"]["effectSlot"], 8)
         self.assertEqual(combat["fire"]["lifecycleFrames"], 16)
         self.assertEqual(combat["fire"]["directionOffset"], 0x30)
+        self.assertEqual(combat["fire"]["sound"], 8)
         self.assertEqual(combat["siteDestruction"]["destroyedMask"], 0x80)
         self.assertEqual(combat["siteDestruction"]["axisWindow"], [0x70, 0x90])
         self.assertEqual(combat["objectHits"]["targetSlots"], [15, 0])
@@ -496,7 +497,7 @@ class DecodeTests(unittest.TestCase):
     def test_reports_a_version_and_bounded_counts(self) -> None:
         document = decode_endgame(Builder().build())
 
-        self.assertEqual(ENDGAME_SCHEMA_VERSION, 5)
+        self.assertEqual(ENDGAME_SCHEMA_VERSION, 6)
         self.assertEqual(document["schemaVersion"], ENDGAME_SCHEMA_VERSION)
         self.assertEqual(
             document["counts"],

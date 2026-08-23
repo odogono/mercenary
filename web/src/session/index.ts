@@ -13,6 +13,7 @@ import {
   REFERENCE_OPENING_POSITION,
   board as boardCraft,
   enter,
+  facing,
   gameState,
   leave as leaveCraftCore,
   playerState,
@@ -41,6 +42,7 @@ import type {
   Doorway,
   DoorwayRules,
   EndgameDropRules,
+  EndgameFire,
   EndgameShipDelivery,
   EndgameSiteDestruction,
   SpecialSetup,
@@ -114,6 +116,7 @@ const occupancyFromHost = (value: number): Occupancy =>
 
 export type PresentationEvent =
   | 'tone'
+  | { readonly fire: { readonly sound: number } }
   | { readonly script: BensonEffect }
   | { readonly touchdown: Touchdown }
   | { readonly arrived: Location }
@@ -128,6 +131,29 @@ export type DropOutcome =
 export interface DropResult {
   readonly events: readonly PresentationEvent[];
   readonly outcome: DropOutcome;
+}
+
+/// What asking to fire did.
+///
+/// The Reference Build refuses silently in all three decoded cases, so the
+/// outcome is here for the tests and traces that have to tell them apart rather
+/// than for anything the player sees.
+export type FireOutcome =
+  /// A Player Projectile is away.
+  | { readonly kind: 'fired' }
+  /// On foot. Firing belongs to the craft, not the player in it.
+  | { readonly kind: 'onFootRefused' }
+  /// A structure impact is still playing.
+  | { readonly kind: 'impactActiveRefused' }
+  /// The one Player Projectile is still in flight.
+  | { readonly kind: 'shotActiveRefused' }
+  /// This content carries no decoded fire rules at all, which is not one of the
+  /// Reference Build's refusals but an absence in what was loaded.
+  | { readonly kind: 'unsupported' };
+
+export interface FireResult {
+  readonly events: readonly PresentationEvent[];
+  readonly outcome: FireOutcome;
 }
 
 export interface SessionSnapshot {
@@ -174,6 +200,8 @@ export interface SessionContent {
   readonly cellSize: number;
   readonly doorwayRules: DoorwayRules | undefined;
   readonly dropRules?: EndgameDropRules;
+  /// What firing costs and how far a shot gets.
+  readonly fire?: EndgameFire;
   readonly flight: FlightModel | undefined;
   readonly interaction: Interaction | undefined;
   readonly objects: readonly ObjectPlacement[];
@@ -192,6 +220,7 @@ export const sessionContent = (
   cellSize: world.cellSize,
   doorwayRules: world.doorwayRules,
   dropRules: bundle.endgame.controls.drop,
+  fire: bundle.endgame.combat.fire,
   flight,
   interaction:
     bundle.interaction === undefined
@@ -370,6 +399,14 @@ export class GameplaySession {
   /// The Site Ledger, owned here and projected across the Host Callout for the
   /// scripts to read (ADR 0018). Absent when the content carries no Sites.
   private sites: SiteLedger | undefined;
+  /// The part of a combat frame that had not elapsed yet.
+  private combatFrames = 0;
+  /// The one Player Projectile, while it is in flight. Its position is its
+  /// Object Residence, because that is what draws it; only what residence
+  /// cannot hold is kept here.
+  private playerShot: { framesLeft: number; velocity: Vector3 } | undefined;
+  /// The structure impact now playing, which firing waits for.
+  private impact: { cell: number; framesLeft: number } | undefined;
   private ownRandomState: bigint;
   private readonly objectsBySlot: ReadonlyMap<number, ObjectPlacement>;
 
@@ -436,8 +473,17 @@ export class GameplaySession {
         this.sites === undefined
           ? null
           : {
+              frames: this.combatFrames,
+              impact: this.impact === undefined ? null : { ...this.impact },
               mechanoidDestroyed: this.sites.mechanoidDestroyed,
               palyarDestroyed: this.sites.palyarDestroyed,
+              playerShot:
+                this.playerShot === undefined
+                  ? null
+                  : {
+                      framesLeft: this.playerShot.framesLeft,
+                      velocity: { ...this.playerShot.velocity }
+                    },
               siteTable: [...this.sites.bytes]
             },
       deliveryFrames: this.deliveryFrames,
@@ -499,6 +545,15 @@ export class GameplaySession {
         snapshot.combat.palyarDestroyed,
         snapshot.combat.mechanoidDestroyed
       );
+      session.combatFrames = snapshot.combat.frames;
+      session.impact = snapshot.combat.impact ?? undefined;
+      session.playerShot =
+        snapshot.combat.playerShot === null
+          ? undefined
+          : {
+              framesLeft: snapshot.combat.playerShot.framesLeft,
+              velocity: { ...snapshot.combat.playerShot.velocity }
+            };
     }
     session.republishHostState();
     return session;
@@ -1068,6 +1123,49 @@ export class GameplaySession {
     return { events: ['tone'], outcome: { kind: 'dropped', slot } };
   }
 
+  /// Fire.
+  ///
+  /// Surface-only falls out of the mover rather than being tested for: firing
+  /// belongs to a craft, and a player underground is always on foot (ADR 0016).
+  /// A shot leaves at the player's own position, along the direction the craft
+  /// is pointing, and carries a speed of its own — the Reference Build converts
+  /// the direction with an exponent offset rather than scaling it by how fast
+  /// the craft is going, so a slow craft's shot is no slower.
+  fire(): FireResult {
+    const rules = this.content.fire;
+    if (rules === undefined) {
+      return { events: [], outcome: { kind: 'unsupported' } };
+    }
+    if (this.occupancy.kind === 'onFoot') {
+      return { events: [], outcome: { kind: 'onFootRefused' } };
+    }
+    if (this.impact !== undefined) {
+      return { events: [], outcome: { kind: 'impactActiveRefused' } };
+    }
+    if (this.playerShot !== undefined) {
+      return { events: [], outcome: { kind: 'shotActiveRefused' } };
+    }
+    const direction = facing(this.game.player);
+    const speed = rules.speedPerFrame;
+    this.playerShot = {
+      framesLeft: rules.lifecycleFrames,
+      velocity: {
+        x: direction.x * speed,
+        y: direction.y * speed,
+        z: direction.z * speed
+      }
+    };
+    this.residence.set(rules.effectSlot, {
+      at: { ...this.game.player.position },
+      kind: 'surface'
+    });
+    this.republishHostState();
+    return {
+      events: [{ fire: { sound: rules.sound } }],
+      outcome: { kind: 'fired' }
+    };
+  }
+
   board(slot: number): void {
     this.residence.set(slot, { kind: 'gone' });
     if (this.content.flight === undefined) {
@@ -1181,7 +1279,75 @@ export class GameplaySession {
       }
     }
     this.advanceShipDelivery(seconds);
+    this.advanceCombat(seconds);
     return { events, snapshot: this.snapshot };
+  }
+
+  /// Advances what combat has in the air, a frame at a time.
+  ///
+  /// The order is the Reference Build's main loop: the structure impact first,
+  /// then the effect slots. Firing itself is a Semantic Action rather than a
+  /// step of this, which is the same relative order the original has, because it
+  /// polls the fire input once per frame before advancing anything.
+  ///
+  /// Nothing here runs underground. The original reaches its combat calls only
+  /// on the outdoor path, so a Room is not a place where a shot quietly keeps
+  /// travelling.
+  private advanceCombat(seconds: number): void {
+    const rules = this.content.fire;
+    const rate = this.content.flight?.limits.referenceFrameRate;
+    if (
+      rules === undefined ||
+      rate === undefined ||
+      seconds <= 0 ||
+      this.location.kind !== 'surface'
+    ) {
+      return;
+    }
+    this.combatFrames += seconds * rate;
+    const frames = Math.floor(this.combatFrames);
+    this.combatFrames -= frames;
+    let moved = false;
+    for (let frame = 0; frame < frames; frame += 1) {
+      if (this.impact !== undefined) {
+        const framesLeft = this.impact.framesLeft - 1;
+        this.impact =
+          framesLeft > 0 ? { ...this.impact, framesLeft } : undefined;
+      }
+      const shot = this.playerShot;
+      if (shot === undefined) {
+        continue;
+      }
+      const framesLeft = shot.framesLeft - 1;
+      if (framesLeft <= 0) {
+        this.playerShot = undefined;
+        this.residence.set(rules.effectSlot, { kind: 'gone' });
+        moved = true;
+        continue;
+      }
+      const where = this.residence.get(rules.effectSlot);
+      const at = where?.kind === 'surface' ? where.at : undefined;
+      if (at === undefined) {
+        // Nothing is carrying the shot's position any more, so there is no
+        // shot; this is the same removal its lifecycle would have reached.
+        this.playerShot = undefined;
+        moved = true;
+        continue;
+      }
+      this.playerShot = { ...shot, framesLeft };
+      this.residence.set(rules.effectSlot, {
+        at: {
+          x: at.x + shot.velocity.x,
+          y: at.y + shot.velocity.y,
+          z: at.z + shot.velocity.z
+        },
+        kind: 'surface'
+      });
+      moved = true;
+    }
+    if (moved) {
+      this.republishHostState();
+    }
   }
 
   /// Flies a hired Interstellar Ship down to the surface, a frame at a time.
@@ -1268,24 +1434,38 @@ export class GameplaySession {
 
   /// This session as flat scalars, for comparison against the Reference Build.
   ///
+  /// Frames left on each occupied Effect Slot, keyed by the slot the payload
+  /// puts it in rather than by a number spelled here.
+  private effectLifecycles(): ReadonlyMap<number, number> {
+    const lifecycles = new Map<number, number>();
+    const shot = this.playerShot;
+    const slot = this.content.fire?.effectSlot;
+    if (shot !== undefined && slot !== undefined) {
+      lifecycles.set(slot, shot.framesLeft);
+    }
+    return lifecycles;
+  }
+
   /// Separate from `snapshot` on purpose: a Session Snapshot is what renderers
   /// draw from, and widening it to carry script counters and engine flags would
   /// push them through every renderer and every trace that compares one.
   observations(): SemanticObservations {
     const sites = this.sites;
+    // One block for everything combat owns, present whenever the content
+    // carries combat at all rather than only when it carries Sites.
+    const combat =
+      sites === undefined && this.content.fire === undefined
+        ? undefined
+        : {
+            destroyedCells: sites?.destroyedCells() ?? [],
+            effectLifecycles: this.effectLifecycles(),
+            mechanoidDestroyed: sites?.mechanoidDestroyed ?? 0,
+            mover: undefined,
+            palyarDestroyed: sites?.palyarDestroyed ?? 0
+          };
     return observationsOf({
       carriedStack: this.carriedStack,
-      ...(sites === undefined
-        ? {}
-        : {
-            combat: {
-              destroyedCells: sites.destroyedCells(),
-              effectLifecycles: new Map<number, number>(),
-              mechanoidDestroyed: sites.mechanoidDestroyed,
-              mover: undefined,
-              palyarDestroyed: sites.palyarDestroyed
-            }
-          }),
+      ...(combat === undefined ? {} : { combat }),
       location: this.location,
       objectFlags: this.objectFlags,
       occupancy: this.occupancy,

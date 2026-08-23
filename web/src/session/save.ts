@@ -2,6 +2,7 @@ import type { BensonHostFields } from '../benson/host.ts';
 import type { BensonStateFields } from '../benson/machine.ts';
 import type { BensonKey } from '../benson/program.ts';
 import type { GameState } from '../gameCore/index.ts';
+import type { Vector3 } from '../orientation/index.ts';
 import type { Alternate } from '../payload/documents.ts';
 import type {
   FlightSettings,
@@ -10,7 +11,7 @@ import type {
 } from '../settings/index.ts';
 import type { Location, Residence } from '../world/index.ts';
 
-export const SAVE_SCHEMA_VERSION = 4 as const;
+export const SAVE_SCHEMA_VERSION = 5 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -84,8 +85,21 @@ export interface GameSaveSnapshot extends Omit<
 /// than derived because restoration puts a Site back without taking back the
 /// count it caused, so the table cannot imply them.
 export interface CombatSaveSnapshot {
+  /// The part of a combat frame that had not elapsed yet.
+  readonly frames: number;
+  /// The structure impact still playing, if one is.
+  readonly impact: {
+    readonly cell: number;
+    readonly framesLeft: number;
+  } | null;
   readonly mechanoidDestroyed: number;
   readonly palyarDestroyed: number;
+  /// The Player Projectile in flight, if there is one. Where it is lives in its
+  /// Object Residence, so only what residence cannot hold is here.
+  readonly playerShot: {
+    readonly framesLeft: number;
+    readonly velocity: Vector3;
+  } | null;
   readonly siteTable: readonly number[];
 }
 
@@ -592,20 +606,64 @@ const SITE_TABLE_LENGTH = 256;
 
 const combat = (value: unknown, at: string): CombatSaveSnapshot => {
   const out = exact(value, at, [
+    'frames',
+    'impact',
     'mechanoidDestroyed',
     'palyarDestroyed',
+    'playerShot',
     'siteTable'
   ]);
+  const frames = finite(out['frames'], `${at}.frames`);
+  if (!(frames >= 0) || frames >= 1) {
+    fail(`${at}.frames must be at least 0 and less than 1`);
+  }
+  const shotValue = out['playerShot'];
+  const playerShot =
+    shotValue === null
+      ? null
+      : (() => {
+          const shot = exact(shotValue, `${at}.playerShot`, [
+            'framesLeft',
+            'velocity'
+          ]);
+          return {
+            framesLeft: nonNegativeInteger(
+              shot['framesLeft'],
+              `${at}.playerShot.framesLeft`
+            ),
+            velocity: vector(shot['velocity'], `${at}.playerShot.velocity`)
+          };
+        })();
+  const impactValue = out['impact'];
+  const impact =
+    impactValue === null
+      ? null
+      : (() => {
+          const hit = exact(impactValue, `${at}.impact`, [
+            'cell',
+            'framesLeft'
+          ]);
+          return {
+            cell: byte(hit['cell'], `${at}.impact.cell`),
+            framesLeft: nonNegativeInteger(
+              hit['framesLeft'],
+              `${at}.impact.framesLeft`
+            )
+          };
+        })();
   const siteTable = byteArray(out['siteTable'], `${at}.siteTable`);
   if (siteTable.length !== SITE_TABLE_LENGTH) {
     fail(`${at}.siteTable must contain ${SITE_TABLE_LENGTH} bytes`);
   }
   return {
+    frames,
+    impact,
     mechanoidDestroyed: byte(
       out['mechanoidDestroyed'],
       `${at}.mechanoidDestroyed`
     ),
     palyarDestroyed: byte(out['palyarDestroyed'], `${at}.palyarDestroyed`),
+    playerShot,
     siteTable
   };
 };

@@ -28,6 +28,7 @@ const harness = () => {
   const calls: unknown[] = [];
   const actions: ControlProfileActions = {
     drop: () => calls.push('drop'),
+    fire: () => calls.push('fire'),
     leaveCraft: () => calls.push('leaveCraft'),
     occupancy: () => occupancy,
     page: delta => calls.push({ page: delta }),
@@ -101,6 +102,39 @@ describe('the browser Control Profile', () => {
     expect(profile.intent.running).toBeTrue();
     profile.keyUp(input('ShiftRight'));
     expect(profile.intent.running).toBeFalse();
+  });
+
+  test('F fires, and does not also answer a script', () => {
+    const { calls, profile } = harness();
+
+    profile.keyDown(input('KeyF'));
+
+    // Firing is the joystick's button in the Reference Build, so it must not
+    // arrive as a keypress the scripts can see.
+    expect(calls).toEqual(['fire']);
+  });
+
+  test('F does not repeat while it is held', () => {
+    const { calls, profile } = harness();
+
+    profile.keyDown(input('KeyF'));
+    profile.keyDown(input('KeyF', { repeat: true }));
+    profile.keyDown(input('KeyF', { repeat: true }));
+
+    expect(calls).toEqual(['fire']);
+  });
+
+  test('space keeps both its meanings and gains no third', () => {
+    const { calls, profile, setOccupancy } = harness();
+
+    profile.keyDown(input('Space'));
+    setOccupancy({ kind: 'aboard', slot: 2 });
+    profile.keyDown(input('Space'));
+
+    // Space is throttle shutoff aboard and message skip on foot, and firing is
+    // deliberately not a third thing it does.
+    expect(calls).toEqual(['skipMessage', 'shutThrottle']);
+    expect(calls).not.toContain('fire');
   });
 
   test('space and leaving a craft follow Occupancy', () => {

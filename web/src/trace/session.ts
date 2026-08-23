@@ -8,7 +8,8 @@ export type SessionTraceCommand =
   | { readonly kind: 'shutThrottle' }
   | { readonly kind: 'leaveCraft' }
   | { readonly kind: 'rideLift' }
-  | { readonly kind: 'drop' };
+  | { readonly kind: 'drop' }
+  | { readonly kind: 'fire' };
 
 const FORBIDDEN = new Set(['board', 'teleport']);
 
@@ -157,6 +158,7 @@ export const decodeSessionTraceCommand = (
     case 'leaveCraft':
     case 'rideLift':
     case 'drop':
+    case 'fire':
       if (operand !== true) {
         throw new Error(`${key} must be true`);
       }
@@ -209,6 +211,11 @@ export const applySessionTraceCommand = (
         ? { dropped: outcome.slot }
         : outcome.kind;
     }
+    // A refusal is recorded rather than thrown: the three the Reference Build
+    // has are silent, so a scenario that fires while it cannot is describing
+    // play the player could have had, not a broken route.
+    case 'fire':
+      return session.fire().outcome.kind;
   }
   return undefined;
 };
