@@ -76,7 +76,7 @@ import { SiteLedger } from './sites.ts';
 ///
 /// Every discrete change to that state passes through a Semantic Action: `reach`, `drop`,
 /// `leaveCraft`, `rideLift`, `teleport`, `place`, `carry`, `board`, `throttleNotchValue`, `throttleStep`,
-/// `fitPoweramp`, `shutThrottle`, `press`, `skipMessage`, `start`, `show`, `describe`. Each moves
+/// `shutThrottle`, `press`, `skipMessage`, `start`, `show`, `describe`. Each moves
 /// everything or nothing, which is what ADR 0018 asks of them.
 ///
 /// Two things are deliberately not actions. `intent` is a held input rather than an event, so a
@@ -212,6 +212,9 @@ export interface SessionContent {
   /// What a shot does when it reaches one of the two objects it can hit.
   readonly objectHits?: EndgameObjectHits;
   readonly objects: readonly ObjectPlacement[];
+  /// The object whose being carried turns on the flight rules' one
+  /// craft-conditioned override.
+  readonly powerampSlot?: number;
   readonly rooms: ReadonlyMap<number, Room>;
   readonly shipDelivery?: EndgameShipDelivery;
   /// The Sites a shot can destroy, and the rules the commit path follows.
@@ -239,6 +242,7 @@ export const sessionContent = (
         ),
   objectHits: bundle.endgame.combat.objectHits,
   objects: world.objects,
+  powerampSlot: bundle.endgame.controls.powerampSlot,
   rooms: world.rooms,
   shipDelivery: bundle.endgame.shipDelivery,
   sites: bundle.endgame.combat.siteDestruction,
@@ -1240,10 +1244,6 @@ export class GameplaySession {
     this.game = stepThrottle(this.game, delta, this.content.flight.rules);
   }
 
-  fitPoweramp(fitted: boolean): void {
-    this.game = { ...this.game, poweramp: fitted };
-  }
-
   shutThrottle(): void {
     if (this.occupancy.kind === 'onFoot') {
       return;
@@ -1276,6 +1276,17 @@ export class GameplaySession {
     readonly snapshot: SessionSnapshot;
   } {
     const events: PresentationEvent[] = [];
+    // The Reference Build reads the override's own carried flag every frame, at
+    // the throttle and again at the ceiling, rather than remembering a decision
+    // taken when it was picked up. So this is derived rather than set: putting
+    // it down mid-flight takes the rates away again.
+    const powerampSlot = this.content.powerampSlot;
+    if (powerampSlot !== undefined) {
+      const fitted = this.carriedStack.includes(powerampSlot);
+      if (fitted !== this.game.poweramp) {
+        this.game = { ...this.game, poweramp: fitted };
+      }
+    }
     if (this.content.flight !== undefined && seconds > 0) {
       let steered = this.intent;
       if (this.game.worldFlipped) {

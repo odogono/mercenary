@@ -17,7 +17,7 @@ from .flight import decode_float
 from .prng import RANDOM_ROUTINE, RANDOM_STATE, RANDOM_VALUE, decode_reference_prng
 
 
-ENDGAME_SCHEMA_VERSION = 10
+ENDGAME_SCHEMA_VERSION = 11
 
 # Drop key dispatch and native inventory mutation.
 DROP_DISPATCH = 0xB33F
@@ -27,6 +27,10 @@ DROP_EXEMPTION_FLAGS_SITE = 0x29F8
 DROP_INVENTORY_SITE = 0x9907
 DROP_CARRIED_MASK_SITE = 0x9913
 SINK_OVERRIDE_SITE = 0x980B
+# The one craft-conditioned flight override: read once for the throttle and
+# once for the ceiling, and both sites must name the same object.
+POWERAMP_THROTTLE_SITE = 0x9F8A
+POWERAMP_CEILING_SITE = 0xA050
 ANTIGRAV_OVERRIDE_SITE = 0x9817
 
 # Fire, projectile update, world damage, and hostile-craft behavior.
@@ -580,6 +584,8 @@ def _require_engine(ram: bytes) -> None:
         (DROP_CARRIED_MASK_SITE, (0x29,), "drop does not clear an immediate carried mask"),
         (SINK_OVERRIDE_SITE, (0xAD, 0xEF, 0x29), "take does not read the Sink override"),
         (ANTIGRAV_OVERRIDE_SITE, (0xAD, 0xDB, 0x29), "take does not read the Antigrav override"),
+        (POWERAMP_THROTTLE_SITE, (0xAC,), "the throttle does not read a carried flight override"),
+        (POWERAMP_CEILING_SITE, (0xAE,), "the ceiling does not read a carried flight override"),
         (0x9915, (0x99, 0xC0, 0x29), "drop does not persist the changed object flags"),
         (0x991B, (0xA5, 0xCD, 0x99, 0x40, 0x29), "drop does not copy the current room"),
         (0x9920, (0xA5, 0x72, 0x99, 0x80, 0x28), "drop does not copy the current position"),
@@ -918,6 +924,16 @@ def decode_endgame(ram: bytes) -> dict[str, Any]:
     sink_slot = (ram[SINK_OVERRIDE_SITE + 1] | (ram[SINK_OVERRIDE_SITE + 2] << 8)) - OBJECT_FLAGS_BASE
     antigrav_slot = (ram[ANTIGRAV_OVERRIDE_SITE + 1] | (ram[ANTIGRAV_OVERRIDE_SITE + 2] << 8)) - OBJECT_FLAGS_BASE
 
+    poweramp_slot = (
+        ram[POWERAMP_THROTTLE_SITE + 1] | (ram[POWERAMP_THROTTLE_SITE + 2] << 8)
+    ) - OBJECT_FLAGS_BASE
+    _require(
+        (ram[POWERAMP_CEILING_SITE + 1] | (ram[POWERAMP_CEILING_SITE + 2] << 8))
+        - OBJECT_FLAGS_BASE
+        == poweramp_slot,
+        "The throttle and the ceiling read different flight overrides",
+    )
+
     fire_slot = ram[FIRE_ROUTINE + 16]
     target_slots = [ram[0x8782 + 1], ram[0x878E + 1]]
     axis_window = [ram[0x872E + 1], ram[0x8732 + 1]]
@@ -936,6 +952,9 @@ def decode_endgame(ram: bytes) -> dict[str, Any]:
                 "sinkSlot": sink_slot,
                 "antigravSlot": antigrav_slot,
             },
+            # The rates this object changes live in the flight rules; what is
+            # here is the object whose being carried changes them.
+            "powerampSlot": poweramp_slot,
             "drop": {
                 "keyCode": drop_key,
                 "inventorySelection": "last-in-first-out",

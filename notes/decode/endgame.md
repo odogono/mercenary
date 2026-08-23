@@ -664,7 +664,22 @@ returns to play. Neither path writes `gameComplete` or leaves the main loop.
 
 Poweramp slot 28 is read at `$9F8A` and `$A050`. While carried in the Dart only,
 it raises the throttle exponent by four (doubling the contribution) and replaces
-the Dart's normal ceiling with `$5A`; it is not a generic damage amplifier. The
+the Dart's normal ceiling with `$5A`; it is not a generic damage amplifier.
+
+Both sites were read again for M7.3 and name the same object's flags, which is
+now asserted rather than assumed. Neither is in the combat path: the first is
+the throttle and the second the ceiling comparison, so nothing about firing or
+being fired at consults slot 28 at all.
+
+The flag is read every frame at both sites rather than latched when the object is
+picked up, so the rates follow what the player is carrying now. Putting the
+Poweramp down mid-flight takes them back.
+
+What it is for is legible from the ceilings either side of it. The blocks carry
+`[90, 10, 1, 90, 1, 1, 90, 1, ...]`, so only three craft can climb, and the Dart
+— the one the opening sells — is not among them. Carrying the Poweramp gives the
+Dart the same ceiling those three have, which is why the Colony Craft's
+ceiling-eligible craft are slots 0, 3 and 6 *plus* the Dart with this aboard. The
 Sink, Antigrav, Pyramid, and Anti Time Bomb overrides described above depend on
 their mutable carried flags and must survive Save/restore.
 

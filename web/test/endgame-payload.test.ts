@@ -96,6 +96,7 @@ const document = {
       keyCode: 18,
       requiresCarriedExemptionOrFlightState: true
     },
+    powerampSlot: 28,
     takeOverrides: { antigravSlot: 27, sinkSlot: 47 }
   },
   counts: {
@@ -217,7 +218,7 @@ const document = {
     minimumAltitudeByte: 252,
     successCarry: 'clear'
   },
-  schemaVersion: 10,
+  schemaVersion: 11,
   shipDelivery: {
     acceptedMask: 128,
     cadence: 'every-frame',
@@ -362,11 +363,11 @@ describe('the endgame Data Payload document', () => {
     const { ['endgame.json']: _, ...missing } = payloadDocuments();
     await expect(load(readDocuments(missing))).rejects.toThrow('endgame.json');
     await expect(
-      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 9 })))
-    ).rejects.toThrow('unsupported schemaVersion 9');
+      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 10 })))
+    ).rejects.toThrow('unsupported schemaVersion 10');
     await expect(
-      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 11 })))
-    ).rejects.toThrow('unsupported schemaVersion 11');
+      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 12 })))
+    ).rejects.toThrow('unsupported schemaVersion 12');
     expect((await load(readDocuments(payloadDocuments()))).endgame).toEqual(
       document
     );

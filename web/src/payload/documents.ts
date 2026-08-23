@@ -547,6 +547,9 @@ export interface EndgameDocument {
   readonly combat: EndgameCombat;
   readonly controls: {
     readonly drop: EndgameDropRules;
+    /// The object whose being carried turns on the flight rules' one
+    /// craft-conditioned override. The rates themselves are flight rules.
+    readonly powerampSlot: number;
     readonly takeOverrides: EndgameTakeOverrides;
   };
   readonly counts: Readonly<Record<string, number>>;
