@@ -49,6 +49,7 @@ const block = (fields: {
   readonly pitchStep?: number;
   readonly speedDamping?: number;
   readonly throttleGain?: number;
+  readonly tumble?: Block['tumble'];
   readonly yawAuthority?: number;
   readonly yawDamping?: number;
 }): Block => ({
@@ -62,7 +63,8 @@ const block = (fields: {
   throttleGain: fields.throttleGain ?? 0.390_625,
   yawAuthority: fields.yawAuthority ?? 1,
   yawDamping: fields.yawDamping ?? 0.9375,
-  ...(fields.mode !== undefined ? { mode: fields.mode } : {})
+  ...(fields.mode !== undefined ? { mode: fields.mode } : {}),
+  ...(fields.tumble !== undefined ? { tumble: fields.tumble } : {})
 });
 
 /// The rules as our own image decodes them, so the thresholds under test are real.
@@ -98,6 +100,15 @@ const blocks = (): Block[] => {
       throttleGain: 1,
       yawAuthority: 16,
       yawDamping: 1.525_878_906_25e-5
+    }),
+    // The crash tumble the engine installs over a craft's own block.
+    block({
+      ceiling: 0,
+      handler: 'tumble',
+      index: 9,
+      liftFactor: 1,
+      mode: 'tumble',
+      tumble: { altitudeDrop: 47, pitchStep: 21, rollStep: 16, yawStep: 13 }
     })
   );
   return table;
@@ -828,5 +839,70 @@ describe('walking inside a Room', () => {
     expect(walked.wallContact).toBe(0);
     expect(walked.wallContactLatch).toBe(0);
     expect(wallThud(walked)).toBe(false);
+  });
+});
+
+describe('the crash tumble the engine installs over a craft', () => {
+  const TUMBLING = 9;
+  const aloft = (): GameState =>
+    gameState({
+      craft: 1,
+      mode: 'flying',
+      mover: TUMBLING,
+      player: playerState({ position: { x: 10_000, y: 400_000, z: 10_000 } })
+    });
+
+  test('falls by its own drop and answers no input at all', () => {
+    const held = intent({ turn: 1, walk: 1 });
+
+    const steered = step(aloft(), held, HOST_FRAME, flight);
+    const ignored = step(aloft(), intent({}), HOST_FRAME, flight);
+
+    // The handler reads nothing, so holding everything changes nothing.
+    expect(steered.player.position).toEqual(ignored.player.position);
+    expect(steered.player.heading).toBe(ignored.player.heading);
+    expect(steered.player.position.y).toBeLessThan(400_000);
+  });
+
+  test('spins all three angles by their own steps', () => {
+    const start = aloft();
+
+    const spun = step(start, intent({}), HOST_FRAME, flight);
+
+    expect(spun.player.heading).not.toBe(start.player.heading);
+    expect(spun.player.pitch).not.toBe(start.player.pitch);
+    expect(spun.player.roll).not.toBe(start.player.roll);
+  });
+
+  test('flies on the installed block rather than the craft it is in', () => {
+    const onItsOwn = step(
+      { ...aloft(), mover: undefined },
+      intent({}),
+      HOST_FRAME,
+      flight
+    );
+
+    // Craft 1 climbs or holds under its own block; the tumble only falls.
+    expect(onItsOwn.player.position.y).toBeGreaterThanOrEqual(
+      step(aloft(), intent({}), HOST_FRAME, flight).player.position.y
+    );
+  });
+
+  test('reaches the ground, gives a verdict, and puts the block away', () => {
+    let state: GameState = {
+      ...aloft(),
+      player: playerState({ position: { x: 10_000, y: 6000, z: 10_000 } })
+    };
+
+    for (let frame = 0; frame < 4; frame += 1) {
+      state = step(state, intent({}), HOST_FRAME, flight);
+      if (state.touchdown !== undefined) {
+        break;
+      }
+    }
+
+    // A tumble ends the way an ordinary touchdown does, in play.
+    expect(state.touchdown).toBeDefined();
+    expect(state.mover).toBeUndefined();
   });
 });

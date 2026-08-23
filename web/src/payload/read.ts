@@ -956,6 +956,16 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
         )
       },
       hostileCraft: {
+        approachAimShift: asInt(
+          r,
+          hostile['approachAimShift'],
+          'combat.hostileCraft.approachAimShift'
+        ),
+        approachDelayLifecycle: asInt(
+          r,
+          hostile['approachDelayLifecycle'],
+          'combat.hostileCraft.approachDelayLifecycle'
+        ),
         attackingSlot: asInt(
           r,
           hostile['attackingSlot'],
@@ -981,6 +991,22 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
           hostile['enabledByAttackingShip'],
           'combat.hostileCraft.enabledByAttackingShip'
         ),
+        firingRange: asInt(
+          r,
+          hostile['firingRange'],
+          'combat.hostileCraft.firingRange'
+        ),
+        hitCubeSize: asInt(
+          r,
+          hostile['hitCubeSize'],
+          'combat.hostileCraft.hitCubeSize'
+        ),
+        hitSound: asInt(r, hostile['hitSound'], 'combat.hostileCraft.hitSound'),
+        inboundAimShift: asInt(
+          r,
+          hostile['inboundAimShift'],
+          'combat.hostileCraft.inboundAimShift'
+        ),
         inboundLifecycleFrames: asInt(
           r,
           hostile['inboundLifecycleFrames'],
@@ -990,6 +1016,26 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
           r,
           hostile['inboundSlot'],
           'combat.hostileCraft.inboundSlot'
+        ),
+        inboundSound: asInt(
+          r,
+          hostile['inboundSound'],
+          'combat.hostileCraft.inboundSound'
+        ),
+        parkedLifecycle: asInt(
+          r,
+          hostile['parkedLifecycle'],
+          'combat.hostileCraft.parkedLifecycle'
+        ),
+        rangeUnit: asInt(
+          r,
+          hostile['rangeUnit'],
+          'combat.hostileCraft.rangeUnit'
+        ),
+        shipDestroyedMessage: asInt(
+          r,
+          hostile['shipDestroyedMessage'],
+          'combat.hostileCraft.shipDestroyedMessage'
         ),
         surfaceOnly: asBool(
           r,

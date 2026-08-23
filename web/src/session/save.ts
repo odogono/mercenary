@@ -11,7 +11,7 @@ import type {
 } from '../settings/index.ts';
 import type { Location, Residence } from '../world/index.ts';
 
-export const SAVE_SCHEMA_VERSION = 5 as const;
+export const SAVE_SCHEMA_VERSION = 6 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -74,9 +74,10 @@ export interface BensonSaveSnapshot {
 
 export interface GameSaveSnapshot extends Omit<
   GameState,
-  'craft' | 'room' | 'touchdown'
+  'craft' | 'mover' | 'room' | 'touchdown'
 > {
   readonly craft: number | null;
+  readonly mover: number | null;
   readonly room: number | null;
   readonly touchdown: GameState['touchdown'] | null;
 }
@@ -85,8 +86,17 @@ export interface GameSaveSnapshot extends Omit<
 /// than derived because restoration puts a Site back without taking back the
 /// count it caused, so the table cannot imply them.
 export interface CombatSaveSnapshot {
+  /// Frames the attacker has left of its current approach.
+  readonly approachFrames: number;
+  /// How the attacker is travelling on that approach.
+  readonly attackerVelocity: Vector3 | null;
   /// The part of a combat frame that had not elapsed yet.
   readonly frames: number;
+  /// The Hostile Projectile on its way, if there is one.
+  readonly hostileShot: {
+    readonly framesLeft: number;
+    readonly velocity: Vector3;
+  } | null;
   /// The structure impact still playing, if one is.
   readonly impact: {
     readonly cell: number;
@@ -436,6 +446,7 @@ const game = (value: unknown, at: string): GameSaveSnapshot => {
     'craft',
     'elapsed',
     'mode',
+    'mover',
     'player',
     'poweramp',
     'room',
@@ -467,6 +478,7 @@ const game = (value: unknown, at: string): GameSaveSnapshot => {
     craft: nullableByte(out['craft'], `${at}.craft`),
     elapsed: nonNegative(out['elapsed'], `${at}.elapsed`),
     mode: mode as GameState['mode'],
+    mover: nullableByte(out['mover'], `${at}.mover`),
     player: {
       heading: finite(player['heading'], `${at}.player.heading`),
       pitch: finite(player['pitch'], `${at}.player.pitch`),
@@ -606,7 +618,10 @@ const SITE_TABLE_LENGTH = 256;
 
 const combat = (value: unknown, at: string): CombatSaveSnapshot => {
   const out = exact(value, at, [
+    'approachFrames',
+    'attackerVelocity',
     'frames',
+    'hostileShot',
     'impact',
     'mechanoidDestroyed',
     'palyarDestroyed',
@@ -617,6 +632,28 @@ const combat = (value: unknown, at: string): CombatSaveSnapshot => {
   if (!(frames >= 0) || frames >= 1) {
     fail(`${at}.frames must be at least 0 and less than 1`);
   }
+  const inboundValue = out['hostileShot'];
+  const hostileShot =
+    inboundValue === null
+      ? null
+      : (() => {
+          const inbound = exact(inboundValue, `${at}.hostileShot`, [
+            'framesLeft',
+            'velocity'
+          ]);
+          return {
+            framesLeft: nonNegativeInteger(
+              inbound['framesLeft'],
+              `${at}.hostileShot.framesLeft`
+            ),
+            velocity: vector(inbound['velocity'], `${at}.hostileShot.velocity`)
+          };
+        })();
+  const attackerValue = out['attackerVelocity'];
+  const attackerVelocity =
+    attackerValue === null
+      ? null
+      : vector(attackerValue, `${at}.attackerVelocity`);
   const shotValue = out['playerShot'];
   const playerShot =
     shotValue === null
@@ -656,7 +693,13 @@ const combat = (value: unknown, at: string): CombatSaveSnapshot => {
     fail(`${at}.siteTable must contain ${SITE_TABLE_LENGTH} bytes`);
   }
   return {
+    approachFrames: nonNegativeInteger(
+      out['approachFrames'],
+      `${at}.approachFrames`
+    ),
+    attackerVelocity,
     frames,
+    hostileShot,
     impact,
     mechanoidDestroyed: byte(
       out['mechanoidDestroyed'],

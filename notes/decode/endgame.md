@@ -619,6 +619,36 @@ It runs only on the surface, moves attacker slot 15 toward the player, and when
 within a 48-unit cube creates hostile projectile slot 14 if that slot is free.
 The hostile projectile has a 32-frame lifecycle.
 
+Reading it through for M7.3 fills in how it closes. Aim comes from `$89AF`: it
+signed-shifts each axis of the distance between the object and the player right
+by a given count and then complements it, so the result points back along the
+gap. The attacker uses a shift of five, its projectile a shift of four, and both
+are stored as ordinary effect velocities by `$8A12` — the same three tables a
+player shot uses. A new projectile also has the attacker's own nine position
+bytes copied into it by `$89DB`, so it leaves from where the attacker is.
+
+An attacker closes in bursts. `$8998` aims it, marks it on the surface — which
+is what brings it into the world at all, since it waits out of the world until
+it is sent for — and gives it a lifecycle of `$AD`. `$892B` then returns every
+frame while that lifecycle is negative, so the attacker flies blind until the
+effect advance has counted it down to the `$7F` it parks slots at: 46 frames.
+The shift of five over 46 frames carries it well past the player, so an attacker
+swoops rather than homing, and re-aims on the far side.
+
+The 48-unit cube and the four-unit hit cube are both compared by `$999A` above
+the low byte, so they reach 12288 and 1024 world units. A hit requests sound
+`$0C`, and takes the player's craft only when they have one: `$8973` tests the
+mover for the walking one and skips the ship-destroyed message when it is set.
+Either way the encounter is cleared, both hostile slots are put out of the
+world, and mover 9 is installed by copying block 9's bytes over the live block —
+which is all `$9D99` does, and what the browser's own installed-mover field
+stands for.
+
+Mover 9 itself is `$9EBE`: it subtracts its drop from the altitude's middle
+byte, advances three angles by their own steps, and reads no input at all.
+Reaching the ground jumps to `$A0AF`, inside the ordinary crash path, so a
+tumble ends in the same recoverable place an ordinary crash does.
+
 A collision within the four-unit cube is one hit. If the player is aboard, the
 engine requests the ship-destroyed message, clears `attackingShip`, installs
 crash/autoland mover 9, removes hostile slots 14 and 15, refreshes objects, and

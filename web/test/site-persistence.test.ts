@@ -51,7 +51,10 @@ describe('the Site Ledger a Gameplay Session owns', () => {
     const wounded = {
       ...struck,
       combat: {
+        approachFrames: 0,
+        attackerVelocity: null,
         frames: 0,
+        hostileShot: null,
         impact: null,
         mechanoidDestroyed: 7,
         palyarDestroyed: 3,
