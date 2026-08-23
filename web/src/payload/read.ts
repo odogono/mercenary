@@ -923,6 +923,11 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
           'combat.fire.directionOffset'
         ),
         effectSlot: asInt(r, fire['effectSlot'], 'combat.fire.effectSlot'),
+        exponentUnitsPerOctave: asInt(
+          r,
+          fire['exponentUnitsPerOctave'],
+          'combat.fire.exponentUnitsPerOctave'
+        ),
         inputActiveValue: asInt(
           r,
           fire['inputActiveValue'],
@@ -937,6 +942,11 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
           r,
           fire['oneActiveShot'],
           'combat.fire.oneActiveShot'
+        ),
+        speedPerFrame: asInt(
+          r,
+          fire['speedPerFrame'],
+          'combat.fire.speedPerFrame'
         ),
         walkingMoverProhibited: asBool(
           r,
