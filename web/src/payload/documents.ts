@@ -387,7 +387,11 @@ export interface EndgameTakeOverrides {
 /// The Sites a shot can destroy, and the rules the commit path follows.
 export interface EndgameSiteDestruction {
   readonly alreadyDestroyedIsInert: boolean;
+  /// How high a shot may be, in its middle byte, and still strike a Site.
+  readonly altitudeMidByteLimit: number;
   readonly axisWindow: readonly number[];
+  /// Which axis contributes the high nibble of a cell index.
+  readonly cellDepthAxisIsHighNibble: boolean;
   readonly destroyedMask: number;
   readonly factionObjective: {
     readonly comparison: string;
@@ -397,6 +401,7 @@ export interface EndgameSiteDestruction {
     readonly threshold: number;
   };
   readonly impactFrames: number;
+  readonly impactSound: number;
   readonly initialCounts: {
     readonly mechanoid: number;
     readonly neutral: number;
@@ -414,6 +419,8 @@ export interface EndgameSiteDestruction {
     readonly script: number;
   }[];
   readonly reactionWipeMask: number;
+  /// Whether a Faction Reaction needs the player over the Site they struck.
+  readonly requiresPlayerCell: boolean;
   readonly restorationKeepMask: number;
   readonly restorationSlot: number;
 }
@@ -435,6 +442,21 @@ export interface EndgameFire {
   readonly walkingMoverProhibited: boolean;
 }
 
+/// What a shot does when it reaches one of the two objects it can hit.
+export interface EndgameObjectHits {
+  readonly clearsAttackState: boolean;
+  readonly cubeSize: number;
+  /// What one unit of `cubeSize` is worth in world units: the test compares the
+  /// bytes above the least significant one.
+  readonly cubeUnit: number;
+  readonly firstTargetMessage: number;
+  readonly removesTarget: boolean;
+  readonly secondTargetScript: number;
+  readonly sound: number;
+  readonly surfaceTargetsOnly: boolean;
+  readonly targetSlots: readonly number[];
+}
+
 export interface EndgameCombat {
   readonly fire: EndgameFire;
   readonly hostileCraft: {
@@ -447,11 +469,7 @@ export interface EndgameCombat {
     readonly inboundSlot: number;
     readonly surfaceOnly: boolean;
   };
-  readonly objectHits: {
-    readonly firstTargetMessage: number;
-    readonly secondTargetScript: number;
-    readonly targetSlots: readonly number[];
-  };
+  readonly objectHits: EndgameObjectHits;
   readonly siteDestruction: EndgameSiteDestruction;
 }
 

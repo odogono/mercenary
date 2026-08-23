@@ -17,7 +17,7 @@ from .flight import decode_float
 from .prng import RANDOM_ROUTINE, RANDOM_STATE, RANDOM_VALUE, decode_reference_prng
 
 
-ENDGAME_SCHEMA_VERSION = 6
+ENDGAME_SCHEMA_VERSION = 8
 
 # Drop key dispatch and native inventory mutation.
 DROP_DISPATCH = 0xB33F
@@ -53,6 +53,23 @@ FIXED_POINT_CHAIN_STEP = (0x4A, 0x66, 0x06)
 ANGLE_EXPONENT_TABLE_SITE = 0x842B
 ANGLE_MANTISSA_TABLE_SITE = 0x842F
 FIRE_VECTOR_SITE = 0x8895
+
+# The hit test a shot runs each frame, and the collision helper both object
+# families share.
+SHOT_ALTITUDE_GATE = 0x871D
+SHOT_ALTITUDE_LIMIT_SITE = 0x8727
+SHOT_CELL_BOUND_SITE = 0x8741
+SHOT_CELL_FORM_SITE = 0x874B
+IMPACT_SOUND_SITE = 0x876C
+COMMIT_CELL_GATE = 0x87A4
+OBJECT_HIT_HELPER = 0x8833
+OBJECT_HIT_CUBE_SITE = 0x8840
+OBJECT_HIT_SOUND_SITE = 0x8849
+OBJECT_HIT_CLEARS_ATTACK_SITE = 0x884E
+OBJECT_HIT_REMOVES_TARGET_SITE = 0x885A
+# The cube test compares the two bytes above the least significant one, so the
+# size it is given counts in units of 256 rather than in world units.
+OBJECT_HIT_CUBE_COMPARE = 0x99D5
 
 SITE_TABLE = 0x2B00
 SITE_TABLE_LENGTH = 0x100
@@ -500,6 +517,10 @@ def _decode_site_table(ram: bytes) -> dict[str, Any]:
     ]
 
     return {
+        "altitudeMidByteLimit": ram[SHOT_ALTITUDE_LIMIT_SITE + 1],
+        "cellDepthAxisIsHighNibble": True,
+        "impactSound": ram[IMPACT_SOUND_SITE + 1],
+        "requiresPlayerCell": True,
         "initialTable": table,
         "lowIdMask": low_id_mask,
         "mechanoidMask": mechanoid_mask,
@@ -599,6 +620,20 @@ def _require_engine(ram: bytes) -> None:
         (ANGLE_EXPONENT_TABLE_SITE, (0x1D,), "angle lookup does not read an exponent table"),
         (ANGLE_MANTISSA_TABLE_SITE, (0xBD,), "angle lookup does not read a mantissa table"),
         (FIRE_VECTOR_SITE, (0x18, 0x65, 0x09, 0xA8, 0x20, 0xA7, 0x84), "fire does not add its direction offset to an exponent before converting"),
+        (SHOT_ALTITUDE_GATE, (0xBD, 0x80, 0x25, 0x30), "site hit does not branch on the shot's altitude sign"),
+        (SHOT_ALTITUDE_LIMIT_SITE, (0xC9,), "site hit does not compare an immediate altitude ceiling"),
+        (SHOT_CELL_BOUND_SITE, (0xBD, 0x40, 0x25, 0x1D, 0xC0, 0x25, 0x29, 0xF0), "site hit does not bound both cell axes to the city"),
+        (SHOT_CELL_FORM_SITE, (0xBD, 0xC0, 0x25, 0x0A, 0x0A, 0x0A, 0x0A), "site hit does not shift the depth axis into the high nibble of its cell"),
+        (SHOT_CELL_FORM_SITE + 9, (0xBD, 0x40, 0x25, 0x29, 0x0F, 0x05), "site hit does not take the across axis as the low nibble of its cell"),
+        (IMPACT_SOUND_SITE, (0xA9,), "site hit does not select an immediate impact sound"),
+        (COMMIT_CELL_GATE, (0xA4, 0xB7, 0xC4, 0xF5, 0xD0), "site commit does not require the struck cell to be the player's own"),
+        (OBJECT_HIT_HELPER, (0x86, 0x0A, 0x84, 0x0B, 0x38), "object collision does not default to a miss"),
+        (OBJECT_HIT_HELPER + 5, (0xB9, 0x40, 0x29, 0xD0), "object collision does not require its target on the surface"),
+        (OBJECT_HIT_CUBE_SITE, (0xA2,), "object collision does not select an immediate cube size"),
+        (OBJECT_HIT_SOUND_SITE, (0xA9,), "object collision does not select an immediate sound"),
+        (OBJECT_HIT_CLEARS_ATTACK_SITE, (0xA9, 0x00, 0x8D, 0xF8, 0xBE), "object collision does not clear attackingShip"),
+        (OBJECT_HIT_REMOVES_TARGET_SITE, (0xA9, 0xFF, 0x99, 0x40, 0x29), "object collision does not put its target out of the world"),
+        (OBJECT_HIT_CUBE_COMPARE, (0x38, 0x8A, 0xE5, 0x08, 0x98, 0xE5, 0x09), "object collision does not compare its cube above the low byte"),
         (SITE_COMMIT_READ, (0xB9, 0x00, 0x2B, 0x85), "site commit does not save the struck cell's table byte"),
         (RESTORATION_TEST_SITE, (0xAD,), "site commit does not read a restoration override's flags"),
         (RESTORATION_TEST_SITE + 3, (0x30,), "site commit does not branch to restoration while that object is carried"),
@@ -904,6 +939,12 @@ def decode_endgame(ram: bytes) -> dict[str, Any]:
                 "targetSlots": target_slots,
                 "firstTargetMessage": ram[0x8789 + 1],
                 "secondTargetScript": ram[0x8795 + 1],
+                "cubeSize": ram[OBJECT_HIT_CUBE_SITE + 1],
+                "cubeUnit": 0x100,
+                "sound": ram[OBJECT_HIT_SOUND_SITE + 1],
+                "clearsAttackState": True,
+                "removesTarget": True,
+                "surfaceTargetsOnly": True,
             },
             "hostileCraft": {
                 "enabledByAttackingShip": True,

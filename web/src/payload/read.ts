@@ -998,15 +998,33 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
         )
       },
       objectHits: {
+        clearsAttackState: asBool(
+          r,
+          hits['clearsAttackState'],
+          'combat.objectHits.clearsAttackState'
+        ),
+        cubeSize: asInt(r, hits['cubeSize'], 'combat.objectHits.cubeSize'),
+        cubeUnit: asInt(r, hits['cubeUnit'], 'combat.objectHits.cubeUnit'),
         firstTargetMessage: asInt(
           r,
           hits['firstTargetMessage'],
           'combat.objectHits.firstTargetMessage'
         ),
+        removesTarget: asBool(
+          r,
+          hits['removesTarget'],
+          'combat.objectHits.removesTarget'
+        ),
         secondTargetScript: asInt(
           r,
           hits['secondTargetScript'],
           'combat.objectHits.secondTargetScript'
+        ),
+        sound: asInt(r, hits['sound'], 'combat.objectHits.sound'),
+        surfaceTargetsOnly: asBool(
+          r,
+          hits['surfaceTargetsOnly'],
+          'combat.objectHits.surfaceTargetsOnly'
         ),
         targetSlots: intArray(
           r,
@@ -1020,10 +1038,20 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
           destruction['alreadyDestroyedIsInert'],
           'combat.siteDestruction.alreadyDestroyedIsInert'
         ),
+        altitudeMidByteLimit: asInt(
+          r,
+          destruction['altitudeMidByteLimit'],
+          'combat.siteDestruction.altitudeMidByteLimit'
+        ),
         axisWindow: intArray(
           r,
           destruction['axisWindow'],
           'combat.siteDestruction.axisWindow'
+        ),
+        cellDepthAxisIsHighNibble: asBool(
+          r,
+          destruction['cellDepthAxisIsHighNibble'],
+          'combat.siteDestruction.cellDepthAxisIsHighNibble'
         ),
         destroyedMask: asInt(
           r,
@@ -1061,6 +1089,11 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
           r,
           destruction['impactFrames'],
           'combat.siteDestruction.impactFrames'
+        ),
+        impactSound: asInt(
+          r,
+          destruction['impactSound'],
+          'combat.siteDestruction.impactSound'
         ),
         initialCounts: {
           mechanoid: asInt(
@@ -1122,6 +1155,11 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
           r,
           destruction['reactionWipeMask'],
           'combat.siteDestruction.reactionWipeMask'
+        ),
+        requiresPlayerCell: asBool(
+          r,
+          destruction['requiresPlayerCell'],
+          'combat.siteDestruction.requiresPlayerCell'
         ),
         restorationKeepMask: asInt(
           r,

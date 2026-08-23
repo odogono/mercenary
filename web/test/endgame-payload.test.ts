@@ -33,13 +33,21 @@ const document = {
       surfaceOnly: true
     },
     objectHits: {
+      clearsAttackState: true,
+      cubeSize: 4,
+      cubeUnit: 256,
       firstTargetMessage: 49,
+      removesTarget: true,
       secondTargetScript: 27,
+      sound: 16,
+      surfaceTargetsOnly: true,
       targetSlots: [15, 0]
     },
     siteDestruction: {
       alreadyDestroyedIsInert: true,
+      altitudeMidByteLimit: 8,
       axisWindow: [112, 144],
+      cellDepthAxisIsHighNibble: true,
       destroyedMask: 128,
       factionObjective: {
         comparison: 'mechanoid-minus-palyar',
@@ -49,6 +57,7 @@ const document = {
         threshold: 105
       },
       impactFrames: 16,
+      impactSound: 4,
       initialCounts: { mechanoid: 115, neutral: 27, palyar: 114 },
       initialTable: siteTable,
       lowIdMask: 31,
@@ -62,6 +71,7 @@ const document = {
         { cells: [3], lowId: 18, script: 50 }
       ],
       reactionWipeMask: 224,
+      requiresPlayerCell: true,
       restorationKeepMask: 127,
       restorationSlot: 24
     }
@@ -197,7 +207,7 @@ const document = {
     minimumAltitudeByte: 252,
     successCarry: 'clear'
   },
-  schemaVersion: 6,
+  schemaVersion: 8,
   shipDelivery: {
     acceptedMask: 128,
     cadence: 'every-frame',
@@ -342,11 +352,11 @@ describe('the endgame Data Payload document', () => {
     const { ['endgame.json']: _, ...missing } = payloadDocuments();
     await expect(load(readDocuments(missing))).rejects.toThrow('endgame.json');
     await expect(
-      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 5 })))
-    ).rejects.toThrow('unsupported schemaVersion 5');
-    await expect(
       load(readDocuments(payloadDocuments({ ...document, schemaVersion: 7 })))
     ).rejects.toThrow('unsupported schemaVersion 7');
+    await expect(
+      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 9 })))
+    ).rejects.toThrow('unsupported schemaVersion 9');
     expect((await load(readDocuments(payloadDocuments()))).endgame).toEqual(
       document
     );

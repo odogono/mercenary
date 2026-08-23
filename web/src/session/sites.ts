@@ -27,7 +27,11 @@ export type SiteStrike =
   | { readonly kind: 'gratitude'; readonly reaction: number }
   /// The Anti Time Bomb put the Site back. Nothing was counted, in either
   /// direction, and no reaction was spent.
-  | { readonly kind: 'restored' };
+  | { readonly kind: 'restored' }
+  /// The Site was destroyed, but the player was over a different cell when the
+  /// shot landed, so nobody was counted and nobody reacted. The bit stays set,
+  /// and the Anti Time Bomb does not get a look either.
+  | { readonly kind: 'awayFromPlayer' };
 
 const BYTE = 0xff;
 
@@ -82,15 +86,29 @@ export class SiteLedger {
   }
 
   /// One shot arriving at one Site, in the order the Reference Build commits it.
-  strike(cell: number, restorationCarried: boolean): SiteStrike {
+  ///
+  /// `playerCell` is where the player was when the shot landed. The Reference
+  /// Build compares it against the struck cell before it commits anything, so
+  /// bombing a Site from over its neighbour destroys it and tells nobody.
+  strike(
+    cell: number,
+    options: {
+      readonly playerCell: number;
+      readonly restorationCarried: boolean;
+    }
+  ): SiteStrike {
     const rules = this.rules;
     const before = this.table[cell]!;
     // The impact sets the destroyed bit before anything decides what it meant.
     this.table[cell] = before | rules.destroyedMask;
 
+    if (rules.requiresPlayerCell && options.playerCell !== cell) {
+      return { kind: 'awayFromPlayer' };
+    }
+
     // Carrying the Anti Time Bomb turns the strike around, and the count and
     // the reaction are both skipped whatever the Site was before.
-    if (restorationCarried) {
+    if (options.restorationCarried) {
       this.table[cell] = before & rules.restorationKeepMask;
       return { kind: 'restored' };
     }

@@ -231,6 +231,26 @@ class Builder:
             0x25, 0x60,
         )
 
+        # The hit test: altitude gate, city bound, cell formation, impact
+        # sound, and the gate that requires the player to be over the cell.
+        self.ram[0x871D:0x8725] = bytes([0xBD, 0x80, 0x25, 0x30, 0x09, 0xD0, 0x5C, 0xBD])
+        self.ram[0x8727:0x8729] = bytes([0xC9, 0x08])
+        self.ram[0x8741:0x8749] = bytes([0xBD, 0x40, 0x25, 0x1D, 0xC0, 0x25, 0x29, 0xF0])
+        self.ram[0x874B:0x875A] = bytes(
+            [0xBD, 0xC0, 0x25, 0x0A, 0x0A, 0x0A, 0x0A, 0x85, 0x06,
+             0xBD, 0x40, 0x25, 0x29, 0x0F, 0x05]
+        )
+        self.ram[0x876C:0x876E] = bytes([0xA9, 0x04])
+        self.ram[0x87A4:0x87A9] = bytes([0xA4, 0xB7, 0xC4, 0xF5, 0xD0])
+
+        # The collision helper both object families share.
+        self.ram[0x8833:0x883C] = bytes([0x86, 0x0A, 0x84, 0x0B, 0x38, 0xB9, 0x40, 0x29, 0xD0])
+        self.ram[0x8840:0x8842] = bytes([0xA2, 0x04])
+        self.ram[0x8849:0x884B] = bytes([0xA9, 0x10])
+        self.ram[0x884E:0x8853] = bytes([0xA9, 0x00, 0x8D, 0xF8, 0xBE])
+        self.ram[0x885A:0x885F] = bytes([0xA9, 0xFF, 0x99, 0x40, 0x29])
+        self.ram[0x99D5:0x99DC] = bytes([0x38, 0x8A, 0xE5, 0x08, 0x98, 0xE5, 0x09])
+
         # The fixed-point conversion a shot's speed comes out of: an exponent
         # shifted to an octave count, a bounded self-modified branch into a
         # chain of identical shift pairs, and the implicit leading one.
@@ -339,6 +359,49 @@ class DecodeTests(unittest.TestCase):
         self.assertEqual(combat["siteDestruction"]["destroyedMask"], 0x80)
         self.assertEqual(combat["siteDestruction"]["axisWindow"], [0x70, 0x90])
         self.assertEqual(combat["objectHits"]["targetSlots"], [15, 0])
+
+    def test_decodes_what_a_shot_must_be_over_to_count(self) -> None:
+        sites = decode_endgame(Builder().build())["combat"]["siteDestruction"]
+
+        # The impact happens wherever a shot lands in the window; the reaction
+        # only follows when the player is over that cell themselves.
+        self.assertTrue(sites["requiresPlayerCell"])
+        self.assertEqual(sites["altitudeMidByteLimit"], 8)
+        self.assertEqual(sites["impactSound"], 4)
+        self.assertTrue(sites["cellDepthAxisIsHighNibble"])
+
+    def test_decodes_what_an_object_hit_costs_its_target(self) -> None:
+        hits = decode_endgame(Builder().build())["combat"]["objectHits"]
+
+        self.assertEqual(hits["cubeSize"], 4)
+        # Compared above the low byte, so four means 1024 world units.
+        self.assertEqual(hits["cubeUnit"], 0x100)
+        self.assertEqual(hits["sound"], 0x10)
+        self.assertEqual(hits["targetSlots"], [15, 0])
+        self.assertTrue(hits["clearsAttackState"])
+        self.assertTrue(hits["removesTarget"])
+        self.assertTrue(hits["surfaceTargetsOnly"])
+
+    def test_rejects_a_commit_that_does_not_check_the_player_cell(self) -> None:
+        builder = Builder()
+        builder.ram[0x87A5] = 0xF5
+
+        with self.assertRaisesRegex(LabError, "struck cell to be the player's own"):
+            decode_endgame(builder.build())
+
+    def test_rejects_a_cell_formed_from_the_wrong_axis(self) -> None:
+        builder = Builder()
+        builder.ram[0x874C] = 0x40
+
+        with self.assertRaisesRegex(LabError, "depth axis into the high nibble"):
+            decode_endgame(builder.build())
+
+    def test_rejects_an_object_hit_that_leaves_the_attack_running(self) -> None:
+        builder = Builder()
+        builder.ram[0x8851] = 0xF9
+
+        with self.assertRaisesRegex(LabError, "does not clear attackingShip"):
+            decode_endgame(builder.build())
 
     def test_decodes_the_speed_a_shot_leaves_with(self) -> None:
         fire = decode_endgame(Builder().build())["combat"]["fire"]
@@ -497,7 +560,7 @@ class DecodeTests(unittest.TestCase):
     def test_reports_a_version_and_bounded_counts(self) -> None:
         document = decode_endgame(Builder().build())
 
-        self.assertEqual(ENDGAME_SCHEMA_VERSION, 6)
+        self.assertEqual(ENDGAME_SCHEMA_VERSION, 8)
         self.assertEqual(document["schemaVersion"], ENDGAME_SCHEMA_VERSION)
         self.assertEqual(
             document["counts"],
