@@ -1,1 +1,1 @@
-"""Cross-title typography extraction for ignored Data Payload artifacts."""
+"""Cross-title typography extraction into the Data Payload."""

@@ -6,8 +6,8 @@ The macOS application is the reference implementation until the browser reaches 
 opening loop, and the deterministic traces it emits are what the canonical TypeScript
 implementation must reproduce to be believed (ADR 0019). This document is the contract
 those traces are written against. It is what the browser's replay harness is written
-from, and it cannot live in `/traces/`, because that directory is derived from the Data
-Payload and is never tracked.
+from, and it does not live in `/traces/`: that directory holds recordings the Oracle emits,
+while this is a hand-written contract they are written against.
 
 A trace pins behaviour that has been signed off, not behaviour under construction. The
 set of scenarios is therefore itself a record: `trace-scenarios.json` at the repository

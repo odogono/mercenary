@@ -139,7 +139,7 @@ def export_typefaces(
     damocles_run_b: Path,
     payload: Path,
 ) -> dict[str, str]:
-    """Validate all evidence, build both faces, then replace the ignored outputs."""
+    """Validate all evidence, build both faces, then replace the payload outputs."""
     require(
         payload.resolve() == DATA_PAYLOAD_ROOT.resolve(),
         f"Typography output must be the repository Data Payload: {DATA_PAYLOAD_ROOT}",

@@ -6,5 +6,5 @@ Reference Disassembly. One file per subsystem, appended to as milestones pull
 new decodes (ADR 0014).
 
 Addresses and structural findings belong here. Actual game bytes do not — data
-extracted from the Reference Build goes to the gitignored `/payload/` via the
+extracted from the Reference Build goes to `/payload/` via the
 `lab` tooling, never into Git.

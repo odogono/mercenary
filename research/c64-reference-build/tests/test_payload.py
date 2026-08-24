@@ -274,11 +274,11 @@ class PayloadOutputGuardTests(unittest.TestCase):
         with self.assertRaisesRegex(LabError, "re-extract"):
             require_current_geometry_decoder({"decoderVersion": 1})
 
-    def test_refuses_to_write_outside_ignored_storage(self) -> None:
+    def test_refuses_to_write_outside_payload_or_laboratory_storage(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             dataset = Path(directory) / "dataset"
             dataset.mkdir()
-            with self.assertRaisesRegex(LabError, "must remain under ignored"):
+            with self.assertRaisesRegex(LabError, "must remain under payload/"):
                 export_payload(dataset, Path(directory) / "tracked-output")
 
     def test_accepts_a_destination_under_work_storage(self) -> None:
@@ -287,7 +287,7 @@ class PayloadOutputGuardTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=LAB_ROOT / "work") as directory:
             with self.assertRaises(LabError) as caught:
                 export_payload(Path(directory) / "absent-dataset", Path(directory) / "payload")
-            self.assertNotIn("must remain under ignored", str(caught.exception))
+            self.assertNotIn("must remain under payload/", str(caught.exception))
 
 
 class RoomsTests(unittest.TestCase):

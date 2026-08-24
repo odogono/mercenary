@@ -19,12 +19,15 @@ not bundling: import specifiers keep their `.ts` extensions and each module is f
 disk in turn, so there is still nothing here that produces a deployable bundle — the thing
 ADR 0019 gitignores and ADR 0004 gates.
 
-The tests and page both read the gitignored `/payload/` from the repository root. Replay Gates
-also read the gitignored `/traces/`, while the live page reads the tracked `/settings.json` and
-advances its own Gameplay Session. The payload and traces are derived from the Reference Build
-and never tracked. If they are missing, use a temporary worktree to run the frozen Trace
-Oracle. `MERCENARY_PAYLOAD` points it at this checkout's canonical payload, so the ignored
-traces are regenerated in this checkout's `/traces/` directory beside that payload:
+The tests and page both read `/payload/` from the repository root; Replay Gates also read
+`/traces/`, while the live page reads `/settings.json` and advances its own Gameplay Session. All
+three are tracked (ADR 0029), so a fresh checkout or worktree runs the gates as it stands — there
+is nothing to populate first.
+
+Re-recording a Golden Trace is the exception, and it still needs the frozen Trace Oracle out of a
+temporary worktree. `MERCENARY_PAYLOAD` points the Oracle at this checkout's canonical payload,
+so the traces are rewritten in this checkout's `/traces/` directory beside that payload, where
+the diff is reviewed as a deliberate re-recording:
 
 ```sh
 repository_root="$(git rev-parse --show-toplevel)"

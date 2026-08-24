@@ -63,7 +63,7 @@ Secondary sources for the Damocles column: the [Damocles Wikipedia article](http
 
 The **method**, not today's live Targ types:
 
-- One multi-title Independent Implementation, own extractors, gitignored Data Payload (ADR 0021, ADR 0002)
+- One multi-title Independent Implementation, own extractors, one Data Payload (ADR 0021, ADR 0002)
 - Host Callout pattern, Gameplay Session as authority, Trace Oracle discipline
 - Device-independent Semantic Actions
 - Damocles Script interpreter **only after** a fuller ISA / Host Callout census — existence Confirmed in `#85`; full semantics still Fog

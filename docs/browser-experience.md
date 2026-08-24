@@ -27,7 +27,7 @@ Damocles condensed panel-label face (CSS approximation in v1), or advance Damocl
 ## Technology and commands
 
 - Mockup: `bun run prototypes/browser-experience/serve.ts` → `http://localhost:4180/`
-  (server exists only because `file://` blocks `@font-face`; fonts come from the ignored
+  (server exists only because `file://` blocks `@font-face`; fonts are served from
   `payload/fonts/`, nothing copied into the prototype).
 - Production shell: plain TypeScript ES modules under `web/src/shell/`, no framework.
 - Browser verification, from `web/`:

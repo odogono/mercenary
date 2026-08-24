@@ -6,13 +6,13 @@ import { load } from '../../src/payload/load.ts';
 import type { Trace, TraceObject } from '../../src/trace/index.ts';
 import { describeDifference, firstDifference } from './compare.ts';
 
-/// Finding the two things a Replay Gate needs, neither of which is in Git.
+/// Finding the two things a Replay Gate needs.
 ///
 /// The Data Payload and the Golden Traces are both derived from the Reference Build and both
-/// gitignored (ADR 0019). They live at the repository root, which is found by walking up from
-/// this file exactly as `PayloadLocator` and `TraceScenarioLocator` walk up from the working
-/// directory — same rule, because two discovery rules for files sitting beside each other
-/// would be a trap.
+/// tracked (ADR 0029), so a gate finds them in any checkout. They live at the repository root,
+/// which is found by walking up from this file exactly as `PayloadLocator` and
+/// `TraceScenarioLocator` walk up from the working directory — same rule, because two discovery
+/// rules for files sitting beside each other would be a trap.
 ///
 /// A missing artifact **throws**. It does not skip. A module without a passing replay is not
 /// ported, and a gate that quietly passes when its evidence is absent is worse than no gate:
@@ -52,7 +52,8 @@ export const tracesDirectory = (): string => join(repositoryRoot, 'traces');
 const EMIT_HINT =
   'regenerate it with --emit-traces from the frozen trace-oracle-last-good tag; ' +
   'see web/README.md\n' +
-  '(Golden Traces are derived from the Data Payload and are never tracked — ADR 0019)';
+  '(Golden Traces are tracked at the repository root, so an absent one means an ' +
+  'incomplete checkout rather than work to be done — ADR 0029)';
 
 /// One Golden Trace's bytes, or a failure that says what to run.
 export const readTraceText = async (
@@ -74,7 +75,8 @@ export const readPayloadFile = async (name: string): Promise<string> => {
   if (!(await file.exists())) {
     throw new Error(
       `no ${name} in ${payloadDirectory()}\n` +
-        'export it with: cd lab && ... payload export  (the Data Payload is never tracked)'
+        'the Data Payload is tracked, so restore it with Git; ' +
+        'a re-export is: cd lab && ... payload export'
     );
   }
   return await file.text();

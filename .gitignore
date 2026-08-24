@@ -1,13 +1,13 @@
+# The Data Payload in /payload/ and the Golden Traces in /traces/ are tracked, on
+# purpose: this repository is permanently private and a public release is built in a
+# separate repository rather than exported from this history (ADR 0029).
+
 # Supplied reference media remain research inputs, not repository content. The one
 # tracked documentation exception is research/reference-disassembly (ADR 0017).
 /roms
 
 # Other Restricted Material that does not belong to a specific research harness.
 /restricted/
-
-# The Data Payload: game data re-extracted from the Reference Build, loaded by
-# the app at runtime. Never tracked (ADR 0014).
-/payload/
 
 # Generated C64 laboratory artifacts may contain ROM-derived data.
 /research/c64-reference-build/work/
@@ -23,10 +23,6 @@ __pycache__/
 
 # Throwaway native-prototype build products.
 /prototypes/macos-experience/.build/
-
-# Golden traces emitted by the Trace Oracle. Derived from the Data Payload and
-# therefore never tracked (ADR 0019).
-/traces/
 
 # Web build products. A bundled browser build embeds payload-derived data
 # (ADR 0019).
