@@ -1034,9 +1034,17 @@ shape in the Reference Build and browser.
 - Retail-media corroboration remains UNC-0008; this dossier is authoritative only
   for the configured provisional crack.
 - The two Escape routes and all post-Ending input behaviors are structurally
-  decoded, not yet proven by tracked uninterrupted scenarios.
-- Legal acquisition has not yet been demonstrated for every craft whose ceiling
-  can satisfy the Colony Craft box.
+  decoded. M7.4 (#133) proves both routes and every refusal by legal play in the
+  browser, and the Colony Craft box by legal play for slots 0 and the Poweramp
+  Dart, so what is still missing is the Reference Build side: no tracked
+  uninterrupted emulator scenario reaches the Ending, and the post-Ending input
+  behaviors still need live observation rather than modelling.
+- Legal acquisition for the Colony Craft box is settled from the decoded
+  placements and the indoor arm's room bound: slot 0 and the Poweramp Dart are
+  acquirable, and slots 3 and 6 are legally unreachable on current evidence
+  because room 7's lift site surfaces off the grid and room 54 is above the
+  arm's bound. Neither is a proof that no other mechanism exists, so both stay
+  recorded rather than closed.
 - The terminal message scroll's exact visual granularity remains the open
   side-by-side question already recorded in `notes/decode/benson-scripts.md`.
 
