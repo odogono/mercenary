@@ -239,6 +239,37 @@ describe('the refusals, each of which resumes', () => {
     expect(scriptRunning(route)).toBeTrue();
   }, 240_000);
 
+  test('the wrong craft refuses at the first test, aboard or on foot', async () => {
+    // Script 7's own first instruction tests the craft, so the refusal does
+    // not need the ship at all: it needs the script asked from anywhere else.
+    for (const aboard of [false, true]) {
+      const route = await LegalRoute.open();
+      route.session.carry(NOVADRIVE);
+      if (aboard) {
+        route.session.board(1);
+      }
+      expect(route.session.start(7)).toBeTrue();
+      expect(refused(route)).toBe(0);
+      expect(route.session.observations().observations['occupancy']).toBe(
+        aboard ? 1 : BensonHostState.onFoot
+      );
+    }
+  }, 240_000);
+
+  test('saying nothing waits at the prompt and dispatches nothing', async () => {
+    const route = await aboardInTheHangar();
+    surfaceAboard(route);
+
+    // Two minutes of play with the key untouched. The script polls rather than
+    // times out, so it neither launches nor gives up.
+    route.advance(120);
+    expect(phase(route)).toBe(0);
+    expect(scriptRunning(route)).toBeTrue();
+
+    // And answering afterwards still works: the wait cost nothing.
+    expect(launch(route)).toBeTrue();
+  }, 240_000);
+
   test('a destroyed advert refuses the launch, and the refusal resumes', async () => {
     const route = await LegalRoute.open();
     route.session.carry(NOVADRIVE);
