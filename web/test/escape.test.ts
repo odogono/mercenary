@@ -200,6 +200,45 @@ describe('the recovered route', () => {
   }, 240_000);
 });
 
+describe('the recovered route, walked from the crash site', () => {
+  // One continuous run: no Room is teleported into, no position is written,
+  // and the lift pad has to be found on foot. What is still handed over is the
+  // Novadrive, because reaching where it lies means a seven-key chain whose
+  // skeleton key is itself fixed until the Sink is carried in from the far
+  // side of the Palyar cluster - a full-game route that belongs with the
+  // economy rather than with this predicate.
+  test('walks to the pad, rides down, boards, rides up, and escapes', async () => {
+    const route = await LegalRoute.open();
+    route.session.carry(NOVADRIVE);
+
+    // Lift site 5 serves the hangar, at cell 3:15. Walking onto its pad is
+    // the whole test of the pad: the ride is refused anywhere else on the cell.
+    route.walkToPoint({ x: 3 * CELL + 0x71_80, z: 15 * CELL + 0x71_80 }, 96);
+    route.run({ command: { kind: 'rideLift' }, kind: 'command' });
+    expect(route.session.observations().observations['room']).toBe(HANGAR_ROOM);
+    route.settle();
+
+    route.run({ action: 'board', kind: 'reach', slot: SHIP }, 120);
+    route.observe('recovered');
+    expect(scriptRunning(route)).toBeTrue();
+
+    surfaceAboard(route);
+    route.observe('surfaced');
+    expect(launch(route)).toBeTrue();
+
+    const recovered = route.observationAt('recovered');
+    expect(recovered['room']).toBe(HANGAR_ROOM);
+    expect(recovered['occupancy']).toBe(SHIP);
+    const surfaced = route.observationAt('surfaced');
+    expect(surfaced['room']).toBe(0);
+    expect(surfaced['occupancy']).toBe(SHIP);
+    expect((surfaced['engineFlags'] as number) & HIRED).toBe(0);
+    // Surfaced at a craft's resting altitude rather than at eye height, which
+    // is what the decoded transition leaves alone.
+    expect(surfaced['playerY']).toBe(63);
+  }, 600_000);
+});
+
 describe('the refusals, each of which resumes', () => {
   test('no authorization: the script asks for the Novadrive and returns to play', async () => {
     const route = await aboardInTheHangar({ novadrive: false });
