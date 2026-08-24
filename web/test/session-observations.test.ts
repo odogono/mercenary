@@ -157,7 +157,7 @@ describe('the semantic observations a Gameplay Session answers with', () => {
     expect(observations['shipInbound']).toBe(0);
     expect(observations['attackingShip']).toBeFalse();
     expect(observations['gameComplete']).toBe(0);
-    expect(observations['orbitalFlag']).toBe(0);
+    expect(observations['colonyCraftFlag']).toBe(0);
     expect(observations['playerX']).toBe(0);
     expect(observations['playerY']).toBe(0);
     expect(observations['playerZ']).toBe(0);

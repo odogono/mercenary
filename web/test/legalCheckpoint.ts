@@ -50,9 +50,6 @@ export interface LegalRun {
 /// find its object as the player walks into range.
 const STEP = 1 / 50;
 
-/// The Rewired Rooms that choose an exit at random rather than by arrival.
-const RANDOM_ROOMS: ReadonlySet<number> = new Set([114]);
-
 export class LegalRoute {
   static async open(options?: {
     readonly script?: number;
@@ -97,6 +94,14 @@ export class LegalRoute {
   }
 
   private readonly checkpoints: LegalCheckpoint[] = [];
+
+  /// Continues a route from a restored Save, so the legs that drove the
+  /// original drive the continuation too. A Save is only evidence of
+  /// deterministic continuation if the restored session is the one that
+  /// carries on.
+  static resume(session: GameplaySession): LegalRoute {
+    return new LegalRoute(session);
+  }
 
   private constructor(readonly session: GameplaySession) {}
 
@@ -250,156 +255,6 @@ export class LegalRoute {
       }
     }
     return doorway.position;
-  }
-
-  /// Walks to a Room, re-planning from what the Rooms actually offer now.
-  ///
-  /// The static payload graph is only a guide underground: a Rewired Room
-  /// chooses its exit on arrival, so the route is recomputed at every hop from
-  /// the Doorways the session is presently willing to show, and a hop that
-  /// will not open is struck off and routed around. Which is how a player
-  /// crosses the maze, rather than how a map does.
-  walkTo(target: number, hops = 120): this {
-    const refused = new Map<string, number>();
-    const keep = this.canReach(target);
-    for (let hop = 0; hop < hops; hop++) {
-      const here = this.session.location;
-      if (here.kind !== 'room') {
-        throw new Error('walkTo travels between Rooms');
-      }
-      if (here.id === target) {
-        return this;
-      }
-      const next =
-        this.nextHop(here.id, target, refused, keep) ??
-        // The Room whose exit is drawn at random can hand the player out
-        // somewhere the target cannot be reached from at all. A player would
-        // walk back out of it, so this does too, rather than giving up where
-        // the map ran out.
-        this.exitsOf(here.id, true).find(
-          room => (refused.get(`${here.id}->${room}`) ?? 0) < 2
-        );
-      if (next === undefined) {
-        throw new Error(`no route from Room ${here.id} to Room ${target}`);
-      }
-      try {
-        this.walkThroughTo(next, 90);
-        this.settle();
-      } catch {
-        // A Doorway that would not open on one approach is worth a second try
-        // before it is written off: the walk beelines, and a beeline can be
-        // held up by the corner of a wall it started behind.
-        const edge = `${here.id}->${next}`;
-        refused.set(edge, (refused.get(edge) ?? 0) + 1);
-      }
-    }
-    throw new Error(`Room ${target} was still not reached after ${hops} hops`);
-  }
-
-  /// The Rooms a Room can lead to, as planning must model them.
-  ///
-  /// A Rewired Room replaces its *first* Doorway on arrival, so the recorded
-  /// destination of that Doorway is not an exit at all while its alternates
-  /// are. The Room the player is standing in needs none of this: the session
-  /// will say what it is presently offering.
-  private exitsOf(id: number, live: boolean): number[] {
-    const here = this.session.content.rooms.get(id);
-    if (here === undefined) {
-      return [];
-    }
-    const asRoom = (destination: Doorway['destination']): number | undefined =>
-      'room' in destination ? destination.room : undefined;
-    if (live) {
-      return this.session
-        .doorwaysOf(here)
-        .map(doorway => asRoom(doorway.destination))
-        .filter((room): room is number => room !== undefined);
-    }
-    const rewired = here.specialSetup !== undefined;
-    const fixed = here.doorways
-      .slice(rewired ? 1 : 0)
-      .map(doorway => asRoom(doorway.destination));
-    const alternates = (here.specialSetup?.alternates ?? []).map(alternate =>
-      asRoom(alternate.destination)
-    );
-    return [...fixed, ...alternates].filter(
-      (room): room is number => room !== undefined
-    );
-  }
-
-  /// Every Room the target can still be reached from, over the recorded graph.
-  ///
-  /// Room Links are directed, so a wrong turn can land somewhere the target is
-  /// no longer reachable from at all. Routing refuses to step outside this set
-  /// rather than discovering that by being stuck in it.
-  private canReach(target: number): ReadonlySet<number> {
-    const inbound = new Map<number, number[]>();
-    for (const id of this.session.content.rooms.keys()) {
-      for (const to of this.exitsOf(id, false)) {
-        inbound.set(to, [...(inbound.get(to) ?? []), id]);
-      }
-    }
-    const seen = new Set([target]);
-    const queue = [target];
-    while (queue.length > 0) {
-      for (const from of inbound.get(queue.shift()!) ?? []) {
-        if (!seen.has(from)) {
-          seen.add(from);
-          queue.push(from);
-        }
-      }
-    }
-    return seen;
-  }
-
-  /// The first hop of a shortest route, over the live Doorways of the Room the
-  /// player is in and the recorded ones everywhere else.
-  private nextHop(
-    from: number,
-    target: number,
-    refused: ReadonlyMap<string, number>,
-    keep: ReadonlySet<number>
-  ): number | undefined {
-    const exits = (id: number, avoid: ReadonlySet<number>): number[] =>
-      this.exitsOf(id, id === from).filter(
-        room =>
-          keep.has(room) &&
-          !avoid.has(room) &&
-          (refused.get(`${id}->${room}`) ?? 0) < 2
-      );
-    // The one Room whose exit is drawn at random is planned around while any
-    // other route exists, because a plan through it is a guess.
-    for (const avoid of [RANDOM_ROOMS, new Set<number>()]) {
-      const parent = new Map<number, number>();
-      const seen = new Set([from]);
-      const queue = [from];
-      while (queue.length > 0) {
-        const id = queue.shift()!;
-        if (id === target) {
-          break;
-        }
-        for (const next of exits(id, avoid)) {
-          if (!seen.has(next)) {
-            seen.add(next);
-            parent.set(next, id);
-            queue.push(next);
-          }
-        }
-      }
-      if (!seen.has(target)) {
-        continue;
-      }
-      let step = target;
-      while (parent.get(step) !== from) {
-        const previous = parent.get(step);
-        if (previous === undefined) {
-          return undefined;
-        }
-        step = previous;
-      }
-      return step;
-    }
-    return undefined;
   }
 
   /// Walks to a point on the surface, steering rather than being placed.

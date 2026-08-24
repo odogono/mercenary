@@ -41,56 +41,64 @@ export const REFERENCE_WALKING_EYE_ALTITUDE = 128;
 /// The altitude byte the tumble handler subtracts its drop from.
 const ALTITUDE_MIDDLE_BYTE = 0x1_00;
 
-/// The one write the Interstellar Ship's phase-0 handler makes: `$AA6E`
-/// stores this into the pitch high byte and returns. Mirrored by
-/// `endgame.json`'s `endingPresentation.slot7PitchHighByte`, which the
-/// payload export guards against the image; the mover tests tie the two.
-export const SLOT7_PITCH_HIGH_BYTE = 0x01;
-
-/// The attitude that write pins, in radians: raw pitch `$0100` against the
-/// decoded level of `rules.levelPitch`, a quarter turn nose-up.
-export const slot7Pitch = (rules: FlightRules): number =>
+/// The attitude the Interstellar Ship's phase-0 handler pins, in radians:
+/// `$AA6E`'s stored pitch high byte against the decoded level of
+/// `rules.levelPitch`, which for the exported byte is a quarter turn nose-up.
+///
+/// The byte itself is not written here. It lives in the endgame Data Payload
+/// as `endingPresentation.slot7PitchHighByte`, guarded against the image by
+/// the payload export, because a native constant duplicated into TypeScript
+/// stops being evidence of anything (#110).
+export const slot7Pitch = (rules: FlightRules, pitchHighByte: number): number =>
   wrapPitch(
-    ((rules.levelPitch - (SLOT7_PITCH_HIGH_BYTE << 8)) /
-      rules.angleUnitsPerTurn) *
-      TURN
+    ((rules.levelPitch - (pitchHighByte << 8)) / rules.angleUnitsPerTurn) * TURN
   );
 
 /// The `$A13D` box and its decoded entry/exit effects, as the endgame Data
-/// Payload carries them. Passed into `step` by the session; a caller without
-/// endgame content — a mover trace, say — simply has no Colony Craft.
-export type OrbitalRules = EndgameDocument['orbitalTransition'];
+/// Payload carries them.
+export type ColonyCraftRules = EndgameDocument['orbitalTransition'];
+
+/// The decoded endgame rules the control loop itself reads. Passed into `step`
+/// by the session; a caller without endgame content — a mover trace, say —
+/// simply has neither, and neither handler can then write a byte it was never
+/// given.
+export interface EndgameRules {
+  readonly colonyCraft: ColonyCraftRules;
+  /// `$AA6E`'s immediate: what the Interstellar Ship's phase-0 arm stores into
+  /// the pitch high byte before returning.
+  readonly slot7PitchHighByte: number;
+}
 
 /// The pure box predicate at `$A13D`: the Colony Craft's cell, a sixteen-
 /// middle-byte square within it, and an altitude middle byte high enough that
 /// it can only be reached by climbing.
-export const withinOrbitalBox = (
-  orbital: OrbitalRules,
+export const withinColonyCraftBox = (
+  colonyCraft: ColonyCraftRules,
   position: Vector3
 ): boolean => {
   const x = Math.trunc(position.x);
   const y = Math.trunc(position.y);
   const z = Math.trunc(position.z);
-  const lower = orbital.axisMiddleByteWindow[0] ?? 0;
-  const upper = orbital.axisMiddleByteWindow[1] ?? 0;
+  const lower = colonyCraft.axisMiddleByteWindow[0] ?? 0;
+  const upper = colonyCraft.axisMiddleByteWindow[1] ?? 0;
   return (
-    ((x >>> 16) & 0xff) === (orbital.cell[0] ?? -1) &&
-    ((z >>> 16) & 0xff) === (orbital.cell[1] ?? -1) &&
+    ((x >>> 16) & 0xff) === (colonyCraft.cell[0] ?? -1) &&
+    ((z >>> 16) & 0xff) === (colonyCraft.cell[1] ?? -1) &&
     ((x >>> 8) & 0xff) >= lower &&
     ((x >>> 8) & 0xff) < upper &&
     ((z >>> 8) & 0xff) >= lower &&
     ((z >>> 8) & 0xff) < upper &&
-    ((y >>> 8) & 0xff) >= orbital.minimumAltitudeByte
+    ((y >>> 8) & 0xff) >= colonyCraft.minimumAltitudeByte
   );
 };
 
 /// Where a craft grounded on the Colony Craft deck rests: the entry's high
 /// byte kept, the wrapped middle byte, and the same low byte every touchdown
 /// rests at.
-const deckRestAltitude = (orbital: OrbitalRules): number =>
-  (orbital.entry.altitudeHighByte << 16) |
-  (orbital.entry.wrappedAltitudeMiddleByte << 8) |
-  orbital.entry.restAltitudeLowByte;
+const deckRestAltitude = (colonyCraft: ColonyCraftRules): number =>
+  (colonyCraft.entry.altitudeHighByte << 16) |
+  (colonyCraft.entry.wrappedAltitudeMiddleByte << 8) |
+  colonyCraft.entry.restAltitudeLowByte;
 
 /// Where the Reference Build's opening leaves the player: the captured crash position, at the
 /// captured eye height.
@@ -259,6 +267,12 @@ export const playerState = (fields: {
 });
 
 export interface GameState {
+  /// The special transition flag the Reference Build keeps at `$FA`: `$FF`
+  /// while the player is on the Colony Craft, zero otherwise. Set by flying
+  /// into the `$A13D` box; cleared by every other flying frame, by lift rides,
+  /// and by the tumble that ends a walk off the deck edge
+  /// (`notes/decode/endgame.md`, "Colony Craft and `$A13D`").
+  readonly colonyCraftFlag: number;
   /// The boarded craft's slot, or absent on foot. Selects the Craft Parameter Block.
   readonly craft: number | undefined;
   readonly elapsed: number;
@@ -267,12 +281,6 @@ export interface GameState {
   /// Reference Build does by copying that block's bytes into the live one. Only
   /// the crash tumble installs one, and reaching the ground clears it.
   readonly mover: number | undefined;
-  /// The special transition flag the Reference Build keeps at `$FA`: `$FF`
-  /// while the player is on the Colony Craft, zero otherwise. Set by flying
-  /// into the `$A13D` box; cleared by every other flying frame, by lift rides,
-  /// and by the tumble that ends a walk off the deck edge
-  /// (`notes/decode/endgame.md`, "Colony Craft and `$A13D`").
-  readonly orbitalFlag: number;
   readonly player: PlayerState;
   /// Whether a poweramp is fitted, which the Reference Build reads for one craft.
   readonly poweramp: boolean;
@@ -314,22 +322,22 @@ export interface GameState {
 }
 
 export const gameState = (fields: {
+  readonly colonyCraftFlag?: number;
   readonly craft?: number;
   readonly elapsed?: number;
   readonly mode?: FlightMode;
   readonly mover?: number;
-  readonly orbitalFlag?: number;
   readonly player: PlayerState;
   readonly poweramp?: boolean;
   readonly room?: number;
   readonly throttle?: number;
   readonly touchdown?: Touchdown;
 }): GameState => ({
+  colonyCraftFlag: fields.colonyCraftFlag ?? 0,
   craft: fields.craft,
   elapsed: fields.elapsed ?? 0,
   mode: fields.mode ?? 'grounded',
   mover: fields.mover,
-  orbitalFlag: fields.orbitalFlag ?? 0,
   player: fields.player,
   poweramp: fields.poweramp ?? false,
   room: fields.room,
@@ -511,10 +519,23 @@ export const board = (
 export const leave = (state: GameState, flight: FlightModel): GameState =>
   settleOnGround(
     { ...state, craft: undefined },
-    state.orbitalFlag !== 0 ? state.player.position.y : flight.groundAltitude
+    state.colonyCraftFlag !== 0
+      ? state.player.position.y
+      : flight.groundAltitude
   );
 
+/// The room id whose indoor lift ride leaves the special transition flag set.
+///
+/// `$B455-$B462` loads X with zero, compares the room id against an immediate
+/// `$08`, and stores X into `$FA`: rooms below 8 leave X at zero, room 8
+/// exactly decrements X to `$FF`, and rooms above 8 never reach the arm. So
+/// this is the one indoor ride that surfaces onto the Colony Craft's own cell
+/// with the flag still set.
+export const COLONY_CRAFT_LIFT_ROOM = 8;
+
 /// Take the lift down into a room. Puts the player where the ride would have left them.
+///
+/// The downward ride clears the special transition flag (`$A2F7`).
 export const enter = (
   state: GameState,
   entrance: UndergroundEntrance,
@@ -524,6 +545,7 @@ export const enter = (
   const middle = lift.submergeMiddle << 8;
   return {
     ...state,
+    colonyCraftFlag: 0,
     craft: undefined,
     mode: 'grounded',
     player: {
@@ -546,17 +568,25 @@ export const enter = (
 /// both the altitude and the boarded-craft byte alone. That is what lets
 /// recovered craft 7 surface still occupied and still at a craft's resting
 /// altitude rather than at the walking eye height.
+///
+/// The same arm writes the special transition flag, so the value it writes is
+/// decided here rather than by the caller: see `COLONY_CRAFT_LIFT_ROOM`.
 export const surface = (
   state: GameState,
   entrance: UndergroundEntrance,
   lift: UndergroundLift,
-  cellSize: number
+  cellSize: number,
+  colonyCraft: ColonyCraftRules | undefined
 ): GameState => {
   const middle = lift.surfaceMiddle << 8;
   const column = entrance.cell[0] ?? 0;
   const row = entrance.cell.length === 2 ? entrance.cell[1]! : 0;
   return {
     ...state,
+    colonyCraftFlag:
+      entrance.room === COLONY_CRAFT_LIFT_ROOM
+        ? (colonyCraft?.entry.flagValue ?? 0)
+        : 0,
     mode: 'grounded',
     player: {
       ...state.player,
@@ -593,7 +623,7 @@ const transition = (
   state: GameState,
   descentRate: number,
   flight: FlightModel,
-  orbital?: OrbitalRules
+  colonyCraft?: ColonyCraftRules
 ): GameState => {
   const rules = flight.rules;
   const band = rules.groundBand;
@@ -602,8 +632,8 @@ const transition = (
   // take-off boundary is the deck's own rest altitude — the low byte passing
   // `$3F` — rather than the surface band.
   const takeoffAbove =
-    state.orbitalFlag !== 0 && orbital !== undefined
-      ? deckRestAltitude(orbital) + 1
+    state.colonyCraftFlag !== 0 && colonyCraft !== undefined
+      ? deckRestAltitude(colonyCraft) + 1
       : band;
   if (state.mode === 'grounded' && player.position.y >= takeoffAbove) {
     return { ...state, mode: 'flying' };
@@ -635,7 +665,7 @@ const walk = (
   intent: Intent,
   dt: number,
   flight: FlightModel,
-  orbital: OrbitalRules | undefined,
+  colonyCraft: ColonyCraftRules | undefined,
   containment: Containment | undefined
 ): GameState => {
   const player = state.player;
@@ -662,7 +692,7 @@ const walk = (
   const stepped: Vector3 = {
     x: player.position.x + sin(heading) * advance,
     y:
-      state.craft !== undefined || state.orbitalFlag !== 0
+      state.craft !== undefined || state.colonyCraftFlag !== 0
         ? player.position.y
         : flight.groundAltitude,
     z: player.position.z + cos(heading) * advance
@@ -715,13 +745,13 @@ const walk = (
   // installs mover 9 — the crash tumble. Walking off the Colony Craft's deck
   // edge is a fall back to Targ.
   if (
-    orbital !== undefined &&
-    state.orbitalFlag !== 0 &&
+    colonyCraft !== undefined &&
+    state.colonyCraftFlag !== 0 &&
     state.craft === undefined &&
     state.room === undefined &&
-    !withinOrbitalBox(orbital, position)
+    !withinColonyCraftBox(colonyCraft, position)
   ) {
-    return { ...walked, mode: 'flying', mover: orbital.exitMover };
+    return { ...walked, mode: 'flying', mover: colonyCraft.exitMover };
   }
   return walked;
 };
@@ -770,7 +800,7 @@ const tumble = (
   // underflow is also what clears the special transition flag (`$9ED0`),
   // which is why a walker who fell off the Colony Craft does not fall again.
   return transition(
-    { ...spun, mover: undefined, orbitalFlag: 0 },
+    { ...spun, colonyCraftFlag: 0, mover: undefined },
     fall / Math.max(frames, 1),
     flight
   );
@@ -782,8 +812,9 @@ const integrate = (
   dt: number,
   flight: FlightModel,
   containment: Containment | undefined,
-  orbital: OrbitalRules | undefined
+  endgame: EndgameRules | undefined
 ): GameState => {
+  const colonyCraft = endgame?.colonyCraft;
   // The transition counts down in the frame loop rather than in either mover, so it runs whether
   // the player is walking, flying or standing still.
   const counted: GameState = {
@@ -802,7 +833,7 @@ const integrate = (
     (counted.mover ?? counted.craft) === undefined ||
     counted.room !== undefined
   ) {
-    return walk(counted, intent, dt, flight, orbital, containment);
+    return walk(counted, intent, dt, flight, colonyCraft, containment);
   }
 
   const player = counted.player;
@@ -817,10 +848,19 @@ const integrate = (
     // (`$AA6E-$AA72`): no yaw, throttle, translation or altitude step runs,
     // so slot 7 cannot be flown. The handler's nonzero-gameComplete arm is
     // the terminal renderer, which is presentation rather than a Mover.
+    //
+    // Without endgame content there is no decoded byte to write, and the
+    // handler writes nothing rather than inventing one.
     return {
       ...counted,
       elapsed: counted.elapsed + dt,
-      player: { ...player, pitch: slot7Pitch(flight.rules) }
+      player:
+        endgame === undefined
+          ? player
+          : {
+              ...player,
+              pitch: slot7Pitch(flight.rules, endgame.slot7PitchHighByte)
+            }
     };
   }
   const rules = flight.rules;
@@ -871,9 +911,9 @@ const integrate = (
   // off the deck, though it can taxi past the box edge and take off there.
   const deckPinned =
     counted.mode === 'grounded' &&
-    counted.orbitalFlag !== 0 &&
-    orbital !== undefined &&
-    withinOrbitalBox(orbital, player.position);
+    counted.colonyCraftFlag !== 0 &&
+    colonyCraft !== undefined &&
+    withinColonyCraftBox(colonyCraft, player.position);
   let pitch = player.pitch;
   if (!mayLeaveTheGround || deckPinned) {
     // Below the take-off run the loop pins pitch level, as it does on foot.
@@ -931,17 +971,17 @@ const integrate = (
   // the special transition flag set. The landing arm is `transition` below.
   // Every other flying frame clears the flag, which is why it cannot survive
   // ordinary flight.
-  if (orbital !== undefined && counted.mode === 'flying') {
+  if (colonyCraft !== undefined && counted.mode === 'flying') {
     const position = moved.player.position;
     const yHigh = (Math.trunc(position.y) >>> 16) & 0xff;
     if (
-      yHigh === orbital.entry.altitudeHighByte &&
-      withinOrbitalBox(orbital, position)
+      yHigh === colonyCraft.entry.altitudeHighByte &&
+      withinColonyCraftBox(colonyCraft, position)
     ) {
       return {
         ...moved,
+        colonyCraftFlag: colonyCraft.entry.flagValue,
         mode: 'grounded',
-        orbitalFlag: orbital.entry.flagValue,
         player: {
           ...moved.player,
           // The grounding tail forces pitch back to level when it is past it,
@@ -950,19 +990,19 @@ const integrate = (
             rawPitch(moved.player.pitch, rules) > rules.levelPitch
               ? 0
               : moved.player.pitch,
-          position: { ...position, y: deckRestAltitude(orbital) },
+          position: { ...position, y: deckRestAltitude(colonyCraft) },
           roll: 0
         },
         touchdown: 'landed'
       };
     }
-    if (position.y >= rules.groundBand && moved.orbitalFlag !== 0) {
-      moved = { ...moved, orbitalFlag: 0 };
+    if (position.y >= rules.groundBand && moved.colonyCraftFlag !== 0) {
+      moved = { ...moved, colonyCraftFlag: 0 };
     }
   }
   // The verdict on a touchdown is about how fast the craft was going down, so the rate is what
   // crosses the boundary rather than the step it came from.
-  return transition(moved, Math.abs(climb) / frames, flight, orbital);
+  return transition(moved, Math.abs(climb) / frames, flight, colonyCraft);
 };
 
 /// Advance the world by `dt`.
@@ -979,7 +1019,7 @@ export const step = (
   dt: number,
   flight: FlightModel,
   containment?: Containment,
-  orbital?: OrbitalRules
+  endgame?: EndgameRules
 ): GameState => {
   if (!Number.isFinite(dt) || dt <= 0) {
     return state;
@@ -989,7 +1029,7 @@ export const step = (
   let remaining = dt;
   while (remaining > 0) {
     const slice = Math.min(remaining, MAXIMUM_STEP);
-    result = integrate(result, intent, slice, flight, containment, orbital);
+    result = integrate(result, intent, slice, flight, containment, endgame);
     remaining -= slice;
   }
   return result;

@@ -415,7 +415,7 @@
         "craft-7-slot7"
       ],
       "on": "2026-08-24",
-      "reason": "Retired in #133. The Trace Oracle flew craft slot 7 through the standard control loop, integrating 47 frames of pitch input to altitude 8330 and landing it. The Reference Build's slot-7 handler at $AA62 does no such thing: at gameComplete 0 it writes $01 into the pitch high byte and returns, so the Interstellar Ship sits pinned a quarter turn nose-up and cannot be flown at all. The oracle is frozen and cannot re-emit this, so it is retired rather than re-recorded: Authoritative Evidence outranks it where the two disagree. The pinned handler is covered by web/test/game-core.test.ts and the Escape route tests in web/test/escape.test.ts.",
+      "reason": "Retired in #133. The Trace Oracle flew craft slot 7 through the standard control loop, integrating 47 frames of pitch input to altitude 8330 and landing it. The Reference Build's slot-7 handler at $AA62 does no such thing: at gameComplete 0 it writes $01 into the pitch high byte and returns, so the Interstellar Ship sits pinned a quarter turn nose-up and cannot be flown at all. The oracle is frozen and cannot re-emit this, so it is retired rather than re-recorded: Authoritative Evidence outranks it where the two disagree. The pinned handler is covered by web/test/mover.test.ts, which pins the attitude and proves it follows the decoded byte, and by the Escape route tests in web/test/escape.test.ts.",
       "evidence": "notes/decode/endgame.md, section \"Ending phases and post-Ending behavior\""
     },
     {

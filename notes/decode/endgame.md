@@ -306,7 +306,7 @@ observation map itself is untracked, so the tracked contract is this id list:
 | `mover` | integer | the mover installed over the craft's own, `-1` when none |
 | `effectLifecycle8` | integer | frames left on the player's shot, `0` when idle |
 | `effectLifecycle14` | integer | frames left on the hostile shot, `0` when idle |
-| `orbitalFlag` | integer | the special transition flag: `$FF` on the Colony Craft, `0` otherwise |
+| `colonyCraftFlag` | integer | the special transition flag: `$FF` on the Colony Craft, `0` otherwise |
 | `playerX` | integer | the player's full X coordinate, three bytes little-endian |
 | `playerY` | integer | the player's full altitude, three bytes little-endian |
 | `playerZ` | integer | the player's full Z coordinate, three bytes little-endian |
@@ -328,13 +328,13 @@ tracked with the rest of the contract:
 | `mover` | ram | `$00A9` | integer, width 1 |
 | `effectLifecycle8` | ram | `$BDAB` | integer, width 1 |
 | `effectLifecycle14` | ram | `$BDB1` | integer, width 1 |
-| `orbitalFlag` | ram | `$00FA` | integer, width 1 |
+| `colonyCraftFlag` | ram | `$00FA` | integer, width 1 |
 | `playerX` | ram | `$0072` | integer, width 3, little-endian |
 | `playerY` | ram | `$0075` | integer, width 3, little-endian |
 | `playerZ` | ram | `$0078` | integer, width 3, little-endian |
 
 The two lifecycle addresses are the player-shot and hostile-shot entries of the
-effect table based at `$BDA3`. The four M7.4 rows are the orbital additions the
+effect table based at `$BDA3`. The four M7.4 rows are the Colony Craft additions the
 required-scenarios table asks for: `$FA` plus the full player coordinates. The
 browser answers the coordinates truncated to integers, which is the spelling
 the emulator's three-byte fields hold. Adding rows changes the map's data, not
@@ -796,6 +796,10 @@ carry a Doorway into it — so the underground connects to the Colony Craft by
 lift as well as by the room-171 Doorway. Sites 6 and 7 still read `$51:$23`
 and `$88:$88`, off the sixteen-cell grid. The outside-to-inside lift ride also
 clears `$FA`, at `$A2F7`.
+
+The browser models the arm as the arm is written, keyed on the room that rode
+up rather than on a value the caller chose, so the room-8 case is right whether
+or not a room-8 entrance is reified in the payload today.
 
 One quirk of the occupancy-preserving arm is recorded but not yet modelled:
 `MOVE`'s on-foot path at `$A192` skips the turn keys whenever `$A9` is
