@@ -965,8 +965,7 @@ export class GameplaySession {
         this.game,
         entrance,
         underground.lift,
-        this.content.cellSize,
-        flight
+        this.content.cellSize
       );
     } else {
       const column = Math.trunc(

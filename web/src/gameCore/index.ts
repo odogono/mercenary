@@ -498,12 +498,17 @@ export const enter = (
 };
 
 /// Take the lift back up, onto the surface cell it serves.
+///
+/// The decoded transition (`$A28E-$A2BA`) writes the horizontal pair only —
+/// lows zeroed, middles at the pad, highs from the site tables — and leaves
+/// both the altitude and the boarded-craft byte alone. That is what lets
+/// recovered craft 7 surface still occupied and still at a craft's resting
+/// altitude rather than at the walking eye height.
 export const surface = (
   state: GameState,
   entrance: UndergroundEntrance,
   lift: UndergroundLift,
-  cellSize: number,
-  flight: FlightModel
+  cellSize: number
 ): GameState => {
   const middle = lift.surfaceMiddle << 8;
   const column = entrance.cell[0] ?? 0;
@@ -516,7 +521,7 @@ export const surface = (
       pitch: state.player.pitch,
       position: {
         x: column * cellSize + middle,
-        y: flight.groundAltitude,
+        y: state.player.position.y,
         z: row * cellSize + middle
       },
       speed: 0,
@@ -599,11 +604,16 @@ const walk = (
     flight.walkStep *
     (intent.running ? flight.limits.runMultiplier : 1) *
     frames;
-  // The altitude is the walking eye height throughout: the routine this comes from has no
-  // vertical term, so there is nothing to carry through the clamp.
+  // The routine this comes from has no vertical term. An ordinary walker is
+  // held at the walking eye height as before, but a boarded craft taxiing
+  // indoors and a walker on the Colony Craft deck keep the altitude they
+  // have, because the Reference Build never writes it here at all.
   const stepped: Vector3 = {
     x: player.position.x + sin(heading) * advance,
-    y: flight.groundAltitude,
+    y:
+      state.craft !== undefined || state.orbitalFlag !== 0
+        ? player.position.y
+        : flight.groundAltitude,
     z: player.position.z + cos(heading) * advance
   };
 
