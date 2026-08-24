@@ -19,6 +19,7 @@ import {
   rawPitch,
   slot7Pitch,
   step,
+  surface,
   throttle,
   throttleStep,
   wallThud,
@@ -657,6 +658,60 @@ describe('boarding and leaving', () => {
     expect(out.player.yawVelocity).toBe(0);
     expect(out.player.roll).toBe(0);
     expect(out.player.pitch).toBe(0);
+  });
+});
+
+describe('the lift surfacing transition', () => {
+  // The decoded arm ($A28E-$A2BA) writes the horizontal pair only: altitude
+  // and the boarded craft survive the ride, which is the recovered route.
+  const entrance = { cell: [9, 6], room: 5, site: 1 } as const;
+  const lift = {
+    altitudeWrap: 6,
+    altitudeWrapSubtract: 7,
+    ascendRate: 38,
+    descendRate: 6,
+    floor: 128,
+    submergeAt: 0x71,
+    submergeMiddle: 0x71,
+    surfaceAt: 0x71,
+    surfaceMiddle: 0x71
+  };
+
+  test('keeps the boarded craft and its altitude', () => {
+    const belowDecks = gameState({
+      craft: 7,
+      player: playerState({ position: { x: 1000, y: 63, z: 1000 } }),
+      room: 5
+    });
+    const surfaced = surface(belowDecks, entrance, lift, 65_536);
+    expect(surfaced.craft).toBe(7);
+    expect(surfaced.room).toBeUndefined();
+    expect(surfaced.player.position.y).toBe(63);
+    expect(surfaced.player.position.x).toBe(9 * 65_536 + 0x7100);
+    expect(surfaced.player.position.z).toBe(6 * 65_536 + 0x7100);
+  });
+
+  test('a walker surfaces at the eye height they rode up with', () => {
+    const walker = gameState({
+      player: playerState({ position: { x: 1000, y: 128, z: 1000 } }),
+      room: 5
+    });
+    expect(surface(walker, entrance, lift, 65_536).player.position.y).toBe(
+      128
+    );
+  });
+});
+
+describe('walking while aboard, which the underground allows', () => {
+  test('a boarded craft taxiing indoors keeps its altitude', () => {
+    const belowDecks = gameState({
+      craft: 7,
+      player: playerState({ position: { x: 1000, y: 63, z: 1000 } }),
+      room: 5
+    });
+    const taxied = held(belowDecks, intent({ walk: 1 }), 60);
+    expect(taxied.player.position.y).toBe(63);
+    expect(taxied.craft).toBe(7);
   });
 });
 
