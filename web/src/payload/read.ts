@@ -894,6 +894,7 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
     SITE_TABLE_LENGTH
   );
   const orbital = asObject(r, o['orbitalTransition'], 'orbitalTransition');
+  const orbitalEntry = asObject(r, orbital['entry'], 'orbitalTransition.entry');
   const ending = asObject(r, o['endingPresentation'], 'endingPresentation');
   const delivery = asObject(r, o['shipDelivery'], 'shipDelivery');
   const descent = asObject(r, delivery['descent'], 'shipDelivery.descent');
@@ -1350,6 +1351,11 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
         r,
         ending['scriptedValue'],
         'endingPresentation.scriptedValue'
+      ),
+      slot7PitchHighByte: asInt(
+        r,
+        ending['slot7PitchHighByte'],
+        'endingPresentation.slot7PitchHighByte'
       )
     },
     orbitalTransition: {
@@ -1364,6 +1370,33 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
         'orbitalTransition.callSites'
       ),
       cell: intArray(r, orbital['cell'], 'orbitalTransition.cell'),
+      entry: {
+        altitudeHighByte: asInt(
+          r,
+          orbitalEntry['altitudeHighByte'],
+          'orbitalTransition.entry.altitudeHighByte'
+        ),
+        flagValue: asInt(
+          r,
+          orbitalEntry['flagValue'],
+          'orbitalTransition.entry.flagValue'
+        ),
+        restAltitudeLowByte: asInt(
+          r,
+          orbitalEntry['restAltitudeLowByte'],
+          'orbitalTransition.entry.restAltitudeLowByte'
+        ),
+        wrappedAltitudeMiddleByte: asInt(
+          r,
+          orbitalEntry['wrappedAltitudeMiddleByte'],
+          'orbitalTransition.entry.wrappedAltitudeMiddleByte'
+        )
+      },
+      exitMover: asInt(
+        r,
+        orbital['exitMover'],
+        'orbitalTransition.exitMover'
+      ),
       minimumAltitudeByte: asInt(
         r,
         orbital['minimumAltitudeByte'],

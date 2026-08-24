@@ -209,16 +209,24 @@ const document = {
         slotsPerArray: 21
       }
     },
-    scriptedValue: 1
+    scriptedValue: 1,
+    slot7PitchHighByte: 1
   },
   orbitalTransition: {
     axisMiddleByteWindow: [104, 120],
     callSites: [40_991, 41_190, 41_434],
     cell: [8, 8],
+    entry: {
+      altitudeHighByte: 64,
+      flagValue: 255,
+      restAltitudeLowByte: 63,
+      wrappedAltitudeMiddleByte: 255
+    },
+    exitMover: 9,
     minimumAltitudeByte: 252,
     successCarry: 'clear'
   },
-  schemaVersion: 11,
+  schemaVersion: 12,
   shipDelivery: {
     acceptedMask: 128,
     cadence: 'every-frame',
@@ -363,11 +371,11 @@ describe('the endgame Data Payload document', () => {
     const { ['endgame.json']: _, ...missing } = payloadDocuments();
     await expect(load(readDocuments(missing))).rejects.toThrow('endgame.json');
     await expect(
-      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 10 })))
-    ).rejects.toThrow('unsupported schemaVersion 10');
+      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 11 })))
+    ).rejects.toThrow('unsupported schemaVersion 11');
     await expect(
-      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 12 })))
-    ).rejects.toThrow('unsupported schemaVersion 12');
+      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 13 })))
+    ).rejects.toThrow('unsupported schemaVersion 13');
     expect((await load(readDocuments(payloadDocuments()))).endgame).toEqual(
       document
     );

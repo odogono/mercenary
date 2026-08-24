@@ -118,6 +118,22 @@ class Builder:
         for site in (0xA01F, 0xA0E6, 0xA1DA):
             self.ram[site:site + 3] = bytes([0x20, 0x3D, 0xA1])
 
+        # The climb caller's entry, clear, and grounding arms, the walking
+        # caller's mover install, the tumble underflow, and both lift writes.
+        for site, data in (
+            (0xA0E2, [0xC9, 0x40, 0xD0, 0x11]),
+            (0xA0EB, [0xA9, 0xFF, 0x85, 0x76, 0x85, 0xFA]),
+            (0xA0F7, [0xA9, 0x00, 0x85, 0x7F, 0x85, 0xFA]),
+            (0xA0BA, [0xA9, 0x3F, 0x85, 0x7F, 0x85, 0x75]),
+            (0xA1DF, [0xA9, 0x09, 0x85, 0xA9, 0x20, 0x99, 0x9D]),
+            (0x9ECE, [0xA9, 0x00, 0x85, 0xFA]),
+            (0xA2F5, [0xA9, 0x00, 0x85, 0xFA]),
+            (0xB455, [0xA2, 0x00, 0xA9, 0x08, 0xC5, 0xCD]),
+            (0xB45F, [0xCA, 0x86, 0xFA]),
+            (0xAA62, [0xA5, 0xCA, 0xF0, 0x03, 0x4C, 0x4A, 0xA2]),
+        ):
+            self.ram[site:site + len(data)] = bytes(data)
+
         self.ram[ENDING_DISPATCH:ENDING_DISPATCH + 12] = bytes(
             [0xAD, 0xFE, 0xBE, 0xD0, 0x05, 0xA9, 0x01, 0x85, 0x2B, 0x60, 0xA9, 0x70]
         )
@@ -582,6 +598,16 @@ class DecodeTests(unittest.TestCase):
         self.assertEqual(orbital["minimumAltitudeByte"], 0xFC)
         self.assertEqual(orbital["callSites"], [0xA01F, 0xA0E6, 0xA1DA])
         self.assertEqual(orbital["successCarry"], "clear")
+        self.assertEqual(
+            orbital["entry"],
+            {
+                "altitudeHighByte": 0x40,
+                "wrappedAltitudeMiddleByte": 0xFF,
+                "flagValue": 0xFF,
+                "restAltitudeLowByte": 0x3F,
+            },
+        )
+        self.assertEqual(orbital["exitMover"], 9)
 
     def test_decodes_all_game_complete_phases_instead_of_a_boolean(self) -> None:
         ending = decode_endgame(Builder().build())["endingPresentation"]
@@ -590,6 +616,7 @@ class DecodeTests(unittest.TestCase):
         self.assertEqual(ending["scriptedValue"], 1)
         self.assertEqual(ending["completedValue"], 255)
         self.assertEqual(ending["dispatch"], "nonzero-enters-terminal-presentation")
+        self.assertEqual(ending["slot7PitchHighByte"], 1)
 
     def test_decodes_the_interstellar_ship_fields_points_and_first_visible_state(self) -> None:
         field = decode_endgame(Builder().build())["endingPresentation"]["interstellarShipField"]
@@ -634,7 +661,7 @@ class DecodeTests(unittest.TestCase):
     def test_reports_a_version_and_bounded_counts(self) -> None:
         document = decode_endgame(Builder().build())
 
-        self.assertEqual(ENDGAME_SCHEMA_VERSION, 11)
+        self.assertEqual(ENDGAME_SCHEMA_VERSION, 12)
         self.assertEqual(document["schemaVersion"], ENDGAME_SCHEMA_VERSION)
         self.assertEqual(
             document["counts"],
