@@ -726,9 +726,14 @@ const integrate = (
     )
   };
   // On foot the Reference Build does not run the control loop at all: `MOVE` dispatches to its own
-  // routine whenever the player is out of a craft or underground. Only a craft reaches the Craft
-  // Parameter Blocks (ADR 0016).
-  if (counted.craft === undefined || counted.room !== undefined) {
+  // routine whenever the player is out of a craft or underground. Only a craft — or an installed
+  // mover, which `MOVE` dispatches by the same positive byte whether or not the player boarded
+  // anything — reaches the Craft Parameter Blocks (ADR 0016). Walking off the Colony Craft deck
+  // installs the tumble over a walker, which is why the mover is consulted before the craft.
+  if (
+    (counted.mover ?? counted.craft) === undefined ||
+    counted.room !== undefined
+  ) {
     return walk(counted, intent, dt, flight, containment);
   }
 
