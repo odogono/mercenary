@@ -447,6 +447,7 @@ const game = (value: unknown, at: string): GameSaveSnapshot => {
     'elapsed',
     'mode',
     'mover',
+    'orbitalFlag',
     'player',
     'poweramp',
     'room',
@@ -479,6 +480,7 @@ const game = (value: unknown, at: string): GameSaveSnapshot => {
     elapsed: nonNegative(out['elapsed'], `${at}.elapsed`),
     mode: mode as GameState['mode'],
     mover: nullableByte(out['mover'], `${at}.mover`),
+    orbitalFlag: byte(out['orbitalFlag'], `${at}.orbitalFlag`),
     player: {
       heading: finite(player['heading'], `${at}.player.heading`),
       pitch: finite(player['pitch'], `${at}.player.pitch`),

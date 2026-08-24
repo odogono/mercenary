@@ -139,6 +139,19 @@ describe('a Save Snapshot', () => {
     }
   });
 
+  test('round-trips the special transition flag as the byte it is', () => {
+    // $FA is $FF on the Colony Craft; a Save taken on the deck must restore
+    // there rather than at an ordinary surface moment.
+    const gameplay = new GameplaySession(
+      content,
+      playerState({ position: { x: 0, y: 0, z: 0 } }),
+      scripts()
+    );
+    gameplay.game = { ...gameplay.game, orbitalFlag: 0xff };
+    const decoded = decodeSave(encodeSave(envelope(gameplay)), environment);
+    expect(decoded.snapshot.game.orbitalFlag).toBe(0xff);
+  });
+
   test('round-trips hidden session state and continues identically', () => {
     const original = new GameplaySession(
       content,
