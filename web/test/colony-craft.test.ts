@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
+import { describe, expect, test } from 'bun:test';
 
 import { BensonProgram, BensonSession } from '../src/benson/index.ts';
 import { intent } from '../src/gameCore/index.ts';
@@ -181,7 +181,11 @@ describe('the $A13D box, entered from flight', () => {
       player: {
         ...gameplay.game.player,
         pitch: 0,
-        position: { x: 8 * CELL + 0x20_00, y: 0x40_f0_00, z: 8 * CELL + 0x20_00 }
+        position: {
+          x: 8 * CELL + 0x20_00,
+          y: 0x40_f0_00,
+          z: 8 * CELL + 0x20_00
+        }
       }
     };
     gameplay.advance(FRAME);
@@ -254,7 +258,7 @@ describe('the room-171 Doorway out of the underground', () => {
       player: {
         ...gameplay.game.player,
         heading: (3 * Math.PI) / 2,
-        position: { x: 96, y: 128, z: 1_640 }
+        position: { x: 96, y: 128, z: 1640 }
       }
     };
     gameplay.intent = intent({ walk: 1 });

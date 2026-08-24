@@ -1398,18 +1398,24 @@ export class GameplaySession {
     readonly snapshot: SessionSnapshot;
   } {
     const events: PresentationEvent[] = [];
+    // Once script 7 has written the Ending phase, the Reference Build's main
+    // loop is replaced by the slot-7 handler's non-returning terminal loop,
+    // which steps Benson and samples input and runs nothing else: no Mover,
+    // no Ship Delivery, no combat. The renderer that loop drives is M7.5's;
+    // the freeze it implies is this ticket's.
+    const terminal = (this.scripts?.host.gameComplete ?? 0) !== 0;
     // The Reference Build reads the override's own carried flag every frame, at
     // the throttle and again at the ceiling, rather than remembering a decision
     // taken when it was picked up. So this is derived rather than set: putting
     // it down mid-flight takes the rates away again.
-    const powerampSlot = this.content.powerampSlot;
+    const powerampSlot = terminal ? undefined : this.content.powerampSlot;
     if (powerampSlot !== undefined) {
       const fitted = this.carriedStack.includes(powerampSlot);
       if (fitted !== this.game.poweramp) {
         this.game = { ...this.game, poweramp: fitted };
       }
     }
-    if (this.content.flight !== undefined && seconds > 0) {
+    if (this.content.flight !== undefined && seconds > 0 && !terminal) {
       let steered = this.intent;
       if (this.game.worldFlipped) {
         steered = { ...steered, turn: -steered.turn };
@@ -1455,8 +1461,10 @@ export class GameplaySession {
         throw error;
       }
     }
-    this.advanceShipDelivery(seconds);
-    events.push(...this.advanceCombat(seconds));
+    if (!terminal) {
+      this.advanceShipDelivery(seconds);
+      events.push(...this.advanceCombat(seconds));
+    }
     return { events, snapshot: this.snapshot };
   }
 

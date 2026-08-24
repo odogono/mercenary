@@ -1392,11 +1392,7 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
           'orbitalTransition.entry.wrappedAltitudeMiddleByte'
         )
       },
-      exitMover: asInt(
-        r,
-        orbital['exitMover'],
-        'orbitalTransition.exitMover'
-      ),
+      exitMover: asInt(r, orbital['exitMover'], 'orbitalTransition.exitMover'),
       minimumAltitudeByte: asInt(
         r,
         orbital['minimumAltitudeByte'],
