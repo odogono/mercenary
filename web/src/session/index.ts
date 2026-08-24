@@ -972,6 +972,11 @@ export class GameplaySession {
         underground.lift,
         this.content.cellSize
       );
+      // Every indoor ride up writes the special transition flag ($B460):
+      // zero for rooms 1-7. Room 8 — the Colony Craft's own hangar — writes
+      // $FF, but the payload reifies no room-8 entrance, so that arm is
+      // recorded in the dossier rather than reachable here.
+      this.game = { ...this.game, orbitalFlag: 0 };
     } else {
       const column = Math.trunc(
         this.game.player.position.x / this.content.cellSize
@@ -1004,6 +1009,8 @@ export class GameplaySession {
         return undefined;
       }
       this.game = enter(this.game, entrance, underground.lift, flight);
+      // The outside-to-inside ride clears the flag too ($A2F7).
+      this.game = { ...this.game, orbitalFlag: 0 };
     }
     return [
       'tone',
@@ -1412,7 +1419,8 @@ export class GameplaySession {
         steered,
         seconds,
         this.content.flight,
-        this.containment
+        this.containment,
+        this.content.orbital
       );
       if (wallThud(this.game) && this.content.doorwayRules !== undefined) {
         events.push({
