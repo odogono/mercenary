@@ -39,14 +39,14 @@ export interface CombatObservationSources {
 
 export interface ObservationSources {
   readonly carriedStack: readonly number[];
+  /// The special transition flag the Reference Build keeps at `$FA`: `$FF` on
+  /// the Colony Craft, zero otherwise.
+  readonly colonyCraftFlag: number;
   readonly combat?: CombatObservationSources;
   readonly location: Location;
   readonly objectFlags: ReadonlyMap<number, number>;
   readonly occupancy: Occupancy;
-  /// The special transition flag the Reference Build keeps at `$FA`: `$FF` on
-  /// the Colony Craft, zero otherwise.
-  readonly orbitalFlag: number;
-  /// The player's full position, for the orbital comparisons that need real
+  /// The player's full position, for the Colony Craft comparisons that need real
   /// coordinates rather than a Room id. Truncated on the way out, since the
   /// emulator's three-byte fields hold integers.
   readonly position: Vector3;
@@ -85,6 +85,7 @@ export const observationsOf = (
   const observations: Record<string, ObservationValue> = {
     attackingShip: host?.attackingShip ?? false,
     carriedStack: sources.carriedStack.join(','),
+    colonyCraftFlag: sources.colonyCraftFlag,
     credits: sources.scripts?.credits ?? 0,
     destroyedCells: asCellList(sources.combat?.destroyedCells ?? []),
     engineFlags: host?.engineFlags ?? 0,
@@ -97,7 +98,6 @@ export const observationsOf = (
       sources.occupancy.kind === 'onFoot'
         ? BensonHostState.onFoot
         : sources.occupancy.slot,
-    orbitalFlag: sources.orbitalFlag,
     palyarDestroyed: sources.combat?.palyarDestroyed ?? 0,
     playerX: Math.trunc(sources.position.x),
     playerY: Math.trunc(sources.position.y),

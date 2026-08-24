@@ -122,7 +122,7 @@ describe('the $A13D box, entered from flight', () => {
       // The wrapped middle byte and the rested low byte: $40FF3F exactly.
       expect(gameplay.game.player.position.y).toBe(DECK_REST);
       const observations = gameplay.observations().observations;
-      expect(observations['orbitalFlag']).toBe(0xff);
+      expect(observations['colonyCraftFlag']).toBe(0xff);
       expect(observations['gameComplete']).toBe(0);
       expect(observations['mover']).toBe(-1);
     });
@@ -165,7 +165,7 @@ describe('the $A13D box, entered from flight', () => {
     const cleared = advanceUntil(
       gameplay,
       300,
-      () => gameplay.game.orbitalFlag === 0
+      () => gameplay.game.colonyCraftFlag === 0
     );
     expect(cleared).toBeTrue();
     expect(gameplay.observations().observations['gameComplete']).toBe(0);
@@ -177,7 +177,7 @@ describe('the $A13D box, entered from flight', () => {
     // Same cell, same band, but outside the middle-byte square: no entry.
     gameplay.game = {
       ...gameplay.game,
-      orbitalFlag: 0xff,
+      colonyCraftFlag: 0xff,
       player: {
         ...gameplay.game.player,
         pitch: 0,
@@ -190,7 +190,7 @@ describe('the $A13D box, entered from flight', () => {
     };
     gameplay.advance(FRAME);
     expect(gameplay.game.mode).toBe('flying');
-    expect(gameplay.game.orbitalFlag).toBe(0);
+    expect(gameplay.game.colonyCraftFlag).toBe(0);
   });
 
   test('walking off the deck edge is a tumble home, once', () => {
@@ -227,7 +227,7 @@ describe('the $A13D box, entered from flight', () => {
       () => gameplay.game.mover === undefined
     );
     expect(grounded).toBeTrue();
-    expect(gameplay.game.orbitalFlag).toBe(0);
+    expect(gameplay.game.colonyCraftFlag).toBe(0);
 
     // The flag is gone, so walking on the ground does not fall again.
     for (let frame = 0; frame < 60; frame++) {
@@ -243,7 +243,7 @@ describe('the $A13D box, entered from flight', () => {
     advanceUntil(gameplay, 600, () => gameplay.game.mode === 'grounded');
 
     const snapshot = gameplay.captureSaveSnapshot();
-    expect(snapshot.game.orbitalFlag).toBe(0xff);
+    expect(snapshot.game.colonyCraftFlag).toBe(0xff);
     expect(snapshot.game.player.position.y).toBe(DECK_REST);
 
     const revived = GameplaySession.restore(
@@ -251,7 +251,7 @@ describe('the $A13D box, entered from flight', () => {
       gameplay.scripts,
       snapshot
     );
-    expect(revived.game.orbitalFlag).toBe(0xff);
+    expect(revived.game.colonyCraftFlag).toBe(0xff);
     expect(revived.snapshot.player).toEqual(gameplay.snapshot.player);
     expect(revived.observations().observations).toEqual(
       gameplay.observations().observations
@@ -268,12 +268,12 @@ describe('the $A13D box, entered from flight', () => {
       gameplay.advance(FRAME);
       revived.advance(FRAME);
       expect(revived.snapshot.player).toEqual(gameplay.snapshot.player);
-      expect(revived.game.orbitalFlag).toBe(gameplay.game.orbitalFlag);
+      expect(revived.game.colonyCraftFlag).toBe(gameplay.game.colonyCraftFlag);
       expect(revived.game.mover).toBe(gameplay.game.mover);
     }
     // And the continuation actually went somewhere: the fall happened and
     // ended, rather than both sessions sitting still in agreement.
-    expect(gameplay.game.orbitalFlag).toBe(0);
+    expect(gameplay.game.colonyCraftFlag).toBe(0);
     expect(gameplay.game.mover).toBeUndefined();
     expect(gameplay.game.player.position.y).toBeLessThan(DECK_REST);
   });

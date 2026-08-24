@@ -5,7 +5,6 @@ import {
   IDLE,
   MAXIMUM_STEP,
   REFERENCE_WALKING_EYE_ALTITUDE,
-  SLOT7_PITCH_HIGH_BYTE,
   board,
   ceilingFor,
   controlLimits,
@@ -24,6 +23,7 @@ import {
   throttleStep,
   wallThud,
   wrapPitch,
+  type ColonyCraftRules,
   type FlightModel,
   type GameState,
   type Intent
@@ -128,6 +128,25 @@ const document: FlightDocument = {
 };
 
 const flight = flightModel(document);
+
+/// The `$A13D` box as the endgame Data Payload carries it, trimmed to the
+/// fields the control loop reads. The exported values are guarded against the
+/// image by endgame-payload.test.ts and the C64 lab; what is pinned here is
+/// what the engine does with them.
+const colonyCraft: ColonyCraftRules = {
+  axisMiddleByteWindow: [0x68, 0x78],
+  callSites: [],
+  cell: [8, 8],
+  entry: {
+    altitudeHighByte: 0x40,
+    flagValue: 0xff,
+    restAltitudeLowByte: 0x3f,
+    wrappedAltitudeMiddleByte: 0xff
+  },
+  exitMover: 9,
+  minimumAltitudeByte: 0xfc,
+  successCarry: 'clear'
+};
 
 const start = (): GameState =>
   gameState({
@@ -683,7 +702,7 @@ describe('the lift surfacing transition', () => {
       player: playerState({ position: { x: 1000, y: 63, z: 1000 } }),
       room: 5
     });
-    const surfaced = surface(belowDecks, entrance, lift, 65_536);
+    const surfaced = surface(belowDecks, entrance, lift, 65_536, undefined);
     expect(surfaced.craft).toBe(7);
     expect(surfaced.room).toBeUndefined();
     expect(surfaced.player.position.y).toBe(63);
@@ -691,12 +710,47 @@ describe('the lift surfacing transition', () => {
     expect(surfaced.player.position.z).toBe(6 * 65_536 + 0x71_00);
   });
 
+  // $B455-$B462 loads X with zero, compares the room id against an immediate
+  // $08 and stores X into $FA: rooms below 8 leave it clear, and room 8
+  // exactly decrements X to $FF. So the flag the ride writes is decided by
+  // which room rode up, not by the caller.
+  test('a ride up from any room below eight leaves the flag clear', () => {
+    const belowDecks = gameState({
+      colonyCraftFlag: 0xff,
+      player: playerState({ position: { x: 1000, y: 128, z: 1000 } }),
+      room: 5
+    });
+    expect(
+      surface(belowDecks, entrance, lift, 65_536, colonyCraft).colonyCraftFlag
+    ).toBe(0);
+  });
+
+  test('the ride up from room eight surfaces with the flag set', () => {
+    const hangar = gameState({
+      player: playerState({ position: { x: 1000, y: 128, z: 1000 } }),
+      room: 8
+    });
+    const surfaced = surface(
+      hangar,
+      { cell: [8, 8], room: 8, site: 8 },
+      lift,
+      65_536,
+      colonyCraft
+    );
+    expect(surfaced.colonyCraftFlag).toBe(0xff);
+    // Site 8's out-of-table reads both land on $08: the Colony Craft's cell.
+    expect(surfaced.player.position.x).toBe(8 * 65_536 + 0x71_00);
+    expect(surfaced.player.position.z).toBe(8 * 65_536 + 0x71_00);
+  });
+
   test('a walker surfaces at the eye height they rode up with', () => {
     const walker = gameState({
       player: playerState({ position: { x: 1000, y: 128, z: 1000 } }),
       room: 5
     });
-    expect(surface(walker, entrance, lift, 65_536).player.position.y).toBe(128);
+    expect(
+      surface(walker, entrance, lift, 65_536, undefined).player.position.y
+    ).toBe(128);
   });
 });
 
@@ -907,23 +961,49 @@ describe('the Interstellar Ship handler', () => {
   // ($AA6E-$AA72): the ship sits pinned a quarter turn nose-up and no yaw,
   // throttle, translation or altitude step runs at all. The nonzero arm is
   // the terminal renderer, which is presentation rather than a Mover.
+  //
+  // The byte is the Data Payload's; that the exported value really is 1 is
+  // guarded against the image by endgame-payload.test.ts. What is pinned here
+  // is what the handler does with whatever byte it is handed.
+  const endgame = { colonyCraft, slot7PitchHighByte: 1 };
+
   test('pins pitch a quarter turn nose-up', () => {
     const pinned = step(
       aboardTheShip(),
       intent({ pitch: 1 }),
       HOST_FRAME,
-      flight
+      flight,
+      undefined,
+      endgame
     );
     // Raw pitch $0100 out of level $0200 over a $0400 turn is +pi/2.
     expect(pinned.player.pitch).toBeCloseTo(Math.PI / 2, 12);
-    expect(slot7Pitch(rules)).toBeCloseTo(Math.PI / 2, 12);
+    expect(slot7Pitch(rules, endgame.slot7PitchHighByte)).toBeCloseTo(
+      Math.PI / 2,
+      12
+    );
+  });
+
+  test('follows the decoded byte rather than a pin of its own', () => {
+    // Two bytes, two attitudes: the handler stores what it was given, so a
+    // different byte has to move the pin. Nothing here may hardcode $01.
+    const level = step(
+      aboardTheShip(),
+      intent({ pitch: 1 }),
+      HOST_FRAME,
+      flight,
+      undefined,
+      { ...endgame, slot7PitchHighByte: 2 }
+    );
+    expect(level.player.pitch).toBe(0);
+    expect(slot7Pitch(rules, 2)).toBe(0);
   });
 
   test('cannot be flown: full input moves nothing at all', () => {
     const held = intent({ pitch: 1, turn: 1, walk: 1 });
     let state = aboardTheShip();
     for (let frame = 0; frame < 120; frame++) {
-      state = step(state, held, HOST_FRAME, flight);
+      state = step(state, held, HOST_FRAME, flight, undefined, endgame);
     }
     expect(state.player.position).toEqual(aboardTheShip().player.position);
     expect(state.player.speed).toBe(0);
@@ -932,12 +1012,15 @@ describe('the Interstellar Ship handler', () => {
   });
 
   test('still advances time, so the world does not stop around it', () => {
-    const later = step(aboardTheShip(), intent({}), HOST_FRAME, flight);
+    const later = step(
+      aboardTheShip(),
+      intent({}),
+      HOST_FRAME,
+      flight,
+      undefined,
+      endgame
+    );
     expect(later.elapsed).toBeCloseTo(HOST_FRAME, 12);
-  });
-
-  test('matches the byte the payload export guards', () => {
-    expect(SLOT7_PITCH_HIGH_BYTE).toBe(1);
   });
 });
 

@@ -147,9 +147,9 @@ describe('a Save Snapshot', () => {
       playerState({ position: { x: 0, y: 0, z: 0 } }),
       scripts()
     );
-    gameplay.game = { ...gameplay.game, orbitalFlag: 0xff };
+    gameplay.game = { ...gameplay.game, colonyCraftFlag: 0xff };
     const decoded = decodeSave(encodeSave(envelope(gameplay)), environment);
-    expect(decoded.snapshot.game.orbitalFlag).toBe(0xff);
+    expect(decoded.snapshot.game.colonyCraftFlag).toBe(0xff);
   });
 
   test('round-trips hidden session state and continues identically', () => {

@@ -40,12 +40,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   while it climbs grounds on the Colony Craft deck at `$40FF3F` with the special transition flag
   `$FA` set; the deck pins pitch level while the predicate holds, walking over the edge installs
   mover 9 and falls home to the ordinary crash resolution, and every other flying frame or lift
-  ride clears the flag. The one Doorway out of the underground now copies all three arrival
-  coordinates rather than dropping the altitude, so it ejects the player at the hull as `$90C0`
-  does. None of it writes `gameComplete`: the Colony Craft is Targ play. Endgame payload schema 12
-  exports the decoded entry effects, the exit mover, and the slot-7 handler's one phase-0 write,
-  each behind a new byte fingerprint; the semantic observation vocabulary gains `orbitalFlag` and
-  the full player coordinates the orbital comparisons need. Craft slots 0 and the Poweramp Dart are
+  ride clears the flag — the indoor ride writes it from the room that rode up, as `$B455-$B462`
+  does, so room 8's ride onto the Colony Craft's own cell is modelled rather than assumed away. The
+  one Doorway out of the underground now copies all three arrival coordinates rather than dropping
+  the altitude, so it ejects the player at the hull as `$90C0` does. None of it writes
+  `gameComplete`: the Colony Craft is Targ play. Endgame payload schema 12 exports the decoded
+  entry effects, the exit mover, and the slot-7 handler's one phase-0 write, each behind a new byte
+  fingerprint, and the control loop reads that write from the document rather than duplicating the
+  byte into TypeScript. The semantic observation vocabulary gains `colonyCraftFlag` and the full
+  player coordinates the Colony Craft comparisons need. Craft slots 0 and the Poweramp Dart are
   demonstrated into and out of the box; slots 3 and 6 are recorded legally unreachable on current
   evidence rather than synthesized. The frozen Trace Oracle's `craft-7-slot7` scenario is retired:
   it flew the Interstellar Ship through the standard loop, and the Reference Build's own handler

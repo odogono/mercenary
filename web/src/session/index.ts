@@ -22,6 +22,7 @@ import {
   throttleStep as stepThrottle,
   surface,
   wallThud,
+  type EndgameRules,
   type FlightModel,
   type GameState,
   type Intent,
@@ -41,7 +42,6 @@ import type {
   Bundle,
   Doorway,
   DoorwayRules,
-  EndgameDocument,
   EndgameDropRules,
   EndgameFire,
   EndgameHostileCraft,
@@ -204,6 +204,10 @@ export interface SessionContent {
   readonly cellSize: number;
   readonly doorwayRules: DoorwayRules | undefined;
   readonly dropRules?: EndgameDropRules;
+  /// The decoded endgame rules the control loop reads: the `$A13D` box the
+  /// Colony Craft transition runs on, and the byte the Interstellar Ship's
+  /// handler writes. Absent when the content carries no endgame rules.
+  readonly endgame?: EndgameRules;
   /// What firing costs and how far a shot gets.
   readonly fire?: EndgameFire;
   readonly flight: FlightModel | undefined;
@@ -213,9 +217,6 @@ export interface SessionContent {
   /// What a shot does when it reaches one of the two objects it can hit.
   readonly objectHits?: EndgameObjectHits;
   readonly objects: readonly ObjectPlacement[];
-  /// The `$A13D` box and its decoded entry/exit effects — the Colony Craft
-  /// transition. Absent when the content carries no endgame rules.
-  readonly orbital?: EndgameDocument['orbitalTransition'];
   /// The object whose being carried turns on the flight rules' one
   /// craft-conditioned override.
   readonly powerampSlot?: number;
@@ -234,6 +235,10 @@ export const sessionContent = (
   cellSize: world.cellSize,
   doorwayRules: world.doorwayRules,
   dropRules: bundle.endgame.controls.drop,
+  endgame: {
+    colonyCraft: bundle.endgame.orbitalTransition,
+    slot7PitchHighByte: bundle.endgame.endingPresentation.slot7PitchHighByte
+  },
   fire: bundle.endgame.combat.fire,
   flight,
   hostile: bundle.endgame.combat.hostileCraft,
@@ -246,7 +251,6 @@ export const sessionContent = (
         ),
   objectHits: bundle.endgame.combat.objectHits,
   objects: world.objects,
-  orbital: bundle.endgame.orbitalTransition,
   powerampSlot: bundle.endgame.controls.powerampSlot,
   rooms: world.rooms,
   shipDelivery: bundle.endgame.shipDelivery,
@@ -970,13 +974,9 @@ export class GameplaySession {
         this.game,
         entrance,
         underground.lift,
-        this.content.cellSize
+        this.content.cellSize,
+        this.content.endgame?.colonyCraft
       );
-      // Every indoor ride up writes the special transition flag ($B460):
-      // zero for rooms 1-7. Room 8 — the Colony Craft's own hangar — writes
-      // $FF, but the payload reifies no room-8 entrance, so that arm is
-      // recorded in the dossier rather than reachable here.
-      this.game = { ...this.game, orbitalFlag: 0 };
     } else {
       const column = Math.trunc(
         this.game.player.position.x / this.content.cellSize
@@ -1009,8 +1009,6 @@ export class GameplaySession {
         return undefined;
       }
       this.game = enter(this.game, entrance, underground.lift, flight);
-      // The outside-to-inside ride clears the flag too ($A2F7).
-      this.game = { ...this.game, orbitalFlag: 0 };
     }
     return [
       'tone',
@@ -1075,7 +1073,7 @@ export class GameplaySession {
       this.game = {
         ...this.game,
         mode: 'flying',
-        mover: this.content.orbital?.exitMover ?? this.game.mover,
+        mover: this.content.endgame?.colonyCraft.exitMover ?? this.game.mover,
         player: {
           ...this.game.player,
           position: {
@@ -1426,7 +1424,7 @@ export class GameplaySession {
         seconds,
         this.content.flight,
         this.containment,
-        this.content.orbital
+        this.content.endgame
       );
       if (wallThud(this.game) && this.content.doorwayRules !== undefined) {
         events.push({
@@ -1969,10 +1967,10 @@ export class GameplaySession {
     return observationsOf({
       carriedStack: this.carriedStack,
       ...(combat === undefined ? {} : { combat }),
+      colonyCraftFlag: this.game.colonyCraftFlag,
       location: this.location,
       objectFlags: this.objectFlags,
       occupancy: this.occupancy,
-      orbitalFlag: this.game.orbitalFlag,
       position: this.game.player.position,
       residence: this.residence,
       scripts: this.scripts
