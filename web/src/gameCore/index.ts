@@ -40,6 +40,21 @@ export const REFERENCE_WALKING_EYE_ALTITUDE = 128;
 /// The altitude byte the tumble handler subtracts its drop from.
 const ALTITUDE_MIDDLE_BYTE = 0x1_00;
 
+/// The one write the Interstellar Ship's phase-0 handler makes: `$AA6E`
+/// stores this into the pitch high byte and returns. Mirrored by
+/// `endgame.json`'s `endingPresentation.slot7PitchHighByte`, which the
+/// payload export guards against the image; the mover tests tie the two.
+export const SLOT7_PITCH_HIGH_BYTE = 0x01;
+
+/// The attitude that write pins, in radians: raw pitch `$0100` against the
+/// decoded level of `rules.levelPitch`, a quarter turn nose-up.
+export const slot7Pitch = (rules: FlightRules): number =>
+  wrapPitch(
+    ((rules.levelPitch - (SLOT7_PITCH_HIGH_BYTE << 8)) /
+      rules.angleUnitsPerTurn) *
+      TURN
+  );
+
 /// Where the Reference Build's opening leaves the player: the captured crash position, at the
 /// captured eye height.
 ///
@@ -713,6 +728,17 @@ const integrate = (
   const block = blockFor(flight.document, counted.mover ?? counted.craft);
   if (block.handler === 'tumble') {
     return tumble(counted, block, flight);
+  }
+  if (block.handler === 'slot7') {
+    // The Interstellar Ship's handler pins pitch nose-up and returns
+    // (`$AA6E-$AA72`): no yaw, throttle, translation or altitude step runs,
+    // so slot 7 cannot be flown. The handler's nonzero-gameComplete arm is
+    // the terminal renderer, which is presentation rather than a Mover.
+    return {
+      ...counted,
+      elapsed: counted.elapsed + dt,
+      player: { ...player, pitch: slot7Pitch(flight.rules) }
+    };
   }
   const rules = flight.rules;
   const limits = flight.limits;
