@@ -237,13 +237,45 @@ describe('the $A13D box, entered from flight', () => {
     expect(gameplay.observations().observations['gameComplete']).toBe(0);
   });
 
-  test('a Save taken on the deck restores onto the deck', () => {
+  test('a Save taken on the deck restores onto it and continues identically', () => {
     const gameplay = session();
     climbing(gameplay, 0);
     advanceUntil(gameplay, 600, () => gameplay.game.mode === 'grounded');
+
     const snapshot = gameplay.captureSaveSnapshot();
     expect(snapshot.game.orbitalFlag).toBe(0xff);
     expect(snapshot.game.player.position.y).toBe(DECK_REST);
+
+    const revived = GameplaySession.restore(
+      gameplay.content,
+      gameplay.scripts,
+      snapshot
+    );
+    expect(revived.game.orbitalFlag).toBe(0xff);
+    expect(revived.snapshot.player).toEqual(gameplay.snapshot.player);
+    expect(revived.observations().observations).toEqual(
+      gameplay.observations().observations
+    );
+
+    // Deterministic continuation is the point of the Save, so both sessions
+    // are flown the same way afterwards and have to agree: step out, walk off
+    // the deck edge, and fall home.
+    for (const session of [gameplay, revived]) {
+      session.leaveCraft();
+      session.intent = intent({ walk: 1 });
+    }
+    for (let frame = 0; frame < 900; frame++) {
+      gameplay.advance(FRAME);
+      revived.advance(FRAME);
+      expect(revived.snapshot.player).toEqual(gameplay.snapshot.player);
+      expect(revived.game.orbitalFlag).toBe(gameplay.game.orbitalFlag);
+      expect(revived.game.mover).toBe(gameplay.game.mover);
+    }
+    // And the continuation actually went somewhere: the fall happened and
+    // ended, rather than both sessions sitting still in agreement.
+    expect(gameplay.game.orbitalFlag).toBe(0);
+    expect(gameplay.game.mover).toBeUndefined();
+    expect(gameplay.game.player.position.y).toBeLessThan(DECK_REST);
   });
 });
 
