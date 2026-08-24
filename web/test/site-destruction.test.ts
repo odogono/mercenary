@@ -201,6 +201,67 @@ describe('a shot that reaches the city', () => {
   });
 });
 
+/// Runs a session on, skipping messages the way a player would, until
+/// `until` holds or the patience runs out.
+const runOn = (
+  session: GameplaySession,
+  until: () => boolean,
+  seconds = 60
+): boolean => {
+  for (let tick = 0; tick < seconds; tick += 1) {
+    session.advance(1);
+    session.skipMessage();
+    if (until()) {
+      return true;
+    }
+  }
+  return false;
+};
+
+describe('the Attack State a Faction Reaction sets', () => {
+  /// The one Site whose reaction sends a craft after the player every time
+  /// rather than sometimes: the generic reactions roll for it.
+  const advertCell = rules.reactions.find(row => row.lowId === 5)!.cells[0]!;
+
+  test('sends a craft after the player, and says so in its own flag', () => {
+    const session = overCell(advertCell);
+    expect(session.observations().observations['attackingShip']).toBeFalse();
+
+    bomb(session);
+    const attacked = runOn(
+      session,
+      () => session.observations().observations['attackingShip'] === true
+    );
+
+    expect(attacked).toBeTrue();
+    // The decoded flag this particular Site's reaction sets on its way past.
+    expect(
+      (session.observations().observations['engineFlags'] as number) & 0x08
+    ).toBe(0x08);
+  });
+
+  test('ends with the craft lost and the session still being played', () => {
+    const session = overCell(advertCell);
+    bomb(session);
+    runOn(
+      session,
+      () => session.observations().observations['attackingShip'] === true
+    );
+
+    // Sit still and let it find them. It does.
+    const settled = runOn(
+      session,
+      () => session.observations().observations['attackingShip'] === false
+    );
+    const after = session.observations().observations;
+
+    expect(settled).toBeTrue();
+    expect(after['messageText']).toContain('SHIP DESTROYED');
+    // Which is a craft lost, and nothing more than that.
+    expect(after['gameComplete']).toBeFalse();
+  });
+});
+
 describe('a shot fired with the Anti Time Bomb aboard', () => {
   test('shows the impact and leaves the Site standing', () => {
     const session = overCell(mechanoidCell);
@@ -306,5 +367,68 @@ describe('a shot that reaches the object it can start a script on', () => {
     expect(observed['scriptPc']).not.toBe(-1);
     // And the shot is spent.
     expect(session.residenceOf(rules.projectileSlot).kind).toBe('gone');
+  });
+});
+
+/// The claim the whole milestone is built around, in one place.
+///
+/// The Reference Build has a Defeat, and none of these reach it: a shot that
+/// finds nothing, a Site destroyed, a craft lost to a hostile, the player shot
+/// down on foot, and a craft flown into the ground. `gameComplete` is the latch
+/// an Ending sets, and every one of these leaves it alone.
+/// One way combat can go wrong, and the latch it must not set.
+const surviving = (name: string, play: (session: GameplaySession) => void) => {
+  test(name, () => {
+    const session = overCell(mechanoidCell);
+    expect(session.observations().observations['gameComplete']).toBeFalse();
+
+    play(session);
+
+    expect(session.observations().observations['gameComplete']).toBeFalse();
+  });
+};
+
+describe('no combat failure this milestone can reach is an Ending', () => {
+  surviving('a shot that expires having reached nothing', session => {
+    // Pointed away from the city, so it runs its lifecycle out.
+    session.game = {
+      ...session.game,
+      player: {
+        ...session.game.player,
+        position: { x: 2_000_000, y: 0, z: 2_000_000 }
+      }
+    };
+    session.fire();
+    session.advance(bundle.endgame.combat.fire.lifecycleFrames / 20);
+  });
+
+  surviving('a Site destroyed and reacted to', session => {
+    bomb(session);
+    for (let tick = 0; tick < 40; tick += 1) {
+      session.advance(1);
+      session.skipMessage();
+    }
+  });
+
+  surviving('a craft flown into the ground', session => {
+    session.throttleNotchValue(10);
+    // Up first, because a craft already on the ground cannot be flown into it.
+    for (let frame = 0; frame < 200; frame += 1) {
+      session.intent = { pitch: 1, running: false, turn: 0, walk: 0 };
+      session.advance(1 / 20);
+      if (session.snapshot.player.position.y > 200_000) {
+        break;
+      }
+    }
+    for (let frame = 0; frame < 400; frame += 1) {
+      session.intent = { pitch: -1, running: false, turn: 0, walk: 0 };
+      session.advance(1 / 20);
+      if (session.occupancy.kind === 'onFoot') {
+        break;
+      }
+    }
+
+    // It ends on foot, which is a crash rather than an Ending.
+    expect(session.observations().observations['occupancy']).toBe(0x80);
   });
 });
