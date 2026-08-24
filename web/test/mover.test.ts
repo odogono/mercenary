@@ -5,6 +5,7 @@ import {
   IDLE,
   MAXIMUM_STEP,
   REFERENCE_WALKING_EYE_ALTITUDE,
+  SLOT7_PITCH_HIGH_BYTE,
   board,
   ceilingFor,
   controlLimits,
@@ -16,6 +17,7 @@ import {
   notchForKey,
   playerState,
   rawPitch,
+  slot7Pitch,
   step,
   throttle,
   throttleStep,
@@ -89,6 +91,7 @@ const rules: FlightRules = {
 const blocks = (): Block[] => {
   const table = Array.from({ length: 8 }, (_, index) => block({ index }));
   table[2] = block({ handler: 'sinking', index: 2, pitchStep: 0 });
+  table[7] = block({ ceiling: 1, handler: 'slot7', index: 7 });
   table.push(
     block({
       ceiling: 0,
@@ -839,6 +842,50 @@ describe('walking inside a Room', () => {
     expect(walked.wallContact).toBe(0);
     expect(walked.wallContactLatch).toBe(0);
     expect(wallThud(walked)).toBe(false);
+  });
+});
+
+describe('the Interstellar Ship handler', () => {
+  // The phase-0 arm writes one byte — the pitch high byte — and returns
+  // ($AA6E-$AA72): the ship sits pinned a quarter turn nose-up and no yaw,
+  // throttle, translation or altitude step runs at all. The nonzero arm is
+  // the terminal renderer, which is presentation rather than a Mover.
+  const aboard = (): GameState =>
+    throttle(
+      {
+        ...start(),
+        craft: 7
+      },
+      10,
+      rules
+    );
+
+  test('pins pitch a quarter turn nose-up', () => {
+    const pinned = step(aboard(), intent({ pitch: 1 }), HOST_FRAME, flight);
+    // Raw pitch $0100 out of level $0200 over a $0400 turn is +pi/2.
+    expect(pinned.player.pitch).toBeCloseTo(Math.PI / 2, 12);
+    expect(slot7Pitch(rules)).toBeCloseTo(Math.PI / 2, 12);
+  });
+
+  test('cannot be flown: full input moves nothing at all', () => {
+    const held = intent({ pitch: 1, turn: 1, walk: 1 });
+    let state = aboard();
+    for (let frame = 0; frame < 120; frame++) {
+      state = step(state, held, HOST_FRAME, flight);
+    }
+    expect(state.player.position).toEqual(aboard().player.position);
+    expect(state.player.speed).toBe(0);
+    expect(state.player.heading).toBe(0);
+    expect(state.mode).toBe('grounded');
+  });
+
+  test('still advances time, so the world does not stop around it', () => {
+    const later = step(aboard(), intent({}), HOST_FRAME, flight);
+    expect(later.elapsed).toBeCloseTo(HOST_FRAME, 12);
+  });
+
+  test('matches the byte the payload export guards', () => {
+    expect(SLOT7_PITCH_HIGH_BYTE).toBe(1);
   });
 });
 
