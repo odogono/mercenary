@@ -34,7 +34,7 @@ from .payload import (
     export_payload,
     export_room_map_svg,
     export_room_plan_svg,
-    require_ignored_output,
+    require_payload_output,
 )
 from .object_semantics import (
     attest_object_semantics,
@@ -291,8 +291,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 }
             else:
                 # Script bytes are Data Payload material, so the readable dump
-                # is held to the same ignored storage as the payload itself.
-                path = require_ignored_output(arguments.output)
+                # is held to the same storage boundary as the payload itself.
+                path = require_payload_output(arguments.output)
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
                 result = {"status": "decoded", "output": str(arguments.output), "counts": document["counts"]}

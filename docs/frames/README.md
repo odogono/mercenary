@@ -4,13 +4,11 @@ Rasters written by `swift run mercenary --render-frame`, kept so a browser frame
 beside one and judged by eye. ADR 0011 makes a maintainer's review the authority on visual
 fidelity, and a review needs something to review against.
 
-These are the one payload-derived artifact this repository tracks. The Data Payload itself, the
-Golden Traces and any built web bundle are all gitignored (ADR 0014, ADR 0019) because they are
-game data or a distribution of it. A single still is neither: it is a picture of one pose, it
-cannot be decoded back into geometry, and the alternative — a comparison that exists only on
-one machine — is not a comparison anyone else can repeat. The repository is private (ADR 0017),
-and publishing any of these remains gated on written clearance under ADR 0004, which names
-comparison media explicitly.
+These are tracked for the same reason the Data Payload and the Golden Traces are (ADR 0029):
+a comparison that exists only on one machine is not a comparison anyone else can repeat. Only a
+built web bundle stays gitignored, because it is a distribution rather than working material
+(ADR 0019). The repository is private (ADR 0017), and publishing any of these remains gated on
+written clearance under ADR 0004, which names comparison media explicitly.
 
 Each frame records the pose it was rendered at, so it can be regenerated exactly.
 

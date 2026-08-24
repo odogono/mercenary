@@ -50,7 +50,8 @@ Pure validation and protocol encoding receive unit tests. A local integration te
 - Do not touch `MercenaryKit`, the Targ gameplay documents, or the Game Surface.
 - Do not build a Damocles gameplay Data Payload, extractor, or schema in this laboratory. The
   typography-only exception in ADR 0021 may consume verified display evidence through the
-  cross-title typography exporter; its generated glyph data and WOFF2 remain ignored.
+  cross-title typography exporter; its generated glyph data and WOFF2 travel in the tracked
+  Data Payload (ADR 0029), while its laboratory inputs stay ignored.
 - Reproducible checkpoints and observation scenarios that expose world tables for mapping notes (#79–#81) are allowed. Filled-polygon decode, Gamma System inventory, and script/motion/time findings belong in `docs/research/` notes, not in a payload.
 - A Working Disassembly is targeted and question-driven: exported windows, `xref` reports, `disassemble` listings, and `script` decodes stay inside the ignored `work/` tree, and only decoded facts reach `docs/research/` notes with provenance. Read for structure, never copy or mechanically translate (ADR 0002). See `docs/research/damocles-gap.md`.
 - `script` is research instrumentation, not an extractor: it may emit a human-readable report only. It must never gain a machine-readable output, a payload writer, or a schema — a Damocles Data Payload stays out of scope until after *The Second City* (ADR 0021).
@@ -61,4 +62,6 @@ Pure validation and protocol encoding receive unit tests. A local integration te
 2. `capture` creates a self-verifying title-screen run with RAM, stable RAM ranges, registers, display, debugger log, and manifest.
 3. `reproduce` obtains equal normalized evidence (stable RAM ranges, stable registers, display) from two independent cold starts.
 4. The title-screen checkpoint is documented and accepts a bounded keyboard scenario.
-5. Tracked evidence contains hashes and interpretations only; generated payloads remain ignored.
+5. Tracked evidence contains hashes and interpretations only; exact laboratory output stays
+   under ignored `work/` or `restricted/` storage. The exported Data Payload is the one
+   generated artifact that is tracked (ADR 0029).

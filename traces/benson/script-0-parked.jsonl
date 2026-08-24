@@ -1,0 +1,1354 @@
+{"dt":0.016666666666666666,"emitter":"benson","id":"script-0-parked","initial":{"host":{"attackingShip":false,"boardedCraft":128,"canLiftAnything":false,"canTakeAnything":false,"currentRoom":0,"decimals":[0,0,0,0,0,0,0,0,9000,0,0,0,0,0,0,0],"destroyedBlocks":[],"engineFlags":64,"gameComplete":false,"inventory":[],"messageInterval":125,"messagePlaying":false,"objectFlags":{},"objectRooms":{},"pendingKey":null,"shipInbound":0,"signedRegister":0,"tickCounter":0},"isMessageComplete":true,"isRunning":true,"message":"","state":{"callStack":[],"pc":3,"randomState":"3200140515932572209","registers":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"resumeAfterTick":null}},"note":"The opening script with no input at all. It plays its messages and parks in the routine that waits for a keypress, which is where a new game leaves it.","payload":{"decoderVersion":7,"manifestSha256":"a8ce4a9a66d87a5127f1ddd6ac1bc2afa2bb9c704bf609b880ec731a4c612f95","schemaVersion":8,"sourceCoreDigest":"7b0cbf0f34c99fbcf8081e8fc152bc490fb4d4d1d9b1be4d9ec9481441d3949c","sourceDatasetId":"world-geometry-7b0cbf0f34c99fbc"},"program":{"entry":3,"framesPerTick":50,"instructions":494,"scripts":51},"scenario":{"host":{"carrying":[],"craft":null,"objectFlags":{},"objectRooms":{},"room":0},"maxInstructions":20000,"presses":[],"script":0,"seconds":120,"timeScale":null,"writes":[]},"schemaVersion":3,"settings":{"message":{"charactersPerSecond":2,"holdSeconds":3},"scripts":{"instructionBudget":512,"timeScale":6}},"tunables":{"framesPerSecond":50,"framesPerTick":50,"instructionBudget":512,"messageCharactersPerSecond":2,"messageHoldSeconds":3,"timeScale":6}}
+{"blocked":false,"effects":[],"elapsed":0,"instruction":{"op":"loadi","register":14,"value":1},"nextPc":4,"pc":3,"step":0}
+{"blocked":false,"effects":[],"elapsed":0,"instruction":{"mask":4,"mode":"or","op":"modf"},"nextPc":5,"pc":4,"step":0}
+{"blocked":false,"effects":[],"elapsed":0,"instruction":{"op":"loadi","register":14,"value":7},"nextPc":6,"pc":5,"step":0}
+{"blocked":false,"effects":[],"elapsed":0,"instruction":{"mask":4,"mode":"or","op":"modf"},"nextPc":7,"pc":6,"step":0}
+{"blocked":false,"effects":[],"elapsed":0,"instruction":{"op":"loadi","register":14,"value":12},"nextPc":8,"pc":7,"step":0}
+{"blocked":false,"effects":[],"elapsed":0,"instruction":{"mask":4,"mode":"or","op":"modf"},"nextPc":9,"pc":8,"step":0}
+{"blocked":true,"effects":[{"playMessage":""}],"elapsed":0,"instruction":{"op":"msgi","source":{"immediate":50}},"nextPc":10,"pc":9,"step":0}
+{"changed":{"host":{"messagePlaying":true,"objectFlags":{"1":4,"7":4,"12":4}},"state":{"pc":10,"registers":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,12,0]}},"elapsed":0,"step":0}
+{"blocked":false,"effects":[],"elapsed":0.016666666666666666,"instruction":{"op":"call","target":99},"nextPc":99,"pc":10,"step":1}
+{"blocked":false,"effects":[],"elapsed":0.016666666666666666,"instruction":{"op":"cfr"},"nextPc":100,"pc":99,"step":1}
+{"blocked":true,"effects":[],"elapsed":0.016666666666666666,"instruction":{"condition":{"branch":{"jump":100},"branchOn":false},"op":"wfr","ticks":2},"nextPc":100,"pc":100,"step":1}
+{"changed":{"host":{"messagePlaying":false},"state":{"callStack":[11],"pc":100,"resumeAfterTick":1}},"elapsed":0.016666666666666666,"step":1}
+{"blocked":false,"effects":[],"elapsed":0.14999999999999999,"instruction":{"condition":{"branch":{"jump":100},"branchOn":false},"op":"wfr","ticks":2},"nextPc":100,"pc":100,"step":9}
+{"blocked":true,"effects":[],"elapsed":0.14999999999999999,"instruction":{"condition":{"branch":{"jump":100},"branchOn":false},"op":"wfr","ticks":2},"nextPc":100,"pc":100,"step":9}
+{"changed":{"host":{"tickCounter":1},"state":{"resumeAfterTick":2}},"elapsed":0.14999999999999999,"step":9}
+{"blocked":false,"effects":[],"elapsed":0.31666666666666665,"instruction":{"condition":{"branch":{"jump":100},"branchOn":false},"op":"wfr","ticks":2},"nextPc":101,"pc":100,"step":19}
+{"blocked":false,"effects":[],"elapsed":0.31666666666666665,"instruction":{"op":"ret"},"nextPc":11,"pc":101,"step":19}
+{"blocked":false,"effects":[],"elapsed":0.31666666666666665,"instruction":{"op":"call","target":99},"nextPc":99,"pc":11,"step":19}
+{"blocked":false,"effects":[],"elapsed":0.31666666666666665,"instruction":{"op":"cfr"},"nextPc":100,"pc":99,"step":19}
+{"blocked":true,"effects":[],"elapsed":0.31666666666666665,"instruction":{"condition":{"branch":{"jump":100},"branchOn":false},"op":"wfr","ticks":2},"nextPc":100,"pc":100,"step":19}
+{"changed":{"host":{"tickCounter":0},"state":{"callStack":[12],"resumeAfterTick":1}},"elapsed":0.31666666666666665,"step":19}
+{"blocked":false,"effects":[],"elapsed":0.48333333333333328,"instruction":{"condition":{"branch":{"jump":100},"branchOn":false},"op":"wfr","ticks":2},"nextPc":100,"pc":100,"step":29}
+{"blocked":true,"effects":[],"elapsed":0.48333333333333328,"instruction":{"condition":{"branch":{"jump":100},"branchOn":false},"op":"wfr","ticks":2},"nextPc":100,"pc":100,"step":29}
+{"changed":{"host":{"tickCounter":1},"state":{"resumeAfterTick":2}},"elapsed":0.48333333333333328,"step":29}
+{"blocked":false,"effects":[],"elapsed":0.65000000000000036,"instruction":{"condition":{"branch":{"jump":100},"branchOn":false},"op":"wfr","ticks":2},"nextPc":101,"pc":100,"step":39}
+{"blocked":false,"effects":[],"elapsed":0.65000000000000036,"instruction":{"op":"ret"},"nextPc":12,"pc":101,"step":39}
+{"blocked":true,"effects":[{"playMessage":"CRASH IMMINENT,"}],"elapsed":0.65000000000000036,"instruction":{"op":"msg","tokens":[{"kind":"word","word":236},{"kind":"word","word":35},{"kind":"literal","text":"IMMINENT,"}]},"nextPc":13,"pc":12,"step":39}
+{"changed":{"host":{"messagePlaying":true,"tickCounter":2},"isMessageComplete":false,"state":{"callStack":[],"pc":13,"resumeAfterTick":null}},"elapsed":0.65000000000000036,"step":39}
+{"changed":{"message":"C"},"elapsed":0.73333333333333395,"step":44}
+{"changed":{"host":{"tickCounter":3}},"elapsed":0.81666666666666754,"step":49}
+{"changed":{"message":"CR"},"elapsed":0.83333333333333426,"step":50}
+{"changed":{"message":"CRA"},"elapsed":0.90000000000000113,"step":54}
+{"changed":{"host":{"tickCounter":4},"message":"CRAS"},"elapsed":0.98333333333333472,"step":59}
+{"changed":{"message":"CRASH"},"elapsed":1.0666666666666678,"step":64}
+{"changed":{"host":{"tickCounter":5},"message":"CRASH "},"elapsed":1.1500000000000008,"step":69}
+{"changed":{"message":"CRASH I"},"elapsed":1.2333333333333338,"step":74}
+{"changed":{"host":{"tickCounter":6},"message":"CRASH IM"},"elapsed":1.3166666666666669,"step":79}
+{"changed":{"message":"CRASH IMM"},"elapsed":1.3999999999999999,"step":84}
+{"changed":{"host":{"tickCounter":7}},"elapsed":1.4833333333333329,"step":89}
+{"changed":{"message":"CRASH IMMI"},"elapsed":1.4999999999999996,"step":90}
+{"changed":{"message":"CRASH IMMIN"},"elapsed":1.5833333333333326,"step":95}
+{"changed":{"host":{"tickCounter":8}},"elapsed":1.649999999999999,"step":99}
+{"changed":{"message":"CRASH IMMINE"},"elapsed":1.6666666666666656,"step":100}
+{"changed":{"message":"CRASH IMMINEN"},"elapsed":1.7499999999999987,"step":105}
+{"changed":{"host":{"tickCounter":9}},"elapsed":1.8166666666666651,"step":109}
+{"changed":{"message":"CRASH IMMINENT"},"elapsed":1.8333333333333317,"step":110}
+{"changed":{"message":"CRASH IMMINENT,"},"elapsed":1.9166666666666647,"step":115}
+{"changed":{"host":{"tickCounter":10}},"elapsed":1.9833333333333312,"step":119}
+{"changed":{"host":{"tickCounter":11}},"elapsed":2.1499999999999972,"step":129}
+{"changed":{"host":{"tickCounter":12}},"elapsed":2.3166666666666633,"step":139}
+{"changed":{"host":{"tickCounter":13}},"elapsed":2.4833333333333294,"step":149}
+{"changed":{"host":{"tickCounter":14}},"elapsed":2.6499999999999955,"step":159}
+{"changed":{"host":{"tickCounter":15}},"elapsed":2.8166666666666615,"step":169}
+{"changed":{"host":{"tickCounter":16}},"elapsed":2.9833333333333276,"step":179}
+{"changed":{"host":{"tickCounter":17}},"elapsed":3.1499999999999937,"step":189}
+{"changed":{"host":{"tickCounter":18}},"elapsed":3.3166666666666598,"step":199}
+{"changed":{"host":{"tickCounter":19}},"elapsed":3.4833333333333258,"step":209}
+{"changed":{"host":{"tickCounter":20}},"elapsed":3.6499999999999919,"step":219}
+{"changed":{"host":{"tickCounter":21}},"elapsed":3.816666666666658,"step":229}
+{"changed":{"host":{"tickCounter":22}},"elapsed":3.9833333333333241,"step":239}
+{"changed":{"host":{"tickCounter":23}},"elapsed":4.1499999999999906,"step":249}
+{"changed":{"host":{"tickCounter":24}},"elapsed":4.3166666666666567,"step":259}
+{"changed":{"host":{"tickCounter":25}},"elapsed":4.4833333333333227,"step":269}
+{"changed":{"host":{"tickCounter":26}},"elapsed":4.6499999999999888,"step":279}
+{"changed":{"host":{"tickCounter":27}},"elapsed":4.8166666666666549,"step":289}
+{"blocked":true,"effects":[{"playMessage":""}],"elapsed":4.9166666666666545,"instruction":{"op":"msgi","source":{"immediate":50}},"nextPc":14,"pc":13,"step":295}
+{"changed":{"isMessageComplete":true,"message":"","state":{"pc":14}},"elapsed":4.9166666666666545,"step":295}
+{"blocked":false,"effects":[],"elapsed":4.9333333333333211,"instruction":{"op":"call","target":99},"nextPc":99,"pc":14,"step":296}
+{"blocked":false,"effects":[],"elapsed":4.9333333333333211,"instruction":{"op":"cfr"},"nextPc":100,"pc":99,"step":296}
+{"blocked":true,"effects":[],"elapsed":4.9333333333333211,"instruction":{"condition":{"branch":{"jump":100},"branchOn":false},"op":"wfr","ticks":2},"nextPc":100,"pc":100,"step":296}
+{"changed":{"host":{"messagePlaying":false,"tickCounter":0},"state":{"callStack":[15],"pc":100,"resumeAfterTick":1}},"elapsed":4.9333333333333211,"step":296}
+{"blocked":false,"effects":[],"elapsed":4.983333333333321,"instruction":{"condition":{"branch":{"jump":100},"branchOn":false},"op":"wfr","ticks":2},"nextPc":100,"pc":100,"step":299}
+{"blocked":true,"effects":[],"elapsed":4.983333333333321,"instruction":{"condition":{"branch":{"jump":100},"branchOn":false},"op":"wfr","ticks":2},"nextPc":100,"pc":100,"step":299}
+{"changed":{"host":{"tickCounter":1},"state":{"resumeAfterTick":2}},"elapsed":4.983333333333321,"step":299}
+{"blocked":false,"effects":[],"elapsed":5.149999999999987,"instruction":{"condition":{"branch":{"jump":100},"branchOn":false},"op":"wfr","ticks":2},"nextPc":101,"pc":100,"step":309}
+{"blocked":false,"effects":[],"elapsed":5.149999999999987,"instruction":{"op":"ret"},"nextPc":15,"pc":101,"step":309}
+{"blocked":true,"effects":[{"playMessage":"RETURNING TO - - -"}],"elapsed":5.149999999999987,"instruction":{"op":"msg","tokens":[{"kind":"space"},{"kind":"literal","text":"RETURNING"},{"kind":"word","word":213},{"kind":"word","word":10}]},"nextPc":16,"pc":15,"step":309}
+{"changed":{"host":{"messagePlaying":true,"tickCounter":2},"isMessageComplete":false,"state":{"callStack":[],"pc":16,"resumeAfterTick":null}},"elapsed":5.149999999999987,"step":309}
+{"changed":{"message":"R"},"elapsed":5.2333333333333201,"step":314}
+{"changed":{"host":{"tickCounter":3}},"elapsed":5.3166666666666531,"step":319}
+{"changed":{"message":"RE"},"elapsed":5.3333333333333197,"step":320}
+{"changed":{"message":"RET"},"elapsed":5.3999999999999861,"step":324}
+{"changed":{"host":{"tickCounter":4},"message":"RETU"},"elapsed":5.4833333333333192,"step":329}
+{"changed":{"message":"RETUR"},"elapsed":5.5666666666666522,"step":334}
+{"changed":{"host":{"tickCounter":5},"message":"RETURN"},"elapsed":5.6499999999999853,"step":339}
+{"changed":{"message":"RETURNI"},"elapsed":5.7333333333333183,"step":344}
+{"changed":{"host":{"tickCounter":6},"message":"RETURNIN"},"elapsed":5.8166666666666513,"step":349}
+{"changed":{"message":"RETURNING"},"elapsed":5.8999999999999844,"step":354}
+{"changed":{"host":{"tickCounter":7}},"elapsed":5.9833333333333174,"step":359}
+{"changed":{"message":"RETURNING "},"elapsed":5.999999999999984,"step":360}
+{"changed":{"message":"RETURNING T"},"elapsed":6.0833333333333171,"step":365}
+{"changed":{"host":{"tickCounter":8}},"elapsed":6.1499999999999835,"step":369}
+{"changed":{"message":"RETURNING TO"},"elapsed":6.1666666666666501,"step":370}
+{"changed":{"message":"RETURNING TO "},"elapsed":6.2499999999999831,"step":375}
+{"changed":{"host":{"tickCounter":9}},"elapsed":6.3166666666666496,"step":379}
+{"changed":{"message":"RETURNING TO -"},"elapsed":6.3333333333333162,"step":380}
+{"changed":{"message":"RETURNING TO - "},"elapsed":6.4166666666666492,"step":385}
+{"changed":{"host":{"tickCounter":10}},"elapsed":6.4833333333333156,"step":389}
+{"changed":{"message":"RETURNING TO - -"},"elapsed":6.4999999999999822,"step":390}
+{"changed":{"message":"RETURNING TO - - "},"elapsed":6.5833333333333153,"step":395}
+{"changed":{"host":{"tickCounter":11}},"elapsed":6.6499999999999817,"step":399}
+{"changed":{"message":"RETURNING TO - - -"},"elapsed":6.6666666666666483,"step":400}
+{"changed":{"host":{"tickCounter":12}},"elapsed":6.8166666666666478,"step":409}
+{"changed":{"host":{"tickCounter":13}},"elapsed":6.9833333333333139,"step":419}
+{"changed":{"host":{"tickCounter":14}},"elapsed":7.1499999999999799,"step":429}
+{"changed":{"host":{"tickCounter":15}},"elapsed":7.316666666666646,"step":439}
+{"changed":{"host":{"tickCounter":16}},"elapsed":7.4833333333333121,"step":449}
+{"changed":{"host":{"tickCounter":17}},"elapsed":7.6499999999999782,"step":459}
+{"changed":{"host":{"tickCounter":18}},"elapsed":7.8166666666666442,"step":469}
+{"changed":{"host":{"tickCounter":19}},"elapsed":7.9833333333333103,"step":479}
+{"changed":{"host":{"tickCounter":20}},"elapsed":8.1499999999999844,"step":489}
+{"changed":{"host":{"tickCounter":21}},"elapsed":8.3166666666666593,"step":499}
+{"changed":{"host":{"tickCounter":22}},"elapsed":8.4833333333333343,"step":509}
+{"changed":{"host":{"tickCounter":23}},"elapsed":8.6500000000000092,"step":519}
+{"changed":{"host":{"tickCounter":24}},"elapsed":8.8166666666666842,"step":529}
+{"changed":{"host":{"tickCounter":25}},"elapsed":8.9833333333333591,"step":539}
+{"changed":{"host":{"tickCounter":26}},"elapsed":9.1500000000000341,"step":549}
+{"changed":{"host":{"tickCounter":27}},"elapsed":9.3166666666667091,"step":559}
+{"changed":{"host":{"tickCounter":28}},"elapsed":9.483333333333384,"step":569}
+{"changed":{"host":{"tickCounter":29}},"elapsed":9.650000000000059,"step":579}
+{"blocked":true,"effects":[{"playMessage":"MANUAL CONTROL"}],"elapsed":9.6666666666667265,"instruction":{"op":"msg","tokens":[{"kind":"word","word":236},{"kind":"literal","text":"MANUAL"},{"kind":"word","word":40}]},"nextPc":17,"pc":16,"step":580}
+{"changed":{"message":"","state":{"pc":17}},"elapsed":9.6666666666667265,"step":580}
+{"changed":{"message":"M"},"elapsed":9.7500000000000639,"step":585}
+{"changed":{"host":{"tickCounter":30}},"elapsed":9.8166666666667339,"step":589}
+{"changed":{"message":"MA"},"elapsed":9.8500000000000689,"step":591}
+{"changed":{"message":"MAN"},"elapsed":9.9166666666667389,"step":595}
+{"changed":{"host":{"tickCounter":31}},"elapsed":9.9833333333334089,"step":599}
+{"changed":{"message":"MANU"},"elapsed":10.000000000000076,"step":600}
+{"changed":{"message":"MANUA"},"elapsed":10.083333333333414,"step":605}
+{"changed":{"host":{"tickCounter":32}},"elapsed":10.150000000000084,"step":609}
+{"changed":{"message":"MANUAL"},"elapsed":10.166666666666751,"step":610}
+{"changed":{"message":"MANUAL "},"elapsed":10.250000000000089,"step":615}
+{"changed":{"host":{"tickCounter":33}},"elapsed":10.316666666666759,"step":619}
+{"changed":{"message":"MANUAL C"},"elapsed":10.333333333333426,"step":620}
+{"changed":{"message":"MANUAL CO"},"elapsed":10.416666666666764,"step":625}
+{"changed":{"host":{"tickCounter":34}},"elapsed":10.483333333333434,"step":629}
+{"changed":{"message":"MANUAL CON"},"elapsed":10.516666666666769,"step":631}
+{"changed":{"message":"MANUAL CONT"},"elapsed":10.600000000000106,"step":636}
+{"changed":{"host":{"tickCounter":35}},"elapsed":10.650000000000109,"step":639}
+{"changed":{"message":"MANUAL CONTR"},"elapsed":10.683333333333444,"step":641}
+{"changed":{"message":"MANUAL CONTRO"},"elapsed":10.766666666666781,"step":646}
+{"changed":{"host":{"tickCounter":36}},"elapsed":10.816666666666784,"step":649}
+{"changed":{"message":"MANUAL CONTROL"},"elapsed":10.850000000000119,"step":651}
+{"changed":{"host":{"tickCounter":37}},"elapsed":10.983333333333459,"step":659}
+{"changed":{"host":{"tickCounter":38}},"elapsed":11.150000000000134,"step":669}
+{"changed":{"host":{"tickCounter":39}},"elapsed":11.316666666666809,"step":679}
+{"changed":{"host":{"tickCounter":40}},"elapsed":11.483333333333483,"step":689}
+{"changed":{"host":{"tickCounter":41}},"elapsed":11.650000000000158,"step":699}
+{"changed":{"host":{"tickCounter":42}},"elapsed":11.816666666666833,"step":709}
+{"changed":{"host":{"tickCounter":43}},"elapsed":11.983333333333508,"step":719}
+{"changed":{"host":{"tickCounter":44}},"elapsed":12.150000000000183,"step":729}
+{"changed":{"host":{"tickCounter":45}},"elapsed":12.316666666666858,"step":739}
+{"changed":{"host":{"tickCounter":46}},"elapsed":12.483333333333533,"step":749}
+{"changed":{"host":{"tickCounter":47}},"elapsed":12.650000000000208,"step":759}
+{"changed":{"host":{"tickCounter":48}},"elapsed":12.816666666666883,"step":769}
+{"changed":{"host":{"tickCounter":49}},"elapsed":12.983333333333558,"step":779}
+{"changed":{"host":{"tickCounter":50}},"elapsed":13.150000000000233,"step":789}
+{"changed":{"host":{"tickCounter":51}},"elapsed":13.316666666666908,"step":799}
+{"changed":{"host":{"tickCounter":52}},"elapsed":13.483333333333583,"step":809}
+{"changed":{"host":{"tickCounter":53}},"elapsed":13.650000000000258,"step":819}
+{"changed":{"host":{"tickCounter":54}},"elapsed":13.816666666666933,"step":829}
+{"blocked":false,"effects":[{"sound":{"symbol":"voice1.control","value":0}}],"elapsed":13.850000000000268,"instruction":{"op":"sound","symbol":"voice1.control","value":0},"nextPc":18,"pc":17,"step":831}
+{"blocked":false,"effects":[],"elapsed":13.850000000000268,"instruction":{"op":"call","target":99},"nextPc":99,"pc":18,"step":831}
+{"blocked":false,"effects":[],"elapsed":13.850000000000268,"instruction":{"op":"cfr"},"nextPc":100,"pc":99,"step":831}
+{"blocked":true,"effects":[],"elapsed":13.850000000000268,"instruction":{"condition":{"branch":{"jump":100},"branchOn":false},"op":"wfr","ticks":2},"nextPc":100,"pc":100,"step":831}
+{"changed":{"host":{"messagePlaying":false,"tickCounter":0},"isMessageComplete":true,"state":{"callStack":[19],"pc":100,"resumeAfterTick":1}},"elapsed":13.850000000000268,"step":831}
+{"blocked":false,"effects":[],"elapsed":13.983333333333608,"instruction":{"condition":{"branch":{"jump":100},"branchOn":false},"op":"wfr","ticks":2},"nextPc":100,"pc":100,"step":839}
+{"blocked":true,"effects":[],"elapsed":13.983333333333608,"instruction":{"condition":{"branch":{"jump":100},"branchOn":false},"op":"wfr","ticks":2},"nextPc":100,"pc":100,"step":839}
+{"changed":{"host":{"tickCounter":1},"state":{"resumeAfterTick":2}},"elapsed":13.983333333333608,"step":839}
+{"blocked":false,"effects":[],"elapsed":14.150000000000283,"instruction":{"condition":{"branch":{"jump":100},"branchOn":false},"op":"wfr","ticks":2},"nextPc":101,"pc":100,"step":849}
+{"blocked":false,"effects":[],"elapsed":14.150000000000283,"instruction":{"op":"ret"},"nextPc":19,"pc":101,"step":849}
+{"blocked":true,"effects":[{"playMessage":"GOOD LANDING,"}],"elapsed":14.150000000000283,"instruction":{"base":60,"mask":3,"op":"msgr"},"nextPc":20,"pc":19,"step":849}
+{"changed":{"host":{"messagePlaying":true,"tickCounter":2},"isMessageComplete":false,"message":"","state":{"callStack":[],"pc":20,"randomState":"14600855335255770694","resumeAfterTick":null}},"elapsed":14.150000000000283,"step":849}
+{"changed":{"message":"G"},"elapsed":14.23333333333362,"step":854}
+{"changed":{"host":{"tickCounter":3}},"elapsed":14.316666666666958,"step":859}
+{"changed":{"message":"GO"},"elapsed":14.333333333333625,"step":860}
+{"changed":{"message":"GOO"},"elapsed":14.400000000000295,"step":864}
+{"changed":{"host":{"tickCounter":4},"message":"GOOD"},"elapsed":14.483333333333633,"step":869}
+{"changed":{"message":"GOOD "},"elapsed":14.56666666666697,"step":874}
+{"changed":{"host":{"tickCounter":5},"message":"GOOD L"},"elapsed":14.650000000000308,"step":879}
+{"changed":{"message":"GOOD LA"},"elapsed":14.733333333333645,"step":884}
+{"changed":{"host":{"tickCounter":6},"message":"GOOD LAN"},"elapsed":14.816666666666983,"step":889}
+{"changed":{"message":"GOOD LAND"},"elapsed":14.90000000000032,"step":894}
+{"changed":{"host":{"tickCounter":7}},"elapsed":14.983333333333658,"step":899}
+{"changed":{"message":"GOOD LANDI"},"elapsed":15.000000000000325,"step":900}
+{"changed":{"message":"GOOD LANDIN"},"elapsed":15.083333333333663,"step":905}
+{"changed":{"host":{"tickCounter":8}},"elapsed":15.150000000000333,"step":909}
+{"changed":{"message":"GOOD LANDING"},"elapsed":15.166666666667,"step":910}
+{"changed":{"message":"GOOD LANDING,"},"elapsed":15.250000000000338,"step":915}
+{"changed":{"host":{"tickCounter":9}},"elapsed":15.316666666667007,"step":919}
+{"changed":{"host":{"tickCounter":10}},"elapsed":15.483333333333682,"step":929}
+{"changed":{"host":{"tickCounter":11}},"elapsed":15.650000000000357,"step":939}
+{"changed":{"host":{"tickCounter":12}},"elapsed":15.816666666667032,"step":949}
+{"changed":{"host":{"tickCounter":13}},"elapsed":15.983333333333707,"step":959}
+{"changed":{"host":{"tickCounter":14}},"elapsed":16.150000000000365,"step":969}
+{"changed":{"host":{"tickCounter":15}},"elapsed":16.316666666667022,"step":979}
+{"changed":{"host":{"tickCounter":16}},"elapsed":16.483333333333679,"step":989}
+{"changed":{"host":{"tickCounter":17}},"elapsed":16.650000000000336,"step":999}
+{"changed":{"host":{"tickCounter":18}},"elapsed":16.816666666666993,"step":1009}
+{"changed":{"host":{"tickCounter":19}},"elapsed":16.98333333333365,"step":1019}
+{"changed":{"host":{"tickCounter":20}},"elapsed":17.150000000000308,"step":1029}
+{"changed":{"host":{"tickCounter":21}},"elapsed":17.316666666666965,"step":1039}
+{"changed":{"host":{"tickCounter":22}},"elapsed":17.483333333333622,"step":1049}
+{"changed":{"host":{"tickCounter":23}},"elapsed":17.650000000000279,"step":1059}
+{"changed":{"host":{"tickCounter":24}},"elapsed":17.816666666666936,"step":1069}
+{"changed":{"host":{"tickCounter":25}},"elapsed":17.983333333333594,"step":1079}
+{"changed":{"host":{"tickCounter":26}},"elapsed":18.150000000000251,"step":1089}
+{"blocked":true,"effects":[{"playMessage":""}],"elapsed":18.250000000000245,"instruction":{"op":"msgi","source":{"immediate":50}},"nextPc":21,"pc":20,"step":1095}
+{"changed":{"isMessageComplete":true,"message":"","state":{"pc":21}},"elapsed":18.250000000000245,"step":1095}
+{"blocked":false,"effects":[],"elapsed":18.266666666666911,"instruction":{"mask":128,"op":"clrf"},"nextPc":22,"pc":21,"step":1096}
+{"blocked":true,"effects":[{"playMessage":"STATUS REPORT"}],"elapsed":18.266666666666911,"instruction":{"op":"msg","tokens":[{"kind":"word","word":235},{"kind":"word","word":199},{"kind":"word","word":192}]},"nextPc":23,"pc":22,"step":1096}
+{"changed":{"isMessageComplete":false,"state":{"pc":23}},"elapsed":18.266666666666911,"step":1096}
+{"changed":{"host":{"tickCounter":27}},"elapsed":18.316666666666908,"step":1099}
+{"changed":{"message":"S"},"elapsed":18.350000000000239,"step":1101}
+{"changed":{"message":"ST"},"elapsed":18.450000000000234,"step":1107}
+{"changed":{"host":{"tickCounter":28}},"elapsed":18.483333333333565,"step":1109}
+{"changed":{"message":"STA"},"elapsed":18.516666666666897,"step":1111}
+{"changed":{"message":"STAT"},"elapsed":18.600000000000225,"step":1116}
+{"changed":{"host":{"tickCounter":29}},"elapsed":18.650000000000222,"step":1119}
+{"changed":{"message":"STATU"},"elapsed":18.683333333333554,"step":1121}
+{"changed":{"message":"STATUS"},"elapsed":18.766666666666882,"step":1126}
+{"changed":{"host":{"tickCounter":30}},"elapsed":18.81666666666688,"step":1129}
+{"changed":{"message":"STATUS "},"elapsed":18.850000000000211,"step":1131}
+{"changed":{"message":"STATUS R"},"elapsed":18.93333333333354,"step":1136}
+{"changed":{"host":{"tickCounter":31}},"elapsed":18.983333333333537,"step":1139}
+{"changed":{"message":"STATUS RE"},"elapsed":19.016666666666868,"step":1141}
+{"changed":{"message":"STATUS REP"},"elapsed":19.116666666666863,"step":1147}
+{"changed":{"host":{"tickCounter":32}},"elapsed":19.150000000000194,"step":1149}
+{"changed":{"message":"STATUS REPO"},"elapsed":19.200000000000191,"step":1152}
+{"changed":{"message":"STATUS REPOR"},"elapsed":19.28333333333352,"step":1157}
+{"changed":{"host":{"tickCounter":33}},"elapsed":19.316666666666851,"step":1159}
+{"changed":{"message":"STATUS REPORT"},"elapsed":19.366666666666848,"step":1162}
+{"changed":{"host":{"tickCounter":34}},"elapsed":19.483333333333508,"step":1169}
+{"changed":{"host":{"tickCounter":35}},"elapsed":19.650000000000166,"step":1179}
+{"changed":{"host":{"tickCounter":36}},"elapsed":19.816666666666823,"step":1189}
+{"changed":{"host":{"tickCounter":37}},"elapsed":19.98333333333348,"step":1199}
+{"changed":{"host":{"tickCounter":38}},"elapsed":20.150000000000137,"step":1209}
+{"changed":{"host":{"tickCounter":39}},"elapsed":20.316666666666794,"step":1219}
+{"changed":{"host":{"tickCounter":40}},"elapsed":20.483333333333452,"step":1229}
+{"changed":{"host":{"tickCounter":41}},"elapsed":20.650000000000109,"step":1239}
+{"changed":{"host":{"tickCounter":42}},"elapsed":20.816666666666766,"step":1249}
+{"changed":{"host":{"tickCounter":43}},"elapsed":20.983333333333423,"step":1259}
+{"changed":{"host":{"tickCounter":44}},"elapsed":21.15000000000008,"step":1269}
+{"changed":{"host":{"tickCounter":45}},"elapsed":21.316666666666737,"step":1279}
+{"changed":{"host":{"tickCounter":46}},"elapsed":21.483333333333395,"step":1289}
+{"changed":{"host":{"tickCounter":47}},"elapsed":21.650000000000052,"step":1299}
+{"changed":{"host":{"tickCounter":48}},"elapsed":21.816666666666709,"step":1309}
+{"changed":{"host":{"tickCounter":49}},"elapsed":21.983333333333366,"step":1319}
+{"changed":{"host":{"tickCounter":50}},"elapsed":22.150000000000023,"step":1329}
+{"changed":{"host":{"tickCounter":51}},"elapsed":22.316666666666681,"step":1339}
+{"blocked":true,"effects":[{"playMessage":"CRASH LANDED ON TARG"}],"elapsed":22.366666666666678,"instruction":{"op":"msg","tokens":[{"kind":"space"},{"kind":"word","word":35},{"kind":"word","word":152},{"kind":"word","word":4},{"kind":"word","word":173},{"kind":"word","word":215}]},"nextPc":24,"pc":23,"step":1342}
+{"changed":{"message":"","state":{"pc":24}},"elapsed":22.366666666666678,"step":1342}
+{"changed":{"message":"C"},"elapsed":22.450000000000006,"step":1347}
+{"changed":{"host":{"tickCounter":52}},"elapsed":22.483333333333338,"step":1349}
+{"changed":{"message":"CR"},"elapsed":22.550000000000001,"step":1353}
+{"changed":{"message":"CRA"},"elapsed":22.616666666666664,"step":1357}
+{"changed":{"host":{"tickCounter":53}},"elapsed":22.649999999999995,"step":1359}
+{"changed":{"message":"CRAS"},"elapsed":22.699999999999992,"step":1362}
+{"changed":{"message":"CRASH"},"elapsed":22.783333333333321,"step":1367}
+{"changed":{"host":{"tickCounter":54}},"elapsed":22.816666666666652,"step":1369}
+{"changed":{"message":"CRASH "},"elapsed":22.866666666666649,"step":1372}
+{"changed":{"message":"CRASH L"},"elapsed":22.949999999999978,"step":1377}
+{"changed":{"host":{"tickCounter":55}},"elapsed":22.983333333333309,"step":1379}
+{"changed":{"message":"CRASH LA"},"elapsed":23.033333333333307,"step":1382}
+{"changed":{"message":"CRASH LAN"},"elapsed":23.116666666666635,"step":1387}
+{"changed":{"host":{"tickCounter":56}},"elapsed":23.149999999999967,"step":1389}
+{"changed":{"message":"CRASH LAND"},"elapsed":23.216666666666629,"step":1393}
+{"changed":{"message":"CRASH LANDE"},"elapsed":23.299999999999958,"step":1398}
+{"changed":{"host":{"tickCounter":57}},"elapsed":23.316666666666624,"step":1399}
+{"changed":{"message":"CRASH LANDED"},"elapsed":23.383333333333287,"step":1403}
+{"changed":{"message":"CRASH LANDED "},"elapsed":23.466666666666615,"step":1408}
+{"changed":{"host":{"tickCounter":58}},"elapsed":23.483333333333281,"step":1409}
+{"changed":{"message":"CRASH LANDED O"},"elapsed":23.549999999999944,"step":1413}
+{"changed":{"message":"CRASH LANDED ON"},"elapsed":23.633333333333272,"step":1418}
+{"changed":{"host":{"tickCounter":59}},"elapsed":23.649999999999938,"step":1419}
+{"changed":{"message":"CRASH LANDED ON "},"elapsed":23.716666666666601,"step":1423}
+{"changed":{"message":"CRASH LANDED ON T"},"elapsed":23.79999999999993,"step":1428}
+{"changed":{"host":{"tickCounter":60}},"elapsed":23.816666666666595,"step":1429}
+{"changed":{"message":"CRASH LANDED ON TA"},"elapsed":23.883333333333258,"step":1433}
+{"changed":{"message":"CRASH LANDED ON TAR"},"elapsed":23.966666666666587,"step":1438}
+{"changed":{"host":{"tickCounter":61}},"elapsed":23.983333333333253,"step":1439}
+{"changed":{"message":"CRASH LANDED ON TARG"},"elapsed":24.049999999999915,"step":1443}
+{"changed":{"host":{"tickCounter":62}},"elapsed":24.14999999999991,"step":1449}
+{"changed":{"host":{"tickCounter":63}},"elapsed":24.316666666666567,"step":1459}
+{"changed":{"host":{"tickCounter":64}},"elapsed":24.483333333333224,"step":1469}
+{"changed":{"host":{"tickCounter":65}},"elapsed":24.649999999999881,"step":1479}
+{"changed":{"host":{"tickCounter":66}},"elapsed":24.816666666666539,"step":1489}
+{"changed":{"host":{"tickCounter":67}},"elapsed":24.983333333333196,"step":1499}
+{"changed":{"host":{"tickCounter":68}},"elapsed":25.149999999999853,"step":1509}
+{"changed":{"host":{"tickCounter":69}},"elapsed":25.31666666666651,"step":1519}
+{"changed":{"host":{"tickCounter":70}},"elapsed":25.483333333333167,"step":1529}
+{"changed":{"host":{"tickCounter":71}},"elapsed":25.649999999999824,"step":1539}
+{"changed":{"host":{"tickCounter":72}},"elapsed":25.816666666666482,"step":1549}
+{"changed":{"host":{"tickCounter":73}},"elapsed":25.983333333333139,"step":1559}
+{"changed":{"host":{"tickCounter":74}},"elapsed":26.149999999999796,"step":1569}
+{"changed":{"host":{"tickCounter":75}},"elapsed":26.316666666666453,"step":1579}
+{"changed":{"host":{"tickCounter":76}},"elapsed":26.48333333333311,"step":1589}
+{"changed":{"host":{"tickCounter":77}},"elapsed":26.649999999999768,"step":1599}
+{"changed":{"host":{"tickCounter":78}},"elapsed":26.816666666666425,"step":1609}
+{"changed":{"host":{"tickCounter":79}},"elapsed":26.983333333333082,"step":1619}
+{"blocked":true,"effects":[{"playMessage":"PRESTINIUM DESTROYED"}],"elapsed":27.049999999999745,"instruction":{"op":"msg","tokens":[{"kind":"space"},{"kind":"literal","text":"PRESTINIUM"},{"kind":"word","word":48},{"kind":"word","word":4}]},"nextPc":25,"pc":24,"step":1623}
+{"changed":{"message":"","state":{"pc":25}},"elapsed":27.049999999999745,"step":1623}
+{"changed":{"message":"P"},"elapsed":27.133333333333074,"step":1628}
+{"changed":{"host":{"tickCounter":80}},"elapsed":27.149999999999739,"step":1629}
+{"changed":{"message":"PR"},"elapsed":27.233333333333068,"step":1634}
+{"changed":{"message":"PRE"},"elapsed":27.299999999999731,"step":1638}
+{"changed":{"host":{"tickCounter":81}},"elapsed":27.316666666666396,"step":1639}
+{"changed":{"message":"PRES"},"elapsed":27.383333333333059,"step":1643}
+{"changed":{"message":"PREST"},"elapsed":27.466666666666388,"step":1648}
+{"changed":{"host":{"tickCounter":82}},"elapsed":27.483333333333054,"step":1649}
+{"changed":{"message":"PRESTI"},"elapsed":27.549999999999716,"step":1653}
+{"changed":{"message":"PRESTIN"},"elapsed":27.633333333333045,"step":1658}
+{"changed":{"host":{"tickCounter":83}},"elapsed":27.649999999999711,"step":1659}
+{"changed":{"message":"PRESTINI"},"elapsed":27.716666666666374,"step":1663}
+{"changed":{"message":"PRESTINIU"},"elapsed":27.799999999999702,"step":1668}
+{"changed":{"host":{"tickCounter":84}},"elapsed":27.816666666666368,"step":1669}
+{"changed":{"message":"PRESTINIUM"},"elapsed":27.899999999999697,"step":1674}
+{"changed":{"host":{"tickCounter":85},"message":"PRESTINIUM "},"elapsed":27.983333333333025,"step":1679}
+{"changed":{"message":"PRESTINIUM D"},"elapsed":28.066666666666354,"step":1684}
+{"changed":{"host":{"tickCounter":86},"message":"PRESTINIUM DE"},"elapsed":28.149999999999682,"step":1689}
+{"changed":{"message":"PRESTINIUM DES"},"elapsed":28.233333333333011,"step":1694}
+{"changed":{"host":{"tickCounter":87},"message":"PRESTINIUM DEST"},"elapsed":28.31666666666634,"step":1699}
+{"changed":{"message":"PRESTINIUM DESTR"},"elapsed":28.399999999999668,"step":1704}
+{"changed":{"host":{"tickCounter":88},"message":"PRESTINIUM DESTRO"},"elapsed":28.483333333332997,"step":1709}
+{"changed":{"message":"PRESTINIUM DESTROY"},"elapsed":28.566666666666325,"step":1714}
+{"changed":{"host":{"tickCounter":89},"message":"PRESTINIUM DESTROYE"},"elapsed":28.649999999999654,"step":1719}
+{"changed":{"message":"PRESTINIUM DESTROYED"},"elapsed":28.733333333332983,"step":1724}
+{"changed":{"host":{"tickCounter":90}},"elapsed":28.816666666666311,"step":1729}
+{"changed":{"host":{"tickCounter":91}},"elapsed":28.983333333332968,"step":1739}
+{"changed":{"host":{"tickCounter":92}},"elapsed":29.149999999999626,"step":1749}
+{"changed":{"host":{"tickCounter":93}},"elapsed":29.316666666666283,"step":1759}
+{"changed":{"host":{"tickCounter":94}},"elapsed":29.48333333333294,"step":1769}
+{"changed":{"host":{"tickCounter":95}},"elapsed":29.649999999999597,"step":1779}
+{"changed":{"host":{"tickCounter":96}},"elapsed":29.816666666666254,"step":1789}
+{"changed":{"host":{"tickCounter":97}},"elapsed":29.983333333332912,"step":1799}
+{"changed":{"host":{"tickCounter":98}},"elapsed":30.149999999999569,"step":1809}
+{"changed":{"host":{"tickCounter":99}},"elapsed":30.316666666666226,"step":1819}
+{"changed":{"host":{"tickCounter":100}},"elapsed":30.483333333332883,"step":1829}
+{"changed":{"host":{"tickCounter":101}},"elapsed":30.64999999999954,"step":1839}
+{"changed":{"host":{"tickCounter":102}},"elapsed":30.816666666666197,"step":1849}
+{"changed":{"host":{"tickCounter":103}},"elapsed":30.983333333332855,"step":1859}
+{"changed":{"host":{"tickCounter":104}},"elapsed":31.149999999999512,"step":1869}
+{"changed":{"host":{"tickCounter":105}},"elapsed":31.316666666666169,"step":1879}
+{"changed":{"host":{"tickCounter":106}},"elapsed":31.483333333332826,"step":1889}
+{"changed":{"host":{"tickCounter":107}},"elapsed":31.649999999999483,"step":1899}
+{"blocked":true,"effects":[{"playMessage":"STATE OF WAR BETWEEN"}],"elapsed":31.733333333332812,"instruction":{"op":"msg","tokens":[{"kind":"literal","text":" STATE OF WAR BETWEEN"}]},"nextPc":26,"pc":25,"step":1904}
+{"changed":{"message":"","state":{"pc":26}},"elapsed":31.733333333332812,"step":1904}
+{"changed":{"host":{"tickCounter":108},"message":"S"},"elapsed":31.816666666666141,"step":1909}
+{"changed":{"message":"ST"},"elapsed":31.916666666666135,"step":1915}
+{"changed":{"host":{"tickCounter":109},"message":"STA"},"elapsed":31.983333333332798,"step":1919}
+{"changed":{"message":"STAT"},"elapsed":32.06666666666613,"step":1924}
+{"changed":{"host":{"tickCounter":110},"message":"STATE"},"elapsed":32.149999999999459,"step":1929}
+{"changed":{"message":"STATE "},"elapsed":32.233333333332787,"step":1934}
+{"changed":{"host":{"tickCounter":111},"message":"STATE O"},"elapsed":32.316666666666116,"step":1939}
+{"changed":{"message":"STATE OF"},"elapsed":32.399999999999444,"step":1944}
+{"changed":{"host":{"tickCounter":112},"message":"STATE OF "},"elapsed":32.483333333332773,"step":1949}
+{"changed":{"message":"STATE OF W"},"elapsed":32.583333333332767,"step":1955}
+{"changed":{"host":{"tickCounter":113}},"elapsed":32.64999999999943,"step":1959}
+{"changed":{"message":"STATE OF WA"},"elapsed":32.666666666666096,"step":1960}
+{"changed":{"message":"STATE OF WAR"},"elapsed":32.749999999999424,"step":1965}
+{"changed":{"host":{"tickCounter":114}},"elapsed":32.816666666666087,"step":1969}
+{"changed":{"message":"STATE OF WAR "},"elapsed":32.833333333332753,"step":1970}
+{"changed":{"message":"STATE OF WAR B"},"elapsed":32.916666666666082,"step":1975}
+{"changed":{"host":{"tickCounter":115}},"elapsed":32.983333333332745,"step":1979}
+{"changed":{"message":"STATE OF WAR BE"},"elapsed":32.99999999999941,"step":1980}
+{"changed":{"message":"STATE OF WAR BET"},"elapsed":33.083333333332739,"step":1985}
+{"changed":{"host":{"tickCounter":116}},"elapsed":33.149999999999402,"step":1989}
+{"changed":{"message":"STATE OF WAR BETW"},"elapsed":33.166666666666067,"step":1990}
+{"changed":{"message":"STATE OF WAR BETWE"},"elapsed":33.249999999999396,"step":1995}
+{"changed":{"host":{"tickCounter":117}},"elapsed":33.316666666666059,"step":1999}
+{"changed":{"message":"STATE OF WAR BETWEE"},"elapsed":33.333333333332725,"step":2000}
+{"changed":{"message":"STATE OF WAR BETWEEN"},"elapsed":33.416666666666053,"step":2005}
+{"changed":{"host":{"tickCounter":118}},"elapsed":33.483333333332716,"step":2009}
+{"changed":{"host":{"tickCounter":119}},"elapsed":33.649999999999373,"step":2019}
+{"changed":{"host":{"tickCounter":120}},"elapsed":33.81666666666603,"step":2029}
+{"changed":{"host":{"tickCounter":121}},"elapsed":33.983333333332688,"step":2039}
+{"changed":{"host":{"tickCounter":122}},"elapsed":34.149999999999345,"step":2049}
+{"changed":{"host":{"tickCounter":123}},"elapsed":34.316666666666002,"step":2059}
+{"changed":{"host":{"tickCounter":124}},"elapsed":34.483333333332659,"step":2069}
+{"changed":{"host":{"tickCounter":125}},"elapsed":34.649999999999316,"step":2079}
+{"changed":{"host":{"tickCounter":126}},"elapsed":34.816666666665974,"step":2089}
+{"changed":{"host":{"tickCounter":127}},"elapsed":34.983333333332631,"step":2099}
+{"changed":{"host":{"tickCounter":128}},"elapsed":35.149999999999288,"step":2109}
+{"changed":{"host":{"tickCounter":129}},"elapsed":35.316666666665945,"step":2119}
+{"changed":{"host":{"tickCounter":130}},"elapsed":35.483333333332602,"step":2129}
+{"changed":{"host":{"tickCounter":131}},"elapsed":35.64999999999926,"step":2139}
+{"changed":{"host":{"tickCounter":132}},"elapsed":35.816666666665917,"step":2149}
+{"changed":{"host":{"tickCounter":133}},"elapsed":35.983333333332574,"step":2159}
+{"changed":{"host":{"tickCounter":134}},"elapsed":36.149999999999231,"step":2169}
+{"changed":{"host":{"tickCounter":135}},"elapsed":36.316666666665888,"step":2179}
+{"blocked":true,"effects":[{"playMessage":"PALYARS AND MECHANOIDS"}],"elapsed":36.416666666665883,"instruction":{"op":"msg","tokens":[{"kind":"word","word":180},{"kind":"word","word":2},{"kind":"word","word":19},{"kind":"word","word":159},{"kind":"word","word":2}]},"nextPc":27,"pc":26,"step":2185}
+{"changed":{"message":"","state":{"pc":27}},"elapsed":36.416666666665883,"step":2185}
+{"changed":{"host":{"tickCounter":136}},"elapsed":36.483333333332546,"step":2189}
+{"changed":{"message":"P"},"elapsed":36.499999999999211,"step":2190}
+{"changed":{"message":"PA"},"elapsed":36.599999999999206,"step":2196}
+{"changed":{"host":{"tickCounter":137}},"elapsed":36.649999999999203,"step":2199}
+{"changed":{"message":"PAL"},"elapsed":36.666666666665868,"step":2200}
+{"changed":{"message":"PALY"},"elapsed":36.749999999999197,"step":2205}
+{"changed":{"host":{"tickCounter":138}},"elapsed":36.81666666666586,"step":2209}
+{"changed":{"message":"PALYA"},"elapsed":36.833333333332526,"step":2210}
+{"changed":{"message":"PALYAR"},"elapsed":36.916666666665854,"step":2215}
+{"changed":{"host":{"tickCounter":139}},"elapsed":36.983333333332517,"step":2219}
+{"changed":{"message":"PALYARS"},"elapsed":36.999999999999183,"step":2220}
+{"changed":{"message":"PALYARS "},"elapsed":37.083333333332511,"step":2225}
+{"changed":{"host":{"tickCounter":140}},"elapsed":37.149999999999174,"step":2229}
+{"changed":{"message":"PALYARS A"},"elapsed":37.16666666666584,"step":2230}
+{"changed":{"message":"PALYARS AN"},"elapsed":37.266666666665834,"step":2236}
+{"changed":{"host":{"tickCounter":141}},"elapsed":37.316666666665832,"step":2239}
+{"changed":{"message":"PALYARS AND"},"elapsed":37.349999999999163,"step":2241}
+{"changed":{"message":"PALYARS AND "},"elapsed":37.433333333332492,"step":2246}
+{"changed":{"host":{"tickCounter":142}},"elapsed":37.483333333332489,"step":2249}
+{"changed":{"message":"PALYARS AND M"},"elapsed":37.51666666666582,"step":2251}
+{"changed":{"message":"PALYARS AND ME"},"elapsed":37.599999999999149,"step":2256}
+{"changed":{"host":{"tickCounter":143}},"elapsed":37.649999999999146,"step":2259}
+{"changed":{"message":"PALYARS AND MEC"},"elapsed":37.683333333332477,"step":2261}
+{"changed":{"message":"PALYARS AND MECH"},"elapsed":37.766666666665806,"step":2266}
+{"changed":{"host":{"tickCounter":144}},"elapsed":37.816666666665803,"step":2269}
+{"changed":{"message":"PALYARS AND MECHA"},"elapsed":37.849999999999135,"step":2271}
+{"changed":{"message":"PALYARS AND MECHAN"},"elapsed":37.933333333332463,"step":2276}
+{"changed":{"host":{"tickCounter":145}},"elapsed":37.98333333333246,"step":2279}
+{"changed":{"message":"PALYARS AND MECHANO"},"elapsed":38.016666666665792,"step":2281}
+{"changed":{"message":"PALYARS AND MECHANOI"},"elapsed":38.09999999999912,"step":2286}
+{"changed":{"host":{"tickCounter":146}},"elapsed":38.149999999999118,"step":2289}
+{"changed":{"message":"PALYARS AND MECHANOID"},"elapsed":38.183333333332449,"step":2291}
+{"changed":{"message":"PALYARS AND MECHANOIDS"},"elapsed":38.266666666665778,"step":2296}
+{"changed":{"host":{"tickCounter":147}},"elapsed":38.316666666665775,"step":2299}
+{"changed":{"host":{"tickCounter":148}},"elapsed":38.483333333332432,"step":2309}
+{"changed":{"host":{"tickCounter":149}},"elapsed":38.649999999999089,"step":2319}
+{"changed":{"host":{"tickCounter":150}},"elapsed":38.816666666665746,"step":2329}
+{"changed":{"host":{"tickCounter":151}},"elapsed":38.983333333332403,"step":2339}
+{"changed":{"host":{"tickCounter":152}},"elapsed":39.149999999999061,"step":2349}
+{"changed":{"host":{"tickCounter":153}},"elapsed":39.316666666665718,"step":2359}
+{"changed":{"host":{"tickCounter":154}},"elapsed":39.483333333332375,"step":2369}
+{"changed":{"host":{"tickCounter":155}},"elapsed":39.649999999999032,"step":2379}
+{"changed":{"host":{"tickCounter":156}},"elapsed":39.816666666665689,"step":2389}
+{"changed":{"host":{"tickCounter":157}},"elapsed":39.983333333332347,"step":2399}
+{"changed":{"host":{"tickCounter":158}},"elapsed":40.149999999999004,"step":2409}
+{"changed":{"host":{"tickCounter":159}},"elapsed":40.316666666665661,"step":2419}
+{"changed":{"host":{"tickCounter":160}},"elapsed":40.483333333332318,"step":2429}
+{"changed":{"host":{"tickCounter":161}},"elapsed":40.649999999998975,"step":2439}
+{"changed":{"host":{"tickCounter":162}},"elapsed":40.816666666665633,"step":2449}
+{"changed":{"host":{"tickCounter":163}},"elapsed":40.98333333333229,"step":2459}
+{"changed":{"host":{"tickCounter":164}},"elapsed":41.149999999998947,"step":2469}
+{"blocked":true,"effects":[{"playMessage":"LOCATION NEAR AIRBASE"}],"elapsed":41.266666666665607,"instruction":{"op":"msg","tokens":[{"kind":"space"},{"kind":"word","word":154},{"kind":"literal","text":"NEAR AIRBASE"}]},"nextPc":28,"pc":27,"step":2476}
+{"changed":{"message":"","state":{"pc":28}},"elapsed":41.266666666665607,"step":2476}
+{"changed":{"host":{"tickCounter":165}},"elapsed":41.316666666665604,"step":2479}
+{"changed":{"message":"L"},"elapsed":41.349999999998936,"step":2481}
+{"changed":{"message":"LO"},"elapsed":41.44999999999893,"step":2487}
+{"changed":{"host":{"tickCounter":166}},"elapsed":41.483333333332261,"step":2489}
+{"changed":{"message":"LOC"},"elapsed":41.516666666665593,"step":2491}
+{"changed":{"message":"LOCA"},"elapsed":41.599999999998921,"step":2496}
+{"changed":{"host":{"tickCounter":167}},"elapsed":41.649999999998919,"step":2499}
+{"changed":{"message":"LOCAT"},"elapsed":41.68333333333225,"step":2501}
+{"changed":{"message":"LOCATI"},"elapsed":41.766666666665579,"step":2506}
+{"changed":{"host":{"tickCounter":168}},"elapsed":41.816666666665576,"step":2509}
+{"changed":{"message":"LOCATIO"},"elapsed":41.849999999998907,"step":2511}
+{"changed":{"message":"LOCATION"},"elapsed":41.933333333332236,"step":2516}
+{"changed":{"host":{"tickCounter":169}},"elapsed":41.983333333332233,"step":2519}
+{"changed":{"message":"LOCATION "},"elapsed":42.016666666665564,"step":2521}
+{"changed":{"message":"LOCATION N"},"elapsed":42.116666666665559,"step":2527}
+{"changed":{"host":{"tickCounter":170}},"elapsed":42.14999999999889,"step":2529}
+{"changed":{"message":"LOCATION NE"},"elapsed":42.199999999998887,"step":2532}
+{"changed":{"message":"LOCATION NEA"},"elapsed":42.283333333332216,"step":2537}
+{"changed":{"host":{"tickCounter":171}},"elapsed":42.316666666665547,"step":2539}
+{"changed":{"message":"LOCATION NEAR"},"elapsed":42.366666666665544,"step":2542}
+{"changed":{"message":"LOCATION NEAR "},"elapsed":42.449999999998873,"step":2547}
+{"changed":{"host":{"tickCounter":172}},"elapsed":42.483333333332205,"step":2549}
+{"changed":{"message":"LOCATION NEAR A"},"elapsed":42.533333333332202,"step":2552}
+{"changed":{"message":"LOCATION NEAR AI"},"elapsed":42.61666666666553,"step":2557}
+{"changed":{"host":{"tickCounter":173}},"elapsed":42.649999999998862,"step":2559}
+{"changed":{"message":"LOCATION NEAR AIR"},"elapsed":42.699999999998859,"step":2562}
+{"changed":{"message":"LOCATION NEAR AIRB"},"elapsed":42.783333333332187,"step":2567}
+{"changed":{"host":{"tickCounter":174}},"elapsed":42.816666666665519,"step":2569}
+{"changed":{"message":"LOCATION NEAR AIRBA"},"elapsed":42.866666666665516,"step":2572}
+{"changed":{"message":"LOCATION NEAR AIRBAS"},"elapsed":42.949999999998845,"step":2577}
+{"changed":{"host":{"tickCounter":175}},"elapsed":42.983333333332176,"step":2579}
+{"changed":{"message":"LOCATION NEAR AIRBASE"},"elapsed":43.033333333332173,"step":2582}
+{"changed":{"host":{"tickCounter":176}},"elapsed":43.149999999998833,"step":2589}
+{"changed":{"host":{"tickCounter":177}},"elapsed":43.31666666666549,"step":2599}
+{"changed":{"host":{"tickCounter":178}},"elapsed":43.483333333332148,"step":2609}
+{"changed":{"host":{"tickCounter":179}},"elapsed":43.649999999998805,"step":2619}
+{"changed":{"host":{"tickCounter":180}},"elapsed":43.816666666665462,"step":2629}
+{"changed":{"host":{"tickCounter":181}},"elapsed":43.983333333332119,"step":2639}
+{"changed":{"host":{"tickCounter":182}},"elapsed":44.149999999998776,"step":2649}
+{"changed":{"host":{"tickCounter":183}},"elapsed":44.316666666665434,"step":2659}
+{"changed":{"host":{"tickCounter":184}},"elapsed":44.483333333332091,"step":2669}
+{"changed":{"host":{"tickCounter":185}},"elapsed":44.649999999998748,"step":2679}
+{"changed":{"host":{"tickCounter":186}},"elapsed":44.816666666665405,"step":2689}
+{"changed":{"host":{"tickCounter":187}},"elapsed":44.983333333332062,"step":2699}
+{"changed":{"host":{"tickCounter":188}},"elapsed":45.14999999999872,"step":2709}
+{"changed":{"host":{"tickCounter":189}},"elapsed":45.316666666665377,"step":2719}
+{"changed":{"host":{"tickCounter":190}},"elapsed":45.483333333332034,"step":2729}
+{"changed":{"host":{"tickCounter":191}},"elapsed":45.649999999998691,"step":2739}
+{"changed":{"host":{"tickCounter":192}},"elapsed":45.816666666665348,"step":2749}
+{"changed":{"host":{"tickCounter":193}},"elapsed":45.983333333332006,"step":2759}
+{"blocked":true,"effects":[{"playMessage":"AIRCRAFT ON PAD"}],"elapsed":46.033333333332003,"instruction":{"op":"msg","tokens":[{"kind":"word","word":236},{"kind":"word","word":17},{"kind":"word","word":173},{"kind":"word","word":187}]},"nextPc":29,"pc":28,"step":2762}
+{"changed":{"message":"","state":{"pc":29}},"elapsed":46.033333333332003,"step":2762}
+{"changed":{"message":"A"},"elapsed":46.116666666665331,"step":2767}
+{"changed":{"host":{"tickCounter":194}},"elapsed":46.149999999998663,"step":2769}
+{"changed":{"message":"AI"},"elapsed":46.216666666665326,"step":2773}
+{"changed":{"message":"AIR"},"elapsed":46.283333333331989,"step":2777}
+{"changed":{"host":{"tickCounter":195}},"elapsed":46.31666666666532,"step":2779}
+{"changed":{"message":"AIRC"},"elapsed":46.366666666665317,"step":2782}
+{"changed":{"message":"AIRCR"},"elapsed":46.449999999998646,"step":2787}
+{"changed":{"host":{"tickCounter":196}},"elapsed":46.483333333331977,"step":2789}
+{"changed":{"message":"AIRCRA"},"elapsed":46.533333333331974,"step":2792}
+{"changed":{"message":"AIRCRAF"},"elapsed":46.616666666665303,"step":2797}
+{"changed":{"host":{"tickCounter":197}},"elapsed":46.649999999998634,"step":2799}
+{"changed":{"message":"AIRCRAFT"},"elapsed":46.699999999998631,"step":2802}
+{"changed":{"message":"AIRCRAFT "},"elapsed":46.78333333333196,"step":2807}
+{"changed":{"host":{"tickCounter":198}},"elapsed":46.816666666665292,"step":2809}
+{"changed":{"message":"AIRCRAFT O"},"elapsed":46.883333333331954,"step":2813}
+{"changed":{"message":"AIRCRAFT ON"},"elapsed":46.966666666665283,"step":2818}
+{"changed":{"host":{"tickCounter":199}},"elapsed":46.983333333331949,"step":2819}
+{"changed":{"message":"AIRCRAFT ON "},"elapsed":47.049999999998612,"step":2823}
+{"changed":{"message":"AIRCRAFT ON P"},"elapsed":47.13333333333194,"step":2828}
+{"changed":{"host":{"tickCounter":200}},"elapsed":47.149999999998606,"step":2829}
+{"changed":{"message":"AIRCRAFT ON PA"},"elapsed":47.216666666665269,"step":2833}
+{"changed":{"message":"AIRCRAFT ON PAD"},"elapsed":47.299999999998597,"step":2838}
+{"changed":{"host":{"tickCounter":201}},"elapsed":47.316666666665263,"step":2839}
+{"changed":{"host":{"tickCounter":202}},"elapsed":47.48333333333192,"step":2849}
+{"changed":{"host":{"tickCounter":203}},"elapsed":47.649999999998577,"step":2859}
+{"changed":{"host":{"tickCounter":204}},"elapsed":47.816666666665235,"step":2869}
+{"changed":{"host":{"tickCounter":205}},"elapsed":47.983333333331892,"step":2879}
+{"changed":{"host":{"tickCounter":206}},"elapsed":48.149999999998549,"step":2889}
+{"changed":{"host":{"tickCounter":207}},"elapsed":48.316666666665206,"step":2899}
+{"changed":{"host":{"tickCounter":208}},"elapsed":48.483333333331863,"step":2909}
+{"changed":{"host":{"tickCounter":209}},"elapsed":48.649999999998521,"step":2919}
+{"changed":{"host":{"tickCounter":210}},"elapsed":48.816666666665178,"step":2929}
+{"changed":{"host":{"tickCounter":211}},"elapsed":48.983333333331835,"step":2939}
+{"changed":{"host":{"tickCounter":212}},"elapsed":49.149999999998492,"step":2949}
+{"changed":{"host":{"tickCounter":213}},"elapsed":49.316666666665149,"step":2959}
+{"changed":{"host":{"tickCounter":214}},"elapsed":49.483333333331807,"step":2969}
+{"changed":{"host":{"tickCounter":215}},"elapsed":49.649999999998464,"step":2979}
+{"changed":{"host":{"tickCounter":216}},"elapsed":49.816666666665121,"step":2989}
+{"changed":{"host":{"tickCounter":217}},"elapsed":49.983333333331778,"step":2999}
+{"changed":{"host":{"tickCounter":218}},"elapsed":50.149999999998435,"step":3009}
+{"blocked":true,"effects":[{"playMessage":"TYPE - DOMINION DART"}],"elapsed":50.299999999998427,"instruction":{"op":"msg","tokens":[{"kind":"literal","text":" TYPE - DOMINION DART"}]},"nextPc":30,"pc":29,"step":3018}
+{"changed":{"message":"","state":{"pc":30}},"elapsed":50.299999999998427,"step":3018}
+{"changed":{"host":{"tickCounter":219}},"elapsed":50.316666666665093,"step":3019}
+{"changed":{"message":"T"},"elapsed":50.383333333331755,"step":3023}
+{"changed":{"host":{"tickCounter":220},"message":"TY"},"elapsed":50.48333333333175,"step":3029}
+{"changed":{"message":"TYP"},"elapsed":50.549999999998413,"step":3033}
+{"changed":{"message":"TYPE"},"elapsed":50.633333333331741,"step":3038}
+{"changed":{"host":{"tickCounter":221}},"elapsed":50.649999999998407,"step":3039}
+{"changed":{"message":"TYPE "},"elapsed":50.71666666666507,"step":3043}
+{"changed":{"message":"TYPE -"},"elapsed":50.799999999998398,"step":3048}
+{"changed":{"host":{"tickCounter":222}},"elapsed":50.816666666665064,"step":3049}
+{"changed":{"message":"TYPE - "},"elapsed":50.883333333331727,"step":3053}
+{"changed":{"message":"TYPE - D"},"elapsed":50.966666666665056,"step":3058}
+{"changed":{"host":{"tickCounter":223}},"elapsed":50.983333333331721,"step":3059}
+{"changed":{"message":"TYPE - DO"},"elapsed":51.049999999998384,"step":3063}
+{"changed":{"host":{"tickCounter":224},"message":"TYPE - DOM"},"elapsed":51.149999999998379,"step":3069}
+{"changed":{"message":"TYPE - DOMI"},"elapsed":51.233333333331707,"step":3074}
+{"changed":{"host":{"tickCounter":225},"message":"TYPE - DOMIN"},"elapsed":51.316666666665036,"step":3079}
+{"changed":{"message":"TYPE - DOMINI"},"elapsed":51.399999999998364,"step":3084}
+{"changed":{"host":{"tickCounter":226},"message":"TYPE - DOMINIO"},"elapsed":51.483333333331693,"step":3089}
+{"changed":{"message":"TYPE - DOMINION"},"elapsed":51.566666666665022,"step":3094}
+{"changed":{"host":{"tickCounter":227},"message":"TYPE - DOMINION "},"elapsed":51.64999999999835,"step":3099}
+{"changed":{"message":"TYPE - DOMINION D"},"elapsed":51.733333333331679,"step":3104}
+{"changed":{"host":{"tickCounter":228},"message":"TYPE - DOMINION DA"},"elapsed":51.816666666665007,"step":3109}
+{"changed":{"message":"TYPE - DOMINION DAR"},"elapsed":51.899999999998336,"step":3114}
+{"changed":{"host":{"tickCounter":229},"message":"TYPE - DOMINION DART"},"elapsed":51.983333333331665,"step":3119}
+{"changed":{"host":{"tickCounter":230}},"elapsed":52.149999999998322,"step":3129}
+{"changed":{"host":{"tickCounter":231}},"elapsed":52.316666666664979,"step":3139}
+{"changed":{"host":{"tickCounter":232}},"elapsed":52.483333333331636,"step":3149}
+{"changed":{"host":{"tickCounter":233}},"elapsed":52.649999999998293,"step":3159}
+{"changed":{"host":{"tickCounter":234}},"elapsed":52.81666666666495,"step":3169}
+{"changed":{"host":{"tickCounter":235}},"elapsed":52.983333333331608,"step":3179}
+{"changed":{"host":{"tickCounter":236}},"elapsed":53.149999999998265,"step":3189}
+{"changed":{"host":{"tickCounter":237}},"elapsed":53.316666666664922,"step":3199}
+{"changed":{"host":{"tickCounter":238}},"elapsed":53.483333333331579,"step":3209}
+{"changed":{"host":{"tickCounter":239}},"elapsed":53.649999999998236,"step":3219}
+{"changed":{"host":{"tickCounter":240}},"elapsed":53.816666666664894,"step":3229}
+{"changed":{"host":{"tickCounter":241}},"elapsed":53.983333333331551,"step":3239}
+{"changed":{"host":{"tickCounter":242}},"elapsed":54.149999999998208,"step":3249}
+{"changed":{"host":{"tickCounter":243}},"elapsed":54.316666666664865,"step":3259}
+{"changed":{"host":{"tickCounter":244}},"elapsed":54.483333333331522,"step":3269}
+{"changed":{"host":{"tickCounter":245}},"elapsed":54.64999999999818,"step":3279}
+{"changed":{"host":{"tickCounter":246}},"elapsed":54.816666666664837,"step":3289}
+{"blocked":true,"effects":[{"playMessage":"MESSAGE RECEIVED"}],"elapsed":54.983333333331494,"instruction":{"op":"msg","tokens":[{"kind":"word","word":237},{"kind":"word","word":160},{"kind":"literal","text":"RECEIVED"}]},"nextPc":31,"pc":30,"step":3299}
+{"changed":{"host":{"tickCounter":247},"message":"","state":{"pc":31}},"elapsed":54.983333333331494,"step":3299}
+{"changed":{"message":"M"},"elapsed":55.066666666664823,"step":3304}
+{"changed":{"host":{"tickCounter":248}},"elapsed":55.149999999998151,"step":3309}
+{"changed":{"message":"ME"},"elapsed":55.166666666664817,"step":3310}
+{"changed":{"message":"MES"},"elapsed":55.23333333333148,"step":3314}
+{"changed":{"host":{"tickCounter":249},"message":"MESS"},"elapsed":55.316666666664808,"step":3319}
+{"changed":{"message":"MESSA"},"elapsed":55.399999999998137,"step":3324}
+{"changed":{"host":{"tickCounter":250},"message":"MESSAG"},"elapsed":55.483333333331466,"step":3329}
+{"changed":{"message":"MESSAGE"},"elapsed":55.566666666664794,"step":3334}
+{"changed":{"host":{"tickCounter":251},"message":"MESSAGE "},"elapsed":55.649999999998123,"step":3339}
+{"changed":{"message":"MESSAGE R"},"elapsed":55.733333333331451,"step":3344}
+{"changed":{"host":{"tickCounter":252}},"elapsed":55.81666666666478,"step":3349}
+{"changed":{"message":"MESSAGE RE"},"elapsed":55.833333333331446,"step":3350}
+{"changed":{"message":"MESSAGE REC"},"elapsed":55.916666666664774,"step":3355}
+{"changed":{"host":{"tickCounter":253}},"elapsed":55.983333333331437,"step":3359}
+{"changed":{"message":"MESSAGE RECE"},"elapsed":55.999999999998103,"step":3360}
+{"changed":{"message":"MESSAGE RECEI"},"elapsed":56.083333333331431,"step":3365}
+{"changed":{"host":{"tickCounter":254}},"elapsed":56.149999999998094,"step":3369}
+{"changed":{"message":"MESSAGE RECEIV"},"elapsed":56.16666666666476,"step":3370}
+{"changed":{"message":"MESSAGE RECEIVE"},"elapsed":56.249999999998089,"step":3375}
+{"changed":{"host":{"tickCounter":255}},"elapsed":56.316666666664752,"step":3379}
+{"changed":{"message":"MESSAGE RECEIVED"},"elapsed":56.333333333331417,"step":3380}
+{"changed":{"host":{"tickCounter":256}},"elapsed":56.483333333331409,"step":3389}
+{"changed":{"host":{"tickCounter":257}},"elapsed":56.649999999998066,"step":3399}
+{"changed":{"host":{"tickCounter":258}},"elapsed":56.816666666664723,"step":3409}
+{"changed":{"host":{"tickCounter":259}},"elapsed":56.98333333333138,"step":3419}
+{"changed":{"host":{"tickCounter":260}},"elapsed":57.149999999998037,"step":3429}
+{"changed":{"host":{"tickCounter":261}},"elapsed":57.316666666664695,"step":3439}
+{"changed":{"host":{"tickCounter":262}},"elapsed":57.483333333331352,"step":3449}
+{"changed":{"host":{"tickCounter":263}},"elapsed":57.649999999998009,"step":3459}
+{"changed":{"host":{"tickCounter":264}},"elapsed":57.816666666664666,"step":3469}
+{"changed":{"host":{"tickCounter":265}},"elapsed":57.983333333331323,"step":3479}
+{"changed":{"host":{"tickCounter":266}},"elapsed":58.149999999997981,"step":3489}
+{"changed":{"host":{"tickCounter":267}},"elapsed":58.316666666664638,"step":3499}
+{"changed":{"host":{"tickCounter":268}},"elapsed":58.483333333331295,"step":3509}
+{"changed":{"host":{"tickCounter":269}},"elapsed":58.649999999997952,"step":3519}
+{"changed":{"host":{"tickCounter":270}},"elapsed":58.816666666664609,"step":3529}
+{"changed":{"host":{"tickCounter":271}},"elapsed":58.983333333331267,"step":3539}
+{"changed":{"host":{"tickCounter":272}},"elapsed":59.149999999997924,"step":3549}
+{"changed":{"host":{"tickCounter":273}},"elapsed":59.316666666664581,"step":3559}
+{"blocked":true,"effects":[{"playMessage":"CRAFT FOR SALE"}],"elapsed":59.333333333331247,"instruction":{"op":"msg","tokens":[{"kind":"word","word":236},{"kind":"word","word":34},{"kind":"word","word":60},{"kind":"word","word":196}]},"nextPc":32,"pc":31,"step":3560}
+{"changed":{"message":"","state":{"pc":32}},"elapsed":59.333333333331247,"step":3560}
+{"changed":{"message":"C"},"elapsed":59.416666666664575,"step":3565}
+{"changed":{"host":{"tickCounter":274}},"elapsed":59.483333333331238,"step":3569}
+{"changed":{"message":"CR"},"elapsed":59.51666666666457,"step":3571}
+{"changed":{"message":"CRA"},"elapsed":59.583333333331232,"step":3575}
+{"changed":{"host":{"tickCounter":275}},"elapsed":59.649999999997895,"step":3579}
+{"changed":{"message":"CRAF"},"elapsed":59.666666666664561,"step":3580}
+{"changed":{"message":"CRAFT"},"elapsed":59.74999999999789,"step":3585}
+{"changed":{"host":{"tickCounter":276}},"elapsed":59.816666666664553,"step":3589}
+{"changed":{"message":"CRAFT "},"elapsed":59.833333333331218,"step":3590}
+{"changed":{"message":"CRAFT F"},"elapsed":59.916666666664547,"step":3595}
+{"changed":{"host":{"tickCounter":277}},"elapsed":59.98333333333121,"step":3599}
+{"changed":{"message":"CRAFT FO"},"elapsed":59.999999999997875,"step":3600}
+{"changed":{"message":"CRAFT FOR"},"elapsed":60.083333333331204,"step":3605}
+{"changed":{"host":{"tickCounter":278}},"elapsed":60.149999999997867,"step":3609}
+{"changed":{"message":"CRAFT FOR "},"elapsed":60.183333333331198,"step":3611}
+{"changed":{"message":"CRAFT FOR S"},"elapsed":60.266666666664527,"step":3616}
+{"changed":{"host":{"tickCounter":279}},"elapsed":60.316666666664524,"step":3619}
+{"changed":{"message":"CRAFT FOR SA"},"elapsed":60.349999999997856,"step":3621}
+{"changed":{"message":"CRAFT FOR SAL"},"elapsed":60.433333333331184,"step":3626}
+{"changed":{"host":{"tickCounter":280}},"elapsed":60.483333333331181,"step":3629}
+{"changed":{"message":"CRAFT FOR SALE"},"elapsed":60.516666666664513,"step":3631}
+{"changed":{"host":{"tickCounter":281}},"elapsed":60.649999999997839,"step":3639}
+{"changed":{"host":{"tickCounter":282}},"elapsed":60.816666666664496,"step":3649}
+{"changed":{"host":{"tickCounter":283}},"elapsed":60.983333333331153,"step":3659}
+{"changed":{"host":{"tickCounter":284}},"elapsed":61.14999999999781,"step":3669}
+{"changed":{"host":{"tickCounter":285}},"elapsed":61.316666666664467,"step":3679}
+{"changed":{"host":{"tickCounter":286}},"elapsed":61.483333333331124,"step":3689}
+{"changed":{"host":{"tickCounter":287}},"elapsed":61.649999999997782,"step":3699}
+{"changed":{"host":{"tickCounter":288}},"elapsed":61.816666666664439,"step":3709}
+{"changed":{"host":{"tickCounter":289}},"elapsed":61.983333333331096,"step":3719}
+{"changed":{"host":{"tickCounter":290}},"elapsed":62.149999999997753,"step":3729}
+{"changed":{"host":{"tickCounter":291}},"elapsed":62.31666666666441,"step":3739}
+{"changed":{"host":{"tickCounter":292}},"elapsed":62.483333333331068,"step":3749}
+{"changed":{"host":{"tickCounter":293}},"elapsed":62.649999999997725,"step":3759}
+{"changed":{"host":{"tickCounter":294}},"elapsed":62.816666666664382,"step":3769}
+{"changed":{"host":{"tickCounter":295}},"elapsed":62.983333333331039,"step":3779}
+{"changed":{"host":{"tickCounter":296}},"elapsed":63.149999999997696,"step":3789}
+{"changed":{"host":{"tickCounter":297}},"elapsed":63.316666666664354,"step":3799}
+{"changed":{"host":{"tickCounter":298}},"elapsed":63.483333333331011,"step":3809}
+{"blocked":true,"effects":[{"playMessage":"PRICE 5OOO CREDITS"}],"elapsed":63.516666666664342,"instruction":{"op":"msg","tokens":[{"kind":"literal","text":"  PRICE 5OOO"},{"kind":"word","word":37}]},"nextPc":33,"pc":32,"step":3811}
+{"changed":{"message":"","state":{"pc":33}},"elapsed":63.516666666664342,"step":3811}
+{"changed":{"message":"P"},"elapsed":63.599999999997671,"step":3816}
+{"changed":{"host":{"tickCounter":299}},"elapsed":63.649999999997668,"step":3819}
+{"changed":{"message":"PR"},"elapsed":63.699999999997665,"step":3822}
+{"changed":{"message":"PRI"},"elapsed":63.766666666664328,"step":3826}
+{"changed":{"host":{"tickCounter":300}},"elapsed":63.816666666664325,"step":3829}
+{"changed":{"message":"PRIC"},"elapsed":63.849999999997657,"step":3831}
+{"changed":{"message":"PRICE"},"elapsed":63.933333333330985,"step":3836}
+{"changed":{"host":{"tickCounter":301}},"elapsed":63.983333333330982,"step":3839}
+{"changed":{"message":"PRICE "},"elapsed":64.016666666664321,"step":3841}
+{"changed":{"message":"PRICE 5"},"elapsed":64.09999999999765,"step":3846}
+{"changed":{"host":{"tickCounter":302}},"elapsed":64.149999999997647,"step":3849}
+{"changed":{"message":"PRICE 5O"},"elapsed":64.183333333330978,"step":3851}
+{"changed":{"message":"PRICE 5OO"},"elapsed":64.266666666664307,"step":3856}
+{"changed":{"host":{"tickCounter":303}},"elapsed":64.316666666664304,"step":3859}
+{"changed":{"message":"PRICE 5OOO"},"elapsed":64.366666666664301,"step":3862}
+{"changed":{"message":"PRICE 5OOO "},"elapsed":64.44999999999763,"step":3867}
+{"changed":{"host":{"tickCounter":304}},"elapsed":64.483333333330961,"step":3869}
+{"changed":{"message":"PRICE 5OOO C"},"elapsed":64.533333333330958,"step":3872}
+{"changed":{"message":"PRICE 5OOO CR"},"elapsed":64.616666666664287,"step":3877}
+{"changed":{"host":{"tickCounter":305}},"elapsed":64.649999999997618,"step":3879}
+{"changed":{"message":"PRICE 5OOO CRE"},"elapsed":64.699999999997615,"step":3882}
+{"changed":{"message":"PRICE 5OOO CRED"},"elapsed":64.783333333330944,"step":3887}
+{"changed":{"host":{"tickCounter":306}},"elapsed":64.816666666664275,"step":3889}
+{"changed":{"message":"PRICE 5OOO CREDI"},"elapsed":64.866666666664273,"step":3892}
+{"changed":{"message":"PRICE 5OOO CREDIT"},"elapsed":64.949999999997601,"step":3897}
+{"changed":{"host":{"tickCounter":307}},"elapsed":64.983333333330933,"step":3899}
+{"changed":{"message":"PRICE 5OOO CREDITS"},"elapsed":65.03333333333093,"step":3902}
+{"changed":{"host":{"tickCounter":308}},"elapsed":65.14999999999759,"step":3909}
+{"changed":{"host":{"tickCounter":309}},"elapsed":65.316666666664247,"step":3919}
+{"changed":{"host":{"tickCounter":310}},"elapsed":65.483333333330904,"step":3929}
+{"changed":{"host":{"tickCounter":311}},"elapsed":65.649999999997561,"step":3939}
+{"changed":{"host":{"tickCounter":312}},"elapsed":65.816666666664219,"step":3949}
+{"changed":{"host":{"tickCounter":313}},"elapsed":65.983333333330876,"step":3959}
+{"changed":{"host":{"tickCounter":314}},"elapsed":66.149999999997533,"step":3969}
+{"changed":{"host":{"tickCounter":315}},"elapsed":66.31666666666419,"step":3979}
+{"changed":{"host":{"tickCounter":316}},"elapsed":66.483333333330847,"step":3989}
+{"changed":{"host":{"tickCounter":317}},"elapsed":66.649999999997505,"step":3999}
+{"changed":{"host":{"tickCounter":318}},"elapsed":66.816666666664162,"step":4009}
+{"changed":{"host":{"tickCounter":319}},"elapsed":66.983333333330819,"step":4019}
+{"changed":{"host":{"tickCounter":320}},"elapsed":67.149999999997476,"step":4029}
+{"changed":{"host":{"tickCounter":321}},"elapsed":67.316666666664133,"step":4039}
+{"changed":{"host":{"tickCounter":322}},"elapsed":67.483333333330791,"step":4049}
+{"changed":{"host":{"tickCounter":323}},"elapsed":67.649999999997448,"step":4059}
+{"changed":{"host":{"tickCounter":324}},"elapsed":67.816666666664105,"step":4069}
+{"changed":{"host":{"tickCounter":325}},"elapsed":67.983333333330762,"step":4079}
+{"blocked":true,"effects":[{"playMessage":"YOU HAVE 9000 CREDITS"}],"elapsed":68.033333333330759,"instruction":{"op":"msgi","source":{"immediate":21}},"nextPc":34,"pc":33,"step":4082}
+{"changed":{"message":"","state":{"pc":34}},"elapsed":68.033333333330759,"step":4082}
+{"changed":{"message":"Y"},"elapsed":68.116666666664088,"step":4087}
+{"changed":{"host":{"tickCounter":326}},"elapsed":68.149999999997419,"step":4089}
+{"changed":{"message":"YO"},"elapsed":68.216666666664082,"step":4093}
+{"changed":{"message":"YOU"},"elapsed":68.283333333330745,"step":4097}
+{"changed":{"host":{"tickCounter":327}},"elapsed":68.316666666664077,"step":4099}
+{"changed":{"message":"YOU "},"elapsed":68.366666666664074,"step":4102}
+{"changed":{"message":"YOU H"},"elapsed":68.449999999997402,"step":4107}
+{"changed":{"host":{"tickCounter":328}},"elapsed":68.483333333330734,"step":4109}
+{"changed":{"message":"YOU HA"},"elapsed":68.533333333330731,"step":4112}
+{"changed":{"message":"YOU HAV"},"elapsed":68.616666666664059,"step":4117}
+{"changed":{"host":{"tickCounter":329}},"elapsed":68.649999999997391,"step":4119}
+{"changed":{"message":"YOU HAVE"},"elapsed":68.699999999997388,"step":4122}
+{"changed":{"message":"YOU HAVE "},"elapsed":68.783333333330717,"step":4127}
+{"changed":{"host":{"tickCounter":330}},"elapsed":68.816666666664048,"step":4129}
+{"changed":{"message":"YOU HAVE 9"},"elapsed":68.883333333330711,"step":4133}
+{"changed":{"message":"YOU HAVE 90"},"elapsed":68.96666666666404,"step":4138}
+{"changed":{"host":{"tickCounter":331}},"elapsed":68.983333333330705,"step":4139}
+{"changed":{"message":"YOU HAVE 900"},"elapsed":69.049999999997368,"step":4143}
+{"changed":{"message":"YOU HAVE 9000"},"elapsed":69.133333333330697,"step":4148}
+{"changed":{"host":{"tickCounter":332}},"elapsed":69.149999999997362,"step":4149}
+{"changed":{"message":"YOU HAVE 9000 "},"elapsed":69.216666666664025,"step":4153}
+{"changed":{"message":"YOU HAVE 9000 C"},"elapsed":69.299999999997354,"step":4158}
+{"changed":{"host":{"tickCounter":333}},"elapsed":69.31666666666402,"step":4159}
+{"changed":{"message":"YOU HAVE 9000 CR"},"elapsed":69.383333333330683,"step":4163}
+{"changed":{"message":"YOU HAVE 9000 CRE"},"elapsed":69.466666666664011,"step":4168}
+{"changed":{"host":{"tickCounter":334}},"elapsed":69.483333333330677,"step":4169}
+{"changed":{"message":"YOU HAVE 9000 CRED"},"elapsed":69.54999999999734,"step":4173}
+{"changed":{"message":"YOU HAVE 9000 CREDI"},"elapsed":69.633333333330668,"step":4178}
+{"changed":{"host":{"tickCounter":335}},"elapsed":69.649999999997334,"step":4179}
+{"changed":{"message":"YOU HAVE 9000 CREDIT"},"elapsed":69.716666666663997,"step":4183}
+{"changed":{"message":"YOU HAVE 9000 CREDITS"},"elapsed":69.799999999997326,"step":4188}
+{"changed":{"host":{"tickCounter":336}},"elapsed":69.816666666663991,"step":4189}
+{"changed":{"host":{"tickCounter":337}},"elapsed":69.983333333330648,"step":4199}
+{"changed":{"host":{"tickCounter":338}},"elapsed":70.149999999997306,"step":4209}
+{"changed":{"host":{"tickCounter":339}},"elapsed":70.316666666663963,"step":4219}
+{"changed":{"host":{"tickCounter":340}},"elapsed":70.48333333333062,"step":4229}
+{"changed":{"host":{"tickCounter":341}},"elapsed":70.649999999997277,"step":4239}
+{"changed":{"host":{"tickCounter":342}},"elapsed":70.816666666663934,"step":4249}
+{"changed":{"host":{"tickCounter":343}},"elapsed":70.983333333330592,"step":4259}
+{"changed":{"host":{"tickCounter":344}},"elapsed":71.149999999997249,"step":4269}
+{"changed":{"host":{"tickCounter":345}},"elapsed":71.316666666663906,"step":4279}
+{"changed":{"host":{"tickCounter":346}},"elapsed":71.483333333330563,"step":4289}
+{"changed":{"host":{"tickCounter":347}},"elapsed":71.64999999999722,"step":4299}
+{"changed":{"host":{"tickCounter":348}},"elapsed":71.816666666663878,"step":4309}
+{"changed":{"host":{"tickCounter":349}},"elapsed":71.983333333330535,"step":4319}
+{"changed":{"host":{"tickCounter":350}},"elapsed":72.149999999997192,"step":4329}
+{"changed":{"host":{"tickCounter":351}},"elapsed":72.316666666663849,"step":4339}
+{"changed":{"host":{"tickCounter":352}},"elapsed":72.483333333330506,"step":4349}
+{"changed":{"host":{"tickCounter":353}},"elapsed":72.649999999997164,"step":4359}
+{"blocked":false,"effects":[],"elapsed":72.799999999997155,"instruction":{"op":"call","target":108},"nextPc":108,"pc":34,"step":4368}
+{"blocked":false,"effects":[],"elapsed":72.799999999997155,"instruction":{"op":"clrk"},"nextPc":109,"pc":108,"step":4368}
+{"blocked":true,"effects":[{"playMessage":"DO YOU WANT TO BUY"}],"elapsed":72.799999999997155,"instruction":{"op":"msg","tokens":[{"kind":"word","word":238},{"kind":"word","word":51},{"kind":"word","word":220},{"kind":"word","word":217},{"kind":"word","word":213},{"kind":"word","word":28},{"kind":"word","word":7}]},"nextPc":110,"pc":109,"step":4368}
+{"changed":{"message":"","state":{"callStack":[35],"pc":110}},"elapsed":72.799999999997155,"step":4368}
+{"changed":{"host":{"tickCounter":354}},"elapsed":72.816666666663821,"step":4369}
+{"changed":{"message":"D"},"elapsed":72.883333333330484,"step":4373}
+{"changed":{"host":{"tickCounter":355},"message":"DO"},"elapsed":72.983333333330478,"step":4379}
+{"changed":{"message":"DO "},"elapsed":73.049999999997141,"step":4383}
+{"changed":{"message":"DO Y"},"elapsed":73.133333333330469,"step":4388}
+{"changed":{"host":{"tickCounter":356}},"elapsed":73.149999999997135,"step":4389}
+{"changed":{"message":"DO YO"},"elapsed":73.216666666663798,"step":4393}
+{"changed":{"message":"DO YOU"},"elapsed":73.299999999997127,"step":4398}
+{"changed":{"host":{"tickCounter":357}},"elapsed":73.316666666663792,"step":4399}
+{"changed":{"message":"DO YOU "},"elapsed":73.383333333330455,"step":4403}
+{"changed":{"message":"DO YOU W"},"elapsed":73.466666666663784,"step":4408}
+{"changed":{"host":{"tickCounter":358}},"elapsed":73.483333333330449,"step":4409}
+{"changed":{"message":"DO YOU WA"},"elapsed":73.549999999997112,"step":4413}
+{"changed":{"host":{"tickCounter":359},"message":"DO YOU WAN"},"elapsed":73.649999999997107,"step":4419}
+{"changed":{"message":"DO YOU WANT"},"elapsed":73.733333333330435,"step":4424}
+{"changed":{"host":{"tickCounter":360},"message":"DO YOU WANT "},"elapsed":73.816666666663764,"step":4429}
+{"changed":{"message":"DO YOU WANT T"},"elapsed":73.899999999997092,"step":4434}
+{"changed":{"host":{"tickCounter":361},"message":"DO YOU WANT TO"},"elapsed":73.983333333330421,"step":4439}
+{"changed":{"message":"DO YOU WANT TO "},"elapsed":74.06666666666375,"step":4444}
+{"changed":{"host":{"tickCounter":362},"message":"DO YOU WANT TO B"},"elapsed":74.149999999997078,"step":4449}
+{"changed":{"message":"DO YOU WANT TO BU"},"elapsed":74.233333333330407,"step":4454}
+{"changed":{"host":{"tickCounter":363},"message":"DO YOU WANT TO BUY"},"elapsed":74.316666666663735,"step":4459}
+{"changed":{"host":{"tickCounter":364}},"elapsed":74.483333333330393,"step":4469}
+{"changed":{"host":{"tickCounter":365}},"elapsed":74.64999999999705,"step":4479}
+{"changed":{"host":{"tickCounter":366}},"elapsed":74.816666666663707,"step":4489}
+{"changed":{"host":{"tickCounter":367}},"elapsed":74.983333333330364,"step":4499}
+{"changed":{"host":{"tickCounter":368}},"elapsed":75.149999999997021,"step":4509}
+{"changed":{"host":{"tickCounter":369}},"elapsed":75.316666666663679,"step":4519}
+{"changed":{"host":{"tickCounter":370}},"elapsed":75.483333333330336,"step":4529}
+{"changed":{"host":{"tickCounter":371}},"elapsed":75.649999999996993,"step":4539}
+{"changed":{"host":{"tickCounter":372}},"elapsed":75.81666666666365,"step":4549}
+{"changed":{"host":{"tickCounter":373}},"elapsed":75.983333333330307,"step":4559}
+{"changed":{"host":{"tickCounter":374}},"elapsed":76.149999999996965,"step":4569}
+{"changed":{"host":{"tickCounter":375}},"elapsed":76.316666666663622,"step":4579}
+{"changed":{"host":{"tickCounter":376}},"elapsed":76.483333333330279,"step":4589}
+{"changed":{"host":{"tickCounter":377}},"elapsed":76.649999999996936,"step":4599}
+{"changed":{"host":{"tickCounter":378}},"elapsed":76.816666666663593,"step":4609}
+{"changed":{"host":{"tickCounter":379}},"elapsed":76.983333333330251,"step":4619}
+{"changed":{"host":{"tickCounter":380}},"elapsed":77.149999999996908,"step":4629}
+{"blocked":false,"effects":[],"elapsed":77.316666666663565,"instruction":{"op":"cfr"},"nextPc":111,"pc":110,"step":4639}
+{"blocked":false,"effects":[],"elapsed":77.316666666663565,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":4639}
+{"blocked":true,"effects":[],"elapsed":77.316666666663565,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":4639}
+{"changed":{"host":{"messagePlaying":false,"tickCounter":0},"isMessageComplete":true,"state":{"pc":112,"resumeAfterTick":1}},"elapsed":77.316666666663565,"step":4639}
+{"blocked":false,"effects":[],"elapsed":77.483333333330222,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":4649}
+{"blocked":false,"effects":[],"elapsed":77.483333333330222,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":4649}
+{"blocked":true,"effects":[],"elapsed":77.483333333330222,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":4649}
+{"changed":{"host":{"tickCounter":1},"state":{"resumeAfterTick":2}},"elapsed":77.483333333330222,"step":4649}
+{"blocked":false,"effects":[],"elapsed":77.649999999996879,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":4659}
+{"blocked":false,"effects":[],"elapsed":77.649999999996879,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":4659}
+{"blocked":true,"effects":[],"elapsed":77.649999999996879,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":4659}
+{"changed":{"host":{"tickCounter":2},"state":{"resumeAfterTick":3}},"elapsed":77.649999999996879,"step":4659}
+{"blocked":false,"effects":[],"elapsed":77.816666666663536,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":4669}
+{"blocked":false,"effects":[],"elapsed":77.816666666663536,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":4669}
+{"blocked":true,"effects":[],"elapsed":77.816666666663536,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":4669}
+{"changed":{"host":{"tickCounter":3},"state":{"resumeAfterTick":4}},"elapsed":77.816666666663536,"step":4669}
+{"blocked":false,"effects":[],"elapsed":77.983333333330194,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":4679}
+{"blocked":false,"effects":[],"elapsed":77.983333333330194,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":4679}
+{"blocked":true,"effects":[],"elapsed":77.983333333330194,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":4679}
+{"changed":{"host":{"tickCounter":4},"state":{"resumeAfterTick":5}},"elapsed":77.983333333330194,"step":4679}
+{"blocked":false,"effects":[],"elapsed":78.149999999996851,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":113,"pc":112,"step":4689}
+{"blocked":false,"effects":[],"elapsed":78.149999999996851,"instruction":{"mask":1,"op":"clrf"},"nextPc":114,"pc":113,"step":4689}
+{"blocked":false,"effects":[],"elapsed":78.149999999996851,"instruction":{"op":"ret"},"nextPc":35,"pc":114,"step":4689}
+{"blocked":false,"effects":[],"elapsed":78.149999999996851,"instruction":{"condition":{"branch":{"jump":72},"branchOn":false},"mask":1,"op":"tstf"},"nextPc":36,"pc":35,"step":4689}
+{"blocked":true,"effects":[{"playMessage":"I THINK YOU SHOULD BUY"}],"elapsed":78.149999999996851,"instruction":{"op":"msg","tokens":[{"kind":"word","word":195},{"kind":"literal","text":"THINK"},{"kind":"word","word":220},{"kind":"word","word":198},{"kind":"word","word":28}]},"nextPc":37,"pc":36,"step":4689}
+{"changed":{"host":{"messagePlaying":true,"tickCounter":5},"isMessageComplete":false,"message":"","state":{"callStack":[],"pc":37,"resumeAfterTick":null}},"elapsed":78.149999999996851,"step":4689}
+{"changed":{"message":"I"},"elapsed":78.233333333330179,"step":4694}
+{"changed":{"host":{"tickCounter":6}},"elapsed":78.316666666663508,"step":4699}
+{"changed":{"message":"I "},"elapsed":78.333333333330174,"step":4700}
+{"changed":{"message":"I T"},"elapsed":78.399999999996837,"step":4704}
+{"changed":{"host":{"tickCounter":7},"message":"I TH"},"elapsed":78.483333333330165,"step":4709}
+{"changed":{"message":"I THI"},"elapsed":78.566666666663494,"step":4714}
+{"changed":{"host":{"tickCounter":8},"message":"I THIN"},"elapsed":78.649999999996822,"step":4719}
+{"changed":{"message":"I THINK"},"elapsed":78.733333333330151,"step":4724}
+{"changed":{"host":{"tickCounter":9},"message":"I THINK "},"elapsed":78.81666666666348,"step":4729}
+{"changed":{"message":"I THINK Y"},"elapsed":78.899999999996808,"step":4734}
+{"changed":{"host":{"tickCounter":10}},"elapsed":78.983333333330137,"step":4739}
+{"changed":{"message":"I THINK YO"},"elapsed":78.999999999996803,"step":4740}
+{"changed":{"message":"I THINK YOU"},"elapsed":79.083333333330131,"step":4745}
+{"changed":{"host":{"tickCounter":11}},"elapsed":79.149999999996794,"step":4749}
+{"changed":{"message":"I THINK YOU "},"elapsed":79.16666666666346,"step":4750}
+{"changed":{"message":"I THINK YOU S"},"elapsed":79.249999999996788,"step":4755}
+{"changed":{"host":{"tickCounter":12}},"elapsed":79.316666666663451,"step":4759}
+{"changed":{"message":"I THINK YOU SH"},"elapsed":79.333333333330117,"step":4760}
+{"changed":{"message":"I THINK YOU SHO"},"elapsed":79.416666666663446,"step":4765}
+{"changed":{"host":{"tickCounter":13}},"elapsed":79.483333333330108,"step":4769}
+{"changed":{"message":"I THINK YOU SHOU"},"elapsed":79.499999999996774,"step":4770}
+{"changed":{"message":"I THINK YOU SHOUL"},"elapsed":79.583333333330103,"step":4775}
+{"changed":{"host":{"tickCounter":14}},"elapsed":79.649999999996766,"step":4779}
+{"changed":{"message":"I THINK YOU SHOULD"},"elapsed":79.666666666663431,"step":4780}
+{"changed":{"message":"I THINK YOU SHOULD "},"elapsed":79.74999999999676,"step":4785}
+{"changed":{"host":{"tickCounter":15}},"elapsed":79.816666666663423,"step":4789}
+{"changed":{"message":"I THINK YOU SHOULD B"},"elapsed":79.833333333330089,"step":4790}
+{"changed":{"message":"I THINK YOU SHOULD BU"},"elapsed":79.916666666663417,"step":4795}
+{"changed":{"host":{"tickCounter":16}},"elapsed":79.98333333333008,"step":4799}
+{"changed":{"message":"I THINK YOU SHOULD BUY"},"elapsed":79.999999999996746,"step":4800}
+{"changed":{"host":{"tickCounter":17}},"elapsed":80.149999999996737,"step":4809}
+{"changed":{"host":{"tickCounter":18}},"elapsed":80.316666666663394,"step":4819}
+{"changed":{"host":{"tickCounter":19}},"elapsed":80.483333333330052,"step":4829}
+{"changed":{"host":{"tickCounter":20}},"elapsed":80.649999999996709,"step":4839}
+{"changed":{"host":{"tickCounter":21}},"elapsed":80.816666666663366,"step":4849}
+{"changed":{"host":{"tickCounter":22}},"elapsed":80.983333333330023,"step":4859}
+{"changed":{"host":{"tickCounter":23}},"elapsed":81.14999999999668,"step":4869}
+{"changed":{"host":{"tickCounter":24}},"elapsed":81.316666666663338,"step":4879}
+{"changed":{"host":{"tickCounter":25}},"elapsed":81.483333333329995,"step":4889}
+{"changed":{"host":{"tickCounter":26}},"elapsed":81.649999999996652,"step":4899}
+{"changed":{"host":{"tickCounter":27}},"elapsed":81.816666666663309,"step":4909}
+{"changed":{"host":{"tickCounter":28}},"elapsed":81.983333333329966,"step":4919}
+{"changed":{"host":{"tickCounter":29}},"elapsed":82.149999999996624,"step":4929}
+{"changed":{"host":{"tickCounter":30}},"elapsed":82.316666666663281,"step":4939}
+{"changed":{"host":{"tickCounter":31}},"elapsed":82.483333333329938,"step":4949}
+{"changed":{"host":{"tickCounter":32}},"elapsed":82.649999999996595,"step":4959}
+{"changed":{"host":{"tickCounter":33}},"elapsed":82.816666666663252,"step":4969}
+{"changed":{"host":{"tickCounter":34}},"elapsed":82.983333333329909,"step":4979}
+{"blocked":false,"effects":[],"elapsed":82.999999999996575,"instruction":{"op":"call","target":108},"nextPc":108,"pc":37,"step":4980}
+{"blocked":false,"effects":[],"elapsed":82.999999999996575,"instruction":{"op":"clrk"},"nextPc":109,"pc":108,"step":4980}
+{"blocked":true,"effects":[{"playMessage":"DO YOU WANT TO BUY"}],"elapsed":82.999999999996575,"instruction":{"op":"msg","tokens":[{"kind":"word","word":238},{"kind":"word","word":51},{"kind":"word","word":220},{"kind":"word","word":217},{"kind":"word","word":213},{"kind":"word","word":28},{"kind":"word","word":7}]},"nextPc":110,"pc":109,"step":4980}
+{"changed":{"message":"","state":{"callStack":[38],"pc":110}},"elapsed":82.999999999996575,"step":4980}
+{"changed":{"message":"D"},"elapsed":83.083333333329904,"step":4985}
+{"changed":{"host":{"tickCounter":35}},"elapsed":83.149999999996567,"step":4989}
+{"changed":{"message":"DO"},"elapsed":83.183333333329898,"step":4991}
+{"changed":{"message":"DO "},"elapsed":83.249999999996561,"step":4995}
+{"changed":{"host":{"tickCounter":36}},"elapsed":83.316666666663224,"step":4999}
+{"changed":{"message":"DO Y"},"elapsed":83.33333333332989,"step":5000}
+{"changed":{"message":"DO YO"},"elapsed":83.416666666663218,"step":5005}
+{"changed":{"host":{"tickCounter":37}},"elapsed":83.483333333329881,"step":5009}
+{"changed":{"message":"DO YOU"},"elapsed":83.499999999996547,"step":5010}
+{"changed":{"message":"DO YOU "},"elapsed":83.583333333329875,"step":5015}
+{"changed":{"host":{"tickCounter":38}},"elapsed":83.649999999996538,"step":5019}
+{"changed":{"message":"DO YOU W"},"elapsed":83.666666666663204,"step":5020}
+{"changed":{"message":"DO YOU WA"},"elapsed":83.749999999996533,"step":5025}
+{"changed":{"host":{"tickCounter":39}},"elapsed":83.816666666663195,"step":5029}
+{"changed":{"message":"DO YOU WAN"},"elapsed":83.849999999996527,"step":5031}
+{"changed":{"message":"DO YOU WANT"},"elapsed":83.933333333329855,"step":5036}
+{"changed":{"host":{"tickCounter":40}},"elapsed":83.983333333329853,"step":5039}
+{"changed":{"message":"DO YOU WANT "},"elapsed":84.016666666663184,"step":5041}
+{"changed":{"message":"DO YOU WANT T"},"elapsed":84.099999999996513,"step":5046}
+{"changed":{"host":{"tickCounter":41}},"elapsed":84.14999999999651,"step":5049}
+{"changed":{"message":"DO YOU WANT TO"},"elapsed":84.183333333329841,"step":5051}
+{"changed":{"message":"DO YOU WANT TO "},"elapsed":84.26666666666317,"step":5056}
+{"changed":{"host":{"tickCounter":42}},"elapsed":84.316666666663167,"step":5059}
+{"changed":{"message":"DO YOU WANT TO B"},"elapsed":84.349999999996498,"step":5061}
+{"changed":{"message":"DO YOU WANT TO BU"},"elapsed":84.433333333329827,"step":5066}
+{"changed":{"host":{"tickCounter":43}},"elapsed":84.483333333329824,"step":5069}
+{"changed":{"message":"DO YOU WANT TO BUY"},"elapsed":84.516666666663156,"step":5071}
+{"changed":{"host":{"tickCounter":44}},"elapsed":84.649999999996481,"step":5079}
+{"changed":{"host":{"tickCounter":45}},"elapsed":84.816666666663139,"step":5089}
+{"changed":{"host":{"tickCounter":46}},"elapsed":84.983333333329796,"step":5099}
+{"changed":{"host":{"tickCounter":47}},"elapsed":85.149999999996453,"step":5109}
+{"changed":{"host":{"tickCounter":48}},"elapsed":85.31666666666311,"step":5119}
+{"changed":{"host":{"tickCounter":49}},"elapsed":85.483333333329767,"step":5129}
+{"changed":{"host":{"tickCounter":50}},"elapsed":85.649999999996425,"step":5139}
+{"changed":{"host":{"tickCounter":51}},"elapsed":85.816666666663082,"step":5149}
+{"changed":{"host":{"tickCounter":52}},"elapsed":85.983333333329739,"step":5159}
+{"changed":{"host":{"tickCounter":53}},"elapsed":86.149999999996396,"step":5169}
+{"changed":{"host":{"tickCounter":54}},"elapsed":86.316666666663053,"step":5179}
+{"changed":{"host":{"tickCounter":55}},"elapsed":86.483333333329711,"step":5189}
+{"changed":{"host":{"tickCounter":56}},"elapsed":86.649999999996368,"step":5199}
+{"changed":{"host":{"tickCounter":57}},"elapsed":86.816666666663025,"step":5209}
+{"changed":{"host":{"tickCounter":58}},"elapsed":86.983333333329682,"step":5219}
+{"changed":{"host":{"tickCounter":59}},"elapsed":87.149999999996339,"step":5229}
+{"changed":{"host":{"tickCounter":60}},"elapsed":87.316666666662996,"step":5239}
+{"changed":{"host":{"tickCounter":61}},"elapsed":87.483333333329654,"step":5249}
+{"blocked":false,"effects":[],"elapsed":87.516666666662985,"instruction":{"op":"cfr"},"nextPc":111,"pc":110,"step":5251}
+{"blocked":false,"effects":[],"elapsed":87.516666666662985,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":5251}
+{"blocked":true,"effects":[],"elapsed":87.516666666662985,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":5251}
+{"changed":{"host":{"messagePlaying":false,"tickCounter":0},"isMessageComplete":true,"state":{"pc":112,"resumeAfterTick":1}},"elapsed":87.516666666662985,"step":5251}
+{"blocked":false,"effects":[],"elapsed":87.649999999996311,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":5259}
+{"blocked":false,"effects":[],"elapsed":87.649999999996311,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":5259}
+{"blocked":true,"effects":[],"elapsed":87.649999999996311,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":5259}
+{"changed":{"host":{"tickCounter":1},"state":{"resumeAfterTick":2}},"elapsed":87.649999999996311,"step":5259}
+{"blocked":false,"effects":[],"elapsed":87.816666666662968,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":5269}
+{"blocked":false,"effects":[],"elapsed":87.816666666662968,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":5269}
+{"blocked":true,"effects":[],"elapsed":87.816666666662968,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":5269}
+{"changed":{"host":{"tickCounter":2},"state":{"resumeAfterTick":3}},"elapsed":87.816666666662968,"step":5269}
+{"blocked":false,"effects":[],"elapsed":87.983333333329625,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":5279}
+{"blocked":false,"effects":[],"elapsed":87.983333333329625,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":5279}
+{"blocked":true,"effects":[],"elapsed":87.983333333329625,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":5279}
+{"changed":{"host":{"tickCounter":3},"state":{"resumeAfterTick":4}},"elapsed":87.983333333329625,"step":5279}
+{"blocked":false,"effects":[],"elapsed":88.149999999996282,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":5289}
+{"blocked":false,"effects":[],"elapsed":88.149999999996282,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":5289}
+{"blocked":true,"effects":[],"elapsed":88.149999999996282,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":5289}
+{"changed":{"host":{"tickCounter":4},"state":{"resumeAfterTick":5}},"elapsed":88.149999999996282,"step":5289}
+{"blocked":false,"effects":[],"elapsed":88.31666666666294,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":113,"pc":112,"step":5299}
+{"blocked":false,"effects":[],"elapsed":88.31666666666294,"instruction":{"mask":1,"op":"clrf"},"nextPc":114,"pc":113,"step":5299}
+{"blocked":false,"effects":[],"elapsed":88.31666666666294,"instruction":{"op":"ret"},"nextPc":38,"pc":114,"step":5299}
+{"blocked":false,"effects":[],"elapsed":88.31666666666294,"instruction":{"condition":{"branch":{"jump":72},"branchOn":false},"mask":1,"op":"tstf"},"nextPc":39,"pc":38,"step":5299}
+{"blocked":true,"effects":[{"playMessage":"IS THIS SENSIBLE"}],"elapsed":88.31666666666294,"instruction":{"op":"msg","tokens":[{"kind":"word","word":237},{"kind":"word","word":43},{"kind":"word","word":211},{"kind":"literal","text":"SENSIBLE"}]},"nextPc":40,"pc":39,"step":5299}
+{"changed":{"host":{"messagePlaying":true,"tickCounter":5},"isMessageComplete":false,"message":"","state":{"callStack":[],"pc":40,"resumeAfterTick":null}},"elapsed":88.31666666666294,"step":5299}
+{"changed":{"message":"I"},"elapsed":88.399999999996268,"step":5304}
+{"changed":{"host":{"tickCounter":6}},"elapsed":88.483333333329597,"step":5309}
+{"changed":{"message":"IS"},"elapsed":88.499999999996263,"step":5310}
+{"changed":{"message":"IS "},"elapsed":88.566666666662925,"step":5314}
+{"changed":{"host":{"tickCounter":7},"message":"IS T"},"elapsed":88.649999999996254,"step":5319}
+{"changed":{"message":"IS TH"},"elapsed":88.733333333329583,"step":5324}
+{"changed":{"host":{"tickCounter":8},"message":"IS THI"},"elapsed":88.816666666662911,"step":5329}
+{"changed":{"message":"IS THIS"},"elapsed":88.89999999999624,"step":5334}
+{"changed":{"host":{"tickCounter":9},"message":"IS THIS "},"elapsed":88.983333333329568,"step":5339}
+{"changed":{"message":"IS THIS S"},"elapsed":89.066666666662897,"step":5344}
+{"changed":{"host":{"tickCounter":10}},"elapsed":89.149999999996226,"step":5349}
+{"changed":{"message":"IS THIS SE"},"elapsed":89.166666666662891,"step":5350}
+{"changed":{"message":"IS THIS SEN"},"elapsed":89.24999999999622,"step":5355}
+{"changed":{"host":{"tickCounter":11}},"elapsed":89.316666666662883,"step":5359}
+{"changed":{"message":"IS THIS SENS"},"elapsed":89.333333333329549,"step":5360}
+{"changed":{"message":"IS THIS SENSI"},"elapsed":89.416666666662877,"step":5365}
+{"changed":{"host":{"tickCounter":12}},"elapsed":89.48333333332954,"step":5369}
+{"changed":{"message":"IS THIS SENSIB"},"elapsed":89.499999999996206,"step":5370}
+{"changed":{"message":"IS THIS SENSIBL"},"elapsed":89.583333333329534,"step":5375}
+{"changed":{"host":{"tickCounter":13}},"elapsed":89.649999999996197,"step":5379}
+{"changed":{"message":"IS THIS SENSIBLE"},"elapsed":89.666666666662863,"step":5380}
+{"changed":{"host":{"tickCounter":14}},"elapsed":89.816666666662854,"step":5389}
+{"changed":{"host":{"tickCounter":15}},"elapsed":89.983333333329512,"step":5399}
+{"changed":{"host":{"tickCounter":16}},"elapsed":90.149999999996169,"step":5409}
+{"changed":{"host":{"tickCounter":17}},"elapsed":90.316666666662826,"step":5419}
+{"changed":{"host":{"tickCounter":18}},"elapsed":90.483333333329483,"step":5429}
+{"changed":{"host":{"tickCounter":19}},"elapsed":90.64999999999614,"step":5439}
+{"changed":{"host":{"tickCounter":20}},"elapsed":90.816666666662798,"step":5449}
+{"changed":{"host":{"tickCounter":21}},"elapsed":90.983333333329455,"step":5459}
+{"changed":{"host":{"tickCounter":22}},"elapsed":91.149999999996112,"step":5469}
+{"changed":{"host":{"tickCounter":23}},"elapsed":91.316666666662769,"step":5479}
+{"changed":{"host":{"tickCounter":24}},"elapsed":91.483333333329426,"step":5489}
+{"changed":{"host":{"tickCounter":25}},"elapsed":91.649999999996083,"step":5499}
+{"changed":{"host":{"tickCounter":26}},"elapsed":91.816666666662741,"step":5509}
+{"changed":{"host":{"tickCounter":27}},"elapsed":91.983333333329398,"step":5519}
+{"changed":{"host":{"tickCounter":28}},"elapsed":92.149999999996055,"step":5529}
+{"changed":{"host":{"tickCounter":29}},"elapsed":92.316666666662712,"step":5539}
+{"changed":{"host":{"tickCounter":30}},"elapsed":92.483333333329369,"step":5549}
+{"changed":{"host":{"tickCounter":31}},"elapsed":92.649999999996027,"step":5559}
+{"blocked":false,"effects":[],"elapsed":92.666666666662692,"instruction":{"op":"call","target":108},"nextPc":108,"pc":40,"step":5560}
+{"blocked":false,"effects":[],"elapsed":92.666666666662692,"instruction":{"op":"clrk"},"nextPc":109,"pc":108,"step":5560}
+{"blocked":true,"effects":[{"playMessage":"DO YOU WANT TO BUY"}],"elapsed":92.666666666662692,"instruction":{"op":"msg","tokens":[{"kind":"word","word":238},{"kind":"word","word":51},{"kind":"word","word":220},{"kind":"word","word":217},{"kind":"word","word":213},{"kind":"word","word":28},{"kind":"word","word":7}]},"nextPc":110,"pc":109,"step":5560}
+{"changed":{"message":"","state":{"callStack":[41],"pc":110}},"elapsed":92.666666666662692,"step":5560}
+{"changed":{"message":"D"},"elapsed":92.749999999996021,"step":5565}
+{"changed":{"host":{"tickCounter":32}},"elapsed":92.816666666662684,"step":5569}
+{"changed":{"message":"DO"},"elapsed":92.849999999996015,"step":5571}
+{"changed":{"message":"DO "},"elapsed":92.916666666662678,"step":5575}
+{"changed":{"host":{"tickCounter":33}},"elapsed":92.983333333329341,"step":5579}
+{"changed":{"message":"DO Y"},"elapsed":92.999999999996007,"step":5580}
+{"changed":{"message":"DO YO"},"elapsed":93.083333333329335,"step":5585}
+{"changed":{"host":{"tickCounter":34}},"elapsed":93.149999999995998,"step":5589}
+{"changed":{"message":"DO YOU"},"elapsed":93.166666666662664,"step":5590}
+{"changed":{"message":"DO YOU "},"elapsed":93.249999999995993,"step":5595}
+{"changed":{"host":{"tickCounter":35}},"elapsed":93.316666666662655,"step":5599}
+{"changed":{"message":"DO YOU W"},"elapsed":93.333333333329321,"step":5600}
+{"changed":{"message":"DO YOU WA"},"elapsed":93.41666666666265,"step":5605}
+{"changed":{"host":{"tickCounter":36}},"elapsed":93.483333333329313,"step":5609}
+{"changed":{"message":"DO YOU WAN"},"elapsed":93.516666666662644,"step":5611}
+{"changed":{"message":"DO YOU WANT"},"elapsed":93.599999999995973,"step":5616}
+{"changed":{"host":{"tickCounter":37}},"elapsed":93.64999999999597,"step":5619}
+{"changed":{"message":"DO YOU WANT "},"elapsed":93.683333333329301,"step":5621}
+{"changed":{"message":"DO YOU WANT T"},"elapsed":93.76666666666263,"step":5626}
+{"changed":{"host":{"tickCounter":38}},"elapsed":93.816666666662627,"step":5629}
+{"changed":{"message":"DO YOU WANT TO"},"elapsed":93.849999999995958,"step":5631}
+{"changed":{"message":"DO YOU WANT TO "},"elapsed":93.933333333329287,"step":5636}
+{"changed":{"host":{"tickCounter":39}},"elapsed":93.983333333329284,"step":5639}
+{"changed":{"message":"DO YOU WANT TO B"},"elapsed":94.016666666662616,"step":5641}
+{"changed":{"message":"DO YOU WANT TO BU"},"elapsed":94.099999999995944,"step":5646}
+{"changed":{"host":{"tickCounter":40}},"elapsed":94.149999999995941,"step":5649}
+{"changed":{"message":"DO YOU WANT TO BUY"},"elapsed":94.183333333329273,"step":5651}
+{"changed":{"host":{"tickCounter":41}},"elapsed":94.316666666662599,"step":5659}
+{"changed":{"host":{"tickCounter":42}},"elapsed":94.483333333329256,"step":5669}
+{"changed":{"host":{"tickCounter":43}},"elapsed":94.649999999995913,"step":5679}
+{"changed":{"host":{"tickCounter":44}},"elapsed":94.81666666666257,"step":5689}
+{"changed":{"host":{"tickCounter":45}},"elapsed":94.983333333329227,"step":5699}
+{"changed":{"host":{"tickCounter":46}},"elapsed":95.149999999995885,"step":5709}
+{"changed":{"host":{"tickCounter":47}},"elapsed":95.316666666662542,"step":5719}
+{"changed":{"host":{"tickCounter":48}},"elapsed":95.483333333329199,"step":5729}
+{"changed":{"host":{"tickCounter":49}},"elapsed":95.649999999995856,"step":5739}
+{"changed":{"host":{"tickCounter":50}},"elapsed":95.816666666662513,"step":5749}
+{"changed":{"host":{"tickCounter":51}},"elapsed":95.983333333329171,"step":5759}
+{"changed":{"host":{"tickCounter":52}},"elapsed":96.149999999995828,"step":5769}
+{"changed":{"host":{"tickCounter":53}},"elapsed":96.316666666662485,"step":5779}
+{"changed":{"host":{"tickCounter":54}},"elapsed":96.483333333329142,"step":5789}
+{"changed":{"host":{"tickCounter":55}},"elapsed":96.649999999995799,"step":5799}
+{"changed":{"host":{"tickCounter":56}},"elapsed":96.816666666662456,"step":5809}
+{"changed":{"host":{"tickCounter":57}},"elapsed":96.983333333329114,"step":5819}
+{"changed":{"host":{"tickCounter":58}},"elapsed":97.149999999995771,"step":5829}
+{"blocked":false,"effects":[],"elapsed":97.183333333329102,"instruction":{"op":"cfr"},"nextPc":111,"pc":110,"step":5831}
+{"blocked":false,"effects":[],"elapsed":97.183333333329102,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":5831}
+{"blocked":true,"effects":[],"elapsed":97.183333333329102,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":5831}
+{"changed":{"host":{"messagePlaying":false,"tickCounter":0},"isMessageComplete":true,"state":{"pc":112,"resumeAfterTick":1}},"elapsed":97.183333333329102,"step":5831}
+{"blocked":false,"effects":[],"elapsed":97.316666666662428,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":5839}
+{"blocked":false,"effects":[],"elapsed":97.316666666662428,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":5839}
+{"blocked":true,"effects":[],"elapsed":97.316666666662428,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":5839}
+{"changed":{"host":{"tickCounter":1},"state":{"resumeAfterTick":2}},"elapsed":97.316666666662428,"step":5839}
+{"blocked":false,"effects":[],"elapsed":97.483333333329085,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":5849}
+{"blocked":false,"effects":[],"elapsed":97.483333333329085,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":5849}
+{"blocked":true,"effects":[],"elapsed":97.483333333329085,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":5849}
+{"changed":{"host":{"tickCounter":2},"state":{"resumeAfterTick":3}},"elapsed":97.483333333329085,"step":5849}
+{"blocked":false,"effects":[],"elapsed":97.649999999995742,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":5859}
+{"blocked":false,"effects":[],"elapsed":97.649999999995742,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":5859}
+{"blocked":true,"effects":[],"elapsed":97.649999999995742,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":5859}
+{"changed":{"host":{"tickCounter":3},"state":{"resumeAfterTick":4}},"elapsed":97.649999999995742,"step":5859}
+{"blocked":false,"effects":[],"elapsed":97.8166666666624,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":5869}
+{"blocked":false,"effects":[],"elapsed":97.8166666666624,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":5869}
+{"blocked":true,"effects":[],"elapsed":97.8166666666624,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":5869}
+{"changed":{"host":{"tickCounter":4},"state":{"resumeAfterTick":5}},"elapsed":97.8166666666624,"step":5869}
+{"blocked":false,"effects":[],"elapsed":97.983333333329057,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":113,"pc":112,"step":5879}
+{"blocked":false,"effects":[],"elapsed":97.983333333329057,"instruction":{"mask":1,"op":"clrf"},"nextPc":114,"pc":113,"step":5879}
+{"blocked":false,"effects":[],"elapsed":97.983333333329057,"instruction":{"op":"ret"},"nextPc":41,"pc":114,"step":5879}
+{"blocked":false,"effects":[],"elapsed":97.983333333329057,"instruction":{"condition":{"branch":{"jump":72},"branchOn":false},"mask":1,"op":"tstf"},"nextPc":42,"pc":41,"step":5879}
+{"blocked":true,"effects":[{"playMessage":"YOU PLAN TO WALK"}],"elapsed":97.983333333329057,"instruction":{"op":"msg","tokens":[{"kind":"word","word":237},{"kind":"word","word":220},{"kind":"word","word":182},{"kind":"word","word":213},{"kind":"word","word":225}]},"nextPc":43,"pc":42,"step":5879}
+{"changed":{"host":{"messagePlaying":true,"tickCounter":5},"isMessageComplete":false,"message":"","state":{"callStack":[],"pc":43,"resumeAfterTick":null}},"elapsed":97.983333333329057,"step":5879}
+{"changed":{"message":"Y"},"elapsed":98.066666666662385,"step":5884}
+{"changed":{"host":{"tickCounter":6}},"elapsed":98.149999999995714,"step":5889}
+{"changed":{"message":"YO"},"elapsed":98.16666666666238,"step":5890}
+{"changed":{"message":"YOU"},"elapsed":98.233333333329043,"step":5894}
+{"changed":{"host":{"tickCounter":7},"message":"YOU "},"elapsed":98.316666666662371,"step":5899}
+{"changed":{"message":"YOU P"},"elapsed":98.3999999999957,"step":5904}
+{"changed":{"host":{"tickCounter":8},"message":"YOU PL"},"elapsed":98.483333333329028,"step":5909}
+{"changed":{"message":"YOU PLA"},"elapsed":98.566666666662357,"step":5914}
+{"changed":{"host":{"tickCounter":9},"message":"YOU PLAN"},"elapsed":98.649999999995686,"step":5919}
+{"changed":{"message":"YOU PLAN "},"elapsed":98.733333333329014,"step":5924}
+{"changed":{"host":{"tickCounter":10}},"elapsed":98.816666666662343,"step":5929}
+{"changed":{"message":"YOU PLAN T"},"elapsed":98.833333333329008,"step":5930}
+{"changed":{"message":"YOU PLAN TO"},"elapsed":98.916666666662337,"step":5935}
+{"changed":{"host":{"tickCounter":11}},"elapsed":98.983333333329,"step":5939}
+{"changed":{"message":"YOU PLAN TO "},"elapsed":98.999999999995666,"step":5940}
+{"changed":{"message":"YOU PLAN TO W"},"elapsed":99.083333333328994,"step":5945}
+{"changed":{"host":{"tickCounter":12}},"elapsed":99.149999999995657,"step":5949}
+{"changed":{"message":"YOU PLAN TO WA"},"elapsed":99.166666666662323,"step":5950}
+{"changed":{"message":"YOU PLAN TO WAL"},"elapsed":99.249999999995651,"step":5955}
+{"changed":{"host":{"tickCounter":13}},"elapsed":99.316666666662314,"step":5959}
+{"changed":{"message":"YOU PLAN TO WALK"},"elapsed":99.33333333332898,"step":5960}
+{"changed":{"host":{"tickCounter":14}},"elapsed":99.483333333328972,"step":5969}
+{"changed":{"host":{"tickCounter":15}},"elapsed":99.649999999995629,"step":5979}
+{"changed":{"host":{"tickCounter":16}},"elapsed":99.816666666662286,"step":5989}
+{"changed":{"host":{"tickCounter":17}},"elapsed":99.983333333328943,"step":5999}
+{"changed":{"host":{"tickCounter":18}},"elapsed":100.1499999999956,"step":6009}
+{"changed":{"host":{"tickCounter":19}},"elapsed":100.31666666666226,"step":6019}
+{"changed":{"host":{"tickCounter":20}},"elapsed":100.48333333332891,"step":6029}
+{"changed":{"host":{"tickCounter":21}},"elapsed":100.64999999999557,"step":6039}
+{"changed":{"host":{"tickCounter":22}},"elapsed":100.81666666666223,"step":6049}
+{"changed":{"host":{"tickCounter":23}},"elapsed":100.98333333332889,"step":6059}
+{"changed":{"host":{"tickCounter":24}},"elapsed":101.14999999999554,"step":6069}
+{"changed":{"host":{"tickCounter":25}},"elapsed":101.3166666666622,"step":6079}
+{"changed":{"host":{"tickCounter":26}},"elapsed":101.48333333332886,"step":6089}
+{"changed":{"host":{"tickCounter":27}},"elapsed":101.64999999999552,"step":6099}
+{"changed":{"host":{"tickCounter":28}},"elapsed":101.81666666666217,"step":6109}
+{"changed":{"host":{"tickCounter":29}},"elapsed":101.98333333332883,"step":6119}
+{"changed":{"host":{"tickCounter":30}},"elapsed":102.14999999999549,"step":6129}
+{"changed":{"host":{"tickCounter":31}},"elapsed":102.31666666666214,"step":6139}
+{"blocked":false,"effects":[],"elapsed":102.33333333332881,"instruction":{"op":"call","target":108},"nextPc":108,"pc":43,"step":6140}
+{"blocked":false,"effects":[],"elapsed":102.33333333332881,"instruction":{"op":"clrk"},"nextPc":109,"pc":108,"step":6140}
+{"blocked":true,"effects":[{"playMessage":"DO YOU WANT TO BUY"}],"elapsed":102.33333333332881,"instruction":{"op":"msg","tokens":[{"kind":"word","word":238},{"kind":"word","word":51},{"kind":"word","word":220},{"kind":"word","word":217},{"kind":"word","word":213},{"kind":"word","word":28},{"kind":"word","word":7}]},"nextPc":110,"pc":109,"step":6140}
+{"changed":{"message":"","state":{"callStack":[44],"pc":110}},"elapsed":102.33333333332881,"step":6140}
+{"changed":{"message":"D"},"elapsed":102.41666666666214,"step":6145}
+{"changed":{"host":{"tickCounter":32}},"elapsed":102.4833333333288,"step":6149}
+{"changed":{"message":"DO"},"elapsed":102.51666666666213,"step":6151}
+{"changed":{"message":"DO "},"elapsed":102.5833333333288,"step":6155}
+{"changed":{"host":{"tickCounter":33}},"elapsed":102.64999999999546,"step":6159}
+{"changed":{"message":"DO Y"},"elapsed":102.66666666666212,"step":6160}
+{"changed":{"message":"DO YO"},"elapsed":102.74999999999545,"step":6165}
+{"changed":{"host":{"tickCounter":34}},"elapsed":102.81666666666212,"step":6169}
+{"changed":{"message":"DO YOU"},"elapsed":102.83333333332878,"step":6170}
+{"changed":{"message":"DO YOU "},"elapsed":102.91666666666211,"step":6175}
+{"changed":{"host":{"tickCounter":35}},"elapsed":102.98333333332877,"step":6179}
+{"changed":{"message":"DO YOU W"},"elapsed":102.99999999999544,"step":6180}
+{"changed":{"message":"DO YOU WA"},"elapsed":103.08333333332877,"step":6185}
+{"changed":{"host":{"tickCounter":36}},"elapsed":103.14999999999543,"step":6189}
+{"changed":{"message":"DO YOU WAN"},"elapsed":103.18333333332876,"step":6191}
+{"changed":{"message":"DO YOU WANT"},"elapsed":103.26666666666209,"step":6196}
+{"changed":{"host":{"tickCounter":37}},"elapsed":103.31666666666209,"step":6199}
+{"changed":{"message":"DO YOU WANT "},"elapsed":103.34999999999542,"step":6201}
+{"changed":{"message":"DO YOU WANT T"},"elapsed":103.43333333332875,"step":6206}
+{"changed":{"host":{"tickCounter":38}},"elapsed":103.48333333332874,"step":6209}
+{"changed":{"message":"DO YOU WANT TO"},"elapsed":103.51666666666208,"step":6211}
+{"changed":{"message":"DO YOU WANT TO "},"elapsed":103.5999999999954,"step":6216}
+{"changed":{"host":{"tickCounter":39}},"elapsed":103.6499999999954,"step":6219}
+{"changed":{"message":"DO YOU WANT TO B"},"elapsed":103.68333333332873,"step":6221}
+{"changed":{"message":"DO YOU WANT TO BU"},"elapsed":103.76666666666206,"step":6226}
+{"changed":{"host":{"tickCounter":40}},"elapsed":103.81666666666206,"step":6229}
+{"changed":{"message":"DO YOU WANT TO BUY"},"elapsed":103.84999999999539,"step":6231}
+{"changed":{"host":{"tickCounter":41}},"elapsed":103.98333333332872,"step":6239}
+{"changed":{"host":{"tickCounter":42}},"elapsed":104.14999999999537,"step":6249}
+{"changed":{"host":{"tickCounter":43}},"elapsed":104.31666666666203,"step":6259}
+{"changed":{"host":{"tickCounter":44}},"elapsed":104.48333333332869,"step":6269}
+{"changed":{"host":{"tickCounter":45}},"elapsed":104.64999999999534,"step":6279}
+{"changed":{"host":{"tickCounter":46}},"elapsed":104.816666666662,"step":6289}
+{"changed":{"host":{"tickCounter":47}},"elapsed":104.98333333332866,"step":6299}
+{"changed":{"host":{"tickCounter":48}},"elapsed":105.14999999999532,"step":6309}
+{"changed":{"host":{"tickCounter":49}},"elapsed":105.31666666666197,"step":6319}
+{"changed":{"host":{"tickCounter":50}},"elapsed":105.48333333332863,"step":6329}
+{"changed":{"host":{"tickCounter":51}},"elapsed":105.64999999999529,"step":6339}
+{"changed":{"host":{"tickCounter":52}},"elapsed":105.81666666666194,"step":6349}
+{"changed":{"host":{"tickCounter":53}},"elapsed":105.9833333333286,"step":6359}
+{"changed":{"host":{"tickCounter":54}},"elapsed":106.14999999999526,"step":6369}
+{"changed":{"host":{"tickCounter":55}},"elapsed":106.31666666666192,"step":6379}
+{"changed":{"host":{"tickCounter":56}},"elapsed":106.48333333332857,"step":6389}
+{"changed":{"host":{"tickCounter":57}},"elapsed":106.64999999999523,"step":6399}
+{"changed":{"host":{"tickCounter":58}},"elapsed":106.81666666666189,"step":6409}
+{"blocked":false,"effects":[],"elapsed":106.84999999999522,"instruction":{"op":"cfr"},"nextPc":111,"pc":110,"step":6411}
+{"blocked":false,"effects":[],"elapsed":106.84999999999522,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":6411}
+{"blocked":true,"effects":[],"elapsed":106.84999999999522,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":6411}
+{"changed":{"host":{"messagePlaying":false,"tickCounter":0},"isMessageComplete":true,"state":{"pc":112,"resumeAfterTick":1}},"elapsed":106.84999999999522,"step":6411}
+{"blocked":false,"effects":[],"elapsed":106.98333333332855,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":6419}
+{"blocked":false,"effects":[],"elapsed":106.98333333332855,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":6419}
+{"blocked":true,"effects":[],"elapsed":106.98333333332855,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":6419}
+{"changed":{"host":{"tickCounter":1},"state":{"resumeAfterTick":2}},"elapsed":106.98333333332855,"step":6419}
+{"blocked":false,"effects":[],"elapsed":107.1499999999952,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":6429}
+{"blocked":false,"effects":[],"elapsed":107.1499999999952,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":6429}
+{"blocked":true,"effects":[],"elapsed":107.1499999999952,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":6429}
+{"changed":{"host":{"tickCounter":2},"state":{"resumeAfterTick":3}},"elapsed":107.1499999999952,"step":6429}
+{"blocked":false,"effects":[],"elapsed":107.31666666666186,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":6439}
+{"blocked":false,"effects":[],"elapsed":107.31666666666186,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":6439}
+{"blocked":true,"effects":[],"elapsed":107.31666666666186,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":6439}
+{"changed":{"host":{"tickCounter":3},"state":{"resumeAfterTick":4}},"elapsed":107.31666666666186,"step":6439}
+{"blocked":false,"effects":[],"elapsed":107.48333333332852,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":6449}
+{"blocked":false,"effects":[],"elapsed":107.48333333332852,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":6449}
+{"blocked":true,"effects":[],"elapsed":107.48333333332852,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":6449}
+{"changed":{"host":{"tickCounter":4},"state":{"resumeAfterTick":5}},"elapsed":107.48333333332852,"step":6449}
+{"blocked":false,"effects":[],"elapsed":107.64999999999517,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":113,"pc":112,"step":6459}
+{"blocked":false,"effects":[],"elapsed":107.64999999999517,"instruction":{"mask":1,"op":"clrf"},"nextPc":114,"pc":113,"step":6459}
+{"blocked":false,"effects":[],"elapsed":107.64999999999517,"instruction":{"op":"ret"},"nextPc":44,"pc":114,"step":6459}
+{"blocked":false,"effects":[],"elapsed":107.64999999999517,"instruction":{"condition":{"branch":{"jump":72},"branchOn":false},"mask":1,"op":"tstf"},"nextPc":45,"pc":44,"step":6459}
+{"blocked":true,"effects":[{"playMessage":"YOU MUST BE CRAZY"}],"elapsed":107.64999999999517,"instruction":{"op":"msg","tokens":[{"kind":"word","word":237},{"kind":"word","word":220},{"kind":"word","word":163},{"kind":"word","word":29},{"kind":"literal","text":"CRAZY"}]},"nextPc":46,"pc":45,"step":6459}
+{"changed":{"host":{"messagePlaying":true,"tickCounter":5},"isMessageComplete":false,"message":"","state":{"callStack":[],"pc":46,"resumeAfterTick":null}},"elapsed":107.64999999999517,"step":6459}
+{"changed":{"message":"Y"},"elapsed":107.7333333333285,"step":6464}
+{"changed":{"host":{"tickCounter":6}},"elapsed":107.81666666666183,"step":6469}
+{"changed":{"message":"YO"},"elapsed":107.8333333333285,"step":6470}
+{"changed":{"message":"YOU"},"elapsed":107.89999999999516,"step":6474}
+{"changed":{"host":{"tickCounter":7},"message":"YOU "},"elapsed":107.98333333332849,"step":6479}
+{"changed":{"message":"YOU M"},"elapsed":108.06666666666182,"step":6484}
+{"changed":{"host":{"tickCounter":8},"message":"YOU MU"},"elapsed":108.14999999999515,"step":6489}
+{"changed":{"message":"YOU MUS"},"elapsed":108.23333333332847,"step":6494}
+{"changed":{"host":{"tickCounter":9},"message":"YOU MUST"},"elapsed":108.3166666666618,"step":6499}
+{"changed":{"message":"YOU MUST "},"elapsed":108.39999999999513,"step":6504}
+{"changed":{"host":{"tickCounter":10}},"elapsed":108.48333333332846,"step":6509}
+{"changed":{"message":"YOU MUST B"},"elapsed":108.49999999999513,"step":6510}
+{"changed":{"message":"YOU MUST BE"},"elapsed":108.58333333332845,"step":6515}
+{"changed":{"host":{"tickCounter":11}},"elapsed":108.64999999999512,"step":6519}
+{"changed":{"message":"YOU MUST BE "},"elapsed":108.66666666666178,"step":6520}
+{"changed":{"message":"YOU MUST BE C"},"elapsed":108.74999999999511,"step":6525}
+{"changed":{"host":{"tickCounter":12}},"elapsed":108.81666666666177,"step":6529}
+{"changed":{"message":"YOU MUST BE CR"},"elapsed":108.83333333332844,"step":6530}
+{"changed":{"message":"YOU MUST BE CRA"},"elapsed":108.91666666666177,"step":6535}
+{"changed":{"host":{"tickCounter":13}},"elapsed":108.98333333332843,"step":6539}
+{"changed":{"message":"YOU MUST BE CRAZ"},"elapsed":108.9999999999951,"step":6540}
+{"changed":{"message":"YOU MUST BE CRAZY"},"elapsed":109.08333333332843,"step":6545}
+{"changed":{"host":{"tickCounter":14}},"elapsed":109.14999999999509,"step":6549}
+{"changed":{"host":{"tickCounter":15}},"elapsed":109.31666666666175,"step":6559}
+{"changed":{"host":{"tickCounter":16}},"elapsed":109.4833333333284,"step":6569}
+{"changed":{"host":{"tickCounter":17}},"elapsed":109.64999999999506,"step":6579}
+{"changed":{"host":{"tickCounter":18}},"elapsed":109.81666666666172,"step":6589}
+{"changed":{"host":{"tickCounter":19}},"elapsed":109.98333333332837,"step":6599}
+{"changed":{"host":{"tickCounter":20}},"elapsed":110.14999999999503,"step":6609}
+{"changed":{"host":{"tickCounter":21}},"elapsed":110.31666666666169,"step":6619}
+{"changed":{"host":{"tickCounter":22}},"elapsed":110.48333333332835,"step":6629}
+{"changed":{"host":{"tickCounter":23}},"elapsed":110.649999999995,"step":6639}
+{"changed":{"host":{"tickCounter":24}},"elapsed":110.81666666666166,"step":6649}
+{"changed":{"host":{"tickCounter":25}},"elapsed":110.98333333332832,"step":6659}
+{"changed":{"host":{"tickCounter":26}},"elapsed":111.14999999999498,"step":6669}
+{"changed":{"host":{"tickCounter":27}},"elapsed":111.31666666666163,"step":6679}
+{"changed":{"host":{"tickCounter":28}},"elapsed":111.48333333332829,"step":6689}
+{"changed":{"host":{"tickCounter":29}},"elapsed":111.64999999999495,"step":6699}
+{"changed":{"host":{"tickCounter":30}},"elapsed":111.8166666666616,"step":6709}
+{"changed":{"host":{"tickCounter":31}},"elapsed":111.98333333332826,"step":6719}
+{"blocked":false,"effects":[],"elapsed":112.08333333332826,"instruction":{"condition":{"branch":{"jump":52},"branchOn":false},"mask":128,"op":"tstf"},"nextPc":47,"pc":46,"step":6725}
+{"blocked":true,"effects":[{"playMessage":""}],"elapsed":112.08333333332826,"instruction":{"op":"msgi","source":{"immediate":50}},"nextPc":48,"pc":47,"step":6725}
+{"changed":{"isMessageComplete":true,"message":"","state":{"pc":48}},"elapsed":112.08333333332826,"step":6725}
+{"blocked":false,"effects":[],"elapsed":112.09999999999492,"instruction":{"op":"call","target":56},"nextPc":56,"pc":48,"step":6726}
+{"blocked":true,"effects":[{"playMessage":"IS ANYBODY THERE"}],"elapsed":112.09999999999492,"instruction":{"op":"msg","tokens":[{"kind":"word","word":237},{"kind":"word","word":43},{"kind":"literal","text":"ANYBODY"},{"kind":"word","word":210}]},"nextPc":57,"pc":56,"step":6726}
+{"changed":{"isMessageComplete":false,"state":{"callStack":[49],"pc":57}},"elapsed":112.09999999999492,"step":6726}
+{"changed":{"host":{"tickCounter":32}},"elapsed":112.14999999999492,"step":6729}
+{"changed":{"message":"I"},"elapsed":112.18333333332825,"step":6731}
+{"changed":{"message":"IS"},"elapsed":112.28333333332824,"step":6737}
+{"changed":{"host":{"tickCounter":33}},"elapsed":112.31666666666158,"step":6739}
+{"changed":{"message":"IS "},"elapsed":112.34999999999491,"step":6741}
+{"changed":{"message":"IS A"},"elapsed":112.43333333332824,"step":6746}
+{"changed":{"host":{"tickCounter":34}},"elapsed":112.48333333332823,"step":6749}
+{"changed":{"message":"IS AN"},"elapsed":112.51666666666156,"step":6751}
+{"changed":{"message":"IS ANY"},"elapsed":112.59999999999489,"step":6756}
+{"changed":{"host":{"tickCounter":35}},"elapsed":112.64999999999489,"step":6759}
+{"changed":{"message":"IS ANYB"},"elapsed":112.68333333332822,"step":6761}
+{"changed":{"message":"IS ANYBO"},"elapsed":112.76666666666155,"step":6766}
+{"changed":{"host":{"tickCounter":36}},"elapsed":112.81666666666155,"step":6769}
+{"changed":{"message":"IS ANYBOD"},"elapsed":112.84999999999488,"step":6771}
+{"changed":{"message":"IS ANYBODY"},"elapsed":112.94999999999487,"step":6777}
+{"changed":{"host":{"tickCounter":37}},"elapsed":112.9833333333282,"step":6779}
+{"changed":{"message":"IS ANYBODY "},"elapsed":113.0333333333282,"step":6782}
+{"changed":{"message":"IS ANYBODY T"},"elapsed":113.11666666666153,"step":6787}
+{"changed":{"host":{"tickCounter":38}},"elapsed":113.14999999999486,"step":6789}
+{"changed":{"message":"IS ANYBODY TH"},"elapsed":113.19999999999486,"step":6792}
+{"changed":{"message":"IS ANYBODY THE"},"elapsed":113.28333333332819,"step":6797}
+{"changed":{"host":{"tickCounter":39}},"elapsed":113.31666666666152,"step":6799}
+{"changed":{"message":"IS ANYBODY THER"},"elapsed":113.36666666666152,"step":6802}
+{"changed":{"message":"IS ANYBODY THERE"},"elapsed":113.44999999999484,"step":6807}
+{"changed":{"host":{"tickCounter":40}},"elapsed":113.48333333332818,"step":6809}
+{"changed":{"host":{"tickCounter":41}},"elapsed":113.64999999999483,"step":6819}
+{"changed":{"host":{"tickCounter":42}},"elapsed":113.81666666666149,"step":6829}
+{"changed":{"host":{"tickCounter":43}},"elapsed":113.98333333332815,"step":6839}
+{"changed":{"host":{"tickCounter":44}},"elapsed":114.1499999999948,"step":6849}
+{"changed":{"host":{"tickCounter":45}},"elapsed":114.31666666666146,"step":6859}
+{"changed":{"host":{"tickCounter":46}},"elapsed":114.48333333332812,"step":6869}
+{"changed":{"host":{"tickCounter":47}},"elapsed":114.64999999999478,"step":6879}
+{"changed":{"host":{"tickCounter":48}},"elapsed":114.81666666666143,"step":6889}
+{"changed":{"host":{"tickCounter":49}},"elapsed":114.98333333332809,"step":6899}
+{"changed":{"host":{"tickCounter":50}},"elapsed":115.14999999999475,"step":6909}
+{"changed":{"host":{"tickCounter":51}},"elapsed":115.3166666666614,"step":6919}
+{"changed":{"host":{"tickCounter":52}},"elapsed":115.48333333332806,"step":6929}
+{"changed":{"host":{"tickCounter":53}},"elapsed":115.64999999999472,"step":6939}
+{"changed":{"host":{"tickCounter":54}},"elapsed":115.81666666666138,"step":6949}
+{"changed":{"host":{"tickCounter":55}},"elapsed":115.98333333332803,"step":6959}
+{"changed":{"host":{"tickCounter":56}},"elapsed":116.14999999999469,"step":6969}
+{"changed":{"host":{"tickCounter":57}},"elapsed":116.31666666666135,"step":6979}
+{"blocked":false,"effects":[],"elapsed":116.44999999999467,"instruction":{"op":"call","target":95},"nextPc":95,"pc":57,"step":6987}
+{"blocked":false,"effects":[],"elapsed":116.44999999999467,"instruction":{"op":"cfr"},"nextPc":96,"pc":95,"step":6987}
+{"blocked":false,"effects":[],"elapsed":116.44999999999467,"instruction":{"condition":{"branch":{"jump":98},"branchOn":false},"mask":128,"op":"tstf"},"nextPc":97,"pc":96,"step":6987}
+{"blocked":true,"effects":[],"elapsed":116.44999999999467,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":97,"pc":97,"step":6987}
+{"changed":{"host":{"messagePlaying":false,"tickCounter":0},"isMessageComplete":true,"state":{"callStack":[49,58],"pc":97,"resumeAfterTick":1}},"elapsed":116.44999999999467,"step":6987}
+{"blocked":false,"effects":[],"elapsed":116.48333333332801,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":96,"pc":97,"step":6989}
+{"blocked":false,"effects":[],"elapsed":116.48333333332801,"instruction":{"condition":{"branch":{"jump":98},"branchOn":false},"mask":128,"op":"tstf"},"nextPc":97,"pc":96,"step":6989}
+{"blocked":true,"effects":[],"elapsed":116.48333333332801,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":97,"pc":97,"step":6989}
+{"changed":{"host":{"tickCounter":1},"state":{"resumeAfterTick":2}},"elapsed":116.48333333332801,"step":6989}
+{"blocked":false,"effects":[],"elapsed":116.64999999999466,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":96,"pc":97,"step":6999}
+{"blocked":false,"effects":[],"elapsed":116.64999999999466,"instruction":{"condition":{"branch":{"jump":98},"branchOn":false},"mask":128,"op":"tstf"},"nextPc":97,"pc":96,"step":6999}
+{"blocked":true,"effects":[],"elapsed":116.64999999999466,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":97,"pc":97,"step":6999}
+{"changed":{"host":{"tickCounter":2},"state":{"resumeAfterTick":3}},"elapsed":116.64999999999466,"step":6999}
+{"blocked":false,"effects":[],"elapsed":116.81666666666132,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":96,"pc":97,"step":7009}
+{"blocked":false,"effects":[],"elapsed":116.81666666666132,"instruction":{"condition":{"branch":{"jump":98},"branchOn":false},"mask":128,"op":"tstf"},"nextPc":97,"pc":96,"step":7009}
+{"blocked":true,"effects":[],"elapsed":116.81666666666132,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":97,"pc":97,"step":7009}
+{"changed":{"host":{"tickCounter":3},"state":{"resumeAfterTick":4}},"elapsed":116.81666666666132,"step":7009}
+{"blocked":false,"effects":[],"elapsed":116.98333333332798,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":96,"pc":97,"step":7019}
+{"blocked":false,"effects":[],"elapsed":116.98333333332798,"instruction":{"condition":{"branch":{"jump":98},"branchOn":false},"mask":128,"op":"tstf"},"nextPc":97,"pc":96,"step":7019}
+{"blocked":true,"effects":[],"elapsed":116.98333333332798,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":97,"pc":97,"step":7019}
+{"changed":{"host":{"tickCounter":4},"state":{"resumeAfterTick":5}},"elapsed":116.98333333332798,"step":7019}
+{"blocked":false,"effects":[],"elapsed":117.14999999999463,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":96,"pc":97,"step":7029}
+{"blocked":false,"effects":[],"elapsed":117.14999999999463,"instruction":{"condition":{"branch":{"jump":98},"branchOn":false},"mask":128,"op":"tstf"},"nextPc":97,"pc":96,"step":7029}
+{"blocked":true,"effects":[],"elapsed":117.14999999999463,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":97,"pc":97,"step":7029}
+{"changed":{"host":{"tickCounter":5},"state":{"resumeAfterTick":6}},"elapsed":117.14999999999463,"step":7029}
+{"blocked":false,"effects":[],"elapsed":117.31666666666129,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":96,"pc":97,"step":7039}
+{"blocked":false,"effects":[],"elapsed":117.31666666666129,"instruction":{"condition":{"branch":{"jump":98},"branchOn":false},"mask":128,"op":"tstf"},"nextPc":97,"pc":96,"step":7039}
+{"blocked":true,"effects":[],"elapsed":117.31666666666129,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":97,"pc":97,"step":7039}
+{"changed":{"host":{"tickCounter":6},"state":{"resumeAfterTick":7}},"elapsed":117.31666666666129,"step":7039}
+{"blocked":false,"effects":[],"elapsed":117.48333333332795,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":96,"pc":97,"step":7049}
+{"blocked":false,"effects":[],"elapsed":117.48333333332795,"instruction":{"condition":{"branch":{"jump":98},"branchOn":false},"mask":128,"op":"tstf"},"nextPc":97,"pc":96,"step":7049}
+{"blocked":true,"effects":[],"elapsed":117.48333333332795,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":97,"pc":97,"step":7049}
+{"changed":{"host":{"tickCounter":7},"state":{"resumeAfterTick":8}},"elapsed":117.48333333332795,"step":7049}
+{"blocked":false,"effects":[],"elapsed":117.64999999999461,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":96,"pc":97,"step":7059}
+{"blocked":false,"effects":[],"elapsed":117.64999999999461,"instruction":{"condition":{"branch":{"jump":98},"branchOn":false},"mask":128,"op":"tstf"},"nextPc":97,"pc":96,"step":7059}
+{"blocked":true,"effects":[],"elapsed":117.64999999999461,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":97,"pc":97,"step":7059}
+{"changed":{"host":{"tickCounter":8},"state":{"resumeAfterTick":9}},"elapsed":117.64999999999461,"step":7059}
+{"blocked":false,"effects":[],"elapsed":117.81666666666126,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":96,"pc":97,"step":7069}
+{"blocked":false,"effects":[],"elapsed":117.81666666666126,"instruction":{"condition":{"branch":{"jump":98},"branchOn":false},"mask":128,"op":"tstf"},"nextPc":97,"pc":96,"step":7069}
+{"blocked":true,"effects":[],"elapsed":117.81666666666126,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":97,"pc":97,"step":7069}
+{"changed":{"host":{"tickCounter":9},"state":{"resumeAfterTick":10}},"elapsed":117.81666666666126,"step":7069}
+{"blocked":false,"effects":[],"elapsed":117.98333333332792,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":96,"pc":97,"step":7079}
+{"blocked":false,"effects":[],"elapsed":117.98333333332792,"instruction":{"condition":{"branch":{"jump":98},"branchOn":false},"mask":128,"op":"tstf"},"nextPc":97,"pc":96,"step":7079}
+{"blocked":true,"effects":[],"elapsed":117.98333333332792,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":97,"pc":97,"step":7079}
+{"changed":{"host":{"tickCounter":10},"state":{"resumeAfterTick":11}},"elapsed":117.98333333332792,"step":7079}
+{"blocked":false,"effects":[],"elapsed":118.14999999999458,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":96,"pc":97,"step":7089}
+{"blocked":false,"effects":[],"elapsed":118.14999999999458,"instruction":{"condition":{"branch":{"jump":98},"branchOn":false},"mask":128,"op":"tstf"},"nextPc":97,"pc":96,"step":7089}
+{"blocked":true,"effects":[],"elapsed":118.14999999999458,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":97,"pc":97,"step":7089}
+{"changed":{"host":{"tickCounter":11},"state":{"resumeAfterTick":12}},"elapsed":118.14999999999458,"step":7089}
+{"blocked":false,"effects":[],"elapsed":118.31666666666123,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":96,"pc":97,"step":7099}
+{"blocked":false,"effects":[],"elapsed":118.31666666666123,"instruction":{"condition":{"branch":{"jump":98},"branchOn":false},"mask":128,"op":"tstf"},"nextPc":97,"pc":96,"step":7099}
+{"blocked":true,"effects":[],"elapsed":118.31666666666123,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":97,"pc":97,"step":7099}
+{"changed":{"host":{"tickCounter":12},"state":{"resumeAfterTick":13}},"elapsed":118.31666666666123,"step":7099}
+{"blocked":false,"effects":[],"elapsed":118.48333333332789,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":96,"pc":97,"step":7109}
+{"blocked":false,"effects":[],"elapsed":118.48333333332789,"instruction":{"condition":{"branch":{"jump":98},"branchOn":false},"mask":128,"op":"tstf"},"nextPc":97,"pc":96,"step":7109}
+{"blocked":true,"effects":[],"elapsed":118.48333333332789,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":97,"pc":97,"step":7109}
+{"changed":{"host":{"tickCounter":13},"state":{"resumeAfterTick":14}},"elapsed":118.48333333332789,"step":7109}
+{"blocked":false,"effects":[],"elapsed":118.64999999999455,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":96,"pc":97,"step":7119}
+{"blocked":false,"effects":[],"elapsed":118.64999999999455,"instruction":{"condition":{"branch":{"jump":98},"branchOn":false},"mask":128,"op":"tstf"},"nextPc":97,"pc":96,"step":7119}
+{"blocked":true,"effects":[],"elapsed":118.64999999999455,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":97,"pc":97,"step":7119}
+{"changed":{"host":{"tickCounter":14},"state":{"resumeAfterTick":15}},"elapsed":118.64999999999455,"step":7119}
+{"blocked":false,"effects":[],"elapsed":118.81666666666121,"instruction":{"condition":{"branch":{"jump":96},"branchOn":false},"op":"wfr","ticks":15},"nextPc":98,"pc":97,"step":7129}
+{"blocked":false,"effects":[],"elapsed":118.81666666666121,"instruction":{"op":"ret"},"nextPc":58,"pc":98,"step":7129}
+{"blocked":false,"effects":[],"elapsed":118.81666666666121,"instruction":{"condition":{"branch":{"jump":69},"branchOn":false},"mask":128,"op":"tstf"},"nextPc":59,"pc":58,"step":7129}
+{"blocked":true,"effects":[{"playMessage":"AM I TALKING TO MYSELF"}],"elapsed":118.81666666666121,"instruction":{"op":"msg","tokens":[{"kind":"word","word":9},{"kind":"word","word":195},{"kind":"literal","text":"TALKING TO MYSELF"}]},"nextPc":60,"pc":59,"step":7129}
+{"changed":{"host":{"messagePlaying":true,"tickCounter":15},"isMessageComplete":false,"message":"","state":{"callStack":[49],"pc":60,"resumeAfterTick":null}},"elapsed":118.81666666666121,"step":7129}
+{"changed":{"message":"A"},"elapsed":118.89999999999453,"step":7134}
+{"changed":{"host":{"tickCounter":16}},"elapsed":118.98333333332786,"step":7139}
+{"changed":{"message":"AM"},"elapsed":118.99999999999453,"step":7140}
+{"changed":{"message":"AM "},"elapsed":119.06666666666119,"step":7144}
+{"changed":{"host":{"tickCounter":17},"message":"AM I"},"elapsed":119.14999999999452,"step":7149}
+{"changed":{"message":"AM I "},"elapsed":119.23333333332785,"step":7154}
+{"changed":{"host":{"tickCounter":18},"message":"AM I T"},"elapsed":119.31666666666118,"step":7159}
+{"changed":{"message":"AM I TA"},"elapsed":119.39999999999451,"step":7164}
+{"changed":{"host":{"tickCounter":19},"message":"AM I TAL"},"elapsed":119.48333333332783,"step":7169}
+{"changed":{"message":"AM I TALK"},"elapsed":119.56666666666116,"step":7174}
+{"changed":{"host":{"tickCounter":20}},"elapsed":119.64999999999449,"step":7179}
+{"changed":{"message":"AM I TALKI"},"elapsed":119.66666666666116,"step":7180}
+{"changed":{"message":"AM I TALKIN"},"elapsed":119.74999999999449,"step":7185}
+{"changed":{"host":{"tickCounter":21}},"elapsed":119.81666666666115,"step":7189}
+{"changed":{"message":"AM I TALKING"},"elapsed":119.83333333332781,"step":7190}
+{"changed":{"message":"AM I TALKING "},"elapsed":119.91666666666114,"step":7195}
+{"changed":{"host":{"tickCounter":22}},"elapsed":119.98333333332781,"step":7199}
+{"changed":{"message":"AM I TALKING T"},"elapsed":119.99999999999447,"step":7200}
+{"elapsed":120.01666666666114,"finished":{"credits":9000,"stillRunning":true},"step":7201}

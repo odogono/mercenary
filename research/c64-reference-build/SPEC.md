@@ -43,4 +43,6 @@ Pure validation and protocol encoding receive unit tests. Filesystem verificatio
 2. `capture` creates a self-verifying post-unpack run with physical RAM, CPU-visible memory, registers, display, monitor log, and a short-lived snapshot.
 3. `reproduce` obtains equal normalized evidence from two independent cold starts.
 4. The first stable interactive game checkpoint is documented and can accept a bounded keyboard/joystick scenario.
-5. Tracked evidence contains hashes and interpretations only; generated payloads remain ignored.
+5. Tracked evidence contains hashes and interpretations only; exact laboratory output stays
+   under ignored `work/` or `restricted/` storage. The exported Data Payload is the one
+   generated artifact that is tracked (ADR 0029).

@@ -7,7 +7,7 @@ Terms marked **(historical)** name concepts retained only for reading frozen pro
 ## Language
 
 **Data Payload**:
-The single gitignored collection of game data re-extracted from the Reference Build by this project's own tooling, loaded by the app at runtime and kept out of Git.
+The single collection of game data re-extracted from the Reference Build by this project's own tooling, loaded by the app at runtime and tracked in this private repository (ADR 0029).
 _Avoid_: Asset folder, resources, ROM data
 
 **Benson Script**:
@@ -155,7 +155,7 @@ The accepted macOS implementation frozen at the annotated `trace-oracle-last-goo
 _Avoid_: Golden master, reference app, source of truth
 
 **Golden Trace**:
-One deterministic, full-precision record of a run the maintainer has accepted, emitted by the Trace Oracle for the canonical implementation to reproduce. Derived from the Data Payload, and therefore never tracked.
+One deterministic, full-precision record of a run the maintainer has accepted, emitted by the Trace Oracle for the canonical implementation to reproduce. Derived from the Data Payload, and tracked beside it so a divergence reads as a diff (ADR 0029).
 _Avoid_: Snapshot, baseline, fixture, expected output
 
 **Trace Scenario**:

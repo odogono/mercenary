@@ -10,7 +10,7 @@ One self-contained HTML page mocking the four new browser-shell surfaces in a sh
 bun run prototypes/browser-experience/serve.ts
 ```
 
-Then open the printed `http://localhost:4180/`. The server exists only because browsers block `@font-face` fetches from `file://` pages; it serves this page plus the two extracted typefaces from the ignored `payload/fonts/` (nothing gitignored is copied into this directory). Without a populated Data Payload the page still works and shows a fallback-typeface banner.
+Then open the printed `http://localhost:4180/`. The server exists only because browsers block `@font-face` fetches from `file://` pages; it serves this page plus the two extracted typefaces from `payload/fonts/` (nothing is copied into this directory). Without a populated Data Payload the page still works and shows a fallback-typeface banner.
 
 Interactions to review:
 

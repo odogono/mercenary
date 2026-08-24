@@ -16,7 +16,7 @@ These are seam *categories* inferred from Working-Authority Evidence. Confirmed 
 | Occupancy / craft | Occupancy on foot or aboard; Craft Parameter Blocks | Walk/board soft state; keyboard speed gears; board/leave keys | `damocles-walk-board-flight.md` (#86) |
 | Time / deadline | (Targ session time as today) | Impact-deadline panel clock advances while idle (encoding still Fog) | `damocles-script-motion-time.md` (#81) |
 
-Method that transfers without transferring live types: Host Callout pattern, Gameplay Session as sole Session State authority, own extractors into a gitignored Data Payload, Trace Oracle discipline, ADR 0002 (no mechanical translation of Working Authority or MDDClone).
+Method that transfers without transferring live types: Host Callout pattern, Gameplay Session as sole Session State authority, own extractors into a single Data Payload, Trace Oracle discipline, ADR 0002 (no mechanical translation of Working Authority or MDDClone).
 
 ### The script seam has a native escape, so far unexercised (#128)
 

@@ -19,21 +19,25 @@ required by [ADR 0002](adr/0002-separate-rom-research-from-implementation.md).
 
 ## Private research boundary
 
-Restricted Material stays outside Git in ignored paths, with one deliberate
-exception: the unlicensed Reference Disassembly is retained as a reviewed,
-provenance-bound snapshot under `research/reference-disassembly/`. It is documentation
-only and is never a build input, runtime dependency, code-generation source, or Data
-Payload source. Supplied media belongs
+Restricted Material stays outside Git in ignored paths, with two deliberate
+exceptions. First, the unlicensed Reference Disassembly is retained as a reviewed,
+provenance-bound snapshot under `research/reference-disassembly/` (ADR 0017). It is
+documentation only and is never a build input, runtime dependency,
+code-generation source, or Data Payload source. Second, this project's own
+extraction — the Data Payload under `payload/` and the Golden Traces under
+`traces/` — is tracked (ADR 0029), because a permanently private history is not
+a publication surface and the everyday checkout needs both to run its gates.
+Supplied media belongs
 under `roms/`, generated laboratory evidence under
 `research/c64-reference-build/work/`, and other restricted work under
-`restricted/`. Apart from the named Reference Disassembly snapshot, this includes
+`restricted/`. Apart from the two named exceptions, this includes
 ROMs, disk or tape images, memory dumps, snapshots, screenshots, other disassembly
 or decompiler output, copied machine code, exact decoded tables, and uncleared
 Reconstructed Payloads.
 
 Research Provenance may point to Restricted Material without moving that
-material into Git. A private repository, an ignored path, a tracked private snapshot,
-or a provenance record
+material into Git. A private repository, an ignored path, a tracked private
+snapshot or payload, or a provenance record
 reduces accidental disclosure; none establishes that publication is permitted.
 Analytical notes, hashes, labels, and offsets may remain tracked while the
 repository is private, but they are Reference Build-specific research and must
@@ -125,7 +129,10 @@ distributing any media or application build:
    under the two tiers above.
 3. Confirm that no ignored input or work artifact is tracked and inspect the
    candidate contents, metadata, logs, and documentation for Restricted Material.
-   The tracked Reference Disassembly must never enter the candidate.
+   The Data Payload and the Golden Traces are tracked on purpose (ADR 0029) and
+   are not findings of this step; they remain uncleared Reconstructed Payload
+   material and must not enter a candidate without clearance. The tracked
+   Reference Disassembly must never enter the candidate either.
 4. Confirm that repository visibility is still private and that the distribution
    process cannot include the repository, its Git history, or a source archive.
 5. Confirm that original source and dependencies have appropriate licences and

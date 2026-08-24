@@ -1,6 +1,6 @@
 // Throwaway prototype server for issue #120. Exists only because browsers block
 // @font-face fetches from file:// pages; serves the mockup page plus the two
-// extracted typefaces straight from the ignored Data Payload.
+// extracted typefaces straight from the Data Payload.
 const pageUrl = new URL("index.html", import.meta.url);
 const fontsUrl = new URL("../../payload/fonts/", import.meta.url);
 const ALLOWED_FONTS = new Set(["mercenary.woff2", "damocles.woff2"]);

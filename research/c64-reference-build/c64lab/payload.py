@@ -5,7 +5,8 @@ and rewrites it in the compact shape the macOS app loads at runtime (ADR 0014).
 Provenance references, raw ROM hex, and reconstruction round-trip fields are
 dropped — the app needs coordinates and topology, not an audit trail.
 
-The Data Payload is never tracked, so output is confined to ignored storage.
+Output is confined to the payload root or laboratory storage, so an export cannot
+scatter game data across the tree.
 """
 
 from __future__ import annotations
@@ -58,12 +59,12 @@ def _require(condition: bool, message: str) -> None:
         raise LabError(message)
 
 
-def require_ignored_output(path: Path) -> Path:
+def require_payload_output(path: Path) -> Path:
     resolved = path.resolve()
     allowed = (PAYLOAD_ROOT.resolve(), WORK_ROOT.resolve(), RESTRICTED_ROOT.resolve())
     _require(
         any(resolved == root or resolved.is_relative_to(root) for root in allowed),
-        f"Data Payload output must remain under ignored payload/, work/, or restricted/ storage: {path}",
+        f"Data Payload output must remain under payload/, work/, or restricted/ storage: {path}",
     )
     return resolved
 
@@ -616,7 +617,7 @@ def render_room_plan_svg(rooms: list[dict[str, Any]]) -> tuple[str, dict[str, in
 def export_room_plan_svg(dataset_root: Path, output: Path) -> dict[str, Any]:
     """Write the laid-out map beside the other restricted outputs."""
     verified = verify_dataset(dataset_root)
-    destination = require_ignored_output(output)
+    destination = require_payload_output(output)
     destination.parent.mkdir(parents=True, exist_ok=True)
     rooms = build_rooms(verified["documents"]["underground"])["rooms"]
     svg, counts = render_room_plan_svg(rooms)
@@ -627,7 +628,7 @@ def export_room_plan_svg(dataset_root: Path, output: Path) -> dict[str, Any]:
 def export_room_map_svg(dataset_root: Path, output: Path) -> dict[str, Any]:
     """Write the room map beside the other restricted outputs."""
     verified = verify_dataset(dataset_root)
-    destination = require_ignored_output(output)
+    destination = require_payload_output(output)
     destination.parent.mkdir(parents=True, exist_ok=True)
     rooms = build_rooms(verified["documents"]["underground"])["rooms"]
     svg, counts = render_room_map_svg(rooms)
@@ -843,7 +844,7 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
     through the dataset, but the text tables are read straight from a capture's
     memory, so they need the original run.
     """
-    resolved = require_ignored_output(output)
+    resolved = require_payload_output(output)
     verified = verify_dataset(dataset)
     manifest = verified["manifest"]
     require_current_geometry_decoder(manifest)

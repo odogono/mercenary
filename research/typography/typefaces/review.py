@@ -19,7 +19,7 @@ REVIEW_SYNTHESIZED_BORDER = (255, 176, 64)
 
 
 def build_review_sheet(faces: Iterable[dict[str, Glyph]]) -> bytes:
-    """Render complete faces in repertoire order for ignored human review."""
+    """Render complete faces in repertoire order for human review."""
     face_list = tuple(faces)
     require(bool(face_list), "Typography review sheet needs at least one face")
     required = set(CHARACTER_REPERTOIRE)

@@ -1,0 +1,97 @@
+{
+  "counts": {
+    "benson.codeBytes": 2523,
+    "benson.inlineMessages": 138,
+    "benson.instructions": 494,
+    "benson.opcodesUsed": 29,
+    "benson.scripts": 51,
+    "benson.soundStores": 3,
+    "benson.unreachableBytes": 8,
+    "cells": 256,
+    "colonyCraftDoorways": 1,
+    "darkRooms": 20,
+    "deferredSurfaceEdges": 0,
+    "doorways": 481,
+    "endgame.interstellarShipFieldPoints": 21,
+    "endgame.objectHitTargets": 2,
+    "endgame.orbitalCallSites": 3,
+    "flight.flightBlocks": 11,
+    "flight.flightCraft": 8,
+    "flight.flightHandlers": 5,
+    "instances": 64,
+    "interaction.craftSlots": 8,
+    "interaction.rules": 13,
+    "lockedDoorways": 53,
+    "models": 55,
+    "oneWayRoomLinks": 82,
+    "roadTableSegments": 271,
+    "roomEdges": 3936,
+    "roomLinks": 478,
+    "rooms": 192,
+    "rotatedStructures": 13,
+    "surfaceEdges": 9667,
+    "surfaceVertices": 7004,
+    "text.distinctWords": 160,
+    "text.messages": 64,
+    "text.referencedWords": 64,
+    "text.wordSlots": 239,
+    "underground.undergroundEntrances": 5,
+    "unresolvedArrivals": 1
+  },
+  "decoderVersion": 7,
+  "files": [
+    {
+      "path": "benson.json",
+      "sha256": "b56dd1525b17859716ae2bfc6809b8c6e30c21afebfd7f162341dd8a79b518be",
+      "size": 35606
+    },
+    {
+      "path": "endgame.json",
+      "sha256": "4ae530db3daf0be5e22adf7952fdaa3aaf55ccb32abf7b3791b7b0fa1d9639de",
+      "size": 7947
+    },
+    {
+      "path": "flight.json",
+      "sha256": "6103cd46a57e8ffa18d24a745a0d3c2a4634cd235d7038a325b898c70028aed8",
+      "size": 2607
+    },
+    {
+      "path": "interaction.json",
+      "sha256": "25b75834202d379d1298804f32bb05212029dd2bf93b1fc21fc242242b0a7229",
+      "size": 280
+    },
+    {
+      "path": "objects.json",
+      "sha256": "0f5cd6a7cad7f3b0570cf719b9e3f4added755ba41d228a1d636492466e870dc",
+      "size": 34076
+    },
+    {
+      "path": "rooms.json",
+      "sha256": "fd4e1018ff884b43a7a4f07053410904a69c29466e222b28d3083e7f3f9a6ecf",
+      "size": 205801
+    },
+    {
+      "path": "surface.json",
+      "sha256": "762575758bf4dcd7646fafe1d65bc70d5555ccbf0bd31e3fc6eec3d8bf773cbd",
+      "size": 486377
+    },
+    {
+      "path": "text.json",
+      "sha256": "5251e77cc9efe8f55155f407c9581313639908512f8e0a19c2635cb98996028f",
+      "size": 31428
+    },
+    {
+      "path": "underground.json",
+      "sha256": "22c54e7d30c5dd2ea953e77f67f80d039cb4408c517a78875081a3e29d5fd276",
+      "size": 434
+    },
+    {
+      "path": "world.json",
+      "sha256": "652c5d71b86aa4b2d061edbb6f26d6d589363a145209682e734240b9a5bef61d",
+      "size": 18200
+    }
+  ],
+  "schemaVersion": 8,
+  "sourceCoreDigest": "7b0cbf0f34c99fbcf8081e8fc152bc490fb4d4d1d9b1be4d9ec9481441d3949c",
+  "sourceDatasetId": "world-geometry-7b0cbf0f34c99fbc"
+}

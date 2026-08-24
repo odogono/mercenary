@@ -10,7 +10,7 @@ import { payloadResponse } from './src/server/payload.ts';
 /// clearance under ADR 0004 (#67). Until then this binds to localhost and there is no build
 /// step that produces a deployable bundle.
 ///
-/// It serves the page, the gitignored `/payload/` from the repository root, and the one tracked
+/// It serves the page, the tracked `/payload/` from the repository root, and the one
 /// settings document the live Gameplay Session resolves. Neither is copied into `web/`.
 
 const findRepositoryRoot = (): string => {
@@ -34,7 +34,8 @@ const e2e = process.env['MERCENARY_E2E'] === '1';
 if (!existsSync(join(payload, 'manifest.json'))) {
   console.error(
     `No Data Payload at ${payload}.\n` +
-      'It is derived from the Reference Build and never tracked; export one with the lab tooling.'
+      'It is tracked at the repository root, so this checkout is incomplete; ' +
+      'restore it with Git, or re-export one with the lab tooling.'
   );
   process.exit(1);
 }

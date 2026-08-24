@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- The Data Payload and the Golden Traces are tracked (ADR 0029). `/payload/` and `/traces/` were
+  gitignored under ADR 0014's publication hedge and ADR 0019's payload-derived clause, which cost
+  a per-worktree tax: a fresh `git worktree` had no working test suite until the payload was
+  hand-copied or the frozen Swift Trace Oracle was run to regenerate its traces. ADR 0017 already
+  makes this repository permanently private and not a candidate for a public source release — a
+  public version is a separate repository built fresh, never an export of this history — so the
+  ignore rule protected a door that is no longer opened this way, while the ADR 0004
+  qualified-review gate that actually governs publication is untouched. `/roms/`, `/restricted/`,
+  the laboratory `work/` trees and any built web bundle stay ignored. `c64lab`'s export guard is
+  renamed `require_payload_output` and now says what it enforces rather than why.
+
 ### Added
 
 - Damocles script catalogue (#128). `lab script` decodes the script bank by reachability from its

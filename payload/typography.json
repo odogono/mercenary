@@ -1,0 +1,50 @@
+{
+  "defaultFace": "mercenary",
+  "faces": {
+    "damocles": {
+      "family": "Damocles Interface",
+      "id": "damocles",
+      "path": "fonts/damocles.woff2",
+      "sha256": "e20e83baa408ee82483d388710ba3b6c3451aedfad182bec42f5abd176fd4bd3",
+      "sourceGlyphCount": 17,
+      "synthesizedGlyphCount": 82
+    },
+    "mercenary": {
+      "family": "Mercenary Pixel",
+      "id": "mercenary",
+      "path": "fonts/mercenary.woff2",
+      "sha256": "8b9163c089a9bf155c0c4ab7014b0ab94cc4f33daa2f1c05fbfee5769d0a634b",
+      "sourceGlyphCount": 48,
+      "synthesizedGlyphCount": 51
+    }
+  },
+  "schemaVersion": 1,
+  "sources": {
+    "damocles": [
+      {
+        "artifactSha256": "8d1194f1dbc0682d195323f81f0a0deb13570e9551af2a41392d5509abeaf914",
+        "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+        "runId": "observe-first-world-20260818T101013Z-c5a32b7d",
+        "scenarioSha256": "e5383458e6db10cbf5d02f44ae26f8192daeb76559a947e564f9058f8582f96e",
+        "tosSha256": "154803e3ff4851f3dc358b91b16d6b6110d187a81d8132ecb665af49878939d5"
+      },
+      {
+        "artifactSha256": "c652e5c7ed09513d8bc4d9b2fbd4ccb8ee3cb4b5ce431d05c0bb5c5611bb165c",
+        "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+        "runId": "observe-first-world-20260818T101117Z-010b9ad3",
+        "scenarioSha256": "e5383458e6db10cbf5d02f44ae26f8192daeb76559a947e564f9058f8582f96e",
+        "tosSha256": "154803e3ff4851f3dc358b91b16d6b6110d187a81d8132ecb665af49878939d5"
+      }
+    ],
+    "mercenary": {
+      "artifactSha256": "04076f2abf5d043990cb26c3392ef548bca204df5dfc897a8180d0061f24ca6d",
+      "fontTableSha256": "523c7c5631ee28adb4a24e00720614a18782d654fbf7b49302ed41f21438cd92",
+      "runId": "interactive-20260812T214013Z-38d7c69d",
+      "scenarioSha256": "2748b0cdeda192f450b49e12bb288ec2e54271b381a53a5e40d680b6ab7ab20d"
+    }
+  },
+  "toolchain": {
+    "Brotli": "1.2.0",
+    "fonttools": "4.63.0"
+  }
+}
