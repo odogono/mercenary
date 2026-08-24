@@ -215,6 +215,12 @@ export interface GameState {
   /// Reference Build does by copying that block's bytes into the live one. Only
   /// the crash tumble installs one, and reaching the ground clears it.
   readonly mover: number | undefined;
+  /// The special transition flag the Reference Build keeps at `$FA`: `$FF`
+  /// while the player is on the Colony Craft, zero otherwise. Set by flying
+  /// into the `$A13D` box; cleared by every other flying frame, by lift rides,
+  /// and by the tumble that ends a walk off the deck edge
+  /// (`notes/decode/endgame.md`, "Colony Craft and `$A13D`").
+  readonly orbitalFlag: number;
   readonly player: PlayerState;
   /// Whether a poweramp is fitted, which the Reference Build reads for one craft.
   readonly poweramp: boolean;
@@ -260,6 +266,7 @@ export const gameState = (fields: {
   readonly elapsed?: number;
   readonly mode?: FlightMode;
   readonly mover?: number;
+  readonly orbitalFlag?: number;
   readonly player: PlayerState;
   readonly poweramp?: boolean;
   readonly room?: number;
@@ -270,6 +277,7 @@ export const gameState = (fields: {
   elapsed: fields.elapsed ?? 0,
   mode: fields.mode ?? 'grounded',
   mover: fields.mover,
+  orbitalFlag: fields.orbitalFlag ?? 0,
   player: fields.player,
   poweramp: fields.poweramp ?? false,
   room: fields.room,

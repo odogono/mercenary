@@ -1940,6 +1940,8 @@ export class GameplaySession {
       location: this.location,
       objectFlags: this.objectFlags,
       occupancy: this.occupancy,
+      orbitalFlag: this.game.orbitalFlag,
+      position: this.game.player.position,
       residence: this.residence,
       scripts: this.scripts
     });

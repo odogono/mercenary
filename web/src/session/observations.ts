@@ -1,5 +1,6 @@
 import { BensonHostState } from '../benson/host.ts';
 import type { BensonSession } from '../benson/session.ts';
+import type { Vector3 } from '../orientation/index.ts';
 import { hostRoom, type Location, type Residence } from '../world/index.ts';
 import type { Occupancy } from './index.ts';
 
@@ -42,6 +43,13 @@ export interface ObservationSources {
   readonly location: Location;
   readonly objectFlags: ReadonlyMap<number, number>;
   readonly occupancy: Occupancy;
+  /// The special transition flag the Reference Build keeps at `$FA`: `$FF` on
+  /// the Colony Craft, zero otherwise.
+  readonly orbitalFlag: number;
+  /// The player's full position, for the orbital comparisons that need real
+  /// coordinates rather than a Room id. Truncated on the way out, since the
+  /// emulator's three-byte fields hold integers.
+  readonly position: Vector3;
   readonly residence: ReadonlyMap<number, Residence>;
   readonly scripts: BensonSession | undefined;
 }
@@ -89,7 +97,11 @@ export const observationsOf = (
       sources.occupancy.kind === 'onFoot'
         ? BensonHostState.onFoot
         : sources.occupancy.slot,
+    orbitalFlag: sources.orbitalFlag,
     palyarDestroyed: sources.combat?.palyarDestroyed ?? 0,
+    playerX: Math.trunc(sources.position.x),
+    playerY: Math.trunc(sources.position.y),
+    playerZ: Math.trunc(sources.position.z),
     room: sources.location.kind === 'room' ? sources.location.id : 0,
     scriptPc: state?.pc ?? NO_SCRIPT_PC,
     scriptStack: (state?.callStack ?? []).join(','),
