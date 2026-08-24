@@ -1039,6 +1039,17 @@ shape in the Reference Build and browser.
   Dart, so what is still missing is the Reference Build side: no tracked
   uninterrupted emulator scenario reaches the Ending, and the post-Ending input
   behaviors still need live observation rather than modelling.
+- The browser's recovered Escape is walked from the crash site in one run, but
+  neither Escape is yet earned end to end. The hired route's balance and the
+  recovered route's Novadrive are handed over at a deterministic checkpoint,
+  because both sit behind the full delivery economy: the underground's seven
+  locked classes chain into each other, the skeleton key in room 88 is *fixed*
+  until the Sink is carried in from room 163 on the far side of the Palyar
+  cluster, several Room Links are one-way, and room 114 draws its exit at
+  random and must be re-entered until it points the wanted way. Earning
+  1,000,000 credits legally therefore means an automated full-game route
+  across two lift clusters, which belongs with the economy rather than with
+  this predicate. Recorded here so the remaining distance is legible.
 - Legal acquisition for the Colony Craft box is settled from the decoded
   placements and the indoor arm's room bound: slot 0 and the Poweramp Dart are
   acquirable, and slots 3 and 6 are legally unreachable on current evidence
