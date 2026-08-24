@@ -21,6 +21,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Both legal Escape routes and the Colony Craft transition (#133). Benson script 7's dispatcher is
+  now reachable by playing: the hired route earns engine flag `$04` through the rental terminal,
+  waits out the native 779-frame descent, and launches without the Novadrive, while the recovered
+  route boards craft slot 7 in Room 5 and rides the indoor lift to the surface with Occupancy
+  intact — the arm at `$B455-$B476` never tested it, and the surfacing transition at
+  `$A28E-$A2BA` writes the horizontal pair only, so both the craft and its altitude survive.
+  Holding both authorization terms converges on the same write rather than a second Ending, and
+  the six decoded refusals — underground, no authorization, wrong craft, no `Y`, leaving before
+  the recheck, and a destroyed advert cell `$32` that the Anti Time Bomb can restore — all stay
+  playable and resume exactly. `gameComplete` is widened from a Boolean to the Ending phase byte
+  it always was (0 active, 1 Escape accepted, 255 mature terminal), which moves the Save schema to
+  v7; once it is nonzero the session freezes the way the Reference Build's terminal loop does,
+  while script 7's epilogue keeps ticking. Presentation of that phase, and the value 255, remain
+  M7.5's.
+
+  The `$A13D` box gained its first consumer. A craft that can hold the sixteen-middle-byte square
+  while it climbs grounds on the Colony Craft deck at `$40FF3F` with the special transition flag
+  `$FA` set; the deck pins pitch level while the predicate holds, walking over the edge installs
+  mover 9 and falls home to the ordinary crash resolution, and every other flying frame or lift
+  ride clears the flag. The one Doorway out of the underground now copies all three arrival
+  coordinates rather than dropping the altitude, so it ejects the player at the hull as `$90C0`
+  does. None of it writes `gameComplete`: the Colony Craft is Targ play. Endgame payload schema 12
+  exports the decoded entry effects, the exit mover, and the slot-7 handler's one phase-0 write,
+  each behind a new byte fingerprint; the semantic observation vocabulary gains `orbitalFlag` and
+  the full player coordinates the orbital comparisons need. Craft slots 0 and the Poweramp Dart are
+  demonstrated into and out of the box; slots 3 and 6 are recorded legally unreachable on current
+  evidence rather than synthesized. The frozen Trace Oracle's `craft-7-slot7` scenario is retired:
+  it flew the Interstellar Ship through the standard loop, and the Reference Build's own handler
+  pins it nose-up and refuses to fly it at all.
+
 - Damocles script catalogue (#128). `lab script` decodes the script bank by reachability from its
   entry table, reaching 497 ops and 98.2% of the code region with nothing undecodable. It resolved
   the bank into two 64-slot pointer tables (strings at `$070000`, script entries at `$070080` — the
