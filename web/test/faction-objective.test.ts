@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
+import { GameplaySession } from '../src/session/index.ts';
 import { CityRun } from './cityRun.ts';
 import { loadPayload } from './replay/artifacts.ts';
 
@@ -10,9 +11,11 @@ const PASS = 46;
 
 /// Bombs one faction's Sites until the other side says thank you.
 const bombUntilThanked = async (
-  faction: 'mechanoid' | 'palyar'
+  faction: 'mechanoid' | 'palyar',
+  before?: (run: CityRun) => void
 ): Promise<CityRun> => {
   const run = await CityRun.open();
+  before?.(run);
   for (const cell of run.sitesOf(faction)) {
     run.bomb(cell);
     // Stop on the lead itself: the script that answers it needs frames to run,
@@ -59,6 +62,23 @@ describe('the Gratitude Threshold one faction reaches', () => {
     );
   }, 120_000);
 
+  test('pays instead when the Pass has already left where it was kept', async () => {
+    // Carrying it is enough: the script asks whether the Pass is still where it
+    // started, not whether the player has been given it.
+    const run = await bombUntilThanked('mechanoid', started => {
+      started.session.carry(PASS);
+    });
+    const before = run.observations()['credits'] as number;
+
+    run.settle();
+    const after = run.observations();
+
+    expect((after['engineFlags'] as number) & GRATITUDE_FLAG).toBe(
+      GRATITUDE_FLAG
+    );
+    expect(after['credits']).toBe(before + 500_000);
+  }, 120_000);
+
   test('says it once, however far past the threshold the lead goes', async () => {
     const run = await bombUntilThanked('mechanoid');
     run.settle();
@@ -87,6 +107,31 @@ describe('the Gratitude Threshold one faction reaches', () => {
     expect(run.lead()).toBeGreaterThan(objective.threshold);
     expect(after[`objectRoom.${PASS}`]).toBe(thanked[`objectRoom.${PASS}`]);
     expect(after['credits']).toBe(thanked['credits']);
+  }, 120_000);
+});
+
+describe('a Save taken on the way to a threshold', () => {
+  test('carries the lead across and goes on counting from it', async () => {
+    const run = await CityRun.open();
+    for (const cell of run.sitesOf('mechanoid').slice(0, 8)) {
+      run.bomb(cell);
+    }
+    const before = run.session.observations().observations;
+    expect(before['mechanoidDestroyed']).toBeGreaterThan(0);
+
+    const restored = GameplaySession.restore(
+      run.session.content,
+      run.session.scripts,
+      run.session.captureSaveSnapshot()
+    );
+
+    expect(restored.observations().observations).toEqual(before);
+    // And the two go on agreeing rather than merely starting equal.
+    restored.advance(2);
+    run.session.advance(2);
+    expect(restored.observations().observations).toEqual(
+      run.session.observations().observations
+    );
   }, 120_000);
 });
 
