@@ -258,7 +258,7 @@ describe('the Attack State a Faction Reaction sets', () => {
     expect(settled).toBeTrue();
     expect(after['messageText']).toContain('SHIP DESTROYED');
     // Which is a craft lost, and nothing more than that.
-    expect(after['gameComplete']).toBeFalse();
+    expect(after['gameComplete']).toBe(0);
   });
 });
 
@@ -380,11 +380,11 @@ describe('a shot that reaches the object it can start a script on', () => {
 const surviving = (name: string, play: (session: GameplaySession) => void) => {
   test(name, () => {
     const session = overCell(mechanoidCell);
-    expect(session.observations().observations['gameComplete']).toBeFalse();
+    expect(session.observations().observations['gameComplete']).toBe(0);
 
     play(session);
 
-    expect(session.observations().observations['gameComplete']).toBeFalse();
+    expect(session.observations().observations['gameComplete']).toBe(0);
   });
 };
 

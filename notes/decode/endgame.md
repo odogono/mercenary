@@ -292,7 +292,7 @@ observation map itself is untracked, so the tracked contract is this id list:
 | `engineFlags` | integer | the engine flag byte |
 | `shipInbound` | integer | the three-valued ship delivery byte |
 | `attackingShip` | boolean | hostile craft state |
-| `gameComplete` | boolean | the Escape latch |
+| `gameComplete` | integer | the Ending phase byte: 0 active, 1 Escape accepted, 255 mature terminal |
 | `scriptPc` | integer | interpreter program counter, `-1` when no script runs |
 | `scriptStack` | string | call stack, outermost first, comma separated |
 | `messagePlaying` | boolean | whether the message line is busy |

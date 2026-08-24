@@ -80,7 +80,7 @@ export const observationsOf = (
     credits: sources.scripts?.credits ?? 0,
     destroyedCells: asCellList(sources.combat?.destroyedCells ?? []),
     engineFlags: host?.engineFlags ?? 0,
-    gameComplete: host?.gameComplete ?? false,
+    gameComplete: host?.gameComplete ?? 0,
     mechanoidDestroyed: sources.combat?.mechanoidDestroyed ?? 0,
     messagePlaying: host?.messagePlaying ?? false,
     messageText: sources.scripts?.messageText ?? '',
