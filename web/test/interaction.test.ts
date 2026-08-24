@@ -170,7 +170,7 @@ describe('boarding', () => {
     expect(host.boardedCraft).toBe(BensonHostState.onFoot);
   });
 
-  test('leaving puts the craft back on the surface', () => {
+  test('leaving puts the craft back where the player stands', () => {
     const boarded = interaction.attempt(
       'board',
       origin,
@@ -182,6 +182,22 @@ describe('boarding', () => {
     expect(left.slot).toBe(1);
     expect(left.host.boardedCraft).toBe(BensonHostState.onFoot);
     expect(left.host.objectRooms.get(1)).toBe(0);
+  });
+
+  test('leaving underground keeps the craft in the current Room', () => {
+    // The recovered Escape route depends on this: craft 7 boarded in room 5
+    // and left again must still reside in room 5 rather than teleport to the
+    // surface.
+    const boarded = interaction.attempt(
+      'board',
+      origin,
+      [candidate(7, origin)],
+      new BensonHostState({ currentRoom: 5 })
+    );
+    expect(boarded.outcome).toEqual({ kind: 'boarded', slot: 7 });
+    const left = interaction.leave(boarded.host);
+    expect(left.slot).toBe(7);
+    expect(left.host.objectRooms.get(7)).toBe(5);
   });
 });
 

@@ -178,9 +178,12 @@ export class Interaction {
       return { host, slot: undefined };
     }
     return {
+      // The craft is left where the player stands, which underground is the
+      // current Room rather than the surface — the occupancy-preserving
+      // recovery route depends on a craft left in room 5 staying there.
       host: host
         .with({ boardedCraft: BensonHostState.onFoot })
-        .withObjectRoom(slot, SURFACE_ROOM),
+        .withObjectRoom(slot, host.currentRoom),
       slot
     };
   }

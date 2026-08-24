@@ -934,10 +934,16 @@ export class GameplaySession {
     if (slot === undefined) {
       return undefined;
     }
-    this.residence.set(slot, {
-      at: { x: position.x, y: position.y, z: position.z },
-      kind: 'surface'
-    });
+    const at = { x: position.x, y: position.y, z: position.z };
+    // Left where the player stands: in the current Room when underground,
+    // on the surface otherwise. The recovered route boards craft 7 in room 5
+    // and must be able to step out without teleporting it away.
+    this.residence.set(
+      slot,
+      this.location.kind === 'room'
+        ? { at, id: this.location.id, kind: 'room' }
+        : { at, kind: 'surface' }
+    );
     this.game = leaveCraftCore(this.game, this.content.flight);
     return { events: ['tone'], slot };
   }
