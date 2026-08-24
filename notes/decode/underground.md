@@ -150,9 +150,10 @@ describes.
 
 **Current app divergence.** The app takes the horizontal pair and leaves altitude
 alone, placing the player at the craft's cell on the ground rather than four million
-units up. M7.5 must replace that obsolete approximation with the decoded altitude,
-mover, and `$A13D` eligibility rules. This is not an Escape by itself and it never
-loads Damocles.
+units up. M7.4 (#133) replaces that obsolete approximation with the decoded altitude,
+mover, and `$A13D` eligibility rules; the byte-precise caller semantics are in
+`notes/decode/endgame.md`, "Colony Craft and `$A13D`". This is not an Escape by
+itself and it never loads Damocles.
 
 ### The terminator is also the darkness flag
 
@@ -281,6 +282,15 @@ Read out of our own image, the tables give `9:6`, `9:5`, `3:0`, `11:13`, `3:15` 
 sites one to five. Site six lands on `81:35` and site seven on `136:136`, both off a
 sixteen-by-sixteen grid, and site eight reads the first byte of the Z table — so the
 X table is five long and that is what bounds the count. Nothing in the ROM states it.
+
+M7.4 read site eight's other byte as well: the X read lands on `$B4BE` and the Z
+read on `$B4C6`, and both hold `$08`. Room 8's lift surfaces at cell 8:8 — the
+Colony Craft's cell — and the indoor arm at `$B455-$B462` writes the special
+transition flag `$FA` on every ride up: `$FF` when the room is exactly 8, zero
+for rooms 1-7 (`$B460: STX $FA`). The out-of-table read is load-bearing rather
+than broken for that one site. The outside-to-inside ride clears `$FA` at
+`$A2F7`. The room-count bound the arm tests is the same immediate `$08`, which
+is what "rooms 1-8" means in the endgame notes.
 
 That matches five of the six coordinates the community list carries (`9:6, 9:5, 3:0,
 3:4, 3:15, 11:13`). The missing one is `3:4`, and it is absent from the lift table

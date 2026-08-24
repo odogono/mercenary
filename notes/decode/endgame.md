@@ -771,6 +771,26 @@ ordinary indoor lift is not restricted to on-foot Occupancy. By contrast, the
 unique room-171 Doorway to the Colony Craft explicitly installs mover/occupancy
 9 at `$90C9`; it cannot carry recovered craft 7 out.
 
+Read again for M7.4, the indoor arm holds one more fact. `$B455-$B462` loads
+X with zero, compares the room id against an immediate `$08` — rooms above 8
+are rejected, rooms below leave X at zero, and room 8 exactly decrements X to
+`$FF` — and stores X into `$FA` at `$B460`. So every indoor lift ride writes
+the special transition flag: rooms 1-7 clear it, and room 8 sets it. The
+surfacing destination tables at `$B4B6`/`$B4BE` are five entries long, but the
+arm's bound is 8, and site 8's out-of-table reads land on `$B4BE` and `$B4C6`,
+which both hold `$08`: room 8's lift surfaces at cell 8:8, the Colony Craft's
+own cell, with `$FA` set. Room 8 is reachable — rooms 145, 148 and 149 each
+carry a Doorway into it — so the underground connects to the Colony Craft by
+lift as well as by the room-171 Doorway. Sites 6 and 7 still read `$51:$23`
+and `$88:$88`, off the sixteen-cell grid. The outside-to-inside lift ride also
+clears `$FA`, at `$A2F7`.
+
+One quirk of the occupancy-preserving arm is recorded but not yet modelled:
+`MOVE`'s on-foot path at `$A192` skips the turn keys whenever `$A9` is
+positive, so a boarded craft underground can walk forward and back but cannot
+turn. The indoor lift needs no walking — E works from anywhere in the room —
+so neither recovery route depends on it.
+
 ### Reachable and unreachable terminal branches
 
 | Branch | Classification | Reason |
@@ -798,18 +818,61 @@ has a legal producer for every predicate, not that M7 acceptance has been observ
 - middle X and Z bytes are each in `[$68,$78)`;
 - the middle altitude byte is at least `$FC`.
 
-The three guarded callers are `$A01F`, `$A0E6`, and `$A1DA`. The climb/landing
-caller additionally reaches it at high altitude `$40`; on entry it sets the
-special transition flag `$FA`, wraps the middle altitude byte, and grounds the
-craft. The walking caller detects leaving the box and installs mover 9. This is
-the native behavior paired with Colony Craft slot 63 at X/Z `$087000`, Y
-`$40FCC0` and with the room-171 Doorway arrival documented in
+The three guarded callers are `$A01F`, `$A0E6`, and `$A1DA`. M7.4 re-read all
+three from the configured image, and each is now byte-precise:
+
+- **Entry, from flight.** The flying altitude path branches on the altitude
+  high byte. Zero with a low byte under `$40` is the ordinary landing; `$40`
+  runs the box predicate at `$A0E6`. Inside the box, `$A0EB-$A0F1` stores
+  `$FF` into both the altitude middle byte `$76` and the flag `$FA`, forces a
+  landed verdict with `CLC`/`PHP`, and joins the grounding tail at `$A0B6` —
+  which is the ordinary touchdown grounding except that it is entered past the
+  middle/high-byte writes, so the altitude keeps `$40` high and `$FF` middle
+  and only the low byte is set to `$3F`. The craft comes to rest on the deck
+  at exactly `$40FF3F`. Every other flying frame through this path — higher,
+  lower, or outside the box — takes `$A0F7`, which sets `$7F` flying, clears
+  `$FA`, and re-copies the boarded block. `$FA` therefore cannot survive
+  ordinary flight.
+- **The deck pin.** The grounded pitch path at `$A01B` reads `$FA`; when it is
+  set, the level pin at `$A02C` (`$2A/$2B := $0200`) applies only while the
+  box predicate still holds. Pitch is pinned level on the deck whatever the
+  speed, so a craft cannot climb off the Colony Craft; it can only taxi past
+  the box edge, where the pin releases and an ordinary take-off works.
+- **Exit, on foot.** Every on-foot frame with `$FA` set runs the predicate at
+  `$A1DA`; stepping outside the box installs mover 9 (`$A1DF: LDA #$09, STA
+  $A9, JSR $9D99`) and clears the underground flag. `MOVE` at `$A174-$A178`
+  dispatches any positive `$A9` through the live block's control vector, so
+  occupancy 9 runs block 9 — the crash tumble, the same block hostile capture
+  installs at `$8986` and the room-171 Doorway installs at `$90C9`. Walking
+  off the deck edge is a fall to the surface.
+- **What ends the fall.** The tumbling altitude subtraction at `$9EBE`
+  underflows the high byte at ground level; that path clears `$FA` at `$9ED0`
+  and enters the grounding tail with the carry set, the ordinary crash
+  resolution. `$FA` is gone by the time the walker stands up, which is what
+  keeps the walking caller from reinstalling mover 9 on the ground.
+
+This is the native behavior paired with Colony Craft slot 63 at X/Z `$087000`,
+Y `$40FCC0` and with the room-171 Doorway arrival documented in
 `notes/decode/underground.md`.
 
 The standard-handler craft with structural ceiling eligibility are slots 0, 3,
-and 6, plus the Dart only while Poweramp is carried. That is not yet a proof that
-every candidate has a legal acquisition route. Slot 7 uses the special `$AA62`
-handler instead. None of the predicate, its callers, or the Colony Craft Doorway
+and 6, plus the Dart only while Poweramp is carried. Slot 7 uses the special
+`$AA62` handler instead. M7.4 closes the acquisition question from the decoded
+placements and lift bound alone, without new captures:
+
+- **Slot 0** rests on the surface and is boarded by walking to it: legally
+  acquirable.
+- **The Dart (slot 1)** is purchased in the opening and the Poweramp is a
+  carryable object: legally acquirable.
+- **Slot 3** rests in room 7. The indoor arm accepts room 7, but site 7's
+  surfacing destination reads `$88:$88`, off the sixteen-cell grid, so the
+  decoded evidence shows no legal path that leaves it at a playable surface
+  cell: **legally unreachable for the box on current evidence**.
+- **Slot 6** rests in room 54, above the indoor arm's room bound of 8, and no
+  decoded mechanism carries an occupied craft out of room 54: **legally
+  unreachable for the box on current evidence**.
+
+None of the predicate, its callers, or the Colony Craft Doorway
 writes `gameComplete` or starts script 7. Escape does not load Damocles; ADRs
 0020 and 0021 make the same title-continuity boundary explicit.
 
@@ -822,6 +885,18 @@ The Reference Build has three presentation-relevant values, not a Boolean:
 | 0 | active play | `$AA69` pins slot-7 pitch and returns |
 | 1 | Escape script accepted; terminal animation running | script 7 `$1123`; `$AA73` initializes the renderer |
 | 255 | mature terminal animation phase | `$AC44-$AC49`; `$AB97` changes point motion for the negative value |
+
+M7.4 re-read `$AA62` for the exact shape of the phase-0 arm. While the lift is
+riding (`$CA` nonzero) the handler defers to the lift altitude routine at
+`$A24A`. Otherwise, at `gameComplete` 0, `$AA6E-$AA72` writes `$01` into the
+pitch high byte `$2B` and returns: the Interstellar Ship sits pinned a quarter
+turn nose-up — pitch `$0100`, straight at the sky — and no yaw, throttle,
+translation, or altitude step runs at all. Slot 7 cannot be flown. The frozen
+Trace Oracle recorded `craft-7-slot7` flying block 7 through the standard
+loop — 47 frames of pitch input integrated, a climb to altitude 8330, a
+touchdown — which is behavior the Reference Build does not have, so that
+scenario is retired in `trace-scenarios.json` rather than re-recorded:
+Authoritative Evidence outranks the oracle where the two disagree.
 
 After writing 1, script 7 waits two ticks, retimes the message interval from the
 captured 125 to 150, presents the congratulations/Escape sequence, optionally
