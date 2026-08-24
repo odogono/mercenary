@@ -41,6 +41,7 @@ import type {
   Bundle,
   Doorway,
   DoorwayRules,
+  EndgameDocument,
   EndgameDropRules,
   EndgameFire,
   EndgameHostileCraft,
@@ -212,6 +213,9 @@ export interface SessionContent {
   /// What a shot does when it reaches one of the two objects it can hit.
   readonly objectHits?: EndgameObjectHits;
   readonly objects: readonly ObjectPlacement[];
+  /// The `$A13D` box and its decoded entry/exit effects — the Colony Craft
+  /// transition. Absent when the content carries no endgame rules.
+  readonly orbital?: EndgameDocument['orbitalTransition'];
   /// The object whose being carried turns on the flight rules' one
   /// craft-conditioned override.
   readonly powerampSlot?: number;
@@ -242,6 +246,7 @@ export const sessionContent = (
         ),
   objectHits: bundle.endgame.combat.objectHits,
   objects: world.objects,
+  orbital: bundle.endgame.orbitalTransition,
   powerampSlot: bundle.endgame.controls.powerampSlot,
   rooms: world.rooms,
   shipDelivery: bundle.endgame.shipDelivery,
@@ -1056,13 +1061,19 @@ export class GameplaySession {
         stepInterlock: rules.stepInterlock
       };
     } else {
+      // The one Doorway out of the underground (`$90C0-$90EA`): the player is
+      // put at the Colony Craft's hull — all three coordinates, four million
+      // units up — with the crash-tumble mover installed over them, and falls
+      // back to Targ from there. It never writes gameComplete.
       this.game = {
         ...this.game,
+        mode: 'flying',
+        mover: this.content.orbital?.exitMover ?? this.game.mover,
         player: {
           ...this.game.player,
           position: {
-            ...this.game.player.position,
             x: rules.colonyCraftArrival.x,
+            y: rules.colonyCraftArrival.y,
             z: rules.colonyCraftArrival.z
           }
         },
