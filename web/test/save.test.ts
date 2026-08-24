@@ -100,7 +100,7 @@ const envelope = (session: GameplaySession): SaveEnvelope => ({
 });
 
 describe('a Save Snapshot', () => {
-  test('uses schema v6 and stores object authority only at the session level', () => {
+  test('uses schema v7 and stores object authority only at the session level', () => {
     const gameplay = new GameplaySession(
       content,
       playerState({ position: { x: 0, y: 0, z: 0 } }),
@@ -108,7 +108,7 @@ describe('a Save Snapshot', () => {
     );
     const snapshot = gameplay.captureSaveSnapshot();
 
-    expect(SAVE_SCHEMA_VERSION).toBe(6);
+    expect(SAVE_SCHEMA_VERSION).toBe(7);
     expect(snapshot).toHaveProperty('carriedStack');
     expect(snapshot).toHaveProperty('deliveryFrames');
     expect(snapshot).toHaveProperty('objectFlags');
@@ -118,6 +118,25 @@ describe('a Save Snapshot', () => {
     // The Site Ledger moved the same way in v4: the session owns it, so the
     // host state no longer carries a second copy to disagree with.
     expect(snapshot.benson!.host).not.toHaveProperty('destroyedBlocks');
+  });
+
+  test('round-trips every Ending phase value the Reference Build has', () => {
+    // The phase byte reads 0, 1 and 255 apart (notes/decode/endgame.md,
+    // "Ending phases"); a Save that collapsed 255 into truth would restore a
+    // finished terminal presentation as a fresh dispatch.
+    for (const phase of [0, 1, 255]) {
+      const gameplay = new GameplaySession(
+        content,
+        playerState({ position: { x: 0, y: 0, z: 0 } }),
+        scripts()
+      );
+      gameplay.scripts!.host = gameplay.scripts!.host.write(
+        'gameComplete',
+        phase
+      );
+      const decoded = decodeSave(encodeSave(envelope(gameplay)), environment);
+      expect(decoded.snapshot.benson!.host.gameComplete).toBe(phase);
+    }
   });
 
   test('round-trips hidden session state and continues identically', () => {

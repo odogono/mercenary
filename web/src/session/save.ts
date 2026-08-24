@@ -11,7 +11,7 @@ import type {
 } from '../settings/index.ts';
 import type { Location, Residence } from '../world/index.ts';
 
-export const SAVE_SCHEMA_VERSION = 6 as const;
+export const SAVE_SCHEMA_VERSION = 7 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -592,7 +592,7 @@ const bensonHost = (value: unknown, at: string): BensonHostSaveSnapshot => {
       integerInRange(value, `${at}.decimals[${index}]`, 0, 99_999_999)
     ),
     engineFlags: byte(out['engineFlags'], `${at}.engineFlags`),
-    gameComplete: bool(out['gameComplete'], `${at}.gameComplete`),
+    gameComplete: byte(out['gameComplete'], `${at}.gameComplete`),
     messageInterval: byte(out['messageInterval'], `${at}.messageInterval`),
     messagePlaying: bool(out['messagePlaying'], `${at}.messagePlaying`),
     pendingKey: pendingKey as BensonKey | null,

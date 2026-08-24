@@ -156,7 +156,7 @@ describe('the semantic observations a Gameplay Session answers with', () => {
     expect(observations['engineFlags']).toBe(0);
     expect(observations['shipInbound']).toBe(0);
     expect(observations['attackingShip']).toBeFalse();
-    expect(observations['gameComplete']).toBeFalse();
+    expect(observations['gameComplete']).toBe(0);
     expect(observations['carriedStack']).toBe('');
     expect(observations['scriptPc']).toBe(-1);
     expect(observations['scriptStack']).toBe('');

@@ -229,6 +229,25 @@ const answerOf = (
   return (advance.host.engineFlags & 0x08) !== 0;
 };
 
+describe('the Ending phase byte behind gameComplete', () => {
+  // The Reference Build reads 0, 1 and 255 apart (notes/decode/endgame.md,
+  // "Ending phases"), so the Host Callout carries the byte rather than a
+  // Boolean that would collapse the two nonzero phases into one.
+  test('write and read keep all three decoded values distinct', () => {
+    for (const phase of [0, 1, 255]) {
+      const host = new BensonHostState().write('gameComplete', phase);
+      expect(host.gameComplete).toBe(phase);
+      expect(host.valueOf('gameComplete')).toBe(phase);
+    }
+  });
+
+  test('a write is masked to one byte, as a store through the callout is', () => {
+    expect(new BensonHostState().write('gameComplete', 0x101).gameComplete).toBe(
+      0x01
+    );
+  });
+});
+
 describe('the polarity of the test opcodes', () => {
   test('tsti answers true when the object is not carried', () => {
     expect(

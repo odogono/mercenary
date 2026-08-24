@@ -24,7 +24,12 @@ export interface BensonHostFields {
   readonly decimals: readonly number[];
   readonly destroyedBlocks: ReadonlySet<number>;
   readonly engineFlags: number;
-  readonly gameComplete: boolean;
+  /// The Ending phase byte: 0 in active play, 1 once script 7's Escape is
+  /// accepted, 255 in the mature terminal presentation. A byte rather than a
+  /// Boolean because the Reference Build reads all three values apart
+  /// (`notes/decode/endgame.md`, "Ending phases"). Only script 7's `stor`
+  /// writes 1; nothing in active play writes 255, which is M7.5's.
+  readonly gameComplete: number;
   readonly inventory: ReadonlySet<number>;
   readonly messageInterval: number;
   readonly messagePlaying: boolean;
@@ -59,7 +64,7 @@ export class BensonHostState implements BensonHostFields {
   readonly decimals: readonly number[];
   readonly destroyedBlocks: ReadonlySet<number>;
   readonly engineFlags: number;
-  readonly gameComplete: boolean;
+  readonly gameComplete: number;
   readonly inventory: ReadonlySet<number>;
   readonly messageInterval: number;
   readonly messagePlaying: boolean;
@@ -89,7 +94,7 @@ export class BensonHostState implements BensonHostFields {
     this.canLiftAnything = fields.canLiftAnything ?? false;
     this.canTakeAnything = fields.canTakeAnything ?? false;
     this.attackingShip = fields.attackingShip ?? false;
-    this.gameComplete = fields.gameComplete ?? false;
+    this.gameComplete = fields.gameComplete ?? 0;
     this.shipInbound = fields.shipInbound ?? 0;
     this.signedRegister = fields.signedRegister ?? 0;
   }
@@ -198,7 +203,7 @@ export class BensonHostState implements BensonHostFields {
         case 'attackingShip':
           return this.attackingShip ? 1 : 0;
         case 'gameComplete':
-          return this.gameComplete ? 1 : 0;
+          return this.gameComplete;
         case 'shipInbound':
           return this.shipInbound;
       }
@@ -233,7 +238,7 @@ export class BensonHostState implements BensonHostFields {
         case 'attackingShip':
           return this.with({ attackingShip: value !== 0 });
         case 'gameComplete':
-          return this.with({ gameComplete: value !== 0 });
+          return this.with({ gameComplete: value & 0xff });
         case 'shipInbound':
           return this.with({ shipInbound: value });
       }
