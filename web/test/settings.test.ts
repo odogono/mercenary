@@ -501,10 +501,11 @@ describe('the tracked settings, against the traces recorded with them', () => {
     readFileSync(join(repositoryRoot, SETTINGS_FILE_NAME), 'utf8')
   );
 
-  test('the catalogue names the twelve mover traces this covers', () => {
+  test('the catalogue names the eleven mover traces this covers', () => {
     // Guards the way this test would otherwise fail silently: an empty list agrees with
     // everything, so a renamed emitter would turn the loop below into no assertion at all.
-    expect(movers.length).toBe(12);
+    // Eleven rather than twelve since craft-7-slot7 retired in #133.
+    expect(movers.length).toBe(11);
   });
 
   test('the tracked file names a knob that is not the default', () => {

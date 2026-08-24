@@ -5,9 +5,12 @@ import { moverGate } from './replay/moverGate.ts';
 
 /// The craft Mover's Replay Gate.
 ///
-/// Nine traces, one per Craft Parameter Block plus the poweramp, replayed step for step against
-/// the Trace Oracle. The gate protocol itself is `replay/moverGate.ts`, shared with the
-/// game-core gate — what is here is only what makes this gate the flight one.
+/// Eight traces, one per replayable Craft Parameter Block plus the poweramp, replayed step for
+/// step against the Trace Oracle. The gate protocol itself is `replay/moverGate.ts`, shared with
+/// the game-core gate — what is here is only what makes this gate the flight one.
+///
+/// `craft-7-slot7` is retired in trace-scenarios.json: the oracle flew slot 7 through the
+/// standard loop, and the Reference Build's own handler pins it nose-up and refuses to fly it.
 
 const IDS = [
   'craft-0-standard',
@@ -17,8 +20,7 @@ const IDS = [
   'craft-3-standard',
   'craft-4-standard',
   'craft-5-sinking',
-  'craft-6-standard',
-  'craft-7-slot7'
+  'craft-6-standard'
 ] as const;
 
 /// The flight emitter boards, fits the poweramp and sets a notch in one command.
@@ -47,7 +49,7 @@ await moverGate({
   },
   emitter: 'flight',
   ids: IDS,
-  recordCounts: [530, 811, 563, 1802, 440, 1102, 1802, 563, 563],
+  recordCounts: [530, 811, 563, 1802, 440, 1102, 1802, 563],
   setupCommands,
   title: 'the flight Replay Gate'
 });
