@@ -242,9 +242,9 @@ describe('the Ending phase byte behind gameComplete', () => {
   });
 
   test('a write is masked to one byte, as a store through the callout is', () => {
-    expect(new BensonHostState().write('gameComplete', 0x101).gameComplete).toBe(
-      0x01
-    );
+    expect(
+      new BensonHostState().write('gameComplete', 0x1_01).gameComplete
+    ).toBe(0x01);
   });
 });
 

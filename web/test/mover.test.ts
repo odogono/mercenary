@@ -687,8 +687,8 @@ describe('the lift surfacing transition', () => {
     expect(surfaced.craft).toBe(7);
     expect(surfaced.room).toBeUndefined();
     expect(surfaced.player.position.y).toBe(63);
-    expect(surfaced.player.position.x).toBe(9 * 65_536 + 0x7100);
-    expect(surfaced.player.position.z).toBe(6 * 65_536 + 0x7100);
+    expect(surfaced.player.position.x).toBe(9 * 65_536 + 0x71_00);
+    expect(surfaced.player.position.z).toBe(6 * 65_536 + 0x71_00);
   });
 
   test('a walker surfaces at the eye height they rode up with', () => {
@@ -696,9 +696,7 @@ describe('the lift surfacing transition', () => {
       player: playerState({ position: { x: 1000, y: 128, z: 1000 } }),
       room: 5
     });
-    expect(surface(walker, entrance, lift, 65_536).player.position.y).toBe(
-      128
-    );
+    expect(surface(walker, entrance, lift, 65_536).player.position.y).toBe(128);
   });
 });
 
@@ -900,23 +898,22 @@ describe('walking inside a Room', () => {
   });
 });
 
+/// Boarded on the Interstellar Ship, throttle wide open.
+const aboardTheShip = (): GameState =>
+  throttle({ ...start(), craft: 7 }, 10, rules);
+
 describe('the Interstellar Ship handler', () => {
   // The phase-0 arm writes one byte — the pitch high byte — and returns
   // ($AA6E-$AA72): the ship sits pinned a quarter turn nose-up and no yaw,
   // throttle, translation or altitude step runs at all. The nonzero arm is
   // the terminal renderer, which is presentation rather than a Mover.
-  const aboard = (): GameState =>
-    throttle(
-      {
-        ...start(),
-        craft: 7
-      },
-      10,
-      rules
-    );
-
   test('pins pitch a quarter turn nose-up', () => {
-    const pinned = step(aboard(), intent({ pitch: 1 }), HOST_FRAME, flight);
+    const pinned = step(
+      aboardTheShip(),
+      intent({ pitch: 1 }),
+      HOST_FRAME,
+      flight
+    );
     // Raw pitch $0100 out of level $0200 over a $0400 turn is +pi/2.
     expect(pinned.player.pitch).toBeCloseTo(Math.PI / 2, 12);
     expect(slot7Pitch(rules)).toBeCloseTo(Math.PI / 2, 12);
@@ -924,18 +921,18 @@ describe('the Interstellar Ship handler', () => {
 
   test('cannot be flown: full input moves nothing at all', () => {
     const held = intent({ pitch: 1, turn: 1, walk: 1 });
-    let state = aboard();
+    let state = aboardTheShip();
     for (let frame = 0; frame < 120; frame++) {
       state = step(state, held, HOST_FRAME, flight);
     }
-    expect(state.player.position).toEqual(aboard().player.position);
+    expect(state.player.position).toEqual(aboardTheShip().player.position);
     expect(state.player.speed).toBe(0);
     expect(state.player.heading).toBe(0);
     expect(state.mode).toBe('grounded');
   });
 
   test('still advances time, so the world does not stop around it', () => {
-    const later = step(aboard(), intent({}), HOST_FRAME, flight);
+    const later = step(aboardTheShip(), intent({}), HOST_FRAME, flight);
     expect(later.elapsed).toBeCloseTo(HOST_FRAME, 12);
   });
 
