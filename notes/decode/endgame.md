@@ -683,8 +683,18 @@ still cleared. The player projectile removes slot 15 in one hit and likewise
 clears the attack.
 
 This is a recoverable combat failure, not a Defeat Ending. The ordinary crash
-path at `$A09A-$A0E1` also ejects the player, requests the crash message, and
-returns to play. Neither path writes `gameComplete` or leaves the main loop.
+path at `$A09A-$A0E1` also ejects the player and returns to play. Neither path
+writes `gameComplete` or leaves the main loop.
+
+That path was read again for M7.3, and it does not request a message. It zeroes
+the altitude bytes, puts the craft back on the ground, copies the grounded
+block's parameters over the live ones, ejects the player through `$98C8` — which
+is what installs the walking mover — and sets `$F9` to two. `$F9` is a countdown
+the frame loop decrements at `$AFCA`, and reaching zero calls `$B242`: a sound
+of `$18` and a raster-timed screen effect, not text. The four message requests
+in the whole build are at `$8789`, `$8977`, `$9430` and `$9848`, and none of
+them is the crash. Whatever shows `YOU CRASHED` is not this routine, so an
+implementation that made it print one would be inventing the behaviour.
 
 ### Other object-conditioned combat state
 

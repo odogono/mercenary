@@ -201,6 +201,39 @@ describe('a shot that reaches the city', () => {
   });
 });
 
+describe('a shot fired with the Anti Time Bomb aboard', () => {
+  test('shows the impact and leaves the Site standing', () => {
+    const session = overCell(mechanoidCell);
+    session.carry(rules.restorationSlot);
+
+    const events = bomb(session);
+    const observed = session.observations().observations;
+
+    // The impact happens either way; what does not happen is the destruction.
+    expect(events).toContainEqual({ impact: { sound: rules.impactSound } });
+    expect(observed['destroyedCells']).toBe('');
+    expect(observed['mechanoidDestroyed']).toBe(0);
+    expect(observed['palyarDestroyed']).toBe(0);
+  });
+
+  test('leaves the Site able to react when it is next destroyed', () => {
+    const session = overCell(mechanoidCell);
+    session.carry(rules.restorationSlot);
+    bomb(session);
+    session.advance(rules.impactFrames / 20);
+
+    // Put it down and try again: nothing was spent the first time.
+    session.drop();
+    bomb(session);
+    const observed = session.observations().observations;
+
+    expect(observed['destroyedCells']).toBe(
+      mechanoidCell.toString(16).padStart(2, '0')
+    );
+    expect(observed['mechanoidDestroyed']).toBe(1);
+  });
+});
+
 describe('a Save taken while a Site is still coming apart', () => {
   test('carries the impact, the ledger and the counters through', () => {
     const session = overCell(mechanoidCell);
