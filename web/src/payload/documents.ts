@@ -559,11 +559,26 @@ export interface EndgameDocument {
     readonly dispatch: string;
     readonly interstellarShipField: EndgameInterstellarShipField;
     readonly scriptedValue: number;
+    /// The phase-0 arm's one write: the byte the handler stores into the
+    /// pitch high byte before returning, pinning the ship nose-up.
+    readonly slot7PitchHighByte: number;
   };
   readonly orbitalTransition: {
     readonly axisMiddleByteWindow: readonly number[];
     readonly callSites: readonly number[];
     readonly cell: readonly number[];
+    /// What flying into the box at exactly `entry.altitudeHighByte` does:
+    /// one immediate feeds the wrapped altitude middle byte and the `$FA`
+    /// flag, and the grounding tail rests the altitude low byte.
+    readonly entry: {
+      readonly altitudeHighByte: number;
+      readonly flagValue: number;
+      readonly restAltitudeLowByte: number;
+      readonly wrappedAltitudeMiddleByte: number;
+    };
+    /// The mover installed on walking out of the box — the crash tumble,
+    /// the same block the room-171 Doorway installs.
+    readonly exitMover: number;
     readonly minimumAltitudeByte: number;
     readonly successCarry: string;
   };

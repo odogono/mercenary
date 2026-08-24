@@ -17,7 +17,7 @@ from .flight import decode_float
 from .prng import RANDOM_ROUTINE, RANDOM_STATE, RANDOM_VALUE, decode_reference_prng
 
 
-ENDGAME_SCHEMA_VERSION = 11
+ENDGAME_SCHEMA_VERSION = 12
 
 # Drop key dispatch and native inventory mutation.
 DROP_DISPATCH = 0xB33F
@@ -707,6 +707,17 @@ def _require_engine(ram: bytes) -> None:
         (0xA157, (0xC9,), "orbital Z-axis width is not an immediate comparison"),
         (0xA15B, (0xA5, 0x76, 0xC9), "orbital altitude floor is not an immediate comparison"),
         (0xA161, (0x18, 0x60, 0x38, 0x60), "orbital predicate does not return clear on success and set on failure"),
+        (0xA0E2, (0xC9, 0x40, 0xD0), "orbital entry does not branch on the altitude high byte"),
+        (0xA0EB, (0xA9, 0xFF, 0x85, 0x76, 0x85, 0xFA), "orbital entry does not wrap the altitude middle byte and set $FA"),
+        (0xA0F7, (0xA9, 0x00, 0x85, 0x7F, 0x85, 0xFA), "ordinary flight does not clear $FA"),
+        (0xA0BA, (0xA9, 0x3F, 0x85, 0x7F, 0x85, 0x75), "grounding does not rest the altitude low byte at $3F"),
+        (0xA1DF, (0xA9, 0x09, 0x85, 0xA9, 0x20, 0x99, 0x9D), "walking out of the box does not install mover 9"),
+        (0x9ECE, (0xA9, 0x00, 0x85, 0xFA), "the tumble underflow does not clear $FA"),
+        (0xA2F5, (0xA9, 0x00, 0x85, 0xFA), "the downward lift ride does not clear $FA"),
+        (0xB455, (0xA2, 0x00, 0xA9, 0x08, 0xC5, 0xCD), "the indoor lift arm does not bound rooms at 8"),
+        (0xB45F, (0xCA, 0x86, 0xFA), "the indoor lift arm does not write $FA"),
+        (0xAA62, (0xA5, 0xCA, 0xF0, 0x03, 0x4C, 0x4A, 0xA2), "the slot-7 handler does not defer to a riding lift"),
+        (0xAA6E, (0xA9, 0x01, 0x85, 0x2B, 0x60), "the slot-7 handler does not pin pitch nose-up and return"),
         (ENDING_DISPATCH, (0xAD, 0xFE, 0xBE, 0xD0), "terminal renderer does not dispatch on gameComplete"),
         (ENDING_COMPLETE_SITE, (0xA9, 0xFF, 0x8D, 0xFE, 0xBE), "terminal presentation does not advance to its completed phase"),
         (FIELD_ENTRY, (0xA9, 0x70, 0x85, 0xC7), "Interstellar Ship Field entry does not install its screen bank"),
@@ -1022,12 +1033,28 @@ def decode_endgame(ram: bytes) -> dict[str, Any]:
             "minimumAltitudeByte": ram[0xA15B + 3],
             "successCarry": "clear",
             "callSites": list(ORBITAL_CALL_SITES),
+            # The climb caller's entry effects at $A0E2-$A0F1: at exactly this
+            # altitude high byte, inside the box, one immediate feeds both the
+            # wrapped middle byte and the flag, and the grounding tail rests
+            # the low byte where every touchdown rests it.
+            "entry": {
+                "altitudeHighByte": ram[0xA0E2 + 1],
+                "wrappedAltitudeMiddleByte": ram[0xA0EB + 1],
+                "flagValue": ram[0xA0EB + 1],
+                "restAltitudeLowByte": ram[0xA0BA + 1],
+            },
+            # The mover the walking caller installs on leaving the box at
+            # $A1DF, the same block the room-171 Doorway installs at $90C9.
+            "exitMover": ram[0xA1DF + 1],
         },
         "endingPresentation": {
             "activeValue": 0,
             "scriptedValue": 1,
             "completedValue": ram[ENDING_COMPLETE_SITE + 1],
             "dispatch": "nonzero-enters-terminal-presentation",
+            # The phase-0 arm's one write: $AA6E stores this into the pitch
+            # high byte and returns, pinning the Interstellar Ship nose-up.
+            "slot7PitchHighByte": ram[0xAA6E + 1],
             "interstellarShipField": _decode_interstellar_ship_field(ram),
         },
         "counts": {
