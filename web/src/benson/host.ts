@@ -23,13 +23,17 @@ export interface BensonHostFields {
   readonly currentRoom: number;
   readonly decimals: readonly number[];
   readonly destroyedBlocks: ReadonlySet<number>;
-  readonly engineFlags: number;
   /// The Ending phase byte: 0 in active play, 1 once script 7's Escape is
   /// accepted, 255 in the mature terminal presentation. A byte rather than a
   /// Boolean because the Reference Build reads all three values apart
   /// (`notes/decode/endgame.md`, "Ending phases"). Only script 7's `stor`
   /// writes 1; nothing in active play writes 255, which is M7.5's.
-  readonly gameComplete: number;
+  ///
+  /// The Host Callout symbol a Benson Script writes this through is still
+  /// spelled `gameComplete`: that name is the Data Payload's, embedded in the
+  /// encoded scripts, and re-spelling it needs a payload re-export.
+  readonly endingPhase: number;
+  readonly engineFlags: number;
   readonly inventory: ReadonlySet<number>;
   readonly messageInterval: number;
   readonly messagePlaying: boolean;
@@ -63,8 +67,8 @@ export class BensonHostState implements BensonHostFields {
   readonly currentRoom: number;
   readonly decimals: readonly number[];
   readonly destroyedBlocks: ReadonlySet<number>;
+  readonly endingPhase: number;
   readonly engineFlags: number;
-  readonly gameComplete: number;
   readonly inventory: ReadonlySet<number>;
   readonly messageInterval: number;
   readonly messagePlaying: boolean;
@@ -94,7 +98,7 @@ export class BensonHostState implements BensonHostFields {
     this.canLiftAnything = fields.canLiftAnything ?? false;
     this.canTakeAnything = fields.canTakeAnything ?? false;
     this.attackingShip = fields.attackingShip ?? false;
-    this.gameComplete = fields.gameComplete ?? 0;
+    this.endingPhase = fields.endingPhase ?? 0;
     this.shipInbound = fields.shipInbound ?? 0;
     this.signedRegister = fields.signedRegister ?? 0;
   }
@@ -124,8 +128,8 @@ export class BensonHostState implements BensonHostFields {
       currentRoom: patch.currentRoom ?? this.currentRoom,
       decimals: patch.decimals ?? this.decimals,
       destroyedBlocks: patch.destroyedBlocks ?? this.destroyedBlocks,
+      endingPhase: patch.endingPhase ?? this.endingPhase,
       engineFlags: patch.engineFlags ?? this.engineFlags,
-      gameComplete: patch.gameComplete ?? this.gameComplete,
       inventory: patch.inventory ?? this.inventory,
       messageInterval: patch.messageInterval ?? this.messageInterval,
       messagePlaying: patch.messagePlaying ?? this.messagePlaying,
@@ -153,8 +157,8 @@ export class BensonHostState implements BensonHostFields {
       currentRoom: this.currentRoom,
       decimals: this.decimals,
       destroyedBlocks: this.destroyedBlocks,
+      endingPhase: this.endingPhase,
       engineFlags: this.engineFlags,
-      gameComplete: this.gameComplete,
       inventory: this.inventory,
       messageInterval: this.messageInterval,
       messagePlaying: this.messagePlaying,
@@ -203,7 +207,7 @@ export class BensonHostState implements BensonHostFields {
         case 'attackingShip':
           return this.attackingShip ? 1 : 0;
         case 'gameComplete':
-          return this.gameComplete;
+          return this.endingPhase;
         case 'shipInbound':
           return this.shipInbound;
       }
@@ -238,7 +242,7 @@ export class BensonHostState implements BensonHostFields {
         case 'attackingShip':
           return this.with({ attackingShip: value !== 0 });
         case 'gameComplete':
-          return this.with({ gameComplete: value & 0xff });
+          return this.with({ endingPhase: value & 0xff });
         case 'shipInbound':
           return this.with({ shipInbound: value });
       }

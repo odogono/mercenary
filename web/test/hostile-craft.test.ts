@@ -109,7 +109,7 @@ describe('a hostile craft that has been sent after the player', () => {
     expect(after['attackingShip']).toBeFalse();
     expect(after['mover']).toBe(rules.captureMover);
     // Nothing about this is an Ending.
-    expect(after['gameComplete']).toBe(0);
+    expect(after['endingPhase']).toBe(0);
     for (const slot of rules.captureRemovesSlots) {
       expect(session.residenceOf(slot).kind).toBe('gone');
     }
@@ -131,7 +131,7 @@ describe('a hostile craft that has been sent after the player', () => {
     expect(after['attackingShip']).toBeFalse();
     // There was no craft to lose, so no mover is installed and nothing is said.
     expect(after['mover']).toBe(-1);
-    expect(after['gameComplete']).toBe(0);
+    expect(after['endingPhase']).toBe(0);
   });
 
   test('is sent into the world and closes the distance', () => {
@@ -212,7 +212,7 @@ describe('a hostile craft that has been sent after the player', () => {
     // The player is told, and is still flying.
     session.advance(FRAME * 20);
     expect(session.observations().observations['messageText']).not.toBe('');
-    expect(after['gameComplete']).toBe(0);
+    expect(after['endingPhase']).toBe(0);
     expect(after['occupancy']).not.toBe(0x80);
   });
 

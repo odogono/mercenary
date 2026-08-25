@@ -8,7 +8,7 @@ import { LegalRoute } from './legalCheckpoint.ts';
 
 /// The sole Escape: Benson script 7's dispatcher, reached by both decoded
 /// route families and refused by every decoded refusal, exactly as the
-/// dossier's predicate says. `gameComplete` moving 0 -> 1 is the one terminal
+/// dossier's predicate says. the Ending phase moving 0 -> 1 is the one terminal
 /// write the Reference Build has; nothing here may invent another.
 
 const CREDITS = BensonHostState.firstNumberDecimal;
@@ -23,7 +23,7 @@ const ADVERT_CELL = 0x32;
 const CELL = 0x1_00_00;
 
 const phase = (route: LegalRoute): number =>
-  route.session.observations().observations['gameComplete'] as number;
+  route.session.observations().observations['endingPhase'] as number;
 
 const scriptRunning = (route: LegalRoute): boolean =>
   route.session.observations().observations['scriptPc'] !== -1;
@@ -165,7 +165,7 @@ describe('the hired route', () => {
     // The hired arm never needed the Novadrive.
     expect(String(aboard['carriedStack'])).not.toContain(String(NOVADRIVE));
     const escaped = route.observationAt('escaped');
-    expect(escaped['gameComplete']).toBe(1);
+    expect(escaped['endingPhase']).toBe(1);
     expect(escaped['destroyedCells']).toBe('');
   }, 240_000);
 });
@@ -426,7 +426,7 @@ describe('Saves at the decoded checkpoints', () => {
 
     const revived = restored(route);
     const observations = revived.observations().observations;
-    expect(observations['gameComplete']).toBe(0);
+    expect(observations['endingPhase']).toBe(0);
     expect(observations['occupancy']).toBe(SHIP);
     expect(observations['room']).toBe(0);
     // The script is mid-flight in the restored session too.
@@ -435,10 +435,10 @@ describe('Saves at the decoded checkpoints', () => {
     for (let half = 0; half < 120; half++) {
       revived.press('keyY');
       revived.advance(0.5);
-      if (revived.observations().observations['gameComplete'] === 1) {
+      if (revived.observations().observations['endingPhase'] === 1) {
         break;
       }
     }
-    expect(revived.observations().observations['gameComplete']).toBe(1);
+    expect(revived.observations().observations['endingPhase']).toBe(1);
   }, 240_000);
 });

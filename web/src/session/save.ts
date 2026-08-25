@@ -567,7 +567,7 @@ const bensonHost = (value: unknown, at: string): BensonHostSaveSnapshot => {
     'currentRoom',
     'decimals',
     'engineFlags',
-    'gameComplete',
+    'endingPhase',
     'messageInterval',
     'messagePlaying',
     'pendingKey',
@@ -593,8 +593,8 @@ const bensonHost = (value: unknown, at: string): BensonHostSaveSnapshot => {
     decimals: decimals.map((value, index) =>
       integerInRange(value, `${at}.decimals[${index}]`, 0, 99_999_999)
     ),
+    endingPhase: byte(out['endingPhase'], `${at}.endingPhase`),
     engineFlags: byte(out['engineFlags'], `${at}.engineFlags`),
-    gameComplete: byte(out['gameComplete'], `${at}.gameComplete`),
     messageInterval: byte(out['messageInterval'], `${at}.messageInterval`),
     messagePlaying: bool(out['messagePlaying'], `${at}.messagePlaying`),
     pendingKey: pendingKey as BensonKey | null,

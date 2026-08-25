@@ -15,7 +15,7 @@ import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 /// The Colony Craft transition, from both of its decoded directions: the one
 /// Doorway out of the underground, and the `$A13D` box the eligible craft can
-/// climb into. Neither is an Ending, and neither may touch `gameComplete`.
+/// climb into. Neither is an Ending, and neither may touch the Ending phase.
 
 const FRAME = 1 / 20;
 
@@ -123,7 +123,7 @@ describe('the $A13D box, entered from flight', () => {
       expect(gameplay.game.player.position.y).toBe(DECK_REST);
       const observations = gameplay.observations().observations;
       expect(observations['colonyCraftFlag']).toBe(0xff);
-      expect(observations['gameComplete']).toBe(0);
+      expect(observations['endingPhase']).toBe(0);
       expect(observations['mover']).toBe(-1);
     });
   }
@@ -168,7 +168,7 @@ describe('the $A13D box, entered from flight', () => {
       () => gameplay.game.colonyCraftFlag === 0
     );
     expect(cleared).toBeTrue();
-    expect(gameplay.observations().observations['gameComplete']).toBe(0);
+    expect(gameplay.observations().observations['endingPhase']).toBe(0);
   });
 
   test('ordinary flight clears the flag, so it cannot survive leaving', () => {
@@ -234,7 +234,7 @@ describe('the $A13D box, entered from flight', () => {
       gameplay.advance(FRAME);
     }
     expect(gameplay.game.mover).toBeUndefined();
-    expect(gameplay.observations().observations['gameComplete']).toBe(0);
+    expect(gameplay.observations().observations['endingPhase']).toBe(0);
   });
 
   test('a Save taken on the deck restores onto it and continues identically', () => {
@@ -312,7 +312,7 @@ describe('the room-171 Doorway out of the underground', () => {
       rules.colonyCraftArrival.y
     );
     expect(gameplay.game.mover).toBe(9);
-    expect(gameplay.observations().observations['gameComplete']).toBe(0);
+    expect(gameplay.observations().observations['endingPhase']).toBe(0);
 
     // The fall ends in the ordinary crash resolution, back in active play on
     // the surface — never an Ending, never Damocles.
@@ -327,7 +327,7 @@ describe('the room-171 Doorway out of the underground', () => {
     expect(gameplay.game.mover).toBeUndefined();
     expect(gameplay.snapshot.occupancy).toEqual({ kind: 'onFoot' });
     const observations = gameplay.observations().observations;
-    expect(observations['gameComplete']).toBe(0);
+    expect(observations['endingPhase']).toBe(0);
     expect(observations['room']).toBe(0);
   });
 });

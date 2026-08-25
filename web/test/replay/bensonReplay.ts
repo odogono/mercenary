@@ -49,10 +49,12 @@ const hostValue = (host: BensonHostState): TraceObject => ({
   decimals: host.decimals.slice(),
   destroyedBlocks: [...host.destroyedBlocks].sort((a, b) => a - b),
   engineFlags: host.engineFlags,
-  // The Trace Oracle spelled the Ending phase byte as a Boolean; no live
-  // trace ever leaves 0, so the projection is the recorded spelling of the
-  // same value rather than a loss.
-  gameComplete: host.gameComplete !== 0,
+  // The Trace Oracle spelled the Ending phase byte as a Boolean and named it
+  // `gameComplete`; no live trace ever leaves 0, so the projection is the
+  // recorded spelling of the same value rather than a loss. The traces are
+  // frozen and cannot be re-emitted, so the key keeps the oracle's name while
+  // the field carries ours.
+  gameComplete: host.endingPhase !== 0,
   inventory: [...host.inventory].sort((a, b) => a - b),
   messageInterval: host.messageInterval,
   messagePlaying: host.messagePlaying,
