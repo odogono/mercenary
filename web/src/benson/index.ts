@@ -22,5 +22,9 @@ export {
   type BensonStep,
   type BensonTunables
 } from './machine.ts';
-export { BensonSession, DEFAULT_SESSION_SEED } from './session.ts';
+export {
+  BensonSession,
+  DEFAULT_SESSION_SEED,
+  type BensonMessagePresentation
+} from './session.ts';
 export { MessageTicker, codePointCount } from './ticker.ts';

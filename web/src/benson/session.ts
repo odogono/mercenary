@@ -24,6 +24,16 @@ export const DEFAULT_SESSION_SEED = 0x2c_69_2e_d8_1b_7f_0a_31n;
 const sortedSet = (values: ReadonlySet<number>): number[] =>
   [...values].sort((a, b) => a - b);
 
+export interface BensonMessagePresentation {
+  readonly completedText?: string;
+  readonly occurrence: object;
+  readonly reveal: {
+    readonly complete: boolean;
+    readonly progress: number;
+  };
+  readonly visibleText: string;
+}
+
 /// One running Benson Script, its host state, and the message line it drives.
 export class BensonSession {
   readonly program: BensonProgram;
@@ -33,6 +43,7 @@ export class BensonSession {
   host: BensonHostState;
   ticker: MessageTicker | undefined;
   private frames = 0;
+  private messageOccurrence: object | undefined;
 
   constructor(
     program: BensonProgram,
@@ -85,6 +96,22 @@ export class BensonSession {
 
   get messageText(): string {
     return this.ticker?.visibleText ?? '';
+  }
+
+  /// Immutable facts for one occurrence, without exposing its mutable ticker to presentation.
+  get messagePresentation(): BensonMessagePresentation | undefined {
+    if (this.ticker === undefined || this.messageOccurrence === undefined) {
+      return undefined;
+    }
+    return {
+      ...(this.ticker.isRevealed ? { completedText: this.ticker.text } : {}),
+      occurrence: this.messageOccurrence,
+      reveal: {
+        complete: this.ticker.isRevealed,
+        progress: this.ticker.revealed
+      },
+      visibleText: this.ticker.visibleText
+    };
   }
 
   get isMessageComplete(): boolean {
@@ -156,6 +183,7 @@ export class BensonSession {
       ) * this.tunables.timeScale,
       this.tunables.messageHoldSeconds
     );
+    this.messageOccurrence = {};
   }
 
   showText(composed: string): void {
@@ -261,6 +289,7 @@ export class BensonSession {
       snapshot.ticker === null
         ? undefined
         : MessageTicker.restore(snapshot.ticker);
+    session.messageOccurrence = session.ticker === undefined ? undefined : {};
     return session;
   }
 }

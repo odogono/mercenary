@@ -5,7 +5,8 @@ import {
   BensonState,
   DEFAULT_SESSION_SEED,
   nextRandom,
-  type BensonKey
+  type BensonKey,
+  type BensonMessagePresentation
 } from '../benson/index.ts';
 import type { Touchdown } from '../flight/index.ts';
 import {
@@ -161,6 +162,7 @@ export interface FireResult {
 }
 
 export interface SessionSnapshot {
+  readonly bensonMessage: BensonMessagePresentation | undefined;
   readonly carriedStack: readonly number[];
   /// The Mover's own bookkeeping for this moment.
   ///
@@ -182,7 +184,6 @@ export interface SessionSnapshot {
   readonly indoor: IndoorScene | undefined;
   readonly isScriptRunning: boolean;
   readonly location: Location;
-  readonly message: string;
   readonly mode: GameState['mode'];
   readonly objectFlags: ReadonlyMap<number, number>;
   readonly occupancy: Occupancy;
@@ -1979,6 +1980,7 @@ export class GameplaySession {
 
   get snapshot(): SessionSnapshot {
     return {
+      bensonMessage: this.scripts?.messagePresentation,
       carriedStack: [...this.carriedStack],
       core: {
         poweramp: this.game.poweramp,
@@ -1993,7 +1995,6 @@ export class GameplaySession {
       indoor: this.indoor,
       isScriptRunning: this.scripts?.isRunning ?? false,
       location: this.location,
-      message: this.scripts?.messageText ?? '',
       mode: this.game.mode,
       objectFlags: new Map(this.objectFlags),
       occupancy: this.occupancy,

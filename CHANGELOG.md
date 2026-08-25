@@ -21,6 +21,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Browser Session Resume (#146). The Browser Shell now checkpoints the one active Gameplay Session
+  into a versioned, exact-decoded `localStorage` snapshot and restores it after a reload or browser
+  restart, without consuming or replacing any of the three explicit Save slots. Checkpoints are
+  throttled during play and forced at action and lifecycle boundaries; an invalid or incompatible
+  snapshot starts fresh and reports the failure through Benson's message line. A two-press NEW GAME
+  command clears only the resumable session, preserving Saves and presentation preferences.
+
+  A Web Lock makes one tab the session owner, with cooperative flush-and-takeover through a
+  BroadcastChannel so a stale page cannot overwrite newer progress. Browsers without Web Locks keep
+  play and manual Saves available while explicitly disabling Session Resume. Completed Benson
+  messages, including resume and ownership notices, now also enter the bounded console history.
 - Both legal Escape routes and the Colony Craft transition (#133). Benson script 7's dispatcher is
   now reachable by playing: the hired route earns engine flag `$04` through the rental terminal,
   waits out the native 779-frame descent, and launches without the Novadrive, while the recovered

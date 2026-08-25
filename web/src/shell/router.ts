@@ -13,7 +13,7 @@ export interface RoutedKey extends BrowserKey {
 ///
 /// `none` means the Game Surface has it. Anything else is an open overlay whose own controls
 /// must swallow keys rather than let them reach Movement Intent.
-export type ShellLayer = 'none' | 'menu' | 'settings' | 'saves';
+export type ShellLayer = 'none' | 'menu' | 'ownership' | 'settings' | 'saves';
 
 export interface RouterState {
   /// Whether a form control inside shell chrome currently holds focus.
@@ -56,7 +56,9 @@ export const routeKey = (state: RouterState, key: RoutedKey): KeyRoute => {
     return 'browser';
   }
   if (consoleKey(key)) {
-    return key.repeat ? 'chrome' : 'console-toggle';
+    return key.repeat || state.layer === 'ownership'
+      ? 'chrome'
+      : 'console-toggle';
   }
   if (key.code === 'Escape') {
     return key.repeat ? 'chrome' : 'escape';

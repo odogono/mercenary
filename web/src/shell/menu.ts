@@ -21,6 +21,8 @@ export const escapeFrom = (
       return { kind: 'layer', layer: 'menu' };
     case 'menu':
       return { kind: 'layer', layer: 'none' };
+    case 'ownership':
+      return { kind: 'layer', layer: 'ownership' };
     case 'saves':
     case 'settings':
       return { kind: 'layer', layer: 'menu' };
@@ -29,6 +31,7 @@ export const escapeFrom = (
 
 export interface MenuPages {
   readonly menu: HTMLElement;
+  readonly ownership: HTMLElement;
   readonly saves: HTMLElement;
   readonly settings: HTMLElement;
 }
@@ -45,6 +48,32 @@ export interface SystemMenu {
   readonly layer: () => ShellLayer;
   readonly show: (layer: ShellLayer) => void;
 }
+
+export interface NewGameAction {
+  readonly armed: () => boolean;
+  readonly disarm: () => void;
+  readonly press: () => { readonly kind: 'armed' | 'started' };
+}
+
+/// Make replacing the live session cost two deliberate presses, like overwriting a Save.
+export const createNewGameAction = (start: () => void): NewGameAction => {
+  let isArmed = false;
+  return {
+    armed: () => isArmed,
+    disarm: () => {
+      isArmed = false;
+    },
+    press: () => {
+      if (!isArmed) {
+        isArmed = true;
+        return { kind: 'armed' };
+      }
+      isArmed = false;
+      start();
+      return { kind: 'started' };
+    }
+  };
+};
 
 /// Own the System Menu and the pages it leads to.
 ///

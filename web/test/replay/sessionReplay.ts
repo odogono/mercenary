@@ -97,7 +97,7 @@ export const snapshotValue = (snapshot: SessionSnapshot): TraceValue => {
           },
     isScriptRunning: snapshot.isScriptRunning,
     location: locationValue(snapshot.location),
-    message: snapshot.message,
+    message: snapshot.bensonMessage?.visibleText ?? '',
     mode: snapshot.mode,
     objectFlags: Object.fromEntries(snapshot.objectFlags),
     occupancy: occupancyValue(snapshot.occupancy),

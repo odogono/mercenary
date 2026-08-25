@@ -66,6 +66,12 @@ describe('the shell key router', () => {
     );
   });
 
+  test('does not open the console over the ownership gate', () => {
+    expect(routeKey(state({ layer: 'ownership' }), key('Backquote'))).toBe(
+      'chrome'
+    );
+  });
+
   test('does not repeat the console or escape keys while held', () => {
     expect(routeKey(state(), key('Backquote', { repeat: true }))).toBe(
       'chrome'
@@ -81,7 +87,7 @@ describe('the shell key router', () => {
   });
 
   test('keeps arrows out of Movement Intent while an overlay is open', () => {
-    for (const layer of ['menu', 'settings', 'saves'] as const) {
+    for (const layer of ['menu', 'ownership', 'settings', 'saves'] as const) {
       expect(routeKey(state({ layer }), key('ArrowUp'))).toBe('chrome');
       expect(routeKey(state({ layer }), key('ArrowDown'))).toBe('chrome');
     }

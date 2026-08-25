@@ -14,6 +14,10 @@ _Avoid_: Asset folder, resources, ROM data
 An original game-logic program from the Reference Build's in-game interpreter, re-extracted into the Data Payload in a structurally preserved re-encoding of its bytecode, and executed by this project's own interpreter through the Host Callout.
 _Avoid_: Game script, event code, AI logic, bytecode dump
 
+**Benson Message**:
+One complete occurrence of text composed by Benson-governed play and revealed through the Game Surface's message line. Repeated identical text is a distinct occurrence; shell notices and partially revealed prefixes are not Benson Messages.
+_Avoid_: Shell notice, message fragment, console output
+
 **Craft Parameter Block**:
 The set of values that makes one craft handle as it does—its control routine and its rates, limits, and gains—re-extracted into the Data Payload as plain numbers and selected by the craft the player currently occupies; a landed craft taxis on a block of its own, while a player on foot runs a separate fixed-step mover rather than this loop (ADR 0016).
 _Avoid_: Flight profile, craft config, tuning block, vehicle stats
@@ -53,6 +57,10 @@ _Avoid_: View model, game state, render state, Save Snapshot
 **Save**:
 A player-created record kept by the Browser Shell, containing one Save Snapshot together with the identity needed to decide whether it can be restored into the current game.
 _Avoid_: Save file, checkpoint, autosave
+
+**Session Resume**:
+The Browser Shell's single automatically maintained record of the current Gameplay Session, retained until New Game so that returning in the same browser can continue play. It has at most one active browser-page owner, is not a player-created Save, and never occupies or overwrites a Save slot.
+_Avoid_: Autosave, Save, recovery slot, checkpoint
 
 **Save Snapshot**:
 The complete serializable description of one Gameplay Session's Session State at a single moment, sufficient to restore the same playable moment and deterministic future behaviour.

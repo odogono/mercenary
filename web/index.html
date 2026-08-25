@@ -758,6 +758,7 @@
       }
 
       #game-surface[data-layer='menu'] #page-menu,
+      #game-surface[data-layer='ownership'] #page-ownership,
       #game-surface[data-layer='settings'] #page-settings,
       #game-surface[data-layer='saves'] #page-saves {
         display: flex;
@@ -1132,8 +1133,23 @@
             <button class="chrome-button" type="button" data-goto="saves">
               SAVE / LOAD
             </button>
+            <button id="new-game" class="chrome-button" type="button">
+              NEW GAME
+            </button>
             <button class="chrome-button" type="button" data-goto="none">
               RESUME
+            </button>
+          </div>
+
+          <div
+            id="page-ownership"
+            class="chrome-page bezel"
+            role="dialog"
+            aria-label="Session ownership"
+          >
+            <p class="chrome-title">SESSION ACTIVE IN ANOTHER TAB</p>
+            <button id="take-over" class="chrome-button" type="button">
+              TAKE OVER
             </button>
           </div>
 
