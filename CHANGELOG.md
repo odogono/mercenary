@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- The Escape presents the Reference Build's terminal sequence, and matures itself (#134). The
+  Interstellar Ship Field decoded by #117 has been in the Data Payload consumed by nothing; it is
+  now a simulation the Gameplay Session owns and steps, at the Reference Build's fifty loops a
+  second accumulated inside the browser's own step. It is Session State rather than an animation
+  because the Ending Phase's move from 1 to 255 is written by the field's own colour sequence when
+  that sequence reaches its last pair, and because a Save taken during the presentation has to
+  continue the field exactly (ADR 0031). Save schema 8 carries that continuation boundary, and — as
+  the codec has never had a migration — a version 7 Save is refused rather than guessed at.
+  `planFrame` gains a branch beside the dark-Room one: an Ending replaces the world view with the
+  21 points on the colour pair in force, identically under either Presentation Preset, because the
+  field is recovered behaviour rather than an authored addition and ADR 0025's Targ Star Sphere is
+  untouched. The respawns draw from the Reference Build's own carry-sensitive two-byte generator,
+  ported to TypeScript and cross-checked against the laboratory's Python by a fixture each side
+  re-derives.
+- Script 7's terminal tail turned out to need no code: the interpreter already retimes the message
+  line from 125 to 150, presents the congratulations, save-status and sequel lines, takes the
+  optional flag-`$20` arm, and repeats the label with a zero written to each SID voice, which the
+  session already surfaces as PresentationEvents. That behaviour is now pinned by tests rather than
+  working by accident, including that the optional arm is a second presentation of one Ending
+  rather than a second Ending. The SID writes were deliberately not rerouted into an event shape of
+  their own: three frozen session traces pin the existing one.
+
 ### Changed
 
 - An Ending is public domain state rather than a byte a caller compares against constants
