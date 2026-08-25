@@ -5,8 +5,11 @@ import {
   BensonSession,
   DEFAULT_SESSION_SEED
 } from '../src/benson/index.ts';
-import { intent } from '../src/gameCore/index.ts';
-import { DoorwayPredicate } from '../src/navigation/index.ts';
+import {
+  REFERENCE_WALKING_EYE_ALTITUDE,
+  intent
+} from '../src/gameCore/index.ts';
+import { Containment, DoorwayPredicate } from '../src/navigation/index.ts';
 import type { Bundle, Doorway } from '../src/payload/documents.ts';
 import {
   GameplaySession,
@@ -147,22 +150,38 @@ export class LegalRoute {
     slot: number,
     seconds: number
   ): this {
+    return this.steerUntil(
+      () => this.positionOf(slot),
+      () => this.session.reach(action, slot).outcome.kind !== 'nothingInReach',
+      seconds,
+      () => `slot ${slot} never came within ${action} range`
+    );
+  }
+
+  /// Steer at a point until arrival, one Movement Intent at a time, and fail if
+  /// the deadline passes first.
+  ///
+  /// The three walking helpers differ only in where they aim and what counts as
+  /// arriving; the loop itself — restore the caller's intent on either exit, and
+  /// never place the player — is the same one.
+  private steerUntil(
+    aim: () => { readonly x: number; readonly z: number },
+    arrived: () => boolean,
+    seconds: number,
+    failure: () => string
+  ): this {
     const deadline = Math.max(1, Math.round(seconds / STEP));
     const before = this.session.intent;
     for (let step = 0; step < deadline; step++) {
-      const { outcome } = this.session.reach(action, slot);
-      if (outcome.kind !== 'nothingInReach') {
+      if (arrived()) {
         this.session.intent = before;
         return this;
       }
-      this.session.intent = intent({
-        turn: this.turnToward(this.positionOf(slot)),
-        walk: 1
-      });
+      this.session.intent = intent({ turn: this.turnToward(aim()), walk: 1 });
       this.session.advance(STEP);
     }
     this.session.intent = before;
-    throw new Error(`slot ${slot} never came within ${action} range`);
+    throw new Error(failure());
   }
 
   /// Walks through the Doorway that leads to `destination`, and fails if it
@@ -190,23 +209,14 @@ export class LegalRoute {
       throw new Error(`Room ${here.id} has no Doorway to Room ${destination}`);
     }
     const aim = this.windowOf(doorway, here.id);
-    const before = this.session.intent;
-    for (let step = 0; step < Math.round(seconds / STEP); step++) {
-      if (
+    return this.steerUntil(
+      () => aim,
+      () =>
         this.session.location.kind === 'room' &&
-        this.session.location.id === destination
-      ) {
-        this.session.intent = before;
-        return this;
-      }
-      this.session.intent = intent({
-        turn: this.turnToward(aim),
-        walk: 1
-      });
-      this.session.advance(STEP);
-    }
-    this.session.intent = before;
-    throw new Error(`the Doorway to Room ${destination} never opened`);
+        this.session.location.id === destination,
+      seconds,
+      () => `the Doorway to Room ${destination} never opened`
+    );
   }
 
   /// A point that presses into the Doorway's own window, found by asking the
@@ -235,10 +245,14 @@ export class LegalRoute {
     const alongIsZ = doorway.plane === 'zy';
     const along = alongIsZ ? doorway.position.z : doorway.position.x;
     const extent = alongIsZ ? here.bounds.max.x : here.bounds.max.z;
+    // The same walls the session holds the player at, asked of the engine's own
+    // Containment rather than restated here: a hand-rolled far line that drifts
+    // from it probes a place the player can never stand.
+    const walls = new Containment(here, rules);
     for (const wall of [0, extent]) {
       // Where the walls actually hold the player, which is where the predicate
       // will be asked the question.
-      const held = wall === 0 ? rules.nearMargin : extent - 33;
+      const held = wall === 0 ? walls.near : alongIsZ ? walls.farX : walls.farZ;
       const heading = alongIsZ
         ? wall === 0
           ? Math.PI * 1.5
@@ -249,7 +263,13 @@ export class LegalRoute {
       for (let offset = 0; offset < 0x1_00; offset += 4) {
         const value = (along & ~0xff) + offset;
         const probe = alongIsZ ? { x: held, z: value } : { x: value, z: held };
-        if (predicate.accepts(doorway, { ...probe, y: 128 }, heading)) {
+        if (
+          predicate.accepts(
+            doorway,
+            { ...probe, y: REFERENCE_WALKING_EYE_ALTITUDE },
+            heading
+          )
+        ) {
           return alongIsZ ? { x: wall, z: value } : { x: value, z: wall };
         }
       }
@@ -263,20 +283,15 @@ export class LegalRoute {
     within = 64,
     seconds = 900
   ): this {
-    const before = this.session.intent;
-    for (let step = 0; step < Math.round(seconds / STEP); step++) {
-      const position = this.session.snapshot.player.position;
-      const dx = at.x - position.x;
-      const dz = at.z - position.z;
-      if (Math.hypot(dx, dz) <= within) {
-        this.session.intent = before;
-        return this;
-      }
-      this.session.intent = intent({ turn: this.turnToward(at), walk: 1 });
-      this.session.advance(STEP);
-    }
-    this.session.intent = before;
-    throw new Error(`never walked within ${within} of ${at.x}:${at.z}`);
+    return this.steerUntil(
+      () => at,
+      () => {
+        const position = this.session.snapshot.player.position;
+        return Math.hypot(at.x - position.x, at.z - position.z) <= within;
+      },
+      seconds,
+      () => `never walked within ${within} of ${at.x}:${at.z}`
+    );
   }
 
   private positionOf(slot: number): { x: number; z: number } {

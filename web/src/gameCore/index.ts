@@ -79,11 +79,11 @@ export const withinColonyCraftBox = (
   const x = Math.trunc(position.x);
   const y = Math.trunc(position.y);
   const z = Math.trunc(position.z);
-  const lower = colonyCraft.axisMiddleByteWindow[0] ?? 0;
-  const upper = colonyCraft.axisMiddleByteWindow[1] ?? 0;
+  const [lower, upper] = colonyCraft.axisMiddleByteWindow;
+  const [cellX, cellZ] = colonyCraft.cell;
   return (
-    ((x >>> 16) & 0xff) === (colonyCraft.cell[0] ?? -1) &&
-    ((z >>> 16) & 0xff) === (colonyCraft.cell[1] ?? -1) &&
+    ((x >>> 16) & 0xff) === cellX &&
+    ((z >>> 16) & 0xff) === cellZ &&
     ((x >>> 8) & 0xff) >= lower &&
     ((x >>> 8) & 0xff) < upper &&
     ((z >>> 8) & 0xff) >= lower &&
@@ -829,17 +829,16 @@ const integrate = (
   // mover, which `MOVE` dispatches by the same positive byte whether or not the player boarded
   // anything — reaches the Craft Parameter Blocks (ADR 0016). Walking off the Colony Craft deck
   // installs the tumble over a walker, which is why the mover is consulted before the craft.
-  if (
-    (counted.mover ?? counted.craft) === undefined ||
-    counted.room !== undefined
-  ) {
+  //
+  // An installed block replaces the craft's own, which is how the Reference
+  // Build flies a crash: it copies that block's bytes over the live ones.
+  const installed = counted.mover ?? counted.craft;
+  if (installed === undefined || counted.room !== undefined) {
     return walk(counted, intent, dt, flight, colonyCraft, containment);
   }
 
   const player = counted.player;
-  // An installed block replaces the craft's own, which is how the Reference
-  // Build flies a crash: it copies that block's bytes over the live ones.
-  const block = blockFor(flight.document, counted.mover ?? counted.craft);
+  const block = blockFor(flight.document, installed);
   if (block.handler === 'tumble') {
     return tumble(counted, block, flight);
   }

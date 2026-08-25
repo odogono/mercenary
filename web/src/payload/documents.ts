@@ -564,9 +564,11 @@ export interface EndgameDocument {
     readonly slot7PitchHighByte: number;
   };
   readonly orbitalTransition: {
-    readonly axisMiddleByteWindow: readonly number[];
+    /// The lower and upper middle-byte bounds of the box, on both axes.
+    readonly axisMiddleByteWindow: readonly [number, number];
     readonly callSites: readonly number[];
-    readonly cell: readonly number[];
+    /// The Colony Craft's own surface cell, as an X and Z high byte.
+    readonly cell: readonly [number, number];
     /// What flying into the box at exactly `entry.altitudeHighByte` does:
     /// one immediate feeds the wrapped altitude middle byte and the `$FA`
     /// flag, and the grounding tail rests the altitude low byte.

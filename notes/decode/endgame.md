@@ -1041,8 +1041,11 @@ shape in the Reference Build and browser.
   for the configured provisional crack.
 - The two Escape routes and all post-Ending input behaviors are structurally
   decoded. M7.4 (#133) proves both routes and every refusal by legal play in the
-  browser, and the Colony Craft box by legal play for slots 0 and the Poweramp
-  Dart, so what is still missing is the Reference Build side: no tracked
+  browser. The Colony Craft box is proved for slot 0 and the Poweramp Dart from
+  a *constructed* checkpoint — the craft is placed climbing inside the box's own
+  cell rather than flown there from the crash site — so the box's behavior is
+  demonstrated while the approach to it is not. What is still missing is that
+  approach, and the Reference Build side: no tracked
   uninterrupted emulator scenario reaches the Ending, and the post-Ending input
   behaviors still need live observation rather than modelling.
 - The browser's recovered Escape is walked from the crash site in one run, but

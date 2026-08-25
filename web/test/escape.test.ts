@@ -274,6 +274,59 @@ describe('the refusals, each of which resumes', () => {
     expect(launch(route)).toBeTrue();
   }, 240_000);
 
+  test('the Novadrive dropped between prompt and recheck refuses, and picking it up resumes', async () => {
+    const route = await aboardInTheHangar();
+    surfaceAboard(route);
+
+    // Let the prompt arrive, then put the authorization down and answer it.
+    // The predicate is rechecked rather than remembered, so the term that was
+    // true when the script asked has to still be true when it is answered.
+    route.advance(15);
+    expect(route.session.drop().outcome.kind).toBe('dropped');
+    route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
+    expect(refused(route)).toBe(0);
+
+    // Resumption: step out, pick it back up, and board again — which is what
+    // restarts the script.
+    route.run({ command: { kind: 'leaveCraft' }, kind: 'command' });
+    route.run({ action: 'take', kind: 'reach', slot: NOVADRIVE }, 60);
+    expect(
+      String(route.session.observations().observations['carriedStack'])
+    ).toContain(String(NOVADRIVE));
+    route.run({ action: 'board', kind: 'reach', slot: SHIP }, 60);
+    expect(launch(route)).toBeTrue();
+  }, 240_000);
+
+  test('the hire cleared between prompt and recheck refuses, and re-authorizing resumes', async () => {
+    const route = await deliveredShip();
+    route.session.teleport(room(1));
+    route.settle();
+    route.run({ command: { kind: 'rideLift' }, kind: 'command' });
+    route.run({ action: 'board', kind: 'reach', slot: SHIP }, 300);
+
+    // The prompt arrived on a hired ship; the hire is withdrawn before it is
+    // answered, leaving the craft and the Location alone so the authorization
+    // term is the only one that moved.
+    route.advance(15);
+    const host = route.session.scripts!.host;
+    route.session.scripts!.host = host.write(
+      'engineFlags',
+      host.engineFlags & ~HIRED
+    );
+    route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
+    expect(refused(route)).toBe(0);
+
+    // Resumption: the hire back, and the same dispatcher answers.
+    const refusedHost = route.session.scripts!.host;
+    route.session.scripts!.host = refusedHost.write(
+      'engineFlags',
+      refusedHost.engineFlags | HIRED
+    );
+    route.run({ command: { kind: 'leaveCraft' }, kind: 'command' });
+    route.run({ action: 'board', kind: 'reach', slot: SHIP }, 60);
+    expect(launch(route)).toBeTrue();
+  }, 240_000);
+
   test('underground the script waits rather than launches', async () => {
     const route = await aboardInTheHangar();
     route.advance(20);
