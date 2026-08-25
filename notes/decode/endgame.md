@@ -1014,6 +1014,82 @@ destroyed cell state, active effect slots/lifecycles, mover, and faction counter
 orbital cases add `$FA` and full X/Y/Z. Compare the same semantic observation
 shape in the Reference Build and browser.
 
+## Terminal-interaction observation protocol
+
+This expands the `terminal interaction` row above into a procedure, because it is
+the one row nothing can be inferred for: the browser's Ending state, its terminal
+presentation, and its Save are implemented, and what leave, Drop, Save/load, and
+Ctrl-Q do during phases 1 and 255 is the only part of #134 still owed to live
+observation. Until these captures exist, none of those behaviors is implemented
+in the browser — an unobserved behavior stays unimplemented rather than guessed.
+
+### Why this is not an `observe` scenario
+
+`lab observe` drives the monitor's PETSCII buffer and joystick port 2, and the
+scenario schema expresses nothing else. The Reference Build scans the keyboard
+matrix, so a scenario cannot press the keys a route to the Ending needs, and no
+tracked checkpoint reaches the Ending. Writing scenario JSON for this would be
+fiction. The route is therefore captured with the foreground event-history tools
+and replayed, and the monitor is used only for the semantic captures either side
+of each probe.
+
+### Reaching the Ending
+
+1. `lab doctor`, then capture one uninterrupted legal route to the dispatch with
+   `tools/capture-keyboard-history.swift`. The recovered route is the shorter of
+   the two: room 5, carry the Novadrive, board craft 7, ride the indoor lift,
+   answer `Y`. Stop the capture with the launch prompt answered and the epilogue
+   beginning.
+2. Verify with `lab catalogue verify-history`, which requires two independent
+   cold replays. A route that does not replay twice is not a checkpoint, and
+   nothing below may be captured from it.
+3. Establish two replay stops: **phase 1**, immediately after the dispatch and
+   before loop 96, and **phase 255**, at least 114 loops after it. Both are
+   inside the non-returning terminal loop, so neither can be reached by waiting
+   on a PC that the loop has already left — stop on instruction counts measured
+   from the dispatch and confirm the phase byte through the observation map.
+
+### The probes
+
+Each probe is one cold replay to a stop, one semantic capture, the probe input,
+and a second semantic capture. Nothing is captured from a replay that has already
+been probed once: an input that changes state invalidates every later probe in
+the same run.
+
+| Probe | At | The question it answers |
+| --- | --- | --- |
+| leave | 1 and 255 | Does the player leave craft 7? Does the loop continue, change, or end? Is Occupancy still the ship afterwards? |
+| Drop | 1 and 255 | Does the Carried Stack change? Does the dropped object take an Object Residence, and where? |
+| Save | 1 and 255 | Does the native save path run at all during the loop, and what does it write for the phase? |
+| load | 1 and 255 | Does a load during the loop restore into active play, into the loop, or refuse? |
+| Ctrl-Q | 1 and 255 | Does the loop respond to the shell key at all, and what state is left behind? |
+
+Observe, either side of every probe: Occupancy, current room, inventory, mutable
+object flags and residences, decimal balance, engine flags, script PC and stack,
+message state, and the Ending Phase byte. The presentation questions — whether
+the field keeps moving, whether the colour sequence keeps advancing — are read
+from the phase byte and the colour state addresses in the continuation boundary
+rather than from a screenshot.
+
+### The recheck/write timing edge
+
+One structurally plausible case cannot be reached by any of the stops above:
+leaving craft 7 after script 7's final recheck passes but before it executes the
+phase-1 write. The window is a handful of instructions wide. Reach it by binary
+search on instruction counts between the recheck and the write, with the leave
+input queued, and confirm from the phase byte and Occupancy which side of the
+window the replay landed on. This is expected to take several attempts; each one
+needs its own cold replay. If the window cannot be hit, say so in the ticket and
+leave the case unimplemented — it must not be settled by inference from the
+structure, which is what the static decode already declined to do.
+
+### What the captures are for
+
+Each answered probe becomes one test in `web/test/escape.test.ts`, and only then
+the behavior behind it. If a capture needs an observation the browser does not
+publish, `SEMANTIC_OBSERVATION_SCHEMA_VERSION` in `web/src/session/observations.ts`
+and `c64lab/semantics.py` are bumped in the same change or the comparison breaks.
+
 ## Consequences for implementation documents
 
 - Economy tables belong with Benson-owned progression, not duplicated in engine
