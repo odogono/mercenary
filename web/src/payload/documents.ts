@@ -495,21 +495,168 @@ export interface EndgameCombat {
   readonly siteDestruction: EndgameSiteDestruction;
 }
 
+/// One step of the field's colour sequence: the pair it applies, the loop it
+/// applies on, and the Ending Phase it writes as it does. Only the last event
+/// carries a `phaseWrite`, which is how the terminal presentation matures.
+export interface EndgameFieldColourEvent {
+  readonly lineColour: number;
+  readonly loop: number;
+  readonly phaseWrite: number | null;
+  readonly screenColour: number;
+}
+
+export interface EndgameFieldColours {
+  readonly completedPhaseLoop: number;
+  /// Loops the first pair is held for. The rest follow every
+  /// `repeatedDelayLoops`, and the last is reapplied for as long as the loop runs.
+  readonly entryDelayLoops: number;
+  readonly events: readonly EndgameFieldColourEvent[];
+  readonly repeatedDelayLoops: number;
+  readonly repeatFinalEveryLoops: number;
+  readonly storageQuirk: string;
+}
+
+/// Where one axis's mantissa and exponent arrays begin. Native addresses, kept
+/// because the continuation boundary is described in terms of them.
+export interface EndgameFieldAxisStorage {
+  readonly exponentBase: number;
+  readonly mantissaBase: number;
+}
+
+export interface EndgameFieldScreenStorage {
+  readonly xBase: number;
+  readonly yBase: number;
+}
+
+export interface EndgameFieldStorage {
+  readonly components: {
+    readonly x: EndgameFieldAxisStorage;
+    readonly y: EndgameFieldAxisStorage;
+    readonly z: EndgameFieldAxisStorage;
+  };
+  readonly screenPositions: {
+    readonly current: EndgameFieldScreenStorage;
+    readonly prior: EndgameFieldScreenStorage;
+  };
+  readonly slotsPerArray: number;
+}
+
+export interface EndgameFieldInitializationStage {
+  readonly name: string;
+  readonly priorXYComponents?: string;
+  readonly reason?: string;
+  readonly result?: string;
+  readonly screenClear?: string;
+  readonly writes?: readonly string[];
+}
+
+export interface EndgameFieldMotion {
+  readonly accelerationSideByteEffect: string;
+  readonly accelerationSideStateAddress: number;
+  readonly maturePhaseFirstMultiplier: number;
+  readonly maturePhaseLaterMultiplier: number;
+  readonly maturePhaseStopsAtExponent: number;
+  /// What selects the behaviour: the sign of the Ending Phase, which is why 255
+  /// reads as negative and moves the field differently from 1.
+  readonly phaseBranch: string;
+  readonly provenPhaseValues: readonly number[];
+  readonly scriptedPhaseDepthDelta: number;
+}
+
+export interface EndgameFieldProjectionAxis {
+  readonly centre: number;
+  readonly range: readonly [number, number];
+}
+
+export interface EndgameFieldProjection {
+  readonly horizontal: EndgameFieldProjectionAxis;
+  readonly invalidity: readonly string[];
+  readonly vertical: EndgameFieldProjectionAxis;
+}
+
+export interface EndgameFieldRespawnAxis {
+  readonly draws: readonly number[];
+  readonly highMask: number;
+  readonly highOffset: number;
+  readonly range: readonly [number, number];
+}
+
+/// Y draws its own three values, but throws the first away and reuses the
+/// residue X's first draw left behind — so the two axes are not independent.
+export interface EndgameFieldRespawnVertical extends EndgameFieldRespawnAxis {
+  readonly conversionLowSource: string;
+  readonly discardedLowDraw: number;
+}
+
+export interface EndgameFieldRespawnDepth {
+  readonly draw: number;
+  readonly exponent: number;
+  readonly range: readonly [number, number];
+  readonly step: number;
+}
+
+export interface EndgameFieldGenerator {
+  readonly carryIn: string;
+  readonly output: string;
+  readonly recurrence: string;
+  readonly routineAddress: number;
+  readonly state: {
+    readonly bytes: number;
+    readonly stateAddress: number;
+    readonly valueAddress: number;
+  };
+}
+
+export interface EndgameFieldRespawn {
+  readonly carryIn: string;
+  /// The shared generator the draws come from. It is never seeded or reset by
+  /// the handler, so a respawn continues whatever random history preceded it.
+  readonly generator: EndgameFieldGenerator;
+  readonly lifetime: string;
+  readonly randomDraws: number;
+  readonly replacesComponents: readonly string[];
+  readonly trigger: string;
+  readonly x: EndgameFieldRespawnAxis;
+  readonly y: EndgameFieldRespawnVertical;
+  readonly z: EndgameFieldRespawnDepth;
+}
+
+/// A nested tree of native addresses. The continuation boundary describes some
+/// of its members this way, and every leaf is an integer.
+export interface EndgameFieldAddressTree {
+  readonly [key: string]: number | EndgameFieldAddressTree;
+}
+
+/// One member of the boundary a Save must carry for the terminal presentation
+/// to continue deterministically. `semanticContinuation: false` marks a byte the
+/// decode found inert — recorded, but not part of the continuation.
+export interface EndgameFieldContinuationState {
+  readonly addresses?: readonly number[];
+  readonly name: string;
+  readonly semanticContinuation?: boolean;
+  readonly slots?: number;
+  readonly storage?: EndgameFieldAddressTree;
+}
+
 export interface EndgameInterstellarShipField {
-  readonly colours: Readonly<Record<string, unknown>>;
-  readonly continuationState: readonly unknown[];
-  readonly initialization: Readonly<Record<string, unknown>>;
+  readonly colours: EndgameFieldColours;
+  readonly continuationState: readonly EndgameFieldContinuationState[];
+  readonly initialization: {
+    readonly stages: readonly EndgameFieldInitializationStage[];
+  };
+  /// What the native loop does, in order, once per loop. The simulation follows
+  /// this rather than an order of its own choosing.
   readonly loopOrder: readonly string[];
-  readonly motion: Readonly<Record<string, unknown>>;
+  readonly motion: EndgameFieldMotion;
   readonly pointSlots: {
     readonly count: number;
     readonly first: number;
     readonly identity: string;
     readonly last: number;
   };
-  readonly projection: Readonly<Record<string, unknown>>;
-  readonly respawn: Readonly<Record<string, unknown>>;
-  readonly storage: Readonly<Record<string, unknown>>;
+  readonly projection: EndgameFieldProjection;
+  readonly respawn: EndgameFieldRespawn;
+  readonly storage: EndgameFieldStorage;
 }
 
 /// Where a hired Interstellar Ship goes, how it gets there, and when it has

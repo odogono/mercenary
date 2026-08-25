@@ -1,0 +1,1904 @@
+{
+  "chain": {
+    "from": {
+      "carryIn": 1,
+      "state": 157,
+      "value": 42
+    },
+    "steps": [
+      {
+        "carry": 0,
+        "output": 71,
+        "state": 206,
+        "value": 149
+      },
+      {
+        "carry": 1,
+        "output": 227,
+        "state": 231,
+        "value": 74
+      },
+      {
+        "carry": 0,
+        "output": 113,
+        "state": 243,
+        "value": 165
+      },
+      {
+        "carry": 1,
+        "output": 248,
+        "state": 249,
+        "value": 210
+      },
+      {
+        "carry": 0,
+        "output": 52,
+        "state": 124,
+        "value": 233
+      },
+      {
+        "carry": 1,
+        "output": 90,
+        "state": 62,
+        "value": 116
+      },
+      {
+        "carry": 0,
+        "output": 173,
+        "state": 31,
+        "value": 58
+      },
+      {
+        "carry": 0,
+        "output": 94,
+        "state": 143,
+        "value": 157
+      },
+      {
+        "carry": 1,
+        "output": 231,
+        "state": 71,
+        "value": 206
+      },
+      {
+        "carry": 0,
+        "output": 187,
+        "state": 163,
+        "value": 231
+      },
+      {
+        "carry": 1,
+        "output": 157,
+        "state": 209,
+        "value": 243
+      },
+      {
+        "carry": 1,
+        "output": 6,
+        "state": 232,
+        "value": 249
+      },
+      {
+        "carry": 1,
+        "output": 67,
+        "state": 116,
+        "value": 124
+      },
+      {
+        "carry": 0,
+        "output": 169,
+        "state": 186,
+        "value": 62
+      },
+      {
+        "carry": 0,
+        "output": 220,
+        "state": 221,
+        "value": 31
+      },
+      {
+        "carry": 1,
+        "output": 238,
+        "state": 110,
+        "value": 143
+      },
+      {
+        "carry": 1,
+        "output": 191,
+        "state": 55,
+        "value": 71
+      },
+      {
+        "carry": 1,
+        "output": 215,
+        "state": 155,
+        "value": 163
+      },
+      {
+        "carry": 1,
+        "output": 43,
+        "state": 205,
+        "value": 209
+      },
+      {
+        "carry": 1,
+        "output": 85,
+        "state": 230,
+        "value": 232
+      },
+      {
+        "carry": 0,
+        "output": 106,
+        "state": 243,
+        "value": 116
+      },
+      {
+        "carry": 0,
+        "output": 189,
+        "state": 121,
+        "value": 186
+      },
+      {
+        "carry": 0,
+        "output": 22,
+        "state": 188,
+        "value": 221
+      },
+      {
+        "carry": 1,
+        "output": 195,
+        "state": 94,
+        "value": 110
+      },
+      {
+        "carry": 0,
+        "output": 225,
+        "state": 175,
+        "value": 55
+      },
+      {
+        "carry": 1,
+        "output": 248,
+        "state": 215,
+        "value": 155
+      },
+      {
+        "carry": 1,
+        "output": 52,
+        "state": 107,
+        "value": 205
+      },
+      {
+        "carry": 1,
+        "output": 218,
+        "state": 53,
+        "value": 230
+      },
+      {
+        "carry": 0,
+        "output": 173,
+        "state": 26,
+        "value": 243
+      },
+      {
+        "carry": 1,
+        "output": 22,
+        "state": 141,
+        "value": 121
+      },
+      {
+        "carry": 1,
+        "output": 11,
+        "state": 70,
+        "value": 188
+      },
+      {
+        "carry": 0,
+        "output": 197,
+        "state": 163,
+        "value": 94
+      },
+      {
+        "carry": 0,
+        "output": 234,
+        "state": 209,
+        "value": 175
+      },
+      {
+        "carry": 1,
+        "output": 189,
+        "state": 104,
+        "value": 215
+      },
+      {
+        "carry": 1,
+        "output": 150,
+        "state": 180,
+        "value": 107
+      },
+      {
+        "carry": 1,
+        "output": 67,
+        "state": 90,
+        "value": 53
+      },
+      {
+        "carry": 1,
+        "output": 169,
+        "state": 173,
+        "value": 26
+      },
+      {
+        "carry": 0,
+        "output": 92,
+        "state": 214,
+        "value": 141
+      },
+      {
+        "carry": 1,
+        "output": 238,
+        "state": 107,
+        "value": 70
+      },
+      {
+        "carry": 0,
+        "output": 247,
+        "state": 53,
+        "value": 163
+      },
+      {
+        "carry": 1,
+        "output": 59,
+        "state": 154,
+        "value": 209
+      },
+      {
+        "carry": 1,
+        "output": 85,
+        "state": 205,
+        "value": 104
+      },
+      {
+        "carry": 0,
+        "output": 34,
+        "state": 230,
+        "value": 180
+      },
+      {
+        "carry": 0,
+        "output": 209,
+        "state": 115,
+        "value": 90
+      },
+      {
+        "carry": 0,
+        "output": 104,
+        "state": 185,
+        "value": 173
+      },
+      {
+        "carry": 1,
+        "output": 252,
+        "state": 92,
+        "value": 214
+      },
+      {
+        "carry": 0,
+        "output": 182,
+        "state": 46,
+        "value": 107
+      },
+      {
+        "carry": 1,
+        "output": 83,
+        "state": 23,
+        "value": 53
+      },
+      {
+        "carry": 1,
+        "output": 169,
+        "state": 139,
+        "value": 154
+      },
+      {
+        "carry": 0,
+        "output": 20,
+        "state": 197,
+        "value": 205
+      },
+      {
+        "carry": 1,
+        "output": 202,
+        "state": 98,
+        "value": 230
+      },
+      {
+        "carry": 0,
+        "output": 173,
+        "state": 49,
+        "value": 115
+      },
+      {
+        "carry": 1,
+        "output": 94,
+        "state": 152,
+        "value": 185
+      },
+      {
+        "carry": 1,
+        "output": 103,
+        "state": 76,
+        "value": 92
+      },
+      {
+        "carry": 0,
+        "output": 187,
+        "state": 166,
+        "value": 46
+      },
+      {
+        "carry": 0,
+        "output": 213,
+        "state": 211,
+        "value": 23
+      },
+      {
+        "carry": 1,
+        "output": 234,
+        "state": 233,
+        "value": 139
+      },
+      {
+        "carry": 1,
+        "output": 61,
+        "state": 116,
+        "value": 197
+      },
+      {
+        "carry": 1,
+        "output": 222,
+        "state": 186,
+        "value": 98
+      },
+      {
+        "carry": 0,
+        "output": 103,
+        "state": 93,
+        "value": 49
+      },
+      {
+        "carry": 1,
+        "output": 59,
+        "state": 174,
+        "value": 152
+      },
+      {
+        "carry": 0,
+        "output": 85,
+        "state": 215,
+        "value": 76
+      },
+      {
+        "carry": 0,
+        "output": 162,
+        "state": 235,
+        "value": 166
+      },
+      {
+        "carry": 0,
+        "output": 153,
+        "state": 117,
+        "value": 211
+      },
+      {
+        "carry": 1,
+        "output": 4,
+        "state": 186,
+        "value": 233
+      },
+      {
+        "carry": 1,
+        "output": 74,
+        "state": 93,
+        "value": 116
+      },
+      {
+        "carry": 0,
+        "output": 173,
+        "state": 46,
+        "value": 186
+      },
+      {
+        "carry": 0,
+        "output": 22,
+        "state": 151,
+        "value": 93
+      },
+      {
+        "carry": 1,
+        "output": 139,
+        "state": 75,
+        "value": 174
+      },
+      {
+        "carry": 0,
+        "output": 141,
+        "state": 165,
+        "value": 215
+      },
+      {
+        "carry": 1,
+        "output": 134,
+        "state": 210,
+        "value": 235
+      },
+      {
+        "carry": 1,
+        "output": 11,
+        "state": 105,
+        "value": 117
+      },
+      {
+        "carry": 1,
+        "output": 141,
+        "state": 180,
+        "value": 186
+      },
+      {
+        "carry": 0,
+        "output": 6,
+        "state": 218,
+        "value": 93
+      },
+      {
+        "carry": 1,
+        "output": 139,
+        "state": 109,
+        "value": 46
+      },
+      {
+        "carry": 0,
+        "output": 197,
+        "state": 182,
+        "value": 151
+      },
+      {
+        "carry": 1,
+        "output": 162,
+        "state": 219,
+        "value": 75
+      },
+      {
+        "carry": 1,
+        "output": 81,
+        "state": 109,
+        "value": 165
+      },
+      {
+        "carry": 1,
+        "output": 232,
+        "state": 182,
+        "value": 210
+      },
+      {
+        "carry": 0,
+        "output": 52,
+        "state": 91,
+        "value": 105
+      },
+      {
+        "carry": 1,
+        "output": 18,
+        "state": 45,
+        "value": 180
+      },
+      {
+        "carry": 0,
+        "output": 193,
+        "state": 22,
+        "value": 218
+      },
+      {
+        "carry": 0,
+        "output": 32,
+        "state": 139,
+        "value": 109
+      },
+      {
+        "carry": 1,
+        "output": 144,
+        "state": 69,
+        "value": 182
+      },
+      {
+        "carry": 0,
+        "output": 128,
+        "state": 34,
+        "value": 219
+      },
+      {
+        "carry": 1,
+        "output": 0,
+        "state": 17,
+        "value": 109
+      },
+      {
+        "carry": 1,
+        "output": 128,
+        "state": 8,
+        "value": 182
+      },
+      {
+        "carry": 0,
+        "output": 128,
+        "state": 4,
+        "value": 91
+      },
+      {
+        "carry": 1,
+        "output": 72,
+        "state": 2,
+        "value": 45
+      },
+      {
+        "carry": 1,
+        "output": 164,
+        "state": 1,
+        "value": 22
+      },
+      {
+        "carry": 0,
+        "output": 218,
+        "state": 0,
+        "value": 139
+      },
+      {
+        "carry": 1,
+        "output": 45,
+        "state": 0,
+        "value": 69
+      },
+      {
+        "carry": 1,
+        "output": 150,
+        "state": 128,
+        "value": 34
+      },
+      {
+        "carry": 0,
+        "output": 67,
+        "state": 64,
+        "value": 17
+      },
+      {
+        "carry": 1,
+        "output": 41,
+        "state": 160,
+        "value": 8
+      },
+      {
+        "carry": 0,
+        "output": 20,
+        "state": 208,
+        "value": 4
+      },
+      {
+        "carry": 0,
+        "output": 130,
+        "state": 104,
+        "value": 2
+      },
+      {
+        "carry": 0,
+        "output": 65,
+        "state": 52,
+        "value": 1
+      },
+      {
+        "carry": 1,
+        "output": 32,
+        "state": 154,
+        "value": 0
+      },
+      {
+        "carry": 0,
+        "output": 16,
+        "state": 77,
+        "value": 0
+      },
+      {
+        "carry": 0,
+        "output": 0,
+        "state": 38,
+        "value": 128
+      },
+      {
+        "carry": 0,
+        "output": 72,
+        "state": 19,
+        "value": 64
+      },
+      {
+        "carry": 0,
+        "output": 36,
+        "state": 9,
+        "value": 160
+      },
+      {
+        "carry": 0,
+        "output": 90,
+        "state": 4,
+        "value": 208
+      },
+      {
+        "carry": 0,
+        "output": 101,
+        "state": 2,
+        "value": 104
+      },
+      {
+        "carry": 0,
+        "output": 50,
+        "state": 129,
+        "value": 52
+      },
+      {
+        "carry": 0,
+        "output": 153,
+        "state": 64,
+        "value": 154
+      },
+      {
+        "carry": 0,
+        "output": 4,
+        "state": 160,
+        "value": 77
+      },
+      {
+        "carry": 1,
+        "output": 130,
+        "state": 80,
+        "value": 38
+      },
+      {
+        "carry": 0,
+        "output": 193,
+        "state": 40,
+        "value": 19
+      },
+      {
+        "carry": 1,
+        "output": 104,
+        "state": 148,
+        "value": 9
+      },
+      {
+        "carry": 1,
+        "output": 52,
+        "state": 74,
+        "value": 4
+      },
+      {
+        "carry": 0,
+        "output": 146,
+        "state": 37,
+        "value": 2
+      },
+      {
+        "carry": 0,
+        "output": 65,
+        "state": 18,
+        "value": 129
+      },
+      {
+        "carry": 1,
+        "output": 104,
+        "state": 137,
+        "value": 64
+      },
+      {
+        "carry": 0,
+        "output": 52,
+        "state": 68,
+        "value": 160
+      },
+      {
+        "carry": 0,
+        "output": 90,
+        "state": 34,
+        "value": 80
+      },
+      {
+        "carry": 0,
+        "output": 45,
+        "state": 17,
+        "value": 40
+      },
+      {
+        "carry": 0,
+        "output": 22,
+        "state": 136,
+        "value": 148
+      },
+      {
+        "carry": 0,
+        "output": 195,
+        "state": 68,
+        "value": 74
+      }
+    ]
+  },
+  "generatedBy": "research/c64-reference-build/.venv/bin/python -c \"...c64lab.prng.step_reference_prng...\" (see test header)",
+  "independent": [
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 0,
+        "value": 0
+      },
+      "then": {
+        "carry": 0,
+        "output": 0,
+        "state": 0,
+        "value": 0
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 0,
+        "value": 0
+      },
+      "then": {
+        "carry": 0,
+        "output": 16,
+        "state": 0,
+        "value": 0
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 1,
+        "value": 0
+      },
+      "then": {
+        "carry": 0,
+        "output": 0,
+        "state": 0,
+        "value": 128
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 1,
+        "value": 0
+      },
+      "then": {
+        "carry": 0,
+        "output": 16,
+        "state": 0,
+        "value": 128
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 60,
+        "value": 0
+      },
+      "then": {
+        "carry": 0,
+        "output": 0,
+        "state": 30,
+        "value": 0
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 60,
+        "value": 0
+      },
+      "then": {
+        "carry": 0,
+        "output": 16,
+        "state": 30,
+        "value": 0
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 195,
+        "value": 0
+      },
+      "then": {
+        "carry": 0,
+        "output": 0,
+        "state": 97,
+        "value": 128
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 195,
+        "value": 0
+      },
+      "then": {
+        "carry": 0,
+        "output": 16,
+        "state": 97,
+        "value": 128
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 255,
+        "value": 0
+      },
+      "then": {
+        "carry": 0,
+        "output": 0,
+        "state": 127,
+        "value": 128
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 255,
+        "value": 0
+      },
+      "then": {
+        "carry": 0,
+        "output": 16,
+        "state": 127,
+        "value": 128
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 0,
+        "value": 1
+      },
+      "then": {
+        "carry": 1,
+        "output": 32,
+        "state": 128,
+        "value": 0
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 0,
+        "value": 1
+      },
+      "then": {
+        "carry": 1,
+        "output": 48,
+        "state": 128,
+        "value": 0
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 1,
+        "value": 1
+      },
+      "then": {
+        "carry": 1,
+        "output": 32,
+        "state": 128,
+        "value": 128
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 1,
+        "value": 1
+      },
+      "then": {
+        "carry": 1,
+        "output": 48,
+        "state": 128,
+        "value": 128
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 60,
+        "value": 1
+      },
+      "then": {
+        "carry": 1,
+        "output": 32,
+        "state": 158,
+        "value": 0
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 60,
+        "value": 1
+      },
+      "then": {
+        "carry": 1,
+        "output": 48,
+        "state": 158,
+        "value": 0
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 195,
+        "value": 1
+      },
+      "then": {
+        "carry": 1,
+        "output": 32,
+        "state": 225,
+        "value": 128
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 195,
+        "value": 1
+      },
+      "then": {
+        "carry": 1,
+        "output": 48,
+        "state": 225,
+        "value": 128
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 255,
+        "value": 1
+      },
+      "then": {
+        "carry": 1,
+        "output": 32,
+        "state": 255,
+        "value": 128
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 255,
+        "value": 1
+      },
+      "then": {
+        "carry": 1,
+        "output": 48,
+        "state": 255,
+        "value": 128
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 0,
+        "value": 2
+      },
+      "then": {
+        "carry": 0,
+        "output": 65,
+        "state": 0,
+        "value": 1
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 0,
+        "value": 2
+      },
+      "then": {
+        "carry": 0,
+        "output": 81,
+        "state": 0,
+        "value": 1
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 1,
+        "value": 2
+      },
+      "then": {
+        "carry": 0,
+        "output": 65,
+        "state": 0,
+        "value": 129
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 1,
+        "value": 2
+      },
+      "then": {
+        "carry": 0,
+        "output": 81,
+        "state": 0,
+        "value": 129
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 60,
+        "value": 2
+      },
+      "then": {
+        "carry": 0,
+        "output": 65,
+        "state": 30,
+        "value": 1
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 60,
+        "value": 2
+      },
+      "then": {
+        "carry": 0,
+        "output": 81,
+        "state": 30,
+        "value": 1
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 195,
+        "value": 2
+      },
+      "then": {
+        "carry": 0,
+        "output": 65,
+        "state": 97,
+        "value": 129
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 195,
+        "value": 2
+      },
+      "then": {
+        "carry": 0,
+        "output": 81,
+        "state": 97,
+        "value": 129
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 255,
+        "value": 2
+      },
+      "then": {
+        "carry": 0,
+        "output": 65,
+        "state": 127,
+        "value": 129
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 255,
+        "value": 2
+      },
+      "then": {
+        "carry": 0,
+        "output": 81,
+        "state": 127,
+        "value": 129
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 0,
+        "value": 85
+      },
+      "then": {
+        "carry": 1,
+        "output": 143,
+        "state": 128,
+        "value": 42
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 0,
+        "value": 85
+      },
+      "then": {
+        "carry": 1,
+        "output": 159,
+        "state": 128,
+        "value": 42
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 1,
+        "value": 85
+      },
+      "then": {
+        "carry": 1,
+        "output": 143,
+        "state": 128,
+        "value": 170
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 1,
+        "value": 85
+      },
+      "then": {
+        "carry": 1,
+        "output": 159,
+        "state": 128,
+        "value": 170
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 60,
+        "value": 85
+      },
+      "then": {
+        "carry": 1,
+        "output": 143,
+        "state": 158,
+        "value": 42
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 60,
+        "value": 85
+      },
+      "then": {
+        "carry": 1,
+        "output": 159,
+        "state": 158,
+        "value": 42
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 195,
+        "value": 85
+      },
+      "then": {
+        "carry": 1,
+        "output": 143,
+        "state": 225,
+        "value": 170
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 195,
+        "value": 85
+      },
+      "then": {
+        "carry": 1,
+        "output": 159,
+        "state": 225,
+        "value": 170
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 255,
+        "value": 85
+      },
+      "then": {
+        "carry": 1,
+        "output": 143,
+        "state": 255,
+        "value": 170
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 255,
+        "value": 85
+      },
+      "then": {
+        "carry": 1,
+        "output": 159,
+        "state": 255,
+        "value": 170
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 0,
+        "value": 170
+      },
+      "then": {
+        "carry": 0,
+        "output": 31,
+        "state": 128,
+        "value": 85
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 0,
+        "value": 170
+      },
+      "then": {
+        "carry": 0,
+        "output": 15,
+        "state": 128,
+        "value": 85
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 1,
+        "value": 170
+      },
+      "then": {
+        "carry": 0,
+        "output": 31,
+        "state": 128,
+        "value": 213
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 1,
+        "value": 170
+      },
+      "then": {
+        "carry": 0,
+        "output": 15,
+        "state": 128,
+        "value": 213
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 60,
+        "value": 170
+      },
+      "then": {
+        "carry": 0,
+        "output": 31,
+        "state": 158,
+        "value": 85
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 60,
+        "value": 170
+      },
+      "then": {
+        "carry": 0,
+        "output": 15,
+        "state": 158,
+        "value": 85
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 195,
+        "value": 170
+      },
+      "then": {
+        "carry": 0,
+        "output": 31,
+        "state": 225,
+        "value": 213
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 195,
+        "value": 170
+      },
+      "then": {
+        "carry": 0,
+        "output": 15,
+        "state": 225,
+        "value": 213
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 255,
+        "value": 170
+      },
+      "then": {
+        "carry": 0,
+        "output": 31,
+        "state": 255,
+        "value": 213
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 255,
+        "value": 170
+      },
+      "then": {
+        "carry": 0,
+        "output": 15,
+        "state": 255,
+        "value": 213
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 0,
+        "value": 127
+      },
+      "then": {
+        "carry": 1,
+        "output": 216,
+        "state": 0,
+        "value": 63
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 0,
+        "value": 127
+      },
+      "then": {
+        "carry": 1,
+        "output": 200,
+        "state": 0,
+        "value": 63
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 1,
+        "value": 127
+      },
+      "then": {
+        "carry": 1,
+        "output": 216,
+        "state": 0,
+        "value": 191
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 1,
+        "value": 127
+      },
+      "then": {
+        "carry": 1,
+        "output": 200,
+        "state": 0,
+        "value": 191
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 60,
+        "value": 127
+      },
+      "then": {
+        "carry": 1,
+        "output": 216,
+        "state": 30,
+        "value": 63
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 60,
+        "value": 127
+      },
+      "then": {
+        "carry": 1,
+        "output": 200,
+        "state": 30,
+        "value": 63
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 195,
+        "value": 127
+      },
+      "then": {
+        "carry": 1,
+        "output": 216,
+        "state": 97,
+        "value": 191
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 195,
+        "value": 127
+      },
+      "then": {
+        "carry": 1,
+        "output": 200,
+        "state": 97,
+        "value": 191
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 255,
+        "value": 127
+      },
+      "then": {
+        "carry": 1,
+        "output": 216,
+        "state": 127,
+        "value": 191
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 255,
+        "value": 127
+      },
+      "then": {
+        "carry": 1,
+        "output": 200,
+        "state": 127,
+        "value": 191
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 0,
+        "value": 128
+      },
+      "then": {
+        "carry": 0,
+        "output": 72,
+        "state": 0,
+        "value": 64
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 0,
+        "value": 128
+      },
+      "then": {
+        "carry": 0,
+        "output": 88,
+        "state": 0,
+        "value": 64
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 1,
+        "value": 128
+      },
+      "then": {
+        "carry": 0,
+        "output": 72,
+        "state": 0,
+        "value": 192
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 1,
+        "value": 128
+      },
+      "then": {
+        "carry": 0,
+        "output": 88,
+        "state": 0,
+        "value": 192
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 60,
+        "value": 128
+      },
+      "then": {
+        "carry": 0,
+        "output": 72,
+        "state": 30,
+        "value": 64
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 60,
+        "value": 128
+      },
+      "then": {
+        "carry": 0,
+        "output": 88,
+        "state": 30,
+        "value": 64
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 195,
+        "value": 128
+      },
+      "then": {
+        "carry": 0,
+        "output": 72,
+        "state": 97,
+        "value": 192
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 195,
+        "value": 128
+      },
+      "then": {
+        "carry": 0,
+        "output": 88,
+        "state": 97,
+        "value": 192
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 255,
+        "value": 128
+      },
+      "then": {
+        "carry": 0,
+        "output": 72,
+        "state": 127,
+        "value": 192
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 255,
+        "value": 128
+      },
+      "then": {
+        "carry": 0,
+        "output": 88,
+        "state": 127,
+        "value": 192
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 0,
+        "value": 254
+      },
+      "then": {
+        "carry": 0,
+        "output": 176,
+        "state": 128,
+        "value": 127
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 0,
+        "value": 254
+      },
+      "then": {
+        "carry": 0,
+        "output": 160,
+        "state": 128,
+        "value": 127
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 1,
+        "value": 254
+      },
+      "then": {
+        "carry": 0,
+        "output": 176,
+        "state": 128,
+        "value": 255
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 1,
+        "value": 254
+      },
+      "then": {
+        "carry": 0,
+        "output": 160,
+        "state": 128,
+        "value": 255
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 60,
+        "value": 254
+      },
+      "then": {
+        "carry": 0,
+        "output": 176,
+        "state": 158,
+        "value": 127
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 60,
+        "value": 254
+      },
+      "then": {
+        "carry": 0,
+        "output": 160,
+        "state": 158,
+        "value": 127
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 195,
+        "value": 254
+      },
+      "then": {
+        "carry": 0,
+        "output": 176,
+        "state": 225,
+        "value": 255
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 195,
+        "value": 254
+      },
+      "then": {
+        "carry": 0,
+        "output": 160,
+        "state": 225,
+        "value": 255
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 255,
+        "value": 254
+      },
+      "then": {
+        "carry": 0,
+        "output": 176,
+        "state": 255,
+        "value": 255
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 255,
+        "value": 254
+      },
+      "then": {
+        "carry": 0,
+        "output": 160,
+        "state": 255,
+        "value": 255
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 0,
+        "value": 255
+      },
+      "then": {
+        "carry": 1,
+        "output": 144,
+        "state": 0,
+        "value": 127
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 0,
+        "value": 255
+      },
+      "then": {
+        "carry": 1,
+        "output": 128,
+        "state": 0,
+        "value": 127
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 1,
+        "value": 255
+      },
+      "then": {
+        "carry": 1,
+        "output": 144,
+        "state": 0,
+        "value": 255
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 1,
+        "value": 255
+      },
+      "then": {
+        "carry": 1,
+        "output": 128,
+        "state": 0,
+        "value": 255
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 60,
+        "value": 255
+      },
+      "then": {
+        "carry": 1,
+        "output": 144,
+        "state": 30,
+        "value": 127
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 60,
+        "value": 255
+      },
+      "then": {
+        "carry": 1,
+        "output": 128,
+        "state": 30,
+        "value": 127
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 195,
+        "value": 255
+      },
+      "then": {
+        "carry": 1,
+        "output": 144,
+        "state": 97,
+        "value": 255
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 195,
+        "value": 255
+      },
+      "then": {
+        "carry": 1,
+        "output": 128,
+        "state": 97,
+        "value": 255
+      }
+    },
+    {
+      "given": {
+        "carryIn": 0,
+        "state": 255,
+        "value": 255
+      },
+      "then": {
+        "carry": 1,
+        "output": 144,
+        "state": 127,
+        "value": 255
+      }
+    },
+    {
+      "given": {
+        "carryIn": 1,
+        "state": 255,
+        "value": 255
+      },
+      "then": {
+        "carry": 1,
+        "output": 128,
+        "state": 127,
+        "value": 255
+      }
+    }
+  ]
+}

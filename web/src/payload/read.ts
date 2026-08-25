@@ -642,217 +642,399 @@ const jsonObject = (
     Record<string, unknown>
   >;
 
-const validateInterstellarShipField = (
+/// One optional member, present only when the payload carried it.
+///
+/// `exactOptionalPropertyTypes` makes `{ key: undefined }` and `{}` different
+/// objects, and a decoded document that never had the member should read as the
+/// second. Spreading this keeps that distinction without a conditional per field.
+const optionally = <K extends string, V>(
+  key: K,
+  value: V | undefined
+): { [P in K]?: V } =>
+  value === undefined ? {} : ({ [key]: value } as { [P in K]?: V });
+
+/// Read the Interstellar Ship Field's decode into the shape the terminal
+/// presentation steps from.
+///
+/// One traversal that both guards and returns: the field is the one payload
+/// subtree a simulation reads member by member rather than handing on whole, so
+/// leaving it as a bag of unknowns would only move the same checks into every
+/// caller.
+const readInterstellarShipField = (
   r: Reader,
   field: Record<string, unknown>
-): void => {
+): Doc.EndgameInterstellarShipField => {
   const root = 'endingPresentation.interstellarShipField';
   const at = (suffix: string): string => `${root}.${suffix}`;
-  const integerTree = (value: unknown, path: string): void => {
+  const addressTree = (
+    value: unknown,
+    path: string
+  ): Doc.EndgameFieldAddressTree => {
     const branch = asObject(r, value, path);
+    const tree: Record<string, number | Doc.EndgameFieldAddressTree> = {};
     for (const [key, child] of Object.entries(branch)) {
       const childPath = `${path}.${key}`;
-      if (
-        typeof child === 'object' &&
-        child !== null &&
-        !Array.isArray(child)
-      ) {
-        integerTree(child, childPath);
-      } else {
-        asInt(r, child, childPath);
-      }
+      tree[key] =
+        typeof child === 'object' && child !== null && !Array.isArray(child)
+          ? addressTree(child, childPath)
+          : asInt(r, child, childPath);
     }
+    return tree;
   };
-  const storage = asObject(r, field['storage'], at('storage'));
+  const axisStorage = (
+    value: unknown,
+    path: string
+  ): Doc.EndgameFieldAxisStorage => {
+    const component = asObject(r, value, path);
+    return {
+      exponentBase: asInt(r, component['exponentBase'], `${path}.exponentBase`),
+      mantissaBase: asInt(r, component['mantissaBase'], `${path}.mantissaBase`)
+    };
+  };
+  const screenStorage = (
+    value: unknown,
+    path: string
+  ): Doc.EndgameFieldScreenStorage => {
+    const position = asObject(r, value, path);
+    return {
+      xBase: asInt(r, position['xBase'], `${path}.xBase`),
+      yBase: asInt(r, position['yBase'], `${path}.yBase`)
+    };
+  };
+  const respawnAxis = (
+    value: unknown,
+    path: string
+  ): Doc.EndgameFieldRespawnAxis => {
+    const generated = asObject(r, value, path);
+    return {
+      draws: intArray(r, generated['draws'], `${path}.draws`),
+      highMask: asInt(r, generated['highMask'], `${path}.highMask`),
+      highOffset: asInt(r, generated['highOffset'], `${path}.highOffset`),
+      range: intPair(r, generated['range'], `${path}.range`)
+    };
+  };
+  const projectionAxis = (
+    value: unknown,
+    path: string
+  ): Doc.EndgameFieldProjectionAxis => {
+    const projected = asObject(r, value, path);
+    return {
+      centre: asInt(r, projected['centre'], `${path}.centre`),
+      range: intPair(r, projected['range'], `${path}.range`)
+    };
+  };
+
+  const storageValue = asObject(r, field['storage'], at('storage'));
   const components = asObject(
     r,
-    storage['components'],
+    storageValue['components'],
     at('storage.components')
   );
-  for (const axis of ['x', 'y', 'z']) {
-    const component = asObject(
-      r,
-      components[axis],
-      at(`storage.components.${axis}`)
-    );
-    asInt(
-      r,
-      component['mantissaBase'],
-      at(`storage.components.${axis}.mantissaBase`)
-    );
-    asInt(
-      r,
-      component['exponentBase'],
-      at(`storage.components.${axis}.exponentBase`)
-    );
-  }
   const screens = asObject(
     r,
-    storage['screenPositions'],
+    storageValue['screenPositions'],
     at('storage.screenPositions')
   );
-  for (const generation of ['current', 'prior']) {
-    const position = asObject(
+  const storage: Doc.EndgameFieldStorage = {
+    components: {
+      x: axisStorage(components['x'], at('storage.components.x')),
+      y: axisStorage(components['y'], at('storage.components.y')),
+      z: axisStorage(components['z'], at('storage.components.z'))
+    },
+    screenPositions: {
+      current: screenStorage(
+        screens['current'],
+        at('storage.screenPositions.current')
+      ),
+      prior: screenStorage(
+        screens['prior'],
+        at('storage.screenPositions.prior')
+      )
+    },
+    slotsPerArray: asInt(
       r,
-      screens[generation],
-      at(`storage.screenPositions.${generation}`)
-    );
-    asInt(
-      r,
-      position['xBase'],
-      at(`storage.screenPositions.${generation}.xBase`)
-    );
-    asInt(
-      r,
-      position['yBase'],
-      at(`storage.screenPositions.${generation}.yBase`)
-    );
-  }
-  asInt(r, storage['slotsPerArray'], at('storage.slotsPerArray'));
+      storageValue['slotsPerArray'],
+      at('storage.slotsPerArray')
+    )
+  };
 
-  const initialization = asObject(
+  const initializationValue = asObject(
     r,
     field['initialization'],
     at('initialization')
   );
-  for (const [index, rawStage] of asArray(
+  const stages = asArray(
     r,
-    initialization['stages'],
+    initializationValue['stages'],
     at('initialization.stages')
-  ).entries()) {
+  ).map((rawStage, index): Doc.EndgameFieldInitializationStage => {
     const path = at(`initialization.stages[${index}]`);
     const stage = asObject(r, rawStage, path);
-    asString(r, stage['name'], `${path}.name`);
-    for (const key of [
-      'priorXYComponents',
-      'reason',
-      'result',
-      'screenClear'
-    ]) {
-      if (stage[key] !== undefined) {
-        asString(r, stage[key], `${path}.${key}`);
-      }
-    }
-    if (stage['writes'] !== undefined) {
-      stringArray(r, stage['writes'], `${path}.writes`);
-    }
-  }
+    const text = (key: string): string | undefined =>
+      stage[key] === undefined
+        ? undefined
+        : asString(r, stage[key], `${path}.${key}`);
+    return {
+      name: asString(r, stage['name'], `${path}.name`),
+      ...optionally('priorXYComponents', text('priorXYComponents')),
+      ...optionally('reason', text('reason')),
+      ...optionally('result', text('result')),
+      ...optionally('screenClear', text('screenClear')),
+      ...optionally(
+        'writes',
+        stage['writes'] === undefined
+          ? undefined
+          : stringArray(r, stage['writes'], `${path}.writes`)
+      )
+    };
+  });
 
-  const motion = asObject(r, field['motion'], at('motion'));
-  asString(r, motion['phaseBranch'], at('motion.phaseBranch'));
-  intArray(r, motion['provenPhaseValues'], at('motion.provenPhaseValues'));
-  for (const key of [
-    'scriptedPhaseDepthDelta',
-    'maturePhaseFirstMultiplier',
-    'maturePhaseLaterMultiplier'
-  ]) {
-    asNumber(r, motion[key], at(`motion.${key}`));
-  }
-  for (const key of [
-    'maturePhaseStopsAtExponent',
-    'accelerationSideStateAddress'
-  ]) {
-    asInt(r, motion[key], at(`motion.${key}`));
-  }
-  asString(
+  const motionValue = asObject(r, field['motion'], at('motion'));
+  const motion: Doc.EndgameFieldMotion = {
+    accelerationSideByteEffect: asString(
+      r,
+      motionValue['accelerationSideByteEffect'],
+      at('motion.accelerationSideByteEffect')
+    ),
+    accelerationSideStateAddress: asInt(
+      r,
+      motionValue['accelerationSideStateAddress'],
+      at('motion.accelerationSideStateAddress')
+    ),
+    maturePhaseFirstMultiplier: asNumber(
+      r,
+      motionValue['maturePhaseFirstMultiplier'],
+      at('motion.maturePhaseFirstMultiplier')
+    ),
+    maturePhaseLaterMultiplier: asNumber(
+      r,
+      motionValue['maturePhaseLaterMultiplier'],
+      at('motion.maturePhaseLaterMultiplier')
+    ),
+    maturePhaseStopsAtExponent: asInt(
+      r,
+      motionValue['maturePhaseStopsAtExponent'],
+      at('motion.maturePhaseStopsAtExponent')
+    ),
+    phaseBranch: asString(
+      r,
+      motionValue['phaseBranch'],
+      at('motion.phaseBranch')
+    ),
+    provenPhaseValues: intArray(
+      r,
+      motionValue['provenPhaseValues'],
+      at('motion.provenPhaseValues')
+    ),
+    scriptedPhaseDepthDelta: asNumber(
+      r,
+      motionValue['scriptedPhaseDepthDelta'],
+      at('motion.scriptedPhaseDepthDelta')
+    )
+  };
+
+  const projectionValue = asObject(r, field['projection'], at('projection'));
+  const projection: Doc.EndgameFieldProjection = {
+    horizontal: projectionAxis(
+      projectionValue['horizontal'],
+      at('projection.horizontal')
+    ),
+    invalidity: stringArray(
+      r,
+      projectionValue['invalidity'],
+      at('projection.invalidity')
+    ),
+    vertical: projectionAxis(
+      projectionValue['vertical'],
+      at('projection.vertical')
+    )
+  };
+
+  const respawnValue = asObject(r, field['respawn'], at('respawn'));
+  const y = asObject(r, respawnValue['y'], at('respawn.y'));
+  const z = asObject(r, respawnValue['z'], at('respawn.z'));
+  const generator = asObject(
     r,
-    motion['accelerationSideByteEffect'],
-    at('motion.accelerationSideByteEffect')
+    respawnValue['generator'],
+    at('respawn.generator')
   );
-
-  const projection = asObject(r, field['projection'], at('projection'));
-  for (const axis of ['horizontal', 'vertical']) {
-    const projected = asObject(r, projection[axis], at(`projection.${axis}`));
-    asInt(r, projected['centre'], at(`projection.${axis}.centre`));
-    intArray(r, projected['range'], at(`projection.${axis}.range`));
-  }
-  stringArray(r, projection['invalidity'], at('projection.invalidity'));
-
-  const respawn = asObject(r, field['respawn'], at('respawn'));
-  for (const key of ['lifetime', 'trigger', 'carryIn']) {
-    asString(r, respawn[key], at(`respawn.${key}`));
-  }
-  asInt(r, respawn['randomDraws'], at('respawn.randomDraws'));
-  stringArray(
-    r,
-    respawn['replacesComponents'],
-    at('respawn.replacesComponents')
-  );
-  for (const axis of ['x', 'y']) {
-    const generated = asObject(r, respawn[axis], at(`respawn.${axis}`));
-    intArray(r, generated['draws'], at(`respawn.${axis}.draws`));
-    asInt(r, generated['highMask'], at(`respawn.${axis}.highMask`));
-    asInt(r, generated['highOffset'], at(`respawn.${axis}.highOffset`));
-    intArray(r, generated['range'], at(`respawn.${axis}.range`));
-  }
-  const y = asObject(r, respawn['y'], at('respawn.y'));
-  asInt(r, y['discardedLowDraw'], at('respawn.y.discardedLowDraw'));
-  asString(r, y['conversionLowSource'], at('respawn.y.conversionLowSource'));
-  const z = asObject(r, respawn['z'], at('respawn.z'));
-  for (const key of ['draw', 'exponent', 'step']) {
-    asInt(r, z[key], at(`respawn.z.${key}`));
-  }
-  intArray(r, z['range'], at('respawn.z.range'));
-  const generator = asObject(r, respawn['generator'], at('respawn.generator'));
-  asInt(r, generator['routineAddress'], at('respawn.generator.routineAddress'));
-  for (const key of ['carryIn', 'output', 'recurrence']) {
-    asString(r, generator[key], at(`respawn.generator.${key}`));
-  }
   const generatorState = asObject(
     r,
     generator['state'],
     at('respawn.generator.state')
   );
-  for (const key of ['valueAddress', 'stateAddress', 'bytes']) {
-    asInt(r, generatorState[key], at(`respawn.generator.state.${key}`));
-  }
-
-  const colours = asObject(r, field['colours'], at('colours'));
-  for (const key of [
-    'entryDelayLoops',
-    'repeatedDelayLoops',
-    'completedPhaseLoop',
-    'repeatFinalEveryLoops'
-  ]) {
-    asInt(r, colours[key], at(`colours.${key}`));
-  }
-  asString(r, colours['storageQuirk'], at('colours.storageQuirk'));
-  for (const [index, rawEvent] of asArray(
-    r,
-    colours['events'],
-    at('colours.events')
-  ).entries()) {
-    const path = at(`colours.events[${index}]`);
-    const event = asObject(r, rawEvent, path);
-    for (const key of ['loop', 'lineColour', 'screenColour']) {
-      asInt(r, event[key], `${path}.${key}`);
+  const respawn: Doc.EndgameFieldRespawn = {
+    carryIn: asString(r, respawnValue['carryIn'], at('respawn.carryIn')),
+    generator: {
+      carryIn: asString(
+        r,
+        generator['carryIn'],
+        at('respawn.generator.carryIn')
+      ),
+      output: asString(r, generator['output'], at('respawn.generator.output')),
+      recurrence: asString(
+        r,
+        generator['recurrence'],
+        at('respawn.generator.recurrence')
+      ),
+      routineAddress: asInt(
+        r,
+        generator['routineAddress'],
+        at('respawn.generator.routineAddress')
+      ),
+      state: {
+        bytes: asInt(
+          r,
+          generatorState['bytes'],
+          at('respawn.generator.state.bytes')
+        ),
+        stateAddress: asInt(
+          r,
+          generatorState['stateAddress'],
+          at('respawn.generator.state.stateAddress')
+        ),
+        valueAddress: asInt(
+          r,
+          generatorState['valueAddress'],
+          at('respawn.generator.state.valueAddress')
+        )
+      }
+    },
+    lifetime: asString(r, respawnValue['lifetime'], at('respawn.lifetime')),
+    randomDraws: asInt(
+      r,
+      respawnValue['randomDraws'],
+      at('respawn.randomDraws')
+    ),
+    replacesComponents: stringArray(
+      r,
+      respawnValue['replacesComponents'],
+      at('respawn.replacesComponents')
+    ),
+    trigger: asString(r, respawnValue['trigger'], at('respawn.trigger')),
+    x: respawnAxis(respawnValue['x'], at('respawn.x')),
+    y: {
+      ...respawnAxis(respawnValue['y'], at('respawn.y')),
+      conversionLowSource: asString(
+        r,
+        y['conversionLowSource'],
+        at('respawn.y.conversionLowSource')
+      ),
+      discardedLowDraw: asInt(
+        r,
+        y['discardedLowDraw'],
+        at('respawn.y.discardedLowDraw')
+      )
+    },
+    z: {
+      draw: asInt(r, z['draw'], at('respawn.z.draw')),
+      exponent: asInt(r, z['exponent'], at('respawn.z.exponent')),
+      range: intPair(r, z['range'], at('respawn.z.range')),
+      step: asInt(r, z['step'], at('respawn.z.step'))
     }
-    if (event['phaseWrite'] !== null) {
-      asInt(r, event['phaseWrite'], `${path}.phaseWrite`);
-    }
-  }
+  };
 
-  for (const [index, rawState] of asArray(
+  const coloursValue = asObject(r, field['colours'], at('colours'));
+  const colours: Doc.EndgameFieldColours = {
+    completedPhaseLoop: asInt(
+      r,
+      coloursValue['completedPhaseLoop'],
+      at('colours.completedPhaseLoop')
+    ),
+    entryDelayLoops: asInt(
+      r,
+      coloursValue['entryDelayLoops'],
+      at('colours.entryDelayLoops')
+    ),
+    events: asArray(r, coloursValue['events'], at('colours.events')).map(
+      (rawEvent, index): Doc.EndgameFieldColourEvent => {
+        const path = at(`colours.events[${index}]`);
+        const event = asObject(r, rawEvent, path);
+        return {
+          lineColour: asInt(r, event['lineColour'], `${path}.lineColour`),
+          loop: asInt(r, event['loop'], `${path}.loop`),
+          phaseWrite:
+            event['phaseWrite'] === null
+              ? null
+              : asInt(r, event['phaseWrite'], `${path}.phaseWrite`),
+          screenColour: asInt(r, event['screenColour'], `${path}.screenColour`)
+        };
+      }
+    ),
+    repeatedDelayLoops: asInt(
+      r,
+      coloursValue['repeatedDelayLoops'],
+      at('colours.repeatedDelayLoops')
+    ),
+    repeatFinalEveryLoops: asInt(
+      r,
+      coloursValue['repeatFinalEveryLoops'],
+      at('colours.repeatFinalEveryLoops')
+    ),
+    storageQuirk: asString(
+      r,
+      coloursValue['storageQuirk'],
+      at('colours.storageQuirk')
+    )
+  };
+
+  const continuationState = asArray(
     r,
     field['continuationState'],
     at('continuationState')
-  ).entries()) {
+  ).map((rawState, index): Doc.EndgameFieldContinuationState => {
     const path = at(`continuationState[${index}]`);
     const state = asObject(r, rawState, path);
-    asString(r, state['name'], `${path}.name`);
-    if (state['addresses'] !== undefined) {
-      intArray(r, state['addresses'], `${path}.addresses`);
-    }
-    if (state['slots'] !== undefined) {
-      asInt(r, state['slots'], `${path}.slots`);
-    }
-    if (state['semanticContinuation'] !== undefined) {
-      asBool(r, state['semanticContinuation'], `${path}.semanticContinuation`);
-    }
-    if (state['storage'] !== undefined) {
-      integerTree(state['storage'], `${path}.storage`);
-    }
-  }
+    return {
+      name: asString(r, state['name'], `${path}.name`),
+      ...optionally(
+        'addresses',
+        state['addresses'] === undefined
+          ? undefined
+          : intArray(r, state['addresses'], `${path}.addresses`)
+      ),
+      ...optionally(
+        'semanticContinuation',
+        state['semanticContinuation'] === undefined
+          ? undefined
+          : asBool(
+              r,
+              state['semanticContinuation'],
+              `${path}.semanticContinuation`
+            )
+      ),
+      ...optionally(
+        'slots',
+        state['slots'] === undefined
+          ? undefined
+          : asInt(r, state['slots'], `${path}.slots`)
+      ),
+      ...optionally(
+        'storage',
+        state['storage'] === undefined
+          ? undefined
+          : addressTree(state['storage'], `${path}.storage`)
+      )
+    };
+  });
+
+  const pointSlots = asObject(r, field['pointSlots'], at('pointSlots'));
+  return {
+    colours,
+    continuationState,
+    initialization: { stages },
+    loopOrder: stringArray(r, field['loopOrder'], at('loopOrder')),
+    motion,
+    pointSlots: {
+      count: asInt(r, pointSlots['count'], at('pointSlots.count')),
+      first: asInt(r, pointSlots['first'], at('pointSlots.first')),
+      identity: asString(r, pointSlots['identity'], at('pointSlots.identity')),
+      last: asInt(r, pointSlots['last'], at('pointSlots.last'))
+    },
+    projection,
+    respawn,
+    storage
+  };
 };
 
 /// The city table has one entry per surface cell.
@@ -905,17 +1087,14 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
     'shipDelivery.initialisation'
   );
   const landing = asObject(r, delivery['landing'], 'shipDelivery.landing');
-  const field = asObject(
+  const field = readInterstellarShipField(
     r,
-    ending['interstellarShipField'],
-    'endingPresentation.interstellarShipField'
+    asObject(
+      r,
+      ending['interstellarShipField'],
+      'endingPresentation.interstellarShipField'
+    )
   );
-  const pointSlots = asObject(
-    r,
-    field['pointSlots'],
-    'endingPresentation.interstellarShipField.pointSlots'
-  );
-  validateInterstellarShipField(r, field);
   return {
     combat: {
       fire: {
@@ -1278,76 +1457,7 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
         'endingPresentation.completedValue'
       ),
       dispatch: asString(r, ending['dispatch'], 'endingPresentation.dispatch'),
-      interstellarShipField: {
-        colours: jsonObject(
-          r,
-          field['colours'],
-          'endingPresentation.interstellarShipField.colours'
-        ),
-        continuationState: asArray(
-          r,
-          field['continuationState'],
-          'endingPresentation.interstellarShipField.continuationState'
-        ).map((item, index) =>
-          jsonValue(
-            r,
-            item,
-            `endingPresentation.interstellarShipField.continuationState[${index}]`
-          )
-        ),
-        initialization: jsonObject(
-          r,
-          field['initialization'],
-          'endingPresentation.interstellarShipField.initialization'
-        ),
-        loopOrder: stringArray(
-          r,
-          field['loopOrder'],
-          'endingPresentation.interstellarShipField.loopOrder'
-        ),
-        motion: jsonObject(
-          r,
-          field['motion'],
-          'endingPresentation.interstellarShipField.motion'
-        ),
-        pointSlots: {
-          count: asInt(
-            r,
-            pointSlots['count'],
-            'endingPresentation.interstellarShipField.pointSlots.count'
-          ),
-          first: asInt(
-            r,
-            pointSlots['first'],
-            'endingPresentation.interstellarShipField.pointSlots.first'
-          ),
-          identity: asString(
-            r,
-            pointSlots['identity'],
-            'endingPresentation.interstellarShipField.pointSlots.identity'
-          ),
-          last: asInt(
-            r,
-            pointSlots['last'],
-            'endingPresentation.interstellarShipField.pointSlots.last'
-          )
-        },
-        projection: jsonObject(
-          r,
-          field['projection'],
-          'endingPresentation.interstellarShipField.projection'
-        ),
-        respawn: jsonObject(
-          r,
-          field['respawn'],
-          'endingPresentation.interstellarShipField.respawn'
-        ),
-        storage: jsonObject(
-          r,
-          field['storage'],
-          'endingPresentation.interstellarShipField.storage'
-        )
-      },
+      interstellarShipField: field,
       scriptedValue: asInt(
         r,
         ending['scriptedValue'],
