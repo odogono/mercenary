@@ -46,6 +46,7 @@ import type {
   EndgameDropRules,
   EndgameFire,
   EndgameHostileCraft,
+  EndgameInterstellarShipField,
   EndgameObjectHits,
   EndgameShipDelivery,
   EndgameSiteDestruction,
@@ -73,6 +74,11 @@ import {
   encodeRandomState,
   type SaveSnapshot
 } from './save.ts';
+import {
+  InterstellarShipField,
+  type ShipFieldColourPair,
+  type ShipFieldPoint
+} from './shipField.ts';
 import { SiteLedger } from './sites.ts';
 
 /// The Gameplay Session: the one owner of a play session's Session State (ADR 0018).
@@ -162,6 +168,13 @@ export interface FireResult {
   readonly outcome: FireOutcome;
 }
 
+/// What the Escape's terminal presentation is showing: already projected, so a
+/// renderer draws it without knowing how a point got there.
+export interface EscapePresentation {
+  readonly colourPair: ShipFieldColourPair;
+  readonly points: readonly ShipFieldPoint[];
+}
+
 export interface SessionSnapshot {
   readonly bensonMessage: BensonMessagePresentation | undefined;
   readonly carriedStack: readonly number[];
@@ -186,6 +199,10 @@ export interface SessionSnapshot {
   /// `activePlay` throughout ordinary play; what draws an Ending reads this
   /// rather than the Host Callout's own byte.
   readonly ending: EndingState;
+  /// What the Escape's terminal presentation is showing at this moment: the
+  /// colour pair in force and the 21 points, already projected. Present only
+  /// while an Escape is being presented, which is what a renderer branches on.
+  readonly escapePresentation?: EscapePresentation;
   readonly indoor: IndoorScene | undefined;
   readonly isScriptRunning: boolean;
   readonly location: Location;
@@ -206,6 +223,10 @@ export const openingPlayer = (): PlayerState =>
     position: REFERENCE_OPENING_POSITION
   });
 
+/// The Reference Build's terminal loop is raster-locked, so it runs at the
+/// display's rate rather than at the browser's step.
+const TERMINAL_LOOPS_PER_SECOND = 50;
+
 export interface SessionContent {
   readonly cellSize: number;
   readonly doorwayRules: DoorwayRules | undefined;
@@ -214,6 +235,10 @@ export interface SessionContent {
   /// Colony Craft transition runs on, and the byte the Interstellar Ship's
   /// handler writes. Absent when the content carries no endgame rules.
   readonly endgame?: EndgameRules;
+  /// The Interstellar Ship Field the Escape's terminal presentation runs.
+  /// Absent when the content carries no endgame rules, in which case an Ending
+  /// simply freezes rather than presenting.
+  readonly endingField?: EndgameInterstellarShipField;
   /// What firing costs and how far a shot gets.
   readonly fire?: EndgameFire;
   readonly flight: FlightModel | undefined;
@@ -245,6 +270,7 @@ export const sessionContent = (
     colonyCraft: bundle.endgame.orbitalTransition,
     slot7PitchHighByte: bundle.endgame.endingPresentation.slot7PitchHighByte
   },
+  endingField: bundle.endgame.endingPresentation.interstellarShipField,
   fire: bundle.endgame.combat.fire,
   flight,
   hostile: bundle.endgame.combat.hostileCraft,
@@ -528,6 +554,14 @@ export class GameplaySession {
   private sites: SiteLedger | undefined;
   /// The part of a combat frame that had not elapsed yet.
   private combatFrames = 0;
+  /// The Escape's terminal presentation, once the Ending has produced it.
+  /// Created on the edge into an Ending and never taken down: the Reference
+  /// Build's terminal loop does not return.
+  private endingField: InterstellarShipField | undefined;
+  /// The part of a terminal loop that had not elapsed yet. The native loop runs
+  /// at the Reference Build's 50 a second, which is not this session's step, so
+  /// the remainder is carried the way Benson frames are.
+  private endingLoops = 0;
   /// The one Player Projectile, while it is in flight. Its position is its
   /// Object Residence, because that is what draws it; only what residence
   /// cannot hold is kept here.
@@ -1464,7 +1498,9 @@ export class GameplaySession {
         throw error;
       }
     }
-    if (!terminal) {
+    if (terminal) {
+      this.advanceEndingPresentation(seconds);
+    } else {
       this.advanceShipDelivery(seconds);
       events.push(...this.advanceCombat(seconds));
     }
@@ -1863,6 +1899,55 @@ export class GameplaySession {
   /// Object Residence, which the decoded write always leaves a whole multiple of
   /// `0x100`, so the only thing this has to carry between frames is the part of
   /// a frame that has not elapsed yet.
+  /// Run the terminal loop for as much of it as this step covers.
+  ///
+  /// The Reference Build's loop is raster-locked at 50 a second, which is not
+  /// the browser's step, so whole loops are taken out of an accumulator and the
+  /// remainder is carried — the same shape `BensonSession.advance` uses for its
+  /// own frames, and for the same reason: the decoded delays are counted in
+  /// loops, so running them on the browser's rate would arrive early.
+  ///
+  /// The field is what writes phase 255, from inside its colour sequence. The
+  /// write goes through the Host Callout after the scripts have been reconciled,
+  /// so the session's own project-and-reconcile seam cannot put the old byte
+  /// back over it.
+  private advanceEndingPresentation(seconds: number): void {
+    const rules = this.content.endingField;
+    if (rules === undefined || this.scripts === undefined || seconds <= 0) {
+      return;
+    }
+    this.endingField ??= InterstellarShipField.begin(
+      rules,
+      this.endingFieldSeed()
+    );
+    this.endingLoops += seconds * TERMINAL_LOOPS_PER_SECOND;
+    while (this.endingLoops >= 1) {
+      this.endingLoops -= 1;
+      const phase = this.ending;
+      if (phase.kind !== 'escape') {
+        return;
+      }
+      const written = this.endingField.step(phase.phase).phaseWrite;
+      if (written !== undefined) {
+        this.scripts.host = this.scripts.host.with({ endingPhase: written });
+      }
+    }
+  }
+
+  /// The two bytes the field's generator continues from.
+  ///
+  /// The Reference Build never seeds this generator: a respawn continues
+  /// whatever random history the session already had, so there is no first-frame
+  /// seed to reproduce. What matters is that the same session always reaches the
+  /// same field, which taking the bytes from the scripts' own random state gives.
+  private endingFieldSeed(): { state: number; value: number } {
+    const random = this.scripts?.state.randomState ?? 0n;
+    return {
+      state: Number((random >> 8n) & 0xffn),
+      value: Number(random & 0xffn)
+    };
+  }
+
   private advanceShipDelivery(seconds: number): void {
     const rules = this.content.shipDelivery;
     if (rules === undefined || this.scripts === undefined || seconds <= 0) {
@@ -1997,6 +2082,14 @@ export class GameplaySession {
       credits: this.scripts?.credits ?? 0,
       elapsed: this.game.elapsed,
       ending: this.ending,
+      ...(this.endingField === undefined
+        ? {}
+        : {
+            escapePresentation: {
+              colourPair: this.endingField.colourPair,
+              points: this.endingField.points
+            }
+          }),
       indoor: this.indoor,
       isScriptRunning: this.scripts?.isRunning ?? false,
       location: this.location,
