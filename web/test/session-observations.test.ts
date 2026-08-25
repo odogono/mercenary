@@ -238,6 +238,14 @@ describe('the semantic observations a Gameplay Session answers with', () => {
       expect(keys).not.toContain(leaked);
     }
   });
+
+  // The raw byte stays out of the Snapshot, above. What the Snapshot does carry
+  // is the Ending projected from it — deliberately, because a renderer has to be
+  // able to tell an Ending from active play without reaching past the Snapshot
+  // for the Host Callout's own state.
+  test('reaches the Session Snapshot only as a projected Ending', () => {
+    expect(session().snapshot.ending).toEqual({ kind: 'activePlay' });
+  });
 });
 
 // Type-level: the map's value domain is the lab's, no wider.

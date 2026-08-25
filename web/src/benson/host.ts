@@ -27,7 +27,11 @@ export interface BensonHostFields {
   /// accepted, 255 in the mature terminal presentation. A byte rather than a
   /// Boolean because the Reference Build reads all three values apart
   /// (`notes/decode/endgame.md`, "Ending phases"). Only script 7's `stor`
-  /// writes 1; nothing in active play writes 255, which is M7.5's.
+  /// writes 1; nothing in active play writes 255, which the terminal
+  /// presentation writes from inside its own colour sequence.
+  ///
+  /// This byte stays the session's private spelling. What the rest of the app
+  /// reads is `EndingState` (`session/ending.ts`), projected from it.
   ///
   /// The Host Callout symbol a Benson Script writes this through is still
   /// spelled `gameComplete`: that name is the Data Payload's, embedded in the

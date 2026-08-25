@@ -443,6 +443,12 @@ describe('after the dispatch', () => {
     expect(texts.size).toBeGreaterThan(1);
     // The phase stays scripted: 255 belongs to the terminal renderer.
     expect(phase(route)).toBe(1);
+    // And the Snapshot names it: one Escape, at the phase its presentation has
+    // reached. What draws the Ending reads this rather than the phase byte.
+    expect(route.session.snapshot.ending).toEqual({
+      kind: 'escape',
+      phase: 1
+    });
   }, 240_000);
 });
 

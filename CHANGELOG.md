@@ -8,6 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- An Ending is public domain state rather than a byte a caller compares against constants
+  (#134). `CONTEXT.md` gains **Ending Phase** — how far an Ending's own presentation has got, as
+  distinct from which Ending was reached — and `web/src/session/ending.ts` spells the pair as one
+  discriminated union: active play carries no Ending, an Escape carries one of exactly two Ending
+  Phases, and Defeat is a member the Reference Build recognises that nothing here produces. The
+  combinations the configured build admits are the type, so "ended at phase 0" and "active at
+  phase 255" cannot be written down. `BensonHostState.endingPhase` stays the session's private
+  spelling, because the symbol the scripts write through is the Data Payload's `gameComplete` and
+  re-spelling it needs a payload re-export; the Session Snapshot now carries the projection
+  instead, so what draws an Ending no longer reaches past the Snapshot for the Host Callout's own
+  state. The Replay Gate's Boolean `gameComplete` projection is untouched: the frozen Benson
+  traces spell it that way and cannot be re-emitted. Presentation of the Ending, and the value
+  255, remain the terminal-presentation slice's.
+
 - The Data Payload and the Golden Traces are tracked (ADR 0029). `/payload/` and `/traces/` were
   gitignored under ADR 0014's publication hedge and ADR 0019's payload-derived clause, which cost
   a per-worktree tax: a fresh `git worktree` had no working test suite until the payload was
