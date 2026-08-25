@@ -66,6 +66,7 @@ import {
   type Room,
   type World
 } from '../world/index.ts';
+import { endingStateOf, type EndingState } from './ending.ts';
 import { observationsOf, type SemanticObservations } from './observations.ts';
 import {
   decodeRandomState,
@@ -181,6 +182,10 @@ export interface SessionSnapshot {
   };
   readonly credits: number;
   readonly elapsed: number;
+  /// Which Ending this moment belongs to, and how far its presentation has got.
+  /// `activePlay` throughout ordinary play; what draws an Ending reads this
+  /// rather than the Host Callout's own byte.
+  readonly ending: EndingState;
   readonly indoor: IndoorScene | undefined;
   readonly isScriptRunning: boolean;
   readonly location: Location;
@@ -1400,9 +1405,8 @@ export class GameplaySession {
     // Once script 7 has written the Ending phase, the Reference Build's main
     // loop is replaced by the slot-7 handler's non-returning terminal loop,
     // which steps Benson and samples input and runs nothing else: no Mover,
-    // no Ship Delivery, no combat. The renderer that loop drives is M7.5's;
-    // the freeze it implies is this ticket's.
-    const terminal = (this.scripts?.host.endingPhase ?? 0) !== 0;
+    // no Ship Delivery, no combat.
+    const terminal = this.ending.kind !== 'activePlay';
     // The Reference Build reads the override's own carried flag every frame, at
     // the throttle and again at the ceiling, rather than remembering a decision
     // taken when it was picked up. So this is derived rather than set: putting
@@ -1992,6 +1996,7 @@ export class GameplaySession {
       },
       credits: this.scripts?.credits ?? 0,
       elapsed: this.game.elapsed,
+      ending: this.ending,
       indoor: this.indoor,
       isScriptRunning: this.scripts?.isRunning ?? false,
       location: this.location,
@@ -2004,6 +2009,15 @@ export class GameplaySession {
       throttleNotch: this.throttleNotch,
       worldFlipped: this.game.worldFlipped
     };
+  }
+
+  /// The Ending this session has reached, as the rest of the app reads it.
+  ///
+  /// Projected from the Host Callout's byte on every read rather than held
+  /// beside it, so the scripts' own write stays the single place an Ending is
+  /// produced and there is no second copy to keep in step.
+  get ending(): EndingState {
+    return endingStateOf(this.scripts?.host.endingPhase ?? 0);
   }
 
   private get sceneResidence(): Map<number, Residence> {

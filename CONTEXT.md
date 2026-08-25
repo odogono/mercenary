@@ -234,6 +234,10 @@ _Avoid_: Win, victory, orbital transition
 An unsuccessful Ending produced by a terminal failure recognised by the Reference Build.
 _Avoid_: Loss, Game Over, failure state
 
+**Ending Phase**:
+How far an Ending's own presentation has got: absent throughout active play, entered the moment the Ending is produced, and advanced once more by the terminal presentation as it matures. It says nothing about which Ending was reached, and an Ending is not resolved twice by advancing it.
+_Avoid_: gameComplete, win phase, game-over flag, Ending
+
 **Movement Intent**:
 The device-independent held request sampled by a Mover on each simulation step — turning, pitching, walking and running — distinct from persistent state and from a one-shot Semantic Action.
 _Avoid_: Key state, held Semantic Action, control event
