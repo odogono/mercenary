@@ -22,6 +22,46 @@ const HANGAR_ROOM = 5;
 const ADVERT_CELL = 0x32;
 const CELL = 0x1_00_00;
 
+/// The engine flag script 7's one optional arm tests. Set by stealing the Dart,
+/// destroying object 0, or destroying cell `$97`; it changes what the epilogue
+/// says and nothing else.
+const OPTIONAL_EPILOGUE = 0x20;
+
+/// Every Benson Message the epilogue completes, in order.
+///
+/// A Benson Message is one complete occurrence, so this counts the moment the
+/// line stops revealing rather than sampling the text as it grows — a partially
+/// revealed prefix is not a Message, and two identical lines are two occurrences.
+const revealed = (route: LegalRoute, quarters: number): string[] => {
+  const lines: string[] = [];
+  // A line counts once it has stopped growing — the hold the Reference Build
+  // keeps a finished Message on screen for. A prefix that is replaced while
+  // still revealing was never a Message and is not recorded as one.
+  let previous = '';
+  let held: string | undefined;
+  const close = (): void => {
+    if (held !== undefined) {
+      lines.push(held);
+      held = undefined;
+    }
+  };
+  for (let quarter = 0; quarter < quarters; quarter++) {
+    route.advance(0.25);
+    const text = String(
+      route.session.observations().observations['messageText']
+    );
+    if (text === '' || !text.startsWith(previous)) {
+      close();
+    }
+    if (text !== '' && text === previous) {
+      held = text;
+    }
+    previous = text;
+  }
+  close();
+  return lines;
+};
+
 const phase = (route: LegalRoute): number =>
   route.session.observations().observations['endingPhase'] as number;
 
@@ -441,14 +481,154 @@ describe('after the dispatch', () => {
     // The epilogue tail is script 7's own and keeps playing; its content is
     // M7.5's to pin, so only that it advances is asserted here.
     expect(texts.size).toBeGreaterThan(1);
-    // The phase stays scripted: 255 belongs to the terminal renderer.
-    expect(phase(route)).toBe(1);
-    // And the Snapshot names it: one Escape, at the phase its presentation has
+    // The Snapshot names it: one Escape, at the phase its presentation has
     // reached. What draws the Ending reads this rather than the phase byte.
     expect(route.session.snapshot.ending).toEqual({
       kind: 'escape',
-      phase: 1
+      phase: 255
     });
+  }, 240_000);
+
+  test('the terminal presentation runs, and matures the Ending itself', async () => {
+    const route = await aboardInTheHangar();
+    surfaceAboard(route);
+    expect(launch(route)).toBeTrue();
+
+    // The field is up on the first loop after the dispatch, with all 21 points.
+    const entry = route.session.snapshot.escapePresentation;
+    expect(entry?.points).toHaveLength(21);
+    expect(phase(route)).toBe(1);
+
+    // Nothing but the field's own colour sequence moves the phase, and it does
+    // so on the decoded loop rather than on a timer of our own: 114 loops at 50
+    // a second is a little under two and a third seconds. `launch` can leave up
+    // to half a second of loops behind it, so the window is checked either side
+    // of that rather than to the loop.
+    route.advance(1);
+    expect(phase(route)).toBe(1);
+    route.advance(2);
+    expect(phase(route)).toBe(255);
+    expect(route.session.snapshot.ending).toEqual({
+      kind: 'escape',
+      phase: 255
+    });
+
+    // The points keep moving, and the pair the sequence settled on stays put.
+    const settled = route.session.snapshot.escapePresentation;
+    route.advance(1);
+    const later = route.session.snapshot.escapePresentation;
+    expect(later?.points).not.toEqual(settled?.points);
+    expect(later?.colourPair).toEqual(settled?.colourPair);
+    expect(later?.points).toHaveLength(21);
+  }, 240_000);
+
+  test('presents the epilogue the decoded tail asks for', async () => {
+    const route = await aboardInTheHangar();
+    surfaceAboard(route);
+    expect(launch(route)).toBeTrue();
+
+    // The tail retimes the message line before it says anything, which is what
+    // makes the epilogue read more slowly than play does.
+    expect(route.session.scripts?.host.messageInterval).toBe(150);
+
+    const texts = revealed(route, 300);
+    const upToTheLabel = texts.slice(0, texts.indexOf('GAME OVER') + 1);
+    expect(upToTheLabel).toEqual([
+      'THE AUTHOR SENDS YOU',
+      'CONGRATULATIONS ON YOUR',
+      'ESCAPE FROM TARG',
+      'SAVE OUT THE STATUS AND',
+      'SEE YOU IN MERCENARY II',
+      'GAME OVER'
+    ]);
+    // And then the label alone, over and over.
+    expect(new Set(texts.slice(upToTheLabel.length))).toEqual(
+      new Set(['GAME OVER'])
+    );
+  }, 240_000);
+
+  test('repeats the terminal label, asking for silence each time', async () => {
+    const route = await aboardInTheHangar();
+    surfaceAboard(route);
+    expect(launch(route)).toBeTrue();
+
+    const sounds: string[] = [];
+    let labels = 0;
+    let last = '';
+    for (let quarter = 0; quarter < 300; quarter++) {
+      const { events } = route.session.advance(0.25);
+      const text = String(
+        route.session.observations().observations['messageText']
+      );
+      if (text === 'GAME OVER' && last !== 'GAME OVER') {
+        labels++;
+      }
+      last = text;
+      for (const event of events) {
+        if (typeof event === 'object' && 'script' in event) {
+          const effect = event.script;
+          if (typeof effect === 'object' && 'sound' in effect) {
+            sounds.push(effect.sound.symbol);
+          }
+        }
+      }
+    }
+
+    // The loop repeats: wait, one label, and silence asked of both voices. The
+    // SID writes stay presentation requests — there is no audio behind them.
+    expect(labels).toBeGreaterThan(1);
+    // Two writes per repeat, give or take the one whose label landed inside the
+    // window but whose writes had not been asked for yet.
+    expect(sounds.length % 2).toBe(0);
+    expect(sounds.length / 2).toBeLessThanOrEqual(labels);
+    expect(sounds.length / 2).toBeGreaterThanOrEqual(labels - 1);
+    for (const [index, symbol] of sounds.entries()) {
+      expect(symbol).toBe(
+        index % 2 === 0 ? 'voice1.control' : 'voice2.control'
+      );
+    }
+  }, 240_000);
+
+  test('the optional arm is a second presentation of one Ending', async () => {
+    const clear = await aboardInTheHangar();
+    surfaceAboard(clear);
+    expect(launch(clear)).toBeTrue();
+    const withoutArm = revealed(clear, 300);
+
+    const set = await aboardInTheHangar();
+    set.session.scripts!.host = set.session.scripts!.host.write(
+      'engineFlags',
+      set.session.scripts!.host.engineFlags | OPTIONAL_EPILOGUE
+    );
+    surfaceAboard(set);
+    expect(launch(set)).toBeTrue();
+    const withArm = revealed(set, 300);
+
+    // One Ending either way — the flag changes what is said, never the outcome.
+    expect(phase(clear)).toBe(phase(set));
+    expect(clear.session.snapshot.ending).toEqual(set.session.snapshot.ending);
+    expect(withArm).not.toEqual(withoutArm);
+    // The arm adds to the sequence rather than replacing it.
+    for (const line of new Set(withoutArm)) {
+      expect(withArm).toContain(line);
+    }
+    expect(withArm).toContain("THE PALYAR COMMANDER'S");
+  }, 240_000);
+
+  test('two sessions restored from one Save present the same field', async () => {
+    const route = await aboardInTheHangar();
+    surfaceAboard(route);
+    expect(launch(route)).toBeTrue();
+    route.advance(3);
+
+    const left = restored(route);
+    const right = restored(route);
+    left.advance(1);
+    right.advance(1);
+    expect(right.snapshot.escapePresentation).toEqual(
+      left.snapshot.escapePresentation
+    );
+    expect(right.snapshot.ending).toEqual(left.snapshot.ending);
   }, 240_000);
 });
 
