@@ -7,10 +7,21 @@ import { FixedStepClock } from './clock.ts';
 import { installConsole } from './consoleView.ts';
 import { Renderer } from './frame.ts';
 import { BrowserControlProfile } from './input.ts';
-import { escapeFrom, installSystemMenu } from './menu.ts';
+import { createNewGameAction, escapeFrom, installSystemMenu } from './menu.ts';
+import { BensonMessageTranscript } from './messageTranscript.ts';
+import {
+  createSessionOwnership,
+  type BrowserLockManager
+} from './ownership.ts';
 import { objectNamesOf, panelViewModel, type PanelContext } from './panel.ts';
 import { installPanel, installPanelScale } from './panelView.ts';
 import { createPreferences, effectivePresentation } from './preferences.ts';
+import {
+  createSessionResumePersistence,
+  readSessionResume,
+  type SessionResumePersistence
+} from './resume.ts';
+import { createSessionResumeNotices } from './resumeNotices.ts';
 import { routeKey, type RouterState } from './router.ts';
 import { installSaveChooser } from './saveChooser.ts';
 import { ALL_SLOTS, createSavePersistence, slotStorageKey } from './saves.ts';
@@ -43,6 +54,7 @@ const consoleElements = {
 };
 const chromePages = {
   menu: document.getElementById('page-menu')!,
+  ownership: document.getElementById('page-ownership')!,
   saves: document.getElementById('page-saves')!,
   settings: document.getElementById('page-settings')!
 };
@@ -141,7 +153,26 @@ try {
   // blocks that identify a Save, so changing one cannot make an existing Save unloadable.
   const preferences = createPreferences({ storage, surface });
   const environment = saveEnvironment(bundle, settings);
-  const initial = createWalkabout(bundle, settings);
+  const notices = createSessionResumeNotices();
+  let handleOwnershipLost = (): void => {};
+  const browserLocks =
+    navigator.locks === undefined
+      ? undefined
+      : (navigator.locks as unknown as BrowserLockManager);
+  const ownership = createSessionOwnership({
+    locks: browserLocks,
+    onLost: () => handleOwnershipLost()
+  });
+  const ownershipOutcome = await ownership.claim();
+  const resumeRead =
+    ownershipOutcome.kind === 'owned'
+      ? readSessionResume(storage, environment)
+      : ({ kind: 'empty' } as const);
+  const initial = createWalkabout(
+    bundle,
+    settings,
+    resumeRead.kind === 'restored' ? resumeRead.snapshot : undefined
+  );
   let session = initial.session;
   let world = initial.world;
   let names = objectNamesOf(world.objects);
@@ -155,10 +186,55 @@ try {
   let frameCount = 0;
   let frameSeconds = 0;
   let lastFrame: number | undefined;
+  const bensonTranscript = new BensonMessageTranscript();
+  let recordBensonMessage = (): void => {};
+
+  switch (ownershipOutcome.kind) {
+    case 'blocked':
+      notices.ownership('SESSION ACTIVE IN ANOTHER TAB');
+      break;
+    case 'owned':
+      if (resumeRead.kind === 'restored') {
+        notices.resumed();
+      } else if (resumeRead.kind === 'invalid') {
+        notices.couldNotResume(resumeRead.reason);
+      } else if (resumeRead.kind === 'unavailable') {
+        notices.failed(resumeRead.reason);
+      }
+      break;
+    case 'unsupported':
+      notices.ownershipUnavailable();
+      break;
+  }
+
+  const makeResumePersistence = (): SessionResumePersistence =>
+    createSessionResumePersistence({
+      capture: () => ({
+        location: session.location,
+        snapshot: session.captureSaveSnapshot()
+      }),
+      environment,
+      onFailure: notices.failed,
+      storage: ownership.mayPersist() ? storage : undefined
+    });
+  let resumePersistence = makeResumePersistence();
+  const flushResume = (): void => {
+    if (ownership.mayPersist()) {
+      resumePersistence.checkpoint(true);
+    }
+  };
 
   const performAndRefresh = (action: () => void): void => {
+    if (!ownership.mayAdvance()) {
+      return;
+    }
     action();
     snapshot = session.snapshot;
+    recordBensonMessage();
+    if (ownership.mayPersist()) {
+      resumePersistence.dirty();
+      resumePersistence.checkpoint(true);
+    }
   };
 
   const controls = new BrowserControlProfile({
@@ -169,11 +245,11 @@ try {
     // The live Benson Script owns the message line. Bracket paging remains a Control Profile
     // action for the scriptless Swift fallback, but this required scripted shell has no pager.
     page: () => {},
-    press: key => session.press(key),
+    press: key => performAndRefresh(() => session.press(key)),
     reach: action => performAndRefresh(() => session.reach(action)),
     rideLift: () => performAndRefresh(() => session.rideLift()),
     shutThrottle: () => performAndRefresh(() => session.shutThrottle()),
-    skipMessage: () => session.skipMessage(),
+    skipMessage: () => performAndRefresh(() => session.skipMessage()),
     throttleNotchValue: notch =>
       performAndRefresh(() => session.throttleNotchValue(notch)),
     throttleStep: delta => performAndRefresh(() => session.throttleStep(delta))
@@ -187,10 +263,30 @@ try {
   installSuspensionHandlers(window, document, release);
 
   const menu = installSystemMenu({
+    onLayer: layer => {
+      if (layer === 'menu') {
+        notices.menuOpened();
+        if (ownership.mayPersist()) {
+          resumePersistence.checkpoint(true);
+        }
+      }
+    },
     pages: chromePages,
     release,
     surface
   });
+  if (ownershipOutcome.kind === 'blocked') {
+    menu.show('ownership');
+  }
+  handleOwnershipLost = () => {
+    release();
+    shellConsole.close();
+    notices.ownership('SESSION OPENED ELSEWHERE');
+    chromePages.ownership.querySelector<HTMLElement>(
+      '.chrome-title'
+    )!.textContent = 'SESSION OPENED ELSEWHERE';
+    menu.show('ownership');
+  };
 
   // Chrome roots declare themselves in the markup, so a new surface owns its keys by carrying
   // the attribute rather than by being named here.
@@ -202,6 +298,16 @@ try {
     layer: menu.layer()
   });
 
+  const replaceWalkabout = (
+    savedSnapshot?: Parameters<typeof createWalkabout>[2]
+  ): void => {
+    const restored = createWalkabout(bundle, settings, savedSnapshot);
+    session = restored.session;
+    world = restored.world;
+    names = objectNamesOf(world.objects);
+    snapshot = session.snapshot;
+  };
+
   const persistence = createSavePersistence({
     capture: () => ({
       location: session.location,
@@ -209,12 +315,13 @@ try {
     }),
     environment,
     release,
-    restore: savedSnapshot => {
-      const restored = createWalkabout(bundle, settings, savedSnapshot);
-      session = restored.session;
-      world = restored.world;
-      names = objectNamesOf(world.objects);
-      snapshot = session.snapshot;
+    restore: (savedSnapshot, slot) => {
+      replaceWalkabout(savedSnapshot);
+      shellConsole.write(BensonMessageTranscript.loaded(slot));
+      if (ownership.mayPersist()) {
+        resumePersistence.dirty();
+        resumePersistence.checkpoint(true);
+      }
       // A restored Save is a new moment to play, so the menu steps out of the way.
       menu.show('none');
     },
@@ -241,12 +348,146 @@ try {
     },
     release
   );
+  recordBensonMessage = () => {
+    shellConsole.write(
+      bensonTranscript.observe(session.scripts?.completedMessage)
+    );
+  };
   installSettingsView({
     page: chromePages.settings,
     preferences,
     root: document.documentElement,
     storage
   });
+
+  type OwnershipMessage =
+    | { readonly kind: 'takeover-ready'; readonly request: string }
+    | { readonly kind: 'takeover-request'; readonly request: string };
+  const ownershipChannel =
+    typeof BroadcastChannel === 'undefined'
+      ? undefined
+      : new BroadcastChannel(
+          'mercenary.browser-shell.session-resume.ownership.v1'
+        );
+  ownershipChannel?.addEventListener('message', event => {
+    const value = event.data as Partial<OwnershipMessage> | undefined;
+    if (
+      value?.kind !== 'takeover-request' ||
+      typeof value.request !== 'string' ||
+      !ownership.mayPersist()
+    ) {
+      return;
+    }
+    flushResume();
+    ownership.release();
+    handleOwnershipLost();
+    ownershipChannel.postMessage({
+      kind: 'takeover-ready',
+      request: value.request
+    } satisfies OwnershipMessage);
+  });
+
+  const requestCooperativeTakeover = async (): Promise<boolean> => {
+    if (ownershipChannel === undefined) {
+      return false;
+    }
+    const request = crypto.randomUUID();
+    return await new Promise<boolean>(resolve => {
+      let settled = false;
+      const finish = (ready: boolean): void => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        clearTimeout(timeout);
+        ownershipChannel.removeEventListener('message', receive);
+        resolve(ready);
+      };
+      const receive = (event: MessageEvent): void => {
+        const value = event.data as Partial<OwnershipMessage> | undefined;
+        if (value?.kind === 'takeover-ready' && value.request === request) {
+          finish(true);
+        }
+      };
+      const timeout = setTimeout(() => finish(false), 250);
+      ownershipChannel.addEventListener('message', receive);
+      ownershipChannel.postMessage({
+        kind: 'takeover-request',
+        request
+      } satisfies OwnershipMessage);
+    });
+  };
+
+  const newGameButton = document.getElementById(
+    'new-game'
+  ) as HTMLButtonElement;
+  const newGame = createNewGameAction(() => {
+    release();
+    replaceWalkabout();
+    shellConsole.write(BensonMessageTranscript.newGame());
+    if (ownership.mayPersist()) {
+      resumePersistence.dirty();
+      resumePersistence.checkpoint(true);
+    }
+    menu.show('none');
+  });
+  const refreshNewGame = (): void => {
+    newGameButton.textContent = newGame.armed()
+      ? 'CONFIRM NEW GAME'
+      : 'NEW GAME';
+    newGameButton.classList.toggle('armed', newGame.armed());
+  };
+  newGameButton.addEventListener('click', () => {
+    newGame.press();
+    refreshNewGame();
+  });
+  newGameButton.addEventListener('blur', () => {
+    newGame.disarm();
+    refreshNewGame();
+  });
+
+  const takeOverButton = document.getElementById(
+    'take-over'
+  ) as HTMLButtonElement;
+  takeOverButton.addEventListener('click', async () => {
+    takeOverButton.disabled = true;
+    const yielded = await requestCooperativeTakeover();
+    let outcome = yielded
+      ? await ownership.claim()
+      : await ownership.takeOver();
+    if (outcome.kind === 'blocked') {
+      outcome = await ownership.takeOver();
+    }
+    if (outcome.kind === 'owned') {
+      resumePersistence = makeResumePersistence();
+      const recovered = readSessionResume(storage, environment);
+      notices.dismiss();
+      if (recovered.kind === 'restored') {
+        replaceWalkabout(recovered.snapshot);
+        notices.resumed();
+      } else {
+        replaceWalkabout();
+        if (recovered.kind === 'invalid') {
+          notices.couldNotResume(recovered.reason);
+        } else if (recovered.kind === 'unavailable') {
+          notices.failed(recovered.reason);
+        }
+      }
+      chromePages.ownership.querySelector<HTMLElement>(
+        '.chrome-title'
+      )!.textContent = 'SESSION ACTIVE IN ANOTHER TAB';
+      menu.show('none');
+    }
+    takeOverButton.disabled = false;
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      flushResume();
+    }
+  });
+  window.addEventListener('pagehide', flushResume);
+  window.addEventListener('pagehide', () => ownershipChannel?.close());
 
   window.addEventListener('keydown', event => {
     switch (routeKey(routerState(), event)) {
@@ -299,7 +540,6 @@ try {
     // Object names are fixed content, so they are gathered once per world rather than per frame.
     objectNames: names
   });
-
   const publish = (): void => {
     const drawn = renderer.draw(
       world,
@@ -313,7 +553,12 @@ try {
     const player = snapshot.player;
     panel.draw(panelViewModel(snapshot, panelContext()));
 
-    const publishedMessage = persistence.message(snapshot.message);
+    recordBensonMessage();
+    const saveMessage = persistence.message(snapshot.message);
+    const publishedMessage =
+      saveMessage.source === 'shell'
+        ? saveMessage
+        : notices.message(snapshot.message, session.scripts?.messageOccurrence);
     updateText(message, publishedMessage.text);
     message.dataset['source'] = publishedMessage.source;
     updateText(credits, `${snapshot.credits} CREDITS`);
@@ -332,10 +577,17 @@ try {
   const frame = (timestamp: number): void => {
     // The System Menu pauses the session rather than hiding it: the frame keeps being drawn, so
     // the player can see what they are about to return to, but no time passes.
-    if (menu.layer() === 'none') {
+    if (menu.layer() === 'none' && ownership.mayAdvance()) {
       clock.frame(timestamp, seconds => {
+        const endingBefore = session.scripts?.host.endingPhase ?? 0;
         session.intent = controls.intent;
         snapshot = session.advance(seconds).snapshot;
+        if (ownership.mayPersist()) {
+          resumePersistence.dirty();
+          resumePersistence.checkpoint(
+            endingBefore === 0 && (session.scripts?.host.endingPhase ?? 0) !== 0
+          );
+        }
       });
     } else {
       clock.reset();

@@ -17,11 +17,11 @@ describe('browser canonical cutover', () => {
     expect(ignoreRules).not.toContain('/app/');
   });
 
-  test('identifies the Save Snapshot milestone as 0.8.0', async () => {
+  test('identifies the Session Resume milestone as 0.9.0', async () => {
     const packageDocument = await Bun.file(
       join(repositoryRoot, 'web', 'package.json')
     ).json();
 
-    expect(packageDocument.version).toBe('0.8.0');
+    expect(packageDocument.version).toBe('0.9.0');
   });
 });

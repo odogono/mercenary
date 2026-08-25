@@ -90,7 +90,7 @@ export interface SavePersistenceOptions {
   readonly environment: SaveEnvironment;
   readonly now?: () => Date;
   readonly release: () => void;
-  readonly restore: (snapshot: SaveSnapshot) => void;
+  readonly restore: (snapshot: SaveSnapshot, slot: SaveSlot) => void;
   readonly storage: SlotStorage | undefined;
   readonly time?: () => number;
 }
@@ -242,7 +242,7 @@ export const createSavePersistence = (
           throw new Error(`slot ${target} is empty`);
         }
         const saved = decodeSave(encoded, options.environment);
-        options.restore(saved.snapshot);
+        options.restore(saved.snapshot, target);
         options.release();
         return done(`LOADED SLOT ${target}`);
       } catch (error) {

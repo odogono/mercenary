@@ -24,6 +24,12 @@ export const DEFAULT_SESSION_SEED = 0x2c_69_2e_d8_1b_7f_0a_31n;
 const sortedSet = (values: ReadonlySet<number>): number[] =>
   [...values].sort((a, b) => a - b);
 
+export interface CompletedBensonMessage {
+  /// The identity of this occurrence, distinct even when another message has equal text.
+  readonly occurrence: object;
+  readonly text: string;
+}
+
 /// One running Benson Script, its host state, and the message line it drives.
 export class BensonSession {
   readonly program: BensonProgram;
@@ -85,6 +91,20 @@ export class BensonSession {
 
   get messageText(): string {
     return this.ticker?.visibleText ?? '';
+  }
+
+  /// Opaque identity for presentation that needs to recognise a new occurrence.
+  get messageOccurrence(): object | undefined {
+    return this.ticker;
+  }
+
+  /// The complete occurrence only after its reveal has finished (normally or by skipping).
+  /// Presentation can retain the opaque ticker identity without seeing unrevealed text early.
+  get completedMessage(): CompletedBensonMessage | undefined {
+    if (this.ticker === undefined || !this.ticker.isRevealed) {
+      return undefined;
+    }
+    return { occurrence: this.ticker, text: this.ticker.text };
   }
 
   get isMessageComplete(): boolean {

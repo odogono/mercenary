@@ -53,6 +53,7 @@ export interface ShellConsole {
   readonly close: () => void;
   readonly isOpen: () => boolean;
   readonly toggle: () => void;
+  readonly write: (lines: readonly string[]) => void;
 }
 
 const BANNER = [
@@ -146,6 +147,7 @@ export const installConsole = (
     isOpen: () => open,
     toggle: () => {
       show(!open);
-    }
+    },
+    write: print
   };
 };

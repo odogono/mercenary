@@ -448,7 +448,7 @@ test('the live opening loop renders, walks and releases held input', async ({
   expect(errors).toEqual([]);
 });
 
-test('a Save restores the same playable moment after a full reload', async ({
+test('Session Resume survives reload and New Game preserves Saves', async ({
   page
 }) => {
   await useComposition(page, 'strip');
@@ -481,7 +481,7 @@ test('a Save restores the same playable moment after a full reload', async ({
     'data-state',
     'ready'
   );
-  expect(await position()).toEqual(opening);
+  expect(await position()).toEqual(saved);
 
   await openPage(page, 'saves');
   await expect(slotDetail(page, 1)).toContainText('SURFACE');
@@ -492,6 +492,17 @@ test('a Save restores the same playable moment after a full reload', async ({
     'none'
   );
   expect(await position()).toEqual(saved);
+
+  await page.keyboard.press('Escape');
+  const newGame = page.locator('#new-game');
+  await newGame.click();
+  await expect(newGame).toHaveText('CONFIRM NEW GAME');
+  await newGame.click();
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-layer',
+    'none'
+  );
+  expect(await position()).toEqual(opening);
 
   // Overwriting and clearing each cost two presses.
   await openPage(page, 'saves');
@@ -507,6 +518,99 @@ test('a Save restores the same playable moment after a full reload', async ({
   // Nothing to load or clear from an empty slot.
   await expect(slotButton(page, 1, 'load')).toBeDisabled();
   await expect(slotButton(page, 1, 'delete')).toBeDisabled();
+});
+
+test('one page owns the Session Resume and a second page can take over', async ({
+  context,
+  page
+}) => {
+  await useComposition(page, 'strip');
+  await page.goto('/');
+  const firstSurface = page.locator('#game-surface');
+  const firstCanvas = page.locator('#frame');
+  await expect(firstSurface).toHaveAttribute('data-state', 'ready');
+
+  const openingZ = await firstCanvas.getAttribute('data-z');
+  await page.keyboard.down('ArrowUp');
+  await expect
+    .poll(async () => firstCanvas.getAttribute('data-z'))
+    .not.toBe(openingZ);
+  await page.keyboard.up('ArrowUp');
+  const latest = {
+    x: await firstCanvas.getAttribute('data-x'),
+    z: await firstCanvas.getAttribute('data-z')
+  };
+
+  const second = await context.newPage();
+  await second.goto('/');
+  const secondSurface = second.locator('#game-surface');
+  await expect(secondSurface).toHaveAttribute('data-state', 'ready');
+  await expect(secondSurface).toHaveAttribute('data-layer', 'ownership');
+  await expect(second.locator('#page-ownership .chrome-title')).toHaveText(
+    'SESSION ACTIVE IN ANOTHER TAB'
+  );
+
+  await second.locator('#take-over').click();
+  await expect(secondSurface).toHaveAttribute('data-layer', 'none');
+  await expect(firstSurface).toHaveAttribute('data-layer', 'ownership');
+  await expect(page.locator('#page-ownership .chrome-title')).toHaveText(
+    'SESSION OPENED ELSEWHERE'
+  );
+  expect({
+    x: await second.locator('#frame').getAttribute('data-x'),
+    z: await second.locator('#frame').getAttribute('data-z')
+  }).toEqual(latest);
+
+  const displaced = await firstCanvas.getAttribute('data-z');
+  await page.waitForTimeout(150);
+  expect(await firstCanvas.getAttribute('data-z')).toBe(displaced);
+});
+
+test('invalid Session Resume starts fresh and repeats its refusal in the menu', async ({
+  page
+}) => {
+  await useComposition(page, 'strip');
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      'mercenary.browser-shell.session-resume.v1',
+      'not a Session Resume'
+    );
+  });
+  await page.goto('/');
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-state',
+    'ready'
+  );
+  await expect(page.locator('#frame')).toHaveAttribute('data-x', '559104');
+  const replacement = await page.evaluate(() =>
+    window.localStorage.getItem('mercenary.browser-shell.session-resume.v1')
+  );
+  expect(replacement).not.toBe('not a Session Resume');
+  expect(() => JSON.parse(replacement!)).not.toThrow();
+
+  // A Benson Message may preempt the initial warning; opening the menu repeats the standing
+  // refusal without mistaking that same message occurrence for a new one.
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#message')).toContainText('COULD NOT RESUME');
+});
+
+test('completed Benson Messages enter the in-memory console transcript', async ({
+  page
+}) => {
+  await useComposition(page, 'strip');
+  await page.goto('/');
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-state',
+    'ready'
+  );
+  await expect(page.locator('#message')).not.toHaveText('—');
+
+  await page.keyboard.press('Space');
+  await page.keyboard.press('Backquote');
+  await expect(page.locator('#console-log')).toContainText('BENSON · ');
+  await expect(page.locator('#console-log')).not.toContainText(
+    'SESSION RESUMED'
+  );
 });
 
 test('the Shell Console runs commands over a running world', async ({

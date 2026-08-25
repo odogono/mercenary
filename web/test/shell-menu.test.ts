@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 
-import { escapeFrom } from '../src/shell/menu.ts';
+import { createNewGameAction, escapeFrom } from '../src/shell/menu.ts';
 
-const layerAfter = (layer: 'none' | 'menu' | 'settings' | 'saves') => {
+const layerAfter = (
+  layer: 'none' | 'menu' | 'ownership' | 'settings' | 'saves'
+) => {
   const outcome = escapeFrom(layer, 'closed');
   return outcome.kind === 'layer' ? outcome.layer : undefined;
 };
@@ -19,6 +21,10 @@ describe('what Escape does', () => {
     expect(layerAfter('saves')).toBe('menu');
   });
 
+  test('cannot dismiss a page that does not own the Gameplay Session', () => {
+    expect(layerAfter('ownership')).toBe('ownership');
+  });
+
   test('always reaches play in at most two presses', () => {
     for (const layer of ['none', 'menu', 'settings', 'saves'] as const) {
       const once = layerAfter(layer);
@@ -28,8 +34,33 @@ describe('what Escape does', () => {
 
   test('closes the Shell Console before anything else', () => {
     // The console sits over whatever else is open, so it is what Escape reaches first.
-    for (const layer of ['none', 'menu', 'settings', 'saves'] as const) {
+    for (const layer of [
+      'none',
+      'menu',
+      'ownership',
+      'settings',
+      'saves'
+    ] as const) {
       expect(escapeFrom(layer, 'open')).toEqual({ kind: 'closeConsole' });
     }
+  });
+});
+
+describe('the New Game confirmation', () => {
+  test('costs two presses and disarms when focus leaves', () => {
+    let starts = 0;
+    const action = createNewGameAction(() => {
+      starts += 1;
+    });
+
+    expect(action.press()).toEqual({ kind: 'armed' });
+    expect(action.armed()).toBeTrue();
+    expect(starts).toBe(0);
+
+    action.disarm();
+    expect(action.press()).toEqual({ kind: 'armed' });
+    expect(action.press()).toEqual({ kind: 'started' });
+    expect(action.armed()).toBeFalse();
+    expect(starts).toBe(1);
   });
 });
