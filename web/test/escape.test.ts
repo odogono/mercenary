@@ -621,14 +621,22 @@ describe('after the dispatch', () => {
     expect(launch(route)).toBeTrue();
     route.advance(3);
 
-    const left = restored(route);
-    const right = restored(route);
-    left.advance(1);
-    right.advance(1);
-    expect(right.snapshot.escapePresentation).toEqual(
-      left.snapshot.escapePresentation
+    // Restored where it was, not begun again: the field the Save carried is
+    // mid-sequence, and it has to pick up from there.
+    const revived = restored(route);
+    expect(revived.snapshot.escapePresentation).toEqual(
+      route.session.snapshot.escapePresentation
     );
-    expect(right.snapshot.ending).toEqual(left.snapshot.ending);
+
+    // And it continues the same way the original does, loop for loop.
+    for (let quarter = 0; quarter < 20; quarter++) {
+      route.advance(0.25);
+      revived.advance(0.25);
+      expect(revived.snapshot.escapePresentation).toEqual(
+        route.session.snapshot.escapePresentation
+      );
+      expect(revived.snapshot.ending).toEqual(route.session.snapshot.ending);
+    }
   }, 240_000);
 });
 

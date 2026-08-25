@@ -10,8 +10,9 @@ import type {
   ScriptSettings
 } from '../settings/index.ts';
 import type { Location, Residence } from '../world/index.ts';
+import type { ShipFieldPoint, ShipFieldSaveSnapshot } from './shipField.ts';
 
-export const SAVE_SCHEMA_VERSION = 7 as const;
+export const SAVE_SCHEMA_VERSION = 8 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -120,6 +121,18 @@ export interface SaveSnapshot {
   readonly combat: CombatSaveSnapshot | null;
   /// The part of a ship-delivery frame that had not elapsed yet.
   readonly deliveryFrames: number;
+  /// The Escape's terminal presentation, if one is running.
+  ///
+  /// `field` is the continuation boundary the decode names, without which a
+  /// restored Ending would begin its field again instead of carrying on.
+  /// `loops` is not the decode's: the native loop is raster-locked and has no
+  /// remainder, and this is what is left of one when a fifty-a-second loop is
+  /// run on the browser's own step — carried for the same reason
+  /// `deliveryFrames` is.
+  readonly ending: {
+    readonly field: ShipFieldSaveSnapshot;
+    readonly loops: number;
+  } | null;
   readonly game: GameSaveSnapshot;
   readonly objectFlags: readonly (readonly [number, number])[];
   readonly randomState: string;
@@ -713,12 +726,81 @@ const combat = (value: unknown, at: string): CombatSaveSnapshot => {
   };
 };
 
+/// The Interstellar Ship Field's continuation boundary, exactly as the decode
+/// names it: the phase's own state lives on the Host Callout, and everything
+/// else the terminal loop would need to carry on is here.
+const endingPresentation = (
+  value: unknown,
+  at: string
+): NonNullable<SaveSnapshot['ending']> => {
+  const wrapper = exact(value, at, ['field', 'loops']);
+  const loops = finite(wrapper['loops'], `${at}.loops`);
+  if (!(loops >= 0) || loops >= 1) {
+    fail(`${at}.loops must be at least 0 and less than 1`);
+  }
+  const out = exact(wrapper['field'], `${at}.field`, [
+    'colourDelay',
+    'colourIndex',
+    'components',
+    'current',
+    'depthDelta',
+    'loop',
+    'matured',
+    'prior',
+    'random'
+  ]);
+  const points = (from: unknown, path: string): ShipFieldPoint[] =>
+    array(from, path, (point, each) => {
+      const fields = exact(point, each, ['x', 'y']);
+      return {
+        x: integer(fields['x'], `${each}.x`),
+        y: integer(fields['y'], `${each}.y`)
+      };
+    });
+  const seed = exact(out['random'], `${at}.field.random`, ['state', 'value']);
+  return {
+    field: {
+      colourDelay: nonNegativeInteger(
+        out['colourDelay'],
+        `${at}.field.colourDelay`
+      ),
+      colourIndex: nonNegativeInteger(
+        out['colourIndex'],
+        `${at}.field.colourIndex`
+      ),
+      components: array(
+        out['components'],
+        `${at}.field.components`,
+        (component, each) => {
+          const fields = exact(component, each, ['x', 'y', 'z']);
+          return {
+            x: finite(fields['x'], `${each}.x`),
+            y: finite(fields['y'], `${each}.y`),
+            z: finite(fields['z'], `${each}.z`)
+          };
+        }
+      ),
+      current: points(out['current'], `${at}.field.current`),
+      depthDelta: finite(out['depthDelta'], `${at}.field.depthDelta`),
+      loop: nonNegativeInteger(out['loop'], `${at}.field.loop`),
+      matured: bool(out['matured'], `${at}.field.matured`),
+      prior: points(out['prior'], `${at}.field.prior`),
+      random: {
+        state: byte(seed['state'], `${at}.field.random.state`),
+        value: byte(seed['value'], `${at}.field.random.value`)
+      }
+    },
+    loops
+  };
+};
+
 const snapshot = (value: unknown, at: string): SaveSnapshot => {
   const out = exact(value, at, [
     'benson',
     'carriedStack',
     'combat',
     'deliveryFrames',
+    'ending',
     'game',
     'objectFlags',
     'randomState',
@@ -740,6 +822,10 @@ const snapshot = (value: unknown, at: string): SaveSnapshot => {
     combat:
       out['combat'] === null ? null : combat(out['combat'], `${at}.combat`),
     deliveryFrames,
+    ending:
+      out['ending'] === null
+        ? null
+        : endingPresentation(out['ending'], `${at}.ending`),
     game: game(out['game'], `${at}.game`),
     objectFlags: mapEntries(out['objectFlags'], `${at}.objectFlags`),
     randomState: randomState(out['randomState'], `${at}.randomState`),

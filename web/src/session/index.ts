@@ -668,6 +668,13 @@ export class GameplaySession {
               siteTable: [...this.sites.bytes]
             },
       deliveryFrames: this.deliveryFrames,
+      ending:
+        this.endingField === undefined
+          ? null
+          : {
+              field: this.endingField.captureSaveSnapshot(),
+              loops: this.endingLoops
+            },
       game: {
         ...this.game,
         craft: this.game.craft ?? null,
@@ -717,6 +724,15 @@ export class GameplaySession {
     };
     session.carriedStack = [...snapshot.carriedStack];
     session.deliveryFrames = snapshot.deliveryFrames;
+    // A terminal presentation is restored where it was rather than begun again:
+    // the field's own generator state is what makes the continuation exact.
+    if (snapshot.ending !== null && content.endingField !== undefined) {
+      session.endingField = InterstellarShipField.restore(
+        content.endingField,
+        snapshot.ending.field
+      );
+      session.endingLoops = snapshot.ending.loops;
+    }
     session.objectFlags = new Map(snapshot.objectFlags);
     session.residence = new Map(snapshot.residence);
     session.rewired = new Map(snapshot.rewired);

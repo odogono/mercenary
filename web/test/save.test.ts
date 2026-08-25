@@ -108,7 +108,7 @@ describe('a Save Snapshot', () => {
     );
     const snapshot = gameplay.captureSaveSnapshot();
 
-    expect(SAVE_SCHEMA_VERSION).toBe(7);
+    expect(SAVE_SCHEMA_VERSION).toBe(8);
     expect(snapshot).toHaveProperty('carriedStack');
     expect(snapshot).toHaveProperty('deliveryFrames');
     expect(snapshot).toHaveProperty('objectFlags');
@@ -139,6 +139,50 @@ describe('a Save Snapshot', () => {
       const decoded = decodeSave(encodeSave(envelope(gameplay)), environment);
       expect(decoded.snapshot.benson!.host.endingPhase).toBe(phase);
     }
+  });
+
+  test('carries no terminal presentation while play continues', () => {
+    const gameplay = new GameplaySession(
+      content,
+      playerState({ position: { x: 0, y: 0, z: 0 } }),
+      scripts()
+    );
+    const decoded = decodeSave(encodeSave(envelope(gameplay)), environment);
+    expect(decoded.snapshot.ending).toBeNull();
+  });
+
+  test('refuses a Save written to the previous schema', () => {
+    const gameplay = new GameplaySession(
+      content,
+      playerState({ position: { x: 0, y: 0, z: 0 } }),
+      scripts()
+    );
+    const stale = JSON.parse(encodeSave(envelope(gameplay))) as {
+      schemaVersion: number;
+    };
+    stale.schemaVersion = 7;
+
+    // No migration: a v7 Save has no continuation boundary for a terminal
+    // presentation, and inventing one would restore a different field.
+    expect(() => decodeSave(JSON.stringify(stale), environment)).toThrow(
+      'unsupported Save schemaVersion 7'
+    );
+  });
+
+  test('names a malformed terminal presentation at its own field', () => {
+    const gameplay = new GameplaySession(
+      content,
+      playerState({ position: { x: 0, y: 0, z: 0 } }),
+      scripts()
+    );
+    const written = JSON.parse(encodeSave(envelope(gameplay))) as {
+      snapshot: { ending: unknown };
+    };
+    written.snapshot.ending = { colourDelay: 3 };
+
+    expect(() => decodeSave(JSON.stringify(written), environment)).toThrow(
+      'snapshot.ending'
+    );
   });
 
   test('round-trips the special transition flag as the byte it is', () => {
