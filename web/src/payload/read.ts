@@ -11,6 +11,7 @@ import {
   intArrayArray,
   intArrayOfLength,
   intMap,
+  intPair,
   numberArray,
   optional,
   stringArray,
@@ -1359,7 +1360,7 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
       )
     },
     orbitalTransition: {
-      axisMiddleByteWindow: intArray(
+      axisMiddleByteWindow: intPair(
         r,
         orbital['axisMiddleByteWindow'],
         'orbitalTransition.axisMiddleByteWindow'
@@ -1369,7 +1370,7 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
         orbital['callSites'],
         'orbitalTransition.callSites'
       ),
-      cell: intArray(r, orbital['cell'], 'orbitalTransition.cell'),
+      cell: intPair(r, orbital['cell'], 'orbitalTransition.cell'),
       entry: {
         altitudeHighByte: asInt(
           r,

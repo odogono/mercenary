@@ -213,9 +213,9 @@ const document = {
     slot7PitchHighByte: 1
   },
   orbitalTransition: {
-    axisMiddleByteWindow: [104, 120],
+    axisMiddleByteWindow: [104, 120] as [number, number],
     callSites: [40_991, 41_190, 41_434],
-    cell: [8, 8],
+    cell: [8, 8] as [number, number],
     entry: {
       altitudeHighByte: 64,
       flagValue: 255,

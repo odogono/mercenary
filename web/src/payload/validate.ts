@@ -134,6 +134,22 @@ export const intArrayOfLength = (
   return items;
 };
 
+/// A two-entry table — a cell, a window — read as a pair so the callers that
+/// only ever want both entries index it without a fallback standing in for a
+/// malformed payload.
+export const intPair = (
+  reader: Reader,
+  value: unknown,
+  path: string
+): [number, number] => {
+  const items = intArrayOfLength(reader, value, path, 2);
+  const [first, second] = items;
+  if (first === undefined || second === undefined) {
+    return bad(reader, path, '2 entries', items.length);
+  }
+  return [first, second];
+};
+
 export const numberArray = (
   reader: Reader,
   value: unknown,
