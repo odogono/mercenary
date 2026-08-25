@@ -163,9 +163,9 @@ const document = {
       },
       pointSlots: { count: 21, first: 0, identity: 'stable-index', last: 20 },
       projection: {
-        horizontal: { centre: 80, range: [0, 160] },
+        horizontal: { centre: 80, range: [0, 160] as [number, number] },
         invalidity: ['negative-depth'],
-        vertical: { centre: 68, range: [0, 136] }
+        vertical: { centre: 68, range: [0, 136] as [number, number] }
       },
       respawn: {
         carryIn: 'set-by-invalidity-branch',
@@ -184,7 +184,7 @@ const document = {
           draws: [1, 2, 3],
           highMask: 63,
           highOffset: -32,
-          range: [-2_097_152, 2_097_151]
+          range: [-2_097_152, 2_097_151] as [number, number]
         },
         y: {
           conversionLowSource: 'x-draw-1-residue',
@@ -192,9 +192,14 @@ const document = {
           draws: [4, 5, 6],
           highMask: 63,
           highOffset: -32,
-          range: [-2_097_152, 2_097_151]
+          range: [-2_097_152, 2_097_151] as [number, number]
         },
-        z: { draw: 7, exponent: 56, range: [16_384, 32_704], step: 64 }
+        z: {
+          draw: 7,
+          exponent: 56,
+          range: [16_384, 32_704] as [number, number],
+          step: 64
+        }
       },
       storage: {
         components: {
@@ -335,6 +340,73 @@ describe('the endgame Data Payload document', () => {
 
     expect(() => readers.endgame({ name: 'endgame.json' }, malformed)).toThrow(
       'endingPresentation.interstellarShipField.respawn.generator.state.bytes'
+    );
+  });
+
+  // The Interstellar Ship Field's decode is what the terminal presentation
+  // steps from, so the reader owes it a shape the simulation can read directly
+  // rather than a bag of unknowns each caller re-inspects.
+  test('hands the Interstellar Ship Field over as a read shape', () => {
+    const field = readers.endgame({ name: 'endgame.json' }, document)
+      .endingPresentation.interstellarShipField;
+
+    // The phase write lives in the colour sequence, on its last event.
+    const last = field.colours.events.at(-1);
+    expect(last?.phaseWrite).toBe(255);
+    expect(last?.loop).toBe(field.colours.completedPhaseLoop);
+    expect(field.colours.events[0]?.phaseWrite).toBeNull();
+
+    // Motion: the scripted delta, and the two mature multipliers with the
+    // exponent they stop climbing at.
+    expect(field.motion.scriptedPhaseDepthDelta).toBe(-32);
+    expect(field.motion.maturePhaseFirstMultiplier).toBe(4.046_875);
+    expect(field.motion.maturePhaseLaterMultiplier).toBe(1.011_718_75);
+    expect(field.motion.maturePhaseStopsAtExponent).toBe(37);
+    expect(field.motion.provenPhaseValues).toEqual([0, 1, 255]);
+
+    // Projection centres and the bounds a point respawns for failing.
+    expect(field.projection.horizontal.centre).toBe(80);
+    expect(field.projection.horizontal.range).toEqual([0, 160]);
+    expect(field.projection.vertical.centre).toBe(68);
+    expect(field.projection.vertical.range).toEqual([0, 136]);
+
+    // Respawn: seven draws, and the quirk that couples Y to X's first draw.
+    expect(field.respawn.randomDraws).toBe(7);
+    expect(field.respawn.x.draws).toEqual([1, 2, 3]);
+    expect(field.respawn.y.draws).toEqual([4, 5, 6]);
+    expect(field.respawn.y.discardedLowDraw).toBe(4);
+    expect(field.respawn.y.conversionLowSource).toBe('x-draw-1-residue');
+    expect(field.respawn.z.draw).toBe(7);
+    expect(field.respawn.z.exponent).toBe(56);
+    expect(field.respawn.z.step).toBe(64);
+    expect(field.respawn.generator.state.bytes).toBe(2);
+
+    // The slots are stable, and every array is one per slot.
+    expect(field.pointSlots.count).toBe(21);
+    expect(field.storage.slotsPerArray).toBe(field.pointSlots.count);
+    expect(field.storage.components.z.exponentBase).toBeGreaterThan(0);
+    expect(field.initialization.stages[0]?.writes).toContain('z-exponent=1');
+  });
+
+  test('names a malformed colour event at its own path', () => {
+    const malformed = structuredClone(document);
+    const colours = malformed.endingPresentation.interstellarShipField.colours;
+    colours.events = colours.events.map((event, index) =>
+      index === 1 ? { ...event, loop: 'later' as never } : event
+    );
+
+    expect(() => readers.endgame({ name: 'endgame.json' }, malformed)).toThrow(
+      'endingPresentation.interstellarShipField.colours.events[1].loop'
+    );
+  });
+
+  test('names a malformed projection bound at its own path', () => {
+    const malformed = structuredClone(document);
+    malformed.endingPresentation.interstellarShipField.projection.vertical.centre =
+      '68' as never;
+
+    expect(() => readers.endgame({ name: 'endgame.json' }, malformed)).toThrow(
+      'endingPresentation.interstellarShipField.projection.vertical.centre'
     );
   });
 

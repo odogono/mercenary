@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -72,6 +73,53 @@ class StepTests(unittest.TestCase):
             with self.subTest(arguments=arguments):
                 with self.assertRaises(LabError):
                     step_reference_prng(**arguments)
+
+
+class BrowserFixtureTests(unittest.TestCase):
+    """Keep the browser's port and this implementation on the same recurrence.
+
+    The browser cannot import this module, so the two agree through a tracked
+    fixture instead: the port replays it in `web/test/reference-prng.test.ts`,
+    and this re-derives every row. Either side drifting fails its own suite
+    rather than surfacing as an unexplained difference in a terminal
+    presentation months later.
+    """
+
+    def setUp(self) -> None:
+        fixture = LAB_ROOT.parents[1] / "web/test/fixtures/referencePrng.json"
+        if not fixture.exists():
+            self.skipTest("browser PRNG fixture is not present in this checkout")
+        self.document = json.loads(fixture.read_text())
+
+    def test_re_derives_every_independent_probe(self) -> None:
+        probes = self.document["independent"]
+        self.assertGreater(len(probes), 0)
+        for probe in probes:
+            given = probe["given"]
+            with self.subTest(**given):
+                self.assertEqual(
+                    step_reference_prng(
+                        value=given["value"],
+                        state=given["state"],
+                        carry_in=given["carryIn"],
+                    ),
+                    probe["then"],
+                )
+
+    def test_re_derives_the_chain(self) -> None:
+        start = self.document["chain"]["from"]
+        value, state, carry = start["value"], start["state"], start["carryIn"]
+        for index, expected in enumerate(self.document["chain"]["steps"]):
+            with self.subTest(step=index):
+                stepped = step_reference_prng(
+                    value=value, state=state, carry_in=carry
+                )
+                self.assertEqual(stepped, expected)
+            value, state, carry = (
+                stepped["value"],
+                stepped["state"],
+                stepped["carry"],
+            )
 
 
 if __name__ == "__main__":
