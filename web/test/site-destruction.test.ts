@@ -258,7 +258,7 @@ describe('the Attack State a Faction Reaction sets', () => {
     expect(settled).toBeTrue();
     expect(after['messageText']).toContain('SHIP DESTROYED');
     // Which is a craft lost, and nothing more than that.
-    expect(after['gameComplete']).toBe(0);
+    expect(after['endingPhase']).toBe(0);
   });
 });
 
@@ -374,17 +374,17 @@ describe('a shot that reaches the object it can start a script on', () => {
 ///
 /// The Reference Build has a Defeat, and none of these reach it: a shot that
 /// finds nothing, a Site destroyed, a craft lost to a hostile, the player shot
-/// down on foot, and a craft flown into the ground. `gameComplete` is the latch
+/// down on foot, and a craft flown into the ground. the Ending phase is the latch
 /// an Ending sets, and every one of these leaves it alone.
 /// One way combat can go wrong, and the latch it must not set.
 const surviving = (name: string, play: (session: GameplaySession) => void) => {
   test(name, () => {
     const session = overCell(mechanoidCell);
-    expect(session.observations().observations['gameComplete']).toBe(0);
+    expect(session.observations().observations['endingPhase']).toBe(0);
 
     play(session);
 
-    expect(session.observations().observations['gameComplete']).toBe(0);
+    expect(session.observations().observations['endingPhase']).toBe(0);
   });
 };
 

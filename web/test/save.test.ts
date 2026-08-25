@@ -130,12 +130,14 @@ describe('a Save Snapshot', () => {
         playerState({ position: { x: 0, y: 0, z: 0 } }),
         scripts()
       );
+      // Written through the Host Callout symbol, which the Data Payload
+      // still spells `gameComplete`.
       gameplay.scripts!.host = gameplay.scripts!.host.write(
         'gameComplete',
         phase
       );
       const decoded = decodeSave(encodeSave(envelope(gameplay)), environment);
-      expect(decoded.snapshot.benson!.host.gameComplete).toBe(phase);
+      expect(decoded.snapshot.benson!.host.endingPhase).toBe(phase);
     }
   });
 

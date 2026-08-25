@@ -1069,7 +1069,7 @@ export class GameplaySession {
       // The one Doorway out of the underground (`$90C0-$90EA`): the player is
       // put at the Colony Craft's hull — all three coordinates, four million
       // units up — with the crash-tumble mover installed over them, and falls
-      // back to Targ from there. It never writes gameComplete.
+      // back to Targ from there. It never writes the Ending phase.
       this.game = {
         ...this.game,
         mode: 'flying',
@@ -1401,7 +1401,7 @@ export class GameplaySession {
     // which steps Benson and samples input and runs nothing else: no Mover,
     // no Ship Delivery, no combat. The renderer that loop drives is M7.5's;
     // the freeze it implies is this ticket's.
-    const terminal = (this.scripts?.host.gameComplete ?? 0) !== 0;
+    const terminal = (this.scripts?.host.endingPhase ?? 0) !== 0;
     // The Reference Build reads the override's own carried flag every frame, at
     // the throttle and again at the ceiling, rather than remembering a decision
     // taken when it was picked up. So this is derived rather than set: putting

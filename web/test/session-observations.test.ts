@@ -156,7 +156,7 @@ describe('the semantic observations a Gameplay Session answers with', () => {
     expect(observations['engineFlags']).toBe(0);
     expect(observations['shipInbound']).toBe(0);
     expect(observations['attackingShip']).toBeFalse();
-    expect(observations['gameComplete']).toBe(0);
+    expect(observations['endingPhase']).toBe(0);
     expect(observations['colonyCraftFlag']).toBe(0);
     expect(observations['playerX']).toBe(0);
     expect(observations['playerY']).toBe(0);
@@ -231,7 +231,7 @@ describe('the semantic observations a Gameplay Session answers with', () => {
     for (const leaked of [
       'attackingShip',
       'engineFlags',
-      'gameComplete',
+      'endingPhase',
       'observations',
       'shipInbound'
     ]) {

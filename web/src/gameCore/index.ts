@@ -846,7 +846,7 @@ const integrate = (
   if (block.handler === 'slot7') {
     // The Interstellar Ship's handler pins pitch nose-up and returns
     // (`$AA6E-$AA72`): no yaw, throttle, translation or altitude step runs,
-    // so slot 7 cannot be flown. The handler's nonzero-gameComplete arm is
+    // so slot 7 cannot be flown. The handler's nonzero-phase arm is
     // the terminal renderer, which is presentation rather than a Mover.
     //
     // Without endgame content there is no decoded byte to write, and the

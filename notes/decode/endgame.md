@@ -292,7 +292,7 @@ observation map itself is untracked, so the tracked contract is this id list:
 | `engineFlags` | integer | the engine flag byte |
 | `shipInbound` | integer | the three-valued ship delivery byte |
 | `attackingShip` | boolean | hostile craft state |
-| `gameComplete` | integer | the Ending phase byte: 0 active, 1 Escape accepted, 255 mature terminal |
+| `endingPhase` | integer | the Ending phase byte: 0 active, 1 Escape accepted, 255 mature terminal |
 | `scriptPc` | integer | interpreter program counter, `-1` when no script runs |
 | `scriptStack` | string | call stack, outermost first, comma separated |
 | `messagePlaying` | boolean | whether the message line is busy |
@@ -939,10 +939,12 @@ recheck but before `$1123`, leaving craft 7 may allow the success script to run
 while delaying entry into the occupancy-dispatched `$AA62` renderer. It must be
 tested, not baked into the model from static conjecture.
 
-The current `BensonHostState.gameComplete` in `web/src/benson/host.ts` and its
-Save representation in `web/src/session/save.ts` collapse 1 and 255 to Boolean.
-M7 needs explicit active/Escape/Defeat Session State plus a separate terminal
-presentation phase where required; it must not invent a reachable Defeat producer.
+M7.4 widened this. `BensonHostState.endingPhase` in `web/src/benson/host.ts`
+and its Save representation in `web/src/session/save.ts` carry the byte, so 0,
+1 and 255 read apart; the Host Callout symbol a script writes it through is
+still the Data Payload's `gameComplete`, and re-spelling that name needs a
+Benson payload re-export. M7 still needs explicit active/Escape/Defeat Session
+State where required; it must not invent a reachable Defeat producer.
 
 ## Dependency graph
 
@@ -1060,6 +1062,16 @@ shape in the Reference Build and browser.
   because room 7's lift site surfaces off the grid and room 54 is above the
   arm's bound. Neither is a proof that no other mechanism exists, so both stay
   recorded rather than closed.
+- The Ending phase is named `endingPhase` in the engine, the Save and the
+  semantic observation contract, but the Host Callout symbol a Benson Script
+  writes it through is still the Data Payload's `gameComplete`. Re-spelling
+  that name means editing the label table in
+  `research/c64-reference-build/c64lab/benson.py`, re-exporting
+  `payload/benson.json` (the symbol appears twice: script 7's `stor` and the
+  `symbols.writes` list), rehashing `payload/manifest.json`, and bumping the
+  Benson payload schema, since a renamed symbol is a breaking vocabulary
+  change rather than added data. That needs the configured Reference Build
+  image, which is not in this repository, so it is recorded rather than done.
 - The terminal message scroll's exact visual granularity remains the open
   side-by-side question already recorded in `notes/decode/benson-scripts.md`.
 

@@ -30,11 +30,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Holding both authorization terms converges on the same write rather than a second Ending, and
   the six decoded refusals — underground, no authorization, wrong craft, no `Y`, leaving before
   the recheck, and a destroyed advert cell `$32` that the Anti Time Bomb can restore — all stay
-  playable and resume exactly. `gameComplete` is widened from a Boolean to the Ending phase byte
-  it always was (0 active, 1 Escape accepted, 255 mature terminal), which moves the Save schema to
-  v7; once it is nonzero the session freezes the way the Reference Build's terminal loop does,
-  while script 7's epilogue keeps ticking. Presentation of that phase, and the value 255, remain
-  M7.5's.
+  playable and resume exactly. The Escape latch is widened from a Boolean to the Ending phase byte
+  it always was (0 active, 1 Escape accepted, 255 mature terminal) and renamed `endingPhase`, which
+  moves the Save schema to v7 and re-spells the semantic observation id; the Host Callout symbol a
+  Benson Script writes it through stays the Data Payload's `gameComplete`, and the frozen Benson
+  Golden Traces keep the Trace Oracle's Boolean spelling of the same value. Once the phase is
+  nonzero the session freezes the way the Reference Build's terminal loop does, while script 7's
+  epilogue keeps ticking. Presentation of that phase, and the value 255, remain M7.5's.
 
   The `$A13D` box gained its first consumer. A craft that can hold the sixteen-middle-byte square
   while it climbs grounds on the Colony Craft deck at `$40FF3F` with the special transition flag
@@ -44,7 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   does, so room 8's ride onto the Colony Craft's own cell is modelled rather than assumed away. The
   one Doorway out of the underground now copies all three arrival coordinates rather than dropping
   the altitude, so it ejects the player at the hull as `$90C0` does. None of it writes
-  `gameComplete`: the Colony Craft is Targ play. Endgame payload schema 12 exports the decoded
+  the Ending phase: the Colony Craft is Targ play. Endgame payload schema 12 exports the decoded
   entry effects, the exit mover, and the slot-7 handler's one phase-0 write, each behind a new byte
   fingerprint, and the control loop reads that write from the document rather than duplicating the
   byte into TypeScript. The semantic observation vocabulary gains `colonyCraftFlag` and the full
