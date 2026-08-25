@@ -186,8 +186,9 @@ try {
   let frameCount = 0;
   let frameSeconds = 0;
   let lastFrame: number | undefined;
-  const bensonTranscript = new BensonMessageTranscript();
+  const bensonTranscript = new BensonMessageTranscript(snapshot.bensonMessage);
   let recordBensonMessage = (): void => {};
+  notices.synchronize(snapshot.bensonMessage);
 
   switch (ownershipOutcome.kind) {
     case 'blocked':
@@ -218,6 +219,13 @@ try {
       storage: ownership.mayPersist() ? storage : undefined
     });
   let resumePersistence = makeResumePersistence();
+  const checkpointChangedResume = (force = true): void => {
+    if (!ownership.mayPersist()) {
+      return;
+    }
+    resumePersistence.dirty();
+    resumePersistence.checkpoint(force);
+  };
   const flushResume = (): void => {
     if (ownership.mayPersist()) {
       resumePersistence.checkpoint(true);
@@ -231,10 +239,7 @@ try {
     action();
     snapshot = session.snapshot;
     recordBensonMessage();
-    if (ownership.mayPersist()) {
-      resumePersistence.dirty();
-      resumePersistence.checkpoint(true);
-    }
+    checkpointChangedResume();
   };
 
   const controls = new BrowserControlProfile({
@@ -317,11 +322,9 @@ try {
     release,
     restore: (savedSnapshot, slot) => {
       replaceWalkabout(savedSnapshot);
+      bensonTranscript.synchronize(snapshot.bensonMessage);
       shellConsole.write(BensonMessageTranscript.loaded(slot));
-      if (ownership.mayPersist()) {
-        resumePersistence.dirty();
-        resumePersistence.checkpoint(true);
-      }
+      checkpointChangedResume();
       // A restored Save is a new moment to play, so the menu steps out of the way.
       menu.show('none');
     },
@@ -349,9 +352,7 @@ try {
     release
   );
   recordBensonMessage = () => {
-    shellConsole.write(
-      bensonTranscript.observe(session.scripts?.completedMessage)
-    );
+    shellConsole.write(bensonTranscript.observe(snapshot.bensonMessage));
   };
   installSettingsView({
     page: chromePages.settings,
@@ -409,7 +410,7 @@ try {
           finish(true);
         }
       };
-      const timeout = setTimeout(() => finish(false), 250);
+      const timeout = setTimeout(() => finish(false), 1000);
       ownershipChannel.addEventListener('message', receive);
       ownershipChannel.postMessage({
         kind: 'takeover-request',
@@ -424,11 +425,9 @@ try {
   const newGame = createNewGameAction(() => {
     release();
     replaceWalkabout();
+    bensonTranscript.synchronize(snapshot.bensonMessage);
     shellConsole.write(BensonMessageTranscript.newGame());
-    if (ownership.mayPersist()) {
-      resumePersistence.dirty();
-      resumePersistence.checkpoint(true);
-    }
+    checkpointChangedResume();
     menu.show('none');
   });
   const refreshNewGame = (): void => {
@@ -464,9 +463,13 @@ try {
       notices.dismiss();
       if (recovered.kind === 'restored') {
         replaceWalkabout(recovered.snapshot);
+        bensonTranscript.synchronize(snapshot.bensonMessage);
+        notices.synchronize(snapshot.bensonMessage);
         notices.resumed();
       } else {
         replaceWalkabout();
+        bensonTranscript.synchronize(snapshot.bensonMessage);
+        notices.synchronize(snapshot.bensonMessage);
         if (recovered.kind === 'invalid') {
           notices.couldNotResume(recovered.reason);
         } else if (recovered.kind === 'unavailable') {
@@ -554,11 +557,13 @@ try {
     panel.draw(panelViewModel(snapshot, panelContext()));
 
     recordBensonMessage();
-    const saveMessage = persistence.message(snapshot.message);
+    const saveMessage = persistence.message(
+      snapshot.bensonMessage?.visibleText ?? ''
+    );
     const publishedMessage =
       saveMessage.source === 'shell'
         ? saveMessage
-        : notices.message(snapshot.message, session.scripts?.messageOccurrence);
+        : notices.message(snapshot.bensonMessage);
     updateText(message, publishedMessage.text);
     message.dataset['source'] = publishedMessage.source;
     updateText(credits, `${snapshot.credits} CREDITS`);
@@ -582,12 +587,9 @@ try {
         const endingBefore = session.scripts?.host.endingPhase ?? 0;
         session.intent = controls.intent;
         snapshot = session.advance(seconds).snapshot;
-        if (ownership.mayPersist()) {
-          resumePersistence.dirty();
-          resumePersistence.checkpoint(
-            endingBefore === 0 && (session.scripts?.host.endingPhase ?? 0) !== 0
-          );
-        }
+        checkpointChangedResume(
+          endingBefore === 0 && (session.scripts?.host.endingPhase ?? 0) !== 0
+        );
       });
     } else {
       clock.reset();

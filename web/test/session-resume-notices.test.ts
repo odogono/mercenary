@@ -1,6 +1,19 @@
 import { describe, expect, test } from 'bun:test';
 
+import type { BensonMessagePresentation } from '../src/benson/index.ts';
 import { createSessionResumeNotices } from '../src/shell/resumeNotices.ts';
+
+const message = (
+  visibleText: string,
+  occurrence: object = {},
+  complete = false,
+  progress = 1
+): BensonMessagePresentation => ({
+  ...(complete ? { completedText: visibleText } : {}),
+  occurrence,
+  reveal: { complete, progress },
+  visibleText
+});
 
 describe('Session Resume notices on the Benson message line', () => {
   test('shows a resumed notice for at most two seconds', () => {
@@ -8,33 +21,44 @@ describe('Session Resume notices on the Benson message line', () => {
     const notices = createSessionResumeNotices({ time: () => clock });
 
     notices.resumed();
-    expect(notices.message('')).toEqual({
+    expect(notices.message()).toEqual({
       source: 'shell',
       text: 'SESSION RESUMED'
     });
     clock = 2000;
-    expect(notices.message('')).toEqual({ source: 'game', text: '' });
+    expect(notices.message()).toEqual({ source: 'game', text: '' });
   });
 
   test('lets a Benson Message preempt a recovery notice immediately', () => {
     const notices = createSessionResumeNotices();
     notices.failed('quota full');
 
-    expect(notices.message('BENSON SPEAKS')).toEqual({
+    expect(notices.message(message('BENSON SPEAKS'))).toEqual({
       source: 'game',
       text: 'BENSON SPEAKS'
     });
-    expect(notices.message('')).toEqual({ source: 'game', text: '' });
+    expect(notices.message()).toEqual({ source: 'game', text: '' });
   });
 
   test('does not mistake the same Benson Message for a new occurrence', () => {
     const notices = createSessionResumeNotices();
     const current = {};
-    notices.message('CURRENT MESSAGE', current);
+    notices.message(message('CURRENT MESSAGE', current, false, 4));
     notices.failed('quota full');
 
-    expect(notices.message('CURRENT MESSAGE', current).source).toBe('shell');
-    expect(notices.message('NEXT MESSAGE', {}).source).toBe('game');
+    expect(
+      notices.message(message('CURRENT MESSAGE', current, false, 5)).source
+    ).toBe('shell');
+    expect(notices.message(message('NEXT MESSAGE')).source).toBe('game');
+  });
+
+  test('does not treat a completed restored occurrence as new', () => {
+    const notices = createSessionResumeNotices();
+    const restored = message('ALREADY SAID', {}, true, 12);
+    notices.synchronize(restored);
+    notices.resumed();
+
+    expect(notices.message(restored).source).toBe('shell');
   });
 
   test('repeats a failed condition when the System Menu opens', () => {
@@ -42,10 +66,10 @@ describe('Session Resume notices on the Benson message line', () => {
     const notices = createSessionResumeNotices({ time: () => clock });
     notices.failed('quota full');
     clock = 5000;
-    expect(notices.message('')).toEqual({ source: 'game', text: '' });
+    expect(notices.message()).toEqual({ source: 'game', text: '' });
 
     notices.menuOpened();
-    expect(notices.message('')).toEqual({
+    expect(notices.message()).toEqual({
       source: 'shell',
       text: 'SESSION RESUME UNAVAILABLE — QUOTA FULL'
     });
@@ -57,19 +81,20 @@ describe('Session Resume notices on the Benson message line', () => {
     notices.ownership('SESSION OPENED ELSEWHERE');
     clock = 60_000;
 
-    expect(notices.message('OLD BENSON TEXT')).toEqual({
+    const oldMessage = message('OLD BENSON TEXT');
+    expect(notices.message(oldMessage)).toEqual({
       source: 'shell',
       text: 'SESSION OPENED ELSEWHERE'
     });
     notices.dismiss();
-    expect(notices.message('OLD BENSON TEXT').source).toBe('game');
+    expect(notices.message(oldMessage).source).toBe('game');
   });
 
   test('uses the exact unsupported-ownership wording', () => {
     const notices = createSessionResumeNotices();
     notices.ownershipUnavailable();
 
-    expect(notices.message('')).toEqual({
+    expect(notices.message()).toEqual({
       source: 'shell',
       text: 'SESSION RESUME OWNERSHIP UNAVAILABLE'
     });

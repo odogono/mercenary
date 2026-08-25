@@ -1,18 +1,18 @@
+import type { BensonMessagePresentation } from '../benson/index.ts';
+
 export interface SessionResumeNotices {
   readonly couldNotResume: (reason: string) => void;
   readonly dismiss: () => void;
   readonly failed: (reason: string) => void;
   readonly menuOpened: () => void;
-  readonly message: (
-    gameMessage: string,
-    occurrence?: object
-  ) => {
+  readonly message: (message?: BensonMessagePresentation) => {
     readonly source: 'game' | 'shell';
     readonly text: string;
   };
   readonly ownership: (text: string) => void;
   readonly ownershipUnavailable: () => void;
   readonly resumed: () => void;
+  readonly synchronize: (message?: BensonMessagePresentation) => void;
 }
 
 export interface SessionResumeNoticeOptions {
@@ -61,23 +61,18 @@ export const createSessionResumeNotices = (
       showFailure();
     },
     menuOpened: showFailure,
-    message: (gameMessage, occurrence) => {
+    message: message => {
       const began =
-        occurrence !== undefined && occurrence !== previousOccurrence;
-      if (occurrence !== undefined) {
-        previousOccurrence = occurrence;
-      }
-      if (
-        notice?.kind !== 'ownership' &&
-        (began || (occurrence === undefined && gameMessage !== ''))
-      ) {
+        message !== undefined && message.occurrence !== previousOccurrence;
+      previousOccurrence = message?.occurrence;
+      if (notice?.kind !== 'ownership' && began) {
         notice = undefined;
       }
       if (notice?.expires !== undefined && time() >= notice.expires) {
         notice = undefined;
       }
       return notice === undefined
-        ? { source: 'game', text: gameMessage }
+        ? { source: 'game', text: message?.visibleText ?? '' }
         : { source: 'shell', text: notice.text };
     },
     ownership: text => {
@@ -93,6 +88,9 @@ export const createSessionResumeNotices = (
         kind: 'resumed',
         text: 'SESSION RESUMED'
       };
+    },
+    synchronize: message => {
+      previousOccurrence = message?.occurrence;
     }
   };
 };

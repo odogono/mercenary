@@ -1,19 +1,31 @@
-import type { CompletedBensonMessage } from '../benson/session.ts';
+import type { BensonMessagePresentation } from '../benson/index.ts';
 import type { SaveSlot } from './saves.ts';
 
-/// Remember which completed message occurrences have already entered one page's transcript.
-///
-/// Identity, not text, is the discriminator: Benson may legitimately say the same words twice.
-/// A WeakSet avoids turning the transcript observer into a second owner of old message tickers.
+/// Remember which complete occurrences have entered one page's transcript.
 export class BensonMessageTranscript {
   private readonly printed = new WeakSet<object>();
 
-  observe(message: CompletedBensonMessage | undefined): readonly string[] {
-    if (message === undefined || this.printed.has(message.occurrence)) {
+  constructor(message?: BensonMessagePresentation) {
+    // A complete occurrence restored into a new page predates that page's transcript and must
+    // not be backfilled. An incomplete restored occurrence will cross the edge later and print.
+    this.synchronize(message);
+  }
+
+  observe(message: BensonMessagePresentation | undefined): readonly string[] {
+    if (
+      message?.completedText === undefined ||
+      this.printed.has(message.occurrence)
+    ) {
       return [];
     }
     this.printed.add(message.occurrence);
-    return [`BENSON · ${message.text}`];
+    return [`BENSON · ${message.completedText}`];
+  }
+
+  synchronize(message: BensonMessagePresentation | undefined): void {
+    if (message?.completedText !== undefined) {
+      this.printed.add(message.occurrence);
+    }
   }
 
   static loaded(slot: SaveSlot): readonly string[] {

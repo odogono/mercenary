@@ -520,6 +520,87 @@ test('Session Resume survives reload and New Game preserves Saves', async ({
   await expect(slotButton(page, 1, 'delete')).toBeDisabled();
 });
 
+test('an abnormal page termination loses less than one checkpoint interval', async ({
+  context,
+  page
+}) => {
+  await useComposition(page, 'strip');
+  // Suppress the lifecycle signals the shell normally flushes, modelling a renderer loss that
+  // leaves only the most recent periodic checkpoint behind.
+  await page.addInitScript(() => {
+    document.addEventListener(
+      'visibilitychange',
+      event => event.stopImmediatePropagation(),
+      true
+    );
+    window.addEventListener(
+      'pagehide',
+      event => event.stopImmediatePropagation(),
+      true
+    );
+  });
+  await page.goto('/');
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-state',
+    'ready'
+  );
+
+  const resume = async (): Promise<string | null> =>
+    await page.evaluate(() =>
+      localStorage.getItem('mercenary.browser-shell.session-resume.v1')
+    );
+  await page.keyboard.down('ArrowUp');
+  await expect.poll(resume).not.toBeNull();
+  const first = JSON.parse((await resume())!) as { savedAt: string };
+  await expect
+    .poll(async () => {
+      const encoded = await resume();
+      return encoded === null
+        ? first.savedAt
+        : (JSON.parse(encoded) as { savedAt: string }).savedAt;
+    })
+    .not.toBe(first.savedAt);
+  const beforeCrash = (await resume())!;
+  const checkpoint = JSON.parse(beforeCrash) as {
+    savedAt: string;
+    snapshot: unknown;
+  };
+  expect(Date.now() - Date.parse(checkpoint.savedAt)).toBeLessThanOrEqual(1100);
+
+  await page.keyboard.up('ArrowUp');
+  await page.close({ runBeforeUnload: false });
+
+  // Hold the replacement page before its first simulation step so the recovered state can be
+  // captured exactly through the player-facing Save path.
+  await context.addInitScript(() => {
+    window.requestAnimationFrame = () => 1;
+  });
+  const recovered = await context.newPage();
+  await recovered.goto('/');
+  await expect(recovered.locator('#game-surface')).toHaveAttribute(
+    'data-state',
+    'ready'
+  );
+  await expect(recovered.locator('#game-surface')).toHaveAttribute(
+    'data-layer',
+    'none'
+  );
+  await recovered.keyboard.press('Backquote');
+  await recovered.locator('#console-input').fill('save 3');
+  await recovered.keyboard.press('Enter');
+  await expect(recovered.locator('#console-log')).toContainText('saved slot 3');
+  const restored = await recovered.evaluate(() => {
+    const encoded = localStorage.getItem(
+      'mercenary.browser-shell.save.v1.slot-3'
+    );
+    if (encoded === null) {
+      throw new Error('the restored session could not be captured');
+    }
+    return JSON.parse(encoded) as { snapshot: unknown };
+  });
+  expect(restored.snapshot).toEqual(checkpoint.snapshot);
+});
+
 test('one page owns the Session Resume and a second page can take over', async ({
   context,
   page
@@ -564,6 +645,39 @@ test('one page owns the Session Resume and a second page can take over', async (
   const displaced = await firstCanvas.getAttribute('data-z');
   await page.waitForTimeout(150);
   expect(await firstCanvas.getAttribute('data-z')).toBe(displaced);
+
+  const secondCanvas = second.locator('#frame');
+  const takenOverAt = await secondCanvas.getAttribute('data-z');
+  await second.keyboard.down('ArrowUp');
+  await expect
+    .poll(async () => secondCanvas.getAttribute('data-z'))
+    .not.toBe(takenOverAt);
+  await second.keyboard.up('ArrowUp');
+  // Opening the menu flushes the new owner's position and then pauses further writes.
+  await second.keyboard.press('Escape');
+  await expect(secondSurface).toHaveAttribute('data-layer', 'menu');
+  const ownerRecord = await second.evaluate(() =>
+    localStorage.getItem('mercenary.browser-shell.session-resume.v1')
+  );
+  expect(ownerRecord).not.toBeNull();
+
+  // Provoke every stale path on the displaced page. Ownership fencing must keep the durable
+  // record byte-identical to the new owner's flush.
+  await page.keyboard.press('ArrowUp');
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', {
+      configurable: true,
+      value: true
+    });
+    document.dispatchEvent(new Event('visibilitychange'));
+    window.dispatchEvent(new PageTransitionEvent('pagehide'));
+  });
+  await page.waitForTimeout(150);
+  expect(
+    await second.evaluate(() =>
+      localStorage.getItem('mercenary.browser-shell.session-resume.v1')
+    )
+  ).toBe(ownerRecord);
 });
 
 test('invalid Session Resume starts fresh and repeats its refusal in the menu', async ({

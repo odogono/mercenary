@@ -24,10 +24,14 @@ export const DEFAULT_SESSION_SEED = 0x2c_69_2e_d8_1b_7f_0a_31n;
 const sortedSet = (values: ReadonlySet<number>): number[] =>
   [...values].sort((a, b) => a - b);
 
-export interface CompletedBensonMessage {
-  /// The identity of this occurrence, distinct even when another message has equal text.
+export interface BensonMessagePresentation {
+  readonly completedText?: string;
   readonly occurrence: object;
-  readonly text: string;
+  readonly reveal: {
+    readonly complete: boolean;
+    readonly progress: number;
+  };
+  readonly visibleText: string;
 }
 
 /// One running Benson Script, its host state, and the message line it drives.
@@ -39,6 +43,7 @@ export class BensonSession {
   host: BensonHostState;
   ticker: MessageTicker | undefined;
   private frames = 0;
+  private messageOccurrence: object | undefined;
 
   constructor(
     program: BensonProgram,
@@ -93,18 +98,20 @@ export class BensonSession {
     return this.ticker?.visibleText ?? '';
   }
 
-  /// Opaque identity for presentation that needs to recognise a new occurrence.
-  get messageOccurrence(): object | undefined {
-    return this.ticker;
-  }
-
-  /// The complete occurrence only after its reveal has finished (normally or by skipping).
-  /// Presentation can retain the opaque ticker identity without seeing unrevealed text early.
-  get completedMessage(): CompletedBensonMessage | undefined {
-    if (this.ticker === undefined || !this.ticker.isRevealed) {
+  /// Immutable facts for one occurrence, without exposing its mutable ticker to presentation.
+  get messagePresentation(): BensonMessagePresentation | undefined {
+    if (this.ticker === undefined || this.messageOccurrence === undefined) {
       return undefined;
     }
-    return { occurrence: this.ticker, text: this.ticker.text };
+    return {
+      ...(this.ticker.isRevealed ? { completedText: this.ticker.text } : {}),
+      occurrence: this.messageOccurrence,
+      reveal: {
+        complete: this.ticker.isRevealed,
+        progress: this.ticker.revealed
+      },
+      visibleText: this.ticker.visibleText
+    };
   }
 
   get isMessageComplete(): boolean {
@@ -176,6 +183,7 @@ export class BensonSession {
       ) * this.tunables.timeScale,
       this.tunables.messageHoldSeconds
     );
+    this.messageOccurrence = {};
   }
 
   showText(composed: string): void {
@@ -281,6 +289,7 @@ export class BensonSession {
       snapshot.ticker === null
         ? undefined
         : MessageTicker.restore(snapshot.ticker);
+    session.messageOccurrence = session.ticker === undefined ? undefined : {};
     return session;
   }
 }
