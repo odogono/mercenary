@@ -587,8 +587,11 @@ try {
         const endingBefore = session.scripts?.host.endingPhase ?? 0;
         session.intent = controls.intent;
         snapshot = session.advance(seconds).snapshot;
+        // Any move of the Ending Phase is a boundary, not just the one out of
+        // active play: a reload during the mature presentation should come back
+        // to it rather than replay the phase it had already left.
         checkpointChangedResume(
-          endingBefore === 0 && (session.scripts?.host.endingPhase ?? 0) !== 0
+          endingBefore !== (session.scripts?.host.endingPhase ?? 0)
         );
       });
     } else {

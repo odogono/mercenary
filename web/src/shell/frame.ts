@@ -1,15 +1,23 @@
 import {
   Camera,
+  ReferenceViewport,
   leanTransform,
   projectFrame,
   transformed,
+  viewportCentre,
+  viewportScale,
   visible,
   type Point,
   type Rect,
   type ScreenLine,
   type Size
 } from '../projection/index.ts';
-import { IndoorBackdrop, ScenePalette, type RGB8 } from '../scene/index.ts';
+import {
+  IndoorBackdrop,
+  ScenePalette,
+  c64Colour,
+  type RGB8
+} from '../scene/index.ts';
 import type { SessionSnapshot } from '../session/index.ts';
 import {
   SKY_VERTEX_FIELDS,
@@ -355,6 +363,11 @@ const addBatch = (
   }
 };
 
+/// The Reference Viewport's logical centre across, in logical columns rather
+/// than physical pixels: the field's own coordinates are logical.
+const LOGICAL_CENTRE_X =
+  ReferenceViewport.width / ReferenceViewport.horizontalPixelScale / 2;
+
 /// Resolve one Session Snapshot into the ordered primitive batches WebGL2 should draw.
 ///
 /// This is deliberately pure. Golden Traces already grade selection and projection; this plan
@@ -365,6 +378,41 @@ export const planFrame = (
   size: Size,
   orrery?: TargOrrery
 ): FramePlan => {
+  // The Escape's terminal loop replaces the world view entirely: no ground, no
+  // Map Lines, no structures, just the Interstellar Ship Field on the colour its
+  // sequence has reached. It comes before everything, including the orrery,
+  // because the field is recovered behaviour rather than an authored addition
+  // and so is the same under either Presentation Preset (ADR 0025).
+  const escape = snapshot.escapePresentation;
+  if (escape !== undefined) {
+    const scale = viewportScale(size);
+    const centre = viewportCentre(size);
+    const vertices = new Float32Array(escape.points.length * 2);
+    for (const [index, point] of escape.points.entries()) {
+      vertices[index * 2] =
+        centre.x +
+        (point.x - LOGICAL_CENTRE_X) *
+          ReferenceViewport.horizontalPixelScale *
+          scale;
+      vertices[index * 2 + 1] =
+        centre.y + (point.y - ReferenceViewport.height / 2) * scale;
+    }
+    const batches: DrawBatch[] = [];
+    addBatch(
+      batches,
+      'points',
+      vertices,
+      c64Colour(escape.colourPair.line) ?? ScenePalette.blackInk
+    );
+    return {
+      batches,
+      clear: c64Colour(escape.colourPair.screen) ?? ScenePalette.blackInk,
+      lines: 0,
+      points: escape.points.length,
+      size
+    };
+  }
+
   const indoor = snapshot.indoor;
   if (indoor?.dark === true) {
     return {

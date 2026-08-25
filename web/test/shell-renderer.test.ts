@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
-import { ScenePalette } from '../src/scene/index.ts';
+import {
+  ReferenceViewport,
+  viewportCentre,
+  viewportScale
+} from '../src/projection/index.ts';
+import { ScenePalette, c64Colour } from '../src/scene/index.ts';
 import {
   GameplaySession,
   openingPlayer,
@@ -217,6 +222,74 @@ describe('a Session Snapshot planned for WebGL2', () => {
     expect(frame.batches).toEqual([]);
     expect(frame.lines).toBe(0);
     expect(frame.points).toBe(0);
+  });
+
+  test('the Escape shows its field alone, on the colour the sequence chose', () => {
+    const escaping = session();
+    const presented = {
+      ...escaping.snapshot,
+      ending: { kind: 'escape', phase: 1 } as const,
+      escapePresentation: {
+        colourPair: { line: 0, screen: 12 },
+        points: [
+          { x: 0, y: 0 },
+          { x: 80, y: 68 },
+          { x: 159, y: 135 }
+        ]
+      }
+    };
+
+    const frame = planFrame(world, presented, size);
+
+    // The terminal loop draws points and nothing else: no world, no ground, no
+    // Map Lines. The pair's second byte is what the screen is cleared to and
+    // the first is what the points are drawn in.
+    expect(frame.clear).toEqual(c64Colour(12)!);
+    expect(frame.batches).toHaveLength(1);
+    expect(frame.batches[0]?.mode).toBe('points');
+    expect(frame.batches[0]?.colour).toEqual(c64Colour(0)!);
+    expect(frame.lines).toBe(0);
+    expect(frame.points).toBe(3);
+
+    // Reference Viewport coordinates, scaled the way everything else is: the
+    // centre of the field is the centre of the view.
+    const centre = viewportCentre(size);
+    const vertices = [...(frame.batches[0]?.vertices ?? [])];
+    expect(vertices[2]).toBeCloseTo(centre.x, 5);
+    expect(vertices[3]).toBeCloseTo(centre.y, 5);
+    // And a logical column is two physical pixels, so the field is as wide as
+    // the world view rather than half of it.
+    const scale = viewportScale(size);
+    expect((vertices[4] ?? 0) - (vertices[2] ?? 0)).toBeCloseTo(
+      79 * ReferenceViewport.horizontalPixelScale * scale,
+      5
+    );
+  });
+
+  test('the Escape presents the same way under either Presentation Preset', () => {
+    const escaping = session();
+    const presented = {
+      ...escaping.snapshot,
+      ending: { kind: 'escape', phase: 255 } as const,
+      escapePresentation: {
+        colourPair: { line: 0, screen: 12 },
+        points: [{ x: 40, y: 40 }]
+      }
+    };
+
+    // The field is recovered behaviour, not an authored addition, so the
+    // Enhanced preset's orrery has nothing to say about it (ADR 0025).
+    const authentic = planFrame(world, presented, size);
+    const enhanced = planFrame(
+      world,
+      presented,
+      size,
+      createTargOrrery(defaultSettings().presentation.sky)
+    );
+
+    expect(enhanced.clear).toEqual(authentic.clear);
+    expect(enhanced.sky).toBeUndefined();
+    expect(enhanced.batches).toEqual(authentic.batches);
   });
 
   test('an Enhanced surface carries a Sky Frame before the unchanged scene batches', () => {
