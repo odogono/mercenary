@@ -22,6 +22,7 @@ from c64lab.geometry import (
     encode_object_model,
     encode_room_record,
     encode_surface_structure,
+    _surface_structure_ink,
     expand_room,
     load_geometry_source,
     render_road_network_svg,
@@ -153,6 +154,24 @@ class ObjectModelTests(unittest.TestCase):
 
 
 class SurfaceStructureTests(unittest.TestCase):
+    def test_an_unreachable_white_black_split_makes_every_line_black(self) -> None:
+        self.assertEqual(
+            [_surface_structure_ink(13, 0xFF, index) for index in range(14)],
+            ["black"] * 14,
+        )
+
+    def test_a_split_at_the_highest_line_makes_every_line_white(self) -> None:
+        self.assertEqual(
+            [_surface_structure_ink(13, 13, index) for index in range(14)],
+            ["white"] * 14,
+        )
+
+    def test_an_in_range_split_changes_from_white_to_black_after_the_split(self) -> None:
+        self.assertEqual(
+            [_surface_structure_ink(13, 5, index) for index in range(14)],
+            ["white"] * 6 + ["black"] * 8,
+        )
+
     def test_zero_switches_the_rest_of_the_edge_table_to_full_width_pairs(self) -> None:
         raw = bytes(
             [

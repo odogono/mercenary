@@ -1,4 +1,4 @@
-{"backdrop":{"ground":{"height":4160,"lean":-0,"width":8320,"x":-4160,"y":400},"horizon":400},"camera":{"farPlane":320000,"heading":0,"isInverted":false,"mirrored":false,"nearPlane":24,"pitch":0,"position":{"x":559104,"y":128,"z":559104},"roll":0,"verticalFieldOfView":0.97666790211281107},"candidates":{"detailedObjects":2,"points":3,"segments":302},"emitter":"projection","id":"opening-view","note":"What the player sees at the crash site the game opens on, looking north.","payload":{"decoderVersion":7,"manifestSha256":"a8ce4a9a66d87a5127f1ddd6ac1bc2afa2bb9c704bf609b880ec731a4c612f95","schemaVersion":8,"sourceCoreDigest":"7b0cbf0f34c99fbcf8081e8fc152bc490fb4d4d1d9b1be4d9ec9481441d3949c","sourceDatasetId":"world-geometry-7b0cbf0f34c99fbc"},"scenario":{"eye":128,"heading":0,"height":800,"pitch":0,"roll":0,"time":0,"width":1280,"x":559104,"z":559104},"schemaVersion":3,"viewport":{"height":800,"width":1280}}
+{"backdrop":{"ground":{"height":4160,"lean":-0,"width":8320,"x":-4160,"y":400},"horizon":400},"camera":{"farPlane":320000,"heading":0,"isInverted":false,"mirrored":false,"nearPlane":24,"pitch":0,"position":{"x":559104,"y":128,"z":559104},"roll":0,"verticalFieldOfView":0.97666790211281107},"candidates":{"detailedObjects":2,"points":3,"segments":302},"emitter":"projection","id":"opening-view","note":"What the player sees at the crash site the game opens on, looking north.","payload":{"decoderVersion":8,"manifestSha256":"df7997cc8993cc3a9a5054ccb1c917e1fea5e03730bd5835efbb7471bc0885b1","schemaVersion":8,"sourceCoreDigest":"75c5c12dca266ad084b181bf492c934556474cf0fbf1c5a423d75d0b363974cd","sourceDatasetId":"world-geometry-75c5c12dca266ad0"},"scenario":{"eye":128,"heading":0,"height":800,"pitch":0,"roll":0,"time":0,"width":1280,"x":559104,"z":559104},"schemaVersion":3,"viewport":{"height":800,"width":1280}}
 {"index":0,"kind":"line","line":{"ink":"white","x1":-2432,"x2":-147.69230651855469,"y1":-560,"y2":104.61538696289062}}
 {"index":1,"kind":"line","line":{"ink":"white","x1":-147.69230651855469,"x2":-1408,"y1":104.61538696289062,"y2":-560}}
 {"index":2,"kind":"line","line":{"ink":"white","x1":-1408,"x2":-2432,"y1":-560,"y2":-560}}
@@ -81,12 +81,12 @@
 {"index":79,"kind":"line","line":{"ink":"black","x1":623.5501708984375,"x2":884.69073486328125,"y1":401.02810668945312,"y2":401.02810668945312}}
 {"index":80,"kind":"line","line":{"ink":"black","x1":358.08908081054688,"x2":623.4169921875,"y1":401.03643798828125,"y2":401.03643798828125}}
 {"index":81,"kind":"line","line":{"ink":"black","x1":623.4169921875,"x2":886.67205810546875,"y1":401.03643798828125,"y2":401.03643798828125}}
-{"index":82,"kind":"line","line":{"ink":"white","x1":1702.4000244140625,"x2":1154.0645751953125,"y1":402.13333129882812,"y2":401.03225708007812}}
-{"index":83,"kind":"line","line":{"ink":"white","x1":1154.0645751953125,"x2":979.968017578125,"y1":401.03225708007812,"y2":400.68267822265625}}
-{"index":84,"kind":"line","line":{"ink":"white","x1":1693.86669921875,"x2":1152,"y1":402.13333129882812,"y2":401.03643798828125}}
-{"index":85,"kind":"line","line":{"ink":"white","x1":1147.8875732421875,"x2":977.2373046875,"y1":401.02810668945312,"y2":400.68267822265625}}
-{"index":86,"kind":"line","line":{"ink":"white","x1":1152,"x2":888.74493408203125,"y1":401.03643798828125,"y2":401.03643798828125}}
-{"index":87,"kind":"line","line":{"ink":"white","x1":1147.8875732421875,"x2":886.74700927734375,"y1":401.02810668945312,"y2":401.02810668945312}}
+{"index":82,"kind":"line","line":{"ink":"black","x1":1702.4000244140625,"x2":1154.0645751953125,"y1":402.13333129882812,"y2":401.03225708007812}}
+{"index":83,"kind":"line","line":{"ink":"black","x1":1154.0645751953125,"x2":979.968017578125,"y1":401.03225708007812,"y2":400.68267822265625}}
+{"index":84,"kind":"line","line":{"ink":"black","x1":1693.86669921875,"x2":1152,"y1":402.13333129882812,"y2":401.03643798828125}}
+{"index":85,"kind":"line","line":{"ink":"black","x1":1147.8875732421875,"x2":977.2373046875,"y1":401.02810668945312,"y2":400.68267822265625}}
+{"index":86,"kind":"line","line":{"ink":"black","x1":1152,"x2":888.74493408203125,"y1":401.03643798828125,"y2":401.03643798828125}}
+{"index":87,"kind":"line","line":{"ink":"black","x1":1147.8875732421875,"x2":886.74700927734375,"y1":401.02810668945312,"y2":401.02810668945312}}
 {"index":88,"kind":"line","line":{"ink":"white","x1":1941.4095458984375,"x2":2128.7890625,"y1":446.84487915039062,"y2":446.84487915039062}}
 {"index":89,"kind":"line","line":{"ink":"white","x1":2128.7890625,"x2":2052.666259765625,"y1":446.84487915039062,"y2":435.1336669921875}}
 {"index":90,"kind":"line","line":{"ink":"white","x1":2052.666259765625,"x2":2035.099365234375,"y1":435.1336669921875,"y2":376.57754516601562}}

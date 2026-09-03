@@ -24,7 +24,7 @@ import { readers } from './read.ts';
 export type ReadDocument = (name: string) => Promise<string | undefined>;
 
 export const SUPPORTED_SCHEMA_VERSION = 8;
-export const SUPPORTED_DECODER_VERSION = 7;
+export const SUPPORTED_DECODER_VERSION = 8;
 export const SUPPORTED_TEXT_SCHEMA_VERSION = 1;
 export const SUPPORTED_BENSON_SCHEMA_VERSION = 1;
 export const SUPPORTED_INTERACTION_SCHEMA_VERSION = 1;

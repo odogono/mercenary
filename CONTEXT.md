@@ -354,6 +354,14 @@ _Avoid_: Source port, ROM wrapper, second Independent Implementation (for Damocl
 A lossless, provenance-backed representation of the Reference Build's object models, vertices, edges, instances, transforms, coordinate systems, layouts, bounds, identities, and visibility rules.
 _Avoid_: Mesh dump, model pack
 
+**Surface Cell**:
+One addressed region of the surface, used as the unit for placing a Surface Structure and accounting for any Site there.
+_Avoid_: Grid cell, tile
+
+**Surface Structure**:
+One reusable wireframe definition placed in one or more Surface Cells, distinct from Map Lines and from movable object geometry.
+_Avoid_: Building, model, cell geometry
+
 **Geometry Identity**:
 A stable, Research Provenance-backed identity for an entity in the World Geometry Dataset that remains valid when its interpretation or name changes.
 _Avoid_: Object name, canonical name

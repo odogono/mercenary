@@ -779,48 +779,45 @@ class RoomLinkCountTests(unittest.TestCase):
         self.assertEqual(set(counts), set(ROOM_LINK_CONTRACT))
 
 
-class SwiftConstantParityTests(unittest.TestCase):
-    """The app restates every payload version by hand, so drift is a real risk.
+class BrowserConsumerParityTests(unittest.TestCase):
+    """The browser restates payload versions and fields, so drift is a real risk."""
 
-    This issue bumps six of them at once. Learning about a mismatch from a runtime
-    "unsupported schema" error mid-playthrough is the worst place to learn it.
-    """
+    LOADER = LAB_ROOT.parents[1] / "web" / "src" / "payload" / "load.ts"
+    DOCUMENTS = LAB_ROOT.parents[1] / "web" / "src" / "payload" / "documents.ts"
 
-    SOURCE = LAB_ROOT.parents[1] / "app" / "Sources" / "MercenaryKit" / "Payload.swift"
-
-    def swift_constant(self, name: str) -> int:
-        text = self.SOURCE.read_text(encoding="utf-8")
-        match = re.search(rf"supported{name}\s*=\s*(\d+)", text)
-        self.assertIsNotNone(match, f"app/Sources/MercenaryKit/Payload.swift declares no supported{name}")
+    def typescript_constant(self, name: str) -> int:
+        text = self.LOADER.read_text(encoding="utf-8")
+        match = re.search(rf"export const {name}\s*=\s*(\d+)", text)
+        self.assertIsNotNone(match, f"web/src/payload/load.ts declares no {name}")
         return int(match.group(1))
 
-    def test_the_app_expects_the_schema_this_export_writes(self) -> None:
-        self.assertEqual(self.swift_constant("SchemaVersion"), PAYLOAD_SCHEMA_VERSION)
+    def test_the_browser_expects_the_schema_this_export_writes(self) -> None:
+        self.assertEqual(self.typescript_constant("SUPPORTED_SCHEMA_VERSION"), PAYLOAD_SCHEMA_VERSION)
 
-    def test_the_app_expects_the_decoder_this_export_requires(self) -> None:
-        self.assertEqual(self.swift_constant("DecoderVersion"), DECODER_VERSION)
+    def test_the_browser_expects_the_decoder_this_export_requires(self) -> None:
+        self.assertEqual(self.typescript_constant("SUPPORTED_DECODER_VERSION"), DECODER_VERSION)
 
-    def test_the_app_declares_every_doorway_rule_this_export_writes(self) -> None:
-        # A rule the app does not declare is not an error anywhere: the export writes
+    def test_the_browser_declares_every_doorway_rule_this_export_writes(self) -> None:
+        # A rule the browser does not declare is not an error anywhere: the export writes
         # it, the decode ignores it, and the behaviour it was meant to govern stays
         # whatever it already was. That is the silent-drift class this whole file
         # exists to close, so the field names are checked and not just the versions.
-        text = self.SOURCE.read_text(encoding="utf-8")
-        rules = text.split("struct DoorwayRules", 1)[1].split("\n  }", 1)[0]
-        declared = set(re.findall(r"public var (\w+)", rules))
+        text = self.DOCUMENTS.read_text(encoding="utf-8")
+        rules = text.split("export interface DoorwayRules {", 1)[1].split("\n}", 1)[0]
+        declared = set(re.findall(r"readonly (\w+)", rules))
 
         self.assertEqual(set(_DOORWAY_RULE_FIELDS) - declared, set())
 
-    def test_the_app_expects_each_capture_documents_own_schema(self) -> None:
+    def test_the_browser_expects_each_capture_documents_own_schema(self) -> None:
         for name, version in (
-            ("TextSchemaVersion", TEXT_SCHEMA_VERSION),
-            ("BensonSchemaVersion", BENSON_SCHEMA_VERSION),
-            ("InteractionSchemaVersion", INTERACTION_SCHEMA_VERSION),
-            ("FlightSchemaVersion", FLIGHT_SCHEMA_VERSION),
-            ("UndergroundSchemaVersion", UNDERGROUND_SCHEMA_VERSION),
+            ("SUPPORTED_TEXT_SCHEMA_VERSION", TEXT_SCHEMA_VERSION),
+            ("SUPPORTED_BENSON_SCHEMA_VERSION", BENSON_SCHEMA_VERSION),
+            ("SUPPORTED_INTERACTION_SCHEMA_VERSION", INTERACTION_SCHEMA_VERSION),
+            ("SUPPORTED_FLIGHT_SCHEMA_VERSION", FLIGHT_SCHEMA_VERSION),
+            ("SUPPORTED_UNDERGROUND_SCHEMA_VERSION", UNDERGROUND_SCHEMA_VERSION),
         ):
             with self.subTest(constant=name):
-                self.assertEqual(self.swift_constant(name), version)
+                self.assertEqual(self.typescript_constant(name), version)
 
 
 if __name__ == "__main__":

@@ -13,6 +13,19 @@ the payload exporter was discarding them: `roadAltitudeLookup`, per-instance
 carries all of them, plus table-faithful road runs and the fixed high-altitude
 map. Schema-2 payloads must be re-exported.
 
+## A `$FF` structure Ink split means all black
+
+`DRAW_STRUCTURE_L96E7` walks a Surface Structure's lines from its highest index down to zero,
+starting with black Ink and switching to white only when the countdown equals the structure's
+white/black split index. A split beyond the highest line is never reached, so `$FF` means every
+line stays black; the exporter instead treated every index as less than `$FF` and made all of
+those lines white.
+
+Geometry decoder 8 corrects the rule. Eight shared Surface Structures are affected: 86 lines
+placed in 26 Surface Cells, producing 282 corrected cell-edge instances in the Data Payload.
+In-range splits are unchanged, including the airstrip in Surface Cell 8:8, whose split at 5 of
+14 lines still makes lines 0 through 5 white and lines 6 through 13 black.
+
 ## Fixed and verified
 
 - **Object orientation.** Slots below `$10` apply three plane rotations about Z,
