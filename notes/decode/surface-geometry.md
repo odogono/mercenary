@@ -20,10 +20,12 @@ Dataset the extractor already produces. No new ROM decoding was needed.
   absolute position and accounts for 6,826 of 6,987 vertices. **`rotated-input`**
   carries a rotation input instead, because the Reference Build rotates those
   points at runtime.
-- 13 of 255 structured cells contain rotated vertices. The payload exporter drops
-  them and any edge touching one — **410 edges deferred** — rather than guessing
-  at a rotation. `deferredEdges` in the payload and `--render-frame` output keep
-  the gap visible.
+- 13 of 255 structured cells contain rotated vertices, which are resolved from
+  their decoded descriptor, centre and per-point input at presentation time.
+- 83 shared structures also address the occupied cell's four Road Workspace
+  points. Across their placements these are 478 point references used by 956
+  structure-edge instances; the renderer resolves them from that cell's two road
+  runs rather than treating them as malformed local indices.
 - Edges carry one of two ink operations, `white` and `black`. Rendering the second
   dimmer preserves the structure the split encodes.
 

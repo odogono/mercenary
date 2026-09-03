@@ -383,7 +383,7 @@ Where a Camera is and how it is turned at one moment — a position, a heading, 
 _Avoid_: Position, viewpoint, snapshot, camera state
 
 **Camera**:
-What turns the world into a view for one Pose, together with the near and far limits of what is worth drawing.
+What turns the world into a view for one Pose, together with its near limit and any explicitly imposed far limit.
 _Avoid_: View, eye, transform, matrix
 
 **Reference Viewport**:
@@ -399,15 +399,23 @@ One world segment after projection: two screen coordinates and the Ink it is dra
 _Avoid_: Edge, stroke, vector, polyline
 
 **Far Point**:
-An object far enough away to be shown as a single point rather than its wireframe, which is how the original represented distance.
+An object outside its detailed reach whose distant form is one point rather than its wireframe; at or above the eye it remains eligible at any range, while below the eye it remains eligible only within Horizon Distance.
 _Avoid_: Dot, sprite, level of detail, billboard
+
+**Horizon Distance**:
+The altitude-derived reach across Surface Cells within which Map Lines are selected and a below-eye Far Point remains visible; at high altitude it encompasses the whole surface.
+_Avoid_: Far plane, draw distance, view distance
+
+**Road Workspace**:
+The occupied Surface Cell's road endpoints made available to its Surface Structure, allowing structure lines to continue to the junctions those roads reach.
+_Avoid_: Deferred vertices, synthetic geometry, road mesh
 
 **Map Lines**:
 The surface's roads and runways, selected for a position and an altitude from the Reference Build's own tables rather than from the structures standing near the player.
 _Avoid_: Roads, terrain, ground detail, map overlay
 
 **Visibility Selector**:
-What decides which of the world's geometry is worth projecting for one Pose, before anything is projected: the structures around the player, the Map Lines for where they are, and the objects present — or, underground, one Room and the things standing in it.
+What decides which of the world's geometry is worth projecting for one Pose, before anything is projected: the selected Surface Structures, the Map Lines for where the player is, and the objects present — or, underground, one Room and the things standing in it.
 _Avoid_: Culler, frustum culling, scene graph, filter
 
 **Curated Name**:

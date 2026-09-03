@@ -1,0 +1,3 @@
+# Select surface geometry by the Reference Build's own rules
+
+The Visibility Selector defaults to the Reference Build's occupied-cell reach and Horizon Distance, replacing the accepted three-by-three structure ring and finite far plane. Those adaptations made crossings smoother and kept projection Golden Traces stable, but they also exposed targetable geometry the Reference Build withheld; the frozen Trace Oracle's gate therefore opts into its old ring, unconditional Far Points and finite far plane explicitly, preserving its value as an arithmetic and ordering check without making its adaptations canonical. An every-cell reach remains admissible only as Enhanced presentation under ADR 0025; Authentic presentation must keep the Reference Build's reach.

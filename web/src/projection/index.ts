@@ -142,7 +142,7 @@ export const REFERENCE_VERTICAL_FIELD_OF_VIEW =
   );
 
 export const DEFAULT_NEAR_PLANE = 24;
-export const DEFAULT_FAR_PLANE = 320_000;
+export const ORACLE_FAR_PLANE = 320_000;
 
 export interface CameraFields {
   readonly farPlane?: number;
@@ -193,7 +193,7 @@ export class Camera {
     this.verticalFieldOfView =
       fields.verticalFieldOfView ?? REFERENCE_VERTICAL_FIELD_OF_VIEW;
     this.nearPlane = fields.nearPlane ?? DEFAULT_NEAR_PLANE;
-    this.farPlane = fields.farPlane ?? DEFAULT_FAR_PLANE;
+    this.farPlane = fields.farPlane ?? Infinity;
     this.mirrored = fields.mirrored ?? false;
     this.sinHeading = sin(this.heading);
     this.cosHeading = cos(this.heading);
@@ -408,15 +408,39 @@ export interface VisibilityOptions {
   /// anything picked up is in the player's hands.
   readonly residence?: ReadonlyMap<number, Residence>;
   readonly room?: number;
+  readonly rules?: VisibilityRules;
 }
+
+export interface VisibilityRules {
+  readonly farPoints: 'every' | 'horizon';
+  readonly reach: 'all' | 'cell' | 'ring';
+}
+
+export const REFERENCE_RULES: VisibilityRules = {
+  farPoints: 'horizon',
+  reach: 'cell'
+};
+
+export const ORACLE_RULES: VisibilityRules = {
+  farPoints: 'every',
+  reach: 'ring'
+};
+
+const withinHorizon = (
+  origin: Vector3,
+  position: Vector3,
+  reach: number
+): boolean =>
+  Math.abs(origin.x - position.x) < reach &&
+  Math.abs(origin.y - position.y) < reach &&
+  Math.abs(origin.z - position.z) < reach;
 
 /// Gather what is worth projecting near the camera. Frustum rejection is left to the
 /// projection step, which has to compute view space anyway.
 ///
-/// Surface structures include the immediately surrounding cells to avoid a whole building
-/// appearing at a cell boundary. This one-cell ring is a presentation adaptation; the Reference
-/// Build expands only the current structure. Objects retain their separate decoded detail-cube
-/// rule.
+/// Surface structures follow the selected reach. Reference play expands only the occupied cell;
+/// the Trace Oracle retains its recorded one-cell ring explicitly. Objects retain their separate
+/// decoded detail-cube rule, with Horizon Distance deciding whether a below-eye Far Point remains.
 ///
 /// The append order is the pipeline order a Golden Trace records, and it is **cells, then the
 /// map lines, then objects** — underground, the Room's own wireframe and then its objects.
@@ -428,6 +452,7 @@ export const visible = (
 ): Visible => {
   const elapsed = options.elapsed ?? 0;
   const residence = options.residence;
+  const rules = options.rules ?? REFERENCE_RULES;
   const segments: Segment[] = [];
   const points: Vector3[] = [];
   let detailedObjects = 0;
@@ -449,7 +474,16 @@ export const visible = (
       if (isDetailed(placed, position)) {
         append(segments, objectSegments(placed));
         detailedObjects += 1;
-      } else if (placed.drawsFarAsPoint) {
+      } else if (
+        placed.drawsFarAsPoint &&
+        (rules.farPoints === 'every' ||
+          placed.origin.y >= position.y ||
+          withinHorizon(
+            placed.origin,
+            position,
+            world.horizonDistance(position.y) * world.cellSize
+          ))
+      ) {
         points.push(placed.origin);
       }
     }
@@ -466,7 +500,9 @@ export const visible = (
 
   const column = Math.floor(position.x / world.cellSize);
   const row = Math.floor(position.z / world.cellSize);
-  const radius = 1;
+  // `all` reserves #152's public value but intentionally has `cell` behaviour until that
+  // ticket adds a separate distant-geometry path.
+  const radius = rules.reach === 'ring' ? 1 : 0;
   const firstColumn = Math.max(0, column - radius);
   const lastColumn = Math.min(world.cellsPerAxis - 1, column + radius);
   const firstRow = Math.max(0, row - radius);
@@ -479,7 +515,14 @@ export const visible = (
     ) {
       const cell = world.cell(selectedColumn, selectedRow);
       if (cell !== undefined && cell.index !== 0) {
-        append(segments, cell.segments(elapsed));
+        const isOccupied = selectedColumn === column && selectedRow === row;
+        append(
+          segments,
+          cell.segments(
+            elapsed,
+            isOccupied ? world.roadWorkspace(cell) : undefined
+          )
+        );
       }
     }
   }
@@ -490,7 +533,7 @@ export const visible = (
   return { detailedObjects, points, segments };
 };
 
-/// Everything one Pose resolves to: the lines to stroke, in pipeline order, and the far points.
+/// Everything one Pose resolves to: near and distant lines, in pipeline order, and Far Points.
 ///
 /// The order is the claim a projection Golden Trace makes, so this is the one traversal — the
 /// Replay Gate grades this function and the browser runs it. A renderer that wants its lines
@@ -500,7 +543,7 @@ export const projectFrame = (
   camera: Camera,
   seen: Visible,
   size: Size
-): { lines: ScreenLine[]; points: Point[] } => {
+): { distant: ScreenLine[]; lines: ScreenLine[]; points: Point[] } => {
   const lines: ScreenLine[] = [];
   for (const segment of seen.segments) {
     const line = camera.projectSegment(segment, size);
@@ -515,5 +558,5 @@ export const projectFrame = (
       points.push(point);
     }
   }
-  return { lines, points };
+  return { distant: [], lines, points };
 };

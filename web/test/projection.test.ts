@@ -3,6 +3,8 @@ import { describe, expect, test } from 'bun:test';
 import type { Bundle } from '../src/payload/documents.ts';
 import {
   Camera,
+  ORACLE_FAR_PLANE,
+  ORACLE_RULES,
   projectFrame,
   visible,
   type ScreenLine,
@@ -189,6 +191,7 @@ describe('the projection Replay Gate', () => {
     const size: Size = { height: scenario.height, width: scenario.width };
     const position = { x: scenario.x, y: scenario.eye, z: scenario.z };
     const camera = new Camera({
+      farPlane: ORACLE_FAR_PLANE,
       heading: radians(scenario.heading),
       pitch: radians(scenario.pitch),
       position,
@@ -196,12 +199,13 @@ describe('the projection Replay Gate', () => {
     });
     const seen: Visible = visible(world, position, {
       elapsed: scenario.time,
+      rules: ORACLE_RULES,
       ...(scenario.room === undefined ? {} : { room: scenario.room })
     });
     // A dark Room draws nothing at all, so the pipeline is not run: the selector's candidates
     // are the claim, and the absence of lines and points is the rest of it.
     const frame = isDark(trace.header)
-      ? { lines: [], points: [] }
+      ? { distant: [], lines: [], points: [] }
       : projectFrame(camera, seen, size);
 
     describe(id, () => {
