@@ -1,4 +1,4 @@
-{"dt":0.016666666666666666,"emitter":"session","id":"opening","initial":{"core":{"poweramp":false,"stepInterlock":0,"touchdown":null,"transitionCooldown":0,"wallContact":0,"wallContactLatch":0},"credits":9000,"indoor":null,"isScriptRunning":true,"location":"surface","message":"","mode":"grounded","occupancy":"onFoot","player":{"heading":0,"pitch":0,"position":{"x":559104,"y":128,"z":559104},"roll":0,"speed":0,"yawVelocity":0},"residence":{"0":"surface","1":"surface","2":"surface","3":{"room":7},"4":{"room":3},"5":{"room":2},"6":{"room":54},"7":{"room":5},"8":{"room":255},"9":{"room":255},"10":"surface","11":{"room":255},"12":{"room":102},"13":{"room":255},"14":{"room":255},"15":{"room":255},"16":{"room":74},"17":{"room":62},"18":{"room":58},"19":{"room":164},"20":{"room":66},"21":{"room":109},"22":{"room":82},"23":{"room":57},"24":{"room":166},"25":{"room":137},"26":{"room":47},"27":{"room":17},"28":{"room":67},"29":{"room":69},"30":{"room":98},"31":{"room":72},"32":{"room":52},"33":{"room":155},"34":{"room":68},"35":{"room":71},"36":{"room":163},"37":{"room":162},"38":{"room":51},"39":{"room":168},"40":{"room":9},"41":{"room":12},"42":{"room":50},"43":{"room":142},"44":{"room":15},"45":{"room":108},"46":{"room":80},"47":{"room":163},"48":{"room":88},"49":{"room":168},"50":"surface","51":{"room":168},"52":{"room":16},"53":{"room":41},"54":{"room":41},"55":{"room":165},"56":"surface","57":{"room":144},"58":{"room":111},"59":{"room":98},"60":{"room":171},"61":"surface","62":"surface","63":"surface"},"throttle":0,"throttleNotch":0,"worldFlipped":false},"note":"The opening status report and purchase conversation, with the player answering the question it asks. This localized trace deliberately stops before walking or boarding.","payload":{"decoderVersion":8,"manifestSha256":"df7997cc8993cc3a9a5054ccb1c917e1fea5e03730bd5835efbb7471bc0885b1","schemaVersion":8,"sourceCoreDigest":"75c5c12dca266ad084b181bf492c934556474cf0fbf1c5a423d75d0b363974cd","sourceDatasetId":"world-geometry-75c5c12dca266ad0"},"scenario":{"boarding":[],"openingLoop":null,"presses":[{"at":74,"key":"y"}],"script":0,"seconds":120,"take":false,"timeScale":null,"walkTo":null},"schemaVersion":3,"settings":{"flight":{"groundAltitude":null,"pitchScale":1,"referenceFrameRate":20,"runMultiplier":3,"speedScale":1,"throttleFloorNotch":3,"turnScale":1},"message":{"charactersPerSecond":2,"holdSeconds":3},"scripts":{"instructionBudget":512,"timeScale":6}}}
+{"dt":0.016666666666666666,"emitter":"session","id":"opening","initial":{"core":{"poweramp":false,"stepInterlock":0,"touchdown":null,"transitionCooldown":0,"wallContact":0,"wallContactLatch":0},"credits":9000,"indoor":null,"isScriptRunning":true,"location":"surface","message":"","mode":"grounded","occupancy":"onFoot","player":{"heading":0,"pitch":0,"position":{"x":559104,"y":128,"z":559104},"roll":0,"speed":0,"yawVelocity":0},"residence":{"0":"surface","1":"surface","2":"surface","3":{"room":7},"4":{"room":3},"5":{"room":2},"6":{"room":54},"7":{"room":5},"8":{"room":255},"9":{"room":255},"10":"surface","11":{"room":255},"12":{"room":102},"13":{"room":255},"14":{"room":255},"15":{"room":255},"16":{"room":74},"17":{"room":62},"18":{"room":58},"19":{"room":164},"20":{"room":66},"21":{"room":109},"22":{"room":82},"23":{"room":57},"24":{"room":166},"25":{"room":137},"26":{"room":47},"27":{"room":17},"28":{"room":67},"29":{"room":69},"30":{"room":98},"31":{"room":72},"32":{"room":52},"33":{"room":155},"34":{"room":68},"35":{"room":71},"36":{"room":163},"37":{"room":162},"38":{"room":51},"39":{"room":168},"40":{"room":9},"41":{"room":12},"42":{"room":50},"43":{"room":142},"44":{"room":15},"45":{"room":108},"46":{"room":80},"47":{"room":163},"48":{"room":88},"49":{"room":168},"50":"surface","51":{"room":168},"52":{"room":16},"53":{"room":41},"54":{"room":41},"55":{"room":165},"56":"surface","57":{"room":144},"58":{"room":111},"59":{"room":98},"60":{"room":171},"61":"surface","62":"surface","63":"surface"},"throttle":0,"throttleNotch":0,"worldFlipped":false},"note":"The opening status report and purchase conversation, with the player answering the question it asks. This localized trace deliberately stops before walking or boarding.","payload":{"decoderVersion":9,"manifestSha256":"09b73f54a1690bef00c4ee29a05739ed2474351e9e4aa18751638c6d54389c7d","schemaVersion":8,"sourceCoreDigest":"ac0d654fb1b733f51a9606ba59b74dbadf1ef4139f6661bee3640aff8cf702dd","sourceDatasetId":"world-geometry-ac0d654fb1b733f5"},"scenario":{"boarding":[],"openingLoop":null,"presses":[{"at":74,"key":"y"}],"script":0,"seconds":120,"take":false,"timeScale":null,"walkTo":null},"schemaVersion":3,"settings":{"flight":{"groundAltitude":null,"pitchScale":1,"referenceFrameRate":20,"runMultiplier":3,"speedScale":1,"throttleFloorNotch":3,"turnScale":1},"message":{"charactersPerSecond":2,"holdSeconds":3},"scripts":{"instructionBudget":512,"timeScale":6}}}
 {"elapsed":0.016666666666666666,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":0}
 {"elapsed":0.033333333333333333,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":1}
 {"elapsed":0.050000000000000003,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":2}
@@ -4464,7 +4464,7 @@
 {"elapsed":74.366666666663733,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4461}
 {"elapsed":74.383333333330398,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4462}
 {"elapsed":74.399999999997064,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4463}
-{"elapsed":74.41666666666373,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4464}
+{"changed":{"message":"DO YOU WANT TO BUY?"},"elapsed":74.41666666666373,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4464}
 {"elapsed":74.433333333330395,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4465}
 {"elapsed":74.449999999997061,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4466}
 {"elapsed":74.466666666663727,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4467}
@@ -4639,118 +4639,118 @@
 {"elapsed":77.283333333330233,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4636}
 {"elapsed":77.299999999996899,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4637}
 {"elapsed":77.316666666663565,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4638}
-{"changed":{"credits":4000,"message":""},"elapsed":77.333333333330231,"events":[{"script":"keyAcknowledged"}],"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4639}
+{"elapsed":77.333333333330231,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4639}
 {"elapsed":77.349999999996896,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4640}
 {"elapsed":77.366666666663562,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4641}
 {"elapsed":77.383333333330228,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4642}
 {"elapsed":77.399999999996894,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4643}
-{"changed":{"message":"T"},"elapsed":77.416666666663559,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4644}
+{"changed":{"credits":4000,"message":""},"elapsed":77.416666666663559,"events":[{"script":"keyAcknowledged"}],"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4644}
 {"elapsed":77.433333333330225,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4645}
 {"elapsed":77.449999999996891,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4646}
 {"elapsed":77.466666666663556,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4647}
 {"elapsed":77.483333333330222,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4648}
-{"elapsed":77.499999999996888,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4649}
-{"changed":{"message":"TR"},"elapsed":77.516666666663554,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4650}
+{"changed":{"message":"T"},"elapsed":77.499999999996888,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4649}
+{"elapsed":77.516666666663554,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4650}
 {"elapsed":77.533333333330219,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4651}
 {"elapsed":77.549999999996885,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4652}
 {"elapsed":77.566666666663551,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4653}
-{"changed":{"message":"TRA"},"elapsed":77.583333333330216,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4654}
-{"elapsed":77.599999999996882,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4655}
+{"elapsed":77.583333333330216,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4654}
+{"changed":{"message":"TR"},"elapsed":77.599999999996882,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4655}
 {"elapsed":77.616666666663548,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4656}
 {"elapsed":77.633333333330214,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4657}
 {"elapsed":77.649999999996879,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4658}
-{"changed":{"message":"TRAN"},"elapsed":77.666666666663545,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4659}
+{"changed":{"message":"TRA"},"elapsed":77.666666666663545,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4659}
 {"elapsed":77.683333333330211,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4660}
 {"elapsed":77.699999999996876,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4661}
 {"elapsed":77.716666666663542,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4662}
 {"elapsed":77.733333333330208,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4663}
-{"changed":{"message":"TRANS"},"elapsed":77.749999999996874,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4664}
+{"changed":{"message":"TRAN"},"elapsed":77.749999999996874,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4664}
 {"elapsed":77.766666666663539,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4665}
 {"elapsed":77.783333333330205,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4666}
 {"elapsed":77.799999999996871,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4667}
 {"elapsed":77.816666666663536,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4668}
-{"changed":{"message":"TRANSA"},"elapsed":77.833333333330202,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4669}
+{"changed":{"message":"TRANS"},"elapsed":77.833333333330202,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4669}
 {"elapsed":77.849999999996868,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4670}
 {"elapsed":77.866666666663534,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4671}
 {"elapsed":77.883333333330199,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4672}
 {"elapsed":77.899999999996865,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4673}
-{"changed":{"message":"TRANSAC"},"elapsed":77.916666666663531,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4674}
+{"changed":{"message":"TRANSA"},"elapsed":77.916666666663531,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4674}
 {"elapsed":77.933333333330197,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4675}
 {"elapsed":77.949999999996862,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4676}
 {"elapsed":77.966666666663528,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4677}
 {"elapsed":77.983333333330194,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4678}
-{"changed":{"message":"TRANSACT"},"elapsed":77.999999999996859,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4679}
+{"changed":{"message":"TRANSAC"},"elapsed":77.999999999996859,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4679}
 {"elapsed":78.016666666663525,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4680}
 {"elapsed":78.033333333330191,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4681}
 {"elapsed":78.049999999996857,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4682}
 {"elapsed":78.066666666663522,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4683}
-{"changed":{"message":"TRANSACTI"},"elapsed":78.083333333330188,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4684}
+{"changed":{"message":"TRANSACT"},"elapsed":78.083333333330188,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4684}
 {"elapsed":78.099999999996854,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4685}
 {"elapsed":78.116666666663519,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4686}
 {"elapsed":78.133333333330185,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4687}
 {"elapsed":78.149999999996851,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4688}
-{"elapsed":78.166666666663517,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4689}
-{"changed":{"message":"TRANSACTIO"},"elapsed":78.183333333330182,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4690}
+{"changed":{"message":"TRANSACTI"},"elapsed":78.166666666663517,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4689}
+{"elapsed":78.183333333330182,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4690}
 {"elapsed":78.199999999996848,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4691}
 {"elapsed":78.216666666663514,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4692}
 {"elapsed":78.233333333330179,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4693}
 {"elapsed":78.249999999996845,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4694}
-{"changed":{"message":"TRANSACTION"},"elapsed":78.266666666663511,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4695}
+{"changed":{"message":"TRANSACTIO"},"elapsed":78.266666666663511,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4695}
 {"elapsed":78.283333333330177,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4696}
 {"elapsed":78.299999999996842,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4697}
 {"elapsed":78.316666666663508,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4698}
 {"elapsed":78.333333333330174,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4699}
-{"changed":{"message":"TRANSACTION "},"elapsed":78.34999999999684,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4700}
+{"changed":{"message":"TRANSACTION"},"elapsed":78.34999999999684,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4700}
 {"elapsed":78.366666666663505,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4701}
 {"elapsed":78.383333333330171,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4702}
 {"elapsed":78.399999999996837,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4703}
 {"elapsed":78.416666666663502,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4704}
-{"changed":{"message":"TRANSACTION C"},"elapsed":78.433333333330168,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4705}
+{"changed":{"message":"TRANSACTION "},"elapsed":78.433333333330168,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4705}
 {"elapsed":78.449999999996834,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4706}
 {"elapsed":78.4666666666635,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4707}
 {"elapsed":78.483333333330165,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4708}
 {"elapsed":78.499999999996831,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4709}
-{"changed":{"message":"TRANSACTION CO"},"elapsed":78.516666666663497,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4710}
+{"changed":{"message":"TRANSACTION C"},"elapsed":78.516666666663497,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4710}
 {"elapsed":78.533333333330162,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4711}
 {"elapsed":78.549999999996828,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4712}
 {"elapsed":78.566666666663494,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4713}
 {"elapsed":78.58333333333016,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4714}
-{"changed":{"message":"TRANSACTION COM"},"elapsed":78.599999999996825,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4715}
+{"changed":{"message":"TRANSACTION CO"},"elapsed":78.599999999996825,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4715}
 {"elapsed":78.616666666663491,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4716}
 {"elapsed":78.633333333330157,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4717}
 {"elapsed":78.649999999996822,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4718}
 {"elapsed":78.666666666663488,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4719}
-{"changed":{"message":"TRANSACTION COMP"},"elapsed":78.683333333330154,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4720}
+{"changed":{"message":"TRANSACTION COM"},"elapsed":78.683333333330154,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4720}
 {"elapsed":78.69999999999682,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4721}
 {"elapsed":78.716666666663485,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4722}
 {"elapsed":78.733333333330151,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4723}
 {"elapsed":78.749999999996817,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4724}
-{"changed":{"message":"TRANSACTION COMPL"},"elapsed":78.766666666663482,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4725}
+{"changed":{"message":"TRANSACTION COMP"},"elapsed":78.766666666663482,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4725}
 {"elapsed":78.783333333330148,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4726}
 {"elapsed":78.799999999996814,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4727}
 {"elapsed":78.81666666666348,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4728}
 {"elapsed":78.833333333330145,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4729}
-{"changed":{"message":"TRANSACTION COMPLE"},"elapsed":78.849999999996811,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4730}
+{"changed":{"message":"TRANSACTION COMPL"},"elapsed":78.849999999996811,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4730}
 {"elapsed":78.866666666663477,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4731}
 {"elapsed":78.883333333330143,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4732}
 {"elapsed":78.899999999996808,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4733}
 {"elapsed":78.916666666663474,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4734}
-{"changed":{"message":"TRANSACTION COMPLET"},"elapsed":78.93333333333014,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4735}
+{"changed":{"message":"TRANSACTION COMPLE"},"elapsed":78.93333333333014,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4735}
 {"elapsed":78.949999999996805,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4736}
 {"elapsed":78.966666666663471,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4737}
 {"elapsed":78.983333333330137,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4738}
 {"elapsed":78.999999999996803,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4739}
-{"changed":{"message":"TRANSACTION COMPLETE"},"elapsed":79.016666666663468,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4740}
+{"changed":{"message":"TRANSACTION COMPLET"},"elapsed":79.016666666663468,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4740}
 {"elapsed":79.033333333330134,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4741}
 {"elapsed":79.0499999999968,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4742}
 {"elapsed":79.066666666663465,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4743}
 {"elapsed":79.083333333330131,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4744}
-{"changed":{"message":"TRANSACTION COMPLETED"},"elapsed":79.099999999996797,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4745}
+{"changed":{"message":"TRANSACTION COMPLETE"},"elapsed":79.099999999996797,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4745}
 {"elapsed":79.116666666663463,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4746}
 {"elapsed":79.133333333330128,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4747}
 {"elapsed":79.149999999996794,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4748}
 {"elapsed":79.16666666666346,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4749}
-{"elapsed":79.183333333330125,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4750}
+{"changed":{"message":"TRANSACTION COMPLETED"},"elapsed":79.183333333330125,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4750}
 {"elapsed":79.199999999996791,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4751}
 {"elapsed":79.216666666663457,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4752}
 {"elapsed":79.233333333330123,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4753}
@@ -4925,118 +4925,118 @@
 {"elapsed":82.049999999996629,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4922}
 {"elapsed":82.066666666663295,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4923}
 {"elapsed":82.083333333329961,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4924}
-{"changed":{"message":""},"elapsed":82.099999999996626,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4925}
+{"elapsed":82.099999999996626,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4925}
 {"elapsed":82.116666666663292,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4926}
 {"elapsed":82.133333333329958,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4927}
 {"elapsed":82.149999999996624,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4928}
 {"elapsed":82.166666666663289,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4929}
-{"changed":{"message":"Y"},"elapsed":82.183333333329955,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4930}
+{"changed":{"message":""},"elapsed":82.183333333329955,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4930}
 {"elapsed":82.199999999996621,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4931}
 {"elapsed":82.216666666663286,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4932}
 {"elapsed":82.233333333329952,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4933}
 {"elapsed":82.249999999996618,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4934}
-{"elapsed":82.266666666663284,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4935}
-{"changed":{"message":"YO"},"elapsed":82.283333333329949,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4936}
+{"changed":{"message":"Y"},"elapsed":82.266666666663284,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4935}
+{"elapsed":82.283333333329949,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4936}
 {"elapsed":82.299999999996615,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4937}
 {"elapsed":82.316666666663281,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4938}
 {"elapsed":82.333333333329946,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4939}
-{"changed":{"message":"YOU"},"elapsed":82.349999999996612,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4940}
-{"elapsed":82.366666666663278,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4941}
+{"elapsed":82.349999999996612,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4940}
+{"changed":{"message":"YO"},"elapsed":82.366666666663278,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4941}
 {"elapsed":82.383333333329944,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4942}
 {"elapsed":82.399999999996609,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4943}
 {"elapsed":82.416666666663275,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4944}
-{"changed":{"message":"YOU "},"elapsed":82.433333333329941,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4945}
+{"changed":{"message":"YOU"},"elapsed":82.433333333329941,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4945}
 {"elapsed":82.449999999996606,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4946}
 {"elapsed":82.466666666663272,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4947}
 {"elapsed":82.483333333329938,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4948}
 {"elapsed":82.499999999996604,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4949}
-{"changed":{"message":"YOU H"},"elapsed":82.516666666663269,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4950}
+{"changed":{"message":"YOU "},"elapsed":82.516666666663269,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4950}
 {"elapsed":82.533333333329935,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4951}
 {"elapsed":82.549999999996601,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4952}
 {"elapsed":82.566666666663266,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4953}
 {"elapsed":82.583333333329932,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4954}
-{"changed":{"message":"YOU HA"},"elapsed":82.599999999996598,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4955}
+{"changed":{"message":"YOU H"},"elapsed":82.599999999996598,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4955}
 {"elapsed":82.616666666663264,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4956}
 {"elapsed":82.633333333329929,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4957}
 {"elapsed":82.649999999996595,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4958}
 {"elapsed":82.666666666663261,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4959}
-{"changed":{"message":"YOU HAV"},"elapsed":82.683333333329927,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4960}
+{"changed":{"message":"YOU HA"},"elapsed":82.683333333329927,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4960}
 {"elapsed":82.699999999996592,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4961}
 {"elapsed":82.716666666663258,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4962}
 {"elapsed":82.733333333329924,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4963}
 {"elapsed":82.749999999996589,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4964}
-{"changed":{"message":"YOU HAVE"},"elapsed":82.766666666663255,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4965}
+{"changed":{"message":"YOU HAV"},"elapsed":82.766666666663255,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4965}
 {"elapsed":82.783333333329921,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4966}
 {"elapsed":82.799999999996587,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4967}
 {"elapsed":82.816666666663252,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4968}
 {"elapsed":82.833333333329918,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4969}
-{"changed":{"message":"YOU HAVE "},"elapsed":82.849999999996584,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4970}
+{"changed":{"message":"YOU HAVE"},"elapsed":82.849999999996584,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4970}
 {"elapsed":82.866666666663249,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4971}
 {"elapsed":82.883333333329915,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4972}
 {"elapsed":82.899999999996581,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4973}
 {"elapsed":82.916666666663247,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4974}
-{"elapsed":82.933333333329912,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4975}
-{"changed":{"message":"YOU HAVE 4"},"elapsed":82.949999999996578,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4976}
+{"changed":{"message":"YOU HAVE "},"elapsed":82.933333333329912,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4975}
+{"elapsed":82.949999999996578,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4976}
 {"elapsed":82.966666666663244,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4977}
 {"elapsed":82.983333333329909,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4978}
 {"elapsed":82.999999999996575,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4979}
 {"elapsed":83.016666666663241,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4980}
-{"changed":{"message":"YOU HAVE 40"},"elapsed":83.033333333329907,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4981}
+{"changed":{"message":"YOU HAVE 4"},"elapsed":83.033333333329907,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4981}
 {"elapsed":83.049999999996572,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4982}
 {"elapsed":83.066666666663238,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4983}
 {"elapsed":83.083333333329904,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4984}
 {"elapsed":83.099999999996569,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4985}
-{"changed":{"message":"YOU HAVE 400"},"elapsed":83.116666666663235,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4986}
+{"changed":{"message":"YOU HAVE 40"},"elapsed":83.116666666663235,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4986}
 {"elapsed":83.133333333329901,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4987}
 {"elapsed":83.149999999996567,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4988}
 {"elapsed":83.166666666663232,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4989}
 {"elapsed":83.183333333329898,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4990}
-{"changed":{"message":"YOU HAVE 4000"},"elapsed":83.199999999996564,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4991}
+{"changed":{"message":"YOU HAVE 400"},"elapsed":83.199999999996564,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4991}
 {"elapsed":83.21666666666323,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4992}
 {"elapsed":83.233333333329895,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4993}
 {"elapsed":83.249999999996561,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4994}
 {"elapsed":83.266666666663227,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4995}
-{"changed":{"message":"YOU HAVE 4000 "},"elapsed":83.283333333329892,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4996}
+{"changed":{"message":"YOU HAVE 4000"},"elapsed":83.283333333329892,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4996}
 {"elapsed":83.299999999996558,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4997}
 {"elapsed":83.316666666663224,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4998}
 {"elapsed":83.33333333332989,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":4999}
 {"elapsed":83.349999999996555,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5000}
-{"changed":{"message":"YOU HAVE 4000 C"},"elapsed":83.366666666663221,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5001}
+{"changed":{"message":"YOU HAVE 4000 "},"elapsed":83.366666666663221,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5001}
 {"elapsed":83.383333333329887,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5002}
 {"elapsed":83.399999999996552,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5003}
 {"elapsed":83.416666666663218,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5004}
 {"elapsed":83.433333333329884,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5005}
-{"changed":{"message":"YOU HAVE 4000 CR"},"elapsed":83.44999999999655,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5006}
+{"changed":{"message":"YOU HAVE 4000 C"},"elapsed":83.44999999999655,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5006}
 {"elapsed":83.466666666663215,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5007}
 {"elapsed":83.483333333329881,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5008}
 {"elapsed":83.499999999996547,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5009}
 {"elapsed":83.516666666663212,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5010}
-{"changed":{"message":"YOU HAVE 4000 CRE"},"elapsed":83.533333333329878,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5011}
+{"changed":{"message":"YOU HAVE 4000 CR"},"elapsed":83.533333333329878,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5011}
 {"elapsed":83.549999999996544,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5012}
 {"elapsed":83.56666666666321,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5013}
 {"elapsed":83.583333333329875,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5014}
 {"elapsed":83.599999999996541,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5015}
-{"changed":{"message":"YOU HAVE 4000 CRED"},"elapsed":83.616666666663207,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5016}
+{"changed":{"message":"YOU HAVE 4000 CRE"},"elapsed":83.616666666663207,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5016}
 {"elapsed":83.633333333329873,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5017}
 {"elapsed":83.649999999996538,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5018}
 {"elapsed":83.666666666663204,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5019}
 {"elapsed":83.68333333332987,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5020}
-{"changed":{"message":"YOU HAVE 4000 CREDI"},"elapsed":83.699999999996535,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5021}
+{"changed":{"message":"YOU HAVE 4000 CRED"},"elapsed":83.699999999996535,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5021}
 {"elapsed":83.716666666663201,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5022}
 {"elapsed":83.733333333329867,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5023}
 {"elapsed":83.749999999996533,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5024}
 {"elapsed":83.766666666663198,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5025}
-{"changed":{"message":"YOU HAVE 4000 CREDIT"},"elapsed":83.783333333329864,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5026}
+{"changed":{"message":"YOU HAVE 4000 CREDI"},"elapsed":83.783333333329864,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5026}
 {"elapsed":83.79999999999653,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5027}
 {"elapsed":83.816666666663195,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5028}
 {"elapsed":83.833333333329861,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5029}
 {"elapsed":83.849999999996527,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5030}
-{"changed":{"message":"YOU HAVE 4000 CREDITS"},"elapsed":83.866666666663193,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5031}
+{"changed":{"message":"YOU HAVE 4000 CREDIT"},"elapsed":83.866666666663193,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5031}
 {"elapsed":83.883333333329858,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5032}
 {"elapsed":83.899999999996524,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5033}
 {"elapsed":83.91666666666319,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5034}
 {"elapsed":83.933333333329855,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5035}
-{"elapsed":83.949999999996521,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5036}
+{"changed":{"message":"YOU HAVE 4000 CREDITS"},"elapsed":83.949999999996521,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5036}
 {"elapsed":83.966666666663187,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5037}
 {"elapsed":83.983333333329853,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5038}
 {"elapsed":83.999999999996518,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5039}
@@ -5211,12 +5211,12 @@
 {"elapsed":86.816666666663025,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5208}
 {"elapsed":86.833333333329691,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5209}
 {"elapsed":86.849999999996356,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5210}
-{"changed":{"message":""},"elapsed":86.866666666663022,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5211}
+{"elapsed":86.866666666663022,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5211}
 {"elapsed":86.883333333329688,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5212}
 {"elapsed":86.899999999996353,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5213}
 {"elapsed":86.916666666663019,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5214}
 {"elapsed":86.933333333329685,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5215}
-{"elapsed":86.949999999996351,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5216}
+{"changed":{"message":""},"elapsed":86.949999999996351,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5216}
 {"elapsed":86.966666666663016,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5217}
 {"elapsed":86.983333333329682,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5218}
 {"elapsed":86.999999999996348,"input":{"pitch":0,"running":false,"turn":0,"walk":0},"step":5219}

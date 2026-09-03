@@ -125,7 +125,9 @@ describe('the prison', () => {
     route.advance(30);
     const after = route.session.observations().observations;
 
-    expect(after['messageText']).toContain('PRISON');
+    expect(route.session.snapshot.bensonMessage?.completedText).toContain(
+      'PRISON'
+    );
     expect(after['credits']).toBe(before['credits'] as number);
     expect(after['carriedStack']).toBe(before['carriedStack'] as string);
     // The script-running latch is the only engine flag it touches, and it

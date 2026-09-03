@@ -107,7 +107,7 @@ export const panelViewModel = (
       snapshot.location.kind === 'room'
         ? locationText(snapshot.location)
         : 'TARG',
-    message: snapshot.bensonMessage?.visibleText ?? '',
+    message: snapshot.bensonMessage?.displayText ?? '',
     runLamp: !aboard && player.speed !== 0,
     speed: `${speed < 0 ? '-' : '+'}${digits(speed, 4)}`,
     speedLabel: `${speed < 0 ? '-' : '+'} 000 000 ${digits(speed, 3)}`

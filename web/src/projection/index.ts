@@ -131,6 +131,62 @@ export const viewportCentre = (size: Size): Point => ({
   y: size.height / 2
 });
 
+/// The centred physical Reference Viewport in view pixels.
+export const referenceViewportBounds = (size: Size): Rect => {
+  const scale = viewportScale(size);
+  const width = ReferenceViewport.width * scale;
+  const height = ReferenceViewport.height * scale;
+  return {
+    height,
+    width,
+    x: (size.width - width) / 2,
+    y: (size.height - height) / 2
+  };
+};
+
+export type ProjectionLineMode = 'clipped' | 'unclipped';
+
+/// Liang-Barsky clipping keeps one parametric interval and therefore preserves endpoint order.
+const clippedToRect = (
+  first: Point,
+  second: Point,
+  rect: Rect
+): readonly [Point, Point] | undefined => {
+  const dx = second.x - first.x;
+  const dy = second.y - first.y;
+  const interval = { entering: 0, leaving: 1 };
+  const constrain = (direction: number, distance: number): boolean => {
+    if (direction === 0) {
+      return distance >= 0;
+    }
+    const ratio = distance / direction;
+    if (direction < 0) {
+      interval.entering = Math.max(interval.entering, ratio);
+    } else {
+      interval.leaving = Math.min(interval.leaving, ratio);
+    }
+    return interval.entering <= interval.leaving;
+  };
+  if (
+    !constrain(-dx, first.x - rect.x) ||
+    !constrain(dx, rect.x + rect.width - first.x) ||
+    !constrain(-dy, first.y - rect.y) ||
+    !constrain(dy, rect.y + rect.height - first.y)
+  ) {
+    return undefined;
+  }
+  return [
+    {
+      x: first.x + interval.entering * dx,
+      y: first.y + interval.entering * dy
+    },
+    {
+      x: first.x + interval.leaving * dx,
+      y: first.y + interval.leaving * dy
+    }
+  ];
+};
+
 export const horizontalFocalLength = (size: Size): number =>
   ReferenceViewport.focalPixels *
   ReferenceViewport.horizontalPixelScale *
@@ -317,7 +373,11 @@ export class Camera {
   }
 
   /// Project one world segment, or undefined when it is clipped away entirely.
-  projectSegment(segment: Segment, size: Size): ScreenLine | undefined {
+  projectSegment(
+    segment: Segment,
+    size: Size,
+    mode: ProjectionLineMode = 'clipped'
+  ): ScreenLine | undefined {
     const a = this.viewSpace(segment.a);
     const b = this.viewSpace(segment.b);
     if (!(a.z <= this.farPlane || b.z <= this.farPlane)) {
@@ -327,8 +387,8 @@ export class Camera {
     if (clipped === undefined) {
       return undefined;
     }
-    const first = this.project(clipped[0], size);
-    const second = this.project(clipped[1], size);
+    let first = this.project(clipped[0], size);
+    let second = this.project(clipped[1], size);
     if (
       !Number.isFinite(first.x) ||
       !Number.isFinite(first.y) ||
@@ -336,6 +396,17 @@ export class Camera {
       !Number.isFinite(second.y)
     ) {
       return undefined;
+    }
+    if (mode === 'clipped') {
+      const screen = clippedToRect(
+        first,
+        second,
+        referenceViewportBounds(size)
+      );
+      if (screen === undefined) {
+        return undefined;
+      }
+      [first, second] = screen;
     }
     // The one narrowing. `ScreenLine` is `Float` in the kit, and this is where it becomes one.
     return {
@@ -577,18 +648,19 @@ export const visible = (
 export const projectFrame = (
   camera: Camera,
   seen: Visible,
-  size: Size
+  size: Size,
+  lineMode: ProjectionLineMode = 'clipped'
 ): { distant: DistantScreenLine[]; lines: ScreenLine[]; points: Point[] } => {
   const distant: DistantScreenLine[] = [];
   for (const segment of seen.distant) {
-    const line = camera.projectSegment(segment, size);
+    const line = camera.projectSegment(segment, size, lineMode);
     if (line !== undefined) {
       distant.push({ ...line, distance: segment.distance });
     }
   }
   const lines: ScreenLine[] = [];
   for (const segment of seen.segments) {
-    const line = camera.projectSegment(segment, size);
+    const line = camera.projectSegment(segment, size, lineMode);
     if (line !== undefined) {
       lines.push(line);
     }

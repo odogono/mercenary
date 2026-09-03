@@ -82,7 +82,7 @@ export type Composition = "panel" | "strip";
   supplied alongside at install time and rebuilt in the load-restore callback; it is not a
   Snapshot extension.
 - Targ rendition mapping: elevation←pitch, LOCATION←position/cellSize grid (ROOM nn
-  underground), ALTITUDE←position.y, SPEED signed, message box + `BENSON G9-ST` caption,
+  underground), ALTITUDE←position.y, SPEED signed, the shared 23-cell Benson Display + `BENSON G9-ST` caption,
   COMPASS←heading; lamps←touchdown / run mode.
 - Damocles rendition: same data in Damocles dressing — inventory window←carried residence
   entries (names via the context map), cash←credits, clock←Targ time-of-day from elapsed;
@@ -188,7 +188,7 @@ export type Composition = "panel" | "strip";
   dot pairs; the Damocles elevation gauge keeps the sky/ground split in muted tints). The
   Damocles nav cluster's rows flex to fill its height.
 - **Console confirm wording**: `save <n> confirm` for occupied slots.
-- **Pause scope**: the System Menu pauses presentation ticking (message reveal, orrery
+- **Pause scope**: the System Menu pauses presentation ticking (Benson Display cadence, orrery
   clock) as well as simulation stepping — the whole frame freezes, as mocked.
 - **Widget copy**: `BENSON G9-ST` caption; Damocles nav order name/speed then
   coords/altitude/heading; clock format `HH-MM-SS`.

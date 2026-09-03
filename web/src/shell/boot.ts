@@ -225,7 +225,7 @@ try {
     const scripts = scriptsOf();
     return ArrivalDirector.entryFor(
       milestones,
-      scripts.ticker?.text,
+      scripts.activeMessageText,
       withinOpeningScript(scripts.program, scripts.state.pc)
     );
   };
@@ -239,7 +239,7 @@ try {
           snapshot = session.advance(seconds).snapshot;
           checkpointChangedResume(false);
         },
-        playingMessage: () => session.scripts?.ticker?.text,
+        playingMessage: () => session.scripts?.activeMessageText,
         setPacing: choice => {
           scriptsOf().tunables =
             choice === 'arrival'
@@ -662,7 +662,7 @@ try {
 
     recordBensonMessage();
     const saveMessage = persistence.message(
-      snapshot.bensonMessage?.visibleText ?? ''
+      snapshot.bensonMessage?.displayText ?? ''
     );
     // A Save's own notice still comes first; the Arrival's narration then takes the line ahead
     // of a resume notice, which will still be there to show when the opening is over.

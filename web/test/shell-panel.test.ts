@@ -34,6 +34,23 @@ const snapshotOf = (
 };
 
 describe('the Benson Panel view model', () => {
+  test('hands the exact fixed-cell Benson Display to both renditions', () => {
+    const displayText = ' '.repeat(7) + 'BENSON' + ' '.repeat(10);
+    const model = panelViewModel(
+      snapshotOf({
+        bensonMessage: {
+          displayText,
+          occurrence: {},
+          reveal: { complete: false, progress: 6 }
+        }
+      }),
+      context()
+    );
+
+    expect(model.message).toBe(displayText);
+    expect(model.message).toHaveLength(23);
+  });
+
   test('reads the surface as a two-digit grid reference', () => {
     const model = panelViewModel(snapshotOf(), context());
 

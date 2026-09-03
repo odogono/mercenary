@@ -54,7 +54,7 @@ const harness = (from: Settings = settings): Harness => {
     advance: seconds => {
       session.advance(seconds);
     },
-    playingMessage: () => session.scripts?.ticker?.text,
+    playingMessage: () => session.scripts?.activeMessageText,
     setPacing: choice => {
       pacingChoices.push(choice);
       session.scripts!.tunables =
@@ -130,12 +130,19 @@ describe('the Arrival', () => {
     const live = harness();
 
     expect(live.session.snapshot.isScriptRunning).toBeTrue();
-    expect(live.session.snapshot.bensonMessage).toBeUndefined();
+    const idleDisplay = live.session.snapshot.bensonMessage;
+    expect(idleDisplay?.displayText).toBe(' '.repeat(23));
+    expect(idleDisplay?.completedText).toBeUndefined();
     for (let step = 0; step < 60; step += 1) {
       live.director.step(STEP);
     }
     expect(live.director.current().kind).toBe('titleCard');
-    expect(live.session.snapshot.bensonMessage).toBeUndefined();
+    expect(live.session.snapshot.bensonMessage?.displayText).toBe(
+      ' '.repeat(23)
+    );
+    expect(live.session.snapshot.bensonMessage?.occurrence).toBe(
+      idleDisplay?.occurrence
+    );
     expect(live.session.captureSaveSnapshot().benson?.state.pc).not.toBeNull();
   });
 
@@ -264,7 +271,9 @@ describe('the Arrival', () => {
     });
     expect(snapshot.credits).toBe(9000);
     // The status report has begun rather than been read: the join is the moment it starts.
-    expect(skipped.session.scripts?.ticker?.text).toBe(milestones.statusReport);
+    expect(skipped.session.scripts?.activeMessageText).toBe(
+      milestones.statusReport
+    );
   });
 
   test('skipping a finished Arrival does nothing', () => {
@@ -328,7 +337,7 @@ describe('an Arrival entered from a restored session', () => {
         advance: seconds => {
           session.advance(seconds);
         },
-        playingMessage: () => session.scripts?.ticker?.text,
+        playingMessage: () => session.scripts?.activeMessageText,
         setPacing: () => {}
       },
       entry: { beat: 'crashImminent', kind: 'resumed' },

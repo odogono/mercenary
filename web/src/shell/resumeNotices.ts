@@ -72,7 +72,7 @@ export const createSessionResumeNotices = (
         notice = undefined;
       }
       return notice === undefined
-        ? { source: 'game', text: message?.visibleText ?? '' }
+        ? { source: 'game', text: message?.displayText ?? '' }
         : { source: 'shell', text: notice.text };
     },
     ownership: text => {

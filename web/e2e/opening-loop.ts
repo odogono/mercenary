@@ -46,7 +46,7 @@ try {
   const trace = parseTrace(traceText, 'session', TRACE_ID);
   const expected = foldStates(trace);
   const settings = requiredSettings(settingsText);
-  const initial = createWalkabout(bundle, settings);
+  const initial = createWalkabout(bundle, settings, undefined, 'legacyOracle');
   let session = initial.session;
   const legacyRoom255Slots = traceOracleRoom255Slots(session.content.objects);
   const { world } = initial;
@@ -74,7 +74,7 @@ try {
       snapshot: before
     });
     slots.write(slot, encoded);
-    session = createWalkabout(bundle, settings, before).session;
+    session = createWalkabout(bundle, settings, before, 'legacyOracle').session;
     const restored = encodeSave({
       environment,
       location: session.location,

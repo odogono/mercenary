@@ -42,6 +42,11 @@ In-range splits are unchanged, including the airstrip in Surface Cell 8:8, whose
   perspective scale of 64 reference pixels. The Y path adds one more exponent
   step before division, giving a vertical scale of 128. These are decoded
   Reference Build behaviour, not visual tuning.
+- **Reference Viewport clipping.** A deterministic parametric clip now trims
+  ordinary and Distant Structure lines to the centred, scaled physical playfield
+  before their one binary32 narrowing. Wholly outside lines disappear; Far Points
+  keep their independent handling. The Projection Replay Gate explicitly selects
+  the old unclipped oracle mode so its accepted arithmetic and ordering remain useful.
 - **Parked instances.** Instances outside the world grid are no longer drawn. All
   64 remain inspectable.
 - **Grid aliasing.** `World.cell(column:row:)` packed its key without range
@@ -94,6 +99,11 @@ its cell. The former three-by-three ring remains only as an explicit Trace Oracl
 rule so its six projection Golden Traces continue to grade arithmetic and order;
 it is no longer production behaviour.
 
+The related surface presentation follow-ups are complete rather than remaining
+work for #111: #149 corrected `$FF` structure Ink, #150 recovered surface
+selection, #151 restored the slot-0 patrol's Far Point, and #152 made building
+reach a presentation setting while retaining the Reference Build default.
+
 ## Roads and the cell 8:8 airstrip
 
 A capture of the original at the interactive checkpoint reads `LOCA 08-08` with
@@ -126,15 +136,12 @@ separate horizon stroke: the boundary is formed by adjacent sky and ground fills
 This is explicitly Atari ST-inspired presentation, not a decoded C64 colour
 claim.
 
-## Still open
+## Resolved: the streaks were unclipped projected lines
 
-- **The streaks are not roads.** Long lines radiating across the view survived
-  road culling entirely, and every cell's vertices were confirmed inside its own
-  cell, so neither roads nor misplaced geometry explains them. The remaining candidate
-  is pipeline step 6 — the original clips lines to the **viewport borders**, which
-  this renderer does not do; it clips only to the near plane, so a segment passing
-  close to the camera projects to enormous coordinates. Standing inside a
-  structure, with no collision, also contributes.
+Long lines radiating across the view survived road culling because a segment near
+the camera projected far beyond the playfield and the browser submitted it without
+the Reference Build's border clip. Reference Viewport clipping removes those
+streaks without changing the source geometry, Ink, traversal order, or Far Points.
 
 ## Corrected: rotated structure displacements are ×64, not ×16
 

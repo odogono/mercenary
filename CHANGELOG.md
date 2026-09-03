@@ -66,6 +66,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Ordinary and Distant Structure lines are now clipped to the centred, scaled Reference
+  Viewport before binary32 narrowing, removing the near-camera streaks while leaving Far Points
+  unchanged. Production uses the recovered clip; the Projection Replay Gate explicitly retains
+  the frozen unclipped oracle mode.
+- Benson Messages now traverse one persistent 23-cell Benson Display from right to left in the
+  recovered 25-frame bursts and `$E1` pauses, including the endgame interval of 150. Both Panel
+  Renditions and the communications strip show the same cells; Arrival Narration and Browser
+  Shell notices remain separate overlays. The old message reveal-rate setting is gone, Save
+  schema 9 stores the display continuation, and schema-8 Saves and Session Resume records are
+  refused. Replay Gates alone can select the frozen progressive ticker.
+- Geometry decoder 9 resolves `$0E` as `.` and `$6D` as `?`, completing `NO. O-9 ?` and leaving
+  no unresolved character codes in the Data Payload. All Golden Traces were re-emitted and
+  verified from the frozen Trace Oracle with only its permitted decoder-version pin changed.
+
 - The Palyar commander's related craft (slot 0) now crosses the landscape at
   the Reference Build's constant speed instead of remaining at its payload
   origin. The guarded decoder recovers the outdoor main-loop update as a

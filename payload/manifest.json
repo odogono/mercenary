@@ -31,19 +31,19 @@
     "rotatedStructures": 13,
     "surfaceEdges": 9667,
     "surfaceVertices": 7004,
-    "text.distinctWords": 160,
+    "text.distinctWords": 161,
     "text.messages": 64,
     "text.referencedWords": 64,
     "text.wordSlots": 239,
     "underground.undergroundEntrances": 5,
     "unresolvedArrivals": 1
   },
-  "decoderVersion": 8,
+  "decoderVersion": 9,
   "files": [
     {
       "path": "benson.json",
-      "sha256": "b56dd1525b17859716ae2bfc6809b8c6e30c21afebfd7f162341dd8a79b518be",
-      "size": 35606
+      "sha256": "bfc34b2cec2c18206d4b51a9b5bf1c36dd83faac076ce2486af43dff5bbc4d12",
+      "size": 35608
     },
     {
       "path": "endgame.json",
@@ -77,8 +77,8 @@
     },
     {
       "path": "text.json",
-      "sha256": "5251e77cc9efe8f55155f407c9581313639908512f8e0a19c2635cb98996028f",
-      "size": 31428
+      "sha256": "3cbe2a34ea4765de12106e25a995dabad53fc14189e103b001ddaf54792369b7",
+      "size": 31581
     },
     {
       "path": "underground.json",
@@ -92,6 +92,6 @@
     }
   ],
   "schemaVersion": 8,
-  "sourceCoreDigest": "75c5c12dca266ad084b181bf492c934556474cf0fbf1c5a423d75d0b363974cd",
-  "sourceDatasetId": "world-geometry-75c5c12dca266ad0"
+  "sourceCoreDigest": "ac0d654fb1b733f51a9606ba59b74dbadf1ef4139f6661bee3640aff8cf702dd",
+  "sourceDatasetId": "world-geometry-ac0d654fb1b733f5"
 }

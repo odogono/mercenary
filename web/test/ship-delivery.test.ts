@@ -19,7 +19,7 @@ const justHired = async (): Promise<LegalRoute> => {
   );
   route.session.carry(30);
   route.session.teleport(room(16));
-  route.advance(20);
+  route.waitForMessage('DO YOU WANT TO HIRE?');
   route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
   // Stops the moment the script writes its state and before the descent has
   // consumed it. There is room to do that because a hundredth of a second is a
@@ -208,7 +208,7 @@ describe('a ship that was never hired', () => {
     );
     route.session.carry(30);
     route.session.teleport(room(16));
-    route.advance(20);
+    route.waitForMessage('DO YOU WANT TO HIRE?');
     route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
     route.advance(60);
 

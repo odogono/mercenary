@@ -34,31 +34,18 @@ const OPTIONAL_EPILOGUE = 0x20;
 /// revealed prefix is not a Message, and two identical lines are two occurrences.
 const revealed = (route: LegalRoute, quarters: number): string[] => {
   const lines: string[] = [];
-  // A line counts once it has stopped growing — the hold the Reference Build
-  // keeps a finished Message on screen for. A prefix that is replaced while
-  // still revealing was never a Message and is not recorded as one.
-  let previous = '';
-  let held: string | undefined;
-  const close = (): void => {
-    if (held !== undefined) {
-      lines.push(held);
-      held = undefined;
-    }
-  };
+  let recorded: object | undefined;
   for (let quarter = 0; quarter < quarters; quarter++) {
     route.advance(0.25);
-    const text = String(
-      route.session.observations().observations['messageText']
-    );
-    if (text === '' || !text.startsWith(previous)) {
-      close();
+    const message = route.session.snapshot.bensonMessage;
+    if (
+      message?.completedText !== undefined &&
+      message.occurrence !== recorded
+    ) {
+      lines.push(message.completedText);
+      recorded = message.occurrence;
     }
-    if (text !== '' && text === previous) {
-      held = text;
-    }
-    previous = text;
   }
-  close();
   return lines;
 };
 
@@ -129,7 +116,7 @@ const deliveredShip = async (): Promise<LegalRoute> => {
   );
   route.session.carry(ANTENNA);
   route.session.teleport(room(RENTAL_ROOM));
-  route.advance(20);
+  route.waitForMessage('DO YOU WANT TO HIRE?');
   route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
   route.advance(30);
   expect(
@@ -537,6 +524,7 @@ describe('after the dispatch', () => {
       'THE AUTHOR SENDS YOU',
       'CONGRATULATIONS ON YOUR',
       'ESCAPE FROM TARG',
+      '',
       'SAVE OUT THE STATUS AND',
       'SEE YOU IN MERCENARY II',
       'GAME OVER'
@@ -554,16 +542,17 @@ describe('after the dispatch', () => {
 
     const sounds: string[] = [];
     let labels = 0;
-    let last = '';
+    let lastOccurrence: object | undefined;
     for (let quarter = 0; quarter < 300; quarter++) {
       const { events } = route.session.advance(0.25);
-      const text = String(
-        route.session.observations().observations['messageText']
-      );
-      if (text === 'GAME OVER' && last !== 'GAME OVER') {
+      const message = route.session.snapshot.bensonMessage;
+      if (
+        message?.completedText === 'GAME OVER' &&
+        message.occurrence !== lastOccurrence
+      ) {
         labels++;
+        lastOccurrence = message.occurrence;
       }
-      last = text;
       for (const event of events) {
         if (typeof event === 'object' && 'script' in event) {
           const effect = event.script;

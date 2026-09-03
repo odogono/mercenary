@@ -711,7 +711,8 @@ export class GameplaySession {
             scripts.program,
             scripts.text,
             scripts.tunables,
-            snapshot.benson
+            snapshot.benson,
+            scripts.messageMode
           );
     const session = new GameplaySession(
       content,
@@ -1512,7 +1513,8 @@ export class GameplaySession {
           this.scripts.program,
           this.scripts.text,
           this.scripts.tunables,
-          before
+          before,
+          this.scripts.messageMode
         );
         this.republishHostState();
         throw error;

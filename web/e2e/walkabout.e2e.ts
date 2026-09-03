@@ -126,6 +126,30 @@ test('the Benson Panel is the default composition and tracks the session', async
   });
 });
 
+test('every Benson surface renders the same fixed 23-cell display', async ({
+  page
+}) => {
+  await page.goto('/');
+  await skipArrival(page);
+  await expect(page.locator('#message')).toHaveAttribute('data-source', 'game');
+
+  // Pause on one recovered display frame so the live scroll cannot advance
+  // between reading the three independently rendered surfaces.
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-layer',
+    'menu'
+  );
+  const displays = await page.evaluate(() => [
+    document.querySelector('#message')!.textContent,
+    document.querySelector('#panel-message')!.textContent,
+    document.querySelector('#damocles-message')!.textContent
+  ]);
+  expect(displays[0]).toBe(displays[1]);
+  expect(displays[0]).toBe(displays[2]);
+  expect([...displays[0]!]).toHaveLength(23);
+});
+
 test('neither rendition overflows the frame it is drawn in', async ({
   page
 }) => {
@@ -255,7 +279,7 @@ test('Authentic preserves the pinned initial canvas pixels', async ({
   });
 
   expect(digest).toBe(
-    '98337982b60f95eba8f3389907a1e238cf9bac7050e70554b58dec9ca7771991'
+    'ec472a1b5c66df6d0a028700755f82549b936119e4cb183bc5e263e71baa705d'
   );
 });
 
@@ -950,7 +974,7 @@ test('the settings page changes Structure Reach live and persists it', async ({
   await expect(all).toHaveAttribute('aria-pressed', 'true');
   await expect
     .poll(async () => Number(await canvas.getAttribute('data-lines')))
-    .toBe(4128);
+    .toBe(2427);
   expect(Number(await canvas.getAttribute('data-lines'))).toBeGreaterThan(
     cellLines
   );

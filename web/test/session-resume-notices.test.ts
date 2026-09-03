@@ -4,15 +4,15 @@ import type { BensonMessagePresentation } from '../src/benson/index.ts';
 import { createSessionResumeNotices } from '../src/shell/resumeNotices.ts';
 
 const message = (
-  visibleText: string,
+  displayText: string,
   occurrence: object = {},
   complete = false,
   progress = 1
 ): BensonMessagePresentation => ({
-  ...(complete ? { completedText: visibleText } : {}),
+  ...(complete ? { completedText: displayText } : {}),
+  displayText,
   occurrence,
-  reveal: { complete, progress },
-  visibleText
+  reveal: { complete, progress }
 });
 
 describe('Session Resume notices on the Benson message line', () => {

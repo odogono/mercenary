@@ -1,4 +1,3 @@
-import type { MessageTickerSaveSnapshot } from '../session/save.ts';
 import { BensonHostState } from './host.ts';
 
 /// Unicode scalar count, not UTF-16 units and not grapheme clusters.
@@ -90,24 +89,13 @@ export class MessageTicker {
     this.held = this.holdSeconds;
   }
 
-  captureSaveSnapshot(): MessageTickerSaveSnapshot {
-    return {
-      charactersPerSecond: this.charactersPerSecond,
-      held: this.held,
-      holdSeconds: this.holdSeconds,
-      revealed: this.revealed,
-      text: this.text
-    };
+  /// Test-only continuation state for the frozen progressive replay oracle.
+  get holdProgress(): number {
+    return this.held;
   }
 
-  static restore(snapshot: MessageTickerSaveSnapshot): MessageTicker {
-    const ticker = new MessageTicker(
-      snapshot.text,
-      snapshot.charactersPerSecond,
-      snapshot.holdSeconds
-    );
-    ticker.revealed = snapshot.revealed;
-    ticker.held = snapshot.held;
-    return ticker;
+  restoreProgress(revealed: number, held: number): void {
+    this.revealed = revealed;
+    this.held = held;
   }
 }

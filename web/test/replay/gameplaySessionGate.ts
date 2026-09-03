@@ -115,7 +115,8 @@ export const gameplaySessionGate = async (
         options?.timeScale === undefined
           ? tunables
           : { ...tunables, timeScale: options.timeScale },
-        randomSeed
+        randomSeed,
+        'legacyOracle'
       );
       return new GameplaySession(
         sessionContent(world, bundle, flight),

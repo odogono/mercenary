@@ -90,7 +90,7 @@ test('Chromium replays the recorded opening loop bit-for-bit and renders its mil
   await expect(surface).toHaveAttribute('data-location', 'room-1');
   await expect(surface).toHaveAttribute('data-occupancy', 'on-foot');
   await expect(page.locator('#status')).toHaveText(
-    '6,291 records replayed bit-for-bit'
+    '6,296 records replayed bit-for-bit'
   );
 
   const colours = await page.locator('#frame').evaluate(canvas => {

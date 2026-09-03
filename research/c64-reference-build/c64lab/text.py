@@ -53,19 +53,23 @@ MAX_WORDS = EXTRA_SPACE_TOKEN
 MAX_MESSAGES = 0x40
 
 #: Character codes whose meaning is established. Letters and the space are literal;
-#: the punctuation codes were read off words that fix them unambiguously —
+#: the punctuation codes were read off words and the load/save prompt that fix them unambiguously —
 #: BROTHER-IN-LAW for the hyphen, COMMANDER'S for the apostrophe, and the
 #: single-character suffix used by "AH, YOU ARE BACK" for the comma. The digits
 #: come from the engine rather than from a word: the numeric-field emitter writes
 #: unpacked BCD nibbles straight into the character stream, so codes zero through
 #: nine are the ten digit glyphs.
-CHARACTER_MAP = {code: str(code) for code in range(10)} | {0x20: " ", 0x0D: "-", 0x6F: "'", 0x6E: ","}
+CHARACTER_MAP = {code: str(code) for code in range(10)} | {
+    0x20: " ",
+    0x0D: "-",
+    0x0E: ".",
+    0x6D: "?",
+    0x6E: ",",
+    0x6F: "'",
+}
 
-#: Codes that appear in the tables but whose meaning is not yet established. They
-#: are preserved rather than guessed at, and render as nothing. Both remaining
-#: codes occur in the load/save prompt, which reads "LOAD NO" and then wants
-#: punctuation the font's tail must supply.
-UNRESOLVED_CODES = (0x0E, 0x6D)
+#: Every code found in the current tables is now established by project-owned evidence.
+UNRESOLVED_CODES: tuple[int, ...] = ()
 
 
 def _require(condition: bool, message: str) -> None:

@@ -82,6 +82,18 @@ describe('Session Resume startup', () => {
     expect(storage.getItem(SESSION_RESUME_STORAGE_KEY)).toBeNull();
   });
 
+  test('atomically removes a schema-8 recovery record', () => {
+    const storage = new MemoryStorage();
+    const stale = JSON.parse(encoded(snapshotAt(1234))) as {
+      schemaVersion: number;
+    };
+    stale.schemaVersion = 8;
+    storage.setItem(SESSION_RESUME_STORAGE_KEY, JSON.stringify(stale));
+
+    expect(readSessionResume(storage, environment).kind).toBe('invalid');
+    expect(storage.getItem(SESSION_RESUME_STORAGE_KEY)).toBeNull();
+  });
+
   test('removes recovery from a different exact environment', () => {
     const storage = new MemoryStorage();
     storage.setItem(SESSION_RESUME_STORAGE_KEY, encoded(snapshotAt(1234)));

@@ -62,7 +62,7 @@ await sessionGate({
     expect(Math.trunc((parked['z'] as number) / 65_536)).toBe(6);
   },
   ids: IDS,
-  recordCounts: [7202, 6291, 7201],
+  recordCounts: [7202, 6296, 7201],
   title: 'the session Replay Gate'
 });
 

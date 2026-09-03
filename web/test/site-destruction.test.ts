@@ -256,7 +256,9 @@ describe('the Attack State a Faction Reaction sets', () => {
     const after = session.observations().observations;
 
     expect(settled).toBeTrue();
-    expect(after['messageText']).toContain('SHIP DESTROYED');
+    expect(session.snapshot.bensonMessage?.completedText).toContain(
+      'SHIP DESTROYED'
+    );
     // Which is a craft lost, and nothing more than that.
     expect(after['endingPhase']).toBe(0);
   });

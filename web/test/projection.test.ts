@@ -5,7 +5,9 @@ import {
   Camera,
   ORACLE_FAR_PLANE,
   ORACLE_RULES,
+  ReferenceViewport,
   projectFrame,
+  referenceViewportBounds,
   visible,
   type ScreenLine,
   type Size,
@@ -78,6 +80,12 @@ interface Scenario {
 
 const radians = (degrees: number): number => (degrees * Math.PI) / 180;
 
+const segment = (x1: number, y1: number, x2: number, y2: number) => ({
+  a: { x: x1, y: y1, z: 128 },
+  b: { x: x2, y: y2, z: 128 },
+  ink: Ink.white
+});
+
 describe('the outdoor ground fill', () => {
   for (const elevation of [-89, -90, -91]) {
     test(`covers the view through a ${elevation}-degree dive`, () => {
@@ -95,6 +103,94 @@ describe('the outdoor ground fill', () => {
       expect(ground.y + ground.height).toBeGreaterThanOrEqual(size.height);
     });
   }
+});
+
+describe('Reference Viewport line clipping', () => {
+  const camera = new Camera({
+    heading: 0,
+    pitch: 0,
+    position: { x: 0, y: 0, z: 0 }
+  });
+  const size: Size = { height: 800, width: 1280 };
+  test('centres the scaled 160-by-136 Reference Viewport', () => {
+    expect(referenceViewportBounds(size)).toEqual({
+      height: 544,
+      width: 1280,
+      x: 0,
+      y: 128
+    });
+    expect(referenceViewportBounds({ height: 136, width: 640 })).toEqual({
+      height: ReferenceViewport.height,
+      width: ReferenceViewport.width,
+      x: 160,
+      y: 0
+    });
+  });
+
+  test.each([
+    ['left', segment(-256, 0, 0, 0), { x1: 0, y1: 400 }],
+    ['right', segment(0, 0, 256, 0), { x2: 1280, y2: 400 }],
+    ['top', segment(0, 256, 0, 0), { x1: 640, y1: 128 }],
+    ['bottom', segment(0, 0, 0, -256), { x2: 640, y2: 672 }]
+  ])('clips a crossing at the %s border', (_edge, input, crossing) => {
+    expect(camera.projectSegment(input, size)).toMatchObject(crossing);
+  });
+
+  test('clips a corner crossing parametrically', () => {
+    expect(camera.projectSegment(segment(-256, 108.8, 0, 0), size)).toEqual({
+      ink: Ink.white,
+      x1: 0,
+      x2: 640,
+      y1: 128,
+      y2: 400
+    });
+  });
+
+  test('discards wholly outside lines and preserves inside Float32 lines', () => {
+    expect(
+      camera.projectSegment(segment(-300, 0, -280, 0), size)
+    ).toBeUndefined();
+    const line = camera.projectSegment(segment(0.1, 0.1, 1.1, 1.1), size)!;
+    expect(line).toEqual({
+      ink: Ink.white,
+      x1: Math.fround(640.4),
+      x2: Math.fround(644.4),
+      y1: Math.fround(399.6),
+      y2: Math.fround(395.6)
+    });
+  });
+
+  test('keeps the byte-identical unclipped oracle mode', () => {
+    expect(
+      camera.projectSegment(segment(-256, 0, 0, 0), size, 'unclipped')
+    ).toEqual({
+      ink: Ink.white,
+      x1: -384,
+      x2: 640,
+      y1: 400,
+      y2: 400
+    });
+  });
+
+  test('clips distant lines by the same border while preserving distance and order', () => {
+    const first = { ...segment(-256, 0, 0, 0), distance: 12 };
+    const second = { ...segment(0, 0, 256, 0), distance: 34 };
+    expect(
+      projectFrame(
+        camera,
+        {
+          detailedObjects: 0,
+          distant: [first, second],
+          points: [],
+          segments: []
+        },
+        size
+      ).distant
+    ).toEqual([
+      { distance: 12, ink: Ink.white, x1: 0, x2: 640, y1: 400, y2: 400 },
+      { distance: 34, ink: Ink.white, x1: 640, x2: 1280, y1: 400, y2: 400 }
+    ]);
+  });
 });
 
 const scenarioOf = (header: TraceObject): Scenario => {
@@ -225,7 +321,7 @@ describe('the projection Replay Gate', () => {
     // are the claim, and the absence of lines and points is the rest of it.
     const frame = isDark(trace.header)
       ? { distant: [], lines: [], points: [] }
-      : projectFrame(camera, seen, size);
+      : projectFrame(camera, seen, size, 'unclipped');
 
     describe(id, () => {
       test('the camera the pose resolves to', () => {

@@ -339,6 +339,21 @@ export class LegalRoute {
     return this;
   }
 
+  /// Advances until the complete Benson occurrence names the expected text.
+  waitForMessage(fragment: string, maxSeconds = 60): this {
+    for (let left = maxSeconds; left > 0; left -= STEP) {
+      if (
+        this.session.snapshot.bensonMessage?.completedText?.includes(fragment)
+      ) {
+        return this;
+      }
+      this.session.advance(STEP);
+    }
+    throw new Error(
+      `Benson never completed a message containing '${fragment}'`
+    );
+  }
+
   /// Advances until no script is running.
   ///
   /// A Room's entry script will not start while another is still going, so

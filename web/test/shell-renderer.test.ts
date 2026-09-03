@@ -170,24 +170,22 @@ const fakeRenderer = (
 };
 
 describe('a Session Snapshot planned for WebGL2', () => {
-  test('the opening surface is ground, dim Ink, bright Ink, then Far Points', () => {
+  test('the clipped opening surface is ground, visible Ink, then Far Points', () => {
     const frame = planFrame(world, session().snapshot, size);
 
     expect(frame.clear).toEqual(ScenePalette.sky);
     expect(frame.batches.map(batch => batch.mode)).toEqual([
       'triangles',
       'lines',
-      'lines',
       'points'
     ]);
     expect(frame.batches.map(batch => batch.colour)).toEqual([
       ScenePalette.ground,
-      ScenePalette.blackInk,
       ScenePalette.whiteInk,
       ScenePalette.whiteInk
     ]);
     expect(frame.batches[0]?.vertices.length).toBe(12);
-    expect(frame.lines).toBe(38);
+    expect(frame.lines).toBe(4);
     expect(frame.points).toBe(1);
     expect(frame.batches.at(-1)?.pointSize).toBe(1);
   });
@@ -350,7 +348,6 @@ describe('a Session Snapshot planned for WebGL2', () => {
     expect(frame.batches.map(batch => batch.mode)).toEqual([
       'triangles',
       'lines',
-      'lines',
       'points'
     ]);
   });
@@ -380,7 +377,7 @@ describe('a Session Snapshot submitted to WebGL2', () => {
     ).toBeTrue();
   });
 
-  test('surface commands clear, then draw ground, dim Ink, bright Ink and Far Points', () => {
+  test('surface commands clear, then draw ground, clipped Ink and Far Points', () => {
     const { calls, renderer } = fakeRenderer();
 
     renderer.draw(world, session().snapshot, size);
@@ -394,9 +391,6 @@ describe('a Session Snapshot submitted to WebGL2', () => {
       'ink',
       'buffer',
       'draw:4',
-      'ink',
-      'buffer',
-      'draw:1',
       'ink',
       'buffer',
       'draw:1',
@@ -462,10 +456,10 @@ describe('a Session Snapshot submitted to WebGL2', () => {
       thickness: 2
     });
 
-    // The two Ink batches become blended instance draws, one instance per line; ground
+    // The surviving Ink batch becomes a blended instance draw; ground
     // triangles and Far Points are untouched.
     const instanced = calls.filter(call => call.startsWith('instanced'));
-    expect(instanced).toHaveLength(2);
+    expect(instanced).toHaveLength(1);
     for (const call of instanced) {
       expect(call.startsWith('instanced:4:')).toBeTrue();
     }
@@ -488,7 +482,7 @@ describe('a Session Snapshot submitted to WebGL2', () => {
       thickness: 1
     });
 
-    expect(calls.filter(call => call.startsWith('instanced'))).toHaveLength(2);
+    expect(calls.filter(call => call.startsWith('instanced'))).toHaveLength(1);
     expect(
       uniforms.filter(uniform => uniform.name === 'extent')
     ).toContainEqual({ name: 'extent', values: [0.5 + 8 * 0.5] });
@@ -539,7 +533,6 @@ describe('a Session Snapshot submitted to WebGL2', () => {
       'draw:6',
       'blend:off',
       'draw:4',
-      'draw:1',
       'draw:1',
       'draw:0'
     ]);

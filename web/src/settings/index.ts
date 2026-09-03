@@ -49,10 +49,8 @@ export class SettingsError extends Error {
   }
 }
 
-/// How long a fully revealed message stays up to be read, and how fast it reveals.
+/// How long a completed Benson message stays up to be read.
 export interface MessageSettings {
-  /// Characters per second, before the script timing scale.
-  readonly charactersPerSecond: number;
   readonly holdSeconds: number;
 }
 
@@ -144,9 +142,6 @@ export interface Settings {
   readonly presentation: PresentationSettings;
   readonly scripts: ScriptSettings;
 }
-
-/// Characters per second a conditioned Reference Build advances a message at.
-export const DEFAULT_MESSAGE_CHARACTERS_PER_SECOND = 2;
 
 /// How long a revealed message is left up to be read. Unlike the reveal rate this is not the
 /// Reference Build's number scaled — it is a reading pause, and reading speed belongs to the
@@ -268,12 +263,6 @@ const positive = (value: number, path: string): number => {
 const readMessage = (value: unknown): MessageSettings => {
   const source = block(value, 'message');
   return {
-    charactersPerSecond: number(
-      source,
-      'charactersPerSecond',
-      'message.charactersPerSecond',
-      DEFAULT_MESSAGE_CHARACTERS_PER_SECOND
-    ),
     holdSeconds: number(
       source,
       'holdSeconds',
@@ -579,7 +568,6 @@ export const bensonTunables = (
   framesPerSecond: 50,
   framesPerTick,
   instructionBudget: settings.scripts.instructionBudget,
-  messageCharactersPerSecond: settings.message.charactersPerSecond,
   messageHoldSeconds: settings.message.holdSeconds,
   timeScale: settings.scripts.timeScale
 });
@@ -597,7 +585,6 @@ export const arrivalTunables = (
   framesPerSecond: 50,
   framesPerTick,
   instructionBudget: settings.scripts.instructionBudget,
-  messageCharactersPerSecond: settings.arrival.charactersPerSecond,
   messageHoldSeconds: settings.arrival.holdSeconds,
   timeScale: settings.arrival.timeScale
 });

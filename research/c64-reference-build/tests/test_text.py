@@ -23,6 +23,7 @@ from c64lab.text import (
     decode_text,
     read_characters,
     render,
+    UNRESOLVED_CODES,
 )
 
 
@@ -128,8 +129,12 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(render([0x05, 0x00, 0x00, 0x00]), "5000")
         self.assertEqual(render([0x09, 0x0D, 0x00]), "9-0")
 
-    def test_drops_codes_whose_meaning_is_unresolved(self) -> None:
-        self.assertEqual(render([0x41, 0x0E, 0x6D, 0x42]), "AB")
+    def test_renders_the_load_save_prompt_punctuation(self) -> None:
+        self.assertEqual(
+            render([0x4E, 0x4F, 0x0E, 0x20, 0x4F, 0x0D, 0x09, 0x20, 0x6D]),
+            "NO. O-9 ?",
+        )
+        self.assertEqual(UNRESOLVED_CODES, ())
 
 
 class WordDecodeTests(unittest.TestCase):
@@ -219,13 +224,13 @@ class MessageDecodeTests(unittest.TestCase):
         with self.assertRaisesRegex(LabError, "resolves to unusable word 200"):
             decode_text(builder.build())
 
-    def test_reports_the_unresolved_codes_it_encountered(self) -> None:
+    def test_reports_no_unresolved_codes_after_punctuation_is_known(self) -> None:
         builder = _basic()
         builder.word("A\x0eB", at=20)
         builder.message(bytes([20]))
         text = decode_text(builder.build())
 
-        self.assertEqual(text["unresolvedCodes"], ["0x0e"])
+        self.assertEqual(text["unresolvedCodes"], [])
 
 
 class EngineGuardTests(unittest.TestCase):
