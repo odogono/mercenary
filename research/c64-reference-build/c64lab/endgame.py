@@ -17,7 +17,7 @@ from .flight import decode_float
 from .prng import RANDOM_ROUTINE, RANDOM_STATE, RANDOM_VALUE, decode_reference_prng
 
 
-ENDGAME_SCHEMA_VERSION = 12
+ENDGAME_SCHEMA_VERSION = 13
 
 # Drop key dispatch and native inventory mutation.
 DROP_DISPATCH = 0xB33F
@@ -38,6 +38,13 @@ FIRE_CALL_SITE = 0x85E1
 FIRE_ROUTINE = 0x886A
 PROJECTILE_UPDATE = 0x8690
 HOSTILE_ROUTINE = 0x8921
+
+# The always-running surface craft at the edge of the city. The outdoor arm of
+# the main loop increments its Z middle byte and wraps the high byte to the
+# world's low nibble before objects are drawn.
+SURFACE_FLYBY_STEP = 0x85C5
+OBJECT_Z_MIDDLE_BASE = 0x2500
+OBJECT_Z_HIGH_BASE = 0x25C0
 
 # Site state, faction counters, and the reaction the commit path dispatches.
 # The 256-byte city table holds, per surface cell, a destroyed bit, a faction
@@ -606,6 +613,10 @@ def _require_engine(ram: bytes) -> None:
         (SHIP_DELIVERY_INITIALISE + 2, (0x8D, 0x87, 0x25), "ship delivery does not seed the altitude high byte"),
         (SHIP_DELIVERY_INITIALISE + 5, (0x8D, 0xFF, 0xBE), "ship delivery does not mark itself descending"),
         (SHIP_DELIVERY_INITIALISE + 8, (0xA9, 0x00), "ship delivery does not zero the components it clears"),
+        (SURFACE_FLYBY_STEP, (0xEE, 0x00, 0x25, 0xD0), "outdoor frame does not advance the surface flyby"),
+        (SURFACE_FLYBY_STEP + 5, (0xEE, 0xC0, 0x25, 0xAD, 0xC0, 0x25), "surface flyby does not carry into its high byte"),
+        (SURFACE_FLYBY_STEP + 11, (0x29,), "surface flyby does not wrap with an immediate mask"),
+        (SURFACE_FLYBY_STEP + 13, (0x8D, 0xC0, 0x25), "surface flyby does not store its wrapped high byte"),
         (FIRE_CALL_SITE, (0xA9,), "frame loop does not load a fire direction offset"),
         (FIRE_CALL_SITE + 2, (0x20, 0x6A, 0x88), "frame loop does not call the fire routine"),
         (FIRE_ROUTINE, (0x85, 0x09, 0xA5, 0x81), "fire does not save its offset and read the action latch"),
@@ -945,6 +956,15 @@ def decode_endgame(ram: bytes) -> dict[str, Any]:
         "The throttle and the ceiling read different flight overrides",
     )
 
+    flyby_middle = ram[SURFACE_FLYBY_STEP + 1] | (ram[SURFACE_FLYBY_STEP + 2] << 8)
+    flyby_high = ram[SURFACE_FLYBY_STEP + 6] | (ram[SURFACE_FLYBY_STEP + 7] << 8)
+    flyby_slot = flyby_middle - OBJECT_Z_MIDDLE_BASE
+    _require(
+        flyby_high - OBJECT_Z_HIGH_BASE == flyby_slot,
+        "The surface flyby advances different object slots across its Z bytes",
+    )
+    flyby_mask = ram[SURFACE_FLYBY_STEP + 12]
+
     fire_slot = ram[FIRE_ROUTINE + 16]
     target_slots = [ram[0x8782 + 1], ram[0x878E + 1]]
     axis_window = [ram[0x872E + 1], ram[0x8732 + 1]]
@@ -975,6 +995,14 @@ def decode_endgame(ram: bytes) -> dict[str, Any]:
                 "requiresCarriedExemptionOrFlightState": True,
                 "copiesCurrentRoomAndPosition": True,
             }
+        },
+        "surfaceFlyby": {
+            "axis": "z",
+            "cadence": "every-outdoor-frame",
+            "slot": flyby_slot,
+            "stepPerFrame": 0x100,
+            "surfaceOnly": True,
+            "wrapAt": (flyby_mask + 1) << 16,
         },
         "combat": {
             "fire": {

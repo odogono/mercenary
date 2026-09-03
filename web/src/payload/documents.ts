@@ -690,6 +690,16 @@ export interface EndgameShipDelivery {
   readonly slot: number;
 }
 
+/// The one craft the outdoor frame loop moves independently of the player.
+export interface EndgameSurfaceFlyby {
+  readonly axis: 'z';
+  readonly cadence: string;
+  readonly slot: number;
+  readonly stepPerFrame: number;
+  readonly surfaceOnly: boolean;
+  readonly wrapAt: number;
+}
+
 export interface EndgameDocument {
   readonly combat: EndgameCombat;
   readonly controls: {
@@ -733,6 +743,7 @@ export interface EndgameDocument {
   };
   readonly schemaVersion: number;
   readonly shipDelivery: EndgameShipDelivery;
+  readonly surfaceFlyby: EndgameSurfaceFlyby;
 }
 
 export interface UndergroundEntrance {

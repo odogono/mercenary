@@ -77,6 +77,12 @@ class Builder:
         self.ram[PROJECTILE_UPDATE:PROJECTILE_UPDATE + 8] = bytes(
             [0xA2, 0x0F, 0xBD, 0xA3, 0xBD, 0xF0, 0x71, 0xC9]
         )
+        self.ram[0x85C5:0x85D5] = bytes(
+            [
+                0xEE, 0x00, 0x25, 0xD0, 0x0B, 0xEE, 0xC0, 0x25,
+                0xAD, 0xC0, 0x25, 0x29, 0x0F, 0x8D, 0xC0, 0x25,
+            ]
+        )
         self.ram[0x8698] = 0x7F
         for site, data in (
             (0x8701, [0xE0, 0x08]),
@@ -407,6 +413,15 @@ class DecodeTests(unittest.TestCase):
         self.assertEqual(combat["siteDestruction"]["axisWindow"], [0x70, 0x90])
         self.assertEqual(combat["objectHits"]["targetSlots"], [15, 0])
 
+    def test_decodes_the_surface_crafts_constant_flyby(self) -> None:
+        flyby = decode_endgame(Builder().build())["surfaceFlyby"]
+
+        self.assertEqual(flyby["slot"], 0)
+        self.assertEqual(flyby["axis"], "z")
+        self.assertEqual(flyby["stepPerFrame"], 0x100)
+        self.assertEqual(flyby["wrapAt"], 0x10_0000)
+        self.assertTrue(flyby["surfaceOnly"])
+
     def test_decodes_how_a_hostile_craft_closes_and_shoots(self) -> None:
         hostile = decode_endgame(Builder().build())["combat"]["hostileCraft"]
 
@@ -661,7 +676,7 @@ class DecodeTests(unittest.TestCase):
     def test_reports_a_version_and_bounded_counts(self) -> None:
         document = decode_endgame(Builder().build())
 
-        self.assertEqual(ENDGAME_SCHEMA_VERSION, 12)
+        self.assertEqual(ENDGAME_SCHEMA_VERSION, 13)
         self.assertEqual(document["schemaVersion"], ENDGAME_SCHEMA_VERSION)
         self.assertEqual(
             document["counts"],

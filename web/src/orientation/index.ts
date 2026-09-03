@@ -19,7 +19,7 @@ export interface Vector3 {
 export interface Orientation {
   readonly x: number;
   readonly y: number;
-  /// Rotation about the Z axis, in bytes where 256 is a full turn.
+  /// Rotation about the Z axis, in bytes where 64 is a full turn.
   readonly z: number;
 }
 
@@ -39,7 +39,9 @@ export const fromBytes = (
   return { x: bytes[1]!, y: bytes[2]!, z: bytes[0]! };
 };
 
-const radians = (byte: number): number => ((byte & 0xff) / 256) * 2 * Math.PI;
+/// The Reference Build's sine lookup masks every object angle with `$3F`.
+/// These are six-bit turns even though they live in byte-wide tables.
+const radians = (byte: number): number => ((byte & 0x3f) / 64) * 2 * Math.PI;
 
 /// Rotate within one coordinate plane, leaving the third axis untouched.
 ///

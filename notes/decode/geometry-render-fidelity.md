@@ -29,11 +29,11 @@ In-range splits are unchanged, including the airstrip in Surface Cell 8:8, whose
 ## Fixed and verified
 
 - **Object orientation.** Slots below `$10` apply three plane rotations about Z,
-  X then Y before placement. Verified by evidence rather than assertion: slots 00
-  and 01 share model `3b25`, and after the fix their world spans differ
-  (2862×192×5046 against 4048×192×3088) because slot 00 carries `y = 32`.
-  **Only slot 00 has a non-zero orientation in the initial state** — this matters
-  for correctness, not for how a fresh load looks.
+  X then Y before placement. The angle is a six-bit turn: `L8445` masks it with
+  `$3F`, so `$20` is 180 degrees rather than 45. Slot 00 therefore points its
+  model-local negative-Z nose along its positive-Z flyby velocity. Slots 00 and
+  01 share model `3b25`, while only slot 00 has a non-zero orientation in the
+  initial state.
 - **Object point-LOD.** Beyond the `$010000` cube per axis an object collapses to
   a projected point, which the doc calls part of the original's look.
 - **Reference viewport.** Projection now derives from the original's 160×136

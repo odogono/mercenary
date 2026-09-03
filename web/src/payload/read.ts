@@ -1077,6 +1077,7 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
     SITE_TABLE_LENGTH
   );
   const orbital = asObject(r, o['orbitalTransition'], 'orbitalTransition');
+  const surfaceFlyby = asObject(r, o['surfaceFlyby'], 'surfaceFlyby');
   const orbitalEntry = asObject(r, orbital['entry'], 'orbitalTransition.entry');
   const ending = asObject(r, o['endingPresentation'], 'endingPresentation');
   const delivery = asObject(r, o['shipDelivery'], 'shipDelivery');
@@ -1582,6 +1583,24 @@ const endgame = (r: Reader, value: unknown): Doc.EndgameDocument => {
         )
       },
       slot: asInt(r, delivery['slot'], 'shipDelivery.slot')
+    },
+    surfaceFlyby: {
+      axis: asOneOf(r, surfaceFlyby['axis'], 'surfaceFlyby.axis', [
+        'z'
+      ] as const),
+      cadence: asString(r, surfaceFlyby['cadence'], 'surfaceFlyby.cadence'),
+      slot: asInt(r, surfaceFlyby['slot'], 'surfaceFlyby.slot'),
+      stepPerFrame: asInt(
+        r,
+        surfaceFlyby['stepPerFrame'],
+        'surfaceFlyby.stepPerFrame'
+      ),
+      surfaceOnly: asBool(
+        r,
+        surfaceFlyby['surfaceOnly'],
+        'surfaceFlyby.surfaceOnly'
+      ),
+      wrapAt: asInt(r, surfaceFlyby['wrapAt'], 'surfaceFlyby.wrapAt')
     }
   };
 };

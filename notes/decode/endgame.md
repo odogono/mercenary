@@ -176,6 +176,17 @@ decoders; the object residences and coordinates come from the guarded object
 tables in the same verified capture. Slot 7's initial residence is the byte at
 `$2947`; slot 63 is `object-instance:3f` in the geometry vocabulary.
 
+### Palyar commander's surface craft flyby
+
+Slot 0 is not a static surface placement. On every outdoor main-loop frame,
+`$85C5-$85D4` increments its Z middle byte at `$2500`, carries into the high
+byte at `$25C0`, and masks that high byte with `$0F`. This is a constant
+`$0100` world-unit step per 20 Hz reference frame, wrapping at `$100000`.
+The update precedes outdoor object drawing and is skipped by the underground
+branch. `c64lab/endgame.py` guards the full instruction shape and exports this
+as `surfaceFlyby`; the Gameplay Session consumes those decoded values rather
+than assigning the craft an authored speed.
+
 ## Complete economy and transaction census
 
 Credits are packed decimal register 8. A conditioned game starts with 9,000;

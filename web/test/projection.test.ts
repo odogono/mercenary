@@ -78,6 +78,25 @@ interface Scenario {
 
 const radians = (degrees: number): number => (degrees * Math.PI) / 180;
 
+describe('the outdoor ground fill', () => {
+  for (const elevation of [-89, -90, -91]) {
+    test(`covers the view through a ${elevation}-degree dive`, () => {
+      const size: Size = { height: 800, width: 1280 };
+      const camera = new Camera({
+        heading: 0,
+        pitch: radians(elevation),
+        position: { x: 0, y: 32_769, z: 0 },
+        roll: 0
+      });
+
+      const ground = camera.groundFill(size).rect;
+
+      expect(ground.y).toBeLessThanOrEqual(0);
+      expect(ground.y + ground.height).toBeGreaterThanOrEqual(size.height);
+    });
+  }
+});
+
 const scenarioOf = (header: TraceObject): Scenario => {
   const body = header['scenario'] as TraceObject;
   const number = (key: string): number => body[key] as number;

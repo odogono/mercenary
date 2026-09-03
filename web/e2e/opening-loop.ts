@@ -90,7 +90,11 @@ try {
 
   expectIdentical(
     trace.header['initial'],
-    traceOracleSnapshotValue(session.snapshot, legacyRoom255Slots),
+    traceOracleSnapshotValue(
+      session.snapshot,
+      legacyRoom255Slots,
+      session.content.surfaceFlyby?.slot
+    ),
     'initial'
   );
   if (
@@ -122,7 +126,11 @@ try {
     expectIdentical(record['elapsed'], snapshot.elapsed, `elapsed ${nextStep}`);
     expectIdentical(
       expected[index],
-      traceOracleSnapshotValue(snapshot, legacyRoom255Slots),
+      traceOracleSnapshotValue(
+        snapshot,
+        legacyRoom255Slots,
+        session.content.surfaceFlyby?.slot
+      ),
       `step ${nextStep}`
     );
     expectIdentical(

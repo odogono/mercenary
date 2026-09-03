@@ -231,7 +231,7 @@ const document = {
     minimumAltitudeByte: 252,
     successCarry: 'clear'
   },
-  schemaVersion: 12,
+  schemaVersion: 13,
   shipDelivery: {
     acceptedMask: 128,
     cadence: 'every-frame',
@@ -253,6 +253,14 @@ const document = {
       predicate: 'sixteen-bit-zero'
     },
     slot: 7
+  },
+  surfaceFlyby: {
+    axis: 'z' as const,
+    cadence: 'every-outdoor-frame',
+    slot: 0,
+    stepPerFrame: 256,
+    surfaceOnly: true,
+    wrapAt: 1_048_576
   }
 };
 
@@ -446,8 +454,8 @@ describe('the endgame Data Payload document', () => {
       load(readDocuments(payloadDocuments({ ...document, schemaVersion: 11 })))
     ).rejects.toThrow('unsupported schemaVersion 11');
     await expect(
-      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 13 })))
-    ).rejects.toThrow('unsupported schemaVersion 13');
+      load(readDocuments(payloadDocuments({ ...document, schemaVersion: 14 })))
+    ).rejects.toThrow('unsupported schemaVersion 14');
     expect((await load(readDocuments(payloadDocuments()))).endgame).toEqual(
       document
     );

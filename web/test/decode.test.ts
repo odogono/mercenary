@@ -38,6 +38,28 @@ const bundle: Bundle = await loadPayload();
 const world = new World(bundle);
 const inspector = new Inspector(world);
 
+/// The frozen Trace Oracle treated object-orientation bytes as eight-bit turns.
+/// The Reference Build masks them to six bits; retain the old projection only
+/// for its object-row comparison while the focused orientation test guards the
+/// corrected canonical interpretation.
+const traceOracleInspector = new Inspector(
+  new World({
+    ...bundle,
+    objects: {
+      ...bundle.objects,
+      instances: bundle.objects.instances.map(instance =>
+        instance.slot === bundle.endgame.surfaceFlyby.slot &&
+        instance.orientation !== undefined
+          ? {
+              ...instance,
+              orientation: instance.orientation.map(byte => byte / 4)
+            }
+          : instance
+      )
+    }
+  })
+);
+
 /// The trace's records, in the order the emitter wrote them.
 const recordsOfKind = (kind: string): TraceObject[] =>
   trace.records.filter(record => record['kind'] === kind);
@@ -180,7 +202,15 @@ describe('the decode Replay Gate', () => {
     });
   };
 
-  rowGate('object', () => inspector.objectRows());
+  rowGate('object', () => {
+    const canonical = inspector.objectRows();
+    return traceOracleInspector.objectRows().map((row, index) => ({
+      ...row,
+      // The trace records the correct raw byte in its note; only its derived
+      // spans used the Oracle's old angular interpretation.
+      note: canonical[index]!.note
+    }));
+  });
   rowGate('cell', () => inspector.cellRows());
   rowGate('structure', () => inspector.structureRows());
   rowGate('room', () => inspector.roomRows());

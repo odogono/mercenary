@@ -17,11 +17,11 @@ describe('browser canonical cutover', () => {
     expect(ignoreRules).not.toContain('/app/');
   });
 
-  test('identifies Reference surface visibility as 0.9.2', async () => {
+  test('identifies Reference surface visibility as 0.9.3', async () => {
     const packageDocument = await Bun.file(
       join(repositoryRoot, 'web', 'package.json')
     ).json();
 
-    expect(packageDocument.version).toBe('0.9.2');
+    expect(packageDocument.version).toBe('0.9.3');
   });
 });

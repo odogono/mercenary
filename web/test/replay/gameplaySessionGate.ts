@@ -175,7 +175,11 @@ export const gameplaySessionGate = async (
       );
       expectIdentical(
         expected[index],
-        traceOracleSnapshotValue(snapshot, legacyRoom255Slots),
+        traceOracleSnapshotValue(
+          snapshot,
+          legacyRoom255Slots,
+          session.content.surfaceFlyby?.slot
+        ),
         `${trace.id} step ${nextStep}`
       );
       expectIdentical(
@@ -222,7 +226,11 @@ export const gameplaySessionGate = async (
           );
           expectIdentical(
             trace.header['initial'],
-            traceOracleSnapshotValue(session.snapshot, legacyRoom255Slots),
+            traceOracleSnapshotValue(
+              session.snapshot,
+              legacyRoom255Slots,
+              session.content.surfaceFlyby?.slot
+            ),
             `${id} initial`
           );
         });

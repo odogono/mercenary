@@ -255,7 +255,7 @@ test('Authentic preserves the pinned initial canvas pixels', async ({
   });
 
   expect(digest).toBe(
-    '44288778d13180746a53bbe1d5bf06553ce02caab3fa7a997dad378f53d0cda0'
+    '98337982b60f95eba8f3389907a1e238cf9bac7050e70554b58dec9ca7771991'
   );
 });
 

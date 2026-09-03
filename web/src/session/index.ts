@@ -50,6 +50,7 @@ import type {
   EndgameObjectHits,
   EndgameShipDelivery,
   EndgameSiteDestruction,
+  EndgameSurfaceFlyby,
   SpecialSetup,
   UndergroundDocument
 } from '../payload/documents.ts';
@@ -255,6 +256,8 @@ export interface SessionContent {
   readonly shipDelivery?: EndgameShipDelivery;
   /// The Sites a shot can destroy, and the rules the commit path follows.
   readonly sites?: EndgameSiteDestruction;
+  /// The surface craft advanced once per outdoor reference frame.
+  readonly surfaceFlyby?: EndgameSurfaceFlyby;
   readonly underground: UndergroundDocument | undefined;
 }
 
@@ -287,6 +290,7 @@ export const sessionContent = (
   rooms: world.rooms,
   shipDelivery: bundle.endgame.shipDelivery,
   sites: bundle.endgame.combat.siteDestruction,
+  surfaceFlyby: bundle.endgame.surfaceFlyby,
   underground: bundle.underground
 });
 
@@ -1855,12 +1859,13 @@ export class GameplaySession {
     return true;
   }
 
-  /// Advances what combat has in the air, a frame at a time.
+  /// Advances the outdoor frame's independently moving objects and combat.
   ///
-  /// The order is the Reference Build's main loop: the structure impact first,
-  /// then the effect slots. Firing itself is a Semantic Action rather than a
-  /// step of this, which is the same relative order the original has, because it
-  /// polls the fire input once per frame before advancing anything.
+  /// The order is the Reference Build's main loop: the permanent flyby, then
+  /// the structure impact and effect slots. Firing itself is a Semantic Action
+  /// rather than a step of this, which is the same relative order the original
+  /// has, because it polls the fire input once per frame before advancing
+  /// anything.
   ///
   /// Nothing here runs underground. The original reaches its combat calls only
   /// on the outdoor path, so a Room is not a place where a shot quietly keeps
@@ -1870,7 +1875,6 @@ export class GameplaySession {
     const rate = this.content.flight?.limits.referenceFrameRate;
     const events: PresentationEvent[] = [];
     if (
-      rules === undefined ||
       rate === undefined ||
       seconds <= 0 ||
       this.location.kind !== 'surface'
@@ -1882,14 +1886,17 @@ export class GameplaySession {
     this.combatFrames -= frames;
     let moved = false;
     for (let frame = 0; frame < frames; frame += 1) {
-      // The Reference Build's own order: the structure impact, then the effect
-      // slots, then the hostile craft.
+      // The Reference Build's own order: the permanent flyby first, then the
+      // structure impact, effect slots, and hostile craft.
+      if (this.stepSurfaceFlyby()) {
+        moved = true;
+      }
       if (this.impact !== undefined) {
         const framesLeft = this.impact.framesLeft - 1;
         this.impact =
           framesLeft > 0 ? { ...this.impact, framesLeft } : undefined;
       }
-      if (this.stepPlayerShot(rules, events)) {
+      if (rules !== undefined && this.stepPlayerShot(rules, events)) {
         moved = true;
       }
       if (this.driftHostileEffects()) {
@@ -1901,6 +1908,28 @@ export class GameplaySession {
       this.republishHostState();
     }
     return events;
+  }
+
+  /// The Reference Build increments slot 0's Z middle byte every outdoor
+  /// frame, carrying into the masked high byte. In world coordinates that is
+  /// a constant `stepPerFrame`, wrapping at `wrapAt`.
+  private stepSurfaceFlyby(): boolean {
+    const rules = this.content.surfaceFlyby;
+    if (rules === undefined) {
+      return false;
+    }
+    const at = this.surfacePlaceOf(rules.slot);
+    if (at === undefined) {
+      return false;
+    }
+    this.residence.set(rules.slot, {
+      at: {
+        ...at,
+        z: (at.z + rules.stepPerFrame) % rules.wrapAt
+      },
+      kind: 'surface'
+    });
+    return true;
   }
 
   /// Flies a hired Interstellar Ship down to the surface, a frame at a time.
@@ -2130,7 +2159,28 @@ export class GameplaySession {
   }
 
   private get sceneResidence(): Map<number, Residence> {
-    return new Map(this.residence);
+    const residence = new Map(this.residence);
+    const rules = this.content.surfaceFlyby;
+    if (
+      rules === undefined ||
+      this.location.kind !== 'surface' ||
+      this.combatFrames <= 0
+    ) {
+      return residence;
+    }
+    const where = residence.get(rules.slot);
+    const at = this.surfacePlaceOf(rules.slot);
+    if (where?.kind !== 'surface' || at === undefined) {
+      return residence;
+    }
+    residence.set(rules.slot, {
+      at: {
+        ...at,
+        z: (at.z + rules.stepPerFrame * this.combatFrames) % rules.wrapAt
+      },
+      kind: 'surface'
+    });
+    return residence;
   }
 
   get throttleNotch(): number {

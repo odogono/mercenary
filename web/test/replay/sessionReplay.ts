@@ -121,9 +121,13 @@ export const snapshotValue = (snapshot: SessionSnapshot): TraceValue => {
 /// M7.1 made the browser Gameplay Session authoritative for complete object flags and carried
 /// order after the Swift implementation was frozen. Those fields remain part of the complete
 /// browser Session Snapshot, but cannot be invented on the oracle side of a Replay Gate.
+/// The same boundary applies to the Reference Build's slot-0 flyby: the frozen
+/// Oracle left that craft at its payload origin, so its changing coordinates
+/// are covered by the focused Reference-Build-derived test instead.
 export const traceOracleSnapshotValue = (
   snapshot: SessionSnapshot,
-  legacyRoom255Slots: ReadonlySet<number>
+  legacyRoom255Slots: ReadonlySet<number>,
+  legacyStaticSurfaceSlot?: number
 ): TraceValue => {
   const value = snapshotValue(snapshot) as TraceObject;
   const residence: TraceObject = {};
@@ -131,9 +135,11 @@ export const traceOracleSnapshotValue = (
     residence[String(slot)] =
       where.kind === 'gone' && legacyRoom255Slots.has(slot)
         ? { room: 255 }
-        : where.kind === 'room'
-          ? { room: where.id }
-          : residenceValue(where);
+        : where.kind === 'surface' && slot === legacyStaticSurfaceSlot
+          ? 'surface'
+          : where.kind === 'room'
+            ? { room: where.id }
+            : residenceValue(where);
   }
   delete value['carriedStack'];
   delete value['objectFlags'];

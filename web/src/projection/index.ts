@@ -269,12 +269,22 @@ export class Camera {
   groundFill(size: Size): { lean: number; rect: Rect } {
     const edge = this.horizon(size);
     const reach = (size.width + size.height) * 2;
+    let y = this.isInverted ? edge - reach : edge;
+    let farEdge = this.isInverted ? edge : edge + reach;
+    // Close to vertical, tan(pitch) can put the horizon farther away than the
+    // ordinary overdraw. Extend the far edge so the ground still reaches past
+    // the viewport instead of letting the entire rectangle leave the screen.
+    if (this.isInverted && y > 0) {
+      y = -reach;
+    } else if (!this.isInverted && farEdge < size.height) {
+      farEdge = size.height + reach;
+    }
     const rect: Rect = {
-      height: reach,
+      height: farEdge - y,
       width: reach * 2,
       x: -reach,
       // Inverted, the ground is above the horizon rather than below it.
-      y: this.isInverted ? edge - reach : edge
+      y
     };
     return { lean: -this.roll, rect };
   }

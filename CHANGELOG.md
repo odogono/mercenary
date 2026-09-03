@@ -57,6 +57,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- The Palyar commander's related craft (slot 0) now crosses the landscape at
+  the Reference Build's constant speed instead of remaining at its payload
+  origin. The guarded decoder recovers the outdoor main-loop update as a
+  `$0100` Z step per 20 Hz reference frame with `$100000` world wrap, and the
+  Gameplay Session pauses it underground just as the original branch does.
+  Presentation interpolates the fractional reference frame so the 20 Hz state
+  cadence remains exact without producing close-range hold-and-jump jitter on
+  a 60 Hz display. Object orientation now follows the Reference Build's six-bit
+  turn lookup, making slot 0's `$20` heading face into its positive-Z velocity.
+
+- Extreme nose-down and inverted views no longer lose the ground when the
+  tangent-projected horizon lies beyond the renderer's ordinary overdraw. The
+  shared Camera ground fill extends its far edge to keep the viewport covered,
+  without changing the projection traces at ordinary attitudes.
+
 - Surface visibility now follows the Reference Build's own selection rules (#150, ADR 0034):
   only the occupied Surface Cell's structure is expanded, below-eye Far Points follow the
   altitude-derived Horizon Distance, and the Camera has no implicit far plane, so the Colony
