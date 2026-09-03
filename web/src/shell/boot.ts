@@ -1,11 +1,19 @@
 import { IDLE } from '../gameCore/index.ts';
 import { fetchReader, load } from '../payload/load.ts';
 import type { SessionSnapshot } from '../session/index.ts';
+import { arrivalTunables, bensonTunables } from '../settings/index.ts';
 import { targOrreryFor } from '../sky/index.ts';
 import { locationText } from '../world/index.ts';
+import { ArrivalDirector, type ArrivalEntry } from './arrival.ts';
+import { arrivalFramePlan } from './arrivalField.ts';
+import { arrivalPanelViewModel, arrivalStripText } from './arrivalPanel.ts';
+import {
+  resolveScript00Milestones,
+  withinOpeningScript
+} from './arrivalScript.ts';
 import { FixedStepClock } from './clock.ts';
 import { installConsole } from './consoleView.ts';
-import { Renderer } from './frame.ts';
+import { Renderer, planFrame } from './frame.ts';
 import { BrowserControlProfile } from './input.ts';
 import { createNewGameAction, escapeFrom, installSystemMenu } from './menu.ts';
 import { BensonMessageTranscript } from './messageTranscript.ts';
@@ -187,6 +195,63 @@ try {
   let frameSeconds = 0;
   let lastFrame: number | undefined;
   const bensonTranscript = new BensonMessageTranscript(snapshot.bensonMessage);
+  const scriptsOf = (): NonNullable<typeof session.scripts> => {
+    const scripts = session.scripts;
+    if (scripts === undefined) {
+      throw new Error('the browser walkabout has no Benson Scripts to present');
+    }
+    return scripts;
+  };
+  // Resolved once from the payload the session is running, so a re-export that renumbers a word
+  // still produces the text the interpreter will produce.
+  const milestones = resolveScript00Milestones(
+    scriptsOf().program,
+    scriptsOf().text
+  );
+  const arrivalPacing = {
+    charactersPerSecond:
+      settings.arrival.charactersPerSecond * settings.arrival.timeScale,
+    holdSeconds: settings.arrival.holdSeconds,
+    titleCardSeconds: settings.arrival.titleCardSeconds
+  };
+  /// What the Arrival does with a session that already exists.
+  ///
+  /// Only a session still inside the opening script's own commentary goes back into the
+  /// Arrival; everything else is a game already under way.
+  const arrivalEntryFor = (fresh: boolean): ArrivalEntry => {
+    if (fresh) {
+      return { kind: 'fresh' };
+    }
+    const scripts = scriptsOf();
+    return ArrivalDirector.entryFor(
+      milestones,
+      scripts.ticker?.text,
+      withinOpeningScript(scripts.program, scripts.state.pc)
+    );
+  };
+  const makeArrival = (fresh: boolean): ArrivalDirector =>
+    new ArrivalDirector({
+      bridge: {
+        // One fixed step, exactly as the frame loop takes one, so that skipping the Arrival
+        // hands the session the same run of steps watching it does.
+        advance: seconds => {
+          session.intent = IDLE;
+          snapshot = session.advance(seconds).snapshot;
+          checkpointChangedResume(false);
+        },
+        playingMessage: () => session.scripts?.ticker?.text,
+        setPacing: choice => {
+          scriptsOf().tunables =
+            choice === 'arrival'
+              ? arrivalTunables(settings, scriptsOf().program.framesPerTick)
+              : bensonTunables(settings, scriptsOf().program.framesPerTick);
+        }
+      },
+      entry: arrivalEntryFor(fresh),
+      milestones,
+      pacing: arrivalPacing
+    });
+  let arrival = makeArrival(resumeRead.kind !== 'restored');
   let recordBensonMessage = (): void => {};
   notices.synchronize(snapshot.bensonMessage);
 
@@ -254,7 +319,16 @@ try {
     reach: action => performAndRefresh(() => session.reach(action)),
     rideLift: () => performAndRefresh(() => session.rideLift()),
     shutThrottle: () => performAndRefresh(() => session.shutThrottle()),
-    skipMessage: () => performAndRefresh(() => session.skipMessage()),
+    // One key hurries Benson along, and during the Arrival that means the whole opening: the
+    // narration is finished at once and the opening script is run to the join.
+    skipMessage: () =>
+      performAndRefresh(() => {
+        if (arrival.isActive()) {
+          arrival.skipToJoin();
+        } else {
+          session.skipMessage();
+        }
+      }),
     throttleNotchValue: notch =>
       performAndRefresh(() => session.throttleNotchValue(notch)),
     throttleStep: delta => performAndRefresh(() => session.throttleStep(delta))
@@ -298,6 +372,7 @@ try {
   const chromeFocus = (): boolean =>
     document.activeElement?.closest('[data-shell-chrome]') != null;
   const routerState = (): RouterState => ({
+    arrival: arrival.gatesInput(),
     chromeFocus: chromeFocus(),
     console: shellConsole.isOpen() ? 'open' : 'closed',
     layer: menu.layer()
@@ -311,6 +386,9 @@ try {
     world = restored.world;
     names = objectNamesOf(world.objects);
     snapshot = session.snapshot;
+    // A New Game plays the Arrival again; a restored Save is a game already under way, so it
+    // gets whatever is left of the Arrival, which is normally none of it.
+    arrival = makeArrival(savedSnapshot === undefined);
   };
 
   const persistence = createSavePersistence({
@@ -494,6 +572,7 @@ try {
 
   window.addEventListener('keydown', event => {
     switch (routeKey(routerState(), event)) {
+      case 'arrival-held':
       case 'browser':
       case 'chrome':
         return;
@@ -544,28 +623,53 @@ try {
     objectNames: names
   });
   const publish = (): void => {
-    const drawn = renderer.draw(
-      world,
-      snapshot,
-      VIEWPORT,
+    const arriving = arrival.isActive();
+    const phase = arrival.current().kind;
+    const narration = arriving ? arrival.narrationText() : undefined;
+    const pose = arrival.pose();
+    const plan = arriving
+      ? arrivalFramePlan(phase, {
+          field: arrival.fieldProgress(),
+          pose,
+          size: VIEWPORT,
+          snapshot,
+          world,
+          ...(renderer.orrery === undefined ? {} : { orrery: renderer.orrery })
+        })
+      : planFrame(world, snapshot, VIEWPORT, renderer.orrery);
+    const drawn = renderer.render(
+      plan,
       // The player's weight and glow choices are presentation, so they are read per frame the
       // same way the sky's preset is.
       effectivePresentation(settings.presentation, preferences.current())
         .wireframe
     );
     const player = snapshot.player;
-    panel.draw(panelViewModel(snapshot, panelContext()));
+    const panelModel = panelViewModel(snapshot, panelContext());
+    panel.draw(
+      arriving
+        ? arrivalPanelViewModel(
+            panelModel,
+            { narration, pose, unmeasured: arrival.readsAsterisks() },
+            world.cellSize
+          )
+        : panelModel
+    );
 
     recordBensonMessage();
     const saveMessage = persistence.message(
       snapshot.bensonMessage?.visibleText ?? ''
     );
+    // A Save's own notice still comes first; the Arrival's narration then takes the line ahead
+    // of a resume notice, which will still be there to show when the opening is over.
     const publishedMessage =
       saveMessage.source === 'shell'
         ? saveMessage
-        : notices.message(snapshot.bensonMessage);
+        : (arrivalStripText(narration) ??
+          notices.message(snapshot.bensonMessage));
     updateText(message, publishedMessage.text);
     message.dataset['source'] = publishedMessage.source;
+    surface.dataset['arrival'] = phase;
     updateText(credits, `${snapshot.credits} CREDITS`);
     updateText(
       status,
@@ -584,6 +688,12 @@ try {
     // the player can see what they are about to return to, but no time passes.
     if (menu.layer() === 'none' && ownership.mayAdvance()) {
       clock.frame(timestamp, seconds => {
+        // The Arrival advances the session itself while it presents, so that watching the
+        // opening and skipping it hand the session the same run of steps.
+        if (arrival.ownsSession()) {
+          arrival.step(seconds);
+          return;
+        }
         const endingBefore = session.scripts?.host.endingPhase ?? 0;
         session.intent = controls.intent;
         snapshot = session.advance(seconds).snapshot;

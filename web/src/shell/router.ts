@@ -1,4 +1,9 @@
-import { RESERVED_CODES, browserChord, type BrowserKey } from './input.ts';
+import {
+  RESERVED_CODES,
+  SKIP_MESSAGE_CODE,
+  browserChord,
+  type BrowserKey
+} from './input.ts';
 
 /// A key press as the router sees it.
 ///
@@ -16,6 +21,9 @@ export interface RoutedKey extends BrowserKey {
 export type ShellLayer = 'none' | 'menu' | 'ownership' | 'settings' | 'saves';
 
 export interface RouterState {
+  /// Whether the Arrival is presenting. While it is, the Game Surface answers only the key that
+  /// skips it: the game is not yet the player's to move (ADR 0032).
+  readonly arrival: boolean;
   /// Whether a form control inside shell chrome currently holds focus.
   readonly chromeFocus: boolean;
   /// Whether the Shell Console is down. Independent of `layer`: the console opens over an
@@ -29,7 +37,7 @@ export interface RouterState {
 /// `browser` keeps the browser's own chord behaviour; `chrome` gives the key to whichever
 /// overlay or form control owns it; `game` is the only route that reaches the Control Profile.
 export type KeyRoute =
-  'browser' | 'chrome' | 'console-toggle' | 'escape' | 'game';
+  'arrival-held' | 'browser' | 'chrome' | 'console-toggle' | 'escape' | 'game';
 
 /// Recognise the console key across keyboard layouts.
 ///
@@ -49,8 +57,12 @@ export const chromeHasKeyboard = (state: RouterState): boolean =>
 /// Order matters and is the whole point of this function:
 /// browser-reserved chords first, so no shell feature can swallow them; then the console key,
 /// which would otherwise be consumed as an ordinary Control Profile code; then Escape, which
-/// drives the layer stack; then anything typed while chrome owns the keyboard; and only then
-/// the Game Surface.
+/// drives the layer stack; then anything typed while chrome owns the keyboard; then the Arrival,
+/// which keeps only the key that skips it; and only then the Game Surface.
+///
+/// The Arrival comes last of the four so the System Menu and the Shell Console stay reachable
+/// throughout it: an opening the player cannot get out of is a worse opening than one they can
+/// skip.
 export const routeKey = (state: RouterState, key: RoutedKey): KeyRoute => {
   if (browserChord(key)) {
     return 'browser';
@@ -65,6 +77,9 @@ export const routeKey = (state: RouterState, key: RoutedKey): KeyRoute => {
   }
   if (chromeHasKeyboard(state)) {
     return 'chrome';
+  }
+  if (state.arrival && key.code !== SKIP_MESSAGE_CODE) {
+    return 'arrival-held';
   }
   return 'game';
 };

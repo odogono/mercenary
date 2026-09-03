@@ -56,6 +56,24 @@ export interface MessageSettings {
   readonly holdSeconds: number;
 }
 
+/// How the Arrival paces itself: the authored opening's own clock (ADR 0032).
+///
+/// Separate from `message` and `scripts` because the Arrival is played once, before the game is
+/// under the player's hand, and wants the original's unhurried rhythm rather than the brisker
+/// pacing chosen for play. It is deliberately absent from the blocks that identify a Save, so
+/// retuning the opening cannot make an existing Save unloadable.
+export interface ArrivalSettings {
+  /// Characters per second the Arrival Narration reveals at, before its time scale.
+  readonly charactersPerSecond: number;
+  /// How long a fully revealed narration line is held.
+  readonly holdSeconds: number;
+  /// Multiplies the Arrival's own pacing, narration and opening-script tail alike, in place of
+  /// `scripts.timeScale` until the Arrival hands over.
+  readonly timeScale: number;
+  /// How long the title card holds the panel before the first narration line.
+  readonly titleCardSeconds: number;
+}
+
 export interface ScriptSettings {
   /// Instructions one advance may run before yielding, which stands in for the frame boundary
   /// the original interpreter had for free.
@@ -118,6 +136,7 @@ export interface PresentationSettings {
 }
 
 export interface Settings {
+  readonly arrival: ArrivalSettings;
   readonly flight: FlightSettings;
   readonly message: MessageSettings;
   readonly presentation: PresentationSettings;
@@ -133,6 +152,14 @@ export const DEFAULT_MESSAGE_CHARACTERS_PER_SECOND = 2;
 export const DEFAULT_MESSAGE_HOLD_SECONDS = 3;
 
 export const DEFAULT_SCRIPT_TIME_SCALE = 6;
+
+/// The Arrival's defaults, tuned so the title card reaches touchdown in about the
+/// sixty-five seconds the original release's opening takes. They are a feel choice judged by
+/// playing it beside the reference recording (ADR 0011), not decoded values.
+export const DEFAULT_ARRIVAL_CHARACTERS_PER_SECOND = 4;
+export const DEFAULT_ARRIVAL_HOLD_SECONDS = 2.1;
+export const DEFAULT_ARRIVAL_TITLE_CARD_SECONDS = 2.5;
+export const DEFAULT_ARRIVAL_TIME_SCALE = 3;
 export const DEFAULT_SCRIPT_INSTRUCTION_BUDGET = 512;
 export const DEFAULT_PRESENTATION_PRESET: PresentationPreset = 'enhanced';
 export const DEFAULT_SKY_DAY_LENGTH_MINUTES = 24;
@@ -249,6 +276,42 @@ const readMessage = (value: unknown): MessageSettings => {
       'holdSeconds',
       'message.holdSeconds',
       DEFAULT_MESSAGE_HOLD_SECONDS
+    )
+  };
+};
+
+const readArrival = (value: unknown): ArrivalSettings => {
+  const source = block(value, 'arrival');
+  return {
+    charactersPerSecond: positive(
+      number(
+        source,
+        'charactersPerSecond',
+        'arrival.charactersPerSecond',
+        DEFAULT_ARRIVAL_CHARACTERS_PER_SECOND
+      ),
+      'arrival.charactersPerSecond'
+    ),
+    holdSeconds: number(
+      source,
+      'holdSeconds',
+      'arrival.holdSeconds',
+      DEFAULT_ARRIVAL_HOLD_SECONDS
+    ),
+    timeScale: positive(
+      number(
+        source,
+        'timeScale',
+        'arrival.timeScale',
+        DEFAULT_ARRIVAL_TIME_SCALE
+      ),
+      'arrival.timeScale'
+    ),
+    titleCardSeconds: number(
+      source,
+      'titleCardSeconds',
+      'arrival.titleCardSeconds',
+      DEFAULT_ARRIVAL_TITLE_CARD_SECONDS
     )
   };
 };
@@ -456,6 +519,7 @@ const readPresentation = (value: unknown): PresentationSettings => {
 };
 
 export const defaultSettings = (): Settings => ({
+  arrival: readArrival(undefined),
   flight: readFlight(undefined),
   message: readMessage(undefined),
   presentation: readPresentation(undefined),
@@ -503,6 +567,24 @@ export const bensonTunables = (
   timeScale: settings.scripts.timeScale
 });
 
+/// Script pacing while the Arrival is presenting, for one payload's tick length.
+///
+/// The same shape `bensonTunables` builds, with the Arrival's own reveal rate, hold and time
+/// scale in place of the game's. The instruction budget is not the Arrival's to change: it
+/// stands in for the frame boundary the original interpreter had for free, so it belongs to the
+/// interpreter rather than to a pace.
+export const arrivalTunables = (
+  settings: Settings,
+  framesPerTick: number
+): BensonTunables => ({
+  framesPerSecond: 50,
+  framesPerTick,
+  instructionBudget: settings.scripts.instructionBudget,
+  messageCharactersPerSecond: settings.arrival.charactersPerSecond,
+  messageHoldSeconds: settings.arrival.holdSeconds,
+  timeScale: settings.arrival.timeScale
+});
+
 /// Load a settings document, or the defaults when there is none.
 ///
 /// The kit's `Settings.load(at:read:)` takes the file's location and a way to read it, so that
@@ -532,6 +614,7 @@ export const loadSettings = (text: string | undefined): Settings => {
   }
   const source = document as Record<string, unknown>;
   return {
+    arrival: readArrival(source['arrival']),
     flight: readFlight(source['flight']),
     message: readMessage(source['message']),
     presentation: readPresentation(source['presentation']),

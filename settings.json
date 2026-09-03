@@ -1,4 +1,10 @@
 {
+  "arrival": {
+    "titleCardSeconds": 2.5,
+    "charactersPerSecond": 4,
+    "holdSeconds": 2.1,
+    "timeScale": 3
+  },
   "message": {
     "holdSeconds": 3,
     "charactersPerSecond": 2

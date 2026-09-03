@@ -158,6 +158,18 @@ _Avoid_: Random stars, particle field, space backdrop
 The Reference Build's 21-point respawning visual field shown by the Interstellar Ship's handler during the Escape terminal presentation, distinct from ordinary flight and the authored Targ Star Sphere.
 _Avoid_: Star Sphere, general particle system, ordinary-flight starfield
 
+**Arrival**:
+The authored opening presentation the Browser Shell plays over the held opening Benson Script before active play — star field, descent and crash — recreated by eye from the original releases because the Reference Build's own intro was stripped from the artifact it was cracked from. It is presentation only: never Session State, absent from the Save Snapshot, and skippable to a game identical to the one watching it reaches (ADR 0032).
+_Avoid_: Intro cutscene, attract mode, title sequence, Ending
+
+**Arrival Field**:
+The authored star field, and the planet growing out of it, that the Arrival's space segment is seen against — distinct from the Targ Star Sphere, the Interstellar Ship Field, and ordinary flight.
+_Avoid_: Star Sphere, Interstellar Ship Field, ordinary-flight starfield, space backdrop
+
+**Arrival Narration**:
+The Arrival's own message sequence, authored into the Browser Shell and quoted from the original releases because it belongs to the stripped part of the intro and is in no Data Payload. It borrows the message line as a shell notice does and is not a Benson Message: it never reaches the interpreter, the Host Callout, or the message transcript (ADR 0032).
+_Avoid_: Benson Message, intro script, opening text
+
 **Trace Oracle**:
 The accepted macOS implementation frozen at the annotated `trace-oracle-last-good` tag, together with the deterministic traces it regenerates, held as the tagged equivalence authority that the canonical browser implementation must reproduce rather than as a live implementation (ADR 0019).
 _Avoid_: Golden master, reference app, source of truth

@@ -499,7 +499,9 @@ export class Renderer {
   private readonly gl: WebGL2RenderingContext;
   private readonly ink: WebGLUniformLocation | null;
   private inkPass: InkPipeline | undefined;
-  private readonly orrery: TargOrrery | undefined;
+  /// The orrery this renderer was built with, readable so a caller planning its own frame plans
+  /// it against the same sky (ADR 0025).
+  readonly orrery: TargOrrery | undefined;
   private readonly pixel: number;
   private readonly program: WebGLProgram;
   private readonly sceneBuffer: WebGLBuffer;
@@ -661,7 +663,25 @@ export class Renderer {
     readonly lines: number;
     readonly points: number;
   } {
-    const plan = planFrame(world, snapshot, size, this.orrery);
+    return this.render(
+      planFrame(world, snapshot, size, this.orrery),
+      inkOptions
+    );
+  }
+
+  /// Draw one already-planned frame.
+  ///
+  /// Split from `draw` so a caller that plans its own frame — the Arrival, which draws the world
+  /// from a camera the session is not standing in (ADR 0032) — reaches this rasteriser rather
+  /// than a second one. How a plan becomes pixels stays here; what a plan says is still decided
+  /// by a pure function.
+  render(
+    plan: FramePlan,
+    inkOptions: InkOptions = DEFAULT_INK
+  ): {
+    readonly lines: number;
+    readonly points: number;
+  } {
     const gl = this.gl;
     // The canvas is sized once by the caller, but the viewport is read here so a resize between
     // frames needs nothing else to be rebuilt.

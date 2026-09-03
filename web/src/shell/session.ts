@@ -94,6 +94,9 @@ export const createWalkabout = (
     restore === undefined
       ? new GameplaySession(content, openingPlayer(), scripts)
       : GameplaySession.restore(content, scripts, restore);
+  // The opening script is started here even when the Arrival is about to present, so that a
+  // Save taken during the opening restores a game with a script to run. The Arrival holds the
+  // script by not advancing the session rather than by leaving it unstarted (ADR 0032).
   if (restore === undefined && !session.start(0)) {
     throw new Error('the opening Benson Script could not start');
   }

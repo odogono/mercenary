@@ -35,6 +35,22 @@ const useComposition = async (
   }, composition);
 };
 
+/// Step past the Arrival, the way a player who has seen it does.
+///
+/// Every fresh session now opens with the authored Arrival (ADR 0032). The opening itself is
+/// proven in `arrival.e2e.ts`; the tests here are about the game it hands over to, so they skip
+/// it and assert against the moment it lands on — which is the moment these tests always started
+/// from. A restored or resumed session has no Arrival to skip and says so.
+const skipArrival = async (page: Page): Promise<void> => {
+  const surface = page.locator('#game-surface');
+  await expect(surface).toHaveAttribute('data-state', 'ready');
+  if ((await surface.getAttribute('data-arrival')) === 'done') {
+    return;
+  }
+  await page.keyboard.press('Space');
+  await expect(surface).toHaveAttribute('data-arrival', 'done');
+};
+
 /// Open a System Menu page the way a player does.
 const openPage = async (
   page: Page,
@@ -62,8 +78,8 @@ test('the Benson Panel is the default composition and tracks the session', async
   page
 }, testInfo) => {
   await page.goto('/');
+  await skipArrival(page);
   const surface = page.locator('#game-surface');
-  await expect(surface).toHaveAttribute('data-state', 'ready');
   await expect(surface).toHaveAttribute('data-composition', 'panel');
   await expect(surface).toHaveAttribute('data-rendition', 'targ');
 
@@ -195,6 +211,10 @@ test('Authentic preserves the pinned initial canvas pixels', async ({
     'data-state',
     'ready'
   );
+  // The pinned frame is the world the Arrival hands over to, not the Arrival's own field. This
+  // test freezes the frame loop, so the skip is pressed here and the single frame it goes on to
+  // draw is the first frame of the game itself.
+  await page.keyboard.press('Space');
   await testInfo.attach('authentic-initial-frame', {
     body: await page.locator('#frame').screenshot(),
     contentType: 'image/png'
@@ -253,9 +273,9 @@ test('the live opening loop renders, walks and releases held input', async ({
   // These readouts and controls belong to the classic strip, which is now a setting.
   await useComposition(page, 'strip');
   await page.goto('/');
+  await skipArrival(page);
   const surface = page.locator('#game-surface');
   const canvas = page.locator('#frame');
-  await expect(surface).toHaveAttribute('data-state', 'ready');
   await expect(canvas).toHaveAttribute('width', '1280');
   await expect(canvas).toHaveAttribute('height', '800');
   await expect(page.locator('#credits')).toContainText('CREDITS');
@@ -453,10 +473,7 @@ test('Session Resume survives reload and New Game preserves Saves', async ({
 }) => {
   await useComposition(page, 'strip');
   await page.goto('/');
-  await expect(page.locator('#game-surface')).toHaveAttribute(
-    'data-state',
-    'ready'
-  );
+  await skipArrival(page);
   const canvas = page.locator('#frame');
   const position = async (): Promise<{
     x: string | null;
@@ -540,10 +557,7 @@ test('an abnormal page termination loses less than one checkpoint interval', asy
     );
   });
   await page.goto('/');
-  await expect(page.locator('#game-surface')).toHaveAttribute(
-    'data-state',
-    'ready'
-  );
+  await skipArrival(page);
 
   const resume = async (): Promise<string | null> =>
     await page.evaluate(() =>
@@ -607,9 +621,9 @@ test('one page owns the Session Resume and a second page can take over', async (
 }) => {
   await useComposition(page, 'strip');
   await page.goto('/');
+  await skipArrival(page);
   const firstSurface = page.locator('#game-surface');
   const firstCanvas = page.locator('#frame');
-  await expect(firstSurface).toHaveAttribute('data-state', 'ready');
 
   const openingZ = await firstCanvas.getAttribute('data-z');
   await page.keyboard.down('ArrowUp');
@@ -691,10 +705,9 @@ test('invalid Session Resume starts fresh and repeats its refusal in the menu', 
     );
   });
   await page.goto('/');
-  await expect(page.locator('#game-surface')).toHaveAttribute(
-    'data-state',
-    'ready'
-  );
+  // The Arrival holds the message line while it presents, so the standing refusal is read after
+  // it rather than under it — which is what opening the menu below asks for.
+  await skipArrival(page);
   await expect(page.locator('#frame')).toHaveAttribute('data-x', '559104');
   const replacement = await page.evaluate(() =>
     window.localStorage.getItem('mercenary.browser-shell.session-resume.v1')
@@ -733,9 +746,9 @@ test('the Shell Console runs commands over a running world', async ({
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
+  await skipArrival(page);
   const surface = page.locator('#game-surface');
   const canvas = page.locator('#frame');
-  await expect(surface).toHaveAttribute('data-state', 'ready');
   await expect(surface).toHaveAttribute('data-console', 'closed');
 
   await page.keyboard.press('Backquote');
@@ -853,9 +866,9 @@ test('console history recalls without moving the player', async ({ page }) => {
 
 test('the System Menu pauses the session it covers', async ({ page }) => {
   await page.goto('/');
+  await skipArrival(page);
   const surface = page.locator('#game-surface');
   const canvas = page.locator('#frame');
-  await expect(surface).toHaveAttribute('data-state', 'ready');
 
   await page.keyboard.press('Escape');
   await expect(surface).toHaveAttribute('data-layer', 'menu');
