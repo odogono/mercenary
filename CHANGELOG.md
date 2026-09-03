@@ -57,6 +57,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- The Save chooser now checks a Save's exact payload and gameplay-settings identity before
+  presenting it as loadable. An incompatible Save is shown as `UNREADABLE` without its old
+  location or timestamp, its LOAD action is disabled, and DELETE remains available so the player
+  can clear it explicitly; the stored record is left untouched as required by ADR 0026.
+
 - Surface Structures whose white/black split lies beyond their last line now keep black Ink,
   matching `DRAW_STRUCTURE_L96E7` instead of treating `$FF` as all white (#149). Geometry decoder
   8 corrects 86 lines shared by 26 Surface Cells, or 282 cell-edge instances in the Data Payload;
