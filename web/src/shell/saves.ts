@@ -2,7 +2,6 @@ import {
   SAVE_SCHEMA_VERSION,
   decodeSave,
   encodeSave,
-  inspectSave,
   type SaveEnvironment,
   type SaveSnapshot
 } from '../session/save.ts';
@@ -193,7 +192,10 @@ export const createSavePersistence = (
       return { slot: target, state: 'empty' };
     }
     try {
-      const saved = inspectSave(encoded);
+      // A structurally valid Save is still unreadable when its payload or settings identity no
+      // longer matches. Describe it through the same compatibility gate as Load so the chooser
+      // never offers an action that the persistence core must refuse.
+      const saved = decodeSave(encoded, options.environment);
       return {
         savedAt: new Date(saved.savedAt),
         slot: target,
