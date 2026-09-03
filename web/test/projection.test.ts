@@ -112,17 +112,17 @@ describe('Reference Viewport line clipping', () => {
     position: { x: 0, y: 0, z: 0 }
   });
   const size: Size = { height: 800, width: 1280 };
-  test('centres the scaled 160-by-136 Reference Viewport', () => {
+  test('maps the 160-by-136 Reference Viewport onto the whole rendered frame', () => {
     expect(referenceViewportBounds(size)).toEqual({
-      height: 544,
+      height: 800,
       width: 1280,
       x: 0,
-      y: 128
+      y: 0
     });
     expect(referenceViewportBounds({ height: 136, width: 640 })).toEqual({
       height: ReferenceViewport.height,
-      width: ReferenceViewport.width,
-      x: 160,
+      width: 640,
+      x: 0,
       y: 0
     });
   });
@@ -130,18 +130,18 @@ describe('Reference Viewport line clipping', () => {
   test.each([
     ['left', segment(-256, 0, 0, 0), { x1: 0, y1: 400 }],
     ['right', segment(0, 0, 256, 0), { x2: 1280, y2: 400 }],
-    ['top', segment(0, 256, 0, 0), { x1: 640, y1: 128 }],
-    ['bottom', segment(0, 0, 0, -256), { x2: 640, y2: 672 }]
+    ['top', segment(0, 256, 0, 0), { x1: 640, y1: 0 }],
+    ['bottom', segment(0, 0, 0, -256), { x2: 640, y2: 800 }]
   ])('clips a crossing at the %s border', (_edge, input, crossing) => {
     expect(camera.projectSegment(input, size)).toMatchObject(crossing);
   });
 
   test('clips a corner crossing parametrically', () => {
-    expect(camera.projectSegment(segment(-256, 108.8, 0, 0), size)).toEqual({
+    expect(camera.projectSegment(segment(-256, 160, 0, 0), size)).toEqual({
       ink: Ink.white,
       x1: 0,
       x2: 640,
-      y1: 128,
+      y1: 0,
       y2: 400
     });
   });

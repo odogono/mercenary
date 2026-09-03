@@ -76,8 +76,8 @@ export interface ScriptSettings {
   /// Instructions one advance may run before yielding, which stands in for the frame boundary
   /// the original interpreter had for free.
   readonly instructionBudget: number;
-  /// Multiplies the pace of the Reference Build's own script timing: its waits and its message
-  /// reveal. The reading hold is deliberately not scaled by it.
+  /// Multiplies the Reference Build's script waits and the Benson Display's silent `$E1` pause.
+  /// Active 50 Hz scanout and the reading hold are deliberately not scaled by it.
   readonly timeScale: number;
 }
 

@@ -219,7 +219,7 @@ export class BensonSession {
     const remaining: BensonEffect[] = [];
     for (const effect of advance.effects) {
       if (typeof effect === 'object' && 'playMessage' in effect) {
-        this.beginMessage(effect.playMessage);
+        this.beginMessage(effect.playMessage, effect.displaySource);
       } else {
         remaining.push(effect);
       }
@@ -235,7 +235,7 @@ export class BensonSession {
     this.host = this.host.with({ boardedCraft: craft });
   }
 
-  private beginMessage(composed: string): void {
+  private beginMessage(composed: string, displaySource = composed): void {
     if (this.messageMode === 'legacyOracle') {
       this.ticker = new MessageTicker(
         composed,
@@ -244,7 +244,7 @@ export class BensonSession {
       );
     } else {
       this.ticker = undefined;
-      this.display.start(composed, this.host.messageInterval);
+      this.display.start(displaySource, this.host.messageInterval);
     }
     this.messageOccurrence = {};
   }
@@ -259,7 +259,11 @@ export class BensonSession {
     if (composed === undefined) {
       return;
     }
-    this.showText(composed);
+    this.beginMessage(
+      composed,
+      this.text.messageForDisplay(index, messageSubstitutions(this.host))
+    );
+    this.host = this.host.with({ messagePlaying: true });
   }
 
   describe(description: InteractionDescription): void {

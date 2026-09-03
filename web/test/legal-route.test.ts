@@ -10,7 +10,7 @@ describe('a route walked through the real world', () => {
     route.observe('crash-site');
 
     // The opening poll wants Y inside its five-second window.
-    route.advance(74);
+    route.advance(76);
     route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
     route.advance(4);
     route.observe('bought');

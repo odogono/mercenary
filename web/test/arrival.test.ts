@@ -120,7 +120,7 @@ describe('the Arrival', () => {
     const run = watched();
 
     expect(run.seconds).toBeGreaterThan(55);
-    expect(run.seconds).toBeLessThan(80);
+    expect(run.seconds).toBeLessThan(85);
   });
 
   test('holds the opening script unadvanced until the handover', () => {

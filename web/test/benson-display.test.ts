@@ -61,15 +61,36 @@ describe('the authentic Benson Display', () => {
     expect(display.completedText).toBe('ABC');
   });
 
-  test('scales recovered frames but never the reading hold', () => {
+  test('keeps recovered padding in the cells but not in the completed message', () => {
+    const display = new BensonDisplay(50, 1, 0);
+    display.start('      STATUS REPORT', 26);
+    display.advance(25 / 50);
+    expect(display.displayText).toBe('    STATUS REPORT      ');
+    expect(display.completedText).toBe('STATUS REPORT');
+  });
+
+  test('keeps active scanout visible while fully scaling the recovered wait', () => {
+    const display = new BensonDisplay(50, 6, 0);
+    display.start('ABCDEFGHIJKLMNOPQRSTUVWXYZ', 125);
+    display.advance(1 / 50);
+    expect(display.displayText).toBe(shifted('A'));
+    display.advance(24 / 50);
+    expect(display.displayText.endsWith('Y')).toBeTrue();
+    display.advance(99 / 300);
+    expect(display.displayText.endsWith('Y')).toBeTrue();
+    display.advance(1 / 300);
+    expect(display.displayText.endsWith('Z')).toBeTrue();
+  });
+
+  test('never scales the reading hold', () => {
     const display = new BensonDisplay(50, 5, 3);
     display.start('A', 26);
-    display.advance(26 / 250);
+    display.advance(0.51);
     expect(display.completedText).toBe('A');
     expect(display.isFinished).toBeFalse();
-    display.advance(2.99);
+    display.advance(2.98);
     expect(display.isFinished).toBeFalse();
-    display.advance(0.01);
+    display.advance(0.02);
     expect(display.isFinished).toBeTrue();
   });
 

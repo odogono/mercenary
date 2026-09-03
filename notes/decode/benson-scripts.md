@@ -208,10 +208,18 @@ eviction, and spaces continuing after the source terminator through the active
 burst. The next recorded interval independently repeats the 25-shift/100-frame
 pause shape.
 
-The browser scales recovered 50 Hz frames and the `$E1` wait together with
-`scripts.timeScale`, then applies its existing three-second reading hold without
-scaling. That hold remains a player-facing adaptation; the burst and pause are
-decoded behaviour.
+The decoded token streams include leading padding words which the transcript's
+normalised text deliberately omits. The browser feeds those raw spaces to the
+display while retaining the normalised Benson Message separately; without them,
+the 25-shift burst evicts the first two printable characters before the reading
+hold (for example, `CRAFT FOR SALE` becomes `AFT FOR SALE`).
+
+The browser scales the silent `$E1` wait with `scripts.timeScale` and applies its
+existing three-second reading hold without scaling. Active scanout remains at the
+recovered 50 Hz: the gameplay scale of six otherwise compresses all 25 shifts into
+about 83 ms, only four or five browser render frames, so the right-edge entry is
+effectively invisible. The cap leaves a burst visible for half a second without
+slowing the script's longer silent interval.
 
 ## Remaining open question
 

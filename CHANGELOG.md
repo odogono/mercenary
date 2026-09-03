@@ -66,14 +66,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- Ordinary and Distant Structure lines are now clipped to the centred, scaled Reference
-  Viewport before binary32 narrowing, removing the near-camera streaks while leaving Far Points
-  unchanged. Production uses the recovered clip; the Projection Replay Gate explicitly retains
-  the frozen unclipped oracle mode.
+- Ordinary and Distant Structure lines are now clipped to the rendered frame's four borders
+  before binary32 narrowing, removing the near-camera streaks without introducing an inset
+  top/bottom letterbox and while leaving Far Points unchanged. The Projection Replay Gate
+  explicitly retains the frozen unclipped oracle mode.
 - Benson Messages now traverse one persistent 23-cell Benson Display from right to left in the
   recovered 25-frame bursts and `$E1` pauses, including the endgame interval of 150. Both Panel
   Renditions and the communications strip show the same cells; Arrival Narration and Browser
-  Shell notices remain separate overlays. The old message reveal-rate setting is gone, Save
+  Shell notices remain separate overlays. Recovered leading padding stays in the display feed
+  but outside transcript text, and active scanout is capped so script acceleration cannot hide
+  the scroll between browser frames. The old message reveal-rate setting is gone, Save
   schema 9 stores the display continuation, and schema-8 Saves and Session Resume records are
   refused. Replay Gates alone can select the frozen progressive ticker.
 - Geometry decoder 9 resolves `$0E` as `.` and `$6D` as `?`, completing `NO. O-9 ?` and leaving

@@ -135,7 +135,7 @@ The game-owned presentation region containing the world view, status information
 _Avoid_: Viewport, game UI
 
 **Reference Viewport**:
-The centred, uniformly scaled 320×136 physical-pixel playfield corresponding to the Reference Build's 160×136 logical projection, including its two-physical-pixels-per-logical-X aspect. Ordinary and Distant Structure lines are clipped to its border before screen coordinates narrow to binary32; Far Points retain their separate rule.
+The 320×136 physical-pixel geometry corresponding to the Reference Build's 160×136 logical projection, including its two-physical-pixels-per-logical-X aspect, mapped into the rendered frame. Ordinary and Distant Structure lines are clipped to the output frame's border before screen coordinates narrow to binary32; Far Points retain their separate rule.
 _Avoid_: Browser window, canvas, camera frustum, Game Surface
 
 **Native Shell (historical)**:

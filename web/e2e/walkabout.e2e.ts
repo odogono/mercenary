@@ -150,6 +150,87 @@ test('every Benson surface renders the same fixed 23-cell display', async ({
   expect([...displays[0]!]).toHaveLength(23);
 });
 
+test('the Benson display keeps every glyph inside its message aperture', async ({
+  page
+}) => {
+  await page.goto('/');
+  await skipArrival(page);
+  const display = page.locator('#panel-message');
+  await expect(display).toBeVisible();
+  const ink = await display.evaluate(element => {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const glyphs = range.getBoundingClientRect();
+    const box = element.getBoundingClientRect();
+    return {
+      boxBottom: box.bottom,
+      boxLeft: box.left,
+      boxRight: box.right,
+      boxTop: box.top,
+      glyphBottom: glyphs.bottom,
+      glyphLeft: glyphs.left,
+      glyphRight: glyphs.right,
+      glyphTop: glyphs.top
+    };
+  });
+  expect(ink.glyphTop).toBeGreaterThanOrEqual(ink.boxTop);
+  expect(ink.glyphBottom).toBeLessThanOrEqual(ink.boxBottom);
+  expect(ink.glyphLeft).toBeGreaterThanOrEqual(ink.boxLeft);
+  expect(ink.glyphRight).toBeLessThanOrEqual(ink.boxRight);
+});
+
+test('the Benson display enters new characters at the right edge', async ({
+  page
+}) => {
+  await page.goto('/');
+  await page.evaluate(() => {
+    const view = window as Window & { bensonDisplayFrames?: string[] };
+    const display = document.querySelector('#panel-message')!;
+    view.bensonDisplayFrames = [];
+    new MutationObserver(() => {
+      view.bensonDisplayFrames!.push(display.textContent ?? '');
+    }).observe(display, {
+      characterData: true,
+      childList: true,
+      subtree: true
+    });
+  });
+  await skipArrival(page);
+  const display = page.locator('#panel-message');
+  await expect(display).toBeVisible();
+  await expect(display).toContainText('STATUS REPORT', { timeout: 1000 });
+
+  const frames = await page.evaluate(
+    () =>
+      (window as Window & { bensonDisplayFrames?: string[] })
+        .bensonDisplayFrames ?? []
+  );
+  const buffers = [...new Set(frames.filter(frame => frame.length === 23))];
+  expect(
+    buffers.some(buffer => {
+      const entered = buffer.trim();
+      return (
+        entered.length > 0 &&
+        entered.length < 'STATUS REPORT'.length &&
+        buffer === entered.padStart(23)
+      );
+    }),
+    JSON.stringify(buffers)
+  ).toBe(true);
+  expect(
+    buffers.some((before, index) => {
+      const after = buffers[index + 1];
+      return (
+        after !== undefined &&
+        Array.from({ length: 22 }, (_, skipped) => skipped + 1).some(
+          skipped => after.slice(0, 23 - skipped) === before.slice(skipped)
+        )
+      );
+    }),
+    JSON.stringify(buffers)
+  ).toBe(true);
+});
+
 test('neither rendition overflows the frame it is drawn in', async ({
   page
 }) => {
@@ -279,7 +360,7 @@ test('Authentic preserves the pinned initial canvas pixels', async ({
   });
 
   expect(digest).toBe(
-    'ec472a1b5c66df6d0a028700755f82549b936119e4cb183bc5e263e71baa705d'
+    '98337982b60f95eba8f3389907a1e238cf9bac7050e70554b58dec9ca7771991'
   );
 });
 

@@ -5,9 +5,16 @@ export type BensonDisplayPhase = 'feeding' | 'waiting' | 'holding' | 'finished';
 
 const blankCell = (): string => ' ';
 
+const completedMessage = (source: string): string =>
+  source
+    .split(' ')
+    .filter(piece => piece.length > 0)
+    .join(' ');
+
 /// The Reference Build's session-persistent 23-cell communications display.
 export class BensonDisplay {
   static readonly activeFrames = 25;
+  static readonly maximumActiveTimeScale = 1;
   static readonly width = 23;
 
   readonly framesPerSecond: number;
@@ -51,33 +58,47 @@ export class BensonDisplay {
     if (seconds <= 0 || this.phase === 'finished') {
       return;
     }
-    if (this.phase === 'holding') {
-      this.advanceHold(seconds);
-      return;
-    }
-    const rate = this.framesPerSecond * this.timeScale;
-    if (rate <= 0) {
-      return;
-    }
-    const initialRemainder = this.frameRemainder;
-    const available = initialRemainder + seconds * rate;
-    const frames = Math.floor(
-      available + Number.EPSILON * Math.max(1, available)
-    );
-    let processed = 0;
-    while (
-      processed < frames &&
-      (this.phase as BensonDisplayPhase) !== 'holding'
-    ) {
-      this.advanceFrame();
-      processed += 1;
-    }
-    if ((this.phase as BensonDisplayPhase) === 'holding') {
-      this.frameRemainder = 0;
+    let remaining = seconds;
+    while (remaining > 0 && (this.phase as BensonDisplayPhase) !== 'finished') {
+      if (this.phase === 'holding') {
+        this.advanceHold(remaining);
+        return;
+      }
+      // Scaling the silent interval preserves the browser's script pacing. Scanout itself is
+      // capped at the recovered 50 Hz: the gameplay scale of six otherwise turns a whole
+      // message into an imperceptible four- or five-render-frame flash.
+      const phaseScale =
+        this.phase === 'feeding'
+          ? Math.min(BensonDisplay.maximumActiveTimeScale, this.timeScale)
+          : this.timeScale;
+      const rate = this.framesPerSecond * phaseScale;
+      if (rate <= 0) {
+        return;
+      }
+      const initialRemainder = this.frameRemainder;
+      const available = initialRemainder + remaining * rate;
+      const frames = Math.floor(
+        available + Number.EPSILON * Math.max(1, available) * 16
+      );
+      if (frames === 0) {
+        this.frameRemainder = available;
+        return;
+      }
+      const phaseBoundary =
+        this.phase === 'feeding'
+          ? BensonDisplay.activeFrames - this.cyclePosition
+          : this.cycleFrames - this.cyclePosition;
+      const processed = Math.min(frames, phaseBoundary);
+      for (let frame = 0; frame < processed; frame += 1) {
+        this.advanceFrame();
+      }
       const consumed = Math.max(0, (processed - initialRemainder) / rate);
-      this.advanceHold(Math.max(0, seconds - consumed));
-    } else {
-      this.frameRemainder = available - frames;
+      remaining = Math.max(0, remaining - consumed);
+      if (processed < phaseBoundary) {
+        this.frameRemainder = Math.max(0, available - processed);
+        return;
+      }
+      this.frameRemainder = 0;
     }
   }
 
@@ -89,6 +110,9 @@ export class BensonDisplay {
       }
       if (this.exhausted) {
         this.phase = 'holding';
+        if (this.holdSeconds === 0) {
+          this.phase = 'finished';
+        }
         return;
       }
       this.cyclePosition = 0;
@@ -133,11 +157,11 @@ export class BensonDisplay {
   }
 
   get text(): string {
-    return this.source;
+    return completedMessage(this.source);
   }
 
   get completedText(): string | undefined {
-    return this.exhausted ? this.source : undefined;
+    return this.exhausted ? completedMessage(this.source) : undefined;
   }
 
   get progress(): number {

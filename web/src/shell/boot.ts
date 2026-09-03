@@ -325,6 +325,10 @@ try {
       performAndRefresh(() => {
         if (arrival.isActive()) {
           arrival.skipToJoin();
+          // Fast-forwarding is synchronous work, not game time. Without resetting here, the
+          // next animation frame charges that wall-clock pause to Benson and consumes an entire
+          // active display burst before the browser can paint its first entering characters.
+          clock.reset();
         } else {
           session.skipMessage();
         }

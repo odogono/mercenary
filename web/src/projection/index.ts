@@ -131,18 +131,17 @@ export const viewportCentre = (size: Size): Point => ({
   y: size.height / 2
 });
 
-/// The centred physical Reference Viewport in view pixels.
-export const referenceViewportBounds = (size: Size): Rect => {
-  const scale = viewportScale(size);
-  const width = ReferenceViewport.width * scale;
-  const height = ReferenceViewport.height * scale;
-  return {
-    height,
-    width,
-    x: (size.width - width) / 2,
-    y: (size.height - height) / 2
-  };
-};
+/// The Reference Viewport after the renderer maps it onto the output frame.
+///
+/// Projection retains the original pixel aspect and field of view. The final canvas is the
+/// presentation surface, however, so its edges are the clipping edges; applying the uniform
+/// projection scale to this rectangle a second time creates an inset horizontal letterbox.
+export const referenceViewportBounds = (size: Size): Rect => ({
+  height: size.height,
+  width: size.width,
+  x: 0,
+  y: 0
+});
 
 export type ProjectionLineMode = 'clipped' | 'unclipped';
 

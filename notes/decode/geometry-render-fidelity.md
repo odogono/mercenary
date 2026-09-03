@@ -43,10 +43,13 @@ In-range splits are unchanged, including the airstrip in Surface Cell 8:8, whose
   step before division, giving a vertical scale of 128. These are decoded
   Reference Build behaviour, not visual tuning.
 - **Reference Viewport clipping.** A deterministic parametric clip now trims
-  ordinary and Distant Structure lines to the centred, scaled physical playfield
-  before their one binary32 narrowing. Wholly outside lines disappear; Far Points
-  keep their independent handling. The Projection Replay Gate explicitly selects
-  the old unclipped oracle mode so its accepted arithmetic and ordering remain useful.
+  ordinary and Distant Structure lines to the four output-frame borders after the
+  Reference Viewport is mapped into that frame, before their one binary32 narrowing.
+  Applying the uniform projection scale to the clip rectangle as well would create
+  a second, inset letterbox and visibly shear every line at its top and bottom.
+  Wholly outside lines disappear; Far Points keep their independent handling. The
+  Projection Replay Gate explicitly selects the old unclipped oracle mode so its
+  accepted arithmetic and ordering remain useful.
 - **Parked instances.** Instances outside the world grid are no longer drawn. All
   64 remain inspectable.
 - **Grid aliasing.** `World.cell(column:row:)` packed its key without range
