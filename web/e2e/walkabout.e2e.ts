@@ -148,6 +148,10 @@ test('every Benson surface renders the same fixed 23-cell display', async ({
   expect(displays[0]).toBe(displays[1]);
   expect(displays[0]).toBe(displays[2]);
   expect([...displays[0]!]).toHaveLength(23);
+  await expect(page.locator('#panel-message > .benson-cell')).toHaveCount(23);
+  await expect(page.locator('#damocles-message > .benson-cell')).toHaveCount(
+    23
+  );
 });
 
 test('the Benson display keeps every glyph inside its message aperture', async ({

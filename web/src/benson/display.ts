@@ -5,12 +5,6 @@ export type BensonDisplayPhase = 'feeding' | 'waiting' | 'holding' | 'finished';
 
 const blankCell = (): string => ' ';
 
-const completedMessage = (source: string): string =>
-  source
-    .split(' ')
-    .filter(piece => piece.length > 0)
-    .join(' ');
-
 /// The Reference Build's session-persistent 23-cell communications display.
 export class BensonDisplay {
   static readonly activeFrames = 25;
@@ -156,14 +150,6 @@ export class BensonDisplay {
     return this.cells.join('');
   }
 
-  get text(): string {
-    return completedMessage(this.source);
-  }
-
-  get completedText(): string | undefined {
-    return this.exhausted ? completedMessage(this.source) : undefined;
-  }
-
   get progress(): number {
     const count = codePointCount(this.source);
     return count === 0 ? 0 : this.sourceIndex;
@@ -204,6 +190,28 @@ export class BensonDisplay {
     holdSeconds: number
   ): BensonDisplay {
     const display = new BensonDisplay(framesPerSecond, timeScale, holdSeconds);
+    if (snapshot.readingHoldProgress > display.holdSeconds) {
+      throw new Error(
+        'Save Snapshot Benson reading-hold progress exceeds its configured hold'
+      );
+    }
+    if (
+      snapshot.completionPhase === 'readingHold' &&
+      snapshot.readingHoldProgress >= display.holdSeconds
+    ) {
+      throw new Error(
+        'Save Snapshot active Benson reading hold has already reached its configured hold'
+      );
+    }
+    if (
+      snapshot.completionPhase === 'idle' &&
+      snapshot.activeSourceText !== null &&
+      snapshot.readingHoldProgress !== display.holdSeconds
+    ) {
+      throw new Error(
+        'Save Snapshot finished Benson message has incomplete reading-hold progress'
+      );
+    }
     display.cells = [...snapshot.cells];
     display.source = snapshot.activeSourceText ?? '';
     display.hasOccurrence = snapshot.activeSourceText !== null;

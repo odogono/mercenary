@@ -134,10 +134,6 @@ _Avoid_: Gameplay improvement, modernization
 The game-owned presentation region containing the world view, status information, prompts, and gameplay feedback whose observable behaviour is governed by the Fidelity Contract.
 _Avoid_: Viewport, game UI
 
-**Reference Viewport**:
-The 320×136 physical-pixel geometry corresponding to the Reference Build's 160×136 logical projection, including its two-physical-pixels-per-logical-X aspect, mapped into the rendered frame. Ordinary and Distant Structure lines are clipped to the output frame's border before screen coordinates narrow to binary32; Far Points retain their separate rule.
-_Avoid_: Browser window, canvas, camera frustum, Game Surface
-
 **Native Shell (historical)**:
 The macOS-owned experience that surrounded the Game Surface, including windows, menus, settings, help, file interaction, and host feedback.
 _Avoid_: Host UI, Mac shell
@@ -403,8 +399,8 @@ What turns the world into a view for one Pose, together with its near limit and 
 _Avoid_: View, eye, transform, matrix
 
 **Reference Viewport**:
-The Reference Build's own screen geometry — its logical extent, its centre, and the fact that its display makes each logical horizontal coordinate two pixels wide — kept whatever size the window is, so the view keeps the original's proportions rather than the window's.
-_Avoid_: Screen size, resolution, canvas, aspect ratio
+The Reference Build's own 160×136 logical projection and 320×136 physical-pixel geometry — its centre and the fact that each logical horizontal coordinate is two pixels wide — mapped into the rendered frame. Ordinary and Distant Structure lines are clipped to the output frame's border before screen coordinates narrow to binary32; Far Points retain their separate rule.
+_Avoid_: Screen size, resolution, canvas, aspect ratio, camera frustum, Game Surface
 
 **Ink**:
 Which of the wireframe's two drawing passes a line belongs to, dim or bright; the Reference Build splits a structure's edges between them and the difference is part of the visual language rather than a shading effect.

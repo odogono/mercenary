@@ -318,6 +318,7 @@ describe('a Save Snapshot', () => {
     );
     session.scripts!.showText('SHORT');
     const save = envelope(session);
+    expect(save.snapshot.benson?.activeMessageText).toBe('SHORT');
     const impossible = {
       ...save,
       snapshot: {
@@ -338,6 +339,58 @@ describe('a Save Snapshot', () => {
     expect(() => decodeSave(encodeSave(impossible), environment)).toThrow(
       'sourceIndex'
     );
+    expect(() =>
+      decodeSave(
+        encodeSave({
+          ...save,
+          snapshot: {
+            ...save.snapshot,
+            benson: {
+              ...save.snapshot.benson!,
+              activeMessageText: null
+            }
+          }
+        }),
+        environment
+      )
+    ).toThrow('active together');
+    expect(() =>
+      decodeSave(
+        encodeSave({
+          ...save,
+          snapshot: {
+            ...save.snapshot,
+            benson: {
+              ...save.snapshot.benson!,
+              display: {
+                ...save.snapshot.benson!.display,
+                readingHoldProgress: 1
+              }
+            }
+          }
+        }),
+        environment
+      )
+    ).toThrow('reading-hold progress');
+    const initial = scripts().captureSaveSnapshot();
+    expect(() =>
+      decodeSave(
+        encodeSave({
+          ...save,
+          snapshot: {
+            ...save.snapshot,
+            benson: {
+              ...initial,
+              display: {
+                ...initial.display,
+                cells: ['X', ...initial.display.cells.slice(1)]
+              }
+            }
+          }
+        }),
+        environment
+      )
+    ).toThrow('initial blank display');
     expect(() =>
       decodeSave(
         encodeSave({

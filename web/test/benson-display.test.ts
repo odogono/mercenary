@@ -58,15 +58,15 @@ describe('the authentic Benson Display', () => {
     expect(display.isFinished).toBeFalse();
     display.advance(1 / 50);
     expect(display.isFinished).toBeTrue();
-    expect(display.completedText).toBe('ABC');
+    expect(display.isComplete).toBeTrue();
   });
 
-  test('keeps recovered padding in the cells but not in the completed message', () => {
+  test('keeps recovered padding in the cells', () => {
     const display = new BensonDisplay(50, 1, 0);
     display.start('      STATUS REPORT', 26);
     display.advance(25 / 50);
     expect(display.displayText).toBe('    STATUS REPORT      ');
-    expect(display.completedText).toBe('STATUS REPORT');
+    expect(display.isComplete).toBeTrue();
   });
 
   test('keeps active scanout visible while fully scaling the recovered wait', () => {
@@ -86,7 +86,7 @@ describe('the authentic Benson Display', () => {
     const display = new BensonDisplay(50, 5, 3);
     display.start('A', 26);
     display.advance(0.51);
-    expect(display.completedText).toBe('A');
+    expect(display.isComplete).toBeTrue();
     expect(display.isFinished).toBeFalse();
     display.advance(2.98);
     expect(display.isFinished).toBeFalse();
@@ -102,7 +102,9 @@ describe('the authentic Benson Display', () => {
     natural.advance(100);
     skipped.finish();
     expect(skipped.displayText).toBe(natural.displayText);
-    expect(skipped.completedText).toBe(natural.completedText);
+    expect(skipped.captureSaveSnapshot()).toEqual(
+      natural.captureSaveSnapshot()
+    );
     expect(skipped.isFinished).toBeTrue();
   });
 
@@ -111,7 +113,7 @@ describe('the authentic Benson Display', () => {
     display.start('', 26);
     display.advance(25 / 50);
     expect(display.displayText).toBe(' '.repeat(23));
-    expect(display.completedText).toBe('');
+    expect(display.isComplete).toBeTrue();
     expect(display.isFinished).toBeFalse();
     display.advance(1 / 50);
     expect(display.isFinished).toBeTrue();
@@ -151,5 +153,28 @@ describe('the authentic Benson Display', () => {
     );
     expect(restored.displayText).toBe(original.displayText);
     expect(restored.isFinished).toBeTrue();
+  });
+
+  test('refuses reading-hold progress that the configured hold cannot emit', () => {
+    const active = new BensonDisplay(50, 1, 3);
+    active.start('A', 26);
+    active.advance(26 / 50 + 1);
+    const snapshot = active.captureSaveSnapshot();
+
+    expect(() =>
+      BensonDisplay.restore({ ...snapshot, readingHoldProgress: 4 }, 50, 1, 3)
+    ).toThrow('exceeds its configured hold');
+    expect(() =>
+      BensonDisplay.restore(
+        {
+          ...snapshot,
+          completionPhase: 'idle',
+          readingHoldProgress: 2
+        },
+        50,
+        1,
+        3
+      )
+    ).toThrow('incomplete reading-hold progress');
   });
 });

@@ -451,6 +451,29 @@
         white-space: nowrap;
       }
 
+      #panel-message.benson-cells,
+      #damocles-message.benson-cells {
+        display: grid;
+        box-sizing: border-box;
+        grid-template-columns: repeat(23, 1ch);
+        justify-content: center;
+        letter-spacing: 0;
+        white-space: pre;
+      }
+
+      #panel-message.benson-cells {
+        column-gap: 0.1em;
+      }
+
+      #damocles-message.benson-cells {
+        column-gap: 0.14em;
+      }
+
+      .benson-cell {
+        min-width: 0;
+        text-align: center;
+      }
+
       #targ-compass-slot {
         width: 108px;
         height: 13px;

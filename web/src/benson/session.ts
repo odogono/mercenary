@@ -50,6 +50,7 @@ export class BensonSession {
   private frames = 0;
   private readonly idleDisplayOccurrence = {};
   private messageOccurrence: object | undefined;
+  private completeMessage: string | undefined;
 
   constructor(
     program: BensonProgram,
@@ -119,7 +120,7 @@ export class BensonSession {
     }
     return this.messageMode === 'legacyOracle'
       ? this.ticker?.text
-      : this.display.text;
+      : this.completeMessage;
   }
 
   /// Immutable presentation facts without exposing either mutable display implementation.
@@ -135,9 +136,9 @@ export class BensonSession {
     }
     if (this.messageMode === 'authentic') {
       return {
-        ...(this.display.completedText === undefined
+        ...(!this.display.isComplete || this.completeMessage === undefined
           ? {}
-          : { completedText: this.display.completedText }),
+          : { completedText: this.completeMessage }),
         displayText: this.display.displayText,
         occurrence: this.messageOccurrence,
         reveal: {
@@ -236,6 +237,7 @@ export class BensonSession {
   }
 
   private beginMessage(composed: string, displaySource = composed): void {
+    this.completeMessage = composed;
     if (this.messageMode === 'legacyOracle') {
       this.ticker = new MessageTicker(
         composed,
@@ -281,6 +283,10 @@ export class BensonSession {
 
   captureSaveSnapshot(): BensonSaveSnapshot {
     return {
+      activeMessageText:
+        this.messageOccurrence === undefined
+          ? null
+          : (this.completeMessage ?? null),
       display:
         this.legacyDisplaySnapshot() ?? this.display.captureSaveSnapshot(),
       frames: this.frames,
@@ -400,6 +406,7 @@ export class BensonSession {
     );
     session.messageOccurrence =
       snapshot.display.activeSourceText === null ? undefined : {};
+    session.completeMessage = snapshot.activeMessageText ?? undefined;
     if (
       messageMode === 'legacyOracle' &&
       snapshot.display.activeSourceText !== null

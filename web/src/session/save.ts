@@ -70,6 +70,7 @@ export interface BensonStateSaveSnapshot extends Omit<
 }
 
 export interface BensonSaveSnapshot {
+  readonly activeMessageText: string | null;
   readonly display: BensonDisplaySaveSnapshot;
   readonly frames: number;
   readonly host: BensonHostSaveSnapshot;
@@ -586,26 +587,47 @@ const display = (value: unknown, at: string): BensonDisplaySaveSnapshot => {
   ) {
     fail(`${at}.${rawPhase} must be at its interval boundary`);
   }
+  const fractionalFrameRemainder = nonNegative(
+    out['fractionalFrameRemainder'],
+    `${at}.fractionalFrameRemainder`
+  );
+  if (fractionalFrameRemainder >= 1) {
+    fail(`${at}.fractionalFrameRemainder must be less than one frame`);
+  }
+  const readingHoldProgress = nonNegative(
+    out['readingHoldProgress'],
+    `${at}.readingHoldProgress`
+  );
+  if (
+    (rawPhase === 'source' || rawPhase === 'blankFeed') &&
+    readingHoldProgress !== 0
+  ) {
+    fail(`${at}.${rawPhase} cannot have reading-hold progress`);
+  }
+  if (
+    (rawPhase === 'readingHold' || rawPhase === 'idle') &&
+    fractionalFrameRemainder !== 0
+  ) {
+    fail(`${at}.${rawPhase} cannot have a fractional display frame`);
+  }
+  if (
+    activeSourceText === null &&
+    (cyclePosition !== 0 ||
+      fractionalFrameRemainder !== 0 ||
+      readingHoldProgress !== 0 ||
+      messageInterval !== 26 ||
+      cells.some(cell => cell !== ' '))
+  ) {
+    fail(`${at} without an active source must be the initial blank display`);
+  }
   return {
     activeSourceText,
     cells,
     completionPhase: rawPhase as BensonDisplaySaveSnapshot['completionPhase'],
     cyclePosition,
-    fractionalFrameRemainder: (() => {
-      const remainder = nonNegative(
-        out['fractionalFrameRemainder'],
-        `${at}.fractionalFrameRemainder`
-      );
-      if (remainder >= 1) {
-        fail(`${at}.fractionalFrameRemainder must be less than one frame`);
-      }
-      return remainder;
-    })(),
+    fractionalFrameRemainder,
     messageInterval,
-    readingHoldProgress: nonNegative(
-      out['readingHoldProgress'],
-      `${at}.readingHoldProgress`
-    ),
+    readingHoldProgress,
     sourceIndex
   };
 };
@@ -683,9 +705,27 @@ const bensonHost = (value: unknown, at: string): BensonHostSaveSnapshot => {
 };
 
 const benson = (value: unknown, at: string): BensonSaveSnapshot => {
-  const out = exact(value, at, ['display', 'frames', 'host', 'state']);
+  const out = exact(value, at, [
+    'activeMessageText',
+    'display',
+    'frames',
+    'host',
+    'state'
+  ]);
+  const activeMessageText =
+    out['activeMessageText'] === null
+      ? null
+      : string(out['activeMessageText'], `${at}.activeMessageText`);
+  const displaySnapshot = display(out['display'], `${at}.display`);
+  if (
+    (activeMessageText === null) !==
+    (displaySnapshot.activeSourceText === null)
+  ) {
+    fail(`${at} message occurrence and display source must be active together`);
+  }
   return {
-    display: display(out['display'], `${at}.display`),
+    activeMessageText,
+    display: displaySnapshot,
     frames: nonNegative(out['frames'], `${at}.frames`),
     host: bensonHost(out['host'], `${at}.host`),
     state: bensonState(out['state'], `${at}.state`)
