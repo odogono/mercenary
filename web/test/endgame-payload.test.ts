@@ -262,7 +262,7 @@ const payloadDocuments = (
   'endgame.json': endgame,
   'manifest.json': {
     counts: {},
-    decoderVersion: 7,
+    decoderVersion: 8,
     schemaVersion: 8,
     sourceCoreDigest: 'core',
     sourceDatasetId: 'dataset'

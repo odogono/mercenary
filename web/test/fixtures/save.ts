@@ -8,7 +8,7 @@ import type { SaveEnvironment } from '../../src/session/save.ts';
 export const environment: SaveEnvironment = {
   payload: {
     bensonSchemaVersion: 1,
-    decoderVersion: 7,
+    decoderVersion: 8,
     endgameSchemaVersion: 2,
     flightSchemaVersion: 3,
     interactionSchemaVersion: 1,

@@ -21,7 +21,7 @@ from .navigation import (
 )
 
 
-DECODER_VERSION = 7
+DECODER_VERSION = 8
 LAB_ROOT = Path(__file__).resolve().parents[1]
 WORK_ROOT = LAB_ROOT / "work"
 REPOSITORY_ROOT = LAB_ROOT.parents[1]
@@ -243,6 +243,25 @@ def decode_object_model(data: bytes, *, address: int) -> dict[str, Any]:
     }
     result["reconstructedHex"] = encode_object_model(result).hex()
     return result
+
+
+def _surface_structure_ink(
+    highest_line_index: int,
+    white_black_split_index: int,
+    line_index: int,
+) -> str:
+    """Return the Ink selected by ``DRAW_STRUCTURE_L96E7`` for one line.
+
+    The Reference Build walks down from the highest line in black, changing to
+    white only when that countdown equals the split.  A split beyond the table,
+    including ``$FF``, is therefore never reached and leaves every line black.
+    """
+    if (
+        white_black_split_index <= highest_line_index
+        and line_index <= white_black_split_index
+    ):
+        return "white"
+    return "black"
 
 
 def decode_surface_structure(data: bytes, *, address: int) -> dict[str, Any]:
@@ -827,7 +846,11 @@ def _expand_surface_structure(structure: dict[str, Any], cell: int) -> dict[str,
             {
                 "geometryIdentity": f"surface-cell:{cell:02x}:edge:{index:02x}",
                 "indices": [edge["start"], edge["end"]],
-                "operation": "white" if index <= structure["whiteBlackSplitIndex"] else "black",
+                "operation": _surface_structure_ink(
+                    structure["lineCount"] - 1,
+                    structure["whiteBlackSplitIndex"],
+                    index,
+                ),
                 "provenanceRefs": [structure["geometryIdentity"]],
             }
             for index, edge in enumerate(structure["lines"])

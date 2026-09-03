@@ -57,6 +57,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Surface Structures whose white/black split lies beyond their last line now keep black Ink,
+  matching `DRAW_STRUCTURE_L96E7` instead of treating `$FF` as all white (#149). Geometry decoder
+  8 corrects 86 lines shared by 26 Surface Cells, or 282 cell-edge instances in the Data Payload;
+  the payload schema and document shapes are unchanged. Every Golden Trace was re-emitted after
+  changing only the decoder compatibility pin in a disposable `trace-oracle-last-good` worktree,
+  as allowed by ADR 0033; the frozen tag and its simulation remain untouched. Beyond their payload
+  headers, only `banked`, `high-altitude`, `opening-view` and `opening-view-turned` change, and only
+  from white to black Ink — `high-altitude`'s six affected lines were absent from #149's predicted
+  trace list but follow from the same corrected Surface Structures. The prior trace acceptance
+  deliberately retains its old payload digest and is therefore visibly stale pending human
+  re-acceptance. Because Saves and the Session Resume contain Save Snapshots bound to the old
+  payload identity, decoder-7 records are now rejected rather than migrated.
+
 - An Ending is public domain state rather than a byte a caller compares against constants
   (#134). `CONTEXT.md` gains **Ending Phase** — how far an Ending's own presentation has got, as
   distinct from which Ending was reached — and `web/src/session/ending.ts` spells the pair as one

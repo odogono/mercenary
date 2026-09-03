@@ -38,7 +38,7 @@
     "underground.undergroundEntrances": 5,
     "unresolvedArrivals": 1
   },
-  "decoderVersion": 7,
+  "decoderVersion": 8,
   "files": [
     {
       "path": "benson.json",
@@ -72,7 +72,7 @@
     },
     {
       "path": "surface.json",
-      "sha256": "762575758bf4dcd7646fafe1d65bc70d5555ccbf0bd31e3fc6eec3d8bf773cbd",
+      "sha256": "c88d1aa300776f39e90f1809133ba3f581a9f260733459c22fa775aaae155bf2",
       "size": 486377
     },
     {
@@ -92,6 +92,6 @@
     }
   ],
   "schemaVersion": 8,
-  "sourceCoreDigest": "7b0cbf0f34c99fbcf8081e8fc152bc490fb4d4d1d9b1be4d9ec9481441d3949c",
-  "sourceDatasetId": "world-geometry-7b0cbf0f34c99fbc"
+  "sourceCoreDigest": "75c5c12dca266ad084b181bf492c934556474cf0fbf1c5a423d75d0b363974cd",
+  "sourceDatasetId": "world-geometry-75c5c12dca266ad0"
 }
