@@ -52,6 +52,13 @@ const HELD_CONTROLS = new Set([
 /// would be relying on the order of a switch elsewhere to get it back.
 export const RESERVED_CODES: ReadonlySet<string> = new Set(['Backquote']);
 
+/// The key that hurries Benson along.
+///
+/// Named here, by the module that decides what it does, so the router can let exactly this key
+/// through while the Arrival holds the rest (ADR 0032) rather than restating a code the profile
+/// might later move.
+export const SKIP_MESSAGE_CODE = 'Space';
+
 const PUNCTUATION_CODES = new Set([
   'Backquote',
   'Backslash',

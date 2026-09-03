@@ -8,6 +8,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The game opens in space, and crashes onto Targ (the Arrival). A star field with the panel live
+  and its readouts still asterisked, Benson counting down a Novadrive and then reporting the
+  failure, Targ growing from a dot to the whole screen, a fall onto the airstrip with the
+  altimeter running down from eighty-two thousand, a blackout at impact, and then the crash site
+  the game has always begun at. It is an authored recreation rather than a recovered sequence: the
+  configured Reference Build is a crack with the intro stripped out, so what is reproduced is the
+  original releases' opening, recreated by eye in the mould of ADR 0027's panels and classified as
+  an `excluded-crack-artifact` rather than claimed as fidelity (ADR 0032). The commentary is the
+  opening Benson Script's own — "CRASH IMMINENT," through the random landing verdict — so nothing
+  new is written for the part the payload carries, and the descent's altitudes are anchored to
+  those lines rather than to a stopwatch, which makes touchdown coincide with the verdict at any
+  pacing. The seventeen lines before it are Arrival Narration: authored shell text quoted from the
+  original releases, played through the message line and deliberately not Benson Messages.
+  Nothing is Session State and the Save schema is untouched at 8 — the deliberate opposite of
+  ADR 0031, whose reasoning does not transfer to a presentation that decides nothing. The opening
+  script is started as it always was and simply given no time until the handover, so a Save taken
+  while the field is up still restores a game with its opening to play. The Arrival plays under
+  both Presentation Presets, because the Reference Build's missing opening is an artifact rather
+  than an appearance Authentic should be faithful to. One key skips it, finishing the narration and
+  then running the script to the join in the same fixed steps the frame loop would have given it —
+  so a skipped opening and a watched one are the same game, which a test asserts by comparing the
+  two Save Snapshots rather than by trusting the argument. Its pacing is a settings block of its
+  own, defaulting to about the sixty-five seconds the original takes, and deliberately outside the
+  settings that identify a Save.
+
 - The Escape presents the Reference Build's terminal sequence, and matures itself (#134). The
   Interstellar Ship Field decoded by #117 has been in the Data Payload consumed by nothing; it is
   now a simulation the Gameplay Session owns and steps, at the Reference Build's fifty loops a

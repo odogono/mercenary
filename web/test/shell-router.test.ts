@@ -17,6 +17,7 @@ const key = (code: string, fields: Partial<RoutedKey> = {}): RoutedKey => ({
 });
 
 const state = (fields: Partial<RouterState> = {}): RouterState => ({
+  arrival: fields.arrival ?? false,
   chromeFocus: fields.chromeFocus ?? false,
   console: fields.console ?? 'closed',
   layer: fields.layer ?? 'none'
@@ -109,5 +110,36 @@ describe('the shell key router', () => {
     expect(chromeHasKeyboard(state({ chromeFocus: true }))).toBe(true);
     expect(chromeHasKeyboard(state({ console: 'open' }))).toBe(true);
     expect(chromeHasKeyboard(state({ layer: 'settings' }))).toBe(true);
+  });
+
+  describe('while the Arrival is presenting', () => {
+    const arriving = state({ arrival: true });
+
+    test('holds every key that would move the player', () => {
+      for (const code of ['ArrowUp', 'ArrowLeft', 'KeyB', 'KeyT', 'Digit3']) {
+        expect(routeKey(arriving, key(code))).toBe('arrival-held');
+      }
+    });
+
+    test('lets the skip key through', () => {
+      expect(routeKey(arriving, key('Space'))).toBe('game');
+    });
+
+    test('keeps the System Menu and the Shell Console reachable', () => {
+      expect(routeKey(arriving, key('Escape'))).toBe('escape');
+      expect(routeKey(arriving, key('Backquote'))).toBe('console-toggle');
+      expect(routeKey(arriving, key('KeyR', { ctrlKey: true }))).toBe(
+        'browser'
+      );
+    });
+
+    test('still gives chrome its keys when chrome has the keyboard', () => {
+      expect(
+        routeKey(state({ arrival: true, layer: 'menu' }), key('ArrowUp'))
+      ).toBe('chrome');
+      expect(
+        routeKey(state({ arrival: true, console: 'open' }), key('Space'))
+      ).toBe('chrome');
+    });
   });
 });
