@@ -627,22 +627,26 @@ try {
     const phase = arrival.current().kind;
     const narration = arriving ? arrival.narrationText() : undefined;
     const pose = arrival.pose();
+    const presentation = effectivePresentation(
+      settings.presentation,
+      preferences.current()
+    );
     const plan = arriving
       ? arrivalFramePlan(phase, {
           field: arrival.fieldProgress(),
           pose,
+          presentation,
           size: VIEWPORT,
           snapshot,
           world,
           ...(renderer.orrery === undefined ? {} : { orrery: renderer.orrery })
         })
-      : planFrame(world, snapshot, VIEWPORT, renderer.orrery);
+      : planFrame(world, snapshot, VIEWPORT, renderer.orrery, presentation);
     const drawn = renderer.render(
       plan,
       // The player's weight and glow choices are presentation, so they are read per frame the
       // same way the sky's preset is.
-      effectivePresentation(settings.presentation, preferences.current())
-        .wireframe
+      presentation.wireframe
     );
     const player = snapshot.player;
     const panelModel = panelViewModel(snapshot, panelContext());

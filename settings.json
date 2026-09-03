@@ -23,6 +23,7 @@
   },
   "presentation": {
     "preset": "enhanced",
+    "structureReach": "cell",
     "sky": {
       "dayLengthMinutes": 24,
       "latitudeDegrees": 34,

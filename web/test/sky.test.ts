@@ -55,6 +55,7 @@ describe('the authored Targ Orrery', () => {
       targOrreryFor({
         preset: 'authentic',
         sky: defaults,
+        structureReach: 'cell',
         wireframe: { glow: 0, thickness: 1 }
       })
     ).toBeUndefined();
@@ -62,6 +63,7 @@ describe('the authored Targ Orrery', () => {
       targOrreryFor({
         preset: 'enhanced',
         sky: defaults,
+        structureReach: 'cell',
         wireframe: { glow: 0, thickness: 1 }
       })?.stars
     ).toEqual(orrery.stars);

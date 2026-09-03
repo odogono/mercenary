@@ -107,6 +107,7 @@ export interface FlightSettings {
 }
 
 export type PresentationPreset = 'authentic' | 'enhanced';
+export type StructureReach = 'all' | 'cell';
 
 /// How the wireframe itself is drawn, as the Reference Build drew it unless told otherwise.
 ///
@@ -132,6 +133,7 @@ export interface SkySettings {
 export interface PresentationSettings {
   readonly preset: PresentationPreset;
   readonly sky: SkySettings;
+  readonly structureReach: StructureReach;
   readonly wireframe: WireframeSettings;
 }
 
@@ -162,6 +164,7 @@ export const DEFAULT_ARRIVAL_TITLE_CARD_SECONDS = 2.5;
 export const DEFAULT_ARRIVAL_TIME_SCALE = 3;
 export const DEFAULT_SCRIPT_INSTRUCTION_BUDGET = 512;
 export const DEFAULT_PRESENTATION_PRESET: PresentationPreset = 'enhanced';
+export const DEFAULT_STRUCTURE_REACH: StructureReach = 'cell';
 export const DEFAULT_SKY_DAY_LENGTH_MINUTES = 24;
 export const DEFAULT_SKY_LATITUDE_DEGREES = 34;
 export const DEFAULT_SKY_OBLIQUITY_DEGREES = 21;
@@ -499,10 +502,15 @@ export const isPresentationPreset = (
   value: unknown
 ): value is PresentationPreset => value === 'authentic' || value === 'enhanced';
 
+export const isStructureReach = (value: unknown): value is StructureReach =>
+  value === 'cell' || value === 'all';
+
 const readPresentation = (value: unknown): PresentationSettings => {
   const source = block(value, 'presentation');
   const namedPreset = source['preset'];
+  const namedStructureReach = source['structureReach'];
   let preset: PresentationPreset = DEFAULT_PRESENTATION_PRESET;
+  let structureReach: StructureReach = DEFAULT_STRUCTURE_REACH;
   if (!unnamed(namedPreset)) {
     if (!isPresentationPreset(namedPreset)) {
       return refuse(
@@ -511,9 +519,18 @@ const readPresentation = (value: unknown): PresentationSettings => {
     }
     preset = namedPreset;
   }
+  if (!unnamed(namedStructureReach)) {
+    if (!isStructureReach(namedStructureReach)) {
+      return refuse(
+        `presentation.structureReach should be "cell" or "all", and is ${shown(namedStructureReach)}`
+      );
+    }
+    structureReach = namedStructureReach;
+  }
   return {
     preset,
     sky: readSky(source['sky']),
+    structureReach,
     wireframe: readWireframe(source['wireframe'])
   };
 };

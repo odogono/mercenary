@@ -2,6 +2,7 @@ import {
   DEFAULT_WIREFRAME_GLOW,
   DEFAULT_WIREFRAME_THICKNESS,
   isPresentationPreset,
+  isStructureReach,
   type PresentationSettings
 } from '../settings/index.ts';
 import type { ReadStorage, WriteStorage } from './storage.ts';
@@ -30,6 +31,7 @@ export interface Preferences {
   readonly panelRendition: PanelRendition;
   /// Absent means "whatever the tuning document says".
   readonly presentationPreset?: PresentationSettings['preset'];
+  readonly structureReach?: PresentationSettings['structureReach'];
   readonly wireframeGlow?: WireframeGlow;
   readonly wireframeWeight?: WireframeWeight;
 }
@@ -81,6 +83,9 @@ export const validatePreferences = (value: unknown): Preferences => {
       : DEFAULT_PREFERENCES.panelRendition,
     // Spread rather than assign: an absent choice must stay absent, not become `undefined`.
     ...(isPresentationPreset(preset) ? { presentationPreset: preset } : {}),
+    ...(isStructureReach(source['structureReach'])
+      ? { structureReach: source['structureReach'] }
+      : {}),
     ...(isGlow(source['wireframeGlow'])
       ? { wireframeGlow: source['wireframeGlow'] as WireframeGlow }
       : {}),
@@ -140,10 +145,17 @@ export const effectivePresentation = (
   if (presentation.preset === 'authentic') {
     return {
       ...presentation,
+      structureReach: 'cell',
       wireframe: {
         glow: DEFAULT_WIREFRAME_GLOW,
         thickness: DEFAULT_WIREFRAME_THICKNESS
       }
+    };
+  }
+  if (preferences.structureReach !== undefined) {
+    presentation = {
+      ...presentation,
+      structureReach: preferences.structureReach
     };
   }
   if (preferences.wireframeWeight !== undefined) {
@@ -175,6 +187,7 @@ export interface PreferencesChange {
   readonly composition?: Composition;
   readonly panelRendition?: PanelRendition;
   readonly presentationPreset?: PresentationSettings['preset'] | undefined;
+  readonly structureReach?: PresentationSettings['structureReach'] | undefined;
   readonly wireframeGlow?: WireframeGlow | undefined;
   readonly wireframeWeight?: WireframeWeight | undefined;
 }
@@ -202,6 +215,7 @@ export const createPreferences = (options: {
         next.composition === preferences.composition &&
         next.panelRendition === preferences.panelRendition &&
         next.presentationPreset === preferences.presentationPreset &&
+        next.structureReach === preferences.structureReach &&
         next.wireframeGlow === preferences.wireframeGlow &&
         next.wireframeWeight === preferences.wireframeWeight
       ) {

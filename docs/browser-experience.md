@@ -88,10 +88,15 @@ export type Composition = "panel" | "strip";
   entries (names via the context map), cash←credits, clock←Targ time-of-day from elapsed;
   T/P gauges and impact-clock semantics are static dressing; ground-proximity and run lamps
   map, the attack lamp is dressing.
-- Preferences: `{ panelRendition, composition, presentationPreset? }` under
+- All-cell Structure Reach keeps Road Workspace links exclusive to the occupied Surface Cell.
+  Bright Distant Structure Ink fades continuously from occupied-cell white toward `#a0a0a0`
+  over horizontal camera distance; dim Ink remains black, and Map Lines remain selected only by
+  Horizon Distance.
+- Preferences: `{ panelRendition, composition, presentationPreset?, structureReach? }` under
   `mercenary.browser-shell.preferences.v1`; invalid or inaccessible storage is ignored.
-  Typeface keeps its existing key. Preferences never touch `flight`/`message`/`scripts`
-  and provably leave the SaveEnvironment byte-identical.
+  Typeface keeps its existing key. Authentic presentation forces occupied-cell Structure Reach;
+  Enhanced presentation takes the player's choice or the tracked tuning document. Preferences
+  never touch `flight`/`message`/`scripts` and provably leave the SaveEnvironment byte-identical.
 - Saves: three slots, ADR 0026 unchanged; `describe(slot)` surfaces the codec's actual
   reject reason; two-press confirm for overwrite and delete, in the chooser and as
   `save <n> confirm` in the console.
@@ -100,10 +105,10 @@ export type Composition = "panel" | "strip";
   of `set rendition`). The console reaches **three** sinks, and the distinction is worth stating:
   the Gameplay Session's own actions (`place`, `teleport`) for `goto`; the preference stores for
   `set` — where `typeface` keeps its own key rather than living in preferences, and
-  `sky document` hands the choice back to the tuning document; and the Save core for
-  `save`/`load`. `load` is a **whole-session replacement** rather than a mutation: it is neither
-  a semantic action nor a preference. The console is a development tool that writes play
-  (ADR 0028): never part of the Game Surface, never in traces.
+  `sky document` and `structures document` hand each choice back to the tuning document; and the
+  Save core for `save`/`load`. `load` is a **whole-session replacement** rather than a mutation:
+  it is neither a semantic action nor a preference. The console is a development tool that
+  writes play (ADR 0028): never part of the Game Surface, never in traces.
 - The session validates neither `place` nor `teleport` — `place` accepts any vector and bypasses
   `Containment`; `teleport` accepts an unknown Room in silence — so refusing unusable input is
   the console's own work. `goto <x> <z>` takes a grid reference bounded by the world, lands at
@@ -135,10 +140,11 @@ export type Composition = "panel" | "strip";
   (headings, pitches, room vs surface, empty inventory); console parser exhaustive over
   hostile input, executor against stub deps.
 - E2E: panel composition default and fields tracking the snapshot; classic-strip toggle
-  restores the old `#status-row` assertions; save round-trip through the chooser; Esc
-  pause freezes `data-x`/`data-z`; console `goto` moves the player; focused chrome never
-  leaks arrows into movement; Alt/Ctrl/Meta pass-through; no overflow at 320/768/1024/1440
-  CSS px. Canvas dataset attributes and `#game-surface[data-state]` survive unchanged.
+  restores the old `#status-row` assertions; live and persisted Structure Reach; save round-trip
+  through the chooser; Esc pause freezes `data-x`/`data-z`; console `goto` moves the player;
+  focused chrome never leaks arrows into movement; Alt/Ctrl/Meta pass-through; no overflow at
+  320/768/1024/1440 CSS px. Canvas dataset attributes and `#game-surface[data-state]` survive
+  unchanged.
 - Eye review (ADR 0011): live panel beside the untracked reference screenshot per
   rendition, verdict on issue #120; tracked stills in `docs/frames/` with regeneration
   recipes.

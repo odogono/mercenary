@@ -90,6 +90,11 @@ export interface ScreenLine {
   readonly y2: number;
 }
 
+/// A projected Distant Structure line carrying the horizontal camera distance that shades it.
+export interface DistantScreenLine extends ScreenLine {
+  readonly distance: number;
+}
+
 /// The Reference Build projects into 160-by-136 logical coordinates centred at (80, 68). Its
 /// multicolour display makes each logical X coordinate two physical pixels wide, producing a
 /// 320-by-136 playfield. Keeping that pixel aspect is essential: treating logical pixels as
@@ -406,9 +411,16 @@ const append = <T>(into: T[], source: readonly T[]): void => {
 /// single point by the detail rule.
 export interface Visible {
   readonly detailedObjects: number;
+  /// Surface Structure segments outside the occupied Surface Cell, drawn as distance.
+  readonly distant: readonly DistantSegment[];
   /// Origins of objects outside the detail cube, drawn as points.
   readonly points: readonly Vector3[];
   readonly segments: readonly Segment[];
+}
+
+export interface DistantSegment extends Segment {
+  /// Horizontal distance from the Camera to the Surface Cell's centre.
+  readonly distance: number;
 }
 
 export interface VisibilityOptions {
@@ -463,6 +475,7 @@ export const visible = (
   const elapsed = options.elapsed ?? 0;
   const residence = options.residence;
   const rules = options.rules ?? REFERENCE_RULES;
+  const distant: DistantSegment[] = [];
   const segments: Segment[] = [];
   const points: Vector3[] = [];
   let detailedObjects = 0;
@@ -505,18 +518,22 @@ export const visible = (
       append(segments, here.segments);
     }
     appendObjects(room(options.room));
-    return { detailedObjects, points, segments };
+    return { detailedObjects, distant, points, segments };
   }
 
   const column = Math.floor(position.x / world.cellSize);
   const row = Math.floor(position.z / world.cellSize);
-  // `all` reserves #152's public value but intentionally has `cell` behaviour until that
-  // ticket adds a separate distant-geometry path.
   const radius = rules.reach === 'ring' ? 1 : 0;
-  const firstColumn = Math.max(0, column - radius);
-  const lastColumn = Math.min(world.cellsPerAxis - 1, column + radius);
-  const firstRow = Math.max(0, row - radius);
-  const lastRow = Math.min(world.cellsPerAxis - 1, row + radius);
+  const firstColumn = rules.reach === 'all' ? 0 : Math.max(0, column - radius);
+  const lastColumn =
+    rules.reach === 'all'
+      ? world.cellsPerAxis - 1
+      : Math.min(world.cellsPerAxis - 1, column + radius);
+  const firstRow = rules.reach === 'all' ? 0 : Math.max(0, row - radius);
+  const lastRow =
+    rules.reach === 'all'
+      ? world.cellsPerAxis - 1
+      : Math.min(world.cellsPerAxis - 1, row + radius);
   for (let selectedRow = firstRow; selectedRow <= lastRow; selectedRow++) {
     for (
       let selectedColumn = firstColumn;
@@ -526,13 +543,21 @@ export const visible = (
       const cell = world.cell(selectedColumn, selectedRow);
       if (cell !== undefined && cell.index !== 0) {
         const isOccupied = selectedColumn === column && selectedRow === row;
-        append(
-          segments,
-          cell.segments(
-            elapsed,
-            isOccupied ? world.roadWorkspace(cell) : undefined
-          )
+        const selected = cell.segments(
+          elapsed,
+          isOccupied ? world.roadWorkspace(cell) : undefined
         );
+        if (rules.reach === 'all' && !isOccupied) {
+          const distance = Math.hypot(
+            cell.centre.x - position.x,
+            cell.centre.z - position.z
+          );
+          for (const segment of selected) {
+            distant.push({ ...segment, distance });
+          }
+        } else {
+          append(segments, selected);
+        }
       }
     }
   }
@@ -540,7 +565,7 @@ export const visible = (
   append(segments, world.mapSegments(position));
   appendObjects(SURFACE);
 
-  return { detailedObjects, points, segments };
+  return { detailedObjects, distant, points, segments };
 };
 
 /// Everything one Pose resolves to: near and distant lines, in pipeline order, and Far Points.
@@ -553,7 +578,14 @@ export const projectFrame = (
   camera: Camera,
   seen: Visible,
   size: Size
-): { distant: ScreenLine[]; lines: ScreenLine[]; points: Point[] } => {
+): { distant: DistantScreenLine[]; lines: ScreenLine[]; points: Point[] } => {
+  const distant: DistantScreenLine[] = [];
+  for (const segment of seen.distant) {
+    const line = camera.projectSegment(segment, size);
+    if (line !== undefined) {
+      distant.push({ ...line, distance: segment.distance });
+    }
+  }
   const lines: ScreenLine[] = [];
   for (const segment of seen.segments) {
     const line = camera.projectSegment(segment, size);
@@ -568,5 +600,5 @@ export const projectFrame = (
       points.push(point);
     }
   }
-  return { distant: [], lines, points };
+  return { distant, lines, points };
 };

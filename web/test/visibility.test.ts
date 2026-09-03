@@ -8,7 +8,12 @@ import {
   projectFrame,
   visible
 } from '../src/projection/index.ts';
-import { World, type Residence, type Segment } from '../src/world/index.ts';
+import {
+  Ink,
+  World,
+  type Residence,
+  type Segment
+} from '../src/world/index.ts';
 import { loadPayload } from './replay/artifacts.ts';
 
 const bundle = await loadPayload();
@@ -50,6 +55,7 @@ describe('Reference surface visibility', () => {
 
     expect(world.cell(8, 8)?.edgeCount).toBe(14);
     expect(seen.detailedObjects).toBe(2);
+    expect(seen.distant).toEqual([]);
     expect(seen.segments.length).toBe(51);
     expect(seen.points).toEqual([object(0).origin, object(63).origin]);
 
@@ -71,16 +77,43 @@ describe('Reference surface visibility', () => {
     });
 
     expect(seen.segments.length).toBe(302);
+    expect(seen.distant).toEqual([]);
     expect(seen.points.length).toBe(3);
   });
 
-  test('all reach remains a foundation alias for cell reach', () => {
+  test('all reach separates every other Surface Structure as distant', () => {
     const reference = visible(world, REFERENCE_OPENING_POSITION);
     const all = visible(world, REFERENCE_OPENING_POSITION, {
       rules: { ...REFERENCE_RULES, reach: 'all' }
     });
 
-    expect(all).toEqual(reference);
+    expect(all.segments).toEqual(reference.segments);
+    expect(all.points).toEqual(reference.points);
+    const structuresWithoutRoadWorkspaces = world.cells
+      .filter(cell =>
+        cell.column === 8 && cell.row === 8 ? false : cell.index !== 0
+      )
+      .flatMap(cell => cell.segments(0));
+    expect(all.distant).toHaveLength(8657);
+    expect(
+      all.distant.filter(segment => segment.ink === Ink.white)
+    ).toHaveLength(6982);
+    expect(
+      all.distant.filter(segment => segment.ink === Ink.black)
+    ).toHaveLength(1675);
+    expect(all.distant).toHaveLength(structuresWithoutRoadWorkspaces.length);
+    expect(
+      all.distant.map(({ distance: _distance, ...segment }) => segment)
+    ).toEqual(structuresWithoutRoadWorkspaces);
+    expect(all.distant.every(segment => segment.distance > 0)).toBeTrue();
+
+    // Road Workspace endpoints belong only to the occupied Surface Cell. Resolving them in
+    // every distant structure produces long, repeated cross-surface lines that look like roads.
+    const distantRoadLinks = world
+      .cell(11, 8)!
+      .segments(0, world.roadWorkspace(world.cell(11, 8)!))
+      .filter(link => !hasSegment(all.distant, link.a, link.b));
+    expect(distantRoadLinks).toHaveLength(4);
   });
 
   test('a below-eye Far Point follows the altitude-derived Horizon Distance', () => {

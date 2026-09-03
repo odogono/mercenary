@@ -8,7 +8,7 @@ import {
   descentViewSnapshot,
   type ArrivalCameraPose
 } from './arrivalCamera.ts';
-import { planFrame, type FramePlan } from './frame.ts';
+import { planFrame, type FramePlan, type FramePresentation } from './frame.ts';
 
 /// The Arrival Field: the authored star field the Arrival's space segment is seen against, and
 /// the planet that grows out of the middle of it.
@@ -148,7 +148,7 @@ const batch = (
   mode: 'points' | 'triangles',
   vertices: Float32Array,
   colour: RGB8
-) => ({ colour, mode, vertices }) as const;
+) => ({ colour, mode, pointSize: 1, vertices }) as const;
 
 /// The frame the Arrival's space segment draws: stars, and the planet once it is there.
 export const arrivalFieldPlan = (
@@ -198,6 +198,7 @@ export const arrivalFramePlan = (
     readonly field: ArrivalFieldProgress;
     readonly orrery?: TargOrrery;
     readonly pose: ArrivalCameraPose;
+    readonly presentation: FramePresentation;
     readonly size: Size;
     readonly snapshot: SessionSnapshot;
     readonly world: World;
@@ -215,11 +216,18 @@ export const arrivalFramePlan = (
         view.world,
         descentViewSnapshot(view.snapshot, view.pose),
         view.size,
-        view.orrery
+        view.orrery,
+        view.presentation
       );
     default:
       // The verdict is read from the ground, at the session's own Pose: the Arrival is still
       // holding the player's keys, but there is nothing left for it to pretend about the view.
-      return planFrame(view.world, view.snapshot, view.size, view.orrery);
+      return planFrame(
+        view.world,
+        view.snapshot,
+        view.size,
+        view.orrery,
+        view.presentation
+      );
   }
 };
