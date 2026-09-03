@@ -537,6 +537,32 @@ test('Session Resume survives reload and New Game preserves Saves', async ({
   await expect(slotButton(page, 1, 'delete')).toBeDisabled();
 });
 
+test('an incompatible Save is not offered for loading', async ({ page }) => {
+  await page.goto('/');
+  await skipArrival(page);
+  await openPage(page, 'saves');
+  await slotButton(page, 2, 'save').click();
+
+  await page.evaluate(() => {
+    const key = 'mercenary.browser-shell.save.v1.slot-2';
+    const encoded = window.localStorage.getItem(key);
+    if (encoded === null) {
+      throw new Error('slot 2 was not saved');
+    }
+    const save = JSON.parse(encoded) as {
+      environment: { payload: { decoderVersion: number } };
+    };
+    save.environment.payload.decoderVersion -= 1;
+    window.localStorage.setItem(key, JSON.stringify(save));
+    window.dispatchEvent(new StorageEvent('storage', { key }));
+  });
+
+  await expect(slotDetail(page, 2)).toContainText('UNREADABLE');
+  await expect(slotDetail(page, 2)).not.toContainText('SURFACE');
+  await expect(slotButton(page, 2, 'load')).toBeDisabled();
+  await expect(slotButton(page, 2, 'delete')).toBeEnabled();
+});
+
 test('an abnormal page termination loses less than one checkpoint interval', async ({
   context,
   page

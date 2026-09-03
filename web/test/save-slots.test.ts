@@ -192,6 +192,23 @@ describe('the Save persistence core', () => {
     expect(persistence.load(2).kind).toBe('failed');
   });
 
+  test('does not describe a Save from an incompatible environment as loadable', () => {
+    const storage = new MemoryStorage();
+    const previousEnvironment = {
+      ...environment,
+      payload: { ...environment.payload, decoderVersion: 7 }
+    };
+    harness({ environment: previousEnvironment, storage }).persistence.save(1);
+
+    const { persistence } = harness({ storage });
+    expect(persistence.describe(1)).toEqual({
+      reason:
+        'Could not read Save: Save environment does not match the current environment',
+      slot: 1,
+      state: 'invalid'
+    });
+  });
+
   test('reports every slot unavailable without storage', () => {
     const { persistence } = harness({ storage: undefined });
 

@@ -1046,5 +1046,3 @@ export const decodeSave = (
   }
   return out;
 };
-
-export const inspectSave = (text: string): SaveEnvelope => decodeEnvelope(text);
