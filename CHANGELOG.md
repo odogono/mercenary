@@ -57,6 +57,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Surface visibility now follows the Reference Build's own selection rules (#150, ADR 0034):
+  only the occupied Surface Cell's structure is expanded, below-eye Far Points follow the
+  altitude-derived Horizon Distance, and the Camera has no implicit far plane, so the Colony
+  Craft remains visible overhead. The occupied cell's Road Workspace now resolves all 478 placed
+  point references, carrying 956 structure-edge instances out to their road junctions, while Map
+  Line deduplication no longer introduces a low-altitude centre line. The frozen Trace Oracle's
+  ring, unconditional Far Points and 320,000-unit far plane are explicit test rules, leaving its
+  six projection Golden Traces unchanged; every-cell reach remains reserved for Enhanced
+  presentation in #152.
+
 - The Save chooser now checks a Save's exact payload and gameplay-settings identity before
   presenting it as loadable. An incompatible Save is shown as `UNREADABLE` without its old
   location or timestamp, its LOAD action is disabled, and DELETE remains available so the player

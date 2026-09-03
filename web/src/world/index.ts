@@ -28,6 +28,22 @@ export interface Segment {
   readonly ink: Ink;
 }
 
+/// The occupied Surface Cell's two road runs in the four point slots the Reference Build
+/// reserves for them: road 0's end and start, then road 1's end and start.
+export type RoadWorkspace = readonly [
+  Vector3 | undefined,
+  Vector3 | undefined,
+  Vector3 | undefined,
+  Vector3 | undefined
+];
+
+const resolvedPoint = (
+  points: readonly Vector3[],
+  workspace: RoadWorkspace | undefined,
+  index: number
+): Vector3 | undefined =>
+  index >= 60 && index < 64 ? workspace?.[index - 60] : points[index];
+
 /// Where the player is. The surface is a Location in its own right and not a Room.
 export type Location =
   { readonly kind: 'surface' } | { readonly id: number; readonly kind: 'room' };
@@ -242,7 +258,7 @@ const resolveRotation = (
   // The original advanced the phase in whole steps once per geometry frame, about five times a
   // second, which at sixty frames a second reads as a stutter rather than a spin. The rate is
   // the decoded one; letting the phase run continuously between its steps is a presentation
-  // adaptation, in the same spirit as drawing the one-cell ring of structures.
+  // adaptation that keeps the recovered motion smooth at the browser's display rate.
   const phase = Math.max(0, elapsed) * REFERENCE_FRAMES_PER_SECOND;
   const angle = ((phase * step) / ANGLE_UNITS_PER_TURN) * (2 * Math.PI);
   // SETUP_STRUCTURE_POINTERS passes the source byte to `BIT24_TO_FP` as the high byte of a
@@ -313,8 +329,8 @@ export class WorldCell {
     ).length;
   }
 
-  /// Resolve runtime-rotated points and return the cell's complete wireframe.
-  segments(elapsed: number): Segment[] {
+  /// Resolve runtime-rotated and Road Workspace points and return the cell's wireframe.
+  segments(elapsed: number, workspace?: RoadWorkspace): Segment[] {
     const points = this.vertices.map(vertex =>
       vertex.kind === 'world'
         ? vertex.point
@@ -324,8 +340,8 @@ export class WorldCell {
     );
     const out: Segment[] = [];
     for (const edge of this.edges) {
-      const a = points[edge.start];
-      const b = points[edge.end];
+      const a = resolvedPoint(points, workspace, edge.start);
+      const b = resolvedPoint(points, workspace, edge.end);
       if (a === undefined || b === undefined) {
         continue;
       }
@@ -491,6 +507,8 @@ export class World {
   readonly cellSize: number;
   readonly cellsPerAxis: number;
   readonly groundExtent: number;
+  /// Raw structure-edge instances whose local endpoint is a Road Workspace point. Retained as
+  /// the historical Trace Oracle diagnostic; the occupied cell resolves them when it draws.
   readonly deferredEdges: number;
   /// The underground Rooms, by their own identifiers.
   readonly rooms: ReadonlyMap<number, Room>;
@@ -619,6 +637,33 @@ export class World {
     return index === undefined ? undefined : this.cells[index];
   }
 
+  /// The occupied Surface Cell's road endpoints as LOAD_MAP_LOD1 places them in point slots
+  /// 60...63. A missing road run leaves both of its slots unresolved.
+  roadWorkspace(cell: WorldCell): RoadWorkspace {
+    const lines = this.mapLinesByCell.get(cell.index) ?? [];
+    const road0 = lines.find(line => line.slot === 0);
+    const road1 = lines.find(line => line.slot === 1);
+    return [
+      road0?.segment.b,
+      road0?.segment.a,
+      road1?.segment.b,
+      road1?.segment.a
+    ];
+  }
+
+  /// The Reference Build's altitude-derived surface reach, measured in Surface Cells.
+  horizonDistance(y: number): number {
+    const altitude = Math.max(0, Math.floor(y));
+    if (altitude >> 16 >= 0x20) {
+      return 64;
+    }
+    if (this.roadAltitudeLookup.length === 0) {
+      return 0;
+    }
+    const index = Math.min(this.roadAltitudeLookup.length - 1, altitude >> 11);
+    return Math.max(0, this.roadAltitudeLookup[index]!);
+  }
+
   /// Select the Reference Build's map lines for one camera position.
   mapSegments(position: { x: number; y: number; z: number }): Segment[] {
     const column = Math.floor(position.x / this.cellSize);
@@ -636,11 +681,7 @@ export class World {
     if (y >> 16 >= 0x20) {
       return this.highAltitudeMap.map(line => line.segment);
     }
-    if (this.roadAltitudeLookup.length === 0) {
-      return [];
-    }
-    const altitudeIndex = Math.min(this.roadAltitudeLookup.length - 1, y >> 11);
-    const extent = Math.max(0, this.roadAltitudeLookup[altitudeIndex]!);
+    const extent = this.horizonDistance(y);
     const currentCell = row * this.cellsPerAxis + column;
     const selected: SurfaceMapLine[] = [];
     const seen = new Set<number>();
@@ -649,6 +690,10 @@ export class World {
       const high = Math.max(line.startPacked, line.endPacked);
       return low * 65_536 + high;
     };
+    const currentLines = this.mapLinesByCell.get(currentCell) ?? [];
+    for (const line of currentLines) {
+      seen.add(key(line));
+    }
 
     // L8EC2 exits before scanning the road tables when the altitude lookup returns zero. It is a
     // no-roads sentinel, not a zero-radius selection.
@@ -685,10 +730,11 @@ export class World {
     // Above the first 64 KiB the Reference Build draws the current lookup cell's stored runs
     // separately, after suppressing structure endpoints.
     if (y >> 16 !== 0) {
-      for (const line of this.mapLinesByCell.get(currentCell) ?? []) {
+      const added = new Set<number>();
+      for (const line of currentLines) {
         const k = key(line);
-        if (!seen.has(k)) {
-          seen.add(k);
+        if (!added.has(k)) {
+          added.add(k);
           selected.push(line);
         }
       }

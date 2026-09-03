@@ -187,7 +187,7 @@ describe('a Session Snapshot planned for WebGL2', () => {
       ScenePalette.whiteInk
     ]);
     expect(frame.batches[0]?.vertices.length).toBe(12);
-    expect(frame.lines).toBe(117);
+    expect(frame.lines).toBe(38);
     expect(frame.points).toBe(1);
   });
 

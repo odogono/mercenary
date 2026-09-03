@@ -85,26 +85,14 @@ Y 128, looking north with a neutral pitch. The previous staged overview was a Ma
 Adaptation 12,000 world units south of that point; it made the whole airstrip easy
 to inspect, but incorrectly moved the player away from the centre of the wreck.
 
-## Surface structures are drawn for more cells than the original drew
+## Surface Structure reach now follows the Reference Build
 
-`visible()` selects a three-by-three block of cells around the player, so the
-structures in all eight neighbouring cells are drawn. The Reference Build draws
-the structures of the occupied cell alone, which is why its horizon is emptier
-than this one's and why a building appears as the player crosses into its cell
-rather than growing from a distance.
-
-This is worth writing down because it is not only a visual difference. The
-destruction commit path refuses to count or react to a Site struck from over a
-different cell (`notes/decode/endgame.md`), a branch the original's own
-visibility keeps a player away from — you cannot aim at what is not drawn. Here
-a neighbour's building is both drawn and targetable, so that branch is
-reachable, and destroying a building without either faction reacting looks like
-a bug in destruction when it is a consequence of visibility.
-
-Narrowing the selection is a change to accepted behaviour rather than a repair:
-the frozen Trace Oracle selected the same neighbourhood, and a projection Golden
-Trace grades the traversal, so the trace and the selection have to move
-together.
+The Visibility Selector expands only the occupied Surface Cell's structure. A
+structure therefore appears at its cell boundary, matching `_OUTSIDE_L85A1`, and
+a neighbouring Site is no longer visible or targetable before the player enters
+its cell. The former three-by-three ring remains only as an explicit Trace Oracle
+rule so its six projection Golden Traces continue to grade arithmetic and order;
+it is no longer production behaviour.
 
 ## Roads and the cell 8:8 airstrip
 
@@ -121,6 +109,10 @@ lines. Runtime selection indexes the altitude table with
 `clamp(floor(Y / 2048), 0...255)`, clips its selected cell square to the map,
 deduplicates points and lines, applies current-structure suppression and the
 raised current-cell pass, then switches to the fixed `$902A` map at Y-high `$20`.
+The occupied cell's two runs seed the Road Workspace even when they are not drawn
+as Map Lines. Its four endpoints fill workspace indices 60–63, resolving 478
+placed point references and the 956 structure-edge instances that use them, so
+road structures now continue to their junctions.
 
 ## Intentional Atari ST scene palette
 
@@ -143,10 +135,6 @@ claim.
   this renderer does not do; it clips only to the near plane, so a segment passing
   close to the camera projects to enormous coordinates. Standing inside a
   structure, with no collision, also contributes.
-- **The 410 deferred edges** were not attempted this pass. The four affected
-  structures, their descriptors (`0x32`, `0x35`, `0x7f`, `0x73`), rotation centres
-  and per-point rotation inputs are now all in the payload, so the bounded search
-  can start from data rather than from a fresh decode.
 
 ## Corrected: rotated structure displacements are ×64, not ×16
 
