@@ -933,3 +933,33 @@ test('the settings page changes the composition it names', async ({ page }) => {
   await expect(surface).toHaveAttribute('data-composition', 'strip');
   await expect(surface).toHaveAttribute('data-rendition', 'damocles');
 });
+
+test('the settings page changes Structure Reach live and persists it', async ({
+  page
+}) => {
+  await page.goto('/');
+  const surface = page.locator('#game-surface');
+  const canvas = page.locator('#frame');
+  await expect(surface).toHaveAttribute('data-state', 'ready');
+  await page.keyboard.press('Space');
+  const cellLines = Number(await canvas.getAttribute('data-lines'));
+
+  await openPage(page, 'settings');
+  const all = page.locator('[data-setting="structures"] button[value="all"]');
+  await all.click();
+  await expect(all).toHaveAttribute('aria-pressed', 'true');
+  await expect
+    .poll(async () => Number(await canvas.getAttribute('data-lines')))
+    .toBe(4128);
+  expect(Number(await canvas.getAttribute('data-lines'))).toBeGreaterThan(
+    cellLines
+  );
+
+  await page.reload();
+  await expect(surface).toHaveAttribute('data-state', 'ready');
+  await page.keyboard.press('Space');
+  await openPage(page, 'settings');
+  await expect(
+    page.locator('[data-setting="structures"] button[value="all"]')
+  ).toHaveAttribute('aria-pressed', 'true');
+});

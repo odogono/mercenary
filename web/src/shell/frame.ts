@@ -1,5 +1,6 @@
 import {
   Camera,
+  REFERENCE_RULES,
   ReferenceViewport,
   leanTransform,
   projectFrame,
@@ -7,6 +8,7 @@ import {
   viewportCentre,
   viewportScale,
   visible,
+  type DistantScreenLine,
   type Point,
   type Rect,
   type ScreenLine,
@@ -19,6 +21,7 @@ import {
   type RGB8
 } from '../scene/index.ts';
 import type { SessionSnapshot } from '../session/index.ts';
+import type { PresentationPreset, StructureReach } from '../settings/index.ts';
 import {
   SKY_VERTEX_FIELDS,
   buildSkyFrame,
@@ -37,13 +40,14 @@ import { Ink, type World } from '../world/index.ts';
 const VERTEX_SHADER = `#version 300 es
 in vec2 pixel;
 uniform vec2 viewport;
+uniform float pointSize;
 void main() {
   vec2 clip = vec2(
     pixel.x / viewport.x * 2.0 - 1.0,
     1.0 - pixel.y / viewport.y * 2.0
   );
   gl_Position = vec4(clip, 0.0, 1.0);
-  gl_PointSize = 1.0;
+  gl_PointSize = pointSize;
 }`;
 
 const FRAGMENT_SHADER = `#version 300 es
@@ -288,6 +292,20 @@ const lineVertices = (lines: readonly ScreenLine[]): Float32Array => {
   return out;
 };
 
+/// Fade bright Distant Structure Ink continuously from the occupied-cell white toward the
+/// shipped distant grey. The half-cell diagonal keeps the hand-off at every cell boundary white,
+/// while half the surface width leaves the far half at the stable distant colour.
+const distantStructureColour = (distance: number, world: World): RGB8 => {
+  const near = world.cellSize * Math.SQRT1_2;
+  const far = world.groundExtent / 2;
+  const progress = Math.max(0, Math.min(1, (distance - near) / (far - near)));
+  const channel = Math.round(
+    ScenePalette.whiteInk.red +
+      (ScenePalette.distantInk.red - ScenePalette.whiteInk.red) * progress
+  );
+  return { blue: channel, green: channel, red: channel };
+};
+
 /// Far points are a one-pixel fill in the headless renderer, whose rectangle starts at the
 /// projected coordinate; a GL point lands on the pixel it falls inside, so it is nudged to
 /// that pixel's centre and covers the same one.
@@ -340,7 +358,13 @@ export const DEFAULT_INK: InkOptions = { glow: 0, thickness: 1 };
 interface DrawBatch {
   readonly colour: RGB8;
   readonly mode: DrawMode;
+  readonly pointSize: number;
   readonly vertices: Float32Array;
+}
+
+export interface FramePresentation {
+  readonly preset: PresentationPreset;
+  readonly structureReach: StructureReach;
 }
 
 export interface FramePlan {
@@ -356,11 +380,17 @@ const addBatch = (
   batches: DrawBatch[],
   mode: DrawMode,
   vertices: Float32Array,
-  colour: RGB8
+  colour: RGB8,
+  pointSize = 1
 ): void => {
   if (vertices.length > 0) {
-    batches.push({ colour, mode, vertices });
+    batches.push({ colour, mode, pointSize, vertices });
   }
+};
+
+const AUTHENTIC_PRESENTATION: FramePresentation = {
+  preset: 'authentic',
+  structureReach: 'cell'
 };
 
 /// The Reference Viewport's logical centre across, in logical columns rather
@@ -376,7 +406,8 @@ export const planFrame = (
   world: World,
   snapshot: SessionSnapshot,
   size: Size,
-  orrery?: TargOrrery
+  orrery?: TargOrrery,
+  presentation: FramePresentation = AUTHENTIC_PRESENTATION
 ): FramePlan => {
   // The Escape's terminal loop replaces the world view entirely: no ground, no
   // Map Lines, no structures, just the Interstellar Ship Field on the colour its
@@ -431,11 +462,26 @@ export const planFrame = (
   const seen = visible(world, snapshot.player.position, {
     elapsed: snapshot.elapsed,
     residence: snapshot.residence,
-    ...(snapshot.location.kind === 'room' ? { room: snapshot.location.id } : {})
+    ...(snapshot.location.kind === 'room'
+      ? { room: snapshot.location.id }
+      : {}),
+    rules: { ...REFERENCE_RULES, reach: presentation.structureReach }
   });
   const projected = projectFrame(camera, seen, size);
   const blackInk: ScreenLine[] = [];
+  const distantBlackInk: ScreenLine[] = [];
+  const distantWhiteInk = new Map<number, DistantScreenLine[]>();
   const whiteInk: ScreenLine[] = [];
+  for (const line of projected.distant) {
+    if (line.ink === Ink.black) {
+      distantBlackInk.push(line);
+    } else {
+      const colour = distantStructureColour(line.distance, world);
+      const lines = distantWhiteInk.get(colour.red) ?? [];
+      lines.push(line);
+      distantWhiteInk.set(colour.red, lines);
+    }
+  }
   for (const line of projected.lines) {
     (line.ink === Ink.black ? blackInk : whiteInk).push(line);
   }
@@ -453,13 +499,26 @@ export const planFrame = (
     addBatch(batches, 'triangles', stripVertices(size, 0), backdrop.foreground);
     addBatch(batches, 'triangles', stripVertices(size, 1), backdrop.background);
   }
-  addBatch(batches, 'lines', lineVertices(blackInk), ScenePalette.blackInk);
+  for (const [channel, lines] of [...distantWhiteInk].sort(
+    ([left], [right]) => left - right
+  )) {
+    addBatch(batches, 'lines', lineVertices(lines), {
+      blue: channel,
+      green: channel,
+      red: channel
+    });
+  }
+  const allBlackInk = [...distantBlackInk, ...blackInk];
+  addBatch(batches, 'lines', lineVertices(allBlackInk), ScenePalette.blackInk);
   addBatch(batches, 'lines', lineVertices(whiteInk), ScenePalette.whiteInk);
   addBatch(
     batches,
     'points',
     pointVertices(projected.points),
-    ScenePalette.whiteInk
+    ScenePalette.whiteInk,
+    presentation.preset === 'enhanced'
+      ? Math.max(1, Math.round(viewportScale(size)))
+      : 1
   );
   const sky =
     orrery === undefined || snapshot.location.kind !== 'surface'
@@ -479,7 +538,7 @@ export const planFrame = (
     clear:
       sky?.clear ??
       (indoor === undefined ? ScenePalette.sky : ScenePalette.blackInk),
-    lines: projected.lines.length,
+    lines: projected.distant.length + projected.lines.length,
     points: projected.points.length,
     size,
     ...(sky === undefined ? {} : { sky })
@@ -503,6 +562,7 @@ export class Renderer {
   /// it against the same sky (ADR 0025).
   readonly orrery: TargOrrery | undefined;
   private readonly pixel: number;
+  private readonly pointSize: WebGLUniformLocation | null;
   private readonly program: WebGLProgram;
   private readonly sceneBuffer: WebGLBuffer;
   private readonly sky: SkyPipeline | undefined;
@@ -517,6 +577,7 @@ export class Renderer {
     gl.useProgram(program);
     this.ink = gl.getUniformLocation(program, 'ink');
     this.viewport = gl.getUniformLocation(program, 'viewport');
+    this.pointSize = gl.getUniformLocation(program, 'pointSize');
     const pixel = gl.getAttribLocation(program, 'pixel');
     const sceneBuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, sceneBuffer);
@@ -540,6 +601,9 @@ export class Renderer {
       triangles: this.gl.TRIANGLES
     };
     this.gl.uniform3f(this.ink, ...channels(batch.colour));
+    if (batch.mode === 'points') {
+      this.gl.uniform1f(this.pointSize, batch.pointSize);
+    }
     this.gl.bufferData(
       this.gl.ARRAY_BUFFER,
       batch.vertices,
@@ -658,13 +722,14 @@ export class Renderer {
     world: World,
     snapshot: SessionSnapshot,
     size: Size,
-    inkOptions: InkOptions = DEFAULT_INK
+    inkOptions: InkOptions = DEFAULT_INK,
+    presentation: FramePresentation = AUTHENTIC_PRESENTATION
   ): {
     readonly lines: number;
     readonly points: number;
   } {
     return this.render(
-      planFrame(world, snapshot, size, this.orrery),
+      planFrame(world, snapshot, size, this.orrery, presentation),
       inkOptions
     );
   }

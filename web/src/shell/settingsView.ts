@@ -95,6 +95,25 @@ export const installSettingsView = (
       ]
     },
     {
+      apply: value => {
+        preferences.update({
+          structureReach:
+            value === PRESET_DEFAULT
+              ? undefined
+              : value === 'all'
+                ? 'all'
+                : 'cell'
+        });
+      },
+      current: () => preferences.current().structureReach ?? PRESET_DEFAULT,
+      name: 'structures',
+      options: [
+        { label: 'AS TUNED', value: PRESET_DEFAULT },
+        { label: 'THIS CELL', value: 'cell' },
+        { label: 'ALL CELLS', value: 'all' }
+      ]
+    },
+    {
       // Like the sky, the wireframe's own numbers stay authored; the player chooses among the
       // named levels or hands the choice back to the document.
       apply: value => {

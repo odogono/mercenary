@@ -1,5 +1,5 @@
 import type { GameplaySession } from '../session/index.ts';
-import type { PresentationPreset } from '../settings/index.ts';
+import type { PresentationPreset, StructureReach } from '../settings/index.ts';
 import { SURFACE, locationText, room } from '../world/index.ts';
 import type {
   Composition,
@@ -29,7 +29,13 @@ export type ConsoleCommand =
   | { readonly kind: 'load'; readonly slot: SaveSlot };
 
 export type SettingName =
-  'composition' | 'glow' | 'rendition' | 'sky' | 'typeface' | 'weight';
+  | 'composition'
+  | 'glow'
+  | 'rendition'
+  | 'sky'
+  | 'structures'
+  | 'typeface'
+  | 'weight';
 
 /// One setting paired with the value it will be set to.
 ///
@@ -39,6 +45,7 @@ export type SettingChoice =
   | { readonly name: 'glow'; readonly value: 'document' | WireframeGlow }
   | { readonly name: 'rendition'; readonly value: PanelRendition }
   | { readonly name: 'sky'; readonly value: 'document' | PresentationPreset }
+  | { readonly name: 'structures'; readonly value: 'document' | StructureReach }
   | { readonly name: 'typeface'; readonly value: TypefaceId }
   | { readonly name: 'weight'; readonly value: 'document' | WireframeWeight };
 
@@ -54,6 +61,11 @@ const SKIES: readonly ('document' | PresentationPreset)[] = [
   'document',
   'authentic',
   'enhanced'
+];
+const STRUCTURES: readonly ('document' | StructureReach)[] = [
+  'document',
+  'cell',
+  'all'
 ];
 const TYPEFACES: readonly TypefaceId[] = ['mercenary', 'damocles'];
 const WEIGHTS: readonly ('document' | WireframeWeight)[] = [
@@ -73,6 +85,7 @@ export const SETTING_VALUES: Readonly<Record<SettingName, readonly string[]>> =
     glow: GLOWS,
     rendition: RENDITIONS,
     sky: SKIES,
+    structures: STRUCTURES,
     typeface: TYPEFACES,
     weight: WEIGHTS
   };
@@ -117,6 +130,10 @@ const SETTING_PARSERS: Readonly<
     value: oneOf(RENDITIONS, word, 'rendition')
   }),
   sky: word => ({ name: 'sky', value: oneOf(SKIES, word, 'sky') }),
+  structures: word => ({
+    name: 'structures',
+    value: oneOf(STRUCTURES, word, 'structures')
+  }),
   typeface: word => ({
     name: 'typeface',
     value: oneOf(TYPEFACES, word, 'typeface')
@@ -361,6 +378,13 @@ const applySetting = (setting: SettingChoice, deps: ConsoleDeps): string => {
       return setting.value === 'document'
         ? 'sky as tuned'
         : `sky ${setting.value}`;
+    case 'structures':
+      if (setting.value === 'document') {
+        deps.preferences.update({ structureReach: undefined });
+        return 'structures as tuned';
+      }
+      deps.preferences.update({ structureReach: setting.value });
+      return `structures ${setting.value}`;
     case 'typeface':
       deps.typeface(setting.value);
       return `typeface ${setting.value}`;

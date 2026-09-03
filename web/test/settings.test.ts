@@ -15,6 +15,7 @@ import {
   DEFAULT_SKY_STAR_COUNT,
   DEFAULT_SKY_STAR_SEED,
   DEFAULT_SKY_YEAR_DAYS,
+  DEFAULT_STRUCTURE_REACH,
   DEFAULT_WIREFRAME_GLOW,
   DEFAULT_WIREFRAME_THICKNESS,
   SETTINGS_FILE_NAME,
@@ -77,6 +78,7 @@ describe('settings that are not there', () => {
         starSeed: DEFAULT_SKY_STAR_SEED,
         yearDays: DEFAULT_SKY_YEAR_DAYS
       },
+      structureReach: DEFAULT_STRUCTURE_REACH,
       wireframe: {
         glow: DEFAULT_WIREFRAME_GLOW,
         thickness: DEFAULT_WIREFRAME_THICKNESS
@@ -223,6 +225,31 @@ describe('the Presentation Preset and Targ sky settings', () => {
         '{"presentation":{"preset":"authentic","sky":{"starCount":-1}}}'
       )
     ).toThrow(SettingsError);
+  });
+});
+
+describe('the Structure Reach setting', () => {
+  test('defaults to the occupied Surface Cell', () => {
+    expect(defaultSettings().presentation.structureReach).toBe('cell');
+  });
+
+  test('accepts both named reaches', () => {
+    expect(
+      loadSettings('{"presentation":{"structureReach":"cell"}}').presentation
+        .structureReach
+    ).toBe('cell');
+    expect(
+      loadSettings('{"presentation":{"structureReach":"all"}}').presentation
+        .structureReach
+    ).toBe('all');
+  });
+
+  test('refuses a reach the Browser Shell does not know', () => {
+    expect(() =>
+      loadSettings('{"presentation":{"structureReach":"ring"}}')
+    ).toThrow(
+      'presentation.structureReach should be "cell" or "all", and is "ring"'
+    );
   });
 });
 
@@ -519,8 +546,9 @@ describe('the tracked settings, against the traces recorded with them', () => {
   test('the tracked file explicitly records the Enhanced sky defaults', () => {
     const source = JSON.parse(
       readFileSync(join(repositoryRoot, SETTINGS_FILE_NAME), 'utf8')
-    ) as { readonly presentation?: unknown };
+    ) as { readonly presentation?: { readonly structureReach?: unknown } };
     expect(source.presentation).toBeDefined();
+    expect(source.presentation?.structureReach).toBe('cell');
     expect(tracked.presentation).toEqual(defaultSettings().presentation);
   });
 

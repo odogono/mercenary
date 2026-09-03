@@ -374,6 +374,14 @@ _Avoid_: Grid cell, tile
 One reusable wireframe definition placed in one or more Surface Cells, distinct from Map Lines and from movable object geometry.
 _Avoid_: Building, model, cell geometry
 
+**Structure Reach**:
+Which Surface Cells contribute Surface Structures to the view: only the occupied Surface Cell, as in the Reference Build, or the whole surface as Enhanced presentation.
+_Avoid_: Building reach, draw distance, render radius
+
+**Distant Structure**:
+A Surface Structure shown from a Surface Cell other than the one the player occupies, subdued so it reads behind the occupied cell's structure.
+_Avoid_: Background building, far model, level of detail
+
 **Geometry Identity**:
 A stable, Research Provenance-backed identity for an entity in the World Geometry Dataset that remains valid when its interpretation or name changes.
 _Avoid_: Object name, canonical name

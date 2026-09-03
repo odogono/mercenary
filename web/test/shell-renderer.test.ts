@@ -189,6 +189,53 @@ describe('a Session Snapshot planned for WebGL2', () => {
     expect(frame.batches[0]?.vertices.length).toBe(12);
     expect(frame.lines).toBe(38);
     expect(frame.points).toBe(1);
+    expect(frame.batches.at(-1)?.pointSize).toBe(1);
+  });
+
+  test('all reach draws distant bright Ink behind every near batch', () => {
+    const presentation = {
+      ...defaultSettings().presentation,
+      structureReach: 'all' as const
+    };
+    const frame = planFrame(
+      world,
+      session().snapshot,
+      size,
+      undefined,
+      presentation
+    );
+
+    expect(frame.batches[0]?.mode).toBe('triangles');
+    expect(frame.batches[0]?.colour).toEqual(ScenePalette.ground);
+    const blackIndex = frame.batches.findIndex(
+      batch =>
+        batch.mode === 'lines' && batch.colour.red === ScenePalette.blackInk.red
+    );
+    const nearWhiteIndex = frame.batches.reduce(
+      (found, batch, index) =>
+        batch.colour.red === ScenePalette.whiteInk.red ? index : found,
+      -1
+    );
+    expect(blackIndex).toBeGreaterThan(1);
+    expect(nearWhiteIndex).toBeGreaterThan(blackIndex);
+    expect(frame.batches.at(-1)?.mode).toBe('points');
+    expect(frame.batches.at(-1)?.colour).toEqual(ScenePalette.whiteInk);
+    expect(frame.lines).toBeGreaterThan(38);
+    expect(frame.batches.at(-1)?.pointSize).toBe(4);
+
+    const distantGreys = frame.batches
+      .filter(
+        batch =>
+          batch.mode === 'lines' &&
+          batch.colour.red !== ScenePalette.blackInk.red &&
+          batch.colour.red !== ScenePalette.whiteInk.red
+      )
+      .map(batch => batch.colour.red);
+    expect(new Set(distantGreys).size).toBeGreaterThan(1);
+    expect(Math.min(...distantGreys)).toBe(ScenePalette.distantInk.red);
+    expect(Math.max(...distantGreys)).toBeGreaterThan(
+      ScenePalette.distantInk.red
+    );
   });
 
   test('a lit Room starts with 320 alternating Indoor Backdrop strips', () => {
@@ -250,6 +297,7 @@ describe('a Session Snapshot planned for WebGL2', () => {
     expect(frame.batches[0]?.colour).toEqual(c64Colour(0)!);
     expect(frame.lines).toBe(0);
     expect(frame.points).toBe(3);
+    expect(frame.batches[0]?.pointSize).toBe(1);
 
     // Reference Viewport coordinates, scaled the way everything else is: the
     // centre of the field is the centre of the view.
@@ -353,9 +401,34 @@ describe('a Session Snapshot submitted to WebGL2', () => {
       'buffer',
       'draw:1',
       'ink',
+      'scalar-uniform',
       'buffer',
       'draw:0'
     ]);
+  });
+
+  test('submits a four-pixel Enhanced Far Point and one-pixel Authentic Far Point', () => {
+    const authentic = fakeRenderer();
+    authentic.renderer.render(planFrame(world, session().snapshot, size));
+    expect(authentic.uniforms).toContainEqual({
+      name: 'pointSize',
+      values: [1]
+    });
+
+    const enhanced = fakeRenderer();
+    enhanced.renderer.render(
+      planFrame(
+        world,
+        session().snapshot,
+        size,
+        undefined,
+        defaultSettings().presentation
+      )
+    );
+    expect(enhanced.uniforms).toContainEqual({
+      name: 'pointSize',
+      values: [4]
+    });
   });
 
   test('compiles the enhanced ink program only when a draw asks for it', () => {

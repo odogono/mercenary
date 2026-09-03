@@ -152,6 +152,7 @@ describe('the Arrival Field', () => {
     expect(drawn).toBe(ARRIVAL_FIELD_STARS);
     expect(plan.points).toBe(ARRIVAL_FIELD_STARS);
     expect(plan.lines).toBe(0);
+    expect(plan.batches.every(batch => batch.pointSize === 1)).toBeTrue();
   });
 
   test('keeps every star inside the frame as the field drifts', () => {

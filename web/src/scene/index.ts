@@ -39,6 +39,7 @@ const rgb = (red: number, green: number, blue: number): RGB8 => ({
 /// reference. These are not decoded C64 colours.
 export const ScenePalette = {
   blackInk: rgb(0x00, 0x00, 0x00),
+  distantInk: rgb(0xa0, 0xa0, 0xa0),
   ground: rgb(0x00, 0x80, 0x00),
   sky: rgb(0x60, 0xa0, 0xe0),
   whiteInk: rgb(0xff, 0xff, 0xff)

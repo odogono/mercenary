@@ -57,6 +57,7 @@ describe('browser shell preferences', () => {
       composition: 'strip',
       panelRendition: 'damocles',
       presentationPreset: 'authentic',
+      structureReach: 'all',
       wireframeGlow: 'soft',
       wireframeWeight: 'bold'
     };
@@ -83,6 +84,12 @@ describe('browser shell preferences', () => {
     expect(
       validatePreferences({ presentationPreset: 'cinematic' })
     ).not.toHaveProperty('presentationPreset');
+  });
+
+  test('reject an unrecognised Structure Reach instead of passing it through', () => {
+    expect(validatePreferences({ structureReach: 'ring' })).not.toHaveProperty(
+      'structureReach'
+    );
   });
 
   test('reject unrecognised wireframe choices instead of passing them through', () => {
@@ -146,6 +153,59 @@ describe('browser shell preferences', () => {
     expect(overridden.sky).toEqual(presentation.sky);
   });
 
+  test('Authentic forces occupied-cell reach and Enhanced restores the stored choice', () => {
+    const presentation = {
+      ...defaultSettings().presentation,
+      structureReach: 'cell' as const
+    };
+    const preferences = {
+      ...DEFAULT_PREFERENCES,
+      structureReach: 'all' as const
+    };
+
+    expect(
+      effectivePresentation(presentation, preferences).structureReach
+    ).toBe('all');
+    expect(
+      effectivePresentation(
+        { ...presentation, preset: 'authentic' },
+        preferences
+      ).structureReach
+    ).toBe('cell');
+    expect(
+      effectivePresentation(
+        { ...presentation, preset: 'authentic' },
+        { ...preferences, presentationPreset: 'enhanced' }
+      ).structureReach
+    ).toBe('all');
+  });
+
+  test('hands Structure Reach back to the tuning document', () => {
+    const presentation = {
+      ...defaultSettings().presentation,
+      structureReach: 'all' as const
+    };
+    expect(
+      effectivePresentation(presentation, DEFAULT_PREFERENCES).structureReach
+    ).toBe('all');
+  });
+
+  test('does not persist or announce an unchanged Structure Reach', () => {
+    const { storage } = memoryStorage();
+    const seen: Preferences[] = [];
+    const store = createPreferences({
+      onChange: preferences => seen.push(preferences),
+      storage,
+      surface: surface()
+    });
+
+    store.update({ structureReach: 'all' });
+    store.update({ structureReach: 'all' });
+
+    expect(seen).toHaveLength(1);
+    expect(readPreferences(storage).structureReach).toBe('all');
+  });
+
   test('map the named wireframe levels onto the pixels they stand for', () => {
     const presentation = defaultSettings().presentation;
     const weighted = effectivePresentation(presentation, {
@@ -183,7 +243,7 @@ describe('browser shell preferences', () => {
       ...settings,
       presentation: effectivePresentation(settings.presentation, {
         ...DEFAULT_PREFERENCES,
-        presentationPreset: 'authentic'
+        structureReach: 'all'
       })
     });
     expect(JSON.stringify(after)).toBe(JSON.stringify(before));

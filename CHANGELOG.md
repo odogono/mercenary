@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Enhanced presentation can now show every Surface Structure through a live, persisted
+  Structure Reach choice in the System Menu or `set structures` Shell Console command. The
+  occupied Surface Cell stays bright while distant bright Ink fades toward `#a0a0a0`; black Ink
+  remains black and is drawn over the distant pass. Road Workspace links remain exclusive to the
+  occupied cell. Authentic presentation always retains the
+  Reference Build's occupied-cell reach. Enhanced Far Points now cover one uniformly scaled
+  Reference row—four pixels at the 1280×800 view—while Authentic, Arrival and Escape points keep
+  their accepted size. The tuning document still defaults independently to occupied-cell reach.
+
 - The game opens in space, and crashes onto Targ (the Arrival). A star field with the panel live
   and its readouts still asterisked, Benson counting down a Novadrive and then reporting the
   failure, Targ growing from a dot to the whole screen, a fall onto the airstrip with the

@@ -171,13 +171,16 @@ describe('reading a console command line', () => {
       }
     }
     expect(() => parse('set volume 4')).toThrow(
-      "unknown setting 'volume': try composition, glow, rendition, sky, typeface, weight"
+      "unknown setting 'volume': try composition, glow, rendition, sky, structures, typeface, weight"
     );
     expect(() => parse('set sky purple')).toThrow(
       "sky takes document, authentic, enhanced, and not 'purple'"
     );
     expect(() => parse('set weight chunky')).toThrow(
       "weight takes document, fine, bold, heavy, and not 'chunky'"
+    );
+    expect(() => parse('set structures ring')).toThrow(
+      "structures takes document, cell, all, and not 'ring'"
     );
     expect(() => parse('set sky')).toThrow('set takes a name and a value');
   });
@@ -271,6 +274,21 @@ describe('doing what a console command says', () => {
 
     expect(run('set sky document', deps)).toEqual(['sky as tuned']);
     expect(changes).toEqual([{ presentationPreset: undefined }]);
+  });
+
+  test('sets Structure Reach and hands it back to the tuning document', () => {
+    const { changes, deps } = harness();
+
+    expect(run('set structures all', deps)).toEqual(['structures all']);
+    expect(run('set structures cell', deps)).toEqual(['structures cell']);
+    expect(run('set structures document', deps)).toEqual([
+      'structures as tuned'
+    ]);
+    expect(changes).toEqual([
+      { structureReach: 'all' },
+      { structureReach: 'cell' },
+      { structureReach: undefined }
+    ]);
   });
 
   test('sets the wireframe weight and glow, and hands them back too', () => {
