@@ -94,15 +94,15 @@ The C64 input reader at `$B2FE` separates keyboard matrix input from joystick
 port 2. The matrix constants are corroborated in
 `research/reference-disassembly/snapshot/Mercenary notzed/mercenary_v260411.tas`.
 
-| Semantic Action | Reference physical input | Code/site | Endgame role |
-| --- | --- | --- | --- |
-| take | T | `$16`, interaction `$97FA` | acquire Mission and Escape objects |
-| board | B | `$1C`, interaction `$984F` | occupy craft slots 0-7 |
-| drop | D | `$12`, dispatch `$B33F`, routine `$98FE` | deliver an Objective object |
-| leave craft | L | `$2A`, dispatch `$B349` | return to on-foot Occupancy |
-| ride lift | E | `$0E`, dispatch `$B3F6` | surface/room and recovered-craft transition |
-| answer yes / launch | Y | `$19`, Benson `tstk` | accept purchase/hire and confirm launch |
-| fire | joystick port-2 fire | active-low `$81`, routine `$886A` | projectile, destruction, hostile-craft combat |
+| Semantic Action     | Reference physical input | Code/site                                | Endgame role                                  |
+| ------------------- | ------------------------ | ---------------------------------------- | --------------------------------------------- |
+| take                | T                        | `$16`, interaction `$97FA`               | acquire Mission and Escape objects            |
+| board               | B                        | `$1C`, interaction `$984F`               | occupy craft slots 0-7                        |
+| drop                | D                        | `$12`, dispatch `$B33F`, routine `$98FE` | deliver an Objective object                   |
+| leave craft         | L                        | `$2A`, dispatch `$B349`                  | return to on-foot Occupancy                   |
+| ride lift           | E                        | `$0E`, dispatch `$B3F6`                  | surface/room and recovered-craft transition   |
+| answer yes / launch | Y                        | `$19`, Benson `tstk`                     | accept purchase/hire and confirm launch       |
+| fire                | joystick port-2 fire     | active-low `$81`, routine `$886A`        | projectile, destruction, hostile-craft combat |
 
 The browser Control Profile projects B, T, L, E, Y, D and F in
 `web/src/shell/input.ts`. D is the decoded drop binding. Joystick fire is the
@@ -142,34 +142,34 @@ own-RAM instruction shape guarded by `c64lab/interaction.py` and
 Object id, Benson script id, inventory id, and Geometry Identity slot are the
 same zero-based slot unless a row explicitly says it is a runtime effect.
 
-| Slot | Identity or runtime role | Proven participation |
-| ---: | --- | --- |
-| 0 | Palyar commander's related craft | player shot starts script 27 at `$8795`; its destruction sets flag `$20` and starts a Palyar attack |
-| 1 | Dominion Dart | optional 5,000-credit opening purchase; unpaid boarding sets flag `$20` and starts an attack |
-| 7 | Interstellar Ship | sole Escape craft; initially in room 5; may instead be delivered to surface cell 8:8 |
-| 8 | player projectile | one active shot, 16-frame lifetime |
-| 12 | captured Mechanoid | Palyar delivery Objective; its presence in Mechanoid control blocks Mechanoid deliveries |
-| 14 | hostile projectile | spawned by hostile craft; 32-frame lifecycle |
-| 15 | hostile attacking craft | the player's projectile target before slot 0 |
-| 24 | Anti Time Bomb | when carried, a struck site's destroyed bit is restored instead of committed |
-| 25 | Novadrive | alternative authorization for a recovered Interstellar Ship |
-| 27 | Antigrav | bypasses the heavy-object take restriction |
-| 28 | Poweramp | doubles the Dart throttle contribution and raises its ceiling to `$5A` while carried |
-| 29 | Neutron Fuel | mutually exclusive Palyar/Mechanoid delivery Objective |
-| 30 | Antenna | activates the rental terminal in room 16 when carried or left there |
-| 31 | Energy Crystal | mutually exclusive delivery Objective |
-| 34 | Large Box | mutually exclusive delivery Objective |
-| 35 | Useful Armament | mutually exclusive delivery Objective |
-| 38 | Gold | Palyar delivery Objective |
-| 41 | Medical Supplies | Palyar delivery Objective |
-| 42 | Essential 12939 Supply | Palyar delivery Objective |
-| 43 | Winchester | mutually exclusive delivery Objective |
-| 44 | Catering Provisions | Palyar delivery Objective |
-| 45 | Databank | Palyar delivery Objective |
-| 46 | Pass | conditional Palyar faction-threshold reward, initially in room 80 |
-| 47 | Sink | bypasses both fixed and heavy take restrictions |
-| 56 | Pyramid | permits drop while airborne |
-| 63 | Colony Craft | high-altitude object at X/Z `$087000`, Y `$40FCC0`; not an Ending craft |
+| Slot | Identity or runtime role         | Proven participation                                                                                |
+| ---: | -------------------------------- | --------------------------------------------------------------------------------------------------- |
+|    0 | Palyar commander's related craft | player shot starts script 27 at `$8795`; its destruction sets flag `$20` and starts a Palyar attack |
+|    1 | Dominion Dart                    | optional 5,000-credit opening purchase; unpaid boarding sets flag `$20` and starts an attack        |
+|    7 | Interstellar Ship                | sole Escape craft; initially in room 5; may instead be delivered to surface cell 8:8                |
+|    8 | player projectile                | one active shot, 16-frame lifetime                                                                  |
+|   12 | captured Mechanoid               | Palyar delivery Objective; its presence in Mechanoid control blocks Mechanoid deliveries            |
+|   14 | hostile projectile               | spawned by hostile craft; 32-frame lifecycle                                                        |
+|   15 | hostile attacking craft          | the player's projectile target before slot 0                                                        |
+|   24 | Anti Time Bomb                   | when carried, a struck site's destroyed bit is restored instead of committed                        |
+|   25 | Novadrive                        | alternative authorization for a recovered Interstellar Ship                                         |
+|   27 | Antigrav                         | bypasses the heavy-object take restriction                                                          |
+|   28 | Poweramp                         | doubles the Dart throttle contribution and raises its ceiling to `$5A` while carried                |
+|   29 | Neutron Fuel                     | mutually exclusive Palyar/Mechanoid delivery Objective                                              |
+|   30 | Antenna                          | activates the rental terminal in room 16 when carried or left there                                 |
+|   31 | Energy Crystal                   | mutually exclusive delivery Objective                                                               |
+|   34 | Large Box                        | mutually exclusive delivery Objective                                                               |
+|   35 | Useful Armament                  | mutually exclusive delivery Objective                                                               |
+|   38 | Gold                             | Palyar delivery Objective                                                                           |
+|   41 | Medical Supplies                 | Palyar delivery Objective                                                                           |
+|   42 | Essential 12939 Supply           | Palyar delivery Objective                                                                           |
+|   43 | Winchester                       | mutually exclusive delivery Objective                                                               |
+|   44 | Catering Provisions              | Palyar delivery Objective                                                                           |
+|   45 | Databank                         | Palyar delivery Objective                                                                           |
+|   46 | Pass                             | conditional Palyar faction-threshold reward, initially in room 80                                   |
+|   47 | Sink                             | bypasses both fixed and heavy take restrictions                                                     |
+|   56 | Pyramid                          | permits drop while airborne                                                                         |
+|   63 | Colony Craft                     | high-altitude object at X/Z `$087000`, Y `$40FCC0`; not an Ending craft                             |
 
 The player-facing names are decoded through the project's own text and script
 decoders; the object residences and coordinates come from the guarded object
@@ -195,13 +195,13 @@ addition. There is no general shop, sale price table, craft resale, loan,
 interest, or bank transfer. Scripts 8 and 29 share the bank entry at `$0B16` and
 only display the balance.
 
-| Family | Trigger and prerequisites | Debit/credit | Completion and repeatability | Script evidence |
-| --- | --- | ---: | --- | --- |
-| Dart purchase | opening prompt; Y within a five-second poll | -5,000 | opening-only; a non-Y input leaves balance unchanged and advances to stolen boarding; silence cycles prompts and eventually waits rather than accepting boarding | script 0, debit `$0A29` |
-| Interstellar Ship hire | room 16; Antenna slot 30 carried or in room; Y; balance at least 1,000,000 | -999,999 | script has no explicit already-hired guard, but the closed legal economy cannot fund a second hire | script 2 `$0E04`; boundary `$0E6F`; debit `$0E90`; delivery state `$0EBA-$0EBE` |
-| delivery reward | correct object carried or already in the trigger room, then legally dropped while the player remains there | table below | one-shot per object; completion ORs object flags with `$11`, making it claimed and fixed | shared `$1010-$104B` |
-| Palyar faction gratitude | net faction-destruction lead reaches 105 and shared gratitude flag `$02` is clear | Pass moved to room 1, or +500,000 if slot 46 has already left room 80 | one global occurrence across the two factions | script 10 `$120B-$1248` |
-| Mechanoid faction gratitude | opposite net lead reaches 105 and shared gratitude flag `$02` is clear | no credits/object | one global occurrence | script 26 `$11F8-$120A` |
+| Family                      | Trigger and prerequisites                                                                                  |                                                          Debit/credit | Completion and repeatability                                                                                                                                     | Script evidence                                                                 |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Dart purchase               | opening prompt; Y within a five-second poll                                                                |                                                                -5,000 | opening-only; a non-Y input leaves balance unchanged and advances to stolen boarding; silence cycles prompts and eventually waits rather than accepting boarding | script 0, debit `$0A29`                                                         |
+| Interstellar Ship hire      | room 16; Antenna slot 30 carried or in room; Y; balance at least 1,000,000                                 |                                                              -999,999 | script has no explicit already-hired guard, but the closed legal economy cannot fund a second hire                                                               | script 2 `$0E04`; boundary `$0E6F`; debit `$0E90`; delivery state `$0EBA-$0EBE` |
+| delivery reward             | correct object carried or already in the trigger room, then legally dropped while the player remains there |                                                           table below | one-shot per object; completion ORs object flags with `$11`, making it claimed and fixed                                                                         | shared `$1010-$104B`                                                            |
+| Palyar faction gratitude    | net faction-destruction lead reaches 105 and shared gratitude flag `$02` is clear                          | Pass moved to room 1, or +500,000 if slot 46 has already left room 80 | one global occurrence across the two factions                                                                                                                    | script 10 `$120B-$1248`                                                         |
+| Mechanoid faction gratitude | opposite net lead reaches 105 and shared gratitude flag `$02` is clear                                     |                                                     no credits/object | one global occurrence                                                                                                                                            | script 26 `$11F8-$120A`                                                         |
 
 The rental affordability test is intentionally asymmetric: `$0E6F` compares
 only the millions byte, so 999,999 is refused and 1,000,000 is accepted; the
@@ -219,11 +219,11 @@ another Room, or watching a message.
 
 `shipInbound` at `$BEFF` is three-valued rather than a Boolean:
 
-| Value | Meaning | Native path |
-| --- | --- | --- |
-| `$00` | no delivery in progress | `$8634` `lda`/`beq` returns at `$8663` |
+| Value                           | Meaning                   | Native path                                                |
+| ------------------------------- | ------------------------- | ---------------------------------------------------------- |
+| `$00`                           | no delivery in progress   | `$8634` `lda`/`beq` returns at `$8663`                     |
 | bit 7 set (script writes `$FF`) | accepted, not yet started | `$8639` `bmi` takes the one-shot initialisation at `$8664` |
-| positive, nonzero (`$7F`) | descending | falls through to the step at `$863B` |
+| positive, nonzero (`$7F`)       | descending                | falls through to the step at `$863B`                       |
 
 Initialisation (`$8664-$868F`) performs eleven stores through the object
 component tables at the slot-7 offset — X `$2880/$2480/$2540`, Y
@@ -271,14 +271,14 @@ Both are load-bearing for the economy scripts and neither is delivery-specific:
 
 ### `tsti` tests absence, not presence
 
-The interpreter's test opcodes uniformly answer with the *negative* condition,
+The interpreter's test opcodes uniformly answer with the _negative_ condition,
 and `tsti` `$0C` is no exception: its handler at `$8B37` loads the object
 register, calls the inventory search at `$941A`, and branches to the
 answer-true target `$8B87` on `bne` -- that is, when the search did **not**
 find the slot. The search leaves Z set only on a match (`cmp $BEB1,x` falling
 through to `rts`), and leaves Z clear when it exhausts the list through `bmi`.
-The same answer-true target is reached by `inrm` when the object is *not* in
-the room (`$8B20`/`$8B22`) and by `tstf` when the flag is *clear* (`$8B33`),
+The same answer-true target is reached by `inrm` when the object is _not_ in
+the room (`$8B20`/`$8B22`) and by `tstf` when the flag is _clear_ (`$8B33`),
 which pins the polarity of all three against each other.
 
 So `tsti` answers "the object is not carried". The delivery protocol depends on
@@ -295,32 +295,32 @@ side by `c64lab/semantics.py` and answered on the browser side by
 `GameplaySession.observations()`. Both carry `schemaVersion` 2. The
 observation map itself is untracked, so the tracked contract is this id list:
 
-| Id | Type | Meaning |
-| --- | --- | --- |
-| `room` | integer | current Room, `0` on the surface |
-| `occupancy` | integer | boarded craft slot, or `$80` on foot |
-| `credits` | integer | packed decimal register 8 |
-| `engineFlags` | integer | the engine flag byte |
-| `shipInbound` | integer | the three-valued ship delivery byte |
-| `attackingShip` | boolean | hostile craft state |
-| `endingPhase` | integer | the Ending phase byte: 0 active, 1 Escape accepted, 255 mature terminal |
-| `scriptPc` | integer | interpreter program counter, `-1` when no script runs |
-| `scriptStack` | string | call stack, outermost first, comma separated |
-| `messagePlaying` | boolean | whether the message line is busy |
-| `messageText` | string | the revealed message text |
-| `carriedStack` | string | carried slots, earliest first, comma separated |
-| `objectRoom.<slot>` | integer | Room membership in the Host Callout's encoding |
-| `objectFlags.<slot>` | integer | the object's mutable flag byte |
-| `destroyedCells` | string | destroyed cells, ascending, two hex digits each, comma separated |
-| `palyarDestroyed` | integer | the Palyar site counter |
-| `mechanoidDestroyed` | integer | the Mechanoid site counter |
-| `mover` | integer | the mover installed over the craft's own, `-1` when none |
-| `effectLifecycle8` | integer | frames left on the player's shot, `0` when idle |
-| `effectLifecycle14` | integer | frames left on the hostile shot, `0` when idle |
-| `colonyCraftFlag` | integer | the special transition flag: `$FF` on the Colony Craft, `0` otherwise |
-| `playerX` | integer | the player's full X coordinate, three bytes little-endian |
-| `playerY` | integer | the player's full altitude, three bytes little-endian |
-| `playerZ` | integer | the player's full Z coordinate, three bytes little-endian |
+| Id                   | Type    | Meaning                                                                 |
+| -------------------- | ------- | ----------------------------------------------------------------------- |
+| `room`               | integer | current Room, `0` on the surface                                        |
+| `occupancy`          | integer | boarded craft slot, or `$80` on foot                                    |
+| `credits`            | integer | packed decimal register 8                                               |
+| `engineFlags`        | integer | the engine flag byte                                                    |
+| `shipInbound`        | integer | the three-valued ship delivery byte                                     |
+| `attackingShip`      | boolean | hostile craft state                                                     |
+| `endingPhase`        | integer | the Ending phase byte: 0 active, 1 Escape accepted, 255 mature terminal |
+| `scriptPc`           | integer | interpreter program counter, `-1` when no script runs                   |
+| `scriptStack`        | string  | call stack, outermost first, comma separated                            |
+| `messagePlaying`     | boolean | whether the message line is busy                                        |
+| `messageText`        | string  | the revealed message text                                               |
+| `carriedStack`       | string  | carried slots, earliest first, comma separated                          |
+| `objectRoom.<slot>`  | integer | Room membership in the Host Callout's encoding                          |
+| `objectFlags.<slot>` | integer | the object's mutable flag byte                                          |
+| `destroyedCells`     | string  | destroyed cells, ascending, two hex digits each, comma separated        |
+| `palyarDestroyed`    | integer | the Palyar site counter                                                 |
+| `mechanoidDestroyed` | integer | the Mechanoid site counter                                              |
+| `mover`              | integer | the mover installed over the craft's own, `-1` when none                |
+| `effectLifecycle8`   | integer | frames left on the player's shot, `0` when idle                         |
+| `effectLifecycle14`  | integer | frames left on the hostile shot, `0` when idle                          |
+| `colonyCraftFlag`    | integer | the special transition flag: `$FF` on the Colony Craft, `0` otherwise   |
+| `playerX`            | integer | the player's full X coordinate, three bytes little-endian               |
+| `playerY`            | integer | the player's full altitude, three bytes little-endian                   |
+| `playerZ`            | integer | the player's full Z coordinate, three bytes little-endian               |
 
 Every payload slot contributes an `objectRoom` and an `objectFlags` entry, in
 ascending slot order, so the same moment always serialises the same way.
@@ -331,18 +331,18 @@ scalar, and comparing them one cell at a time would have made 256 observations
 out of one fact. The restricted map gains these entries, which cannot be
 tracked with the rest of the contract:
 
-| Id | Bank | Address | Shape |
-| --- | --- | --- | --- |
-| `destroyedCells` | ram | `$2B00` | `maskedCells`, count 256, mask `$80` |
-| `palyarDestroyed` | ram | `$BEBB` | integer, width 1 |
-| `mechanoidDestroyed` | ram | `$BEBC` | integer, width 1 |
-| `mover` | ram | `$00A9` | integer, width 1 |
-| `effectLifecycle8` | ram | `$BDAB` | integer, width 1 |
-| `effectLifecycle14` | ram | `$BDB1` | integer, width 1 |
-| `colonyCraftFlag` | ram | `$00FA` | integer, width 1 |
-| `playerX` | ram | `$0072` | integer, width 3, little-endian |
-| `playerY` | ram | `$0075` | integer, width 3, little-endian |
-| `playerZ` | ram | `$0078` | integer, width 3, little-endian |
+| Id                   | Bank | Address | Shape                                |
+| -------------------- | ---- | ------- | ------------------------------------ |
+| `destroyedCells`     | ram  | `$2B00` | `maskedCells`, count 256, mask `$80` |
+| `palyarDestroyed`    | ram  | `$BEBB` | integer, width 1                     |
+| `mechanoidDestroyed` | ram  | `$BEBC` | integer, width 1                     |
+| `mover`              | ram  | `$00A9` | integer, width 1                     |
+| `effectLifecycle8`   | ram  | `$BDAB` | integer, width 1                     |
+| `effectLifecycle14`  | ram  | `$BDB1` | integer, width 1                     |
+| `colonyCraftFlag`    | ram  | `$00FA` | integer, width 1                     |
+| `playerX`            | ram  | `$0072` | integer, width 3, little-endian      |
+| `playerY`            | ram  | `$0075` | integer, width 3, little-endian      |
+| `playerZ`            | ram  | `$0078` | integer, width 3, little-endian      |
 
 The two lifecycle addresses are the player-shot and hostile-shot entries of the
 effect table based at `$BDA3`. The four M7.4 rows are the Colony Craft additions the
@@ -356,24 +356,24 @@ its shape, so the schema stays at 2.
 All sixteen entries use the same guarded hand-in protocol. The room is both the
 room-entry script trigger and the required final Object Residence.
 
-| Faction | Script / entry | Room | Object slot | Object | Credits |
-| --- | --- | ---: | ---: | --- | ---: |
-| Palyar | 3 / `$0F9E` | 136 | 29 | Neutron Fuel | 200,000 |
-| Palyar | 4 / `$0FB2` | 155 | 42 | Essential 12939 Supply | 50,000 |
-| Palyar | 5 / `$0FC6` | 162 | 38 | Gold | 100,000 |
-| Palyar | 6 / `$0FD9` | 163 | 44 | Catering Provisions | 60,000 |
-| Palyar | 9 / `$0FEC` | 165 | 41 | Medical Supplies | 40,000 |
-| Palyar | 14 / `$0EC3` | 173 | 31 | Energy Crystal | 100,000 |
-| Palyar | 15 / `$0ED7` | 147 | 34 | Large Box | 35,000 |
-| Palyar | 16 / `$0EEA` | 146 | 35 | Useful Armament | 65,000 |
-| Palyar | 17 / `$0EFD` | 144 | 43 | Winchester | 100,000 |
-| Palyar | 18 / `$0F10` | 170 | 45 | Databank | 100,000 |
-| Palyar | 19 / `$0F24` | 154 | 12 | captured Mechanoid | 250,000 |
-| Mechanoid | 20 / `$0F38` | 70 | 29 | Neutron Fuel | 250,000 |
-| Mechanoid | 22 / `$0F4D` | 50 | 31 | Energy Crystal | 100,000 |
-| Mechanoid | 23 / `$0F62` | 48 | 34 | Large Box | 80,000 |
-| Mechanoid | 24 / `$0F76` | 34 | 35 | Useful Armament | 120,000 |
-| Mechanoid | 25 / `$0F8A` | 18 | 43 | Winchester | 250,000 |
+| Faction   | Script / entry | Room | Object slot | Object                 | Credits |
+| --------- | -------------- | ---: | ----------: | ---------------------- | ------: |
+| Palyar    | 3 / `$0F9E`    |  136 |          29 | Neutron Fuel           | 200,000 |
+| Palyar    | 4 / `$0FB2`    |  155 |          42 | Essential 12939 Supply |  50,000 |
+| Palyar    | 5 / `$0FC6`    |  162 |          38 | Gold                   | 100,000 |
+| Palyar    | 6 / `$0FD9`    |  163 |          44 | Catering Provisions    |  60,000 |
+| Palyar    | 9 / `$0FEC`    |  165 |          41 | Medical Supplies       |  40,000 |
+| Palyar    | 14 / `$0EC3`   |  173 |          31 | Energy Crystal         | 100,000 |
+| Palyar    | 15 / `$0ED7`   |  147 |          34 | Large Box              |  35,000 |
+| Palyar    | 16 / `$0EEA`   |  146 |          35 | Useful Armament        |  65,000 |
+| Palyar    | 17 / `$0EFD`   |  144 |          43 | Winchester             | 100,000 |
+| Palyar    | 18 / `$0F10`   |  170 |          45 | Databank               | 100,000 |
+| Palyar    | 19 / `$0F24`   |  154 |          12 | captured Mechanoid     | 250,000 |
+| Mechanoid | 20 / `$0F38`   |   70 |          29 | Neutron Fuel           | 250,000 |
+| Mechanoid | 22 / `$0F4D`   |   50 |          31 | Energy Crystal         | 100,000 |
+| Mechanoid | 23 / `$0F62`   |   48 |          34 | Large Box              |  80,000 |
+| Mechanoid | 24 / `$0F76`   |   34 |          35 | Useful Armament        | 120,000 |
+| Mechanoid | 25 / `$0F8A`   |   18 |          43 | Winchester             | 250,000 |
 
 Slots 29, 31, 34, 35, and 43 therefore have mutually exclusive buyers. The
 first completed hand-in sets their claimed bit and makes the alternative script
@@ -427,13 +427,13 @@ new Boolean that the browser should invent.
 
 ### Engine trigger census
 
-| Trigger | Native site | Script selection |
-| --- | --- | --- |
-| initial progression | seeded on new game | script 0 |
-| object take/board description | `$98B1-$98C0` | object slot when description low bit selects script |
-| room entry | `$921E` | decoded room header entry id |
-| structure destruction | `$8813` | faction threshold script 10/26, otherwise `32 + (flags & $1F)` |
-| player projectile hits object 0 | `$8795` | script 27 |
+| Trigger                         | Native site        | Script selection                                               |
+| ------------------------------- | ------------------ | -------------------------------------------------------------- |
+| initial progression             | seeded on new game | script 0                                                       |
+| object take/board description   | `$98B1-$98C0`      | object slot when description low bit selects script            |
+| room entry                      | `$921E`            | decoded room header entry id                                   |
+| structure destruction           | `$8813`            | faction threshold script 10/26, otherwise `32 + (flags & $1F)` |
+| player projectile hits object 0 | `$8795`            | script 27                                                      |
 
 The room-entry table relevant to transactions is exactly the sixteen rows above,
 plus room 16 -> script 2, room 41 -> script 28, room 102 -> script 13, rooms 42,
@@ -558,7 +558,7 @@ reads less like a rule about bombing and more like the engine declining to act
 on a cell it is not currently thinking about. It is implemented because it is
 what the engine does, not because play depends on it.
 
-It *is* reachable in this implementation, and that is a divergence in
+It _is_ reachable in this implementation, and that is a divergence in
 visibility rather than in destruction. `visible()` selects a three-by-three
 block of cells around the player, so a neighbour's structures are both drawn and
 targetable. The frozen Trace Oracle selected the same neighbourhood and a
@@ -591,23 +591,23 @@ Most faction sites use one of two generic reaction ids:
 Every exceptional reaction identity is below. This is a semantic census rather
 than a copy of the original 256-byte table.
 
-| Cell(s) | Low id / script | Decoded identity or reaction | Consequence |
-| --- | --- | --- | --- |
-| `$83` | 4 / 36 `$0B28` | Novabill | acknowledgement, no attack |
-| `$32` | 5 / 37 `$0B41` | author's advert | sets flag `$08`; Palyar attack |
-| `$3C` | 6 / 38 `$0B70` | Sabins Cube | Mechanoid attack |
-| `$06` | 7 / 39 `$0B85` | Walton Monument | Palyar attack |
-| `$36` | 8 / 40 `$0BB4` | St Stallards | Palyar attack |
-| `$1A` | 9 / 41 `$0BCB` | Moorby Arch | Mechanoid attack |
-| `$07` | 10 / 42 `$0BE1` | Tyler Point | Mechanoid attack |
-| `$78` | 11 / 43 `$0BF6` | Bosher Stadium | Palyar attack |
-| `$DC` | 12 / 44 `$0C0E` | Jordan Airport | Palyar attack |
-| `$42` | 13 / 45 `$0C1F` | Vector Henge | Mechanoid attack |
-| `$97` | 14 / 46 `$0C35` | commander's related house | sets flag `$20`; Palyar attack |
-| `$41` | 15 / 47 `$0C46` | Mechanoid Fort | Mechanoid attack |
-| `$2F` | 16 / 48 `$0C56` | Coach and Horses | Palyar attack |
-| `$4D,$D3,$D9,$F4,$F9` | 17 / 49 `$0C97` | traitor reaction | no attack |
-| `$5E,$8E,$BC,$F6,$FB` | 18 / 50 `$0CAB` | approval reaction | no attack |
+| Cell(s)               | Low id / script | Decoded identity or reaction | Consequence                    |
+| --------------------- | --------------- | ---------------------------- | ------------------------------ |
+| `$83`                 | 4 / 36 `$0B28`  | Novabill                     | acknowledgement, no attack     |
+| `$32`                 | 5 / 37 `$0B41`  | author's advert              | sets flag `$08`; Palyar attack |
+| `$3C`                 | 6 / 38 `$0B70`  | Sabins Cube                  | Mechanoid attack               |
+| `$06`                 | 7 / 39 `$0B85`  | Walton Monument              | Palyar attack                  |
+| `$36`                 | 8 / 40 `$0BB4`  | St Stallards                 | Palyar attack                  |
+| `$1A`                 | 9 / 41 `$0BCB`  | Moorby Arch                  | Mechanoid attack               |
+| `$07`                 | 10 / 42 `$0BE1` | Tyler Point                  | Mechanoid attack               |
+| `$78`                 | 11 / 43 `$0BF6` | Bosher Stadium               | Palyar attack                  |
+| `$DC`                 | 12 / 44 `$0C0E` | Jordan Airport               | Palyar attack                  |
+| `$42`                 | 13 / 45 `$0C1F` | Vector Henge                 | Mechanoid attack               |
+| `$97`                 | 14 / 46 `$0C35` | commander's related house    | sets flag `$20`; Palyar attack |
+| `$41`                 | 15 / 47 `$0C46` | Mechanoid Fort               | Mechanoid attack               |
+| `$2F`                 | 16 / 48 `$0C56` | Coach and Horses             | Palyar attack                  |
+| `$4D,$D3,$D9,$F4,$F9` | 17 / 49 `$0C97` | traitor reaction             | no attack                      |
+| `$5E,$8E,$BC,$F6,$FB` | 18 / 50 `$0CAB` | approval reaction            | no attack                      |
 
 The 27 neutral cells all have low id 0 and do not dispatch script 32. No cell has
 low id 1. Already-destroyed cells do not double-count. Carrying Anti Time Bomb
@@ -738,7 +738,7 @@ What it is for is legible from the ceilings either side of it. The blocks carry
 `[90, 10, 1, 90, 1, 1, 90, 1, ...]`, so only three craft can climb, and the Dart
 — the one the opening sells — is not among them. Carrying the Poweramp gives the
 Dart the same ceiling those three have, which is why the Colony Craft's
-ceiling-eligible craft are slots 0, 3 and 6 *plus* the Dart with this aboard. The
+ceiling-eligible craft are slots 0, 3 and 6 _plus_ the Dart with this aboard. The
 Sink, Antigrav, Pyramid, and Anti Time Bomb overrides described above depend on
 their mutable carried flags and must survive Save/restore.
 
@@ -789,10 +789,11 @@ sets the hangar surface pose without overwriting boarded craft `$A9`, so craft-7
 Occupancy survives and script 7 can launch. No hire or million-credit balance is
 required.
 
-This corrects the ground-only assumption in `notes/decode/underground.md`: the
-ordinary indoor lift is not restricted to on-foot Occupancy. By contrast, the
-unique room-171 Doorway to the Colony Craft explicitly installs mover/occupancy
-9 at `$90C9`; it cannot carry recovered craft 7 out.
+This corrects the ground-only assumption in `notes/decode/underground.md`:
+confirmed Reference Build play permits occupied craft through a lift in both
+directions. The unique room-171 Doorway to the Colony Craft is different: it
+explicitly installs mover/occupancy 9 at `$90C9`, so it cannot carry recovered
+craft 7 out.
 
 Read again for M7.4, the indoor arm holds one more fact. `$B455-$B462` loads
 X with zero, compares the room id against an immediate `$08` — rooms above 8
@@ -802,10 +803,11 @@ the special transition flag: rooms 1-7 clear it, and room 8 sets it. The
 surfacing destination tables at `$B4B6`/`$B4BE` are five entries long, but the
 arm's bound is 8, and site 8's out-of-table reads land on `$B4BE` and `$B4C6`,
 which both hold `$08`: room 8's lift surfaces at cell 8:8, the Colony Craft's
-own cell, with `$FA` set. Room 8 is reachable — rooms 145, 148 and 149 each
+own cell, with `$FA` set. The outside-to-inside ride retains an occupied craft
+while clearing `$FA`. Room 8 is reachable — rooms 145, 148 and 149 each
 carry a Doorway into it — so the underground connects to the Colony Craft by
 lift as well as by the room-171 Doorway. Sites 6 and 7 still read `$51:$23`
-and `$88:$88`, off the sixteen-cell grid. The outside-to-inside lift ride also
+and `$88:$88`, off the sixteen-cell grid. The outside-to-inside lift ride
 clears `$FA`, at `$A2F7`.
 
 The browser models the arm as the arm is written, keyed on the room that rode
@@ -820,18 +822,18 @@ so neither recovery route depends on it.
 
 ### Reachable and unreachable terminal branches
 
-| Branch | Classification | Reason |
-| --- | --- | --- |
-| hired craft 7, surface, Y, cell `$32` intact | reachable Escape candidate | script and native delivery form a closed legal path |
-| recovered craft 7 + Novadrive, lift to surface, Y, cell `$32` intact | reachable Escape candidate | script OR predicate plus occupancy-preserving lift form a closed legal path |
-| both hire flag and Novadrive | reachable but not distinct | converges before `$10E6`; same Ending identity |
-| optional flag `$20` epilogue | reachable presentation variant | set by stealing the Dart, destroying object 0, or destroying cell `$97`; does not change outcome |
-| cell `$32` destroyed | reachable refusal, not an Ending | script returns at `$1122` |
-| not aboard slot 7, underground, no authorization, no Y, or leave before recheck | reachable refusal/wait | no terminal write |
-| other craft reaches orbital box | reachable world transition for eligible craft, not Escape | `$A13D` has no Benson/game-complete edge |
-| hostile craft destroys player's ship | reachable recoverable failure, not Defeat | returns to main loop |
-| ordinary crash | reachable recoverable failure, not Defeat | returns to main loop |
-| any other Escape or terminal Defeat | structurally unreachable | no script/native terminal dispatcher exists |
+| Branch                                                                          | Classification                                            | Reason                                                                                           |
+| ------------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| hired craft 7, surface, Y, cell `$32` intact                                    | reachable Escape candidate                                | script and native delivery form a closed legal path                                              |
+| recovered craft 7 + Novadrive, lift to surface, Y, cell `$32` intact            | reachable Escape candidate                                | script OR predicate plus occupancy-preserving lift form a closed legal path                      |
+| both hire flag and Novadrive                                                    | reachable but not distinct                                | converges before `$10E6`; same Ending identity                                                   |
+| optional flag `$20` epilogue                                                    | reachable presentation variant                            | set by stealing the Dart, destroying object 0, or destroying cell `$97`; does not change outcome |
+| cell `$32` destroyed                                                            | reachable refusal, not an Ending                          | script returns at `$1122`                                                                        |
+| not aboard slot 7, underground, no authorization, no Y, or leave before recheck | reachable refusal/wait                                    | no terminal write                                                                                |
+| other craft reaches orbital box                                                 | reachable world transition for eligible craft, not Escape | `$A13D` has no Benson/game-complete edge                                                         |
+| hostile craft destroys player's ship                                            | reachable recoverable failure, not Defeat                 | returns to main loop                                                                             |
+| ordinary crash                                                                  | reachable recoverable failure, not Defeat                 | returns to main loop                                                                             |
+| any other Escape or terminal Defeat                                             | structurally unreachable                                  | no script/native terminal dispatcher exists                                                      |
 
 Structural reachability of the two Escape candidates still needs the legal-play
 traces below. Until those pass, the word “reachable” means the decoded state graph
@@ -867,7 +869,7 @@ three from the configured image, and each is now byte-precise:
   the box edge, where the pin releases and an ordinary take-off works.
 - **Exit, on foot.** Every on-foot frame with `$FA` set runs the predicate at
   `$A1DA`; stepping outside the box installs mover 9 (`$A1DF: LDA #$09, STA
-  $A9, JSR $9D99`) and clears the underground flag. `MOVE` at `$A174-$A178`
+$A9, JSR $9D99`) and clears the underground flag. `MOVE` at `$A174-$A178`
   dispatches any positive `$A9` through the live block's control vector, so
   occupancy 9 runs block 9 — the crash tumble, the same block hostile capture
   installs at `$8986` and the room-171 Doorway installs at `$90C9`. Walking
@@ -907,11 +909,11 @@ writes `gameComplete` or starts script 7. Escape does not load Damocles; ADRs
 
 The Reference Build has three presentation-relevant values, not a Boolean:
 
-| Value | Meaning | Evidence |
-| ---: | --- | --- |
-| 0 | active play | `$AA69` pins slot-7 pitch and returns |
-| 1 | Escape script accepted; terminal animation running | script 7 `$1123`; `$AA73` initializes the renderer |
-| 255 | mature terminal animation phase | `$AC44-$AC49`; `$AB97` changes point motion for the negative value |
+| Value | Meaning                                            | Evidence                                                           |
+| ----: | -------------------------------------------------- | ------------------------------------------------------------------ |
+|     0 | active play                                        | `$AA69` pins slot-7 pitch and returns                              |
+|     1 | Escape script accepted; terminal animation running | script 7 `$1123`; `$AA73` initializes the renderer                 |
+|   255 | mature terminal animation phase                    | `$AC44-$AC49`; `$AB97` changes point motion for the negative value |
 
 M7.4 re-read `$AA62` for the exact shape of the phase-0 arm. While the lift is
 riding (`$CA` nonzero) the handler defers to the lift altitude routine at
@@ -1000,23 +1002,23 @@ by ordinary play. A monitor may capture semantic observations but must not mutat
 acceptance state. Scenario definitions and observations may be tracked; RAM,
 snapshots, screenshots, video, and exact captures remain ignored/restricted.
 
-| Scenario | Start and action | Required semantic before/after observations |
-| --- | --- | --- |
-| drop hand-in | acquire one delivery object, enter its buyer room, Save/restore, press D | inventory, object flags/residence, credits, claimed/fixed repeat refusal |
-| drop boundaries | empty; airborne without/with Pyramid | no-op, rejection, and exemption without unrelated mutation |
-| economy boundary | nearest legally reachable balances below and at/above 1,000,000; accept/timeout | exact debit, no-state-change rejection, shipInbound/flag `$04`; synthetic unit tests separately pin 999,999 refused and 1,000,000 accepted/one credit left |
-| every delivery row | legally obtain and deliver all sixteen rows across separate checkpoints where shared goods conflict | correct buyer, reward, persistence, alternative-buyer refusal |
-| faction briefings | enter rooms 41 and 102; leave during presentation | no invented acceptance flag; decoded presentation and resumption |
-| site families | generic ids 2/3 and each exceptional id 4-18 | destroyed bit, reaction script, faction counter, attack state |
-| restoration | strike an intact site with Anti Time Bomb carried | impact presentation but no committed destroyed/count/reaction state |
-| faction threshold | reach both signed 105 thresholds in separate legal runs | scripts 10/26, shared flag `$02`, Pass/cash alternative for script 10 |
-| hostile win/loss | destroy attacker; allow hostile projectile to hit aboard/on foot | one-hit outcome, cleared attack, removed effects, continued active play |
-| hired Escape | uninterrupted fresh game through deliveries, Antenna, hire, delivery, board, Y | every predicate, `gameComplete` 0->1->255, messages/timing/visual loop |
-| recovered Escape | uninterrupted fresh game through room 5, Novadrive, board, indoor lift, Y | craft-7 Occupancy preserved across lift; same Ending identity |
-| launch refusals | no authorization; destroyed cell `$32`; leave before recheck | no terminal state and exact script resumption |
-| epilogue arms | Escape once with flag `$20` clear and once set | one Ending, two presentation variants |
-| Colony Craft | enter and leave the `$A13D` box with each legally eligible craft | real altitude/mover/`$FA` transition; no Ending |
-| terminal interaction | Save/restore in pre-launch, phase 1, and phase 255; exercise leave/drop/load/Ctrl-Q | atomic state, exact post-Ending behavior, no accidental return or invented lockout |
+| Scenario             | Start and action                                                                                    | Required semantic before/after observations                                                                                                                |
+| -------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| drop hand-in         | acquire one delivery object, enter its buyer room, Save/restore, press D                            | inventory, object flags/residence, credits, claimed/fixed repeat refusal                                                                                   |
+| drop boundaries      | empty; airborne without/with Pyramid                                                                | no-op, rejection, and exemption without unrelated mutation                                                                                                 |
+| economy boundary     | nearest legally reachable balances below and at/above 1,000,000; accept/timeout                     | exact debit, no-state-change rejection, shipInbound/flag `$04`; synthetic unit tests separately pin 999,999 refused and 1,000,000 accepted/one credit left |
+| every delivery row   | legally obtain and deliver all sixteen rows across separate checkpoints where shared goods conflict | correct buyer, reward, persistence, alternative-buyer refusal                                                                                              |
+| faction briefings    | enter rooms 41 and 102; leave during presentation                                                   | no invented acceptance flag; decoded presentation and resumption                                                                                           |
+| site families        | generic ids 2/3 and each exceptional id 4-18                                                        | destroyed bit, reaction script, faction counter, attack state                                                                                              |
+| restoration          | strike an intact site with Anti Time Bomb carried                                                   | impact presentation but no committed destroyed/count/reaction state                                                                                        |
+| faction threshold    | reach both signed 105 thresholds in separate legal runs                                             | scripts 10/26, shared flag `$02`, Pass/cash alternative for script 10                                                                                      |
+| hostile win/loss     | destroy attacker; allow hostile projectile to hit aboard/on foot                                    | one-hit outcome, cleared attack, removed effects, continued active play                                                                                    |
+| hired Escape         | uninterrupted fresh game through deliveries, Antenna, hire, delivery, board, Y                      | every predicate, `gameComplete` 0->1->255, messages/timing/visual loop                                                                                     |
+| recovered Escape     | uninterrupted fresh game through room 5, Novadrive, board, indoor lift, Y                           | craft-7 Occupancy preserved across lift; same Ending identity                                                                                              |
+| launch refusals      | no authorization; destroyed cell `$32`; leave before recheck                                        | no terminal state and exact script resumption                                                                                                              |
+| epilogue arms        | Escape once with flag `$20` clear and once set                                                      | one Ending, two presentation variants                                                                                                                      |
+| Colony Craft         | enter and leave the `$A13D` box with each legally eligible craft                                    | real altitude/mover/`$FA` transition; no Ending                                                                                                            |
+| terminal interaction | Save/restore in pre-launch, phase 1, and phase 255; exercise leave/drop/load/Ctrl-Q                 | atomic state, exact post-Ending behavior, no accidental return or invented lockout                                                                         |
 
 For script-facing cases observe at least current room, Occupancy, inventory,
 mutable object flags/residences, decimal balance, engine flags, script PC/stack,
@@ -1067,13 +1069,13 @@ and a second semantic capture. Nothing is captured from a replay that has alread
 been probed once: an input that changes state invalidates every later probe in
 the same run.
 
-| Probe | At | The question it answers |
-| --- | --- | --- |
-| leave | 1 and 255 | Does the player leave craft 7? Does the loop continue, change, or end? Is Occupancy still the ship afterwards? |
-| Drop | 1 and 255 | Does the Carried Stack change? Does the dropped object take an Object Residence, and where? |
-| Save | 1 and 255 | Does the native save path run at all during the loop, and what does it write for the phase? |
-| load | 1 and 255 | Does a load during the loop restore into active play, into the loop, or refuse? |
-| Ctrl-Q | 1 and 255 | Does the loop respond to the shell key at all, and what state is left behind? |
+| Probe  | At        | The question it answers                                                                                        |
+| ------ | --------- | -------------------------------------------------------------------------------------------------------------- |
+| leave  | 1 and 255 | Does the player leave craft 7? Does the loop continue, change, or end? Is Occupancy still the ship afterwards? |
+| Drop   | 1 and 255 | Does the Carried Stack change? Does the dropped object take an Object Residence, and where?                    |
+| Save   | 1 and 255 | Does the native save path run at all during the loop, and what does it write for the phase?                    |
+| load   | 1 and 255 | Does a load during the loop restore into active play, into the loop, or refuse?                                |
+| Ctrl-Q | 1 and 255 | Does the loop respond to the shell key at all, and what state is left behind?                                  |
 
 Observe, either side of every probe: Occupancy, current room, inventory, mutable
 object flags and residences, decimal balance, engine flags, script PC and stack,
@@ -1129,7 +1131,7 @@ and `c64lab/semantics.py` are bumped in the same change or the comparison breaks
 - The two Escape routes and all post-Ending input behaviors are structurally
   decoded. M7.4 (#133) proves both routes and every refusal by legal play in the
   browser. The Colony Craft box is proved for slot 0 and the Poweramp Dart from
-  a *constructed* checkpoint — the craft is placed climbing inside the box's own
+  a _constructed_ checkpoint — the craft is placed climbing inside the box's own
   cell rather than flown there from the crash site — so the box's behavior is
   demonstrated while the approach to it is not. What is still missing is that
   approach, and the Reference Build side: no tracked
@@ -1139,7 +1141,7 @@ and `c64lab/semantics.py` are bumped in the same change or the comparison breaks
   neither Escape is yet earned end to end. The hired route's balance and the
   recovered route's Novadrive are handed over at a deterministic checkpoint,
   because both sit behind the full delivery economy: the underground's seven
-  locked classes chain into each other, the skeleton key in room 88 is *fixed*
+  locked classes chain into each other, the skeleton key in room 88 is _fixed_
   until the Sink is carried in from room 163 on the far side of the Palyar
   cluster, several Room Links are one-way, and room 114 draws its exit at
   random and must be re-entered until it points the wanted way. Earning

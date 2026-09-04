@@ -907,9 +907,9 @@ test('the Shell Console runs commands over a running world', async ({
   await input.type('goto room 0');
   await page.keyboard.press('Enter');
   await expect(log).toContainText('is not a Room');
-  await input.type('goto 99 99');
+  await input.type('goto 256 99');
   await page.keyboard.press('Enter');
-  await expect(log).toContainText('must be from 0 through 15');
+  await expect(log).toContainText('must be from 0 through 255');
 
   // Backquote toggles: the same key that opened the console closes it, without typing a glyph,
   // even though the console's own input holds focus.

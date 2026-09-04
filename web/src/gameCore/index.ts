@@ -503,7 +503,9 @@ export const throttleStep = (
   return { ...state, throttle: lowered < lowest ? 0 : lowered };
 };
 
-/// Board a craft: the Reference Build took its position and its heading.
+/// Board a craft: the Reference Build took its position and its heading. On the
+/// Colony Craft deck there is no ordinary surface ground to settle onto, so the
+/// deck altitude survives boarding just as it survives leaving.
 export const board = (
   state: GameState,
   craft: number,
@@ -521,7 +523,9 @@ export const board = (
         position: { x: position.x, y: state.player.position.y, z: position.z }
       }
     },
-    flight.touchdownAltitude
+    state.colonyCraftFlag !== 0
+      ? state.player.position.y
+      : flight.touchdownAltitude
   );
 
 /// Leave the craft, which puts the player back on the walking block. On the
@@ -546,7 +550,9 @@ export const COLONY_CRAFT_LIFT_ROOM = 8;
 
 /// Take the lift down into a room. Puts the player where the ride would have left them.
 ///
-/// The downward ride clears the special transition flag (`$A2F7`).
+/// The downward ride clears the special transition flag (`$A2F7`) but leaves
+/// the boarded-craft byte alone, so a craft on the surface pad descends with
+/// its Occupancy intact just as one in a hangar ascends with it intact.
 export const enter = (
   state: GameState,
   entrance: UndergroundEntrance,
@@ -557,7 +563,6 @@ export const enter = (
   return {
     ...state,
     colonyCraftFlag: 0,
-    craft: undefined,
     mode: 'grounded',
     player: {
       heading: state.player.heading,
@@ -576,9 +581,9 @@ export const enter = (
 ///
 /// The decoded transition (`$A28E-$A2BA`) writes the horizontal pair only —
 /// lows zeroed, middles at the pad, highs from the site tables — and leaves
-/// both the altitude and the boarded-craft byte alone. That is what lets
-/// recovered craft 7 surface still occupied and still at a craft's resting
-/// altitude rather than at the walking eye height.
+/// the boarded-craft byte alone. Ordinary surface lifts retain their indoor
+/// resting altitude. Room 8 instead completes on the Colony Craft deck, whose
+/// decoded resting altitude replaces the room floor height.
 ///
 /// The same arm writes the special transition flag, so the value it writes is
 /// decided here rather than by the caller: see `COLONY_CRAFT_LIFT_ROOM`.
@@ -604,7 +609,10 @@ export const surface = (
       pitch: state.player.pitch,
       position: {
         x: column * cellSize + middle,
-        y: state.player.position.y,
+        y:
+          entrance.room === COLONY_CRAFT_LIFT_ROOM && colonyCraft !== undefined
+            ? deckRestAltitude(colonyCraft)
+            : state.player.position.y,
         z: row * cellSize + middle
       },
       speed: 0,
@@ -828,10 +836,23 @@ const integrate = (
   surfaceBounds: SurfaceBounds
 ): GameState => {
   const colonyCraft = endgame?.colonyCraft;
+  // A grounded craft is pinned only while the Colony Craft box is beneath it.
+  // Once it has crossed that boundary there is no surface at this altitude:
+  // promote it to ordinary flight before the take-off-speed gate can pin its
+  // pitch as though it were still taxiing on Targ. The on-foot path remains a
+  // separate tumble handled by `walk` below.
+  const releasedFromDeck =
+    state.mode === 'grounded' &&
+    state.craft !== undefined &&
+    state.room === undefined &&
+    state.colonyCraftFlag !== 0 &&
+    colonyCraft !== undefined &&
+    !withinColonyCraftBox(colonyCraft, state.player.position);
   // The transition counts down in the frame loop rather than in either mover, so it runs whether
   // the player is walking, flying or standing still.
   const counted: GameState = {
     ...state,
+    mode: releasedFromDeck ? 'flying' : state.mode,
     transitionCooldown: Math.max(
       0,
       state.transitionCooldown - dt * flight.limits.referenceFrameRate

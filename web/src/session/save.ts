@@ -12,7 +12,7 @@ import type {
 import type { Location, Residence } from '../world/index.ts';
 import type { ShipFieldPoint, ShipFieldSaveSnapshot } from './shipField.ts';
 
-export const SAVE_SCHEMA_VERSION = 9 as const;
+export const SAVE_SCHEMA_VERSION = 10 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -341,23 +341,40 @@ const residence = (value: unknown, at: string): Residence => {
       exact(value, at, ['kind']);
       return { kind: source['kind'] };
     case 'room': {
-      const fields =
-        source['at'] === undefined ? ['id', 'kind'] : ['at', 'id', 'kind'];
+      const fields = [
+        ...(source['at'] === undefined ? [] : ['at']),
+        ...(source['heading'] === undefined ? [] : ['heading']),
+        'id',
+        'kind'
+      ];
       const out = exact(value, at, fields);
-      return out['at'] === undefined
-        ? { id: byte(out['id'], `${at}.id`), kind: 'room' }
-        : {
-            at: vector(out['at'], `${at}.at`),
-            id: byte(out['id'], `${at}.id`),
-            kind: 'room'
-          };
+      return {
+        ...(out['at'] === undefined
+          ? {}
+          : { at: vector(out['at'], `${at}.at`) }),
+        ...(out['heading'] === undefined
+          ? {}
+          : { heading: finite(out['heading'], `${at}.heading`) }),
+        id: byte(out['id'], `${at}.id`),
+        kind: 'room'
+      };
     }
     case 'surface': {
-      const fields = source['at'] === undefined ? ['kind'] : ['at', 'kind'];
+      const fields = [
+        ...(source['at'] === undefined ? [] : ['at']),
+        ...(source['heading'] === undefined ? [] : ['heading']),
+        'kind'
+      ];
       const out = exact(value, at, fields);
-      return out['at'] === undefined
-        ? { kind: 'surface' }
-        : { at: vector(out['at'], `${at}.at`), kind: 'surface' };
+      return {
+        ...(out['at'] === undefined
+          ? {}
+          : { at: vector(out['at'], `${at}.at`) }),
+        ...(out['heading'] === undefined
+          ? {}
+          : { heading: finite(out['heading'], `${at}.heading`) }),
+        kind: 'surface'
+      };
     }
     default:
       return fail(`${at}.kind is not a Residence`);

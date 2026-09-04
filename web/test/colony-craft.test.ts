@@ -10,7 +10,12 @@ import {
   loadSettings
 } from '../src/settings/index.ts';
 import { TextTable } from '../src/text/index.ts';
-import { atUnsignedSurfacePosition, World } from '../src/world/index.ts';
+import {
+  World,
+  atUnsignedSurfacePosition,
+  movedTo,
+  placedAtResidence
+} from '../src/world/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 /// The Colony Craft transition, from both of its decoded directions: the one
@@ -59,6 +64,7 @@ const session = (): GameplaySession => {
 
 const CELL = 0x1_00_00;
 const DECK_REST = 0x40_ff_3f;
+const DECK_SURFACE = 0x40_ff_00;
 
 test('reboarding the Dart after an object teleport keeps its new residence', () => {
   const gameplay = session();
@@ -75,6 +81,7 @@ test('reboarding the Dart after an object teleport keeps its new residence', () 
   expect(gameplay.leaveCraft()?.slot).toBe(1);
   expect(gameplay.residenceOf(1)).toEqual({
     at: remote,
+    heading: 0,
     kind: 'surface'
   });
   expect(gameplay.reach('board', 1).outcome).toEqual({
@@ -83,6 +90,87 @@ test('reboarding the Dart after an object teleport keeps its new residence', () 
   });
   expect(gameplay.game.player.position.x).toBe(remote.x);
   expect(gameplay.game.player.position.z).toBe(remote.z);
+});
+
+test('leaving the grounded Dart parks its model on the planet surface', () => {
+  const gameplay = session();
+  gameplay.board(1);
+  gameplay.game = {
+    ...gameplay.game,
+    mode: 'grounded',
+    player: {
+      ...gameplay.game.player,
+      position: {
+        ...gameplay.game.player.position,
+        y: gameplay.content.flight!.groundAltitude
+      }
+    }
+  };
+
+  expect(gameplay.leaveCraft()?.slot).toBe(1);
+  const residence = gameplay.residenceOf(1);
+  if (residence.kind !== 'surface' || residence.at === undefined) {
+    throw new Error('the parked Dart has no surface residence');
+  }
+  const dart = world.objects.find(object => object.slot === 1)!;
+  const parkedDart = placedAtResidence(
+    world,
+    dart,
+    residence,
+    gameplay.snapshot.location
+  );
+  expect(Math.min(...parkedDart.vertices.map(vertex => vertex.y))).toBe(0);
+});
+
+test('leaving the Dart preserves its flown heading in the parked craft', () => {
+  const gameplay = session();
+  gameplay.board(1);
+  const flownHeading = Math.PI / 2;
+  gameplay.game = {
+    ...gameplay.game,
+    mode: 'grounded',
+    player: {
+      ...gameplay.game.player,
+      heading: flownHeading,
+      position: {
+        ...gameplay.game.player.position,
+        y: bundle.flight!.rules.groundAltitude
+      }
+    }
+  };
+
+  expect(gameplay.leaveCraft()?.slot).toBe(1);
+  const residence = gameplay.residenceOf(1);
+  expect(residence).toMatchObject({ heading: flownHeading });
+  if (residence.kind !== 'surface') {
+    throw new Error('the parked Dart has no surface residence');
+  }
+  const dart = world.objects.find(object => object.slot === 1)!;
+  const parkedDart = placedAtResidence(
+    world,
+    dart,
+    residence,
+    gameplay.snapshot.location
+  );
+  const { heading: _, ...unturnedResidence } = residence;
+  const unturnedDart = placedAtResidence(
+    world,
+    dart,
+    unturnedResidence,
+    gameplay.snapshot.location
+  );
+  expect(parkedDart.vertices).not.toEqual(unturnedDart.vertices);
+
+  const restored = GameplaySession.restore(
+    gameplay.content,
+    gameplay.scripts,
+    gameplay.captureSaveSnapshot()
+  );
+  expect(restored.reach('board', 1).outcome).toEqual({
+    kind: 'boarded',
+    slot: 1
+  });
+  expect(restored.game.player.heading).toBe(flownHeading);
 });
 
 /// Aboard a craft, climbing near-vertically inside the box's cell just under
@@ -146,6 +234,12 @@ describe('the $A13D box, entered from flight', () => {
 
       // The wrapped middle byte and the rested low byte: $40FF3F exactly.
       expect(gameplay.game.player.position.y).toBe(DECK_REST);
+      const colonyCraft = world.objects.find(object => object.slot === 63)!;
+      const topDeck = Math.max(...colonyCraft.vertices.map(vertex => vertex.y));
+      expect(topDeck).toBe(DECK_SURFACE);
+      expect(gameplay.snapshot.player.position.y - topDeck).toBe(
+        bundle.flight!.rules.groundAltitude
+      );
       const observations = gameplay.observations().observations;
       expect(observations['colonyCraftFlag']).toBe(0xff);
       expect(observations['endingPhase']).toBe(0);
@@ -194,6 +288,33 @@ describe('the $A13D box, entered from flight', () => {
     );
     expect(cleared).toBeTrue();
     expect(gameplay.observations().observations['endingPhase']).toBe(0);
+  });
+
+  test('a low-speed craft beyond the deck bounds can pitch in open air', () => {
+    const gameplay = session();
+    gameplay.board(1);
+    gameplay.game = {
+      ...gameplay.game,
+      colonyCraftFlag: 0xff,
+      mode: 'grounded',
+      player: {
+        ...gameplay.game.player,
+        pitch: 0,
+        position: {
+          x: 8 * CELL + 0x20_00,
+          y: DECK_REST,
+          z: 8 * CELL + 0x20_00
+        },
+        speed: 99
+      }
+    };
+    gameplay.intent = intent({ pitch: 1 });
+
+    gameplay.advance(FRAME);
+
+    expect(gameplay.game.mode).toBe('flying');
+    expect(gameplay.game.colonyCraftFlag).toBe(0);
+    expect(gameplay.game.player.pitch).toBeGreaterThan(0);
   });
 
   test('ordinary flight clears the flag, so it cannot survive leaving', () => {
@@ -260,6 +381,143 @@ describe('the $A13D box, entered from flight', () => {
     }
     expect(gameplay.game.mover).toBeUndefined();
     expect(gameplay.observations().observations['endingPhase']).toBe(0);
+  });
+
+  test('reboarding a craft on the deck keeps the Colony Craft altitude', () => {
+    const gameplay = session();
+    gameplay.carry(28);
+    climbing(gameplay, 1);
+    advanceUntil(gameplay, 600, () => gameplay.game.mode === 'grounded');
+    expect(gameplay.game.player.position.y).toBe(DECK_REST);
+
+    const left = gameplay.leaveCraft();
+    expect(left?.slot).toBe(1);
+    expect(gameplay.residenceOf(1)).toEqual({
+      at: { ...gameplay.game.player.position, y: DECK_SURFACE },
+      heading: 0,
+      kind: 'surface'
+    });
+    const residence = gameplay.residenceOf(1);
+    if (residence.kind !== 'surface' || residence.at === undefined) {
+      throw new Error('the parked Dart has no surface residence');
+    }
+    const dart = world.objects.find(object => object.slot === 1)!;
+    const parkedDart = movedTo(dart, residence.at);
+    const dartBase = Math.min(...parkedDart.vertices.map(vertex => vertex.y));
+    const colonyCraft = world.objects.find(object => object.slot === 63)!;
+    const topDeck = Math.max(...colonyCraft.vertices.map(vertex => vertex.y));
+    expect(dartBase).toBe(topDeck);
+
+    expect(gameplay.reach('board', 1).outcome).toEqual({
+      kind: 'boarded',
+      slot: 1
+    });
+    expect(gameplay.game.player.position.y).toBe(DECK_REST);
+    expect(gameplay.game.colonyCraftFlag).toBe(0xff);
+
+    gameplay.advance(FRAME);
+    expect(gameplay.game.player.position.y).toBe(DECK_REST);
+    expect(gameplay.game.colonyCraftFlag).toBe(0xff);
+  });
+
+  test('the deck lift descends into room 8', () => {
+    const gameplay = session();
+    gameplay.carry(28);
+    climbing(gameplay, 1);
+    advanceUntil(gameplay, 600, () => gameplay.game.mode === 'grounded');
+    gameplay.leaveCraft();
+    gameplay.game = {
+      ...gameplay.game,
+      player: {
+        ...gameplay.game.player,
+        position: {
+          x: 8 * CELL + 0x71_00,
+          y: DECK_REST,
+          z: 8 * CELL + 0x71_00
+        }
+      }
+    };
+
+    expect(gameplay.rideLift()).toBeDefined();
+    expect(gameplay.snapshot.location).toEqual({ id: 8, kind: 'room' });
+    expect(gameplay.game.colonyCraftFlag).toBe(0);
+  });
+
+  test('the deck lift descends into room 8 with the Dart still occupied', () => {
+    const gameplay = session();
+    gameplay.carry(28);
+    climbing(gameplay, 1);
+    advanceUntil(gameplay, 600, () => gameplay.game.mode === 'grounded');
+    gameplay.game = {
+      ...gameplay.game,
+      player: {
+        ...gameplay.game.player,
+        position: {
+          x: 8 * CELL + 0x71_00,
+          y: DECK_REST,
+          z: 8 * CELL + 0x71_00
+        }
+      }
+    };
+
+    expect(gameplay.snapshot.occupancy).toEqual({ kind: 'aboard', slot: 1 });
+    expect(gameplay.rideLift()).toBeDefined();
+    expect(gameplay.snapshot.location).toEqual({ id: 8, kind: 'room' });
+    expect(gameplay.snapshot.occupancy).toEqual({ kind: 'aboard', slot: 1 });
+    expect(gameplay.game.colonyCraftFlag).toBe(0);
+  });
+
+  test('leaving the Dart after the deck lift parks it on the hangar floor', () => {
+    const gameplay = session();
+    gameplay.carry(28);
+    climbing(gameplay, 1);
+    advanceUntil(gameplay, 600, () => gameplay.game.mode === 'grounded');
+    gameplay.game = {
+      ...gameplay.game,
+      player: {
+        ...gameplay.game.player,
+        position: {
+          x: 8 * CELL + 0x71_00,
+          y: DECK_REST,
+          z: 8 * CELL + 0x71_00
+        }
+      }
+    };
+
+    expect(gameplay.rideLift()).toBeDefined();
+    expect(gameplay.leaveCraft()?.slot).toBe(1);
+    const residence = gameplay.residenceOf(1);
+    if (residence.kind !== 'room' || residence.at === undefined) {
+      throw new Error('the parked Dart has no hangar residence');
+    }
+    const dart = world.objects.find(object => object.slot === 1)!;
+    const parkedDart = placedAtResidence(
+      world,
+      dart,
+      residence,
+      gameplay.snapshot.location
+    );
+
+    expect(Math.min(...parkedDart.vertices.map(vertex => vertex.y))).toBe(0);
+  });
+
+  test('the room 8 lift returns from the hangar to the deck', () => {
+    const gameplay = session();
+    gameplay.game = {
+      ...gameplay.game,
+      player: {
+        ...gameplay.game.player,
+        position: { x: 0x8_00, y: 0x80, z: 0x8_00 }
+      },
+      room: 8
+    };
+
+    expect(gameplay.rideLift()).toBeDefined();
+    expect(gameplay.snapshot.location).toEqual({ kind: 'surface' });
+    expect(gameplay.game.player.position.x).toBe(8 * CELL + 0x71_00);
+    expect(gameplay.game.player.position.y).toBe(DECK_REST);
+    expect(gameplay.game.player.position.z).toBe(8 * CELL + 0x71_00);
+    expect(gameplay.game.colonyCraftFlag).toBe(0xff);
   });
 
   test('a Save taken on the deck restores onto it and continues identically', () => {

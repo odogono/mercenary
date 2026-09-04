@@ -2,16 +2,15 @@ import { atan, cos, sin, tan, toFloat32 } from '../math/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import {
   SURFACE,
-  displacement,
+  atUnsignedSurfacePosition,
   isDetailed,
   isDrawable,
-  atUnsignedSurfacePosition,
-  movedTo,
   objectSegments,
+  placedAtResidence,
   room,
   type Ink,
-  type RoadWorkspace,
   type Residence,
+  type RoadWorkspace,
   type Segment,
   type World,
   type Location as WorldLocation
@@ -600,13 +599,12 @@ export const visible = (
       if (!isDrawable(object, location, where) && !parkedSurfaceObject) {
         continue;
       }
-      const moved = where === undefined ? undefined : displacement(where);
       const placed =
-        moved === undefined
+        where === undefined
           ? location.kind === 'surface'
             ? atUnsignedSurfacePosition(object)
             : object
-          : movedTo(object, moved);
+          : placedAtResidence(world, object, where, location);
       if (isDetailed(placed, position)) {
         append(segments, objectSegments(placed));
         detailedObjects += 1;

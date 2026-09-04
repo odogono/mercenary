@@ -68,25 +68,37 @@ describe('the Benson Panel view model', () => {
     expect(model.locationName).toBe('ROOM 07');
   });
 
-  test('pads altitude and signs speed as the panel cells expect', () => {
-    const forward = panelViewModel(
+  test('shows altitude in 256-unit bands without exposing viewpoint offsets', () => {
+    const onFoot = panelViewModel(
       snapshotOf({
         player: playerState({ position: { x: 0, y: 128, z: 0 }, speed: 42 })
       }),
       context()
     );
-    expect(forward.altitude).toBe('00128');
-    expect(forward.speed).toBe('+0042');
+    expect(onFoot.altitude).toBe('00000');
+    expect(onFoot.speed).toBe('+0042');
 
-    const reverse = panelViewModel(
+    const groundedCraft = panelViewModel(
       snapshotOf({
-        player: playerState({ position: { x: 0, y: 0, z: 0 }, speed: -7 })
+        occupancy: { kind: 'aboard', slot: 1 },
+        player: playerState({ position: { x: 0, y: 63, z: 0 }, speed: -7 })
       }),
       context()
     );
+    expect(groundedCraft.altitude).toBe('00000');
     // A sign, not a minus digit: the cells hold five characters either way.
-    expect(reverse.speed).toBe('-0007');
-    expect(reverse.speed).toHaveLength(5);
+    expect(groundedCraft.speed).toBe('-0007');
+    expect(groundedCraft.speed).toHaveLength(5);
+
+    const airborneCraft = panelViewModel(
+      snapshotOf({
+        mode: 'flying',
+        occupancy: { kind: 'aboard', slot: 1 },
+        player: playerState({ position: { x: 0, y: 320, z: 0 } })
+      }),
+      context()
+    );
+    expect(airborneCraft.altitude).toBe('00001');
   });
 
   test('wraps the compass into one turn, whichever way the player faced', () => {
@@ -170,7 +182,7 @@ describe('the Benson Panel view model', () => {
     expect(model.cash).toBe('000000512');
   });
 
-  test('lights the run lamp on foot and the ground lamp only in flight', () => {
+  test('lights the altitude lamp aboard and the ground lamp only in flight', () => {
     const walking = panelViewModel(
       snapshotOf({
         player: playerState({ position: { x: 0, y: 0, z: 0 }, speed: 3 })
@@ -178,6 +190,7 @@ describe('the Benson Panel view model', () => {
       context()
     );
     expect(walking.runLamp).toBeTrue();
+    expect(walking.altitudeLamp).toBeFalse();
     expect(walking.groundLamp).toBeFalse();
 
     const flyingLow = panelViewModel(
@@ -189,6 +202,7 @@ describe('the Benson Panel view model', () => {
       context()
     );
     expect(flyingLow.groundLamp).toBeTrue();
+    expect(flyingLow.altitudeLamp).toBeTrue();
     // Aboard a craft the player is not running.
     expect(flyingLow.runLamp).toBeFalse();
   });

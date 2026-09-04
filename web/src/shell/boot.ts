@@ -24,6 +24,7 @@ import {
 } from './ownership.ts';
 import { objectNamesOf, panelViewModel, type PanelContext } from './panel.ts';
 import { installPanel, installPanelScale } from './panelView.ts';
+import { canvasPointer, takeTargetAt } from './pointer.ts';
 import { createPreferences, effectivePresentation } from './preferences.ts';
 import {
   createSessionResumePersistence,
@@ -31,7 +32,7 @@ import {
   type SessionResumePersistence
 } from './resume.ts';
 import { createSessionResumeNotices } from './resumeNotices.ts';
-import { routeKey, type RouterState } from './router.ts';
+import { chromeHasKeyboard, routeKey, type RouterState } from './router.ts';
 import { installSaveChooser } from './saveChooser.ts';
 import { ALL_SLOTS, createSavePersistence, slotStorageKey } from './saves.ts';
 import {
@@ -426,6 +427,7 @@ try {
       cellSize: () => world.cellSize,
       cellsPerAxis: () => SURFACE_AXIS_MODULUS / world.cellSize,
       hasRoom: id => world.rooms.has(id),
+      objectName: slot => bundle.text?.messages[slot]?.text,
       objectSlots: () => world.objects.length,
       persistence,
       preferences,
@@ -576,6 +578,56 @@ try {
   });
   window.addEventListener('pagehide', flushResume);
   window.addEventListener('pagehide', () => ownershipChannel?.close());
+
+  const pointerTakeTarget = (event: MouseEvent): number | undefined => {
+    const state = routerState();
+    const interaction = session.content.interaction;
+    const pointer = canvasPointer(canvas, {
+      x: event.clientX,
+      y: event.clientY
+    });
+    if (
+      state.arrival ||
+      chromeHasKeyboard(state) ||
+      interaction === undefined ||
+      pointer === undefined ||
+      !ownership.mayAdvance()
+    ) {
+      return undefined;
+    }
+    return takeTargetAt(
+      world,
+      snapshot,
+      interaction,
+      VIEWPORT,
+      pointer.point,
+      pointer.hitSlop
+    );
+  };
+  canvas.addEventListener('pointermove', event => {
+    const target = pointerTakeTarget(event);
+    if (target === undefined) {
+      delete canvas.dataset['takeTarget'];
+    } else {
+      canvas.dataset['takeTarget'] = String(target);
+    }
+  });
+  canvas.addEventListener('pointerleave', () => {
+    delete canvas.dataset['takeTarget'];
+  });
+  canvas.addEventListener('click', event => {
+    if (event.button !== 0) {
+      return;
+    }
+    const target = pointerTakeTarget(event);
+    if (target === undefined) {
+      return;
+    }
+    performAndRefresh(() => session.reach('take', target));
+    delete canvas.dataset['takeTarget'];
+    publish();
+    event.preventDefault();
+  });
 
   window.addEventListener('keydown', event => {
     switch (routeKey(routerState(), event)) {

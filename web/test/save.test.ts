@@ -100,7 +100,7 @@ const envelope = (session: GameplaySession): SaveEnvelope => ({
 });
 
 describe('a Save Snapshot', () => {
-  test('uses schema v9 and stores object authority only at the session level', () => {
+  test('uses schema v10 and stores object authority only at the session level', () => {
     const gameplay = new GameplaySession(
       content,
       playerState({ position: { x: 0, y: 0, z: 0 } }),
@@ -108,7 +108,7 @@ describe('a Save Snapshot', () => {
     );
     const snapshot = gameplay.captureSaveSnapshot();
 
-    expect(SAVE_SCHEMA_VERSION).toBe(9);
+    expect(SAVE_SCHEMA_VERSION).toBe(10);
     expect(snapshot).toHaveProperty('carriedStack');
     expect(snapshot).toHaveProperty('deliveryFrames');
     expect(snapshot).toHaveProperty('objectFlags');
@@ -160,12 +160,12 @@ describe('a Save Snapshot', () => {
     const stale = JSON.parse(encodeSave(envelope(gameplay))) as {
       schemaVersion: number;
     };
-    stale.schemaVersion = 8;
+    stale.schemaVersion = SAVE_SCHEMA_VERSION - 1;
 
     // No migration: a v8 Save has a progressive ticker rather than the Benson
     // Display continuation boundary, and inventing one would restore a different line.
     expect(() => decodeSave(JSON.stringify(stale), environment)).toThrow(
-      'unsupported Save schemaVersion 8'
+      `unsupported Save schemaVersion ${SAVE_SCHEMA_VERSION - 1}`
     );
   });
 

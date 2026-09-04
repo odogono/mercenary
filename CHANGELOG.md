@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Nearby objects can now be taken by clicking or tapping their projected wireframes. Pointer
+  targeting uses the same live Residence, visibility, reach, and Interaction rules as keyboard
+  Take, scales its hit allowance with the canvas, and is disabled while shell chrome owns input.
+  The shared VS Code workspace colours are also tracked for a consistent development workspace.
+
+- The Shell Console now provides `inventory`, `get <object-slot>`, and
+  `drop <object-id|name>`. Remote Get bypasses only distance and Location while retaining the
+  ordinary fixed, heavy, capacity, and object-state rules; Drop resolves ids and names within the
+  Carried Stack and retains airborne restrictions. Console input is displayed in uppercase.
+
 - The Shell Console can now navigate the complete 256-by-256 unsigned surface with
   `goto <x> <z> [height]`, including heights that place a flyable craft in flight and make an
   on-foot player or non-flyable craft fall under the existing Mover. `goto object <slot>` follows
@@ -73,6 +83,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   their own: three frozen session traces pin the existing one.
 
 ### Changed
+
+- `where` is now the Shell Console's sole location-reporting command; the redundant `location`
+  command has been removed. Its output now combines Location, grid cell, Occupancy,
+  position, and heading/pitch/roll orientation, with position and orientation rounded to three
+  decimal places.
+
+- Colony Craft flight and lift handling now uses the rendered top deck as its landing plane,
+  preserves orbital altitude when boarding or leaving, and connects the deck to hangar room 8 in
+  both directions. Occupied craft can ride either way, leave grounded on the deck or hangar floor,
+  retain their landed orientation across reboarding and Saves, and become freely pitchable flight
+  as soon as they clear the craft's bounds even below Targ's ordinary take-off speed. On-foot deck
+  departures retain their falling tumble. Save schema 10 stores the parked-craft heading and
+  refuses schema-9 records rather than inventing it.
+
+- The Targ Benson Panel altitude readout now shows the middle/high altitude bytes rather than the
+  viewpoint-offset low byte, and its altitude lamp is red while the player is aboard a craft.
+  The Ending browser smoke test now also exercises a room-8 Colony Craft elevator round trip.
 
 - The browser Ending E2E now reaches a console-assisted recovered Escape from a fresh session
   instead of planting Ending Phase 1 into a Save. It completes the opening purchase, uses the
@@ -195,6 +222,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   BroadcastChannel so a stale page cannot overwrite newer progress. Browsers without Web Locks keep
   play and manual Saves available while explicitly disabling Session Resume. Completed Benson
   messages, including resume and ownership notices, now also enter the bounded console history.
+
 - Both legal Escape routes and the Colony Craft transition (#133). Benson script 7's dispatcher is
   now reachable by playing: the hired route earns engine flag `$04` through the rental terminal,
   waits out the native 779-frame descent, and launches without the Novadrive, while the recovered
@@ -239,7 +267,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the bargaining ladder whose figures are packed decimal, delay-as-subroutine pacing, and the
   suspend-not-block message gate. Script arithmetic is BCD, so a port must reproduce those semantics
   or prove binary equivalent. Two incidental findings: the original shipped cross-title save import
-  from *Mercenary I* and *The Second City*, and the inline-native escape at slots `$08`/`$09` is
+  from _Mercenary I_ and _The Second City_, and the inline-native escape at slots `$08`/`$09` is
   unused anywhere in this bank. The decoder is report-only instrumentation and must never become an
   extractor (ADR 0021).
 - Damocles Script dispatch loop decoded by Working Disassembly (#128). The ST laboratory gained
@@ -335,7 +363,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   property the Oracle already encoded when it bounded a parked jump-to-self.
   The session mutates in place and an instruction observer records what `ScriptTrace` records.
   There is no honest way to assemble that from outside: running with a one-instruction budget
-  traces a *different* execution, because the budget stands in for the frame boundary the
+  traces a _different_ execution, because the budget stands in for the frame boundary the
   original interpreter had for free. Each record carries what changed (`changes` is the inverse
   of the existing `apply`), so a replay is a pure function of the trace plus the presses and
   writes the header already named.
@@ -438,13 +466,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `ScreenLine` is `Float`, so a projection trace records binary32 quantities in full
   binary64 precision — `0.10000000149011612` is the value, not noise — and that binds the
   port to narrow at the same boundary. The clock is recorded as an integer step index with
-  the accumulated `elapsed` beside it as an *assertion*: every diagnostic accumulates
+  the accumulated `elapsed` beside it as an _assertion_: every diagnostic accumulates
   `elapsed += 1/60`, the core consumes that value, and a replay keyed off it would diverge
   on the order of its additions rather than on the simulation.
   One `MercenaryKit` change, and only one: an optional per-instruction observer on
   `BensonMachine.run`, threaded through `BensonSession.advance`. There is no honest way to
   assemble an instruction trace from outside — running with a one-instruction budget traces
-  a *different* execution, because the budget stands in for the frame boundary the original
+  a _different_ execution, because the budget stands in for the frame boundary the original
   interpreter had for free. What an instruction read is deliberately not recorded: the
   header carries the whole of the interpreter and host state and each record carries what
   changed, so every value it could have consulted is reconstructible, and which way a test
@@ -482,14 +510,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   rewired Rooms and mirrored world the Reference Build has.
   The traversal gate is implemented in the Reference Build's own order, and two parts
   of it look removable and are not. A Doorway is only looked for on a frame where the
-  Room's walls had to push the player back, so walking into a wall *is* how a door is
+  Room's walls had to push the player back, so walking into a wall _is_ how a door is
   opened and standing in a Doorway turning around does nothing. And the facing test
   accepts square-on to the wall in either direction, including facing away from it,
   which it can afford to because which way the player is pushing is already settled by
   which wall they hit. Both have tests named after the surprise rather than the
   mechanism.
   There are two interlocks and only one is general. The step interlock counts down
-  only while the player walks, which is what stops arrival — which places them *inside*
+  only while the player walks, which is what stops arrival — which places them _inside_
   the Doorway on the far side — from handing them straight back. The transition
   cooldown, the one that also drives a colour ramp, is installed inside the
   special-setup branch that an ordinary Room skips entirely, so most transitions have
@@ -507,8 +535,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   slots, moved positions, room membership — are replaced by the one `Residence` value
   all three were views of, finishing at the renderer's edge the collapse PR 2 made
   inside the session.
-  Darkness is literal: all three colours zeroed, nothing drawn, and *"ITS VERY DARK IN
-  HERE"* (PQ-0004). How a Room looks is now a session fact rather than a property of
+  Darkness is literal: all three colours zeroed, nothing drawn, and _"ITS VERY DARK IN
+  HERE"_ (PQ-0004). How a Room looks is now a session fact rather than a property of
   the Room, since it depends on where the photon emitter has got to, and both
   renderers take it off the snapshot so neither decides for itself what dark means.
 - `--room-trace`, a deterministic walk through the underground from a named Room along
@@ -538,7 +566,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   We place the player at the craft's cell on the ground rather than at its altitude:
   arriving at the ship is the escape route, which this issue puts out of scope, and the
   mover installed there is one we do not have. That is a known difference, asserted by a
-  test that checks the altitude is *not* adopted rather than left to look like a bug.
+  test that checks the altitude is _not_ adopted rather than left to look like a bug.
 
 ### Fixed
 
@@ -600,6 +628,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `app/traces.sh` is new, and emits the deterministic traces a behaviour-neutral
   change is checked against. Trace output is payload-derived and gitignored per ADR
   0019, so it is regenerated and diffed rather than committed.
+
 ### Fixed
 
 - Make every headless command take `--output`, and refuse an invocation it does not
@@ -630,7 +659,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   therefore been running something else — "press any key at zero seconds" rather than
   "any at two, `y` at six". They are corrected here, which is what the strict reader
   is for: the same mistake is now a refusal rather than a quiet substitution. It also
-  means those traces now exercise a *matched* key press and a boarding at a non-zero
+  means those traces now exercise a _matched_ key press and a boarding at a non-zero
   time, neither of which any trace had reached before.
 
 ### Added
@@ -644,14 +673,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   The opcode is now fully accounted for, and the field that was missing turned out to
   be the one the navigation work needed most. Bits 4-6 were carried as
   `opcode-high-bits` uncertainty and are the **arrival command index**: they name
-  which of the *destination* Room's own Doorways the player arrives in. The decoder
+  which of the _destination_ Room's own Doorways the player arrives in. The decoder
   resolves that into an absolute arrival position, so no cross-Room index lookup
   happens in the app at all. Altitude is untouched by a room transition, which is what
   the Reference Build does — it never writes one.
   Darkness cost one bit rather than a decode pass: a record's `$80` terminator ends it
-  *and* marks the Room dark, so the twenty dark Rooms were already in our data and
+  _and_ marks the Room dark, so the twenty dark Rooms were already in our data and
   were being discarded. The photon-emitter gate, the third colour darkness clears, and
-  the *"ITS VERY DARK IN HERE"* message index all travel now. That third colour has no
+  the _"ITS VERY DARK IN HERE"_ message index all travel now. That third colour has no
   per-Room source — every Room setup stores the same immediate — so it rides in
   `doorwayRules` as one global `lineColour` rather than pretending to be part of a
   Room's palette.
@@ -670,8 +699,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the raw shape nibble, so the seven lock classes want slots `$11..$17`, with `$30` as
   the skeleton key. 53 of the 481 Doorways are locked.
   Two one-way link totals circulate and both are right, so they are now counted apart
-  and named for what they measure: 83 unanswered *Doorways* out of 481 on the checking
-  map, and 82 one-way *Room Links* out of 478 in the payload manifest. The difference
+  and named for what they measure: 83 unanswered _Doorways_ out of 481 on the checking
+  map, and 82 one-way _Room Links_ out of 478 in the payload manifest. The difference
   is the single Doorway onto the surface, for which reciprocity is undefined, and one
   pair of Rooms with two mutual Doorways. Both are asserted on every export.
   `docs/preserved-quirks.md` is new and records the three behaviours a future reader
@@ -711,7 +740,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   off the grid and site eight reads into the second table, so five is what bounds the
   count. That is five of the six coordinates the community list carries, and the
   missing `3:4` is absent from the lift table rather than misread — the documented
-  list covers elevators *and hangars*, and a hangar is entered by the separate box
+  list covers elevators _and hangars_, and a hangar is entered by the separate box
   test, so `3:4` is most likely a hangar.
   The site turns out to be the room id: arriving hands it straight to the room setup,
   which keys the room pointer tables with it, so site one arrives in room one.
@@ -780,7 +809,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   live block. That routine walks by a fixed step held at `$AA/$AB` and turns by a
   fixed number of angle units held at `$AC`, with no velocity, no damping, no
   throttle and no vertical term. So the block after the eight craft is not the
-  on-foot walk: it is the block touchdown installs so a *landed craft taxis*, which
+  on-foot walk: it is the block touchdown installs so a _landed craft taxis_, which
   is why the touchdown copy exists, and it is named `grounded` now. ADR 0016 carries
   the correction; the eleven-block table, the touchdown copy and the two filter
   shapes all stand.
@@ -907,7 +936,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Draw the rotating structures at their real width. A rotated structure's X and Z
   displacements are a signed **×64** per byte, not ×16: `SETUP_STRUCTURE_POINTERS`
-  hands the source byte to `BIT24_TO_FP` as the *high* byte of a twenty-four bit
+  hands the source byte to `BIT24_TO_FP` as the _high_ byte of a twenty-four bit
   value — its normalisation counter starts at `$18`, which is bit 24 — so the float
   it gets back is the byte shifted left sixteen, and subtracting `$28` from the
   exponent byte takes ten powers of two off it rather than four. The visible
@@ -934,7 +963,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Say what the player is in. The status strip now shows the craft, and while
   aboard, altitude, throttle notch, and whether the craft is flying or grounded —
   none of which had any indication before.
-- Bank the right way. The world turns *against* a rolling craft, so a right bank
+- Bank the right way. The world turns _against_ a rolling craft, so a right bank
   has to lift the right of the horizon; it was dropping it, which made a turn read
   as a turn the other way. The ground fill and the wireframe now lean together.
 - Sit the player in the craft facing the way it points. A craft's nose runs along
@@ -1102,7 +1131,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   diagnostics, author tooling, fuzz gates, and candidate-release evidence.
 - Add 14 Draft 2020-12 schemas, six CDDL contract families, closed version
   registries, 25 positive/negative golden vectors, and `lab implementation
-  validate`; add Execution Environment to the shared language and record ADR
+validate`; add Execution Environment to the shared language and record ADR
   0012 for the production encoding boundary.
 - Define the normative Verification System for issue #12 with scoped Behavior
   Cases, immutable results, public/restricted manifests, dependency-aware reuse,

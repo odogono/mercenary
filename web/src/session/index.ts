@@ -10,6 +10,7 @@ import {
 } from '../benson/index.ts';
 import { blockFor, type Touchdown } from '../flight/index.ts';
 import {
+  COLONY_CRAFT_LIFT_ROOM,
   IDLE,
   REFERENCE_OPENING_POSITION,
   board as boardCraft,
@@ -56,6 +57,7 @@ import type {
 } from '../payload/documents.ts';
 import { indoorScene, type IndoorScene } from '../scene/index.ts';
 import {
+  craftHeading,
   displacement,
   hostRoom,
   isCarried,
@@ -86,7 +88,7 @@ import { SiteLedger } from './sites.ts';
 /// The Gameplay Session: the one owner of a play session's Session State (ADR 0018).
 ///
 /// Every discrete change to that state passes through a Semantic Action: `reach`, `drop`,
-/// `leaveCraft`, `rideLift`, `teleport`, `place`, `placeAtObject`, `carry`, `board`,
+/// `leaveCraft`, `rideLift`, `teleport`, `place`, `placeAtObject`, `takeObject`, `carry`, `board`,
 /// `throttleNotchValue`, `throttleStep`, `placeInAir`, `shutThrottle`, `press`, `skipMessage`,
 /// `start`, `show`, `describe`. Each moves everything or nothing, which is what ADR 0018 asks of
 /// them.
@@ -146,6 +148,21 @@ export type DropOutcome =
 export interface DropResult {
   readonly events: readonly PresentationEvent[];
   readonly outcome: DropOutcome;
+}
+
+export type TakeObjectOutcome =
+  | { readonly kind: 'took'; readonly slot: number }
+  | { readonly kind: 'fixedInPlace'; readonly slot: number }
+  | { readonly kind: 'tooHeavy'; readonly slot: number }
+  | { readonly kind: 'handsFull' }
+  | { readonly kind: 'alreadyCarried'; readonly slot: number }
+  | { readonly kind: 'gone'; readonly slot: number }
+  | { readonly kind: 'missing'; readonly slot: number }
+  | { readonly kind: 'unsupported' };
+
+export interface TakeObjectResult {
+  readonly events: readonly PresentationEvent[];
+  readonly outcome: TakeObjectOutcome;
 }
 
 /// What asking to fire did.
@@ -318,19 +335,6 @@ const rewriteDoorway = (doorway: Doorway, alternate: Alternate): Doorway => {
   }
   const { arrival: _, ...rest } = rewritten;
   return rest;
-};
-
-const TWO_PI = 2 * Math.PI;
-
-/// A craft's heading, from the orientation bytes the payload carries for it.
-///
-/// Those bytes count 256 to a turn, which is the object tables' own unit and not the 1024 the
-/// control loop's angles use. The half turn is the models' own facing: a craft's nose points
-/// along decreasing Z when its orientation byte is zero, while a heading of zero looks along
-/// increasing Z, so boarding one without this put the player in it back to front.
-const craftHeading = (craft: ObjectPlacement): number => {
-  const turn = ((craft.orientation.y & 0xff) / 256) * TWO_PI;
-  return (turn + Math.PI) % TWO_PI;
 };
 
 const samePoint = (
@@ -874,24 +878,19 @@ export class GameplaySession {
       } else if (written === BensonHostState.outOfTheWorld) {
         nextResidence.set(slot, { kind: 'gone' });
       } else if (written === SURFACE_ROOM) {
-        const at = current.kind === 'surface' ? current.at : undefined;
         nextResidence.set(
           slot,
-          at === undefined ? { kind: 'surface' } : { at, kind: 'surface' }
+          current.kind === 'surface' ? current : { kind: 'surface' }
         );
       } else {
         if (!this.content.rooms.has(written)) {
           throw new Error(`Host Callout refers to missing Room ${written}`);
         }
-        const at =
-          current.kind === 'room' && current.id === written
-            ? current.at
-            : undefined;
         nextResidence.set(
           slot,
-          at === undefined
-            ? { id: written, kind: 'room' }
-            : { at, id: written, kind: 'room' }
+          current.kind === 'room' && current.id === written
+            ? current
+            : { id: written, kind: 'room' }
         );
       }
     }
@@ -950,10 +949,17 @@ export class GameplaySession {
       .filter(object =>
         isDrawable(object, this.location, this.residence.get(object.slot))
       )
-      .map(object => ({
-        position: displacement(this.residenceOf(object.slot)) ?? object.origin,
-        slot: object.slot
-      }));
+      .map(object => {
+        const where = this.residenceOf(object.slot);
+        return {
+          heading:
+            where.kind === 'surface' || where.kind === 'room'
+              ? where.heading
+              : undefined,
+          position: displacement(where) ?? object.origin,
+          slot: object.slot
+        };
+      });
     const position = this.game.player.position;
     const outcome = this.acrossTheCallout(host => {
       const attempted = interaction.attempt(action, position, candidates, host);
@@ -974,11 +980,14 @@ export class GameplaySession {
           const at =
             candidates.find(candidate => candidate.slot === outcome.slot)
               ?.position ?? craft.origin;
+          const heading = candidates.find(
+            candidate => candidate.slot === outcome.slot
+          )?.heading;
           this.game = boardCraft(
             this.game,
             outcome.slot,
             { x: at.x, y: 0, z: at.z },
-            craftHeading(craft),
+            heading ?? craftHeading(craft),
             this.content.flight
           );
         }
@@ -989,6 +998,59 @@ export class GameplaySession {
       this.show(interaction.tooHeavyMessage);
     }
     return { events, outcome };
+  }
+
+  /// Take one named object without requiring it to be nearby.
+  ///
+  /// This is the Shell Console's remote equivalent of reaching: it skips only Location and
+  /// distance, while the Interaction still owns fixed/heavy checks and the Carried Stack limit.
+  takeObject(slot: number): TakeObjectResult {
+    const object = this.objectsBySlot.get(slot);
+    if (object === undefined) {
+      return { events: [], outcome: { kind: 'missing', slot } };
+    }
+    const residence = this.residenceOf(slot);
+    if (residence.kind === 'carried') {
+      return { events: [], outcome: { kind: 'alreadyCarried', slot } };
+    }
+    if (residence.kind === 'gone') {
+      return { events: [], outcome: { kind: 'gone', slot } };
+    }
+    const interaction = this.content.interaction;
+    if (interaction === undefined || this.scripts === undefined) {
+      return { events: [], outcome: { kind: 'unsupported' } };
+    }
+    const position = this.game.player.position;
+    const outcome = this.acrossTheCallout(host => {
+      const attempted = interaction.attempt(
+        'take',
+        position,
+        [{ position, slot }],
+        host
+      );
+      return { host: attempted.host, result: attempted.outcome };
+    });
+    if (outcome === undefined) {
+      return { events: [], outcome: { kind: 'unsupported' } };
+    }
+    switch (outcome.kind) {
+      case 'took': {
+        const flags = this.scripts.host.objectFlags.get(slot) ?? 0;
+        this.describe(interaction.description(slot, flags));
+        return { events: ['tone'], outcome };
+      }
+      case 'tooHeavy':
+        this.show(interaction.tooHeavyMessage);
+        return { events: [], outcome };
+      case 'fixedInPlace':
+      case 'handsFull':
+        return { events: [], outcome };
+      case 'nothingInReach':
+      case 'boarded':
+      case 'notACraft':
+      case 'alreadyAboard':
+        throw new Error(`unexpected remote take outcome '${outcome.kind}'`);
+    }
   }
 
   leaveCraft():
@@ -1010,15 +1072,31 @@ export class GameplaySession {
     if (slot === undefined) {
       return undefined;
     }
-    const at = { x: position.x, y: position.y, z: position.z };
+    // On the Colony Craft deck the player's low altitude byte is eye height,
+    // not part of the surface under the parked craft. Clear it as the Reference
+    // Build does at `$993E-$994A`; ordinary leaving retains the accepted Golden
+    // Trace's full position.
+    const at = {
+      x: position.x,
+      y:
+        this.game.colonyCraftFlag !== 0
+          ? Math.floor(position.y / 0x1_00) * 0x1_00
+          : position.y,
+      z: position.z
+    };
     // Left where the player stands: in the current Room when underground,
     // on the surface otherwise. The recovered route boards craft 7 in room 5
     // and must be able to step out without teleporting it away.
     this.residence.set(
       slot,
       this.location.kind === 'room'
-        ? { at, id: this.location.id, kind: 'room' }
-        : { at, kind: 'surface' }
+        ? {
+            at,
+            heading: this.game.player.heading,
+            id: this.location.id,
+            kind: 'room'
+          }
+        : { at, heading: this.game.player.heading, kind: 'surface' }
     );
     this.game = leaveCraftCore(this.game, this.content.flight);
     return { events: ['tone'], slot };
@@ -1033,7 +1111,19 @@ export class GameplaySession {
     const previousRoom = locationHostValue(this.location);
     if (this.location.kind === 'room') {
       const id = this.location.id;
-      const entrance = underground.entrances.find(item => item.room === id);
+      const ordinaryEntrance = underground.entrances.find(
+        item => item.room === id
+      );
+      const colonyCraft = this.content.endgame?.colonyCraft;
+      const entrance =
+        ordinaryEntrance ??
+        (id === COLONY_CRAFT_LIFT_ROOM && colonyCraft !== undefined
+          ? {
+              cell: colonyCraft.cell,
+              room: COLONY_CRAFT_LIFT_ROOM,
+              site: COLONY_CRAFT_LIFT_ROOM
+            }
+          : undefined);
       if (entrance === undefined) {
         return undefined;
       }
@@ -1052,7 +1142,6 @@ export class GameplaySession {
         this.game.player.position.z / this.content.cellSize
       );
       if (
-        this.occupancy.kind !== 'onFoot' ||
         !padCovers(
           underground.pad,
           this.game.player.position.x,
@@ -1066,12 +1155,25 @@ export class GameplaySession {
       ) {
         return undefined;
       }
-      const entrance = underground.entrances.find(
+      const ordinaryEntrance = underground.entrances.find(
         item =>
           item.cell.length === 2 &&
           item.cell[0] === column &&
           item.cell[1] === row
       );
+      const colonyCraft = this.content.endgame?.colonyCraft;
+      const entrance =
+        ordinaryEntrance ??
+        (this.game.colonyCraftFlag !== 0 &&
+        colonyCraft !== undefined &&
+        colonyCraft.cell[0] === column &&
+        colonyCraft.cell[1] === row
+          ? {
+              cell: colonyCraft.cell,
+              room: COLONY_CRAFT_LIFT_ROOM,
+              site: COLONY_CRAFT_LIFT_ROOM
+            }
+          : undefined);
       if (entrance === undefined) {
         return undefined;
       }
@@ -1400,10 +1502,14 @@ export class GameplaySession {
     this.republishHostState();
   }
 
-  drop(): DropResult {
-    const slot = this.carriedStack.at(-1);
+  drop(selectedSlot?: number): DropResult {
+    const slot = selectedSlot ?? this.carriedStack.at(-1);
     if (slot === undefined) {
       return { events: [], outcome: { kind: 'emptyInventory' } };
+    }
+    const carriedIndex = this.carriedStack.indexOf(slot);
+    if (carriedIndex === -1) {
+      throw new Error(`Cannot drop object slot ${slot} that is not carried`);
     }
     const exemption = this.content.dropRules?.carriedExemptionSlot;
     if (
@@ -1424,7 +1530,10 @@ export class GameplaySession {
       this.location.kind === 'surface'
         ? { at, kind: 'surface' }
         : { at, id: this.location.id, kind: 'room' };
-    this.carriedStack = this.carriedStack.slice(0, -1);
+    this.carriedStack = [
+      ...this.carriedStack.slice(0, carriedIndex),
+      ...this.carriedStack.slice(carriedIndex + 1)
+    ];
     this.objectFlags.set(slot, flags);
     this.residence.set(slot, where);
     this.republishHostState();

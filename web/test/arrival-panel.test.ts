@@ -11,6 +11,7 @@ const CELL_SIZE = 65_536;
 
 const base: PanelViewModel = {
   altitude: '00128',
+  altitudeLamp: false,
   attackLamp: false,
   cash: '000009000',
   clock: '00-00-00',

@@ -69,7 +69,7 @@ test('the Arrival presents the opening and lands on the game', async ({
   await page.keyboard.press('Space');
   await expect(surface).toHaveAttribute('data-arrival', 'done');
   await expect(panelField(page, 'locationLabel')).toHaveText('08-08');
-  await expect(panelField(page, 'altitude')).toHaveText('00128');
+  await expect(panelField(page, 'altitude')).toHaveText('00000');
   await expect(page.locator('#frame')).toHaveAttribute('data-x', '559104');
   await expect(page.locator('#frame')).toHaveAttribute('data-z', '559104');
   await expect(panelField(page, 'message')).not.toHaveText('');

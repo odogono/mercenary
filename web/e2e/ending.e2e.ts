@@ -93,6 +93,31 @@ const hurryUntil = async (page: Page, fragment: string): Promise<void> => {
     .toContain(fragment);
 };
 
+test('E rides the Colony Craft lift down and back up through the Browser Shell', async ({
+  page
+}) => {
+  await page.goto('/');
+  const surface = page.locator('#game-surface');
+  await expect(surface).toHaveAttribute('data-state', 'ready');
+  await page.keyboard.press('Space');
+  await expect(surface).toHaveAttribute('data-arrival', 'done');
+
+  await command(page, 'goto room 8', 'teleported to ROOM 08');
+  await expect.poll(async () => (await sessionState(page)).room).toBe(8);
+
+  await page.keyboard.press('KeyE');
+  await expect.poll(async () => (await sessionState(page)).room).toBeNull();
+  await expect(
+    page.locator('#panel-targ [data-field="locationLabel"]')
+  ).toHaveText('08-08');
+  await expect(page.locator('#panel-targ [data-field="altitude"]')).toHaveText(
+    '16639'
+  );
+
+  await page.keyboard.press('KeyE');
+  await expect.poll(async () => (await sessionState(page)).room).toBe(8);
+});
+
 test('the console-assisted recovered route reaches and matures the Escape', async ({
   page
 }) => {

@@ -7,6 +7,8 @@ import { decodeSessionTraceCommand } from '../src/trace/session.ts';
 const CONSOLE_VERBS = [
   'help',
   'where',
+  'inventory',
+  'get',
   'goto',
   'panel',
   'set',
@@ -34,6 +36,14 @@ describe('the Shell Console stays out of traces', () => {
     );
   });
 
+  test('keeps the shared drop word structurally distinct', () => {
+    expect(decodeSessionTraceCommand({ drop: true })).toEqual({ kind: 'drop' });
+    expect(parseConsoleCommand('drop 42', 16)).toEqual({
+      kind: 'dropObject',
+      selector: '42'
+    });
+  });
+
   test('understands none of the commands a trace records', () => {
     // The reverse direction: a recorded input is not something a player can type.
     for (const recorded of [
@@ -44,6 +54,12 @@ describe('the Shell Console stays out of traces', () => {
       'rideLift',
       'drop'
     ]) {
+      if (recorded === 'drop') {
+        expect(() => parseConsoleCommand(recorded, 16)).toThrow(
+          'drop takes an object id or name'
+        );
+        continue;
+      }
       expect(() => parseConsoleCommand(recorded, 16)).toThrow(
         `unknown command '${recorded.toLowerCase()}': type help`
       );

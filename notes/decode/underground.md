@@ -20,14 +20,14 @@ from: `192 = 173 + 19`, and `427 + 3×18 = 481`.
 Each command in a record is one **Doorway**. Its opcode packs three fields and the
 whole byte is now accounted for:
 
-| bits | field |
-| --- | --- |
-| 7 | plane, `xy` when clear and `zy` when set |
-| 4-6 | the **arrival command index** in the destination room |
-| 0-3 | the door's shape, which is also its lock class |
+| bits | field                                                 |
+| ---- | ----------------------------------------------------- |
+| 7    | plane, `xy` when clear and `zy` when set              |
+| 4-6  | the **arrival command index** in the destination room |
+| 0-3  | the door's shape, which is also its lock class        |
 
 **Bits 4-6 were the last unexplained field and they are not a coordinate.** They name
-which of the *destination* room's own commands the player arrives in: `$94C8` folds
+which of the _destination_ room's own commands the player arrives in: `$94C8` folds
 them into the record offset `4n + 7`, and `$9148` reads the x byte, the z byte, and
 that command's own plane bit from there. So arrival is `x = destX*256 + (plane ? $00 :
 $80)` and `z = destZ*256 + (plane ? $80 : $00)`, and **no y is written at all** —
@@ -45,7 +45,7 @@ Two counts of one-way links circulate and both are right, so it is worth being
 explicit about which is which:
 
 - **83 unanswered Doorways.** Per command, out of 481. This is what `lab geometry
-  rooms-svg` reports and draws in a different colour, because a Doorway is what the
+rooms-svg` reports and draws in a different colour, because a Doorway is what the
   map draws. It includes the single Doorway out of the underground.
 - **82 one-way Room Links.** Per distinct room-to-room pair, out of 478. This is what
   the payload manifest reports. It excludes the surface Doorway, because reciprocity
@@ -64,7 +64,7 @@ error: a corridor is a chamber with one axis collapsed.
 
 ### Walking into a wall is how a Doorway is opened
 
-The gate at `$8570` is five things in order, and the order *is* the behaviour:
+The gate at `$8570` is five things in order, and the order _is_ the behaviour:
 
 ```
 JSR $939E     containment — clamp both axes, count how many had to move
@@ -82,17 +82,17 @@ Two of these look removable and are not.
 
 **The wall-contact precondition.** Standing inside a Doorway and turning around does
 nothing whatever; the player has to push into the wall on that same frame. This is not
-an optimisation — it is what makes a Doorway a thing you walk *through* rather than a
+an optimisation — it is what makes a Doorway a thing you walk _through_ rather than a
 trigger volume you can be nudged into.
 
 **Two interlocks, and only one of them is general.** `$B1` is set for every accepted
 Doorway and counts down inside the walk integrator (`$A243`), so it stalls while the
-player stands still. That is the one that matters: arrival puts the player *inside* the
+player stands still. That is the one that matters: arrival puts the player _inside_ the
 Doorway on the far side, and a gate they could spend by waiting would hand them
 straight back. `$F0` is different — it is installed at `$913D`, which is inside the
 special-setup branch that `$9108` skips for an ordinary room. **So an ordinary room
 transition has no cooldown at all**, and `$F0` is really the special-room transition:
-the thing that blocks Doorways *and* drives the colour ramp at `$BB7E`.
+the thing that blocks Doorways _and_ drives the colour ramp at `$BB7E`.
 
 An earlier note here described `$F0` as the re-trigger interlock. It is the wrong one
 of the two, and it does not run for most transitions.
@@ -134,12 +134,12 @@ highest thing in the world by two orders of magnitude — the next highest objec
 
 Three things agree on the identification:
 
-* the position, which is what settles it;
-* `docs/research/c64-geometry-encoding.md`, which recorded slot `$3F` at exactly that
+- the position, which is what settles it;
+- `docs/research/c64-geometry-encoding.md`, which recorded slot `$3F` at exactly that
   position as an "orbital-station candidate" and said the name should wait for "an
   observed encounter or authoritative text/behaviour correlation" — a Doorway that puts
   the player at its hull is that correlation;
-* the mover, which is the same one `$A1DF` installs when the player leaves the craft's
+- the mover, which is the same one `$A1DF` installs when the player leaves the craft's
   bounding box, and that box test at `$A13D` is what this note used to call "the orbital
   transition". The Reference Disassembly names it `COLONY_CRAFT_LA13D`, which
   corroborates rather than originates.
@@ -159,7 +159,7 @@ itself and it never loads Damocles.
 
 A record ends on `$00` or `$80`, and `$80` means one more thing. `$91EA` tests the
 same byte three ways: zero ends the record, positive is a command, and `$80` exactly
-clears all three room colours — gated on the photon emitter — and *then* ends it. So
+clears all three room colours — gated on the photon emitter — and _then_ ends it. So
 darkness is not a field anywhere in the Reference Build's data; it is which terminator
 a record carries. **Twenty records are dark.** The gate is object slot `$10`, and
 either holding it (`$941A`, the carried list at `$BEB1`) or it lying in the room
@@ -179,7 +179,7 @@ the other reason to believe `$C4`/`$C5` are the room-varying pair.
 and `header[2]`'s top bit chooses what it means: set, and the index starts a Benson
 script; clear, and it is stored to `$F7`. **`$F7` is not opaque state** — `$AEE8` does
 `LDX $F7 / BEQ / JSR $8DAA`, the message routine, and darkness stores `1` there, which
-is the index of *"ITS VERY DARK IN HERE"*. So the second arm is an entry message.
+is the index of _"ITS VERY DARK IN HERE"_. So the second arm is an entry message.
 
 The two are alternatives in the Reference Build's own control flow, so the payload
 carries them as a tagged union rather than as two fields that could both be set.
@@ -209,10 +209,10 @@ Twenty-two records have `header[0]`'s top bit set, and they are exactly rooms
 values it rewrites it to sit past the terminator in a table of `(room, arrival index)`
 pairs. The table comes in two sizes and the difference is arithmetic, not convention:
 
-| | records | trailing bytes | pairs | record size |
-| --- | --- | --- | --- | --- |
-| room `$72` | 1 | 16 | 8 | 26 |
-| rooms `$73..$87` | 21 | 4 | 2 | 14 |
+|                  | records | trailing bytes | pairs | record size |
+| ---------------- | ------- | -------------- | ----- | ----------- |
+| room `$72`       | 1       | 16             | 8     | 26          |
+| rooms `$73..$87` | 21      | 4              | 2     | 14          |
 
 Room `$72` selects at random with `AND #$0E`, which keeps three bits and therefore
 reaches eight offsets from `10` to `24`, the last pair's second byte landing on `25`.
@@ -249,7 +249,7 @@ it indexes that list with a different register from the one it reads the state b
 with. No reader of bit 6 exists anywhere in the image, so the write is unobservable and
 is deliberately not implemented.
 
-The compare sits *after* the pair-patch block and is only reached when a pair was
+The compare sits _after_ the pair-patch block and is only reached when a pair was
 actually applied. Room `$7F`'s two pairs are identical — both name room `$56` — so
 arriving from room `$56` matches both, takes the "no patch" branch, and **skips the
 flip entirely**. See `docs/preserved-quirks.md`.
@@ -273,7 +273,7 @@ and takes the destination cell from **two** tables indexed by the same site: X f
 `$B4B6 + site` and Z from `$B4BE + site`, so the site counts from one.
 
 Arriving inside hands the site to `SETUP_ROOM` (`$90BE`) as `$08`, and that routine
-keys the room pointer tables at `$2300`/`$23C0` with it. So the site *is* the room
+keys the room pointer tables at `$2300`/`$23C0` with it. So the site _is_ the room
 id: site one arrives in room one.
 
 ### Ruling: five lift entrances, and the sixth documented one is not a lift
@@ -294,7 +294,7 @@ is what "rooms 1-8" means in the endgame notes.
 
 That matches five of the six coordinates the community list carries (`9:6, 9:5, 3:0,
 3:4, 3:15, 11:13`). The missing one is `3:4`, and it is absent from the lift table
-altogether rather than misread. The documented list is of elevators *and hangars*,
+altogether rather than misread. The documented list is of elevators _and hangars_,
 and a hangar is entered by a different mechanism — the box test below — so `3:4` is
 most likely a hangar. Not proven, but the tables are unambiguous about what they
 hold.
@@ -333,17 +333,18 @@ enough to be worth chasing one at a time rather than explaining away.
 
 ## Lift dispatch and indoor presentation
 
-* **The lift is invoked by E.** `$B3F6` compares the keyboard result with `$0E`, the
+- **The lift is invoked by E.** `$B3F6` compares the keyboard result with `$0E`, the
   Reference Build's `E` key, before entering the handler containing `$B404`. Its
-  surface conditions are that the player be on foot and standing on the lift's pad —
-  the position's middle byte shifted down two and compared against `$1C`, so middle
+  surface position condition is that the player be standing on the lift's pad — the
+  position's middle byte shifted down two and compared against `$1C`, so middle
   bytes `$70` to `$73` on both axes, a small square near the middle of the cell.
   Surfacing puts the player at `$71`, the pad's own middle, so arriving leaves them
   able to go straight back. A search then walks the same destination tables backwards
   to find which site they are standing in, and the lift starts with `$CA` set to `$80`
-  going down or `$01` going up. The indoor path does not test Occupancy: a craft
-  recovered in Room 5 can therefore leave through the lift while still occupied.
-* **The indoor screen is a decoded `$AA` bitmap fill.** `$AFC3` branches on the
+  going down or `$01` going up. Confirmed Reference Build play shows that neither
+  direction rejects Occupancy: a craft can descend from a surface pad and a craft
+  recovered in Room 5 can leave through the lift while still occupied.
+- **The indoor screen is a decoded `$AA` bitmap fill.** `$AFC3` branches on the
   underground flag to `CLEAR_SCREEN_INDOOR` at `$B197`, which fills the bitmap with
   `$AA`. Bit 7 is drawn first, so the 320 bitmap columns alternate foreground then
   background across the full Game Surface. Room setup loads background and
