@@ -15,8 +15,12 @@ An original game-logic program from the Reference Build's in-game interpreter, r
 _Avoid_: Game script, event code, AI logic, bytecode dump
 
 **Benson Message**:
-One complete occurrence of text composed by Benson-governed play and revealed through the Game Surface's message line. Repeated identical text is a distinct occurrence; shell notices and partially revealed prefixes are not Benson Messages.
+One complete occurrence of text composed by Benson-governed play, retained whole for occurrence tracking and the transcript independently of which of its characters currently occupy the Benson Display. Repeated identical text is a distinct occurrence; shell notices and visible cell fragments are not Benson Messages.
 _Avoid_: Shell notice, message fragment, console output
+
+**Benson Display**:
+The Gameplay Session's persistent row of exactly 23 character cells through which Benson Messages move from right to left in the Reference Build's recovered 50 Hz bursts and `$E1` pauses. It is one shared display shown by both Benson Panel Renditions and the communications strip; Arrival Narration and Browser Shell notices may cover those surfaces but never alter its cells.
+_Avoid_: Message ticker, visible Benson Message, narration line, shell notice
 
 **Craft Parameter Block**:
 The set of values that makes one craft handle as it does—its control routine and its rates, limits, and gains—re-extracted into the Data Payload as plain numbers and selected by the craft the player currently occupies; a landed craft taxis on a block of its own, while a player on foot runs a separate fixed-step mover rather than this loop (ADR 0016).
@@ -395,8 +399,8 @@ What turns the world into a view for one Pose, together with its near limit and 
 _Avoid_: View, eye, transform, matrix
 
 **Reference Viewport**:
-The Reference Build's own screen geometry — its logical extent, its centre, and the fact that its display makes each logical horizontal coordinate two pixels wide — kept whatever size the window is, so the view keeps the original's proportions rather than the window's.
-_Avoid_: Screen size, resolution, canvas, aspect ratio
+The Reference Build's own 160×136 logical projection and 320×136 physical-pixel geometry — its centre and the fact that each logical horizontal coordinate is two pixels wide — mapped into the rendered frame. Ordinary and Distant Structure lines are clipped to the output frame's border before screen coordinates narrow to binary32; Far Points retain their separate rule.
+_Avoid_: Screen size, resolution, canvas, aspect ratio, camera frustum, Game Surface
 
 **Ink**:
 Which of the wireframe's two drawing passes a line belongs to, dim or bright; the Reference Build splits a structure's edges between them and the difference is part of the visual language rather than a shading effect.

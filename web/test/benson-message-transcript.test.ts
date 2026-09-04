@@ -9,9 +9,9 @@ const message = (
   complete = true
 ): BensonMessagePresentation => ({
   ...(complete ? { completedText: text } : {}),
+  displayText: complete ? text : text.slice(0, 1),
   occurrence,
-  reveal: { complete, progress: complete ? text.length : 1 },
-  visibleText: complete ? text : text.slice(0, 1)
+  reveal: { complete, progress: complete ? text.length : 1 }
 });
 
 describe('Benson Messages in the Shell Console transcript', () => {

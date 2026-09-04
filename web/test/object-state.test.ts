@@ -185,6 +185,22 @@ describe('complete mutable object state', () => {
 });
 
 describe('Drop', () => {
+  test('removes a selected carried object without disturbing acquisition order', () => {
+    const gameplay = session();
+    gameplay.carry(21);
+    gameplay.carry(20);
+
+    expect(gameplay.drop(21)).toEqual({
+      events: ['tone'],
+      outcome: { kind: 'dropped', slot: 21 }
+    });
+    expect(gameplay.snapshot.carriedStack).toEqual([20]);
+    expect(gameplay.snapshot.residence.get(21)).toEqual({
+      at: { x: 1000, y: 0x12_00, z: 3000 },
+      kind: 'surface'
+    });
+  });
+
   test('removes the tail and places it at full current coordinates', () => {
     const gameplay = session();
     gameplay.carry(21);

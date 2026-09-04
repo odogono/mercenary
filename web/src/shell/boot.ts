@@ -4,6 +4,7 @@ import type { SessionSnapshot } from '../session/index.ts';
 import { arrivalTunables, bensonTunables } from '../settings/index.ts';
 import { targOrreryFor } from '../sky/index.ts';
 import { locationText } from '../world/index.ts';
+import { SURFACE_AXIS_MODULUS } from '../world/surfaceCoordinates.ts';
 import { ArrivalDirector, type ArrivalEntry } from './arrival.ts';
 import { arrivalFramePlan } from './arrivalField.ts';
 import { arrivalPanelViewModel, arrivalStripText } from './arrivalPanel.ts';
@@ -23,6 +24,7 @@ import {
 } from './ownership.ts';
 import { objectNamesOf, panelViewModel, type PanelContext } from './panel.ts';
 import { installPanel, installPanelScale } from './panelView.ts';
+import { canvasPointer, takeTargetAt } from './pointer.ts';
 import { createPreferences, effectivePresentation } from './preferences.ts';
 import {
   createSessionResumePersistence,
@@ -30,7 +32,7 @@ import {
   type SessionResumePersistence
 } from './resume.ts';
 import { createSessionResumeNotices } from './resumeNotices.ts';
-import { routeKey, type RouterState } from './router.ts';
+import { chromeHasKeyboard, routeKey, type RouterState } from './router.ts';
 import { installSaveChooser } from './saveChooser.ts';
 import { ALL_SLOTS, createSavePersistence, slotStorageKey } from './saves.ts';
 import {
@@ -212,6 +214,7 @@ try {
     charactersPerSecond:
       settings.arrival.charactersPerSecond * settings.arrival.timeScale,
     holdSeconds: settings.arrival.holdSeconds,
+    timeScale: settings.arrival.timeScale,
     titleCardSeconds: settings.arrival.titleCardSeconds
   };
   /// What the Arrival does with a session that already exists.
@@ -225,7 +228,7 @@ try {
     const scripts = scriptsOf();
     return ArrivalDirector.entryFor(
       milestones,
-      scripts.ticker?.text,
+      scripts.activeMessageText,
       withinOpeningScript(scripts.program, scripts.state.pc)
     );
   };
@@ -239,7 +242,7 @@ try {
           snapshot = session.advance(seconds).snapshot;
           checkpointChangedResume(false);
         },
-        playingMessage: () => session.scripts?.ticker?.text,
+        playingMessage: () => session.scripts?.activeMessageText,
         setPacing: choice => {
           scriptsOf().tunables =
             choice === 'arrival'
@@ -325,6 +328,10 @@ try {
       performAndRefresh(() => {
         if (arrival.isActive()) {
           arrival.skipToJoin();
+          // Fast-forwarding is synchronous work, not game time. Without resetting here, the
+          // next animation frame charges that wall-clock pause to Benson and consumes an entire
+          // active display burst before the browser can paint its first entering characters.
+          clock.reset();
         } else {
           session.skipMessage();
         }
@@ -418,8 +425,10 @@ try {
     consoleElements,
     {
       cellSize: () => world.cellSize,
-      cellsPerAxis: () => world.cellsPerAxis,
+      cellsPerAxis: () => SURFACE_AXIS_MODULUS / world.cellSize,
       hasRoom: id => world.rooms.has(id),
+      objectName: slot => bundle.text?.messages[slot]?.text,
+      objectSlots: () => world.objects.length,
       persistence,
       preferences,
       session: () => session,
@@ -570,6 +579,56 @@ try {
   window.addEventListener('pagehide', flushResume);
   window.addEventListener('pagehide', () => ownershipChannel?.close());
 
+  const pointerTakeTarget = (event: MouseEvent): number | undefined => {
+    const state = routerState();
+    const interaction = session.content.interaction;
+    const pointer = canvasPointer(canvas, {
+      x: event.clientX,
+      y: event.clientY
+    });
+    if (
+      state.arrival ||
+      chromeHasKeyboard(state) ||
+      interaction === undefined ||
+      pointer === undefined ||
+      !ownership.mayAdvance()
+    ) {
+      return undefined;
+    }
+    return takeTargetAt(
+      world,
+      snapshot,
+      interaction,
+      VIEWPORT,
+      pointer.point,
+      pointer.hitSlop
+    );
+  };
+  canvas.addEventListener('pointermove', event => {
+    const target = pointerTakeTarget(event);
+    if (target === undefined) {
+      delete canvas.dataset['takeTarget'];
+    } else {
+      canvas.dataset['takeTarget'] = String(target);
+    }
+  });
+  canvas.addEventListener('pointerleave', () => {
+    delete canvas.dataset['takeTarget'];
+  });
+  canvas.addEventListener('click', event => {
+    if (event.button !== 0) {
+      return;
+    }
+    const target = pointerTakeTarget(event);
+    if (target === undefined) {
+      return;
+    }
+    performAndRefresh(() => session.reach('take', target));
+    delete canvas.dataset['takeTarget'];
+    publish();
+    event.preventDefault();
+  });
+
   window.addEventListener('keydown', event => {
     switch (routeKey(routerState(), event)) {
       case 'arrival-held':
@@ -662,7 +721,7 @@ try {
 
     recordBensonMessage();
     const saveMessage = persistence.message(
-      snapshot.bensonMessage?.visibleText ?? ''
+      snapshot.bensonMessage?.displayText ?? ''
     );
     // A Save's own notice still comes first; the Arrival's narration then takes the line ahead
     // of a resume notice, which will still be there to show when the opening is over.

@@ -17,10 +17,9 @@ import {
 /// `GameplaySession` asks for an `IndoorScene`; what lives here is the resolution rule itself,
 /// which both renderers ask and which must not differ between them.
 ///
-/// Of the palette, only `ScenePalette` has a caller today — the demo page draws its four
-/// colours. The C64 table is here because an indoor scene names its colours by index into it
-/// and the renderer that resolves them is #95; drawing the backdrop is that issue's, not this
-/// one's.
+/// Room records retain the Reference Build's colour indices, but Enhanced presentation resolves
+/// them through the Atari ST-inspired table below. The C64 table remains for Authentic Rooms and
+/// recovered presentation sequences whose values really are C64 palette indices.
 
 /// An eight-bit sRGB colour, as both renderers name it.
 export interface RGB8 {
@@ -45,6 +44,31 @@ export const ScenePalette = {
   whiteInk: rgb(0xff, 0xff, 0xff)
 } as const;
 
+/// Atari ST-inspired equivalents for the sixteen colour names used by Room records. Values are
+/// sampled from the ST presentation: its low-resolution palette uses channel steps of `$20`, and
+/// unlike the C64 bitmap clear it presents a Room as a solid field.
+export const ATARI_ST_PALETTE: readonly RGB8[] = [
+  rgb(0x00, 0x00, 0x00),
+  rgb(0xe0, 0xe0, 0xe0),
+  rgb(0xe0, 0x40, 0x40),
+  rgb(0x00, 0xe0, 0xc0),
+  rgb(0xe0, 0x40, 0x80),
+  rgb(0x00, 0x80, 0x60),
+  rgb(0x00, 0x00, 0x40),
+  rgb(0xe0, 0xa0, 0x00),
+  rgb(0xa0, 0x40, 0x00),
+  rgb(0x60, 0x00, 0x00),
+  rgb(0xe0, 0x80, 0x80),
+  rgb(0x40, 0x40, 0x40),
+  rgb(0xa0, 0xa0, 0xa0),
+  rgb(0x00, 0xc0, 0xa0),
+  rgb(0x60, 0x80, 0xe0),
+  rgb(0xc0, 0xc0, 0xc0)
+];
+
+export const atariSTColour = (index: number): RGB8 | undefined =>
+  ATARI_ST_PALETTE[index];
+
 /// The local VICE 3.8 C64 PAL palette used to produce the reference captures.
 export const C64_PALETTE: readonly RGB8[] = [
   rgb(0x00, 0x00, 0x00),
@@ -68,13 +92,12 @@ export const C64_PALETTE: readonly RGB8[] = [
 export const c64Colour = (index: number): RGB8 | undefined =>
   C64_PALETTE[index];
 
-/// How many bitmap columns an indoor backdrop alternates across. The Reference Build clears
-/// the bitmap with `$AA` — foreground bit first, then background — and a projection Golden
-/// Trace records the count alongside the scene, which is the whole of why it is here.
+/// The width recorded by projection Golden Traces for the Reference Build's decoded indoor
+/// bitmap. Enhanced presentation replaces that texture with the solid Atari ST colour.
 export const INDOOR_BACKDROP_COLUMNS = 320;
 
 /// The Reference Build clears an indoor bitmap with `$AA`: foreground bit first, then
-/// background, alternating through all 320 bitmap columns.
+/// background, alternating through all 320 bitmap columns. Authentic presentation retains it.
 export class IndoorBackdrop {
   static readonly columnCount = INDOOR_BACKDROP_COLUMNS;
   readonly background: RGB8;

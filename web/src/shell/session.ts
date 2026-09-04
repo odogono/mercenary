@@ -1,4 +1,9 @@
-import { BensonProgram, BensonSession } from '../benson/index.ts';
+import {
+  BensonProgram,
+  BensonSession,
+  DEFAULT_SESSION_SEED,
+  type BensonMessageMode
+} from '../benson/index.ts';
 import type { Bundle } from '../payload/documents.ts';
 import {
   GameplaySession,
@@ -61,7 +66,8 @@ export const saveEnvironment = (
 export const createWalkabout = (
   bundle: Bundle,
   settings: Settings,
-  restore?: SaveSnapshot
+  restore?: SaveSnapshot,
+  messageMode: BensonMessageMode = 'authentic'
 ): Walkabout => {
   if (bundle.flight === undefined) {
     throw new Error('flight.json is required by the browser walkabout');
@@ -82,7 +88,9 @@ export const createWalkabout = (
   const scripts = new BensonSession(
     program,
     text,
-    bensonTunables(settings, program.framesPerTick)
+    bensonTunables(settings, program.framesPerTick),
+    DEFAULT_SESSION_SEED,
+    messageMode
   );
   const flight = flightModel(
     settings.flight,

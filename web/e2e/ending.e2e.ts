@@ -1,86 +1,221 @@
 import { expect, test, type Page } from '@playwright/test';
 
-/// The Escape's terminal presentation, in a real browser.
+/// A console-assisted recovered Escape, in a real browser.
 ///
-/// The Ending is reached here by planting the phase into a Save and loading it
-/// through the Shell Console, rather than by playing a whole legal route: the
-/// routes themselves are proven in `test/escape.test.ts`, and what this owes is
-/// that the browser draws the field, matures it on its own, and survives doing
-/// so. The Shell Console is allowed to write play (ADR 0028), which is why the
-/// session it produces is not a trace.
+/// The Shell Console removes only the journey between objects: taking the
+/// Novadrive, boarding both craft, riding the Room-5 lift and answering the
+/// launch prompt all remain ordinary play. That makes this a smoke test of the
+/// complete browser path into the Ending, not a legal-route proof: `goto`
+/// bypasses the locked-Room journey, makes the session ineligible for a trace,
+/// and is admitted for exactly that development use by ADR 0028. The legal
+/// predicate and its refusal arms remain proven in `test/escape.test.ts`.
 
 const RESUME_KEY = 'mercenary.browser-shell.session-resume.v1';
-const SLOT_KEY = 'mercenary.browser-shell.save.v1.slot-1';
+const SCRIPT_RUNNING = 0x40;
 
-interface EndingState {
+interface SessionState {
+  readonly carried: readonly number[];
+  readonly craft: number | null;
+  readonly credits: number;
   readonly field: 'none' | 'running';
   readonly phase: number;
+  readonly room: number | null;
+  readonly scriptRunning: boolean;
 }
 
-const command = async (page: Page, line: string): Promise<void> => {
-  await page.locator('#console-input').type(line);
+const sessionState = async (page: Page): Promise<SessionState> =>
+  await page.evaluate(
+    ({ key, scriptRunning }) => {
+      const stored = localStorage.getItem(key);
+      if (stored === null) {
+        throw new Error('the Session Resume is empty');
+      }
+      const save = JSON.parse(stored) as {
+        snapshot: {
+          benson: {
+            host: {
+              decimals: readonly number[];
+              endingPhase: number;
+              engineFlags: number;
+            };
+          } | null;
+          carriedStack: readonly number[];
+          ending: unknown;
+          game: { craft: number | null; room: number | null };
+        };
+      };
+      const host = save.snapshot.benson?.host;
+      return {
+        carried: save.snapshot.carriedStack,
+        craft: save.snapshot.game.craft,
+        credits: host?.decimals[8] ?? 0,
+        field: save.snapshot.ending === null ? 'none' : 'running',
+        phase: host?.endingPhase ?? 0,
+        room: save.snapshot.game.room,
+        scriptRunning:
+          host === undefined ? false : (host.engineFlags & scriptRunning) !== 0
+      };
+    },
+    { key: RESUME_KEY, scriptRunning: SCRIPT_RUNNING }
+  );
+
+const command = async (
+  page: Page,
+  line: string,
+  result: string
+): Promise<void> => {
+  await page.keyboard.press('Backquote');
+  await page.locator('#console-input').fill(line);
   await page.keyboard.press('Enter');
+  await expect(page.locator('#console-log')).toContainText(result);
+  await page.keyboard.press('Backquote');
 };
 
-const endingState = async (page: Page): Promise<EndingState> =>
-  await page.evaluate(key => {
-    const stored = localStorage.getItem(key);
-    if (stored === null) {
-      throw new Error('the Session Resume is empty');
-    }
-    const save = JSON.parse(stored) as {
-      snapshot: {
-        benson: { host: { endingPhase: number } } | null;
-        ending: unknown;
-      };
-    };
-    return {
-      field: save.snapshot.ending === null ? 'none' : 'running',
-      phase: save.snapshot.benson?.host.endingPhase ?? 0
-    };
-  }, RESUME_KEY);
+const nextFrame = async (page: Page): Promise<void> => {
+  await page.evaluate(
+    () => new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
+  );
+};
 
-test('the Escape presents its field and matures itself', async ({ page }) => {
+const hurryUntil = async (page: Page, fragment: string): Promise<void> => {
+  const message = page.locator('#panel-targ [data-field="message"]');
+  await expect
+    .poll(
+      async () => {
+        const text = (await message.textContent()) ?? '';
+        if (!text.includes(fragment)) {
+          await page.keyboard.press('Space');
+        }
+        return text;
+      },
+      { intervals: [50], timeout: 60_000 }
+    )
+    .toContain(fragment);
+};
+
+test('E rides the Colony Craft lift down and back up through the Browser Shell', async ({
+  page
+}) => {
+  await page.goto('/');
+  const surface = page.locator('#game-surface');
+  await expect(surface).toHaveAttribute('data-state', 'ready');
+  await page.keyboard.press('Space');
+  await expect(surface).toHaveAttribute('data-arrival', 'done');
+
+  await command(page, 'goto room 8', 'teleported to ROOM 08');
+  await expect.poll(async () => (await sessionState(page)).room).toBe(8);
+
+  await page.keyboard.press('KeyE');
+  await expect.poll(async () => (await sessionState(page)).room).toBeNull();
+  await expect(
+    page.locator('#panel-targ [data-field="locationLabel"]')
+  ).toHaveText('08-08');
+  await expect(page.locator('#panel-targ [data-field="altitude"]')).toHaveText(
+    '16639'
+  );
+
+  await page.keyboard.press('KeyE');
+  await expect.poll(async () => (await sessionState(page)).room).toBe(8);
+});
+
+test('the console-assisted recovered route reaches and matures the Escape', async ({
+  page
+}) => {
+  test.setTimeout(90_000);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
   const surface = page.locator('#game-surface');
+  const frame = page.locator('#frame');
   await expect(surface).toHaveAttribute('data-state', 'ready');
 
-  await page.keyboard.press('Backquote');
-  await command(page, 'save 1');
-  await expect(page.locator('#console-log')).toContainText('saved slot 1');
+  // The Arrival has its own E2E. This route begins at the fresh game's crash
+  // site, then completes the opening transaction through ordinary input.
+  await page.keyboard.press('Space');
+  await expect(surface).toHaveAttribute('data-arrival', 'done');
+  await hurryUntil(page, 'DO YOU WANT TO BUY?');
+  await expect
+    .poll(
+      async () => {
+        await page.keyboard.press('KeyY');
+        return (await sessionState(page)).credits;
+      },
+      { intervals: [100], timeout: 10_000 }
+    )
+    .toBe(4000);
+  // The purchase branch has two reports and a blank terminator before its
+  // craft poll. Four ordinary skips are deliberately harmless if the poll is
+  // already running, and keep Space's aboard meaning out of this sequence.
+  for (let message = 0; message < 4; message += 1) {
+    await page.keyboard.press('Space');
+    await nextFrame(page);
+  }
 
-  // The Ending, planted into the Save the console just wrote.
-  await page.evaluate(key => {
-    const save = JSON.parse(localStorage.getItem(key) ?? '{}') as {
-      snapshot: { benson: { host: { endingPhase: number } } };
-    };
-    save.snapshot.benson.host.endingPhase = 1;
-    localStorage.setItem(key, JSON.stringify(save));
-  }, SLOT_KEY);
-  await command(page, 'load 1');
-  await expect(page.locator('#console-log')).toContainText('restored slot 1');
-  await page.keyboard.press('Backquote');
+  // Script 00 must see the bought Dart boarded before another Benson Script
+  // can start. The console saves the walk to it; B and L remain real actions.
+  await command(page, 'goto object 1', 'moved to object 01 on SURFACE');
+  await page.keyboard.press('KeyB');
+  await expect.poll(async () => (await sessionState(page)).craft).toBe(1);
+  await expect
+    .poll(async () => (await sessionState(page)).scriptRunning, {
+      timeout: 10_000
+    })
+    .toBe(false);
+  await page.keyboard.press('KeyL');
+  await expect.poll(async () => (await sessionState(page)).craft).toBeNull();
 
-  // Early in the sequence the field is up but its first colour pair draws the
-  // points in the colour behind them, so the screen is one flat colour.
-  await page.waitForTimeout(1000);
-  // The Session Resume is throttled, so what it holds here is the checkpoint the
-  // load forced: the scripted phase, before the field had been created.
-  expect((await endingState(page)).phase).toBe(1);
-  const early = await page.locator('#frame').screenshot();
+  // Travel is abbreviated; acquiring the recovered route's authorization is
+  // not. The normal Take action still owns capacity, weight, flags and scripts.
+  await command(page, 'goto object 25', 'moved to object 25 in ROOM 137');
+  await page.keyboard.press('KeyT');
+  await expect
+    .poll(async () => (await sessionState(page)).carried)
+    .toContain(25);
 
-  // The colour sequence reaches its last pair on the decoded loop and writes the
-  // mature phase itself. Nothing in the shell is counting; the field is.
-  await page.waitForTimeout(2500);
-  const matured = await endingState(page);
-  expect(matured).toEqual({ field: 'running', phase: 255 });
-  const late = await page.locator('#frame').screenshot();
+  await command(page, 'goto object 7', 'moved to object 07 in ROOM 05');
+  await page.keyboard.press('KeyB');
+  await expect
+    .poll(async () => {
+      const state = await sessionState(page);
+      return { craft: state.craft, room: state.room };
+    })
+    .toEqual({ craft: 7, room: 5 });
+
+  // E takes the real occupancy-preserving lift. A surface `goto` here would
+  // skip the recovered route's most important integration boundary.
+  await page.keyboard.press('KeyE');
+  await expect
+    .poll(async () => {
+      const state = await sessionState(page);
+      return { craft: state.craft, room: state.room };
+    })
+    .toEqual({ craft: 7, room: null });
+
+  const message = page.locator('#panel-targ [data-field="message"]');
+  await expect(message).toContainText('PRESS Y TO LAUNCH', {
+    timeout: 30_000
+  });
+  await expect
+    .poll(
+      async () => {
+        await page.keyboard.press('KeyY');
+        return (await sessionState(page)).phase;
+      },
+      { intervals: [100], timeout: 20_000 }
+    )
+    .toBe(1);
+
+  // The field is created by the Gameplay Session after the script's write.
+  // Its first colour pair is flat; later pairs visibly evolve the same field.
+  await expect(frame).toHaveAttribute('data-points', '21');
+  const early = await frame.screenshot();
+  await expect
+    .poll(async () => await sessionState(page), {
+      intervals: [100],
+      timeout: 10_000
+    })
+    .toMatchObject({ field: 'running', phase: 255 });
+  const late = await frame.screenshot();
   expect(late.equals(early)).toBe(false);
-
-  // The loop does not return: it keeps presenting, and keeps the phase it has.
-  await page.waitForTimeout(1000);
-  expect(await endingState(page)).toEqual({ field: 'running', phase: 255 });
   expect(errors).toEqual([]);
 });

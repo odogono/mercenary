@@ -18,7 +18,16 @@ import type { TypefaceId } from './typography.ts';
 export type ConsoleCommand =
   | { readonly kind: 'help' }
   | { readonly kind: 'where' }
-  | { readonly kind: 'gotoCell'; readonly x: number; readonly z: number }
+  | { readonly kind: 'inventory' }
+  | { readonly kind: 'dropObject'; readonly selector: string }
+  | { readonly kind: 'getObject'; readonly slot: number }
+  | {
+      readonly height?: number;
+      readonly kind: 'gotoCell';
+      readonly x: number;
+      readonly z: number;
+    }
+  | { readonly kind: 'gotoObject'; readonly slot: number }
   | { readonly kind: 'gotoRoom'; readonly room: number }
   | { readonly kind: 'set'; readonly setting: SettingChoice }
   | {
@@ -151,6 +160,27 @@ const cell = (word: string, axis: string, cellsPerAxis: number): number => {
   return value;
 };
 
+const height = (word: string): number => {
+  const value = integer(word, 'a height');
+  const highest = 0xff_ff_ff;
+  if (value < 0 || value > highest) {
+    throw new Error(
+      `a height must be from 0 through ${highest}, and is ${value}`
+    );
+  }
+  return value;
+};
+
+const objectSlot = (word: string, objectSlots: number): number => {
+  const value = integer(word, 'an object slot');
+  if (value < 0 || value >= objectSlots) {
+    throw new Error(
+      `an object slot must be from 0 through ${objectSlots - 1}, and is ${value}`
+    );
+  }
+  return value;
+};
+
 const slotOf = (word: string): SaveSlot => {
   const value = integer(word, 'a slot');
   if (value !== 1 && value !== 2 && value !== 3) {
@@ -167,7 +197,8 @@ const slotOf = (word: string): SaveSlot => {
 /// the parser is honest about the world it is reading for rather than pinning one payload's shape.
 export const parseConsoleCommand = (
   line: string,
-  cellsPerAxis: number
+  cellsPerAxis: number,
+  objectSlots = 64
 ): ConsoleCommand | undefined => {
   const words = line.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const verb = words[0];
@@ -180,8 +211,38 @@ export const parseConsoleCommand = (
     case 'help':
       return { kind: 'help' };
     case 'where':
+      if (rest.length !== 0) {
+        throw new Error('where takes no arguments');
+      }
       return { kind: 'where' };
+    case 'inventory':
+      if (rest.length !== 0) {
+        throw new Error('inventory takes no arguments');
+      }
+      return { kind: 'inventory' };
+    case 'drop':
+      if (rest.length === 0) {
+        throw new Error('drop takes an object id or name');
+      }
+      return { kind: 'dropObject', selector: rest.join(' ') };
+    case 'get':
+      if (rest.length !== 1) {
+        throw new Error('get takes one object slot');
+      }
+      return {
+        kind: 'getObject',
+        slot: objectSlot(rest[0]!, objectSlots)
+      };
     case 'goto':
+      if (rest[0] === 'object') {
+        if (rest.length !== 2) {
+          throw new Error('goto object takes one object slot');
+        }
+        return {
+          kind: 'gotoObject',
+          slot: objectSlot(rest[1]!, objectSlots)
+        };
+      }
       if (rest[0] === 'room') {
         if (rest.length !== 2) {
           throw new Error('goto room takes one Room');
@@ -194,10 +255,13 @@ export const parseConsoleCommand = (
         }
         return { kind: 'gotoRoom', room: id };
       }
-      if (rest.length !== 2) {
-        throw new Error('goto takes two cells, or the word room and one Room');
+      if (rest.length < 2 || rest.length > 3) {
+        throw new Error(
+          'goto takes two cells and an optional height, or the word room and one Room'
+        );
       }
       return {
+        ...(rest[2] === undefined ? {} : { height: height(rest[2]) }),
         kind: 'gotoCell',
         x: cell(rest[0]!, 'x', cellsPerAxis),
         z: cell(rest[1]!, 'z', cellsPerAxis)
@@ -246,6 +310,8 @@ export interface ConsoleDeps {
   readonly cellSize: () => number;
   readonly cellsPerAxis: () => number;
   readonly hasRoom: (id: number) => boolean;
+  readonly objectName: (slot: number) => string | undefined;
+  readonly objectSlots: () => number;
   readonly persistence: SavePersistence;
   readonly preferences: PreferencesStore;
   readonly session: () => GameplaySession;
@@ -253,7 +319,9 @@ export interface ConsoleDeps {
 }
 
 const HELP = [
-  'help · where · goto <x> <z> · goto room <n>',
+  'help · where · inventory · get <object-slot>',
+  'drop <object-id|name>',
+  'goto <x> <z> [height] · goto room <n> · goto object <slot>',
   'panel <targ|damocles> · set <name> <value>',
   `set names: ${SETTING_NAMES.join(', ')}`,
   'save <slot> [confirm] · load <slot>'
@@ -261,6 +329,57 @@ const HELP = [
 
 const twoDigits = (value: number): string =>
   String(Math.trunc(value)).padStart(2, '0');
+
+const threeDecimals = (value: number): string => {
+  const formatted = value.toFixed(3);
+  return formatted === '-0.000' ? '0.000' : formatted;
+};
+
+const inventoryLabel = (
+  slot: number,
+  objectName: (slot: number) => string | undefined
+): string => `(${slot}) ${objectName(slot) ?? `OBJECT ${twoDigits(slot)}`}`;
+
+const normalName = (value: string): string =>
+  value.trim().toLowerCase().replaceAll(/\s+/g, ' ');
+
+const regexLiteral = (value: string): string =>
+  value.replaceAll(/[$()*+.?[\\\]^{|}]/g, String.raw`\$&`);
+
+/// Resolve a selector only within the Carried Stack. A literal carried id wins; names then use
+/// the strongest available match so a precise phrase is not made ambiguous by a looser substring.
+const matchingCarriedSlots = (
+  selector: string,
+  carried: readonly number[],
+  objectName: (slot: number) => string | undefined
+): readonly number[] => {
+  if (/^\d+$/.test(selector)) {
+    const id = Number(selector);
+    if (carried.includes(id)) {
+      return [id];
+    }
+  }
+
+  const query = normalName(selector);
+  const named = carried.map(slot => ({
+    name: normalName(objectName(slot) ?? `OBJECT ${twoDigits(slot)}`),
+    slot
+  }));
+  const exact = named.filter(candidate => candidate.name === query);
+  if (exact.length > 0) {
+    return exact.map(candidate => candidate.slot);
+  }
+  const whole = new RegExp(
+    `(?:^|[^a-z0-9])${regexLiteral(query)}(?:$|[^a-z0-9])`
+  );
+  const words = named.filter(candidate => whole.test(candidate.name));
+  if (words.length > 0) {
+    return words.map(candidate => candidate.slot);
+  }
+  return named
+    .filter(candidate => candidate.name.includes(query))
+    .map(candidate => candidate.slot);
+};
 
 /// Do what one understood command says, and report what happened.
 ///
@@ -275,15 +394,78 @@ export const executeConsoleCommand = (
       return HELP;
     case 'where': {
       const snapshot = deps.session().snapshot;
-      const player = snapshot.player;
+      const { heading, pitch, position, roll } = snapshot.player;
       const size = deps.cellSize();
       return [
-        `${locationText(snapshot.location)} · cell ${twoDigits(player.position.x / size)}-${twoDigits(player.position.z / size)}`,
-        `x ${Math.trunc(player.position.x)} y ${Math.trunc(player.position.y)} z ${Math.trunc(player.position.z)}`,
+        `${locationText(snapshot.location)} · cell ${twoDigits(position.x / size)}-${twoDigits(position.z / size)}`,
+        `position x ${threeDecimals(position.x)} y ${threeDecimals(position.y)} z ${threeDecimals(position.z)}`,
+        `orientation heading ${threeDecimals(heading)} pitch ${threeDecimals(pitch)} roll ${threeDecimals(roll)} radians`,
         snapshot.occupancy.kind === 'onFoot'
           ? 'on foot'
           : `aboard craft ${twoDigits(snapshot.occupancy.slot)}`
       ];
+    }
+    case 'inventory': {
+      const carried = deps.session().snapshot.carriedStack;
+      return carried.length === 0
+        ? ['inventory is empty']
+        : carried.map(slot => inventoryLabel(slot, deps.objectName));
+    }
+    case 'dropObject': {
+      const session = deps.session();
+      const carried = session.snapshot.carriedStack;
+      if (carried.length === 0) {
+        return ['inventory is empty'];
+      }
+      const matches = matchingCarriedSlots(
+        command.selector,
+        carried,
+        deps.objectName
+      );
+      if (matches.length === 0) {
+        return [`no carried object matches '${command.selector}'`];
+      }
+      if (matches.length > 1) {
+        return [
+          `'${command.selector}' matches more than one carried object: ${matches
+            .map(slot => inventoryLabel(slot, deps.objectName))
+            .join(', ')}`
+        ];
+      }
+      const slot = matches[0]!;
+      const outcome = session.drop(slot).outcome;
+      switch (outcome.kind) {
+        case 'dropped':
+          return [`dropped ${inventoryLabel(slot, deps.objectName)}`];
+        case 'emptyInventory':
+          return ['inventory is empty'];
+        case 'airborneRefused':
+          return ['cannot drop objects while airborne'];
+      }
+      throw new Error('unknown object drop outcome');
+    }
+    case 'getObject': {
+      const outcome = deps.session().takeObject(command.slot).outcome;
+      const label = twoDigits(command.slot);
+      switch (outcome.kind) {
+        case 'took':
+          return [`took object ${label}`];
+        case 'fixedInPlace':
+          return [`object ${label} is fixed in place`];
+        case 'tooHeavy':
+          return [`object ${label} is too heavy`];
+        case 'handsFull':
+          return ['inventory is full'];
+        case 'alreadyCarried':
+          return [`object ${label} is already carried`];
+        case 'gone':
+          return [`object ${label} is not in the world`];
+        case 'missing':
+          return [`there is no object ${label}`];
+        case 'unsupported':
+          return ['getting objects is unavailable'];
+      }
+      throw new Error('unknown object take outcome');
     }
     case 'gotoCell': {
       const session = deps.session();
@@ -292,12 +474,42 @@ export const executeConsoleCommand = (
       session.teleport(SURFACE);
       // The cell's middle, and the altitude they already had — the session would take any number
       // given to it, including one no play could reach.
-      session.place({
+      const position = {
         x: (command.x + 0.5) * size,
-        y: session.snapshot.player.position.y,
+        y: command.height ?? session.snapshot.player.position.y,
         z: (command.z + 0.5) * size
-      });
-      return [`moved to cell ${twoDigits(command.x)}-${twoDigits(command.z)}`];
+      };
+      if (command.height === undefined) {
+        session.place(position);
+      } else {
+        session.placeInAir(position);
+      }
+      return [
+        `moved to cell ${twoDigits(command.x)}-${twoDigits(command.z)}${
+          command.height === undefined ? '' : ` at height ${command.height}`
+        }`
+      ];
+    }
+    case 'gotoObject': {
+      const outcome = deps.session().placeAtObject(command.slot);
+      const label = twoDigits(command.slot);
+      switch (outcome.kind) {
+        case 'placed':
+          return [
+            `moved to object ${label} ${
+              outcome.location.kind === 'surface'
+                ? 'on SURFACE'
+                : `in ${locationText(outcome.location)}`
+            }`
+          ];
+        case 'carried':
+          return [`object ${label} is being carried`];
+        case 'gone':
+          return [`object ${label} is not in the world`];
+        case 'missing':
+          return [`there is no object ${label}`];
+      }
+      throw new Error('unknown object placement outcome');
     }
     case 'gotoRoom': {
       if (!deps.hasRoom(command.room)) {

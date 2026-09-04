@@ -126,6 +126,115 @@ test('the Benson Panel is the default composition and tracks the session', async
   });
 });
 
+test('every Benson surface renders the same fixed 23-cell display', async ({
+  page
+}) => {
+  await page.goto('/');
+  await skipArrival(page);
+  await expect(page.locator('#message')).toHaveAttribute('data-source', 'game');
+
+  // Pause on one recovered display frame so the live scroll cannot advance
+  // between reading the three independently rendered surfaces.
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-layer',
+    'menu'
+  );
+  const displays = await page.evaluate(() => [
+    document.querySelector('#message')!.textContent,
+    document.querySelector('#panel-message')!.textContent,
+    document.querySelector('#damocles-message')!.textContent
+  ]);
+  expect(displays[0]).toBe(displays[1]);
+  expect(displays[0]).toBe(displays[2]);
+  expect([...displays[0]!]).toHaveLength(23);
+  await expect(page.locator('#panel-message > .benson-cell')).toHaveCount(23);
+  await expect(page.locator('#damocles-message > .benson-cell')).toHaveCount(
+    23
+  );
+});
+
+test('the Benson display keeps every glyph inside its message aperture', async ({
+  page
+}) => {
+  await page.goto('/');
+  await skipArrival(page);
+  const display = page.locator('#panel-message');
+  await expect(display).toBeVisible();
+  const ink = await display.evaluate(element => {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const glyphs = range.getBoundingClientRect();
+    const box = element.getBoundingClientRect();
+    return {
+      boxBottom: box.bottom,
+      boxLeft: box.left,
+      boxRight: box.right,
+      boxTop: box.top,
+      glyphBottom: glyphs.bottom,
+      glyphLeft: glyphs.left,
+      glyphRight: glyphs.right,
+      glyphTop: glyphs.top
+    };
+  });
+  expect(ink.glyphTop).toBeGreaterThanOrEqual(ink.boxTop);
+  expect(ink.glyphBottom).toBeLessThanOrEqual(ink.boxBottom);
+  expect(ink.glyphLeft).toBeGreaterThanOrEqual(ink.boxLeft);
+  expect(ink.glyphRight).toBeLessThanOrEqual(ink.boxRight);
+});
+
+test('the Benson display enters new characters at the right edge', async ({
+  page
+}) => {
+  await page.goto('/');
+  await page.evaluate(() => {
+    const view = window as Window & { bensonDisplayFrames?: string[] };
+    const display = document.querySelector('#panel-message')!;
+    view.bensonDisplayFrames = [];
+    new MutationObserver(() => {
+      view.bensonDisplayFrames!.push(display.textContent ?? '');
+    }).observe(display, {
+      characterData: true,
+      childList: true,
+      subtree: true
+    });
+  });
+  await skipArrival(page);
+  const display = page.locator('#panel-message');
+  await expect(display).toBeVisible();
+  await expect(display).toContainText('STATUS REPORT', { timeout: 1000 });
+
+  const frames = await page.evaluate(
+    () =>
+      (window as Window & { bensonDisplayFrames?: string[] })
+        .bensonDisplayFrames ?? []
+  );
+  const buffers = [...new Set(frames.filter(frame => frame.length === 23))];
+  expect(
+    buffers.some(buffer => {
+      const entered = buffer.trim();
+      return (
+        entered.length > 0 &&
+        entered.length < 'STATUS REPORT'.length &&
+        buffer === entered.padStart(23)
+      );
+    }),
+    JSON.stringify(buffers)
+  ).toBe(true);
+  expect(
+    buffers.some((before, index) => {
+      const after = buffers[index + 1];
+      return (
+        after !== undefined &&
+        Array.from({ length: 22 }, (_, skipped) => skipped + 1).some(
+          skipped => after.slice(0, 23 - skipped) === before.slice(skipped)
+        )
+      );
+    }),
+    JSON.stringify(buffers)
+  ).toBe(true);
+});
+
 test('neither rendition overflows the frame it is drawn in', async ({
   page
 }) => {
@@ -798,9 +907,9 @@ test('the Shell Console runs commands over a running world', async ({
   await input.type('goto room 0');
   await page.keyboard.press('Enter');
   await expect(log).toContainText('is not a Room');
-  await input.type('goto 99 99');
+  await input.type('goto 256 99');
   await page.keyboard.press('Enter');
-  await expect(log).toContainText('must be from 0 through 15');
+  await expect(log).toContainText('must be from 0 through 255');
 
   // Backquote toggles: the same key that opened the console closes it, without typing a glyph,
   // even though the console's own input holds focus.
@@ -950,7 +1059,7 @@ test('the settings page changes Structure Reach live and persists it', async ({
   await expect(all).toHaveAttribute('aria-pressed', 'true');
   await expect
     .poll(async () => Number(await canvas.getAttribute('data-lines')))
-    .toBe(4128);
+    .toBe(2427);
   expect(Number(await canvas.getAttribute('data-lines'))).toBeGreaterThan(
     cellLines
   );

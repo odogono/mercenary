@@ -80,6 +80,14 @@
         background: #000;
       }
 
+      #frame {
+        touch-action: manipulation;
+      }
+
+      #frame[data-take-target] {
+        cursor: pointer;
+      }
+
       #comms,
       #status-row {
         display: flex;
@@ -99,6 +107,11 @@
         flex: 1;
         text-overflow: ellipsis;
         white-space: nowrap;
+      }
+
+      #message[data-source='game'] {
+        font-variant-ligatures: none;
+        white-space: pre;
       }
 
       #credits {
@@ -124,7 +137,8 @@
         flex: none;
         align-items: center;
         gap: 8px;
-        white-space: nowrap;
+        font-variant-ligatures: none;
+        white-space: pre;
       }
 
       #typeface {
@@ -241,6 +255,7 @@
         --label-ink: #3c2f16;
         --lamp-off: #2e2818;
         --lamp-on: #e8c33c;
+        --altitude-lamp-on: #ed1c24;
         --gauge-sky: #7ab2dc;
         --gauge-ground: #74ac48;
         --gauge-face: #e8e8e8;
@@ -347,12 +362,18 @@
         box-shadow: 0 0 8px var(--lamp-on);
       }
 
+      .lamp[data-lamp='altitudeLamp'].on {
+        background: var(--altitude-lamp-on);
+        box-shadow: 0 0 8px var(--altitude-lamp-on);
+      }
+
       .plabel {
         color: var(--label-ink);
         font-size: 13px;
         letter-spacing: 0.08em;
         text-align: center;
-        white-space: nowrap;
+        font-variant-ligatures: none;
+        white-space: pre;
       }
 
       .instrument-canvas {
@@ -442,6 +463,29 @@
         letter-spacing: 0.1em;
         text-align: center;
         white-space: nowrap;
+      }
+
+      #panel-message.benson-cells,
+      #damocles-message.benson-cells {
+        display: grid;
+        box-sizing: border-box;
+        grid-template-columns: repeat(23, 1ch);
+        justify-content: center;
+        letter-spacing: 0;
+        white-space: pre;
+      }
+
+      #panel-message.benson-cells {
+        column-gap: 0.1em;
+      }
+
+      #damocles-message.benson-cells {
+        column-gap: 0.14em;
+      }
+
+      .benson-cell {
+        min-width: 0;
+        text-align: center;
       }
 
       #targ-compass-slot {
@@ -943,6 +987,7 @@
         font: inherit;
         letter-spacing: 0.06em;
         outline: none;
+        text-transform: uppercase;
       }
     </style>
   </head>
@@ -954,7 +999,7 @@
             id="frame"
             width="1280"
             height="800"
-            aria-label="Wireframe view of Targ"
+            aria-label="Wireframe view of Targ. Tap or click a nearby object to take it."
           ></canvas>
           <div id="benson-panel" aria-label="Benson Panel">
             <div id="panel-scale">
@@ -982,7 +1027,7 @@
                     </div>
                     <div class="instrument bezel">
                       <div class="row">
-                        <span class="lamp" data-lamp="runLamp"></span>
+                        <span class="lamp" data-lamp="altitudeLamp"></span>
                         <span class="lcd" data-field="altitude"></span>
                       </div>
                       <div class="plabel">ALTITUDE</div>
@@ -1113,6 +1158,7 @@
               id="console-input"
               type="text"
               autocomplete="off"
+              autocapitalize="characters"
               spellcheck="false"
               aria-label="console command"
             />

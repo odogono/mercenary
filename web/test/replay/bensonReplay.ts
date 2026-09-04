@@ -1,6 +1,7 @@
 import {
   BensonHostState,
   BensonSession,
+  DEFAULT_SESSION_SEED,
   parseBensonKey,
   type BensonEffect,
   type BensonKey,
@@ -323,7 +324,13 @@ export const prepareSession = (
   tunables: BensonTunables,
   scenario: BensonScenario
 ): BensonSession => {
-  const session = new BensonSession(program, text, tunables);
+  const session = new BensonSession(
+    program,
+    text,
+    tunables,
+    DEFAULT_SESSION_SEED,
+    'legacyOracle'
+  );
   session.host = applyHost(session.host, scenario.host, true);
   if (!session.start(scenario.script)) {
     throw new Error(`script ${scenario.script} would not start`);

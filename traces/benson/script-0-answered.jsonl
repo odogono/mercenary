@@ -1,4 +1,4 @@
-{"dt":0.016666666666666666,"emitter":"benson","id":"script-0-answered","initial":{"host":{"attackingShip":false,"boardedCraft":128,"canLiftAnything":false,"canTakeAnything":false,"currentRoom":0,"decimals":[0,0,0,0,0,0,0,0,9000,0,0,0,0,0,0,0],"destroyedBlocks":[],"engineFlags":64,"gameComplete":false,"inventory":[],"messageInterval":125,"messagePlaying":false,"objectFlags":{},"objectRooms":{},"pendingKey":null,"shipInbound":0,"signedRegister":0,"tickCounter":0},"isMessageComplete":true,"isRunning":true,"message":"","state":{"callStack":[],"pc":3,"randomState":"3200140515932572209","registers":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"resumeAfterTick":null}},"note":"The same opening released by a keypress at twenty seconds, after which it runs on far enough to reach this trace's instruction limit and say so in its last record. The keypress is recorded as an input at the step it was applied, so a replay presses at the same step.","payload":{"decoderVersion":8,"manifestSha256":"df7997cc8993cc3a9a5054ccb1c917e1fea5e03730bd5835efbb7471bc0885b1","schemaVersion":8,"sourceCoreDigest":"75c5c12dca266ad084b181bf492c934556474cf0fbf1c5a423d75d0b363974cd","sourceDatasetId":"world-geometry-75c5c12dca266ad0"},"program":{"entry":3,"framesPerTick":50,"instructions":494,"scripts":51},"scenario":{"host":{"carrying":[],"craft":null,"objectFlags":{},"objectRooms":{},"room":0},"maxInstructions":20000,"presses":[{"at":20,"key":"y"}],"script":0,"seconds":120,"timeScale":null,"writes":[]},"schemaVersion":3,"settings":{"message":{"charactersPerSecond":2,"holdSeconds":3},"scripts":{"instructionBudget":512,"timeScale":6}},"tunables":{"framesPerSecond":50,"framesPerTick":50,"instructionBudget":512,"messageCharactersPerSecond":2,"messageHoldSeconds":3,"timeScale":6}}
+{"dt":0.016666666666666666,"emitter":"benson","id":"script-0-answered","initial":{"host":{"attackingShip":false,"boardedCraft":128,"canLiftAnything":false,"canTakeAnything":false,"currentRoom":0,"decimals":[0,0,0,0,0,0,0,0,9000,0,0,0,0,0,0,0],"destroyedBlocks":[],"engineFlags":64,"gameComplete":false,"inventory":[],"messageInterval":125,"messagePlaying":false,"objectFlags":{},"objectRooms":{},"pendingKey":null,"shipInbound":0,"signedRegister":0,"tickCounter":0},"isMessageComplete":true,"isRunning":true,"message":"","state":{"callStack":[],"pc":3,"randomState":"3200140515932572209","registers":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"resumeAfterTick":null}},"note":"The same opening released by a keypress at twenty seconds, after which it runs on far enough to reach this trace's instruction limit and say so in its last record. The keypress is recorded as an input at the step it was applied, so a replay presses at the same step.","payload":{"decoderVersion":9,"manifestSha256":"09b73f54a1690bef00c4ee29a05739ed2474351e9e4aa18751638c6d54389c7d","schemaVersion":8,"sourceCoreDigest":"ac0d654fb1b733f51a9606ba59b74dbadf1ef4139f6661bee3640aff8cf702dd","sourceDatasetId":"world-geometry-ac0d654fb1b733f5"},"program":{"entry":3,"framesPerTick":50,"instructions":494,"scripts":51},"scenario":{"host":{"carrying":[],"craft":null,"objectFlags":{},"objectRooms":{},"room":0},"maxInstructions":20000,"presses":[{"at":20,"key":"y"}],"script":0,"seconds":120,"timeScale":null,"writes":[]},"schemaVersion":3,"settings":{"message":{"charactersPerSecond":2,"holdSeconds":3},"scripts":{"instructionBudget":512,"timeScale":6}},"tunables":{"framesPerSecond":50,"framesPerTick":50,"instructionBudget":512,"messageCharactersPerSecond":2,"messageHoldSeconds":3,"timeScale":6}}
 {"blocked":false,"effects":[],"elapsed":0,"instruction":{"op":"loadi","register":14,"value":1},"nextPc":4,"pc":3,"step":0}
 {"blocked":false,"effects":[],"elapsed":0,"instruction":{"mask":4,"mode":"or","op":"modf"},"nextPc":5,"pc":4,"step":0}
 {"blocked":false,"effects":[],"elapsed":0,"instruction":{"op":"loadi","register":14,"value":7},"nextPc":6,"pc":5,"step":0}
@@ -763,7 +763,7 @@
 {"changed":{"host":{"tickCounter":353}},"elapsed":72.649999999997164,"step":4359}
 {"blocked":false,"effects":[],"elapsed":72.799999999997155,"instruction":{"op":"call","target":108},"nextPc":108,"pc":34,"step":4368}
 {"blocked":false,"effects":[],"elapsed":72.799999999997155,"instruction":{"op":"clrk"},"nextPc":109,"pc":108,"step":4368}
-{"blocked":true,"effects":[{"playMessage":"DO YOU WANT TO BUY"}],"elapsed":72.799999999997155,"instruction":{"op":"msg","tokens":[{"kind":"word","word":238},{"kind":"word","word":51},{"kind":"word","word":220},{"kind":"word","word":217},{"kind":"word","word":213},{"kind":"word","word":28},{"kind":"word","word":7}]},"nextPc":110,"pc":109,"step":4368}
+{"blocked":true,"effects":[{"playMessage":"DO YOU WANT TO BUY?"}],"elapsed":72.799999999997155,"instruction":{"op":"msg","tokens":[{"kind":"word","word":238},{"kind":"word","word":51},{"kind":"word","word":220},{"kind":"word","word":217},{"kind":"word","word":213},{"kind":"word","word":28},{"kind":"word","word":7}]},"nextPc":110,"pc":109,"step":4368}
 {"changed":{"host":{"pendingKey":null},"message":"","state":{"callStack":[35],"pc":110}},"elapsed":72.799999999997155,"step":4368}
 {"changed":{"host":{"tickCounter":354}},"elapsed":72.816666666663821,"step":4369}
 {"changed":{"message":"D"},"elapsed":72.883333333330484,"step":4373}
@@ -787,6 +787,7 @@
 {"changed":{"host":{"tickCounter":362},"message":"DO YOU WANT TO B"},"elapsed":74.149999999997078,"step":4449}
 {"changed":{"message":"DO YOU WANT TO BU"},"elapsed":74.233333333330407,"step":4454}
 {"changed":{"host":{"tickCounter":363},"message":"DO YOU WANT TO BUY"},"elapsed":74.316666666663735,"step":4459}
+{"changed":{"message":"DO YOU WANT TO BUY?"},"elapsed":74.399999999997064,"step":4464}
 {"changed":{"host":{"tickCounter":364}},"elapsed":74.483333333330393,"step":4469}
 {"changed":{"host":{"tickCounter":365}},"elapsed":74.64999999999705,"step":4479}
 {"changed":{"host":{"tickCounter":366}},"elapsed":74.816666666663707,"step":4489}
@@ -804,10 +805,11 @@
 {"changed":{"host":{"tickCounter":378}},"elapsed":76.816666666663593,"step":4609}
 {"changed":{"host":{"tickCounter":379}},"elapsed":76.983333333330251,"step":4619}
 {"changed":{"host":{"tickCounter":380}},"elapsed":77.149999999996908,"step":4629}
-{"blocked":false,"effects":[],"elapsed":77.316666666663565,"instruction":{"op":"cfr"},"nextPc":111,"pc":110,"step":4639}
-{"blocked":false,"effects":[],"elapsed":77.316666666663565,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":4639}
-{"blocked":true,"effects":[],"elapsed":77.316666666663565,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":4639}
-{"changed":{"host":{"messagePlaying":false,"tickCounter":0},"isMessageComplete":true,"state":{"pc":112,"resumeAfterTick":1}},"elapsed":77.316666666663565,"step":4639}
+{"changed":{"host":{"tickCounter":381}},"elapsed":77.316666666663565,"step":4639}
+{"blocked":false,"effects":[],"elapsed":77.399999999996894,"instruction":{"op":"cfr"},"nextPc":111,"pc":110,"step":4644}
+{"blocked":false,"effects":[],"elapsed":77.399999999996894,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":4644}
+{"blocked":true,"effects":[],"elapsed":77.399999999996894,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":4644}
+{"changed":{"host":{"messagePlaying":false,"tickCounter":0},"isMessageComplete":true,"state":{"pc":112,"resumeAfterTick":1}},"elapsed":77.399999999996894,"step":4644}
 {"blocked":false,"effects":[],"elapsed":77.483333333330222,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":4649}
 {"blocked":false,"effects":[],"elapsed":77.483333333330222,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":4649}
 {"blocked":true,"effects":[],"elapsed":77.483333333330222,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":4649}
@@ -880,7 +882,7 @@
 {"changed":{"host":{"tickCounter":34}},"elapsed":82.983333333329909,"step":4979}
 {"blocked":false,"effects":[],"elapsed":82.999999999996575,"instruction":{"op":"call","target":108},"nextPc":108,"pc":37,"step":4980}
 {"blocked":false,"effects":[],"elapsed":82.999999999996575,"instruction":{"op":"clrk"},"nextPc":109,"pc":108,"step":4980}
-{"blocked":true,"effects":[{"playMessage":"DO YOU WANT TO BUY"}],"elapsed":82.999999999996575,"instruction":{"op":"msg","tokens":[{"kind":"word","word":238},{"kind":"word","word":51},{"kind":"word","word":220},{"kind":"word","word":217},{"kind":"word","word":213},{"kind":"word","word":28},{"kind":"word","word":7}]},"nextPc":110,"pc":109,"step":4980}
+{"blocked":true,"effects":[{"playMessage":"DO YOU WANT TO BUY?"}],"elapsed":82.999999999996575,"instruction":{"op":"msg","tokens":[{"kind":"word","word":238},{"kind":"word","word":51},{"kind":"word","word":220},{"kind":"word","word":217},{"kind":"word","word":213},{"kind":"word","word":28},{"kind":"word","word":7}]},"nextPc":110,"pc":109,"step":4980}
 {"changed":{"message":"","state":{"callStack":[38],"pc":110}},"elapsed":82.999999999996575,"step":4980}
 {"changed":{"message":"D"},"elapsed":83.083333333329904,"step":4985}
 {"changed":{"host":{"tickCounter":35}},"elapsed":83.149999999996567,"step":4989}
@@ -909,6 +911,7 @@
 {"changed":{"message":"DO YOU WANT TO BU"},"elapsed":84.433333333329827,"step":5066}
 {"changed":{"host":{"tickCounter":43}},"elapsed":84.483333333329824,"step":5069}
 {"changed":{"message":"DO YOU WANT TO BUY"},"elapsed":84.516666666663156,"step":5071}
+{"changed":{"message":"DO YOU WANT TO BUY?"},"elapsed":84.599999999996484,"step":5076}
 {"changed":{"host":{"tickCounter":44}},"elapsed":84.649999999996481,"step":5079}
 {"changed":{"host":{"tickCounter":45}},"elapsed":84.816666666663139,"step":5089}
 {"changed":{"host":{"tickCounter":46}},"elapsed":84.983333333329796,"step":5099}
@@ -927,10 +930,10 @@
 {"changed":{"host":{"tickCounter":59}},"elapsed":87.149999999996339,"step":5229}
 {"changed":{"host":{"tickCounter":60}},"elapsed":87.316666666662996,"step":5239}
 {"changed":{"host":{"tickCounter":61}},"elapsed":87.483333333329654,"step":5249}
-{"blocked":false,"effects":[],"elapsed":87.516666666662985,"instruction":{"op":"cfr"},"nextPc":111,"pc":110,"step":5251}
-{"blocked":false,"effects":[],"elapsed":87.516666666662985,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":5251}
-{"blocked":true,"effects":[],"elapsed":87.516666666662985,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":5251}
-{"changed":{"host":{"messagePlaying":false,"tickCounter":0},"isMessageComplete":true,"state":{"pc":112,"resumeAfterTick":1}},"elapsed":87.516666666662985,"step":5251}
+{"blocked":false,"effects":[],"elapsed":87.599999999996314,"instruction":{"op":"cfr"},"nextPc":111,"pc":110,"step":5256}
+{"blocked":false,"effects":[],"elapsed":87.599999999996314,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":5256}
+{"blocked":true,"effects":[],"elapsed":87.599999999996314,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":5256}
+{"changed":{"host":{"messagePlaying":false,"tickCounter":0},"isMessageComplete":true,"state":{"pc":112,"resumeAfterTick":1}},"elapsed":87.599999999996314,"step":5256}
 {"blocked":false,"effects":[],"elapsed":87.649999999996311,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":5259}
 {"blocked":false,"effects":[],"elapsed":87.649999999996311,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":5259}
 {"blocked":true,"effects":[],"elapsed":87.649999999996311,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":5259}
@@ -994,7 +997,7 @@
 {"changed":{"host":{"tickCounter":31}},"elapsed":92.649999999996027,"step":5559}
 {"blocked":false,"effects":[],"elapsed":92.666666666662692,"instruction":{"op":"call","target":108},"nextPc":108,"pc":40,"step":5560}
 {"blocked":false,"effects":[],"elapsed":92.666666666662692,"instruction":{"op":"clrk"},"nextPc":109,"pc":108,"step":5560}
-{"blocked":true,"effects":[{"playMessage":"DO YOU WANT TO BUY"}],"elapsed":92.666666666662692,"instruction":{"op":"msg","tokens":[{"kind":"word","word":238},{"kind":"word","word":51},{"kind":"word","word":220},{"kind":"word","word":217},{"kind":"word","word":213},{"kind":"word","word":28},{"kind":"word","word":7}]},"nextPc":110,"pc":109,"step":5560}
+{"blocked":true,"effects":[{"playMessage":"DO YOU WANT TO BUY?"}],"elapsed":92.666666666662692,"instruction":{"op":"msg","tokens":[{"kind":"word","word":238},{"kind":"word","word":51},{"kind":"word","word":220},{"kind":"word","word":217},{"kind":"word","word":213},{"kind":"word","word":28},{"kind":"word","word":7}]},"nextPc":110,"pc":109,"step":5560}
 {"changed":{"message":"","state":{"callStack":[41],"pc":110}},"elapsed":92.666666666662692,"step":5560}
 {"changed":{"message":"D"},"elapsed":92.749999999996021,"step":5565}
 {"changed":{"host":{"tickCounter":32}},"elapsed":92.816666666662684,"step":5569}
@@ -1023,6 +1026,7 @@
 {"changed":{"message":"DO YOU WANT TO BU"},"elapsed":94.099999999995944,"step":5646}
 {"changed":{"host":{"tickCounter":40}},"elapsed":94.149999999995941,"step":5649}
 {"changed":{"message":"DO YOU WANT TO BUY"},"elapsed":94.183333333329273,"step":5651}
+{"changed":{"message":"DO YOU WANT TO BUY?"},"elapsed":94.266666666662601,"step":5656}
 {"changed":{"host":{"tickCounter":41}},"elapsed":94.316666666662599,"step":5659}
 {"changed":{"host":{"tickCounter":42}},"elapsed":94.483333333329256,"step":5669}
 {"changed":{"host":{"tickCounter":43}},"elapsed":94.649999999995913,"step":5679}
@@ -1041,10 +1045,10 @@
 {"changed":{"host":{"tickCounter":56}},"elapsed":96.816666666662456,"step":5809}
 {"changed":{"host":{"tickCounter":57}},"elapsed":96.983333333329114,"step":5819}
 {"changed":{"host":{"tickCounter":58}},"elapsed":97.149999999995771,"step":5829}
-{"blocked":false,"effects":[],"elapsed":97.183333333329102,"instruction":{"op":"cfr"},"nextPc":111,"pc":110,"step":5831}
-{"blocked":false,"effects":[],"elapsed":97.183333333329102,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":5831}
-{"blocked":true,"effects":[],"elapsed":97.183333333329102,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":5831}
-{"changed":{"host":{"messagePlaying":false,"tickCounter":0},"isMessageComplete":true,"state":{"pc":112,"resumeAfterTick":1}},"elapsed":97.183333333329102,"step":5831}
+{"blocked":false,"effects":[],"elapsed":97.266666666662431,"instruction":{"op":"cfr"},"nextPc":111,"pc":110,"step":5836}
+{"blocked":false,"effects":[],"elapsed":97.266666666662431,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":5836}
+{"blocked":true,"effects":[],"elapsed":97.266666666662431,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":5836}
+{"changed":{"host":{"messagePlaying":false,"tickCounter":0},"isMessageComplete":true,"state":{"pc":112,"resumeAfterTick":1}},"elapsed":97.266666666662431,"step":5836}
 {"blocked":false,"effects":[],"elapsed":97.316666666662428,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":5839}
 {"blocked":false,"effects":[],"elapsed":97.316666666662428,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":5839}
 {"blocked":true,"effects":[],"elapsed":97.316666666662428,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":5839}
@@ -1108,7 +1112,7 @@
 {"changed":{"host":{"tickCounter":31}},"elapsed":102.31666666666214,"step":6139}
 {"blocked":false,"effects":[],"elapsed":102.33333333332881,"instruction":{"op":"call","target":108},"nextPc":108,"pc":43,"step":6140}
 {"blocked":false,"effects":[],"elapsed":102.33333333332881,"instruction":{"op":"clrk"},"nextPc":109,"pc":108,"step":6140}
-{"blocked":true,"effects":[{"playMessage":"DO YOU WANT TO BUY"}],"elapsed":102.33333333332881,"instruction":{"op":"msg","tokens":[{"kind":"word","word":238},{"kind":"word","word":51},{"kind":"word","word":220},{"kind":"word","word":217},{"kind":"word","word":213},{"kind":"word","word":28},{"kind":"word","word":7}]},"nextPc":110,"pc":109,"step":6140}
+{"blocked":true,"effects":[{"playMessage":"DO YOU WANT TO BUY?"}],"elapsed":102.33333333332881,"instruction":{"op":"msg","tokens":[{"kind":"word","word":238},{"kind":"word","word":51},{"kind":"word","word":220},{"kind":"word","word":217},{"kind":"word","word":213},{"kind":"word","word":28},{"kind":"word","word":7}]},"nextPc":110,"pc":109,"step":6140}
 {"changed":{"message":"","state":{"callStack":[44],"pc":110}},"elapsed":102.33333333332881,"step":6140}
 {"changed":{"message":"D"},"elapsed":102.41666666666214,"step":6145}
 {"changed":{"host":{"tickCounter":32}},"elapsed":102.4833333333288,"step":6149}
@@ -1137,6 +1141,7 @@
 {"changed":{"message":"DO YOU WANT TO BU"},"elapsed":103.76666666666206,"step":6226}
 {"changed":{"host":{"tickCounter":40}},"elapsed":103.81666666666206,"step":6229}
 {"changed":{"message":"DO YOU WANT TO BUY"},"elapsed":103.84999999999539,"step":6231}
+{"changed":{"message":"DO YOU WANT TO BUY?"},"elapsed":103.93333333332872,"step":6236}
 {"changed":{"host":{"tickCounter":41}},"elapsed":103.98333333332872,"step":6239}
 {"changed":{"host":{"tickCounter":42}},"elapsed":104.14999999999537,"step":6249}
 {"changed":{"host":{"tickCounter":43}},"elapsed":104.31666666666203,"step":6259}
@@ -1155,10 +1160,10 @@
 {"changed":{"host":{"tickCounter":56}},"elapsed":106.48333333332857,"step":6389}
 {"changed":{"host":{"tickCounter":57}},"elapsed":106.64999999999523,"step":6399}
 {"changed":{"host":{"tickCounter":58}},"elapsed":106.81666666666189,"step":6409}
-{"blocked":false,"effects":[],"elapsed":106.84999999999522,"instruction":{"op":"cfr"},"nextPc":111,"pc":110,"step":6411}
-{"blocked":false,"effects":[],"elapsed":106.84999999999522,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":6411}
-{"blocked":true,"effects":[],"elapsed":106.84999999999522,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":6411}
-{"changed":{"host":{"messagePlaying":false,"tickCounter":0},"isMessageComplete":true,"state":{"pc":112,"resumeAfterTick":1}},"elapsed":106.84999999999522,"step":6411}
+{"blocked":false,"effects":[],"elapsed":106.93333333332855,"instruction":{"op":"cfr"},"nextPc":111,"pc":110,"step":6416}
+{"blocked":false,"effects":[],"elapsed":106.93333333332855,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":6416}
+{"blocked":true,"effects":[],"elapsed":106.93333333332855,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":6416}
+{"changed":{"host":{"messagePlaying":false,"tickCounter":0},"isMessageComplete":true,"state":{"pc":112,"resumeAfterTick":1}},"elapsed":106.93333333332855,"step":6416}
 {"blocked":false,"effects":[],"elapsed":106.98333333332855,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":111,"pc":112,"step":6419}
 {"blocked":false,"effects":[],"elapsed":106.98333333332855,"instruction":{"condition":{"branch":{"jump":115},"branchOn":false},"key":"keyY","op":"tstk"},"nextPc":112,"pc":111,"step":6419}
 {"blocked":true,"effects":[],"elapsed":106.98333333332855,"instruction":{"condition":{"branch":{"jump":111},"branchOn":false},"op":"wfr","ticks":5},"nextPc":112,"pc":112,"step":6419}

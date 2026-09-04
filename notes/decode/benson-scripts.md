@@ -176,25 +176,54 @@ which is the same thing said plainly.
 On foot is `$80` in the boarded-craft byte, not zero — the boarding check tested
 it as a negative signed byte, and slot zero is a real ship.
 
-## Open questions
+## The Benson Display cadence
 
-- **Message scroll granularity.** The scroll interrupt at `$8DC3` compares its
-  frame tally against `$E1`, whose live value is 125 — two and a half seconds. That
-  is far too slow for one character and plausible for one word, so the unit is not
-  settled. The app reveals characters at a tunable rate and treats a script's
-  write to `messageInterval` as a *relative* retiming, which preserves what the
-  script means without adopting a granularity we have not established. Worth a
-  side-by-side ruling.
+The scroll interrupt at `$8DC3` owns a 23-cell row at `$5F78-$5F8E`. `$E0` is
+incremented once per 50 Hz frame. Values 1 through 25 shift the row left and put
+the next `$FC` character (or the emitter's trailing space) in the rightmost cell;
+at 26 the active burst stops. The row then remains unchanged until `$E0` reaches
+the `$E1` interval, normally 125. The boundary resets `$E0` and either begins the
+next burst on that same frame or clears `$E6` when the emitter has ended. A script
+write of 150 to `$E1` therefore lengthens the endgame pause rather than changing a
+per-character rate. `$DE/$DF` are the token/word cursors described in
+[text-tables.md](text-tables.md).
 
-  The rate, the reading hold, and the script timing scale are all in
-  `settings.json` at the repository root, so settling this is a matter of playing
-  and editing rather than editing and rebuilding. None of the three is a decoded
-  value: script timing scales the Reference Build's own pacing, while the hold is
-  time given to the player to read and is deliberately not scaled with it.
+The bounded raw observation is kept under the ignored
+`research/c64-reference-build/work/issue111-benson-observation/` directory.
+Reproduce its 400 consecutive interrupt-entry records from a clean boot of the
+verified Reference Build with:
+
+```sh
+cd research/c64-reference-build
+PYTHONPATH=. .venv/bin/python work/issue111-benson-observation/capture_cycle.py
+```
+
+The binary-monitor capture stops at `$8DC3` and records `$DE-$E1`, `$E6`, and
+`$5F78-$5F8E` each time. Records 0-125 are one complete interval: `$E0` runs
+0-124 and returns to 0 while `$E1` stays 125. The row changes exactly 25 times,
+on the entries following values 0-24; records 25-125 have byte-identical cells.
+`$DE/$DF` advance only during that active burst and stay at 5/0 throughout the
+pause. The observations show exactly 23 cells, right-edge entry/left-edge
+eviction, and spaces continuing after the source terminator through the active
+burst. The next recorded interval independently repeats the 25-shift/100-frame
+pause shape.
+
+The decoded token streams include leading padding words which the transcript's
+normalised text deliberately omits. The browser feeds those raw spaces to the
+display while retaining the normalised Benson Message separately; without them,
+the 25-shift burst evicts the first two printable characters before the reading
+hold (for example, `CRAFT FOR SALE` becomes `AFT FOR SALE`).
+
+The browser scales the silent `$E1` wait with `scripts.timeScale` and applies its
+existing three-second reading hold without scaling. Active scanout remains at the
+recovered 50 Hz: the gameplay scale of six otherwise compresses all 25 shifts into
+about 83 ms, only four or five browser render frames, so the right-edge entry is
+effectively invisible. The cap leaves a burst visible for half a second without
+slowing the script's longer silent interval.
+
+## Remaining open question
+
 - **How the engine starts script 00.** The intro proper was stripped from the
   Reference Disassembly, and we start it at launch. The other triggers — room
   entry, structure approach, kill, object examine — are visible in the engine and
   belong to the later steps that need them.
-- `$0E` and `$6D` remain the only unresolved character codes; `$00`-`$09` turned
-  out to be the digits, which the numeric emitter settles (see
-  [text-tables.md](text-tables.md)).

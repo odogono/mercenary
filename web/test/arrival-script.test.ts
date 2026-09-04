@@ -21,6 +21,21 @@ describe("the opening script's beats, resolved from the payload", () => {
     expect(milestones.statusReport).toBe('STATUS REPORT');
   });
 
+  test('retains the recovered leading display cells separately from transcript text', () => {
+    const instruction = program.instructions.find(
+      candidate =>
+        candidate.op === 'msg' &&
+        text.compose(candidate.tokens) === milestones.statusReport
+    );
+    expect(instruction?.op).toBe('msg');
+    if (instruction?.op !== 'msg') {
+      throw new Error('the status report instruction is missing');
+    }
+    expect(text.composeForDisplay(instruction.tokens)).toBe(
+      '      STATUS REPORT'
+    );
+  });
+
   test('include all four landing verdicts in table order', () => {
     expect(milestones.verdicts).toEqual([
       'WHERE AM I',

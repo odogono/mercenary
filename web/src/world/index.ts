@@ -8,6 +8,7 @@ import {
   type Vector3
 } from '../orientation/index.ts';
 import type * as Doc from '../payload/documents.ts';
+import { wrapSurfaceAxis } from './surfaceCoordinates.ts';
 
 /// The render-ready world, derived from a payload Bundle.
 ///
@@ -54,8 +55,17 @@ export type Location =
 /// happens to a craft the player parks somewhere else; its absence means the object is still
 /// where the payload placed it.
 export type Residence =
-  | { readonly at?: Vector3; readonly kind: 'surface' }
-  | { readonly at?: Vector3; readonly id: number; readonly kind: 'room' }
+  | {
+      readonly at?: Vector3;
+      readonly heading?: number;
+      readonly kind: 'surface';
+    }
+  | {
+      readonly at?: Vector3;
+      readonly heading?: number;
+      readonly id: number;
+      readonly kind: 'room';
+    }
   | { readonly kind: 'carried' }
   | { readonly kind: 'gone' };
 
@@ -139,6 +149,14 @@ export interface ObjectPlacement {
   readonly withinWorld: boolean;
 }
 
+/// A craft's Mover heading, decoded from the orientation bytes its payload
+/// placement carries. The model's forward axis points along decreasing Z, so
+/// it is half a turn from the Mover's heading-zero direction.
+export const craftHeading = (craft: ObjectPlacement): number => {
+  const turn = ((craft.orientation.y & 0xff) / 256) * 2 * Math.PI;
+  return (turn + Math.PI) % (2 * Math.PI);
+};
+
 /// The object's own line segments, for when it is inside the detail cube.
 export const objectSegments = (object: ObjectPlacement): Segment[] => {
   const out: Segment[] = [];
@@ -212,6 +230,91 @@ export const movedTo = (
     vertices: object.vertices.map(v => vector(v.x + dx, v.y + dy, v.z + dz))
   };
 };
+
+/// Turn an already placed craft from its payload heading to a live heading.
+///
+/// A model whose orientation byte is zero faces decreasing Z, while the
+/// Mover's matching heading is pi. Rotate about the placement origin so a
+/// parked craft retains the direction in which the player landed it.
+const turnedToHeading = (
+  object: ObjectPlacement,
+  heading: number | undefined
+): ObjectPlacement => {
+  if (heading === undefined) {
+    return object;
+  }
+  const angle = heading - craftHeading(object);
+  const sine = sin(angle);
+  const cosine = cos(angle);
+  return {
+    ...object,
+    vertices: object.vertices.map(vertex => {
+      const x = vertex.x - object.origin.x;
+      const z = vertex.z - object.origin.z;
+      return vector(
+        object.origin.x + z * sine + x * cosine,
+        vertex.y,
+        object.origin.z + z * cosine - x * sine
+      );
+    })
+  };
+};
+
+/// Resolve a live Object Residence into the placement presentation draws.
+///
+/// A leave transition records a grounded craft at the walking eye altitude.
+/// World geometry is grounded by its lowest vertex, so presentation removes
+/// that low-byte eye offset from a player-parked craft. This works with both
+/// decoded and configured eye heights; the Colony Craft deck has already
+/// cleared its low byte, so it remains on the high-altitude deck plane.
+/// Airborne craft positions and non-craft objects stay exact.
+export const placedAtResidence = (
+  world: World,
+  object: ObjectPlacement,
+  residence: Residence,
+  location: Location
+): ObjectPlacement => {
+  const moved = displacement(residence);
+  const turned =
+    residence.kind === 'surface' || residence.kind === 'room'
+      ? turnedToHeading(object, residence.heading)
+      : object;
+  if (moved === undefined) {
+    return location.kind === 'surface'
+      ? atUnsignedSurfacePosition(turned)
+      : turned;
+  }
+  const lowByte = ((Math.trunc(moved.y) % 0x1_00) + 0x1_00) % 0x1_00;
+  const playerParked =
+    object.slot < world.craftSlotBound &&
+    (residence.kind === 'surface' || residence.kind === 'room') &&
+    residence.heading !== undefined;
+  const legacySurfaceGrounding =
+    residence.kind === 'surface' &&
+    object.slot < world.craftSlotBound &&
+    lowByte === world.groundAltitude;
+  const groundingOffset = playerParked
+    ? lowByte
+    : legacySurfaceGrounding
+      ? world.groundAltitude
+      : 0;
+  return movedTo(
+    turned,
+    groundingOffset === 0 ? moved : { ...moved, y: moved.y - groundingOffset }
+  );
+};
+
+/// A surface object's stored coordinates are signed only because the extractor
+/// needs one ordinary JSON number for a 24-bit bit-pattern. The live machine
+/// reads the same bits as an unsigned surface position.
+export const atUnsignedSurfacePosition = (
+  object: ObjectPlacement
+): ObjectPlacement =>
+  movedTo(object, {
+    x: wrapSurfaceAxis(object.origin.x),
+    y: object.origin.y,
+    z: wrapSurfaceAxis(object.origin.z)
+  });
 
 /// One full surface map line decoded from a road-table endpoint pair.
 interface SurfaceMapLine {
@@ -435,7 +538,9 @@ const mapLine = (
 /// rotatable slots. Model vertices are centred on their own bounding cube, so an instance
 /// position does not by itself say where the base sits; the model is grounded so its lowest
 /// vertex lands on the instance's height. That grounding is a modernised-feel judgement, not a
-/// decoded fact.
+/// decoded fact. The Colony Craft is the exception: its highest vertex belongs on the decoded
+/// deck plane (the landing altitude with its eye-height low byte cleared), so grounding the model
+/// would lift the rendered deck above the landed camera.
 ///
 /// Every instance is placed, including those in Rooms and those parked outside the grid, so the
 /// inspector can see all sixty-four. The renderer filters by `isDrawable`.
@@ -468,12 +573,22 @@ const placements = (
     if (local.length === 0) {
       continue;
     }
+    let highest = local[0]!.y;
     let lowest = local[0]!.y;
     for (const v of local) {
+      highest = Math.max(highest, v.y);
       lowest = Math.min(lowest, v.y);
     }
+    const colonyCraft = bundle.endgame.orbitalTransition;
+    const deckPlane =
+      (colonyCraft.entry.altitudeHighByte << 16) |
+      (colonyCraft.entry.wrappedAltitudeMiddleByte << 8);
+    const groundingOffset =
+      instance.slot === bundle.rooms.doorwayRules.colonyCraftSlot
+        ? origin.y + highest - deckPlane
+        : lowest;
     const placed = local.map(v =>
-      vector(v.x + origin.x, v.y - lowest + origin.y, v.z + origin.z)
+      vector(v.x + origin.x, v.y - groundingOffset + origin.y, v.z + origin.z)
     );
     const edges: [number, number][] = [];
     for (const edge of model.edges) {
@@ -506,6 +621,8 @@ export class World {
   readonly objects: readonly ObjectPlacement[];
   readonly cellSize: number;
   readonly cellsPerAxis: number;
+  readonly craftSlotBound: number;
+  readonly groundAltitude: number;
   readonly groundExtent: number;
   /// Raw structure-edge instances whose local endpoint is a Road Workspace point. Retained as
   /// the historical Trace Oracle diagnostic; the occupied cell resolves them when it draws.
@@ -530,6 +647,8 @@ export class World {
     const cellsPerAxis = bundle.world.grid.cellsPerAxis;
     this.cellSize = cellSize;
     this.cellsPerAxis = cellsPerAxis;
+    this.craftSlotBound = bundle.interaction?.craftSlotBound ?? 0;
+    this.groundAltitude = bundle.flight?.rules.groundAltitude ?? 0;
     this.groundExtent = toFloat32(cellSize * cellsPerAxis);
 
     const cells: WorldCell[] = [];

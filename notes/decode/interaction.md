@@ -34,9 +34,10 @@ reachable as a face. It also compares only the upper two bytes of each 24-bit
 difference, which is why the threshold counts whole steps of 256 rather than
 plain distance. Board reaches further than take.
 
-Two global overrides sit beside the object tables: `$29EF` lifts the fixed
-restriction ("sink — we can take anything") and `$29DB` the weight one. Both are
-off in a conditioned capture, and nothing has yet been decoded that turns them on.
+Two global overrides sit beside the object tables: `$29EF` lifts both the fixed
+and heavy restrictions, while `$29DB` lifts the heavy restriction. The carried
+object checks resolve them to Sink slot 47 and Antigrav slot 27 respectively.
+Both overrides are implemented in `Interaction` and covered by take tests.
 
 ## What each action does
 
@@ -50,9 +51,9 @@ the player to the craft's position, adopts the craft's heading from an orientati
 table, copies that craft's sixteen-byte parameter block into the live block at
 `$BEA0`, and marks the object as out of the world like a taken one.
 
-The parameter block is the craft's flight behaviour, and it is the one part left
-undone here: the app boards, and the block waits for the step that gives a craft
-something to fly with. The heading is deferred with it, for the same reason.
+The parameter block is the craft's flight behaviour. Boarding selects its decoded
+block and heading, and the flight model applies both; this formerly deferred work
+is implemented and covered by the boarding and Craft Parameter Block tests.
 
 ## What an object says when you reach it
 
@@ -84,11 +85,6 @@ the craft test, which boarding satisfies. Saying nothing at all leaves the scrip
 in its "IS ANYBODY THERE / AM I TALKING TO MYSELF" loop, waiting, which is
 faithful and worth knowing before wondering why boarding did nothing.
 
-## Open questions
-
-- **The parameter block.** Sixteen bytes per craft, copied on boarding, holding
-  the flight behaviour. Located but not decoded, because nothing flies yet.
-- **The craft's heading.** Taken from a table at boarding; deferred with the
-  block.
-- **What turns the global overrides on.** Both are object-table bytes rather than
-  flags on an object, so something the player carries presumably sets them.
+The formerly open parameter-block and heading work is recorded in the decoded
+Craft Parameter Blocks and boarding implementation; the Sink and Antigrav
+override question is resolved above.

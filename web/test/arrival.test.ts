@@ -37,6 +37,7 @@ const pacingOf = (from: Settings): ArrivalPacing => ({
   charactersPerSecond:
     from.arrival.charactersPerSecond * from.arrival.timeScale,
   holdSeconds: from.arrival.holdSeconds,
+  timeScale: from.arrival.timeScale,
   titleCardSeconds: from.arrival.titleCardSeconds
 });
 
@@ -54,7 +55,7 @@ const harness = (from: Settings = settings): Harness => {
     advance: seconds => {
       session.advance(seconds);
     },
-    playingMessage: () => session.scripts?.ticker?.text,
+    playingMessage: () => session.scripts?.activeMessageText,
     setPacing: choice => {
       pacingChoices.push(choice);
       session.scripts!.tunables =
@@ -120,7 +121,7 @@ describe('the Arrival', () => {
     const run = watched();
 
     expect(run.seconds).toBeGreaterThan(55);
-    expect(run.seconds).toBeLessThan(80);
+    expect(run.seconds).toBeLessThan(85);
   });
 
   test('holds the opening script unadvanced until the handover', () => {
@@ -130,12 +131,19 @@ describe('the Arrival', () => {
     const live = harness();
 
     expect(live.session.snapshot.isScriptRunning).toBeTrue();
-    expect(live.session.snapshot.bensonMessage).toBeUndefined();
+    const idleDisplay = live.session.snapshot.bensonMessage;
+    expect(idleDisplay?.displayText).toBe(' '.repeat(23));
+    expect(idleDisplay?.completedText).toBeUndefined();
     for (let step = 0; step < 60; step += 1) {
       live.director.step(STEP);
     }
     expect(live.director.current().kind).toBe('titleCard');
-    expect(live.session.snapshot.bensonMessage).toBeUndefined();
+    expect(live.session.snapshot.bensonMessage?.displayText).toBe(
+      ' '.repeat(23)
+    );
+    expect(live.session.snapshot.bensonMessage?.occurrence).toBe(
+      idleDisplay?.occurrence
+    );
     expect(live.session.captureSaveSnapshot().benson?.state.pc).not.toBeNull();
   });
 
@@ -172,7 +180,7 @@ describe('the Arrival', () => {
     while (live.director.isActive()) {
       const text = live.director.narrationText();
       if (text !== undefined && text.length > 0) {
-        seen.add(text);
+        seen.add(text.trim());
       }
       live.director.step(STEP);
     }
@@ -180,6 +188,39 @@ describe('the Arrival', () => {
       expect(seen).toContain(item.text);
     }
     expect(live.director.narrationText()).toBeUndefined();
+  });
+
+  test('scrolls Arrival Narration into the same 23 cells from the right', () => {
+    const live = harness();
+
+    while (live.director.current().kind === 'titleCard') {
+      live.director.step(STEP);
+    }
+
+    expect(live.director.narrationText()).toBe(' '.repeat(23));
+    live.director.step(6 / 50);
+    expect(live.director.narrationText()).toBe(' '.repeat(21) + 'NO');
+  });
+
+  test('keeps the display cells between Arrival Narration lines', () => {
+    const live = harness();
+    let firstLineSeen = false;
+    let carriedIntoNextLine = false;
+
+    while (live.director.narrationText() !== undefined) {
+      const visible = live.director.narrationText()!.trim();
+      if (visible === 'NOVADRIVE COUNTDOWN') {
+        firstLineSeen = true;
+      } else if (firstLineSeen && visible !== '' && visible !== '3') {
+        carriedIntoNextLine = true;
+      }
+      if (visible === '3') {
+        break;
+      }
+      live.director.step(1 / 50);
+    }
+
+    expect(carriedIntoNextLine).toBeTrue();
   });
 
   test('reads asterisks in space and live values from the descent on', () => {
@@ -264,7 +305,9 @@ describe('the Arrival', () => {
     });
     expect(snapshot.credits).toBe(9000);
     // The status report has begun rather than been read: the join is the moment it starts.
-    expect(skipped.session.scripts?.ticker?.text).toBe(milestones.statusReport);
+    expect(skipped.session.scripts?.activeMessageText).toBe(
+      milestones.statusReport
+    );
   });
 
   test('skipping a finished Arrival does nothing', () => {
@@ -328,7 +371,7 @@ describe('an Arrival entered from a restored session', () => {
         advance: seconds => {
           session.advance(seconds);
         },
-        playingMessage: () => session.scripts?.ticker?.text,
+        playingMessage: () => session.scripts?.activeMessageText,
         setPacing: () => {}
       },
       entry: { beat: 'crashImminent', kind: 'resumed' },

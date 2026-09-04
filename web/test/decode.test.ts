@@ -114,6 +114,17 @@ describe('the payload this gate runs against', () => {
   test('is the extraction the trace was recorded from', () => {
     expectRecordedPayload(trace, bundle);
   });
+
+  test('uses decoder 9 with both punctuation codes resolved', () => {
+    expect(bundle.manifest.decoderVersion).toBe(9);
+    expect(bundle.text?.unresolvedCodes).toEqual([]);
+    expect(
+      bundle.text?.messages.find(message => message.index === 58)?.text
+    ).toBe('LOAD NO. O-9 ?');
+    expect(
+      bundle.text?.messages.find(message => message.index === 59)?.text
+    ).toBe('SAVE NO. O-9 ?');
+  });
 });
 
 describe('the decode Replay Gate', () => {

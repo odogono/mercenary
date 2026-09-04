@@ -21,7 +21,7 @@ from .navigation import (
 )
 
 
-DECODER_VERSION = 8
+DECODER_VERSION = 9
 LAB_ROOT = Path(__file__).resolve().parents[1]
 WORK_ROOT = LAB_ROOT / "work"
 REPOSITORY_ROOT = LAB_ROOT.parents[1]

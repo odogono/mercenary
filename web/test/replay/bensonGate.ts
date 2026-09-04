@@ -31,7 +31,7 @@ import { expectIdentical } from './compare.ts';
 
 export const scriptSettingsValue = (resolved: Settings) => ({
   message: {
-    charactersPerSecond: resolved.message.charactersPerSecond,
+    charactersPerSecond: 2,
     holdSeconds: resolved.message.holdSeconds
   },
   scripts: {
@@ -50,7 +50,7 @@ export const tunablesValue = (
     framesPerSecond: tunables.framesPerSecond,
     framesPerTick: tunables.framesPerTick,
     instructionBudget: tunables.instructionBudget,
-    messageCharactersPerSecond: tunables.messageCharactersPerSecond,
+    messageCharactersPerSecond: 2,
     messageHoldSeconds: tunables.messageHoldSeconds,
     timeScale: timeScale ?? tunables.timeScale
   };

@@ -11,7 +11,6 @@ export interface BensonTunables {
   framesPerSecond: number;
   framesPerTick: number;
   instructionBudget: number;
-  messageCharactersPerSecond: number;
   messageHoldSeconds: number;
   timeScale: number;
 }
@@ -20,7 +19,6 @@ export const defaultTunables = (framesPerTick = 50): BensonTunables => ({
   framesPerSecond: 50,
   framesPerTick,
   instructionBudget: 512,
-  messageCharactersPerSecond: 2,
   messageHoldSeconds: 3,
   timeScale: 1
 });
@@ -238,6 +236,7 @@ const decided = (
 
 const play = (
   message: string | undefined,
+  displaySource: string | undefined,
   pc: number,
   state: BensonState,
   host: BensonHostState,
@@ -247,7 +246,10 @@ const play = (
   if (message === undefined) {
     return advanced(host, next);
   }
-  effects.push({ playMessage: message });
+  effects.push({
+    displaySource: displaySource ?? message,
+    playMessage: message
+  });
   return {
     host: host.with({ messagePlaying: true }),
     outcome: 'blocked',
@@ -287,6 +289,7 @@ const step = (
     case 'msg':
       return play(
         text.compose(instruction.tokens, messageSubstitutions(host)),
+        text.composeForDisplay(instruction.tokens, messageSubstitutions(host)),
         pc,
         state,
         host,
@@ -299,6 +302,7 @@ const step = (
           : state.register(instruction.source.register);
       return play(
         text.message(index, messageSubstitutions(host)),
+        text.messageForDisplay(index, messageSubstitutions(host)),
         pc,
         state,
         host,
@@ -314,6 +318,7 @@ const step = (
       }
       return play(
         text.message(index, messageSubstitutions(host)),
+        text.messageForDisplay(index, messageSubstitutions(host)),
         pc,
         rolled.state,
         host,

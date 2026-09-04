@@ -4,7 +4,6 @@ import { describe, expect, test } from 'bun:test';
 
 import { controlLimits } from '../src/gameCore/index.ts';
 import {
-  DEFAULT_MESSAGE_CHARACTERS_PER_SECOND,
   DEFAULT_MESSAGE_HOLD_SECONDS,
   DEFAULT_PRESENTATION_PRESET,
   DEFAULT_SCRIPT_INSTRUCTION_BUDGET,
@@ -53,11 +52,8 @@ describe('settings that are not there', () => {
     expect(loadSettings('{}')).toEqual(defaultSettings());
   });
 
-  test("the message block's defaults are the reference reveal and a reading pause", () => {
+  test("the message block's default is a reading pause", () => {
     const { message } = defaultSettings();
-    expect(message.charactersPerSecond).toBe(
-      DEFAULT_MESSAGE_CHARACTERS_PER_SECOND
-    );
     expect(message.holdSeconds).toBe(DEFAULT_MESSAGE_HOLD_SECONDS);
   });
 
@@ -107,10 +103,9 @@ describe('a document that names only what it changes', () => {
 
   test('merges each named block independently of the others', () => {
     const settings = loadSettings(
-      '{"message": {"charactersPerSecond": 40}, "scripts": {"instructionBudget": 64}}'
+      '{"message": {"holdSeconds": 4}, "scripts": {"instructionBudget": 64}}'
     );
-    expect(settings.message.charactersPerSecond).toBe(40);
-    expect(settings.message.holdSeconds).toBe(DEFAULT_MESSAGE_HOLD_SECONDS);
+    expect(settings.message.holdSeconds).toBe(4);
     expect(settings.scripts.instructionBudget).toBe(64);
     expect(settings.scripts.timeScale).toBe(DEFAULT_SCRIPT_TIME_SCALE);
   });

@@ -1,5 +1,6 @@
 import type { SessionSnapshot } from '../session/index.ts';
 import { locationText } from '../world/index.ts';
+import { surfaceCellCoordinate } from '../world/surfaceCoordinates.ts';
 
 /// What the Benson Panel needs beyond a Session Snapshot.
 ///
@@ -18,6 +19,7 @@ export interface PanelContext {
 /// Damocles clothes (ADR 0027), so one view model serves both.
 export interface PanelViewModel {
   readonly altitude: string;
+  readonly altitudeLamp: boolean;
   readonly attackLamp: boolean;
   readonly cash: string;
   readonly clock: string;
@@ -47,8 +49,17 @@ export const compassDegrees = (heading: number): number => {
 };
 
 /// The panel's own grid reference, two digits per axis.
-export const gridReference = (x: number, z: number, cellSize: number): string =>
-  `${digits(x / cellSize, 2)}-${digits(z / cellSize, 2)}`;
+export const gridReference = (
+  x: number,
+  z: number,
+  cellSize: number
+): string => {
+  const axis = (value: number): string => {
+    const cell = surfaceCellCoordinate(value, cellSize);
+    return cell > 99 ? '**' : digits(cell, 2);
+  };
+  return `${axis(x)}-${axis(z)}`;
+};
 
 /// Time of day on Targ, as the Damocles clock shows it.
 ///
@@ -86,7 +97,11 @@ export const panelViewModel = (
   const aboard = snapshot.occupancy.kind === 'aboard';
   const speed = Math.trunc(player.speed);
   return {
-    altitude: digits(player.position.y, 5),
+    // The ST instrument reads the middle/high altitude bytes. The low byte carries the
+    // different on-foot and grounded-craft viewpoint offsets (128 and 63), neither of which is
+    // height above the surface: both therefore read zero on the panel.
+    altitude: digits(player.position.y / 0x1_00, 5),
+    altitudeLamp: aboard,
     // Targ has no attack warning to report, so the Damocles lamp stays dressing (ADR 0027).
     attackLamp: false,
     cash: digits(snapshot.credits, 9),
@@ -107,7 +122,7 @@ export const panelViewModel = (
       snapshot.location.kind === 'room'
         ? locationText(snapshot.location)
         : 'TARG',
-    message: snapshot.bensonMessage?.visibleText ?? '',
+    message: snapshot.bensonMessage?.displayText ?? '',
     runLamp: !aboard && player.speed !== 0,
     speed: `${speed < 0 ? '-' : '+'}${digits(speed, 4)}`,
     speedLabel: `${speed < 0 ? '-' : '+'} 000 000 ${digits(speed, 3)}`

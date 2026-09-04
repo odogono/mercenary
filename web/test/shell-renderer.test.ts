@@ -5,7 +5,7 @@ import {
   viewportCentre,
   viewportScale
 } from '../src/projection/index.ts';
-import { ScenePalette, c64Colour } from '../src/scene/index.ts';
+import { ScenePalette, atariSTColour, c64Colour } from '../src/scene/index.ts';
 import {
   GameplaySession,
   openingPlayer,
@@ -170,24 +170,22 @@ const fakeRenderer = (
 };
 
 describe('a Session Snapshot planned for WebGL2', () => {
-  test('the opening surface is ground, dim Ink, bright Ink, then Far Points', () => {
+  test('the clipped opening surface is ground, visible Ink, then Far Points', () => {
     const frame = planFrame(world, session().snapshot, size);
 
     expect(frame.clear).toEqual(ScenePalette.sky);
     expect(frame.batches.map(batch => batch.mode)).toEqual([
       'triangles',
       'lines',
-      'lines',
       'points'
     ]);
     expect(frame.batches.map(batch => batch.colour)).toEqual([
       ScenePalette.ground,
-      ScenePalette.blackInk,
       ScenePalette.whiteInk,
       ScenePalette.whiteInk
     ]);
     expect(frame.batches[0]?.vertices.length).toBe(12);
-    expect(frame.lines).toBe(38);
+    expect(frame.lines).toBe(4);
     expect(frame.points).toBe(1);
     expect(frame.batches.at(-1)?.pointSize).toBe(1);
   });
@@ -238,25 +236,42 @@ describe('a Session Snapshot planned for WebGL2', () => {
     );
   });
 
-  test('a lit Room starts with 320 alternating Indoor Backdrop strips', () => {
+  test('a lit Room clears to its solid Atari ST backdrop colour', () => {
+    const inside = session();
+    inside.teleport({ id: 3, kind: 'room' });
+
+    const frame = planFrame(
+      world,
+      inside.snapshot,
+      size,
+      undefined,
+      defaultSettings().presentation
+    );
+
+    expect(frame.clear).toEqual(
+      atariSTColour(inside.snapshot.indoor!.foreground)!
+    );
+    expect(frame.batches.map(batch => batch.mode)).toEqual(['lines']);
+    expect(frame.batches[0]?.colour).toEqual(ScenePalette.whiteInk);
+    expect(frame.lines).toBeGreaterThan(0);
+    expect(frame.points).toBe(0);
+  });
+
+  test('Authentic presentation retains the decoded C64 Room backdrop', () => {
     const inside = session();
     inside.teleport({ id: 3, kind: 'room' });
 
     const frame = planFrame(world, inside.snapshot, size);
 
     expect(frame.clear).toEqual(ScenePalette.blackInk);
-    expect(frame.batches.slice(0, 2).map(batch => batch.mode)).toEqual([
+    expect(frame.batches.map(batch => batch.mode)).toEqual([
       'triangles',
-      'triangles'
+      'triangles',
+      'lines'
     ]);
     expect(
       frame.batches[0]!.vertices.length + frame.batches[1]!.vertices.length
     ).toBe(320 * 6 * 2);
-    expect(frame.batches[0]?.colour).not.toEqual(frame.batches[1]?.colour);
-    expect(frame.batches.slice(2).map(batch => batch.mode)).toEqual(['lines']);
-    expect(frame.batches[2]?.colour).toEqual(ScenePalette.whiteInk);
-    expect(frame.lines).toBeGreaterThan(0);
-    expect(frame.points).toBe(0);
   });
 
   test('a dark Room clears black and submits no geometry at all', () => {
@@ -350,7 +365,6 @@ describe('a Session Snapshot planned for WebGL2', () => {
     expect(frame.batches.map(batch => batch.mode)).toEqual([
       'triangles',
       'lines',
-      'lines',
       'points'
     ]);
   });
@@ -359,10 +373,18 @@ describe('a Session Snapshot planned for WebGL2', () => {
     const inside = session();
     inside.teleport({ id: 3, kind: 'room' });
     const orrery = createTargOrrery(defaultSettings().presentation.sky);
-    const frame = planFrame(world, inside.snapshot, size, orrery);
+    const frame = planFrame(
+      world,
+      inside.snapshot,
+      size,
+      orrery,
+      defaultSettings().presentation
+    );
 
     expect(frame.sky).toBeUndefined();
-    expect(frame.clear).toEqual(ScenePalette.blackInk);
+    expect(frame.clear).toEqual(
+      atariSTColour(inside.snapshot.indoor!.foreground)!
+    );
   });
 });
 
@@ -380,7 +402,7 @@ describe('a Session Snapshot submitted to WebGL2', () => {
     ).toBeTrue();
   });
 
-  test('surface commands clear, then draw ground, dim Ink, bright Ink and Far Points', () => {
+  test('surface commands clear, then draw ground, clipped Ink and Far Points', () => {
     const { calls, renderer } = fakeRenderer();
 
     renderer.draw(world, session().snapshot, size);
@@ -394,9 +416,6 @@ describe('a Session Snapshot submitted to WebGL2', () => {
       'ink',
       'buffer',
       'draw:4',
-      'ink',
-      'buffer',
-      'draw:1',
       'ink',
       'buffer',
       'draw:1',
@@ -462,10 +481,10 @@ describe('a Session Snapshot submitted to WebGL2', () => {
       thickness: 2
     });
 
-    // The two Ink batches become blended instance draws, one instance per line; ground
+    // The surviving Ink batch becomes a blended instance draw; ground
     // triangles and Far Points are untouched.
     const instanced = calls.filter(call => call.startsWith('instanced'));
-    expect(instanced).toHaveLength(2);
+    expect(instanced).toHaveLength(1);
     for (const call of instanced) {
       expect(call.startsWith('instanced:4:')).toBeTrue();
     }
@@ -488,25 +507,27 @@ describe('a Session Snapshot submitted to WebGL2', () => {
       thickness: 1
     });
 
-    expect(calls.filter(call => call.startsWith('instanced'))).toHaveLength(2);
+    expect(calls.filter(call => call.startsWith('instanced'))).toHaveLength(1);
     expect(
       uniforms.filter(uniform => uniform.name === 'extent')
     ).toContainEqual({ name: 'extent', values: [0.5 + 8 * 0.5] });
     expect(uniforms).toContainEqual({ name: 'halo', values: [0.5] });
   });
 
-  test('a lit Room submits both backdrop halves before its Ink', () => {
+  test('a lit Room clears once and submits only its Ink', () => {
     const inside = session();
     inside.teleport({ id: 3, kind: 'room' });
     const { calls, renderer } = fakeRenderer();
 
-    renderer.draw(world, inside.snapshot, size);
+    renderer.draw(
+      world,
+      inside.snapshot,
+      size,
+      undefined,
+      defaultSettings().presentation
+    );
 
-    expect(calls.filter(call => call.startsWith('draw:'))).toEqual([
-      'draw:4',
-      'draw:4',
-      'draw:1'
-    ]);
+    expect(calls.filter(call => call.startsWith('draw:'))).toEqual(['draw:1']);
   });
 
   test('a dark Room clears without submitting any geometry', () => {
@@ -539,7 +560,6 @@ describe('a Session Snapshot submitted to WebGL2', () => {
       'draw:6',
       'blend:off',
       'draw:4',
-      'draw:1',
       'draw:1',
       'draw:0'
     ]);

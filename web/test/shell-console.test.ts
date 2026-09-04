@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
 import { playerState } from '../src/gameCore/index.ts';
-import { GameplaySession } from '../src/session/index.ts';
+import { visible } from '../src/projection/index.ts';
+import { GameplaySession, sessionContent } from '../src/session/index.ts';
+import { defaultSettings, flightModel } from '../src/settings/index.ts';
 import {
   SETTING_VALUES,
   executeConsoleCommand,
@@ -12,11 +14,21 @@ import {
 } from '../src/shell/console.ts';
 import type { PreferencesChange } from '../src/shell/preferences.ts';
 import type { SaveOutcome, SavePersistence } from '../src/shell/saves.ts';
+import { createWalkabout } from '../src/shell/session.ts';
 import type { TypefaceId } from '../src/shell/typography.ts';
+import { World, atUnsignedSurfacePosition } from '../src/world/index.ts';
 import { emptyContent } from './fixtures/save.ts';
+import { loadPayload } from './replay/artifacts.ts';
 
 const CELL = 65_536;
-const CELLS_PER_AXIS = 16;
+const CELLS_PER_AXIS = 256;
+const bundle = await loadPayload();
+const world = new World(bundle);
+const content = sessionContent(
+  world,
+  bundle,
+  flightModel(defaultSettings().flight, bundle.flight!, world.groundExtent)
+);
 
 /// The parser takes its grid bound from the world it reads for; the tests read for Targ's 16×16.
 const parse = (line: string, cellsPerAxis = CELLS_PER_AXIS) =>
@@ -24,15 +36,19 @@ const parse = (line: string, cellsPerAxis = CELLS_PER_AXIS) =>
 
 const harness = (
   overrides: {
+    readonly objectName?: (slot: number) => string | undefined;
     readonly rooms?: readonly number[];
     readonly saveOutcomes?: readonly SaveOutcome[];
+    readonly session?: GameplaySession;
   } = {}
 ) => {
-  const session = new GameplaySession(
-    emptyContent(),
-    playerState({ position: { x: 8.5 * CELL, y: 128, z: 8.5 * CELL } }),
-    undefined
-  );
+  const session =
+    overrides.session ??
+    new GameplaySession(
+      emptyContent(),
+      playerState({ position: { x: 8.5 * CELL, y: 128, z: 8.5 * CELL } }),
+      undefined
+    );
   const changes: PreferencesChange[] = [];
   const faces: TypefaceId[] = [];
   const calls: string[] = [];
@@ -61,6 +77,9 @@ const harness = (
     cellSize: () => CELL,
     cellsPerAxis: () => CELLS_PER_AXIS,
     hasRoom: id => rooms.has(id),
+    objectName:
+      overrides.objectName ?? (slot => bundle.text?.messages[slot]?.text),
+    objectSlots: () => world.objects.length,
     persistence,
     preferences: {
       current: () => ({ composition: 'panel', panelRendition: 'targ' }),
@@ -97,18 +116,88 @@ describe('reading a console command line', () => {
     expect(() => parse('warp 3')).toThrow("unknown command 'warp': type help");
   });
 
-  test('reads a grid reference, and refuses one off the world', () => {
+  test('reads a grid reference across the full 24-bit surface', () => {
     expect(parse('goto 03 11')).toEqual({
       kind: 'gotoCell',
       x: 3,
       z: 11
     });
-    expect(() => parse('goto 16 00')).toThrow(
-      'a x cell must be from 0 through 15, and is 16'
+    expect(parse('goto 136 136')).toEqual({
+      kind: 'gotoCell',
+      x: 136,
+      z: 136
+    });
+    expect(() => parse('goto 256 00')).toThrow(
+      'a x cell must be from 0 through 255, and is 256'
     );
     expect(() => parse('goto 00 -1')).toThrow(
-      'a z cell must be from 0 through 15, and is -1'
+      'a z cell must be from 0 through 255, and is -1'
     );
+  });
+
+  test('accepts an optional bounded altitude', () => {
+    expect(parse('goto 136 136 4259008')).toEqual({
+      height: 4_259_008,
+      kind: 'gotoCell',
+      x: 136,
+      z: 136
+    });
+    expect(() => parse('goto 8 8 -1')).toThrow(
+      'a height must be from 0 through 16777215, and is -1'
+    );
+    expect(() => parse('goto 8 8 16777216')).toThrow(
+      'a height must be from 0 through 16777215, and is 16777216'
+    );
+  });
+
+  test('reads an object slot across the payload object census', () => {
+    expect(parse('goto object 0')).toEqual({ kind: 'gotoObject', slot: 0 });
+    expect(parse('goto object 63')).toEqual({ kind: 'gotoObject', slot: 63 });
+    expect(() => parse('goto object -1')).toThrow(
+      'an object slot must be from 0 through 63, and is -1'
+    );
+    expect(() => parse('goto object 64')).toThrow(
+      'an object slot must be from 0 through 63, and is 64'
+    );
+    expect(() => parse('goto object')).toThrow(
+      'goto object takes one object slot'
+    );
+    expect(() => parse('goto object 1 2')).toThrow(
+      'goto object takes one object slot'
+    );
+  });
+
+  test('reads a request to get one object slot', () => {
+    expect(parse('get 20')).toEqual({ kind: 'getObject', slot: 20 });
+    expect(() => parse('get')).toThrow('get takes one object slot');
+    expect(() => parse('get 20 21')).toThrow('get takes one object slot');
+    expect(() => parse('get 64')).toThrow(
+      'an object slot must be from 0 through 63, and is 64'
+    );
+  });
+
+  test('keeps where as the sole location-reporting command', () => {
+    expect(parse('where')).toEqual({ kind: 'where' });
+    expect(() => parse('where now')).toThrow('where takes no arguments');
+    expect(() => parse('location')).toThrow(
+      "unknown command 'location': type help"
+    );
+  });
+
+  test('reads inventory without arguments', () => {
+    expect(parse('inventory')).toEqual({ kind: 'inventory' });
+    expect(() => parse('inventory now')).toThrow(
+      'inventory takes no arguments'
+    );
+  });
+
+  test('reads a drop selector as all text following the verb', () => {
+    expect(parse('drop 42')).toEqual({ kind: 'dropObject', selector: '42' });
+    expect(parse('drop Essential 12939 Supply')).toEqual({
+      kind: 'dropObject',
+      selector: 'essential 12939 supply'
+    });
+    expect(() => parse('drop')).toThrow('drop takes an object id or name');
   });
 
   test('takes its grid bound from the world it reads for', () => {
@@ -134,7 +223,7 @@ describe('reading a console command line', () => {
 
   test('counts the words a command needs', () => {
     expect(() => parse('goto 3')).toThrow(
-      'goto takes two cells, or the word room and one Room'
+      'goto takes two cells and an optional height, or the word room and one Room'
     );
     // A bare `goto room` is answered by the more specific message, not the general one.
     expect(() => parse('goto room')).toThrow('goto room takes one Room');
@@ -211,6 +300,11 @@ describe('doing what a console command says', () => {
     const lines = run('help', deps);
 
     expect(lines.join(' ')).toContain('goto room');
+    expect(lines.join(' ')).toContain('goto object');
+    expect(lines.join(' ')).toContain('get <object-slot>');
+    expect(lines.join(' ')).toContain('inventory');
+    expect(lines.join(' ')).not.toContain('location');
+    expect(lines.join(' ')).toContain('goto <x> <z> [height]');
     expect(lines.join(' ')).toContain('save <slot>');
   });
 
@@ -219,9 +313,143 @@ describe('doing what a console command says', () => {
 
     expect(run('where', deps)).toEqual([
       'SURFACE · cell 08-08',
-      'x 557056 y 128 z 557056',
+      'position x 557056.000 y 128.000 z 557056.000',
+      'orientation heading 0.000 pitch 0.000 roll 0.000 radians',
       'on foot'
     ]);
+  });
+
+  test('reports position and orientation rounded to three decimal places', () => {
+    const session = new GameplaySession(
+      emptyContent(),
+      playerState({
+        heading: Math.PI / 3,
+        pitch: -0.125,
+        position: { x: 557_056.25, y: 128.5, z: 557_055.75 },
+        roll: 0.0625
+      }),
+      undefined
+    );
+    const { deps } = harness({ session });
+
+    expect(run('where', deps)).toEqual([
+      'SURFACE · cell 08-08',
+      'position x 557056.250 y 128.500 z 557055.750',
+      'orientation heading 1.047 pitch -0.125 roll 0.063 radians',
+      'on foot'
+    ]);
+  });
+
+  test('prints the Carried Stack one named object per line', () => {
+    const session = createWalkabout(bundle, defaultSettings()).session;
+    const { deps } = harness({ session });
+    session.carry(29);
+    session.carry(43);
+
+    expect(run('inventory', deps)).toEqual([
+      '(29) NEUTRON FUEL',
+      '(43) WINCHESTER'
+    ]);
+  });
+
+  test('reports an empty inventory', () => {
+    const { deps } = harness();
+
+    expect(run('inventory', deps)).toEqual(['inventory is empty']);
+  });
+
+  test('drops a carried object by id or a distinctive part of its name', () => {
+    const session = createWalkabout(bundle, defaultSettings()).session;
+    const { deps } = harness({ session });
+
+    for (const selector of ['42', '12939', 'supply']) {
+      session.carry(42);
+      expect(run(`drop ${selector}`, deps)).toEqual([
+        'dropped (42) ESSENTIAL 12939 SUPPLY'
+      ]);
+      expect(session.snapshot.carriedStack).not.toContain(42);
+    }
+  });
+
+  test('prefers a carried object id over a numeric name match', () => {
+    const session = createWalkabout(bundle, defaultSettings()).session;
+    session.carry(20);
+    session.carry(42);
+    const { deps } = harness({
+      objectName: slot => (slot === 20 ? 'SUPPLY 42' : 'OTHER'),
+      session
+    });
+
+    expect(run('drop 42', deps)).toEqual(['dropped (42) OTHER']);
+    expect(session.snapshot.carriedStack).toEqual([20]);
+  });
+
+  test('refuses missing and ambiguous inventory name matches', () => {
+    const session = createWalkabout(bundle, defaultSettings()).session;
+    session.carry(20);
+    session.carry(21);
+    const { deps } = harness({
+      objectName: slot => (slot === 20 ? 'RED KEY' : 'BLUE KEY'),
+      session
+    });
+
+    expect(run('drop wrench', deps)).toEqual([
+      "no carried object matches 'wrench'"
+    ]);
+    expect(run('drop key', deps)).toEqual([
+      "'key' matches more than one carried object: (20) RED KEY, (21) BLUE KEY"
+    ]);
+    expect(session.snapshot.carriedStack).toEqual([20, 21]);
+  });
+
+  test('reports ordinary drop refusals without changing inventory', () => {
+    const session = createWalkabout(bundle, defaultSettings()).session;
+    const { deps } = harness({ session });
+
+    expect(run('drop 42', deps)).toEqual(['inventory is empty']);
+
+    session.carry(42);
+    session.board(1);
+    session.placeInAir({ ...session.snapshot.player.position, y: 10_000 });
+    expect(run('drop supply', deps)).toEqual([
+      'cannot drop objects while airborne'
+    ]);
+    expect(session.snapshot.carriedStack).toContain(42);
+  });
+
+  test('gets a remote object when the ordinary take rules allow it', () => {
+    const session = createWalkabout(bundle, defaultSettings()).session;
+    const { deps } = harness({ session });
+
+    expect(run('get 20', deps)).toEqual(['took object 20']);
+    expect(session.snapshot.carriedStack).toContain(20);
+    expect(session.snapshot.residence.get(20)).toEqual({ kind: 'carried' });
+  });
+
+  test('refuses to get an object that the ordinary take rules forbid', () => {
+    const session = createWalkabout(bundle, defaultSettings()).session;
+    const { deps } = harness({ session });
+
+    expect(run('get 10', deps)).toEqual(['object 10 is fixed in place']);
+    expect(session.snapshot.carriedStack).not.toContain(10);
+  });
+
+  test('keeps all other take refusals and object states visible', () => {
+    const session = createWalkabout(bundle, defaultSettings()).session;
+    const { deps } = harness({ session });
+    const before = session.snapshot.player;
+
+    expect(run('get 2', deps)).toEqual(['object 02 is too heavy']);
+    expect(run('get 8', deps)).toEqual(['object 08 is not in the world']);
+    expect(run('get 20', deps)).toEqual(['took object 20']);
+    expect(run('get 20', deps)).toEqual(['object 20 is already carried']);
+    expect(session.snapshot.player).toEqual(before);
+
+    for (let slot = 21; slot < 30; slot += 1) {
+      session.carry(slot);
+    }
+    expect(run('get 30', deps)).toEqual(['inventory is full']);
+    expect(session.snapshot.carriedStack).not.toContain(30);
   });
 
   test('goes to the middle of a cell, on the surface, at the altitude it found', () => {
@@ -235,6 +463,118 @@ describe('doing what a console command says', () => {
     expect(session.snapshot.player.position.z).toBeCloseTo(11.5 * CELL);
     // The altitude it found, not one invented for it.
     expect(session.snapshot.player.position.y).toBe(128);
+  });
+
+  test('places a flyable craft at the requested height', () => {
+    const session = new GameplaySession(
+      content,
+      playerState({ position: { x: 0, y: 128, z: 0 } }),
+      undefined
+    );
+    session.board(1);
+    const { deps } = harness({ session });
+
+    expect(run('goto 8 8 4259008', deps)).toEqual([
+      'moved to cell 08-08 at height 4259008'
+    ]);
+    expect(session.snapshot.player.position).toEqual({
+      x: 8.5 * CELL,
+      y: 4_259_008,
+      z: 8.5 * CELL
+    });
+    expect(session.snapshot.mode).toBe('flying');
+    session.advance(1 / 60);
+    expect(session.snapshot.player.position.y).toBe(4_259_008);
+  });
+
+  test('goes to the Colony Craft exact surface position', () => {
+    const session = new GameplaySession(
+      content,
+      playerState({ position: { x: 0, y: 128, z: 0 } }),
+      undefined
+    );
+    session.board(0);
+    const { deps } = harness({ session });
+    const colonyCraft = world.objects.find(object => object.slot === 63)!;
+
+    expect(run('goto object 63', deps)).toEqual([
+      'moved to object 63 on SURFACE'
+    ]);
+    expect(session.snapshot.location).toEqual({ kind: 'surface' });
+    expect(session.snapshot.player.position).toEqual(colonyCraft.origin);
+    expect(session.snapshot.mode).toBe('flying');
+  });
+
+  test('normalises a remote surface object into the unsigned world', () => {
+    const session = new GameplaySession(
+      content,
+      playerState({ position: { x: 0, y: 128, z: 0 } }),
+      undefined
+    );
+    session.board(0);
+    const { deps } = harness({ session });
+    const lift = world.objects.find(object => object.slot === 62)!;
+
+    run('goto object 63', deps);
+    expect(session.snapshot.mode).toBe('flying');
+    expect(run('goto object 62', deps)).toEqual([
+      'moved to object 62 on SURFACE'
+    ]);
+    expect(session.snapshot.player.position).toEqual(
+      atUnsignedSurfacePosition(lift).origin
+    );
+    expect(session.snapshot.mode).toBe('grounded');
+    expect(
+      visible(world, session.snapshot.player.position, {
+        residence: session.snapshot.residence
+      }).detailedObjects
+    ).toBeGreaterThan(0);
+  });
+
+  test('goes to an underground object in its Room', () => {
+    const session = new GameplaySession(
+      content,
+      playerState({ position: { x: 0, y: 128, z: 0 } }),
+      undefined
+    );
+    const { deps } = harness({ session });
+    const interstellarShip = world.objects.find(object => object.slot === 7)!;
+
+    expect(run('goto object 7', deps)).toEqual([
+      'moved to object 07 in ROOM 05'
+    ]);
+    expect(session.snapshot.location).toEqual({ id: 5, kind: 'room' });
+    expect(session.snapshot.player.position).toEqual(interstellarShip.origin);
+  });
+
+  test('starts an on-foot player falling from the requested height', () => {
+    const session = new GameplaySession(
+      content,
+      playerState({ position: { x: 0, y: 128, z: 0 } }),
+      undefined
+    );
+    const { deps } = harness({ session });
+
+    run('goto 136 136 100000', deps);
+    expect(session.snapshot.mode).toBe('flying');
+    expect(session.snapshot.player.position.y).toBe(100_000);
+
+    session.advance(1 / 60);
+    expect(session.snapshot.player.position.y).toBeLessThan(100_000);
+  });
+
+  test('starts a player in the non-flyable Interstellar Ship falling too', () => {
+    const session = new GameplaySession(
+      content,
+      playerState({ position: { x: 0, y: 128, z: 0 } }),
+      undefined
+    );
+    session.board(7);
+    const { deps } = harness({ session });
+
+    run('goto 8 8 100000', deps);
+    session.advance(1 / 60);
+    expect(session.snapshot.player.position.y).toBeLessThan(100_000);
   });
 
   test('teleports to a Room the payload has', () => {

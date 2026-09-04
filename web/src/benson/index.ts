@@ -25,6 +25,8 @@ export {
 export {
   BensonSession,
   DEFAULT_SESSION_SEED,
-  type BensonMessagePresentation
+  type BensonMessagePresentation,
+  type BensonMessageMode
 } from './session.ts';
 export { MessageTicker, codePointCount } from './ticker.ts';
+export { BensonDisplay, type BensonDisplayPhase } from './display.ts';

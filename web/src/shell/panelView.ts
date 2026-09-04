@@ -223,6 +223,43 @@ export const drawDamoclesCompass = (
 
 /// The width the panel is authored at, and the scale everything inside it is drawn to.
 const PANEL_WIDTH = 1280;
+const BENSON_CELL_COUNT = 23;
+
+const writeField = (
+  element: HTMLElement,
+  name: keyof PanelViewModel,
+  value: string
+): void => {
+  const points = [...value];
+  if (name !== 'message' || points.length !== BENSON_CELL_COUNT) {
+    element.classList.remove('benson-cells');
+    if (element.textContent !== value) {
+      element.textContent = value;
+    }
+    return;
+  }
+  if (
+    element.classList.contains('benson-cells') &&
+    element.children.length === BENSON_CELL_COUNT
+  ) {
+    points.forEach((point, index) => {
+      const cell = element.children.item(index);
+      if (cell !== null && cell.textContent !== point) {
+        cell.textContent = point;
+      }
+    });
+    return;
+  }
+  element.classList.add('benson-cells');
+  element.replaceChildren(
+    ...points.map(point => {
+      const cell = document.createElement('span');
+      cell.className = 'benson-cell';
+      cell.textContent = point;
+      return cell;
+    })
+  );
+};
 
 /// Keep the authored panel filling the width it is given.
 ///
@@ -259,9 +296,7 @@ export const installPanel = (
       for (const element of elements.fields) {
         const name = element.dataset['field'] as keyof PanelViewModel;
         const value = String(model[name] ?? '');
-        if (element.textContent !== value) {
-          element.textContent = value;
-        }
+        writeField(element, name, value);
       }
       for (const element of elements.lamps) {
         const name = element.dataset['lamp'] as keyof PanelViewModel;

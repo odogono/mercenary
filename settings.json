@@ -6,8 +6,7 @@
     "timeScale": 3
   },
   "message": {
-    "holdSeconds": 3,
-    "charactersPerSecond": 2
+    "holdSeconds": 3
   },
   "scripts": {
     "timeScale": 6,

@@ -52,11 +52,35 @@ export class TextTable {
     return this.compose(message.tokens, values);
   }
 
+  /// Compose the exact character source consumed by the recovered Benson Display.
+  ///
+  /// Padding words are invisible in transcript text but position a short message inside the
+  /// 25-shift display burst, so the display must receive them intact.
+  messageForDisplay(
+    index: number,
+    values: Substitutions = NO_SUBSTITUTIONS
+  ): string | undefined {
+    const message = this.messages[index];
+    return message === undefined
+      ? undefined
+      : this.composeForDisplay(message.tokens, values);
+  }
+
   /// Compose a bare token stream.
   ///
   /// Benson Scripts carry message text inside the instruction rather than in the table, in this
   /// same token vocabulary, which is why this takes tokens rather than a message.
   compose(
+    tokens: readonly Token[],
+    values: Substitutions = NO_SUBSTITUTIONS
+  ): string {
+    return this.composeForDisplay(tokens, values)
+      .split(' ')
+      .filter(piece => piece.length > 0)
+      .join(' ');
+  }
+
+  composeForDisplay(
     tokens: readonly Token[],
     values: Substitutions = NO_SUBSTITUTIONS
   ): string {
@@ -98,12 +122,6 @@ export class TextTable {
           continue;
       }
     }
-    // Collapse the runs of spaces the character-at-a-time rule leaves behind, and drop the
-    // leading one. Swift's `split(separator:)` discards empty subsequences, so the join is over
-    // non-empty pieces only — an empty filter here, not a cosmetic trim.
-    return out
-      .split(' ')
-      .filter(piece => piece.length > 0)
-      .join(' ');
+    return out;
   }
 }

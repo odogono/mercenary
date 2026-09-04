@@ -11,6 +11,7 @@ import {
 import {
   Ink,
   World,
+  objectSegments,
   type Residence,
   type Segment
 } from '../src/world/index.ts';
@@ -79,6 +80,47 @@ describe('Reference surface visibility', () => {
     expect(seen.segments.length).toBe(302);
     expect(seen.distant).toEqual([]);
     expect(seen.points.length).toBe(3);
+  });
+
+  test('selects and places Surface Structures beyond the city grid', () => {
+    const source = world.cell(2, 11)!;
+    const sourceSegment = source.segments(0)[0]!;
+    const shift = 32 * world.cellSize;
+    const seen = visible(world, surfacePosition(34, 11, 4096));
+
+    expect(
+      hasSegment(
+        seen.segments,
+        { ...sourceSegment.a, x: sourceSegment.a.x + shift },
+        { ...sourceSegment.b, x: sourceSegment.b.x + shift }
+      )
+    ).toBeTrue();
+  });
+
+  test('the lift stored past signed range is visible at its unsigned 24-bit position', () => {
+    const lift = object(62);
+    const position = {
+      x: lift.origin.x + 0x01_00_00_00,
+      y: lift.origin.y,
+      z: lift.origin.z + 0x01_00_00_00
+    };
+    const seen = visible(world, position);
+
+    expect(Math.floor(position.x / world.cellSize)).toBe(136);
+    expect(seen.detailedObjects).toBeGreaterThan(0);
+    expect(seen.segments).toContainEqual({
+      ...objectSegments(lift)[0]!,
+      a: {
+        ...objectSegments(lift)[0]!.a,
+        x: objectSegments(lift)[0]!.a.x + 0x01_00_00_00,
+        z: objectSegments(lift)[0]!.a.z + 0x01_00_00_00
+      },
+      b: {
+        ...objectSegments(lift)[0]!.b,
+        x: objectSegments(lift)[0]!.b.x + 0x01_00_00_00,
+        z: objectSegments(lift)[0]!.b.z + 0x01_00_00_00
+      }
+    });
   });
 
   test('all reach separates every other Surface Structure as distant', () => {

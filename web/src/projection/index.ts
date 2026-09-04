@@ -2,18 +2,20 @@ import { atan, cos, sin, tan, toFloat32 } from '../math/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import {
   SURFACE,
-  displacement,
+  atUnsignedSurfacePosition,
   isDetailed,
   isDrawable,
-  movedTo,
   objectSegments,
+  placedAtResidence,
   room,
   type Ink,
   type Residence,
+  type RoadWorkspace,
   type Segment,
   type World,
   type Location as WorldLocation
 } from '../world/index.ts';
+import { wrapSurfaceAxis } from '../world/surfaceCoordinates.ts';
 
 /// Perspective projection from world space to view pixels, and what is worth projecting.
 ///
@@ -130,6 +132,61 @@ export const viewportCentre = (size: Size): Point => ({
   x: size.width / 2,
   y: size.height / 2
 });
+
+/// The Reference Viewport after the renderer maps it onto the output frame.
+///
+/// Projection retains the original pixel aspect and field of view. The final canvas is the
+/// presentation surface, however, so its edges are the clipping edges; applying the uniform
+/// projection scale to this rectangle a second time creates an inset horizontal letterbox.
+export const referenceViewportBounds = (size: Size): Rect => ({
+  height: size.height,
+  width: size.width,
+  x: 0,
+  y: 0
+});
+
+export type ProjectionLineMode = 'clipped' | 'unclipped';
+
+/// Liang-Barsky clipping keeps one parametric interval and therefore preserves endpoint order.
+const clippedToRect = (
+  first: Point,
+  second: Point,
+  rect: Rect
+): readonly [Point, Point] | undefined => {
+  const dx = second.x - first.x;
+  const dy = second.y - first.y;
+  const interval = { entering: 0, leaving: 1 };
+  const constrain = (direction: number, distance: number): boolean => {
+    if (direction === 0) {
+      return distance >= 0;
+    }
+    const ratio = distance / direction;
+    if (direction < 0) {
+      interval.entering = Math.max(interval.entering, ratio);
+    } else {
+      interval.leaving = Math.min(interval.leaving, ratio);
+    }
+    return interval.entering <= interval.leaving;
+  };
+  if (
+    !constrain(-dx, first.x - rect.x) ||
+    !constrain(dx, rect.x + rect.width - first.x) ||
+    !constrain(-dy, first.y - rect.y) ||
+    !constrain(dy, rect.y + rect.height - first.y)
+  ) {
+    return undefined;
+  }
+  return [
+    {
+      x: first.x + interval.entering * dx,
+      y: first.y + interval.entering * dy
+    },
+    {
+      x: first.x + interval.leaving * dx,
+      y: first.y + interval.leaving * dy
+    }
+  ];
+};
 
 export const horizontalFocalLength = (size: Size): number =>
   ReferenceViewport.focalPixels *
@@ -317,7 +374,11 @@ export class Camera {
   }
 
   /// Project one world segment, or undefined when it is clipped away entirely.
-  projectSegment(segment: Segment, size: Size): ScreenLine | undefined {
+  projectSegment(
+    segment: Segment,
+    size: Size,
+    mode: ProjectionLineMode = 'clipped'
+  ): ScreenLine | undefined {
     const a = this.viewSpace(segment.a);
     const b = this.viewSpace(segment.b);
     if (!(a.z <= this.farPlane || b.z <= this.farPlane)) {
@@ -327,8 +388,8 @@ export class Camera {
     if (clipped === undefined) {
       return undefined;
     }
-    const first = this.project(clipped[0], size);
-    const second = this.project(clipped[1], size);
+    let first = this.project(clipped[0], size);
+    let second = this.project(clipped[1], size);
     if (
       !Number.isFinite(first.x) ||
       !Number.isFinite(first.y) ||
@@ -336,6 +397,17 @@ export class Camera {
       !Number.isFinite(second.y)
     ) {
       return undefined;
+    }
+    if (mode === 'clipped') {
+      const screen = clippedToRect(
+        first,
+        second,
+        referenceViewportBounds(size)
+      );
+      if (screen === undefined) {
+        return undefined;
+      }
+      [first, second] = screen;
     }
     // The one narrowing. `ScreenLine` is `Float` in the kit, and this is where it becomes one.
     return {
@@ -457,6 +529,35 @@ const withinHorizon = (
   Math.abs(origin.y - position.y) < reach &&
   Math.abs(origin.z - position.z) < reach;
 
+const translatePoint = (point: Vector3, x: number, z: number): Vector3 => ({
+  x: point.x + x,
+  y: point.y,
+  z: point.z + z
+});
+
+const translateSegment = (segment: Segment, x: number, z: number): Segment => ({
+  ...segment,
+  a: translatePoint(segment.a, x, z),
+  b: translatePoint(segment.b, x, z)
+});
+
+const translateWorkspace = (
+  workspace: RoadWorkspace,
+  x: number,
+  z: number
+): RoadWorkspace => {
+  const point = (index: number): Vector3 | undefined => {
+    const source = workspace[index];
+    return source === undefined ? undefined : translatePoint(source, x, z);
+  };
+  return [point(0), point(1), point(2), point(3)];
+};
+
+const positiveRemainder = (value: number, modulus: number): number => {
+  const remainder = value % modulus;
+  return remainder < 0 ? remainder + modulus : remainder;
+};
+
 /// Gather what is worth projecting near the camera. Frustum rejection is left to the
 /// projection step, which has to compute view space anyway.
 ///
@@ -489,17 +590,27 @@ export const visible = (
   const appendObjects = (location: WorldLocation): void => {
     for (const object of world.objects) {
       const where = residence?.get(object.slot);
-      if (!isDrawable(object, location, where)) {
+      const parkedSurfaceObject =
+        location.kind === 'surface' &&
+        object.placement === 'surface' &&
+        !object.withinWorld &&
+        (where === undefined ||
+          (where.kind === 'surface' && where.at === undefined));
+      if (!isDrawable(object, location, where) && !parkedSurfaceObject) {
         continue;
       }
-      const moved = where === undefined ? undefined : displacement(where);
-      const placed = moved === undefined ? object : movedTo(object, moved);
+      const placed =
+        where === undefined
+          ? location.kind === 'surface'
+            ? atUnsignedSurfacePosition(object)
+            : object
+          : placedAtResidence(world, object, where, location);
       if (isDetailed(placed, position)) {
         append(segments, objectSegments(placed));
         detailedObjects += 1;
       } else if (
         placed.drawsFarAsPoint &&
-        (rules.farPoints === 'every' ||
+        ((!parkedSurfaceObject && rules.farPoints === 'every') ||
           placed.origin.y >= position.y ||
           withinHorizon(
             placed.origin,
@@ -521,36 +632,65 @@ export const visible = (
     return { detailedObjects, distant, points, segments };
   }
 
-  const column = Math.floor(position.x / world.cellSize);
-  const row = Math.floor(position.z / world.cellSize);
+  const repeats = rules.reach === 'cell';
+  const column = Math.floor(
+    (repeats ? wrapSurfaceAxis(position.x) : position.x) / world.cellSize
+  );
+  const row = Math.floor(
+    (repeats ? wrapSurfaceAxis(position.z) : position.z) / world.cellSize
+  );
   const radius = rules.reach === 'ring' ? 1 : 0;
-  const firstColumn = rules.reach === 'all' ? 0 : Math.max(0, column - radius);
+  const firstColumn =
+    rules.reach === 'all'
+      ? 0
+      : repeats
+        ? column - radius
+        : Math.max(0, column - radius);
   const lastColumn =
     rules.reach === 'all'
       ? world.cellsPerAxis - 1
-      : Math.min(world.cellsPerAxis - 1, column + radius);
-  const firstRow = rules.reach === 'all' ? 0 : Math.max(0, row - radius);
+      : repeats
+        ? column + radius
+        : Math.min(world.cellsPerAxis - 1, column + radius);
+  const firstRow =
+    rules.reach === 'all'
+      ? 0
+      : repeats
+        ? row - radius
+        : Math.max(0, row - radius);
   const lastRow =
     rules.reach === 'all'
       ? world.cellsPerAxis - 1
-      : Math.min(world.cellsPerAxis - 1, row + radius);
+      : repeats
+        ? row + radius
+        : Math.min(world.cellsPerAxis - 1, row + radius);
   for (let selectedRow = firstRow; selectedRow <= lastRow; selectedRow++) {
     for (
       let selectedColumn = firstColumn;
       selectedColumn <= lastColumn;
       selectedColumn++
     ) {
-      const cell = world.cell(selectedColumn, selectedRow);
+      const sourceColumn = repeats
+        ? positiveRemainder(selectedColumn, world.cellsPerAxis)
+        : selectedColumn;
+      const sourceRow = repeats
+        ? positiveRemainder(selectedRow, world.cellsPerAxis)
+        : selectedRow;
+      const cell = world.cell(sourceColumn, sourceRow);
       if (cell !== undefined && cell.index !== 0) {
         const isOccupied = selectedColumn === column && selectedRow === row;
-        const selected = cell.segments(
-          elapsed,
-          isOccupied ? world.roadWorkspace(cell) : undefined
-        );
+        const dx = (selectedColumn - sourceColumn) * world.cellSize;
+        const dz = (selectedRow - sourceRow) * world.cellSize;
+        const workspace = isOccupied
+          ? translateWorkspace(world.roadWorkspace(cell), dx, dz)
+          : undefined;
+        const selected = cell
+          .segments(elapsed, workspace)
+          .map(segment => translateSegment(segment, dx, dz));
         if (rules.reach === 'all' && !isOccupied) {
           const distance = Math.hypot(
-            cell.centre.x - position.x,
-            cell.centre.z - position.z
+            cell.centre.x + dx - position.x,
+            cell.centre.z + dz - position.z
           );
           for (const segment of selected) {
             distant.push({ ...segment, distance });
@@ -577,18 +717,19 @@ export const visible = (
 export const projectFrame = (
   camera: Camera,
   seen: Visible,
-  size: Size
+  size: Size,
+  lineMode: ProjectionLineMode = 'clipped'
 ): { distant: DistantScreenLine[]; lines: ScreenLine[]; points: Point[] } => {
   const distant: DistantScreenLine[] = [];
   for (const segment of seen.distant) {
-    const line = camera.projectSegment(segment, size);
+    const line = camera.projectSegment(segment, size, lineMode);
     if (line !== undefined) {
       distant.push({ ...line, distance: segment.distance });
     }
   }
   const lines: ScreenLine[] = [];
   for (const segment of seen.segments) {
-    const line = camera.projectSegment(segment, size);
+    const line = camera.projectSegment(segment, size, lineMode);
     if (line !== undefined) {
       lines.push(line);
     }

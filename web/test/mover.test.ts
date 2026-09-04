@@ -269,23 +269,67 @@ describe('properties that hold whatever the block', () => {
     expect(turned.player.heading).toBeLessThan(2 * Math.PI);
   });
 
-  test('movement is held inside the world', () => {
-    const cornered = held(
+  test('surface movement continues beyond the city boundary', () => {
+    const outside = held(
       {
         ...start(),
         player: playerState({
-          heading: Math.PI,
-          position: { x: 10, y: 63, z: 10 }
+          heading: 0,
+          position: {
+            x: 10,
+            y: 63,
+            z: flight.limits.groundExtent - 10
+          }
         })
       },
       intent({ walk: 1 }),
-      600
+      1
     );
 
-    expect(cornered.player.position.z).toBeGreaterThanOrEqual(0);
-    expect(cornered.player.position.z).toBeLessThanOrEqual(
+    expect(outside.player.position.z).toBeGreaterThan(
       flight.limits.groundExtent
     );
+  });
+
+  test('a flying craft can leave the city too', () => {
+    const state = flying();
+    const outside = step(
+      {
+        ...state,
+        player: {
+          ...state.player,
+          heading: 0,
+          position: {
+            ...state.player.position,
+            z: flight.limits.groundExtent - 10
+          }
+        }
+      },
+      IDLE,
+      HOST_FRAME,
+      flight
+    );
+
+    expect(outside.player.position.z).toBeGreaterThan(
+      flight.limits.groundExtent
+    );
+  });
+
+  test('surface coordinates wrap like the Reference Build\'s 24-bit axes', () => {
+    const wrapped = step(
+      {
+        ...start(),
+        player: playerState({
+          heading: 0,
+          position: { x: 10, y: 63, z: 0xff_ff_f0 }
+        })
+      },
+      intent({ walk: 1 }),
+      1 / 40,
+      flight
+    );
+
+    expect(wrapped.player.position.z).toBe(24);
   });
 
   test('heading zero travels toward increasing Z', () => {

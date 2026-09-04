@@ -89,7 +89,11 @@ export const installConsole = (
   const run = (line: string): void => {
     print([`] ${line}`]);
     try {
-      const command = parseConsoleCommand(line, deps.cellsPerAxis());
+      const command = parseConsoleCommand(
+        line,
+        deps.cellsPerAxis(),
+        deps.objectSlots()
+      );
       if (command !== undefined) {
         print(executeConsoleCommand(command, deps));
       }

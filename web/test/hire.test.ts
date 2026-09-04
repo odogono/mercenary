@@ -43,7 +43,7 @@ const atTheTerminal = async (
 
 /// Says yes to the terminal's question and lets the answer land.
 const sayYes = (route: LegalRoute): void => {
-  route.advance(20);
+  route.waitForMessage('DO YOU WANT TO HIRE?');
   route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
   route.advance(30);
 };
@@ -63,7 +63,9 @@ describe('the Antenna the rental terminal needs', () => {
 
   test('the terminal is dead without it, whatever the balance', async () => {
     const route = await atTheTerminal(99_000_000, { antenna: 'absent' });
-    sayYes(route);
+    route.advance(20);
+    route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
+    route.advance(30);
     const after = route.session.observations().observations;
     expect(after['shipInbound']).toBe(0);
     expect(after['credits']).toBe(99_000_000);
@@ -182,19 +184,11 @@ describe('walking in and hiring', () => {
 
     // The terminal's poll does not wait forever, so the answer goes in while
     // it is still asking.
-    let heard = '';
-    const listen = (ticks: number): void => {
-      for (let step = 0; step < ticks; step++) {
-        route.advance(0.5);
-        const text = route.session.observations().observations['messageText'];
-        if (typeof text === 'string' && text.includes('8-8')) {
-          heard = text;
-        }
-      }
-    };
-    listen(40);
+    route.waitForMessage('DO YOU WANT TO HIRE?');
     route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
-    listen(80);
+    route.waitForMessage('8-8');
+    const heard = route.session.snapshot.bensonMessage?.completedText ?? '';
+    route.advance(5);
 
     const after = route.session.observations().observations;
     expect(after['credits']).toBe(1);

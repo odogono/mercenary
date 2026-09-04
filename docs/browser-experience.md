@@ -8,7 +8,7 @@ acceptance; Phase B proceeds in the ordered slices below.**
 
 Make the Browser Shell look like Mercenary. The Game Surface gains a **Benson Panel** — an
 authored instrument-panel Display Composition hand-recreated by eye from the Atari ST
-*Escape from Targ* panel — switchable to a **Panel Rendition** wearing the ST *Damocles*
+_Escape from Targ_ panel — switchable to a **Panel Rendition** wearing the ST _Damocles_
 dressing over the same Targ gameplay data. The Browser Shell gains a **System Menu** (Esc)
 owning a settings page and the three-slot save chooser, and a **Shell Console** (backtick)
 for debug commands. One graphical style, defined as a CSS token layer, covers all of it.
@@ -82,8 +82,9 @@ export type Composition = "panel" | "strip";
   supplied alongside at install time and rebuilt in the load-restore callback; it is not a
   Snapshot extension.
 - Targ rendition mapping: elevation←pitch, LOCATION←position/cellSize grid (ROOM nn
-  underground), ALTITUDE←position.y, SPEED signed, message box + `BENSON G9-ST` caption,
-  COMPASS←heading; lamps←touchdown / run mode.
+  underground), ALTITUDE←the middle/high bytes of position.y, SPEED signed, the shared
+  23-cell Benson Display + `BENSON G9-ST` caption, COMPASS←heading; the red altitude lamp is
+  lit while aboard a craft.
 - Damocles rendition: same data in Damocles dressing — inventory window←carried residence
   entries (names via the context map), cash←credits, clock←Targ time-of-day from elapsed;
   T/P gauges and impact-clock semantics are static dressing; ground-proximity and run lamps
@@ -100,10 +101,13 @@ export type Composition = "panel" | "strip";
 - Saves: three slots, ADR 0026 unchanged; `describe(slot)` surfaces the codec's actual
   reject reason; two-press confirm for overwrite and delete, in the chooser and as
   `save <n> confirm` in the console.
-- Console commands v1: `help`, `where`, `goto <x> <z>`, `goto room <n>`,
+- Console commands: `help`, `where`, `inventory`, `get <object-slot>`,
+  `drop <object-id|name>`,
+  `goto <x> <z> [height]`, `goto room <n>`, `goto object <slot>`,
   `set <setting> <value>`, `save <slot> [confirm]`, `load <slot>`, `panel <rendition>` (an alias
   of `set rendition`). The console reaches **three** sinks, and the distinction is worth stating:
-  the Gameplay Session's own actions (`place`, `teleport`) for `goto`; the preference stores for
+  the Gameplay Session's own actions (`place`, `placeInAir`, `teleport`, `takeObject`) for
+  `goto` and `get`; the preference stores for
   `set` — where `typeface` keeps its own key rather than living in preferences, and
   `sky document` and `structures document` hand each choice back to the tuning document; and the
   Save core for `save`/`load`. `load` is a **whole-session replacement** rather than a mutation:
@@ -111,11 +115,31 @@ export type Composition = "panel" | "strip";
   writes play (ADR 0028): never part of the Game Surface, never in traces.
 - The session validates neither `place` nor `teleport` — `place` accepts any vector and bypasses
   `Containment`; `teleport` accepts an unknown Room in silence — so refusing unusable input is
-  the console's own work. `goto <x> <z>` takes a grid reference bounded by the world, lands at
-  the cell's middle, teleports to the surface first (placing alone would move the player inside
-  whatever Room they occupy) and keeps the altitude it found. `goto room <n>` refuses Room zero,
+  the console's own work. `goto <x> <z> [height]` takes a grid reference across the full unsigned
+  24-bit surface (cells 0 through 255), lands at the cell's middle, and teleports to the surface
+  first (placing alone would move the player inside whatever Room they occupy). Without a height
+  it keeps the altitude it found. With a height it puts a flyable craft into flight; on foot or
+  aboard a non-flyable craft, the existing crash-tumble Mover makes the player fall. `goto room
+<n>` refuses Room zero,
   which names the surface, and any Room the payload lacks; it teleports and does **not** place,
   so the session's own containment decides where the player lands.
+  `goto object <slot>` follows the object's current Residence. Surface objects use their exact
+  position, with signed parked coordinates normalised into the unsigned 24-bit world; Room
+  objects teleport into their owning Room and use room-local coordinates. Carried and removed
+  objects have no independent destination and are reported rather than guessed.
+- `where` prints the player's Location and surface grid reference, X/Y/Z position,
+  heading/pitch/roll orientation in radians, and Occupancy. Position and orientation values are
+  rounded to three decimal places.
+- `get <object-slot>` remotely takes one object without changing the player's Location or pose.
+  It bypasses distance and Room only: fixed/heavy rules and the Carried Stack limit still apply,
+  and carried or out-of-world objects are reported without changing state.
+- `inventory` prints the Carried Stack in acquisition order, one Benson object id and name per
+  line. `drop` selects within that stack: a carried numeric id wins, otherwise exact names and
+  whole words/phrases rank ahead of substring matches. Ambiguous or absent matches are reported
+  without changing play. The selected object is passed to the Session's ordinary Drop action, so
+  airborne restrictions remain authoritative. An empty stack is reported explicitly. Console
+  input is always presented in uppercase so the
+  extracted display face never has to render its poor lowercase forms.
 - `save <n> confirm` presses the Save core twice in one command and leaves nothing armed, so a
   press in the chooser cannot finish what was typed in the console. If a third surface ever needs
   confirmation, the shape to adopt is a non-mutating `plan(action, slot) -> {needsConfirmation}`
@@ -127,10 +151,10 @@ export type Composition = "panel" | "strip";
 - Key routing order: browser-reserved Alt/Ctrl/Meta chords pass through untouched;
   Backquote toggles the console before the Control Profile sees it; Escape drives the
   layer stack; any open layer or focused form control swallows keys (arrows never become
-   Movement Intent); otherwise keys reach the Control Profile. Keyup always forwards.
-   Opening any layer — the console included, though it never pauses — releases held
-   keys; the menu pauses stepping (draw continues,
-   `clock.reset()` on resume).
+  Movement Intent); otherwise keys reach the Control Profile. Keyup always forwards.
+  Opening any layer — the console included, though it never pauses — releases held
+  keys; the menu pauses stepping (draw continues,
+  `clock.reset()` on resume).
 
 ## Testing strategy
 
@@ -188,7 +212,7 @@ export type Composition = "panel" | "strip";
   dot pairs; the Damocles elevation gauge keeps the sky/ground split in muted tints). The
   Damocles nav cluster's rows flex to fill its height.
 - **Console confirm wording**: `save <n> confirm` for occupied slots.
-- **Pause scope**: the System Menu pauses presentation ticking (message reveal, orrery
+- **Pause scope**: the System Menu pauses presentation ticking (Benson Display cadence, orrery
   clock) as well as simulation stepping — the whole frame freezes, as mocked.
 - **Widget copy**: `BENSON G9-ST` caption; Damocles nav order name/speed then
   coords/altitude/heading; clock format `HH-MM-SS`.

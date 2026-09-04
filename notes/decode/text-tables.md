@@ -49,10 +49,11 @@ compression scheme's cleverness: `LOCK` + `ED` costs two bytes.
 
 ## Character codes
 
-Letters are ASCII `A`–`Z`; `$20` is a space. Three punctuation codes are fixed
+Letters are ASCII `A`–`Z`; `$20` is a space. Five punctuation codes are fixed
 unambiguously by the words that use them: `$0D` is the hyphen (BROTHER-IN-LAW),
 `$6F` the apostrophe (COMMANDER'S), and `$6E` the comma (the single-character
-suffix in "AH, YOU ARE BACK").
+suffix in "AH, YOU ARE BACK"). The project-owned font tail and the load/save
+prompt settle `$0E` as `.` and `$6D` as `?`, producing `NO. O-9 ?` exactly.
 
 Codes `$00`–`$09` are the **digits**. The engine settles this rather than a word
 does: the numeric-field emitter (`PRINT_DECIMAL`, `$8E76`) unpacks a decimal
@@ -61,11 +62,8 @@ stream, so the font's first ten glyphs must be `0`–`9`. It also explains the "
 that was missing from "PRICE 5OOO CREDITS", which is a `$05` inside an inline
 literal — and it resolves `$09`, which had been listed as unknown.
 
-`$0E` and `$6D` remain **unresolved** and render as nothing. Both occur in the word
-used by the load and save prompts, which now decodes as `NO[0e] O-9 [6d]` — "NO.
-0-9" with a trailing mark, with the zero written as a letter O the way the game
-also writes "LOC O-O". They are listed in the payload's `unresolvedCodes`, so
-message 58 ("LOAD NO O-9") remains the one visibly incomplete string of the 64.
+No encountered character code remains unresolved. The payload therefore exports
+an empty `unresolvedCodes` list, and messages 58 and 59 retain their punctuation.
 
 ## What is addressable, and what is not
 

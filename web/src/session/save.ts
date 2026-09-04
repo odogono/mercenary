@@ -12,7 +12,7 @@ import type {
 import type { Location, Residence } from '../world/index.ts';
 import type { ShipFieldPoint, ShipFieldSaveSnapshot } from './shipField.ts';
 
-export const SAVE_SCHEMA_VERSION = 8 as const;
+export const SAVE_SCHEMA_VERSION = 10 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -42,12 +42,15 @@ export interface SaveEnvironment {
   };
 }
 
-export interface MessageTickerSaveSnapshot {
-  readonly charactersPerSecond: number;
-  readonly held: number;
-  readonly holdSeconds: number;
-  readonly revealed: number;
-  readonly text: string;
+export interface BensonDisplaySaveSnapshot {
+  readonly activeSourceText: string | null;
+  readonly cells: readonly string[];
+  readonly completionPhase: 'source' | 'blankFeed' | 'readingHold' | 'idle';
+  readonly cyclePosition: number;
+  readonly fractionalFrameRemainder: number;
+  readonly messageInterval: number;
+  readonly readingHoldProgress: number;
+  readonly sourceIndex: number;
 }
 
 export interface BensonHostSaveSnapshot extends Omit<
@@ -67,10 +70,11 @@ export interface BensonStateSaveSnapshot extends Omit<
 }
 
 export interface BensonSaveSnapshot {
+  readonly activeMessageText: string | null;
+  readonly display: BensonDisplaySaveSnapshot;
   readonly frames: number;
   readonly host: BensonHostSaveSnapshot;
   readonly state: BensonStateSaveSnapshot;
-  readonly ticker: MessageTickerSaveSnapshot | null;
 }
 
 export interface GameSaveSnapshot extends Omit<
@@ -337,23 +341,40 @@ const residence = (value: unknown, at: string): Residence => {
       exact(value, at, ['kind']);
       return { kind: source['kind'] };
     case 'room': {
-      const fields =
-        source['at'] === undefined ? ['id', 'kind'] : ['at', 'id', 'kind'];
+      const fields = [
+        ...(source['at'] === undefined ? [] : ['at']),
+        ...(source['heading'] === undefined ? [] : ['heading']),
+        'id',
+        'kind'
+      ];
       const out = exact(value, at, fields);
-      return out['at'] === undefined
-        ? { id: byte(out['id'], `${at}.id`), kind: 'room' }
-        : {
-            at: vector(out['at'], `${at}.at`),
-            id: byte(out['id'], `${at}.id`),
-            kind: 'room'
-          };
+      return {
+        ...(out['at'] === undefined
+          ? {}
+          : { at: vector(out['at'], `${at}.at`) }),
+        ...(out['heading'] === undefined
+          ? {}
+          : { heading: finite(out['heading'], `${at}.heading`) }),
+        id: byte(out['id'], `${at}.id`),
+        kind: 'room'
+      };
     }
     case 'surface': {
-      const fields = source['at'] === undefined ? ['kind'] : ['at', 'kind'];
+      const fields = [
+        ...(source['at'] === undefined ? [] : ['at']),
+        ...(source['heading'] === undefined ? [] : ['heading']),
+        'kind'
+      ];
       const out = exact(value, at, fields);
-      return out['at'] === undefined
-        ? { kind: 'surface' }
-        : { at: vector(out['at'], `${at}.at`), kind: 'surface' };
+      return {
+        ...(out['at'] === undefined
+          ? {}
+          : { at: vector(out['at'], `${at}.at`) }),
+        ...(out['heading'] === undefined
+          ? {}
+          : { heading: finite(out['heading'], `${at}.heading`) }),
+        kind: 'surface'
+      };
     }
     default:
       return fail(`${at}.kind is not a Residence`);
@@ -520,28 +541,111 @@ const game = (value: unknown, at: string): GameSaveSnapshot => {
   };
 };
 
-const ticker = (value: unknown, at: string): MessageTickerSaveSnapshot => {
+const display = (value: unknown, at: string): BensonDisplaySaveSnapshot => {
   const out = exact(value, at, [
-    'charactersPerSecond',
-    'held',
-    'holdSeconds',
-    'revealed',
-    'text'
+    'activeSourceText',
+    'cells',
+    'completionPhase',
+    'cyclePosition',
+    'fractionalFrameRemainder',
+    'messageInterval',
+    'readingHoldProgress',
+    'sourceIndex'
   ]);
-  const text = string(out['text'], `${at}.text`);
-  const revealed = nonNegative(out['revealed'], `${at}.revealed`);
-  if (revealed > [...text].length) {
-    fail(`${at}.revealed exceeds the message length`);
+  const activeSourceText =
+    out['activeSourceText'] === null
+      ? null
+      : string(out['activeSourceText'], `${at}.activeSourceText`);
+  const cells = array(out['cells'], `${at}.cells`, string);
+  if (cells.length !== 23 || cells.some(cell => [...cell].length !== 1)) {
+    fail(`${at}.cells must contain exactly 23 character cells`);
+  }
+  const sourceIndex = nonNegativeInteger(
+    out['sourceIndex'],
+    `${at}.sourceIndex`
+  );
+  if (sourceIndex > [...(activeSourceText ?? '')].length) {
+    fail(`${at}.sourceIndex exceeds the source text`);
+  }
+  const rawPhase = string(out['completionPhase'], `${at}.completionPhase`);
+  if (!['source', 'blankFeed', 'readingHold', 'idle'].includes(rawPhase)) {
+    fail(`${at}.completionPhase is not recognized`);
+  }
+  const messageInterval = integerInRange(
+    out['messageInterval'],
+    `${at}.messageInterval`,
+    26,
+    255
+  );
+  const cyclePosition = integerInRange(
+    out['cyclePosition'],
+    `${at}.cyclePosition`,
+    0,
+    messageInterval
+  );
+  const sourceLength = [...(activeSourceText ?? '')].length;
+  if (activeSourceText === null) {
+    if (rawPhase !== 'idle' || sourceIndex !== 0) {
+      fail(`${at} without an active source must be idle at source index zero`);
+    }
+  } else if (rawPhase !== 'source' && sourceIndex !== sourceLength) {
+    fail(`${at}.${rawPhase} must have consumed the complete source text`);
+  }
+  if (
+    (rawPhase === 'source' || rawPhase === 'blankFeed') &&
+    cyclePosition >= messageInterval
+  ) {
+    fail(`${at}.${rawPhase} cycle position must precede its interval boundary`);
+  }
+  if (
+    (rawPhase === 'readingHold' ||
+      (rawPhase === 'idle' && activeSourceText !== null)) &&
+    cyclePosition !== messageInterval
+  ) {
+    fail(`${at}.${rawPhase} must be at its interval boundary`);
+  }
+  const fractionalFrameRemainder = nonNegative(
+    out['fractionalFrameRemainder'],
+    `${at}.fractionalFrameRemainder`
+  );
+  if (fractionalFrameRemainder >= 1) {
+    fail(`${at}.fractionalFrameRemainder must be less than one frame`);
+  }
+  const readingHoldProgress = nonNegative(
+    out['readingHoldProgress'],
+    `${at}.readingHoldProgress`
+  );
+  if (
+    (rawPhase === 'source' || rawPhase === 'blankFeed') &&
+    readingHoldProgress !== 0
+  ) {
+    fail(`${at}.${rawPhase} cannot have reading-hold progress`);
+  }
+  if (
+    (rawPhase === 'readingHold' || rawPhase === 'idle') &&
+    fractionalFrameRemainder !== 0
+  ) {
+    fail(`${at}.${rawPhase} cannot have a fractional display frame`);
+  }
+  if (
+    activeSourceText === null &&
+    (cyclePosition !== 0 ||
+      fractionalFrameRemainder !== 0 ||
+      readingHoldProgress !== 0 ||
+      messageInterval !== 26 ||
+      cells.some(cell => cell !== ' '))
+  ) {
+    fail(`${at} without an active source must be the initial blank display`);
   }
   return {
-    charactersPerSecond: nonNegative(
-      out['charactersPerSecond'],
-      `${at}.charactersPerSecond`
-    ),
-    held: nonNegative(out['held'], `${at}.held`),
-    holdSeconds: nonNegative(out['holdSeconds'], `${at}.holdSeconds`),
-    revealed,
-    text
+    activeSourceText,
+    cells,
+    completionPhase: rawPhase as BensonDisplaySaveSnapshot['completionPhase'],
+    cyclePosition,
+    fractionalFrameRemainder,
+    messageInterval,
+    readingHoldProgress,
+    sourceIndex
   };
 };
 
@@ -618,13 +722,30 @@ const bensonHost = (value: unknown, at: string): BensonHostSaveSnapshot => {
 };
 
 const benson = (value: unknown, at: string): BensonSaveSnapshot => {
-  const out = exact(value, at, ['frames', 'host', 'state', 'ticker']);
+  const out = exact(value, at, [
+    'activeMessageText',
+    'display',
+    'frames',
+    'host',
+    'state'
+  ]);
+  const activeMessageText =
+    out['activeMessageText'] === null
+      ? null
+      : string(out['activeMessageText'], `${at}.activeMessageText`);
+  const displaySnapshot = display(out['display'], `${at}.display`);
+  if (
+    (activeMessageText === null) !==
+    (displaySnapshot.activeSourceText === null)
+  ) {
+    fail(`${at} message occurrence and display source must be active together`);
+  }
   return {
+    activeMessageText,
+    display: displaySnapshot,
     frames: nonNegative(out['frames'], `${at}.frames`),
     host: bensonHost(out['host'], `${at}.host`),
-    state: bensonState(out['state'], `${at}.state`),
-    ticker:
-      out['ticker'] === null ? null : ticker(out['ticker'], `${at}.ticker`)
+    state: bensonState(out['state'], `${at}.state`)
   };
 };
 
@@ -887,7 +1008,6 @@ const environment = (value: unknown, at: string): SaveEnvironment => {
     'scripts'
   ]);
   const message = exact(settings['message'], `${at}.settings.message`, [
-    'charactersPerSecond',
     'holdSeconds'
   ]);
   const scripts = exact(settings['scripts'], `${at}.settings.scripts`, [
@@ -943,10 +1063,6 @@ const environment = (value: unknown, at: string): SaveEnvironment => {
     settings: {
       flight: flightSettings(settings['flight'], `${at}.settings.flight`),
       message: {
-        charactersPerSecond: finite(
-          message['charactersPerSecond'],
-          `${at}.settings.message.charactersPerSecond`
-        ),
         holdSeconds: finite(
           message['holdSeconds'],
           `${at}.settings.message.holdSeconds`

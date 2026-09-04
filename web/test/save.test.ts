@@ -100,7 +100,7 @@ const envelope = (session: GameplaySession): SaveEnvelope => ({
 });
 
 describe('a Save Snapshot', () => {
-  test('uses schema v7 and stores object authority only at the session level', () => {
+  test('uses schema v10 and stores object authority only at the session level', () => {
     const gameplay = new GameplaySession(
       content,
       playerState({ position: { x: 0, y: 0, z: 0 } }),
@@ -108,7 +108,7 @@ describe('a Save Snapshot', () => {
     );
     const snapshot = gameplay.captureSaveSnapshot();
 
-    expect(SAVE_SCHEMA_VERSION).toBe(8);
+    expect(SAVE_SCHEMA_VERSION).toBe(10);
     expect(snapshot).toHaveProperty('carriedStack');
     expect(snapshot).toHaveProperty('deliveryFrames');
     expect(snapshot).toHaveProperty('objectFlags');
@@ -160,12 +160,12 @@ describe('a Save Snapshot', () => {
     const stale = JSON.parse(encodeSave(envelope(gameplay))) as {
       schemaVersion: number;
     };
-    stale.schemaVersion = 7;
+    stale.schemaVersion = SAVE_SCHEMA_VERSION - 1;
 
-    // No migration: a v7 Save has no continuation boundary for a terminal
-    // presentation, and inventing one would restore a different field.
+    // No migration: a v8 Save has a progressive ticker rather than the Benson
+    // Display continuation boundary, and inventing one would restore a different line.
     expect(() => decodeSave(JSON.stringify(stale), environment)).toThrow(
-      'unsupported Save schemaVersion 7'
+      `unsupported Save schemaVersion ${SAVE_SCHEMA_VERSION - 1}`
     );
   });
 
@@ -310,7 +310,7 @@ describe('a Save Snapshot', () => {
     expect(current.snapshot).toEqual(before);
   });
 
-  test('bounds input before parsing and refuses impossible ticker progress', () => {
+  test('bounds input before parsing and refuses impossible display progress', () => {
     const session = new GameplaySession(
       content,
       playerState({ position: { x: 0, y: 0, z: 0 } }),
@@ -318,15 +318,16 @@ describe('a Save Snapshot', () => {
     );
     session.scripts!.showText('SHORT');
     const save = envelope(session);
+    expect(save.snapshot.benson?.activeMessageText).toBe('SHORT');
     const impossible = {
       ...save,
       snapshot: {
         ...save.snapshot,
         benson: {
           ...save.snapshot.benson!,
-          ticker: {
-            ...save.snapshot.benson!.ticker!,
-            revealed: 6
+          display: {
+            ...save.snapshot.benson!.display,
+            sourceIndex: 6
           }
         }
       }
@@ -336,8 +337,78 @@ describe('a Save Snapshot', () => {
       decodeSave(' '.repeat(SAVE_JSON_CODE_UNIT_LIMIT + 1), environment)
     ).toThrow('exceeds');
     expect(() => decodeSave(encodeSave(impossible), environment)).toThrow(
-      'revealed'
+      'sourceIndex'
     );
+    expect(() =>
+      decodeSave(
+        encodeSave({
+          ...save,
+          snapshot: {
+            ...save.snapshot,
+            benson: {
+              ...save.snapshot.benson!,
+              activeMessageText: null
+            }
+          }
+        }),
+        environment
+      )
+    ).toThrow('active together');
+    expect(() =>
+      decodeSave(
+        encodeSave({
+          ...save,
+          snapshot: {
+            ...save.snapshot,
+            benson: {
+              ...save.snapshot.benson!,
+              display: {
+                ...save.snapshot.benson!.display,
+                readingHoldProgress: 1
+              }
+            }
+          }
+        }),
+        environment
+      )
+    ).toThrow('reading-hold progress');
+    const initial = scripts().captureSaveSnapshot();
+    expect(() =>
+      decodeSave(
+        encodeSave({
+          ...save,
+          snapshot: {
+            ...save.snapshot,
+            benson: {
+              ...initial,
+              display: {
+                ...initial.display,
+                cells: ['X', ...initial.display.cells.slice(1)]
+              }
+            }
+          }
+        }),
+        environment
+      )
+    ).toThrow('initial blank display');
+    expect(() =>
+      decodeSave(
+        encodeSave({
+          ...save,
+          snapshot: {
+            ...save.snapshot,
+            benson: {
+              ...save.snapshot.benson!,
+              display: {
+                ...save.snapshot.benson!.display,
+                completionPhase: 'readingHold'
+              }
+            }
+          }
+        }),
+        environment
+      )
+    ).toThrow('readingHold');
     expect(() =>
       decodeSave(
         encodeSave({
