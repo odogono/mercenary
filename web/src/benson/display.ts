@@ -150,6 +150,36 @@ export class BensonDisplay {
     return this.cells.join('');
   }
 
+  /// The stable reading view of a complete fitting message.
+  ///
+  /// The recovered burst still feeds blanks after the source terminator, which can evict one
+  /// or two printable cells from a nearly full line. Keep those authentic cells and timings as
+  /// continuation state, but present the intact source during the reading hold when it fits in
+  /// the aperture. Explicit decoded padding is retained whenever the burst already did so.
+  readingText(completedText: string | undefined): string {
+    const cells = this.displayText;
+    if (
+      !this.exhausted ||
+      completedText === undefined ||
+      codePointCount(completedText) > BensonDisplay.width ||
+      cells.trim() === completedText
+    ) {
+      return cells;
+    }
+    const source = this.sourcePoints;
+    return (
+      source.length > BensonDisplay.width
+        ? source.slice(-BensonDisplay.width)
+        : [
+            ...source,
+            ...Array.from(
+              { length: BensonDisplay.width - source.length },
+              blankCell
+            )
+          ]
+    ).join('');
+  }
+
   get progress(): number {
     const count = codePointCount(this.source);
     return count === 0 ? 0 : this.sourceIndex;

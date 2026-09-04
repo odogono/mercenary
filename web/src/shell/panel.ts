@@ -1,5 +1,6 @@
 import type { SessionSnapshot } from '../session/index.ts';
 import { locationText } from '../world/index.ts';
+import { surfaceCellCoordinate } from '../world/surfaceCoordinates.ts';
 
 /// What the Benson Panel needs beyond a Session Snapshot.
 ///
@@ -47,8 +48,13 @@ export const compassDegrees = (heading: number): number => {
 };
 
 /// The panel's own grid reference, two digits per axis.
-export const gridReference = (x: number, z: number, cellSize: number): string =>
-  `${digits(x / cellSize, 2)}-${digits(z / cellSize, 2)}`;
+export const gridReference = (x: number, z: number, cellSize: number): string => {
+  const axis = (value: number): string => {
+    const cell = surfaceCellCoordinate(value, cellSize);
+    return cell > 99 ? '**' : digits(cell, 2);
+  };
+  return `${axis(x)}-${axis(z)}`;
+};
 
 /// Time of day on Targ, as the Damocles clock shows it.
 ///

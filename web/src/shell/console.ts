@@ -18,7 +18,13 @@ import type { TypefaceId } from './typography.ts';
 export type ConsoleCommand =
   | { readonly kind: 'help' }
   | { readonly kind: 'where' }
-  | { readonly kind: 'gotoCell'; readonly x: number; readonly z: number }
+  | {
+      readonly height?: number;
+      readonly kind: 'gotoCell';
+      readonly x: number;
+      readonly z: number;
+    }
+  | { readonly kind: 'gotoObject'; readonly slot: number }
   | { readonly kind: 'gotoRoom'; readonly room: number }
   | { readonly kind: 'set'; readonly setting: SettingChoice }
   | {
@@ -151,6 +157,27 @@ const cell = (word: string, axis: string, cellsPerAxis: number): number => {
   return value;
 };
 
+const height = (word: string): number => {
+  const value = integer(word, 'a height');
+  const highest = 0xff_ff_ff;
+  if (value < 0 || value > highest) {
+    throw new Error(
+      `a height must be from 0 through ${highest}, and is ${value}`
+    );
+  }
+  return value;
+};
+
+const objectSlot = (word: string, objectSlots: number): number => {
+  const value = integer(word, 'an object slot');
+  if (value < 0 || value >= objectSlots) {
+    throw new Error(
+      `an object slot must be from 0 through ${objectSlots - 1}, and is ${value}`
+    );
+  }
+  return value;
+};
+
 const slotOf = (word: string): SaveSlot => {
   const value = integer(word, 'a slot');
   if (value !== 1 && value !== 2 && value !== 3) {
@@ -167,7 +194,8 @@ const slotOf = (word: string): SaveSlot => {
 /// the parser is honest about the world it is reading for rather than pinning one payload's shape.
 export const parseConsoleCommand = (
   line: string,
-  cellsPerAxis: number
+  cellsPerAxis: number,
+  objectSlots = 64
 ): ConsoleCommand | undefined => {
   const words = line.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const verb = words[0];
@@ -182,6 +210,15 @@ export const parseConsoleCommand = (
     case 'where':
       return { kind: 'where' };
     case 'goto':
+      if (rest[0] === 'object') {
+        if (rest.length !== 2) {
+          throw new Error('goto object takes one object slot');
+        }
+        return {
+          kind: 'gotoObject',
+          slot: objectSlot(rest[1]!, objectSlots)
+        };
+      }
       if (rest[0] === 'room') {
         if (rest.length !== 2) {
           throw new Error('goto room takes one Room');
@@ -194,10 +231,13 @@ export const parseConsoleCommand = (
         }
         return { kind: 'gotoRoom', room: id };
       }
-      if (rest.length !== 2) {
-        throw new Error('goto takes two cells, or the word room and one Room');
+      if (rest.length < 2 || rest.length > 3) {
+        throw new Error(
+          'goto takes two cells and an optional height, or the word room and one Room'
+        );
       }
       return {
+        ...(rest[2] === undefined ? {} : { height: height(rest[2]) }),
         kind: 'gotoCell',
         x: cell(rest[0]!, 'x', cellsPerAxis),
         z: cell(rest[1]!, 'z', cellsPerAxis)
@@ -246,6 +286,7 @@ export interface ConsoleDeps {
   readonly cellSize: () => number;
   readonly cellsPerAxis: () => number;
   readonly hasRoom: (id: number) => boolean;
+  readonly objectSlots: () => number;
   readonly persistence: SavePersistence;
   readonly preferences: PreferencesStore;
   readonly session: () => GameplaySession;
@@ -253,7 +294,7 @@ export interface ConsoleDeps {
 }
 
 const HELP = [
-  'help · where · goto <x> <z> · goto room <n>',
+  'help · where · goto <x> <z> [height] · goto room <n> · goto object <slot>',
   'panel <targ|damocles> · set <name> <value>',
   `set names: ${SETTING_NAMES.join(', ')}`,
   'save <slot> [confirm] · load <slot>'
@@ -292,12 +333,42 @@ export const executeConsoleCommand = (
       session.teleport(SURFACE);
       // The cell's middle, and the altitude they already had — the session would take any number
       // given to it, including one no play could reach.
-      session.place({
+      const position = {
         x: (command.x + 0.5) * size,
-        y: session.snapshot.player.position.y,
+        y: command.height ?? session.snapshot.player.position.y,
         z: (command.z + 0.5) * size
-      });
-      return [`moved to cell ${twoDigits(command.x)}-${twoDigits(command.z)}`];
+      };
+      if (command.height === undefined) {
+        session.place(position);
+      } else {
+        session.placeInAir(position);
+      }
+      return [
+        `moved to cell ${twoDigits(command.x)}-${twoDigits(command.z)}${
+          command.height === undefined ? '' : ` at height ${command.height}`
+        }`
+      ];
+    }
+    case 'gotoObject': {
+      const outcome = deps.session().placeAtObject(command.slot);
+      const label = twoDigits(command.slot);
+      switch (outcome.kind) {
+        case 'placed':
+          return [
+            `moved to object ${label} ${
+              outcome.location.kind === 'surface'
+                ? 'on SURFACE'
+                : `in ${locationText(outcome.location)}`
+            }`
+          ];
+        case 'carried':
+          return [`object ${label} is being carried`];
+        case 'gone':
+          return [`object ${label} is not in the world`];
+        case 'missing':
+          return [`there is no object ${label}`];
+      }
+      throw new Error('unknown object placement outcome');
     }
     case 'gotoRoom': {
       if (!deps.hasRoom(command.room)) {

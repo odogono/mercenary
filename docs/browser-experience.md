@@ -100,10 +100,11 @@ export type Composition = "panel" | "strip";
 - Saves: three slots, ADR 0026 unchanged; `describe(slot)` surfaces the codec's actual
   reject reason; two-press confirm for overwrite and delete, in the chooser and as
   `save <n> confirm` in the console.
-- Console commands v1: `help`, `where`, `goto <x> <z>`, `goto room <n>`,
+- Console commands v1: `help`, `where`, `goto <x> <z> [height]`, `goto room <n>`,
+  `goto object <slot>`,
   `set <setting> <value>`, `save <slot> [confirm]`, `load <slot>`, `panel <rendition>` (an alias
   of `set rendition`). The console reaches **three** sinks, and the distinction is worth stating:
-  the Gameplay Session's own actions (`place`, `teleport`) for `goto`; the preference stores for
+  the Gameplay Session's own actions (`place`, `placeInAir`, `teleport`) for `goto`; the preference stores for
   `set` — where `typeface` keeps its own key rather than living in preferences, and
   `sky document` and `structures document` hand each choice back to the tuning document; and the
   Save core for `save`/`load`. `load` is a **whole-session replacement** rather than a mutation:
@@ -111,11 +112,18 @@ export type Composition = "panel" | "strip";
   writes play (ADR 0028): never part of the Game Surface, never in traces.
 - The session validates neither `place` nor `teleport` — `place` accepts any vector and bypasses
   `Containment`; `teleport` accepts an unknown Room in silence — so refusing unusable input is
-  the console's own work. `goto <x> <z>` takes a grid reference bounded by the world, lands at
-  the cell's middle, teleports to the surface first (placing alone would move the player inside
-  whatever Room they occupy) and keeps the altitude it found. `goto room <n>` refuses Room zero,
+  the console's own work. `goto <x> <z> [height]` takes a grid reference across the full unsigned
+  24-bit surface (cells 0 through 255), lands at the cell's middle, and teleports to the surface
+  first (placing alone would move the player inside whatever Room they occupy). Without a height
+  it keeps the altitude it found. With a height it puts a flyable craft into flight; on foot or
+  aboard a non-flyable craft, the existing crash-tumble Mover makes the player fall. `goto room
+  <n>` refuses Room zero,
   which names the surface, and any Room the payload lacks; it teleports and does **not** place,
   so the session's own containment decides where the player lands.
+  `goto object <slot>` follows the object's current Residence. Surface objects use their exact
+  position, with signed parked coordinates normalised into the unsigned 24-bit world; Room
+  objects teleport into their owning Room and use room-local coordinates. Carried and removed
+  objects have no independent destination and are reported rather than guessed.
 - `save <n> confirm` presses the Save core twice in one command and leaves nothing armed, so a
   press in the chooser cannot finish what was typed in the console. If a third surface ever needs
   confirmation, the shape to adopt is a non-mutating `plan(action, slot) -> {needsConfirmation}`

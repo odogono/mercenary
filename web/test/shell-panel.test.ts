@@ -200,6 +200,9 @@ describe('the Benson Panel view model', () => {
   test('divides the surface by the world grid it was given', () => {
     expect(gridReference(0, 0, CELL)).toBe('00-00');
     expect(gridReference(3.9 * CELL, 11.2 * CELL, CELL)).toBe('03-11');
+    expect(gridReference(34.9 * CELL, 11.2 * CELL, CELL)).toBe('34-11');
+    expect(gridReference(99.9 * CELL, 99.9 * CELL, CELL)).toBe('99-99');
+    expect(gridReference(100 * CELL, 136 * CELL, CELL)).toBe('**-**');
   });
 
   test('names objects by slot, uppercased for the readout', () => {

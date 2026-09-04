@@ -10,7 +10,7 @@ import {
   loadSettings
 } from '../src/settings/index.ts';
 import { TextTable } from '../src/text/index.ts';
-import { World } from '../src/world/index.ts';
+import { atUnsignedSurfacePosition, World } from '../src/world/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 /// The Colony Craft transition, from both of its decoded directions: the one
@@ -59,6 +59,31 @@ const session = (): GameplaySession => {
 
 const CELL = 0x1_00_00;
 const DECK_REST = 0x40_ff_3f;
+
+test('reboarding the Dart after an object teleport keeps its new residence', () => {
+  const gameplay = session();
+  const lift = world.objects.find(object => object.slot === 62)!;
+  const remote = atUnsignedSurfacePosition(lift).origin;
+
+  gameplay.board(1);
+  expect(gameplay.placeAtObject(62)).toEqual({
+    kind: 'placed',
+    location: { kind: 'surface' }
+  });
+  expect(gameplay.game.player.position).toEqual(remote);
+
+  expect(gameplay.leaveCraft()?.slot).toBe(1);
+  expect(gameplay.residenceOf(1)).toEqual({
+    at: remote,
+    kind: 'surface'
+  });
+  expect(gameplay.reach('board', 1).outcome).toEqual({
+    kind: 'boarded',
+    slot: 1
+  });
+  expect(gameplay.game.player.position.x).toBe(remote.x);
+  expect(gameplay.game.player.position.z).toBe(remote.z);
+});
 
 /// Aboard a craft, climbing near-vertically inside the box's cell just under
 /// the entry band. The box is a sixteen-middle-byte square, so a shallow

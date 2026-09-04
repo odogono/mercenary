@@ -1,4 +1,4 @@
-import { MessageTicker } from '../benson/index.ts';
+import { BensonDisplay } from '../benson/index.ts';
 import {
   ARRIVAL_TUNING,
   altitudeAt,
@@ -64,6 +64,7 @@ export type ArrivalEntry =
 export interface ArrivalPacing {
   readonly charactersPerSecond: number;
   readonly holdSeconds: number;
+  readonly timeScale: number;
   readonly titleCardSeconds: number;
 }
 
@@ -102,6 +103,27 @@ const SKIP_STEP_LIMIT = 40_000;
 
 const STEP_SECONDS = 1 / 60;
 
+/// Centre one fitting authored line inside the recovered 25-shift burst.
+///
+/// Two leading cells are sacrificed as the 25 inputs pass through 23 cells. The last cell is
+/// supplied by the source terminator, so a fitting line completes in one burst and leaves its
+/// actual cells behind for the next line, just like decoded Benson text does.
+const arrivalDisplaySource = (text: string): string => {
+  const points = [...text];
+  if (points.length >= BensonDisplay.width) {
+    return text;
+  }
+  const empty = BensonDisplay.width - points.length;
+  const left = Math.floor(empty / 2);
+  const right = empty - left;
+  const cells = [
+    ...Array.from({ length: left }, () => ' '),
+    ...points,
+    ...Array.from({ length: right }, () => ' ')
+  ];
+  return `  ${cells.slice(0, -1).join('')}`;
+};
+
 export class ArrivalDirector {
   private readonly bridge: ArrivalSessionBridge;
   private readonly milestones: Script00Milestones;
@@ -111,18 +133,20 @@ export class ArrivalDirector {
   private phase: ArrivalPhaseKind;
   private titleHeld = 0;
   private line = -1;
-  private ticker: MessageTicker | undefined;
+  private readonly display: BensonDisplay;
   private handedOver = false;
   private beat: Script00Beat | undefined;
   private altitude: number = ARRIVAL_TUNING.entryAltitude;
   private descentSeconds = 0;
   private blackoutLeft = 0;
+  private lineElapsed = 0;
 
   constructor(options: ArrivalOptions) {
     this.bridge = options.bridge;
     this.milestones = options.milestones;
     this.narration = options.narration ?? ARRIVAL_NARRATION;
     this.pacing = options.pacing;
+    this.display = new BensonDisplay(50, this.pacing.timeScale, 0);
     switch (options.entry.kind) {
       case 'done':
         this.phase = 'done';
@@ -191,7 +215,7 @@ export class ArrivalDirector {
     }
     return this.phase === 'titleCard'
       ? ARRIVAL_TITLE
-      : (this.ticker?.visibleText ?? '');
+      : this.display.readingText(this.narration[this.line]?.text);
   }
 
   /// Whether the panel's readouts are still asterisks.
@@ -227,27 +251,43 @@ export class ArrivalDirector {
   }
 
   private lineProgress(): number {
-    const ticker = this.ticker;
-    if (ticker === undefined) {
+    const item = this.narration[this.line];
+    if (item === undefined) {
       return 0;
     }
-    const item = this.narration[this.line];
-    const hold = this.holdFor(item);
-    const revealSeconds =
-      ticker.text.length / Math.max(0.001, this.pacing.charactersPerSecond);
-    const total = revealSeconds + hold;
-    const done = ticker.isRevealed
-      ? revealSeconds + Math.min(hold, this.heldSeconds)
-      : ticker.revealed / Math.max(0.001, this.pacing.charactersPerSecond);
-    return Math.min(1, total <= 0 ? 1 : done / total);
+    const total = this.displaySecondsFor(item) + this.holdFor(item);
+    return Math.min(1, total <= 0 ? 1 : this.lineElapsed / total);
   }
 
-  /// The Arrival's own hold clock. `MessageTicker` keeps its hold private, so the Arrival keeps
-  /// its own — it needs the fraction to grow the planet by, not just the finished flag.
+  /// The Arrival's own hold clock is separate from the shell-owned Benson Display so the four
+  /// countdown lines can retain their shorter authored holds without changing the component.
   private heldSeconds = 0;
 
   private holdFor(item: NarrationItem | undefined): number {
     return this.pacing.holdSeconds * (item?.holdScale ?? 1);
+  }
+
+  /// Preserve the authored line duration by putting any time beyond the authentic half-second
+  /// scanout into the same silent interval the in-game display uses.
+  private intervalFor(item: NarrationItem): number {
+    const desired =
+      [...item.text].length / Math.max(0.001, this.pacing.charactersPerSecond);
+    const active = BensonDisplay.activeFrames / 50;
+    const waiting = Math.max(0, desired - active);
+    return Math.max(
+      26,
+      BensonDisplay.activeFrames +
+        Math.round(waiting * 50 * Math.max(0, this.pacing.timeScale))
+    );
+  }
+
+  private displaySecondsFor(item: NarrationItem): number {
+    const interval = this.intervalFor(item);
+    return (
+      BensonDisplay.activeFrames / 50 +
+      (interval - BensonDisplay.activeFrames) /
+        (50 * Math.max(0.001, this.pacing.timeScale))
+    );
   }
 
   private beginLine(index: number): void {
@@ -257,12 +297,9 @@ export class ArrivalDirector {
       this.handOver();
       return;
     }
-    this.ticker = new MessageTicker(
-      item.text,
-      this.pacing.charactersPerSecond,
-      this.holdFor(item)
-    );
+    this.display.start(arrivalDisplaySource(item.text), this.intervalFor(item));
     this.heldSeconds = 0;
+    this.lineElapsed = 0;
     this.phase =
       index >= DESCENT_LINE
         ? 'descent'
@@ -272,7 +309,6 @@ export class ArrivalDirector {
   }
 
   private handOver(): void {
-    this.ticker = undefined;
     this.handedOver = true;
     this.phase = 'descent';
     // The opening script has been waiting since the session was built, unadvanced. Its clock is
@@ -319,16 +355,17 @@ export class ArrivalDirector {
       }
       return;
     }
-    const ticker = this.ticker;
-    if (ticker === undefined) {
+    const item = this.narration[this.line];
+    if (item === undefined) {
       this.handOver();
       return;
     }
-    ticker.advance(seconds);
-    if (ticker.isRevealed) {
+    this.display.advance(seconds);
+    this.lineElapsed += seconds;
+    if (this.display.isFinished) {
       this.heldSeconds += seconds;
     }
-    if (ticker.isFinished) {
+    if (this.display.isFinished && this.heldSeconds >= this.holdFor(item)) {
       this.beginLine(this.line + 1);
     }
   }

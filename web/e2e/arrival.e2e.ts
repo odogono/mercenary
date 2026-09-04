@@ -54,6 +54,9 @@ test('the Arrival presents the opening and lands on the game', async ({
   await expect(panelField(page, 'message')).toContainText('NOVADRIVE', {
     timeout: 20_000
   });
+  await expect(
+    panelField(page, 'message').locator(':scope > .benson-cell')
+  ).toHaveCount(23);
 
   // The player cannot fly the wreck they are about to become.
   const before = await page.locator('#frame').getAttribute('data-x');

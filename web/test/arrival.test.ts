@@ -37,6 +37,7 @@ const pacingOf = (from: Settings): ArrivalPacing => ({
   charactersPerSecond:
     from.arrival.charactersPerSecond * from.arrival.timeScale,
   holdSeconds: from.arrival.holdSeconds,
+  timeScale: from.arrival.timeScale,
   titleCardSeconds: from.arrival.titleCardSeconds
 });
 
@@ -179,7 +180,7 @@ describe('the Arrival', () => {
     while (live.director.isActive()) {
       const text = live.director.narrationText();
       if (text !== undefined && text.length > 0) {
-        seen.add(text);
+        seen.add(text.trim());
       }
       live.director.step(STEP);
     }
@@ -187,6 +188,39 @@ describe('the Arrival', () => {
       expect(seen).toContain(item.text);
     }
     expect(live.director.narrationText()).toBeUndefined();
+  });
+
+  test('scrolls Arrival Narration into the same 23 cells from the right', () => {
+    const live = harness();
+
+    while (live.director.current().kind === 'titleCard') {
+      live.director.step(STEP);
+    }
+
+    expect(live.director.narrationText()).toBe(' '.repeat(23));
+    live.director.step(6 / 50);
+    expect(live.director.narrationText()).toBe(' '.repeat(21) + 'NO');
+  });
+
+  test('keeps the display cells between Arrival Narration lines', () => {
+    const live = harness();
+    let firstLineSeen = false;
+    let carriedIntoNextLine = false;
+
+    while (live.director.narrationText() !== undefined) {
+      const visible = live.director.narrationText()!.trim();
+      if (visible === 'NOVADRIVE COUNTDOWN') {
+        firstLineSeen = true;
+      } else if (firstLineSeen && visible !== '' && visible !== '3') {
+        carriedIntoNextLine = true;
+      }
+      if (visible === '3') {
+        break;
+      }
+      live.director.step(1 / 50);
+    }
+
+    expect(carriedIntoNextLine).toBeTrue();
   });
 
   test('reads asterisks in space and live values from the descent on', () => {

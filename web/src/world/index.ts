@@ -8,6 +8,7 @@ import {
   type Vector3
 } from '../orientation/index.ts';
 import type * as Doc from '../payload/documents.ts';
+import { wrapSurfaceAxis } from './surfaceCoordinates.ts';
 
 /// The render-ready world, derived from a payload Bundle.
 ///
@@ -212,6 +213,18 @@ export const movedTo = (
     vertices: object.vertices.map(v => vector(v.x + dx, v.y + dy, v.z + dz))
   };
 };
+
+/// A surface object's stored coordinates are signed only because the extractor
+/// needs one ordinary JSON number for a 24-bit bit-pattern. The live machine
+/// reads the same bits as an unsigned surface position.
+export const atUnsignedSurfacePosition = (
+  object: ObjectPlacement
+): ObjectPlacement =>
+  movedTo(object, {
+    x: wrapSurfaceAxis(object.origin.x),
+    y: object.origin.y,
+    z: wrapSurfaceAxis(object.origin.z)
+  });
 
 /// One full surface map line decoded from a road-table endpoint pair.
 interface SurfaceMapLine {

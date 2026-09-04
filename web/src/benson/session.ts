@@ -111,7 +111,7 @@ export class BensonSession {
   get messageText(): string {
     return this.messageMode === 'legacyOracle'
       ? (this.ticker?.visibleText ?? '')
-      : this.display.displayText;
+      : this.display.readingText(this.completeMessage);
   }
 
   get activeMessageText(): string | undefined {
@@ -139,7 +139,7 @@ export class BensonSession {
         ...(!this.display.isComplete || this.completeMessage === undefined
           ? {}
           : { completedText: this.completeMessage }),
-        displayText: this.display.displayText,
+        displayText: this.display.readingText(this.completeMessage),
         occurrence: this.messageOccurrence,
         reveal: {
           complete: this.display.isComplete,

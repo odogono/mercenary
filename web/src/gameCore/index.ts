@@ -17,6 +17,7 @@ import type {
   UndergroundEntrance,
   UndergroundLift
 } from '../payload/documents.ts';
+import { wrapSurfaceAxis } from '../world/surfaceCoordinates.ts';
 
 /// The simulation. A pure function of state, intent and elapsed time.
 ///
@@ -409,6 +410,19 @@ const wrap = (radians: number): number => {
   return remainder < 0 ? remainder + TURN : remainder;
 };
 
+/// The frozen Trace Oracle predates out-of-city travel and retains its accepted
+/// city-edge clamp. Live play uses the Reference Build's full 24-bit surface.
+export type SurfaceBounds = 'city' | 'world';
+
+const surfaceAxis = (
+  value: number,
+  flight: FlightModel,
+  bounds: SurfaceBounds
+): number =>
+  bounds === 'city'
+    ? Math.min(flight.limits.groundExtent, Math.max(0, value))
+    : wrapSurfaceAxis(value);
+
 /// The shortest signed turn to an angle: what pitch wraps to, and what any caller steering toward
 /// a heading needs.
 ///
@@ -433,9 +447,6 @@ export const rawPitch = (radians: number, rules: FlightRules): number => {
   const wrapped = raw % units;
   return wrapped < 0 ? wrapped + units : wrapped;
 };
-
-const clampToWorld = (value: number, extent: number): number =>
-  Math.min(extent, Math.max(0, value));
 
 /// Stop everything at the supplied craft or walking altitude. Both crossings of the craft door
 /// begin from rest, but their vertical positions differ.
@@ -666,7 +677,8 @@ const walk = (
   dt: number,
   flight: FlightModel,
   colonyCraft: ColonyCraftRules | undefined,
-  containment: Containment | undefined
+  containment: Containment | undefined,
+  surfaceBounds: SurfaceBounds
 ): GameState => {
   const player = state.player;
   const frames = dt * flight.limits.referenceFrameRate;
@@ -704,9 +716,9 @@ const walk = (
   let stepInterlock = state.stepInterlock;
   if (containment === undefined) {
     position = {
-      x: clampToWorld(stepped.x, flight.limits.groundExtent),
+      x: surfaceAxis(stepped.x, flight, surfaceBounds),
       y: stepped.y,
-      z: clampToWorld(stepped.z, flight.limits.groundExtent)
+      z: surfaceAxis(stepped.z, flight, surfaceBounds)
     };
   } else {
     // Inside a Room the walls are the bound, and touching one is recorded rather than merely
@@ -812,7 +824,8 @@ const integrate = (
   dt: number,
   flight: FlightModel,
   containment: Containment | undefined,
-  endgame: EndgameRules | undefined
+  endgame: EndgameRules | undefined,
+  surfaceBounds: SurfaceBounds
 ): GameState => {
   const colonyCraft = endgame?.colonyCraft;
   // The transition counts down in the frame loop rather than in either mover, so it runs whether
@@ -834,7 +847,15 @@ const integrate = (
   // Build flies a crash: it copies that block's bytes over the live ones.
   const installed = counted.mover ?? counted.craft;
   if (installed === undefined || counted.room !== undefined) {
-    return walk(counted, intent, dt, flight, colonyCraft, containment);
+    return walk(
+      counted,
+      intent,
+      dt,
+      flight,
+      colonyCraft,
+      containment,
+      surfaceBounds
+    );
   }
 
   const player = counted.player;
@@ -931,13 +952,15 @@ const integrate = (
   // Translation, one axis at a time as the Reference Build did it.
   const advance = speed * frames;
   const direction = facing({ ...player, heading, pitch });
-  const x = clampToWorld(
+  const x = surfaceAxis(
     player.position.x + direction.x * advance,
-    limits.groundExtent
+    flight,
+    surfaceBounds
   );
-  const z = clampToWorld(
+  const z = surfaceAxis(
     player.position.z + direction.z * advance,
-    limits.groundExtent
+    flight,
+    surfaceBounds
   );
 
   // Altitude only moves once the craft has the speed for it, which is the take-off run: on the
@@ -1018,7 +1041,8 @@ export const step = (
   dt: number,
   flight: FlightModel,
   containment?: Containment,
-  endgame?: EndgameRules
+  endgame?: EndgameRules,
+  surfaceBounds: SurfaceBounds = 'world'
 ): GameState => {
   if (!Number.isFinite(dt) || dt <= 0) {
     return state;
@@ -1028,7 +1052,15 @@ export const step = (
   let remaining = dt;
   while (remaining > 0) {
     const slice = Math.min(remaining, MAXIMUM_STEP);
-    result = integrate(result, intent, slice, flight, containment, endgame);
+    result = integrate(
+      result,
+      intent,
+      slice,
+      flight,
+      containment,
+      endgame,
+      surfaceBounds
+    );
     remaining -= slice;
   }
   return result;

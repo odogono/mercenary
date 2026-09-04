@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
-import { BensonDisplay } from '../src/benson/index.ts';
+import { BensonDisplay, BensonProgram } from '../src/benson/index.ts';
+import { TextTable } from '../src/text/index.ts';
+import { loadPayload } from './replay/artifacts.ts';
 
 const shifted = (text: string): string => text.padStart(BensonDisplay.width);
 
@@ -67,6 +69,27 @@ describe('the authentic Benson Display', () => {
     display.advance(25 / 50);
     expect(display.displayText).toBe('    STATUS REPORT      ');
     expect(display.isComplete).toBeTrue();
+  });
+
+  test('keeps every fitting payload message intact through its reading hold', async () => {
+    const bundle = await loadPayload();
+    const program = BensonProgram.fromDocument(bundle.benson!);
+    const text = new TextTable(bundle.text!);
+
+    for (const instruction of program.instructions) {
+      if (instruction.op !== 'msg') {
+        continue;
+      }
+      const spoken = text.compose(instruction.tokens);
+      if ([...spoken].length > BensonDisplay.width) {
+        continue;
+      }
+      const display = new BensonDisplay(50, 1, 0);
+      display.start(text.composeForDisplay(instruction.tokens), 26);
+      display.advance(BensonDisplay.activeFrames / 50);
+
+      expect(display.readingText(spoken).trim(), spoken).toBe(spoken);
+    }
   });
 
   test('keeps active scanout visible while fully scaling the recovered wait', () => {

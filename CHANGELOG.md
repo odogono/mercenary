@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The Shell Console can now navigate the complete 256-by-256 unsigned surface with
+  `goto <x> <z> [height]`, including heights that place a flyable craft in flight and make an
+  on-foot player or non-flyable craft fall under the existing Mover. `goto object <slot>` follows
+  an object's current Residence to its exact surface or Room coordinates, reports carried and
+  removed objects, and reaches both remote lifts and the Colony Craft. New object and Surface
+  Structure catalogues document every payload slot, named landmark, lift, and canonical structure
+  placement.
+
 - Enhanced presentation can now show every Surface Structure through a live, persisted
   Structure Reach choice in the System Menu or `set structures` Shell Console command. The
   occupied Surface Cell stays bright while distant bright Ink fades toward `#a0a0a0`; black Ink
@@ -66,16 +74,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Surface travel now uses the Reference Build's full unsigned 24-bit axes, wrapping at their
+  boundaries instead of stopping at the city edge. The 16-by-16 Surface Structure map repeats at
+  the corresponding translated coordinates, while standalone remote objects retain their exact
+  positions; this makes the lifts at `81-35` and `136-136` visible and reachable. The Benson Panel
+  retains ordinary coordinates through `99-99` and displays `**` beyond them. A craft moved by a
+  console teleport also keeps that Residence when the player leaves and boards it again instead
+  of returning to its payload origin.
+
 - Ordinary and Distant Structure lines are now clipped to the rendered frame's four borders
   before binary32 narrowing, removing the near-camera streaks without introducing an inset
   top/bottom letterbox and while leaving Far Points unchanged. The Projection Replay Gate
   explicitly retains the frozen unclipped oracle mode.
 - Benson Messages now traverse one persistent 23-cell Benson Display from right to left in the
   recovered 25-frame bursts and `$E1` pauses, including the endgame interval of 150. Both Panel
-  Renditions and the communications strip show the same cells; Arrival Narration and Browser
-  Shell notices remain separate overlays. Recovered leading padding stays in the display feed
-  but outside transcript text, and active scanout is capped so script acceleration cannot hide
-  the scroll between browser frames. The old message reveal-rate setting is gone, Save
+  Renditions and the communications strip show the same cells; complete fitting messages remain
+  intact during their reading hold even when the recovered terminator blanks continue through the
+  underlying cells. Arrival Narration remains a separate shell-owned overlay but now uses its own
+  Benson Display with the same cells, bursts, and right-edge entry; Browser Shell notices remain
+  separate. Recovered leading padding stays in the display feed but outside transcript text, and
+  active scanout is capped so script acceleration cannot hide the scroll between browser frames.
+  The old message reveal-rate setting is gone, Save
   schema 9 stores the display continuation, and schema-8 Saves and Session Resume records are
   refused. Replay Gates alone can select the frozen progressive ticker.
 - Geometry decoder 9 resolves `$0E` as `.` and `$6D` as `?`, completing `NO. O-9 ?` and leaving

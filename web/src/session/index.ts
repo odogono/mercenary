@@ -8,7 +8,7 @@ import {
   type BensonKey,
   type BensonMessagePresentation
 } from '../benson/index.ts';
-import type { Touchdown } from '../flight/index.ts';
+import { blockFor, type Touchdown } from '../flight/index.ts';
 import {
   IDLE,
   REFERENCE_OPENING_POSITION,
@@ -68,6 +68,7 @@ import {
   type Room,
   type World
 } from '../world/index.ts';
+import { wrapSurfaceAxis } from '../world/surfaceCoordinates.ts';
 import { endingStateOf, type EndingState } from './ending.ts';
 import { observationsOf, type SemanticObservations } from './observations.ts';
 import {
@@ -85,9 +86,10 @@ import { SiteLedger } from './sites.ts';
 /// The Gameplay Session: the one owner of a play session's Session State (ADR 0018).
 ///
 /// Every discrete change to that state passes through a Semantic Action: `reach`, `drop`,
-/// `leaveCraft`, `rideLift`, `teleport`, `place`, `carry`, `board`, `throttleNotchValue`, `throttleStep`,
-/// `shutThrottle`, `press`, `skipMessage`, `start`, `show`, `describe`. Each moves
-/// everything or nothing, which is what ADR 0018 asks of them.
+/// `leaveCraft`, `rideLift`, `teleport`, `place`, `placeAtObject`, `carry`, `board`,
+/// `throttleNotchValue`, `throttleStep`, `placeInAir`, `shutThrottle`, `press`, `skipMessage`,
+/// `start`, `show`, `describe`. Each moves everything or nothing, which is what ADR 0018 asks of
+/// them.
 ///
 /// Two things are deliberately not actions. `intent` is a held input rather than an event, so a
 /// caller assigns it and `advance` reads whatever it says at the time — that is the shape a
@@ -966,8 +968,12 @@ export class GameplaySession {
       if (outcome.kind === 'boarded' && this.content.flight !== undefined) {
         const craft = this.objectsBySlot.get(outcome.slot);
         if (craft !== undefined) {
+          // The Host Callout has already changed the boarded craft's Residence
+          // to `gone`. Keep the candidate position selected before that write,
+          // otherwise a moved craft falls back to its Data Payload origin.
           const at =
-            displacement(this.residenceOf(outcome.slot)) ?? craft.origin;
+            candidates.find(candidate => candidate.slot === outcome.slot)
+              ?.position ?? craft.origin;
           this.game = boardCraft(
             this.game,
             outcome.slot,
@@ -1297,6 +1303,80 @@ export class GameplaySession {
   place(position: Vector3, heading?: number): void {
     this.game = {
       ...this.game,
+      player: {
+        ...this.game.player,
+        heading: heading ?? this.game.player.heading,
+        position
+      }
+    };
+  }
+
+  /// Place the player at an object's current residence.
+  ///
+  /// Surface positions are normalised into the unsigned 24-bit world because
+  /// the payload parks some remote objects in the equivalent signed range.
+  /// Room objects retain their room-local coordinates. Carried and removed
+  /// objects have no independent place to visit.
+  placeAtObject(
+    slot: number
+  ):
+    | { readonly kind: 'carried' | 'gone' | 'missing' }
+    | { readonly kind: 'placed'; readonly location: Location } {
+    const object = this.objectsBySlot.get(slot);
+    if (object === undefined) {
+      return { kind: 'missing' };
+    }
+    const residence = this.residenceOf(slot);
+    if (residence.kind === 'carried' || residence.kind === 'gone') {
+      return { kind: residence.kind };
+    }
+    const at = displacement(residence) ?? object.origin;
+    if (residence.kind === 'room') {
+      const location = { id: residence.id, kind: 'room' } as const;
+      this.teleport(location);
+      this.place(at);
+      return { kind: 'placed', location };
+    }
+
+    const location = { kind: 'surface' } as const;
+    const position = {
+      x: wrapSurfaceAxis(at.x),
+      y: at.y,
+      z: wrapSurfaceAxis(at.z)
+    };
+    this.teleport(location);
+    if (this.content.flight !== undefined) {
+      this.placeInAir(position);
+    } else {
+      this.place(position);
+    }
+    return { kind: 'placed', location };
+  }
+
+  /// Place the player on the surface at an airborne height. A craft whose
+  /// control block can be flown takes over normally; on foot, or in a craft
+  /// whose handler cannot fly, the crash-tumble Mover brings the player down.
+  placeInAir(position: Vector3, heading?: number): void {
+    const flight = this.content.flight;
+    const craft = this.game.craft;
+    const block =
+      flight === undefined || craft === undefined
+        ? undefined
+        : blockFor(flight.document, craft);
+    const flyable =
+      block?.handler === 'standard' || block?.handler === 'sinking';
+    const airborne =
+      flight !== undefined && position.y >= flight.rules.groundBand;
+    const falling = airborne && !flyable;
+    const tumble = falling
+      ? flight.document.blocks.find(candidate => candidate.handler === 'tumble')
+      : undefined;
+
+    this.game = {
+      ...this.game,
+      colonyCraftFlag: 0,
+      mode: airborne ? 'flying' : 'grounded',
+      mover: falling ? tumble?.index : undefined,
       player: {
         ...this.game.player,
         heading: heading ?? this.game.player.heading,

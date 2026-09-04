@@ -61,7 +61,7 @@ export interface MessageSettings {
 /// pacing chosen for play. It is deliberately absent from the blocks that identify a Save, so
 /// retuning the opening cannot make an existing Save unloadable.
 export interface ArrivalSettings {
-  /// Characters per second the Arrival Narration reveals at, before its time scale.
+  /// Authored line-duration rate for Arrival Narration, before its time scale.
   readonly charactersPerSecond: number;
   /// How long a fully revealed narration line is held.
   readonly holdSeconds: number;

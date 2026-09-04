@@ -5,15 +5,18 @@ import {
   displacement,
   isDetailed,
   isDrawable,
+  atUnsignedSurfacePosition,
   movedTo,
   objectSegments,
   room,
   type Ink,
+  type RoadWorkspace,
   type Residence,
   type Segment,
   type World,
   type Location as WorldLocation
 } from '../world/index.ts';
+import { wrapSurfaceAxis } from '../world/surfaceCoordinates.ts';
 
 /// Perspective projection from world space to view pixels, and what is worth projecting.
 ///
@@ -527,6 +530,35 @@ const withinHorizon = (
   Math.abs(origin.y - position.y) < reach &&
   Math.abs(origin.z - position.z) < reach;
 
+const translatePoint = (point: Vector3, x: number, z: number): Vector3 => ({
+  x: point.x + x,
+  y: point.y,
+  z: point.z + z
+});
+
+const translateSegment = (segment: Segment, x: number, z: number): Segment => ({
+  ...segment,
+  a: translatePoint(segment.a, x, z),
+  b: translatePoint(segment.b, x, z)
+});
+
+const translateWorkspace = (
+  workspace: RoadWorkspace,
+  x: number,
+  z: number
+): RoadWorkspace => {
+  const point = (index: number): Vector3 | undefined => {
+    const source = workspace[index];
+    return source === undefined ? undefined : translatePoint(source, x, z);
+  };
+  return [point(0), point(1), point(2), point(3)];
+};
+
+const positiveRemainder = (value: number, modulus: number): number => {
+  const remainder = value % modulus;
+  return remainder < 0 ? remainder + modulus : remainder;
+};
+
 /// Gather what is worth projecting near the camera. Frustum rejection is left to the
 /// projection step, which has to compute view space anyway.
 ///
@@ -559,17 +591,28 @@ export const visible = (
   const appendObjects = (location: WorldLocation): void => {
     for (const object of world.objects) {
       const where = residence?.get(object.slot);
-      if (!isDrawable(object, location, where)) {
+      const parkedSurfaceObject =
+        location.kind === 'surface' &&
+        object.placement === 'surface' &&
+        !object.withinWorld &&
+        (where === undefined ||
+          (where.kind === 'surface' && where.at === undefined));
+      if (!isDrawable(object, location, where) && !parkedSurfaceObject) {
         continue;
       }
       const moved = where === undefined ? undefined : displacement(where);
-      const placed = moved === undefined ? object : movedTo(object, moved);
+      const placed =
+        moved === undefined
+          ? location.kind === 'surface'
+            ? atUnsignedSurfacePosition(object)
+            : object
+          : movedTo(object, moved);
       if (isDetailed(placed, position)) {
         append(segments, objectSegments(placed));
         detailedObjects += 1;
       } else if (
         placed.drawsFarAsPoint &&
-        (rules.farPoints === 'every' ||
+        ((!parkedSurfaceObject && rules.farPoints === 'every') ||
           placed.origin.y >= position.y ||
           withinHorizon(
             placed.origin,
@@ -591,36 +634,65 @@ export const visible = (
     return { detailedObjects, distant, points, segments };
   }
 
-  const column = Math.floor(position.x / world.cellSize);
-  const row = Math.floor(position.z / world.cellSize);
+  const repeats = rules.reach === 'cell';
+  const column = Math.floor(
+    (repeats ? wrapSurfaceAxis(position.x) : position.x) / world.cellSize
+  );
+  const row = Math.floor(
+    (repeats ? wrapSurfaceAxis(position.z) : position.z) / world.cellSize
+  );
   const radius = rules.reach === 'ring' ? 1 : 0;
-  const firstColumn = rules.reach === 'all' ? 0 : Math.max(0, column - radius);
+  const firstColumn =
+    rules.reach === 'all'
+      ? 0
+      : repeats
+        ? column - radius
+        : Math.max(0, column - radius);
   const lastColumn =
     rules.reach === 'all'
       ? world.cellsPerAxis - 1
-      : Math.min(world.cellsPerAxis - 1, column + radius);
-  const firstRow = rules.reach === 'all' ? 0 : Math.max(0, row - radius);
+      : repeats
+        ? column + radius
+        : Math.min(world.cellsPerAxis - 1, column + radius);
+  const firstRow =
+    rules.reach === 'all'
+      ? 0
+      : repeats
+        ? row - radius
+        : Math.max(0, row - radius);
   const lastRow =
     rules.reach === 'all'
       ? world.cellsPerAxis - 1
-      : Math.min(world.cellsPerAxis - 1, row + radius);
+      : repeats
+        ? row + radius
+        : Math.min(world.cellsPerAxis - 1, row + radius);
   for (let selectedRow = firstRow; selectedRow <= lastRow; selectedRow++) {
     for (
       let selectedColumn = firstColumn;
       selectedColumn <= lastColumn;
       selectedColumn++
     ) {
-      const cell = world.cell(selectedColumn, selectedRow);
+      const sourceColumn = repeats
+        ? positiveRemainder(selectedColumn, world.cellsPerAxis)
+        : selectedColumn;
+      const sourceRow = repeats
+        ? positiveRemainder(selectedRow, world.cellsPerAxis)
+        : selectedRow;
+      const cell = world.cell(sourceColumn, sourceRow);
       if (cell !== undefined && cell.index !== 0) {
         const isOccupied = selectedColumn === column && selectedRow === row;
-        const selected = cell.segments(
-          elapsed,
-          isOccupied ? world.roadWorkspace(cell) : undefined
-        );
+        const dx = (selectedColumn - sourceColumn) * world.cellSize;
+        const dz = (selectedRow - sourceRow) * world.cellSize;
+        const workspace = isOccupied
+          ? translateWorkspace(world.roadWorkspace(cell), dx, dz)
+          : undefined;
+        const selected = cell
+          .segments(elapsed, workspace)
+          .map(segment => translateSegment(segment, dx, dz));
         if (rules.reach === 'all' && !isOccupied) {
           const distance = Math.hypot(
-            cell.centre.x - position.x,
-            cell.centre.z - position.z
+            cell.centre.x + dx - position.x,
+            cell.centre.z + dz - position.z
           );
           for (const segment of selected) {
             distant.push({ ...segment, distance });

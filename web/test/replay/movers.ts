@@ -197,7 +197,9 @@ export class MoverReplay {
       inputIntent,
       dt,
       this.flight,
-      this.containment
+      this.containment,
+      undefined,
+      'city'
     );
 
     const events: TraceValue[] = [];

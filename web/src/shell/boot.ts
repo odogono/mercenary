@@ -4,6 +4,7 @@ import type { SessionSnapshot } from '../session/index.ts';
 import { arrivalTunables, bensonTunables } from '../settings/index.ts';
 import { targOrreryFor } from '../sky/index.ts';
 import { locationText } from '../world/index.ts';
+import { SURFACE_AXIS_MODULUS } from '../world/surfaceCoordinates.ts';
 import { ArrivalDirector, type ArrivalEntry } from './arrival.ts';
 import { arrivalFramePlan } from './arrivalField.ts';
 import { arrivalPanelViewModel, arrivalStripText } from './arrivalPanel.ts';
@@ -212,6 +213,7 @@ try {
     charactersPerSecond:
       settings.arrival.charactersPerSecond * settings.arrival.timeScale,
     holdSeconds: settings.arrival.holdSeconds,
+    timeScale: settings.arrival.timeScale,
     titleCardSeconds: settings.arrival.titleCardSeconds
   };
   /// What the Arrival does with a session that already exists.
@@ -422,8 +424,9 @@ try {
     consoleElements,
     {
       cellSize: () => world.cellSize,
-      cellsPerAxis: () => world.cellsPerAxis,
+      cellsPerAxis: () => SURFACE_AXIS_MODULUS / world.cellSize,
       hasRoom: id => world.rooms.has(id),
+      objectSlots: () => world.objects.length,
       persistence,
       preferences,
       session: () => session,

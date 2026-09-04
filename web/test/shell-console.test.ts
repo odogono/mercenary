@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
 import { playerState } from '../src/gameCore/index.ts';
-import { GameplaySession } from '../src/session/index.ts';
+import { visible } from '../src/projection/index.ts';
+import { GameplaySession, sessionContent } from '../src/session/index.ts';
+import { defaultSettings, flightModel } from '../src/settings/index.ts';
 import {
   SETTING_VALUES,
   executeConsoleCommand,
@@ -13,10 +15,19 @@ import {
 import type { PreferencesChange } from '../src/shell/preferences.ts';
 import type { SaveOutcome, SavePersistence } from '../src/shell/saves.ts';
 import type { TypefaceId } from '../src/shell/typography.ts';
+import { atUnsignedSurfacePosition, World } from '../src/world/index.ts';
 import { emptyContent } from './fixtures/save.ts';
+import { loadPayload } from './replay/artifacts.ts';
 
 const CELL = 65_536;
-const CELLS_PER_AXIS = 16;
+const CELLS_PER_AXIS = 256;
+const bundle = await loadPayload();
+const world = new World(bundle);
+const content = sessionContent(
+  world,
+  bundle,
+  flightModel(defaultSettings().flight, bundle.flight!, world.groundExtent)
+);
 
 /// The parser takes its grid bound from the world it reads for; the tests read for Targ's 16×16.
 const parse = (line: string, cellsPerAxis = CELLS_PER_AXIS) =>
@@ -26,13 +37,16 @@ const harness = (
   overrides: {
     readonly rooms?: readonly number[];
     readonly saveOutcomes?: readonly SaveOutcome[];
+    readonly session?: GameplaySession;
   } = {}
 ) => {
-  const session = new GameplaySession(
-    emptyContent(),
-    playerState({ position: { x: 8.5 * CELL, y: 128, z: 8.5 * CELL } }),
-    undefined
-  );
+  const session =
+    overrides.session ??
+    new GameplaySession(
+      emptyContent(),
+      playerState({ position: { x: 8.5 * CELL, y: 128, z: 8.5 * CELL } }),
+      undefined
+    );
   const changes: PreferencesChange[] = [];
   const faces: TypefaceId[] = [];
   const calls: string[] = [];
@@ -61,6 +75,7 @@ const harness = (
     cellSize: () => CELL,
     cellsPerAxis: () => CELLS_PER_AXIS,
     hasRoom: id => rooms.has(id),
+    objectSlots: () => world.objects.length,
     persistence,
     preferences: {
       current: () => ({ composition: 'panel', panelRendition: 'targ' }),
@@ -97,17 +112,54 @@ describe('reading a console command line', () => {
     expect(() => parse('warp 3')).toThrow("unknown command 'warp': type help");
   });
 
-  test('reads a grid reference, and refuses one off the world', () => {
+  test('reads a grid reference across the full 24-bit surface', () => {
     expect(parse('goto 03 11')).toEqual({
       kind: 'gotoCell',
       x: 3,
       z: 11
     });
-    expect(() => parse('goto 16 00')).toThrow(
-      'a x cell must be from 0 through 15, and is 16'
+    expect(parse('goto 136 136')).toEqual({
+      kind: 'gotoCell',
+      x: 136,
+      z: 136
+    });
+    expect(() => parse('goto 256 00')).toThrow(
+      'a x cell must be from 0 through 255, and is 256'
     );
     expect(() => parse('goto 00 -1')).toThrow(
-      'a z cell must be from 0 through 15, and is -1'
+      'a z cell must be from 0 through 255, and is -1'
+    );
+  });
+
+  test('accepts an optional bounded altitude', () => {
+    expect(parse('goto 136 136 4259008')).toEqual({
+      height: 4_259_008,
+      kind: 'gotoCell',
+      x: 136,
+      z: 136
+    });
+    expect(() => parse('goto 8 8 -1')).toThrow(
+      'a height must be from 0 through 16777215, and is -1'
+    );
+    expect(() => parse('goto 8 8 16777216')).toThrow(
+      'a height must be from 0 through 16777215, and is 16777216'
+    );
+  });
+
+  test('reads an object slot across the payload object census', () => {
+    expect(parse('goto object 0')).toEqual({ kind: 'gotoObject', slot: 0 });
+    expect(parse('goto object 63')).toEqual({ kind: 'gotoObject', slot: 63 });
+    expect(() => parse('goto object -1')).toThrow(
+      'an object slot must be from 0 through 63, and is -1'
+    );
+    expect(() => parse('goto object 64')).toThrow(
+      'an object slot must be from 0 through 63, and is 64'
+    );
+    expect(() => parse('goto object')).toThrow(
+      'goto object takes one object slot'
+    );
+    expect(() => parse('goto object 1 2')).toThrow(
+      'goto object takes one object slot'
     );
   });
 
@@ -134,7 +186,7 @@ describe('reading a console command line', () => {
 
   test('counts the words a command needs', () => {
     expect(() => parse('goto 3')).toThrow(
-      'goto takes two cells, or the word room and one Room'
+      'goto takes two cells and an optional height, or the word room and one Room'
     );
     // A bare `goto room` is answered by the more specific message, not the general one.
     expect(() => parse('goto room')).toThrow('goto room takes one Room');
@@ -211,6 +263,8 @@ describe('doing what a console command says', () => {
     const lines = run('help', deps);
 
     expect(lines.join(' ')).toContain('goto room');
+    expect(lines.join(' ')).toContain('goto object');
+    expect(lines.join(' ')).toContain('goto <x> <z> [height]');
     expect(lines.join(' ')).toContain('save <slot>');
   });
 
@@ -235,6 +289,118 @@ describe('doing what a console command says', () => {
     expect(session.snapshot.player.position.z).toBeCloseTo(11.5 * CELL);
     // The altitude it found, not one invented for it.
     expect(session.snapshot.player.position.y).toBe(128);
+  });
+
+  test('places a flyable craft at the requested height', () => {
+    const session = new GameplaySession(
+      content,
+      playerState({ position: { x: 0, y: 128, z: 0 } }),
+      undefined
+    );
+    session.board(1);
+    const { deps } = harness({ session });
+
+    expect(run('goto 8 8 4259008', deps)).toEqual([
+      'moved to cell 08-08 at height 4259008'
+    ]);
+    expect(session.snapshot.player.position).toEqual({
+      x: 8.5 * CELL,
+      y: 4_259_008,
+      z: 8.5 * CELL
+    });
+    expect(session.snapshot.mode).toBe('flying');
+    session.advance(1 / 60);
+    expect(session.snapshot.player.position.y).toBe(4_259_008);
+  });
+
+  test('goes to the Colony Craft exact surface position', () => {
+    const session = new GameplaySession(
+      content,
+      playerState({ position: { x: 0, y: 128, z: 0 } }),
+      undefined
+    );
+    session.board(0);
+    const { deps } = harness({ session });
+    const colonyCraft = world.objects.find(object => object.slot === 63)!;
+
+    expect(run('goto object 63', deps)).toEqual([
+      'moved to object 63 on SURFACE'
+    ]);
+    expect(session.snapshot.location).toEqual({ kind: 'surface' });
+    expect(session.snapshot.player.position).toEqual(colonyCraft.origin);
+    expect(session.snapshot.mode).toBe('flying');
+  });
+
+  test('normalises a remote surface object into the unsigned world', () => {
+    const session = new GameplaySession(
+      content,
+      playerState({ position: { x: 0, y: 128, z: 0 } }),
+      undefined
+    );
+    session.board(0);
+    const { deps } = harness({ session });
+    const lift = world.objects.find(object => object.slot === 62)!;
+
+    run('goto object 63', deps);
+    expect(session.snapshot.mode).toBe('flying');
+    expect(run('goto object 62', deps)).toEqual([
+      'moved to object 62 on SURFACE'
+    ]);
+    expect(session.snapshot.player.position).toEqual(
+      atUnsignedSurfacePosition(lift).origin
+    );
+    expect(session.snapshot.mode).toBe('grounded');
+    expect(
+      visible(world, session.snapshot.player.position, {
+        residence: session.snapshot.residence
+      }).detailedObjects
+    ).toBeGreaterThan(0);
+  });
+
+  test('goes to an underground object in its Room', () => {
+    const session = new GameplaySession(
+      content,
+      playerState({ position: { x: 0, y: 128, z: 0 } }),
+      undefined
+    );
+    const { deps } = harness({ session });
+    const interstellarShip = world.objects.find(object => object.slot === 7)!;
+
+    expect(run('goto object 7', deps)).toEqual([
+      'moved to object 07 in ROOM 05'
+    ]);
+    expect(session.snapshot.location).toEqual({ id: 5, kind: 'room' });
+    expect(session.snapshot.player.position).toEqual(interstellarShip.origin);
+  });
+
+  test('starts an on-foot player falling from the requested height', () => {
+    const session = new GameplaySession(
+      content,
+      playerState({ position: { x: 0, y: 128, z: 0 } }),
+      undefined
+    );
+    const { deps } = harness({ session });
+
+    run('goto 136 136 100000', deps);
+    expect(session.snapshot.mode).toBe('flying');
+    expect(session.snapshot.player.position.y).toBe(100_000);
+
+    session.advance(1 / 60);
+    expect(session.snapshot.player.position.y).toBeLessThan(100_000);
+  });
+
+  test('starts a player in the non-flyable Interstellar Ship falling too', () => {
+    const session = new GameplaySession(
+      content,
+      playerState({ position: { x: 0, y: 128, z: 0 } }),
+      undefined
+    );
+    session.board(7);
+    const { deps } = harness({ session });
+
+    run('goto 8 8 100000', deps);
+    session.advance(1 / 60);
+    expect(session.snapshot.player.position.y).toBeLessThan(100_000);
   });
 
   test('teleports to a Room the payload has', () => {
