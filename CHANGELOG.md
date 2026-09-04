@@ -74,6 +74,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- Enhanced presentation now renders underground Rooms with the Atari ST-inspired solid-colour
+  palette instead of the Reference Build's alternating C64 bitmap columns. Room colour identities,
+  white wireframes, and dark-Room behaviour remain intact, while Authentic presentation retains
+  the decoded C64 backdrop.
+
 - Surface travel now uses the Reference Build's full unsigned 24-bit axes, wrapping at their
   boundaries instead of stopping at the city edge. The 16-by-16 Surface Structure map repeats at
   the corresponding translated coordinates, while standalone remote objects retain their exact

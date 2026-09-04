@@ -17,6 +17,7 @@ import {
 import {
   IndoorBackdrop,
   ScenePalette,
+  atariSTColour,
   c64Colour,
   type RGB8
 } from '../scene/index.ts';
@@ -494,7 +495,7 @@ export const planFrame = (
       groundVertices(camera.groundFill(size), size),
       ScenePalette.ground
     );
-  } else {
+  } else if (presentation.preset === 'authentic') {
     const backdrop = new IndoorBackdrop(indoor.background, indoor.foreground);
     addBatch(batches, 'triangles', stripVertices(size, 0), backdrop.foreground);
     addBatch(batches, 'triangles', stripVertices(size, 1), backdrop.background);
@@ -537,7 +538,11 @@ export const planFrame = (
     batches,
     clear:
       sky?.clear ??
-      (indoor === undefined ? ScenePalette.sky : ScenePalette.blackInk),
+      (indoor === undefined
+        ? ScenePalette.sky
+        : presentation.preset === 'enhanced'
+          ? (atariSTColour(indoor.foreground) ?? ScenePalette.blackInk)
+          : ScenePalette.blackInk),
     lines: projected.distant.length + projected.lines.length,
     points: projected.points.length,
     size,
