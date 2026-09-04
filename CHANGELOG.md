@@ -74,6 +74,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- The browser Ending E2E now reaches a console-assisted recovered Escape from a fresh session
+  instead of planting Ending Phase 1 into a Save. It completes the opening purchase, uses the
+  real Take and Board actions for the Novadrive and Interstellar Ship, rides the
+  occupancy-preserving Room-5 lift, answers the launch prompt, and observes Ending Phases 1 and
+  255 and the evolving 21-point Interstellar Ship Field. The Shell Console abbreviates only the
+  travel between objects, so ADR 0028's boundary remains explicit: this is an integration smoke
+  test, not a legal-route proof or a trace.
+
 - Enhanced presentation now renders underground Rooms with the Atari ST-inspired solid-colour
   palette instead of the Reference Build's alternating C64 bitmap columns. Room colour identities,
   white wireframes, and dark-Room behaviour remain intact, while Authentic presentation retains
