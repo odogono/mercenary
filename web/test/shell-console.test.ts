@@ -260,7 +260,7 @@ describe('reading a console command line', () => {
       }
     }
     expect(() => parse('set volume 4')).toThrow(
-      "unknown setting 'volume': try composition, glow, rendition, sky, structures, typeface, weight"
+      "unknown setting 'volume': try composition, glow, rendition, road-glow, road-weight, sky, structures, typeface, weight"
     );
     expect(() => parse('set sky purple')).toThrow(
       "sky takes document, authentic, enhanced, and not 'purple'"
@@ -644,6 +644,22 @@ describe('doing what a console command says', () => {
       { wireframeGlow: 'soft' },
       { wireframeWeight: undefined },
       { wireframeGlow: 'off' }
+    ]);
+  });
+
+  test('sets road styling independently and hands it back to tuning', () => {
+    const { changes, deps } = harness();
+    expect(run('set road-weight heavy', deps)).toEqual(['road-weight heavy']);
+    expect(run('set road-glow bright', deps)).toEqual(['road-glow bright']);
+    expect(run('set road-weight document', deps)).toEqual([
+      'road-weight as tuned'
+    ]);
+    expect(run('set road-glow document', deps)).toEqual(['road-glow as tuned']);
+    expect(changes).toEqual([
+      { roadWeight: 'heavy' },
+      { roadGlow: 'bright' },
+      { roadWeight: undefined },
+      { roadGlow: undefined }
     ]);
   });
 

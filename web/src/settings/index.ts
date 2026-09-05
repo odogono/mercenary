@@ -130,6 +130,7 @@ export interface SkySettings {
 
 export interface PresentationSettings {
   readonly preset: PresentationPreset;
+  readonly roads: WireframeSettings;
   readonly sky: SkySettings;
   readonly structureReach: StructureReach;
   readonly wireframe: WireframeSettings;
@@ -458,17 +459,15 @@ const readSky = (value: unknown): SkySettings => {
   };
 };
 
-const readWireframe = (value: unknown): WireframeSettings => {
-  const source = block(value, 'presentation.wireframe');
+const readWireframe = (
+  value: unknown,
+  path = 'presentation.wireframe'
+): WireframeSettings => {
+  const source = block(value, path);
   return {
     glow: inRange(
-      number(
-        source,
-        'glow',
-        'presentation.wireframe.glow',
-        DEFAULT_WIREFRAME_GLOW
-      ),
-      'presentation.wireframe.glow',
+      number(source, 'glow', `${path}.glow`, DEFAULT_WIREFRAME_GLOW),
+      `${path}.glow`,
       0,
       1
     ),
@@ -476,10 +475,10 @@ const readWireframe = (value: unknown): WireframeSettings => {
       number(
         source,
         'thickness',
-        'presentation.wireframe.thickness',
+        `${path}.thickness`,
         DEFAULT_WIREFRAME_THICKNESS
       ),
-      'presentation.wireframe.thickness',
+      `${path}.thickness`,
       1,
       4
     )
@@ -518,6 +517,7 @@ const readPresentation = (value: unknown): PresentationSettings => {
   }
   return {
     preset,
+    roads: readWireframe(source['roads'], 'presentation.roads'),
     sky: readSky(source['sky']),
     structureReach,
     wireframe: readWireframe(source['wireframe'])

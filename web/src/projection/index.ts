@@ -485,6 +485,8 @@ export interface Visible {
   readonly detailedObjects: number;
   /// Surface Structure segments outside the occupied Surface Cell, drawn as distance.
   readonly distant: readonly DistantSegment[];
+  /// Membership only: the ordered segment list remains the projection authority.
+  readonly mapSegments?: ReadonlySet<Segment>;
   /// Origins of objects outside the detail cube, drawn as points.
   readonly points: readonly Vector3[];
   readonly segments: readonly Segment[];
@@ -702,10 +704,12 @@ export const visible = (
     }
   }
 
-  append(segments, world.mapSegments(position));
+  const roads = world.mapSegments(position);
+  const mapSegments = new Set(roads);
+  append(segments, roads);
   appendObjects(SURFACE);
 
-  return { detailedObjects, distant, points, segments };
+  return { detailedObjects, distant, mapSegments, points, segments };
 };
 
 /// Everything one Pose resolves to: near and distant lines, in pipeline order, and Far Points.
@@ -719,7 +723,13 @@ export const projectFrame = (
   seen: Visible,
   size: Size,
   lineMode: ProjectionLineMode = 'clipped'
-): { distant: DistantScreenLine[]; lines: ScreenLine[]; points: Point[] } => {
+): {
+  distant: DistantScreenLine[];
+  lines: ScreenLine[];
+  points: Point[];
+  roads: ReadonlySet<ScreenLine>;
+} => {
+  const roads = new Set<ScreenLine>();
   const distant: DistantScreenLine[] = [];
   for (const segment of seen.distant) {
     const line = camera.projectSegment(segment, size, lineMode);
@@ -732,6 +742,9 @@ export const projectFrame = (
     const line = camera.projectSegment(segment, size, lineMode);
     if (line !== undefined) {
       lines.push(line);
+      if (seen.mapSegments?.has(segment)) {
+        roads.add(line);
+      }
     }
   }
   const points: Point[] = [];
@@ -741,5 +754,5 @@ export const projectFrame = (
       points.push(point);
     }
   }
-  return { distant, lines, points };
+  return { distant, lines, points, roads };
 };

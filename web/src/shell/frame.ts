@@ -76,10 +76,12 @@ in vec4 endpoints;
 uniform vec2 viewport;
 uniform float extent;
 out vec2 lineSpace;
+flat out float halfLength;
 void main() {
   vec2 span = endpoints.zw - endpoints.xy;
-  float spanLength = max(length(span), 0.0001);
-  vec2 axis = span / spanLength;
+  float spanLength = length(span);
+  vec2 axis = spanLength > 0.0001 ? span / spanLength : vec2(1.0, 0.0);
+  halfLength = spanLength * 0.5;
   vec2 across = vec2(-axis.y, axis.x);
   vec2 centre = (endpoints.xy + endpoints.zw) * 0.5;
   vec2 place =
@@ -94,23 +96,42 @@ void main() {
   lineSpace = vec2(corner.x * (spanLength * 0.5 + extent), corner.y * extent);
 }`;
 
-/// A solid core out to the requested thickness — feathered by roughly a pixel, which is the
-/// antialiasing this context has otherwise switched off — and beyond it a halo of the same ink
-/// fading out over the glow band. Alpha blending rather than additive, so the black dim pass
-/// casts a soft shadow instead of glowing like light.
+/// Finite-segment distance gives the core and halo rounded ends. Coverage is combined with
+/// MAX into a mask, so shared endpoints and overlapping edges never increase opacity.
 const INK_FRAGMENT_SHADER = `#version 300 es
 precision highp float;
-uniform vec3 ink;
 uniform float halfWidth;
 uniform float extent;
 uniform float halo;
 in vec2 lineSpace;
+flat in float halfLength;
 out vec4 colour;
 void main() {
-  float d = abs(lineSpace.y);
+  float d = length(vec2(max(abs(lineSpace.x) - halfLength, 0.0), lineSpace.y));
   float core = 1.0 - smoothstep(halfWidth - ${FEATHER}, halfWidth + ${FEATHER}, d);
-  float falloff = halo * (1.0 - smoothstep(halfWidth, extent, d));
-  colour = vec4(ink, max(core, falloff));
+  float outside = max(d - halfWidth, 0.0);
+  float radius = max(extent - halfWidth, 0.0001);
+  float falloff = halo * exp(-3.0 * outside * outside / (radius * radius))
+    * (1.0 - smoothstep(radius * 0.75, radius, outside));
+  colour = vec4(max(core, falloff));
+}`;
+
+const MASK_VERTEX_SHADER = `#version 300 es
+out vec2 uv;
+void main() {
+  vec2 corner = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
+  uv = corner;
+  gl_Position = vec4(corner * 2.0 - 1.0, 0.0, 1.0);
+}`;
+
+const MASK_FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+uniform sampler2D coverage;
+uniform vec3 ink;
+in vec2 uv;
+out vec4 colour;
+void main() {
+  colour = vec4(ink, texture(coverage, uv).r);
 }`;
 
 const SKY_VERTEX_SHADER = `#version 300 es
@@ -227,20 +248,27 @@ const channels = (colour: RGB8): [number, number, number] => [
 ];
 
 interface InkPipeline {
+  readonly composite: WebGLProgram;
   readonly corner: number;
   readonly corners: WebGLBuffer;
+  readonly coverage: WebGLUniformLocation | null;
   readonly endpoints: WebGLBuffer;
   readonly endpointsField: number;
   readonly extent: WebGLUniformLocation | null;
+  readonly framebuffer: WebGLFramebuffer;
   readonly halfWidth: WebGLUniformLocation | null;
   readonly halo: WebGLUniformLocation | null;
+  height: number;
   readonly ink: WebGLUniformLocation | null;
   readonly program: WebGLProgram;
+  readonly texture: WebGLTexture;
   readonly viewport: WebGLUniformLocation | null;
+  width: number;
 }
 
 const inkPipeline = (gl: WebGL2RenderingContext): InkPipeline => {
   const program = linked(gl, INK_VERTEX_SHADER, INK_FRAGMENT_SHADER);
+  const composite = linked(gl, MASK_VERTEX_SHADER, MASK_FRAGMENT_SHADER);
   // Two triangles' worth of corner signs, one instance of which expands each line.
   const corners = gl.createBuffer()!;
   gl.bindBuffer(gl.ARRAY_BUFFER, corners);
@@ -250,16 +278,22 @@ const inkPipeline = (gl: WebGL2RenderingContext): InkPipeline => {
     gl.STATIC_DRAW
   );
   return {
+    composite,
     corner: gl.getAttribLocation(program, 'corner'),
     corners,
+    coverage: gl.getUniformLocation(composite, 'coverage'),
     endpoints: gl.createBuffer()!,
     endpointsField: gl.getAttribLocation(program, 'endpoints'),
     extent: gl.getUniformLocation(program, 'extent'),
+    framebuffer: gl.createFramebuffer()!,
     halfWidth: gl.getUniformLocation(program, 'halfWidth'),
     halo: gl.getUniformLocation(program, 'halo'),
-    ink: gl.getUniformLocation(program, 'ink'),
+    height: 0,
+    ink: gl.getUniformLocation(composite, 'ink'),
     program,
-    viewport: gl.getUniformLocation(program, 'viewport')
+    texture: gl.createTexture()!,
+    viewport: gl.getUniformLocation(program, 'viewport'),
+    width: 0
   };
 };
 
@@ -360,6 +394,7 @@ interface DrawBatch {
   readonly colour: RGB8;
   readonly mode: DrawMode;
   readonly pointSize: number;
+  readonly style?: 'roads';
   readonly vertices: Float32Array;
 }
 
@@ -382,10 +417,17 @@ const addBatch = (
   mode: DrawMode,
   vertices: Float32Array,
   colour: RGB8,
-  pointSize = 1
+  pointSize = 1,
+  style?: 'roads'
 ): void => {
   if (vertices.length > 0) {
-    batches.push({ colour, mode, pointSize, vertices });
+    batches.push({
+      colour,
+      mode,
+      pointSize,
+      vertices,
+      ...(style === undefined ? {} : { style })
+    });
   }
 };
 
@@ -473,6 +515,8 @@ export const planFrame = (
   const distantBlackInk: ScreenLine[] = [];
   const distantWhiteInk = new Map<number, DistantScreenLine[]>();
   const whiteInk: ScreenLine[] = [];
+  const roadBlackInk: ScreenLine[] = [];
+  const roadWhiteInk: ScreenLine[] = [];
   for (const line of projected.distant) {
     if (line.ink === Ink.black) {
       distantBlackInk.push(line);
@@ -484,7 +528,11 @@ export const planFrame = (
     }
   }
   for (const line of projected.lines) {
-    (line.ink === Ink.black ? blackInk : whiteInk).push(line);
+    if (presentation.preset === 'enhanced' && projected.roads.has(line)) {
+      (line.ink === Ink.black ? roadBlackInk : roadWhiteInk).push(line);
+    } else {
+      (line.ink === Ink.black ? blackInk : whiteInk).push(line);
+    }
   }
 
   const batches: DrawBatch[] = [];
@@ -511,7 +559,23 @@ export const planFrame = (
   }
   const allBlackInk = [...distantBlackInk, ...blackInk];
   addBatch(batches, 'lines', lineVertices(allBlackInk), ScenePalette.blackInk);
+  addBatch(
+    batches,
+    'lines',
+    lineVertices(roadBlackInk),
+    ScenePalette.blackInk,
+    1,
+    'roads'
+  );
   addBatch(batches, 'lines', lineVertices(whiteInk), ScenePalette.whiteInk);
+  addBatch(
+    batches,
+    'lines',
+    lineVertices(roadWhiteInk),
+    ScenePalette.whiteInk,
+    1,
+    'roads'
+  );
   addBatch(
     batches,
     'points',
@@ -627,6 +691,43 @@ export class Renderer {
     const gl = this.gl;
     const ink = (this.inkPass ??= inkPipeline(gl));
     const halfWidth = options.thickness / 2;
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, ink.texture);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, ink.framebuffer);
+    if (ink.width !== this.canvas.width || ink.height !== this.canvas.height) {
+      ink.width = this.canvas.width;
+      ink.height = this.canvas.height;
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.R8,
+        ink.width,
+        ink.height,
+        0,
+        gl.RED,
+        gl.UNSIGNED_BYTE,
+        null
+      );
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        ink.texture,
+        0
+      );
+      if (
+        gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE
+      ) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        throw new Error('wireframe coverage framebuffer is incomplete');
+      }
+    }
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
     gl.useProgram(ink.program);
     gl.bindBuffer(gl.ARRAY_BUFFER, ink.endpoints);
     gl.bufferData(gl.ARRAY_BUFFER, batch.vertices, gl.STREAM_DRAW);
@@ -637,7 +738,6 @@ export class Renderer {
     gl.enableVertexAttribArray(ink.corner);
     gl.vertexAttribPointer(ink.corner, 2, gl.FLOAT, false, 0, 0);
     gl.uniform2f(ink.viewport, size.width, size.height);
-    gl.uniform3f(ink.ink, ...channels(batch.colour));
     gl.uniform1f(ink.halfWidth, halfWidth);
     // The quad always reaches one feather past the core so its antialiased edge has room;
     // glow spreads it further.
@@ -647,12 +747,21 @@ export class Renderer {
     );
     gl.uniform1f(ink.halo, options.glow);
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.blendEquation(gl.MAX);
+    gl.blendFunc(gl.ONE, gl.ONE);
     gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, batch.vertices.length / 4);
-    gl.disable(gl.BLEND);
     gl.vertexAttribDivisor(ink.endpointsField, 0);
     gl.disableVertexAttribArray(ink.endpointsField);
     gl.disableVertexAttribArray(ink.corner);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.useProgram(ink.composite);
+    gl.uniform1i(ink.coverage, 0);
+    gl.uniform3f(ink.ink, ...channels(batch.colour));
+    gl.blendEquation(gl.FUNC_ADD);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.disable(gl.BLEND);
+    gl.bindTexture(gl.TEXTURE_2D, null);
     gl.useProgram(this.program);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.sceneBuffer);
     gl.enableVertexAttribArray(this.pixel);
@@ -728,14 +837,16 @@ export class Renderer {
     snapshot: SessionSnapshot,
     size: Size,
     inkOptions: InkOptions = DEFAULT_INK,
-    presentation: FramePresentation = AUTHENTIC_PRESENTATION
+    presentation: FramePresentation = AUTHENTIC_PRESENTATION,
+    roadOptions: InkOptions = DEFAULT_INK
   ): {
     readonly lines: number;
     readonly points: number;
   } {
     return this.render(
       planFrame(world, snapshot, size, this.orrery, presentation),
-      inkOptions
+      inkOptions,
+      roadOptions
     );
   }
 
@@ -747,7 +858,8 @@ export class Renderer {
   /// by a pure function.
   render(
     plan: FramePlan,
-    inkOptions: InkOptions = DEFAULT_INK
+    inkOptions: InkOptions = DEFAULT_INK,
+    roadOptions: InkOptions = DEFAULT_INK
   ): {
     readonly lines: number;
     readonly points: number;
@@ -765,11 +877,12 @@ export class Renderer {
       this.skyPass(plan.sky, plan.size);
       gl.uniform2f(this.viewport, plan.size.width, plan.size.height);
     }
-    const enhanced =
-      inkOptions.thickness > DEFAULT_INK.thickness || inkOptions.glow > 0;
     for (const batch of plan.batches) {
+      const options = batch.style === 'roads' ? roadOptions : inkOptions;
+      const enhanced =
+        options.thickness > DEFAULT_INK.thickness || options.glow > 0;
       if (enhanced && batch.mode === 'lines') {
-        this.enhancedInk(batch, inkOptions, plan.size);
+        this.enhancedInk(batch, options, plan.size);
       } else {
         this.pass(batch);
       }

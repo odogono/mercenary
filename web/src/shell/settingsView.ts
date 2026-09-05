@@ -150,6 +150,44 @@ export const installSettingsView = (
         { label: 'SOFT', value: 'soft' },
         { label: 'BRIGHT', value: 'bright' }
       ]
+    },
+    {
+      // Like the sky, the wireframe's own numbers stay authored; the player chooses among the
+      // named levels or hands the choice back to the document.
+      apply: value => {
+        preferences.update({
+          roadWeight:
+            value === PRESET_DEFAULT
+              ? undefined
+              : (value as 'fine' | 'bold' | 'heavy')
+        });
+      },
+      current: () => preferences.current().roadWeight ?? PRESET_DEFAULT,
+      name: 'road-weight',
+      options: [
+        { label: 'AS TUNED', value: PRESET_DEFAULT },
+        { label: 'FINE', value: 'fine' },
+        { label: 'BOLD', value: 'bold' },
+        { label: 'HEAVY', value: 'heavy' }
+      ]
+    },
+    {
+      apply: value => {
+        preferences.update({
+          roadGlow:
+            value === PRESET_DEFAULT
+              ? undefined
+              : (value as 'off' | 'soft' | 'bright')
+        });
+      },
+      current: () => preferences.current().roadGlow ?? PRESET_DEFAULT,
+      name: 'road-glow',
+      options: [
+        { label: 'AS TUNED', value: PRESET_DEFAULT },
+        { label: 'OFF', value: 'off' },
+        { label: 'SOFT', value: 'soft' },
+        { label: 'BRIGHT', value: 'bright' }
+      ]
     }
   ];
 

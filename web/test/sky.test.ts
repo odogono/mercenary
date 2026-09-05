@@ -54,6 +54,7 @@ describe('the authored Targ Orrery', () => {
     expect(
       targOrreryFor({
         preset: 'authentic',
+        roads: { glow: 0, thickness: 1 },
         sky: defaults,
         structureReach: 'cell',
         wireframe: { glow: 0, thickness: 1 }
@@ -62,6 +63,7 @@ describe('the authored Targ Orrery', () => {
     expect(
       targOrreryFor({
         preset: 'enhanced',
+        roads: { glow: 0, thickness: 1 },
         sky: defaults,
         structureReach: 'cell',
         wireframe: { glow: 0, thickness: 1 }

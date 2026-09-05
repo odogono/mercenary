@@ -24,6 +24,13 @@ The tests and page both read `/payload/` from the repository root; Replay Gates 
 three are tracked (ADR 0029), so a fresh checkout or worktree runs the gates as it stands — there
 is nothing to populate first.
 
+Enhanced line styling has independent structure/object and road controls. `presentation.wireframe`
+and `presentation.roads` in `settings.json` each accept `thickness` (1–4 pixels) and `glow` (0–1),
+with omitted fields defaulting to one pixel and no glow. Roads include runways; Road Workspace
+lines belonging to a Surface Structure retain structure styling. The settings page and console
+(`set weight`, `set glow`, `set road-weight`, `set road-glow`) override these values; `document`
+hands a console choice back to tuning. Authentic always uses the original hairline without glow.
+
 Re-recording a Golden Trace is the exception, and it still needs the frozen Trace Oracle out of a
 temporary worktree. `MERCENARY_PAYLOAD` points the Oracle at this checkout's canonical payload,
 so the traces are rewritten in this checkout's `/traces/` directory beside that payload, where
