@@ -635,28 +635,42 @@ try {
   window.addEventListener('pagehide', () => sound.dispose());
   window.addEventListener('blur', () => sound.suspend());
   window.addEventListener('focus', () => {
-    if (!document.hidden && menu.layer() === 'none') {
+    if (!document.hidden && menu.layer() === 'none' && ownership.mayAdvance()) {
       sound.resume();
     }
   });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
       sound.suspend();
-    } else if (menu.layer() === 'none') {
+    } else if (menu.layer() === 'none' && ownership.mayAdvance()) {
       sound.resume();
     }
   });
 
-  const unlockSound = (): void => {
-    void sound.unlock().catch(() => {});
+  const unlockSound = (event: Event): void => {
+    if (!event.isTrusted) {
+      return;
+    }
+    window.removeEventListener('pointerdown', unlockSound, true);
+    window.removeEventListener('keydown', unlockSound, true);
+    void sound
+      .unlock()
+      .then(() => {
+        if (
+          document.hidden ||
+          menu.layer() !== 'none' ||
+          !ownership.mayAdvance()
+        ) {
+          sound.suspend();
+        }
+      })
+      .catch(() => {});
   };
   window.addEventListener('pointerdown', unlockSound, {
-    capture: true,
-    once: true
+    capture: true
   });
   window.addEventListener('keydown', unlockSound, {
-    capture: true,
-    once: true
+    capture: true
   });
 
   const pointerTakeTarget = (event: MouseEvent): number | undefined => {

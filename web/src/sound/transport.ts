@@ -21,6 +21,7 @@ export class AudioWorkletTransport implements SoundTransport {
   private muted = false;
   private origin: number | undefined;
   private volume = 100;
+  private suspended = false;
 
   constructor(
     private readonly document: SoundDocument,
@@ -37,9 +38,18 @@ export class AudioWorkletTransport implements SoundTransport {
         throw new Error('Web Audio is unavailable');
       }
       const context = new Context();
-      await context.audioWorklet.addModule(
-        this.options.workletUrl ?? '/src/sound/worklet.ts'
-      );
+      this.context = context;
+      // Resume inside the trusted gesture, before asynchronous module loading.
+      await Promise.all([
+        context.resume(),
+        context.audioWorklet.addModule(
+          this.options.workletUrl ?? '/src/sound/worklet.ts'
+        )
+      ]);
+      if (this.disposed) {
+        await context.close();
+        return;
+      }
       const Node = this.options.node ?? globalThis.AudioWorkletNode;
       if (Node === undefined) {
         throw new Error('AudioWorklet is unavailable');
@@ -54,7 +64,11 @@ export class AudioWorkletTransport implements SoundTransport {
       this.context = context;
       this.node = node;
       this.gain = gain;
-      await context.resume();
+      node.onprocessorerror = () =>
+        this.report(new Error('SID AudioWorklet failed'));
+      if (this.suspended) {
+        await context.suspend();
+      }
     } catch (error) {
       this.report(error);
     }
@@ -63,33 +77,53 @@ export class AudioWorkletTransport implements SoundTransport {
   send(batch: SoundBatch): void {
     const context = this.context;
     const node = this.node;
-    if (this.disposed || context === undefined || node === undefined) {
+    if (
+      this.disposed ||
+      this.failed ||
+      context === undefined ||
+      node === undefined
+    ) {
       return;
     }
-    this.origin ??= context.currentTime - batch.at;
-    const at = Math.max(context.currentTime, this.origin + batch.at);
     const audible: SoundCommand[] = [];
     for (const command of batch.commands) {
       if (command.kind === 'mute') {
         this.muted = command.value;
-        this.applyGain(at);
+        this.applyGain(context.currentTime);
       } else if (command.kind === 'volume') {
         this.volume = command.value;
-        this.applyGain(at);
+        this.applyGain(context.currentTime);
       } else {
         audible.push(command);
       }
     }
     if (audible.length > 0) {
+      if (audible.some(command => command.kind === 'reset')) {
+        this.origin = undefined;
+      }
+      this.origin ??= context.currentTime - batch.at;
+      const at = Math.max(context.currentTime, this.origin + batch.at);
       node.port.postMessage({ at, commands: audible });
     }
   }
 
   suspend(): void {
+    this.suspended = true;
     void this.context?.suspend().catch(error => this.report(error));
   }
 
   resume(): void {
+    if (this.suspended) {
+      this.origin = undefined;
+      // Preserve synthesis phase while discarding future commands from the
+      // previous clock origin. The presenter refreshes continuous registers.
+      this.node?.port.postMessage({
+        at: this.context?.currentTime ?? 0,
+        commands: [],
+        replacePending: true
+      });
+    }
+    this.suspended = false;
     void this.context?.resume().catch(error => this.report(error));
   }
 
@@ -112,6 +146,8 @@ export class AudioWorkletTransport implements SoundTransport {
       return;
     }
     this.failed = true;
+    this.node?.disconnect();
+    void this.context?.close().catch(() => {});
     this.options.onFailure(String(error));
   }
 }

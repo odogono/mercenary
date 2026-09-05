@@ -122,7 +122,7 @@ def decode_sound(ram: bytes) -> dict[str, Any]:
             "clockHz": 985248,
             "model": "6581",
             "registerCount": 25,
-            "supportedControls": [0x00, 0x15, 0x41, 0x80, 0x81],
+            "supportedControls": [0x00, 0x04, 0x10, 0x15, 0x41, 0x80, 0x81],
             "voiceStride": 7,
         },
         "initialRegisters": initial,

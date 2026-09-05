@@ -25,6 +25,15 @@ class MercenarySidProcessor extends AudioWorkletProcessor {
     super(options);
     this.synth = new SidSynth(options.processorOptions.document, sampleRate);
     this.port.onmessage = (message: MessageEvent<SoundBatch>) => {
+      if (
+        message.data.replacePending ||
+        message.data.commands.some(command => command.kind === 'reset')
+      ) {
+        this.queue = [];
+      }
+      if (this.queue.length >= 2048) {
+        throw new Error('SID command queue overflow');
+      }
       this.queue.push(message.data);
       this.queue.sort((left, right) => left.at - right.at);
     };
@@ -35,13 +44,26 @@ class MercenarySidProcessor extends AudioWorkletProcessor {
     if (channel === undefined) {
       return true;
     }
-    while (this.queue[0] !== undefined && this.queue[0].at <= currentTime) {
+    let position = 0;
+    while (
+      this.queue[0] !== undefined &&
+      this.queue[0].at < currentTime + channel.length / sampleRate
+    ) {
       const batch = this.queue.shift()!;
+      const target = Math.max(
+        position,
+        Math.min(
+          channel.length,
+          Math.ceil((batch.at - currentTime) * sampleRate)
+        )
+      );
+      channel.set(this.synth.render(target - position), position);
+      position = target;
       for (const command of batch.commands) {
         this.apply(command);
       }
     }
-    channel.set(this.synth.render(channel.length));
+    channel.set(this.synth.render(channel.length - position), position);
     return true;
   }
 

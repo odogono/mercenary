@@ -33,6 +33,7 @@ export interface BensonMessagePresentation {
     readonly complete: boolean;
     readonly progress: number;
   };
+  readonly soundCharacter?: string;
 }
 
 export type BensonMessageMode = 'authentic' | 'legacyOracle';
@@ -136,6 +137,9 @@ export class BensonSession {
     }
     if (this.messageMode === 'authentic') {
       return {
+        ...(this.display.soundCharacter === undefined
+          ? {}
+          : { soundCharacter: this.display.soundCharacter }),
         ...(!this.display.isComplete || this.completeMessage === undefined
           ? {}
           : { completedText: this.completeMessage }),

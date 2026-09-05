@@ -153,13 +153,15 @@ dispatcher. The display's independently observed 50 Hz cadence is documented in
 
 The outdoor presentation path at `$B5D8-$B61C` skips modulation underground and
 for craft/mover `$0A`. Otherwise it derives a byte from live values `$26/$27`,
-writes the low nibble of `$26` into voice 2 frequency-high (`$D408`) together
+writes the high nibble of `$26` into voice 2 frequency-high (`$D408`) together
 with the derived upper nibble, and writes the derived envelope byte to voice 2
 sustain/release (`$D40D`) when it changes. An upward change also invokes selector
 `$24`, which gates voice 2 off and back on using the freshly written mutable
 tuple at `$B9AB-$B9AE`. This proves continuous modulation and edge-triggered
-retriggering; the player-facing relationship between `$26/$27`, Occupancy, and
-throttle still needs a synchronized state/register capture.
+retriggering. The guarded flight decode identifies `$26/$27` as speed's custom
+floating-point mantissa/exponent (see [flight.md](flight.md)), not throttle.
+The presenter re-encodes Session Snapshot speed for this calculation. A
+synchronized gameplay capture remains necessary to claim exact modulation timing.
 
 ### Lift and Room transition
 
@@ -173,9 +175,12 @@ pulse width `$0800`, control/AD/SR `$15/$00/$A0`. The scene-transition paths at
 visual work. At the lift's lower clamp, `$A302` calls `$BB2F`, which clears the
 lift state byte and writes voice 2 control `$00`.
 
-Direction labels for the two profiles are intentionally withheld until runtime
-capture correlates `$AF3E` and `$AF3A` with ascent and descent. Static proximity
-to the visual transition is insufficient evidence for a player-facing name.
+Both native transition branches call `$AF3E` and then `$AF3A`; these are two
+phases, not separate ascent/descent sounds. The `$15` control enables triangle,
+ring modulation and gate, not oscillator sync. Because browser lift traversal
+is atomic, its presentation currently holds each profile for 0.5 seconds, then
+restores the baseline. This one-second compression is authored presentation
+timing, not a recovered native duration, and requires listening review.
 
 ## What is still unknown
 
@@ -187,7 +192,7 @@ native selectors are requested. It does **not** yet close the Sound Cue inventor
   all interactions, combat, Mission reactions, recoverable failures, and the
   Ending;
 - selector `$00` and the dynamic `$24`/`$30` programs need state-correlated names,
-  and lift profile direction needs observation;
+  and lift phase timing needs observation;
 - exact onset, duration, envelope completion, retrigger, same-voice interruption,
   cross-voice overlap, and every stop path remain to be measured;
 - runtime watchpoints must prove that the self-modifying Benson store is the only
@@ -248,6 +253,40 @@ a non-empty SID log (33–91 writes). Full recordings span 3.49–4.99 seconds;
 `audition.wav` removes only the first 400 ms of initialization. Signal validation
 excludes the initialization transient, so a startup click cannot masquerade as
 a successful effect capture. No human listening verdict is claimed.
+
+### Owned-renderer comparisons
+
+From `web/`, run:
+
+```sh
+bun tools/sound-compare.ts ../research/c64-reference-build/work/sound-probe-20260905T095605Z-57511b39
+```
+
+The tool verifies recording/register-log hashes and renders the captured cycle
+sequence through the same owned core used by the AudioWorklet. A new restricted
+comparison directory contains paired WAVs, a `LISTEN.md` index and windowed RMS
+measurements. Both clips omit the same initial 400 ms; Reference clips are copied
+byte-for-byte from the accepted audition files. There is no per-clip loudness
+normalization and no recording is shipped in the browser.
+
+The first comparison exposed an under-clocked noise generator, linear decay,
+missing lift ring modulation, a silent initially gated Benson voice, and an
+over-loud mix. The rendition now uses oscillator-bit-derived noise clocks,
+piecewise exponential envelope decay/release, ring modulation, initial gate
+state, four sub-samples per output sample, and one fixed 0.45 mix calibration.
+The envelope model follows the documented linear-attack/exponential-decay
+behavior ([SID envelope overview](https://sourceforge.net/p/sidplay-residfp/wiki/SID%20internals%20-%20Envelope%20Overview/));
+no third-party synthesis code was incorporated. Zero-frequency output is
+explicitly silenced and a 20 Hz DC-removal stage follows the mix. Analog 6581
+distortion, chip-specific envelope quirks and cycle-exact analog behavior are
+not claimed. Signal tests and RMS comparisons are diagnostics, not a human
+listening verdict or a proof that all gameplay callers are covered.
+
+Suspension freezes synthesis phase. If the visible but unfocused browser keeps
+advancing the Gameplay Session, its audible events are discarded until focus
+returns; resumption clears old queued commands, rebases the audio clock and
+refreshes continuous registers without resetting oscillator phase. This avoids
+replaying stale Sound Cues after a long blur without changing Game Semantics.
 
 The present static findings can be reproduced without publishing restricted
 outputs:

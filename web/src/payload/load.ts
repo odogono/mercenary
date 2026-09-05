@@ -187,15 +187,61 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
   );
 
   if (
+    soundDocument.sid.clockHz !== 985_248 ||
     soundDocument.sid.registerCount !== 25 ||
     soundDocument.sid.voiceStride !== 7 ||
     soundDocument.initialRegisters.length !== soundDocument.sid.registerCount ||
     soundDocument.oneShots.length !== soundDocument.counts['oneShotPrograms'] ||
     soundDocument.liftProfiles.length !==
       soundDocument.counts['liftProfiles'] ||
-    soundDocument.sid.supportedControls.join(',') !== '0,21,65,128,129' ||
+    soundDocument.sid.supportedControls.join(',') !== '0,4,16,21,65,128,129' ||
+    soundDocument.counts['initialRegisters'] !== 25 ||
+    soundDocument.counts['voices'] !== 3 ||
+    soundDocument.oneShots.map(program => program.selector).join(',') !==
+      '0,4,8,12,16,20,24,28,32,36,40,44,48' ||
+    soundDocument.liftProfiles.map(profile => profile.entry).join(',') !==
+      'af3e,af3a' ||
+    soundDocument.initialRegisters.some(value => value < 0 || value > 255) ||
+    [4, 11, 18].some(
+      register =>
+        !soundDocument.sid.supportedControls.includes(
+          soundDocument.initialRegisters[register]!
+        )
+    ) ||
+    soundDocument.initialRegisters.slice(21).join(',') !== '0,0,0,15' ||
+    soundDocument.liftProfiles.some(
+      profile =>
+        profile.registers.length !== 14 ||
+        profile.startControl !== 21 ||
+        profile.registers.some(value => value < 0 || value > 255) ||
+        [4, 11].some(
+          register =>
+            !soundDocument.sid.supportedControls.includes(
+              profile.registers[register]!
+            )
+        )
+    ) ||
+    soundDocument.craft.frequencyHighRegister !== 8 ||
+    soundDocument.craft.sustainReleaseRegister !== 13 ||
+    soundDocument.craft.programSelector !== 36 ||
+    soundDocument.craft.speedHighShift !== 4 ||
+    soundDocument.bensonDisplay.frequencyHighRegister !== 15 ||
+    soundDocument.bensonDisplay.controlRegister !== 18 ||
+    soundDocument.bensonDisplay.control !== 65 ||
+    soundDocument.bensonDisplay.voice !== 3 ||
+    soundDocument.stopRules.oneShotControlRegister !== 4 ||
+    soundDocument.stopRules.secondVoiceControlRegister !== 11 ||
+    soundDocument.stopRules.liftControlRegister !== 11 ||
+    soundDocument.stopRules.bensonDisplayFrequencyHighRegister !== 15 ||
+    soundDocument.stopRules.stoppedValue !== 0 ||
     soundDocument.oneShots.some(
-      program => ![0x41, 0x80, 0x81].includes(program.control)
+      program =>
+        ![0x41, 0x80, 0x81].includes(program.control) ||
+        [
+          program.frequencyHigh,
+          program.attackDecay,
+          program.sustainRelease
+        ].some(value => value < 0 || value > 255)
     )
   ) {
     fail({

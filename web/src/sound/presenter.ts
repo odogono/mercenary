@@ -15,6 +15,7 @@ export type SoundCommand =
 export interface SoundBatch {
   readonly at: number;
   readonly commands: readonly SoundCommand[];
+  readonly replacePending?: boolean;
 }
 
 export interface SoundTransport {
@@ -59,7 +60,11 @@ export class SoundPresenter {
   private pending: SoundBatch[] = [];
   private muted = false;
   private volume = 100;
+  private suspended = false;
+  private refreshPersistent = false;
   private lastDisplay = '';
+  private liftStarted: number | undefined;
+  private liftSecondProfile = false;
   private craftActive = false;
   private lastCraft:
     | { readonly frequencyHigh: number; readonly sustainRelease: number }
@@ -78,6 +83,10 @@ export class SoundPresenter {
       return;
     }
     this.state = 'unlocking';
+    this.liftStarted = undefined;
+    this.lastDisplay = '';
+    this.lastCraft = undefined;
+    this.craftActive = false;
     try {
       await this.transport.unlock();
       if ((this.state as string) === 'disposed') {
@@ -103,7 +112,7 @@ export class SoundPresenter {
   }
 
   present(step: PresentSoundStep): void {
-    if (this.state === 'disposed') {
+    if (this.state === 'disposed' || this.suspended) {
       return;
     }
     const commands: SoundCommand[] = [];
@@ -116,6 +125,10 @@ export class SoundPresenter {
           ) {
             commands.push({ kind: 'play', selector: 0, voice: 1 });
           }
+        } else if ('lift' in event) {
+          this.liftStarted = step.snapshot.elapsed;
+          this.liftSecondProfile = false;
+          commands.push(...this.liftProfile(0));
         } else if ('fire' in event) {
           commands.push({ kind: 'play', selector: event.fire.sound, voice: 1 });
         } else if ('impact' in event) {
@@ -127,16 +140,34 @@ export class SoundPresenter {
         } else if ('wall' in event) {
           commands.push({ kind: 'play', selector: event.wall.sound, voice: 1 });
         } else if ('script' in event) {
-          const command = scriptCommand(event);
+          const command =
+            event.script === 'keyAcknowledged' &&
+            !(
+              step.snapshot.location.kind === 'surface' &&
+              step.snapshot.occupancy.kind === 'aboard'
+            )
+              ? undefined
+              : scriptCommand(event);
           if (command !== undefined) {
             commands.push(command);
           }
         } else if ('arrived' in event) {
-          commands.push({
-            kind: 'write',
-            register: this.document.stopRules.oneShotControlRegister,
-            value: this.document.stopRules.stoppedValue
-          });
+          if (
+            !step.events.some(
+              item => typeof item === 'object' && 'lift' in item
+            )
+          ) {
+            this.liftStarted = undefined;
+            this.craftActive = false;
+            this.lastCraft = undefined;
+            commands.push(...this.restoreSceneVoices());
+            if (step.snapshot.core.transitionCooldown > 0) {
+              commands.push(
+                { kind: 'play', selector: 28, voice: 1 },
+                { kind: 'play', selector: 32, voice: 2 }
+              );
+            }
+          }
         } else if ('touchdown' in event && event.touchdown === 'crashed') {
           commands.push({ kind: 'play', selector: 24, voice: 1 });
         }
@@ -167,18 +198,25 @@ export class SoundPresenter {
   }
 
   suspend(): void {
-    if (this.state === 'unlocked') {
+    this.suspended = true;
+    if (this.state !== 'disposed') {
       this.transport.suspend();
     }
   }
 
   resume(): void {
-    if (this.state === 'unlocked') {
+    if (this.suspended) {
+      this.refreshPersistent = true;
+    }
+    this.suspended = false;
+    if (this.state !== 'disposed') {
       this.transport.resume();
     }
   }
 
   resetFromSnapshot(snapshot: SessionSnapshot): void {
+    this.pending = [];
+    this.liftStarted = undefined;
     this.craftActive = false;
     this.lastCraft = undefined;
     this.lastDisplay = '';
@@ -206,8 +244,10 @@ export class SoundPresenter {
 
   private persistentCommands(snapshot: SessionSnapshot): SoundCommand[] {
     const commands: SoundCommand[] = [];
-    const display = snapshot.bensonMessage?.displayText ?? '';
-    if (display !== this.lastDisplay) {
+    const refresh = this.refreshPersistent;
+    this.refreshPersistent = false;
+    const display = snapshot.bensonMessage?.soundCharacter ?? '';
+    if (refresh || display !== this.lastDisplay) {
       this.lastDisplay = display;
       const character = display.at(-1)?.charCodeAt(0);
       const rule = this.document.bensonDisplay;
@@ -226,11 +266,28 @@ export class SoundPresenter {
       });
     }
 
+    if (this.liftStarted !== undefined) {
+      const age = snapshot.elapsed - this.liftStarted;
+      if (age < 1) {
+        if (refresh || (age >= 0.5 && !this.liftSecondProfile)) {
+          this.liftSecondProfile = age >= 0.5;
+          commands.push(...this.liftProfile(this.liftSecondProfile ? 1 : 0));
+        }
+        return commands;
+      }
+      this.liftStarted = undefined;
+      this.craftActive = false;
+      this.lastCraft = undefined;
+      commands.push(...this.restoreSceneVoices());
+    }
     const craftActive =
       snapshot.location.kind === 'surface' &&
       snapshot.occupancy.kind === 'aboard';
     if (!craftActive) {
-      if (this.craftActive) {
+      if (
+        this.craftActive ||
+        (refresh && snapshot.core.transitionCooldown === 0)
+      ) {
         commands.push({
           kind: 'write',
           register: this.document.stopRules.secondVoiceControlRegister,
@@ -240,26 +297,38 @@ export class SoundPresenter {
       this.craftActive = false;
       this.lastCraft = undefined;
     } else {
-      const speed = Math.abs(Math.round(snapshot.player.speed));
-      const throttle = Math.max(
-        this.document.craft.throttleFloor,
-        Math.round(snapshot.throttle) - this.document.craft.throttleSubtract
+      // $26/$27 are speed's mantissa and signed exponent, not throttle bytes.
+      const speed = Math.max(2 ** -32, Math.abs(snapshot.player.speed));
+      const exponent = Math.max(
+        -32,
+        Math.min(31, Math.floor(Math.log2(speed)))
       );
+      const mantissa = Math.min(
+        255,
+        Math.max(0, Math.floor((speed / 2 ** exponent - 1) * 256))
+      );
+      const exponentByte =
+        (exponent * 4 + (snapshot.player.speed < 0 ? 1 : 0)) & 255;
+      const adjusted = exponentByte - this.document.craft.throttleSubtract;
+      const envelope =
+        (exponentByte & 128) !== 0
+          ? 0
+          : (((adjusted <= 0 ? this.document.craft.throttleFloor : adjusted) <<
+              2) |
+              this.document.craft.sustainReleaseOr) &
+            255;
       const next = {
-        frequencyHigh: ((throttle << 2) & 0xf0) | ((speed >> 4) & 0x0f),
-        sustainRelease:
-          ((throttle << 2) & 0xf0) | this.document.craft.sustainReleaseOr
+        frequencyHigh:
+          (envelope & 0xf0) | (mantissa >> this.document.craft.speedHighShift),
+        sustainRelease: envelope
       };
       if (
+        refresh ||
         !this.craftActive ||
         this.lastCraft?.frequencyHigh !== next.frequencyHigh ||
         this.lastCraft?.sustainRelease !== next.sustainRelease
       ) {
-        if (
-          !this.craftActive ||
-          (this.lastCraft !== undefined &&
-            next.sustainRelease > this.lastCraft.sustainRelease)
-        ) {
+        if (next.sustainRelease > (this.lastCraft?.sustainRelease ?? 0)) {
           commands.push({
             kind: 'play',
             selector: this.document.craft.programSelector,
@@ -283,5 +352,27 @@ export class SoundPresenter {
       this.craftActive = true;
     }
     return commands;
+  }
+
+  private liftProfile(index: number): SoundCommand[] {
+    const profile = this.document.liftProfiles[index]!;
+    return [
+      ...profile.registers.slice(1).map((value, offset): SoundCommand => ({
+        kind: 'write',
+        register: offset + 1,
+        value
+      })),
+      { kind: 'write', register: 11, value: profile.startControl }
+    ];
+  }
+
+  private restoreSceneVoices(): SoundCommand[] {
+    return this.document.initialRegisters
+      .slice(0, 14)
+      .map((value, register) => ({
+        kind: 'write',
+        register,
+        value
+      }));
   }
 }

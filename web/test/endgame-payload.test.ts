@@ -318,8 +318,8 @@ const payloadDocuments = (
     },
     counts: {
       initialRegisters: 25,
-      liftProfiles: 0,
-      oneShotPrograms: 0,
+      liftProfiles: 2,
+      oneShotPrograms: 13,
       voices: 3
     },
     craft: {
@@ -333,15 +333,25 @@ const payloadDocuments = (
       undergroundSuppresses: true,
       walkingCraftId: 10
     },
-    initialRegisters: Array(25).fill(0),
-    liftProfiles: [],
-    oneShots: [],
+    initialRegisters: [...Array(24).fill(0), 15],
+    liftProfiles: ['af3e', 'af3a'].map(entry => ({
+      entry,
+      registers: Array(14).fill(0),
+      startControl: 21
+    })),
+    oneShots: Array.from({ length: 13 }, (_, index) => ({
+      attackDecay: 0,
+      control: 65,
+      frequencyHigh: 0,
+      selector: index * 4,
+      sustainRelease: 0
+    })),
     schemaVersion: 1,
     sid: {
       clockHz: 985_248,
       model: '6581',
       registerCount: 25,
-      supportedControls: [0, 21, 65, 128, 129],
+      supportedControls: [0, 4, 16, 21, 65, 128, 129],
       voiceStride: 7
     },
     stopRules: {
