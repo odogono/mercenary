@@ -46,6 +46,7 @@ from .verification import aggregate_verification, render_report, validate_verifi
 from .implementation_contracts import validate_implementation_contracts
 from .semantics import validate_event_history_proof
 from .sound import decode_sound
+from .sound_probe import capture_probes, probe_names
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -232,6 +233,9 @@ def _parser() -> argparse.ArgumentParser:
     )
     sound_decode.add_argument("--run", required=True, type=Path)
     sound_decode.add_argument("--output", type=Path)
+    sound_probe = sound_commands.add_parser("probe", help="audition native sound routines without gameplay (restricted outputs)")
+    sound_probe.add_argument("--run", required=True, type=Path)
+    sound_probe.add_argument("--probe", choices=["all", *probe_names()], default="projectile")
 
     implementation_parser = subparsers.add_parser("implementation", help="validate production implementation contracts")
     implementation_commands = implementation_parser.add_subparsers(dest="implementation_command", required=True)
@@ -320,6 +324,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "runId": source["runId"],
                 "endgame": native,
             }
+        elif arguments.command == "sound" and arguments.sound_command == "probe":
+            result = capture_probes(arguments.run, probe_names() if arguments.probe == "all" else [arguments.probe])
         elif arguments.command == "sound":
             reference, _ = load_configuration()
             ram, source = load_geometry_source(

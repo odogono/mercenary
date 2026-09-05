@@ -213,6 +213,42 @@ that capture path before relying on it.
 
 ## Reproduction and next captures
 
+### Direct auditions without gameplay
+
+The `lab sound probe --run work/<interactive-run> --probe all` command now
+generates isolated auditions using the original sound routines. Its inputs are
+guarded RAM from the configured build; it loads the native `$8000-$BFFF` region
+into a fresh VICE process and installs an original temporary driver at `$0200`.
+The binary monitor verifies the driver, replaces its entry parking loop with
+NOPs, and requires the terminal checkpoint before finalizing the recording.
+
+VICE's existing `dump` playback device logs SID writes while its separate `wav`
+recording device writes PCM audio. The selected settings are PAL, reSID 6581
+(`-sidenginemodel 256`), 48 kHz, warp disabled and speed 100. This is development
+tooling only. Generated source slices, driver binaries, recordings and logs stay
+under ignored `work/`; the browser gains no third-party implementation.
+
+The available probes cover the nine known fixed selector requests, both lift
+profiles, retrigger, interruption, overlap, a stepped craft-input sweep, and
+controlled Benson display characters. The craft probe deliberately replaces
+`$B61D` with RTS to return before unrelated graphics work; this patch site is
+guarded and the unpatched source slice is retained. Benson runs its original
+display tick with controlled zero-page inputs and its original frequency stop.
+
+These experiments answer what the supplied native program and register history
+sound like. The hold times, sweep trajectory and character sequence are authored
+test inputs, not recovered gameplay timing. This supports tuning a recognisable
+owned rendition without requiring a full playthrough. It does not retroactively
+close the preservation-grade evidence gaps above.
+
+On 2026-09-05, run `sound-probe-20260905T095605Z-57511b39` completed all 16
+probes against the source RAM identified above. Every probe reached its checked
+completion boundary and produced a finalized mono 48 kHz PCM16 recording plus
+a non-empty SID log (33–91 writes). Full recordings span 3.49–4.99 seconds;
+`audition.wav` removes only the first 400 ms of initialization. Signal validation
+excludes the initialization transient, so a startup click cannot masquerade as
+a successful effect capture. No human listening verdict is claimed.
+
 The present static findings can be reproduced without publishing restricted
 outputs:
 
