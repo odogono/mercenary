@@ -154,6 +154,11 @@ export const installSettingsView = (
   ];
 
   const buttons = new Map<SettingRow, readonly HTMLButtonElement[]>();
+  const mute = options.page.querySelector<HTMLButtonElement>('#audio-mute');
+  const volume = options.page.querySelector<HTMLInputElement>('#audio-volume');
+  const volumeValue = options.page.querySelector<HTMLOutputElement>(
+    '#audio-volume-value'
+  );
   const refresh = (): void => {
     for (const [row, choices] of buttons) {
       const current = row.current();
@@ -161,7 +166,27 @@ export const installSettingsView = (
         button.setAttribute('aria-pressed', String(button.value === current));
       }
     }
+    const audio = preferences.current();
+    if (mute !== null) {
+      mute.setAttribute('aria-pressed', String(audio.audioMuted));
+      mute.textContent = audio.audioMuted ? 'SOUND OFF' : 'SOUND ON';
+    }
+    if (volume !== null) {
+      volume.value = String(audio.audioVolume);
+    }
+    if (volumeValue !== null) {
+      volumeValue.value = String(audio.audioVolume);
+    }
   };
+
+  mute?.addEventListener('click', () => {
+    preferences.update({ audioMuted: !preferences.current().audioMuted });
+    refresh();
+  });
+  volume?.addEventListener('input', () => {
+    preferences.update({ audioVolume: Number(volume.value) });
+    refresh();
+  });
 
   for (const row of rows) {
     const group = options.page.querySelector<HTMLElement>(

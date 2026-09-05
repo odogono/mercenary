@@ -875,6 +875,18 @@
         letter-spacing: 0.06em;
       }
 
+      .audio-controls {
+        align-items: center;
+        display: grid;
+        grid-template-columns: minmax(86px, auto) 1fr 3ch;
+      }
+
+      .audio-controls input[type='range'] {
+        accent-color: var(--lamp-on);
+        min-width: 90px;
+        width: 100%;
+      }
+
       #slot-rows {
         display: flex;
         flex-direction: column;
@@ -1233,6 +1245,30 @@
             <div class="setting-row">
               <span class="chrome-label">LINE GLOW</span>
               <div class="setting-choices" data-setting="glow"></div>
+            </div>
+            <div class="setting-row">
+              <label class="chrome-label" for="audio-volume">AUDIO</label>
+              <div class="setting-choices audio-controls">
+                <button
+                  id="audio-mute"
+                  class="chrome-button"
+                  type="button"
+                  aria-label="Mute audio"
+                  aria-pressed="false"
+                >
+                  SOUND ON
+                </button>
+                <input
+                  id="audio-volume"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value="100"
+                  aria-label="Audio volume"
+                />
+                <output id="audio-volume-value" for="audio-volume">100</output>
+              </div>
             </div>
             <button class="chrome-button" type="button" data-goto="menu">
               BACK

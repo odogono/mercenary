@@ -315,7 +315,7 @@ describe('properties that hold whatever the block', () => {
     );
   });
 
-  test('surface coordinates wrap like the Reference Build\'s 24-bit axes', () => {
+  test("surface coordinates wrap like the Reference Build's 24-bit axes", () => {
     const wrapped = step(
       {
         ...start(),

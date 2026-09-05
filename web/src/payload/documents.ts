@@ -778,6 +778,64 @@ export interface UndergroundDocument {
   readonly schemaVersion: number;
 }
 
+export interface SoundProgram {
+  readonly attackDecay: number;
+  readonly control: number;
+  readonly frequencyHigh: number;
+  readonly selector: number;
+  readonly sustainRelease: number;
+}
+
+export interface SoundLiftProfile {
+  readonly entry: 'af3e' | 'af3a';
+  readonly registers: readonly number[];
+  readonly startControl: number;
+}
+
+export interface SoundDocument {
+  readonly bensonDisplay: {
+    readonly characterMask: number;
+    readonly control: number;
+    readonly controlRegister: number;
+    readonly frequencyHighBias: number;
+    readonly frequencyHighRegister: number;
+    readonly spaceCode: number;
+    readonly spaceFrequencyHigh: number;
+    readonly stopFrequencyHigh: number;
+    readonly voice: number;
+  };
+  readonly counts: Readonly<Record<string, number>>;
+  readonly craft: {
+    readonly frequencyHighRegister: number;
+    readonly programSelector: number;
+    readonly speedHighShift: number;
+    readonly sustainReleaseOr: number;
+    readonly sustainReleaseRegister: number;
+    readonly throttleFloor: number;
+    readonly throttleSubtract: number;
+    readonly undergroundSuppresses: boolean;
+    readonly walkingCraftId: number;
+  };
+  readonly initialRegisters: readonly number[];
+  readonly liftProfiles: readonly SoundLiftProfile[];
+  readonly oneShots: readonly SoundProgram[];
+  readonly schemaVersion: number;
+  readonly sid: {
+    readonly clockHz: number;
+    readonly model: '6581';
+    readonly registerCount: number;
+    readonly supportedControls: readonly number[];
+    readonly voiceStride: number;
+  };
+  readonly stopRules: {
+    readonly bensonDisplayFrequencyHighRegister: number;
+    readonly liftControlRegister: number;
+    readonly oneShotControlRegister: number;
+    readonly secondVoiceControlRegister: number;
+    readonly stoppedValue: number;
+  };
+}
+
 export interface Bundle {
   readonly benson?: BensonDocument;
   readonly endgame: EndgameDocument;
@@ -786,6 +844,7 @@ export interface Bundle {
   readonly manifest: Manifest;
   readonly objects: ObjectsDocument;
   readonly rooms: RoomsDocument;
+  readonly sound: SoundDocument;
   readonly surface: SurfaceDocument;
   readonly text?: TextDocument;
   readonly underground?: UndergroundDocument;

@@ -82,10 +82,20 @@ const harness = (
     objectSlots: () => world.objects.length,
     persistence,
     preferences: {
-      current: () => ({ composition: 'panel', panelRendition: 'targ' }),
+      current: () => ({
+        audioMuted: false,
+        audioVolume: 100,
+        composition: 'panel',
+        panelRendition: 'targ'
+      }),
       update: change => {
         changes.push(change);
-        return { composition: 'panel', panelRendition: 'targ' };
+        return {
+          audioMuted: false,
+          audioVolume: 100,
+          composition: 'panel',
+          panelRendition: 'targ'
+        };
       }
     },
     session: () => session,

@@ -92,6 +92,18 @@ describe('the live browser Gameplay Session', () => {
         }
       })
     ).not.toEqual(baseline);
+    expect(
+      saveEnvironment(
+        {
+          ...bundle,
+          sound: {
+            ...bundle.sound,
+            schemaVersion: bundle.sound.schemaVersion + 1
+          }
+        },
+        settings
+      )
+    ).toEqual(baseline);
   });
 
   test('restores airborne mover and parked-craft state exactly', () => {

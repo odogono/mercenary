@@ -304,6 +304,54 @@ const payloadDocuments = (
     rooms: [],
     schemaVersion: 8
   },
+  'sound.json': {
+    bensonDisplay: {
+      characterMask: 63,
+      control: 65,
+      controlRegister: 18,
+      frequencyHighBias: 48,
+      frequencyHighRegister: 15,
+      spaceCode: 32,
+      spaceFrequencyHigh: 208,
+      stopFrequencyHigh: 0,
+      voice: 3
+    },
+    counts: {
+      initialRegisters: 25,
+      liftProfiles: 0,
+      oneShotPrograms: 0,
+      voices: 3
+    },
+    craft: {
+      frequencyHighRegister: 8,
+      programSelector: 36,
+      speedHighShift: 4,
+      sustainReleaseOr: 8,
+      sustainReleaseRegister: 13,
+      throttleFloor: 4,
+      throttleSubtract: 12,
+      undergroundSuppresses: true,
+      walkingCraftId: 10
+    },
+    initialRegisters: Array(25).fill(0),
+    liftProfiles: [],
+    oneShots: [],
+    schemaVersion: 1,
+    sid: {
+      clockHz: 985_248,
+      model: '6581',
+      registerCount: 25,
+      supportedControls: [0, 21, 65, 128, 129],
+      voiceStride: 7
+    },
+    stopRules: {
+      bensonDisplayFrequencyHighRegister: 15,
+      liftControlRegister: 11,
+      oneShotControlRegister: 4,
+      secondVoiceControlRegister: 11,
+      stoppedValue: 0
+    }
+  },
   'surface.json': { cells: [], schemaVersion: 8 },
   'world.json': {
     bounds: { max: [0, 0, 0], min: [0, 0, 0] },

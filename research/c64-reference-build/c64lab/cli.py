@@ -45,6 +45,7 @@ from .object_semantics import (
 from .verification import aggregate_verification, render_report, validate_verification
 from .implementation_contracts import validate_implementation_contracts
 from .semantics import validate_event_history_proof
+from .sound import decode_sound
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -222,6 +223,16 @@ def _parser() -> argparse.ArgumentParser:
     )
     endgame_decode.add_argument("--run", required=True, type=Path)
 
+    sound_parser = subparsers.add_parser(
+        "sound", help="decode the bounded SID programs and control rules"
+    )
+    sound_commands = sound_parser.add_subparsers(dest="sound_command", required=True)
+    sound_decode = sound_commands.add_parser(
+        "decode", help="decode guarded sound data from an interactive capture"
+    )
+    sound_decode.add_argument("--run", required=True, type=Path)
+    sound_decode.add_argument("--output", type=Path)
+
     implementation_parser = subparsers.add_parser("implementation", help="validate production implementation contracts")
     implementation_commands = implementation_parser.add_subparsers(dest="implementation_command", required=True)
     implementation_validate = implementation_commands.add_parser("validate", help="validate schemas, CDDL, and golden vectors")
@@ -309,6 +320,31 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "runId": source["runId"],
                 "endgame": native,
             }
+        elif arguments.command == "sound":
+            reference, _ = load_configuration()
+            ram, source = load_geometry_source(
+                arguments.run,
+                expected_build_sha256=reference["hashes"]["sha256"],
+            )
+            document = decode_sound(ram)
+            if arguments.output is None:
+                result = {
+                    "status": "decoded",
+                    "runId": source["runId"],
+                    "counts": document["counts"],
+                }
+            else:
+                path = require_payload_output(arguments.output)
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(
+                    json.dumps(document, indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                )
+                result = {
+                    "status": "decoded",
+                    "output": str(arguments.output),
+                    "counts": document["counts"],
+                }
         elif arguments.command == "implementation":
             result = {"status": "verified", **validate_implementation_contracts(arguments.root)}
         elif arguments.command == "verification":

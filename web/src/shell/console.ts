@@ -1,4 +1,4 @@
-import type { GameplaySession } from '../session/index.ts';
+import type { GameplaySession, PresentationEvent } from '../session/index.ts';
 import type { PresentationPreset, StructureReach } from '../settings/index.ts';
 import { SURFACE, locationText, room } from '../world/index.ts';
 import type {
@@ -314,6 +314,7 @@ export interface ConsoleDeps {
   readonly objectSlots: () => number;
   readonly persistence: SavePersistence;
   readonly preferences: PreferencesStore;
+  readonly present?: (events: readonly PresentationEvent[]) => void;
   readonly session: () => GameplaySession;
   readonly typeface: (face: TypefaceId) => void;
 }
@@ -433,7 +434,9 @@ export const executeConsoleCommand = (
         ];
       }
       const slot = matches[0]!;
-      const outcome = session.drop(slot).outcome;
+      const result = session.drop(slot);
+      deps.present?.(result.events);
+      const outcome = result.outcome;
       switch (outcome.kind) {
         case 'dropped':
           return [`dropped ${inventoryLabel(slot, deps.objectName)}`];
@@ -445,7 +448,9 @@ export const executeConsoleCommand = (
       throw new Error('unknown object drop outcome');
     }
     case 'getObject': {
-      const outcome = deps.session().takeObject(command.slot).outcome;
+      const result = deps.session().takeObject(command.slot);
+      deps.present?.(result.events);
+      const outcome = result.outcome;
       const label = twoDigits(command.slot);
       switch (outcome.kind) {
         case 'took':

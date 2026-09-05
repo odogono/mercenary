@@ -71,6 +71,11 @@
       "size": 205801
     },
     {
+      "path": "sound.json",
+      "sha256": "d3ba2acb569ed548f810784477ffaf0f5f5219901445fba22f299d52d50a744a",
+      "size": 2154
+    },
+    {
       "path": "surface.json",
       "sha256": "c88d1aa300776f39e90f1809133ba3f581a9f260733459c22fa775aaae155bf2",
       "size": 486377

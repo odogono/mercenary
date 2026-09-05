@@ -19,6 +19,7 @@
   "knip": {
     "entry": [
       "src/shell/boot.ts",
+      "src/sound/worklet.ts",
       "e2e/opening-loop.ts",
       "e2e/*.e2e.ts",
       "test/**/*.test.ts"
