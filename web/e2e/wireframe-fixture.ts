@@ -137,7 +137,98 @@ const darkDuplicateDifference = darkLine.reduce(
       : difference,
   0
 );
+// Camera-view endpoints are deliberately synthetic: constant z isolates the radial
+// distance response from projection, while a changing z tests perspective interpolation.
+const distancePixels = (
+  start: number,
+  end = start,
+  options = heavy,
+  road = false,
+  explicitRange = true,
+  lateral = 0
+): Uint8Array => {
+  const distancePlan = {
+    ...plan(horizontal),
+    batches: plan(horizontal).batches.map(batch => ({
+      ...batch,
+      ...(road ? { style: 'roads' as const } : {}),
+      viewEndpoints: new Float32Array([lateral, 0, start, lateral, 0, end])
+    })),
+    ...(explicitRange
+      ? { glowDistance: { fadeEnd: 16_384, fadeStart: 4096 } }
+      : {})
+  };
+  renderer.render(distancePlan, options, options);
+  return readPixels();
+};
+const difference = (left: Uint8Array, right: Uint8Array): number =>
+  left.reduce(
+    (maximum, value, index) =>
+      Math.max(maximum, Math.abs(value - right[index]!)),
+    0
+  );
+const distanceNear = distancePixels(1000);
+const distanceMid = distancePixels(10_240);
+const distanceFar = distancePixels(20_000);
+const glowOff: InkOptions = { glow: 0, thickness: heavy.thickness };
+const distanceNoGlow = distancePixels(1000, 1000, glowOff);
+const slantedDepth = distancePixels(1000, 30_000);
+const collapsedDepth = (start: number, end: number): Uint8Array => {
+  const collapsedPlan = plan([300, 60, 300, 60]);
+  renderer.render(
+    {
+      ...collapsedPlan,
+      batches: collapsedPlan.batches.map(batch => ({
+        ...batch,
+        viewEndpoints: new Float32Array([0, 0, start, 0, 0, end])
+      }))
+    },
+    heavy
+  );
+  return readPixels();
+};
+const collapsedForward = collapsedDepth(20_000, 1000);
+const collapsedReverse = collapsedDepth(1000, 20_000);
+const distanceReport = {
+  collapsedDepthDifference: difference(collapsedForward, collapsedReverse),
+  collapsedDepthHalo: redAt(collapsedForward, 303, 60),
+  distanceCoreFar: redAt(distanceFar, 160, 60),
+  distanceCoreMid: redAt(distanceMid, 160, 60),
+  distanceCoreNear: redAt(distanceNear, 160, 60),
+  distanceCoreOff: redAt(distanceNoGlow, 160, 60),
+  distanceDefaultsDifference: difference(
+    distancePixels(10_240, 10_240, heavy, false, false),
+    distanceMid
+  ),
+  distanceFarHalo: redAt(distanceFar, 160, 64),
+  distanceFarOffDifference: difference(distanceFar, distanceNoGlow),
+  distanceMidHalo: redAt(distanceMid, 160, 64),
+  distanceMidInnerHalo: redAt(distanceMid, 160, 63),
+  distanceMidOuterHalo: redAt(distanceMid, 160, 65),
+  distanceNearHalo: redAt(distanceNear, 160, 64),
+  distanceNearOuterHalo: redAt(distanceNear, 160, 65),
+  distanceOffDifference: difference(
+    distancePixels(20_000, 20_000, glowOff),
+    distanceNoGlow
+  ),
+  distanceRadialOffDifference: difference(
+    distancePixels(1000, 1000, heavy, false, true, 20_000),
+    distanceNoGlow
+  ),
+  distanceRoadFarDifference: difference(
+    distancePixels(20_000, 20_000, heavy, true),
+    distanceFar
+  ),
+  distanceRoadNearDifference: difference(
+    distancePixels(1000, 1000, heavy, true),
+    distanceNear
+  ),
+  slantedFarHalo: redAt(slantedDepth, 214, 64),
+  slantedMidHalo: redAt(slantedDepth, 160, 64),
+  slantedNearHalo: redAt(slantedDepth, 106, 64)
+};
 const report = {
+  ...distanceReport,
   authenticDifference,
   core: redAt(isolated, 160, 60),
   crossingExcess,

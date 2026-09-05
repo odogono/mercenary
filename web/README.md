@@ -29,7 +29,11 @@ and `presentation.roads` in `settings.json` each accept `thickness` (1–4 pixel
 with omitted fields defaulting to one pixel and no glow. Roads include runways; Road Workspace
 lines belonging to a Surface Structure retain structure styling. The settings page and console
 (`set weight`, `set glow`, `set road-weight`, `set road-glow`) override these values; `document`
-hands a console choice back to tuning. Authentic always uses the original hairline without glow.
+hands a console choice back to tuning. Selected glow is the nearby maximum: the shared
+`presentation.glowDistance` block defaults to `fadeStart: 4096` and `fadeEnd: 16384` world units.
+Both halo strength and spread fade smoothly with camera distance along each line; line weight
+stays independent. The same fade applies to structures, objects, indoor wireframes and roads,
+including Arrival's moving Camera. Authentic always uses the original hairline without glow.
 
 Re-recording a Golden Trace is the exception, and it still needs the frozen Trace Oracle out of a
 temporary worktree. `MERCENARY_PAYLOAD` points the Oracle at this checkout's canonical payload,

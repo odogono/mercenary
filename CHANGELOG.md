@@ -578,7 +578,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Enhanced wireframes now have rounded line ends and softer halos. Overlapping lines combine
   their coverage before drawing, eliminating square endpoint protrusions and excessive bright
   buildup at joins and crossings. Existing colours, line-weight levels and Authentic rendering
-  are preserved; the shared renderer also applies the correction during Arrival (#162).
+  are preserved; the shared renderer also applies the correction during Arrival. Glow strength
+  and spread now fade with camera distance, remaining full nearby and disappearing farther away,
+  independently of line weight. `presentation.glowDistance` tunes the fade range in world units
+  (4,096–16,384 by default), including road glow and the moving Arrival Camera (#162).
 
 - Two claims in merged documentation, both mine. `docs/preserved-quirks.md` said the
   world flip "complements bit 6 of every live entity's state byte" — it walks the

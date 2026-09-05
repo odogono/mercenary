@@ -22,7 +22,12 @@ import {
   type RGB8
 } from '../scene/index.ts';
 import type { SessionSnapshot } from '../session/index.ts';
-import type { PresentationPreset, StructureReach } from '../settings/index.ts';
+import {
+  DEFAULT_GLOW_DISTANCE,
+  type GlowDistanceSettings,
+  type PresentationPreset,
+  type StructureReach
+} from '../settings/index.ts';
 import {
   SKY_VERTEX_FIELDS,
   buildSkyFrame,
@@ -68,16 +73,23 @@ const FEATHER = '0.75';
 /// The enhanced ink path draws every line as an expanded screen-space quad rather than a GL
 /// line, because WebGL2 drivers cap `lineWidth` at one pixel. Each instance is one line's two
 /// endpoints; the six corners expand it to two triangles around the segment's axis, extended
-/// past the endpoints so the halo wraps them. `lineSpace` carries how far the fragment sits
-/// from the centre line, in pixels, which is all the shading the fragment shader needs.
+/// past the endpoints so the halo wraps them. The fragment derives its distance from the actual
+/// pixel centre, keeping core coverage stable when halo extent changes.
 const INK_VERTEX_SHADER = `#version 300 es
 in vec2 corner;
 in vec4 endpoints;
+in vec3 viewStart;
+in vec3 viewEnd;
 uniform vec2 viewport;
 uniform float extent;
-out vec2 lineSpace;
+flat out vec2 lineAxis;
+flat out vec2 lineCentre;
 flat out float halfLength;
+flat out vec3 startInView;
+flat out vec3 endInView;
 void main() {
+  startInView = viewStart;
+  endInView = viewEnd;
   vec2 span = endpoints.zw - endpoints.xy;
   float spanLength = length(span);
   vec2 axis = spanLength > 0.0001 ? span / spanLength : vec2(1.0, 0.0);
@@ -93,7 +105,8 @@ void main() {
     1.0 - place.y / viewport.y * 2.0
   );
   gl_Position = vec4(clip, 0.0, 1.0);
-  lineSpace = vec2(corner.x * (spanLength * 0.5 + extent), corner.y * extent);
+  lineAxis = axis;
+  lineCentre = centre;
 }`;
 
 /// Finite-segment distance gives the core and halo rounded ends. Coverage is combined with
@@ -103,15 +116,31 @@ precision highp float;
 uniform float halfWidth;
 uniform float extent;
 uniform float halo;
-in vec2 lineSpace;
+uniform vec2 glowRange;
+uniform vec2 viewport;
+uniform vec2 framebufferSize;
+flat in vec2 lineAxis;
+flat in vec2 lineCentre;
 flat in float halfLength;
+flat in vec3 startInView;
+flat in vec3 endInView;
 out vec4 colour;
 void main() {
+  vec2 pixel = vec2(gl_FragCoord.x, framebufferSize.y - gl_FragCoord.y) * viewport / framebufferSize;
+  vec2 relative = pixel - lineCentre;
+  vec2 lineSpace = vec2(dot(relative, lineAxis), dot(relative, vec2(-lineAxis.y, lineAxis.x)));
   float d = length(vec2(max(abs(lineSpace.x) - halfLength, 0.0), lineSpace.y));
   float core = 1.0 - smoothstep(halfWidth - ${FEATHER}, halfWidth + ${FEATHER}, d);
+  float t = halfLength > 0.0001 ? clamp((lineSpace.x + halfLength) / (2.0 * halfLength), 0.0, 1.0) : 0.0;
+  float inverseStart = 1.0 / startInView.z;
+  float inverseEnd = 1.0 / endInView.z;
+  vec3 viewPosition = mix(startInView * inverseStart, endInView * inverseEnd, t)
+    / mix(inverseStart, inverseEnd, t);
+  float distanceToCamera = halfLength > 0.0001 ? length(viewPosition) : min(length(startInView), length(endInView));
+  float fade = 1.0 - smoothstep(glowRange.x, glowRange.y, distanceToCamera);
   float outside = max(d - halfWidth, 0.0);
-  float radius = max(extent - halfWidth, 0.0001);
-  float falloff = halo * exp(-3.0 * outside * outside / (radius * radius))
+  float radius = max((extent - halfWidth) * fade, 0.0001);
+  float falloff = halo * fade * exp(-3.0 * outside * outside / (radius * radius))
     * (1.0 - smoothstep(radius * 0.75, radius, outside));
   colour = vec4(max(core, falloff));
 }`;
@@ -256,13 +285,18 @@ interface InkPipeline {
   readonly endpointsField: number;
   readonly extent: WebGLUniformLocation | null;
   readonly framebuffer: WebGLFramebuffer;
+  readonly framebufferSize: WebGLUniformLocation | null;
+  readonly glowRange: WebGLUniformLocation | null;
   readonly halfWidth: WebGLUniformLocation | null;
   readonly halo: WebGLUniformLocation | null;
   height: number;
   readonly ink: WebGLUniformLocation | null;
   readonly program: WebGLProgram;
   readonly texture: WebGLTexture;
+  readonly viewEnd: number;
+  readonly viewEndpoints: WebGLBuffer;
   readonly viewport: WebGLUniformLocation | null;
+  readonly viewStart: number;
   width: number;
 }
 
@@ -286,13 +320,18 @@ const inkPipeline = (gl: WebGL2RenderingContext): InkPipeline => {
     endpointsField: gl.getAttribLocation(program, 'endpoints'),
     extent: gl.getUniformLocation(program, 'extent'),
     framebuffer: gl.createFramebuffer()!,
+    framebufferSize: gl.getUniformLocation(program, 'framebufferSize'),
+    glowRange: gl.getUniformLocation(program, 'glowRange'),
     halfWidth: gl.getUniformLocation(program, 'halfWidth'),
     halo: gl.getUniformLocation(program, 'halo'),
     height: 0,
     ink: gl.getUniformLocation(composite, 'ink'),
     program,
     texture: gl.createTexture()!,
+    viewEnd: gl.getAttribLocation(program, 'viewEnd'),
+    viewEndpoints: gl.createBuffer()!,
     viewport: gl.getUniformLocation(program, 'viewport'),
+    viewStart: gl.getAttribLocation(program, 'viewStart'),
     width: 0
   };
 };
@@ -396,9 +435,12 @@ interface DrawBatch {
   readonly pointSize: number;
   readonly style?: 'roads';
   readonly vertices: Float32Array;
+  /// Six camera-view coordinates per line, aligned with vertices; absent for non-world fixtures.
+  readonly viewEndpoints?: Float32Array;
 }
 
 export interface FramePresentation {
+  readonly glowDistance?: GlowDistanceSettings;
   readonly preset: PresentationPreset;
   readonly structureReach: StructureReach;
 }
@@ -406,6 +448,7 @@ export interface FramePresentation {
 export interface FramePlan {
   readonly batches: readonly DrawBatch[];
   readonly clear: RGB8;
+  readonly glowDistance?: GlowDistanceSettings;
   readonly lines: number;
   readonly points: number;
   readonly size: Size;
@@ -418,7 +461,8 @@ const addBatch = (
   vertices: Float32Array,
   colour: RGB8,
   pointSize = 1,
-  style?: 'roads'
+  style?: 'roads',
+  viewEndpoints?: Float32Array
 ): void => {
   if (vertices.length > 0) {
     batches.push({
@@ -426,9 +470,37 @@ const addBatch = (
       mode,
       pointSize,
       vertices,
+      ...(viewEndpoints === undefined ? {} : { viewEndpoints }),
       ...(style === undefined ? {} : { style })
     });
   }
+};
+
+const addLineBatch = (
+  batches: DrawBatch[],
+  lines: readonly ScreenLine[],
+  colour: RGB8,
+  style?: 'roads'
+): void => {
+  const viewEndpoints =
+    lines[0]?.viewEndpoints === undefined
+      ? undefined
+      : new Float32Array(lines.length * 6);
+  if (viewEndpoints !== undefined) {
+    for (const [index, line] of lines.entries()) {
+      const [a, b] = line.viewEndpoints!;
+      viewEndpoints.set([a.x, a.y, a.z, b.x, b.y, b.z], index * 6);
+    }
+  }
+  addBatch(
+    batches,
+    'lines',
+    lineVertices(lines),
+    colour,
+    1,
+    style,
+    viewEndpoints
+  );
 };
 
 const AUTHENTIC_PRESENTATION: FramePresentation = {
@@ -510,7 +582,13 @@ export const planFrame = (
       : {}),
     rules: { ...REFERENCE_RULES, reach: presentation.structureReach }
   });
-  const projected = projectFrame(camera, seen, size);
+  const projected = projectFrame(
+    camera,
+    seen,
+    size,
+    'clipped',
+    presentation.preset === 'enhanced'
+  );
   const blackInk: ScreenLine[] = [];
   const distantBlackInk: ScreenLine[] = [];
   const distantWhiteInk = new Map<number, DistantScreenLine[]>();
@@ -551,31 +629,17 @@ export const planFrame = (
   for (const [channel, lines] of [...distantWhiteInk].sort(
     ([left], [right]) => left - right
   )) {
-    addBatch(batches, 'lines', lineVertices(lines), {
+    addLineBatch(batches, lines, {
       blue: channel,
       green: channel,
       red: channel
     });
   }
   const allBlackInk = [...distantBlackInk, ...blackInk];
-  addBatch(batches, 'lines', lineVertices(allBlackInk), ScenePalette.blackInk);
-  addBatch(
-    batches,
-    'lines',
-    lineVertices(roadBlackInk),
-    ScenePalette.blackInk,
-    1,
-    'roads'
-  );
-  addBatch(batches, 'lines', lineVertices(whiteInk), ScenePalette.whiteInk);
-  addBatch(
-    batches,
-    'lines',
-    lineVertices(roadWhiteInk),
-    ScenePalette.whiteInk,
-    1,
-    'roads'
-  );
+  addLineBatch(batches, allBlackInk, ScenePalette.blackInk);
+  addLineBatch(batches, roadBlackInk, ScenePalette.blackInk, 'roads');
+  addLineBatch(batches, whiteInk, ScenePalette.whiteInk);
+  addLineBatch(batches, roadWhiteInk, ScenePalette.whiteInk, 'roads');
   addBatch(
     batches,
     'points',
@@ -607,6 +671,7 @@ export const planFrame = (
         : presentation.preset === 'enhanced'
           ? (atariSTColour(indoor.foreground) ?? ScenePalette.blackInk)
           : ScenePalette.blackInk),
+    glowDistance: presentation.glowDistance ?? DEFAULT_GLOW_DISTANCE,
     lines: projected.distant.length + projected.lines.length,
     points: projected.points.length,
     size,
@@ -687,7 +752,12 @@ export class Renderer {
   /// `gl.LINES`; instancing turns each into the corner-expanded quad instead. The default
   /// vertex array's state is shared with every other program, so the instance stepping and
   /// attribute enables this pass asks for are undone before it returns.
-  private enhancedInk(batch: DrawBatch, options: InkOptions, size: Size): void {
+  private enhancedInk(
+    batch: DrawBatch,
+    options: InkOptions,
+    size: Size,
+    glowDistance: GlowDistanceSettings
+  ): void {
     const gl = this.gl;
     const ink = (this.inkPass ??= inkPipeline(gl));
     const halfWidth = options.thickness / 2;
@@ -734,6 +804,26 @@ export class Renderer {
     gl.enableVertexAttribArray(ink.endpointsField);
     gl.vertexAttribPointer(ink.endpointsField, 4, gl.FLOAT, false, 0, 0);
     gl.vertexAttribDivisor(ink.endpointsField, 1);
+    if (batch.viewEndpoints === undefined) {
+      // Authored screen-space fields and raster fixtures have no world distance.
+      gl.disableVertexAttribArray(ink.viewStart);
+      gl.disableVertexAttribArray(ink.viewEnd);
+      gl.vertexAttrib3f(ink.viewStart, 0, 0, 1);
+      gl.vertexAttrib3f(ink.viewEnd, 0, 0, 1);
+    } else {
+      gl.bindBuffer(gl.ARRAY_BUFFER, ink.viewEndpoints);
+      gl.bufferData(gl.ARRAY_BUFFER, batch.viewEndpoints, gl.STREAM_DRAW);
+      for (const [field, offset] of [
+        [ink.viewStart, 0],
+        [ink.viewEnd, 12]
+      ] as const) {
+        gl.enableVertexAttribArray(field);
+        gl.vertexAttribPointer(field, 3, gl.FLOAT, false, 24, offset);
+        gl.vertexAttribDivisor(field, 1);
+      }
+    }
+    gl.uniform2f(ink.glowRange, glowDistance.fadeStart, glowDistance.fadeEnd);
+    gl.uniform2f(ink.framebufferSize, this.canvas.width, this.canvas.height);
     gl.bindBuffer(gl.ARRAY_BUFFER, ink.corners);
     gl.enableVertexAttribArray(ink.corner);
     gl.vertexAttribPointer(ink.corner, 2, gl.FLOAT, false, 0, 0);
@@ -750,6 +840,10 @@ export class Renderer {
     gl.blendEquation(gl.MAX);
     gl.blendFunc(gl.ONE, gl.ONE);
     gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, batch.vertices.length / 4);
+    gl.vertexAttribDivisor(ink.viewStart, 0);
+    gl.vertexAttribDivisor(ink.viewEnd, 0);
+    gl.disableVertexAttribArray(ink.viewStart);
+    gl.disableVertexAttribArray(ink.viewEnd);
     gl.vertexAttribDivisor(ink.endpointsField, 0);
     gl.disableVertexAttribArray(ink.endpointsField);
     gl.disableVertexAttribArray(ink.corner);
@@ -882,7 +976,12 @@ export class Renderer {
       const enhanced =
         options.thickness > DEFAULT_INK.thickness || options.glow > 0;
       if (enhanced && batch.mode === 'lines') {
-        this.enhancedInk(batch, options, plan.size);
+        this.enhancedInk(
+          batch,
+          options,
+          plan.size,
+          plan.glowDistance ?? DEFAULT_GLOW_DISTANCE
+        );
       } else {
         this.pass(batch);
       }

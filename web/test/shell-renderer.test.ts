@@ -152,6 +152,7 @@ const fakeRenderer = (
     },
     useProgram: (_program: WebGLProgram | null) => undefined,
     VERTEX_SHADER: 0x8b_31,
+    vertexAttrib3f: () => undefined,
     vertexAttribDivisor: (_index: number, divisor: number) =>
       calls.push(`divisor:${String(divisor)}`),
     vertexAttribPointer: (
@@ -483,7 +484,7 @@ describe('a Session Snapshot submitted to WebGL2', () => {
     // The quad must span the whole segment, extended by the extent — expanding by the extent
     // alone drew every line as a short blob centred on its midpoint.
     const vertex = bold.shaderSources.find(source =>
-      source.includes('lineSpace')
+      source.includes('lineAxis = axis')
     );
     expect(vertex?.includes('spanLength * 0.5 + extent')).toBeTrue();
   });
