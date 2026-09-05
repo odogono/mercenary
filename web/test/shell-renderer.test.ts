@@ -1,9 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  Camera,
   ReferenceViewport,
+  projectFrame,
   viewportCentre,
-  viewportScale
+  viewportScale,
+  visible
 } from '../src/projection/index.ts';
 import { ScenePalette, atariSTColour, c64Colour } from '../src/scene/index.ts';
 import {
@@ -51,14 +54,19 @@ const fakeRenderer = (
   const program = {} as WebGLProgram;
   const buffer = {} as WebGLBuffer;
   const gl = {
+    activeTexture: () => undefined,
     ARRAY_BUFFER: 0x88_92,
     attachShader: (_program: WebGLProgram, _shader: WebGLShader) => undefined,
     bindBuffer: (_target: number, _buffer: WebGLBuffer | null) => undefined,
+    bindFramebuffer: () => undefined,
+    bindTexture: () => undefined,
     BLEND: 0x0b_71,
+    blendEquation: () => undefined,
     blendFunc: (_source: number, _destination: number) =>
       calls.push('blend-function'),
     bufferData: (_target: number, _vertices: Float32Array, _usage: number) =>
       calls.push('buffer'),
+    checkFramebufferStatus: () => 0x8c_d5,
     clear: (_mask: number) => calls.push('clear'),
     clearColor: (_red: number, _green: number, _blue: number, _alpha: number) =>
       calls.push('clear-colour'),
@@ -66,11 +74,13 @@ const fakeRenderer = (
     COMPILE_STATUS: 0x8b_81,
     compileShader: (_shader: WebGLShader) => undefined,
     createBuffer: () => buffer,
+    createFramebuffer: () => ({}),
     createProgram: () => {
       programs += 1;
       return program;
     },
     createShader: (_type: number) => shader,
+    createTexture: () => ({}),
     disable: (capability: number) =>
       calls.push(
         capability === 0x0b_71 ? 'blend:off' : `disable:${capability}`
@@ -89,6 +99,8 @@ const fakeRenderer = (
     enableVertexAttribArray: (_index: number) => undefined,
     FLOAT: 0x14_06,
     FRAGMENT_SHADER: 0x8b_30,
+    FRAMEBUFFER_COMPLETE: 0x8c_d5,
+    framebufferTexture2D: () => undefined,
     getAttribLocation: (_program: WebGLProgram, _name: string) => 0,
     getProgramInfoLog: (_program: WebGLProgram) => null,
     getProgramParameter: (_program: WebGLProgram, _parameter: number) => true,
@@ -106,12 +118,15 @@ const fakeRenderer = (
       shaderSources.push(source),
     SRC_ALPHA: 0x03_02,
     STREAM_DRAW: 0x88_e0,
+    texImage2D: () => undefined,
+    texParameteri: () => undefined,
     TRIANGLE_FAN: 0x00_06,
     TRIANGLES: 0x00_04,
     uniform1f: (location: WebGLUniformLocation | null, value: number) => {
       calls.push('scalar-uniform');
       uniforms.push({ name: uniformName(location), values: [value] });
     },
+    uniform1i: () => undefined,
     uniform2f: (
       _location: WebGLUniformLocation | null,
       _width: number,
@@ -137,6 +152,7 @@ const fakeRenderer = (
     },
     useProgram: (_program: WebGLProgram | null) => undefined,
     VERTEX_SHADER: 0x8b_31,
+    vertexAttrib3f: () => undefined,
     vertexAttribDivisor: (_index: number, divisor: number) =>
       calls.push(`divisor:${String(divisor)}`),
     vertexAttribPointer: (
@@ -461,14 +477,14 @@ describe('a Session Snapshot submitted to WebGL2', () => {
       glow: 0,
       thickness: 2
     });
-    expect(bold.programs).toBe(2);
+    expect(bold.programs).toBe(3);
     expect(
       bold.shaderSources.some(source => source.includes('endpoints'))
     ).toBeTrue();
     // The quad must span the whole segment, extended by the extent — expanding by the extent
     // alone drew every line as a short blob centred on its midpoint.
     const vertex = bold.shaderSources.find(source =>
-      source.includes('lineSpace')
+      source.includes('lineAxis = axis')
     );
     expect(vertex?.includes('spanLength * 0.5 + extent')).toBeTrue();
   });
@@ -607,4 +623,52 @@ describe('a Session Snapshot submitted to WebGL2', () => {
         .map(call => call.values[0])
     ).toContain(1);
   });
+});
+
+test('Enhanced frame separates Map Lines without changing projected geometry', () => {
+  const opening = session().snapshot;
+  const snapshot = {
+    ...opening,
+    player: {
+      ...opening.player,
+      heading: 0,
+      pitch: -0.5,
+      position: { x: 0, y: 5000, z: 0 },
+      roll: 0
+    }
+  };
+  const authentic = planFrame(world, snapshot, size);
+  const enhanced = planFrame(world, snapshot, size, undefined, {
+    preset: 'enhanced',
+    structureReach: 'cell'
+  });
+  const roadBatches = enhanced.batches.filter(batch => batch.style === 'roads');
+  expect(roadBatches.length).toBeGreaterThan(0);
+  const selected = visible(world, snapshot.player.position);
+  const projected = projectFrame(new Camera(snapshot.player), selected, size);
+  const expectedRoads = [...projected.roads].flatMap(line => [
+    line.x1,
+    line.y1,
+    line.x2,
+    line.y2
+  ]);
+  expect(roadBatches.flatMap(batch => Array.from(batch.vertices))).toEqual(
+    expectedRoads
+  );
+  expect(selected.mapSegments?.size).toBe(
+    world.mapSegments(snapshot.player.position).length
+  );
+  expect(enhanced.lines).toBe(authentic.lines);
+  const segments = (frame: typeof enhanced) =>
+    frame.batches
+      .filter(batch => batch.mode === 'lines')
+      .flatMap(batch =>
+        Array.from(
+          { length: batch.vertices.length / 4 },
+          (_, index) =>
+            `${JSON.stringify(batch.colour)}:${Array.from(batch.vertices.slice(index * 4, index * 4 + 4)).join(',')}`
+        )
+      )
+      .sort();
+  expect(segments(enhanced)).toEqual(segments(authentic));
 });

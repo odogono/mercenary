@@ -65,7 +65,9 @@ describe('settings that are not there', () => {
 
   test('the presentation defaults to the authored Enhanced Targ sky', () => {
     expect(defaultSettings().presentation).toEqual({
+      glowDistance: { fadeEnd: 16_384, fadeStart: 4096 },
       preset: DEFAULT_PRESENTATION_PRESET,
+      roads: { glow: 0, thickness: 1 },
       sky: {
         dayLengthMinutes: DEFAULT_SKY_DAY_LENGTH_MINUTES,
         latitudeDegrees: DEFAULT_SKY_LATITUDE_DEGREES,

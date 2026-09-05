@@ -40,6 +40,8 @@ export type ConsoleCommand =
 export type SettingName =
   | 'composition'
   | 'glow'
+  | 'road-glow'
+  | 'road-weight'
   | 'rendition'
   | 'sky'
   | 'structures'
@@ -51,6 +53,11 @@ export type SettingName =
 /// The value is narrowed at parse time, so execution never re-asks what a string means.
 export type SettingChoice =
   | { readonly name: 'composition'; readonly value: Composition }
+  | { readonly name: 'road-glow'; readonly value: 'document' | WireframeGlow }
+  | {
+      readonly name: 'road-weight';
+      readonly value: 'document' | WireframeWeight;
+    }
   | { readonly name: 'glow'; readonly value: 'document' | WireframeGlow }
   | { readonly name: 'rendition'; readonly value: PanelRendition }
   | { readonly name: 'sky'; readonly value: 'document' | PresentationPreset }
@@ -93,6 +100,8 @@ export const SETTING_VALUES: Readonly<Record<SettingName, readonly string[]>> =
     composition: COMPOSITIONS,
     glow: GLOWS,
     rendition: RENDITIONS,
+    'road-glow': GLOWS,
+    'road-weight': WEIGHTS,
     sky: SKIES,
     structures: STRUCTURES,
     typeface: TYPEFACES,
@@ -137,6 +146,14 @@ const SETTING_PARSERS: Readonly<
   rendition: word => ({
     name: 'rendition',
     value: oneOf(RENDITIONS, word, 'rendition')
+  }),
+  'road-glow': word => ({
+    name: 'road-glow',
+    value: oneOf(GLOWS, word, 'road-glow')
+  }),
+  'road-weight': word => ({
+    name: 'road-weight',
+    value: oneOf(WEIGHTS, word, 'road-weight')
   }),
   sky: word => ({ name: 'sky', value: oneOf(SKIES, word, 'sky') }),
   structures: word => ({
@@ -565,6 +582,16 @@ const applySetting = (setting: SettingChoice, deps: ConsoleDeps): string => {
     case 'rendition':
       deps.preferences.update({ panelRendition: setting.value });
       return `rendition ${setting.value}`;
+    case 'road-glow':
+      deps.preferences.update({
+        roadGlow: setting.value === 'document' ? undefined : setting.value
+      });
+      return `road-glow ${setting.value === 'document' ? 'as tuned' : setting.value}`;
+    case 'road-weight':
+      deps.preferences.update({
+        roadWeight: setting.value === 'document' ? undefined : setting.value
+      });
+      return `road-weight ${setting.value === 'document' ? 'as tuned' : setting.value}`;
     case 'glow':
       // As with the sky, 'document' hands the choice back to the tuning document.
       if (setting.value === 'document') {

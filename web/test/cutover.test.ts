@@ -17,11 +17,11 @@ describe('browser canonical cutover', () => {
     expect(ignoreRules).not.toContain('/app/');
   });
 
-  test('identifies Building Reach as 0.10.1', async () => {
+  test('identifies the wireframe refinement as 0.10.2', async () => {
     const packageDocument = await Bun.file(
       join(repositoryRoot, 'web', 'package.json')
     ).json();
 
-    expect(packageDocument.version).toBe('0.10.1');
+    expect(packageDocument.version).toBe('0.10.2');
   });
 });

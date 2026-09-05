@@ -86,6 +86,8 @@ export const transformed = (
 /// A projected line ready to stroke, in view pixels. Its coordinates are binary32.
 export interface ScreenLine {
   readonly ink: Ink;
+  /// Optional camera-view endpoints for distance-aware presentation, after near/screen clipping.
+  readonly viewEndpoints?: readonly [Vector3, Vector3];
   readonly x1: number;
   readonly x2: number;
   readonly y1: number;
@@ -377,7 +379,8 @@ export class Camera {
   projectSegment(
     segment: Segment,
     size: Size,
-    mode: ProjectionLineMode = 'clipped'
+    mode: ProjectionLineMode = 'clipped',
+    includeViewEndpoints = false
   ): ScreenLine | undefined {
     const a = this.viewSpace(segment.a);
     const b = this.viewSpace(segment.b);
@@ -398,6 +401,8 @@ export class Camera {
     ) {
       return undefined;
     }
+    const projectedFirst = first;
+    const projectedSecond = second;
     if (mode === 'clipped') {
       const screen = clippedToRect(
         first,
@@ -409,9 +414,43 @@ export class Camera {
       }
       [first, second] = screen;
     }
+    // Screen clipping interpolates projected coordinates. Recover the matching view-space
+    // points with reciprocal depth, not a linear world-space lerp, so long approaching lines
+    // retain the correct distances after either clipping boundary. Legacy callers pay none
+    // of this work and keep their exact Screen Line shape.
+    const viewAt = (point: Point): Vector3 => {
+      const dx = projectedSecond.x - projectedFirst.x;
+      const dy = projectedSecond.y - projectedFirst.y;
+      const squaredLength = dx * dx + dy * dy;
+      if (squaredLength === 0) {
+        return clipped[0].z <= clipped[1].z ? clipped[0] : clipped[1];
+      }
+      const t = Math.max(
+        0,
+        Math.min(
+          1,
+          ((point.x - projectedFirst.x) * dx +
+            (point.y - projectedFirst.y) * dy) /
+            squaredLength
+        )
+      );
+      const a = clipped[0];
+      const b = clipped[1];
+      const weightA = (1 - t) / a.z;
+      const weightB = t / b.z;
+      const reciprocalDepth = weightA + weightB;
+      return {
+        x: (a.x * weightA + b.x * weightB) / reciprocalDepth,
+        y: (a.y * weightA + b.y * weightB) / reciprocalDepth,
+        z: 1 / reciprocalDepth
+      };
+    };
     // The one narrowing. `ScreenLine` is `Float` in the kit, and this is where it becomes one.
     return {
       ink: segment.ink,
+      ...(includeViewEndpoints
+        ? { viewEndpoints: [viewAt(first), viewAt(second)] as const }
+        : {}),
       x1: toFloat32(first.x),
       x2: toFloat32(second.x),
       y1: toFloat32(first.y),
@@ -485,6 +524,8 @@ export interface Visible {
   readonly detailedObjects: number;
   /// Surface Structure segments outside the occupied Surface Cell, drawn as distance.
   readonly distant: readonly DistantSegment[];
+  /// Membership only: the ordered segment list remains the projection authority.
+  readonly mapSegments?: ReadonlySet<Segment>;
   /// Origins of objects outside the detail cube, drawn as points.
   readonly points: readonly Vector3[];
   readonly segments: readonly Segment[];
@@ -702,10 +743,12 @@ export const visible = (
     }
   }
 
-  append(segments, world.mapSegments(position));
+  const roads = world.mapSegments(position);
+  const mapSegments = new Set(roads);
+  append(segments, roads);
   appendObjects(SURFACE);
 
-  return { detailedObjects, distant, points, segments };
+  return { detailedObjects, distant, mapSegments, points, segments };
 };
 
 /// Everything one Pose resolves to: near and distant lines, in pipeline order, and Far Points.
@@ -718,20 +761,40 @@ export const projectFrame = (
   camera: Camera,
   seen: Visible,
   size: Size,
-  lineMode: ProjectionLineMode = 'clipped'
-): { distant: DistantScreenLine[]; lines: ScreenLine[]; points: Point[] } => {
+  lineMode: ProjectionLineMode = 'clipped',
+  includeViewEndpoints = false
+): {
+  distant: DistantScreenLine[];
+  lines: ScreenLine[];
+  points: Point[];
+  roads: ReadonlySet<ScreenLine>;
+} => {
+  const roads = new Set<ScreenLine>();
   const distant: DistantScreenLine[] = [];
   for (const segment of seen.distant) {
-    const line = camera.projectSegment(segment, size, lineMode);
+    const line = camera.projectSegment(
+      segment,
+      size,
+      lineMode,
+      includeViewEndpoints
+    );
     if (line !== undefined) {
       distant.push({ ...line, distance: segment.distance });
     }
   }
   const lines: ScreenLine[] = [];
   for (const segment of seen.segments) {
-    const line = camera.projectSegment(segment, size, lineMode);
+    const line = camera.projectSegment(
+      segment,
+      size,
+      lineMode,
+      includeViewEndpoints
+    );
     if (line !== undefined) {
       lines.push(line);
+      if (seen.mapSegments?.has(segment)) {
+        roads.add(line);
+      }
     }
   }
   const points: Point[] = [];
@@ -741,5 +804,5 @@ export const projectFrame = (
       points.push(point);
     }
   }
-  return { distant, lines, points };
+  return { distant, lines, points, roads };
 };
