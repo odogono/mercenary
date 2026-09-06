@@ -3,6 +3,7 @@ import { fetchReader, load } from '../payload/load.ts';
 import type { PresentationEvent, SessionSnapshot } from '../session/index.ts';
 import { arrivalTunables, bensonTunables } from '../settings/index.ts';
 import { targOrreryFor } from '../sky/index.ts';
+import { TargPresentationClock, formatTargTime } from '../sky/time.ts';
 import { SoundPresenter } from '../sound/presenter.ts';
 import { AudioWorkletTransport } from '../sound/transport.ts';
 import { locationText } from '../world/index.ts';
@@ -196,6 +197,9 @@ try {
   let session = initial.session;
   let world = initial.world;
   let names = objectNamesOf(world.objects);
+  const targClock = new TargPresentationClock(
+    () => settings.presentation.sky.dayLengthMinutes
+  );
   const orrery = targOrreryFor(
     effectivePresentation(settings.presentation, preferences.current())
   );
@@ -442,6 +446,7 @@ try {
     world = restored.world;
     names = objectNamesOf(world.objects);
     snapshot = session.snapshot;
+    targClock.reset();
     sound.resetFromSnapshot(snapshot);
     // A New Game plays the Arrival again; a restored Save is a game already under way, so it
     // gets whatever is left of the Arrival, which is normally none of it.
@@ -486,6 +491,9 @@ try {
         sound.present({ events, snapshot });
       },
       session: () => session,
+      setTime: secondsOfDay =>
+        targClock.set(session.snapshot.elapsed, secondsOfDay),
+      time: () => targClock.secondsOfDay(session.snapshot.elapsed),
       typeface: face => {
         applyTypeface(document.documentElement, face, storage);
       }
@@ -771,7 +779,7 @@ try {
   const panel = installPanel(panelElements);
   const panelContext = (): PanelContext => ({
     cellSize: world.cellSize,
-    dayLengthMinutes: settings.presentation.sky.dayLengthMinutes,
+    clock: formatTargTime(targClock.secondsOfDay(snapshot.elapsed), '-'),
     // Object names are fixed content, so they are gathered once per world rather than per frame.
     objectNames: names
   });
@@ -784,17 +792,27 @@ try {
       settings.presentation,
       preferences.current()
     );
+    const framePresentation = {
+      ...presentation,
+      orreryElapsed: targClock.elapsed(snapshot.elapsed)
+    };
     const plan = arriving
       ? arrivalFramePlan(phase, {
           field: arrival.fieldProgress(),
           pose,
-          presentation,
+          presentation: framePresentation,
           size: VIEWPORT,
           snapshot,
           world,
           ...(renderer.orrery === undefined ? {} : { orrery: renderer.orrery })
         })
-      : planFrame(world, snapshot, VIEWPORT, renderer.orrery, presentation);
+      : planFrame(
+          world,
+          snapshot,
+          VIEWPORT,
+          renderer.orrery,
+          framePresentation
+        );
     const drawn = renderer.render(
       plan,
       // The player's weight and glow choices are presentation, so they are read per frame the

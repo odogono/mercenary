@@ -168,9 +168,17 @@ in vec2 pixel;
 in vec2 disc;
 in float opacity;
 uniform vec2 viewport;
+uniform float gradientPass;
 out vec2 localDisc;
 out float localOpacity;
 void main() {
+  if (gradientPass > 0.5) {
+    vec2 corner = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
+    gl_Position = vec4(corner * 2.0 - 1.0, 0.0, 1.0);
+    localDisc = vec2(0.0);
+    localOpacity = 1.0;
+    return;
+  }
   vec2 clip = vec2(
     pixel.x / viewport.x * 2.0 - 1.0,
     1.0 - pixel.y / viewport.y * 2.0
@@ -188,10 +196,31 @@ uniform vec3 darkInk;
 uniform float phaseCosine;
 uniform float phased;
 uniform float pointPass;
+uniform float gradientPass;
+uniform vec2 framebufferSize;
+uniform vec2 viewport;
+uniform vec2 gradientCentre;
+uniform vec2 gradientFocal;
+uniform vec3 gradientHorizon;
+uniform vec3 gradientZenith;
+uniform vec3 gradientUpInView;
 in vec2 localDisc;
 in float localOpacity;
 out vec4 colour;
 void main() {
+  if (gradientPass > 0.5) {
+    vec2 pixel = vec2(gl_FragCoord.x, framebufferSize.y - gl_FragCoord.y)
+      * viewport / framebufferSize;
+    vec3 viewDirection = normalize(vec3(
+      (pixel.x - gradientCentre.x) / gradientFocal.x,
+      (gradientCentre.y - pixel.y) / gradientFocal.y,
+      1.0
+    ));
+    float elevation = asin(clamp(dot(viewDirection, gradientUpInView), -1.0, 1.0));
+    float amount = smoothstep(0.0, radians(30.0), elevation);
+    colour = vec4(mix(gradientHorizon, gradientZenith, amount), 1.0);
+    return;
+  }
   if (pointPass > 0.5) {
     colour = vec4(litInk, localOpacity);
     return;
@@ -243,6 +272,13 @@ interface SkyPipeline {
   readonly buffer: WebGLBuffer;
   readonly darkInk: WebGLUniformLocation | null;
   readonly disc: number;
+  readonly framebufferSize: WebGLUniformLocation | null;
+  readonly gradientCentre: WebGLUniformLocation | null;
+  readonly gradientFocal: WebGLUniformLocation | null;
+  readonly gradientHorizon: WebGLUniformLocation | null;
+  readonly gradientPass: WebGLUniformLocation | null;
+  readonly gradientUpInView: WebGLUniformLocation | null;
+  readonly gradientZenith: WebGLUniformLocation | null;
   readonly litInk: WebGLUniformLocation | null;
   readonly opacity: number;
   readonly phaseCosine: WebGLUniformLocation | null;
@@ -259,6 +295,13 @@ const skyPipeline = (gl: WebGL2RenderingContext): SkyPipeline => {
     buffer: gl.createBuffer()!,
     darkInk: gl.getUniformLocation(program, 'darkInk'),
     disc: gl.getAttribLocation(program, 'disc'),
+    framebufferSize: gl.getUniformLocation(program, 'framebufferSize'),
+    gradientCentre: gl.getUniformLocation(program, 'gradientCentre'),
+    gradientFocal: gl.getUniformLocation(program, 'gradientFocal'),
+    gradientHorizon: gl.getUniformLocation(program, 'gradientHorizon'),
+    gradientPass: gl.getUniformLocation(program, 'gradientPass'),
+    gradientUpInView: gl.getUniformLocation(program, 'gradientUpInView'),
+    gradientZenith: gl.getUniformLocation(program, 'gradientZenith'),
     litInk: gl.getUniformLocation(program, 'litInk'),
     opacity: gl.getAttribLocation(program, 'opacity'),
     phaseCosine: gl.getUniformLocation(program, 'phaseCosine'),
@@ -441,6 +484,7 @@ interface DrawBatch {
 
 export interface FramePresentation {
   readonly glowDistance?: GlowDistanceSettings;
+  readonly orreryElapsed?: number;
   readonly preset: PresentationPreset;
   readonly structureReach: StructureReach;
 }
@@ -596,7 +640,9 @@ export const planFrame = (
   const roadBlackInk: ScreenLine[] = [];
   const roadWhiteInk: ScreenLine[] = [];
   for (const line of projected.distant) {
-    if (line.ink === Ink.black) {
+    if (presentation.preset === 'enhanced' && projected.roads.has(line)) {
+      (line.ink === Ink.black ? roadBlackInk : roadWhiteInk).push(line);
+    } else if (line.ink === Ink.black) {
       distantBlackInk.push(line);
     } else {
       const colour = distantStructureColour(line.distance, world);
@@ -626,6 +672,10 @@ export const planFrame = (
     addBatch(batches, 'triangles', stripVertices(size, 0), backdrop.foreground);
     addBatch(batches, 'triangles', stripVertices(size, 1), backdrop.background);
   }
+  // Ground roads must sit behind bright structures at every reach. Otherwise
+  // entering a cell changes which side of its wireframe the roads are drawn on.
+  addLineBatch(batches, roadBlackInk, ScenePalette.blackInk, 'roads');
+  addLineBatch(batches, roadWhiteInk, ScenePalette.whiteInk, 'roads');
   for (const [channel, lines] of [...distantWhiteInk].sort(
     ([left], [right]) => left - right
   )) {
@@ -637,9 +687,7 @@ export const planFrame = (
   }
   const allBlackInk = [...distantBlackInk, ...blackInk];
   addLineBatch(batches, allBlackInk, ScenePalette.blackInk);
-  addLineBatch(batches, roadBlackInk, ScenePalette.blackInk, 'roads');
   addLineBatch(batches, whiteInk, ScenePalette.whiteInk);
-  addLineBatch(batches, roadWhiteInk, ScenePalette.whiteInk, 'roads');
   addBatch(
     batches,
     'points',
@@ -653,7 +701,7 @@ export const planFrame = (
     orrery === undefined || snapshot.location.kind !== 'surface'
       ? undefined
       : buildSkyFrame(
-          skyStateAt(orrery, snapshot.elapsed),
+          skyStateAt(orrery, presentation.orreryElapsed ?? snapshot.elapsed),
           {
             heading: snapshot.player.heading,
             mirrored: snapshot.worldFlipped,
@@ -872,6 +920,26 @@ export class Renderer {
     gl.useProgram(sky.program);
     gl.bindBuffer(gl.ARRAY_BUFFER, sky.buffer);
     gl.uniform2f(sky.viewport, size.width, size.height);
+    const gradient = frame.gradient;
+    if (gradient !== undefined) {
+      gl.disableVertexAttribArray(sky.pixel);
+      gl.disableVertexAttribArray(sky.disc);
+      gl.disableVertexAttribArray(sky.opacity);
+      gl.uniform1f(sky.gradientPass, 1);
+      gl.uniform2f(sky.framebufferSize, this.canvas.width, this.canvas.height);
+      gl.uniform2f(sky.gradientCentre, gradient.centre.x, gradient.centre.y);
+      gl.uniform2f(sky.gradientFocal, gradient.focal.x, gradient.focal.y);
+      gl.uniform3f(sky.gradientHorizon, ...channels(gradient.horizon));
+      gl.uniform3f(sky.gradientZenith, ...channels(gradient.zenith));
+      gl.uniform3f(
+        sky.gradientUpInView,
+        gradient.upInView.x,
+        gradient.upInView.y,
+        gradient.upInView.z
+      );
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+    gl.uniform1f(sky.gradientPass, 0);
     gl.enableVertexAttribArray(sky.pixel);
     gl.enableVertexAttribArray(sky.disc);
     gl.enableVertexAttribArray(sky.opacity);

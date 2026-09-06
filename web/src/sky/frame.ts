@@ -1,8 +1,14 @@
 import { cos, sin } from '../math/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
-import { Camera, type Size } from '../projection/index.ts';
+import {
+  Camera,
+  horizontalFocalLength,
+  viewportCentre,
+  type Point,
+  type Size
+} from '../projection/index.ts';
 import type { RGB8 } from '../scene/index.ts';
-import type { SkyDisc, SkyState } from './index.ts';
+import { skyGradientAt, type SkyDisc, type SkyState } from './index.ts';
 import { dot, normalized } from './vector.ts';
 
 const CELESTIAL_RADIUS = 1000;
@@ -32,6 +38,15 @@ export interface SkyBatch {
 export interface SkyFrame {
   readonly batches: readonly SkyBatch[];
   readonly clear: RGB8;
+  readonly gradient?: SkyGradient;
+}
+
+export interface SkyGradient {
+  readonly centre: Point;
+  readonly focal: Point;
+  readonly horizon: RGB8;
+  readonly upInView: Vector3;
+  readonly zenith: RGB8;
 }
 
 const cross = (a: Vector3, b: Vector3): Vector3 => ({
@@ -196,7 +211,24 @@ export const buildSkyFrame = (
       batches.push(body);
     }
   }
-  return { batches, clear: state.clear };
+  const colours = skyGradientAt(state.solarAltitudeDegrees);
+  const gradient =
+    colours === undefined
+      ? undefined
+      : {
+          centre: viewportCentre(size),
+          focal: {
+            x: horizontalFocalLength(size),
+            y: camera.verticalFocalLength(size)
+          },
+          ...colours,
+          upInView: camera.viewSpace({ x: 0, y: 1, z: 0 })
+        };
+  return {
+    batches,
+    clear: state.clear,
+    ...(gradient === undefined ? {} : { gradient })
+  };
 };
 
 export const SKY_VERTEX_FIELDS = VERTEX_FIELDS;

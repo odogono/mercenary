@@ -903,6 +903,13 @@ test('the Shell Console runs commands over a running world', async ({
     page.locator('#panel-targ [data-field="locationLabel"]')
   ).toHaveText('03-11');
 
+  await input.type('panel damocles');
+  await page.keyboard.press('Enter');
+  await input.type('time 18:00');
+  await page.keyboard.press('Enter');
+  await expect(log).toContainText('time 18:00:00');
+  await expect(page.locator('#damocles-clock')).toHaveText(/^18-\d{2}-\d{2}$/);
+
   // Refusals name what was wrong rather than doing something adjacent.
   await input.type('goto room 0');
   await page.keyboard.press('Enter');

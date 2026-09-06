@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import { defaultSettings } from '../src/settings/index.ts';
-import { buildSkyFrame } from '../src/sky/frame.ts';
+import { buildSkyFrame, type SkyPose } from '../src/sky/frame.ts';
 import {
   createTargOrrery,
   skyStateAt,
@@ -9,12 +9,12 @@ import {
 } from '../src/sky/index.ts';
 
 const size = { height: 800, width: 1280 } as const;
-const pose = {
+const pose: SkyPose = {
   heading: 0,
   mirrored: false,
   pitch: 0,
   roll: 0
-} as const;
+};
 const state = skyStateAt(
   createTargOrrery(defaultSettings().presentation.sky),
   0
@@ -35,6 +35,57 @@ const moonOnly = (direction: {
 });
 
 describe('one Sky State built into view pixels', () => {
+  test('describes a world-aligned gradient only between the night and day stops', () => {
+    const twilight = {
+      ...state,
+      clear: { blue: 0x38, green: 0x68, red: 0xc8 },
+      solarAltitudeDegrees: 0
+    };
+    const frame = buildSkyFrame(twilight, pose, size);
+
+    expect(frame.gradient).toEqual({
+      centre: { x: 640, y: 400 },
+      focal: { x: 512, y: 512 },
+      horizon: twilight.clear,
+      upInView: { x: 0, y: 1, z: 0 },
+      zenith: { blue: 0x7c, green: 0x58, red: 0x34 }
+    });
+    expect(
+      buildSkyFrame({ ...twilight, solarAltitudeDegrees: -12 }, pose, size)
+        .gradient
+    ).toBeUndefined();
+    expect(
+      buildSkyFrame({ ...twilight, solarAltitudeDegrees: 12 }, pose, size)
+        .gradient
+    ).toBeUndefined();
+  });
+
+  test('turns world up with bank, inversion and wrapped pitch but not mirroring', () => {
+    const twilight = { ...state, solarAltitudeDegrees: 0 };
+    const up = (changed: Partial<typeof pose>) =>
+      buildSkyFrame(twilight, { ...pose, ...changed }, size).gradient!.upInView;
+
+    expect(up({ roll: Math.PI / 2 }).x).toBeCloseTo(-1, 12);
+    expect(up({ roll: Math.PI / 2 }).y).toBeCloseTo(0, 12);
+    expect(up({ pitch: Math.PI }).y).toBeCloseTo(-1, 12);
+    expect(up({ pitch: 2 * Math.PI }).y).toBeCloseTo(up({}).y, 12);
+    expect(up({ pitch: 2 * Math.PI }).z).toBeCloseTo(up({}).z, 12);
+    expect(up({ mirrored: true }).x).toBeCloseTo(up({}).x, 12);
+    expect(up({ mirrored: true }).y).toBeCloseTo(up({}).y, 12);
+    expect(up({ mirrored: true }).z).toBeCloseTo(up({}).z, 12);
+  });
+
+  test('scales gradient projection parameters with the viewport', () => {
+    const twilight = { ...state, solarAltitudeDegrees: 0 };
+
+    expect(
+      buildSkyFrame(twilight, pose, { height: 400, width: 640 }).gradient
+    ).toMatchObject({
+      centre: { x: 320, y: 200 },
+      focal: { x: 256, y: 256 }
+    });
+  });
+
   test('the opening view contains the outer moon and culls the eastern sun', () => {
     const frame = buildSkyFrame(state, pose, size);
 

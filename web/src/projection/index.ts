@@ -1,6 +1,7 @@
 import { atan, cos, sin, tan, toFloat32 } from '../math/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import {
+  Ink,
   SURFACE,
   atUnsignedSurfacePosition,
   isDetailed,
@@ -8,7 +9,6 @@ import {
   objectSegments,
   placedAtResidence,
   room,
-  type Ink,
   type Residence,
   type RoadWorkspace,
   type Segment,
@@ -476,7 +476,7 @@ export class Camera {
 
   /// Recomputed from the field of view rather than read off the viewport, because a camera may
   /// be given a field of view the reference frustum did not imply.
-  private verticalFocalLength(size: Size): number {
+  verticalFocalLength(size: Size): number {
     const referencePixels =
       ReferenceViewport.height / 2 / tan(this.verticalFieldOfView / 2);
     return referencePixels * viewportScale(size);
@@ -524,10 +524,11 @@ export interface Visible {
   readonly detailedObjects: number;
   /// Surface Structure segments outside the occupied Surface Cell, drawn as distance.
   readonly distant: readonly DistantSegment[];
-  /// Membership only: the ordered segment list remains the projection authority.
-  readonly mapSegments?: ReadonlySet<Segment>;
   /// Origins of objects outside the detail cube, drawn as points.
   readonly points: readonly Vector3[];
+  /// Map Lines and the ground-level black road edges embedded in Surface Structures.
+  /// Membership only: the ordered segment lists remain the projection authority.
+  readonly roadSegments?: ReadonlySet<Segment>;
   readonly segments: readonly Segment[];
 }
 
@@ -673,6 +674,7 @@ export const visible = (
     return { detailedObjects, distant, points, segments };
   }
 
+  const roadSegments = new Set<Segment>();
   const repeats = rules.reach === 'cell';
   const column = Math.floor(
     (repeats ? wrapSurfaceAxis(position.x) : position.x) / world.cellSize
@@ -734,21 +736,40 @@ export const visible = (
             cell.centre.z + dz - position.z
           );
           for (const segment of selected) {
-            distant.push({ ...segment, distance });
+            const distantSegment = { ...segment, distance };
+            distant.push(distantSegment);
+            if (
+              segment.ink === Ink.black &&
+              segment.a.y === 0 &&
+              segment.b.y === 0
+            ) {
+              roadSegments.add(distantSegment);
+            }
           }
         } else {
           append(segments, selected);
+          for (const segment of selected) {
+            if (
+              segment.ink === Ink.black &&
+              segment.a.y === 0 &&
+              segment.b.y === 0
+            ) {
+              roadSegments.add(segment);
+            }
+          }
         }
       }
     }
   }
 
   const roads = world.mapSegments(position);
-  const mapSegments = new Set(roads);
+  for (const segment of roads) {
+    roadSegments.add(segment);
+  }
   append(segments, roads);
   appendObjects(SURFACE);
 
-  return { detailedObjects, distant, mapSegments, points, segments };
+  return { detailedObjects, distant, points, roadSegments, segments };
 };
 
 /// Everything one Pose resolves to: near and distant lines, in pipeline order, and Far Points.
@@ -779,7 +800,11 @@ export const projectFrame = (
       includeViewEndpoints
     );
     if (line !== undefined) {
-      distant.push({ ...line, distance: segment.distance });
+      const distantLine = { ...line, distance: segment.distance };
+      distant.push(distantLine);
+      if (seen.roadSegments?.has(segment)) {
+        roads.add(distantLine);
+      }
     }
   }
   const lines: ScreenLine[] = [];
@@ -792,7 +817,7 @@ export const projectFrame = (
     );
     if (line !== undefined) {
       lines.push(line);
-      if (seen.mapSegments?.has(segment)) {
+      if (seen.roadSegments?.has(segment)) {
         roads.add(line);
       }
     }

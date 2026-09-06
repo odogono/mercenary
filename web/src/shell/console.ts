@@ -1,5 +1,6 @@
 import type { GameplaySession, PresentationEvent } from '../session/index.ts';
 import type { PresentationPreset, StructureReach } from '../settings/index.ts';
+import { formatTargTime, parseTargTime } from '../sky/time.ts';
 import { SURFACE, locationText, room } from '../world/index.ts';
 import type {
   Composition,
@@ -19,6 +20,8 @@ export type ConsoleCommand =
   | { readonly kind: 'help' }
   | { readonly kind: 'where' }
   | { readonly kind: 'inventory' }
+  | { readonly kind: 'time' }
+  | { readonly kind: 'setTime'; readonly secondsOfDay: number }
   | { readonly kind: 'dropObject'; readonly selector: string }
   | { readonly kind: 'getObject'; readonly slot: number }
   | {
@@ -232,6 +235,14 @@ export const parseConsoleCommand = (
         throw new Error('where takes no arguments');
       }
       return { kind: 'where' };
+    case 'time':
+      if (rest.length === 0) {
+        return { kind: 'time' };
+      }
+      if (rest.length !== 1) {
+        throw new Error('time takes no value, or one H:MM[:SS] value');
+      }
+      return { kind: 'setTime', secondsOfDay: parseTargTime(rest[0]!) };
     case 'inventory':
       if (rest.length !== 0) {
         throw new Error('inventory takes no arguments');
@@ -333,11 +344,13 @@ export interface ConsoleDeps {
   readonly preferences: PreferencesStore;
   readonly present?: (events: readonly PresentationEvent[]) => void;
   readonly session: () => GameplaySession;
+  readonly setTime: (secondsOfDay: number) => void;
+  readonly time: () => number;
   readonly typeface: (face: TypefaceId) => void;
 }
 
 const HELP = [
-  'help · where · inventory · get <object-slot>',
+  'help · where · time [h]h:mm[:ss] · inventory · get <object-slot>',
   'drop <object-id|name>',
   'goto <x> <z> [height] · goto room <n> · goto object <slot>',
   'panel <targ|damocles> · set <name> <value>',
@@ -422,6 +435,13 @@ export const executeConsoleCommand = (
           ? 'on foot'
           : `aboard craft ${twoDigits(snapshot.occupancy.slot)}`
       ];
+    }
+    case 'time': {
+      return [`time ${formatTargTime(deps.time())}`];
+    }
+    case 'setTime': {
+      deps.setTime(command.secondsOfDay);
+      return [`time ${formatTargTime(deps.time())}`];
     }
     case 'inventory': {
       const carried = deps.session().snapshot.carriedStack;
