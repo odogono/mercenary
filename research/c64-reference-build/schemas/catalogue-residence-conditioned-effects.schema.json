@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/odogono/mercenary/catalogue-residence-conditioned-effects.schema.json",
+  "title": "Residence-conditioned effect audit",
+  "type": "object",
+  "required": ["schemaVersion", "scope", "census", "evidence", "effects"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "scope": {
+      "type": "object",
+      "required": ["term", "includes", "excludes", "resolvesUncertainty"],
+      "properties": {
+        "term": {"const": "Residence-Conditioned Effect"},
+        "includes": {"type": "string", "minLength": 1},
+        "excludes": {"type": "string", "minLength": 1},
+        "resolvesUncertainty": {"const": false}
+      },
+      "additionalProperties": false
+    },
+    "census": {
+      "type": "object",
+      "required": ["algorithm", "nativeSites", "bensonSites", "digest"],
+      "properties": {
+        "algorithm": {"const": "sha256-canonical-native-and-benson-sites-v1"},
+        "nativeSites": {"$ref": "#/$defs/keys"},
+        "bensonSites": {"$ref": "#/$defs/keys"},
+        "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "reference"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^RCE-EV-[0-9]{4}$"},
+          "kind": {"enum": ["native", "benson", "reference-capture", "browser-source", "browser-test"]},
+          "reference": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "effects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "object", "residencePredicates", "observableBehavior", "source", "censusKeys", "evidenceIds", "browserDisposition", "verificationCoverage"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^RCE-[0-9]{4}$"},
+          "title": {"type": "string", "minLength": 1},
+          "object": {
+            "type": "object",
+            "required": ["slots", "identities"],
+            "properties": {
+              "slots": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 0, "maximum": 63}},
+              "identities": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+            },
+            "additionalProperties": false
+          },
+          "residencePredicates": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["carried", "not-carried", "in-current-room", "in-specific-room", "not-in-specific-room"]}},
+          "observableBehavior": {"type": "string", "minLength": 1},
+          "source": {"enum": ["native", "benson"]},
+          "censusKeys": {"$ref": "#/$defs/keys"},
+          "evidenceIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^RCE-EV-[0-9]{4}$"}},
+          "browserDisposition": {"enum": ["implemented", "confirmed-missing", "governed-departure", "unresolved"]},
+          "verificationCoverage": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "$defs": {
+    "keys": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z0-9:-]+$"}}
+  },
+  "additionalProperties": false
+}

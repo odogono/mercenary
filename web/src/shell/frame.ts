@@ -494,9 +494,18 @@ export interface FramePlan {
   readonly clear: RGB8;
   readonly glowDistance?: GlowDistanceSettings;
   readonly lines: number;
+  /// Fixed Reference Viewport bitmaps composited after the complete Game Surface.
+  readonly overlays: readonly BitmapOverlay[];
   readonly points: number;
   readonly size: Size;
   readonly sky?: SkyFrame;
+}
+
+export interface BitmapOverlay {
+  readonly colour: RGB8;
+  readonly origin: Point;
+  readonly pixelScale: Point;
+  readonly vertices: Float32Array;
 }
 
 const addBatch = (
@@ -557,6 +566,63 @@ const AUTHENTIC_PRESENTATION: FramePresentation = {
 const LOGICAL_CENTRE_X =
   ReferenceViewport.width / ReferenceViewport.horizontalPixelScale / 2;
 
+const bitmapVertices = (
+  rows: readonly number[],
+  width: number,
+  origin: readonly [number, number],
+  pixelScale: readonly [number, number],
+  size: Size
+): Float32Array => {
+  const scale = viewportScale(size);
+  const centre = viewportCentre(size);
+  const left = centre.x - (ReferenceViewport.width * scale) / 2;
+  const top = centre.y - (ReferenceViewport.height * scale) / 2;
+  const vertices: number[] = [];
+  for (const [rowIndex, row] of rows.entries()) {
+    for (let column = 0; column < width; column += 1) {
+      if ((row & (2 ** (width - column - 1))) === 0) {
+        continue;
+      }
+      const x0 = left + (origin[0] + column * pixelScale[0]) * scale;
+      const y0 = top + (origin[1] + rowIndex * pixelScale[1]) * scale;
+      const x1 = x0 + pixelScale[0] * scale;
+      const y1 = y0 + pixelScale[1] * scale;
+      vertices.push(x0, y0, x1, y0, x1, y1, x0, y0, x1, y1, x0, y1);
+    }
+  }
+  return new Float32Array(vertices);
+};
+
+const objectOverlays = (
+  world: World,
+  snapshot: SessionSnapshot,
+  size: Size
+): readonly BitmapOverlay[] => {
+  const sights = world.objectEffects.sights;
+  if (!snapshot.carriedStack.includes(sights.slot)) {
+    return [];
+  }
+  return [
+    {
+      colour:
+        c64Colour(
+          snapshot.location.kind === 'room'
+            ? sights.colours.room
+            : sights.colours.surface
+        ) ?? ScenePalette.whiteInk,
+      origin: { x: sights.origin[0], y: sights.origin[1] },
+      pixelScale: { x: sights.pixelScale[0], y: sights.pixelScale[1] },
+      vertices: bitmapVertices(
+        sights.bitmapRows,
+        sights.width,
+        sights.origin,
+        sights.pixelScale,
+        size
+      )
+    }
+  ];
+};
+
 /// Resolve one Session Snapshot into the ordered primitive batches WebGL2 should draw.
 ///
 /// This is deliberately pure. Golden Traces already grade selection and projection; this plan
@@ -568,6 +634,7 @@ export const planFrame = (
   orrery?: TargOrrery,
   presentation: FramePresentation = AUTHENTIC_PRESENTATION
 ): FramePlan => {
+  const overlays = objectOverlays(world, snapshot, size);
   // The Escape's terminal loop replaces the world view entirely: no ground, no
   // Map Lines, no structures, just the Interstellar Ship Field on the colour its
   // sequence has reached. It comes before everything, including the orrery,
@@ -598,6 +665,7 @@ export const planFrame = (
       batches,
       clear: c64Colour(escape.colourPair.screen) ?? ScenePalette.blackInk,
       lines: 0,
+      overlays,
       points: escape.points.length,
       size
     };
@@ -609,6 +677,7 @@ export const planFrame = (
       batches: [],
       clear: ScenePalette.blackInk,
       lines: 0,
+      overlays,
       points: 0,
       size
     };
@@ -721,6 +790,7 @@ export const planFrame = (
           : ScenePalette.blackInk),
     glowDistance: presentation.glowDistance ?? DEFAULT_GLOW_DISTANCE,
     lines: projected.distant.length + projected.lines.length,
+    overlays,
     points: projected.points.length,
     size,
     ...(sky === undefined ? {} : { sky })
@@ -1053,6 +1123,16 @@ export class Renderer {
       } else {
         this.pass(batch);
       }
+    }
+    // Hardware-style overlays are deliberately outside both scene and Enhanced
+    // Ink composition: they are fixed-screen pixels in either preset.
+    for (const overlay of plan.overlays) {
+      this.pass({
+        colour: overlay.colour,
+        mode: 'triangles',
+        pointSize: 1,
+        vertices: overlay.vertices
+      });
     }
     return { lines: plan.lines, points: plan.points };
   }

@@ -25,7 +25,7 @@ export const payloadResponse = async (
   }
 
   const name = pathname.slice('/payload/'.length);
-  if (!/^[a-z]+\.json$/.test(name)) {
+  if (!/^[a-z]+(?:-[a-z]+)*\.json$/.test(name)) {
     return new Response('not found', { status: 404 });
   }
   const file = Bun.file(join(payload, name));

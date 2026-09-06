@@ -1,19 +1,29 @@
 import { describe, expect, test } from 'bun:test';
 
 import { playerState } from '../src/gameCore/index.ts';
-import { GameplaySession } from '../src/session/index.ts';
+import {
+  GameplaySession,
+  openingPlayer,
+  sessionContent
+} from '../src/session/index.ts';
 import {
   SAVE_SCHEMA_VERSION,
   encodeSave,
   type SaveSnapshot
 } from '../src/session/save.ts';
+import { planFrame } from '../src/shell/frame.ts';
 import {
   SESSION_RESUME_STORAGE_KEY,
   createSessionResumePersistence,
   readSessionResume,
   type SessionResumeStorage
 } from '../src/shell/resume.ts';
+import { World } from '../src/world/index.ts';
 import { emptyContent, environment } from './fixtures/save.ts';
+import { loadPayload } from './replay/artifacts.ts';
+
+const bundle = await loadPayload();
+const world = new World(bundle);
 
 class MemoryStorage implements SessionResumeStorage {
   readonly values = new Map<string, string>();
@@ -63,6 +73,39 @@ describe('Session Resume startup', () => {
       kind: 'restored',
       snapshot
     });
+  });
+
+  test('restores visible Sights exactly when the resumed session carries them', () => {
+    const content = sessionContent(world, bundle, undefined);
+    for (const [carried, expectedOverlays] of [
+      [false, 0],
+      [true, 1]
+    ] as const) {
+      const original = new GameplaySession(content, openingPlayer());
+      if (carried) {
+        original.carry(40);
+      }
+      const storage = new MemoryStorage();
+      storage.setItem(
+        SESSION_RESUME_STORAGE_KEY,
+        encoded(original.captureSaveSnapshot())
+      );
+
+      const outcome = readSessionResume(storage, environment);
+      expect(outcome.kind).toBe('restored');
+      if (outcome.kind !== 'restored') {
+        throw new Error('Expected a restored Session Resume');
+      }
+      const restored = GameplaySession.restore(
+        content,
+        undefined,
+        outcome.snapshot
+      );
+      expect(
+        planFrame(world, restored.snapshot, { height: 800, width: 1280 })
+          .overlays
+      ).toHaveLength(expectedOverlays);
+    }
   });
 
   test('reports an empty store without inventing a failure', () => {

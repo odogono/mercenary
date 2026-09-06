@@ -619,6 +619,9 @@ const placements = (
 export class World {
   readonly cells: readonly WorldCell[];
   readonly objects: readonly ObjectPlacement[];
+  /// Immutable fixed-screen effects decoded from the Data Payload. Whether an
+  /// effect is active remains Session Snapshot state, not cached World state.
+  readonly objectEffects: Doc.ObjectEffectsDocument;
   readonly cellSize: number;
   readonly cellsPerAxis: number;
   readonly craftSlotBound: number;
@@ -650,6 +653,7 @@ export class World {
     this.craftSlotBound = bundle.interaction?.craftSlotBound ?? 0;
     this.groundAltitude = bundle.flight?.rules.groundAltitude ?? 0;
     this.groundExtent = toFloat32(cellSize * cellsPerAxis);
+    this.objectEffects = bundle.objectEffects;
 
     const cells: WorldCell[] = [];
     const byGrid = new Map<number, number>();

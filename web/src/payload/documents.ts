@@ -836,12 +836,32 @@ export interface SoundDocument {
   };
 }
 
+export interface SightsEffect {
+  readonly bitmapRows: readonly number[];
+  readonly colours: {
+    readonly room: number;
+    readonly surface: number;
+  };
+  readonly height: number;
+  readonly origin: readonly [number, number];
+  readonly pixelScale: readonly [number, number];
+  readonly slot: number;
+  readonly width: number;
+}
+
+export interface ObjectEffectsDocument {
+  readonly counts: Readonly<Record<string, number>>;
+  readonly schemaVersion: number;
+  readonly sights: SightsEffect;
+}
+
 export interface Bundle {
   readonly benson?: BensonDocument;
   readonly endgame: EndgameDocument;
   readonly flight?: FlightDocument;
   readonly interaction?: InteractionDocument;
   readonly manifest: Manifest;
+  readonly objectEffects: ObjectEffectsDocument;
   readonly objects: ObjectsDocument;
   readonly rooms: RoomsDocument;
   readonly sound: SoundDocument;

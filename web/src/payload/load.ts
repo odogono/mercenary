@@ -11,9 +11,10 @@ import { readers } from './read.ts';
 /// already existed for exactly this reason.
 ///
 /// The load order and every check are the kit's. Five geometry documents share one schema
-/// version, and endgame.json is independently required; the geometry decoder's version is
-/// checked against the manifest; then five optional documents, each present-or-absent and each carrying a version of its own, because
-/// their formats change on their own schedules. `benson.json` without `text.json` is refused,
+/// version, while endgame.json, sound.json, and object-effects.json are independently required;
+/// the geometry decoder's version is checked against the manifest; then five optional documents,
+/// each present-or-absent and each carrying a version of its own, because their formats change
+/// on their own schedules. `benson.json` without `text.json` is refused,
 /// since a script cannot render its messages without the word table.
 ///
 /// **A stale schema is refused rather than tolerated.** That is not a new rule — the kit
@@ -32,6 +33,7 @@ export const SUPPORTED_FLIGHT_SCHEMA_VERSION = 3;
 export const SUPPORTED_UNDERGROUND_SCHEMA_VERSION = 2;
 export const SUPPORTED_ENDGAME_SCHEMA_VERSION = 13;
 export const SUPPORTED_SOUND_SCHEMA_VERSION = 1;
+export const SUPPORTED_OBJECT_EFFECTS_SCHEMA_VERSION = 1;
 
 const parse = (name: string, body: string): unknown => {
   try {
@@ -91,7 +93,7 @@ const check = (name: string, version: number, supported: number): void => {
 };
 
 export const load = async (read: ReadDocument): Promise<Bundle> => {
-  // All eleven documents are asked for at once and then checked in order.
+  // All thirteen documents are asked for at once and then checked in order.
   //
   // The read seam is a `fetch` in the browser (ADR 0011), so awaiting each document before
   // asking for the next made startup ten serialised round trips before the first frame. They
@@ -114,7 +116,8 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     interaction,
     flight,
     underground,
-    sound
+    sound,
+    objectEffects
   ] = await inOrder([
     required(read, 'manifest.json', readers.manifest),
     required(read, 'world.json', readers.world),
@@ -127,7 +130,8 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     present(read, 'interaction.json', readers.interaction),
     present(read, 'flight.json', readers.flight),
     present(read, 'underground.json', readers.underground),
-    present(read, 'sound.json', readers.sound)
+    present(read, 'sound.json', readers.sound),
+    required(read, 'object-effects.json', readers.objectEffects)
   ]);
 
   // The five geometry documents share one version, because they are one extraction.
@@ -140,6 +144,11 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     'endgame.json',
     endgame.schemaVersion,
     SUPPORTED_ENDGAME_SCHEMA_VERSION
+  );
+  check(
+    'object-effects.json',
+    objectEffects.schemaVersion,
+    SUPPORTED_OBJECT_EFFECTS_SCHEMA_VERSION
   );
   if (manifest.decoderVersion !== SUPPORTED_DECODER_VERSION) {
     fail({ kind: 'unsupportedDecoder', version: manifest.decoderVersion });
@@ -254,6 +263,7 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
   return {
     endgame,
     manifest,
+    objectEffects,
     objects,
     rooms,
     sound: soundDocument,

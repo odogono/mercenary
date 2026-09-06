@@ -32,6 +32,7 @@ from .interaction import decode_interaction
 from .underground import decode_underground
 from .text import decode_text
 from .sound import decode_sound
+from .object_effects import decode_object_effects
 
 
 PAYLOAD_SCHEMA_VERSION = 8
@@ -867,6 +868,7 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
         documents["flight.json"] = decode_flight(ram)
         documents["underground.json"] = decode_underground(ram)
         documents["endgame.json"] = decode_endgame(ram)
+        documents["object-effects.json"] = decode_object_effects(ram)
         # Sound keeps its counts inside its independently versioned document.
         # Replay traces compare the established top-level manifest counts, so
         # adding an audio presentation contract must not change that identity.

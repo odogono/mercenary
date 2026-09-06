@@ -32,3 +32,7 @@ __pycache__/
 /web/playwright-report/
 /web/test-results/
 .DS_Store
+
+
+# general output
+output
