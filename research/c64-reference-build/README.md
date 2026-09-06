@@ -254,6 +254,40 @@ It must not claim physical keyboard holds or matrix-scanned input. The
 scenario's human-facing port 2 maps to VICE monitor index 1; the runner selects
 VICE's I/O Simulation device and translates pressed bits to active-low lines.
 
+## Isolated sound auditions
+
+`sound probe` runs the configured C64 build's native sound routines directly,
+without playing through the game. Start with a verified interactive RAM capture:
+
+```sh
+./lab sound probe --run work/<interactive-run> --probe projectile
+./lab sound probe --run work/<interactive-run> --probe all
+```
+
+Each selected probe starts a fresh VICE process and retains `audio.wav`,
+`audition.wav` (a listening copy with the first 400 ms of initialization removed),
+`sid.log` (VICE cycle-delta/register/value records), normalized `sid-events.json`,
+effective startup configuration, generated driver, and source slice under a new ignored
+`work/sound-probe-*` directory. The manifest hashes the artifacts and records the
+source build/RAM and emulator identities. Open `LISTEN.md` in that run directory
+for links to the clips. `--help` lists individual probes.
+
+These are **probe-mode auditions**, with authored hold and stop times. They do
+not prove gameplay timing or reachability. Known selectors, both lift profiles,
+retrigger, interruption, overlap, a stepped craft-input sweep, and a controlled
+Benson character sequence can be recorded independently. The craft probe puts
+an RTS at the guarded end of its native sound block before unrelated graphics
+work. The other probes call the unmodified native routines. IRQ/NMI sources are
+disabled and a PAL raster wait drives the authored audition timing. No emulator
+or original-game code is added to the browser.
+
+The harness validates the loaded driver before releasing it, requires its final
+execution checkpoint, asks VICE to quit cleanly, and refuses empty/invalid SID
+logs or truncated, silent, or incorrectly formatted WAVs. Recording starts after
+the harness parks at its verified entry boundary. A failed run remains available
+for diagnosis but has no success
+manifest. The frozen catalogue and Behavior Cases are not changed by these probes.
+
 ## Artifact policy
 
 Tracked material is limited to tooling, configuration, schemas, scenarios,

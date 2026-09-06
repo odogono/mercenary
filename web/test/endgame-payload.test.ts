@@ -304,6 +304,64 @@ const payloadDocuments = (
     rooms: [],
     schemaVersion: 8
   },
+  'sound.json': {
+    bensonDisplay: {
+      characterMask: 63,
+      control: 65,
+      controlRegister: 18,
+      frequencyHighBias: 48,
+      frequencyHighRegister: 15,
+      spaceCode: 32,
+      spaceFrequencyHigh: 208,
+      stopFrequencyHigh: 0,
+      voice: 3
+    },
+    counts: {
+      initialRegisters: 25,
+      liftProfiles: 2,
+      oneShotPrograms: 13,
+      voices: 3
+    },
+    craft: {
+      frequencyHighRegister: 8,
+      programSelector: 36,
+      speedHighShift: 4,
+      sustainReleaseOr: 8,
+      sustainReleaseRegister: 13,
+      throttleFloor: 4,
+      throttleSubtract: 12,
+      undergroundSuppresses: true,
+      walkingCraftId: 10
+    },
+    initialRegisters: [...Array(24).fill(0), 15],
+    liftProfiles: ['af3e', 'af3a'].map(entry => ({
+      entry,
+      registers: Array(14).fill(0),
+      startControl: 21
+    })),
+    oneShots: Array.from({ length: 13 }, (_, index) => ({
+      attackDecay: 0,
+      control: 65,
+      frequencyHigh: 0,
+      selector: index * 4,
+      sustainRelease: 0
+    })),
+    schemaVersion: 1,
+    sid: {
+      clockHz: 985_248,
+      model: '6581',
+      registerCount: 25,
+      supportedControls: [0, 4, 16, 21, 65, 128, 129],
+      voiceStride: 7
+    },
+    stopRules: {
+      bensonDisplayFrequencyHighRegister: 15,
+      liftControlRegister: 11,
+      oneShotControlRegister: 4,
+      secondVoiceControlRegister: 11,
+      stoppedValue: 0
+    }
+  },
   'surface.json': { cells: [], schemaVersion: 8 },
   'world.json': {
     bounds: { max: [0, 0, 0], min: [0, 0, 0] },

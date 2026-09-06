@@ -45,6 +45,8 @@ const surface = () =>
 describe('browser shell preferences', () => {
   test('default to the Benson Panel in its Targ rendition', () => {
     expect(DEFAULT_PREFERENCES).toEqual({
+      audioMuted: false,
+      audioVolume: 100,
       composition: 'panel',
       panelRendition: 'targ'
     });
@@ -54,6 +56,8 @@ describe('browser shell preferences', () => {
   test('round-trip through storage', () => {
     const { storage } = memoryStorage();
     const preferences: Preferences = {
+      audioMuted: true,
+      audioVolume: 37,
       composition: 'strip',
       panelRendition: 'damocles',
       presentationPreset: 'authentic',
@@ -77,7 +81,23 @@ describe('browser shell preferences', () => {
         composition: 'nonsense',
         panelRendition: 'damocles'
       })
-    ).toEqual({ composition: 'panel', panelRendition: 'damocles' });
+    ).toEqual({
+      audioMuted: false,
+      audioVolume: 100,
+      composition: 'panel',
+      panelRendition: 'damocles'
+    });
+  });
+
+  test('reads old stored preferences with audio defaults and rejects bad levels', () => {
+    expect(
+      validatePreferences({ composition: 'strip', panelRendition: 'targ' })
+    ).toMatchObject({ audioMuted: false, audioVolume: 100 });
+    expect(
+      validatePreferences({ audioMuted: true, audioVolume: 42 })
+    ).toMatchObject({ audioMuted: true, audioVolume: 42 });
+    expect(validatePreferences({ audioVolume: 101 }).audioVolume).toBe(100);
+    expect(validatePreferences({ audioVolume: 10.5 }).audioVolume).toBe(100);
   });
 
   test('reject an unrecognised preset instead of passing it through', () => {

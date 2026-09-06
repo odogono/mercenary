@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Reference audio now plays through a project-owned bounded SID renderer (#118). A guarded
+  `sound.json` payload supplies the configured C64 build's one-shot programs, lift phases, craft
+  modulation, Benson Display behaviour, and stop controls; ordered Sound Cues are rendered by a
+  shared synthesis core in an AudioWorklet without captured samples or a third-party runtime.
+  Playback unlocks on the first trusted gesture, remains silent throughout the authored Arrival,
+  follows System Menu, focus, visibility, ownership, New Game, and restore lifecycles, and fails
+  safely to silence when browser audio is unavailable. Settings now include persistent master
+  mute and volume controls. Sixteen isolated native-routine auditions can be rendered offline as
+  paired Reference/browser comparisons without playing through the game, and maintainer listening
+  accepted the resulting recognisable, reasonably accurate rendition. The implementation does not
+  claim chip-exact 6581 emulation or recovered lift duration.
+
 - Enhanced roads and runways now have independent weight and glow controls, defaulting to fine
   lines with glow off. The settings page, `set road-weight` / `set road-glow` console commands,
   and `presentation.roads` tuning block control them separately from structures, objects and

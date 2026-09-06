@@ -31,6 +31,7 @@ from .endgame import decode_endgame
 from .interaction import decode_interaction
 from .underground import decode_underground
 from .text import decode_text
+from .sound import decode_sound
 
 
 PAYLOAD_SCHEMA_VERSION = 8
@@ -866,6 +867,10 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
         documents["flight.json"] = decode_flight(ram)
         documents["underground.json"] = decode_underground(ram)
         documents["endgame.json"] = decode_endgame(ram)
+        # Sound keeps its counts inside its independently versioned document.
+        # Replay traces compare the established top-level manifest counts, so
+        # adding an audio presentation contract must not change that identity.
+        documents["sound.json"] = decode_sound(ram)
     resolved.mkdir(parents=True, exist_ok=True)
     files: list[dict[str, Any]] = []
     for name, document in documents.items():

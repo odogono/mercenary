@@ -1,6 +1,7 @@
 import type { BensonMessagePresentation } from '../benson/index.ts';
 
 export interface SessionResumeNotices {
+  readonly audioUnavailable: () => void;
   readonly couldNotResume: (reason: string) => void;
   readonly dismiss: () => void;
   readonly failed: (reason: string) => void;
@@ -48,6 +49,10 @@ export const createSessionResumeNotices = (
   };
 
   return {
+    audioUnavailable: () => {
+      failureText = 'AUDIO UNAVAILABLE — CONTINUING SILENTLY';
+      showFailure();
+    },
     couldNotResume: reason => {
       failureText = `COULD NOT RESUME — ${reason.toUpperCase()}`;
       showFailure();

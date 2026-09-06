@@ -17,11 +17,11 @@ describe('browser canonical cutover', () => {
     expect(ignoreRules).not.toContain('/app/');
   });
 
-  test('identifies the wireframe refinement as 0.10.2', async () => {
+  test('identifies the SID audio release as 0.11.0', async () => {
     const packageDocument = await Bun.file(
       join(repositoryRoot, 'web', 'package.json')
     ).json();
 
-    expect(packageDocument.version).toBe('0.10.2');
+    expect(packageDocument.version).toBe('0.11.0');
   });
 });

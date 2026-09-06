@@ -11,10 +11,14 @@ describe('the authentic Benson Display', () => {
     const display = new BensonDisplay(50, 1, 3);
     expect(display.displayText).toBe(' '.repeat(23));
     display.start('ABCDEFGHIJKLMNOPQRSTUVW', 125);
+    expect(display.soundCharacter).toBeUndefined();
     display.advance(1 / 50);
+    expect(display.soundCharacter).toBe('A');
     expect(display.displayText).toBe(shifted('A'));
     display.advance(22 / 50);
     expect(display.displayText).toBe('ABCDEFGHIJKLMNOPQRSTUVW');
+    display.advance(2 / 50);
+    expect(display.soundCharacter).toBeUndefined();
   });
 
   test('preserves cells when a later message starts', () => {

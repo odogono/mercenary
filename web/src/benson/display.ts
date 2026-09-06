@@ -185,6 +185,12 @@ export class BensonDisplay {
     return count === 0 ? 0 : this.sourceIndex;
   }
 
+  get soundCharacter(): string | undefined {
+    return this.phase === 'feeding' && this.cyclePosition > 0
+      ? this.cells.at(-1)
+      : undefined;
+  }
+
   get isComplete(): boolean {
     return this.exhausted;
   }

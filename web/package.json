@@ -1,6 +1,6 @@
 {
   "name": "mercenary-web",
-  "version": "0.10.2",
+  "version": "0.11.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -19,6 +19,8 @@
   "knip": {
     "entry": [
       "src/shell/boot.ts",
+      "src/sound/worklet.ts",
+      "tools/sound-compare.ts",
       "e2e/opening-loop.ts",
       "e2e/wireframe-fixture.ts",
       "e2e/*.e2e.ts",

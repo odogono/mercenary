@@ -1,8 +1,10 @@
 import { IDLE } from '../gameCore/index.ts';
 import { fetchReader, load } from '../payload/load.ts';
-import type { SessionSnapshot } from '../session/index.ts';
+import type { PresentationEvent, SessionSnapshot } from '../session/index.ts';
 import { arrivalTunables, bensonTunables } from '../settings/index.ts';
 import { targOrreryFor } from '../sky/index.ts';
+import { SoundPresenter } from '../sound/presenter.ts';
+import { AudioWorkletTransport } from '../sound/transport.ts';
 import { locationText } from '../world/index.ts';
 import { SURFACE_AXIS_MODULUS } from '../world/surfaceCoordinates.ts';
 import { ArrivalDirector, type ArrivalEntry } from './arrival.ts';
@@ -161,7 +163,15 @@ try {
   const settings = requiredSettings(settingsText);
   // Player presentation choices overlay the tracked tuning document. They never reach the
   // blocks that identify a Save, so changing one cannot make an existing Save unloadable.
-  const preferences = createPreferences({ storage, surface });
+  let applyAudioPreferences = (_preferences: {
+    readonly audioMuted: boolean;
+    readonly audioVolume: number;
+  }): void => {};
+  const preferences = createPreferences({
+    onChange: changed => applyAudioPreferences(changed),
+    storage,
+    surface
+  });
   const environment = saveEnvironment(bundle, settings);
   const notices = createSessionResumeNotices();
   let handleOwnershipLost = (): void => {};
@@ -192,6 +202,17 @@ try {
   const renderer = new Renderer(canvas, orrery);
   const clock = new FixedStepClock();
   let snapshot = session.snapshot;
+  const sound = new SoundPresenter(
+    bundle.sound,
+    new AudioWorkletTransport(bundle.sound, {
+      onFailure: () => notices.audioUnavailable()
+    })
+  );
+  applyAudioPreferences = changed => {
+    sound.setMuted(changed.audioMuted, snapshot.elapsed);
+    sound.setVolume(changed.audioVolume, snapshot.elapsed);
+  };
+  applyAudioPreferences(preferences.current());
   let framesPerSecond = 0;
   let frameCount = 0;
   let frameSeconds = 0;
@@ -300,12 +321,33 @@ try {
     }
   };
 
-  const performAndRefresh = (action: () => void): void => {
+  type PresentedAction =
+    | void
+    | readonly PresentationEvent[]
+    | { readonly events: readonly PresentationEvent[] };
+  const eventsFrom = (
+    result: PresentedAction
+  ): readonly PresentationEvent[] => {
+    if (result === undefined) {
+      return [];
+    }
+    if (Array.isArray(result)) {
+      return result as readonly PresentationEvent[];
+    }
+    return (result as { readonly events: readonly PresentationEvent[] }).events;
+  };
+  const performAndRefresh = (action: () => PresentedAction): void => {
     if (!ownership.mayAdvance()) {
       return;
     }
-    action();
+    const arrivalOwned = arrival.isActive();
+    const result = action();
     snapshot = session.snapshot;
+    sound.present({
+      events: eventsFrom(result),
+      snapshot,
+      ...(arrivalOwned ? { suppressTransient: true } : {})
+    });
     recordBensonMessage();
     checkpointChangedResume();
   };
@@ -350,6 +392,11 @@ try {
 
   const menu = installSystemMenu({
     onLayer: layer => {
+      if (layer === 'none') {
+        sound.resume();
+      } else {
+        sound.suspend();
+      }
       if (layer === 'menu') {
         notices.menuOpened();
         if (ownership.mayPersist()) {
@@ -365,6 +412,8 @@ try {
     menu.show('ownership');
   }
   handleOwnershipLost = () => {
+    sound.resetFromSnapshot(snapshot);
+    sound.suspend();
     release();
     shellConsole.close();
     notices.ownership('SESSION OPENED ELSEWHERE');
@@ -393,6 +442,7 @@ try {
     world = restored.world;
     names = objectNamesOf(world.objects);
     snapshot = session.snapshot;
+    sound.resetFromSnapshot(snapshot);
     // A New Game plays the Arrival again; a restored Save is a game already under way, so it
     // gets whatever is left of the Arrival, which is normally none of it.
     arrival = makeArrival(savedSnapshot === undefined);
@@ -431,6 +481,10 @@ try {
       objectSlots: () => world.objects.length,
       persistence,
       preferences,
+      present: events => {
+        snapshot = session.snapshot;
+        sound.present({ events, snapshot });
+      },
       session: () => session,
       typeface: face => {
         applyTypeface(document.documentElement, face, storage);
@@ -578,6 +632,46 @@ try {
   });
   window.addEventListener('pagehide', flushResume);
   window.addEventListener('pagehide', () => ownershipChannel?.close());
+  window.addEventListener('pagehide', () => sound.dispose());
+  window.addEventListener('blur', () => sound.suspend());
+  window.addEventListener('focus', () => {
+    if (!document.hidden && menu.layer() === 'none' && ownership.mayAdvance()) {
+      sound.resume();
+    }
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      sound.suspend();
+    } else if (menu.layer() === 'none' && ownership.mayAdvance()) {
+      sound.resume();
+    }
+  });
+
+  const unlockSound = (event: Event): void => {
+    if (!event.isTrusted) {
+      return;
+    }
+    window.removeEventListener('pointerdown', unlockSound, true);
+    window.removeEventListener('keydown', unlockSound, true);
+    void sound
+      .unlock()
+      .then(() => {
+        if (
+          document.hidden ||
+          menu.layer() !== 'none' ||
+          !ownership.mayAdvance()
+        ) {
+          sound.suspend();
+        }
+      })
+      .catch(() => {});
+  };
+  window.addEventListener('pointerdown', unlockSound, {
+    capture: true
+  });
+  window.addEventListener('keydown', unlockSound, {
+    capture: true
+  });
 
   const pointerTakeTarget = (event: MouseEvent): number | undefined => {
     const state = routerState();
@@ -760,7 +854,9 @@ try {
         }
         const endingBefore = session.scripts?.host.endingPhase ?? 0;
         session.intent = controls.intent;
-        snapshot = session.advance(seconds).snapshot;
+        const stepped = session.advance(seconds);
+        snapshot = stepped.snapshot;
+        sound.present(stepped);
         // Any move of the Ending Phase is a boundary, not just the one out of
         // active play: a reload during the mature presentation should come back
         // to it rather than replay the phase it had already left.

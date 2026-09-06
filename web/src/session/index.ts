@@ -132,6 +132,7 @@ const occupancyFromHost = (value: number): Occupancy =>
 
 export type PresentationEvent =
   | 'tone'
+  | { readonly lift: 'up' | 'down' }
   | { readonly fire: { readonly sound: number } }
   | { readonly impact: { readonly sound: number } }
   | { readonly script: BensonEffect }
@@ -1108,6 +1109,7 @@ export class GameplaySession {
     if (flight === undefined || underground === undefined) {
       return undefined;
     }
+    const direction = this.location.kind === 'room' ? 'up' : 'down';
     const previousRoom = locationHostValue(this.location);
     if (this.location.kind === 'room') {
       const id = this.location.id;
@@ -1180,7 +1182,7 @@ export class GameplaySession {
       this.game = enter(this.game, entrance, underground.lift, flight);
     }
     return [
-      'tone',
+      { lift: direction },
       { arrived: this.location },
       ...this.settleIntoTheRoom(previousRoom)
     ];

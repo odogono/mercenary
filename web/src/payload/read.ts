@@ -1644,6 +1644,113 @@ const underground = (r: Reader, value: unknown): Doc.UndergroundDocument => {
   };
 };
 
+const sound = (r: Reader, value: unknown): Doc.SoundDocument => {
+  const o = asObject(r, value, '$');
+  const sid = asObject(r, o['sid'], 'sid');
+  const craft = asObject(r, o['craft'], 'craft');
+  const display = asObject(r, o['bensonDisplay'], 'bensonDisplay');
+  const stops = asObject(r, o['stopRules'], 'stopRules');
+  const integer = (
+    holder: Record<string, unknown>,
+    name: string,
+    at: string
+  ): number => asInt(r, holder[name], `${at}.${name}`);
+  return {
+    bensonDisplay: {
+      characterMask: integer(display, 'characterMask', 'bensonDisplay'),
+      control: integer(display, 'control', 'bensonDisplay'),
+      controlRegister: integer(display, 'controlRegister', 'bensonDisplay'),
+      frequencyHighBias: integer(display, 'frequencyHighBias', 'bensonDisplay'),
+      frequencyHighRegister: integer(
+        display,
+        'frequencyHighRegister',
+        'bensonDisplay'
+      ),
+      spaceCode: integer(display, 'spaceCode', 'bensonDisplay'),
+      spaceFrequencyHigh: integer(
+        display,
+        'spaceFrequencyHigh',
+        'bensonDisplay'
+      ),
+      stopFrequencyHigh: integer(display, 'stopFrequencyHigh', 'bensonDisplay'),
+      voice: integer(display, 'voice', 'bensonDisplay')
+    },
+    counts: intMap(r, o['counts'], 'counts'),
+    craft: {
+      frequencyHighRegister: integer(craft, 'frequencyHighRegister', 'craft'),
+      programSelector: integer(craft, 'programSelector', 'craft'),
+      speedHighShift: integer(craft, 'speedHighShift', 'craft'),
+      sustainReleaseOr: integer(craft, 'sustainReleaseOr', 'craft'),
+      sustainReleaseRegister: integer(craft, 'sustainReleaseRegister', 'craft'),
+      throttleFloor: integer(craft, 'throttleFloor', 'craft'),
+      throttleSubtract: integer(craft, 'throttleSubtract', 'craft'),
+      undergroundSuppresses: asBool(
+        r,
+        craft['undergroundSuppresses'],
+        'craft.undergroundSuppresses'
+      ),
+      walkingCraftId: integer(craft, 'walkingCraftId', 'craft')
+    },
+    initialRegisters: intArray(r, o['initialRegisters'], 'initialRegisters'),
+    liftProfiles: asArray(r, o['liftProfiles'], 'liftProfiles').map(
+      (raw, index) => {
+        const at = `liftProfiles[${index}]`;
+        const profile = asObject(r, raw, at);
+        return {
+          entry: asOneOf(r, profile['entry'], `${at}.entry`, [
+            'af3e',
+            'af3a'
+          ] as const),
+          registers: intArray(r, profile['registers'], `${at}.registers`),
+          startControl: integer(profile, 'startControl', at)
+        };
+      }
+    ),
+    oneShots: asArray(r, o['oneShots'], 'oneShots').map((raw, index) => {
+      const at = `oneShots[${index}]`;
+      const program = asObject(r, raw, at);
+      return {
+        attackDecay: integer(program, 'attackDecay', at),
+        control: integer(program, 'control', at),
+        frequencyHigh: integer(program, 'frequencyHigh', at),
+        selector: integer(program, 'selector', at),
+        sustainRelease: integer(program, 'sustainRelease', at)
+      };
+    }),
+    schemaVersion: integer(o, 'schemaVersion', '$'),
+    sid: {
+      clockHz: integer(sid, 'clockHz', 'sid'),
+      model: asOneOf(r, sid['model'], 'sid.model', ['6581'] as const),
+      registerCount: integer(sid, 'registerCount', 'sid'),
+      supportedControls: intArray(
+        r,
+        sid['supportedControls'],
+        'sid.supportedControls'
+      ),
+      voiceStride: integer(sid, 'voiceStride', 'sid')
+    },
+    stopRules: {
+      bensonDisplayFrequencyHighRegister: integer(
+        stops,
+        'bensonDisplayFrequencyHighRegister',
+        'stopRules'
+      ),
+      liftControlRegister: integer(stops, 'liftControlRegister', 'stopRules'),
+      oneShotControlRegister: integer(
+        stops,
+        'oneShotControlRegister',
+        'stopRules'
+      ),
+      secondVoiceControlRegister: integer(
+        stops,
+        'secondVoiceControlRegister',
+        'stopRules'
+      ),
+      stoppedValue: integer(stops, 'stoppedValue', 'stopRules')
+    }
+  };
+};
+
 export const readers = {
   benson,
   endgame,
@@ -1652,6 +1759,7 @@ export const readers = {
   manifest,
   objects,
   rooms,
+  sound,
   surface,
   text,
   underground,

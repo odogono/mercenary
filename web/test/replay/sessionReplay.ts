@@ -46,7 +46,7 @@ export const residenceValue = (residence: Residence): TraceValue => {
 };
 
 export const eventValue = (event: PresentationEvent): TraceValue => {
-  if (event === 'tone') {
+  if (event === 'tone' || 'lift' in event) {
     return 'tone';
   }
   if ('script' in event) {

@@ -31,6 +31,7 @@ export const SUPPORTED_INTERACTION_SCHEMA_VERSION = 1;
 export const SUPPORTED_FLIGHT_SCHEMA_VERSION = 3;
 export const SUPPORTED_UNDERGROUND_SCHEMA_VERSION = 2;
 export const SUPPORTED_ENDGAME_SCHEMA_VERSION = 13;
+export const SUPPORTED_SOUND_SCHEMA_VERSION = 1;
 
 const parse = (name: string, body: string): unknown => {
   try {
@@ -112,7 +113,8 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     benson,
     interaction,
     flight,
-    underground
+    underground,
+    sound
   ] = await inOrder([
     required(read, 'manifest.json', readers.manifest),
     required(read, 'world.json', readers.world),
@@ -124,7 +126,8 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     present(read, 'benson.json', readers.benson),
     present(read, 'interaction.json', readers.interaction),
     present(read, 'flight.json', readers.flight),
-    present(read, 'underground.json', readers.underground)
+    present(read, 'underground.json', readers.underground),
+    present(read, 'sound.json', readers.sound)
   ]);
 
   // The five geometry documents share one version, because they are one extraction.
@@ -175,12 +178,85 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
       SUPPORTED_UNDERGROUND_SCHEMA_VERSION
     );
   }
+  const soundDocument =
+    sound ?? fail({ kind: 'missingFile', name: 'sound.json' });
+  check(
+    'sound.json',
+    soundDocument.schemaVersion,
+    SUPPORTED_SOUND_SCHEMA_VERSION
+  );
+
+  if (
+    soundDocument.sid.clockHz !== 985_248 ||
+    soundDocument.sid.registerCount !== 25 ||
+    soundDocument.sid.voiceStride !== 7 ||
+    soundDocument.initialRegisters.length !== soundDocument.sid.registerCount ||
+    soundDocument.oneShots.length !== soundDocument.counts['oneShotPrograms'] ||
+    soundDocument.liftProfiles.length !==
+      soundDocument.counts['liftProfiles'] ||
+    soundDocument.sid.supportedControls.join(',') !== '0,4,16,21,65,128,129' ||
+    soundDocument.counts['initialRegisters'] !== 25 ||
+    soundDocument.counts['voices'] !== 3 ||
+    soundDocument.oneShots.map(program => program.selector).join(',') !==
+      '0,4,8,12,16,20,24,28,32,36,40,44,48' ||
+    soundDocument.liftProfiles.map(profile => profile.entry).join(',') !==
+      'af3e,af3a' ||
+    soundDocument.initialRegisters.some(value => value < 0 || value > 255) ||
+    [4, 11, 18].some(
+      register =>
+        !soundDocument.sid.supportedControls.includes(
+          soundDocument.initialRegisters[register]!
+        )
+    ) ||
+    soundDocument.initialRegisters.slice(21).join(',') !== '0,0,0,15' ||
+    soundDocument.liftProfiles.some(
+      profile =>
+        profile.registers.length !== 14 ||
+        profile.startControl !== 21 ||
+        profile.registers.some(value => value < 0 || value > 255) ||
+        [4, 11].some(
+          register =>
+            !soundDocument.sid.supportedControls.includes(
+              profile.registers[register]!
+            )
+        )
+    ) ||
+    soundDocument.craft.frequencyHighRegister !== 8 ||
+    soundDocument.craft.sustainReleaseRegister !== 13 ||
+    soundDocument.craft.programSelector !== 36 ||
+    soundDocument.craft.speedHighShift !== 4 ||
+    soundDocument.bensonDisplay.frequencyHighRegister !== 15 ||
+    soundDocument.bensonDisplay.controlRegister !== 18 ||
+    soundDocument.bensonDisplay.control !== 65 ||
+    soundDocument.bensonDisplay.voice !== 3 ||
+    soundDocument.stopRules.oneShotControlRegister !== 4 ||
+    soundDocument.stopRules.secondVoiceControlRegister !== 11 ||
+    soundDocument.stopRules.liftControlRegister !== 11 ||
+    soundDocument.stopRules.bensonDisplayFrequencyHighRegister !== 15 ||
+    soundDocument.stopRules.stoppedValue !== 0 ||
+    soundDocument.oneShots.some(
+      program =>
+        ![0x41, 0x80, 0x81].includes(program.control) ||
+        [
+          program.frequencyHigh,
+          program.attackDecay,
+          program.sustainRelease
+        ].some(value => value < 0 || value > 255)
+    )
+  ) {
+    fail({
+      kind: 'unreadable',
+      name: 'sound.json',
+      reason: 'inconsistent or unsupported bounded SID contract'
+    });
+  }
 
   return {
     endgame,
     manifest,
     objects,
     rooms,
+    sound: soundDocument,
     surface,
     world,
     ...(text !== undefined ? { text } : {}),

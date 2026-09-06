@@ -27,6 +27,8 @@ export const PREFERENCES_STORAGE_KEY = 'mercenary.browser-shell.preferences.v1';
 /// identity, so a player who could edit them would silently make their own Saves unloadable;
 /// those stay in `settings.json` alone.
 export interface Preferences {
+  readonly audioMuted: boolean;
+  readonly audioVolume: number;
   readonly composition: Composition;
   readonly panelRendition: PanelRendition;
   /// Absent means "whatever the tuning document says".
@@ -39,6 +41,8 @@ export interface Preferences {
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
+  audioMuted: false,
+  audioVolume: 100,
   composition: 'panel',
   panelRendition: 'targ'
 };
@@ -76,7 +80,18 @@ export const validatePreferences = (value: unknown): Preferences => {
   }
   const source = value as Record<string, unknown>;
   const preset = source['presentationPreset'];
+  const volume = source['audioVolume'];
   return {
+    audioMuted:
+      typeof source['audioMuted'] === 'boolean'
+        ? source['audioMuted']
+        : DEFAULT_PREFERENCES.audioMuted,
+    audioVolume:
+      Number.isInteger(volume) &&
+      (volume as number) >= 0 &&
+      (volume as number) <= 100
+        ? (volume as number)
+        : DEFAULT_PREFERENCES.audioVolume,
     composition: isComposition(source['composition'])
       ? source['composition']
       : DEFAULT_PREFERENCES.composition,
@@ -207,6 +222,8 @@ export const effectivePresentation = (
 /// Choices are spelled with `undefined` allowed rather than merely optional, because handing
 /// a choice back to the tuning document is itself a choice a player can make.
 export interface PreferencesChange {
+  readonly audioMuted?: boolean;
+  readonly audioVolume?: number;
   readonly composition?: Composition;
   readonly panelRendition?: PanelRendition;
   readonly presentationPreset?: PresentationSettings['preset'] | undefined;
@@ -237,6 +254,8 @@ export const createPreferences = (options: {
       // Selecting what is already selected must not pay for a synchronous write, and must not
       // announce a change that later slices answer by rebuilding the renderer.
       if (
+        next.audioMuted === preferences.audioMuted &&
+        next.audioVolume === preferences.audioVolume &&
         next.composition === preferences.composition &&
         next.panelRendition === preferences.panelRendition &&
         next.presentationPreset === preferences.presentationPreset &&
