@@ -1,0 +1,1003 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "term": "Residence-Conditioned Effect",
+    "includes": "Object identity combined with carried, current-Room, or specified-Room Residence predicates.",
+    "excludes": "Generic object residence rules and non-Residence object predicates in the broader eight-family programme.",
+    "resolvesUncertainty": false
+  },
+  "census": {
+    "algorithm": "sha256-canonical-native-and-benson-sites-v1",
+    "nativeSites": [
+      "native:photon:91f2",
+      "native:anti-time-bomb:87af",
+      "native:metal-detector:b53d",
+      "native:antigrav:9817",
+      "native:poweramp:9f8a-a050",
+      "native:sights:9374",
+      "native:door-keys:9493",
+      "native:skeleton-key:948e",
+      "native:kitchen-sink:980b",
+      "native:pyramid:98fe",
+      "native:pass-lift:b430"
+    ],
+    "bensonSites": [
+      "benson:antenna:script-2",
+      "benson:delivery:palyar:136:29",
+      "benson:delivery:palyar:155:42",
+      "benson:delivery:palyar:162:38",
+      "benson:delivery:palyar:163:44",
+      "benson:delivery:palyar:165:41",
+      "benson:delivery:palyar:173:31",
+      "benson:delivery:palyar:147:34",
+      "benson:delivery:palyar:146:35",
+      "benson:delivery:palyar:144:43",
+      "benson:delivery:palyar:170:45",
+      "benson:delivery:palyar:154:12",
+      "benson:delivery:mechanoid:70:29",
+      "benson:delivery:mechanoid:50:31",
+      "benson:delivery:mechanoid:48:34",
+      "benson:delivery:mechanoid:34:35",
+      "benson:delivery:mechanoid:18:43",
+      "benson:captured-mechanoid:room-102",
+      "benson:novadrive:script-7",
+      "benson:pass-reward:script-10"
+    ],
+    "digest": "69fc8cf79a14b6b6e78862861d0b7712859f8f0f659369560308b21c2bf72118"
+  },
+  "evidence": [
+    {
+      "id": "RCE-EV-0001",
+      "kind": "native",
+      "reference": "research/reference-disassembly/snapshot/Mercenary notzed/mercenary_v260411.lst"
+    },
+    {
+      "id": "RCE-EV-0002",
+      "kind": "benson",
+      "reference": "payload/benson.json and research/c64-reference-build/c64lab/benson.py"
+    },
+    {
+      "id": "RCE-EV-0003",
+      "kind": "reference-capture",
+      "reference": "VICE monitor Sights sprite/register and Metal Detector colour-transition captures documented in docs/research/residence-conditioned-effects.md"
+    },
+    {
+      "id": "RCE-EV-0004",
+      "kind": "browser-source",
+      "reference": "web/src"
+    },
+    {
+      "id": "RCE-EV-0005",
+      "kind": "browser-test",
+      "reference": "web/test"
+    }
+  ],
+  "effects": [
+    {
+      "id": "RCE-0001",
+      "title": "Photon Emitter",
+      "object": {
+        "slots": [
+          16
+        ],
+        "identities": [
+          "Photon Emitter"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-current-room"
+      ],
+      "observableBehavior": "Illuminates an otherwise dark Room.",
+      "source": "native",
+      "censusKeys": [
+        "native:photon:91f2"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0001",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/indoor-scene.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0002",
+      "title": "Anti Time Bomb",
+      "object": {
+        "slots": [
+          24
+        ],
+        "identities": [
+          "Anti Time Bomb"
+        ]
+      },
+      "residencePredicates": [
+        "carried"
+      ],
+      "observableBehavior": "Restores a qualifying Structure strike instead of committing destruction.",
+      "source": "native",
+      "censusKeys": [
+        "native:anti-time-bomb:87af"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0001",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/site-destruction.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0003",
+      "title": "Metal Detector",
+      "object": {
+        "slots": [
+          26
+        ],
+        "identities": [
+          "Metal Detector"
+        ]
+      },
+      "residencePredicates": [
+        "carried"
+      ],
+      "observableBehavior": "Recolours the Benson Display red, green, or blue for the selected Structure faction.",
+      "source": "native",
+      "censusKeys": [
+        "native:metal-detector:b53d"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0001",
+        "RCE-EV-0003",
+        "RCE-EV-0004"
+      ],
+      "browserDisposition": "confirmed-missing",
+      "verificationCoverage": [
+        "Focused Reference capture and browser production-source audit; implementation remains unchecked."
+      ]
+    },
+    {
+      "id": "RCE-0004",
+      "title": "Antigrav",
+      "object": {
+        "slots": [
+          27
+        ],
+        "identities": [
+          "Antigrav"
+        ]
+      },
+      "residencePredicates": [
+        "carried"
+      ],
+      "observableBehavior": "Permits taking heavy objects.",
+      "source": "native",
+      "censusKeys": [
+        "native:antigrav:9817"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0001",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/interaction.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0005",
+      "title": "Poweramp",
+      "object": {
+        "slots": [
+          28
+        ],
+        "identities": [
+          "Poweramp"
+        ]
+      },
+      "residencePredicates": [
+        "carried"
+      ],
+      "observableBehavior": "Raises Dominion Dart thrust and altitude ceiling.",
+      "source": "native",
+      "censusKeys": [
+        "native:poweramp:9f8a-a050"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0001",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/flight.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0006",
+      "title": "Sights",
+      "object": {
+        "slots": [
+          40
+        ],
+        "identities": [
+          "Sights (functional)"
+        ]
+      },
+      "residencePredicates": [
+        "carried"
+      ],
+      "observableBehavior": "Displays the expanded fixed-screen Sights sprite.",
+      "source": "native",
+      "censusKeys": [
+        "native:sights:9374"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0001",
+        "RCE-EV-0003",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/shell-renderer.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0007",
+      "title": "Door keys",
+      "object": {
+        "slots": [
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23
+        ],
+        "identities": [
+          "Key objects"
+        ]
+      },
+      "residencePredicates": [
+        "carried"
+      ],
+      "observableBehavior": "Opens a Doorway requiring the matching key class.",
+      "source": "native",
+      "censusKeys": [
+        "native:door-keys:9493"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0001",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/doorway.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0008",
+      "title": "Skeleton key",
+      "object": {
+        "slots": [
+          48
+        ],
+        "identities": [
+          "Skeleton Key"
+        ]
+      },
+      "residencePredicates": [
+        "carried"
+      ],
+      "observableBehavior": "Opens every locked Doorway.",
+      "source": "native",
+      "censusKeys": [
+        "native:skeleton-key:948e"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0001",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/doorway.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0009",
+      "title": "Kitchen Sink",
+      "object": {
+        "slots": [
+          47
+        ],
+        "identities": [
+          "Kitchen Sink"
+        ]
+      },
+      "residencePredicates": [
+        "carried"
+      ],
+      "observableBehavior": "Permits taking fixed and heavy objects.",
+      "source": "native",
+      "censusKeys": [
+        "native:kitchen-sink:980b"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0001",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/interaction.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0010",
+      "title": "Pyramid",
+      "object": {
+        "slots": [
+          56
+        ],
+        "identities": [
+          "Pyramid"
+        ]
+      },
+      "residencePredicates": [
+        "carried"
+      ],
+      "observableBehavior": "Permits dropping objects while airborne.",
+      "source": "native",
+      "censusKeys": [
+        "native:pyramid:98fe"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0001",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/object-state.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0011",
+      "title": "Pass-controlled lift",
+      "object": {
+        "slots": [
+          46
+        ],
+        "identities": [
+          "Pass"
+        ]
+      },
+      "residencePredicates": [
+        "carried"
+      ],
+      "observableBehavior": "Permits the restricted surface-to-hangar lift transition.",
+      "source": "native",
+      "censusKeys": [
+        "native:pass-lift:b430"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0001",
+        "RCE-EV-0004"
+      ],
+      "browserDisposition": "confirmed-missing",
+      "verificationCoverage": [
+        "Browser production-source audit; implementation remains unchecked."
+      ]
+    },
+    {
+      "id": "RCE-0012",
+      "title": "Hertz Antenna activation",
+      "object": {
+        "slots": [
+          30
+        ],
+        "identities": [
+          "Antenna"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-specific-room"
+      ],
+      "observableBehavior": "Activates the Hertz terminal and hire transaction in Room 16.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:antenna:script-2"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/hire.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0013",
+      "title": "palyar delivery: Neutron Fuel",
+      "object": {
+        "slots": [
+          29
+        ],
+        "identities": [
+          "Neutron Fuel"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-specific-room"
+      ],
+      "observableBehavior": "Offers and completes the palyar delivery in Room 136.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:delivery:palyar:136:29"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/deliveries.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0014",
+      "title": "palyar delivery: Essential 12939 Supply",
+      "object": {
+        "slots": [
+          42
+        ],
+        "identities": [
+          "Essential 12939 Supply"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-specific-room"
+      ],
+      "observableBehavior": "Offers and completes the palyar delivery in Room 155.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:delivery:palyar:155:42"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/deliveries.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0015",
+      "title": "palyar delivery: Gold",
+      "object": {
+        "slots": [
+          38
+        ],
+        "identities": [
+          "Gold"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-specific-room"
+      ],
+      "observableBehavior": "Offers and completes the palyar delivery in Room 162.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:delivery:palyar:162:38"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/deliveries.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0016",
+      "title": "palyar delivery: Catering Provisions",
+      "object": {
+        "slots": [
+          44
+        ],
+        "identities": [
+          "Catering Provisions"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-specific-room"
+      ],
+      "observableBehavior": "Offers and completes the palyar delivery in Room 163.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:delivery:palyar:163:44"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/deliveries.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0017",
+      "title": "palyar delivery: Medical Supplies",
+      "object": {
+        "slots": [
+          41
+        ],
+        "identities": [
+          "Medical Supplies"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-specific-room"
+      ],
+      "observableBehavior": "Offers and completes the palyar delivery in Room 165.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:delivery:palyar:165:41"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/deliveries.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0018",
+      "title": "palyar delivery: Energy Crystal",
+      "object": {
+        "slots": [
+          31
+        ],
+        "identities": [
+          "Energy Crystal"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-specific-room"
+      ],
+      "observableBehavior": "Offers and completes the palyar delivery in Room 173.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:delivery:palyar:173:31"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/deliveries.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0019",
+      "title": "palyar delivery: Large Box",
+      "object": {
+        "slots": [
+          34
+        ],
+        "identities": [
+          "Large Box"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-specific-room"
+      ],
+      "observableBehavior": "Offers and completes the palyar delivery in Room 147.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:delivery:palyar:147:34"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/deliveries.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0020",
+      "title": "palyar delivery: Useful Armament",
+      "object": {
+        "slots": [
+          35
+        ],
+        "identities": [
+          "Useful Armament"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-specific-room"
+      ],
+      "observableBehavior": "Offers and completes the palyar delivery in Room 146.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:delivery:palyar:146:35"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/deliveries.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0021",
+      "title": "palyar delivery: Winchester",
+      "object": {
+        "slots": [
+          43
+        ],
+        "identities": [
+          "Winchester"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-specific-room"
+      ],
+      "observableBehavior": "Offers and completes the palyar delivery in Room 144.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:delivery:palyar:144:43"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/deliveries.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0022",
+      "title": "palyar delivery: Databank",
+      "object": {
+        "slots": [
+          45
+        ],
+        "identities": [
+          "Databank"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-specific-room"
+      ],
+      "observableBehavior": "Offers and completes the palyar delivery in Room 170.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:delivery:palyar:170:45"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/deliveries.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0023",
+      "title": "palyar delivery: Captured Mechanoid",
+      "object": {
+        "slots": [
+          12
+        ],
+        "identities": [
+          "Captured Mechanoid"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-specific-room"
+      ],
+      "observableBehavior": "Offers and completes the palyar delivery in Room 154.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:delivery:palyar:154:12"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/deliveries.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0024",
+      "title": "mechanoid delivery: Neutron Fuel",
+      "object": {
+        "slots": [
+          29
+        ],
+        "identities": [
+          "Neutron Fuel"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-specific-room"
+      ],
+      "observableBehavior": "Offers and completes the mechanoid delivery in Room 70.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:delivery:mechanoid:70:29"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/deliveries.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0025",
+      "title": "mechanoid delivery: Energy Crystal",
+      "object": {
+        "slots": [
+          31
+        ],
+        "identities": [
+          "Energy Crystal"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-specific-room"
+      ],
+      "observableBehavior": "Offers and completes the mechanoid delivery in Room 50.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:delivery:mechanoid:50:31"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/deliveries.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0026",
+      "title": "mechanoid delivery: Large Box",
+      "object": {
+        "slots": [
+          34
+        ],
+        "identities": [
+          "Large Box"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-specific-room"
+      ],
+      "observableBehavior": "Offers and completes the mechanoid delivery in Room 48.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:delivery:mechanoid:48:34"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/deliveries.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0027",
+      "title": "mechanoid delivery: Useful Armament",
+      "object": {
+        "slots": [
+          35
+        ],
+        "identities": [
+          "Useful Armament"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-specific-room"
+      ],
+      "observableBehavior": "Offers and completes the mechanoid delivery in Room 34.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:delivery:mechanoid:34:35"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/deliveries.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0028",
+      "title": "mechanoid delivery: Winchester",
+      "object": {
+        "slots": [
+          43
+        ],
+        "identities": [
+          "Winchester"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "in-specific-room"
+      ],
+      "observableBehavior": "Offers and completes the mechanoid delivery in Room 18.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:delivery:mechanoid:18:43"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/deliveries.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0029",
+      "title": "Captured Mechanoid delivery gate",
+      "object": {
+        "slots": [
+          12
+        ],
+        "identities": [
+          "Captured Mechanoid"
+        ]
+      },
+      "residencePredicates": [
+        "in-specific-room",
+        "not-in-specific-room"
+      ],
+      "observableBehavior": "Permits Mechanoid trade only while the captured leader is in Room 102.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:captured-mechanoid:room-102"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/deliveries.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0030",
+      "title": "Novadrive launch authorization",
+      "object": {
+        "slots": [
+          25
+        ],
+        "identities": [
+          "Novadrive"
+        ]
+      },
+      "residencePredicates": [
+        "carried",
+        "not-carried"
+      ],
+      "observableBehavior": "Authorizes escape craft launch and rechecks residence after the prompt.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:novadrive:script-7"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/escape.test.ts"
+      ]
+    },
+    {
+      "id": "RCE-0031",
+      "title": "Palyar Gratitude Pass reward",
+      "object": {
+        "slots": [
+          46
+        ],
+        "identities": [
+          "Pass"
+        ]
+      },
+      "residencePredicates": [
+        "in-specific-room",
+        "not-in-specific-room"
+      ],
+      "observableBehavior": "Moves the Pass from Room 80 to Room 1 or substitutes a credit reward.",
+      "source": "benson",
+      "censusKeys": [
+        "benson:pass-reward:script-10"
+      ],
+      "evidenceIds": [
+        "RCE-EV-0002",
+        "RCE-EV-0004",
+        "RCE-EV-0005"
+      ],
+      "browserDisposition": "implemented",
+      "verificationCoverage": [
+        "web/test/faction-objective.test.ts"
+      ]
+    }
+  ]
+}

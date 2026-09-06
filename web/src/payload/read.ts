@@ -1,4 +1,5 @@
 import type * as Doc from './documents.ts';
+import { fail } from './errors.ts';
 import {
   asArray,
   asBool,
@@ -1751,12 +1752,86 @@ const sound = (r: Reader, value: unknown): Doc.SoundDocument => {
   };
 };
 
+const inRange = (value: number, minimum: number, maximum: number): boolean =>
+  value >= minimum && value <= maximum;
+
+const setBitCount = (rows: readonly number[]): number =>
+  rows.reduce(
+    (total, row) => total + row.toString(2).replaceAll('0', '').length,
+    0
+  );
+
+const validSightsMetadata = (
+  sights: Doc.SightsEffect,
+  counts: Readonly<Record<string, number>>
+): boolean => {
+  const dimensionsValid =
+    inRange(sights.width, 1, 24) && inRange(sights.height, 1, 21);
+  const bitmapValid =
+    sights.bitmapRows.length === sights.height &&
+    sights.bitmapRows.every(row => inRange(row, 0, 2 ** sights.width - 1));
+  const placementValid =
+    sights.origin.every(coordinate => coordinate >= 0) &&
+    sights.pixelScale.every(scale => inRange(scale, 1, 8)) &&
+    sights.origin[0] + sights.width * sights.pixelScale[0] <= 320 &&
+    sights.origin[1] + sights.height * sights.pixelScale[1] <= 136;
+  const identityAndColoursValid =
+    inRange(sights.slot, 0, 63) &&
+    inRange(sights.colours.surface, 0, 15) &&
+    inRange(sights.colours.room, 0, 15);
+  const countsValid =
+    counts['effects'] === 1 &&
+    counts['sightsPixels'] === setBitCount(sights.bitmapRows);
+  return (
+    dimensionsValid &&
+    bitmapValid &&
+    placementValid &&
+    identityAndColoursValid &&
+    countsValid
+  );
+};
+
+const objectEffects = (
+  r: Reader,
+  value: unknown
+): Doc.ObjectEffectsDocument => {
+  const o = asObject(r, value, '$');
+  const raw = asObject(r, o['sights'], 'sights');
+  const colours = asObject(r, raw['colours'], 'sights.colours');
+  const sights: Doc.SightsEffect = {
+    bitmapRows: intArray(r, raw['bitmapRows'], 'sights.bitmapRows'),
+    colours: {
+      room: asInt(r, colours['room'], 'sights.colours.room'),
+      surface: asInt(r, colours['surface'], 'sights.colours.surface')
+    },
+    height: asInt(r, raw['height'], 'sights.height'),
+    origin: intPair(r, raw['origin'], 'sights.origin'),
+    pixelScale: intPair(r, raw['pixelScale'], 'sights.pixelScale'),
+    slot: asInt(r, raw['slot'], 'sights.slot'),
+    width: asInt(r, raw['width'], 'sights.width')
+  };
+  const counts = intMap(r, o['counts'], 'counts');
+  if (!validSightsMetadata(sights, counts)) {
+    return fail({
+      kind: 'unreadable',
+      name: r.name,
+      reason: 'invalid or inconsistent Sights bitmap metadata'
+    });
+  }
+  return {
+    counts,
+    schemaVersion: asInt(r, o['schemaVersion'], 'schemaVersion'),
+    sights
+  };
+};
+
 export const readers = {
   benson,
   endgame,
   flight,
   interaction,
   manifest,
+  objectEffects,
   objects,
   rooms,
   sound,

@@ -61,6 +61,11 @@
       "size": 280
     },
     {
+      "path": "object-effects.json",
+      "sha256": "a6708dba55b07649965c06bbc8ed39836d5e5bd3b75120888c31b611505a9e21",
+      "size": 240
+    },
+    {
       "path": "objects.json",
       "sha256": "0f5cd6a7cad7f3b0570cf719b9e3f4added755ba41d228a1d636492466e870dc",
       "size": 34076

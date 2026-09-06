@@ -36,6 +36,7 @@ from c64lab.interaction import INTERACTION_SCHEMA_VERSION
 from c64lab.text import TEXT_SCHEMA_VERSION
 from c64lab.underground import UNDERGROUND_SCHEMA_VERSION
 from c64lab.sound import SOUND_SCHEMA_VERSION
+from c64lab.object_effects import OBJECT_EFFECTS_SCHEMA_VERSION
 
 
 def _surface() -> dict:
@@ -817,6 +818,7 @@ class BrowserConsumerParityTests(unittest.TestCase):
             ("SUPPORTED_FLIGHT_SCHEMA_VERSION", FLIGHT_SCHEMA_VERSION),
             ("SUPPORTED_UNDERGROUND_SCHEMA_VERSION", UNDERGROUND_SCHEMA_VERSION),
             ("SUPPORTED_SOUND_SCHEMA_VERSION", SOUND_SCHEMA_VERSION),
+            ("SUPPORTED_OBJECT_EFFECTS_SCHEMA_VERSION", OBJECT_EFFECTS_SCHEMA_VERSION),
         ):
             with self.subTest(constant=name):
                 self.assertEqual(self.typescript_constant(name), version)

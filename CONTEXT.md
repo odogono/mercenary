@@ -278,6 +278,10 @@ _Avoid_: Vehicle type, craft class, ship model
 A fidelity-governed rule whose outcome depends on which Geometry Identity is involved, as distinct from the mode-neutral rules that hold whatever the player is interacting with.
 _Avoid_: Object rule, per-object logic
 
+**Residence-Conditioned Effect**:
+A player-observable behavior selected by one or more objects' Object Residence — carried, in the current Room, in a specified Room, or out of the world — independent of how that Residence was reached. This is a deliberately narrower audit term than Object-Conditioned Predicate.
+_Avoid_: Equipment effect, inventory perk, pickup effect
+
 **Control Profile**:
 A named set of device-specific bindings that maps physical controls to Movement Intent and Semantic Actions.
 _Avoid_: Keymap, input profile

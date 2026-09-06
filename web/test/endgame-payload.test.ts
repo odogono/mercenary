@@ -275,6 +275,19 @@ const payloadDocuments = (
     sourceCoreDigest: 'core',
     sourceDatasetId: 'dataset'
   },
+  'object-effects.json': {
+    counts: { effects: 1, sightsPixels: 16 },
+    schemaVersion: 1,
+    sights: {
+      bitmapRows: [0xff_00_ff, ...Array<number>(20).fill(0)],
+      colours: { room: 1, surface: 15 },
+      height: 21,
+      origin: [136, 66],
+      pixelScale: [2, 2],
+      slot: 40,
+      width: 24
+    }
+  },
   'objects.json': { instances: [], models: [], schemaVersion: 8 },
   'rooms.json': {
     doorwayRules: {

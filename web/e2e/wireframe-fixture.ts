@@ -25,6 +25,7 @@ const plan = (vertices: number[], colour = white): FramePlan => ({
   ],
   clear: black,
   lines: vertices.length / 4,
+  overlays: [],
   points: 0,
   size: { height: 480, width: 640 }
 });

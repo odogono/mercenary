@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-09-06
+
+### Added
+
+- The Data Payload now carries independently versioned fixed-screen object effects, beginning
+  with the Reference Build's decoded Sights sprite. A schema-validated Residence-Conditioned
+  Effect matrix and guarded native/Benson census account for all 31 discovered effects without
+  claiming that the broader Object-Conditioned Predicate programme or `UNC-0002` is complete.
+  The audit confirms Metal Detector feedback and the Pass-controlled lift as the two remaining
+  browser omissions and tracks both in #166.
+
+### Fixed
+
+- Carrying the functional Sights object in slot 40 now displays its recovered fixed-screen
+  overlay in both Presentation Presets, including Rooms, dark Rooms, and the Escape terminal
+  presentation. Slot 39 remains inert, and Pickup, Drop, New Game, Saves, and Session Resume all
+  update visibility from the live Carried Stack without adding Session State.
+
 ## [0.12.0] - 2026-09-06
 
 ### Added

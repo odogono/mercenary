@@ -186,6 +186,118 @@ const fakeRenderer = (
 };
 
 describe('a Session Snapshot planned for WebGL2', () => {
+  test('shows the decoded Sights only while functional slot 40 is carried', () => {
+    const gameplay = session();
+    expect(planFrame(world, gameplay.snapshot, size).overlays).toEqual([]);
+
+    gameplay.carry(39);
+    expect(planFrame(world, gameplay.snapshot, size).overlays).toEqual([]);
+
+    gameplay.carry(40);
+    const authentic = planFrame(world, gameplay.snapshot, size);
+    const enhanced = planFrame(
+      world,
+      gameplay.snapshot,
+      size,
+      undefined,
+      defaultSettings().presentation
+    );
+    expect(authentic.overlays).toHaveLength(1);
+    expect(enhanced.overlays).toEqual(authentic.overlays);
+    expect(authentic.overlays[0]?.colour).toEqual(c64Colour(15)!);
+    expect(authentic.overlays[0]?.vertices).toHaveLength(16 * 6 * 2);
+
+    gameplay.drop(40);
+    expect(planFrame(world, gameplay.snapshot, size).overlays).toEqual([]);
+  });
+
+  test('places and scales the fixed Reference Viewport bitmap without projection', () => {
+    const gameplay = session();
+    gameplay.carry(40);
+
+    const reference = planFrame(world, gameplay.snapshot, {
+      height: ReferenceViewport.height,
+      width: ReferenceViewport.width
+    }).overlays[0]!;
+    expect(reference.origin).toEqual({ x: 136, y: 66 });
+    expect(reference.pixelScale).toEqual({ x: 2, y: 2 });
+    expect(Math.min(...reference.vertices.filter((_, i) => i % 2 === 0))).toBe(
+      136
+    );
+    expect(Math.max(...reference.vertices.filter((_, i) => i % 2 === 0))).toBe(
+      184
+    );
+    expect(Math.min(...reference.vertices.filter((_, i) => i % 2 === 1))).toBe(
+      66
+    );
+    expect(Math.max(...reference.vertices.filter((_, i) => i % 2 === 1))).toBe(
+      68
+    );
+
+    const doubled = planFrame(world, gameplay.snapshot, {
+      height: ReferenceViewport.height * 2,
+      width: ReferenceViewport.width * 2
+    }).overlays[0]!;
+    expect(Math.min(...doubled.vertices.filter((_, i) => i % 2 === 0))).toBe(
+      272
+    );
+    expect(Math.max(...doubled.vertices.filter((_, i) => i % 2 === 0))).toBe(
+      368
+    );
+    expect(Math.min(...doubled.vertices.filter((_, i) => i % 2 === 1))).toBe(
+      132
+    );
+    expect(Math.max(...doubled.vertices.filter((_, i) => i % 2 === 1))).toBe(
+      136
+    );
+  });
+
+  test('composites carried Sights after dark Room and Ending frames', () => {
+    const gameplay = session();
+    gameplay.carry(40);
+    gameplay.teleport({ id: 5, kind: 'room' });
+    const dark = planFrame(world, gameplay.snapshot, size);
+    expect(dark.batches).toEqual([]);
+    expect(dark.overlays[0]?.colour).toEqual(c64Colour(1)!);
+
+    const ending = planFrame(
+      world,
+      {
+        ...gameplay.snapshot,
+        ending: { kind: 'escape', phase: 1 },
+        escapePresentation: {
+          colourPair: { line: 0, screen: 12 },
+          points: [{ x: 80, y: 68 }]
+        }
+      },
+      size
+    );
+    expect(ending.batches[0]?.mode).toBe('points');
+    expect(ending.overlays).toHaveLength(1);
+  });
+
+  test('restores Sights visibility from saved carrying state without separate state', () => {
+    const content = sessionContent(world, bundle, undefined);
+    const carried = new GameplaySession(content, openingPlayer());
+    carried.carry(40);
+    const restored = GameplaySession.restore(
+      content,
+      undefined,
+      carried.captureSaveSnapshot()
+    );
+    expect(planFrame(world, restored.snapshot, size).overlays).toHaveLength(1);
+
+    const absent = new GameplaySession(content, openingPlayer());
+    const absentRestored = GameplaySession.restore(
+      content,
+      undefined,
+      absent.captureSaveSnapshot()
+    );
+    expect(planFrame(world, absentRestored.snapshot, size).overlays).toEqual(
+      []
+    );
+  });
+
   test('the clipped opening surface is ground, visible Ink, then Far Points', () => {
     const frame = planFrame(world, session().snapshot, size);
 
@@ -421,6 +533,18 @@ describe('a Session Snapshot planned for WebGL2', () => {
 });
 
 describe('a Session Snapshot submitted to WebGL2', () => {
+  test('submits fixed-screen Sights after every scene batch', () => {
+    const gameplay = session();
+    gameplay.carry(40);
+    const rendered = fakeRenderer();
+
+    rendered.renderer.render(planFrame(world, gameplay.snapshot, size));
+
+    const draws = rendered.calls.filter(call => call.startsWith('draw:'));
+    expect(draws.at(-2)).toBe('draw:0');
+    expect(draws.at(-1)).toBe('draw:4');
+  });
+
   test('compiles the sky program only when an Enhanced orrery is supplied', () => {
     const orrery = createTargOrrery(defaultSettings().presentation.sky);
     const enhanced = fakeRenderer(orrery);

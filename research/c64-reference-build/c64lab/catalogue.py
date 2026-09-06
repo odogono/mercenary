@@ -189,6 +189,64 @@ def catalogue_digest(value: Any) -> str:
     return hashlib.sha256(_canonical_bytes(value)).hexdigest()
 
 
+def validate_residence_conditioned_effects(document: dict[str, Any]) -> dict[str, int]:
+    """Validate the narrow Residence audit and its exhaustive census binding."""
+
+    _validate_schema(document, "catalogue-residence-conditioned-effects.schema.json")
+    census = document["census"]
+    census_subject = {
+        "nativeSites": census["nativeSites"],
+        "bensonSites": census["bensonSites"],
+    }
+    _require(
+        census["digest"] == catalogue_digest(census_subject),
+        "Residence-conditioned census digest is stale",
+    )
+    census_keys = [*census["nativeSites"], *census["bensonSites"]]
+    _require(
+        len(census_keys) == len(set(census_keys)),
+        "Residence-conditioned census repeats a discovered site",
+    )
+    evidence_ids = [item["id"] for item in document["evidence"]]
+    _require(
+        len(evidence_ids) == len(set(evidence_ids)),
+        "Residence-conditioned matrix repeats an evidence record",
+    )
+    known_evidence = set(evidence_ids)
+    effect_ids = [item["id"] for item in document["effects"]]
+    _require(
+        len(effect_ids) == len(set(effect_ids)),
+        "Residence-conditioned matrix repeats an effect",
+    )
+    mapped: list[str] = []
+    for effect in document["effects"]:
+        _require(
+            set(effect["evidenceIds"]) <= known_evidence,
+            f"Residence-conditioned effect {effect['id']} references unknown evidence",
+        )
+        expected_prefix = f"{effect['source']}:"
+        _require(
+            all(key.startswith(expected_prefix) for key in effect["censusKeys"]),
+            f"Residence-conditioned effect {effect['id']} has a source/census mismatch",
+        )
+        mapped.extend(effect["censusKeys"])
+    _require(
+        len(mapped) == len(set(mapped)),
+        "Residence-conditioned census maps a discovered effect more than once",
+    )
+    _require(
+        set(mapped) == set(census_keys),
+        "Residence-conditioned census mapping is incomplete or contains an unknown site",
+    )
+    return {
+        "effects": len(document["effects"]),
+        "confirmedMissing": sum(
+            item["browserDisposition"] == "confirmed-missing"
+            for item in document["effects"]
+        ),
+    }
+
+
 def validate_semantic_coverage(
     coverage: dict[str, Any],
     catalogue_subject_digest: str,
@@ -838,6 +896,12 @@ def validate_catalogue(root: Path, *, case_root: Path | None = None) -> dict[str
     uncertainties_document = _load_json(root / "uncertainties.json")
     evidence_document = _load_json(root / "evidence-index.json")
     coverage = _load_json(root / "coverage.json")
+    residence_effects_path = root / "residence-conditioned-effects.json"
+    residence_effects = (
+        _load_json(residence_effects_path)
+        if residence_effects_path.is_file()
+        else None
+    )
     for name, document in (("entries", entries_document), ("uncertainties", uncertainties_document), ("evidence-index", evidence_document), ("coverage", coverage)):
         _require(document.get("schemaVersion") == 1, f"Catalogue {name} schemaVersion must be 1")
     for entry in entries_document.get("entries", []):
@@ -849,6 +913,11 @@ def validate_catalogue(root: Path, *, case_root: Path | None = None) -> dict[str
     _validate_schema(uncertainties_document, "catalogue-uncertainties.schema.json")
     _validate_schema(evidence_document, "catalogue-evidence-index.schema.json")
     _validate_schema(coverage, "catalogue-coverage.schema.json")
+    residence_counts = (
+        validate_residence_conditioned_effects(residence_effects)
+        if residence_effects is not None
+        else None
+    )
 
     entries_list = entries_document.get("entries")
     uncertainty_list = uncertainties_document.get("uncertainties")
@@ -1030,6 +1099,8 @@ def validate_catalogue(root: Path, *, case_root: Path | None = None) -> dict[str
             "Resolved UNC-0002 requires every predicate family and the enterable inventory to be verified",
         )
     documents = dict(catalogue_subject)
+    if residence_effects is not None:
+        documents["residenceConditionedEffects"] = residence_effects
     if semantic_coverage is not None:
         documents["semanticCoverage"] = semantic_coverage
     if object_semantics_coverage is not None:
@@ -1045,6 +1116,14 @@ def validate_catalogue(root: Path, *, case_root: Path | None = None) -> dict[str
             "evidence": len(evidence),
             "domains": len(rows),
             "journeys": len(journeys),
+            **(
+                {
+                    "residenceConditionedEffects": residence_counts["effects"],
+                    "residenceConditionedConfirmedMissing": residence_counts["confirmedMissing"],
+                }
+                if residence_counts is not None
+                else {}
+            ),
             **(
                 {"semanticModes": len(semantic_coverage["modes"]), "semanticObligations": len(semantic_coverage["obligations"])}
                 if semantic_coverage is not None

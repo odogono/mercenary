@@ -56,6 +56,7 @@ test('Enhanced twilight follows the world horizon in the WebGL renderer', async 
         batches: [],
         clear: sky.clear,
         lines: 0,
+        overlays: [],
         points: 0,
         size: view.size,
         sky
@@ -150,6 +151,7 @@ test('Enhanced twilight follows the world horizon in the WebGL renderer', async 
       ],
       clear: level.clear,
       lines: 0,
+      overlays: [],
       points: 0,
       size: large,
       sky: level

@@ -167,6 +167,7 @@ export const arrivalFieldPlan = (
     clear: FIELD_SKY,
     // The status strip counts what the world renderer drew, and this is not it.
     lines: 0,
+    overlays: [],
     points: STARS.length,
     size
   };
@@ -181,6 +182,7 @@ export const arrivalBlackoutPlan = (size: Size): FramePlan => ({
   batches: [],
   clear: ScenePalette.blackInk,
   lines: 0,
+  overlays: [],
   points: 0,
   size
 });
