@@ -799,7 +799,8 @@ try {
       plan,
       // The player's weight and glow choices are presentation, so they are read per frame the
       // same way the sky's preset is.
-      presentation.wireframe
+      presentation.wireframe,
+      presentation.roads
     );
     const player = snapshot.player;
     const panelModel = panelViewModel(snapshot, panelContext());

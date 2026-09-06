@@ -33,6 +33,8 @@ export interface Preferences {
   readonly panelRendition: PanelRendition;
   /// Absent means "whatever the tuning document says".
   readonly presentationPreset?: PresentationSettings['preset'];
+  readonly roadGlow?: WireframeGlow;
+  readonly roadWeight?: WireframeWeight;
   readonly structureReach?: PresentationSettings['structureReach'];
   readonly wireframeGlow?: WireframeGlow;
   readonly wireframeWeight?: WireframeWeight;
@@ -101,6 +103,10 @@ export const validatePreferences = (value: unknown): Preferences => {
     ...(isStructureReach(source['structureReach'])
       ? { structureReach: source['structureReach'] }
       : {}),
+    ...(isGlow(source['roadGlow']) ? { roadGlow: source['roadGlow'] } : {}),
+    ...(isWeight(source['roadWeight'])
+      ? { roadWeight: source['roadWeight'] }
+      : {}),
     ...(isGlow(source['wireframeGlow'])
       ? { wireframeGlow: source['wireframeGlow'] as WireframeGlow }
       : {}),
@@ -160,6 +166,10 @@ export const effectivePresentation = (
   if (presentation.preset === 'authentic') {
     return {
       ...presentation,
+      roads: {
+        glow: DEFAULT_WIREFRAME_GLOW,
+        thickness: DEFAULT_WIREFRAME_THICKNESS
+      },
       structureReach: 'cell',
       wireframe: {
         glow: DEFAULT_WIREFRAME_GLOW,
@@ -191,6 +201,19 @@ export const effectivePresentation = (
       }
     };
   }
+  presentation = {
+    ...presentation,
+    roads: {
+      glow:
+        preferences.roadGlow === undefined
+          ? presentation.roads.glow
+          : WIREFRAME_GLOW_AMOUNT[preferences.roadGlow],
+      thickness:
+        preferences.roadWeight === undefined
+          ? presentation.roads.thickness
+          : WIREFRAME_WEIGHT_PIXELS[preferences.roadWeight]
+    }
+  };
   return presentation;
 };
 
@@ -204,6 +227,8 @@ export interface PreferencesChange {
   readonly composition?: Composition;
   readonly panelRendition?: PanelRendition;
   readonly presentationPreset?: PresentationSettings['preset'] | undefined;
+  readonly roadGlow?: WireframeGlow | undefined;
+  readonly roadWeight?: WireframeWeight | undefined;
   readonly structureReach?: PresentationSettings['structureReach'] | undefined;
   readonly wireframeGlow?: WireframeGlow | undefined;
   readonly wireframeWeight?: WireframeWeight | undefined;
@@ -235,6 +260,8 @@ export const createPreferences = (options: {
         next.panelRendition === preferences.panelRendition &&
         next.presentationPreset === preferences.presentationPreset &&
         next.structureReach === preferences.structureReach &&
+        next.roadGlow === preferences.roadGlow &&
+        next.roadWeight === preferences.roadWeight &&
         next.wireframeGlow === preferences.wireframeGlow &&
         next.wireframeWeight === preferences.wireframeWeight
       ) {

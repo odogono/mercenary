@@ -21,6 +21,10 @@
     "runMultiplier": 3
   },
   "presentation": {
+    "glowDistance": {
+      "fadeStart": 4096,
+      "fadeEnd": 16384
+    },
     "preset": "enhanced",
     "structureReach": "cell",
     "sky": {
