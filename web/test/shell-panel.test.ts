@@ -8,7 +8,6 @@ import {
   gridReference,
   objectNamesOf,
   panelViewModel,
-  timeOfDay,
   type PanelContext
 } from '../src/shell/panel.ts';
 import { emptyContent } from './fixtures/save.ts';
@@ -17,7 +16,7 @@ const CELL = 65_536;
 
 const context = (overrides: Partial<PanelContext> = {}): PanelContext => ({
   cellSize: CELL,
-  dayLengthMinutes: 24,
+  clock: '09-00-00',
   objectNames: new Map(),
   ...overrides
 });
@@ -123,12 +122,11 @@ describe('the Benson Panel view model', () => {
     expect(model.elevationDegrees).toBeCloseTo(10);
   });
 
-  test('turns session time into a time of day that wraps', () => {
-    expect(timeOfDay(0, 24)).toBe('00-00-00');
-    // Half a day in, whatever the day is worth in real minutes.
-    expect(timeOfDay(12 * 60, 24)).toBe('12-00-00');
-    expect(timeOfDay(24 * 60, 24)).toBe('00-00-00');
-    expect(timeOfDay(24 * 60 + 6 * 60, 24)).toBe('06-00-00');
+  test('presents the clock supplied by the Browser Shell', () => {
+    expect(panelViewModel(snapshotOf(), context()).clock).toBe('09-00-00');
+    expect(
+      panelViewModel(snapshotOf(), context({ clock: '17-42-09' })).clock
+    ).toBe('17-42-09');
   });
 
   test('shows the last thing picked up, or an empty window', () => {

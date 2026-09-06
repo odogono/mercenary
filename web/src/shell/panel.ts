@@ -9,7 +9,7 @@ import { surfaceCellCoordinate } from '../world/surfaceCoordinates.ts';
 /// the Snapshot leaves the Snapshot describing only what changes as the session runs.
 export interface PanelContext {
   readonly cellSize: number;
-  readonly dayLengthMinutes: number;
+  readonly clock: string;
   readonly objectNames: ReadonlyMap<number, string>;
 }
 
@@ -61,24 +61,6 @@ export const gridReference = (
   return `${axis(x)}-${axis(z)}`;
 };
 
-/// Time of day on Targ, as the Damocles clock shows it.
-///
-/// Derived from session time alone, exactly as the Enhanced sky is (ADR 0025), so it reports the
-/// day the player is living through without becoming a fact the session has to keep.
-export const timeOfDay = (
-  elapsed: number,
-  dayLengthMinutes: number
-): string => {
-  const dayLength = dayLengthMinutes * 60;
-  const fraction = (((elapsed / dayLength) % 1) + 1) % 1;
-  const seconds = Math.floor(fraction * 86_400);
-  return [
-    digits(seconds / 3600, 2),
-    digits((seconds % 3600) / 60, 2),
-    digits(seconds % 60, 2)
-  ].join('-');
-};
-
 /// Which objects the player is carrying, in acquisition order, named for the inventory window.
 export const carriedNames = (
   snapshot: SessionSnapshot,
@@ -105,7 +87,7 @@ export const panelViewModel = (
     // Targ has no attack warning to report, so the Damocles lamp stays dressing (ADR 0027).
     attackLamp: false,
     cash: digits(snapshot.credits, 9),
-    clock: timeOfDay(snapshot.elapsed, context.dayLengthMinutes),
+    clock: context.clock,
     compassDegrees: compassDegrees(player.heading),
     elevationDegrees: degrees(player.pitch),
     // The Reference Build's ground proximity warning has no equivalent here, so this reports the

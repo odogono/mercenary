@@ -2,10 +2,10 @@ import { atan, cos, sin } from '../math/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { ScenePalette, type RGB8 } from '../scene/index.ts';
 import type { PresentationSettings, SkySettings } from '../settings/index.ts';
+import { TARG_EPOCH_HOUR } from './time.ts';
 import { dot, normalized } from './vector.ts';
 
 const TURN = 2 * Math.PI;
-const EPOCH_HOUR = 9;
 const NIGHT_ALTITUDE_DEGREES = -12;
 const SUNRISE_ALTITUDE_DEGREES = 0;
 const DAY_ALTITUDE_DEGREES = 12;
@@ -274,6 +274,36 @@ export const skyColourAt = (solarAltitudeDegrees: number): RGB8 => {
   return ScenePalette.sky;
 };
 
+/// The cool end of the Enhanced twilight gradient, away from the horizon glow.
+export const skyZenithColourAt = (solarAltitudeDegrees: number): RGB8 => {
+  if (solarAltitudeDegrees <= NIGHT_ALTITUDE_DEGREES) {
+    return NIGHT;
+  }
+  if (solarAltitudeDegrees >= DAY_ALTITUDE_DEGREES) {
+    return ScenePalette.sky;
+  }
+  return mixed(
+    NIGHT,
+    ScenePalette.sky,
+    smoothstep(
+      NIGHT_ALTITUDE_DEGREES,
+      DAY_ALTITUDE_DEGREES,
+      solarAltitudeDegrees
+    )
+  );
+};
+
+export const skyGradientAt = (
+  solarAltitudeDegrees: number
+): { readonly horizon: RGB8; readonly zenith: RGB8 } | undefined =>
+  solarAltitudeDegrees <= NIGHT_ALTITUDE_DEGREES ||
+  solarAltitudeDegrees >= DAY_ALTITUDE_DEGREES
+    ? undefined
+    : {
+        horizon: skyColourAt(solarAltitudeDegrees),
+        zenith: skyZenithColourAt(solarAltitudeDegrees)
+      };
+
 export const starVisibilityAt = (solarAltitudeDegrees: number): number =>
   1 -
   smoothstep(
@@ -313,7 +343,8 @@ export const skyStateAt = (
   const obliquity = radians(settings.obliquityDegrees);
   const latitude = radians(settings.latitudeDegrees);
   const localSiderealTime =
-    radians((EPOCH_HOUR - 12) * 15) + TURN * days * (1 + 1 / settings.yearDays);
+    radians((TARG_EPOCH_HOUR - 12) * 15) +
+    TURN * days * (1 + 1 / settings.yearDays);
   const horizon = localFrame(latitude, localSiderealTime);
   const sunEquatorial = equatorialDirection(
     { ...SUN_ORBIT, periodDays: settings.yearDays },

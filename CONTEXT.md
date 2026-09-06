@@ -1,6 +1,6 @@
 # Mercenary Remake
 
-This context defines the shared language for recreating Novagen's *Mercenary: Escape from Targ* as a browser game. The browser implementation is canonical; the accepted macOS implementation is frozen at `trace-oracle-last-good` as the Trace Oracle (see ADR 0019).
+This context defines the shared language for recreating Novagen's _Mercenary: Escape from Targ_ as a browser game. The browser implementation is canonical; the accepted macOS implementation is frozen at `trace-oracle-last-good` as the Trace Oracle (see ADR 0019).
 
 Terms marked **(historical)** name concepts retained only for reading frozen project records. They remain accurate for those records but are not used for new implementation work; ADR 0014 governs the verification-era terms among them.
 
@@ -123,7 +123,7 @@ The community-maintained annotated disassembly of the Reference Build, consumed 
 _Avoid_: Source code, upstream, dependency
 
 **Reference Build**:
-The Commodore 64 edition of *Mercenary: Escape from Targ*, used as the authority for the original world's data and game behaviour.
+The Commodore 64 edition of _Mercenary: Escape from Targ_, used as the authority for the original world's data and game behaviour.
 _Avoid_: Canonical ROM, original version
 
 **Faithful Remake**:
@@ -155,7 +155,7 @@ The Browser Shell's named choice between Authentic presentation, which retains t
 _Avoid_: Graphics mode, theme, sky toggle
 
 **Targ Orrery**:
-The deterministic Enhanced-presentation model of Targ's sun, two moons, twilight and night, advancing only with elapsed time in one Gameplay Session.
+The deterministic Enhanced-presentation model of Targ's sun, two moons, twilight and night, advancing with elapsed time in one Gameplay Session unless the Shell Console applies a presentation-only local-time adjustment; its twilight includes an authored horizon-to-zenith colour change that follows the world's horizon.
 _Avoid_: World clock, day/night system, recovered sky
 
 **Star Sphere**:
@@ -291,7 +291,7 @@ A validated arrangement of the world view, status information, and prompts withi
 _Avoid_: Layout mode, aspect mode
 
 **Benson Panel**:
-The authored instrument-panel Display Composition drawn under the world view, presenting only what the Session Snapshot already carries and never changing play; hand-recreated presentation rather than recovered behaviour (ADR 0027).
+The authored instrument-panel Display Composition drawn under the world view, presenting the Session Snapshot and the Targ Orrery's authored local time without changing play; hand-recreated presentation rather than recovered behaviour (ADR 0027).
 _Avoid_: HUD, status bar, dashboard, cockpit
 
 **Panel Rendition**:
@@ -303,19 +303,19 @@ The Browser Shell overlay opened with Escape that pauses stepping and owns the s
 _Avoid_: Pause menu, options screen, main menu
 
 **Shell Console**:
-The Browser Shell's slide-down development command line, reaching the Gameplay Session's own actions and the stores that own each preference and Save rather than the state behind them; alone among Browser Shell surfaces it writes play rather than only presenting it, which is why a session it has touched is no longer reproducible from its inputs and never part of a trace (ADR 0028).
+The Browser Shell's slide-down development command line, reaching the Gameplay Session's own actions and the stores that own each preference, Save, and adjustable presentation value rather than the state behind them; alone among Browser Shell surfaces it may write play rather than only presenting it, which is why its commands are never part of a trace (ADR 0028).
 _Avoid_: Cheat console, terminal, dev overlay
 
 **Initial Release**:
-The complete *Mercenary: Escape from Targ* experience delivered by this effort, with extension seams for *The Second City* but without that expansion's content; Damocles is out of Initial Release scope and waits until after *The Second City* (ADR 0021).
+The complete _Mercenary: Escape from Targ_ experience delivered by this effort, with extension seams for _The Second City_ but without that expansion's content; Damocles is out of Initial Release scope and waits until after _The Second City_ (ADR 0021).
 _Avoid_: Mercenary 1, base game, Damocles, multi-title release
 
 **The Second City**:
-The Commodore 64 expansion of *Mercenary: Escape from Targ*, and the only expansion this remake's Initial Release leaves a Content Overlay seam for.
+The Commodore 64 expansion of _Mercenary: Escape from Targ_, and the only expansion this remake's Initial Release leaves a Content Overlay seam for.
 _Avoid_: Mercenary 2, Damocles, mission disk
 
 **Damocles**:
-Novagen's 16-bit sequel (*Mercenary II*), set in the Gamma System after the player has left Targ; not a Content Overlay and not *The Second City*; in programme scope after *The Second City* inside one multi-title Independent Implementation (ADR 0021).
+Novagen's 16-bit sequel (_Mercenary II_), set in the Gamma System after the player has left Targ; not a Content Overlay and not _The Second City_; in programme scope after _The Second City_ inside one multi-title Independent Implementation (ADR 0021).
 _Avoid_: Mercenary 2 (for The Second City), expansion, mission disk, second Independent Implementation
 
 **Gamma System**:
@@ -367,7 +367,7 @@ The authoritative ordered history of committed Game Semantics outcomes from whic
 _Avoid_: Input recording, debug log, event telemetry
 
 **Independent Implementation**:
-New application code written without incorporating or mechanically translating the Reference Build's or Working Authority's program code, intended to support public distribution; this programme's destination is one multi-title Independent Implementation that can host *Escape from Targ* and later Damocles (ADR 0021), not a separate Damocles remake body.
+New application code written without incorporating or mechanically translating the Reference Build's or Working Authority's program code, intended to support public distribution; this programme's destination is one multi-title Independent Implementation that can host _Escape from Targ_ and later Damocles (ADR 0021), not a separate Damocles remake body.
 _Avoid_: Source port, ROM wrapper, second Independent Implementation (for Damocles)
 
 **World Geometry Dataset**:

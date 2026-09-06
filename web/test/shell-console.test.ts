@@ -16,6 +16,7 @@ import type { PreferencesChange } from '../src/shell/preferences.ts';
 import type { SaveOutcome, SavePersistence } from '../src/shell/saves.ts';
 import { createWalkabout } from '../src/shell/session.ts';
 import type { TypefaceId } from '../src/shell/typography.ts';
+import { TargPresentationClock } from '../src/sky/time.ts';
 import { World, atUnsignedSurfacePosition } from '../src/world/index.ts';
 import { emptyContent } from './fixtures/save.ts';
 import { loadPayload } from './replay/artifacts.ts';
@@ -54,6 +55,7 @@ const harness = (
   const calls: string[] = [];
   const outcomes = [...(overrides.saveOutcomes ?? [])];
   const rooms = new Set(overrides.rooms ?? [5]);
+  const targClock = new TargPresentationClock(() => 24);
   const persistence = {
     armed: () => undefined,
     delete: () => ({ kind: 'done' }) as SaveOutcome,
@@ -99,6 +101,9 @@ const harness = (
       }
     },
     session: () => session,
+    setTime: secondsOfDay =>
+      targClock.set(session.snapshot.elapsed, secondsOfDay),
+    time: () => targClock.secondsOfDay(session.snapshot.elapsed),
     typeface: face => faces.push(face)
   };
   return { calls, changes, deps, faces, session };
@@ -191,6 +196,30 @@ describe('reading a console command line', () => {
     expect(() => parse('where now')).toThrow('where takes no arguments');
     expect(() => parse('location')).toThrow(
       "unknown command 'location': type help"
+    );
+  });
+
+  test('reads a time query and a bounded Targ local time', () => {
+    expect(parse('time')).toEqual({ kind: 'time' });
+    expect(parse('time 18:30')).toEqual({
+      kind: 'setTime',
+      secondsOfDay: 18 * 3600 + 30 * 60
+    });
+    expect(parse('time 9:00')).toEqual({
+      kind: 'setTime',
+      secondsOfDay: 9 * 3600
+    });
+    expect(parse('time 07-08-09')).toEqual({
+      kind: 'setTime',
+      secondsOfDay: 7 * 3600 + 8 * 60 + 9
+    });
+    for (const invalid of ['24:00', '12:60', '12:30:60', 'noon', '1:2']) {
+      expect(() => parse(`time ${invalid}`)).toThrow(
+        'a time must be H:MM or H:MM:SS'
+      );
+    }
+    expect(() => parse('time 12:00 later')).toThrow(
+      'time takes no value, or one H:MM[:SS] value'
     );
   });
 
@@ -316,6 +345,16 @@ describe('doing what a console command says', () => {
     expect(lines.join(' ')).not.toContain('location');
     expect(lines.join(' ')).toContain('goto <x> <z> [height]');
     expect(lines.join(' ')).toContain('save <slot>');
+    expect(lines.join(' ')).toContain('time [h]h:mm[:ss]');
+  });
+
+  test('reports and sets presentation time without changing Session State', () => {
+    const { deps, session } = harness();
+
+    expect(run('time', deps)).toEqual(['time 09:00:00']);
+    expect(run('time 18:00', deps)).toEqual(['time 18:00:00']);
+    expect(session.snapshot.elapsed).toBe(0);
+    expect(run('time', deps)).toEqual(['time 18:00:00']);
   });
 
   test('reports where the player is', () => {

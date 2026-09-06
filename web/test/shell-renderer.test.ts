@@ -17,7 +17,7 @@ import {
 import { defaultSettings } from '../src/settings/index.ts';
 import { Renderer, planFrame } from '../src/shell/frame.ts';
 import { createTargOrrery, type TargOrrery } from '../src/sky/index.ts';
-import { World } from '../src/world/index.ts';
+import { Ink, World } from '../src/world/index.ts';
 import { loadPayload } from './replay/artifacts.ts';
 
 const bundle = await loadPayload();
@@ -206,7 +206,7 @@ describe('a Session Snapshot planned for WebGL2', () => {
     expect(frame.batches.at(-1)?.pointSize).toBe(1);
   });
 
-  test('all reach draws distant bright Ink behind every near batch', () => {
+  test('all reach draws roads behind distant and nearby bright Ink', () => {
     const presentation = {
       ...defaultSettings().presentation,
       structureReach: 'all' as const
@@ -230,7 +230,7 @@ describe('a Session Snapshot planned for WebGL2', () => {
         batch.colour.red === ScenePalette.whiteInk.red ? index : found,
       -1
     );
-    expect(blackIndex).toBeGreaterThan(1);
+    expect(blackIndex).toBe(1);
     expect(nearWhiteIndex).toBeGreaterThan(blackIndex);
     expect(frame.batches.at(-1)?.mode).toBe('points');
     expect(frame.batches.at(-1)?.colour).toEqual(ScenePalette.whiteInk);
@@ -383,6 +383,22 @@ describe('a Session Snapshot planned for WebGL2', () => {
       'lines',
       'points'
     ]);
+  });
+
+  test('positions the Orrery with presentation time without changing the Session Snapshot', () => {
+    const orrery = createTargOrrery(defaultSettings().presentation.sky);
+    const snapshot = session().snapshot;
+
+    expect(
+      planFrame(world, snapshot, size, orrery).sky?.gradient
+    ).toBeUndefined();
+    expect(
+      planFrame(world, snapshot, size, orrery, {
+        ...defaultSettings().presentation,
+        orreryElapsed: 9 * 60
+      }).sky?.gradient
+    ).toBeDefined();
+    expect(snapshot.elapsed).toBe(0);
   });
 
   test('never carries the Enhanced sky into a Room', () => {
@@ -581,6 +597,54 @@ describe('a Session Snapshot submitted to WebGL2', () => {
     ]);
   });
 
+  test('draws the world-aligned twilight gradient before blended sky bodies', () => {
+    const orrery = createTargOrrery(defaultSettings().presentation.sky);
+    const twilight = { ...session().snapshot, elapsed: 540 };
+    const planned = planFrame(world, twilight, size, orrery);
+    const { calls, renderer, shaderSources, uniforms } = fakeRenderer(orrery);
+
+    expect(planned.sky?.gradient).toBeDefined();
+    renderer.draw(world, twilight, size);
+
+    const drawsAndBlend = calls.filter(
+      call => call.startsWith('blend') || call.startsWith('draw')
+    );
+    expect(drawsAndBlend[0]).toBe('draw:4');
+    expect(drawsAndBlend.indexOf('draw:4')).toBeLessThan(
+      drawsAndBlend.indexOf('blend:on')
+    );
+    expect(uniforms).toContainEqual({ name: 'gradientPass', values: [1] });
+    expect(uniforms).toContainEqual({ name: 'gradientPass', values: [0] });
+    expect(uniforms).toContainEqual({
+      name: 'gradientUpInView',
+      values: [
+        planned.sky!.gradient!.upInView.x,
+        planned.sky!.gradient!.upInView.y,
+        planned.sky!.gradient!.upInView.z
+      ]
+    });
+    expect(
+      shaderSources.some(
+        source =>
+          source.includes('asin(clamp(dot(viewDirection, gradientUpInView)') &&
+          source.includes('smoothstep(0.0, radians(30.0), elevation)')
+      )
+    ).toBeTrue();
+  });
+
+  test('does not submit a gradient outside twilight', () => {
+    const orrery = createTargOrrery(defaultSettings().presentation.sky);
+    const { renderer, uniforms } = fakeRenderer(orrery);
+
+    renderer.draw(world, session().snapshot, size);
+
+    expect(
+      uniforms.some(
+        uniform => uniform.name === 'gradientPass' && uniform.values[0] === 1
+      )
+    ).toBeFalse();
+  });
+
   test('submits the authored moon and star shader inputs', () => {
     const orrery = createTargOrrery(defaultSettings().presentation.sky);
     const opening = session().snapshot;
@@ -655,7 +719,7 @@ test('Enhanced frame separates Map Lines without changing projected geometry', (
   expect(roadBatches.flatMap(batch => Array.from(batch.vertices))).toEqual(
     expectedRoads
   );
-  expect(selected.mapSegments?.size).toBe(
+  expect(selected.roadSegments?.size).toBeGreaterThanOrEqual(
     world.mapSegments(snapshot.player.position).length
   );
   expect(enhanced.lines).toBe(authentic.lines);
@@ -671,4 +735,84 @@ test('Enhanced frame separates Map Lines without changing projected geometry', (
       )
       .sort();
   expect(segments(enhanced)).toEqual(segments(authentic));
+});
+
+test('roads around cell 06-09 structures use road styling at both structure reaches', () => {
+  const opening = session().snapshot;
+  const cell = world.cell(6, 9)!;
+  const snapshot = {
+    ...opening,
+    player: {
+      ...opening.player,
+      heading: 0,
+      pitch: -Math.PI / 2,
+      position: { ...cell.centre, y: 12_000 },
+      roll: 0
+    }
+  };
+  const camera = new Camera(snapshot.player);
+  const roadLines = cell
+    .segments(0, world.roadWorkspace(cell))
+    .filter(segment => segment.ink === Ink.black)
+    .flatMap(segment => {
+      const line = camera.projectSegment(segment, size);
+      return line ? [[line.x1, line.y1, line.x2, line.y2]] : [];
+    });
+  expect(roadLines.length).toBeGreaterThan(0);
+  for (const structureReach of ['cell', 'all'] as const) {
+    const frame = planFrame(world, snapshot, size, undefined, {
+      preset: 'enhanced',
+      structureReach
+    });
+    const roads = frame.batches
+      .filter(batch => batch.style === 'roads')
+      .flatMap(batch =>
+        Array.from({ length: batch.vertices.length / 4 }, (_, index) =>
+          Array.from(batch.vertices.slice(index * 4, index * 4 + 4))
+        )
+      );
+    for (const line of roadLines) {
+      expect(roads).toContainEqual(line);
+    }
+    expect(
+      frame.batches.some(
+        batch =>
+          batch.mode === 'lines' &&
+          batch.style === undefined &&
+          batch.colour.red === 255
+      )
+    ).toBe(true);
+  }
+});
+
+test('Enhanced roads are drawn behind distant and nearby bright structures', () => {
+  const opening = session().snapshot;
+  const cell = world.cell(6, 9)!;
+  const frame = planFrame(
+    world,
+    {
+      ...opening,
+      player: {
+        ...opening.player,
+        heading: 0,
+        pitch: -0.05,
+        position: { ...cell.centre, y: 2700 },
+        roll: 0
+      }
+    },
+    size,
+    undefined,
+    { preset: 'enhanced', structureReach: 'all' }
+  );
+  const roadIndices = frame.batches.flatMap((batch, index) =>
+    batch.style === 'roads' ? [index] : []
+  );
+  const structureIndices = frame.batches.flatMap((batch, index) =>
+    batch.mode === 'lines' && batch.style === undefined && batch.colour.red > 0
+      ? [index]
+      : []
+  );
+  expect(roadIndices.length).toBeGreaterThan(0);
+  expect(structureIndices.length).toBeGreaterThan(1);
+  expect(Math.max(...roadIndices)).toBeLessThan(Math.min(...structureIndices));
 });

@@ -7,6 +7,7 @@ import {
   kepler,
   skyColourAt,
   skyStateAt,
+  skyZenithColourAt,
   starVisibilityAt,
   targOrreryFor
 } from '../src/sky/index.ts';
@@ -170,6 +171,20 @@ describe('twilight', () => {
     expect(skyColourAt(0)).toEqual({ blue: 0x38, green: 0x68, red: 0xc8 });
     expect(skyColourAt(12)).toEqual(ScenePalette.sky);
     expect(skyColourAt(90)).toBe(ScenePalette.sky);
+  });
+
+  test('keeps the zenith cool while moving between the existing night and day colours', () => {
+    expect(skyZenithColourAt(-12)).toEqual({
+      blue: 0x18,
+      green: 0x10,
+      red: 0x08
+    });
+    expect(skyZenithColourAt(0)).toEqual({
+      blue: 0x7c,
+      green: 0x58,
+      red: 0x34
+    });
+    expect(skyZenithColourAt(12)).toBe(ScenePalette.sky);
   });
 
   test('fades stars through twilight and removes them at sunrise', () => {

@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-09-06
+
+### Added
+
+- Enhanced twilight now grades smoothly from the authored horizon colour to the Targ sky colour
+  over the first 30 degrees above the world horizon (#116). The gradient follows pitch, roll,
+  inversion, mirroring, and viewport scaling behind stars, celestial bodies, ground, and world
+  geometry. Full day, full night, Authentic presentation, Rooms, and the Escape terminal retain
+  their existing rendering paths.
+
+- The Shell Console now reports Targ local time with `time` and adjusts the presentation clock
+  with `time <hour>:<minute>[:<second>]`. One- and two-digit hours are accepted; the Targ Orrery
+  and Benson Panel update together without changing Session State, Saves, Game Semantics, or
+  trace inputs. The adjustment resets on New Game and Save restoration.
+
+### Fixed
+
+- Enhanced road styling now includes ground-level black road edges embedded in Surface
+  Structures at both Structure Reach settings. Roads and runways draw behind nearby and Distant
+  Structure Ink instead of changing layer order when the player crosses a Surface Cell boundary.
+
 ## [0.11.0] - 2026-09-06
 
 ### Added
