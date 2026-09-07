@@ -260,7 +260,8 @@ export interface SessionSnapshot {
 
 export const openingPlayer = (): PlayerState =>
   playerState({
-    heading: 0,
+    // The Reference Build starts with YAW_HI=$02: a half turn toward +Z.
+    heading: Math.PI,
     pitch: 0,
     position: REFERENCE_OPENING_POSITION
   });
@@ -1210,7 +1211,8 @@ export class GameplaySession {
             this.game,
             outcome.slot,
             { x: at.x, y: 0, z: at.z },
-            heading ?? craftHeading(craft),
+            heading ??
+              craftHeading(craft, this.content.flight?.headingConvention),
             this.content.flight
           );
         }
@@ -1798,7 +1800,10 @@ export class GameplaySession {
     if (this.playerShot !== undefined) {
       return { events: [], outcome: { kind: 'shotActiveRefused' } };
     }
-    const direction = facing(this.game.player);
+    const direction = facing(
+      this.game.player,
+      this.content.flight?.headingConvention
+    );
     const speed = rules.speedPerFrame;
     this.playerShot = {
       framesLeft: rules.lifecycleFrames,

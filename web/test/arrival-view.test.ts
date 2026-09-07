@@ -59,7 +59,7 @@ describe("the Arrival's camera", () => {
     expect(Math.abs(ARRIVAL_TUNING.plungePitch)).toBeLessThan(Math.PI / 4);
     expect(arrivalPose(0, 30).pitch).toBe(0);
     expect(arrivalPose(0, 30).roll).toBe(0);
-    expect(arrivalPose(0, 30).heading).toBe(0);
+    expect(arrivalPose(0, 30).heading).toBe(Math.PI);
   });
 
   test('is level while the ship is still under way', () => {
@@ -103,7 +103,7 @@ describe("the Arrival's camera", () => {
       z: REFERENCE_OPENING_POSITION.z
     });
     expect(seen.player.pitch).toBe(pose.pitch);
-    expect(seen.player.heading).toBe(0);
+    expect(seen.player.heading).toBe(Math.PI);
     expect(seen.credits).toBe(9000);
     expect(seen.elapsed).toBe(12);
     expect(seen.location).toEqual({ kind: 'surface' });
@@ -116,7 +116,7 @@ describe("the Arrival's camera", () => {
     );
 
     expect(landed.player.position).toEqual(REFERENCE_OPENING_POSITION);
-    expect(landed.player.heading).toBe(0);
+    expect(landed.player.heading).toBe(Math.PI);
     expect(landed.player.pitch).toBe(0);
   });
 });

@@ -52,11 +52,10 @@ export class MoverReplay {
       throw new Error('a mover replay needs flight.json');
     }
     this.world = world;
-    this.flight = flightModel(
-      settings.flight,
-      document,
-      this.world.groundExtent
-    );
+    this.flight = {
+      ...flightModel(settings.flight, document, this.world.groundExtent),
+      headingConvention: 'traceOracle'
+    };
     this.residence = new Map(
       this.world.objects.map(object => [
         object.slot,

@@ -228,14 +228,14 @@ describe('the closed codec the combat block travels in', () => {
     );
   });
 
-  test('refuses the schema before this one rather than migrating it', () => {
+  test('refuses schemas before the supported heading migration', () => {
     const saved = JSON.parse(
       envelopeWith(session().captureSaveSnapshot().combat)
     );
-    saved.schemaVersion = SAVE_SCHEMA_VERSION - 1;
+    saved.schemaVersion = SAVE_SCHEMA_VERSION - 2;
 
     expect(() => decodeSave(JSON.stringify(saved), environment)).toThrow(
-      `unsupported Save schemaVersion ${SAVE_SCHEMA_VERSION - 1}`
+      `unsupported Save schemaVersion ${SAVE_SCHEMA_VERSION - 2}`
     );
   });
 });

@@ -140,7 +140,7 @@ const strikeTheAdvert = (route: LegalRoute): void => {
     ...session.game,
     player: {
       ...session.game.player,
-      heading: 0,
+      heading: Math.PI,
       position: {
         x: (ADVERT_CELL & 0x0f) * CELL + 0x70_00,
         y: 0,

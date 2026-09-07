@@ -187,7 +187,7 @@ const flying = (
 const inside = (): GameState =>
   gameState({
     player: playerState({
-      heading: (3 * Math.PI) / 2,
+      heading: Math.PI / 2,
       position: { x: 40, y: 128, z: 1000 }
     }),
     room: 3
@@ -220,7 +220,7 @@ describe('properties that hold whatever the block', () => {
     const stalled = step(start(), intent({ walk: 1 }), 1, flight);
 
     expect(stalled.elapsed).toBeCloseTo(1, 9);
-    expect(stalled.player.position.z).toBeGreaterThan(10_000);
+    expect(stalled.player.position.z).toBeLessThan(10_000);
   });
 
   test('a stalled frame is a run of bounded slices rather than one leap', () => {
@@ -274,7 +274,7 @@ describe('properties that hold whatever the block', () => {
       {
         ...start(),
         player: playerState({
-          heading: 0,
+          heading: Math.PI,
           position: {
             x: 10,
             y: 63,
@@ -298,7 +298,7 @@ describe('properties that hold whatever the block', () => {
         ...state,
         player: {
           ...state.player,
-          heading: 0,
+          heading: Math.PI,
           position: {
             ...state.player.position,
             z: flight.limits.groundExtent - 10
@@ -320,7 +320,7 @@ describe('properties that hold whatever the block', () => {
       {
         ...start(),
         player: playerState({
-          heading: 0,
+          heading: Math.PI,
           position: { x: 10, y: 63, z: 0xff_ff_f0 }
         })
       },
@@ -332,14 +332,14 @@ describe('properties that hold whatever the block', () => {
     expect(wrapped.player.position.z).toBe(24);
   });
 
-  test('heading zero travels toward increasing Z', () => {
+  test('heading zero travels toward decreasing Z', () => {
     const moved = step(start(), intent({ walk: 1 }), 0.5, flight);
 
     expect(moved.player.position.x).toBe(10_000);
-    expect(moved.player.position.z).toBeGreaterThan(10_000);
+    expect(moved.player.position.z).toBeLessThan(10_000);
   });
 
-  test('a quarter turn travels toward increasing X', () => {
+  test('a quarter turn travels toward decreasing X', () => {
     const moved = step(
       {
         ...start(),
@@ -353,7 +353,7 @@ describe('properties that hold whatever the block', () => {
       flight
     );
 
-    expect(moved.player.position.x).toBeGreaterThan(10_000);
+    expect(moved.player.position.x).toBeLessThan(10_000);
     expect(moved.player.position.z).toBeCloseTo(10_000, 3);
   });
 
@@ -378,15 +378,15 @@ describe('properties that hold whatever the block', () => {
 describe('the two filters at work', () => {
   test('yaw velocity builds and then decays rather than stopping dead', () => {
     const turning = held(flying(), intent({ turn: 1 }), 60);
-    expect(turning.player.yawVelocity).toBeGreaterThan(0);
+    expect(turning.player.yawVelocity).toBeLessThan(0);
 
     // Let go: a craft keeps turning for a while, which is the damping at work.
     const released = step(turning, IDLE, HOST_FRAME, flight);
 
-    expect(released.player.yawVelocity).toBeLessThan(
+    expect(released.player.yawVelocity).toBeGreaterThan(
       turning.player.yawVelocity
     );
-    expect(released.player.yawVelocity).toBeGreaterThan(0);
+    expect(released.player.yawVelocity).toBeLessThan(0);
   });
 
   test('speed settles on the throttle fixed point', () => {
@@ -430,7 +430,7 @@ describe('the two filters at work', () => {
 
     expect(
       step(flying(), intent({ turn: 1 }), 0.1, quick).player.yawVelocity
-    ).toBeGreaterThan(
+    ).toBeLessThan(
       step(flying(), intent({ turn: 1 }), 0.1, slow).player.yawVelocity
     );
   });
@@ -448,7 +448,7 @@ describe('the two filters at work', () => {
     );
     const turn = intent({ turn: 1 });
 
-    expect(held(flying(), turn, 30, quick).player.yawVelocity).toBeGreaterThan(
+    expect(held(flying(), turn, 30, quick).player.yawVelocity).toBeLessThan(
       held(flying(), turn, 30, slow).player.yawVelocity * 2
     );
   });
@@ -820,19 +820,25 @@ describe('the on-foot mover', () => {
     // no velocity to build and none to shed (ADR 0016).
     const moved = step(start(), intent({ walk: 1 }), frame, flight);
 
-    expect(moved.player.position.z - 10_000).toBeCloseTo(80, 9);
+    expect(moved.player.position.z - 10_000).toBeCloseTo(-80, 9);
     expect(moved.player.speed).toBeCloseTo(80, 9);
   });
 
   test('the turn is fixed too and leaves no velocity behind', () => {
     const turned = step(start(), intent({ turn: 1 }), frame, flight);
 
-    expect(turned.player.heading).toBeCloseTo(16 * flight.radiansPerUnit, 9);
+    expect(turned.player.heading).toBeCloseTo(
+      2 * Math.PI - 16 * flight.radiansPerUnit,
+      9
+    );
     expect(turned.player.yawVelocity).toBe(0);
 
     // Letting go stops the turn dead, because there was never a velocity.
     const released = step(turned, IDLE, frame, flight);
-    expect(released.player.heading).toBeCloseTo(16 * flight.radiansPerUnit, 9);
+    expect(released.player.heading).toBeCloseTo(
+      2 * Math.PI - 16 * flight.radiansPerUnit,
+      9
+    );
   });
 
   test('walking backwards is the step negated', () => {
@@ -923,7 +929,7 @@ describe('walking inside a Room', () => {
     };
     const moved = step(carried, intent({ walk: 1 }), frame, flight, walls);
 
-    expect(moved.player.position.z - 1000).toBeCloseTo(80, 9);
+    expect(moved.player.position.z - 1000).toBeCloseTo(-80, 9);
     expect(moved.player.speed).toBeCloseTo(80, 9);
     expect(moved.mode).toBe('grounded');
   });

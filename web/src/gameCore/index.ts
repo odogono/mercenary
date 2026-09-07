@@ -8,7 +8,7 @@ import {
 } from '../flight/index.ts';
 import { cos, sin } from '../math/index.ts';
 import type { Containment } from '../navigation/index.ts';
-import type { Vector3 } from '../orientation/index.ts';
+import type { HeadingConvention, Vector3 } from '../orientation/index.ts';
 import type {
   Block,
   EndgameDocument,
@@ -210,6 +210,8 @@ export interface FlightModel {
   readonly document: FlightDocument;
   /// Eye height on foot: the tuning knob's, or the captured Reference Build height.
   readonly groundAltitude: number;
+  /// Only frozen Replay Gates use the pre-recovery heading convention.
+  readonly headingConvention?: HeadingConvention;
   readonly limits: ControlLimits;
   /// One angle unit in radians. The Reference Build's turn is 1024 units.
   readonly radiansPerUnit: number;
@@ -237,7 +239,7 @@ export const flightModel = (
 });
 
 export interface PlayerState {
-  /// Radians clockwise from +Z.
+  /// Reference yaw in radians: zero faces -Z; increasing yaw turns toward -X.
   readonly heading: number;
   /// Radians, positive nose up.
   readonly pitch: number;
@@ -361,12 +363,17 @@ export const wallThud = (state: GameState): boolean =>
 /// shot and the craft that fired it cannot drift apart: the Reference Build
 /// builds both from the same three components — the pitch cosine times the
 /// heading sine, the pitch sine, and the pitch cosine times the heading cosine.
-export const facing = (player: PlayerState): Vector3 => {
+/// Its raw level pitch is a half turn, hence the negative horizontal terms.
+export const facing = (
+  player: PlayerState,
+  convention: HeadingConvention = 'reference'
+): Vector3 => {
   const cosPitch = cos(player.pitch);
+  const sign = convention === 'traceOracle' ? 1 : -1;
   return {
-    x: cosPitch * sin(player.heading),
+    x: cosPitch * sin(player.heading) * sign,
     y: sin(player.pitch),
-    z: cosPitch * cos(player.heading)
+    z: cosPitch * cos(player.heading) * sign
   };
 };
 
@@ -694,9 +701,14 @@ const walk = (
     return state;
   }
 
+  const headingSign = flight.headingConvention === 'traceOracle' ? 1 : -1;
   const heading = wrap(
     player.heading +
-      intent.turn * flight.walkTurn * frames * flight.radiansPerUnit
+      intent.turn *
+        flight.walkTurn *
+        frames *
+        flight.radiansPerUnit *
+        headingSign
   );
   // Walking backwards is the step negated, as the Reference Build did it by flipping the sign bit
   // of the one value rather than keeping two.
@@ -710,12 +722,12 @@ const walk = (
   // indoors and a walker on the Colony Craft deck keep the altitude they
   // have, because the Reference Build never writes it here at all.
   const stepped: Vector3 = {
-    x: player.position.x + sin(heading) * advance,
+    x: player.position.x + sin(heading) * advance * headingSign,
     y:
       state.craft !== undefined || state.colonyCraftFlag !== 0
         ? player.position.y
         : flight.groundAltitude,
-    z: player.position.z + cos(heading) * advance
+    z: player.position.z + cos(heading) * advance * headingSign
   };
 
   let position: Vector3;
@@ -914,7 +926,9 @@ const integrate = (
 
   // Yaw: velocity damps, then takes its input. Turning right negates the authority, which is all
   // the Reference Build's INY on the sign bit did.
-  const authority = intent.turn * block.yawAuthority * limits.turnScale;
+  const headingSign = flight.headingConvention === 'traceOracle' ? 1 : -1;
+  const authority =
+    intent.turn * block.yawAuthority * limits.turnScale * headingSign;
   const yawTarget = yawFixedPoint(authority, block.yawDamping);
   const yawVelocity = settle(
     player.yawVelocity,
@@ -965,14 +979,21 @@ const integrate = (
   }
 
   // Roll is set from yaw velocity rather than accumulated, and only in flight.
+  // The camera uses the negative of raw roll: a right turn decreases raw yaw
+  // and raw roll, but raises the right-hand horizon with positive camera roll.
   const roll =
     counted.mode === 'flying'
-      ? wrap(yawVelocity * block.rollCoupling * flight.radiansPerUnit)
+      ? wrap(
+          yawVelocity * block.rollCoupling * flight.radiansPerUnit * headingSign
+        )
       : 0;
 
   // Translation, one axis at a time as the Reference Build did it.
   const advance = speed * frames;
-  const direction = facing({ ...player, heading, pitch });
+  const direction = facing(
+    { ...player, heading, pitch },
+    flight.headingConvention
+  );
   const x = surfaceAxis(
     player.position.x + direction.x * advance,
     flight,

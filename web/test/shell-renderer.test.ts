@@ -893,7 +893,7 @@ test('Enhanced frame separates Map Lines without changing projected geometry', (
     ...opening,
     player: {
       ...opening.player,
-      heading: 0,
+      heading: Math.PI,
       pitch: -0.5,
       position: { x: 0, y: 5000, z: 0 },
       roll: 0

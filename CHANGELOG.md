@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-09-07
+
 ### Added
 
 - Metal Detector feedback now recolours all 23 Benson Display cells in both panel renditions
@@ -22,6 +24,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Correct the shared camera and movement heading convention that mirrored the world. AIRPORT
+  lettering now reads correctly, and the city boundary appears on the right at displayed 270°.
+  Walking, flight, shots, craft orientation, banking, and the opening view use the recovered
+  Reference Build convention while the compass retains the browser's displayed bearings.
 - Lift arrival narration now advances consistently across frame sizes, and Save restore
   rejects unreachable Lift Journey phases before they can interrupt play.
 - Downward entry to hangar 5 now requires the carried Pass in slot 46. An absent or nearby
@@ -34,8 +40,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - Saves and Session Resume now persist the complete Lift Journey, fractional timing remainder,
-  and retained detector colour. Save schema 11 and the updated payload document versions enforce
-  strict compatibility; earlier Saves are incompatible and have no migration.
+  and retained detector colour. Save schema 12 migrates schema-11 headings and turn velocity
+  automatically, preserving positions and displayed bearings in Saves and Session Resume.
+  Schemas 10 and earlier remain incompatible.
 
 ## [0.13.0] - 2026-09-06
 

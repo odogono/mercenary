@@ -119,7 +119,7 @@ export class CityRun {
     if (!this.goTo({ x: centre.x, z: centre.z - 24_000 }, 3000)) {
       return false;
     }
-    if (!this.settleOnHeading(0)) {
+    if (!this.settleOnHeading(Math.PI)) {
       return false;
     }
     const before = this.counters();
@@ -138,7 +138,10 @@ export class CityRun {
           );
         }
       }
-      this.hold(shortest(0 - this.session.snapshot.player.heading) * 4, 3);
+      this.hold(
+        -shortest(Math.PI - this.session.snapshot.player.heading) * 4,
+        3
+      );
     }
     return false;
   }
@@ -202,9 +205,9 @@ export class CityRun {
       if (away < tolerance) {
         return true;
       }
-      const wanted = Math.atan2(to.x - at.x, to.z - at.z);
+      const wanted = Math.atan2(at.x - to.x, at.z - to.z);
       this.hold(
-        shortest(wanted - this.session.snapshot.player.heading) * 4,
+        -shortest(wanted - this.session.snapshot.player.heading) * 4,
         away > 2 * CELL ? 10 : away > 30_000 ? 7 : 4
       );
     }
@@ -220,7 +223,7 @@ export class CityRun {
       if (Math.abs(error) < 0.01) {
         return true;
       }
-      this.hold(error * 4, 1);
+      this.hold(-error * 4, 1);
     }
     return false;
   }
@@ -232,9 +235,9 @@ export class CityRun {
     const speed = this.bundle.endgame.combat.fire.speedPerFrame;
     const flat = Math.cos(player.pitch);
     return {
-      x: player.position.x + flat * Math.sin(player.heading) * speed,
+      x: player.position.x - flat * Math.sin(player.heading) * speed,
       y: player.position.y + Math.sin(player.pitch) * speed,
-      z: player.position.z + flat * Math.cos(player.heading) * speed
+      z: player.position.z - flat * Math.cos(player.heading) * speed
     };
   }
 

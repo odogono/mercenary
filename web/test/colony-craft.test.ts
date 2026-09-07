@@ -581,7 +581,7 @@ describe('the room-171 Doorway out of the underground', () => {
       ...gameplay.game,
       player: {
         ...gameplay.game.player,
-        heading: (3 * Math.PI) / 2,
+        heading: Math.PI / 2,
         position: { x: 96, y: 128, z: 1640 }
       }
     };

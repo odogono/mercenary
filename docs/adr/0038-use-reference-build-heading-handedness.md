@@ -1,0 +1,5 @@
+# Use the Reference Build’s heading handedness
+
+The Camera, both Movers, shots, and craft placement now share the Reference Build’s recovered horizontal basis: heading zero faces −Z with +X to the right, and right turns decrease heading. This supersedes the frozen Trace Oracle’s opposite forward convention; its Replay Gates explicitly select `traceOracle` so their immutable recordings continue to grade arithmetic and ordering, while production uses the independently probed Reference Build convention with no player preference for the old behavior.
+
+The compass adds a half turn at the presentation boundary to retain the Browser Shell’s existing displayed bearings; this is not a claim about the C64’s coloured half-turn tape. The opening uses the captured raw half-turn, and Save schema 12 migrates schema 11 attitudes to preserve world-facing direction and ongoing right-turn intent without moving the player or objects. Evidence, the separate raw-pitch and roll conversions, and the limits of the Atari ST compass comparison are recorded in [the decode notes](../../notes/decode/coordinate-handedness.md).

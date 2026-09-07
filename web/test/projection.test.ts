@@ -81,8 +81,8 @@ interface Scenario {
 const radians = (degrees: number): number => (degrees * Math.PI) / 180;
 
 const segment = (x1: number, y1: number, x2: number, y2: number) => ({
-  a: { x: x1, y: y1, z: 128 },
-  b: { x: x2, y: y2, z: 128 },
+  a: { x: x1, y: y1, z: -128 },
+  b: { x: x2, y: y2, z: -128 },
   ink: Ink.white
 });
 
@@ -308,6 +308,7 @@ describe('the projection Replay Gate', () => {
     const camera = new Camera({
       farPlane: ORACLE_FAR_PLANE,
       heading: radians(scenario.heading),
+      headingConvention: 'traceOracle',
       pitch: radians(scenario.pitch),
       position,
       roll: radians(scenario.roll)

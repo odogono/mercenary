@@ -21,11 +21,14 @@ const nearby = (): GameplaySession => {
     openingPlayer()
   );
   session.teleport({ id: supply.room, kind: 'room' });
-  session.place({
-    x: supply.origin.x,
-    y: supply.origin.y + 48,
-    z: supply.origin.z - 400
-  });
+  session.place(
+    {
+      x: supply.origin.x,
+      y: supply.origin.y + 48,
+      z: supply.origin.z + 400
+    },
+    0
+  );
   return session;
 };
 
@@ -76,7 +79,7 @@ describe('pointer Take targeting', () => {
     const pointer = projectedCentre(session);
     session.place({
       ...session.snapshot.player.position,
-      z: supply.origin.z - 512
+      z: supply.origin.z + 512
     });
 
     expect(

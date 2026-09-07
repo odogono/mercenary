@@ -60,7 +60,14 @@ const underAttack = (options?: {
   };
   const session = new GameplaySession(
     content,
-    { heading: 0, pitch: 0, position: at, roll: 0, speed: 0, yawVelocity: 0 },
+    {
+      heading: Math.PI,
+      pitch: 0,
+      position: at,
+      roll: 0,
+      speed: 0,
+      yawVelocity: 0
+    },
     scripts()
   );
   if (options?.onFoot !== true) {
@@ -195,7 +202,7 @@ describe('a hostile craft that has been sent after the player', () => {
       ...session.game,
       player: {
         ...session.game.player,
-        heading: 0,
+        heading: Math.PI,
         pitch: 0,
         position: { x: where.at.x, y: where.at.y, z: where.at.z - shot }
       }

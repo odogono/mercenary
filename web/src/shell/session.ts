@@ -4,6 +4,7 @@ import {
   DEFAULT_SESSION_SEED,
   type BensonMessageMode
 } from '../benson/index.ts';
+import type { HeadingConvention } from '../orientation/index.ts';
 import type { Bundle } from '../payload/documents.ts';
 import {
   GameplaySession,
@@ -67,7 +68,8 @@ export const createWalkabout = (
   bundle: Bundle,
   settings: Settings,
   restore?: SaveSnapshot,
-  messageMode: BensonMessageMode = 'authentic'
+  messageMode: BensonMessageMode = 'authentic',
+  headingConvention: HeadingConvention = 'reference'
 ): Walkabout => {
   if (bundle.flight === undefined) {
     throw new Error('flight.json is required by the browser walkabout');
@@ -92,15 +94,21 @@ export const createWalkabout = (
     DEFAULT_SESSION_SEED,
     messageMode
   );
-  const flight = flightModel(
-    settings.flight,
-    bundle.flight,
-    world.groundExtent
-  );
+  const flight = {
+    ...flightModel(settings.flight, bundle.flight, world.groundExtent),
+    headingConvention
+  };
   const content = sessionContent(world, bundle, flight);
   const session =
     restore === undefined
-      ? new GameplaySession(content, openingPlayer(), scripts)
+      ? new GameplaySession(
+          content,
+          {
+            ...openingPlayer(),
+            ...(headingConvention === 'traceOracle' ? { heading: 0 } : {})
+          },
+          scripts
+        )
       : GameplaySession.restore(content, scripts, restore);
   // The opening script is started here even when the Arrival is about to present, so that a
   // Save taken during the opening restores a game with a script to run. The Arrival holds the
