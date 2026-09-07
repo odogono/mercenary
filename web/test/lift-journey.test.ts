@@ -3,7 +3,11 @@ import { describe, expect, test } from 'bun:test';
 
 import { BensonProgram, BensonSession } from '../src/benson/index.ts';
 import type { UndergroundLift } from '../src/payload/documents.ts';
-import { GameplaySession, sessionContent } from '../src/session/index.ts';
+import {
+  GameplaySession,
+  sessionContent,
+  type PresentationEvent
+} from '../src/session/index.ts';
 import {
   advanceLiftJourney,
   liftCameraAltitude,
@@ -185,6 +189,39 @@ const panel = (subject: GameplaySession) =>
   }).altitude;
 
 describe('Lift Journeys in a Gameplay Session', () => {
+  test('gives arrival narration only the time after arrival across frame sizes', () => {
+    const once = newSession();
+    const many = newSession();
+    for (const session of [once, many]) {
+      session.carry(46);
+      session.rideLift();
+    }
+    const events = once.advance(7).events;
+    const steppedEvents: PresentationEvent[] = [];
+    for (let frame = 0; frame < 350; frame += 1) {
+      steppedEvents.push(...many.advance(0.02).events);
+    }
+    expect(once.captureSaveSnapshot().benson).toEqual(
+      many.captureSaveSnapshot().benson
+    );
+    expect(events).toEqual(steppedEvents);
+  });
+
+  test('rejects individually valid Save fields that form an unreachable lift phase', () => {
+    const session = newSession();
+    session.carry(46);
+    session.rideLift();
+    const saved = session.captureSaveSnapshot();
+    for (const phase of [{ position: 0, stage: 0 }, { position: 130 }]) {
+      expect(() =>
+        GameplaySession.restore(content, session.scripts, {
+          ...saved,
+          liftJourney: { ...saved.liftJourney!, ...phase }
+        })
+      ).toThrow('Lift Journey phase');
+    }
+  });
+
   test('holds the altitude instrument throughout both directions and Save restore', () => {
     const session = newSession();
     session.carry(46);

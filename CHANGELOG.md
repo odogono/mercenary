@@ -22,6 +22,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Lift arrival narration now advances consistently across frame sizes, and Save restore
+  rejects unreachable Lift Journey phases before they can interrupt play.
 - Downward entry to hangar 5 now requires the carried Pass in slot 46. An absent or nearby
   dropped Pass produces `PASS HOLDERS ONLY` without starting travel or lift sound (#166).
 - Lift travel preserves the script-facing destination Room independently of the visible scene,

@@ -76,6 +76,7 @@ import { endingStateOf, type EndingState } from './ending.ts';
 import {
   advanceLiftJourney,
   liftCameraAltitude,
+  liftPhaseIndex,
   startLiftJourney,
   type LiftJourneyState
 } from './liftJourney.ts';
@@ -539,6 +540,24 @@ const validateSnapshotReferences = (
         'Save Snapshot Lift Journey stage is outside its direction'
       );
     }
+    const lift = content.underground!.lift;
+    const initial = startLiftJourney(
+      journey.direction,
+      journey.entranceRoom,
+      lift,
+      journey.restingAltitude
+    );
+    const expected = advanceLiftJourney(
+      initial,
+      journey.elapsedFrames / lift.framesPerSecond,
+      lift
+    ).journey;
+    if (
+      expected?.stage !== journey.stage ||
+      expected.position !== journey.position
+    ) {
+      throw new Error('Save Snapshot Lift Journey phase is unreachable');
+    }
   }
   const objectSlots = new Set(content.objects.map(object => object.slot));
   if (snapshot.game.craft !== null && !objectSlots.has(snapshot.game.craft)) {
@@ -897,11 +916,27 @@ export class GameplaySession {
     return this.location;
   }
 
+  private liftEntrance(
+    room: number
+  ): UndergroundDocument['entrances'][number] | undefined {
+    const ordinary = this.content.underground?.entrances.find(
+      entrance => entrance.room === room
+    );
+    if (ordinary !== undefined) {
+      return ordinary;
+    }
+    const colonyCraft = this.content.endgame?.colonyCraft;
+    if (room === COLONY_CRAFT_LIFT_ROOM && colonyCraft !== undefined) {
+      return { cell: colonyCraft.cell, room, site: room };
+    }
+    return undefined;
+  }
+
   private applyLiftScene(
     before: LiftJourneyState,
-    after: LiftJourneyState
+    scene: LiftJourneyState['scene']
   ): void {
-    if (before.scene === after.scene) {
+    if (before.scene === scene) {
       return;
     }
     const underground = this.content.underground;
@@ -909,27 +944,15 @@ export class GameplaySession {
     if (underground === undefined || flight === undefined) {
       return;
     }
-    const ordinary = underground.entrances.find(
-      item => item.room === after.entranceRoom
-    );
     const colonyCraft = this.content.endgame?.colonyCraft;
-    const entrance =
-      ordinary ??
-      (after.entranceRoom === COLONY_CRAFT_LIFT_ROOM &&
-      colonyCraft !== undefined
-        ? {
-            cell: colonyCraft.cell,
-            room: COLONY_CRAFT_LIFT_ROOM,
-            site: COLONY_CRAFT_LIFT_ROOM
-          }
-        : undefined);
+    const entrance = this.liftEntrance(before.entranceRoom);
     if (entrance === undefined) {
       throw new Error(
-        `Lift Journey refers to missing Room ${after.entranceRoom}`
+        `Lift Journey refers to missing Room ${before.entranceRoom}`
       );
     }
     this.game =
-      after.scene === 'room'
+      scene === 'room'
         ? enter(this.game, entrance, underground.lift, flight)
         : surface(
             this.game,
@@ -1314,20 +1337,7 @@ export class GameplaySession {
     const direction = this.location.kind === 'room' ? 'up' : 'down';
     let entrance: UndergroundDocument['entrances'][number] | undefined;
     if (this.location.kind === 'room') {
-      const id = this.location.id;
-      const ordinaryEntrance = underground.entrances.find(
-        item => item.room === id
-      );
-      const colonyCraft = this.content.endgame?.colonyCraft;
-      entrance =
-        ordinaryEntrance ??
-        (id === COLONY_CRAFT_LIFT_ROOM && colonyCraft !== undefined
-          ? {
-              cell: colonyCraft.cell,
-              room: COLONY_CRAFT_LIFT_ROOM,
-              site: COLONY_CRAFT_LIFT_ROOM
-            }
-          : undefined);
+      entrance = this.liftEntrance(this.location.id);
       if (entrance === undefined) {
         return undefined;
       }
@@ -1871,6 +1881,30 @@ export class GameplaySession {
     readonly events: readonly PresentationEvent[];
     readonly snapshot: SessionSnapshot;
   } {
+    const lift = this.content.underground?.lift;
+    if (this.liftJourney === undefined || lift === undefined || seconds <= 0) {
+      return this.advanceInterval(seconds);
+    }
+    // Keep Benson and the other running systems alongside the lift clock.
+    // In particular, arrival cannot consume time that preceded completion.
+    const events: PresentationEvent[] = [];
+    let remaining = seconds;
+    while (remaining > 1e-12) {
+      const remainder = this.liftJourney?.fractionalFrameRemainder ?? 0;
+      const interval = Math.min(
+        remaining,
+        (1 - remainder) / lift.framesPerSecond
+      );
+      events.push(...this.advanceInterval(interval).events);
+      remaining -= interval;
+    }
+    return { events, snapshot: this.snapshot };
+  }
+
+  private advanceInterval(seconds: number): {
+    readonly events: readonly PresentationEvent[];
+    readonly snapshot: SessionSnapshot;
+  } {
     const events: PresentationEvent[] = [];
     // Once script 7 has written the Ending phase, the Reference Build's main
     // loop is replaced by the slot-7 handler's non-returning terminal loop,
@@ -1892,7 +1926,7 @@ export class GameplaySession {
       liftSurfaceSeconds = advanced.surfaceSeconds;
       if (advanced.journey !== undefined) {
         this.liftJourney = advanced.journey;
-        this.applyLiftScene(before, advanced.journey);
+        this.applyLiftScene(before, advanced.journey.scene);
         const colonyEntry =
           advanced.journey.entranceRoom === COLONY_CRAFT_LIFT_ROOM &&
           advanced.journey.scene === 'surface'
@@ -1920,22 +1954,10 @@ export class GameplaySession {
       } else {
         const previousRoom =
           before.direction === 'down' ? SURFACE_ROOM : before.entranceRoom;
-        const completed = {
-          ...before,
-          position:
-            before.direction === 'down'
-              ? this.content.underground.lift.descending.position
-              : before.position,
-          scene:
-            before.direction === 'down'
-              ? ('room' as const)
-              : ('surface' as const),
-          stage:
-            before.direction === 'down'
-              ? 0
-              : this.content.underground.lift.ascending.stopAt
-        };
-        this.applyLiftScene(before, completed);
+        this.applyLiftScene(
+          before,
+          before.direction === 'down' ? 'room' : 'surface'
+        );
         this.game = {
           ...this.game,
           player: {
@@ -2651,9 +2673,7 @@ export class GameplaySession {
     const journey = this.liftJourney;
     const bensonColour = this.bensonColour;
     const liftIndex =
-      journey === undefined
-        ? undefined
-        : journey.stage * 2 + (journey.position >= 0x42 ? 1 : 0);
+      journey === undefined ? undefined : liftPhaseIndex(journey);
     return {
       ...(bensonColour === undefined ? {} : { bensonColour }),
       bensonMessage: this.scripts?.messagePresentation,
