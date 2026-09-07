@@ -47,6 +47,7 @@ from .implementation_contracts import validate_implementation_contracts
 from .semantics import validate_event_history_proof
 from .sound import decode_sound
 from .sound_probe import capture_probes, probe_names
+from .lift_probe import capture_lift_journeys
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -241,6 +242,11 @@ def _parser() -> argparse.ArgumentParser:
     implementation_commands = implementation_parser.add_subparsers(dest="implementation_command", required=True)
     implementation_validate = implementation_commands.add_parser("validate", help="validate schemas, CDDL, and golden vectors")
     implementation_validate.add_argument("--root", required=True, type=Path)
+    lift_parser = subparsers.add_parser("lift", help="capture Reference Lift Journeys")
+    lift_commands = lift_parser.add_subparsers(dest="lift_command", required=True)
+    lift_capture = lift_commands.add_parser("capture", help="capture ordinary and Colony Craft journeys")
+    lift_capture.add_argument("--run", required=True, type=Path)
+    lift_capture.add_argument("--output", required=True, type=Path)
     return parser
 
 
@@ -292,6 +298,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 result = verify_object_semantics(arguments.mapping)
         elif arguments.command == "payload":
             result = export_payload(arguments.dataset, arguments.output, run=arguments.run)
+        elif arguments.command == "lift":
+            result = capture_lift_journeys(arguments.run, arguments.output)
         elif arguments.command == "benson":
             ram, source = load_geometry_source(arguments.run)
             document = decode_benson(ram)

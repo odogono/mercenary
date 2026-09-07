@@ -11,6 +11,7 @@ import {
   encodeSave,
   type SaveSnapshot
 } from '../src/session/save.ts';
+import { flightModel, loadSettings } from '../src/settings/index.ts';
 import { planFrame } from '../src/shell/frame.ts';
 import {
   SESSION_RESUME_STORAGE_KEY,
@@ -20,10 +21,13 @@ import {
 } from '../src/shell/resume.ts';
 import { World } from '../src/world/index.ts';
 import { emptyContent, environment } from './fixtures/save.ts';
-import { loadPayload } from './replay/artifacts.ts';
+import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 const bundle = await loadPayload();
 const world = new World(bundle);
+const settings = loadSettings(
+  await Bun.file(`${repositoryRoot}/settings.json`).text()
+);
 
 class MemoryStorage implements SessionResumeStorage {
   readonly values = new Map<string, string>();
@@ -106,6 +110,45 @@ describe('Session Resume startup', () => {
           .overlays
       ).toHaveLength(expectedOverlays);
     }
+  });
+
+  test('restores and deterministically continues an intermediate Lift Journey', () => {
+    const content = sessionContent(
+      world,
+      bundle,
+      flightModel(settings.flight, bundle.flight!, world.groundExtent)
+    );
+    const original = new GameplaySession(content, {
+      ...openingPlayer(),
+      position: {
+        x: 3 * world.cellSize + 0x71_00,
+        y: 128,
+        z: 15 * world.cellSize + 0x71_00
+      }
+    });
+    original.carry(46);
+    original.rideLift();
+    original.advance(2.345);
+    const storage = new MemoryStorage();
+    storage.setItem(
+      SESSION_RESUME_STORAGE_KEY,
+      encoded(original.captureSaveSnapshot())
+    );
+    const outcome = readSessionResume(storage, environment);
+    expect(outcome.kind).toBe('restored');
+    if (outcome.kind !== 'restored') {
+      throw new Error('Expected a restored Lift Journey');
+    }
+    const restored = GameplaySession.restore(
+      content,
+      undefined,
+      outcome.snapshot
+    );
+    original.advance(5);
+    restored.advance(5);
+    expect(restored.captureSaveSnapshot()).toEqual(
+      original.captureSaveSnapshot()
+    );
   });
 
   test('reports an empty store without inventing a failure', () => {

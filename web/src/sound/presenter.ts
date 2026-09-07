@@ -63,8 +63,8 @@ export class SoundPresenter {
   private suspended = false;
   private refreshPersistent = false;
   private lastDisplay = '';
-  private liftStarted: number | undefined;
-  private liftSecondProfile = false;
+  private liftActive = false;
+  private lastLiftPitch: number | undefined;
   private craftActive = false;
   private lastCraft:
     | { readonly frequencyHigh: number; readonly sustainRelease: number }
@@ -83,7 +83,8 @@ export class SoundPresenter {
       return;
     }
     this.state = 'unlocking';
-    this.liftStarted = undefined;
+    this.liftActive = false;
+    this.lastLiftPitch = undefined;
     this.lastDisplay = '';
     this.lastCraft = undefined;
     this.craftActive = false;
@@ -126,9 +127,20 @@ export class SoundPresenter {
             commands.push({ kind: 'play', selector: 0, voice: 1 });
           }
         } else if ('lift' in event) {
-          this.liftStarted = step.snapshot.elapsed;
-          this.liftSecondProfile = false;
-          commands.push(...this.liftProfile(0));
+          this.liftActive = true;
+          this.lastLiftPitch = undefined;
+          commands.push(
+            {
+              kind: 'play',
+              selector: this.document.liftJourney.dingSelector,
+              voice: 1
+            },
+            {
+              kind: 'play',
+              selector: this.document.liftJourney.programSelector,
+              voice: 2
+            }
+          );
         } else if ('fire' in event) {
           commands.push({ kind: 'play', selector: event.fire.sound, voice: 1 });
         } else if ('impact' in event) {
@@ -157,7 +169,8 @@ export class SoundPresenter {
               item => typeof item === 'object' && 'lift' in item
             )
           ) {
-            this.liftStarted = undefined;
+            this.liftActive = false;
+            this.lastLiftPitch = undefined;
             this.craftActive = false;
             this.lastCraft = undefined;
             commands.push(...this.restoreSceneVoices());
@@ -216,7 +229,10 @@ export class SoundPresenter {
 
   resetFromSnapshot(snapshot: SessionSnapshot): void {
     this.pending = [];
-    this.liftStarted = undefined;
+    // A reset clears voice 2, so an in-progress restored journey must start
+    // its continuous program again before applying the retained pitch.
+    this.liftActive = false;
+    this.lastLiftPitch = undefined;
     this.craftActive = false;
     this.lastCraft = undefined;
     this.lastDisplay = '';
@@ -266,19 +282,36 @@ export class SoundPresenter {
       });
     }
 
-    if (this.liftStarted !== undefined) {
-      const age = snapshot.elapsed - this.liftStarted;
-      if (age < 1) {
-        if (refresh || (age >= 0.5 && !this.liftSecondProfile)) {
-          this.liftSecondProfile = age >= 0.5;
-          commands.push(...this.liftProfile(this.liftSecondProfile ? 1 : 0));
-        }
-        return commands;
+    if (snapshot.liftJourney !== undefined) {
+      if (!this.liftActive) {
+        this.liftActive = true;
+        commands.push({
+          kind: 'play',
+          selector: this.document.liftJourney.programSelector,
+          voice: 2
+        });
       }
-      this.liftStarted = undefined;
+      const pitch = snapshot.liftJourney.pitchHighByte;
+      if (refresh || pitch !== this.lastLiftPitch) {
+        commands.push({
+          kind: 'write',
+          register: this.document.liftJourney.pitchHighRegister,
+          value: pitch
+        });
+        this.lastLiftPitch = pitch;
+      }
+      return commands;
+    }
+    if (this.liftActive) {
+      this.liftActive = false;
+      this.lastLiftPitch = undefined;
       this.craftActive = false;
       this.lastCraft = undefined;
-      commands.push(...this.restoreSceneVoices());
+      commands.push({
+        kind: 'write',
+        register: this.document.liftJourney.controlRegister,
+        value: this.document.liftJourney.stoppedValue
+      });
     }
     const craftActive =
       snapshot.location.kind === 'surface' &&
@@ -352,18 +385,6 @@ export class SoundPresenter {
       this.craftActive = true;
     }
     return commands;
-  }
-
-  private liftProfile(index: number): SoundCommand[] {
-    const profile = this.document.liftProfiles[index]!;
-    return [
-      ...profile.registers.slice(1).map((value, offset): SoundCommand => ({
-        kind: 'write',
-        register: offset + 1,
-        value
-      })),
-      { kind: 'write', register: 11, value: profile.startControl }
-    ];
   }
 
   private restoreSceneVoices(): SoundCommand[] {

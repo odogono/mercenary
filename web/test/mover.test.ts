@@ -738,7 +738,7 @@ describe('the lift surfacing transition', () => {
     submergeMiddle: 0x71,
     surfaceAt: 0x71,
     surfaceMiddle: 0x71
-  };
+  } as unknown as import('../src/payload/documents.ts').UndergroundLift;
 
   test('keeps the boarded craft and its altitude', () => {
     const belowDecks = gameState({

@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Metal Detector feedback now recolours all 23 Benson Display cells in both panel renditions
+  and the communications strip while slot 26 is carried (#166). Readings follow the occupied
+  cell's live faction flags and the recovered altitude high-byte boundary; normal text keeps
+  its theme colour when the detector is absent, and journeys retain the last reading.
+- Reference Lift Journeys now run at 50 Hz through entrances 1–5 and the Colony Craft route in
+  both directions. Recovered camera movement, opaque colour bars, scene crossings, and sound
+  phases replace instantaneous travel. The altitude instrument holds its reading during travel,
+  and the final ascent bar reveals the surface above it as it shrinks downward.
+- The research laboratory can capture all supported Reference Lift Journeys with `lab lift
+  capture`. Decoded tables, captured route timings, regression coverage, and ADR 0037 document
+  the Reference behavior and the separate test-only instantaneous mode for frozen replays.
+
+### Fixed
+
+- Lift arrival narration now advances consistently across frame sizes, and Save restore
+  rejects unreachable Lift Journey phases before they can interrupt play.
+- Downward entry to hangar 5 now requires the carried Pass in slot 46. An absent or nearby
+  dropped Pass produces `PASS HOLDERS ONLY` without starting travel or lift sound (#166).
+- Lift travel preserves the script-facing destination Room independently of the visible scene,
+  including Drop during outdoor descent. Repeated lift requests are rejected, ordinary movement
+  is replaced, Benson and Ship Delivery continue, and outdoor effects advance while attacker
+  handling pauses.
+
+### Changed
+
+- Saves and Session Resume now persist the complete Lift Journey, fractional timing remainder,
+  and retained detector colour. Save schema 11 and the updated payload document versions enforce
+  strict compatibility; earlier Saves are incompatible and have no migration.
+
 ## [0.13.0] - 2026-09-06
 
 ### Added

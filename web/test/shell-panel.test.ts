@@ -37,6 +37,7 @@ describe('the Benson Panel view model', () => {
     const displayText = ' '.repeat(7) + 'BENSON' + ' '.repeat(10);
     const model = panelViewModel(
       snapshotOf({
+        bensonColour: 6,
         bensonMessage: {
           displayText,
           occurrence: {},
@@ -48,6 +49,7 @@ describe('the Benson Panel view model', () => {
 
     expect(model.message).toBe(displayText);
     expect(model.message).toHaveLength(23);
+    expect(model.messageColour).toBe(6);
   });
 
   test('reads the surface as a two-digit grid reference', () => {

@@ -27,7 +27,7 @@ from typing import Any
 from .core import require
 
 
-UNDERGROUND_SCHEMA_VERSION = 2
+UNDERGROUND_SCHEMA_VERSION = 3
 
 #: The flag that decides which mover runs, and the routine that walks the lift.
 UNDERGROUND_FLAG = 0xA8
@@ -80,6 +80,62 @@ ROOM_FOREGROUND_STORE_SITE = 0x91E5
 #: Which state each direction starts the lift in.
 DESCEND_STATE = 0x80
 ASCEND_STATE = 0x01
+
+LIFT_MOTION_TABLE = 0xBB89
+LIFT_MOTION_COUNT = 28
+LIFT_PITCH_TABLE = 0xBBA5
+LIFT_PITCH_COUNT = 29
+LIFT_COLOUR_TABLE = 0xBBC2
+LIFT_COLOUR_COUNT = 13
+
+
+def decode_lift_journey(ram: bytes) -> dict[str, Any]:
+    """Decode the raster-driven Lift Journey rather than treating camera offsets as rates."""
+    require(len(ram) == 65536, "Lift Journey decode requires a 64 KiB RAM image")
+    motion = list(ram[LIFT_MOTION_TABLE:LIFT_MOTION_TABLE + LIFT_MOTION_COUNT])
+    pitch = list(ram[LIFT_PITCH_TABLE:LIFT_PITCH_TABLE + LIFT_PITCH_COUNT])
+    colours = list(ram[LIFT_COLOUR_TABLE:LIFT_COLOUR_TABLE + LIFT_COLOUR_COUNT])
+    require(
+        motion == [2, 4, *([8] * 22), 5, 3, 2, 1],
+        "Reference Build lift motion table changed",
+    )
+    require(
+        pitch == [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, *([5] * 12), 4, 3, 2, 0],
+        "Reference Build lift pitch table changed",
+    )
+    require(
+        colours == [2, 6, 9, 4, 5, 2, 2, 8, 11, 0, 9, 0, 11],
+        "Reference Build lift colour table changed",
+    )
+    return {
+        "framesPerSecond": 50,
+        "positionWrap": 132,
+        "motionRates": motion,
+        "pitchHighBytes": pitch,
+        "ascending": {"stage": 0, "position": 66, "sceneAt": 12, "stopAt": 14},
+        "descending": {"stage": 13, "position": 131, "sceneAt": 8, "floor": 128},
+        "cameraOffsets": {"ascending": 38, "descending": 6},
+        "screen": {
+            "rasterBase": 50,
+            "rasterLimit": 133,
+            "outdoorLineColours": colours[1:8],
+            "indoorLineColours": colours[8:12],
+            "descendingInitialLineColour": colours[12],
+            "descendingInitialScreenColour": 0,
+        },
+        # Observed twice at the real $BA54 PAL IRQ boundary by `lab lift
+        # capture`.  Room setup runs in the main loop, so these presentation
+        # boundaries cannot be inferred from the raster tables alone.
+        "timing": [
+            {"room": 1, "down": {"sceneAt": 193, "stopAt": 340}, "up": {"sceneAt": 206, "stopAt": 338}},
+            {"room": 2, "down": {"sceneAt": 193, "stopAt": 336}, "up": {"sceneAt": 207, "stopAt": 338}},
+            {"room": 3, "down": {"sceneAt": 193, "stopAt": 340}, "up": {"sceneAt": 208, "stopAt": 338}},
+            {"room": 4, "down": {"sceneAt": 193, "stopAt": 336}, "up": {"sceneAt": 206, "stopAt": 338}},
+            {"room": 5, "down": {"sceneAt": 193, "stopAt": 340}, "up": {"sceneAt": 204, "stopAt": 338}},
+            {"room": 8, "down": {"sceneAt": 191, "stopAt": 339}, "up": {"sceneAt": 209, "stopAt": 338}},
+        ],
+        "access": {"restrictedRoom": 5, "passSlot": 46, "refusalMessage": 57},
+    }
 
 #: The grid the surface is divided into, which bounds a plausible entrance.
 CELLS_PER_AXIS = 16
@@ -211,13 +267,11 @@ def decode_underground(ram: bytes) -> dict[str, Any]:
             "shift": TRIGGER_PAD_SHIFT,
         },
         "lift": {
-            "ascendRate": ram[ASCEND_RATE_SITE + 1],
-            "descendRate": ram[DESCEND_RATE_SITE + 1],
+            **decode_lift_journey(ram),
             "surfaceAt": ram[OUTSIDE_THRESHOLD_SITE + 1],
             "submergeAt": ram[INSIDE_THRESHOLD_SITE + 1],
             "surfaceMiddle": ram[OUTSIDE_MIDDLE_SITE + 1],
             "submergeMiddle": ram[INSIDE_MIDDLE_SITE + 1],
-            "floor": ram[BOTTOM_CLAMP_SITE + 1],
             "altitudeWrap": ram[ALTITUDE_WRAP_SITE + 1],
             "altitudeWrapSubtract": ram[ALTITUDE_WRAP_SUBTRACT_SITE + 1],
         },

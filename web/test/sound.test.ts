@@ -309,32 +309,59 @@ describe('the Sound Presenter', () => {
     expect(transport.batches).toHaveLength(count);
   });
 
-  test('lift profiles change once and settle without restarting on subsequent steps', async () => {
+  test('lift sound follows the recovered journey pitch and stops at completion', async () => {
     const transport = new RecordingTransport();
     const presenter = new SoundPresenter(sound, transport);
     await presenter.unlock();
-    const snapshot = bundleSnapshot();
+    const snapshot = {
+      ...bundleSnapshot(),
+      liftJourney: {
+        destination: { id: 5, kind: 'room' } as const,
+        direction: 'down' as const,
+        lineColour: 11,
+        pitchHighByte: 5,
+        position: 131,
+        scene: 'surface' as const,
+        screenSplit: 131,
+        stage: 13
+      }
+    };
     presenter.present({ events: [{ lift: 'down' }], snapshot });
     expect(transport.batches.at(-1)).toMatchObject({
       commands: expect.arrayContaining([
-        { kind: 'write', register: 7, value: 80 },
-        { kind: 'write', register: 11, value: 21 }
+        { kind: 'play', selector: 0, voice: 1 },
+        { kind: 'play', selector: 48, voice: 2 },
+        { kind: 'write', register: 8, value: 5 }
       ])
     });
-    presenter.present({ events: [], snapshot: { ...snapshot, elapsed: 0.6 } });
+    presenter.present({
+      events: [],
+      snapshot: {
+        ...snapshot,
+        elapsed: 0.02,
+        liftJourney: { ...snapshot.liftJourney, pitchHighByte: 4 }
+      }
+    });
     expect(transport.batches.at(-1)).toMatchObject({
       commands: expect.arrayContaining([
-        { kind: 'write', register: 7, value: 228 }
+        { kind: 'write', register: 8, value: 4 }
       ])
     });
-    presenter.present({ events: [], snapshot: { ...snapshot, elapsed: 1.1 } });
+    const { liftJourney: _, ...completed } = snapshot;
+    presenter.present({
+      events: [{ arrived: { id: 5, kind: 'room' } }],
+      snapshot: { ...completed, elapsed: 6.8 }
+    });
     expect(transport.batches.at(-1)).toMatchObject({
       commands: expect.arrayContaining([
         { kind: 'write', register: 11, value: 0 }
       ])
     });
     const count = transport.batches.length;
-    presenter.present({ events: [], snapshot: { ...snapshot, elapsed: 1.2 } });
+    presenter.present({
+      events: [],
+      snapshot: { ...completed, elapsed: 6.9 }
+    });
     expect(transport.batches).toHaveLength(count);
   });
   test('discards pre-gesture cues and includes the unlocking gesture cue', async () => {

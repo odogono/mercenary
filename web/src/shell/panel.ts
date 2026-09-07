@@ -32,6 +32,7 @@ export interface PanelViewModel {
   readonly locationLabel: string;
   readonly locationName: string;
   readonly message: string;
+  readonly messageColour: number | undefined;
   readonly runLamp: boolean;
   readonly speed: string;
   readonly speedLabel: string;
@@ -82,7 +83,10 @@ export const panelViewModel = (
     // The ST instrument reads the middle/high altitude bytes. The low byte carries the
     // different on-foot and grounded-craft viewpoint offsets (128 and 63), neither of which is
     // height above the surface: both therefore read zero on the panel.
-    altitude: digits(player.position.y / 0x1_00, 5),
+    altitude: digits(
+      (snapshot.liftJourney?.instrumentAltitude ?? player.position.y) / 0x1_00,
+      5
+    ),
     altitudeLamp: aboard,
     // Targ has no attack warning to report, so the Damocles lamp stays dressing (ADR 0027).
     attackLamp: false,
@@ -105,6 +109,7 @@ export const panelViewModel = (
         ? locationText(snapshot.location)
         : 'TARG',
     message: snapshot.bensonMessage?.displayText ?? '',
+    messageColour: snapshot.bensonColour,
     runLamp: !aboard && player.speed !== 0,
     speed: `${speed < 0 ? '-' : '+'}${digits(speed, 4)}`,
     speedLabel: `${speed < 0 ? '-' : '+'} 000 000 ${digits(speed, 3)}`

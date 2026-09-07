@@ -8,7 +8,14 @@ describe('object-effects payload', () => {
   test('is required, independently versioned, and names the functional Sights slot', async () => {
     const bundle = await loadPayload();
 
-    expect(bundle.objectEffects.schemaVersion).toBe(1);
+    expect(bundle.objectEffects.schemaVersion).toBe(2);
+    expect(bundle.objectEffects.metalDetector).toEqual({
+      altitudeHighByteLimit: 1,
+      colours: { mechanoid: 6, neutral: 2, palyar: 5 },
+      mechanoidMask: 64,
+      neutralMask: 32,
+      slot: 26
+    });
     expect(bundle.objectEffects.sights.slot).toBe(40);
     expect(bundle.objectEffects.sights.bitmapRows).toEqual([
       0xff_00_ff,
@@ -37,10 +44,37 @@ describe('object-effects payload', () => {
       expect(() =>
         readers.objectEffects(
           { name: 'object-effects.json' },
-          { counts: { effects: 1, sightsPixels: 16 }, schemaVersion: 1, sights }
+          {
+            counts: { effects: 2, sightsPixels: 16 },
+            metalDetector: {
+              altitudeHighByteLimit: 1,
+              colours: { mechanoid: 6, neutral: 2, palyar: 5 },
+              mechanoidMask: 64,
+              neutralMask: 32,
+              slot: 26
+            },
+            schemaVersion: 2,
+            sights
+          }
         )
       ).toThrow();
     }
+  });
+
+  test('rejects a changed Metal Detector predicate contract', async () => {
+    const payload = await loadPayload();
+    expect(() =>
+      readers.objectEffects(
+        { name: 'object-effects.json' },
+        {
+          ...payload.objectEffects,
+          metalDetector: {
+            ...payload.objectEffects.metalDetector,
+            altitudeHighByteLimit: 0
+          }
+        }
+      )
+    ).toThrow('Metal Detector');
   });
 
   test('the bundle loader refuses a missing or stale document', async () => {
@@ -75,7 +109,7 @@ describe('object-effects payload', () => {
         name === 'object-effects.json' ? undefined : bodies.get(name)
       )
     ).rejects.toThrow('object-effects.json');
-    const stale = { ...payload.objectEffects, schemaVersion: 2 };
+    const stale = { ...payload.objectEffects, schemaVersion: 3 };
     await expect(
       load(async name =>
         name === 'object-effects.json'

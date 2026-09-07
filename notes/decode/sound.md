@@ -176,11 +176,17 @@ visual work. At the lift's lower clamp, `$A302` calls `$BB2F`, which clears the
 lift state byte and writes voice 2 control `$00`.
 
 Both native transition branches call `$AF3E` and then `$AF3A`; these are two
-phases, not separate ascent/descent sounds. The `$15` control enables triangle,
-ring modulation and gate, not oscillator sync. Because browser lift traversal
-is atomic, its presentation currently holds each profile for 0.5 seconds, then
-restores the baseline. This one-second compression is authored presentation
-timing, not a recovered native duration, and requires listening review.
+screen-change phases, not separate ascent/descent sounds. The `$15` control
+enables triangle, ring modulation and gate, not oscillator sync.
+
+The Lift Journey itself starts elsewhere: `$B43E/$B462` first invokes selector
+`$00` for the ding, and `$B476` invokes selector `$30` on voice 2. Each lift
+interrupt indexes `$BBA5` by stage and position half and writes the result to
+`$D408`; `$BB2F` writes `$00` to `$D40B` only when the main loop completes the
+journey. `lab lift capture` observed that chain on every route and direction.
+The browser now follows those session-owned phases and restarts selector `$30`
+when restoring an in-progress Save, instead of using the former one-second
+profile approximation.
 
 ## What is still unknown
 
@@ -191,8 +197,7 @@ native selectors are requested. It does **not** yet close the Sound Cue inventor
   startup, ordinary movement, craft/thrust, both lift directions, Benson Display,
   all interactions, combat, Mission reactions, recoverable failures, and the
   Ending;
-- selector `$00` and the dynamic `$24`/`$30` programs need state-correlated names,
-  and lift phase timing needs observation;
+- selector `$00` and the dynamic `$24` program still need state-correlated names;
 - exact onset, duration, envelope completion, retrigger, same-voice interruption,
   cross-voice overlap, and every stop path remain to be measured;
 - runtime watchpoints must prove that the self-modifying Benson store is the only

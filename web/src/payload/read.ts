@@ -1610,6 +1610,15 @@ const underground = (r: Reader, value: unknown): Doc.UndergroundDocument => {
   const o = asObject(r, value, '$');
   const pad = asObject(r, o['pad'], 'pad');
   const lift = asObject(r, o['lift'], 'lift');
+  const access = asObject(r, lift['access'], 'lift.access');
+  const ascending = asObject(r, lift['ascending'], 'lift.ascending');
+  const cameraOffsets = asObject(
+    r,
+    lift['cameraOffsets'],
+    'lift.cameraOffsets'
+  );
+  const descending = asObject(r, lift['descending'], 'lift.descending');
+  const screen = asObject(r, lift['screen'], 'lift.screen');
   return {
     counts: intMap(r, o['counts'], 'counts'),
     entrances: asArray(r, o['entrances'], 'entrances').map((raw, i) => {
@@ -1622,19 +1631,106 @@ const underground = (r: Reader, value: unknown): Doc.UndergroundDocument => {
       };
     }),
     lift: {
+      access: {
+        passSlot: asInt(r, access['passSlot'], 'lift.access.passSlot'),
+        refusalMessage: asInt(
+          r,
+          access['refusalMessage'],
+          'lift.access.refusalMessage'
+        ),
+        restrictedRoom: asInt(
+          r,
+          access['restrictedRoom'],
+          'lift.access.restrictedRoom'
+        )
+      },
       altitudeWrap: asInt(r, lift['altitudeWrap'], 'lift.altitudeWrap'),
       altitudeWrapSubtract: asInt(
         r,
         lift['altitudeWrapSubtract'],
         'lift.altitudeWrapSubtract'
       ),
-      ascendRate: asInt(r, lift['ascendRate'], 'lift.ascendRate'),
-      descendRate: asInt(r, lift['descendRate'], 'lift.descendRate'),
-      floor: asInt(r, lift['floor'], 'lift.floor'),
+      ascending: {
+        position: asInt(r, ascending['position'], 'lift.ascending.position'),
+        sceneAt: asInt(r, ascending['sceneAt'], 'lift.ascending.sceneAt'),
+        stage: asInt(r, ascending['stage'], 'lift.ascending.stage'),
+        stopAt: asInt(r, ascending['stopAt'], 'lift.ascending.stopAt')
+      },
+      cameraOffsets: {
+        ascending: asInt(
+          r,
+          cameraOffsets['ascending'],
+          'lift.cameraOffsets.ascending'
+        ),
+        descending: asInt(
+          r,
+          cameraOffsets['descending'],
+          'lift.cameraOffsets.descending'
+        )
+      },
+      descending: {
+        floor: asInt(r, descending['floor'], 'lift.descending.floor'),
+        position: asInt(r, descending['position'], 'lift.descending.position'),
+        sceneAt: asInt(r, descending['sceneAt'], 'lift.descending.sceneAt'),
+        stage: asInt(r, descending['stage'], 'lift.descending.stage')
+      },
+      framesPerSecond: asInt(
+        r,
+        lift['framesPerSecond'],
+        'lift.framesPerSecond'
+      ),
+      motionRates: intArray(r, lift['motionRates'], 'lift.motionRates'),
+      pitchHighBytes: intArray(
+        r,
+        lift['pitchHighBytes'],
+        'lift.pitchHighBytes'
+      ),
+      positionWrap: asInt(r, lift['positionWrap'], 'lift.positionWrap'),
+      screen: {
+        descendingInitialLineColour: asInt(
+          r,
+          screen['descendingInitialLineColour'],
+          'lift.screen.descendingInitialLineColour'
+        ),
+        descendingInitialScreenColour: asInt(
+          r,
+          screen['descendingInitialScreenColour'],
+          'lift.screen.descendingInitialScreenColour'
+        ),
+        indoorLineColours: intArray(
+          r,
+          screen['indoorLineColours'],
+          'lift.screen.indoorLineColours'
+        ),
+        outdoorLineColours: intArray(
+          r,
+          screen['outdoorLineColours'],
+          'lift.screen.outdoorLineColours'
+        ),
+        rasterBase: asInt(r, screen['rasterBase'], 'lift.screen.rasterBase'),
+        rasterLimit: asInt(r, screen['rasterLimit'], 'lift.screen.rasterLimit')
+      },
       submergeAt: asInt(r, lift['submergeAt'], 'lift.submergeAt'),
       submergeMiddle: asInt(r, lift['submergeMiddle'], 'lift.submergeMiddle'),
       surfaceAt: asInt(r, lift['surfaceAt'], 'lift.surfaceAt'),
-      surfaceMiddle: asInt(r, lift['surfaceMiddle'], 'lift.surfaceMiddle')
+      surfaceMiddle: asInt(r, lift['surfaceMiddle'], 'lift.surfaceMiddle'),
+      timing: asArray(r, lift['timing'], 'lift.timing').map((raw, index) => {
+        const at = `lift.timing[${index}]`;
+        const value = asObject(r, raw, at);
+        const down = asObject(r, value['down'], `${at}.down`);
+        const up = asObject(r, value['up'], `${at}.up`);
+        return {
+          down: {
+            sceneAt: asInt(r, down['sceneAt'], `${at}.down.sceneAt`),
+            stopAt: asInt(r, down['stopAt'], `${at}.down.stopAt`)
+          },
+          room: asInt(r, value['room'], `${at}.room`),
+          up: {
+            sceneAt: asInt(r, up['sceneAt'], `${at}.up.sceneAt`),
+            stopAt: asInt(r, up['stopAt'], `${at}.up.stopAt`)
+          }
+        };
+      })
     },
     pad: {
       shift: asInt(r, pad['shift'], 'pad.shift'),
@@ -1693,6 +1789,36 @@ const sound = (r: Reader, value: unknown): Doc.SoundDocument => {
       walkingCraftId: integer(craft, 'walkingCraftId', 'craft')
     },
     initialRegisters: intArray(r, o['initialRegisters'], 'initialRegisters'),
+    liftJourney: (() => {
+      const value = asObject(r, o['liftJourney'], 'liftJourney');
+      return {
+        controlRegister: asInt(
+          r,
+          value['controlRegister'],
+          'liftJourney.controlRegister'
+        ),
+        dingSelector: asInt(
+          r,
+          value['dingSelector'],
+          'liftJourney.dingSelector'
+        ),
+        pitchHighRegister: asInt(
+          r,
+          value['pitchHighRegister'],
+          'liftJourney.pitchHighRegister'
+        ),
+        programSelector: asInt(
+          r,
+          value['programSelector'],
+          'liftJourney.programSelector'
+        ),
+        stoppedValue: asInt(
+          r,
+          value['stoppedValue'],
+          'liftJourney.stoppedValue'
+        )
+      };
+    })(),
     liftProfiles: asArray(r, o['liftProfiles'], 'liftProfiles').map(
       (raw, index) => {
         const at = `liftProfiles[${index}]`;
@@ -1780,7 +1906,7 @@ const validSightsMetadata = (
     inRange(sights.colours.surface, 0, 15) &&
     inRange(sights.colours.room, 0, 15);
   const countsValid =
-    counts['effects'] === 1 &&
+    counts['effects'] === 2 &&
     counts['sightsPixels'] === setBitCount(sights.bitmapRows);
   return (
     dimensionsValid &&
@@ -1796,6 +1922,12 @@ const objectEffects = (
   value: unknown
 ): Doc.ObjectEffectsDocument => {
   const o = asObject(r, value, '$');
+  const detector = asObject(r, o['metalDetector'], 'metalDetector');
+  const detectorColours = asObject(
+    r,
+    detector['colours'],
+    'metalDetector.colours'
+  );
   const raw = asObject(r, o['sights'], 'sights');
   const colours = asObject(r, raw['colours'], 'sights.colours');
   const sights: Doc.SightsEffect = {
@@ -1818,8 +1950,55 @@ const objectEffects = (
       reason: 'invalid or inconsistent Sights bitmap metadata'
     });
   }
+  const metalDetector = {
+    altitudeHighByteLimit: asInt(
+      r,
+      detector['altitudeHighByteLimit'],
+      'metalDetector.altitudeHighByteLimit'
+    ),
+    colours: {
+      mechanoid: asInt(
+        r,
+        detectorColours['mechanoid'],
+        'metalDetector.colours.mechanoid'
+      ),
+      neutral: asInt(
+        r,
+        detectorColours['neutral'],
+        'metalDetector.colours.neutral'
+      ),
+      palyar: asInt(
+        r,
+        detectorColours['palyar'],
+        'metalDetector.colours.palyar'
+      )
+    },
+    mechanoidMask: asInt(
+      r,
+      detector['mechanoidMask'],
+      'metalDetector.mechanoidMask'
+    ),
+    neutralMask: asInt(r, detector['neutralMask'], 'metalDetector.neutralMask'),
+    slot: asInt(r, detector['slot'], 'metalDetector.slot')
+  };
+  if (
+    metalDetector.altitudeHighByteLimit !== 1 ||
+    metalDetector.slot !== 26 ||
+    metalDetector.neutralMask !== 32 ||
+    metalDetector.mechanoidMask !== 64 ||
+    metalDetector.colours.neutral !== 2 ||
+    metalDetector.colours.palyar !== 5 ||
+    metalDetector.colours.mechanoid !== 6
+  ) {
+    return fail({
+      kind: 'unreadable',
+      name: r.name,
+      reason: 'invalid Metal Detector predicate contract'
+    });
+  }
   return {
     counts,
+    metalDetector,
     schemaVersion: asInt(r, o['schemaVersion'], 'schemaVersion'),
     sights
   };

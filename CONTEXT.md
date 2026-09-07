@@ -98,6 +98,10 @@ _Avoid_: Cooldown, debounce, timer
 The interval after arriving in a Rewired Room during which no Doorway can be taken and the border shows a colour from the transition ramp; ordinary arrivals have none.
 _Avoid_: Fade, loading, teleport delay
 
+**Lift Journey**:
+The travel interval between a surface entrance and its Room. During descent the destination Room can already govern Benson Scripts and Object Residence before the visible scene changes, while the recovered camera, split, palette, and sound phases continue until arrival.
+_Avoid_: Elevator animation, Room Transition, instant teleport
+
 **Indoor Scene**:
 How the Room the player is in looks at this moment — its two backdrop colours, the colour its wireframe is drawn in, and whether it is dark — which depends on play rather than on the Room alone.
 _Avoid_: Room palette, lighting, theme

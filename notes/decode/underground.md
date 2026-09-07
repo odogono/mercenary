@@ -331,6 +331,42 @@ enough to be worth chasing one at a time rather than explaining away.
 
 `lab geometry rooms-plan-svg` draws it.
 
+### The Lift Journey runs on the PAL interrupt
+
+The raster interrupt at `$BA54` advances `$CB/$CC` at 50 Hz. It indexes the
+28-byte motion table at `$BB89`, the 29-byte voice-2 pitch-high table at `$BBA5`,
+and the colour phases at `$BBC2`. `CONTROL_LIFT` projects the camera from the
+same live position and retries if the interrupt changes it during the multiply.
+The moving raster boundary is `$CB + $32`; `$CA` remains nonzero until the
+main loop reaches the terminal camera condition and `$BB2F` clears it.
+
+`lab lift capture` sampled this real interrupt and main loop for both directions
+through Rooms 1-5 and Room 8. The scene/complete frame pairs are exported in
+`underground.json` because Room setup makes the visible scene boundary
+route-dependent: down completes on frames 336-340, up on frame 338, and the
+scene crossings range from 191-193 down and 204-209 up. These observed values
+replace the earlier inference that stage thresholds alone defined presentation
+timing.
+
+The trigger writes `CURRENT_ROOM` before downward travel begins. Consequently
+Benson and Drop already see the destination Room during the visibly outdoor
+part of descent; `PLANET_UNDERGROUND` remains the independent visible-scene
+flag until the main loop crosses over.
+
+The camera calculation must include `$A269-$A279`: a middle byte of six or
+greater subtracts seven altitude bands, including the borrow into the high
+byte. The resulting negative height is below the surface, not a large unsigned
+height above it. Colony Craft surface phases additionally apply the deck offset.
+The altitude instrument retains its pre-journey reading while the camera moves.
+
+`$BB37` selects the blank character screen on both sides of the moving raster
+boundary during the middle stages. These are opaque colour fields, so neither
+world wireframes nor the sky belong in those phases. Descending stage 13 retains
+the scene above the boundary. Descending stage 7 restores the scene below it
+through `$AE37`; ascending stage 13 instead calls `$AE76`, restoring the scene
+above a shrinking lower bar. The two field colours come from adjacent
+entries at `$BBCA-$BBCF`, rather than the outdoor Room palette.
+
 ## Lift dispatch and indoor presentation
 
 - **The lift is invoked by E.** `$B3F6` compares the keyboard result with `$0E`, the
@@ -344,6 +380,10 @@ enough to be worth chasing one at a time rather than explaining away.
   going down or `$01` going up. Confirmed Reference Build play shows that neither
   direction rejects Occupancy: a craft can descend from a surface pad and a craft
   recovered in Room 5 can leave through the lift while still occupied.
+- **Hangar 5 requires the carried Pass.** `$B430-$B43D` tests slot 46's carried
+  flag before any lift state, colour, or continuous sound is started. Failure
+  dispatches message `$39` (57), `PASS HOLDERS ONLY`; a Pass lying nearby does
+  not satisfy the predicate.
 - **The indoor screen is a decoded `$AA` bitmap fill.** `$AFC3` branches on the
   underground flag to `CLEAR_SCREEN_INDOOR` at `$B197`, which fills the bitmap with
   `$AA`. Bit 7 is drawn first, so the 320 bitmap columns alternate foreground then

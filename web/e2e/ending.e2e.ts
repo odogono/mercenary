@@ -106,7 +106,9 @@ test('E rides the Colony Craft lift down and back up through the Browser Shell',
   await expect.poll(async () => (await sessionState(page)).room).toBe(8);
 
   await page.keyboard.press('KeyE');
-  await expect.poll(async () => (await sessionState(page)).room).toBeNull();
+  await expect
+    .poll(async () => (await sessionState(page)).room, { timeout: 10_000 })
+    .toBeNull();
   await expect(
     page.locator('#panel-targ [data-field="locationLabel"]')
   ).toHaveText('08-08');
@@ -115,7 +117,9 @@ test('E rides the Colony Craft lift down and back up through the Browser Shell',
   );
 
   await page.keyboard.press('KeyE');
-  await expect.poll(async () => (await sessionState(page)).room).toBe(8);
+  await expect
+    .poll(async () => (await sessionState(page)).room, { timeout: 10_000 })
+    .toBe(8);
 });
 
 test('the console-assisted recovered route reaches and matures the Escape', async ({
@@ -185,10 +189,13 @@ test('the console-assisted recovered route reaches and matures the Escape', asyn
   // skip the recovered route's most important integration boundary.
   await page.keyboard.press('KeyE');
   await expect
-    .poll(async () => {
-      const state = await sessionState(page);
-      return { craft: state.craft, room: state.room };
-    })
+    .poll(
+      async () => {
+        const state = await sessionState(page);
+        return { craft: state.craft, room: state.room };
+      },
+      { timeout: 10_000 }
+    )
     .toEqual({ craft: 7, room: null });
 
   const message = page.locator('#panel-targ [data-field="message"]');

@@ -134,6 +134,10 @@ export class LegalRoute {
         return this.approach(leg.action, leg.slot, seconds);
       case 'command':
         applySessionTraceCommand(this.session, this.encode(leg.command));
+        if (leg.command.kind === 'rideLift') {
+          this.advance(7);
+          this.advance(STEP);
+        }
         break;
     }
     return this;

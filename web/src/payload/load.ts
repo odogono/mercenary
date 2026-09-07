@@ -30,10 +30,10 @@ export const SUPPORTED_TEXT_SCHEMA_VERSION = 1;
 export const SUPPORTED_BENSON_SCHEMA_VERSION = 1;
 export const SUPPORTED_INTERACTION_SCHEMA_VERSION = 1;
 export const SUPPORTED_FLIGHT_SCHEMA_VERSION = 3;
-export const SUPPORTED_UNDERGROUND_SCHEMA_VERSION = 2;
+export const SUPPORTED_UNDERGROUND_SCHEMA_VERSION = 3;
 export const SUPPORTED_ENDGAME_SCHEMA_VERSION = 13;
-export const SUPPORTED_SOUND_SCHEMA_VERSION = 1;
-export const SUPPORTED_OBJECT_EFFECTS_SCHEMA_VERSION = 1;
+export const SUPPORTED_SOUND_SCHEMA_VERSION = 2;
+export const SUPPORTED_OBJECT_EFFECTS_SCHEMA_VERSION = 2;
 
 const parse = (name: string, body: string): unknown => {
   try {
@@ -233,6 +233,11 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     soundDocument.craft.frequencyHighRegister !== 8 ||
     soundDocument.craft.sustainReleaseRegister !== 13 ||
     soundDocument.craft.programSelector !== 36 ||
+    soundDocument.liftJourney.dingSelector !== 0 ||
+    soundDocument.liftJourney.programSelector !== 48 ||
+    soundDocument.liftJourney.pitchHighRegister !== 8 ||
+    soundDocument.liftJourney.controlRegister !== 11 ||
+    soundDocument.liftJourney.stoppedValue !== 0 ||
     soundDocument.craft.speedHighShift !== 4 ||
     soundDocument.bensonDisplay.frequencyHighRegister !== 15 ||
     soundDocument.bensonDisplay.controlRegister !== 18 ||

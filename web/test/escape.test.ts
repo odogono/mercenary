@@ -242,6 +242,9 @@ describe('the recovered route, walked from the crash site', () => {
   test('walks to the pad, rides down, boards, rides up, and escapes', async () => {
     const route = await LegalRoute.open();
     route.session.carry(NOVADRIVE);
+    // This focused escape route starts after the Palyar reward; the Pass is
+    // required by the now-restored hangar lift predicate.
+    route.session.carry(46);
 
     // Lift site 5 serves the hangar, at cell 3:15. Walking onto its pad is
     // the whole test of the pad: the ride is refused anywhere else on the cell.

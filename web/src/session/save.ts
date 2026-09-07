@@ -12,7 +12,7 @@ import type {
 import type { Location, Residence } from '../world/index.ts';
 import type { ShipFieldPoint, ShipFieldSaveSnapshot } from './shipField.ts';
 
-export const SAVE_SCHEMA_VERSION = 10 as const;
+export const SAVE_SCHEMA_VERSION = 11 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -138,6 +138,17 @@ export interface SaveSnapshot {
     readonly loops: number;
   } | null;
   readonly game: GameSaveSnapshot;
+  readonly liftJourney: {
+    readonly direction: 'down' | 'up';
+    readonly elapsedFrames: number;
+    readonly entranceRoom: number;
+    readonly fractionalFrameRemainder: number;
+    readonly position: number;
+    readonly restingAltitude: number;
+    readonly retainedBensonColour: number | null;
+    readonly scene: 'room' | 'surface';
+    readonly stage: number;
+  } | null;
   readonly objectFlags: readonly (readonly [number, number])[];
   readonly randomState: string;
   readonly residence: readonly (readonly [number, Residence])[];
@@ -923,6 +934,7 @@ const snapshot = (value: unknown, at: string): SaveSnapshot => {
     'deliveryFrames',
     'ending',
     'game',
+    'liftJourney',
     'objectFlags',
     'randomState',
     'residence',
@@ -936,6 +948,40 @@ const snapshot = (value: unknown, at: string): SaveSnapshot => {
   if (!(deliveryFrames >= 0) || deliveryFrames >= 1) {
     fail(`${at}.deliveryFrames must be at least 0 and less than 1`);
   }
+  const rawLift =
+    out['liftJourney'] === null
+      ? null
+      : exact(out['liftJourney'], `${at}.liftJourney`, [
+          'direction',
+          'elapsedFrames',
+          'entranceRoom',
+          'fractionalFrameRemainder',
+          'position',
+          'restingAltitude',
+          'retainedBensonColour',
+          'scene',
+          'stage'
+        ]);
+  const liftRemainder =
+    rawLift === null
+      ? 0
+      : finite(
+          rawLift['fractionalFrameRemainder'],
+          `${at}.liftJourney.fractionalFrameRemainder`
+        );
+  if (!(liftRemainder >= 0) || liftRemainder >= 1) {
+    fail(
+      `${at}.liftJourney.fractionalFrameRemainder must be at least 0 and less than 1`
+    );
+  }
+  const liftDirection = rawLift?.['direction'];
+  if (rawLift !== null && liftDirection !== 'down' && liftDirection !== 'up') {
+    fail(`${at}.liftJourney.direction must be down or up`);
+  }
+  const liftScene = rawLift?.['scene'];
+  if (rawLift !== null && liftScene !== 'room' && liftScene !== 'surface') {
+    fail(`${at}.liftJourney.scene must be room or surface`);
+  }
   return {
     benson:
       out['benson'] === null ? null : benson(out['benson'], `${at}.benson`),
@@ -948,6 +994,49 @@ const snapshot = (value: unknown, at: string): SaveSnapshot => {
         ? null
         : endingPresentation(out['ending'], `${at}.ending`),
     game: game(out['game'], `${at}.game`),
+    liftJourney:
+      rawLift === null
+        ? null
+        : {
+            direction: liftDirection as 'down' | 'up',
+            elapsedFrames: nonNegativeInteger(
+              rawLift['elapsedFrames'],
+              `${at}.liftJourney.elapsedFrames`
+            ),
+            entranceRoom: integerInRange(
+              rawLift['entranceRoom'],
+              `${at}.liftJourney.entranceRoom`,
+              1,
+              191
+            ),
+            fractionalFrameRemainder: liftRemainder,
+            position: integerInRange(
+              rawLift['position'],
+              `${at}.liftJourney.position`,
+              0,
+              132
+            ),
+            restingAltitude: finite(
+              rawLift['restingAltitude'],
+              `${at}.liftJourney.restingAltitude`
+            ),
+            retainedBensonColour:
+              rawLift['retainedBensonColour'] === null
+                ? null
+                : integerInRange(
+                    rawLift['retainedBensonColour'],
+                    `${at}.liftJourney.retainedBensonColour`,
+                    0,
+                    15
+                  ),
+            scene: liftScene as 'room' | 'surface',
+            stage: integerInRange(
+              rawLift['stage'],
+              `${at}.liftJourney.stage`,
+              0,
+              14
+            )
+          },
     objectFlags: mapEntries(out['objectFlags'], `${at}.objectFlags`),
     randomState: randomState(out['randomState'], `${at}.randomState`),
     residence: residenceEntries(out['residence'], `${at}.residence`),

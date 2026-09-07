@@ -118,12 +118,17 @@ export const gameplaySessionGate = async (
         randomSeed,
         'legacyOracle'
       );
-      return new GameplaySession(
+      const session = new GameplaySession(
         sessionContent(world, bundle, flight),
         openingPlayer(),
         scripts,
         randomSeed
       );
+      // The oracle froze before Lift Journeys were recovered. Keep its
+      // instantaneous lift behavior inside the replay harness rather than in
+      // the production constructor surface.
+      Object.defineProperty(session, 'liftMode', { value: 'instantOracle' });
+      return session;
     },
     world
   };
