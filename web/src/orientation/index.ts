@@ -16,6 +16,10 @@ export interface Vector3 {
   readonly z: number;
 }
 
+/// The frozen Mac traces predate recovery of the Reference Build's heading signs.
+/// Production uses reference headings; only Replay Gates opt into the old convention.
+export type HeadingConvention = 'reference' | 'traceOracle';
+
 export interface Orientation {
   readonly x: number;
   readonly y: number;

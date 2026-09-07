@@ -55,7 +55,7 @@ const overCell = (cell: number, altitude?: number): GameplaySession => {
   };
   const session = new GameplaySession(
     content,
-    { heading: 0, pitch: 0, position, roll: 0, speed: 0, yawVelocity: 0 },
+    { heading: Math.PI, pitch: 0, position, roll: 0, speed: 0, yawVelocity: 0 },
     scripts()
   );
   session.board(1);
@@ -166,7 +166,7 @@ describe('a shot that reaches the city', () => {
       ...session.game,
       player: {
         ...session.game.player,
-        heading: Math.PI / 2,
+        heading: (3 * Math.PI) / 2,
         position: {
           ...session.game.player.position,
           x: across * CELL + 40_000,
@@ -334,7 +334,7 @@ describe('a shot that reaches the object it can start a script on', () => {
     const session = new GameplaySession(
       content,
       {
-        heading: 0,
+        heading: Math.PI,
         pitch: 0,
         position: { x: at.x, y: at.y, z: at.z - 4096 },
         roll: 0,

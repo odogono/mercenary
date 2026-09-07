@@ -28,10 +28,10 @@ const moonOnly = (direction: {
   ...state,
   moons: [
     { ...state.moons[0], direction },
-    { ...state.moons[1], direction: { x: 0, y: 0, z: -1 } }
+    { ...state.moons[1], direction: { x: 0, y: 0, z: 1 } }
   ],
   starVisibility: 0,
-  sun: { ...state.sun, direction: { x: 1, y: 0, z: 1 } }
+  sun: { ...state.sun, direction: { x: 1, y: 0, z: -1 } }
 });
 
 describe('one Sky State built into view pixels', () => {
@@ -86,16 +86,25 @@ describe('one Sky State built into view pixels', () => {
     });
   });
 
-  test('the opening view contains the outer moon and culls the eastern sun', () => {
+  test('heading zero contains the sun and inner moon and culls the outer moon', () => {
     const frame = buildSkyFrame(state, pose, size);
 
     expect(frame.clear).toEqual(state.clear);
-    expect(frame.batches.map(batch => batch.kind)).toEqual(['outerMoon']);
+    expect(frame.batches.map(batch => batch.kind)).toEqual([
+      'sun',
+      'innerMoon'
+    ]);
     expect(frame.batches[0]?.vertices.length).toBe(34 * 5);
   });
 
+  test('the opening heading contains the outer moon and culls the sun', () => {
+    const frame = buildSkyFrame(state, { ...pose, heading: Math.PI }, size);
+
+    expect(frame.batches.map(batch => batch.kind)).toEqual(['outerMoon']);
+  });
+
   test('puts a moon local +x rim toward the sun on screen', () => {
-    const frame = buildSkyFrame(moonOnly({ x: 0, y: 0, z: 1 }), pose, size);
+    const frame = buildSkyFrame(moonOnly({ x: 0, y: 0, z: -1 }), pose, size);
     const batch = frame.batches.find(value => value.kind === 'innerMoon')!;
     const centreX = batch.vertices[0]!;
     const positiveRimX = batch.vertices[5]!;
@@ -105,10 +114,10 @@ describe('one Sky State built into view pixels', () => {
   });
 
   test('mirrors celestial geometry through the unchanged Camera', () => {
-    const normal = buildSkyFrame(moonOnly({ x: 0.25, y: 0, z: 1 }), pose, size)
+    const normal = buildSkyFrame(moonOnly({ x: 0.25, y: 0, z: -1 }), pose, size)
       .batches[0]!;
     const mirrored = buildSkyFrame(
-      moonOnly({ x: 0.25, y: 0, z: 1 }),
+      moonOnly({ x: 0.25, y: 0, z: -1 }),
       { ...pose, mirrored: true },
       size
     ).batches[0]!;
@@ -121,12 +130,12 @@ describe('one Sky State built into view pixels', () => {
 
   test('rolls celestial geometry about the viewport centre', () => {
     const normal = buildSkyFrame(
-      moonOnly({ x: 0.25, y: 0.2, z: 1 }),
+      moonOnly({ x: 0.25, y: 0.2, z: -1 }),
       pose,
       size
     ).batches[0]!;
     const rolled = buildSkyFrame(
-      moonOnly({ x: 0.25, y: 0.2, z: 1 }),
+      moonOnly({ x: 0.25, y: 0.2, z: -1 }),
       { ...pose, roll: Math.PI / 2 },
       size
     ).batches[0]!;
@@ -139,12 +148,12 @@ describe('one Sky State built into view pixels', () => {
 
   test('inherits wrapped pitch from the unchanged Camera', () => {
     const normal = buildSkyFrame(
-      moonOnly({ x: 0.25, y: 0.2, z: 1 }),
+      moonOnly({ x: 0.25, y: 0.2, z: -1 }),
       pose,
       size
     );
     const wrapped = buildSkyFrame(
-      moonOnly({ x: 0.25, y: 0.2, z: 1 }),
+      moonOnly({ x: 0.25, y: 0.2, z: -1 }),
       { ...pose, pitch: 2 * Math.PI },
       size
     );
@@ -153,9 +162,9 @@ describe('one Sky State built into view pixels', () => {
   });
 
   test('inherits over-the-top pitch inversion from the unchanged Camera', () => {
-    const behind = moonOnly({ x: 0.25, y: 0.2, z: -1 });
+    const behind = moonOnly({ x: 0.25, y: 0.2, z: 1 });
     const frame = buildSkyFrame(
-      { ...behind, sun: { ...behind.sun, direction: { x: 0, y: 0, z: -1 } } },
+      { ...behind, sun: { ...behind.sun, direction: { x: 0, y: 0, z: 1 } } },
       { ...pose, pitch: Math.PI },
       size
     );
@@ -168,9 +177,9 @@ describe('one Sky State built into view pixels', () => {
   });
 
   test('culls a disc wholly behind the camera', () => {
-    const behind = moonOnly({ x: 0, y: 0, z: -1 });
+    const behind = moonOnly({ x: 0, y: 0, z: 1 });
     const frame = buildSkyFrame(
-      { ...behind, sun: { ...behind.sun, direction: { x: 0, y: 0, z: -1 } } },
+      { ...behind, sun: { ...behind.sun, direction: { x: 0, y: 0, z: 1 } } },
       pose,
       size
     );
@@ -197,7 +206,7 @@ describe('one Sky State built into view pixels', () => {
   });
 
   test('orders every visible sky batch from stars through the inner moon', () => {
-    const forward = { x: 0, y: 0, z: 1 };
+    const forward = { x: 0, y: 0, z: -1 };
     const frame = buildSkyFrame(
       {
         ...state,

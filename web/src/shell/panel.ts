@@ -43,9 +43,12 @@ const digits = (value: number, width: number): string =>
 
 const degrees = (radians: number): number => (radians * 180) / Math.PI;
 
-/// Heading as the compass reads it: degrees clockwise, wrapped into one turn.
+/// Keep the Browser Shell's displayed bearings while the simulation uses raw
+/// Reference Build yaw. The original opening yaw is a half turn; it remains
+/// displayed as zero, as do schema-11 Saves after their half-turn migration.
+/// This full-turn numbering is presentation, not the C64's coloured half-turn tape.
 export const compassDegrees = (heading: number): number => {
-  const wrapped = degrees(heading) % 360;
+  const wrapped = (degrees(heading) + 180) % 360;
   return wrapped < 0 ? wrapped + 360 : wrapped;
 };
 

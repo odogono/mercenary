@@ -100,11 +100,10 @@ export const gameplaySessionGate = async (
   }
   const program = BensonProgram.fromDocument(bundle.benson);
   const text = new TextTable(bundle.text);
-  const flight = flightModel(
-    settings.flight,
-    bundle.flight,
-    world.groundExtent
-  );
+  const flight = {
+    ...flightModel(settings.flight, bundle.flight, world.groundExtent),
+    headingConvention: 'traceOracle' as const
+  };
   const context: GameplaySessionGateContext = {
     createSession: options => {
       const tunables = bensonTunables(settings, program.framesPerTick);
@@ -120,7 +119,7 @@ export const gameplaySessionGate = async (
       );
       const session = new GameplaySession(
         sessionContent(world, bundle, flight),
-        openingPlayer(),
+        { ...openingPlayer(), heading: 0 },
         scripts,
         randomSeed
       );

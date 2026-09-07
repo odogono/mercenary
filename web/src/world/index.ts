@@ -4,6 +4,7 @@ import {
   IDENTITY,
   apply,
   fromBytes,
+  type HeadingConvention,
   type Orientation,
   type Vector3
 } from '../orientation/index.ts';
@@ -150,11 +151,17 @@ export interface ObjectPlacement {
 }
 
 /// A craft's Mover heading, decoded from the orientation bytes its payload
-/// placement carries. The model's forward axis points along decreasing Z, so
-/// it is half a turn from the Mover's heading-zero direction.
-export const craftHeading = (craft: ObjectPlacement): number => {
-  const turn = ((craft.orientation.y & 0xff) / 256) * 2 * Math.PI;
-  return (turn + Math.PI) % (2 * Math.PI);
+/// placement carries. Model-local -Z and heading zero now name the same forward
+/// direction. Object orientation uses six-bit turns, as `apply` does.
+export const craftHeading = (
+  craft: ObjectPlacement,
+  convention: HeadingConvention = 'reference'
+): number => {
+  if (convention === 'traceOracle') {
+    const turn = ((craft.orientation.y & 0xff) / 256) * 2 * Math.PI;
+    return (turn + Math.PI) % (2 * Math.PI);
+  }
+  return ((craft.orientation.y & 0x3f) / 64) * 2 * Math.PI;
 };
 
 /// The object's own line segments, for when it is inside the detail cube.
@@ -233,8 +240,8 @@ export const movedTo = (
 
 /// Turn an already placed craft from its payload heading to a live heading.
 ///
-/// A model whose orientation byte is zero faces decreasing Z, while the
-/// Mover's matching heading is pi. Rotate about the placement origin so a
+/// A model whose orientation byte is zero faces decreasing Z at heading zero.
+/// Rotate about the placement origin so a
 /// parked craft retains the direction in which the player landed it.
 const turnedToHeading = (
   object: ObjectPlacement,

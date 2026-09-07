@@ -53,7 +53,13 @@ try {
   const trace = parseTrace(traceText, 'session', TRACE_ID);
   const expected = foldStates(trace);
   const settings = requiredSettings(settingsText);
-  const initial = createWalkabout(bundle, settings, undefined, 'legacyOracle');
+  const initial = createWalkabout(
+    bundle,
+    settings,
+    undefined,
+    'legacyOracle',
+    'traceOracle'
+  );
   let session = initial.session;
   enableInstantLiftOracle(session);
   const legacyRoom255Slots = traceOracleRoom255Slots(session.content.objects);
@@ -82,7 +88,13 @@ try {
       snapshot: before
     });
     slots.write(slot, encoded);
-    session = createWalkabout(bundle, settings, before, 'legacyOracle').session;
+    session = createWalkabout(
+      bundle,
+      settings,
+      before,
+      'legacyOracle',
+      'traceOracle'
+    ).session;
     enableInstantLiftOracle(session);
     const restored = encodeSave({
       environment,

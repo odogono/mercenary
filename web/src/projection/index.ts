@@ -1,5 +1,5 @@
 import { atan, cos, sin, tan, toFloat32 } from '../math/index.ts';
-import type { Vector3 } from '../orientation/index.ts';
+import type { HeadingConvention, Vector3 } from '../orientation/index.ts';
 import {
   Ink,
   SURFACE,
@@ -211,6 +211,7 @@ export const ORACLE_FAR_PLANE = 320_000;
 export interface CameraFields {
   readonly farPlane?: number;
   readonly heading: number;
+  readonly headingConvention?: HeadingConvention;
   /// Whether the view is mirrored left for right. One underground Room turns this on.
   readonly mirrored?: boolean;
   readonly nearPlane?: number;
@@ -248,9 +249,11 @@ export class Camera {
   private readonly cosPitch: number;
   private readonly sinRoll: number;
   private readonly cosRoll: number;
+  private readonly forwardSign: number;
 
   constructor(fields: CameraFields) {
     this.position = fields.position;
+    this.forwardSign = fields.headingConvention === 'traceOracle' ? 1 : -1;
     this.heading = fields.heading;
     this.pitch = fields.pitch;
     this.roll = fields.roll ?? 0;
@@ -286,10 +289,14 @@ export class Camera {
     const relativeX = world.x - this.position.x;
     const relativeY = world.y - this.position.y;
     const relativeZ = world.z - this.position.z;
-    // Yaw about the vertical axis, with heading measured clockwise from +Z.
+    // Reference heading zero faces -Z; increasing heading turns toward -X.
+    // Right remains +X at zero. Negating both right and forward would rotate
+    // the view but retain the incorrect handedness of the frozen Mac camera.
     const yawed = relativeX * this.cosHeading - relativeZ * this.sinHeading;
     const x = this.mirrored ? -yawed : yawed;
-    const forward = relativeX * this.sinHeading + relativeZ * this.cosHeading;
+    const forward =
+      (relativeX * this.sinHeading + relativeZ * this.cosHeading) *
+      this.forwardSign;
     const pitched = relativeY * this.cosPitch - forward * this.sinPitch;
     const z = relativeY * this.sinPitch + forward * this.cosPitch;
     if (this.roll === 0) {

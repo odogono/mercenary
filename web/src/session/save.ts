@@ -12,7 +12,7 @@ import type {
 import type { Location, Residence } from '../world/index.ts';
 import type { ShipFieldPoint, ShipFieldSaveSnapshot } from './shipField.ts';
 
-export const SAVE_SCHEMA_VERSION = 11 as const;
+export const SAVE_SCHEMA_VERSION = 12 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -1198,6 +1198,39 @@ export const encodeSave = (value: SaveEnvelope): string => {
   return canonical(checked);
 };
 
+const migratedHeading = (angle: number): number => {
+  const turn = 2 * Math.PI;
+  return ((((angle % turn) + Math.PI) % turn) + turn) % turn;
+};
+
+/// Schema 11 used the opposite horizontal forward vector. Convert only
+/// stored attitudes; positions and in-flight projectile velocities are world-space.
+const migrateHeadingConvention = (
+  value: SaveSnapshot,
+  schemaVersion: number
+): SaveSnapshot => {
+  if (schemaVersion !== 11) {
+    return value;
+  }
+  return {
+    ...value,
+    game: {
+      ...value.game,
+      player: {
+        ...value.game.player,
+        heading: migratedHeading(value.game.player.heading),
+        yawVelocity: -value.game.player.yawVelocity
+      }
+    },
+    residence: value.residence.map(([slot, residence]) => [
+      slot,
+      'heading' in residence && residence.heading !== undefined
+        ? { ...residence, heading: migratedHeading(residence.heading) }
+        : residence
+    ])
+  };
+};
+
 const decodeEnvelope = (text: string): SaveEnvelope => {
   if (text.length > SAVE_JSON_CODE_UNIT_LIMIT) {
     return fail('JSON exceeds the Save size limit');
@@ -1219,7 +1252,7 @@ const decodeEnvelope = (text: string): SaveEnvelope => {
     'snapshot'
   ]);
   const schemaVersion = integer(out['schemaVersion'], '$.schemaVersion');
-  if (schemaVersion !== SAVE_SCHEMA_VERSION) {
+  if (schemaVersion !== 11 && schemaVersion !== SAVE_SCHEMA_VERSION) {
     return fail(`unsupported Save schemaVersion ${schemaVersion}`);
   }
   const savedAt = string(out['savedAt'], '$.savedAt');
@@ -1237,7 +1270,10 @@ const decodeEnvelope = (text: string): SaveEnvelope => {
     location: location(out['location'], '$.location'),
     savedAt,
     schemaVersion: SAVE_SCHEMA_VERSION,
-    snapshot: snapshot(out['snapshot'], '$.snapshot')
+    snapshot: migrateHeadingConvention(
+      snapshot(out['snapshot'], '$.snapshot'),
+      schemaVersion
+    )
   };
 };
 

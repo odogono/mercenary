@@ -165,3 +165,12 @@ sixteen times finer, and the visible consequence was the rotating inverted pyram
 at cell 8:8: four times too narrow in X and Z while its independently stored Y byte
 kept its correct ×256 units, so it drew as a tall spike rather than a squat
 pyramid. Y was never wrong; the axes either side of it were.
+
+## Corrected: camera and movement handedness
+
+The AIRPORT sign exposed a shared heading-sign error in the browser and frozen
+Mac implementation. The Reference Build's full matrix at level pitch, confirmed
+against its separate walking projection, faces −Z at raw heading zero with +X
+on the right. The browser had kept that right vector while facing +Z. See
+[coordinate handedness](coordinate-handedness.md) for the executable evidence,
+cardinal tests, correct opening attitude, and Atari ST compass comparison limits.

@@ -28,7 +28,8 @@ test('the shared renderer draws surface, distant and indoor wireframes with inde
               ...session.snapshot,
               player: {
                 ...session.snapshot.player,
-                heading: 0,
+                // These fixtures look into the city along increasing world Z.
+                heading: Math.PI,
                 pitch: -0.3,
                 position:
                   scene === 'structure'

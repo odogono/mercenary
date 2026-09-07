@@ -119,7 +119,7 @@ const settled = (angle: number): number => (angle === 0 ? 0 : angle);
 /// all the way through the space segment, and starts moving when the view becomes Targ's.
 export const arrivalCruisePose = (altitude: number): ArrivalCameraPose => ({
   altitude,
-  heading: 0,
+  heading: Math.PI,
   pitch: 0,
   roll: 0
 });
@@ -139,7 +139,7 @@ export const arrivalPose = (
   const tumble = ARRIVAL_TUNING.rollAmplitude * (1 - remaining) * steep;
   return {
     altitude,
-    heading: 0,
+    heading: Math.PI,
     pitch: settled(ARRIVAL_TUNING.plungePitch * steep),
     roll: settled(
       tumble *
