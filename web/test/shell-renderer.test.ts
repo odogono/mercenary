@@ -532,6 +532,80 @@ describe('a Session Snapshot planned for WebGL2', () => {
   });
 });
 
+test('a Lift Journey carries its recovered moving split and line colour into the frame plan', () => {
+  const snapshot = session().snapshot;
+  const frame = planFrame(
+    world,
+    {
+      ...snapshot,
+      liftJourney: {
+        destination: { id: 1, kind: 'room' },
+        direction: 'down',
+        lineColour: 6,
+        pitchHighByte: 5,
+        position: 80,
+        scene: 'surface',
+        screenSplit: 130,
+        stage: 10
+      }
+    },
+    size
+  );
+
+  expect(frame.liftWipe).toEqual({ lineColour: c64Colour(6)!, split: 130 });
+  expect(frame.batches.every(batch => batch.mode === 'triangles')).toBe(true);
+  expect(frame.lines).toBe(0);
+  expect(frame.points).toBe(0);
+  const bar = frame.batches.find(
+    batch => batch.mode === 'triangles' && batch.colour === c64Colour(6)
+  );
+  expect(bar).toBeDefined();
+  const xs = Array.from(bar!.vertices).filter((_, index) => index % 2 === 0);
+  const ys = Array.from(bar!.vertices).filter((_, index) => index % 2 === 1);
+  const scale = viewportScale(size);
+  const centre = viewportCentre(size);
+  expect(new Set(xs)).toEqual(new Set([0, size.width]));
+  expect(new Set(ys)).toEqual(
+    new Set([
+      centre.y - (ReferenceViewport.height * scale) / 2 + (130 - 50) * scale,
+      size.height
+    ])
+  );
+});
+
+test('the final ascent bar shrinks downward to reveal the surface above it', () => {
+  const snapshot = session().snapshot;
+  for (const position of [0, 66, 131]) {
+    const frame = planFrame(
+      world,
+      {
+        ...snapshot,
+        liftJourney: {
+          destination: { kind: 'surface' },
+          direction: 'up',
+          lineColour: 0,
+          pitchHighByte: 2,
+          position,
+          scene: 'surface',
+          screenSplit: position + 50,
+          stage: 13,
+          upperColour: 0
+        }
+      },
+      size
+    );
+    const bar = frame.batches.at(-1)!;
+    const ys = Array.from(bar.vertices).filter((_, index) => index % 2 === 1);
+    const boundary =
+      viewportCentre(size).y -
+      (ReferenceViewport.height * viewportScale(size)) / 2 +
+      position * viewportScale(size);
+    expect(bar.colour).toEqual(c64Colour(0)!);
+    expect(Math.min(...ys)).toBe(boundary);
+    expect(Math.max(...ys)).toBe(size.height);
+  }
+});
+
 describe('a Session Snapshot submitted to WebGL2', () => {
   test('submits fixed-screen Sights after every scene batch', () => {
     const gameplay = session();

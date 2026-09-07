@@ -37,6 +37,13 @@ const surface = document.getElementById('trace-surface')!;
 const canvas = document.getElementById('frame') as HTMLCanvasElement;
 const status = document.getElementById('status')!;
 
+// The trace predates recovered Lift Journeys. Its compatibility mode belongs
+// to this frozen replay fixture and is deliberately independent of Benson's
+// legacy message timing.
+const enableInstantLiftOracle = (session: object): void => {
+  Object.defineProperty(session, 'liftMode', { value: 'instantOracle' });
+};
+
 try {
   const [bundle, settingsText, traceText] = await Promise.all([
     load(fetchReader(new URL('/payload/', location.href).href)),
@@ -48,6 +55,7 @@ try {
   const settings = requiredSettings(settingsText);
   const initial = createWalkabout(bundle, settings, undefined, 'legacyOracle');
   let session = initial.session;
+  enableInstantLiftOracle(session);
   const legacyRoom255Slots = traceOracleRoom255Slots(session.content.objects);
   const { world } = initial;
   const environment = saveEnvironment(bundle, settings);
@@ -75,6 +83,7 @@ try {
     });
     slots.write(slot, encoded);
     session = createWalkabout(bundle, settings, before, 'legacyOracle').session;
+    enableInstantLiftOracle(session);
     const restored = encodeSave({
       environment,
       location: session.location,

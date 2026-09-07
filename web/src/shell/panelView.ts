@@ -297,6 +297,12 @@ export const installPanel = (
         const name = element.dataset['field'] as keyof PanelViewModel;
         const value = String(model[name] ?? '');
         writeField(element, name, value);
+        if (name === 'message') {
+          element.dataset['bensonColour'] =
+            model.messageColour === undefined
+              ? ''
+              : String(model.messageColour);
+        }
       }
       for (const element of elements.lamps) {
         const name = element.dataset['lamp'] as keyof PanelViewModel;

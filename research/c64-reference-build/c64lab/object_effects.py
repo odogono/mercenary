@@ -14,7 +14,7 @@ from typing import Any
 
 from .core import LabError, require as _require
 
-OBJECT_EFFECTS_SCHEMA_VERSION = 1
+OBJECT_EFFECTS_SCHEMA_VERSION = 2
 
 _OBJECT_FLAGS = 0x29C0
 _VIC_LEFT_BORDER = 24
@@ -238,11 +238,35 @@ def decode_object_effects(ram: bytes) -> dict[str, Any]:
     room_colour = ram[0x91DE]
     _require(surface_colour <= 15 and room_colour <= 15, "Sights colour is not a C64 palette index")
 
+    detector = ram[0xB53D:0xB56D]
+    _require(
+        detector == bytes.fromhex(
+            "a5caf00160adda29101ca5cdd018a5b7f014a577d010a5f20a0a300a9004"
+            "a906d006a905d002a902cdd3b4f00320c7b4"
+        ),
+        "Reference Build Metal Detector routine changed",
+    )
+    detector_slot = (ram[0xB543] | (ram[0xB544] << 8)) - _OBJECT_FLAGS
+    _require(0 <= detector_slot < 64, "Reference Build Metal Detector slot is out of range")
+
     return {
         "schemaVersion": OBJECT_EFFECTS_SCHEMA_VERSION,
         "counts": {
-            "effects": 1,
+            "effects": 2,
             "sightsPixels": sum(row.bit_count() for row in rows),
+        },
+        "metalDetector": {
+            "slot": detector_slot,
+            # The routine accepts only CUR_Y_HSB == 0: all non-negative
+            # 24-bit altitudes below this exclusive high-byte limit.
+            "altitudeHighByteLimit": 1,
+            "neutralMask": 0x20,
+            "mechanoidMask": 0x40,
+            "colours": {
+                "neutral": ram[0xB564],
+                "palyar": ram[0xB560],
+                "mechanoid": ram[0xB55C],
+            },
         },
         "sights": {
             "slot": slot,

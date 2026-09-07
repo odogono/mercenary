@@ -493,6 +493,10 @@ export interface FramePlan {
   readonly batches: readonly DrawBatch[];
   readonly clear: RGB8;
   readonly glowDistance?: GlowDistanceSettings;
+  readonly liftWipe?: {
+    readonly lineColour: RGB8;
+    readonly split: number;
+  };
   readonly lines: number;
   /// Fixed Reference Viewport bitmaps composited after the complete Game Surface.
   readonly overlays: readonly BitmapOverlay[];
@@ -593,6 +597,35 @@ const bitmapVertices = (
   return new Float32Array(vertices);
 };
 
+const liftBarVertices = (
+  split: number,
+  size: Size,
+  upper = false
+): Float32Array => {
+  const scale = viewportScale(size);
+  const centre = viewportCentre(size);
+  const left = 0;
+  const right = size.width;
+  const top = centre.y - (ReferenceViewport.height * scale) / 2;
+  const boundary = top + (split - 50) * scale;
+  const y = upper ? 0 : boundary;
+  const bottom = upper ? boundary : size.height;
+  return new Float32Array([
+    left,
+    y,
+    right,
+    y,
+    right,
+    bottom,
+    left,
+    y,
+    right,
+    bottom,
+    left,
+    bottom
+  ]);
+};
+
 const objectOverlays = (
   world: World,
   snapshot: SessionSnapshot,
@@ -671,6 +704,42 @@ export const planFrame = (
     };
   }
 
+  const journey = snapshot.liftJourney;
+  const liftWipe =
+    journey?.screenSplit === undefined
+      ? undefined
+      : {
+          lineColour: c64Colour(journey.lineColour) ?? ScenePalette.whiteInk,
+          split: journey.screenSplit
+        };
+  // $BB37 selects the blank character screen on both sides of the raster
+  // boundary. Stage 7 descending restores the bitmap below the boundary
+  // through $AE37; stage 13 ascending selects $AE76 and restores it above.
+  const solidLift =
+    journey !== undefined &&
+    journey.stage >= 7 &&
+    journey.stage <= 12 &&
+    !(journey.direction === 'down' && journey.stage === 7);
+  if (solidLift) {
+    const batches: DrawBatch[] = [];
+    if (liftWipe !== undefined) {
+      addBatch(
+        batches,
+        'triangles',
+        liftBarVertices(liftWipe.split, size),
+        liftWipe.lineColour
+      );
+    }
+    return {
+      batches,
+      clear: c64Colour(journey.upperColour ?? 0) ?? ScenePalette.blackInk,
+      ...(liftWipe === undefined ? {} : { liftWipe }),
+      lines: 0,
+      overlays: [],
+      points: 0,
+      size
+    };
+  }
   const indoor = snapshot.indoor;
   if (indoor?.dark === true) {
     return {
@@ -766,6 +835,17 @@ export const planFrame = (
       ? Math.max(1, Math.round(viewportScale(size)))
       : 1
   );
+  if (liftWipe !== undefined && journey !== undefined) {
+    const upper = journey.direction === 'down' && journey.stage === 7;
+    addBatch(
+      batches,
+      'triangles',
+      liftBarVertices(liftWipe.split, size, upper),
+      upper
+        ? (c64Colour(journey.upperColour ?? 0) ?? ScenePalette.blackInk)
+        : liftWipe.lineColour
+    );
+  }
   const sky =
     orrery === undefined || snapshot.location.kind !== 'surface'
       ? undefined
@@ -790,6 +870,7 @@ export const planFrame = (
           : ScenePalette.blackInk),
     glowDistance: presentation.glowDistance ?? DEFAULT_GLOW_DISTANCE,
     lines: projected.distant.length + projected.lines.length,
+    ...(liftWipe === undefined ? {} : { liftWipe }),
     overlays,
     points: projected.points.length,
     size,

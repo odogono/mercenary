@@ -52,6 +52,7 @@ import type {
   EndgameShipDelivery,
   EndgameSiteDestruction,
   EndgameSurfaceFlyby,
+  ObjectEffectsDocument,
   SpecialSetup,
   UndergroundDocument
 } from '../payload/documents.ts';
@@ -72,6 +73,12 @@ import {
 } from '../world/index.ts';
 import { wrapSurfaceAxis } from '../world/surfaceCoordinates.ts';
 import { endingStateOf, type EndingState } from './ending.ts';
+import {
+  advanceLiftJourney,
+  liftCameraAltitude,
+  startLiftJourney,
+  type LiftJourneyState
+} from './liftJourney.ts';
 import { observationsOf, type SemanticObservations } from './observations.ts';
 import {
   decodeRandomState,
@@ -197,6 +204,7 @@ export interface EscapePresentation {
 }
 
 export interface SessionSnapshot {
+  readonly bensonColour?: number;
   readonly bensonMessage: BensonMessagePresentation | undefined;
   readonly carriedStack: readonly number[];
   /// The Mover's own bookkeeping for this moment.
@@ -226,6 +234,18 @@ export interface SessionSnapshot {
   readonly escapePresentation?: EscapePresentation;
   readonly indoor: IndoorScene | undefined;
   readonly isScriptRunning: boolean;
+  readonly liftJourney?: {
+    readonly destination: Location;
+    readonly direction: 'down' | 'up';
+    readonly instrumentAltitude?: number;
+    readonly lineColour: number;
+    readonly pitchHighByte: number;
+    readonly position: number;
+    readonly scene: 'room' | 'surface';
+    readonly screenSplit: number | undefined;
+    readonly stage: number;
+    readonly upperColour?: number;
+  };
   readonly location: Location;
   readonly mode: GameState['mode'];
   readonly objectFlags: ReadonlyMap<number, number>;
@@ -266,6 +286,7 @@ export interface SessionContent {
   /// How a hostile craft closes, shoots, and what its hit costs.
   readonly hostile?: EndgameHostileCraft;
   readonly interaction: Interaction | undefined;
+  readonly metalDetector?: ObjectEffectsDocument['metalDetector'];
   /// What a shot does when it reaches one of the two objects it can hit.
   readonly objectHits?: EndgameObjectHits;
   readonly objects: readonly ObjectPlacement[];
@@ -304,6 +325,7 @@ export const sessionContent = (
           bundle.interaction,
           bundle.endgame.controls.takeOverrides
         ),
+  metalDetector: bundle.objectEffects.metalDetector,
   objectHits: bundle.endgame.combat.objectHits,
   objects: world.objects,
   powerampSlot: bundle.endgame.controls.powerampSlot,
@@ -465,6 +487,59 @@ const validateSnapshotReferences = (
       `Save Snapshot refers to missing Room ${snapshot.game.room}`
     );
   }
+  if (snapshot.liftJourney !== null) {
+    const journey = snapshot.liftJourney;
+    const ordinary = content.underground?.entrances.some(
+      entrance => entrance.room === journey.entranceRoom
+    );
+    const colony =
+      journey.entranceRoom === COLONY_CRAFT_LIFT_ROOM &&
+      content.endgame?.colonyCraft !== undefined;
+    if (ordinary !== true && !colony) {
+      throw new Error(
+        `Save Snapshot Lift Journey refers to missing entrance ${journey.entranceRoom}`
+      );
+    }
+    const timing = content.underground?.lift.timing.find(
+      item => item.room === journey.entranceRoom
+    )?.[journey.direction];
+    if (timing === undefined) {
+      throw new Error(
+        `Save Snapshot Lift Journey has no timing for entrance ${journey.entranceRoom}`
+      );
+    }
+    if (journey.elapsedFrames >= timing.stopAt) {
+      throw new Error('Save Snapshot Lift Journey has already completed');
+    }
+    const expectedScene =
+      journey.elapsedFrames >= timing.sceneAt
+        ? journey.direction === 'down'
+          ? 'room'
+          : 'surface'
+        : journey.direction === 'down'
+          ? 'surface'
+          : 'room';
+    if (journey.scene !== expectedScene) {
+      throw new Error(
+        'Save Snapshot Lift Journey scene disagrees with its captured phase'
+      );
+    }
+    const visibleRoom = journey.scene === 'room' ? journey.entranceRoom : null;
+    if (snapshot.game.room !== visibleRoom) {
+      throw new Error(
+        'Save Snapshot Lift Journey visible scene disagrees with Room'
+      );
+    }
+    if (
+      (journey.direction === 'down' &&
+        (journey.stage < 0 || journey.stage > 13)) ||
+      (journey.direction === 'up' && (journey.stage < 0 || journey.stage >= 14))
+    ) {
+      throw new Error(
+        'Save Snapshot Lift Journey stage is outside its direction'
+      );
+    }
+  }
   const objectSlots = new Set(content.objects.map(object => object.slot));
   if (snapshot.game.craft !== null && !objectSlots.has(snapshot.game.craft)) {
     throw new Error(
@@ -555,6 +630,9 @@ export class GameplaySession {
 
   /// The fraction of a frame left over from the last ship-delivery step.
   private deliveryFrames = 0;
+  private readonly liftMode: 'instantOracle' | 'reference' = 'reference';
+  private liftJourney: LiftJourneyState | undefined;
+  private liftBensonColour: number | undefined;
   private residence = new Map<number, Residence>();
   private objectFlags = new Map<number, number>();
   private carriedStack: number[] = [];
@@ -693,6 +771,13 @@ export class GameplaySession {
         room: this.game.room ?? null,
         touchdown: this.game.touchdown ?? null
       },
+      liftJourney:
+        this.liftJourney === undefined
+          ? null
+          : {
+              ...this.liftJourney,
+              retainedBensonColour: this.liftBensonColour ?? null
+            },
       objectFlags: [...this.objectFlags.entries()].sort(([a], [b]) => a - b),
       randomState: encodeRandomState(this.ownRandomState),
       residence: [...this.residence.entries()].sort(([a], [b]) => a - b),
@@ -736,6 +821,22 @@ export class GameplaySession {
     };
     session.carriedStack = [...snapshot.carriedStack];
     session.deliveryFrames = snapshot.deliveryFrames;
+    session.liftJourney =
+      snapshot.liftJourney === null
+        ? undefined
+        : {
+            direction: snapshot.liftJourney.direction,
+            elapsedFrames: snapshot.liftJourney.elapsedFrames,
+            entranceRoom: snapshot.liftJourney.entranceRoom,
+            fractionalFrameRemainder:
+              snapshot.liftJourney.fractionalFrameRemainder,
+            position: snapshot.liftJourney.position,
+            restingAltitude: snapshot.liftJourney.restingAltitude,
+            scene: snapshot.liftJourney.scene,
+            stage: snapshot.liftJourney.stage
+          };
+    session.liftBensonColour =
+      snapshot.liftJourney?.retainedBensonColour ?? undefined;
     // A terminal presentation is restored where it was rather than begun again:
     // the field's own generator state is what makes the continuation exact.
     if (snapshot.ending !== null && content.endingField !== undefined) {
@@ -786,6 +887,99 @@ export class GameplaySession {
     return locationFromHost(this.game.room ?? SURFACE_ROOM);
   }
 
+  /// The Room byte used by Benson and object Drop can lead the visible scene
+  /// during descent, just as CURRENT_ROOM leads PLANET_UNDERGROUND in the
+  /// Reference Build.
+  private get semanticLocation(): Location {
+    if (this.liftJourney?.direction === 'down') {
+      return { id: this.liftJourney.entranceRoom, kind: 'room' };
+    }
+    return this.location;
+  }
+
+  private applyLiftScene(
+    before: LiftJourneyState,
+    after: LiftJourneyState
+  ): void {
+    if (before.scene === after.scene) {
+      return;
+    }
+    const underground = this.content.underground;
+    const flight = this.content.flight;
+    if (underground === undefined || flight === undefined) {
+      return;
+    }
+    const ordinary = underground.entrances.find(
+      item => item.room === after.entranceRoom
+    );
+    const colonyCraft = this.content.endgame?.colonyCraft;
+    const entrance =
+      ordinary ??
+      (after.entranceRoom === COLONY_CRAFT_LIFT_ROOM &&
+      colonyCraft !== undefined
+        ? {
+            cell: colonyCraft.cell,
+            room: COLONY_CRAFT_LIFT_ROOM,
+            site: COLONY_CRAFT_LIFT_ROOM
+          }
+        : undefined);
+    if (entrance === undefined) {
+      throw new Error(
+        `Lift Journey refers to missing Room ${after.entranceRoom}`
+      );
+    }
+    this.game =
+      after.scene === 'room'
+        ? enter(this.game, entrance, underground.lift, flight)
+        : surface(
+            this.game,
+            entrance,
+            underground.lift,
+            this.content.cellSize,
+            colonyCraft
+          );
+  }
+
+  private get bensonColour(): number | undefined {
+    const detector = this.content.metalDetector;
+    if (detector === undefined) {
+      return undefined;
+    }
+    if (this.liftJourney !== undefined) {
+      return this.liftBensonColour;
+    }
+    if (!this.carriedStack.includes(detector.slot)) {
+      return undefined;
+    }
+    if (
+      this.location.kind !== 'surface' ||
+      Math.floor(this.game.player.position.y / 0x1_00_00) >=
+        detector.altitudeHighByteLimit
+    ) {
+      return detector.colours.neutral;
+    }
+    const across = Math.floor(
+      this.game.player.position.x / this.content.cellSize
+    );
+    const depth = Math.floor(
+      this.game.player.position.z / this.content.cellSize
+    );
+    if (across < 0 || across >= 16 || depth < 0 || depth >= 16) {
+      return detector.colours.neutral;
+    }
+    const cell = depth * 16 + across;
+    if (cell === 0) {
+      return detector.colours.neutral;
+    }
+    const flags = this.sites?.bytes[cell];
+    if (flags === undefined || (flags & detector.neutralMask) !== 0) {
+      return detector.colours.neutral;
+    }
+    return (flags & detector.mechanoidMask) !== 0
+      ? detector.colours.mechanoid
+      : detector.colours.palyar;
+  }
+
   get occupancy(): Occupancy {
     return occupancyFromHost(this.game.craft ?? BensonHostState.onFoot);
   }
@@ -816,7 +1010,7 @@ export class GameplaySession {
     }
     return host.with({
       boardedCraft: occupancyHostValue(this.occupancy),
-      currentRoom: locationHostValue(this.location),
+      currentRoom: locationHostValue(this.semanticLocation),
       destroyedBlocks: new Set(this.sites?.destroyedCells() ?? []),
       inventory: new Set(this.carriedStack),
       objectFlags: new Map(this.objectFlags),
@@ -904,7 +1098,12 @@ export class GameplaySession {
     const nextGame = {
       ...this.game,
       craft: occupancy.kind === 'onFoot' ? undefined : occupancy.slot,
-      room: nextLocation.kind === 'surface' ? undefined : nextLocation.id
+      room:
+        this.liftJourney === undefined
+          ? nextLocation.kind === 'surface'
+            ? undefined
+            : nextLocation.id
+          : this.game.room
     };
     this.game = nextGame;
     this.residence = nextResidence;
@@ -1109,15 +1308,18 @@ export class GameplaySession {
     if (flight === undefined || underground === undefined) {
       return undefined;
     }
+    if (this.liftJourney !== undefined) {
+      return undefined;
+    }
     const direction = this.location.kind === 'room' ? 'up' : 'down';
-    const previousRoom = locationHostValue(this.location);
+    let entrance: UndergroundDocument['entrances'][number] | undefined;
     if (this.location.kind === 'room') {
       const id = this.location.id;
       const ordinaryEntrance = underground.entrances.find(
         item => item.room === id
       );
       const colonyCraft = this.content.endgame?.colonyCraft;
-      const entrance =
+      entrance =
         ordinaryEntrance ??
         (id === COLONY_CRAFT_LIFT_ROOM && colonyCraft !== undefined
           ? {
@@ -1129,13 +1331,6 @@ export class GameplaySession {
       if (entrance === undefined) {
         return undefined;
       }
-      this.game = surface(
-        this.game,
-        entrance,
-        underground.lift,
-        this.content.cellSize,
-        this.content.endgame?.colonyCraft
-      );
     } else {
       const column = Math.trunc(
         this.game.player.position.x / this.content.cellSize
@@ -1164,7 +1359,7 @@ export class GameplaySession {
           item.cell[1] === row
       );
       const colonyCraft = this.content.endgame?.colonyCraft;
-      const entrance =
+      entrance =
         ordinaryEntrance ??
         (this.game.colonyCraftFlag !== 0 &&
         colonyCraft !== undefined &&
@@ -1179,13 +1374,42 @@ export class GameplaySession {
       if (entrance === undefined) {
         return undefined;
       }
-      this.game = enter(this.game, entrance, underground.lift, flight);
+      const access = underground.lift.access;
+      if (
+        entrance.room === access.restrictedRoom &&
+        !this.carriedStack.includes(access.passSlot)
+      ) {
+        this.show(access.refusalMessage);
+        return undefined;
+      }
     }
-    return [
-      { lift: direction },
-      { arrived: this.location },
-      ...this.settleIntoTheRoom(previousRoom)
-    ];
+    if (this.liftMode === 'instantOracle') {
+      const previousRoom = locationHostValue(this.location);
+      this.game =
+        direction === 'down'
+          ? enter(this.game, entrance, underground.lift, flight)
+          : surface(
+              this.game,
+              entrance,
+              underground.lift,
+              this.content.cellSize,
+              this.content.endgame?.colonyCraft
+            );
+      return [
+        { lift: direction },
+        { arrived: this.location },
+        ...this.settleIntoTheRoom(previousRoom)
+      ];
+    }
+    this.liftBensonColour = this.bensonColour;
+    this.liftJourney = startLiftJourney(
+      direction,
+      entrance.room,
+      underground.lift,
+      this.game.player.position.y
+    );
+    this.republishHostState();
+    return [{ lift: direction }];
   }
 
   private traverse(): PresentationEvent[] {
@@ -1529,9 +1753,9 @@ export class GameplaySession {
       z: position.z
     };
     const where: Residence =
-      this.location.kind === 'surface'
+      this.semanticLocation.kind === 'surface'
         ? { at, kind: 'surface' }
-        : { at, id: this.location.id, kind: 'room' };
+        : { at, id: this.semanticLocation.id, kind: 'room' };
     this.carriedStack = [
       ...this.carriedStack.slice(0, carriedIndex),
       ...this.carriedStack.slice(carriedIndex + 1)
@@ -1653,6 +1877,106 @@ export class GameplaySession {
     // which steps Benson and samples input and runs nothing else: no Mover,
     // no Ship Delivery, no combat.
     const terminal = this.ending.kind !== 'activePlay';
+    const journeyAtStart = this.liftJourney !== undefined;
+    let liftSurfaceSeconds = 0;
+    if (
+      this.liftJourney !== undefined &&
+      this.content.underground !== undefined
+    ) {
+      const before = this.liftJourney;
+      const advanced = advanceLiftJourney(
+        before,
+        seconds,
+        this.content.underground.lift
+      );
+      liftSurfaceSeconds = advanced.surfaceSeconds;
+      if (advanced.journey !== undefined) {
+        this.liftJourney = advanced.journey;
+        this.applyLiftScene(before, advanced.journey);
+        const colonyEntry =
+          advanced.journey.entranceRoom === COLONY_CRAFT_LIFT_ROOM &&
+          advanced.journey.scene === 'surface'
+            ? this.content.endgame?.colonyCraft.entry
+            : undefined;
+        const deckOffset =
+          colonyEntry === undefined
+            ? 0
+            : colonyEntry.altitudeHighByte * 0x1_00_00 +
+              colonyEntry.wrappedAltitudeMiddleByte * 0x1_00;
+        this.game = {
+          ...this.game,
+          player: {
+            ...this.game.player,
+            position: {
+              ...this.game.player.position,
+              y:
+                liftCameraAltitude(
+                  advanced.journey,
+                  this.content.underground.lift
+                ) + deckOffset
+            }
+          }
+        };
+      } else {
+        const previousRoom =
+          before.direction === 'down' ? SURFACE_ROOM : before.entranceRoom;
+        const completed = {
+          ...before,
+          position:
+            before.direction === 'down'
+              ? this.content.underground.lift.descending.position
+              : before.position,
+          scene:
+            before.direction === 'down'
+              ? ('room' as const)
+              : ('surface' as const),
+          stage:
+            before.direction === 'down'
+              ? 0
+              : this.content.underground.lift.ascending.stopAt
+        };
+        this.applyLiftScene(before, completed);
+        this.game = {
+          ...this.game,
+          player: {
+            ...this.game.player,
+            position: {
+              ...this.game.player.position,
+              y:
+                before.direction === 'up'
+                  ? before.restingAltitude
+                  : (advanced.finalAltitude ?? this.game.player.position.y)
+            }
+          }
+        };
+        if (
+          before.direction === 'up' &&
+          before.entranceRoom === COLONY_CRAFT_LIFT_ROOM
+        ) {
+          const colonyCraft = this.content.endgame?.colonyCraft;
+          if (colonyCraft !== undefined) {
+            this.game = surface(
+              this.game,
+              {
+                cell: colonyCraft.cell,
+                room: COLONY_CRAFT_LIFT_ROOM,
+                site: COLONY_CRAFT_LIFT_ROOM
+              },
+              this.content.underground.lift,
+              this.content.cellSize,
+              colonyCraft
+            );
+          }
+        }
+        this.liftJourney = undefined;
+        this.liftBensonColour = undefined;
+        events.push(
+          { arrived: this.location },
+          ...this.settleIntoTheRoom(previousRoom)
+        );
+      }
+      this.game = { ...this.game, elapsed: this.game.elapsed + seconds };
+    }
     // The Reference Build reads the override's own carried flag every frame, at
     // the throttle and again at the ceiling, rather than remembering a decision
     // taken when it was picked up. So this is derived rather than set: putting
@@ -1664,7 +1988,12 @@ export class GameplaySession {
         this.game = { ...this.game, poweramp: fitted };
       }
     }
-    if (this.content.flight !== undefined && seconds > 0 && !terminal) {
+    if (
+      this.content.flight !== undefined &&
+      seconds > 0 &&
+      !terminal &&
+      !journeyAtStart
+    ) {
       let steered = this.intent;
       if (this.game.worldFlipped) {
         steered = { ...steered, turn: -steered.turn };
@@ -1715,7 +2044,13 @@ export class GameplaySession {
       this.advanceEndingPresentation(seconds);
     } else {
       this.advanceShipDelivery(seconds);
-      events.push(...this.advanceCombat(seconds));
+      events.push(
+        ...this.advanceCombat(
+          journeyAtStart ? liftSurfaceSeconds : seconds,
+          journeyAtStart,
+          journeyAtStart
+        )
+      );
     }
     return { events, snapshot: this.snapshot };
   }
@@ -1893,7 +2228,7 @@ export class GameplaySession {
   /// same way: a velocity added to a place, once a frame, until a lifecycle runs
   /// out. Only the attacker keeps going when its own count reaches zero, because
   /// what runs out for it is the approach rather than the craft.
-  private driftHostileEffects(): boolean {
+  private driftHostileEffects(pauseAttacker = false): boolean {
     const rules = this.content.hostile;
     if (rules === undefined) {
       return false;
@@ -1914,7 +2249,7 @@ export class GameplaySession {
       });
       moved = true;
     };
-    if (this.attackerVelocity !== undefined) {
+    if (!pauseAttacker && this.attackerVelocity !== undefined) {
       drift(rules.attackingSlot, this.attackerVelocity);
     }
     const shot = this.hostileShot;
@@ -2063,14 +2398,18 @@ export class GameplaySession {
   /// Nothing here runs underground. The original reaches its combat calls only
   /// on the outdoor path, so a Room is not a place where a shot quietly keeps
   /// travelling.
-  private advanceCombat(seconds: number): readonly PresentationEvent[] {
+  private advanceCombat(
+    seconds: number,
+    pauseAttacker = false,
+    forceSurface = false
+  ): readonly PresentationEvent[] {
     const rules = this.content.fire;
     const rate = this.content.flight?.limits.referenceFrameRate;
     const events: PresentationEvent[] = [];
     if (
       rate === undefined ||
       seconds <= 0 ||
-      this.location.kind !== 'surface'
+      (!forceSurface && this.location.kind !== 'surface')
     ) {
       return events;
     }
@@ -2092,10 +2431,12 @@ export class GameplaySession {
       if (rules !== undefined && this.stepPlayerShot(rules, events)) {
         moved = true;
       }
-      if (this.driftHostileEffects()) {
+      if (this.driftHostileEffects(pauseAttacker)) {
         moved = true;
       }
-      events.push(...this.advanceHostile());
+      if (!pauseAttacker) {
+        events.push(...this.advanceHostile());
+      }
     }
     if (moved) {
       this.republishHostState();
@@ -2306,7 +2647,15 @@ export class GameplaySession {
   }
 
   get snapshot(): SessionSnapshot {
+    const lift = this.content.underground?.lift;
+    const journey = this.liftJourney;
+    const bensonColour = this.bensonColour;
+    const liftIndex =
+      journey === undefined
+        ? undefined
+        : journey.stage * 2 + (journey.position >= 0x42 ? 1 : 0);
     return {
+      ...(bensonColour === undefined ? {} : { bensonColour }),
       bensonMessage: this.scripts?.messagePresentation,
       carriedStack: [...this.carriedStack],
       core: {
@@ -2331,6 +2680,36 @@ export class GameplaySession {
       indoor: this.indoor,
       isScriptRunning: this.scripts?.isRunning ?? false,
       location: this.location,
+      ...(journey === undefined || lift === undefined || liftIndex === undefined
+        ? {}
+        : {
+            liftJourney: {
+              destination:
+                journey.direction === 'down'
+                  ? ({ id: journey.entranceRoom, kind: 'room' } as const)
+                  : ({ kind: 'surface' } as const),
+              direction: journey.direction,
+              instrumentAltitude: journey.restingAltitude,
+              lineColour:
+                lift.screen.indoorLineColours[journey.stage - 8] ??
+                (journey.stage === 12
+                  ? lift.screen.descendingInitialLineColour
+                  : 0),
+              pitchHighByte: lift.pitchHighBytes[liftIndex] ?? 0,
+              position: journey.position,
+              scene: journey.scene,
+              screenSplit:
+                journey.stage >= 7 && journey.position < lift.screen.rasterLimit
+                  ? journey.position + lift.screen.rasterBase
+                  : undefined,
+              stage: journey.stage,
+              upperColour:
+                lift.screen.indoorLineColours[journey.stage - 7] ??
+                (journey.stage === 11
+                  ? lift.screen.descendingInitialLineColour
+                  : 0)
+            }
+          }),
       mode: this.game.mode,
       objectFlags: new Map(this.objectFlags),
       occupancy: this.occupancy,

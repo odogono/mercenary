@@ -156,9 +156,10 @@
         "RCE-EV-0003",
         "RCE-EV-0004"
       ],
-      "browserDisposition": "confirmed-missing",
+      "browserDisposition": "implemented",
       "verificationCoverage": [
-        "Focused Reference capture and browser production-source audit; implementation remains unchecked."
+        "web/test/lift-journey.test.ts",
+        "web/test/shell-panel.test.ts"
       ]
     },
     {
@@ -394,9 +395,9 @@
         "RCE-EV-0001",
         "RCE-EV-0004"
       ],
-      "browserDisposition": "confirmed-missing",
+      "browserDisposition": "implemented",
       "verificationCoverage": [
-        "Browser production-source audit; implementation remains unchecked."
+        "web/test/lift-journey.test.ts"
       ]
     },
     {

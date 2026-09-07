@@ -759,15 +759,50 @@ export interface UndergroundPad {
 }
 
 export interface UndergroundLift {
+  readonly access: {
+    readonly passSlot: number;
+    readonly refusalMessage: number;
+    readonly restrictedRoom: number;
+  };
   readonly altitudeWrap: number;
   readonly altitudeWrapSubtract: number;
-  readonly ascendRate: number;
-  readonly descendRate: number;
-  readonly floor: number;
+  readonly ascending: {
+    readonly position: number;
+    readonly sceneAt: number;
+    readonly stage: number;
+    readonly stopAt: number;
+  };
+  readonly cameraOffsets: {
+    readonly ascending: number;
+    readonly descending: number;
+  };
+  readonly descending: {
+    readonly floor: number;
+    readonly position: number;
+    readonly sceneAt: number;
+    readonly stage: number;
+  };
+  readonly framesPerSecond: number;
+  readonly motionRates: readonly number[];
+  readonly pitchHighBytes: readonly number[];
+  readonly positionWrap: number;
+  readonly screen: {
+    readonly descendingInitialLineColour: number;
+    readonly descendingInitialScreenColour: number;
+    readonly indoorLineColours: readonly number[];
+    readonly outdoorLineColours: readonly number[];
+    readonly rasterBase: number;
+    readonly rasterLimit: number;
+  };
   readonly submergeAt: number;
   readonly submergeMiddle: number;
   readonly surfaceAt: number;
   readonly surfaceMiddle: number;
+  readonly timing: readonly {
+    readonly down: { readonly sceneAt: number; readonly stopAt: number };
+    readonly room: number;
+    readonly up: { readonly sceneAt: number; readonly stopAt: number };
+  }[];
 }
 
 export interface UndergroundDocument {
@@ -817,6 +852,13 @@ export interface SoundDocument {
     readonly walkingCraftId: number;
   };
   readonly initialRegisters: readonly number[];
+  readonly liftJourney: {
+    readonly controlRegister: number;
+    readonly dingSelector: number;
+    readonly pitchHighRegister: number;
+    readonly programSelector: number;
+    readonly stoppedValue: number;
+  };
   readonly liftProfiles: readonly SoundLiftProfile[];
   readonly oneShots: readonly SoundProgram[];
   readonly schemaVersion: number;
@@ -851,6 +893,17 @@ export interface SightsEffect {
 
 export interface ObjectEffectsDocument {
   readonly counts: Readonly<Record<string, number>>;
+  readonly metalDetector: {
+    readonly altitudeHighByteLimit: number;
+    readonly colours: {
+      readonly mechanoid: number;
+      readonly neutral: number;
+      readonly palyar: number;
+    };
+    readonly mechanoidMask: number;
+    readonly neutralMask: number;
+    readonly slot: number;
+  };
   readonly schemaVersion: number;
   readonly sights: SightsEffect;
 }

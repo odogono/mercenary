@@ -845,6 +845,10 @@ try {
           notices.message(snapshot.bensonMessage));
     updateText(message, publishedMessage.text);
     message.dataset['source'] = publishedMessage.source;
+    message.dataset['bensonColour'] =
+      publishedMessage.source === 'game' && snapshot.bensonColour !== undefined
+        ? String(snapshot.bensonColour)
+        : '';
     surface.dataset['arrival'] = phase;
     updateText(credits, `${snapshot.credits} CREDITS`);
     updateText(

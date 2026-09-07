@@ -276,8 +276,15 @@ const payloadDocuments = (
     sourceDatasetId: 'dataset'
   },
   'object-effects.json': {
-    counts: { effects: 1, sightsPixels: 16 },
-    schemaVersion: 1,
+    counts: { effects: 2, sightsPixels: 16 },
+    metalDetector: {
+      altitudeHighByteLimit: 1,
+      colours: { mechanoid: 6, neutral: 2, palyar: 5 },
+      mechanoidMask: 64,
+      neutralMask: 32,
+      slot: 26
+    },
+    schemaVersion: 2,
     sights: {
       bitmapRows: [0xff_00_ff, ...Array<number>(20).fill(0)],
       colours: { room: 1, surface: 15 },
@@ -347,6 +354,13 @@ const payloadDocuments = (
       walkingCraftId: 10
     },
     initialRegisters: [...Array(24).fill(0), 15],
+    liftJourney: {
+      controlRegister: 11,
+      dingSelector: 0,
+      pitchHighRegister: 8,
+      programSelector: 48,
+      stoppedValue: 0
+    },
     liftProfiles: ['af3e', 'af3a'].map(entry => ({
       entry,
       registers: Array(14).fill(0),
@@ -359,7 +373,7 @@ const payloadDocuments = (
       selector: index * 4,
       sustainRelease: 0
     })),
-    schemaVersion: 1,
+    schemaVersion: 2,
     sid: {
       clockHz: 985_248,
       model: '6581',

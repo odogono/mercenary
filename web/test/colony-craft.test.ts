@@ -439,6 +439,7 @@ describe('the $A13D box, entered from flight', () => {
     };
 
     expect(gameplay.rideLift()).toBeDefined();
+    gameplay.advance(7);
     expect(gameplay.snapshot.location).toEqual({ id: 8, kind: 'room' });
     expect(gameplay.game.colonyCraftFlag).toBe(0);
   });
@@ -462,6 +463,7 @@ describe('the $A13D box, entered from flight', () => {
 
     expect(gameplay.snapshot.occupancy).toEqual({ kind: 'aboard', slot: 1 });
     expect(gameplay.rideLift()).toBeDefined();
+    gameplay.advance(7);
     expect(gameplay.snapshot.location).toEqual({ id: 8, kind: 'room' });
     expect(gameplay.snapshot.occupancy).toEqual({ kind: 'aboard', slot: 1 });
     expect(gameplay.game.colonyCraftFlag).toBe(0);
@@ -485,6 +487,7 @@ describe('the $A13D box, entered from flight', () => {
     };
 
     expect(gameplay.rideLift()).toBeDefined();
+    gameplay.advance(7);
     expect(gameplay.leaveCraft()?.slot).toBe(1);
     const residence = gameplay.residenceOf(1);
     if (residence.kind !== 'room' || residence.at === undefined) {
@@ -513,6 +516,12 @@ describe('the $A13D box, entered from flight', () => {
     };
 
     expect(gameplay.rideLift()).toBeDefined();
+    gameplay.advance(5.5);
+    expect(gameplay.snapshot.location).toEqual({ kind: 'surface' });
+    expect(
+      Math.abs(gameplay.game.player.position.y - DECK_SURFACE)
+    ).toBeLessThan(256);
+    gameplay.advance(1.5);
     expect(gameplay.snapshot.location).toEqual({ kind: 'surface' });
     expect(gameplay.game.player.position.x).toBe(8 * CELL + 0x71_00);
     expect(gameplay.game.player.position.y).toBe(DECK_REST);

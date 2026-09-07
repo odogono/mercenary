@@ -24,7 +24,7 @@ class ResidenceConditionedCatalogueTests(unittest.TestCase):
     def test_accepts_the_complete_bound_census(self) -> None:
         result = validate_residence_conditioned_effects(self.matrix())
         self.assertEqual(result["effects"], 31)
-        self.assertEqual(result["confirmedMissing"], 2)
+        self.assertEqual(result["confirmedMissing"], 0)
 
     def test_decoder_census_matches_the_matrix_digest(self) -> None:
         ram = bytearray(65536)

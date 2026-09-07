@@ -24,6 +24,7 @@ const base: PanelViewModel = {
   locationLabel: '08-08',
   locationName: 'TARG',
   message: 'CRASH LANDED ON TARG',
+  messageColour: 2,
   runLamp: false,
   speed: '+0000',
   speedLabel: '+ 000 000 000'

@@ -26,6 +26,11 @@ def reference_shaped_ram() -> bytearray:
     ram[0x00C7] = 0x70
     ram[0x5FF8] = 0xD9
     ram[0x7640:0x7680] = bytes.fromhex("ff00ff" + "00" * 61)
+    detector = bytes.fromhex(
+        "a5caf00160adda29101ca5cdd018a5b7f014a577d010a5f20a0a300a9004"
+        "a906d006a905d002a902cdd3b4f00320c7b4"
+    )
+    ram[0xB53D : 0xB53D + len(detector)] = detector
     return ram
 
 
@@ -33,8 +38,18 @@ class ObjectEffectsDecoderTests(unittest.TestCase):
     def test_decodes_sights_slot_bitmap_placement_expansion_and_colours(self) -> None:
         document = decode_object_effects(bytes(reference_shaped_ram()))
 
-        self.assertEqual(document["schemaVersion"], 1)
-        self.assertEqual(document["counts"], {"effects": 1, "sightsPixels": 16})
+        self.assertEqual(document["schemaVersion"], 2)
+        self.assertEqual(document["counts"], {"effects": 2, "sightsPixels": 16})
+        self.assertEqual(
+            document["metalDetector"],
+            {
+                "altitudeHighByteLimit": 1,
+                "colours": {"mechanoid": 6, "neutral": 2, "palyar": 5},
+                "mechanoidMask": 64,
+                "neutralMask": 32,
+                "slot": 26,
+            },
+        )
         self.assertEqual(
             document["sights"],
             {
