@@ -22,6 +22,9 @@ export interface LiftAdvance {
   readonly surfaceSeconds: number;
 }
 
+export const liftPhaseIndex = (journey: LiftJourneyState): number =>
+  journey.stage * 2 + (journey.position >= 0x42 ? 1 : 0);
+
 export const startLiftJourney = (
   direction: LiftDirection,
   entranceRoom: number,
@@ -77,8 +80,7 @@ const tick = (
       `Lift Journey has no captured timing for Room ${current.entranceRoom}`
     );
   }
-  const upperHalf = current.position >= 0x42 ? 1 : 0;
-  const rate = lift.motionRates[current.stage * 2 + upperHalf];
+  const rate = lift.motionRates[liftPhaseIndex(current)];
   if (rate === undefined) {
     throw new Error(
       `Lift Journey has no motion rate for stage ${current.stage}`
