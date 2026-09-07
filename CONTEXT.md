@@ -338,6 +338,22 @@ _Avoid_: Mercenary 2 (for The Second City), expansion, mission disk, second Inde
 Damocles's multi-body setting as Confirmed in Working-Authority Evidence: a named celestial roster (including DAMOCLES and VOID), packed place labels, and object catalogues — not Targ Location as surface-or-Room.
 _Avoid_: Targ world, Location (for Damocles bodies), solar system pack
 
+**Damocles Model**:
+One reusable geometric definition recovered from the Working Authority, independent of its name and of the places where it appears. Alternate visual forms remain separately evidenced. Catalogue record families (object, surface assembly, building detail) do not by themselves establish exterior or interior use; building detail can serve both.
+_Avoid_: Object instance, Surface Structure
+
+**Damocles Instance**:
+One identified occurrence of a Damocles Model in the world, with its own recovered location and orientation; an unknown location is not a placement at the origin.
+_Avoid_: Model, mesh
+
+**Damocles Place**:
+One named location in Damocles that may contain multiple instances and interiors; a place name alone establishes neither its position nor its contents.
+_Avoid_: Model, building shape
+
+**Damocles Catalogue**:
+The read-only collection of recovered Damocles Models, Instances, Places, visual variants, and their evidence, including explicit gaps in recovery.
+_Avoid_: Gameplay Session, playable Damocles
+
 **Damocles Script**:
 A program from Damocles's successor 16-bit bytecode VM Confirmed in the Working Authority, distinct from a Benson Script and from the C64 Benson encoding (ADR 0015).
 _Avoid_: Benson Script (for Damocles), game script, ST bytecode dump

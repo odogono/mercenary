@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Damocles · Object & structure catalogue</title>
+    <link rel="stylesheet" href="/src/catalogue/catalogue.css" />
+  </head>
+  <body>
+    <header>
+      <a href="/" class="back">← Back to game</a
+      ><span class="edition">WORKING AUTHORITY / ATARI ST</span>
+      <h1>Damocles <span>Object & structure catalogue</span></h1>
+      <p id="summary" role="status">Loading recovered content…</p>
+    </header>
+    <main id="catalogue" hidden>
+      <aside class="collection" aria-label="Catalogue entries">
+        <label for="search">Find a model</label
+        ><input
+          id="search"
+          type="search"
+          placeholder="Name, identity or slot"
+        />
+        <div class="filters">
+          <label
+            >Kind<select id="kind">
+              <option value="">All kinds</option>
+              <option value="object">Objects</option>
+              <option value="structure">Surface assemblies</option>
+              <option value="interior">Building details</option>
+            </select></label
+          ><label
+            >Recovery<select id="recovery">
+              <option value="">All states</option>
+              <option value="decoded">Decoded</option>
+              <option value="partial">Partial</option>
+              <option value="unresolved">Unresolved</option>
+            </select></label
+          >
+        </div>
+        <p id="result-count" role="status"></p>
+        <nav id="results" aria-label="Models"></nav>
+      </aside>
+      <section class="inspection" aria-label="Model inspection">
+        <div class="title-row">
+          <div>
+            <p id="model-kind" class="eyebrow"></p>
+            <h2 id="model-name">Choose a model</h2>
+            <p id="model-id" class="muted"></p>
+          </div>
+          <span id="model-status" class="badge"></span>
+        </div>
+        <div class="viewer">
+          <canvas
+            id="model-view"
+            tabindex="0"
+            aria-label="3D model. Arrow keys orbit, plus and minus zoom, zero resets."
+          ></canvas>
+          <p id="viewer-message" role="status"></p>
+        </div>
+        <div class="toolbar">
+          <label
+            >Form
+            <select id="variant"></select></label
+          ><label id="door-control" hidden
+            >Door<select id="door">
+              <option value="open">Open</option>
+              <option value="closed">Closed</option>
+            </select></label
+          ><label><input id="wireframe" type="checkbox" /> Wireframe</label
+          ><button id="zoom-out" aria-label="Zoom out">−</button
+          ><button id="zoom-in" aria-label="Zoom in">+</button
+          ><button id="reset">Reset view</button>
+        </div>
+        <p class="hint">
+          Drag to orbit · Scroll to zoom · Arrow keys when the view is focused
+        </p>
+        <div id="details"></div>
+        <section class="map-section">
+          <h2>Surface placements</h2>
+          <label
+            >Body
+            <select id="body"></select
+          ></label>
+          <p id="map-note" class="muted"></p>
+          <div id="map" aria-label="Surface placement map"></div>
+          <div id="locations"></div>
+        </section>
+      </section>
+      <aside class="evidence">
+        <h2>Recovery ledger</h2>
+        <div id="ledger"></div>
+        <details>
+          <summary>Source evidence</summary>
+          <div id="source"></div>
+        </details>
+      </aside>
+    </main>
+    <section id="error" role="alert" hidden>
+      <h2>Catalogue unavailable</h2>
+      <p id="error-message"></p>
+      <p>
+        Restore <code>payload/damocles/catalogue.json</code> from this checkout,
+        or regenerate it with the Damocles laboratory extractor.
+      </p>
+      <button id="retry">Try again</button>
+    </section>
+    <script type="module" src="/src/catalogue/boot.ts"></script>
+  </body>
+</html>

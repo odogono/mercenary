@@ -4,6 +4,8 @@ Working-Authority Evidence from the Damocles ST programme (#79–#81, #85–#86)
 
 ## Status
 
+The early implementation restriction is partially superseded by [ADR 0039](0039-admit-the-damocles-catalogue-before-playable-integration.md), which admits the read-only Damocles Catalogue and its separate extracted data now. Playable integration retains the sequencing below.
+
 Accepted. Supersedes the architecture and “outside this remake's engine” product stance of ADR 0020. Sequencing after *The Second City*, single-context research notes, ADR 0002, and the ban on live Damocles payload / filled Game Surface / `CONTEXT-MAP` split *before* that seam are unchanged.
 
 ## Considered Options

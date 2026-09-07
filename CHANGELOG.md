@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- A desktop Damocles catalogue is available directly from the game menu without starting a
+  Gameplay Session. It searches and filters 539 resident object, surface-assembly, and
+  building-detail models; preserves unresolved records; provides stable model and instance
+  links with browser Back support; and maps 76 recovered placements and 11 named places in the
+  pinned first-world Eris workspace.
+- The catalogue viewer presents recovered flat-colour geometry with orbit, zoom, reset,
+  wireframe, palette/form selection, provenance, recovery evidence, related geometry, and
+  linked instances. Its separately versioned private payload validates source hashes, census
+  accounting, geometry references, relationships, and incomplete coverage independently of
+  Targ's payload and stored sessions.
+- Capital Spaceport Structure 74 now has candidate naming and separate exterior, region-1
+  interior, combined, and open/closed door inspection forms. The recovered region queue orders
+  all 28 plan faces, identifies its `$FF` entry as the animated entrance-door attachment, and
+  links resident slot 183, `KEY- V.I.P. LIMO`, while leaving its unproved room coordinates
+  unknown.
+
+### Fixed
+
+- Correct the catalogue viewer's face orientation and handedness so recovered surfaces render
+  without the earlier missing-face artifacts and the Capital Spaceport entrance appears on the
+  same side as the Atari ST reference views.
+- Select the Spaceport's authored aperture surrounds in exterior and combined inspection forms,
+  removing coincident facade polygons that caused z-fighting while retaining a visible interior
+  through the window and doorway.
+
 ## [0.14.0] - 2026-09-07
 
 ### Added
@@ -19,7 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   phases replace instantaneous travel. The altitude instrument holds its reading during travel,
   and the final ascent bar reveals the surface above it as it shrinks downward.
 - The research laboratory can capture all supported Reference Lift Journeys with `lab lift
-  capture`. Decoded tables, captured route timings, regression coverage, and ADR 0037 document
+capture`. Decoded tables, captured route timings, regression coverage, and ADR 0037 document
   the Reference behavior and the separate test-only instantaneous mode for frozen replays.
 
 ### Fixed

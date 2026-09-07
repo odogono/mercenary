@@ -82,6 +82,21 @@ const server = Bun.serve({
       return new Response('not found', { status: 404 });
     }
 
+    if (url.pathname === '/catalogue') {
+      return new Response(Bun.file(join(import.meta.dir, 'catalogue.html')), {
+        headers: { 'content-type': 'text/html; charset=utf-8' }
+      });
+    }
+    if (url.pathname === '/payload/damocles/catalogue.json') {
+      const file = Bun.file(join(payload, 'damocles/catalogue.json'));
+      if (!(await file.exists())) {
+        return new Response('Damocles catalogue unavailable', { status: 404 });
+      }
+      return new Response(file, {
+        headers: { 'content-type': 'application/json' }
+      });
+    }
+
     const payloadAsset = await payloadResponse(url.pathname, payload);
     if (payloadAsset !== undefined) {
       return payloadAsset;

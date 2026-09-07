@@ -1,5 +1,10 @@
 # Damocles ST Working Authority laboratory
 
+> Catalogue extension: ADR 0039 now permits a separate geometry/catalogue extractor
+> and read-only app viewer. Earlier exclusions below describe the original lab
+> scope; the script decoder remains research instrumentation and gameplay is deferred.
+
+
 This directory is the reproducible Hatari harness for the Damocles Atari ST
 Working Authority named in `docs/research/damocles-gap.md`. Results are
 Working-Authority Evidence, not Authoritative Evidence.
