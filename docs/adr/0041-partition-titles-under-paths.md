@@ -1,0 +1,39 @@
+# Partition Titles under paths
+
+The Departure (ADR 0040) settled *how* a player chooses what to play: a carousel of Destinations in deep space, committed into one seamless journey to the unchanged Arrival. It left the browser's address bar out of the picture, and today the Browser Shell reads nothing from it — the page is one URL, and the only thing in `web/` that touches the location is the Damocles catalogue's query string. This ADR gives each game its own address: *Escape from Targ* and *The Second City* under `/targ`, Damocles under `/damocles`, and — as aspiration only — *The Dion Crisis* under `/dion`.
+
+To say what a path names, the glossary needs a word the Departure deliberately avoided. `/targ` holds two Destinations. `/dion` and `/damocles` are different games in the same Gamma System. So a path is neither a Destination, nor a system, nor a world: it is the original release together with its official expansions, which ADR 0021 has been calling a **title** since it decided on one multi-title Independent Implementation. The word is now a glossary term. A **Title** owns one or more Destinations, one of which is its default, and has exactly one path. Targ's default is the original city; Damocles has one Destination and so no choice to make.
+
+**The carousel lives at `/`, and a Title's path starts its game.** The root is the whole Departure: every Destination that exists, across every Title, and the deep-space choice between them. A direct visit to `/targ` with nothing in progress does not open that carousel snapped to Targ; it starts *Escape from Targ* — the committed journey past Targ's sun and moons and then the Arrival — with the carousel omitted, because the visitor has already chosen by typing the address. This is the reading a player brings to a URL, and it is the one that makes each Title a front door someone can link to. The alternative, a carousel at every path that merely opens snapped to that Title, would have made the address a bookmark for a menu position rather than for a game.
+
+That rule forces the Second City question. If a path starts a game, then a Destination without a path can only be started from the carousel, and *The Second City* would be the one thing in the app nobody can link to. So a Title with more than one Destination exposes the others as sub-paths: `/targ/second-city`. The cost is that the URL now names a Destination as well as a Title, and so could disagree with the carousel or the Session Resume about which is in play. The rule for that is below, and it is worth paying for the sake of one consistent statement — *a path names something you can start* — over uniform depth. Paths are the canonical identifiers: a Save and a Session Resume store the slugs `targ`, `second-city`, `damocles`, and renaming a path is already a breaking change for bookmarks, so making it a Save-identity change too costs nothing extra.
+
+**The Session Resume is the authority over what is in progress; the path is the authority only over what to start.** A direct visit to a Title's path resumes that Title's Session Resume if one exists, silently and without any Departure, and corrects the address to the Destination actually in progress — a visit to `/targ` with a Second City game underway lands at `/targ/second-city`. Only when nothing is in progress does the path decide, by starting its named Destination fresh; Saves stay reachable from the System Menu as they are today. Committing on the carousel pushes the Title's path into browser history, so Back returns to the carousel; nothing is lost by that, since the Session Resume for the Title already exists and the path resumes it. Within a game the address never changes again. New Game from the System Menu restarts the current Title's default Destination on the current path; changing Title means returning to `/`. Unknown paths fall back to `/` without ceremony.
+
+**Partitioning follows the path into storage, but not into the player's settings.** Saves and the Session Resume are kept per Title, so `/targ` and `/damocles` each have their own slots and their own single Resume record. This revises ADR 0040, which kept one Session Resume for the whole app: with Titles at separate addresses, a player who leaves Damocles half-played to look at Targ expects to find Damocles waiting when they return, and one global record would have made the visit to Targ a New Game confirm away from destroying it. A Save's Destination field still decides what it restores into, so two Destinations under one Title share slots without a further rule. Preferences and typeface stay global: they describe the player, not the game.
+
+**A Title's Data Payload is loaded when a Destination of it is committed**, not at boot. The carousel needs labels and rosters and nothing more, so the root page loads no payload at all, and a Targ player never pays for Damocles. Damocles's data already sits under `payload/damocles/` (ADR 0039); Targ's occupies the payload root and moves under its own name only when a second Title actually loads, since the layout is shared with the laboratory tooling. The Damocles catalogue's eventual home is `/damocles/catalogue`; it stays at `/catalogue.html` until then, being a lab surface and not a player one.
+
+Nothing here is Session State, and nothing here is a build. The Browser Shell's routing, the storage namespaces and the payload layout are all downstream of ADR 0021's gate, and the dev server remains localhost-only with no deployable bundle under ADR 0019. What this ADR fixes now is the shape *The Second City* must fit: a sub-path under `/targ`, a Destination inside Targ's Saves, and no second app. The deliverables are this decision, the **Title** glossary term, and amendments to the Departure sketch.
+
+## Considered Options
+
+- One URL for the whole app, with the Departure carousel the only way in.
+- A carousel at every Title's path, opening snapped to that Title.
+- A Title's path starting its default Destination, with no sub-paths and the Second City reachable only from the carousel.
+- Sub-paths for every Destination, including `/damocles/<default>`.
+- Partitioning by system, so Damocles and Dion share a path.
+- Global Saves and one Session Resume across Titles, with the Destination field the only partition.
+- Loading every Title's payload at boot.
+- Titles at their own paths starting their default Destination, further Destinations as sub-paths, the carousel only at `/`, per-Title Saves and Session Resume, per-Title loading.
+
+The last option is taken. One URL makes three games unlinkable. A carousel at every path bookmarks a menu position rather than a game. Leaving the Second City without a path breaks the one rule that gives paths meaning. A sub-path for a Title's only Destination is noise. Partitioning by system puts two different games behind one door because of fiction they happen to share. Global storage makes one Title's New Game a threat to another's progress. Loading everything makes Targ's players pay for Damocles.
+
+## Consequences
+
+- **Title** enters the glossary; the Session Resume entry becomes one record per Title, and a Destination belongs to exactly one Title.
+- ADR 0040 is amended in one respect: the Session Resume is per Title rather than single for the app. Everything else in it stands, including the carousel, the journey, the skip proof and the Save's Destination field.
+- Slugs are Save identity. Renaming a path is a breaking change for Saves as well as bookmarks.
+- The dev server will need a path fallback to the page when the Departure is built; until then nothing in `web/src` or `serve.ts` changes.
+- Targ's payload relocation and the catalogue's move are deferred to the first release that loads a second Title.
+- *The Dion Crisis* stays non-binding: `/dion` is reserved by this decision and by nothing else.

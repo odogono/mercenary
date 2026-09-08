@@ -36,3 +36,4 @@ __pycache__/
 
 # general output
 output
+*.sav
