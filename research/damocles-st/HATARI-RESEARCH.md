@@ -81,6 +81,17 @@ Take is **Right Shift + Up** (not `T`). Board `B`, leave `L`. Number keys set
 the panel speed field beside `ERIS`. Walk-versus-boarded soft word: `$7A8E`
 (`1` on foot, `0` boarded) — see `docs/research/damocles-walk-board-flight.md`.
 
+The tracked empty-inventory route reaches the V.I.P. limo without entering the
+Spaceport Room or taking its key, then exercises the refusal directly:
+
+```sh
+python3 research/damocles-st/scripts/record-play.py replay \
+  --sequence research/damocles-st/scenarios/limo-no-key-route.json
+```
+
+It remains on foot and displays `VEHICLE KEY REQUIRED`; addressed evidence and
+the paired keyed capture are recorded in `docs/research/damocles-vip-limo.md`.
+
 #### How the address was found
 
 Damocles's IKBD ACIA handler (`$05555C`–`$055574`) decodes joystick packets:

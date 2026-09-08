@@ -150,3 +150,12 @@ is absent.
 
 Nothing here is a mechanical translation of the Swift implementation or of the Reference
 Build. Both are read for understanding; neither is copied (ADR 0002, ADR 0014, ADR 0019).
+
+## Damocles Catalogue
+
+Open `/catalogue` directly or use the game menu's **Damocles catalogue** link.
+This desktop inspection page loads only `payload/damocles/catalogue.json`, with
+orbit/zoom, original flat colours, wireframe, visual forms, evidence, instance
+links and a per-body placement map. Recovery gaps are visible, and empty maps do
+not imply an empty game world. See [extraction and coverage](../docs/research/damocles-catalogue.md)
+for regeneration, source grammar and remaining research.

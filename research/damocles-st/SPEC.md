@@ -1,5 +1,10 @@
 # Specification: Damocles ST Working Authority Laboratory
 
+> Catalogue extension: ADR 0039 now permits a separate geometry/catalogue extractor
+> and read-only app viewer. Earlier exclusions below describe the original lab
+> scope; the script decoder remains research instrumentation and gameplay is deferred.
+
+
 ## Objective
 
 Provide researchers with a repeatable, provenance-backed way to identify, boot, observe, and inspect the Damocles Atari ST Working Authority. A result is reliable only when it is tied to the exact STX hash, TOS image hash, Hatari build and configuration, scenario, checkpoint, and artifact hashes.

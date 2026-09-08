@@ -10,6 +10,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- A desktop Damocles catalogue is available directly from the game menu without starting a
+  Gameplay Session. It searches and filters 539 resident object, surface-assembly, and
+  building-detail models; preserves unresolved records; provides stable model and instance
+  links with browser Back support; and maps 110 recovered placements across 18 bodies, including
+  76 surface assemblies and 34 resident objects. The pinned first-world Eris workspace retains
+  its 11 named places; other-body named places remain unresolved.
+- The catalogue viewer presents recovered flat-colour geometry with orbit, zoom, reset,
+  wireframe, palette/form selection, provenance, recovery evidence, related geometry, and
+  linked instances. Its separately versioned private payload validates source hashes, census
+  accounting, geometry references, relationships, and incomplete coverage independently of
+  Targ's payload and stored sessions.
+- Capital Spaceport Structure 74 now has candidate naming and separate exterior, region-1
+  interior, combined, and open/closed door inspection forms. The recovered region queue orders
+  all 28 plan faces, identifies its `$FF` entry as the animated entrance-door attachment, and
+  places resident slot 183, `KEY- V.I.P. LIMO`, at its recovered room coordinates. Shared key
+  geometry, two-character display codes, label anchors, and pickup removal are documented;
+  eight formerly unresolved key models are now viewable.
+- Resident slot 5, `V.I.P. LIMO`, is now plotted outside Capital Spaceport from its recovered
+  Eris coordinates and raw heading, linked to its verified key and named place, and opens at a
+  model-specific inspection angle that exposes its complete recovered geometry. A reproducible
+  empty-inventory route verifies its `VEHICLE KEY REQUIRED` refusal; matching names and the
+  recovered `+178` slot relation link all eight vehicle/key pairs while leaving unknown
+  residences unresolved.
+- The native Association B surface-resident selector maps 34 resident objects across 18 bodies.
+  This places 99 CHEVY on Gaea from its source coordinates and heading while retaining its
+  unknown named place and its key's unresolved Eris interior association.
+
+### Fixed
+
+- Damocles keys now include the twelve body faces previously lost at a misread
+  vector-text record. Lettering uses the recovered 3D glyph strokes, rotates
+  with the plate, and is hidden by the key from behind; the incorrect HTML
+  font overlay has been removed.
+
+- Correct the catalogue viewer's face orientation and handedness so recovered surfaces render
+  without the earlier missing-face artifacts and the Capital Spaceport entrance appears on the
+  same side as the Atari ST reference views.
+- Select the Spaceport's authored aperture surrounds in exterior and combined inspection forms,
+  removing coincident facade polygons that caused z-fighting while retaining a visible interior
+  through the window and doorway.
+
+## [0.14.0] - 2026-09-07
+
+### Added
+
 - Metal Detector feedback now recolours all 23 Benson Display cells in both panel renditions
   and the communications strip while slot 26 is carried (#166). Readings follow the occupied
   cell's live faction flags and the recovered altitude high-byte boundary; normal text keeps
@@ -19,7 +64,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   phases replace instantaneous travel. The altitude instrument holds its reading during travel,
   and the final ascent bar reveals the surface above it as it shrinks downward.
 - The research laboratory can capture all supported Reference Lift Journeys with `lab lift
-  capture`. Decoded tables, captured route timings, regression coverage, and ADR 0037 document
+capture`. Decoded tables, captured route timings, regression coverage, and ADR 0037 document
   the Reference behavior and the separate test-only instantaneous mode for frozen replays.
 
 ### Fixed

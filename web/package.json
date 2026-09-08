@@ -19,6 +19,7 @@
   "knip": {
     "entry": [
       "src/shell/boot.ts",
+      "src/catalogue/boot.ts",
       "src/sound/worklet.ts",
       "tools/sound-compare.ts",
       "e2e/opening-loop.ts",
