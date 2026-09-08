@@ -63,7 +63,7 @@ A player-created record kept by the Browser Shell, containing one Save Snapshot 
 _Avoid_: Save file, checkpoint, autosave
 
 **Session Resume**:
-The Browser Shell's single automatically maintained record of the current Gameplay Session, retained until New Game so that returning in the same browser can continue play. It has at most one active browser-page owner, is not a player-created Save, and never occupies or overwrites a Save slot.
+The Browser Shell's automatically maintained record of the current Gameplay Session, one per Title, retained until New Game so that returning in the same browser can continue play. It has at most one active browser-page owner, is not a player-created Save, and never occupies or overwrites a Save slot.
 _Avoid_: Autosave, Save, recovery slot, checkpoint
 
 **Save Snapshot**:
@@ -183,12 +183,16 @@ The Arrival's own message sequence, authored into the Browser Shell and quoted f
 _Avoid_: Benson Message, intro script, opening text
 
 **Departure**:
-The authored, shell-owned opening in which the player chooses a Destination — a deep-space star field carrying a carousel of Destinations, and after commitment one seamless journey to the chosen system and world, ending exactly where the Arrival begins. Presentation only: never Session State, absent from the Save Snapshot, played under both Presentation Presets, and skippable to a game identical to the one watching it reaches (ADR 0037).
+The authored, shell-owned opening in which the player chooses a Destination — a deep-space star field carrying a carousel of Destinations, and after commitment one seamless journey to the chosen system and world, ending exactly where the Arrival begins. Presentation only: never Session State, absent from the Save Snapshot, played under both Presentation Presets, and skippable to a game identical to the one watching it reaches (ADR 0040).
 _Avoid_: Title screen, main menu, game select, launcher, Arrival
 
 **Destination**:
-One playable experience a Departure can commit to, named by its system, its world, and where the player will land; only Destinations that exist are offered, a Save belongs to exactly one, and which Destinations exist says nothing about how their content is composed.
+One playable experience a Departure can commit to, named by its system, its world, and where the player will land; only Destinations that exist are offered, a Save belongs to exactly one, and which Destinations exist says nothing about how their content is composed. Every Destination belongs to exactly one Title.
 _Avoid_: Title, game, campaign, Content Overlay, level
+
+**Title**:
+One original release of the series together with its official expansions, owning one or more Destinations, one of which is its default. Each Title has exactly one address in the Browser Shell, keeps its own Saves and its own Session Resume, and is the unit whose content is loaded when a Destination is committed (ADR 0041).
+_Avoid_: Game, app, product, Destination, Content Set
 
 **Trace Oracle**:
 The accepted macOS implementation frozen at the annotated `trace-oracle-last-good` tag, together with the deterministic traces it regenerates, held as the tagged equivalence authority that the canonical browser implementation must reproduce rather than as a live implementation (ADR 0019).
