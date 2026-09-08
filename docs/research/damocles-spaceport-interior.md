@@ -21,6 +21,9 @@ and the [research boundary](damocles-gap.md).
 | `interior-window-ram-20260818T172346Z-e3772e4d/interior.ram` | `c9cbbacb6d5ac9266b350bb9b47cdc0d0b0167c6a4ebb0d03d163f0ada292eaa` |
 | Same interior run, `interior.png`                            | `11ceae7789681980e1ab5957be5db521752cc8eeb8c43309678bbe0e7dc654b4` |
 | `research/damocles-st/snapshots/interior-window.sav`         | `a11254db81c2552be6b73c6d4e8f654e740a1c46553193a2aa28e78f7ba54dd6` |
+| `stick-record-20260818T174759Z-1b7b3fee/stick-sequence.json` | `7c6d3db6ac0a5a244f0c6184ae815004b60bc9130823c4d55f169ecb35ecf540` |
+| `stick-replay-20260907T202708Z-7cc03bca/observed.ram`        | `aa50cc457c970d6e55b13803cbc9bfb6a30a2164491f023a7c0adabcb2f3394a` |
+| Same isolated post-pickup replay, `observed.png`             | `d3dc8e1408ab52dba093377f0b88ede5b574f07ce24febc22ca5fb99b8017e72` |
 
 The interior snapshot was captured after a human walked into the spaceport;
 its approach was not reproduced by deterministic input replay. The existing
@@ -137,9 +140,56 @@ queue.
 Slot 183 selects source model `KEY- V.I.P. LIMO` (`object-03e494`). The name is
 the 16-byte source label directly preceding its model at `$03E494`, not an
 inferred catalogue label. Its resident coordinates are X `$004780E4` at
-`$6684`, Y `$00000000` at `$6A84`, and Z `$0088892D` at `$6E84`. Exact placement
-of the key within the room awaits a complete world-to-model transform decode;
-the region queue establishes its membership without a coordinate-only guess.
+`$6684`, Y `$00000000` at `$6A84`, and Z `$0088892D` at `$6E84`.
+
+The world-to-room transform is now closed for this instance. Cell `$87`'s
+record at `$ADF8` is `$004A E5 34`: Structure 74, signed X offset −27 and Z
+offset 52. `$54D48..$54D6C` sign-extends those offsets, multiplies them by the
+source constant 30 at `$4BD14`, and measures them from the centre of the
+65,536-unit surface cell. The captured world/local pairs at `$7A92`/`$7A2C`
+and `$7A9A`/`$7A34` establish the loaded grid origin as X `$00400000`, Z
+`$00800000`. Consequently the Spaceport's world origin is X `$00477CD6`, Z
+`$00888618`, and direct subtraction gives the key's Structure-74-local
+placement **(X 1038, Y 0, Z 789)**. This is the extracted coordinate frame;
+the inspector's established Z reflection is a presentation transform and must
+not be baked into the stored placement. The slot yaw byte used by the object
+renderer is `$00` at `$7A84`; its absolute angular convention remains only
+partially decoded.
+
+The key record's `$8008` source command at `$03E494` supplies display code
+`VL` and a relative offset `$006A` to the shared key geometry at `$03E502`.
+The renderer dispatch at `$535E4..$53638` copies `VL` into its display-code
+workspace and follows that authored offset. The shared geometry's `$6000`
+record at `$03E580` supplies the local label anchor **(−8, 24, 0)**.
+
+**Correction, 2026-09-08:** the first key extraction incorrectly treated the
+following `$8000` as a terminator, discarded the remaining body faces, and
+substituted an HTML font overlay. The user’s front and side captures exposed
+both errors. `$8000` is the vector-text configuration word: the rest of this
+record is character advance 9, signed X/Y scales 3 and 5, hardware colour
+`$8000` (black), and text reference `$8B00`. Body polygons resume at `$03E590`;
+the actual polygon-stream zero terminator is at `$03E5E6`. All **14 faces**
+use the original **18 body vertices**, including the back, thickness, shaft,
+and tooth. The letters are source stroke geometry, not a billboard or the
+interface bitmap font.
+
+Targeted examination of `$53F96..$5416A` establishes the text-record layout,
+local 3D placement, and relative glyph table at `$31700`. `$8B` selects the
+pointer at `$CCCC` to the `$CD34` display-code workspace populated by `$8008`.
+Font zero indexes characters relative to ASCII space. `V` resolves to `$31C64`
+and `L` to `$31BA0`; signed byte coordinate pairs end at `$81`, followed by
+pairs of one-based vertex offsets in units of four, ending at a zero byte.
+The result is four V strokes and two L strokes. Applying the source scales
+and advance puts their bounds at X −8..7, Y 24..34, Z 0, on the white plate.
+The extractor emits these as ordinary model-space vertices and lines, keeping
+the display code and anchor as metadata. The viewer depth-tests the strokes,
+so the body hides them from behind. Stroke width is one CSS pixel; exact ST
+rasterisation and perspective are not claimed.
+
+Regression checks now require every source body vertex to participate in
+drawable triangles and lettering to occupy the plate in model space. Browser
+checks exercise the oblique, side and rear views, including rear occlusion;
+the original two-face decode and HTML overlay fail these checks.
 
 The complete resident X/Y/Z array range `$63A8..$6FA7` has SHA-256
 `d3d7004108aa22dd128268295cd33620ce90f481c7ded5d0d43560192de0a284`
@@ -148,6 +198,25 @@ for the V.I.P. limo key's initial residence in the one-room spaceport. It is not
 a whole-game object-residence census: the key is the sole matching resident in
 these captures. Carried or removed objects, script-created placements and
 content not loaded in these captures remain unresolved.
+
+### Pickup removes the resident placement
+
+The original recorded route first tries `T`, then acquires the key with Right
+Shift + Up. A shortened deterministic replay of that same route stops
+immediately after the take input, before the player walks to or boards the
+limo. Its panel contains `KEY- V.I.P. LIMO` and pointer `$03E484` at `$4DDBC`.
+In the same post-pickup RAM, slot 183's association words change from
+`$00120404` / `$2C0C0087` at `$7284` / `$7684` to `$00318404` /
+`$78010010`, its X/Z values change to `$000081D5` / `$0001831C`, and tagged
+queue value `$FFFF00B7` is absent. The initial, interior-window and supplied
+at-key states all retain the original coordinates and queue tag.
+
+The boarded and subsequently left-limo captures retain exactly those
+post-pickup slot values, the inventory entry, and the absent room-queue tag.
+This establishes a persistent transition from placed resident to held key,
+independent of boarding. The meanings of every replacement association bit and
+the low X/Z values while held remain unresolved; they must not be presented as
+a second world placement.
 
 ## Consequence for the catalogue
 
@@ -203,7 +272,8 @@ as such rather than claimed as recovered source winding.
 
 The Form selector also offers a combined interior/exterior view, alongside the
 separate views. It places both recovered components in their shared local frame
-using the same evidenced scales. This is an inspection assembly; it does not
+using the same evidenced scales. The interior and combined forms also place the
+captured resident V.I.P. limo key at its recovered local coordinates. This is an inspection assembly; it does not
 reproduce the original region-dependent visibility. It selects the authored
 open-facade alternatives described below. Direct link: `/catalogue?instance=eris-surface-87&variant=combined`.
 

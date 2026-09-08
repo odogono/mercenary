@@ -52,10 +52,56 @@ def colour_value(word: int, palette: list[int] | None, hardware: list[int] | Non
     return st_rgb(word)
 
 
+def decode_key_lettering(data: bytes, reader: Reader, code: str, vertices: list,
+                         lines: list, hardware: list[int] | None) -> list[int]:
+    """Decode the key's inline vector-text record and source stroke glyphs."""
+    anchor = [reader.signed(), reader.signed(), reader.signed()]
+    flags, advance = reader.word(), reader.signed()
+    scale_x, scale_y = struct.unpack('>bb', reader.take(2))
+    colour = reader.word()
+    if flags != 0x8000 or reader.word() != 0x8b00:
+        raise ValueError('key vector-text configuration unresolved')
+    # $8B selects the display-code workspace populated by the $8008 header.
+    # Glyph pointers are relative to $31700; font zero starts at ASCII space.
+    rgb = colour_value(colour, None, hardware)
+    for character_index, character in enumerate(code):
+        index = ord(character) - 32
+        if not 0 <= index < 96:
+            raise ValueError('key glyph outside font zero')
+        pointer = Reader(data, 0x31700 + index * 2).signed()
+        glyph = Reader(data, 0x31700 + pointer)
+        offset = len(vertices)
+        for _ in range(63):
+            x = int.from_bytes(glyph.take(1), 'big', signed=True)
+            if x in (-128, -127):
+                if x != -127:
+                    raise ValueError('key filled glyph unresolved')
+                break
+            y = int.from_bytes(glyph.take(1), 'big', signed=True)
+            vertices.append([anchor[0] + character_index * advance + x * scale_x,
+                             anchor[1] + y * scale_y, anchor[2]])
+        else:
+            raise ValueError('key glyph vertex terminator missing')
+        for _ in range(256):
+            a = glyph.take(1)[0]
+            if a == 0:
+                break
+            b = glyph.take(1)[0]
+            if any(ref == 0 or ref % 4 or ref // 4 > len(vertices) - offset for ref in (a, b)):
+                raise ValueError('invalid key glyph vertex reference')
+            lines.append({'vertices': [offset + a // 4 - 1, offset + b // 4 - 1],
+                          'colour': rgb, 'sourceColour': colour})
+        else:
+            raise ValueError('key glyph line terminator missing')
+    return anchor
+
+
 def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = None,
                 hardware: list[int] | None = None) -> dict:
     reader = Reader(data, start)
     patches: dict[int, int] = {}
+    display_code = None
+    label_anchor = None
     if kind == 'object':
         visited = set()
         for _ in range(32):
@@ -77,6 +123,11 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
                 break  # name substitution / far-distance marker, no local vertex change
             if command == 0x800c:
                 reader.word()  # visibility distance only
+                break
+            if command == 0x8008:
+                display_code = reader.take(2).decode('ascii')
+                offset = reader.signed()
+                reader.p += offset - 2
                 break
             if command == 0x800a:
                 replacement = reader.take(2)
@@ -109,6 +160,7 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
         raise ValueError('vertex terminator missing')
     if not vertices:
         raise ValueError('model has no vertices')
+    body_vertex_count = len(vertices)
     if kind == 'object':
         if reader.word() != 0:
             raise ValueError('view-conditioned face groups unresolved')
@@ -120,8 +172,17 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
         if colour == 0:
             if not faces and not lines:
                 raise ValueError('model has no drawable primitives')
+            if display_code is not None and label_anchor is None:
+                raise ValueError('key vector-text record missing')
             return {'vertices': vertices, 'faces': faces, 'lines': lines,
-                    'sourceStart': start, 'sourceEnd': reader.p, 'geometryStart': geometry_start}
+                    'sourceStart': start, 'sourceEnd': reader.p, 'geometryStart': geometry_start,
+                    **({'displayCode': display_code, 'labelAnchor': label_anchor}
+                       if label_anchor is not None else {})}
+        if colour == 0x6000 and display_code is not None:
+            # Special records align their parameters to an even RAM address.
+            reader.p &= ~1
+            label_anchor = decode_key_lettering(data, reader, display_code, vertices, lines, hardware)
+            continue
         if colour & 0x4000:
             if colour & 0x2000:
                 raise ValueError('special polygon command unresolved')
@@ -138,7 +199,7 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
             else:
                 raise ValueError('polygon terminator missing')
             line = False
-        if any(ref == 0 or ref % 4 or ref // 4 > len(vertices) for ref in refs):
+        if any(ref == 0 or ref % 4 or ref // 4 > body_vertex_count for ref in refs):
             raise ValueError(f'invalid vertex reference at ${address:06x}')
         if len(refs) < (2 if line else 3):
             raise ValueError('degenerate polygon record')
@@ -234,11 +295,29 @@ def assemble_mesh(base: dict, detail: dict, scale: tuple[int, int]) -> dict:
     result = {**base, 'vertices': base['vertices'] + [[x * scale[0], y, z * scale[1]] for x, y, z in detail['vertices']]}
     for kind in ('faces', 'lines'):
         result[kind] = base[kind] + [{**face, 'vertices': [index + offset for index in face['vertices']]} for face in detail[kind]]
+    if 'displayCode' in detail:
+        result['displayCode'] = detail['displayCode']
+        x, y, z = detail['labelAnchor']
+        result['labelAnchor'] = [x * scale[0], y, z * scale[1]]
+    return result
+
+
+def translate_mesh(mesh: dict, position: tuple[int, int, int]) -> dict:
+    """Place reusable geometry without changing its source-local model."""
+    result = {**mesh, 'vertices': [[x + position[0], y + position[1], z + position[2]]
+                                  for x, y, z in mesh['vertices']]}
+    if 'labelAnchor' in mesh:
+        result['labelAnchor'] = [value + position[index]
+                                 for index, value in enumerate(mesh['labelAnchor'])]
     return result
 
 
 def u32(data: bytes, p: int) -> int:
     return int.from_bytes(data[p:p + 4], 'big')
+
+
+def s32(data: bytes, p: int) -> int:
+    return int.from_bytes(data[p:p + 4], 'big', signed=True)
 
 
 def palette_at(data: bytes, index: int) -> list[int]:
@@ -305,6 +384,12 @@ def extract(data: bytes, source: dict) -> dict:
                 model['variants'] = [{'id': 'record', 'name': 'Recovered form' if kind == 'object' else 'Palette 0 (binding unverified)', 'mesh': mesh}]
                 model['status'] = 'decoded' if kind == 'object' else 'partial'
                 model['reason'] = '' if kind == 'object' else 'Building-detail shape decoded; place-specific palette and visibility groups are not bound.'
+                if kind == 'object' and 'displayCode' in mesh:
+                    model['evidence'] = [{
+                        'claim': f"Source $8008 header selects shared key geometry and display code {mesh['displayCode']} at local anchor {mesh['labelAnchor']}.",
+                        'confidence': 'verified',
+                        'source': 'docs/research/damocles-spaceport-interior.md',
+                    }]
             except (ValueError, struct.error) as error:
                 model['reason'] = str(error)
         tables.append({'kind': kind, 'address': base, 'entryCount': count, 'entries': entries,
@@ -319,7 +404,7 @@ def extract(data: bytes, source: dict) -> dict:
                   'the exact interior coordinate transform remains unresolved.' if slot == 183 else
                   'Resident object slot; body/residence and coordinate interpretation remain unresolved.')
         instances.append({'id': f'object-slot-{slot}', 'model': model_id, 'name': f"{by_address[model_id]['name']} · slot {slot}",
-                          'location': None, 'reason': reason,
+                          'location': None, 'placement': None, 'reason': reason,
                           'sourceAddress': 0x63a8 + slot * 4})
     # Current first-world surface workspace: low nibble X, high nibble Z.
     # Camera world/local coordinates bind this workspace to its system grid origin.
@@ -353,12 +438,24 @@ def extract(data: bytes, source: dict) -> dict:
         place = names.get(cell)
         instances.append({'id': identity, 'name': place[1] if place else f'Eris surface cell {cell & 15},{cell >> 4}',
                           'model': model_id, 'sourceAddress': address,
+                          'placement': None,
                           'location': {'body': 'body-11', 'place': place[0] if place else None,
                             'position': [origin_x + (cell & 15) + 0.5 + dx * 30 / 65536, 0, origin_z + (cell >> 4) + 0.5 + dz * 30 / 65536],
                             'coordinateSystem': 'ST surface grid units (first-world Eris workspace)', 'heading': None},
                           'reason': 'Recovered first-world surface workspace placement; not a census of the whole body.'})
         if place:
             next(p for p in places if p['id'] == place[0])['instances'].append(identity)
+    key_position = None
+    spaceport = next((instance for instance in instances if instance['id'] == 'eris-surface-87'), None)
+    key = next((instance for instance in instances if instance['id'] == 'object-slot-183'), None)
+    if spaceport is not None and key is not None:
+        spaceport_raw = [round(spaceport['location']['position'][axis] * 65536) for axis in (0, 1, 2)]
+        key_position = [s32(data, address) - spaceport_raw[axis] for axis, address in
+                        enumerate((0x6684, 0x6a84, 0x6e84))]
+        key['placement'] = {'parent': spaceport['id'], 'position': key_position, 'heading': None,
+                            'coordinateSystem': 'Capital Spaceport local model units'}
+        key['reason'] = ('Recovered resident placement in Capital Spaceport region 1. Raw yaw is zero; '
+                         'the absolute angular convention remains unresolved.')
     interior_palettes = {}
     for model in models:
         if 'interiorSlot' in model:
@@ -397,6 +494,8 @@ def extract(data: bytes, source: dict) -> dict:
         # Region 1 belongs to the plan record; detail 88 is not a separate room.
         # Keep this scoped until other occupied-cell records are reviewed.
         if identity == 'structure-01484e' and slot == 88:
+            if key_position is None:
+                raise ValueError('spaceport key placement is unavailable')
             region_order, region_gaps = decode_visibility_list(data, 0x14970, 28)
             # The region renderer interprets $FF * 4 as runtime slot $3FC,
             # Structure 74's authored dynamic entrance-door attachment.
@@ -405,6 +504,9 @@ def extract(data: bytes, source: dict) -> dict:
             if set(region_order) != set(faces_by_source):
                 raise ValueError('spaceport region 1 visibility list does not account for every decoded plan face')
             base = {**base, 'faces': [faces_by_source[index] for index in region_order]}
+            key_model = by_address['object-03e494']
+            key_mesh = translate_mesh(key_model['variants'][0]['mesh'], tuple(key_position))
+            occupied_base = assemble_mesh(base, key_mesh, (1, 1))
             # Detail 88 contains mutually exclusive closed and open facades.
             # Keep the authored aperture surrounds (35–37, 39–42), excluding
             # full walls and flat opening fills (1, 2, 31, 32).
@@ -416,12 +518,12 @@ def extract(data: bytes, source: dict) -> dict:
             closed_exterior = assemble_mesh({'vertices': [], 'faces': [], 'lines': []}, closed_detail, scale)
             model['variants'] = [
                 {'id': 'exterior', 'name': 'Exterior', 'view': 'exterior', 'doorState': 'open', 'mesh': exterior},
-                {'id': 'interior-layout', 'name': 'Interior layout (partial)', 'mesh': base},
-                {'id': 'combined', 'name': 'Combined interior and exterior', 'view': 'combined', 'doorState': 'open', 'mesh': assemble_mesh(base, open_detail, scale)},
+                {'id': 'interior-layout', 'name': 'Interior with captured resident (partial)', 'mesh': occupied_base},
+                {'id': 'combined', 'name': 'Combined interior and exterior', 'view': 'combined', 'doorState': 'open', 'mesh': assemble_mesh(occupied_base, open_detail, scale)},
             ]
             model['variants'].extend([
                 {'id': 'exterior-closed', 'name': 'Exterior', 'view': 'exterior', 'doorState': 'closed', 'mesh': closed_exterior},
-                {'id': 'combined-closed', 'name': 'Combined interior and exterior', 'view': 'combined', 'doorState': 'closed', 'mesh': assemble_mesh(base, closed_detail, scale)},
+                {'id': 'combined-closed', 'name': 'Combined interior and exterior', 'view': 'combined', 'doorState': 'closed', 'mesh': assemble_mesh(occupied_base, closed_detail, scale)},
             ])
             model['name'] = 'Capital Spaceport'
             model['nameStatus'] = 'candidate'
@@ -435,9 +537,15 @@ def extract(data: bytes, source: dict) -> dict:
                  'confidence': 'verified', 'source': 'docs/research/damocles-spaceport-interior.md'},
                 {'claim': 'Dynamic door proximity box: X 1200–1600, Z -1200–-200.',
                  'confidence': 'verified', 'source': 'docs/research/damocles-spaceport-interior.md'},
-                {'claim': 'Region 1 includes resident slot 183, KEY- V.I.P. LIMO; its exact local position is unresolved.',
-                 'confidence': 'partial', 'source': 'docs/research/damocles-spaceport-interior.md'},
+                {'claim': 'Region 1 places resident slot 183, KEY- V.I.P. LIMO, at local (1038, 0, 789).',
+                 'confidence': 'verified', 'source': 'docs/research/damocles-spaceport-interior.md'},
             ]
+            key_model['evidence'].extend([
+                {'claim': 'Resident slot 183 is placed in Capital Spaceport region 1 at local (1038, 0, 789).',
+                 'confidence': 'verified', 'source': 'docs/research/damocles-spaceport-interior.md'},
+                {'claim': 'Observed pickup removes slot 183 from the room queue and retains the key in inventory.',
+                 'confidence': 'observed', 'source': 'docs/research/damocles-spaceport-interior.md'},
+            ])
             model['status'] = 'partial'
             model['reason'] = (model['reason'] + ' ' + ' '.join(region_gaps) + ' Capital Spaceport at Eris cell $87: the captured interior selects region 1 of this same structure, with local X 840–1560 and Z -760–760. Exterior, interior layout and combined views are available. The interior layout follows region 1 source face ordering. Its $FF entry identifies the authored dynamic entrance-door attachment. The exterior and combined views select the authored open-window and open-door surrounds rather than overlapping them with closed facades. Open and closed detail endpoints are available for inspection; the recovered dynamic door motion, timing and retreat behaviour are not simulated. The closed panel is visible from both sides for inspection. Original region-dependent detail visibility is not fully simulated. Ordinary walls are shown from both sides for inspection; their source records do not specify polygon winding. The blue floor and cyan lower window wall are consistent with the supplied original-game interior view. See docs/research/damocles-spaceport-interior.md.').strip()
             detail['relatedModels'].append(identity)
@@ -460,7 +568,7 @@ def extract(data: bytes, source: dict) -> dict:
         for model in group:
             model['variants'] = variants
             model['relatedModels'].extend(other['id'] for other in group if other is not model)
-    return {'schemaVersion': 2, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
+    return {'schemaVersion': 3, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'places': places, 'tables': tables,
             'coverage': {'complete': False, 'notes': ['Resident first-world census; not a claim of complete disk coverage.',
                 'Conditional geometry, surface attachments, scene palette binding and other-body placements remain incomplete.',

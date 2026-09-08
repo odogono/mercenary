@@ -9,7 +9,9 @@ export interface Primitive {
   readonly vertices: readonly number[];
 }
 export interface Mesh {
+  readonly displayCode?: string;
   readonly faces: readonly Primitive[];
+  readonly labelAnchor?: Point;
   readonly lines: readonly Primitive[];
   readonly vertices: readonly Point[];
 }
@@ -48,6 +50,12 @@ export interface Instance {
   } | null;
   readonly model: string;
   readonly name: string;
+  readonly placement: {
+    readonly coordinateSystem: string;
+    readonly heading: number | null;
+    readonly parent: string;
+    readonly position: Point;
+  } | null;
   readonly reason: string;
   readonly sourceAddress: number;
 }
@@ -66,7 +74,7 @@ export interface Catalogue {
   readonly instances: readonly Instance[];
   readonly models: readonly Model[];
   readonly places: readonly Place[];
-  readonly schemaVersion: 2;
+  readonly schemaVersion: 3;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -172,8 +180,24 @@ const mesh = (value: unknown): Mesh => {
         vertices: refs
       };
     });
+  const displayCode =
+    record['displayCode'] === undefined
+      ? undefined
+      : string(record['displayCode']);
+  const labelAnchor =
+    record['labelAnchor'] === undefined
+      ? undefined
+      : point(record['labelAnchor']);
+  if ((displayCode === undefined) !== (labelAnchor === undefined)) {
+    fail('key display code and anchor must appear together');
+  }
+  if (displayCode !== undefined && !/^[\u0020-\u007e]{2}$/.test(displayCode)) {
+    fail('invalid key display code');
+  }
   return {
+    ...(displayCode === undefined ? {} : { displayCode }),
     faces: primitives(record['faces'], 3),
+    ...(labelAnchor === undefined ? {} : { labelAnchor }),
     lines: primitives(record['lines'], 2),
     vertices
   };
@@ -181,7 +205,7 @@ const mesh = (value: unknown): Mesh => {
 
 export const parseCatalogue = (value: unknown): Catalogue => {
   const r = object(value);
-  if (r['schemaVersion'] !== 2) {
+  if (r['schemaVersion'] !== 3) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -299,11 +323,22 @@ export const parseCatalogue = (value: unknown): Catalogue => {
         position: point(l['position'])
       };
     }
+    let placement: Instance['placement'] = null;
+    if (i['placement'] !== null) {
+      const p = object(i['placement']);
+      placement = {
+        coordinateSystem: string(p['coordinateSystem']),
+        heading: p['heading'] === null ? null : number(p['heading']),
+        parent: string(p['parent']),
+        position: point(p['position'])
+      };
+    }
     return {
       id: string(i['id']),
       location,
       model,
       name: string(i['name']),
+      placement,
       reason: string(i['reason']),
       sourceAddress: integer(i['sourceAddress'])
     };
@@ -312,6 +347,14 @@ export const parseCatalogue = (value: unknown): Catalogue => {
   for (const model of models) {
     for (const id of model.linkedInstances) {
       reference(instanceIds, id, 'linked instance');
+    }
+  }
+  for (const instance of instances) {
+    if (instance.placement !== null) {
+      reference(instanceIds, instance.placement.parent, 'parent instance');
+      if (instance.placement.parent === instance.id) {
+        fail('instance cannot contain itself');
+      }
     }
   }
   for (const place of places) {
@@ -392,7 +435,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     instances,
     models,
     places,
-    schemaVersion: 2,
+    schemaVersion: 3,
     source,
     tables
   };

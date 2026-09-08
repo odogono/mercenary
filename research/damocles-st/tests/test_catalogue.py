@@ -6,6 +6,36 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from damocleslab.catalogue import decode_mesh, st_rgb
 
 class CatalogueTests(unittest.TestCase):
+    def test_key_header_selects_shared_geometry_and_preserves_display_code(self):
+        # $8008 stores a two-character key code, then jumps from the offset
+        # word to a shared key geometry stream.
+        data = bytes.fromhex('8008 564c 0006 00000000')
+        data += struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768)
+        data += bytes.fromhex('0000 0777 04 08 0c 00 6000 fff8 0018 0000 8000 0009 0305 8000 8b00')
+        # A further body polygon follows the complete text record. The $8000
+        # flags above must not be mistaken for an end-of-model marker.
+        data += bytes.fromhex('0543 0c 08 04 00 0000')
+        end = len(data)
+        data = bytearray(data.ljust(0x31910, b'\0'))
+        for char in 'VL':
+            struct.pack_into('>h', data, 0x31700 + (ord(char) - 32) * 2, 0x200)
+        data[0x31900:0x31908] = bytes.fromhex('0000 0202 81 0408 00')
+        mesh = decode_mesh(data, 0, 'object', hardware=[0])
+        self.assertEqual(mesh['displayCode'], 'VL')
+        self.assertEqual(mesh['labelAnchor'], [-8, 24, 0])
+        self.assertEqual(mesh['geometryStart'], 10)
+        self.assertEqual(len(mesh['faces']), 2)
+        self.assertEqual(mesh['sourceEnd'], end)
+        self.assertEqual(mesh['vertices'][3:], [[-8, 24, 0], [-2, 34, 0], [1, 24, 0], [7, 34, 0]])
+        self.assertEqual([line['vertices'] for line in mesh['lines']], [[3, 4], [5, 6]])
+
+    def test_truncated_key_text_is_not_reported_as_a_complete_model(self):
+        data = bytes.fromhex('8008 564c 0002')
+        data += struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768)
+        data += bytes.fromhex('0000 0777 04 08 0c 00 6000 fff8 0018 0000 8000')
+        with self.assertRaisesRegex(ValueError, 'truncated record'):
+            decode_mesh(data, 0, 'object')
+
     def test_signed_vertices_and_one_based_polygon_indices(self):
         data = struct.pack('>11h', -10, 0, 10, 10, 0, 10, 0, 20, 0, -32768, 0)
         data += bytes.fromhex('0540 04 08 0c 00 0000')
@@ -69,6 +99,15 @@ class SourceTests(unittest.TestCase):
         self.assertNotEqual(first['models'][0]['name'], second['models'][0]['name'])
 
 class AssemblyTests(unittest.TestCase):
+    def test_translation_places_geometry_and_its_label_anchor(self):
+        from damocleslab.catalogue import translate_mesh
+        mesh = {'vertices': [[-10, 0, 4]], 'faces': [], 'lines': [],
+                'displayCode': 'VL', 'labelAnchor': [-8, 24, 0]}
+        placed = translate_mesh(mesh, (1038, 0, 789))
+        self.assertEqual(placed['vertices'], [[1028, 0, 793]])
+        self.assertEqual(placed['labelAnchor'], [1030, 24, 789])
+        self.assertEqual(mesh['vertices'], [[-10, 0, 4]])
+
     def test_detail_coordinates_scale_into_structure_and_refs_are_rebased(self):
         from damocleslab.catalogue import assemble_mesh
         base = {'vertices': [[0,0,0]], 'faces': [], 'lines': []}

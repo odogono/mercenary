@@ -1,5 +1,54 @@
 import { expect, test } from '@playwright/test';
 
+test('key strokes rotate with the plate and are hidden behind the solid body', async ({
+  page
+}) => {
+  await page.goto('/catalogue?instance=object-slot-183');
+  await expect(page.locator('#model-name')).toHaveText('KEY- V.I.P. LIMO');
+  await expect(page.locator('#viewer-message')).toBeHidden();
+  const inkPixels = async (keys: string[]) =>
+    page.locator('#model-view').evaluate((element, keys) => {
+      const canvas = element as HTMLCanvasElement;
+      for (const key of keys) {
+        canvas.dispatchEvent(new KeyboardEvent('keydown', { key }));
+      }
+      const gl = canvas.getContext('webgl2')!;
+      const pixels = new Uint8Array(canvas.width * canvas.height * 4);
+      gl.readPixels(
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        pixels
+      );
+      let black = 0;
+      for (let index = 0; index < pixels.length; index += 4) {
+        if (
+          pixels[index]! < 3 &&
+          pixels[index + 1]! < 3 &&
+          pixels[index + 2]! < 3
+        ) {
+          black++;
+        }
+      }
+      return black;
+    }, keys);
+  expect(await inkPixels(['0'])).toBeGreaterThan(30);
+  await page
+    .locator('#model-view')
+    .screenshot({ path: 'test-results/key-oblique.png' });
+  expect(await inkPixels(Array(8).fill('ArrowLeft'))).toBeGreaterThan(10);
+  await page
+    .locator('#model-view')
+    .screenshot({ path: 'test-results/key-side.png' });
+  expect(await inkPixels(Array(24).fill('ArrowLeft'))).toBe(0);
+  await page
+    .locator('#model-view')
+    .screenshot({ path: 'test-results/key-back.png' });
+});
+
 test('direct catalogue access, search, inspection and Back never start Targ', async ({
   page
 }) => {
@@ -221,13 +270,16 @@ test('Capital Spaceport exposes its interior layout independently of its exterio
     'Dynamic door proximity box: X 1200–1600, Z -1200–-200.'
   );
   await expect(page.locator('#details')).toContainText(
-    'Region 1 includes resident slot 183, KEY- V.I.P. LIMO'
+    'Region 1 places resident slot 183, KEY- V.I.P. LIMO, at local (1038, 0, 789).'
   );
   await expect(
     page.locator('#details').getByRole('link', { name: /KEY- V.I.P. LIMO/ })
   ).toHaveAttribute('href', /instance=object-slot-183/);
   await expect(page.locator('#model-status')).toHaveText('partial');
   await expect(page.locator('#viewer-message')).toBeHidden();
+  await page.screenshot({
+    path: 'test-results/catalogue-spaceport-room-key.png'
+  });
   const interiorCounts = await page.locator('#details').innerText();
   await page.locator('#variant').selectOption('exterior');
   await expect(page).toHaveURL(/variant=exterior/);
@@ -240,14 +292,27 @@ test('Capital Spaceport exposes its interior layout independently of its exterio
   await page.reload();
   await expect(page.locator('#variant')).toHaveValue('combined');
   await expect(page.locator('#viewer-message')).toBeHidden();
+  await page.screenshot({
+    path: 'test-results/catalogue-spaceport-with-key.png'
+  });
   await page
     .locator('#details')
     .getByRole('link', { name: /KEY- V.I.P. LIMO/ })
     .click();
   await expect(page.locator('#model-name')).toHaveText('KEY- V.I.P. LIMO');
+  await expect(page.locator('#model-status')).toHaveText('decoded');
+  await expect(page.locator('#model-label')).toHaveCount(0);
+  await expect(page.locator('#viewer-message')).toBeHidden();
   await expect(page.locator('#details')).toContainText(
-    'exact interior coordinate transform remains unresolved'
+    'Inside CAPITAL SPACEPORT · 1038, 0, 789 · Capital Spaceport local model units'
   );
+  await expect(page.locator('#details')).toContainText(
+    'display code VL at local anchor [-8, 24, 0]'
+  );
+  await expect(page.locator('#details')).toContainText(
+    'Observed pickup removes slot 183 from the room queue'
+  );
+  await page.screenshot({ path: 'test-results/catalogue-spaceport-key.png' });
 });
 
 test('source negative-Z facade keeps the spaceport entrance on the right', async ({

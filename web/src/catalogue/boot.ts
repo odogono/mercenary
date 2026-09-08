@@ -77,7 +77,9 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
       details,
       instance.location
         ? `${data.bodies.find(b => b.id === instance.location!.body)?.name} · ${instance.location.position.map(value => value.toFixed(3)).join(', ')} · ${instance.location.coordinateSystem}`
-        : instance.reason
+        : instance.placement
+          ? `Inside ${data.instances.find(value => value.id === instance.placement!.parent)?.name} · ${instance.placement.position.join(', ')} · ${instance.placement.coordinateSystem}. ${instance.reason}`
+          : instance.reason
     );
   }
   const chosen = new URL(location.href).searchParams.get('variant');

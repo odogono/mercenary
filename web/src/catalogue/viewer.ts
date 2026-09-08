@@ -20,16 +20,30 @@ export const createViewer = (canvas: HTMLCanvasElement) => {
   const vertex = shader(
     gl.VERTEX_SHADER,
     `#version 300 es
-    in vec3 position; in vec3 colour; out vec3 ink;
-    uniform vec2 angle; uniform vec2 scale;
-    void main() {
+    in vec3 position; in vec3 colour; in vec3 endpoint; in float edge;
+    out vec3 ink;
+    uniform vec2 angle; uniform vec2 scale; uniform vec2 viewport;
+    vec3 project(vec3 position) {
       // ST model space has the opposite handedness to the viewer.
       float sourceZ=-position.z;
       float x=position.x*cos(angle.x)+sourceZ*sin(angle.x);
       float z=-position.x*sin(angle.x)+sourceZ*cos(angle.x);
       float y=position.y*cos(angle.y)-z*sin(angle.y);
       z=position.y*sin(angle.y)+z*cos(angle.y);
-      gl_Position=vec4(x*scale.x,y*scale.y,-z*0.1,1.0); ink=colour;
+      return vec3(x*scale.x,y*scale.y,-z*0.1);
+    }
+    void main() {
+      vec3 point=project(position);
+      if (edge != 0.0) {
+        vec2 direction=(project(endpoint).xy-point.xy)*viewport;
+        float extent=length(direction);
+        if (extent > 0.00001) {
+          // One CSS-pixel stroke, independent of device pixel ratio. Its
+          // endpoints and depth still follow the authored model geometry.
+          point.xy+=vec2(-direction.y,direction.x)/extent*edge/viewport;
+        }
+      }
+      gl_Position=vec4(point,1.0); ink=colour;
     }`
   );
   const fragment = shader(
@@ -50,13 +64,15 @@ export const createViewer = (canvas: HTMLCanvasElement) => {
   gl.useProgram(program);
   const buffer = gl.createBuffer()!;
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  for (const [name, offset] of [
-    ['position', 0],
-    ['colour', 12]
+  for (const [name, offset, size] of [
+    ['position', 0, 3],
+    ['colour', 12, 3],
+    ['endpoint', 24, 3],
+    ['edge', 36, 1]
   ] as const) {
     const attribute = gl.getAttribLocation(program, name);
     gl.enableVertexAttribArray(attribute);
-    gl.vertexAttribPointer(attribute, 3, gl.FLOAT, false, 24, offset);
+    gl.vertexAttribPointer(attribute, size, gl.FLOAT, false, 40, offset);
   }
   let yaw = -0.55,
     pitch = 0.3,
@@ -88,13 +104,14 @@ export const createViewer = (canvas: HTMLCanvasElement) => {
       v => v.map((n, i) => (n - center[i]!) / radius) as unknown as Point
     );
     const data: number[] = [];
-    const add = (index: number, p: Primitive) => {
+    const add = (index: number, p: Primitive, endpoint = index, edge = 0) => {
       data.push(...points[index]!);
       for (const offset of [1, 3, 5]) {
         data.push(
           Number.parseInt(p.colour.slice(offset, offset + 2), 16) / 255
         );
       }
+      data.push(...points[endpoint]!, edge);
     };
     for (const face of mesh.faces) {
       const triangles = triangulate(mesh.vertices, face.vertices);
@@ -107,7 +124,7 @@ export const createViewer = (canvas: HTMLCanvasElement) => {
         add(index, face);
       }
     }
-    fillCount = data.length / 6;
+    fillCount = data.length / 10;
     const paths = wire ? [...mesh.faces, ...mesh.lines] : mesh.lines;
     for (const path of paths) {
       for (
@@ -115,11 +132,17 @@ export const createViewer = (canvas: HTMLCanvasElement) => {
         i < path.vertices.length - (path.vertices.length === 2 ? 1 : 0);
         i++
       ) {
-        add(path.vertices[i]!, path);
-        add(path.vertices[(i + 1) % path.vertices.length]!, path);
+        const a = path.vertices[i]!,
+          b = path.vertices[(i + 1) % path.vertices.length]!;
+        add(a, path, b, -1);
+        add(a, path, b, 1);
+        add(b, path, a, -1);
+        add(a, path, b, -1);
+        add(b, path, a, -1);
+        add(b, path, a, 1);
       }
     }
-    lineCount = data.length / 6 - fillCount;
+    lineCount = data.length / 10 - fillCount;
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
   };
   const draw = () => {
@@ -137,6 +160,11 @@ export const createViewer = (canvas: HTMLCanvasElement) => {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.uniform2f(gl.getUniformLocation(program, 'angle'), yaw, pitch);
     gl.uniform2f(
+      gl.getUniformLocation(program, 'viewport'),
+      canvas.clientWidth,
+      canvas.clientHeight
+    );
+    gl.uniform2f(
       gl.getUniformLocation(program, 'scale'),
       zoom * Math.min(1, height / width),
       zoom * Math.min(1, width / height)
@@ -149,9 +177,14 @@ export const createViewer = (canvas: HTMLCanvasElement) => {
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
     if (!wire) {
+      // Keep coplanar source strokes visible without changing their geometry.
+      gl.enable(gl.POLYGON_OFFSET_FILL);
+      gl.polygonOffset(1, 1);
       gl.drawArrays(gl.TRIANGLES, 0, fillCount);
+      gl.disable(gl.POLYGON_OFFSET_FILL);
     }
-    gl.drawArrays(gl.LINES, fillCount, lineCount);
+    gl.disable(gl.CULL_FACE);
+    gl.drawArrays(gl.TRIANGLES, fillCount, lineCount);
   };
   const reset = () => {
     yaw = -0.55;

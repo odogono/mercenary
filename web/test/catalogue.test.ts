@@ -12,6 +12,12 @@ const fixture = () => ({
       location: null,
       model: 'object-1',
       name: 'Test instance',
+      placement: null as null | {
+        coordinateSystem: string;
+        heading: number | null;
+        parent: string;
+        position: [number, number, number];
+      },
       reason: 'Unknown location',
       sourceAddress: 2
     }
@@ -33,7 +39,7 @@ const fixture = () => ({
     }
   ],
   places: [],
-  schemaVersion: 2,
+  schemaVersion: 3,
   source: {
     authority: 'Synthetic test',
     evidence: 'test',
@@ -69,6 +75,14 @@ describe('Damocles catalogue contract', () => {
     const badLink = fixture();
     badLink.models[0]!.linkedInstances = ['missing'];
     expect(() => parseCatalogue(badLink)).toThrow('linked instance');
+    const badParent = fixture();
+    badParent.instances[0]!.placement = {
+      coordinateSystem: 'Test local coordinates',
+      heading: null,
+      parent: 'missing',
+      position: [0, 0, 0]
+    };
+    expect(() => parseCatalogue(badParent)).toThrow('parent instance');
   });
   it('rejects duplicate identities and dishonest census counts', () => {
     const bad = fixture();
@@ -280,14 +294,90 @@ it('identifies the reviewed spaceport and preserves its region-one visibility ev
   });
   expect(spaceport.evidence).toContainEqual({
     claim:
-      'Region 1 includes resident slot 183, KEY- V.I.P. LIMO; its exact local position is unresolved.',
-    confidence: 'partial',
+      'Region 1 places resident slot 183, KEY- V.I.P. LIMO, at local (1038, 0, 789).',
+    confidence: 'verified',
     source: 'docs/research/damocles-spaceport-interior.md'
   });
   expect(spaceport.linkedInstances).toEqual(['object-slot-183']);
   const room = spaceport.variants.find(form => form.id === 'interior-layout')!;
-  expect(room.mesh.faces.map(face => face.sourceIndex)).toEqual([
+  expect(room.mesh.faces.slice(0, 28).map(face => face.sourceIndex)).toEqual([
     25, 21, 22, 8, 26, 27, 24, 7, 10, 9, 23, 6, 11, 12, 1, 4, 16, 2, 3, 17, 0,
     5, 15, 14, 19, 20, 13, 18
   ]);
+});
+
+it('draws every source silhouette vertex of the V.I.P. limo key body', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const key = data.models.find(model => model.id === 'object-03e494')!;
+  const { mesh } = key.variants.find(variant => variant.id === key.id)!;
+  // The source body contains nine paired front/back vertices. A plate and
+  // detached tooth alone leave the shaft, outline and thickness undrawn.
+  const drawableVertices = new Set(
+    mesh.faces.flatMap(face => triangulate(mesh.vertices, face.vertices))
+  );
+  expect(
+    Array.from({ length: 18 }, (_, index) => index).filter(
+      index => !drawableVertices.has(index)
+    )
+  ).toEqual([]);
+});
+
+it('keeps V.I.P. limo key lettering in model space on its plate', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const key = data.models.find(model => model.id === 'object-03e494')!;
+  const { mesh } = key.variants.find(variant => variant.id === key.id)!;
+  const lettering = mesh.lines.filter(line => line.colour === '#000000');
+  expect(lettering.length).toBeGreaterThan(0);
+  const points = lettering.flatMap(line =>
+    line.vertices.map(index => mesh.vertices[index]!)
+  );
+  for (const [x, y, z] of points) {
+    expect(x).toBeGreaterThanOrEqual(-10);
+    expect(x).toBeLessThanOrEqual(10);
+    expect(y).toBeGreaterThanOrEqual(20);
+    expect(y).toBeLessThanOrEqual(40);
+    expect(Math.abs(z)).toBeLessThan(0.1);
+  }
+  expect(new Set(points.map(([x]) => x)).size).toBeGreaterThan(1);
+  expect(new Set(points.map(([, y]) => y)).size).toBeGreaterThan(1);
+});
+
+it('decodes the V.I.P. limo key and preserves its source display code', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const key = data.models.find(model => model.id === 'object-03e494')!;
+  const form = key.variants.find(variant => variant.id === key.id)!;
+  expect(key.status).toBe('decoded');
+  expect(form.mesh.displayCode).toBe('VL');
+  expect(form.mesh.labelAnchor).toEqual([-8, 24, 0]);
+  expect(key.evidence).toContainEqual({
+    claim:
+      'Source $8008 header selects shared key geometry and display code VL at local anchor [-8, 24, 0].',
+    confidence: 'verified',
+    source: 'docs/research/damocles-spaceport-interior.md'
+  });
+  const instance = data.instances.find(
+    value => value.id === 'object-slot-183'
+  )!;
+  expect(instance.placement).toEqual({
+    coordinateSystem: 'Capital Spaceport local model units',
+    heading: null,
+    parent: 'eris-surface-87',
+    position: [1038, 0, 789]
+  });
+  const spaceport = data.models.find(model => model.id === 'structure-01484e')!;
+  const room = spaceport.variants.find(
+    variant => variant.id === 'interior-layout'
+  )!;
+  expect(room.mesh.vertices.slice(-form.mesh.vertices.length)).toEqual(
+    form.mesh.vertices.map(([x, y, z]) => [x + 1038, y, z + 789])
+  );
+  expect(
+    room.mesh.faces.slice(-form.mesh.faces.length).map(face => face.colour)
+  ).toEqual(form.mesh.faces.map(face => face.colour));
 });

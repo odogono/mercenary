@@ -21,10 +21,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Capital Spaceport Structure 74 now has candidate naming and separate exterior, region-1
   interior, combined, and open/closed door inspection forms. The recovered region queue orders
   all 28 plan faces, identifies its `$FF` entry as the animated entrance-door attachment, and
-  links resident slot 183, `KEY- V.I.P. LIMO`, while leaving its unproved room coordinates
-  unknown.
+  places resident slot 183, `KEY- V.I.P. LIMO`, at its recovered room coordinates. Shared key
+  geometry, two-character display codes, label anchors, and pickup removal are documented;
+  eight formerly unresolved key models are now viewable.
 
 ### Fixed
+
+- Damocles keys now include the twelve body faces previously lost at a misread
+  vector-text record. Lettering uses the recovered 3D glyph strokes, rotates
+  with the plate, and is hidden by the key from behind; the incorrect HTML
+  font overlay has been removed.
 
 - Correct the catalogue viewer's face orientation and handedness so recovered surfaces render
   without the earlier missing-face artifacts and the Capital Spaceport entrance appears on the

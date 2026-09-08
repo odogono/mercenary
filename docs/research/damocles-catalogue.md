@@ -25,8 +25,9 @@ first-world scenario hash. It uses the standard library only. A missing capture
 can be regenerated with the existing `lab observe --scenario
 research/damocles-st/scenarios/first-world.json` command. Raw images, RAM and
 Working Disassembly stay in ignored research paths; the browser receives only
-the separately versioned catalogue JSON. Schema version 2 adds per-face source
-indices and structured model evidence with explicit confidence and source fields.
+the separately versioned catalogue JSON. Schema version 3 includes per-face
+source indices, structured evidence, nested instance placements, and source key
+display metadata.
 
 ## Source and census
 
@@ -54,17 +55,18 @@ runtime-selectable index. The UI displays that qualification for each table.
 Every slot maps to one model identity; repeated pointers share a model and retain
 all slot indices. No pointer scan is represented as a model census.
 
-Current extraction accounts for **539 unique records**: **158 decoded**,
-**306 partial**, and **75 unresolved**. “Decoded” means the supported record was
+Current extraction accounts for **539 unique records**: **166 decoded**,
+**306 partial**, and **67 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.
 Unresolved records remain searchable and retain their source identity and reason.
 NULL is explicitly accounted for as an empty record, not a fabricated mesh.
 
 The 31 body labels at `$0081DC` include VOID; this does not imply all entries are
-planets. Object residence is not yet decoded. The first 256 resident object slots
-are represented as instances with unknown locations; later model slots are not
-invented as placed objects.
+planets. The first 256 resident object slots are represented as instances; later
+model slots are not invented as placed objects. Residence remains unknown except
+for slot 183, whose source association and world-to-structure transform place it
+inside Capital Spaceport region 1.
 
 ## Recovered data grammar
 
@@ -91,6 +93,14 @@ code. Targeted disassembly used to establish them remains ignored at
   modes remain unresolved. Supported name/far-marker headers do not change local
   vertices. Relative header jumps and colour patches expose related visual forms
   with the same vertex stream; the browser offers those forms in its selector.
+- Key header `$8008` stores a two-character display code and jumps to shared key
+  geometry. Its `$6000` vector-text record supplies the local anchor, character
+  advance, scales, colour and text reference. Glyph strokes come from the source
+  table at `$31700` and become model-space lines. The `$8000` text configuration
+  is not a terminator: twelve further body faces follow the text record, giving
+  fourteen faces and eighteen body vertices. Eight key models share this body
+  with different source lettering. See the 2026-09-08 correction in the
+  [Spaceport findings](damocles-spaceport-interior.md).
 - The detail table serves **both exterior and interior** geometry. Building detail 88
   includes the tower and windowed facade seen outside at the spaceport; it is not
   a separate enclosed room. The original “Interiors” label incorrectly treated a source bank as a semantic
@@ -169,7 +179,8 @@ keys are also seeded and checked byte-for-byte so direct catalogue access cannot
 alter an existing session or save.
 
 Representative inspection uses the DART II model, the Capital Spaceport structure
-at cell `$87`, and building detail 88. The original first-world and
+at cell `$87`, building detail 88, and `KEY- V.I.P. LIMO` in resident slot 183.
+The original first-world and
 `interior-window-ram-20260818T172346Z-e3772e4d` captures establish the spaceport's
 exterior/interior correspondence. The latter records interior pointer `$0303D6`
 and palette pointer `$00D54C`. Shape inspection and colour comparison remain
@@ -178,7 +189,7 @@ attachments, or exterior seen through the interior's window. These are not
 claimed as a completed pixel-fidelity gate.
 
 Still unexplored or incomplete: other-body placement workspaces and named-place
-lists, disk-load reachability beyond resident tables, object residence/transforms,
+lists, disk-load reachability beyond resident tables, remaining object residences/transforms,
 view-conditioned object groups, articulated geometry, special primitives,
 surface attachments/openings, and script-created visual changes. The recovery
 ledger exposes this boundary; it does not declare the whole game's extraction
