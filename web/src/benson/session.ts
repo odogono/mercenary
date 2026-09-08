@@ -195,7 +195,9 @@ export class BensonSession {
       this.messageOccurrence !== undefined
     ) {
       this.display.advance(seconds);
-      if (this.display.isFinished) {
+      // The script continues once the reading hold has passed; the row's departure is
+      // presentation that runs alongside whatever the script does next.
+      if (this.display.isReleased) {
         this.host = this.host.with({ messagePlaying: false });
       }
     }
@@ -348,6 +350,7 @@ export class BensonSession {
       fractionalFrameRemainder: revealed - Math.trunc(revealed),
       messageInterval,
       readingHoldProgress: this.ticker.holdProgress,
+      restedIntact: false,
       sourceIndex: Math.trunc(revealed)
     };
   }

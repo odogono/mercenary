@@ -12,7 +12,7 @@ import type {
 import type { Location, Residence } from '../world/index.ts';
 import type { ShipFieldPoint, ShipFieldSaveSnapshot } from './shipField.ts';
 
-export const SAVE_SCHEMA_VERSION = 12 as const;
+export const SAVE_SCHEMA_VERSION = 13 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -45,11 +45,17 @@ export interface SaveEnvironment {
 export interface BensonDisplaySaveSnapshot {
   readonly activeSourceText: string | null;
   readonly cells: readonly string[];
-  readonly completionPhase: 'source' | 'blankFeed' | 'readingHold' | 'idle';
+  readonly completionPhase:
+    | 'source'
+    | 'blankFeed'
+    | 'readingHold'
+    | 'clearing'
+    | 'idle';
   readonly cyclePosition: number;
   readonly fractionalFrameRemainder: number;
   readonly messageInterval: number;
   readonly readingHoldProgress: number;
+  readonly restedIntact: boolean;
   readonly sourceIndex: number;
 }
 
@@ -561,6 +567,7 @@ const display = (value: unknown, at: string): BensonDisplaySaveSnapshot => {
     'fractionalFrameRemainder',
     'messageInterval',
     'readingHoldProgress',
+    'restedIntact',
     'sourceIndex'
   ]);
   const activeSourceText =
@@ -579,7 +586,9 @@ const display = (value: unknown, at: string): BensonDisplaySaveSnapshot => {
     fail(`${at}.sourceIndex exceeds the source text`);
   }
   const rawPhase = string(out['completionPhase'], `${at}.completionPhase`);
-  if (!['source', 'blankFeed', 'readingHold', 'idle'].includes(rawPhase)) {
+  if (
+    !['source', 'blankFeed', 'readingHold', 'clearing', 'idle'].includes(rawPhase)
+  ) {
     fail(`${at}.completionPhase is not recognized`);
   }
   const messageInterval = integerInRange(
@@ -599,11 +608,16 @@ const display = (value: unknown, at: string): BensonDisplaySaveSnapshot => {
     if (rawPhase !== 'idle' || sourceIndex !== 0) {
       fail(`${at} without an active source must be idle at source index zero`);
     }
-  } else if (rawPhase !== 'source' && sourceIndex !== sourceLength) {
+  } else if (
+    (rawPhase === 'blankFeed' || rawPhase === 'idle') &&
+    sourceIndex !== sourceLength
+  ) {
     fail(`${at}.${rawPhase} must have consumed the complete source text`);
   }
   if (
-    (rawPhase === 'source' || rawPhase === 'blankFeed') &&
+    (rawPhase === 'source' ||
+      rawPhase === 'blankFeed' ||
+      rawPhase === 'clearing') &&
     cyclePosition >= messageInterval
   ) {
     fail(`${at}.${rawPhase} cycle position must precede its interval boundary`);
@@ -656,6 +670,7 @@ const display = (value: unknown, at: string): BensonDisplaySaveSnapshot => {
     fractionalFrameRemainder,
     messageInterval,
     readingHoldProgress,
+    restedIntact: bool(out['restedIntact'], `${at}.restedIntact`),
     sourceIndex
   };
 };
@@ -1252,7 +1267,7 @@ const decodeEnvelope = (text: string): SaveEnvelope => {
     'snapshot'
   ]);
   const schemaVersion = integer(out['schemaVersion'], '$.schemaVersion');
-  if (schemaVersion !== 11 && schemaVersion !== SAVE_SCHEMA_VERSION) {
+  if (schemaVersion < 11 || schemaVersion > SAVE_SCHEMA_VERSION) {
     return fail(`unsupported Save schemaVersion ${schemaVersion}`);
   }
   const savedAt = string(out['savedAt'], '$.savedAt');
@@ -1271,9 +1286,38 @@ const decodeEnvelope = (text: string): SaveEnvelope => {
     savedAt,
     schemaVersion: SAVE_SCHEMA_VERSION,
     snapshot: migrateHeadingConvention(
-      snapshot(out['snapshot'], '$.snapshot'),
+      snapshot(migrateDisplayRest(out['snapshot'], schemaVersion), '$.snapshot'),
       schemaVersion
     )
+  };
+};
+
+/// Schema 13 records whether the Benson Message has rested intact on the row. Earlier Saves
+/// never let a rested message leave, so the flag they would have recorded is false; the
+/// restored display simply rests through whatever hold remains and then departs.
+const migrateDisplayRest = (value: unknown, schemaVersion: number): unknown => {
+  if (schemaVersion >= 13) {
+    return value;
+  }
+  const raw = record(value, '$.snapshot');
+  const benson = raw['benson'];
+  if (benson === null || benson === undefined) {
+    return value;
+  }
+  const bensonRecord = record(benson, '$.snapshot.benson');
+  const display = bensonRecord['display'];
+  if (display === undefined) {
+    return value;
+  }
+  return {
+    ...raw,
+    benson: {
+      ...bensonRecord,
+      display: {
+        ...record(display, '$.snapshot.benson.display'),
+        restedIntact: false
+      }
+    }
   };
 };
 

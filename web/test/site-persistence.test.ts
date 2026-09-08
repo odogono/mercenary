@@ -232,10 +232,10 @@ describe('the closed codec the combat block travels in', () => {
     const saved = JSON.parse(
       envelopeWith(session().captureSaveSnapshot().combat)
     );
-    saved.schemaVersion = SAVE_SCHEMA_VERSION - 2;
+    saved.schemaVersion = SAVE_SCHEMA_VERSION - 3;
 
     expect(() => decodeSave(JSON.stringify(saved), environment)).toThrow(
-      `unsupported Save schemaVersion ${SAVE_SCHEMA_VERSION - 2}`
+      `unsupported Save schemaVersion ${SAVE_SCHEMA_VERSION - 3}`
     );
   });
 });

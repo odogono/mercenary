@@ -62,9 +62,38 @@ describe('the authentic Benson Display', () => {
     display.advance(25 / 50);
     expect(display.displayText).toBe('C' + ' '.repeat(22));
     expect(display.isFinished).toBeFalse();
-    display.advance(1 / 50);
-    expect(display.isFinished).toBeTrue();
     expect(display.isComplete).toBeTrue();
+    display.advance(1 / 50);
+    expect(display.readingText('ABC')).toBe('ABC' + ' '.repeat(20));
+    expect(display.isFinished).toBeFalse();
+  });
+
+  test('scrolls a finished message off the left edge after its reading hold', () => {
+    const display = new BensonDisplay(50, 6, 3);
+    display.start('  HANGER', 125);
+    display.advance(25 / 50 + 100 / 300);
+    expect(display.readingText('HANGER')).toBe('HANGER' + ' '.repeat(17));
+    display.advance(3);
+    expect(display.isFinished).toBeFalse();
+    expect(display.readingText('HANGER')).toBe('HANGER' + ' '.repeat(17));
+    display.advance(1 / 50);
+    expect(display.readingText('HANGER')).toBe('ANGER' + ' '.repeat(18));
+    display.advance(4 / 50);
+    expect(display.readingText('HANGER')).toBe('R' + ' '.repeat(22));
+    expect(display.isFinished).toBeFalse();
+    display.advance(1 / 50);
+    expect(display.readingText('HANGER')).toBe(' '.repeat(23));
+    expect(display.isFinished).toBeTrue();
+  });
+
+  test('keeps the row still when told not to clear after the hold', () => {
+    const display = new BensonDisplay(50, 1, 0, false);
+    display.start('ABC', 26);
+    display.advance(26 / 50);
+    expect(display.isFinished).toBeTrue();
+    expect(display.readingText('ABC')).toBe('ABC' + ' '.repeat(20));
+    display.advance(10);
+    expect(display.readingText('ABC')).toBe('ABC' + ' '.repeat(20));
   });
 
   test('keeps recovered padding in the cells', () => {
@@ -117,7 +146,10 @@ describe('the authentic Benson Display', () => {
     expect(display.isFinished).toBeFalse();
     display.advance(2.98);
     expect(display.isFinished).toBeFalse();
+    expect(display.captureSaveSnapshot().completionPhase).toBe('readingHold');
     display.advance(0.02);
+    expect(display.captureSaveSnapshot().completionPhase).toBe('clearing');
+    display.advance(1 / 50);
     expect(display.isFinished).toBeTrue();
   });
 
@@ -128,6 +160,7 @@ describe('the authentic Benson Display', () => {
     skipped.start('A MESSAGE LONGER THAN ONE BURST', 125);
     natural.advance(100);
     skipped.finish();
+    expect(natural.displayText).toBe(' '.repeat(23));
     expect(skipped.displayText).toBe(natural.displayText);
     expect(skipped.captureSaveSnapshot()).toEqual(
       natural.captureSaveSnapshot()
@@ -146,11 +179,31 @@ describe('the authentic Benson Display', () => {
     expect(display.isFinished).toBeTrue();
   });
 
+  test('a message longer than the row leaves without a jump', () => {
+    const display = new BensonDisplay(50, 1, 0);
+    display.start('A MESSAGE LONGER THAN ONE BURST', 26);
+    display.advance(50 / 50);
+    expect(display.displayText).toBe('URST' + ' '.repeat(19));
+    expect(display.captureSaveSnapshot().completionPhase).toBe('blankFeed');
+    display.advance(1 / 50);
+    expect(display.displayText).toBe('URST' + ' '.repeat(19));
+    expect(display.captureSaveSnapshot().completionPhase).toBe('clearing');
+    expect(display.readingText('A MESSAGE LONGER THAN ONE BURST')).toBe(
+      display.displayText
+    );
+    display.advance(1 / 50);
+    expect(display.displayText).toBe('RST' + ' '.repeat(20));
+    display.advance(3 / 50);
+    expect(display.displayText).toBe(' '.repeat(23));
+    expect(display.isFinished).toBeTrue();
+  });
+
   test.each([
     ['mid-burst', 3.5 / 50],
     ['$E1 wait', 30 / 50],
     ['blank feed', 5 / 50],
-    ['reading hold', 26 / 50 + 1]
+    ['reading hold', 26 / 50 + 1],
+    ['clearing', 26 / 50 + 3 + 1.5 / 50]
   ])('restores %s and continues exactly', (_phase, elapsed) => {
     const original = new BensonDisplay(50, 1, 3);
     original.start('ABC', 26);

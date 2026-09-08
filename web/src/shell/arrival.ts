@@ -146,7 +146,7 @@ export class ArrivalDirector {
     this.milestones = options.milestones;
     this.narration = options.narration ?? ARRIVAL_NARRATION;
     this.pacing = options.pacing;
-    this.display = new BensonDisplay(50, this.pacing.timeScale, 0);
+    this.display = new BensonDisplay(50, this.pacing.timeScale, 0, false);
     switch (options.entry.kind) {
       case 'done':
         this.phase = 'done';
