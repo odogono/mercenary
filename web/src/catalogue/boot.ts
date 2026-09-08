@@ -76,7 +76,7 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
     paragraph(
       details,
       instance.location
-        ? `${data.bodies.find(b => b.id === instance.location!.body)?.name} · ${instance.location.position.map(value => value.toFixed(3)).join(', ')} · ${instance.location.coordinateSystem}`
+        ? `${data.bodies.find(b => b.id === instance.location!.body)?.name} · ${instance.location.position.map(value => value.toFixed(3)).join(', ')} · ${instance.location.coordinateSystem}${instance.location.heading === null ? '' : ` · source heading ${instance.location.heading}`}`
         : instance.placement
           ? `Inside ${data.instances.find(value => value.id === instance.placement!.parent)?.name} · ${instance.placement.position.join(', ')} · ${instance.placement.coordinateSystem}. ${instance.reason}`
           : instance.reason
@@ -111,7 +111,7 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
       ? `${form.mesh.vertices.length} vertices · ${form.mesh.faces.length} faces · ${form.mesh.lines.length} lines`
       : '';
     try {
-      viewer?.show(form?.mesh ?? null, preserveView);
+      viewer?.show(form?.mesh ?? null, preserveView, form?.inspectionAngle);
       message(
         viewerError ||
           (!form ? 'Geometry unresolved. See the recovery details below.' : '')

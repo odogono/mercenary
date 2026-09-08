@@ -381,7 +381,12 @@ def extract(data: bytes, source: dict) -> dict:
                     model['interiorSlot'] = interior
                     continue
                 mesh = decode_mesh(data, address, kind, palette_at(data, 0) if kind == 'interior' else None, hardware)
-                model['variants'] = [{'id': 'record', 'name': 'Recovered form' if kind == 'object' else 'Palette 0 (binding unverified)', 'mesh': mesh}]
+                model['variants'] = [{
+                    'id': 'record',
+                    'name': 'Recovered form' if kind == 'object' else 'Palette 0 (binding unverified)',
+                    'mesh': mesh,
+                    **({'inspectionAngle': [0.65, 0.3]} if identity == 'object-036176' else {}),
+                }]
                 model['status'] = 'decoded' if kind == 'object' else 'partial'
                 model['reason'] = '' if kind == 'object' else 'Building-detail shape decoded; place-specific palette and visibility groups are not bound.'
                 if kind == 'object' and 'displayCode' in mesh:
@@ -448,6 +453,35 @@ def extract(data: bytes, source: dict) -> dict:
     key_position = None
     spaceport = next((instance for instance in instances if instance['id'] == 'eris-surface-87'), None)
     key = next((instance for instance in instances if instance['id'] == 'object-slot-183'), None)
+    limo = next((instance for instance in instances if instance['id'] == 'object-slot-5'), None)
+    capital_spaceport = next((place for place in places if place['name'] == 'CAPITAL SPACEPORT'), None)
+    if (spaceport is not None and key is not None and limo is not None and capital_spaceport is not None and
+            limo['model'] == 'object-036176' and u32(data, 0x73a8 + 5 * 4) & 0xff == 0x87):
+        limo['location'] = {
+            'body': 'body-11',
+            'place': capital_spaceport['id'],
+            'position': [s32(data, base + 5 * 4) / 65536 for base in (0x63a8, 0x67a8, 0x6ba8)],
+            'coordinateSystem': 'ST surface grid units (first-world Eris workspace)',
+            'heading': data[0x79cd + 5],
+        }
+        limo['reason'] = ('Resident slot 5 is associated with Eris surface cell $87. '
+                          'Its world coordinates and zero yaw are recovered from the on-foot capture.')
+        capital_spaceport['instances'].append(limo['id'])
+        limo_model = by_address[limo['model']]
+        key_model = by_address[key['model']]
+        limo_model['linkedInstances'].append(key['id'])
+        limo_model['evidence'].append({
+            'claim': ('Resident slot 5 places the V.I.P. LIMO at CAPITAL SPACEPORT; '
+                      'boarding was observed while KEY- V.I.P. LIMO was held.'),
+            'confidence': 'observed',
+            'source': 'docs/research/damocles-vip-limo.md',
+        })
+        key_model['linkedInstances'].append(limo['id'])
+        key_model['evidence'].append({
+            'claim': 'Holding KEY- V.I.P. LIMO was observed to permit boarding resident V.I.P. LIMO slot 5.',
+            'confidence': 'observed',
+            'source': 'docs/research/damocles-vip-limo.md',
+        })
     if spaceport is not None and key is not None:
         spaceport_raw = [round(spaceport['location']['position'][axis] * 65536) for axis in (0, 1, 2)]
         key_position = [s32(data, address) - spaceport_raw[axis] for axis, address in
@@ -527,7 +561,7 @@ def extract(data: bytes, source: dict) -> dict:
             ])
             model['name'] = 'Capital Spaceport'
             model['nameStatus'] = 'candidate'
-            model['linkedInstances'] = ['object-slot-183']
+            model['linkedInstances'] = ['object-slot-183', 'object-slot-5']
             model['evidence'] = [
                 {'claim': 'Placed at the source-named CAPITAL SPACEPORT cell $87.',
                  'confidence': 'verified', 'source': 'docs/research/damocles-spaceport-interior.md'},
@@ -539,6 +573,8 @@ def extract(data: bytes, source: dict) -> dict:
                  'confidence': 'verified', 'source': 'docs/research/damocles-spaceport-interior.md'},
                 {'claim': 'Region 1 places resident slot 183, KEY- V.I.P. LIMO, at local (1038, 0, 789).',
                  'confidence': 'verified', 'source': 'docs/research/damocles-spaceport-interior.md'},
+                {'claim': 'Resident slot 5 places the V.I.P. LIMO outside at CAPITAL SPACEPORT cell $87.',
+                 'confidence': 'verified', 'source': 'docs/research/damocles-vip-limo.md'},
             ]
             key_model['evidence'].extend([
                 {'claim': 'Resident slot 183 is placed in Capital Spaceport region 1 at local (1038, 0, 789).',

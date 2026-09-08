@@ -18,7 +18,8 @@ bun run dev
 
 Open `http://127.0.0.1:5173/catalogue`, or follow **Damocles catalogue** from the
 game menu. `?model=object-035d12` opens DART II;
-`?instance=eris-surface-87` opens the Capital Spaceport placement.
+`?instance=eris-surface-87` opens the Capital Spaceport placement;
+`?instance=object-slot-5` opens the V.I.P. LIMO outside it.
 
 The extractor first verifies the run's artifact hashes, program/TOS pins, and
 first-world scenario hash. It uses the standard library only. A missing capture
@@ -65,8 +66,9 @@ NULL is explicitly accounted for as an empty record, not a fabricated mesh.
 The 31 body labels at `$0081DC` include VOID; this does not imply all entries are
 planets. The first 256 resident object slots are represented as instances; later
 model slots are not invented as placed objects. Residence remains unknown except
-for slot 183, whose source association and world-to-structure transform place it
-inside Capital Spaceport region 1.
+for slot 5, whose source association and captured world coordinates place the
+V.I.P. LIMO outside Capital Spaceport, and slot 183, whose source association and
+world-to-structure transform place its key inside Capital Spaceport region 1.
 
 ## Recovered data grammar
 
@@ -158,9 +160,11 @@ code. Targeted disassembly used to establish them remains ignored at
 - `$7A6C` points to the current area's label list. Following the 20-byte area name,
   each nonzero cell byte precedes ten bytes of name and ten bytes of kind. The
   zero cell ends the list. `$054C10` establishes the cell-to-name relationship.
-- This yields **76 surface placements and 11 named places**. It covers the loaded
-  workspace, not all of Eris. Other bodies show an explicit empty map. Object
-  instances whose residence is unknown are listed but never plotted at zero.
+- This yields **76 surface-assembly placements and 11 named places**. Resident
+  slot 5 adds one recovered surface-object placement, so the Eris map displays
+  **77 placements**. This covers the loaded workspace, not all of Eris. Other
+  bodies show an explicit empty map. Object instances whose residence is unknown
+  are listed but never plotted at zero.
 
 ## Verification and remaining coverage
 
@@ -179,7 +183,13 @@ keys are also seeded and checked byte-for-byte so direct catalogue access cannot
 alter an existing session or save.
 
 Representative inspection uses the DART II model, the Capital Spaceport structure
-at cell `$87`, building detail 88, and `KEY- V.I.P. LIMO` in resident slot 183.
+at cell `$87`, building detail 88, `KEY- V.I.P. LIMO` in resident slot 183, and
+the V.I.P. LIMO in resident slot 5. The limo's recovered world coordinates place
+it outside the named Spaceport cell, and the catalogue preserves its raw zero
+heading byte without claiming a decoded world orientation. The on-foot and boarded
+captures establish that boarding occurred while its key was held; they do not by
+themselves isolate the key-check instruction. See the
+[V.I.P. LIMO findings](damocles-vip-limo.md).
 The original first-world and
 `interior-window-ram-20260818T172346Z-e3772e4d` captures establish the spaceport's
 exterior/interior correspondence. The latter records interior pointer `$0303D6`

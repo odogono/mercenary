@@ -172,11 +172,21 @@
     },
     {
       "id": "object-slot-5",
-      "location": null,
+      "location": {
+        "body": "body-11",
+        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "heading": 0,
+        "place": "place-025042",
+        "position": [
+          71.5137939453125,
+          0.0,
+          136.47434997558594
+        ]
+      },
       "model": "object-036176",
       "name": "V.I.P. LIMO \u00b7 slot 5",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Resident slot 5 is associated with Eris surface cell $87. Its world coordinates and zero yaw are recovered from the on-foot capture.",
       "sourceAddress": 25532
     },
     {
@@ -5076,10 +5086,18 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "Resident slot 5 places the V.I.P. LIMO at CAPITAL SPACEPORT; boarding was observed while KEY- V.I.P. LIMO was held.",
+          "confidence": "observed",
+          "source": "docs/research/damocles-vip-limo.md"
+        }
+      ],
       "id": "object-036176",
       "kind": "object",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-183"
+      ],
       "name": "V.I.P. LIMO",
       "nameStatus": "verified",
       "reason": "",
@@ -5092,6 +5110,10 @@
       "variants": [
         {
           "id": "record",
+          "inspectionAngle": [
+            0.65,
+            0.3
+          ],
           "mesh": {
             "faces": [
               {
@@ -47085,6 +47107,11 @@
           "source": "docs/research/damocles-spaceport-interior.md"
         },
         {
+          "claim": "Holding KEY- V.I.P. LIMO was observed to permit boarding resident V.I.P. LIMO slot 5.",
+          "confidence": "observed",
+          "source": "docs/research/damocles-vip-limo.md"
+        },
+        {
           "claim": "Resident slot 183 is placed in Capital Spaceport region 1 at local (1038, 0, 789).",
           "confidence": "verified",
           "source": "docs/research/damocles-spaceport-interior.md"
@@ -47097,7 +47124,9 @@
       ],
       "id": "object-03e494",
       "kind": "object",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-5"
+      ],
       "name": "KEY- V.I.P. LIMO",
       "nameStatus": "verified",
       "reason": "",
@@ -166757,12 +166786,18 @@
           "claim": "Region 1 places resident slot 183, KEY- V.I.P. LIMO, at local (1038, 0, 789).",
           "confidence": "verified",
           "source": "docs/research/damocles-spaceport-interior.md"
+        },
+        {
+          "claim": "Resident slot 5 places the V.I.P. LIMO outside at CAPITAL SPACEPORT cell $87.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vip-limo.md"
         }
       ],
       "id": "structure-01484e",
       "kind": "structure",
       "linkedInstances": [
-        "object-slot-183"
+        "object-slot-183",
+        "object-slot-5"
       ],
       "name": "Capital Spaceport",
       "nameStatus": "candidate",
@@ -512362,7 +512397,8 @@
       "body": "body-11",
       "id": "place-025042",
       "instances": [
-        "eris-surface-87"
+        "eris-surface-87",
+        "object-slot-5"
       ],
       "name": "CAPITAL SPACEPORT"
     },

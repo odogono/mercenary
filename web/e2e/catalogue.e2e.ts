@@ -49,6 +49,56 @@ test('key strokes rotate with the plate and are hidden behind the solid body', a
     .screenshot({ path: 'test-results/key-back.png' });
 });
 
+test('the V.I.P. limo opens visibly at its recovered Spaceport placement', async ({
+  page
+}) => {
+  await page.goto('/catalogue?instance=object-slot-5');
+  await expect(page.locator('#model-name')).toHaveText('V.I.P. LIMO');
+  await expect(page.locator('#details')).toContainText(
+    'ERIS · 71.514, 0.000, 136.474 · ST surface grid units'
+  );
+  await expect(page.locator('#details')).toContainText('source heading 0');
+  await expect(page.locator('#details')).toContainText(
+    'boarding was observed while KEY- V.I.P. LIMO was held'
+  );
+  await expect(
+    page.locator('#details').getByRole('link', { name: /KEY- V.I.P. LIMO/ })
+  ).toBeVisible();
+  await expect(
+    page.locator('#map').getByRole('link', { name: /V.I.P. LIMO/ })
+  ).toHaveAttribute('aria-current', 'true');
+  const visiblePixels = await page.locator('#model-view').evaluate(element => {
+    const canvas = element as HTMLCanvasElement;
+    canvas.dispatchEvent(new KeyboardEvent('keydown', { key: '0' }));
+    const gl = canvas.getContext('webgl2')!;
+    const pixels = new Uint8Array(canvas.width * canvas.height * 4);
+    gl.readPixels(
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      pixels
+    );
+    let visible = 0;
+    for (let index = 0; index < pixels.length; index += 4) {
+      if (
+        pixels[index]! > 12 ||
+        pixels[index + 1]! > 12 ||
+        pixels[index + 2]! > 16
+      ) {
+        visible++;
+      }
+    }
+    return visible;
+  });
+  expect(visiblePixels).toBeGreaterThan(1000);
+  await page
+    .locator('#model-view')
+    .screenshot({ path: 'test-results/catalogue-vip-limo.png' });
+});
+
 test('direct catalogue access, search, inspection and Back never start Targ', async ({
   page
 }) => {
@@ -111,7 +161,7 @@ test('maps known placements and links a surface assembly to building detail', as
 }) => {
   await page.goto('/catalogue?instance=eris-surface-87&q=structure');
   await expect(page.locator('#details')).toContainText('CAPITAL SPACEPORT');
-  await expect(page.locator('#map a')).toHaveCount(76);
+  await expect(page.locator('#map a')).toHaveCount(77);
   await page
     .locator('#map')
     .getByRole('link', { exact: true, name: 'CAPITAL SPACEPORT' })

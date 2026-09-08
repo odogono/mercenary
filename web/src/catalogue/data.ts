@@ -34,6 +34,7 @@ export interface Model {
   readonly variants: readonly {
     readonly doorState?: 'open' | 'closed';
     readonly id: string;
+    readonly inspectionAngle?: readonly [number, number];
     readonly mesh: Mesh;
     readonly name: string;
     readonly view?: 'exterior' | 'combined';
@@ -121,6 +122,13 @@ const point = (value: unknown): Point => {
     return fail('expected three coordinates');
   }
   return [p[0]!, p[1]!, p[2]!];
+};
+const angle = (value: unknown): readonly [number, number] => {
+  const values = list(value).map(number);
+  if (values.length !== 2) {
+    return fail('expected yaw and pitch');
+  }
+  return [values[0]!, values[1]!];
 };
 const choice = <T extends string>(value: unknown, choices: readonly T[]): T =>
   choices.includes(value as T)
@@ -237,6 +245,9 @@ export const parseCatalogue = (value: unknown): Catalogue => {
       return {
         ...door,
         id: string(v['id']),
+        ...(v['inspectionAngle'] === undefined
+          ? {}
+          : { inspectionAngle: angle(v['inspectionAngle']) }),
         mesh: mesh(v['mesh']),
         name: string(v['name'])
       };

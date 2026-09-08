@@ -74,8 +74,10 @@ export const createViewer = (canvas: HTMLCanvasElement) => {
     gl.enableVertexAttribArray(attribute);
     gl.vertexAttribPointer(attribute, size, gl.FLOAT, false, 40, offset);
   }
-  let yaw = -0.55,
-    pitch = 0.3,
+  let resetYaw = -0.55,
+    resetPitch = 0.3,
+    yaw = resetYaw,
+    pitch = resetPitch,
     zoom = 0.8,
     wire = false,
     mesh: Mesh | null = null;
@@ -187,8 +189,8 @@ export const createViewer = (canvas: HTMLCanvasElement) => {
     gl.drawArrays(gl.TRIANGLES, fillCount, lineCount);
   };
   const reset = () => {
-    yaw = -0.55;
-    pitch = 0.3;
+    yaw = resetYaw;
+    pitch = resetPitch;
     zoom = 0.8;
     draw();
   };
@@ -277,8 +279,15 @@ export const createViewer = (canvas: HTMLCanvasElement) => {
   });
   return {
     reset,
-    show(value: Mesh | null, preserveView = false) {
+    show(
+      value: Mesh | null,
+      preserveView = false,
+      inspectionAngle?: readonly [number, number]
+    ) {
       mesh = value;
+      if (!preserveView) {
+        [resetYaw, resetPitch] = inspectionAngle ?? [-0.55, 0.3];
+      }
       rebuild();
       if (preserveView) {
         draw();

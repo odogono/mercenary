@@ -298,7 +298,10 @@ it('identifies the reviewed spaceport and preserves its region-one visibility ev
     confidence: 'verified',
     source: 'docs/research/damocles-spaceport-interior.md'
   });
-  expect(spaceport.linkedInstances).toEqual(['object-slot-183']);
+  expect(spaceport.linkedInstances).toEqual([
+    'object-slot-183',
+    'object-slot-5'
+  ]);
   const room = spaceport.variants.find(form => form.id === 'interior-layout')!;
   expect(room.mesh.faces.slice(0, 28).map(face => face.sourceIndex)).toEqual([
     25, 21, 22, 8, 26, 27, 24, 7, 10, 9, 23, 6, 11, 12, 1, 4, 16, 2, 3, 17, 0,
@@ -380,4 +383,38 @@ it('decodes the V.I.P. limo key and preserves its source display code', async ()
   expect(
     room.mesh.faces.slice(-form.mesh.faces.length).map(face => face.colour)
   ).toEqual(form.mesh.faces.map(face => face.colour));
+});
+
+it('places the V.I.P. limo at the Capital Spaceport and links its observed key', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const limo = data.models.find(model => model.id === 'object-036176')!;
+  const limoInstance = data.instances.find(
+    instance => instance.id === 'object-slot-5'
+  )!;
+  expect(limoInstance.location).toEqual({
+    body: 'body-11',
+    coordinateSystem: 'ST surface grid units (first-world Eris workspace)',
+    heading: 0,
+    place: 'place-025042',
+    position: [71.513_793_945_312_5, 0, 136.474_349_975_585_94]
+  });
+  expect(limoInstance.placement).toBeNull();
+  expect(limo.linkedInstances).toContain('object-slot-183');
+  expect(limo.evidence).toContainEqual({
+    claim:
+      'Resident slot 5 places the V.I.P. LIMO at CAPITAL SPACEPORT; boarding was observed while KEY- V.I.P. LIMO was held.',
+    confidence: 'observed',
+    source: 'docs/research/damocles-vip-limo.md'
+  });
+  const key = data.models.find(model => model.id === 'object-03e494')!;
+  expect(key.linkedInstances).toContain('object-slot-5');
+  const place = data.places.find(value => value.id === 'place-025042')!;
+  expect(place.instances).toContain('object-slot-5');
+  const spaceport = data.models.find(model => model.id === 'structure-01484e')!;
+  expect(spaceport.linkedInstances).toEqual([
+    'object-slot-183',
+    'object-slot-5'
+  ]);
 });
