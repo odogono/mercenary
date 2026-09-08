@@ -35,12 +35,14 @@ const useComposition = async (
   }, composition);
 };
 
-/// Step past the Arrival, the way a player who has seen it does.
+/// Step past the opening, the way a player who has seen it does.
 ///
-/// Every fresh session now opens with the authored Arrival (ADR 0032). The opening itself is
-/// proven in `arrival.e2e.ts`; the tests here are about the game it hands over to, so they skip
-/// it and assert against the moment it lands on — which is the moment these tests always started
-/// from. A restored or resumed session has no Arrival to skip and says so.
+/// Every fresh session now opens in deep space with the Departure (ADR 0040) and then the
+/// authored Arrival (ADR 0032). The openings are proven in `departure.e2e.ts` and
+/// `arrival.e2e.ts`; the tests here are about the game they hand over to, so they commit the one
+/// Destination and hurry the rest, asserting against the moment it lands on — which is the moment
+/// these tests always started from. A restored or resumed session has no opening to skip and
+/// says so.
 const skipArrival = async (page: Page): Promise<void> => {
   const surface = page.locator('#game-surface');
   await expect(surface).toHaveAttribute('data-state', 'ready');
@@ -48,6 +50,7 @@ const skipArrival = async (page: Page): Promise<void> => {
     return;
   }
   await page.keyboard.press('Space');
+  await page.locator('#departure-skip').click();
   await expect(surface).toHaveAttribute('data-arrival', 'done');
 };
 
@@ -320,10 +323,12 @@ test('Authentic preserves the pinned initial canvas pixels', async ({
     'data-state',
     'ready'
   );
-  // The pinned frame is the world the Arrival hands over to, not the Arrival's own field. This
-  // test freezes the frame loop, so the skip is pressed here and the single frame it goes on to
-  // draw is the first frame of the game itself.
+  // The pinned frame is the world the openings hand over to, not the Departure's or the
+  // Arrival's own field. This test freezes the frame loop, so the Destination is committed and
+  // the journey and Arrival hurried here, and the single frame it goes on to draw is the first
+  // frame of the game itself.
   await page.keyboard.press('Space');
+  await page.locator('#departure-skip').click();
   await testInfo.attach('authentic-initial-frame', {
     body: await page.locator('#frame').screenshot(),
     contentType: 'image/png'
@@ -867,7 +872,7 @@ test('completed Benson Messages enter the in-memory console transcript', async (
   );
   await expect(page.locator('#message')).not.toHaveText('—');
 
-  await page.keyboard.press('Space');
+  await skipArrival(page);
   await page.keyboard.press('Backquote');
   await expect(page.locator('#console-log')).toContainText('BENSON · ');
   await expect(page.locator('#console-log')).not.toContainText(
@@ -1056,8 +1061,7 @@ test('the settings page changes Structure Reach live and persists it', async ({
   await page.goto('/');
   const surface = page.locator('#game-surface');
   const canvas = page.locator('#frame');
-  await expect(surface).toHaveAttribute('data-state', 'ready');
-  await page.keyboard.press('Space');
+  await skipArrival(page);
   const cellLines = Number(await canvas.getAttribute('data-lines'));
 
   await openPage(page, 'settings');

@@ -9,7 +9,9 @@ const ready = async (page: Page) => {
     (await page.locator('#game-surface').getAttribute('data-arrival')) !==
     'done'
   ) {
+    // Commit the one Destination from deep space, then hurry the opening to the game.
     await page.keyboard.press('Space');
+    await page.locator('#departure-skip').click();
   }
   await expect(page.locator('#game-surface')).toHaveAttribute(
     'data-arrival',

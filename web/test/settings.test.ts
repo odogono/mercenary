@@ -4,6 +4,9 @@ import { describe, expect, test } from 'bun:test';
 
 import { controlLimits } from '../src/gameCore/index.ts';
 import {
+  DEFAULT_DEPARTURE_JOURNEY_SECONDS,
+  DEFAULT_DEPARTURE_REDUCED_MOTION_JOURNEY_SECONDS,
+  DEFAULT_DEPARTURE_SNAP_SECONDS,
   DEFAULT_MESSAGE_HOLD_SECONDS,
   DEFAULT_PRESENTATION_PRESET,
   DEFAULT_SCRIPT_INSTRUCTION_BUDGET,
@@ -587,4 +590,27 @@ describe('the tracked settings, against the traces recorded with them', () => {
       expect(Object.keys(settings).sort()).toEqual(['message', 'scripts']);
     });
   }
+});
+
+describe('the Departure settings', () => {
+  test('default to the recipe the prototype settled', () => {
+    const { departure } = defaultSettings();
+    expect(departure.journeySeconds).toBe(DEFAULT_DEPARTURE_JOURNEY_SECONDS);
+    expect(departure.reducedMotionJourneySeconds).toBe(
+      DEFAULT_DEPARTURE_REDUCED_MOTION_JOURNEY_SECONDS
+    );
+    expect(departure.snapSeconds).toBe(DEFAULT_DEPARTURE_SNAP_SECONDS);
+  });
+
+  test('take the durations the document names and default the rest', () => {
+    const settings = loadSettings('{"departure": {"journeySeconds": 2}}');
+    expect(settings.departure.journeySeconds).toBe(2);
+    expect(settings.departure.snapSeconds).toBe(DEFAULT_DEPARTURE_SNAP_SECONDS);
+  });
+
+  test('refuse a journey that takes no time', () => {
+    expect(() => loadSettings('{"departure": {"journeySeconds": 0}}')).toThrow(
+      SettingsError
+    );
+  });
 });

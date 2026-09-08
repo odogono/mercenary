@@ -5,6 +5,11 @@
     "holdSeconds": 2.1,
     "timeScale": 3
   },
+  "departure": {
+    "journeySeconds": 10,
+    "reducedMotionJourneySeconds": 4,
+    "snapSeconds": 0.32
+  },
   "message": {
     "holdSeconds": 3
   },

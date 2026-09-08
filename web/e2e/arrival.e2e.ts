@@ -6,6 +6,10 @@ import { expect, test, type Page } from '@playwright/test';
 /// narration, descent and cut — that it holds the player's keys while it does, that the skip key
 /// lands on the same game, and that reloading, a New Game and a Save load each begin it or
 /// bypass it as they should (ADR 0032).
+///
+/// The Departure precedes it (ADR 0040): every fresh opening here first commits the one
+/// Destination from deep space, with the journey hurried by the settings so these tests stay
+/// about the Arrival. The Departure's own E2E is `departure.e2e.ts`.
 
 const RESUME_KEY = 'mercenary.browser-shell.session-resume.v1';
 
@@ -14,20 +18,30 @@ const surfaceOf = (page: Page) => page.locator('#game-surface');
 const panelField = (page: Page, name: string) =>
   page.locator(`#panel-targ [data-field="${name}"]`);
 
-/// Slow the Arrival right down, so a test can catch it in a state it would otherwise fly past.
+/// Slow the Arrival right down, so a test can catch it in a state it would otherwise fly past,
+/// and hurry the Departure's journey in front of it.
 const slowArrival = async (page: Page, holdSeconds: number): Promise<void> => {
   await page.route('**/settings.json', async route => {
     const response = await route.fetch();
     const settings = (await response.json()) as {
       arrival: { holdSeconds: number };
+      departure: { journeySeconds: number };
     };
     settings.arrival.holdSeconds = holdSeconds;
+    settings.departure.journeySeconds = 0.2;
     await route.fulfill({ json: settings, response });
   });
 };
 
 const arrived = async (page: Page): Promise<void> => {
   await expect(surfaceOf(page)).toHaveAttribute('data-state', 'ready');
+};
+
+/// Commit the one Destination from deep space, so the Arrival can begin.
+const depart = async (page: Page): Promise<void> => {
+  await expect(surfaceOf(page)).toHaveAttribute('data-departure', 'carousel');
+  await page.keyboard.press('Enter');
+  await expect(surfaceOf(page)).toHaveAttribute('data-departure', 'done');
 };
 
 test('the Arrival presents the opening and lands on the game', async ({
@@ -39,6 +53,7 @@ test('the Arrival presents the opening and lands on the game', async ({
   await page.goto('/');
   const surface = surfaceOf(page);
   await arrived(page);
+  await depart(page);
 
   // The title card, over the Arrival Field, with the readouts still asterisks.
   await expect(surface).toHaveAttribute('data-arrival', 'titleCard');
@@ -96,6 +111,7 @@ test('the Arrival reaches Targ, the ground and the cut on its own', async ({
   await page.goto('/');
   const surface = surfaceOf(page);
   await arrived(page);
+  await depart(page);
 
   const seen: string[] = [];
   await expect
@@ -129,6 +145,7 @@ test('the descent draws Targ itself and counts the fall down', async ({
   await page.goto('/');
   const surface = surfaceOf(page);
   await arrived(page);
+  await depart(page);
 
   await expect(surface).toHaveAttribute('data-arrival', 'descent', {
     timeout: 60_000
@@ -154,6 +171,7 @@ test('the System Menu freezes the Arrival it covers', async ({ page }) => {
   await page.goto('/');
   const surface = surfaceOf(page);
   await arrived(page);
+  await depart(page);
   await expect(surface).toHaveAttribute('data-arrival', 'space', {
     timeout: 20_000
   });
@@ -171,10 +189,13 @@ test('the System Menu freezes the Arrival it covers', async ({ page }) => {
   await expect(surface).not.toHaveAttribute('data-arrival', 'titleCard');
 });
 
-test('a reload during the Arrival begins it again', async ({ page }) => {
+test('a reload during the Arrival begins the opening again', async ({
+  page
+}) => {
   await slowArrival(page, 6);
   await page.goto('/');
   await arrived(page);
+  await depart(page);
   await expect(surfaceOf(page)).toHaveAttribute('data-arrival', 'space', {
     timeout: 20_000
   });
@@ -182,8 +203,10 @@ test('a reload during the Arrival begins it again', async ({ page }) => {
   await page.reload();
   await arrived(page);
 
-  // Nothing is checkpointed while the field is up, so the opening starts over rather than
-  // resuming halfway through a sequence the Session Resume never recorded.
+  // Nothing is checkpointed while the field is up, so the opening starts over — from deep space,
+  // since no Session Resume was recorded — rather than resuming halfway through a sequence the
+  // Session Resume never recorded.
+  await depart(page);
   await expect(surfaceOf(page)).toHaveAttribute('data-arrival', 'titleCard');
 });
 
@@ -194,6 +217,7 @@ test('a New Game plays the Arrival again and a resumed game does not', async ({
   await page.goto('/');
   const surface = surfaceOf(page);
   await arrived(page);
+  await depart(page);
   await page.keyboard.press('Space');
   await expect(surface).toHaveAttribute('data-arrival', 'done');
 
@@ -218,6 +242,7 @@ test('a New Game plays the Arrival again and a resumed game does not', async ({
   await newGame.click();
   await expect(newGame).toHaveText('CONFIRM NEW GAME');
   await newGame.click();
+  await depart(page);
   await expect(surface).toHaveAttribute('data-arrival', 'titleCard');
 });
 
@@ -226,6 +251,7 @@ test('a loaded Save bypasses the Arrival', async ({ page }) => {
   await page.goto('/');
   const surface = surfaceOf(page);
   await arrived(page);
+  await depart(page);
   await page.keyboard.press('Space');
   await expect(surface).toHaveAttribute('data-arrival', 'done');
 

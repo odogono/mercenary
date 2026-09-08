@@ -100,6 +100,7 @@ test('E rides the Colony Craft lift down and back up through the Browser Shell',
   const surface = page.locator('#game-surface');
   await expect(surface).toHaveAttribute('data-state', 'ready');
   await page.keyboard.press('Space');
+  await page.locator('#departure-skip').click();
   await expect(surface).toHaveAttribute('data-arrival', 'done');
 
   await command(page, 'goto room 8', 'teleported to ROOM 08');
@@ -133,9 +134,11 @@ test('the console-assisted recovered route reaches and matures the Escape', asyn
   const frame = page.locator('#frame');
   await expect(surface).toHaveAttribute('data-state', 'ready');
 
-  // The Arrival has its own E2E. This route begins at the fresh game's crash
-  // site, then completes the opening transaction through ordinary input.
+  // The Departure and the Arrival have their own E2E. This route begins at the
+  // fresh game's crash site, then completes the opening transaction through
+  // ordinary input.
   await page.keyboard.press('Space');
+  await page.locator('#departure-skip').click();
   await expect(surface).toHaveAttribute('data-arrival', 'done');
   await hurryUntil(page, 'DO YOU WANT TO BUY?');
   await expect
