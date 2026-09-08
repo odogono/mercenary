@@ -6,20 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Fixed
-
-- A Benson Message now rests on the Benson Display through its reading hold and then scrolls
-  off the left edge, as in the original, instead of staying on the row. The hold begins at the
-  first burst boundary after the last printable character, so padded indexed messages such as
-  `HANGER` rest centred and then depart with their trailing padding; a message that has rested
-  intact is never snapped back to its reading view. The script continues as soon as the hold
-  ends, so pacing is unchanged. Save schema 13 records the display's rested state and the new
-  `clearing` phase, and migrates schema 11 and 12 Saves; Arrival Narration keeps its still row.
-
-## [0.14.0] - 2026-09-07
+## [0.15.0] - 2026-09-08
 
 ### Added
 
+- The game now opens with the Departure (ADR 0040, #160): deep space, a one-entry carousel
+  offering Targ, and on commit a ten-second journey — interstellar run, flyby past Targ's sun and
+  two moons drawn from the Targ Orrery, convergence — that hands over on the exact planet-free
+  Arrival Field before the `M E R C E N A R Y` title card. Enter, Space or the Commit button
+  commit; a Skip control appears for the journey alone and fast-forwards journey and Arrival
+  together, reaching the same game watching does. The Departure is presentation only: it gives
+  the session no time and records nothing, so a Session Resume bypasses it and a reload from deep
+  space returns there. New Game returns to deep space. Reduced motion is honoured automatically
+  with a four-second journey. A `departure` block in `settings.json` carries the durations.
 - A desktop Damocles catalogue is available directly from the game menu without starting a
   Gameplay Session. It searches and filters 539 resident object, surface-assembly, and
   building-detail models; preserves unresolved records; provides stable model and instance
@@ -49,17 +48,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- Damocles keys now include the twelve body faces previously lost at a misread
-  vector-text record. Lettering uses the recovered 3D glyph strokes, rotates
-  with the plate, and is hidden by the key from behind; the incorrect HTML
-  font overlay has been removed.
-
+- A Benson Message now rests on the Benson Display through its reading hold and then scrolls
+  off the left edge, as in the original, instead of staying on the row. The hold begins at the
+  first burst boundary after the last printable character, so padded indexed messages such as
+  `HANGER` rest centred and then depart with their trailing padding; a message that has rested
+  intact is never snapped back to its reading view. The script continues as soon as the hold
+  ends, so pacing is unchanged. Save schema 13 records the display's rested state and the new
+  `clearing` phase, and migrates schema 11 and 12 Saves; Arrival Narration keeps its still row.
+- Damocles keys now include the twelve body faces previously lost at a misread vector-text
+  record. Lettering uses the recovered 3D glyph strokes, rotates with the plate, and is hidden by
+  the key from behind; the incorrect HTML font overlay has been removed.
 - Correct the catalogue viewer's face orientation and handedness so recovered surfaces render
   without the earlier missing-face artifacts and the Capital Spaceport entrance appears on the
   same side as the Atari ST reference views.
 - Select the Spaceport's authored aperture surrounds in exterior and combined inspection forms,
   removing coincident facade polygons that caused z-fighting while retaining a visible interior
   through the window and doorway.
+
+### Changed
+
+- Titles are partitioned under paths (ADR 0041): each Title will have one address and keep its
+  own Saves and Session Resume. Design only; the shell reads nothing from the address bar yet.
+- The Browser Shell's key router holds the keyboard for whichever opening is presenting —
+  carousel, journey or Arrival — rather than for the Arrival alone. The System Menu and the
+  Shell Console stay reachable throughout.
 
 ## [0.14.0] - 2026-09-07
 
