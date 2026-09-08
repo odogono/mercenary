@@ -129,52 +129,92 @@
     "complete": false,
     "notes": [
       "Resident first-world census; not a claim of complete disk coverage.",
-      "Conditional geometry, surface attachments, scene palette binding and other-body placements remain incomplete.",
+      "Conditional geometry, surface attachments, scene palette binding, other-body structures and named places remain incomplete.",
       "Unexamined disk-loaded content and script-created visual changes are not included."
     ]
   },
   "instances": [
     {
       "id": "object-slot-1",
-      "location": null,
+      "location": {
+        "body": "body-11",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          2560.486083984375,
+          0.0,
+          3591.5093841552734
+        ]
+      },
       "model": "object-035d12",
       "name": "DART II \u00b7 slot 1",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and raw heading are recovered from the resident arrays at source cell $70. The named place is unresolved.",
       "sourceAddress": 25516
     },
     {
       "id": "object-slot-2",
-      "location": null,
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          519.4872589111328,
+          0.0,
+          1793.4870300292969
+        ]
+      },
       "model": "object-035d98",
       "name": "99 CHEVY \u00b7 slot 2",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for GAEA; coordinates and raw heading are recovered from the resident arrays at source cell $17. The named place is unresolved.",
       "sourceAddress": 25520
     },
     {
       "id": "object-slot-3",
-      "location": null,
+      "location": {
+        "body": "body-11",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          73.51618957519531,
+          0.0,
+          137.51339721679688
+        ]
+      },
       "model": "object-035ec8",
       "name": "EAGLE NINE S E \u00b7 slot 3",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and raw heading are recovered from the resident arrays at source cell $99. The named place is unresolved.",
       "sourceAddress": 25524
     },
     {
       "id": "object-slot-4",
-      "location": null,
+      "location": {
+        "body": "body-11",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          72.51475524902344,
+          0.0,
+          142.5078582763672
+        ]
+      },
       "model": "object-035f92",
       "name": "BESTCUPAND CRAFT \u00b7 slot 4",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and raw heading are recovered from the resident arrays at source cell $E8. The named place is unresolved.",
       "sourceAddress": 25528
     },
     {
       "id": "object-slot-5",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": 0,
         "place": "place-025042",
         "position": [
@@ -191,20 +231,40 @@
     },
     {
       "id": "object-slot-6",
-      "location": null,
+      "location": {
+        "body": "body-4",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          3255.465072631836,
+          0.0,
+          1328.4815368652344
+        ]
+      },
       "model": "object-03e702",
       "name": "TARG TOURER \u00b7 slot 6",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for DION; coordinates and raw heading are recovered from the resident arrays at source cell $E3. The named place is unresolved.",
       "sourceAddress": 25536
     },
     {
       "id": "object-slot-7",
-      "location": null,
+      "location": {
+        "body": "body-11",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 255,
+        "place": null,
+        "position": [
+          71.44020080566406,
+          0.0,
+          136.4225616455078
+        ]
+      },
       "model": "object-036324",
       "name": "INTERSTELLARSHIP \u00b7 slot 7",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and raw heading are recovered from the resident arrays at source cell $87. The named place is unresolved.",
       "sourceAddress": 25540
     },
     {
@@ -218,11 +278,21 @@
     },
     {
       "id": "object-slot-10",
-      "location": null,
+      "location": {
+        "body": "body-23",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 128,
+        "place": null,
+        "position": [
+          1663.5109252929688,
+          0.0,
+          1594.5229949951172
+        ]
+      },
       "model": "object-03e81c",
       "name": "CONCORD III \u00b7 slot 10",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for BACCHUS; coordinates and raw heading are recovered from the resident arrays at source cell $82. The named place is unresolved.",
       "sourceAddress": 25552
     },
     {
@@ -236,20 +306,40 @@
     },
     {
       "id": "object-slot-12",
-      "location": null,
+      "location": {
+        "body": "body-21",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 160,
+        "place": null,
+        "position": [
+          2005.5067443847656,
+          0.0,
+          3259.495132446289
+        ]
+      },
       "model": "object-03672c",
       "name": "BULLET \u00b7 slot 12",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for THALIA; coordinates and raw heading are recovered from the resident arrays at source cell $36. The named place is unresolved.",
       "sourceAddress": 25560
     },
     {
       "id": "object-slot-13",
-      "location": null,
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          264.5323181152344,
+          0.0,
+          776.5154876708984
+        ]
+      },
       "model": "object-036838",
       "name": "22 CV \u00b7 slot 13",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for GAEA; coordinates and raw heading are recovered from the resident arrays at source cell $88. The named place is unresolved.",
       "sourceAddress": 25564
     },
     {
@@ -470,11 +560,21 @@
     },
     {
       "id": "object-slot-49",
-      "location": null,
+      "location": {
+        "body": "body-16",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          100.86563110351562,
+          0.0,
+          3930.173095703125
+        ]
+      },
       "model": "object-0378ee",
       "name": "READING GLASSES \u00b7 slot 49",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for LUCAN; coordinates and raw heading are recovered from the resident arrays at source cell $70. The named place is unresolved.",
       "sourceAddress": 25708
     },
     {
@@ -515,11 +615,21 @@
     },
     {
       "id": "object-slot-54",
-      "location": null,
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          1087.5000610351562,
+          0.0,
+          311.49981689453125
+        ]
+      },
       "model": "object-037ec6",
       "name": "RED BEACON LOCTR \u00b7 slot 54",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for VESTA; coordinates and raw heading are recovered from the resident arrays at source cell $44. The named place is unresolved.",
       "sourceAddress": 25728
     },
     {
@@ -668,20 +778,40 @@
     },
     {
       "id": "object-slot-72",
-      "location": null,
+      "location": {
+        "body": "body-23",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 76,
+        "place": null,
+        "position": [
+          1663.5188598632812,
+          0.0,
+          1594.49560546875
+        ]
+      },
       "model": "object-038820",
       "name": "TRANSPORTER a \u00b7 slot 72",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for BACCHUS; coordinates and raw heading are recovered from the resident arrays at source cell $82. The named place is unresolved.",
       "sourceAddress": 25800
     },
     {
       "id": "object-slot-73",
-      "location": null,
+      "location": {
+        "body": "body-27",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          2826.511199951172,
+          0.0,
+          275.5050964355469
+        ]
+      },
       "model": "object-038820",
       "name": "TRANSPORTER a \u00b7 slot 73",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for MENTOR; coordinates and raw heading are recovered from the resident arrays at source cell $79. The named place is unresolved.",
       "sourceAddress": 25804
     },
     {
@@ -767,11 +897,21 @@
     },
     {
       "id": "object-slot-83",
-      "location": null,
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          3080.014389038086,
+          0.0,
+          264.6529846191406
+        ]
+      },
       "model": "object-038956",
       "name": "EXPLOSIVE \u00b7 slot 83",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for GAEA; coordinates and raw heading are recovered from the resident arrays at source cell $88. The named place is unresolved.",
       "sourceAddress": 25844
     },
     {
@@ -848,11 +988,21 @@
     },
     {
       "id": "object-slot-92",
-      "location": null,
+      "location": {
+        "body": "body-11",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          76.52760314941406,
+          0.0,
+          132.47042846679688
+        ]
+      },
       "model": "object-03971e",
       "name": "SUNSHADE \u00b7 slot 92",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and raw heading are recovered from the resident arrays at source cell $4C. The named place is unresolved.",
       "sourceAddress": 25880
     },
     {
@@ -1028,11 +1178,21 @@
     },
     {
       "id": "object-slot-112",
-      "location": null,
+      "location": {
+        "body": "body-9",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 71,
+        "place": null,
+        "position": [
+          2569.4829864501953,
+          0.0,
+          878.4844970703125
+        ]
+      },
       "model": "object-036c10",
       "name": "MUSEUM GUIDE \u00b7 slot 112",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for CRONUS; coordinates and raw heading are recovered from the resident arrays at source cell $55. The named place is unresolved.",
       "sourceAddress": 25960
     },
     {
@@ -1424,11 +1584,21 @@
     },
     {
       "id": "object-slot-156",
-      "location": null,
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 2,
+        "place": null,
+        "position": [
+          3080.5,
+          0.0,
+          264.5
+        ]
+      },
       "model": "object-03e08c",
       "name": "Object 156 \u00b7 slot 156",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for GAEA; coordinates and raw heading are recovered from the resident arrays at source cell $88. The named place is unresolved.",
       "sourceAddress": 26136
     },
     {
@@ -1496,146 +1666,306 @@
     },
     {
       "id": "object-slot-164",
-      "location": null,
+      "location": {
+        "body": "body-1",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 2,
+        "place": null,
+        "position": [
+          625.4840850830078,
+          0.0,
+          689.4900360107422
+        ]
+      },
       "model": "object-03e2c6",
       "name": "BLACK BEACON \u00b7 slot 164",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ICARUS; coordinates and raw heading are recovered from the resident arrays at source cell $11. The named place is unresolved.",
       "sourceAddress": 26168
     },
     {
       "id": "object-slot-165",
-      "location": null,
+      "location": {
+        "body": "body-3",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 80,
+        "place": null,
+        "position": [
+          3422.500244140625,
+          0.0,
+          301.50096130371094
+        ]
+      },
       "model": "object-03e2c6",
       "name": "BLACK BEACON \u00b7 slot 165",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ACHERON; coordinates and raw heading are recovered from the resident arrays at source cell $33. The named place is unresolved.",
       "sourceAddress": 26172
     },
     {
       "id": "object-slot-166",
-      "location": null,
+      "location": {
+        "body": "body-5",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 67,
+        "place": null,
+        "position": [
+          42.45500183105469,
+          0.0,
+          226.5952606201172
+        ]
+      },
       "model": "object-03e2c6",
       "name": "BLACK BEACON \u00b7 slot 166",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ATROPOS; coordinates and raw heading are recovered from the resident arrays at source cell $10. The named place is unresolved.",
       "sourceAddress": 26176
     },
     {
       "id": "object-slot-167",
-      "location": null,
+      "location": {
+        "body": "body-17",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          1300.4530487060547,
+          0.0,
+          2648.592086791992
+        ]
+      },
       "model": "object-03e2c6",
       "name": "BLACK BEACON \u00b7 slot 167",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for LOGOS; coordinates and raw heading are recovered from the resident arrays at source cell $06. The named place is unresolved.",
       "sourceAddress": 26180
     },
     {
       "id": "object-slot-168",
-      "location": null,
+      "location": {
+        "body": "body-9",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          2569.5179138183594,
+          0.0,
+          878.5006713867188
+        ]
+      },
       "model": "object-03e2c6",
       "name": "BLACK BEACON \u00b7 slot 168",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for CRONUS; coordinates and raw heading are recovered from the resident arrays at source cell $55. The named place is unresolved.",
       "sourceAddress": 26184
     },
     {
       "id": "object-slot-169",
-      "location": null,
+      "location": {
+        "body": "body-23",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          1662.5848236083984,
+          0.0,
+          1594.5476989746094
+        ]
+      },
       "model": "object-03e2c6",
       "name": "BLACK BEACON \u00b7 slot 169",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for BACCHUS; coordinates and raw heading are recovered from the resident arrays at source cell $81. The named place is unresolved.",
       "sourceAddress": 26188
     },
     {
       "id": "object-slot-170",
-      "location": null,
+      "location": {
+        "body": "body-27",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          2818.474151611328,
+          0.0,
+          269.44444274902344
+        ]
+      },
       "model": "object-03e2c6",
       "name": "BLACK BEACON \u00b7 slot 170",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for MENTOR; coordinates and raw heading are recovered from the resident arrays at source cell $11. The named place is unresolved.",
       "sourceAddress": 26192
     },
     {
       "id": "object-slot-171",
-      "location": null,
+      "location": {
+        "body": "body-15",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          2529.4729614257812,
+          0.0,
+          1066.452163696289
+        ]
+      },
       "model": "object-03e2c6",
       "name": "BLACK BEACON \u00b7 slot 171",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for METIS; coordinates and raw heading are recovered from the resident arrays at source cell $02. The named place is unresolved.",
       "sourceAddress": 26196
     },
     {
       "id": "object-slot-172",
-      "location": null,
+      "location": {
+        "body": "body-25",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          2738.5304107666016,
+          0.0,
+          1571.5209350585938
+        ]
+      },
       "model": "object-03e2ea",
       "name": "BLUE BEACON \u00b7 slot 172",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for TOLOSA; coordinates and raw heading are recovered from the resident arrays at source cell $01. The named place is unresolved.",
       "sourceAddress": 26200
     },
     {
       "id": "object-slot-173",
-      "location": null,
+      "location": {
+        "body": "body-12",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          3975.4517517089844,
+          0.0,
+          1397.5772399902344
+        ]
+      },
       "model": "object-03e2ea",
       "name": "BLUE BEACON \u00b7 slot 173",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for SOLON; coordinates and raw heading are recovered from the resident arrays at source cell $11. The named place is unresolved.",
       "sourceAddress": 26204
     },
     {
       "id": "object-slot-174",
-      "location": null,
+      "location": {
+        "body": "body-13",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          2547.4843139648438,
+          0.0,
+          3336.4794311523438
+        ]
+      },
       "model": "object-03e2ea",
       "name": "BLUE BEACON \u00b7 slot 174",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for THEON; coordinates and raw heading are recovered from the resident arrays at source cell $21. The named place is unresolved.",
       "sourceAddress": 26208
     },
     {
       "id": "object-slot-175",
-      "location": null,
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          3080.010757446289,
+          0.0,
+          264.6525115966797
+        ]
+      },
       "model": "object-03e2ea",
       "name": "BLUE BEACON \u00b7 slot 175",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for GAEA; coordinates and raw heading are recovered from the resident arrays at source cell $88. The named place is unresolved.",
       "sourceAddress": 26212
     },
     {
       "id": "object-slot-176",
-      "location": null,
+      "location": {
+        "body": "body-21",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          2005.5264587402344,
+          0.0,
+          3259.554168701172
+        ]
+      },
       "model": "object-03e30e",
       "name": "RED BEACON \u00b7 slot 176",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for THALIA; coordinates and raw heading are recovered from the resident arrays at source cell $36. The named place is unresolved.",
       "sourceAddress": 26216
     },
     {
       "id": "object-slot-177",
-      "location": null,
+      "location": {
+        "body": "body-20",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          425.5233612060547,
+          0.0,
+          1799.4439392089844
+        ]
+      },
       "model": "object-03e30e",
       "name": "RED BEACON \u00b7 slot 177",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for PAN; coordinates and raw heading are recovered from the resident arrays at source cell $04. The named place is unresolved.",
       "sourceAddress": 26220
     },
     {
       "id": "object-slot-178",
-      "location": null,
+      "location": {
+        "body": "body-11",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          73.46475219726562,
+          0.0,
+          130.5043182373047
+        ]
+      },
       "model": "object-03e30e",
       "name": "RED BEACON \u00b7 slot 178",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and raw heading are recovered from the resident arrays at source cell $29. The named place is unresolved.",
       "sourceAddress": 26224
     },
     {
       "id": "object-slot-179",
-      "location": null,
+      "location": {
+        "body": "body-16",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": 0,
+        "place": null,
+        "position": [
+          100.8740234375,
+          0.0,
+          3930.1731567382812
+        ]
+      },
       "model": "object-03e30e",
       "name": "RED BEACON \u00b7 slot 179",
       "placement": null,
-      "reason": "Resident object slot; body/residence and coordinate interpretation remain unresolved.",
+      "reason": "Association B matches the native surface-resident selector for LUCAN; coordinates and raw heading are recovered from the resident arrays at source cell $70. The named place is unresolved.",
       "sourceAddress": 26228
     },
     {
@@ -2326,7 +2656,7 @@
       "id": "eris-surface-11",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": "place-0250c0",
         "position": [
@@ -2345,7 +2675,7 @@
       "id": "eris-surface-12",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2364,7 +2694,7 @@
       "id": "eris-surface-14",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2383,7 +2713,7 @@
       "id": "eris-surface-20",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2402,7 +2732,7 @@
       "id": "eris-surface-22",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2421,7 +2751,7 @@
       "id": "eris-surface-23",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2440,7 +2770,7 @@
       "id": "eris-surface-24",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2459,7 +2789,7 @@
       "id": "eris-surface-29",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": "place-0250d5",
         "position": [
@@ -2478,7 +2808,7 @@
       "id": "eris-surface-30",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2497,7 +2827,7 @@
       "id": "eris-surface-31",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2516,7 +2846,7 @@
       "id": "eris-surface-33",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2535,7 +2865,7 @@
       "id": "eris-surface-35",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2554,7 +2884,7 @@
       "id": "eris-surface-36",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2573,7 +2903,7 @@
       "id": "eris-surface-37",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2592,7 +2922,7 @@
       "id": "eris-surface-3c",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2611,7 +2941,7 @@
       "id": "eris-surface-3d",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2630,7 +2960,7 @@
       "id": "eris-surface-3e",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2649,7 +2979,7 @@
       "id": "eris-surface-3f",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2668,7 +2998,7 @@
       "id": "eris-surface-40",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2687,7 +3017,7 @@
       "id": "eris-surface-41",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2706,7 +3036,7 @@
       "id": "eris-surface-42",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2725,7 +3055,7 @@
       "id": "eris-surface-43",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2744,7 +3074,7 @@
       "id": "eris-surface-44",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2763,7 +3093,7 @@
       "id": "eris-surface-45",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2782,7 +3112,7 @@
       "id": "eris-surface-46",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2801,7 +3131,7 @@
       "id": "eris-surface-4b",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2820,7 +3150,7 @@
       "id": "eris-surface-4d",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2839,7 +3169,7 @@
       "id": "eris-surface-51",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2858,7 +3188,7 @@
       "id": "eris-surface-52",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2877,7 +3207,7 @@
       "id": "eris-surface-53",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2896,7 +3226,7 @@
       "id": "eris-surface-54",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2915,7 +3245,7 @@
       "id": "eris-surface-5c",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2934,7 +3264,7 @@
       "id": "eris-surface-5e",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": "place-025096",
         "position": [
@@ -2953,7 +3283,7 @@
       "id": "eris-surface-63",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2972,7 +3302,7 @@
       "id": "eris-surface-64",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -2991,7 +3321,7 @@
       "id": "eris-surface-6b",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3010,7 +3340,7 @@
       "id": "eris-surface-6d",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3029,7 +3359,7 @@
       "id": "eris-surface-74",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3048,7 +3378,7 @@
       "id": "eris-surface-7b",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3067,7 +3397,7 @@
       "id": "eris-surface-84",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3086,7 +3416,7 @@
       "id": "eris-surface-87",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": "place-025042",
         "position": [
@@ -3105,7 +3435,7 @@
       "id": "eris-surface-89",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": "place-02502d",
         "position": [
@@ -3124,7 +3454,7 @@
       "id": "eris-surface-8b",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3143,7 +3473,7 @@
       "id": "eris-surface-95",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3162,7 +3492,7 @@
       "id": "eris-surface-96",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3181,7 +3511,7 @@
       "id": "eris-surface-97",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3200,7 +3530,7 @@
       "id": "eris-surface-98",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3219,7 +3549,7 @@
       "id": "eris-surface-99",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": "place-025057",
         "position": [
@@ -3238,7 +3568,7 @@
       "id": "eris-surface-9a",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3257,7 +3587,7 @@
       "id": "eris-surface-a4",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3276,7 +3606,7 @@
       "id": "eris-surface-a9",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3295,7 +3625,7 @@
       "id": "eris-surface-b3",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3314,7 +3644,7 @@
       "id": "eris-surface-b4",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": "place-0250ab",
         "position": [
@@ -3333,7 +3663,7 @@
       "id": "eris-surface-b5",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3352,7 +3682,7 @@
       "id": "eris-surface-b9",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3371,7 +3701,7 @@
       "id": "eris-surface-be",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3390,7 +3720,7 @@
       "id": "eris-surface-c9",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3409,7 +3739,7 @@
       "id": "eris-surface-ce",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3428,7 +3758,7 @@
       "id": "eris-surface-cf",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": "place-025081",
         "position": [
@@ -3447,7 +3777,7 @@
       "id": "eris-surface-d8",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3466,7 +3796,7 @@
       "id": "eris-surface-d9",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3485,7 +3815,7 @@
       "id": "eris-surface-da",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3504,7 +3834,7 @@
       "id": "eris-surface-db",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3523,7 +3853,7 @@
       "id": "eris-surface-dc",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3542,7 +3872,7 @@
       "id": "eris-surface-dd",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3561,7 +3891,7 @@
       "id": "eris-surface-de",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3580,7 +3910,7 @@
       "id": "eris-surface-df",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3599,7 +3929,7 @@
       "id": "eris-surface-e1",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": "place-0250ea",
         "position": [
@@ -3618,7 +3948,7 @@
       "id": "eris-surface-e8",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": "place-02506c",
         "position": [
@@ -3637,7 +3967,7 @@
       "id": "eris-surface-ec",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": "place-0250ff",
         "position": [
@@ -3656,7 +3986,7 @@
       "id": "eris-surface-ed",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3675,7 +4005,7 @@
       "id": "eris-surface-ee",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3694,7 +4024,7 @@
       "id": "eris-surface-ef",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3713,7 +4043,7 @@
       "id": "eris-surface-fd",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3732,7 +4062,7 @@
       "id": "eris-surface-fe",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [
@@ -3751,7 +4081,7 @@
       "id": "eris-surface-ff",
       "location": {
         "body": "body-11",
-        "coordinateSystem": "ST surface grid units (first-world Eris workspace)",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
         "heading": null,
         "place": null,
         "position": [

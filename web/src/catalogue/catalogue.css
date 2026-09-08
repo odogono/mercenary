@@ -282,6 +282,7 @@ canvas:active {
   transform: translate(-50%, -50%);
 }
 #map a[aria-current='true'] {
+  z-index: 1;
   width: 18px;
   height: 18px;
   background: #fff;

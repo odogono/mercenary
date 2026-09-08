@@ -11,8 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A desktop Damocles catalogue is available directly from the game menu without starting a
   Gameplay Session. It searches and filters 539 resident object, surface-assembly, and
   building-detail models; preserves unresolved records; provides stable model and instance
-  links with browser Back support; and maps 76 recovered placements and 11 named places in the
-  pinned first-world Eris workspace.
+  links with browser Back support; and maps 110 recovered placements across 18 bodies, including
+  76 surface assemblies and 34 resident objects. The pinned first-world Eris workspace retains
+  its 11 named places; other-body named places remain unresolved.
 - The catalogue viewer presents recovered flat-colour geometry with orbit, zoom, reset,
   wireframe, palette/form selection, provenance, recovery evidence, related geometry, and
   linked instances. Its separately versioned private payload validates source hashes, census
@@ -30,6 +31,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   empty-inventory route verifies its `VEHICLE KEY REQUIRED` refusal; matching names and the
   recovered `+178` slot relation link all eight vehicle/key pairs while leaving unknown
   residences unresolved.
+- The native Association B surface-resident selector maps 34 resident objects across 18 bodies.
+  This places 99 CHEVY on Gaea from its source coordinates and heading while retaining its
+  unknown named place and its key's unresolved Eris interior association.
 
 ### Fixed
 

@@ -99,14 +99,17 @@ test('the V.I.P. limo opens visibly at its recovered Spaceport placement', async
     .screenshot({ path: 'test-results/catalogue-vip-limo.png' });
 });
 
-test('another recovered vehicle and key link to each other without a claimed location', async ({
-  page
-}) => {
+test('99 Chevy is mapped on Gaea and links to its key', async ({ page }) => {
   await page.goto('/catalogue?instance=object-slot-2');
   await expect(page.locator('#model-name')).toHaveText('99 CHEVY');
   await expect(page.locator('#details')).toContainText(
-    'body/residence and coordinate interpretation remain unresolved'
+    'GAEA · 519.487, 0.000, 1793.487 · ST surface grid units'
   );
+  await expect(page.locator('#details')).toContainText('source heading 0');
+  await expect(page.locator('#map a')).toHaveCount(5);
+  await expect(
+    page.locator('#map').getByRole('link', { name: /99 CHEVY/ })
+  ).toHaveAttribute('aria-current', 'true');
   await page
     .locator('#details')
     .getByRole('link', { name: /KEY - 99 CHEVY/ })
@@ -180,7 +183,7 @@ test('maps known placements and links a surface assembly to building detail', as
 }) => {
   await page.goto('/catalogue?instance=eris-surface-87&q=structure');
   await expect(page.locator('#details')).toContainText('CAPITAL SPACEPORT');
-  await expect(page.locator('#map a')).toHaveCount(77);
+  await expect(page.locator('#map a')).toHaveCount(83);
   await page
     .locator('#map')
     .getByRole('link', { exact: true, name: 'CAPITAL SPACEPORT' })
@@ -195,10 +198,10 @@ test('maps known placements and links a surface assembly to building detail', as
   await expect(page.locator('#viewer-message')).toBeHidden();
   await page.screenshot({ path: 'test-results/catalogue-interior.png' });
   await page.locator('#body').selectOption('body-1');
-  await expect(page.locator('#map a')).toHaveCount(0);
-  await expect(page.locator('#map-note')).toContainText(
-    'No verified surface placements'
-  );
+  await expect(page.locator('#map a')).toHaveCount(1);
+  await expect(
+    page.locator('#map').getByRole('link', { name: /BLACK BEACON/ })
+  ).toBeVisible();
 });
 
 test('unresolved records, empty filters and invalid links are explained', async ({

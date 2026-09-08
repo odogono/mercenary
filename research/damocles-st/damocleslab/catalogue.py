@@ -325,6 +325,17 @@ def palette_at(data: bytes, index: int) -> list[int]:
     return list(struct.unpack_from('>64H', data, p))
 
 
+def surface_resident_body(association: bytes) -> int | None:
+    """Return the body selected by a resident's native surface association."""
+    if len(association) < 2:
+        return None
+    encoded_body, region = association[:2]
+    if encoded_body == 0 or encoded_body % 4 or region != 0:
+        return None
+    body = encoded_body // 4
+    return body if body < 30 else None
+
+
 def extract(data: bytes, source: dict) -> dict:
     """Catalogue all entries of the three bounded resident tables, never a byte scan."""
     if len(data) != 1048576 or u32(data, 0x4bd10) != 0x35700 or u32(data, 0x4bd22) != 0x26000:
@@ -411,6 +422,30 @@ def extract(data: bytes, source: dict) -> dict:
         instances.append({'id': f'object-slot-{slot}', 'model': model_id, 'name': f"{by_address[model_id]['name']} · slot {slot}",
                           'location': None, 'placement': None, 'reason': reason,
                           'sourceAddress': 0x63a8 + slot * 4})
+    instance_by_id = {instance['id']: instance for instance in instances}
+    # $52C9C compares $7AA8 << 8 with the first word of Association B while
+    # assembling surface residents. This proves the body-times-four encoding
+    # and the zero region byte without assigning meaning to the remaining bytes.
+    for slot in range(1, 256):
+        instance = instance_by_id.get(f'object-slot-{slot}')
+        association = data[0x73a8 + slot * 4:0x73ac + slot * 4]
+        body = surface_resident_body(association)
+        if instance is None or body is None:
+            continue
+        instance['location'] = {
+            'body': f'body-{body}',
+            'place': None,
+            'position': [s32(data, base + slot * 4) / 65536
+                         for base in (0x63a8, 0x67a8, 0x6ba8)],
+            'coordinateSystem': 'ST surface grid units (body-local origin unresolved)',
+            'heading': data[0x79cd + slot],
+        }
+        instance['reason'] = (
+            f'Association B matches the native surface-resident selector for '
+            f"{bodies[body]['name']}; coordinates and raw heading are recovered "
+            f"from the resident arrays at source cell ${association[3]:02X}. "
+            'The named place is unresolved.'
+        )
     # Current first-world surface workspace: low nibble X, high nibble Z.
     # Camera world/local coordinates bind this workspace to its system grid origin.
     origin_x = (u32(data, 0x7a92) - u32(data, 0x7a2c)) / 65536
@@ -446,11 +481,10 @@ def extract(data: bytes, source: dict) -> dict:
                           'placement': None,
                           'location': {'body': 'body-11', 'place': place[0] if place else None,
                             'position': [origin_x + (cell & 15) + 0.5 + dx * 30 / 65536, 0, origin_z + (cell >> 4) + 0.5 + dz * 30 / 65536],
-                            'coordinateSystem': 'ST surface grid units (first-world Eris workspace)', 'heading': None},
+                            'coordinateSystem': 'ST surface grid units (body-local origin unresolved)', 'heading': None},
                           'reason': 'Recovered first-world surface workspace placement; not a census of the whole body.'})
         if place:
             next(p for p in places if p['id'] == place[0])['instances'].append(identity)
-    instance_by_id = {instance['id']: instance for instance in instances}
     for vehicle_slot, key_slot in ((2, 180), (3, 181), (4, 182), (5, 183),
                                    (6, 184), (10, 188), (12, 190), (13, 191)):
         vehicle = instance_by_id[f'object-slot-{vehicle_slot}']
@@ -479,7 +513,7 @@ def extract(data: bytes, source: dict) -> dict:
             'body': 'body-11',
             'place': capital_spaceport['id'],
             'position': [s32(data, base + 5 * 4) / 65536 for base in (0x63a8, 0x67a8, 0x6ba8)],
-            'coordinateSystem': 'ST surface grid units (first-world Eris workspace)',
+            'coordinateSystem': 'ST surface grid units (body-local origin unresolved)',
             'heading': data[0x79cd + 5],
         }
         limo['reason'] = ('Resident slot 5 is associated with Eris surface cell $87. '
@@ -624,7 +658,7 @@ def extract(data: bytes, source: dict) -> dict:
     return {'schemaVersion': 3, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'places': places, 'tables': tables,
             'coverage': {'complete': False, 'notes': ['Resident first-world census; not a claim of complete disk coverage.',
-                'Conditional geometry, surface attachments, scene palette binding and other-body placements remain incomplete.',
+                'Conditional geometry, surface attachments, scene palette binding, other-body structures and named places remain incomplete.',
                 'Unexamined disk-loaded content and script-created visual changes are not included.']}}
 
 

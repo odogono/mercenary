@@ -65,10 +65,12 @@ NULL is explicitly accounted for as an empty record, not a fabricated mesh.
 
 The 31 body labels at `$0081DC` include VOID; this does not imply all entries are
 planets. The first 256 resident object slots are represented as instances; later
-model slots are not invented as placed objects. Residence remains unknown except
-for slot 5, whose source association and captured world coordinates place the
-V.I.P. LIMO outside Capital Spaceport, and slot 183, whose source association and
+model slots are not invented as placed objects. The native surface-resident
+selector and Association B place 34 resident objects across 18 bodies. Named
+places remain unknown except for slot 5, whose independently reviewed cell places
+the V.I.P. LIMO outside Capital Spaceport. Slot 183's source association and
 world-to-structure transform place its key inside Capital Spaceport region 1.
+See [resident object associations](damocles-resident-objects.md).
 
 ## Recovered data grammar
 
@@ -147,7 +149,7 @@ code. Targeted disassembly used to establish them remains ignored at
   surface attachments/openings after the basic wall list are not silently omitted
   from a “decoded” result: their presence makes the model partial.
 
-### Captured Eris placements and places
+### Surface placements and captured Eris places
 
 - `$054B98` constructs a cell index as `(z << 4) | x`. `$054CBC` indexes four-byte
   records at `$00ABDC`; the low nine bits select a structure. The last two signed
@@ -160,11 +162,18 @@ code. Targeted disassembly used to establish them remains ignored at
 - `$7A6C` points to the current area's label list. Following the 20-byte area name,
   each nonzero cell byte precedes ten bytes of name and ten bytes of kind. The
   zero cell ends the list. `$054C10` establishes the cell-to-name relationship.
-- This yields **76 surface-assembly placements and 11 named places**. Resident
-  slot 5 adds one recovered surface-object placement, so the Eris map displays
-  **77 placements**. This covers the loaded workspace, not all of Eris. Other
-  bodies show an explicit empty map. Object instances whose residence is unknown
-  are listed but never plotted at zero.
+- Association B's first word is compared with `$7AA8 << 8` by the native
+  surface-resident selector at `$52C9C..$52CD2`. A nonzero aligned first byte
+  identifies the body and a zero second byte identifies a surface resident.
+  This yields **34 surface-object placements across 18 bodies**. Coordinates use
+  the resident signed 16.16 X/Y/Z arrays and headings retain the raw source byte.
+  Other association bytes are not promoted to named places.
+- The Eris workspace yields **76 surface-assembly placements and 11 named
+  places**. Its seven surface objects bring that map to **83 placements**. Across
+  all bodies the dataset now contains **110 mapped placements**. This is resident
+  state from the pinned first-world capture, not a complete body-surface census.
+  Interior-associated and exceptional residents remain listed without invented
+  map positions.
 
 ## Verification and remaining coverage
 

@@ -395,7 +395,7 @@ it('places the V.I.P. limo at the Capital Spaceport and links its verified key',
   )!;
   expect(limoInstance.location).toEqual({
     body: 'body-11',
-    coordinateSystem: 'ST surface grid units (first-world Eris workspace)',
+    coordinateSystem: 'ST surface grid units (body-local origin unresolved)',
     heading: 0,
     place: 'place-025042',
     position: [71.513_793_945_312_5, 0, 136.474_349_975_585_94]
@@ -419,7 +419,7 @@ it('places the V.I.P. limo at the Capital Spaceport and links its verified key',
   ]);
 });
 
-it('links each recovered vehicle to its matching key without inventing residences', async () => {
+it('links each recovered vehicle to its matching key', async () => {
   const data = parseCatalogue(
     await Bun.file('../payload/damocles/catalogue.json').json()
   );
@@ -456,10 +456,77 @@ it('links each recovered vehicle to its matching key without inventing residence
       confidence: 'verified',
       source: 'docs/research/damocles-vip-limo.md'
     });
-    if (vehicleSlot !== 5) {
-      expect(vehicleInstance.location).toBeNull();
-      expect(keyInstance.location).toBeNull();
+    expect(keyInstance.location).toBeNull();
+    if (keySlot !== 183) {
       expect(keyInstance.placement).toBeNull();
     }
   }
+});
+
+it('places only residents selected by the native surface-body association', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const expected = new Map<number, number>([
+    [164, 1],
+    [165, 3],
+    [6, 4],
+    [166, 5],
+    [2, 8],
+    [13, 8],
+    [83, 8],
+    [156, 8],
+    [175, 8],
+    [112, 9],
+    [168, 9],
+    [1, 11],
+    [3, 11],
+    [4, 11],
+    [5, 11],
+    [7, 11],
+    [92, 11],
+    [178, 11],
+    [173, 12],
+    [174, 13],
+    [54, 14],
+    [171, 15],
+    [49, 16],
+    [179, 16],
+    [167, 17],
+    [177, 20],
+    [12, 21],
+    [176, 21],
+    [10, 23],
+    [72, 23],
+    [169, 23],
+    [172, 25],
+    [73, 27],
+    [170, 27]
+  ]);
+  const locatedObjects = data.instances.filter(
+    instance => instance.id.startsWith('object-slot-') && instance.location
+  );
+  expect(locatedObjects).toHaveLength(expected.size);
+  for (const instance of locatedObjects) {
+    const slot = Number(instance.id.slice('object-slot-'.length));
+    expect(instance.location!.body).toBe(`body-${expected.get(slot)}`);
+    if (slot !== 5) {
+      expect(instance.location!.place).toBeNull();
+    }
+  }
+
+  const chevy = data.instances.find(
+    instance => instance.id === 'object-slot-2'
+  )!;
+  expect(chevy.location).toEqual({
+    body: 'body-8',
+    coordinateSystem: 'ST surface grid units (body-local origin unresolved)',
+    heading: 0,
+    place: null,
+    position: [519.487_258_911_132_8, 0, 1793.487_030_029_296_9]
+  });
+  expect(chevy.reason).toContain('native surface-resident selector');
+  expect(
+    data.instances.find(instance => instance.id === 'object-slot-8')!.location
+  ).toBeNull();
 });

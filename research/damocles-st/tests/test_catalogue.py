@@ -70,6 +70,15 @@ class SurfaceTests(unittest.TestCase):
         self.assertEqual(mesh['vertices'], [[10, 0, 10], [20, 0, 10], [20, 100, 10], [10, 100, 10]])
 
 class SourceTests(unittest.TestCase):
+    def test_surface_residence_requires_a_nonzero_aligned_body_and_surface_selector(self):
+        from damocleslab.catalogue import surface_resident_body
+        self.assertEqual(surface_resident_body(bytes.fromhex('20000017')), 8)
+        self.assertEqual(surface_resident_body(bytes.fromhex('2c000099')), 11)
+        self.assertIsNone(surface_resident_body(bytes.fromhex('00000087')))
+        self.assertIsNone(surface_resident_body(bytes.fromhex('2c010087')))
+        self.assertIsNone(surface_resident_body(bytes.fromhex('2d000087')))
+        self.assertIsNone(surface_resident_body(bytes.fromhex('78000000')))
+
     def test_source_identity_and_scenario_must_match(self):
         from damocleslab.catalogue import validate_source
         pin = {'programImage': {'hashes': {'sha256': 'program'}}, 'tosImage': {'hashes': {'sha256': 'tos'}}}
