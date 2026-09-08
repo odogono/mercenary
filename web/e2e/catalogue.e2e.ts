@@ -59,7 +59,7 @@ test('the V.I.P. limo opens visibly at its recovered Spaceport placement', async
   );
   await expect(page.locator('#details')).toContainText('source heading 0');
   await expect(page.locator('#details')).toContainText(
-    'boarding was observed while KEY- V.I.P. LIMO was held'
+    'refuses an empty inventory with VEHICLE KEY REQUIRED'
   );
   await expect(
     page.locator('#details').getByRole('link', { name: /KEY- V.I.P. LIMO/ })
@@ -97,6 +97,25 @@ test('the V.I.P. limo opens visibly at its recovered Spaceport placement', async
   await page
     .locator('#model-view')
     .screenshot({ path: 'test-results/catalogue-vip-limo.png' });
+});
+
+test('another recovered vehicle and key link to each other without a claimed location', async ({
+  page
+}) => {
+  await page.goto('/catalogue?instance=object-slot-2');
+  await expect(page.locator('#model-name')).toHaveText('99 CHEVY');
+  await expect(page.locator('#details')).toContainText(
+    'body/residence and coordinate interpretation remain unresolved'
+  );
+  await page
+    .locator('#details')
+    .getByRole('link', { name: /KEY - 99 CHEVY/ })
+    .click();
+  await expect(page).toHaveURL(/instance=object-slot-180/);
+  await expect(page.locator('#model-name')).toHaveText('KEY - 99 CHEVY');
+  await expect(
+    page.locator('#details').getByRole('link', { name: /99 CHEVY · slot 2/ })
+  ).toBeVisible();
 });
 
 test('direct catalogue access, search, inspection and Back never start Targ', async ({

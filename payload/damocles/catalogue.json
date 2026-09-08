@@ -3973,10 +3973,18 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "Resident vehicle slot 2 pairs with key slot 180 by the recovered +178 table relation and matching source names.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vip-limo.md"
+        }
+      ],
       "id": "object-035d98",
       "kind": "object",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-180"
+      ],
       "name": "99 CHEVY",
       "nameStatus": "verified",
       "reason": "",
@@ -4308,10 +4316,18 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "Resident vehicle slot 3 pairs with key slot 181 by the recovered +178 table relation and matching source names.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vip-limo.md"
+        }
+      ],
       "id": "object-035ec8",
       "kind": "object",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-181"
+      ],
       "name": "EAGLE NINE S E",
       "nameStatus": "verified",
       "reason": "",
@@ -4535,10 +4551,18 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "Resident vehicle slot 4 pairs with key slot 182 by the recovered +178 table relation and matching source names.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vip-limo.md"
+        }
+      ],
       "id": "object-035f92",
       "kind": "object",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-182"
+      ],
       "name": "BESTCUPAND CRAFT",
       "nameStatus": "verified",
       "reason": "",
@@ -5088,8 +5112,13 @@
     {
       "evidence": [
         {
-          "claim": "Resident slot 5 places the V.I.P. LIMO at CAPITAL SPACEPORT; boarding was observed while KEY- V.I.P. LIMO was held.",
-          "confidence": "observed",
+          "claim": "Resident vehicle slot 5 pairs with key slot 183 by the recovered +178 table relation and matching source names.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vip-limo.md"
+        },
+        {
+          "claim": "Resident slot 5 places the V.I.P. LIMO at CAPITAL SPACEPORT. It boards with KEY- V.I.P. LIMO held and refuses an empty inventory with VEHICLE KEY REQUIRED.",
+          "confidence": "verified",
           "source": "docs/research/damocles-vip-limo.md"
         }
       ],
@@ -5589,10 +5618,18 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "Resident vehicle slot 6 pairs with key slot 184 by the recovered +178 table relation and matching source names.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vip-limo.md"
+        }
+      ],
       "id": "object-03e702",
       "kind": "object",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-184"
+      ],
       "name": "TARG TOURER",
       "nameStatus": "verified",
       "reason": "",
@@ -6175,10 +6212,18 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "Resident vehicle slot 10 pairs with key slot 188 by the recovered +178 table relation and matching source names.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vip-limo.md"
+        }
+      ],
       "id": "object-03e81c",
       "kind": "object",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-188"
+      ],
       "name": "CONCORD III",
       "nameStatus": "verified",
       "reason": "",
@@ -6497,10 +6542,18 @@
       "variants": []
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "Resident vehicle slot 12 pairs with key slot 190 by the recovered +178 table relation and matching source names.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vip-limo.md"
+        }
+      ],
       "id": "object-03672c",
       "kind": "object",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-190"
+      ],
       "name": "BULLET",
       "nameStatus": "verified",
       "reason": "",
@@ -6811,10 +6864,18 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "Resident vehicle slot 13 pairs with key slot 191 by the recovered +178 table relation and matching source names.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vip-limo.md"
+        }
+      ],
       "id": "object-036838",
       "kind": "object",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-191"
+      ],
       "name": "22 CV",
       "nameStatus": "verified",
       "reason": "",
@@ -38555,11 +38616,18 @@
           "claim": "Source $8008 header selects shared key geometry and display code 99 at local anchor [-8, 24, 0].",
           "confidence": "verified",
           "source": "docs/research/damocles-spaceport-interior.md"
+        },
+        {
+          "claim": "Resident vehicle slot 2 pairs with key slot 180 by the recovered +178 table relation and matching source names.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vip-limo.md"
         }
       ],
       "id": "object-03e446",
       "kind": "object",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-2"
+      ],
       "name": "KEY - 99 CHEVY",
       "nameStatus": "verified",
       "reason": "",
@@ -41405,11 +41473,18 @@
           "claim": "Source $8008 header selects shared key geometry and display code E9 at local anchor [-8, 24, 0].",
           "confidence": "verified",
           "source": "docs/research/damocles-spaceport-interior.md"
+        },
+        {
+          "claim": "Resident vehicle slot 3 pairs with key slot 181 by the recovered +178 table relation and matching source names.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vip-limo.md"
         }
       ],
       "id": "object-03e460",
       "kind": "object",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-3"
+      ],
       "name": "KEY - EAGLE 9SE",
       "nameStatus": "verified",
       "reason": "",
@@ -44255,11 +44330,18 @@
           "claim": "Source $8008 header selects shared key geometry and display code BC at local anchor [-8, 24, 0].",
           "confidence": "verified",
           "source": "docs/research/damocles-spaceport-interior.md"
+        },
+        {
+          "claim": "Resident vehicle slot 4 pairs with key slot 182 by the recovered +178 table relation and matching source names.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vip-limo.md"
         }
       ],
       "id": "object-03e47a",
       "kind": "object",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-4"
+      ],
       "name": "KEY - BESTCUPAND",
       "nameStatus": "verified",
       "reason": "",
@@ -47107,8 +47189,13 @@
           "source": "docs/research/damocles-spaceport-interior.md"
         },
         {
-          "claim": "Holding KEY- V.I.P. LIMO was observed to permit boarding resident V.I.P. LIMO slot 5.",
-          "confidence": "observed",
+          "claim": "Resident vehicle slot 5 pairs with key slot 183 by the recovered +178 table relation and matching source names.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vip-limo.md"
+        },
+        {
+          "claim": "KEY- V.I.P. LIMO permits boarding resident V.I.P. LIMO slot 5; without it the Working Authority refuses boarding with VEHICLE KEY REQUIRED.",
+          "confidence": "verified",
           "source": "docs/research/damocles-vip-limo.md"
         },
         {
@@ -49972,11 +50059,18 @@
           "claim": "Source $8008 header selects shared key geometry and display code TT at local anchor [-8, 24, 0].",
           "confidence": "verified",
           "source": "docs/research/damocles-spaceport-interior.md"
+        },
+        {
+          "claim": "Resident vehicle slot 6 pairs with key slot 184 by the recovered +178 table relation and matching source names.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vip-limo.md"
         }
       ],
       "id": "object-03e4ae",
       "kind": "object",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-6"
+      ],
       "name": "KEY- TARG TOURER",
       "nameStatus": "verified",
       "reason": "",
@@ -52822,11 +52916,18 @@
           "claim": "Source $8008 header selects shared key geometry and display code C3 at local anchor [-8, 24, 0].",
           "confidence": "verified",
           "source": "docs/research/damocles-spaceport-interior.md"
+        },
+        {
+          "claim": "Resident vehicle slot 10 pairs with key slot 188 by the recovered +178 table relation and matching source names.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vip-limo.md"
         }
       ],
       "id": "object-03e4c8",
       "kind": "object",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-10"
+      ],
       "name": "KEY- CONCORD III",
       "nameStatus": "verified",
       "reason": "",
@@ -55672,11 +55773,18 @@
           "claim": "Source $8008 header selects shared key geometry and display code BT at local anchor [-8, 24, 0].",
           "confidence": "verified",
           "source": "docs/research/damocles-spaceport-interior.md"
+        },
+        {
+          "claim": "Resident vehicle slot 12 pairs with key slot 190 by the recovered +178 table relation and matching source names.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vip-limo.md"
         }
       ],
       "id": "object-03e4e2",
       "kind": "object",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-12"
+      ],
       "name": "KEY - BULLET",
       "nameStatus": "verified",
       "reason": "",
@@ -58522,11 +58630,18 @@
           "claim": "Source $8008 header selects shared key geometry and display code 22 at local anchor [-8, 24, 0].",
           "confidence": "verified",
           "source": "docs/research/damocles-spaceport-interior.md"
+        },
+        {
+          "claim": "Resident vehicle slot 13 pairs with key slot 191 by the recovered +178 table relation and matching source names.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vip-limo.md"
         }
       ],
       "id": "object-03e4fc",
       "kind": "object",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-13"
+      ],
       "name": "KEY - 22 CV",
       "nameStatus": "verified",
       "reason": "",

@@ -385,7 +385,7 @@ it('decodes the V.I.P. limo key and preserves its source display code', async ()
   ).toEqual(form.mesh.faces.map(face => face.colour));
 });
 
-it('places the V.I.P. limo at the Capital Spaceport and links its observed key', async () => {
+it('places the V.I.P. limo at the Capital Spaceport and links its verified key', async () => {
   const data = parseCatalogue(
     await Bun.file('../payload/damocles/catalogue.json').json()
   );
@@ -404,8 +404,8 @@ it('places the V.I.P. limo at the Capital Spaceport and links its observed key',
   expect(limo.linkedInstances).toContain('object-slot-183');
   expect(limo.evidence).toContainEqual({
     claim:
-      'Resident slot 5 places the V.I.P. LIMO at CAPITAL SPACEPORT; boarding was observed while KEY- V.I.P. LIMO was held.',
-    confidence: 'observed',
+      'Resident slot 5 places the V.I.P. LIMO at CAPITAL SPACEPORT. It boards with KEY- V.I.P. LIMO held and refuses an empty inventory with VEHICLE KEY REQUIRED.',
+    confidence: 'verified',
     source: 'docs/research/damocles-vip-limo.md'
   });
   const key = data.models.find(model => model.id === 'object-03e494')!;
@@ -417,4 +417,49 @@ it('places the V.I.P. limo at the Capital Spaceport and links its observed key',
     'object-slot-183',
     'object-slot-5'
   ]);
+});
+
+it('links each recovered vehicle to its matching key without inventing residences', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  for (const [vehicleSlot, keySlot] of [
+    [2, 180],
+    [3, 181],
+    [4, 182],
+    [5, 183],
+    [6, 184],
+    [10, 188],
+    [12, 190],
+    [13, 191]
+  ] as const) {
+    const vehicleInstance = data.instances.find(
+      instance => instance.id === `object-slot-${vehicleSlot}`
+    )!;
+    const keyInstance = data.instances.find(
+      instance => instance.id === `object-slot-${keySlot}`
+    )!;
+    const vehicle = data.models.find(
+      model => model.id === vehicleInstance.model
+    )!;
+    const key = data.models.find(model => model.id === keyInstance.model)!;
+    const claim = `Resident vehicle slot ${vehicleSlot} pairs with key slot ${keySlot} by the recovered +178 table relation and matching source names.`;
+    expect(vehicle.linkedInstances).toContain(keyInstance.id);
+    expect(key.linkedInstances).toContain(vehicleInstance.id);
+    expect(vehicle.evidence).toContainEqual({
+      claim,
+      confidence: 'verified',
+      source: 'docs/research/damocles-vip-limo.md'
+    });
+    expect(key.evidence).toContainEqual({
+      claim,
+      confidence: 'verified',
+      source: 'docs/research/damocles-vip-limo.md'
+    });
+    if (vehicleSlot !== 5) {
+      expect(vehicleInstance.location).toBeNull();
+      expect(keyInstance.location).toBeNull();
+      expect(keyInstance.placement).toBeNull();
+    }
+  }
 });

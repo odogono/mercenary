@@ -25,8 +25,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   geometry, two-character display codes, label anchors, and pickup removal are documented;
   eight formerly unresolved key models are now viewable.
 - Resident slot 5, `V.I.P. LIMO`, is now plotted outside Capital Spaceport from its recovered
-  Eris coordinates and raw heading, linked to its observed key and named place, and opens at a
-  model-specific inspection angle that exposes its complete recovered geometry.
+  Eris coordinates and raw heading, linked to its verified key and named place, and opens at a
+  model-specific inspection angle that exposes its complete recovered geometry. A reproducible
+  empty-inventory route verifies its `VEHICLE KEY REQUIRED` refusal; matching names and the
+  recovered `+178` slot relation link all eight vehicle/key pairs while leaving unknown
+  residences unresolved.
 
 ### Fixed
 

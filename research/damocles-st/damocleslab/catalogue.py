@@ -450,6 +450,24 @@ def extract(data: bytes, source: dict) -> dict:
                           'reason': 'Recovered first-world surface workspace placement; not a census of the whole body.'})
         if place:
             next(p for p in places if p['id'] == place[0])['instances'].append(identity)
+    instance_by_id = {instance['id']: instance for instance in instances}
+    for vehicle_slot, key_slot in ((2, 180), (3, 181), (4, 182), (5, 183),
+                                   (6, 184), (10, 188), (12, 190), (13, 191)):
+        vehicle = instance_by_id[f'object-slot-{vehicle_slot}']
+        vehicle_key = instance_by_id[f'object-slot-{key_slot}']
+        claim = (f'Resident vehicle slot {vehicle_slot} pairs with key slot {key_slot} by the '
+                 'recovered +178 table relation and matching source names.')
+        evidence = {
+            'claim': claim,
+            'confidence': 'verified',
+            'source': 'docs/research/damocles-vip-limo.md',
+        }
+        vehicle_model = by_address[vehicle['model']]
+        key_model = by_address[vehicle_key['model']]
+        vehicle_model['linkedInstances'].append(vehicle_key['id'])
+        key_model['linkedInstances'].append(vehicle['id'])
+        vehicle_model['evidence'].append(evidence)
+        key_model['evidence'].append(evidence.copy())
     key_position = None
     spaceport = next((instance for instance in instances if instance['id'] == 'eris-surface-87'), None)
     key = next((instance for instance in instances if instance['id'] == 'object-slot-183'), None)
@@ -469,17 +487,16 @@ def extract(data: bytes, source: dict) -> dict:
         capital_spaceport['instances'].append(limo['id'])
         limo_model = by_address[limo['model']]
         key_model = by_address[key['model']]
-        limo_model['linkedInstances'].append(key['id'])
         limo_model['evidence'].append({
-            'claim': ('Resident slot 5 places the V.I.P. LIMO at CAPITAL SPACEPORT; '
-                      'boarding was observed while KEY- V.I.P. LIMO was held.'),
-            'confidence': 'observed',
+            'claim': ('Resident slot 5 places the V.I.P. LIMO at CAPITAL SPACEPORT. It boards '
+                      'with KEY- V.I.P. LIMO held and refuses an empty inventory with VEHICLE KEY REQUIRED.'),
+            'confidence': 'verified',
             'source': 'docs/research/damocles-vip-limo.md',
         })
-        key_model['linkedInstances'].append(limo['id'])
         key_model['evidence'].append({
-            'claim': 'Holding KEY- V.I.P. LIMO was observed to permit boarding resident V.I.P. LIMO slot 5.',
-            'confidence': 'observed',
+            'claim': ('KEY- V.I.P. LIMO permits boarding resident V.I.P. LIMO slot 5; without it '
+                      'the Working Authority refuses boarding with VEHICLE KEY REQUIRED.'),
+            'confidence': 'verified',
             'source': 'docs/research/damocles-vip-limo.md',
         })
     if spaceport is not None and key is not None:

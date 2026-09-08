@@ -1,0 +1,20 @@
+{
+  "description": "Walk directly from the empty-inventory Spaceport checkpoint to V.I.P. LIMO slot 5 and attempt to board without taking its key.",
+  "memstate": "research/damocles-st/snapshots/eris-spaceport-onfoot.sav",
+  "segments": [
+    { "rawByte": 8, "seconds": 1.4 },
+    { "rawByte": 0, "seconds": 0.4 },
+    { "rawByte": 1, "seconds": 5.0 },
+    { "rawByte": 0, "seconds": 0.3 },
+    { "rawByte": 8, "seconds": 0.5 },
+    { "rawByte": 0, "seconds": 0.3 },
+    { "rawByte": 1, "seconds": 10.0 },
+    { "rawByte": 0, "seconds": 0.8 }
+  ],
+  "keyboardEvents": [
+    { "t": 1.6, "type": "keydown", "stScancode": 19, "name": "R" },
+    { "t": 1.7, "type": "keyup", "stScancode": 147, "name": "R" },
+    { "t": 18.2, "type": "keydown", "stScancode": 48, "name": "B" },
+    { "t": 18.3, "type": "keyup", "stScancode": 176, "name": "B" }
+  ]
+}

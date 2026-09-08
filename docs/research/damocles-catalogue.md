@@ -186,9 +186,12 @@ Representative inspection uses the DART II model, the Capital Spaceport structur
 at cell `$87`, building detail 88, `KEY- V.I.P. LIMO` in resident slot 183, and
 the V.I.P. LIMO in resident slot 5. The limo's recovered world coordinates place
 it outside the named Spaceport cell, and the catalogue preserves its raw zero
-heading byte without claiming a decoded world orientation. The on-foot and boarded
-captures establish that boarding occurred while its key was held; they do not by
-themselves isolate the key-check instruction. See the
+heading byte without claiming a decoded world orientation. A successful keyed
+capture and two legal empty-inventory approaches establish that this limo
+requires its key and otherwise reports `VEHICLE KEY REQUIRED`. The exact native
+comparison branch remains undecoded. The same matching names and `+178` table
+relation link all eight recovered vehicle/key pairs without inventing their
+unknown residences. See the
 [V.I.P. LIMO findings](damocles-vip-limo.md).
 The original first-world and
 `interior-window-ram-20260818T172346Z-e3772e4d` captures establish the spaceport's

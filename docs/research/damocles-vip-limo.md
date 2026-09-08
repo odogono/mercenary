@@ -10,17 +10,20 @@ not establish playable Damocles behaviour in the browser.
 
 ## Working Authority and evidence
 
-| Item                    | Value                                                                                                                                               |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Program                 | `roms/atarist/damocles_-_mercenary_ii_novagen_software_(uk).stx`                                                                                    |
-| Program SHA-256         | `8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef`                                                                                  |
-| First-world RAM         | `research/damocles-st/work/observe-first-world-20260818T101013Z-c5a32b7d/observed.ram`                                                              |
-| First-world RAM SHA-256 | `b019301ec5ac355301613db8e2bf6cd6d4a0df41311b6efedacfea87f2a9c967`                                                                                  |
-| Fresh on-foot RAM       | `research/damocles-st/work/occ-onfoot-20260818T184106Z-bccaa487/observed.ram` (`8acceaabcfccb3191bfb97f7dddad301ba8a4562c5d1f43b2e057842772dad04`)  |
-| Boarded RAM             | `research/damocles-st/work/occ-boarded-20260818T184116Z-6ae44a13/observed.ram` (`5b6b5164ea5a7de0096693ebb3daddad7a0558a872ae05d1f65504f9de79ff9c`) |
-| Driving RAM             | `research/damocles-st/work/occ-driving-20260818T184125Z-4e1ce2ac/observed.ram` (`57df696d8b4812e0543cddcd94f6535f688f9f4d2159a4a40a2651283b9c987a`) |
-| Left-limo RAM           | `research/damocles-st/work/occ-left-20260818T185829Z-238e808e/observed.ram` (`bd608b2f0e49f146d68ead1c400ab2607e3899d2577e0553b5d0cb86e42159b8`)    |
-| Left-limo snapshot      | `research/damocles-st/snapshots/left-limo.sav` (`5d0ac4653d9209e6426aac3e04a3fb6671dd13694030f3d977eb6eda1d990c1a`)                                 |
+| Item                    | Value                                                                                                                                                |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Program                 | `roms/atarist/damocles_-_mercenary_ii_novagen_software_(uk).stx`                                                                                     |
+| Program SHA-256         | `8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef`                                                                                   |
+| First-world RAM         | `research/damocles-st/work/observe-first-world-20260818T101013Z-c5a32b7d/observed.ram`                                                               |
+| First-world RAM SHA-256 | `b019301ec5ac355301613db8e2bf6cd6d4a0df41311b6efedacfea87f2a9c967`                                                                                   |
+| Fresh on-foot RAM       | `research/damocles-st/work/occ-onfoot-20260818T184106Z-bccaa487/observed.ram` (`8acceaabcfccb3191bfb97f7dddad301ba8a4562c5d1f43b2e057842772dad04`)   |
+| Boarded RAM             | `research/damocles-st/work/occ-boarded-20260818T184116Z-6ae44a13/observed.ram` (`5b6b5164ea5a7de0096693ebb3daddad7a0558a872ae05d1f65504f9de79ff9c`)  |
+| Driving RAM             | `research/damocles-st/work/occ-driving-20260818T184125Z-4e1ce2ac/observed.ram` (`57df696d8b4812e0543cddcd94f6535f688f9f4d2159a4a40a2651283b9c987a`)  |
+| Left-limo RAM           | `research/damocles-st/work/occ-left-20260818T185829Z-238e808e/observed.ram` (`bd608b2f0e49f146d68ead1c400ab2607e3899d2577e0553b5d0cb86e42159b8`)     |
+| Left-limo snapshot      | `research/damocles-st/snapshots/left-limo.sav` (`5d0ac4653d9209e6426aac3e04a3fb6671dd13694030f3d977eb6eda1d990c1a`)                                  |
+| No-key route            | `research/damocles-st/scenarios/limo-no-key-route.json`                                                                                              |
+| No-key replay A         | `research/damocles-st/work/stick-replay-20260908T091435Z-ac090b95/observed.ram` (`a0fae448509dd7ba852fb6bb4ea286149e5ee23ad7f23aeb7958ed87f2307e90`) |
+| No-key replay B         | `research/damocles-st/work/stick-replay-20260908T091435Z-add59acd/observed.ram` (`494b8d7198ffc5d2e42e249b3bca970768bec889aee5b573d512e3aa47042cd9`) |
 
 The board/leave controls and four occupancy captures were first established in
 [`damocles-walk-board-flight.md`](damocles-walk-board-flight.md). The Spaceport
@@ -147,15 +150,21 @@ Three independent source facts connect the key to craft slot 5:
    `$7A8E`/`$7A90` return to on-foot values. The key is not consumed by
    boarding.
 
-The resident Script system string table independently contains **`VEHICLE KEY
-REQUIRED`** in slot 3: `$070006` contains relative offset `$2DC4`, selecting the
-string record at `$072DC4` (text begins at `$072DD2` after padding). This proves
-that vehicle boarding has a missing-key refusal in the loaded program. The
-existing captures do not include a failed attempt to board this specific limo
-without the key, and the native branch selecting the required key has not yet
-been decoded. Therefore the fixed slot pairing and successful keyed boarding
-are verified, while the exact no-key predicate for slot 5 remains to be closed
-by a negative capture or targeted native disassembly.
+The tracked `limo-no-key-route.json` starts from the untouched
+`eris-spaceport-onfoot.sav`, whose inventory is `EMPTY`, walks around the
+building without entering the Room or taking its key, and presses `B` beside
+resident slot 5. Two independent starts reproduce the same result. Both remain
+on foot (`$7A8E/$7A90 = $0001/$FFFF`), leave the limo surface-resident
+(`$6FBC/$73BC = $FF122002/$2C000087`), retain the empty inventory and visibly
+display **`VEHICLE KEY REQUIRED`**. The two final positions differ because this
+older replay helper schedules walking by host time, but each is within boarding
+range and produces the same state transition and message.
+
+The resident Script system string table independently contains that message in
+slot 3: `$070006` contains relative offset `$2DC4`, selecting the string record
+at `$072DC4` (text begins at `$072DD2` after padding). The successful keyed
+capture and the two legal no-key captures therefore verify the V.I.P. limo key
+requirement. The native branch implementing the comparison remains undecoded.
 
 The key's pickup transition occurs before boarding and persists after leaving;
 see the slot-183 values in
@@ -177,5 +186,8 @@ geometry or mutable state embedded in the vehicle model.
   remain unresolved. The recovered heading `0` is a raw ST angle byte, not a
   verified degree or cardinal heading.
 - The source evidence connects key slot 183 to craft slot 5 and shows successful
-  keyed boarding. A limo-specific failed board without that key remains useful
-  validation before declaring the requirement predicate completely decoded.
+  keyed boarding. Two untouched-checkpoint replays verify that the same craft
+  refuses boarding without the key and emits `VEHICLE KEY REQUIRED`.
+- The matching names and exact `+178` slot relation link the other seven
+  recovered vehicle/key pairs in the catalogue. Their residences and individual
+  no-key runtime paths remain unresolved.
