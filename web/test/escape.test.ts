@@ -518,7 +518,9 @@ describe('after the dispatch', () => {
     expect(launch(route)).toBeTrue();
 
     // The tail retimes the message line before it says anything, which is what
-    // makes the epilogue read more slowly than play does.
+    // makes the epilogue read more slowly than play does. The dispatcher's answer and that
+    // write sit a frame apart, so give the script the frame.
+    route.advance(0.5);
     expect(route.session.scripts?.host.messageInterval).toBe(150);
 
     const texts = revealed(route, 300);

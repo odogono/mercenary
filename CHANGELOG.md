@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- A Benson Message now rests on the Benson Display through its reading hold and then scrolls
+  off the left edge, as in the original, instead of staying on the row. The hold begins at the
+  first burst boundary after the last printable character, so padded indexed messages such as
+  `HANGER` rest centred and then depart with their trailing padding; a message that has rested
+  intact is never snapped back to its reading view. The script continues as soon as the hold
+  ends, so pacing is unchanged. Save schema 13 records the display's rested state and the new
+  `clearing` phase, and migrates schema 11 and 12 Saves; Arrival Narration keeps its still row.
+
 ## [0.14.0] - 2026-09-07
 
 ### Added

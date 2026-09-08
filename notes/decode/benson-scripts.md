@@ -215,7 +215,14 @@ the 25-shift burst evicts the first two printable characters before the reading
 hold (for example, `CRAFT FOR SALE` becomes `AFT FOR SALE`).
 
 The browser scales the silent `$E1` wait with `scripts.timeScale` and applies its
-existing three-second reading hold without scaling. Active scanout remains at the
+existing three-second reading hold without scaling. The capture never reached a
+message's end, so what follows rests on play of the original: a message such as
+`HANGER` arrives centred by its leading padding words, holds still, then its
+trailing padding and the emitter's spaces carry it off the left edge in the next
+burst. The browser holds at the first boundary after the last printable character,
+releases the script when the hold ends, and lets the departure run at the same
+capped 50 Hz alongside whatever the script does next. Its intact reading view is
+only ever substituted for a message that never rested intact on the row. Active scanout remains at the
 recovered 50 Hz: the gameplay scale of six otherwise compresses all 25 shifts into
 about 83 ms, only four or five browser render frames, so the right-edge entry is
 effectively invisible. The cap leaves a burst visible for half a second without
