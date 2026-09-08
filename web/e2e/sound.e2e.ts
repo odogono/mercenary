@@ -70,6 +70,7 @@ test('unavailable browser audio leaves the Gameplay Session usable', async ({
   const surface = page.locator('#game-surface');
   await expect(surface).toHaveAttribute('data-state', 'ready');
   await page.keyboard.press('Space');
+  await page.locator('#departure-skip').click();
   await expect(surface).toHaveAttribute('data-arrival', 'done');
   await page.keyboard.press('Escape');
   await expect(surface).toHaveAttribute('data-layer', 'menu');

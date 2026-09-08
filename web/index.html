@@ -953,6 +953,113 @@
       }
 
       /* ---------------------------------------------------------------------
+         DEPARTURE — the carousel of Destinations over the deep-space frame
+         (ADR 0040). Skip is page chrome anchored to the viewport, so its
+         disappearance at the join changes nothing in the authored frame.
+         ------------------------------------------------------------------ */
+      #frame-stack {
+        position: relative;
+      }
+
+      #departure {
+        position: absolute;
+        z-index: 1;
+        inset: 0 0 auto;
+        height: calc(800 / 970 * 100%);
+        color: var(--text);
+        font-family: var(--panel-font);
+        letter-spacing: 0.08em;
+        pointer-events: none;
+        text-transform: uppercase;
+      }
+
+      #game-surface[data-composition='strip'] #departure {
+        height: 100%;
+      }
+
+      #departure[hidden] {
+        display: none;
+      }
+
+      .departure-carousel {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .departure-track {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        display: grid;
+        width: 100%;
+        grid-auto-columns: 100%;
+        grid-auto-flow: column;
+        align-items: center;
+        transform: translateY(-50%);
+        will-change: transform;
+      }
+
+      .departure-destination {
+        display: grid;
+        justify-items: center;
+        gap: 8px;
+        text-align: center;
+        text-shadow: 0 2px 0 #000;
+      }
+
+      .departure-kicker {
+        color: var(--status);
+        font-size: 12px;
+      }
+
+      .departure-name {
+        margin: 0;
+        color: var(--accent);
+        font-size: clamp(28px, 6vw, 64px);
+        font-weight: 400;
+      }
+
+      .departure-place {
+        color: var(--text);
+        font-size: clamp(12px, 2vw, 18px);
+      }
+
+      .departure-actions {
+        position: absolute;
+        right: 0;
+        bottom: 12%;
+        left: 0;
+        display: flex;
+        justify-content: center;
+        pointer-events: auto;
+      }
+
+      #departure-commit {
+        min-width: 112px;
+      }
+
+      /* Page chrome anchored to the viewport, not to the authored frame: it appears at commit
+         and vanishes at the join without the frame's layout changing. */
+      #departure-skip {
+        position: fixed;
+        z-index: 2;
+        right: 16px;
+        bottom: 16px;
+      }
+
+      #departure-skip[hidden] {
+        display: none;
+      }
+
+      @media (max-width: 600px) {
+        .departure-place {
+          font-size: 8px;
+          letter-spacing: 0.04em;
+        }
+      }
+
+      /* ---------------------------------------------------------------------
          SHELL CONSOLE — a development tool that slides over a running world.
          It deliberately does not pause: a command's effect shows in the panel
          the moment it is typed.
@@ -1031,6 +1138,26 @@
             height="800"
             aria-label="Wireframe view of Targ. Tap or click a nearby object to take it."
           ></canvas>
+          <section
+            id="departure"
+            data-shell-chrome
+            aria-label="Departure"
+            hidden
+          >
+            <div class="departure-carousel">
+              <div id="departure-track" class="departure-track"></div>
+            </div>
+            <div class="departure-actions">
+              <button
+                id="departure-commit"
+                class="chrome-button"
+                type="button"
+                aria-label="Commit Destination"
+              >
+                COMMIT
+              </button>
+            </div>
+          </section>
           <div id="benson-panel" aria-label="Benson Panel">
             <div id="panel-scale">
               <section id="panel-targ" class="rendition-targ bezel">
@@ -1179,6 +1306,16 @@
         <div id="status-row">
           <div id="status">STARTING SESSION</div>
         </div>
+        <button
+          id="departure-skip"
+          class="chrome-button"
+          type="button"
+          data-shell-chrome
+          aria-label="Skip to Targ"
+          hidden
+        >
+          SKIP
+        </button>
 
         <div id="console" data-shell-chrome aria-label="Shell Console">
           <div id="console-log" role="log" aria-live="polite"></div>

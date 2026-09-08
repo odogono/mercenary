@@ -2,7 +2,7 @@ import { IDLE } from '../gameCore/index.ts';
 import { fetchReader, load } from '../payload/load.ts';
 import type { PresentationEvent, SessionSnapshot } from '../session/index.ts';
 import { arrivalTunables, bensonTunables } from '../settings/index.ts';
-import { targOrreryFor } from '../sky/index.ts';
+import { createTargOrrery, skyStateAt, targOrreryFor } from '../sky/index.ts';
 import { TargPresentationClock, formatTargTime } from '../sky/time.ts';
 import { SoundPresenter } from '../sound/presenter.ts';
 import { AudioWorkletTransport } from '../sound/transport.ts';
@@ -17,6 +17,14 @@ import {
 } from './arrivalScript.ts';
 import { FixedStepClock } from './clock.ts';
 import { installConsole } from './consoleView.ts';
+import {
+  DESTINATIONS,
+  DepartureDirector,
+  departureBodiesFrom,
+  departureMotionFor,
+  type DepartureEntry
+} from './departure.ts';
+import { installDepartureView } from './departureView.ts';
 import { Renderer, planFrame } from './frame.ts';
 import { BrowserControlProfile } from './input.ts';
 import { createNewGameAction, escapeFrom, installSystemMenu } from './menu.ts';
@@ -73,6 +81,12 @@ const chromePages = {
 };
 const panelRoot = document.getElementById('benson-panel')!;
 const panelScale = document.getElementById('panel-scale')!;
+const departureElements = {
+  commit: document.getElementById('departure-commit') as HTMLButtonElement,
+  root: document.getElementById('departure')!,
+  skip: document.getElementById('departure-skip') as HTMLButtonElement,
+  track: document.getElementById('departure-track')!
+};
 
 const panelElements = {
   damoclesCompass: document.getElementById(
@@ -280,6 +294,28 @@ try {
       pacing: arrivalPacing
     });
   let arrival = makeArrival(resumeRead.kind !== 'restored');
+  // The Departure precedes the Arrival and touches no session: it has no bridge, gives the
+  // session no time and checkpoints nothing, so a reload from deep space returns to deep space.
+  // Its flyby roster is read from the Targ Orrery under both Presentation Presets — the bodies
+  // are bound to the sky model, not to whether the player has the Enhanced sky on (ADR 0040).
+  const departureMotion = departureMotionFor(
+    matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+  const departureBodies = departureBodiesFrom(
+    skyStateAt(createTargOrrery(settings.presentation.sky), 0)
+  );
+  const makeDeparture = (entry: DepartureEntry): DepartureDirector =>
+    new DepartureDirector({
+      bodies: departureBodies,
+      destinations: DESTINATIONS,
+      entry,
+      motion: departureMotion,
+      settings: settings.departure
+    });
+  // A game already under way — a Session Resume — has chosen its Destination already.
+  let departure = makeDeparture(
+    resumeRead.kind === 'restored' ? 'done' : 'carousel'
+  );
   let recordBensonMessage = (): void => {};
   notices.synchronize(snapshot.bensonMessage);
 
@@ -432,10 +468,16 @@ try {
   const chromeFocus = (): boolean =>
     document.activeElement?.closest('[data-shell-chrome]') != null;
   const routerState = (): RouterState => ({
-    arrival: arrival.gatesInput(),
     chromeFocus: chromeFocus(),
     console: shellConsole.isOpen() ? 'open' : 'closed',
-    layer: menu.layer()
+    layer: menu.layer(),
+    opening: departure.atCarousel()
+      ? 'carousel'
+      : departure.inJourney()
+        ? 'journey'
+        : arrival.gatesInput()
+          ? 'arrival'
+          : 'none'
   });
 
   const replaceWalkabout = (
@@ -448,10 +490,32 @@ try {
     snapshot = session.snapshot;
     targClock.reset();
     sound.resetFromSnapshot(snapshot);
-    // A New Game plays the Arrival again; a restored Save is a game already under way, so it
-    // gets whatever is left of the Arrival, which is normally none of it.
+    // A New Game plays the Departure and the Arrival again; a restored Save is a game already
+    // under way, so it gets whatever is left of the Arrival, which is normally none of it.
+    departure = makeDeparture(
+      savedSnapshot === undefined ? 'carousel' : 'done'
+    );
     arrival = makeArrival(savedSnapshot === undefined);
   };
+
+  /// Commit the Destination the carousel is on. The journey begins; the Arrival waits at its end.
+  /// Published at once so the chrome follows the commit rather than the next frame.
+  const commitDestination = (): void => {
+    departure.commit();
+    publish();
+  };
+  /// Hurry the committed journey and the Arrival to the join. One control, one outcome: the
+  /// game at the status report, identical to the one watching reaches.
+  const skipToTarg = (): void =>
+    performAndRefresh(() => {
+      if (!departure.inJourney()) {
+        return;
+      }
+      departure.skipJourney();
+      arrival.skipToJoin();
+      // Fast-forwarding is synchronous work, not game time (see the skip key below).
+      clock.reset();
+    });
 
   const persistence = createSavePersistence({
     capture: () => ({
@@ -689,7 +753,7 @@ try {
       y: event.clientY
     });
     if (
-      state.arrival ||
+      state.opening !== 'none' ||
       chromeHasKeyboard(state) ||
       interaction === undefined ||
       pointer === undefined ||
@@ -733,9 +797,13 @@ try {
 
   window.addEventListener('keydown', event => {
     switch (routeKey(routerState(), event)) {
-      case 'arrival-held':
       case 'browser':
       case 'chrome':
+      case 'opening-held':
+        return;
+      case 'opening':
+        commitDestination();
+        event.preventDefault();
         return;
       case 'escape': {
         // Escape both enters and leaves the chrome, and the console sits over whatever else is
@@ -777,6 +845,12 @@ try {
     new ResizeObserver(onResize).observe(target);
   });
   const panel = installPanel(panelElements);
+  const departureView = installDepartureView({
+    destinations: DESTINATIONS,
+    elements: departureElements,
+    onCommit: commitDestination,
+    onSkip: skipToTarg
+  });
   const panelContext = (): PanelContext => ({
     cellSize: world.cellSize,
     clock: formatTargTime(targClock.secondsOfDay(snapshot.elapsed), '-'),
@@ -784,9 +858,16 @@ try {
     objectNames: names
   });
   const publish = (): void => {
+    const departing = departure.isActive();
     const arriving = arrival.isActive();
     const phase = arrival.current().kind;
-    const narration = arriving ? arrival.narrationText() : undefined;
+    // Deep space keeps the message window blank: the Departure has no narration of its own, and
+    // the title card is the Arrival's first beat, not the Departure's last.
+    const narration = departing
+      ? ''
+      : arriving
+        ? arrival.narrationText()
+        : undefined;
     const pose = arrival.pose();
     const presentation = effectivePresentation(
       settings.presentation,
@@ -796,23 +877,27 @@ try {
       ...presentation,
       orreryElapsed: targClock.elapsed(snapshot.elapsed)
     };
-    const plan = arriving
-      ? arrivalFramePlan(phase, {
-          field: arrival.fieldProgress(),
-          pose,
-          presentation: framePresentation,
-          size: VIEWPORT,
-          snapshot,
-          world,
-          ...(renderer.orrery === undefined ? {} : { orrery: renderer.orrery })
-        })
-      : planFrame(
-          world,
-          snapshot,
-          VIEWPORT,
-          renderer.orrery,
-          framePresentation
-        );
+    const plan = departing
+      ? departure.framePlan(VIEWPORT)
+      : arriving
+        ? arrivalFramePlan(phase, {
+            field: arrival.fieldProgress(),
+            pose,
+            presentation: framePresentation,
+            size: VIEWPORT,
+            snapshot,
+            world,
+            ...(renderer.orrery === undefined
+              ? {}
+              : { orrery: renderer.orrery })
+          })
+        : planFrame(
+            world,
+            snapshot,
+            VIEWPORT,
+            renderer.orrery,
+            framePresentation
+          );
     const drawn = renderer.render(
       plan,
       // The player's weight and glow choices are presentation, so they are read per frame the
@@ -823,10 +908,14 @@ try {
     const player = snapshot.player;
     const panelModel = panelViewModel(snapshot, panelContext());
     panel.draw(
-      arriving
+      departing || arriving
         ? arrivalPanelViewModel(
             panelModel,
-            { narration, pose, unmeasured: arrival.readsAsterisks() },
+            {
+              narration,
+              pose,
+              unmeasured: departing || arrival.readsAsterisks()
+            },
             world.cellSize
           )
         : panelModel
@@ -850,6 +939,9 @@ try {
         ? String(snapshot.bensonColour)
         : '';
     surface.dataset['arrival'] = phase;
+    surface.dataset['departure'] = departure.current().kind;
+    surface.dataset['departureMotion'] = departureMotion;
+    departureView.update(departure);
     updateText(credits, `${snapshot.credits} CREDITS`);
     updateText(
       status,
@@ -868,8 +960,13 @@ try {
     // the player can see what they are about to return to, but no time passes.
     if (menu.layer() === 'none' && ownership.mayAdvance()) {
       clock.frame(timestamp, seconds => {
-        // The Arrival advances the session itself while it presents, so that watching the
-        // opening and skipping it hand the session the same run of steps.
+        // The Departure gives the session nothing at all; the Arrival then advances the session
+        // itself while it presents, so that watching the opening and skipping it hand the
+        // session the same run of steps.
+        if (departure.isActive()) {
+          departure.step(seconds);
+          return;
+        }
         if (arrival.ownsSession()) {
           arrival.step(seconds);
           return;

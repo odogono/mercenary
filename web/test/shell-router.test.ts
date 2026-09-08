@@ -17,10 +17,10 @@ const key = (code: string, fields: Partial<RoutedKey> = {}): RoutedKey => ({
 });
 
 const state = (fields: Partial<RouterState> = {}): RouterState => ({
-  arrival: fields.arrival ?? false,
   chromeFocus: fields.chromeFocus ?? false,
   console: fields.console ?? 'closed',
-  layer: fields.layer ?? 'none'
+  layer: fields.layer ?? 'none',
+  opening: fields.opening ?? 'none'
 });
 
 describe('the shell key router', () => {
@@ -113,11 +113,11 @@ describe('the shell key router', () => {
   });
 
   describe('while the Arrival is presenting', () => {
-    const arriving = state({ arrival: true });
+    const arriving = state({ opening: 'arrival' });
 
     test('holds every key that would move the player', () => {
       for (const code of ['ArrowUp', 'ArrowLeft', 'KeyB', 'KeyT', 'Digit3']) {
-        expect(routeKey(arriving, key(code))).toBe('arrival-held');
+        expect(routeKey(arriving, key(code))).toBe('opening-held');
       }
     });
 
@@ -135,11 +135,62 @@ describe('the shell key router', () => {
 
     test('still gives chrome its keys when chrome has the keyboard', () => {
       expect(
-        routeKey(state({ arrival: true, layer: 'menu' }), key('ArrowUp'))
+        routeKey(state({ layer: 'menu', opening: 'arrival' }), key('ArrowUp'))
       ).toBe('chrome');
       expect(
-        routeKey(state({ arrival: true, console: 'open' }), key('Space'))
+        routeKey(state({ console: 'open', opening: 'arrival' }), key('Space'))
       ).toBe('chrome');
+    });
+  });
+
+  describe('while the Departure is at its carousel', () => {
+    const carousel = state({ opening: 'carousel' });
+
+    test('commits on Enter or Space', () => {
+      expect(routeKey(carousel, key('Enter'))).toBe('opening');
+      expect(routeKey(carousel, key('NumpadEnter'))).toBe('opening');
+      expect(routeKey(carousel, key('Space'))).toBe('opening');
+    });
+
+    test('does not commit on a held key repeating', () => {
+      expect(routeKey(carousel, key('Enter', { repeat: true }))).toBe(
+        'opening-held'
+      );
+    });
+
+    test('holds every other key', () => {
+      for (const code of ['ArrowUp', 'ArrowLeft', 'KeyB', 'KeyT', 'Digit3']) {
+        expect(routeKey(carousel, key(code))).toBe('opening-held');
+      }
+    });
+
+    test('keeps the System Menu and the Shell Console reachable', () => {
+      expect(routeKey(carousel, key('Escape'))).toBe('escape');
+      expect(routeKey(carousel, key('Backquote'))).toBe('console-toggle');
+    });
+
+    test('gives a focused Commit button its own keys', () => {
+      expect(
+        routeKey(
+          state({ chromeFocus: true, opening: 'carousel' }),
+          key('Space')
+        )
+      ).toBe('chrome');
+    });
+  });
+
+  describe('while the Departure journey is under way', () => {
+    const journey = state({ opening: 'journey' });
+
+    test('holds every key, the skip key included', () => {
+      for (const code of ['Space', 'Enter', 'ArrowUp', 'KeyB']) {
+        expect(routeKey(journey, key(code))).toBe('opening-held');
+      }
+    });
+
+    test('keeps the System Menu and the Shell Console reachable', () => {
+      expect(routeKey(journey, key('Escape'))).toBe('escape');
+      expect(routeKey(journey, key('Backquote'))).toBe('console-toggle');
     });
   });
 });

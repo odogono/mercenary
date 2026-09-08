@@ -72,6 +72,17 @@ export interface ArrivalSettings {
   readonly titleCardSeconds: number;
 }
 
+/// Durations of the Departure, the shell-owned opening that precedes the Arrival (ADR 0040).
+/// Presentation only, like `arrival`: none of it identifies a Save.
+export interface DepartureSettings {
+  /// How long the committed journey takes, from commit to the join with the Arrival.
+  readonly journeySeconds: number;
+  /// The journey's duration when the browser asks for reduced motion.
+  readonly reducedMotionJourneySeconds: number;
+  /// How long the carousel takes to settle on an entry after it is turned.
+  readonly snapSeconds: number;
+}
+
 export interface ScriptSettings {
   /// Instructions one advance may run before yielding, which stands in for the frame boundary
   /// the original interpreter had for free.
@@ -150,6 +161,7 @@ export interface PresentationSettings {
 
 export interface Settings {
   readonly arrival: ArrivalSettings;
+  readonly departure: DepartureSettings;
   readonly flight: FlightSettings;
   readonly message: MessageSettings;
   readonly presentation: PresentationSettings;
@@ -170,6 +182,11 @@ export const DEFAULT_ARRIVAL_CHARACTERS_PER_SECOND = 4;
 export const DEFAULT_ARRIVAL_HOLD_SECONDS = 2.1;
 export const DEFAULT_ARRIVAL_TITLE_CARD_SECONDS = 2.5;
 export const DEFAULT_ARRIVAL_TIME_SCALE = 3;
+
+/// The Departure's recipe as settled by the prototype study (`departure-opening-prototype.md`).
+export const DEFAULT_DEPARTURE_JOURNEY_SECONDS = 10;
+export const DEFAULT_DEPARTURE_REDUCED_MOTION_JOURNEY_SECONDS = 4;
+export const DEFAULT_DEPARTURE_SNAP_SECONDS = 0.32;
 export const DEFAULT_SCRIPT_INSTRUCTION_BUDGET = 512;
 export const DEFAULT_PRESENTATION_PRESET: PresentationPreset = 'enhanced';
 export const DEFAULT_STRUCTURE_REACH: StructureReach = 'cell';
@@ -317,6 +334,39 @@ const readArrival = (value: unknown): ArrivalSettings => {
       'titleCardSeconds',
       'arrival.titleCardSeconds',
       DEFAULT_ARRIVAL_TITLE_CARD_SECONDS
+    )
+  };
+};
+
+const readDeparture = (value: unknown): DepartureSettings => {
+  const source = block(value, 'departure');
+  return {
+    journeySeconds: positive(
+      number(
+        source,
+        'journeySeconds',
+        'departure.journeySeconds',
+        DEFAULT_DEPARTURE_JOURNEY_SECONDS
+      ),
+      'departure.journeySeconds'
+    ),
+    reducedMotionJourneySeconds: positive(
+      number(
+        source,
+        'reducedMotionJourneySeconds',
+        'departure.reducedMotionJourneySeconds',
+        DEFAULT_DEPARTURE_REDUCED_MOTION_JOURNEY_SECONDS
+      ),
+      'departure.reducedMotionJourneySeconds'
+    ),
+    snapSeconds: positive(
+      number(
+        source,
+        'snapSeconds',
+        'departure.snapSeconds',
+        DEFAULT_DEPARTURE_SNAP_SECONDS
+      ),
+      'departure.snapSeconds'
     )
   };
 };
@@ -563,6 +613,7 @@ const readPresentation = (value: unknown): PresentationSettings => {
 
 export const defaultSettings = (): Settings => ({
   arrival: readArrival(undefined),
+  departure: readDeparture(undefined),
   flight: readFlight(undefined),
   message: readMessage(undefined),
   presentation: readPresentation(undefined),
@@ -656,6 +707,7 @@ export const loadSettings = (text: string | undefined): Settings => {
   const source = document as Record<string, unknown>;
   return {
     arrival: readArrival(source['arrival']),
+    departure: readDeparture(source['departure']),
     flight: readFlight(source['flight']),
     message: readMessage(source['message']),
     presentation: readPresentation(source['presentation']),

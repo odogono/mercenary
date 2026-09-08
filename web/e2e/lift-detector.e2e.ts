@@ -1,11 +1,14 @@
 import { expect, test, type Page } from '@playwright/test';
 
+/// Commit the one Destination from deep space, then hurry the journey and the Arrival to the
+/// game (ADR 0040, ADR 0032).
 const skipArrival = async (page: Page): Promise<void> => {
   await expect(page.locator('#game-surface')).toHaveAttribute(
     'data-state',
     'ready'
   );
   await page.keyboard.press('Space');
+  await page.locator('#departure-skip').click();
   await expect(page.locator('#game-surface')).toHaveAttribute(
     'data-arrival',
     'done'

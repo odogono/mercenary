@@ -1,6 +1,6 @@
 # Departure and Destination sketch (non-loaded)
 
-**Status:** Research sketch only. Not loaded by the app, no change to `web/src`, no Save schema change. The decision it details is ADR 0040; the vehicle is the one ADR 0021 licenses (non-loaded sketches until after _The Second City_).
+**Status:** Research sketch, now partly built. The one-entry Departure ships as Browser Shell presentation (issue #160, `web/src/shell/departure.ts`), under ADR 0040's 2026-09-08 amendment; everything multi-title here — paths, a second entry, the Destination field on Saves, the last-played entry — remains unbuilt under ADR 0021 until after _The Second City_. Where the shipped build and this sketch differ, the amendment and the code are authoritative.
 
 **Verdict this sketch supports:** the player chooses what to play by choosing where to fly — a shell-owned Departure committing one Destination, ending seamlessly where the unchanged Arrival (ADR 0032) begins.
 
@@ -24,7 +24,7 @@ The Arrival Narration's quoted "DESTINATION-GAMMA FIVE" (`web/src/shell/arrivalN
 
 ## Skip path
 
-Skip = **commit the currently snapped entry + fast-forward**. One key from deep space runs journey and Arrival to the join in the same fixed steps the frame loop would have given the held session, so skipped and watched reach the identical Save Snapshot — ADR 0032's proof extended by composition, testable the same way (`web/test/arrival.test.ts` is the model). A first play reaches the status report with zero decisions.
+_Revised at build time (ADR 0040 amendment, 2026-09-08)._ The carousel offers a **Commit** alone — Enter, Space or its button. Once the journey is under way a **Skip** control appears in page chrome and fast-forwards the journey and the Arrival together to the join, running the held session through the same fixed steps the frame loop would have given it, so skipped and watched reach the identical Save Snapshot — ADR 0032's proof extended by composition (`web/test/departure.test.ts`, modelled on `web/test/arrival.test.ts`). Space is inert during the journey. Nothing on the carousel skips: committing the only entry is not a decision, so a first play still reaches the status report with none.
 
 ## When it shows
 
@@ -57,7 +57,7 @@ When the second Destination ships, a Save and the Session Resume name their Dest
 
 ## What this sketch must not become yet
 
-- Shipped shell code, a boot-flow change, path routing in the shell or `serve.ts`, or anything imported from `web/src`.
+- Path routing in the shell or `serve.ts`, or a boot flow that reads the address bar. _(The one-entry Departure itself is now shipped shell code; see the status above.)_
 - A Save schema bump, a Destination or Title field in today's Save identity, or a storage namespace change.
 - A locked or teased carousel entry, or any Dion Crisis treatment.
 - A second island in the World Geometry Dataset or any surface-geometry change.
