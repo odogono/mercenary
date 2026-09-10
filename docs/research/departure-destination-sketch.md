@@ -1,6 +1,6 @@
 # Departure and Destination sketch (non-loaded)
 
-**Status:** Research sketch, now partly built. The one-entry Departure ships as Browser Shell presentation (issue #160, `web/src/shell/departure.ts`), under ADR 0040's 2026-09-08 amendment; everything multi-title here — paths, a second entry, the Destination field on Saves, the last-played entry — remains unbuilt under ADR 0021 until after _The Second City_. Where the shipped build and this sketch differ, the amendment and the code are authoritative.
+**Status:** Research sketch, now partly built. The one-entry Departure ships as Browser Shell presentation (issue #160, `web/src/shell/departure.ts`), under ADR 0040's 2026-09-08 amendment; ADR 0042 separately admits only the debug paths and shell-owned Flyover. Everything else multi-title here — Title game paths, a second entry, the Destination field on Saves, the last-played entry — remains unbuilt under ADR 0021 until after _The Second City_. Where the shipped build and this sketch differ, the amendments and the code are authoritative.
 
 **Verdict this sketch supports:** the player chooses what to play by choosing where to fly — a shell-owned Departure committing one Destination, ending seamlessly where the unchanged Arrival (ADR 0032) begins.
 
@@ -45,9 +45,11 @@ Each Title has one path; the carousel lives only at the root.
 | `/dion`             | Reserved, non-binding                                                             | No design                                                                                       |
 | anything else       | Falls back to `/`                                                                 |                                                                                                 |
 
+ADR 0042 adds `/targ/debug` and `/damocles/debug` for the internal Flyover, with `/debug` redirecting to `/targ/debug`. These inspect the `targ` and `gamma` Systems without committing a Destination, starting or resuming play, or activating the Title paths above.
+
 Commit on the carousel pushes the Title's path into history, so Back returns to deep space; the address never changes again inside a game. New Game restarts the current Title's default Destination on the current path. Slugs (`targ`, `second-city`, `damocles`) are the identifiers a Save and a Session Resume store.
 
-A Title's Data Payload loads on commit. Damocles's is already under `payload/damocles/` (ADR 0039); Targ's moves from the payload root to `payload/targ/` only when a second Title actually loads. The Damocles catalogue's eventual home is `/damocles/catalogue`; it stays at `/catalogue.html` for now.
+A Title's Data Payload loads on commit. Damocles's is already under `payload/damocles/` (ADR 0039); Targ's moves from the payload root to `payload/targ/` only when a second Title actually loads. The Damocles catalogue's eventual home is `/damocles/catalogue`; its shipped canonical path remains `/catalogue` for now, with `/catalogue.html` redirecting there (ADR 0042).
 
 ## Save and Resume identity (deferred schema note)
 
@@ -57,7 +59,7 @@ When the second Destination ships, a Save and the Session Resume name their Dest
 
 ## What this sketch must not become yet
 
-- Path routing in the shell or `serve.ts`, or a boot flow that reads the address bar. _(The one-entry Departure itself is now shipped shell code; see the status above.)_
+- Title game-path routing, per-Title boot or a gameplay boot flow that reads the address bar. Debug-document routing is separately admitted by ADR 0042; the one-entry Departure itself is already shipped shell code.
 - A Save schema bump, a Destination or Title field in today's Save identity, or a storage namespace change.
 - A locked or teased carousel entry, or any Dion Crisis treatment.
 - A second island in the World Geometry Dataset or any surface-geometry change.
