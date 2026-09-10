@@ -159,12 +159,16 @@ The Browser Shell's named choice between Authentic presentation, which retains t
 _Avoid_: Graphics mode, theme, sky toggle
 
 **Targ Orrery**:
-The deterministic Enhanced-presentation model of Targ's sun, two moons, twilight and night, advancing with elapsed time in one Gameplay Session unless the Shell Console applies a presentation-only local-time adjustment; its twilight includes an authored horizon-to-zenith colour change that follows the world's horizon.
+The deterministic Enhanced-presentation model of Targ's sun, two moons, twilight and night, advancing with presentation elapsed time supplied either by a Gameplay Session or by the sessionless Flyover unless the Shell Console applies a presentation-only local-time adjustment; its twilight includes an authored horizon-to-zenith colour change that follows the world's horizon.
 _Avoid_: World clock, day/night system, recovered sky
 
 **Star Sphere**:
 The fixed seeded arrangement of stars belonging to the Targ Orrery, seen turning at the sidereal rate rather than regenerated from frame to frame.
-_Avoid_: Random stars, particle field, space backdrop
+_Avoid_: Random stars, particle field, Flyover Backdrop, space backdrop
+
+**Flyover Backdrop**:
+The fixed procedural star field shared by every Flyover as inspection dressing in System space, carrying no claim about any System's recovered sky or Body roster.
+_Avoid_: Star Sphere, recovered sky, Body roster, random stars
 
 **Interstellar Ship Field**:
 The Reference Build's 21-point respawning visual field shown by the Interstellar Ship's handler during the Escape terminal presentation, distinct from ordinary flight and the authored Targ Star Sphere.
@@ -193,6 +197,30 @@ _Avoid_: Title, game, campaign, Content Overlay, level
 **Title**:
 One original release of the series together with its official expansions, owning one or more Destinations, one of which is its default. Each Title has exactly one address in the Browser Shell, keeps its own Saves and its own Session Resume, and is the unit whose content is loaded when a Destination is committed (ADR 0041).
 _Avoid_: Game, app, product, Destination, Content Set
+
+**System**:
+One celestial setting containing Bodies and the relationships among them, independent of the Titles and Destinations that refer to it; more than one Title may share a System.
+_Avoid_: Title, Destination, world, star map
+
+**Body**:
+One physical member of a System whose known identity and placement come from that System's authority, without implying that its type, dimensions, Primary or motion are known.
+_Avoid_: World, planet, place, sphere
+
+**Primary**:
+The optional Body that another Body is established to revolve around; absence means the relationship is not established, not that the Body revolves around nothing.
+_Avoid_: Parent, centre, star, inferred Primary
+
+**Island**:
+One authored landmass on a Body in the Flyover, optionally carrying one canonical surface patch; a Damocles Place whose recovered kind is `ISLAND` is a place and not an Island in this sense.
+_Avoid_: Continent, surface map, Damocles place, level
+
+**Range**:
+Which of the Flyover's three scale bands a Camera occupies relative to its nearest Body — Orbital, Coastal or Surface — determining how that Body is presented without changing the Camera's continuous Pose.
+_Avoid_: Level of detail, zoom level, scene, mode
+
+**Flyover**:
+The shell-owned internal development surface in which a free Camera moves through a System for rendering inspection without a Gameplay Session; it is neither the Game Surface nor a fidelity claim.
+_Avoid_: Free-flight mode, spectator mode, Gameplay Session, game viewer
 
 **Trace Oracle**:
 The accepted macOS implementation frozen at the annotated `trace-oracle-last-good` tag, together with the deterministic traces it regenerates, held as the tagged equivalence authority that the canonical browser implementation must reproduce rather than as a live implementation (ADR 0019).
