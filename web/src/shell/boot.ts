@@ -25,6 +25,7 @@ import {
   type DepartureEntry
 } from './departure.ts';
 import { installDepartureView } from './departureView.ts';
+import { assertBrowserDocument } from './documentPath.ts';
 import { Renderer, planFrame } from './frame.ts';
 import { BrowserControlProfile } from './input.ts';
 import { createNewGameAction, escapeFrom, installSystemMenu } from './menu.ts';
@@ -160,6 +161,7 @@ const statusText = (
 };
 
 try {
+  assertBrowserDocument(location.pathname, 'gameplay');
   // Payload, settings and typography are independent localhost reads, so none waits behind
   // another.
   const [bundle, settingsText] = await Promise.all([

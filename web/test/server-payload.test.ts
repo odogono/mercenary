@@ -55,4 +55,24 @@ describe('the localhost Data Payload route', () => {
       await rm(root, { force: true, recursive: true });
     }
   });
+
+  test('serves one safe nested JSON segment and no deeper', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'mercenary-payload-route-'));
+    try {
+      await mkdir(join(root, 'damocles'));
+      await writeFile(join(root, 'damocles/system.json'), '{}');
+      expect(
+        (await payloadResponse('/payload/damocles/system.json', root))?.status
+      ).toBe(200);
+      for (const path of [
+        '/payload/damocles/nested/system.json',
+        '/payload/damocles/%2e%2e/system.json',
+        '/payload/Damocles/system.json'
+      ]) {
+        expect((await payloadResponse(path, root))?.status).toBe(404);
+      }
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
 });
