@@ -35,7 +35,10 @@ test.beforeEach(async ({ page }) => {
 test('Targ and Gamma boot through the isolated Flyover document', async ({
   page
 }) => {
-  for (const path of ['/targ/debug', '/damocles/debug']) {
+  for (const [path, bodyCount] of [
+    ['/targ/debug', '4'],
+    ['/damocles/debug', '29']
+  ] as const) {
     const requests: string[] = [];
     page.on('request', request =>
       requests.push(new URL(request.url()).pathname)
@@ -45,6 +48,12 @@ test('Targ and Gamma boot through the isolated Flyover document', async ({
       'renderer is not yet available'
     );
     await expect(page.getByRole('alert')).toBeHidden();
+    expect(await page.locator('html').getAttribute('data-body-count')).toBe(
+      bodyCount
+    );
+    if (path === '/targ/debug') {
+      expect(requests).toContain('/settings.json');
+    }
     expect(requests).not.toContain('/src/shell/boot.ts');
     expect(requests).not.toContain('/payload/world.json');
     expect(await page.evaluate(() => window.storageCalls)).toEqual([]);
@@ -67,6 +76,25 @@ test('aliases canonicalise and a malformed document blocks startup', async ({
   await expect(page.getByRole('alert')).toContainText('/flyover/targ.json');
   await expect(page.getByRole('alert')).toContainText('systemId');
   await expect(page.getByRole('status')).toBeHidden();
+
+  await page.unroute('**/flyover/targ.json');
+  await page.route('**/flyover/gamma.json', route =>
+    route.fulfill({
+      body: '{"schemaVersion":1}',
+      contentType: 'application/json'
+    })
+  );
+  await page.goto('/damocles/debug');
+  await expect(page.getByRole('alert')).toContainText('/flyover/gamma.json');
+  await expect(page.getByRole('alert')).toContainText('systemId');
+
+  await page.unroute('**/flyover/gamma.json');
+  await page.route('**/settings.json', route =>
+    route.fulfill({ body: '{', contentType: 'application/json' })
+  );
+  await page.goto('/targ/debug');
+  await expect(page.getByRole('alert')).toContainText('settings.json');
+  await expect(page.getByRole('alert')).not.toContainText('/flyover/targ.json');
 });
 
 test('the HTTP boundary keeps documents separate from missing resources', async ({

@@ -29,6 +29,7 @@ describe('the Flyover document boundary', () => {
     expect(html).not.toContain('/src/shell/boot.ts');
 
     const graph = await sourceGraph('src/flyover/boot.ts');
+    expect(graph).toContain('flyover/system.ts');
     expect(graph).not.toContain('shell/boot.ts');
     expect(graph).not.toContain('shell/ownership.ts');
     expect(graph).not.toContain('shell/resume.ts');
