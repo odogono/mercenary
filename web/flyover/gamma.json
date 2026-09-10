@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "systemId": "gamma",
+  "cameraSpeed": {
+    "minimumUnitsPerSecond": 16,
+    "maximumUnitsPerSecond": 250000
+  },
+  "backdropColour": "#000008",
+  "bodies": [
+    {
+      "id": "dialis",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "icarus",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "midas",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "acheron",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "dion",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "atropos",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "clotho",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "lachesis",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "gaea",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "cronus",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "cyclopes",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "eris",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "solon",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "theon",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "vesta",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "metis",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "lucan",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "logos",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "aurora",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "triton",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "pan",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "thalia",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "juno",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "bacchus",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "jason",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "tolosa",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "perseus",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "mentor",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    },
+    {
+      "id": "sapphire",
+      "colour": "#a0a8c0",
+      "ranges": ["orbital"],
+      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+    }
+  ]
+}

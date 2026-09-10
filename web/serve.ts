@@ -1,6 +1,10 @@
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
+import {
+  documentResponse,
+  unsupportedMethodResponse
+} from './src/server/document.ts';
 import { payloadResponse } from './src/server/payload.ts';
 
 /// The development server. Localhost only, and deliberately so.
@@ -47,6 +51,11 @@ const server = Bun.serve({
   async fetch(request) {
     const url = new URL(request.url);
 
+    const unsupportedMethod = unsupportedMethodResponse(request.method);
+    if (unsupportedMethod !== undefined) {
+      return unsupportedMethod;
+    }
+
     if (e2e && url.pathname === '/__e2e__/opening-loop') {
       return new Response(
         Bun.file(join(import.meta.dir, 'e2e/opening-loop.html')),
@@ -82,19 +91,9 @@ const server = Bun.serve({
       return new Response('not found', { status: 404 });
     }
 
-    if (url.pathname === '/catalogue') {
-      return new Response(Bun.file(join(import.meta.dir, 'catalogue.html')), {
-        headers: { 'content-type': 'text/html; charset=utf-8' }
-      });
-    }
-    if (url.pathname === '/payload/damocles/catalogue.json') {
-      const file = Bun.file(join(payload, 'damocles/catalogue.json'));
-      if (!(await file.exists())) {
-        return new Response('Damocles catalogue unavailable', { status: 404 });
-      }
-      return new Response(file, {
-        headers: { 'content-type': 'application/json' }
-      });
+    const browserDocument = await documentResponse(request, import.meta.dir);
+    if (browserDocument !== undefined) {
+      return browserDocument;
     }
 
     const payloadAsset = await payloadResponse(url.pathname, payload);
@@ -109,12 +108,6 @@ const server = Bun.serve({
       }
       return new Response(file, {
         headers: { 'content-type': 'application/json; charset=utf-8' }
-      });
-    }
-
-    if (url.pathname === '/' || url.pathname === '/index.html') {
-      return new Response(Bun.file(join(import.meta.dir, 'index.html')), {
-        headers: { 'content-type': 'text/html' }
       });
     }
 

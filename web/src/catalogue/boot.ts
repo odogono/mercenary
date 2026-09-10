@@ -1,3 +1,4 @@
+import { assertBrowserDocument } from '../shell/documentPath.ts';
 import {
   parseCatalogue,
   selectModels,
@@ -240,6 +241,7 @@ const render = () => {
 
 const start = async () => {
   try {
+    assertBrowserDocument(location.pathname, 'catalogue');
     const response = await fetch('/payload/damocles/catalogue.json');
     if (!response.ok) {
       throw new Error(`Dataset request returned HTTP ${response.status}.`);
