@@ -39,6 +39,31 @@ describe('the four-step Kepler solve', () => {
 });
 
 describe('the authored Targ Orrery', () => {
+  test('keeps the existing celestial directions bit-identical', () => {
+    const state = skyStateAt(orrery, 123.5);
+    expect({
+      inner: state.moons[0].direction,
+      outer: state.moons[1].direction,
+      sun: state.sun.direction
+    }).toEqual({
+      inner: {
+        x: 0.344_611_041_062_982_1,
+        y: 0.717_230_494_411_036_3,
+        z: -0.605_659_680_236_672_4
+      },
+      outer: {
+        x: 0.603_566_271_513_557_2,
+        y: 0.589_659_960_953_842_9,
+        z: 0.536_664_593_893_742_2
+      },
+      sun: {
+        x: 0.244_335_086_554_261,
+        y: 0.805_178_704_789_182_9,
+        z: -0.540_358_787_133_637_4
+      }
+    });
+  });
+
   test('is a deterministic value of settings and elapsed session time', () => {
     expect(skyStateAt(orrery, 123.5)).toEqual(
       skyStateAt(createTargOrrery(defaults), 123.5)

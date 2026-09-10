@@ -130,7 +130,7 @@ const rotateZ = (value: Vector3, angle: number): Vector3 => ({
   z: value.z
 });
 
-const equatorialDirection = (
+const equatorialPosition = (
   orbit: Orbit,
   days: number,
   obliquity: number
@@ -149,7 +149,7 @@ const equatorialDirection = (
   direction = rotateZ(direction, radians(orbit.argumentOfPeriapsisDegrees));
   direction = rotateX(direction, radians(orbit.inclinationDegrees));
   direction = rotateZ(direction, radians(orbit.nodeDegrees));
-  return normalized(rotateX(direction, obliquity));
+  return rotateX(direction, obliquity);
 };
 
 interface LocalFrame {
@@ -228,6 +228,67 @@ export const targOrreryFor = (
   presentation.preset === 'enhanced'
     ? createTargOrrery(presentation.sky)
     : undefined;
+
+export interface TargOrreryBodyPosition {
+  readonly angularDiameterRadians: number;
+  readonly position: Vector3;
+}
+
+export interface TargOrreryBodyPositions {
+  readonly moons: readonly [TargOrreryBodyPosition, TargOrreryBodyPosition];
+  readonly sun: TargOrreryBodyPosition;
+}
+
+interface OrreryFrame {
+  readonly horizon: LocalFrame;
+  readonly moons: readonly [Vector3, Vector3];
+  readonly sun: Vector3;
+}
+
+const orreryFrameAt = (
+  settings: SkySettings,
+  elapsedSeconds: number
+): OrreryFrame => {
+  const daySeconds = settings.dayLengthMinutes * 60;
+  const days = Math.max(0, elapsedSeconds) / daySeconds;
+  const obliquity = radians(settings.obliquityDegrees);
+  const latitude = radians(settings.latitudeDegrees);
+  const localSiderealTime =
+    radians((TARG_EPOCH_HOUR - 12) * 15) +
+    TURN * days * (1 + 1 / settings.yearDays);
+  return {
+    horizon: localFrame(latitude, localSiderealTime),
+    moons: [
+      equatorialPosition(MOON_ORBITS[0], days, obliquity),
+      equatorialPosition(MOON_ORBITS[1], days, obliquity)
+    ],
+    sun: equatorialPosition(
+      { ...SUN_ORBIT, periodDays: settings.yearDays },
+      days,
+      obliquity
+    )
+  };
+};
+
+/// The Orrery's dimensionless, unnormalised Targ-relative orbital positions. Consumers choose
+/// an authored distance scale; `skyStateAt` continues to consume only their directions.
+export const targOrreryBodyPositionsAt = (
+  orrery: TargOrrery,
+  elapsedSeconds: number
+): TargOrreryBodyPositions => {
+  const frame = orreryFrameAt(orrery.settings, elapsedSeconds);
+  const body = (orbit: Orbit, position: Vector3): TargOrreryBodyPosition => ({
+    angularDiameterRadians: radians(orbit.angularDiameterDegrees),
+    position: localDirection(position, frame.horizon)
+  });
+  return {
+    moons: [
+      body(MOON_ORBITS[0], frame.moons[0]),
+      body(MOON_ORBITS[1], frame.moons[1])
+    ],
+    sun: body(SUN_ORBIT, frame.sun)
+  };
+};
 
 const smoothstep = (edge0: number, edge1: number, value: number): number => {
   const unit = Math.max(0, Math.min(1, (value - edge0) / (edge1 - edge0)));
@@ -338,33 +399,26 @@ export const skyStateAt = (
   elapsedSeconds: number
 ): SkyState => {
   const { settings } = orrery;
-  const daySeconds = settings.dayLengthMinutes * 60;
-  const days = Math.max(0, elapsedSeconds) / daySeconds;
-  const obliquity = radians(settings.obliquityDegrees);
-  const latitude = radians(settings.latitudeDegrees);
-  const localSiderealTime =
-    radians((TARG_EPOCH_HOUR - 12) * 15) +
-    TURN * days * (1 + 1 / settings.yearDays);
-  const horizon = localFrame(latitude, localSiderealTime);
-  const sunEquatorial = equatorialDirection(
-    { ...SUN_ORBIT, periodDays: settings.yearDays },
-    days,
-    obliquity
-  );
-  const sunDirection = localDirection(sunEquatorial, horizon);
-  const moonAt = (orbit: Orbit, litColour: RGB8): SkyDisc => {
-    const equatorial = equatorialDirection(orbit, days, obliquity);
+  const frame = orreryFrameAt(settings, elapsedSeconds);
+  const sunEquatorial = normalized(frame.sun);
+  const sunDirection = localDirection(sunEquatorial, frame.horizon);
+  const moonAt = (
+    orbit: Orbit,
+    equatorialPosition: Vector3,
+    litColour: RGB8
+  ): SkyDisc => {
+    const equatorial = normalized(equatorialPosition);
     return disc(
       orbit,
-      localDirection(equatorial, horizon),
+      localDirection(equatorial, frame.horizon),
       litColour,
       sunEquatorial,
       equatorial
     );
   };
   const moonValues: readonly [SkyDisc, SkyDisc] = [
-    moonAt(MOON_ORBITS[0], INNER_MOON_COLOUR),
-    moonAt(MOON_ORBITS[1], OUTER_MOON_COLOUR)
+    moonAt(MOON_ORBITS[0], frame.moons[0], INNER_MOON_COLOUR),
+    moonAt(MOON_ORBITS[1], frame.moons[1], OUTER_MOON_COLOUR)
   ];
   const solarAltitudeDegrees = degrees(arcsine(sunDirection.y));
   return {
@@ -375,7 +429,7 @@ export const skyStateAt = (
     starColour: STAR_COLOUR,
     stars: orrery.stars.map(star => ({
       alpha: star.alpha,
-      direction: localDirection(star.equatorial, horizon)
+      direction: localDirection(star.equatorial, frame.horizon)
     })),
     starVisibility: starVisibilityAt(solarAltitudeDegrees),
     sun: disc(SUN_ORBIT, sunDirection, SUN_COLOUR)
