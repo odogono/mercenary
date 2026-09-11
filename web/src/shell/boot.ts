@@ -17,6 +17,9 @@ import {
 } from './arrivalScript.ts';
 import { FixedStepClock } from './clock.ts';
 import { installConsole } from './consoleView.ts';
+
+import './damoclesPanelElement.ts';
+
 import {
   DESTINATIONS,
   DepartureDirector,

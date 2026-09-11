@@ -8,8 +8,8 @@ import type { PanelViewModel } from './panel.ts';
 export interface PanelCanvases {
   readonly damoclesCompass: HTMLCanvasElement;
   readonly damoclesElevation: HTMLCanvasElement;
-  readonly targCompass: HTMLCanvasElement;
-  readonly targElevation: HTMLCanvasElement;
+  readonly targCompass?: HTMLCanvasElement;
+  readonly targElevation?: HTMLCanvasElement;
 }
 
 export interface PanelElements extends PanelCanvases {
@@ -318,11 +318,13 @@ export const installPanel = (
       lastRendition = rendition;
       if (restyled || model.elevationDegrees !== lastElevation) {
         lastElevation = model.elevationDegrees;
-        drawElevation(
-          elements.targElevation,
-          elements.root,
-          model.elevationDegrees
-        );
+        if (elements.targElevation !== undefined) {
+          drawElevation(
+            elements.targElevation,
+            elements.root,
+            model.elevationDegrees
+          );
+        }
         drawDamoclesElevation(
           elements.damoclesElevation,
           elements.root,
@@ -331,7 +333,13 @@ export const installPanel = (
       }
       if (restyled || model.compassDegrees !== lastCompass) {
         lastCompass = model.compassDegrees;
-        drawCompass(elements.targCompass, elements.root, model.compassDegrees);
+        if (elements.targCompass !== undefined) {
+          drawCompass(
+            elements.targCompass,
+            elements.root,
+            model.compassDegrees
+          );
+        }
         drawDamoclesCompass(
           elements.damoclesCompass,
           elements.root,

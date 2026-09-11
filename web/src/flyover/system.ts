@@ -8,6 +8,10 @@ import {
 } from '../sky/index.ts';
 import { TargPresentationClock } from '../sky/time.ts';
 import type {
+  FlyoverBackdropPresentation,
+  FlyoverBodyMeshPresentation,
+  FlyoverCameraPresentation,
+  FlyoverLighting,
   FlyoverRange,
   GammaPresentationDocument,
   GammaSystemDocument,
@@ -34,21 +38,27 @@ export interface FlyoverBody {
 }
 
 interface FlyoverSystemBase {
-  readonly backdropColour: string;
+  readonly backdrop: FlyoverBackdropPresentation;
   readonly bodiesAt: (elapsedSeconds: number) => readonly FlyoverBody[];
+  readonly bodyMesh: FlyoverBodyMeshPresentation;
+  readonly camera: FlyoverCameraPresentation;
   readonly cameraSpeed: {
     readonly maximumUnitsPerSecond: number;
     readonly minimumUnitsPerSecond: number;
   };
+  readonly lighting: FlyoverLighting;
 }
 
 export interface TargFlyoverSystem extends FlyoverSystemBase {
   readonly clock: TargFlyoverClock;
   readonly islands: readonly IslandPresentation[];
   readonly provenance: {
-    readonly backdropColour: 'authored';
+    readonly backdrop: 'authored';
+    readonly bodyMesh: 'authored';
+    readonly camera: 'authored';
     readonly cameraSpeed: 'authored';
     readonly islands: 'authored';
+    readonly lighting: 'authored';
     readonly surfaceColours: 'authored';
   };
   readonly surfaceColours: TargPresentationDocument['surfaceColours'];
@@ -57,8 +67,11 @@ export interface TargFlyoverSystem extends FlyoverSystemBase {
 
 export interface GammaFlyoverSystem extends FlyoverSystemBase {
   readonly provenance: {
-    readonly backdropColour: 'authored';
+    readonly backdrop: 'authored';
+    readonly bodyMesh: 'authored';
+    readonly camera: 'authored';
     readonly cameraSpeed: 'authored';
+    readonly lighting: 'authored';
   };
   readonly systemId: 'gamma';
 }
@@ -100,7 +113,7 @@ export const composeTargSystem = (
 ): TargFlyoverSystem => {
   const orrery = createTargOrrery(skySettings);
   return {
-    backdropColour: presentation.backdropColour,
+    backdrop: presentation.backdrop,
     bodiesAt: elapsedSeconds => {
       const orbits = targOrreryBodyPositionsAt(orrery, elapsedSeconds);
       return presentation.bodies.map(body => {
@@ -143,13 +156,19 @@ export const composeTargSystem = (
         };
       });
     },
+    bodyMesh: presentation.bodyMesh,
+    camera: presentation.camera,
     cameraSpeed: presentation.cameraSpeed,
     clock,
     islands: presentation.islands,
+    lighting: presentation.lighting,
     provenance: {
-      backdropColour: 'authored',
+      backdrop: 'authored',
+      bodyMesh: 'authored',
+      camera: 'authored',
       cameraSpeed: 'authored',
       islands: 'authored',
+      lighting: 'authored',
       surfaceColours: 'authored'
     },
     surfaceColours: presentation.surfaceColours,
@@ -193,12 +212,18 @@ export const composeGammaSystem = (
     } satisfies FlyoverBody;
   });
   return {
-    backdropColour: presentation.backdropColour,
+    backdrop: presentation.backdrop,
     bodiesAt: () => bodies,
+    bodyMesh: presentation.bodyMesh,
+    camera: presentation.camera,
     cameraSpeed: presentation.cameraSpeed,
+    lighting: presentation.lighting,
     provenance: {
-      backdropColour: 'authored',
-      cameraSpeed: 'authored'
+      backdrop: 'authored',
+      bodyMesh: 'authored',
+      camera: 'authored',
+      cameraSpeed: 'authored',
+      lighting: 'authored'
     },
     systemId: 'gamma'
   };

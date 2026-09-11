@@ -1,0 +1,345 @@
+damocles-panel {
+  --panel-face: #9aa0a0;
+  --panel-face-dark: #7e8484;
+  --panel-hi: #ced4d4;
+  --panel-lo: #43484a;
+  --msg-bg: #060606;
+  --msg-ink: #3ecf3e;
+  --label-ink: #2c3032;
+  --lamp-off: #2c3032;
+  --lamp-on: #e8c33c;
+  --gauge-sky: #a9c6dc;
+  --gauge-ground: #9dbd85;
+  --gauge-face: #cfe4f2;
+  --gauge-ink: #141414;
+  --nav-face: #86987e;
+  --nav-lcd: #c9d8ba;
+  --nav-ink: #1c2414;
+  --inv-face: #8fb0c8;
+  --inv-lcd: #cfe4f2;
+  --inv-ink: #16303e;
+  --clock-bg: #e8a685;
+  --clock-ink: #301408;
+  display: grid;
+  height: 170px;
+  padding: 6px 10px 8px;
+  gap: 6px;
+  background: var(--panel-face);
+  border-radius: 8px;
+  box-shadow:
+    inset 3px 3px 0 var(--panel-hi),
+    inset -3px -3px 0 var(--panel-lo);
+  color: var(--label-ink);
+  font-family: 'Damocles Interface', 'Courier New', monospace;
+  grid-template-rows: 34px 1fr;
+  user-select: none;
+}
+
+damocles-panel .inset {
+  background: var(--panel-face-dark);
+  border-radius: 7px;
+  box-shadow:
+    inset 3px 3px 0 var(--panel-lo),
+    inset -3px -3px 0 var(--panel-hi);
+}
+
+damocles-panel .plabel {
+  color: var(--label-ink);
+  font-size: 13px;
+  font-variant-ligatures: none;
+  letter-spacing: 0.08em;
+  text-align: center;
+  white-space: pre;
+}
+
+damocles-panel .instrument-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+damocles-panel #damocles-message-bar {
+  padding: 6px;
+}
+
+damocles-panel #damocles-message {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  background: var(--msg-bg);
+  border-radius: 3px;
+  color: var(--msg-ink);
+  font-size: 19px;
+  letter-spacing: 0.14em;
+  text-shadow: 2px 0 0 currentcolor;
+  white-space: nowrap;
+}
+
+damocles-panel #damocles-message.benson-cells {
+  display: grid;
+  box-sizing: border-box;
+  column-gap: 0.14em;
+  grid-template-columns: repeat(23, 1ch);
+  justify-content: center;
+  letter-spacing: 0;
+  white-space: pre;
+}
+
+damocles-panel .benson-cell {
+  min-width: 0;
+  text-align: center;
+}
+
+damocles-panel #damocles-body {
+  display: grid;
+  min-height: 0;
+  gap: 8px;
+  grid-template-columns: 16px 372px 1fr 300px 16px;
+}
+
+damocles-panel #damocles-body > * {
+  min-height: 0;
+}
+
+damocles-panel .tp-gauge {
+  position: relative;
+  border-radius: 6px;
+}
+
+damocles-panel .tp-gauge .fill {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  left: 6px;
+  background: #d8d8d8;
+  border-radius: 2px;
+}
+
+damocles-panel .tp-gauge .tp-label {
+  position: absolute;
+  right: 0;
+  bottom: -2px;
+  left: 0;
+  color: var(--label-ink);
+  font-size: 16px;
+  text-align: center;
+}
+
+damocles-panel #damocles-nav {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background: var(--nav-face);
+  border-radius: 10px;
+  box-shadow:
+    inset 4px 4px 0 var(--panel-hi),
+    inset -4px -4px 0 var(--panel-lo);
+}
+
+damocles-panel #damocles-nav > .nav-row {
+  flex: 1;
+}
+
+damocles-panel #damocles-nav .nav-lower {
+  display: flex;
+  flex: 2;
+  gap: 10px;
+}
+
+damocles-panel .nav-lcd {
+  display: flex;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 4px;
+  background: var(--nav-lcd);
+  border: 3px solid #3f463c;
+  border-radius: 6px;
+  color: var(--nav-ink);
+  font-size: 15px;
+  text-shadow: 2px 0 0 currentcolor;
+  white-space: nowrap;
+}
+
+damocles-panel #damocles-nav .nav-row {
+  display: flex;
+  gap: 10px;
+}
+
+damocles-panel #damocles-nav .nav-row > .nav-lcd {
+  flex: 1;
+}
+
+damocles-panel #damocles-elevation {
+  width: 42px;
+  overflow: hidden;
+  align-self: stretch;
+  border: 4px solid #3f463c;
+  border-radius: 8px;
+  flex: none;
+}
+
+damocles-panel #damocles-nav .nav-stack {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+}
+
+damocles-panel #damocles-nav .nav-foot {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+}
+
+damocles-panel #damocles-nav .nav-foot .plabel {
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  text-shadow: 2px 0 0 currentcolor;
+}
+
+damocles-panel #damocles-compass {
+  width: 114px;
+  height: 27px;
+  overflow: hidden;
+  border: 4px solid #3f463c;
+  border-radius: 8px;
+}
+
+damocles-panel #damocles-aux {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #060606;
+  border-radius: 8px;
+  box-shadow:
+    inset 4px 4px 0 var(--panel-lo),
+    inset -4px -4px 0 var(--panel-hi);
+}
+
+damocles-panel #damocles-aux .aux-title {
+  color: #b8bec2;
+  font-size: 32px;
+  letter-spacing: 0.06em;
+  text-shadow: 4px 4px 0 #3a4046;
+}
+
+damocles-panel #damocles-right {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+damocles-panel #damocles-inventory {
+  display: grid;
+  min-height: 0;
+  flex: 1;
+  gap: 8px;
+  padding: 8px;
+  background: var(--inv-face);
+  border-radius: 10px;
+  box-shadow:
+    inset 4px 4px 0 var(--panel-hi),
+    inset -4px -4px 0 var(--panel-lo);
+  grid-template-columns: 20px 1fr;
+}
+
+damocles-panel #inventory-capacity {
+  position: relative;
+  background: var(--inv-lcd);
+  border: 2px solid var(--panel-lo);
+  border-radius: 4px;
+}
+
+damocles-panel #inventory-capacity .fill {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  left: 2px;
+  background: var(--inv-ink);
+}
+
+damocles-panel #damocles-inventory .inventory-stack {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+}
+
+damocles-panel #inventory-window {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  background: var(--inv-lcd);
+  border: 2px solid var(--panel-lo);
+  border-radius: 4px;
+  color: var(--inv-ink);
+  font-size: 19px;
+  letter-spacing: 0.12em;
+  text-shadow: 2px 0 0 currentcolor;
+}
+
+damocles-panel #damocles-inventory .inventory-foot {
+  display: flex;
+  overflow: hidden;
+  gap: 10px;
+  align-items: center;
+}
+
+damocles-panel #inventory-cash {
+  padding: 2px 6px;
+  background: var(--inv-lcd);
+  border: 2px solid var(--panel-lo);
+  border-radius: 4px;
+  color: var(--inv-ink);
+  font-size: 15px;
+  text-shadow: 2px 0 0 currentcolor;
+  white-space: nowrap;
+}
+
+damocles-panel #damocles-inventory .inventory-foot .plabel {
+  color: var(--inv-lcd);
+  font-size: 16px;
+  letter-spacing: 0.06em;
+}
+
+damocles-panel #damocles-foot {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+damocles-panel .lamp {
+  width: 17px;
+  height: 17px;
+  background: var(--lamp-off);
+  border-radius: 3px;
+  box-shadow: inset 2px 2px 0 rgb(0 0 0 / 60%);
+}
+
+damocles-panel .lamp.on {
+  background: var(--lamp-on);
+  box-shadow: 0 0 8px var(--lamp-on);
+}
+
+damocles-panel #damocles-clock {
+  padding: 2px 8px 1px;
+  background: var(--clock-bg);
+  border-radius: 4px;
+  color: var(--clock-ink);
+  font-size: 18px;
+  letter-spacing: 0.1em;
+  text-shadow: 2px 0 0 currentcolor;
+}

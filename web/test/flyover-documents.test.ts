@@ -6,7 +6,13 @@ import {
 } from '../src/flyover/documents.ts';
 
 const targ = () => ({
-  backdropColour: '#000008',
+  backdrop: {
+    colour: '#000008',
+    pointSizeCssPixels: 1,
+    starColour: '#d8e8ff',
+    starCount: 2048,
+    starSeed: 1_179_408_719
+  },
   bodies: [
     {
       colour: '#008000',
@@ -24,6 +30,12 @@ const targ = () => ({
       ranges: ['orbital']
     }
   ],
+  bodyMesh: { latitudeSegments: 32, longitudeSegments: 64 },
+  camera: {
+    framingCoverage: 0.9,
+    overviewAxis: 'positive-z',
+    verticalFieldOfViewDegrees: 60
+  },
   cameraSpeed: {
     maximumUnitsPerSecond: 21_361_414.861_763_49,
     minimumUnitsPerSecond: 64
@@ -47,6 +59,7 @@ const targ = () => ({
       }
     }
   ],
+  lighting: { kind: 'body', sourceBodyId: 'sun' },
   schemaVersion: 1,
   surfaceColours: {
     coastline: '#d0b878',
@@ -66,7 +79,13 @@ describe('Flyover presentation documents', () => {
   test('reads a complete Gamma document', () => {
     const document = readFlyoverPresentation(
       {
-        backdropColour: '#000008',
+        backdrop: {
+          colour: '#000008',
+          pointSizeCssPixels: 1,
+          starColour: '#d8e8ff',
+          starCount: 2048,
+          starSeed: 1_179_408_719
+        },
         bodies: [
           {
             colour: '#a0a8c0',
@@ -75,10 +94,17 @@ describe('Flyover presentation documents', () => {
             ranges: ['orbital']
           }
         ],
+        bodyMesh: { latitudeSegments: 32, longitudeSegments: 64 },
+        camera: {
+          framingCoverage: 0.9,
+          overviewAxis: 'positive-z',
+          verticalFieldOfViewDegrees: 60
+        },
         cameraSpeed: {
           maximumUnitsPerSecond: 250_000,
           minimumUnitsPerSecond: 16
         },
+        lighting: { kind: 'camera-headlight' },
         schemaVersion: 1,
         systemId: 'gamma'
       },
@@ -94,6 +120,54 @@ describe('Flyover presentation documents', () => {
     expect(() =>
       readFlyoverPresentation(document, 'targ', ['targ', 'sun'])
     ).toThrow('cameraSpeed has unexpected field fastest');
+  });
+
+  test('strictly reads the authored Orbital rendering contract', () => {
+    const document = readFlyoverPresentation(targ(), 'targ', ['targ', 'sun']);
+    expect(document.camera).toEqual({
+      framingCoverage: 0.9,
+      overviewAxis: 'positive-z',
+      verticalFieldOfViewDegrees: 60
+    });
+    expect(document.bodyMesh).toEqual({
+      latitudeSegments: 32,
+      longitudeSegments: 64
+    });
+    expect(document.backdrop).toEqual({
+      colour: '#000008',
+      pointSizeCssPixels: 1,
+      starColour: '#d8e8ff',
+      starCount: 2048,
+      starSeed: 1_179_408_719
+    });
+    expect(document.lighting).toEqual({ kind: 'body', sourceBodyId: 'sun' });
+  });
+
+  test('rejects incomplete render data and invalid lighting', () => {
+    const incomplete = targ();
+    delete (incomplete.backdrop as Partial<typeof incomplete.backdrop>)
+      .starSeed;
+    expect(() =>
+      readFlyoverPresentation(incomplete, 'targ', ['targ', 'sun'])
+    ).toThrow('backdrop is missing field starSeed');
+
+    const badLight = targ();
+    badLight.lighting.sourceBodyId = 'missing';
+    expect(() =>
+      readFlyoverPresentation(badLight, 'targ', ['targ', 'sun'])
+    ).toThrow('lighting.sourceBodyId');
+
+    const wrongTargLight = targ();
+    wrongTargLight.lighting.sourceBodyId = 'targ';
+    expect(() =>
+      readFlyoverPresentation(wrongTargLight, 'targ', ['targ', 'sun'])
+    ).toThrow('lighting.sourceBodyId should be sun');
+
+    const excessive = targ();
+    excessive.backdrop.starCount = 10_001;
+    expect(() =>
+      readFlyoverPresentation(excessive, 'targ', ['targ', 'sun'])
+    ).toThrow('backdrop.starCount');
   });
 
   test('rejects a partial or foreign Body census', () => {
@@ -291,5 +365,40 @@ describe('the canonical Flyover presentation documents', () => {
     );
     expect(targDocument.bodies).toHaveLength(4);
     expect(gammaDocument.bodies).toHaveLength(29);
+    expect(
+      Object.fromEntries(
+        gammaDocument.bodies.map(body => [body.id, body.colour])
+      )
+    ).toEqual({
+      acheron: '#909090',
+      atropos: '#909090',
+      aurora: '#902424',
+      bacchus: '#6c6c6c',
+      clotho: '#6c4848',
+      cronus: '#6c4848',
+      cyclopes: '#6c6c6c',
+      dialis: '#ffffff',
+      dion: '#00b4b4',
+      eris: '#00006c',
+      gaea: '#006c00',
+      icarus: '#484848',
+      jason: '#909090',
+      juno: '#4890d8',
+      lachesis: '#902424',
+      logos: '#909090',
+      lucan: '#6c4848',
+      mentor: '#909090',
+      metis: '#902424',
+      midas: '#b49000',
+      pan: '#484848',
+      perseus: '#6c4848',
+      sapphire: '#4890d8',
+      solon: '#6c6c6c',
+      thalia: '#4890d8',
+      theon: '#909090',
+      tolosa: '#902424',
+      triton: '#ff9000',
+      vesta: '#4890d8'
+    });
   });
 });

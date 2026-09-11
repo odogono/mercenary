@@ -89,9 +89,12 @@ describe('the composed Targ System', () => {
     expect(system.clock.secondsOfDay()).toBeCloseTo(9 * 3600, 0);
     expect(bodies.every(body => !('primaryId' in body))).toBeTrue();
     expect(system.provenance).toEqual({
-      backdropColour: 'authored',
+      backdrop: 'authored',
+      bodyMesh: 'authored',
+      camera: 'authored',
       cameraSpeed: 'authored',
       islands: 'authored',
+      lighting: 'authored',
       surfaceColours: 'authored'
     });
     expect(system.islands).toHaveLength(2);
@@ -125,7 +128,7 @@ describe('the composed Targ System', () => {
 });
 
 describe('the composed Gamma System', () => {
-  test('uses exactly the stable recovered centres and derives neutral fixed radii', async () => {
+  test('uses the stable recovered centres with authored colours and derived radii', async () => {
     const authority = readGammaSystem(
       await json('../payload/damocles/system.json')
     );
@@ -159,7 +162,9 @@ describe('the composed Gamma System', () => {
       );
       expect(body.position).toEqual(recovered.position);
       expect(body.displayRadiusUnits).toBe(nearest * 0.2);
-      expect(body.colour).toBe('#a0a8c0');
+      expect(body.colour).toBe(
+        presentation.bodies.find(candidate => candidate.id === body.id)!.colour
+      );
       expect(body.ranges).toEqual(['orbital']);
       expect(body.provenance).toEqual({
         colour: 'authored',
