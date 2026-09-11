@@ -18,6 +18,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   grid origin, eye height and outdoor palette beside authored placeholders for heading, turn rate,
   camera, ground plane and sky, each tagged with its provenance (ADR 0043) and read by a strict
   validator (#198).
+- The Eris surface is composed from the Damocles Catalogue for play: 84 recovered placements in
+  raw units with exterior variants chosen, 11 named places by cell, and 21 placements whose
+  geometry is unrecovered drawn as nothing and counted (#199).
 
 - The Damocles Catalogue now preserves all 195 interior-associated resident selector records
   without presenting selectors as Room, floor, or place names. Decoded structure-association
