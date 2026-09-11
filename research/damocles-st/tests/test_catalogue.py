@@ -210,6 +210,29 @@ class ThirdHeightTests(unittest.TestCase):
         self.assertEqual(mesh['faces'][0]['colour'], '#00cccc')
 
 
+class EmptySurfaceTests(unittest.TestCase):
+    def test_empty_plan_and_wall_list_is_an_accounted_record(self):
+        from damocleslab.catalogue import decode_structure
+        # Structure 100 at $01A618: heights 160/128, scene colours, immediate
+        # plan terminator, wall-list zero word, no attachments.
+        data = bytes.fromhex(
+            '01013e01 000a000a 00a0 0080 8082 8092 0000 0000 0000'
+        )
+        mesh, gaps = decode_structure(data, 8, scale=(1, 1))
+        self.assertEqual(mesh['vertices'], [])
+        self.assertEqual(mesh['faces'], [])
+        self.assertEqual(mesh['lines'], [])
+        self.assertTrue(any('Empty surface record' in gap for gap in gaps))
+
+    def test_empty_building_detail_terminates_at_8000(self):
+        data = bytes.fromhex('8000')
+        with self.assertRaisesRegex(
+            ValueError,
+            'Empty building-detail record: vertex list terminates immediately',
+        ):
+            decode_mesh(data, 0, 'interior')
+
+
 class GroundTests(unittest.TestCase):
     def test_pad_strip_keeps_local_vertices_and_omits_join_sentinels(self):
         from damocleslab.catalogue import decode_ground

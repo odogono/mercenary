@@ -263,8 +263,8 @@ it('recovers the spaceport pad strip as a per-cell ground record', async () => {
   expect(pad.kind).toBe('ground');
   expect(pad.status).toBe('partial');
   const colours = new Set(pad.variants[0]!.mesh.faces.map(face => face.sourceColour));
-  expect(colours.has(0x777)).toBe(true);
-  expect(colours.has(0x800e)).toBe(true);
+  expect(colours.has(0x7_77)).toBe(true);
+  expect(colours.has(0x80_0e)).toBe(true);
   expect(
     data.instances.find(instance => instance.id === 'eris-ground-88')!.model
   ).toBe(pad.id);
@@ -387,6 +387,29 @@ it('draws every source silhouette vertex of the V.I.P. limo key body', async () 
       index => !drawableVertices.has(index)
     )
   ).toEqual([]);
+});
+
+it('accounts for Structure 100 as an empty placeholder, not missing walls', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const model = data.models.find(item => item.id === 'structure-01a618')!;
+  expect(model.status).toBe('unresolved');
+  expect(model.variants).toEqual([]);
+  expect(model.reason).toContain('Empty surface record');
+  expect(model.reason).toContain('empty vertex list');
+  expect(model.relatedModels).toEqual(['interior-02620e']);
+  expect(model.evidence).toContainEqual({
+    claim:
+      'Empty plan and wall list at $01A618; linked building detail 1 at $02620E is an immediate $8000 vertex terminator. Nineteen Eris cells share this placeholder; they have no recovered building mesh.',
+    confidence: 'verified',
+    source: 'docs/research/damocles-eris-structure-01a618.md'
+  });
+  const detail = data.models.find(item => item.id === 'interior-02620e')!;
+  expect(detail.reason).toContain('Empty building-detail record');
+  expect(
+    data.instances.filter(instance => instance.model === 'structure-01a618')
+  ).toHaveLength(19);
 });
 
 it('keeps V.I.P. limo key lettering in model space on its plate', async () => {

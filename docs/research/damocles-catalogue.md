@@ -145,6 +145,10 @@ code. Targeted disassembly used to establish them remains ignored at
   become independent polygons.
   Types requiring the third height remain gaps except for the reviewed spaceport,
   whose captured height binding now recovers the lower window wall and sill.
+  An immediate plan terminator and wall-list zero word is an empty placeholder,
+  not a failed decode: Structure 100 (`structure-01a618`) and its linked
+  building detail 1 (`$02620E`, `$8000` vertex terminator) are accounted that
+  way. See [Structure 100](damocles-eris-structure-01a618.md).
 - Negative structure headers select an alias, scales, palette and interior.
   Alias indirection which the decoder cannot resolve remains unresolved. Authored
   surface attachments/openings after the basic wall list are not silently omitted

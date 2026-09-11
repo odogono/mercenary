@@ -93552,7 +93552,7 @@
       "linkedInstances": [],
       "name": "Structure 0",
       "nameStatus": "unknown",
-      "reason": "no supported surface faces Linked building detail geometry is unresolved.",
+      "reason": "Empty surface record: no plan vertices or walls. Linked building detail is an empty vertex list.",
       "relatedModels": [
         "interior-02620e"
       ],
@@ -126391,7 +126391,7 @@
       "linkedInstances": [],
       "name": "Structure 33",
       "nameStatus": "unknown",
-      "reason": "Authored surface attachments/openings are not yet decoded. Linked building detail geometry is unresolved.",
+      "reason": "Authored surface attachments/openings are not yet decoded. Linked building detail is an empty vertex list.",
       "relatedModels": [
         "structure-010d0c",
         "interior-02620e"
@@ -126963,7 +126963,7 @@
       "linkedInstances": [],
       "name": "Structure 34",
       "nameStatus": "unknown",
-      "reason": "Authored surface attachments/openings are not yet decoded. Linked building detail geometry is unresolved.",
+      "reason": "Authored surface attachments/openings are not yet decoded. Linked building detail is an empty vertex list.",
       "relatedModels": [
         "structure-010bb4",
         "interior-02620e"
@@ -127535,7 +127535,7 @@
       "linkedInstances": [],
       "name": "Structure 35",
       "nameStatus": "unknown",
-      "reason": "Authored surface attachments/openings are not yet decoded. Linked building detail geometry is unresolved.",
+      "reason": "Authored surface attachments/openings are not yet decoded. Linked building detail is an empty vertex list.",
       "relatedModels": [
         "structure-010e8a",
         "interior-02620e"
@@ -128107,7 +128107,7 @@
       "linkedInstances": [],
       "name": "Structure 36",
       "nameStatus": "unknown",
-      "reason": "Authored surface attachments/openings are not yet decoded. Linked building detail geometry is unresolved.",
+      "reason": "Authored surface attachments/openings are not yet decoded. Linked building detail is an empty vertex list.",
       "relatedModels": [
         "structure-010d32",
         "interior-02620e"
@@ -140500,7 +140500,7 @@
       "linkedInstances": [],
       "name": "Structure 46",
       "nameStatus": "unknown",
-      "reason": "no supported surface faces Linked building detail geometry is unresolved.",
+      "reason": "Empty surface record: no plan vertices or walls. Linked building detail is an empty vertex list.",
       "relatedModels": [
         "structure-01a5f2",
         "interior-0262e8"
@@ -231458,7 +231458,7 @@
       "linkedInstances": [],
       "name": "Structure 99",
       "nameStatus": "unknown",
-      "reason": "no supported surface faces Linked building detail geometry is unresolved.",
+      "reason": "Empty surface record: no plan vertices or walls. Linked building detail is an empty vertex list.",
       "relatedModels": [
         "structure-0122fa",
         "interior-02620e"
@@ -231471,13 +231471,19 @@
       "variants": []
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "Empty plan and wall list at $01A618; linked building detail 1 at $02620E is an immediate $8000 vertex terminator. Nineteen Eris cells share this placeholder; they have no recovered building mesh.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-eris-structure-01a618.md"
+        }
+      ],
       "id": "structure-01a618",
       "kind": "structure",
       "linkedInstances": [],
       "name": "Structure 100",
       "nameStatus": "unknown",
-      "reason": "no supported surface faces Linked building detail geometry is unresolved.",
+      "reason": "Empty surface record: no plan vertices or walls. Linked building detail is an empty vertex list.",
       "relatedModels": [
         "interior-02620e"
       ],
@@ -263832,7 +263838,7 @@
       "linkedInstances": [],
       "name": "Structure 133",
       "nameStatus": "unknown",
-      "reason": "no supported surface faces Includes linked exterior/interior detail in its neutral pose; view-conditioned visibility is not simulated.",
+      "reason": "Authored surface attachments/openings are not yet decoded. Empty surface record: no plan vertices or walls. Includes linked exterior/interior detail in its neutral pose; view-conditioned visibility is not simulated.",
       "relatedModels": [
         "interior-029c66"
       ],
@@ -282103,7 +282109,7 @@
       "linkedInstances": [],
       "name": "Structure 146",
       "nameStatus": "unknown",
-      "reason": "no supported surface faces Linked building detail geometry is unresolved.",
+      "reason": "Empty surface record: no plan vertices or walls. Linked building detail is an empty vertex list.",
       "relatedModels": [
         "interior-02620e"
       ],
@@ -351643,7 +351649,7 @@
       "linkedInstances": [],
       "name": "Structure 205",
       "nameStatus": "unknown",
-      "reason": "no supported surface faces Includes linked exterior/interior detail in its neutral pose; view-conditioned visibility is not simulated.",
+      "reason": "Empty surface record: no plan vertices or walls. Includes linked exterior/interior detail in its neutral pose; view-conditioned visibility is not simulated.",
       "relatedModels": [
         "interior-026c9e"
       ],
@@ -352322,7 +352328,7 @@
       "linkedInstances": [],
       "name": "Structure 206",
       "nameStatus": "unknown",
-      "reason": "no supported surface faces Linked building detail geometry is unresolved.",
+      "reason": "Empty surface record: no plan vertices or walls. Linked building detail geometry is unresolved.",
       "relatedModels": [
         "interior-02630e"
       ],
@@ -352819,7 +352825,7 @@
       "linkedInstances": [],
       "name": "Structure 208",
       "nameStatus": "unknown",
-      "reason": "no supported surface faces Linked building detail geometry is unresolved.",
+      "reason": "Empty surface record: no plan vertices or walls. Linked building detail geometry is unresolved.",
       "relatedModels": [
         "interior-0268ee"
       ],
@@ -463434,7 +463440,7 @@
       "linkedInstances": [],
       "name": "Building detail 1",
       "nameStatus": "unknown",
-      "reason": "model has no vertices",
+      "reason": "Empty building-detail record: vertex list terminates immediately.",
       "relatedModels": [],
       "slots": [
         1
@@ -463450,7 +463456,7 @@
       "linkedInstances": [],
       "name": "Building detail 2",
       "nameStatus": "unknown",
-      "reason": "model has no vertices",
+      "reason": "Empty building-detail record: vertex list terminates immediately.",
       "relatedModels": [],
       "slots": [
         2
