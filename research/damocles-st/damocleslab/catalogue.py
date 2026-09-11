@@ -336,6 +336,72 @@ def surface_resident_body(association: bytes) -> int | None:
     return body if body < 30 else None
 
 
+def interior_resident_association(association_a: bytes, association_b: bytes) -> dict | None:
+    """Decode the selectors used by the native structure-resident builder."""
+    if len(association_a) != 4 or len(association_b) != 4:
+        return None
+    encoded_body, insertion_group, level, cell = association_b
+    if encoded_body == 0 or encoded_body % 4 or insertion_group == 0:
+        return None
+    body = encoded_body // 4
+    if body >= 30:
+        return None
+    return {
+        'body': body,
+        'structureGroupSelector': association_a[1],
+        'insertionGroupSelector': insertion_group,
+        'levelSelector': level,
+        'cell': cell,
+    }
+
+
+def decode_structure_associations(data: bytes, start: int) -> dict[int, dict[int, int]]:
+    """Decode a zero-terminated list of insertion-group records."""
+    reader = Reader(data, start)
+    groups: dict[int, dict[int, int]] = {}
+    for _ in range(256):
+        if reader.p >= len(data):
+            raise ValueError('structure association list terminator missing')
+        selector = reader.take(1)[0]
+        if selector == 0:
+            return groups
+        if selector in groups:
+            raise ValueError(f'duplicate insertion group ${selector:02X}')
+        insertions = {}
+        for _ in range(256):
+            if reader.p >= len(data):
+                raise ValueError('structure association group terminator missing')
+            region = reader.take(1)[0]
+            if region == 0:
+                break
+            if reader.p >= len(data):
+                raise ValueError(f'structure association group ${selector:02X} insertion key missing')
+            insertion = reader.take(1)[0]
+            if region in insertions:
+                raise ValueError(f'duplicate region ${region:02X} in insertion group ${selector:02X}')
+            insertions[region] = insertion
+        else:
+            raise ValueError('structure association group terminator missing')
+        groups[selector] = insertions
+    raise ValueError('structure association list limit exceeded')
+
+
+def resident_local_position(data: bytes, slot: int, structure_origin: tuple[int, int, int],
+                            coordinate_arrays: tuple[int, int, int] = (0x63a8, 0x67a8, 0x6ba8)) -> list[int]:
+    """Transform authored resident coordinates into a structure-local frame."""
+    return [s32(data, base + slot * 4) - structure_origin[axis]
+            for axis, base in enumerate(coordinate_arrays)]
+
+
+def structure_origin(resident_position: tuple[int, int, int], dx: int, dz: int) -> tuple[int, int, int]:
+    """Resolve a cell structure's raw origin using the native offset transform."""
+    return (
+        (resident_position[0] & ~0xffff) | (0x8000 + dx * 30),
+        0,
+        (resident_position[2] & ~0xffff) | (0x8000 + dz * 30),
+    )
+
+
 def extract(data: bytes, source: dict) -> dict:
     """Catalogue all entries of the three bounded resident tables, never a byte scan."""
     if len(data) != 1048576 or u32(data, 0x4bd10) != 0x35700 or u32(data, 0x4bd22) != 0x26000:
@@ -346,6 +412,7 @@ def extract(data: bytes, source: dict) -> dict:
     specs = [('object', 0x35700, 378), ('structure', 0xe900, 280), ('interior', 0x26000, 130)]
     by_address = {}
     structure_bindings = {}
+    structure_aliases = []
     for kind, base, count in specs:
         entries = []
         for slot in range(count):
@@ -370,7 +437,11 @@ def extract(data: bytes, source: dict) -> dict:
                         target = data[pointer + 6]
                         if target >= count:
                             raise ValueError('invalid structure alias target')
-                        pointer = base + u32(data, base + target * 4)
+                        target_address = base + u32(data, base + target * 4)
+                        target_identity = f'structure-{target_address:06x}'
+                        pointer = target_address
+                        model['relatedModels'].append(target_identity)
+                        structure_aliases.append((identity, target_identity))
                         scale = struct.unpack_from('>bb', data, address + 2)
                         palette_index = data[address + 4] or data[address + 18]
                         interior = data[address + 5]
@@ -410,6 +481,8 @@ def extract(data: bytes, source: dict) -> dict:
                 model['reason'] = str(error)
         tables.append({'kind': kind, 'address': base, 'entryCount': count, 'entries': entries,
                        'extentEvidence': 'Contiguous relative-pointer table up to the following data record; extent is provisional.'})
+    for alias, target in structure_aliases:
+        by_address[target]['relatedModels'].append(alias)
     bodies = [{'id': f'body-{i}', 'name': data[0x81dc + i * 8:0x81e4 + i * 8].decode('ascii').strip()} for i in range(31)]
     # The first 256 object slots have resident state arrays; extra model slots are templates.
     for slot in range(1, 256):
@@ -420,9 +493,35 @@ def extract(data: bytes, source: dict) -> dict:
                   'the exact interior coordinate transform remains unresolved.' if slot == 183 else
                   'Resident object slot; body/residence and coordinate interpretation remain unresolved.')
         instances.append({'id': f'object-slot-{slot}', 'model': model_id, 'name': f"{by_address[model_id]['name']} · slot {slot}",
+                          'association': None,
                           'location': None, 'placement': None, 'reason': reason,
                           'sourceAddress': 0x63a8 + slot * 4})
     instance_by_id = {instance['id']: instance for instance in instances}
+    for slot in range(1, 256):
+        instance = instance_by_id.get(f'object-slot-{slot}')
+        if instance is None:
+            continue
+        selectors = interior_resident_association(
+            data[0x6fa8 + slot * 4:0x6fac + slot * 4],
+            data[0x73a8 + slot * 4:0x73ac + slot * 4],
+        )
+        if selectors is None:
+            continue
+        body = selectors.pop('body')
+        instance['association'] = {
+            'body': f'body-{body}',
+            **selectors,
+            'insertions': [],
+        }
+        body_name = bodies[body]['name']
+        instance['reason'] = (
+            f'Interior-associated resident on {body_name}: structure-group selector '
+            f"${selectors['structureGroupSelector']:02X}, insertion-group selector "
+            f"${selectors['insertionGroupSelector']:02X}, level selector "
+            f"${selectors['levelSelector']:02X}, cell ${selectors['cell']:02X}. "
+            'The source structure for this body/cell workspace has not been recovered, '
+            'so no parent or local placement is claimed.'
+        )
     # $52C9C compares $7AA8 << 8 with the first word of Association B while
     # assembling surface residents. This proves the body-times-four encoding
     # and the zero region byte without assigning meaning to the remaining bytes.
@@ -478,6 +577,7 @@ def extract(data: bytes, source: dict) -> dict:
         place = names.get(cell)
         instances.append({'id': identity, 'name': place[1] if place else f'Eris surface cell {cell & 15},{cell >> 4}',
                           'model': model_id, 'sourceAddress': address,
+                          'association': None,
                           'placement': None,
                           'location': {'body': 'body-11', 'place': place[0] if place else None,
                             'position': [origin_x + (cell & 15) + 0.5 + dx * 30 / 65536, 0, origin_z + (cell >> 4) + 0.5 + dz * 30 / 65536],
@@ -485,6 +585,66 @@ def extract(data: bytes, source: dict) -> dict:
                           'reason': 'Recovered first-world surface workspace placement; not a census of the whole body.'})
         if place:
             next(p for p in places if p['id'] == place[0])['instances'].append(identity)
+    chevy_key = instance_by_id.get('object-slot-180')
+    chevy_parent_model = by_address.get('structure-01d188')
+    chevy_map_record = data[0x251d7:0x251dd]
+    if (chevy_key is not None and chevy_parent_model is not None and
+            chevy_key['association'] == {
+                'body': 'body-11', 'structureGroupSelector': 0x14,
+                'insertionGroupSelector': 0x03, 'levelSelector': 0x01,
+                'cell': 0x26, 'insertions': [],
+            } and chevy_map_record == bytes.fromhex('60 26 91 00 df 83') and
+            tables[1]['entries'][0x91] == chevy_parent_model['id']):
+        dx, dz = struct.unpack('>bb', chevy_map_record[4:])
+        resident_raw = [s32(data, base + 180 * 4) for base in (0x63a8, 0x67a8, 0x6ba8)]
+        parent_raw = structure_origin(tuple(resident_raw), dx, dz)
+        parent_id = 'eris-structure-0251d7'
+        instances.append({
+            'id': parent_id,
+            'name': 'Eris structure group $14 cell $26',
+            'model': chevy_parent_model['id'],
+            'sourceAddress': 0x251d7,
+            'association': None,
+            'placement': None,
+            'location': {
+                'body': 'body-11', 'place': None,
+                'position': [parent_raw[0] / 65536, 0, parent_raw[2] / 65536],
+                'coordinateSystem': 'ST surface grid units (body-local origin unresolved)',
+                'heading': None,
+            },
+            'reason': ('Authored structure-group $14 cell $26 instance; source name and named place '
+                       'remain unresolved.'),
+        })
+        insertions = decode_structure_associations(data, 0x13218).get(0x03)
+        if insertions is None:
+            raise ValueError('99 Chevy key insertion group is missing')
+        chevy_key['association']['insertions'] = [
+            {'regionSelector': region, 'insertionKey': insertion}
+            for region, insertion in insertions.items()
+        ]
+        chevy_key['placement'] = {
+            'parent': parent_id,
+            'position': resident_local_position(data, 180, tuple(parent_raw)),
+            'heading': None,
+            'coordinateSystem': 'Eris structure group $14 cell $26 local model units',
+        }
+        chevy_key['reason'] = (
+            'Recovered resident placement in the source-unnamed Eris structure-group $14 cell '
+            '$26 instance. Raw yaw is zero; the absolute angular convention remains unresolved.'
+        )
+        chevy_parent_model['linkedInstances'].append(chevy_key['id'])
+        chevy_parent_model['evidence'].append({
+            'claim': ('Authored group-$14 cell-$26 record places this slot-145 alias instance '
+                      'and binds resident slot 180 at local (-394, 200, 1846).'),
+            'confidence': 'verified',
+            'source': 'docs/research/damocles-resident-objects.md',
+        })
+        by_address[chevy_key['model']]['evidence'].append({
+            'claim': ('Structure association group $03 binds resident slot 180 to the Eris '
+                      'group-$14 cell-$26 slot-145 instance at local (-394, 200, 1846).'),
+            'confidence': 'verified',
+            'source': 'docs/research/damocles-resident-objects.md',
+        })
     for vehicle_slot, key_slot in ((2, 180), (3, 181), (4, 182), (5, 183),
                                    (6, 184), (10, 188), (12, 190), (13, 191)):
         vehicle = instance_by_id[f'object-slot-{vehicle_slot}']
@@ -534,9 +694,19 @@ def extract(data: bytes, source: dict) -> dict:
             'source': 'docs/research/damocles-vip-limo.md',
         })
     if spaceport is not None and key is not None:
+        association = key['association']
+        if association is None or association['insertionGroupSelector'] != 12:
+            raise ValueError('spaceport resident association selectors do not match the reviewed source')
+        groups = decode_structure_associations(data, 0x14aac)
+        insertions = groups.get(association['insertionGroupSelector'])
+        if insertions is None:
+            raise ValueError('spaceport resident insertion group is missing')
+        association['insertions'] = [
+            {'regionSelector': region, 'insertionKey': insertion}
+            for region, insertion in insertions.items()
+        ]
         spaceport_raw = [round(spaceport['location']['position'][axis] * 65536) for axis in (0, 1, 2)]
-        key_position = [s32(data, address) - spaceport_raw[axis] for axis, address in
-                        enumerate((0x6684, 0x6a84, 0x6e84))]
+        key_position = resident_local_position(data, 183, tuple(spaceport_raw))
         key['placement'] = {'parent': spaceport['id'], 'position': key_position, 'heading': None,
                             'coordinateSystem': 'Capital Spaceport local model units'}
         key['reason'] = ('Recovered resident placement in Capital Spaceport region 1. Raw yaw is zero; '
@@ -655,7 +825,7 @@ def extract(data: bytes, source: dict) -> dict:
         for model in group:
             model['variants'] = variants
             model['relatedModels'].extend(other['id'] for other in group if other is not model)
-    return {'schemaVersion': 3, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
+    return {'schemaVersion': 4, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'places': places, 'tables': tables,
             'coverage': {'complete': False, 'notes': ['Resident first-world census; not a claim of complete disk coverage.',
                 'Conditional geometry, surface attachments, scene palette binding, other-body structures and named places remain incomplete.',

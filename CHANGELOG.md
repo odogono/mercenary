@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- The Damocles Catalogue now preserves all 195 interior-associated resident selector records
+  without presenting selectors as Room, floor, or place names. Decoded structure-association
+  lists expose their region-to-render-queue insertion keys, and placed residents link directly
+  to their parent surface assembly.
+- Resident slot 180, `KEY - 99 CHEVY`, is attached to the source-unnamed Eris structure-group
+  `$14`, cell `$26` alias instance at recovered local coordinates `(-394, 200, 1846)`. The
+  catalogue retains the alias, base structure, and Building detail as separate valid identities.
+
 ## [0.17.0] - 2026-09-11
 
 ### Changed
