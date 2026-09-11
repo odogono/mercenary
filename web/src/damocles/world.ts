@@ -1,4 +1,10 @@
-import type { Catalogue, Mesh, Model, Recovery } from '../catalogue/data.ts';
+import type {
+  Catalogue,
+  Kind,
+  Mesh,
+  Model,
+  Recovery
+} from '../catalogue/data.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { ErisPresentationDocument } from './documents.ts';
 
@@ -28,6 +34,7 @@ export interface ErisPlacement {
   readonly faceCount: number;
   readonly heading: number;
   readonly id: string;
+  readonly kind: Kind;
   /// The variant drawn, or nothing when the model's geometry is unrecovered. Nothing is
   /// drawn in that case rather than a stand-in, and the gap is counted (ADR 0043).
   readonly mesh: Mesh | undefined;
@@ -48,7 +55,9 @@ export interface ErisSurface {
   readonly grid: ErisGrid;
   readonly placements: readonly ErisPlacement[];
   readonly places: readonly ErisPlace[];
-  /// Placements whose model has no recovered faces.
+  /// Object and structure placements whose model has no recovered faces (ADR 0043). Empty
+  /// ground cells have no catalogue instance; their authored fill is the presentation
+  /// placeholder (#221), not a counted gap.
   readonly unresolvedCount: number;
 }
 
@@ -57,6 +66,22 @@ export const cellOf = (position: Vector3, grid: ErisGrid): ErisCell => ({
   x: Math.floor(position.x / grid.cellUnits) - grid.origin.x,
   z: Math.floor(position.z / grid.cellUnits) - grid.origin.z
 });
+
+export const cellsEqual = (a: ErisCell, b: ErisCell): boolean =>
+  a.x === b.x && a.z === b.z;
+
+/// The cell centre in raw units, matching catalogue ground instance positions.
+export const cellCentre = (cell: ErisCell, grid: ErisGrid): Vector3 => ({
+  x: (grid.origin.x + cell.x + 0.5) * grid.cellUnits,
+  y: 0,
+  z: (grid.origin.z + cell.z + 0.5) * grid.cellUnits
+});
+
+export const hasRecoveredGroundFaces = (placement: ErisPlacement): boolean =>
+  placement.kind === 'ground' && placement.faceCount > 0;
+
+export const isUnrecoveredPlacement = (placement: ErisPlacement): boolean =>
+  placement.mesh === undefined && placement.kind !== 'ground';
 
 const TURN = 2 * Math.PI;
 
@@ -142,15 +167,12 @@ export const erisSurfaceFrom = (
         `Damocles Instance ${instance.id} names unknown model ${instance.model}`
       );
     }
-    if (model.kind === 'ground') {
-      // Recovered pad/road faces belong to the catalogue; /damocles still paints the authored cell fill (#206).
-      continue;
-    }
     const mesh = exteriorMesh(model);
     placements.push({
       faceCount: mesh?.faces.length ?? 0,
       heading: headingFromByte(location.heading, doc.orientation),
       id: instance.id,
+      kind: model.kind,
       mesh,
       modelId: model.id,
       name: instance.name,
@@ -184,8 +206,6 @@ export const erisSurfaceFrom = (
     grid,
     placements,
     places,
-    unresolvedCount: placements.filter(
-      placement => placement.mesh === undefined
-    ).length
+    unresolvedCount: placements.filter(isUnrecoveredPlacement).length
   };
 };

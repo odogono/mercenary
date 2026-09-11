@@ -3,7 +3,15 @@ import { triangulate } from '../catalogue/geometry.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { Camera } from '../projection/index.ts';
 import type { ErisPresentationDocument } from './documents.ts';
-import type { ErisPlacement, ErisPose, ErisSurface } from './world.ts';
+import {
+  cellCentre,
+  cellOf,
+  cellsEqual,
+  hasRecoveredGroundFaces,
+  type ErisPlacement,
+  type ErisPose,
+  type ErisSurface
+} from './world.ts';
 
 /// One frame of Eris in Filled Presentation, planned without a graphics context.
 ///
@@ -112,6 +120,61 @@ const placed = (
   };
 };
 
+type WorldTriangle = readonly [Vector3, Vector3, Vector3];
+
+const doubleSidedQuad = (
+  southwest: Vector3,
+  southeast: Vector3,
+  northeast: Vector3,
+  northwest: Vector3
+): readonly WorldTriangle[] => [
+  [southwest, southeast, northeast],
+  [southwest, northeast, northwest],
+  [northeast, southeast, southwest],
+  [northwest, northeast, southwest]
+];
+
+const groundFillTriangles = (
+  surface: ErisSurface,
+  pose: ErisPose,
+  extentCells: number
+): readonly WorldTriangle[] => {
+  const cellsWithGroundFaces = surface.placements
+    .filter(hasRecoveredGroundFaces)
+    .map(placement => cellOf(placement.position, surface.grid));
+  const currentCell = cellOf(pose.position, surface.grid);
+  const halfCell = surface.grid.cellUnits / 2;
+  const triangles: WorldTriangle[] = [];
+
+  for (let x = 0; x < surface.grid.cellsPerAxis; x += 1) {
+    for (let z = 0; z < surface.grid.cellsPerAxis; z += 1) {
+      const cell = { x, z };
+      if (
+        Math.max(Math.abs(currentCell.x - x), Math.abs(currentCell.z - z)) >
+          extentCells ||
+        cellsWithGroundFaces.some(occupied => cellsEqual(occupied, cell))
+      ) {
+        continue;
+      }
+      const centre = cellCentre(cell, surface.grid);
+      const corner = (dx: number, dz: number): Vector3 => ({
+        x: centre.x + dx * halfCell,
+        y: 0,
+        z: centre.z + dz * halfCell
+      });
+      triangles.push(
+        ...doubleSidedQuad(
+          corner(-1, -1),
+          corner(1, -1),
+          corner(1, 1),
+          corner(-1, 1)
+        )
+      );
+    }
+  }
+  return triangles;
+};
+
 export const planErisFrame = (
   surface: ErisSurface,
   pose: ErisPose,
@@ -133,27 +196,17 @@ export const planErisFrame = (
     values.push(view.x, view.y, view.z, colour[0], colour[1], colour[2]);
   };
 
-  // The authored ground: a flat plane at y = 0 under and around the camera, in the recovered
-  // green. Both windings are emitted, so it shows whatever the front-face rule settles on and
-  // from below should the camera ever get there.
-  const extent = doc.ground.extentCells * surface.grid.cellUnits;
+  // Authored fill for first-world cells whose ground record has no faces (#221). Recovered
+  // pad and road polygons sit at y = 0; a camera-following plane would hide them.
   const ground = channels(doc.ground.colour);
-  const cx = pose.position.x;
-  const cz = pose.position.z;
-  const corner = (dx: number, dz: number): Vector3 => ({
-    x: cx + dx * extent,
-    y: 0,
-    z: cz + dz * extent
-  });
-  for (const [a, b, c] of [
-    [corner(-1, -1), corner(1, -1), corner(1, 1)],
-    [corner(-1, -1), corner(1, 1), corner(-1, 1)],
-    [corner(1, 1), corner(1, -1), corner(-1, -1)],
-    [corner(-1, 1), corner(1, 1), corner(-1, -1)]
-  ] as const) {
-    emit(a, ground);
-    emit(b, ground);
-    emit(c, ground);
+  for (const triangle of groundFillTriangles(
+    surface,
+    pose,
+    doc.ground.extentCells
+  )) {
+    for (const vertex of triangle) {
+      emit(vertex, ground);
+    }
     triangleCount += 1;
   }
 

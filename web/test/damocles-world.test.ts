@@ -7,6 +7,7 @@ import {
   cellOf,
   erisSurfaceFrom,
   headingFromByte,
+  isUnrecoveredPlacement,
   startPose
 } from '../src/damocles/world.ts';
 
@@ -26,7 +27,7 @@ describe('the Eris surface from the Damocles Catalogue', () => {
     const { catalogue, doc } = await load();
     const surface = erisSurfaceFrom(catalogue, doc);
     expect(surface.body).toEqual({ id: 'body-11', name: 'ERIS' });
-    expect(surface.placements).toHaveLength(84);
+    expect(surface.placements).toHaveLength(174);
     const spaceport = surface.placements.find(
       placement => placement.id === 'eris-surface-87'
     )!;
@@ -37,14 +38,26 @@ describe('the Eris surface from the Damocles Catalogue', () => {
     expect(spaceport.position.y).toBe(0);
     expect(spaceport.position.z / 65_536).toBeCloseTo(136.5238, 3);
     expect(cellOf(spaceport.position, surface.grid)).toEqual({ x: 7, z: 8 });
+    const pad = surface.placements.find(
+      placement => placement.id === 'eris-ground-88'
+    )!;
+    expect(pad.kind).toBe('ground');
+    expect(pad.modelId).toBe('ground-021afe-00');
+    expect(pad.faceCount).toBeGreaterThan(0);
+    const colours = new Set(pad.mesh!.faces.map(face => face.sourceColour));
+    expect(colours.has(0x7_77)).toBe(true);
+    expect(colours.has(0x80_0e)).toBe(true);
+    const apron = surface.placements.find(
+      placement => placement.id === 'eris-ground-87'
+    )!;
+    expect(cellOf(apron.position, surface.grid)).toEqual({ x: 7, z: 8 });
+    expect(apron.faceCount).toBeGreaterThan(0);
   });
 
   test('draws nothing for unrecovered geometry and counts the gap', async () => {
     const { catalogue, doc } = await load();
     const surface = erisSurfaceFrom(catalogue, doc);
-    const unresolved = surface.placements.filter(
-      placement => placement.mesh === undefined
-    );
+    const unresolved = surface.placements.filter(isUnrecoveredPlacement);
     expect(unresolved).toHaveLength(21);
     expect(surface.unresolvedCount).toBe(21);
     expect(unresolved.every(placement => placement.faceCount === 0)).toBe(true);
@@ -110,7 +123,10 @@ describe('the Eris surface from the Damocles Catalogue', () => {
     expect(headingFromByte(0x00, orientation)).toBeCloseTo(0, 12);
     expect(headingFromByte(0x40, orientation)).toBeCloseTo(Math.PI / 2, 12);
     expect(headingFromByte(0x80, orientation)).toBeCloseTo(Math.PI, 12);
-    expect(headingFromByte(0xc0, orientation)).toBeCloseTo((3 * Math.PI) / 2, 12);
+    expect(headingFromByte(0xc0, orientation)).toBeCloseTo(
+      (3 * Math.PI) / 2,
+      12
+    );
     expect(
       cellOf(
         { x: 64 * 65_536 - 1, y: 0, z: 128 * 65_536 },

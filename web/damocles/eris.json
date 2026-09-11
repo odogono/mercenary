@@ -83,7 +83,7 @@
     "colourProvenance": "recovered",
     "geometryProvenance": "authored",
     "extentCells": 24,
-    "note": "A flat plane at y = 0 in the recovered green. Pad and road polygons are recovered in the Damocles Catalogue ground family (docs/research/damocles-eris-ground.md); this plane still covers them (#206)."
+    "note": "Authored cell-sized fill at y = 0 in the recovered green, only for cells whose catalogue ground record has no faces; extentCells is the Chebyshev neighbourhood of that fill (#221). Recovered pad and road polygons come from the Damocles Catalogue ground family (docs/research/damocles-eris-ground.md)."
   },
   "sky": {
     "colour": "#4992db",

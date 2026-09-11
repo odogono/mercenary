@@ -134,10 +134,9 @@ Representative:
 ## Catalogue
 
 Kind `ground`, schema version 5, table `$01E400`. Instances
-`eris-ground-{cell}` are plotted on the catalogue map. `/damocles` does not
-consume them yet: [`web/src/damocles/world.ts`](../../web/src/damocles/world.ts)
-skips `kind === 'ground'` so the authored plane in `eris.json` remains the
-walk's cell fill.
+`eris-ground-{cell}` are plotted on the catalogue map. `/damocles` composes
+those instances into the Eris surface and keeps an authored cell fill only
+where the record has no faces ([#221](https://github.com/odogono/mercenary/issues/221)).
 
 ## Unresolved
 

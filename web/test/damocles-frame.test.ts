@@ -8,6 +8,7 @@ import {
 import { planErisFrame } from '../src/damocles/frame.ts';
 import { ErisRenderer } from '../src/damocles/renderer.ts';
 import {
+  cellCentre,
   erisSurfaceFrom,
   startPose,
   type ErisPlacement,
@@ -48,6 +49,7 @@ const placement = (
   faceCount: mesh?.faces.length ?? 0,
   heading: 0,
   id: 'test',
+  kind: 'object',
   mesh,
   modelId: 'model',
   name: 'TEST',
@@ -73,7 +75,7 @@ describe('an Eris frame in Filled Presentation', () => {
       (sum, p) => sum + (p.mesh?.faces.length ?? 0),
       0
     );
-    // Every face is at least one triangle; the ground is two, both ways round.
+    // Every face is at least one triangle; empty first-world cells get a double-sided quad.
     expect(plan.triangleCount).toBeGreaterThanOrEqual(decodedFaces + 4);
     expect(plan.vertices).toHaveLength(plan.triangleCount * 3 * 6);
     expect(plan.skippedFaces).toBe(0);
@@ -83,15 +85,15 @@ describe('an Eris frame in Filled Presentation', () => {
     );
     expect(
       planErisFrame(withoutMeshes, startPose(doc), doc).triangleCount
-    ).toBe(4);
+    ).toBe(surface.grid.cellsPerAxis ** 2 * 4);
   });
 
   test('puts a face straight ahead at positive view depth in its own colour', async () => {
     const { doc } = await load();
     const plan = planErisFrame(surfaceOf([placement(square())]), origin, doc);
-    expect(plan.triangleCount).toBe(4 + 2);
-    // Skip the ground's twelve vertices; the face's corners follow, in the triangulator's order.
-    for (let corner = 72; corner < plan.vertices.length; corner += 6) {
+    expect(plan.triangleCount).toBe(2);
+    // The pose sits outside the first-world grid, so no authored cell fill precedes the face.
+    for (let corner = 0; corner < plan.vertices.length; corner += 6) {
       const view = Array.from(plan.vertices.slice(corner, corner + 6));
       expect(Math.abs(view[0]!)).toBeCloseTo(10, 3);
       expect(view[1]).toBeCloseTo(-63, 3);
@@ -109,8 +111,8 @@ describe('an Eris frame in Filled Presentation', () => {
       doc
     );
     expect(double.triangleCount).toBe(single.triangleCount + 2);
-    const firstFace = Array.from(single.vertices.slice(72, 72 + 18));
-    const reversed = Array.from(double.vertices.slice(72 + 36, 72 + 54));
+    const firstFace = Array.from(single.vertices.slice(0, 18));
+    const reversed = Array.from(double.vertices.slice(36, 54));
     expect(reversed.slice(0, 3)).toEqual(firstFace.slice(12, 15));
     expect(reversed.slice(12, 15)).toEqual(firstFace.slice(0, 3));
   });
@@ -132,7 +134,7 @@ describe('an Eris frame in Filled Presentation', () => {
           surfaceOf([placement(mesh, { x: at.x, y: 0, z: at.z })]),
           { ...origin, heading },
           doc
-        ).vertices.slice(72, 75)
+        ).vertices.slice(0, 3)
       );
     // Facing north (a zero bearing), a placement at +z is ahead at positive depth and one at
     // +x is on the right, as the Working Authority's spaceport tower is from the start.
@@ -164,7 +166,7 @@ describe('an Eris frame in Filled Presentation', () => {
           surfaceOf([{ ...placement(mesh, { x: 0, y: 0, z: 0 }), heading }]),
           origin,
           document
-        ).vertices.slice(72, 75)
+        ).vertices.slice(0, 3)
       );
     // Camera at the origin facing north: a model vertex at +100 z sits ahead (positive
     // depth) when kept, behind when negated.
@@ -189,8 +191,28 @@ describe('an Eris frame in Filled Presentation', () => {
       ]
     };
     const plan = planErisFrame(surfaceOf([placement(degenerate)]), origin, doc);
-    expect(plan.triangleCount).toBe(4);
+    expect(plan.triangleCount).toBe(0);
     expect(plan.skippedFaces).toBe(0);
+  });
+
+  test('omits authored fill where catalogue ground has faces', async () => {
+    const { doc } = await load();
+    const pose = startPose(doc);
+    const empty = planErisFrame(surfaceOf([]), pose, doc);
+    expect(empty.triangleCount).toBe(doc.grid.cellsPerAxis ** 2 * 4);
+    const padCell = cellCentre({ x: 7, z: 8 }, doc.grid);
+    const withPad = planErisFrame(
+      surfaceOf([
+        {
+          ...placement(square(), padCell),
+          kind: 'ground',
+          id: 'eris-ground-87'
+        }
+      ]),
+      pose,
+      doc
+    );
+    expect(withPad.triangleCount).toBe(empty.triangleCount - 4 + 2);
   });
 });
 

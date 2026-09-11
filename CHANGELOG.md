@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-09-11
+
 ### Added
 
 - ADR 0043 admits Damocles play alongside _The Second City_, removing ADR 0021's sequencing.
@@ -30,6 +32,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Damocles's own Session State. The Session Resume is written on suspension and every five
   seconds (#201, #202). Playwright covers the boot, the panel readouts, walking, resume, storage
   isolation from Targ and a malformed document (#203).
+- The Damocles Catalogue recovers the per-cell Eris ground, pad and road family at `$01E000` as
+  kind `ground` (#206). Structure 100 is named as an empty Eris placeholder rather than a failed
+  decode (#207).
 
 - The Damocles Catalogue now preserves all 195 interior-associated resident selector records
   without presenting selectors as Room, floor, or place names. Decoded structure-association
@@ -38,6 +43,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Resident slot 180, `KEY - 99 CHEVY`, is attached to the source-unnamed Eris structure-group
   `$14`, cell `$26` alias instance at recovered local coordinates `(-394, 200, 1846)`. The
   catalogue retains the alias, base structure, and Building detail as separate valid identities.
+
+### Changed
+
+- The Eris camera yaw and instance heading byte are recovered: 1024 units per turn, north at
+  `$200`, rising to the right. The start view faces north with the spaceport tower on the right
+  (#204).
+- `/damocles` draws the recovered grey apron and white pad from the Damocles Catalogue ground
+  family. Authored green fill remains only for cells whose ground record has no faces; the
+  camera-following plane is omitted (#221).
 
 ## [0.17.0] - 2026-09-11
 
