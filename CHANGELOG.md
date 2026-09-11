@@ -21,6 +21,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The Eris surface is composed from the Damocles Catalogue for play: 84 recovered placements in
   raw units with exterior variants chosen, 11 named places by cell, and 21 placements whose
   geometry is unrecovered drawn as nothing and counted (#199).
+- A Damocles Gameplay Session: on foot on Eris with a fixed-step Mover in Damocles units, stepped
+  at the shared bound, and a Session Resume of its own under a Damocles key. The Browser Shell
+  gains a `TitleRuntime` seam naming what it needs from any Title (ADR 0041, ADR 0043) (#200).
 
 - The Damocles Catalogue now preserves all 195 interior-associated resident selector records
   without presenting selectors as Room, floor, or place names. Decoded structure-association
