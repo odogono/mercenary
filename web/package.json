@@ -20,6 +20,7 @@
     "entry": [
       "src/shell/boot.ts",
       "src/catalogue/boot.ts",
+      "src/damocles/boot.ts",
       "src/flyover/boot.ts",
       "src/sound/worklet.ts",
       "tools/sound-compare.ts",

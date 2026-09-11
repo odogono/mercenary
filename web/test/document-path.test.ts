@@ -15,6 +15,14 @@ describe('the Browser Shell document path', () => {
       document: 'catalogue',
       kind: 'document'
     });
+    expect(resolveDocumentPath('/targ')).toEqual({
+      document: 'gameplay',
+      kind: 'document'
+    });
+    expect(resolveDocumentPath('/damocles')).toEqual({
+      document: 'damocles',
+      kind: 'document'
+    });
     expect(resolveDocumentPath('/targ/debug')).toEqual({
       document: 'flyover',
       kind: 'document',
@@ -30,6 +38,8 @@ describe('the Browser Shell document path', () => {
   test('canonicalises known aliases in one hop', () => {
     for (const [path, pathname] of [
       ['/index.html', '/'],
+      ['/targ/', '/targ'],
+      ['/damocles/', '/damocles'],
       ['/catalogue.html', '/catalogue'],
       ['/catalogue/', '/catalogue'],
       ['/debug', '/targ/debug'],
@@ -46,7 +56,7 @@ describe('the Browser Shell document path', () => {
   });
 
   test('falls unknown documents back temporarily', () => {
-    for (const path of ['/targ', '/unknown/', '/missing.html']) {
+    for (const path of ['/dion', '/unknown/', '/missing.html']) {
       expect(resolveDocumentPath(path)).toEqual({
         kind: 'redirect',
         pathname: '/',
@@ -82,6 +92,9 @@ describe('the Browser Shell document path', () => {
     expect(assertBrowserDocument('/', 'gameplay').document).toBe('gameplay');
     expect(assertBrowserDocument('/catalogue', 'catalogue').document).toBe(
       'catalogue'
+    );
+    expect(assertBrowserDocument('/damocles', 'damocles').document).toBe(
+      'damocles'
     );
     expect(assertBrowserDocument('/damocles/debug', 'flyover')).toMatchObject({
       document: 'flyover',
