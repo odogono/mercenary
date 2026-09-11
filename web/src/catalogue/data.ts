@@ -1,5 +1,5 @@
 export type Point = readonly [number, number, number];
-export type Kind = 'object' | 'structure' | 'interior';
+export type Kind = 'object' | 'structure' | 'interior' | 'ground';
 export type Recovery = 'decoded' | 'partial' | 'unresolved';
 export interface Primitive {
   readonly colour: string;
@@ -86,7 +86,7 @@ export interface Catalogue {
   readonly instances: readonly Instance[];
   readonly models: readonly Model[];
   readonly places: readonly Place[];
-  readonly schemaVersion: 4;
+  readonly schemaVersion: 5;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -228,7 +228,7 @@ const mesh = (value: unknown): Mesh => {
 
 export const parseCatalogue = (value: unknown): Catalogue => {
   const r = object(value);
-  if (r['schemaVersion'] !== 4) {
+  if (r['schemaVersion'] !== 5) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -291,7 +291,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
         };
       }),
       id: string(m['id']),
-      kind: choice(m['kind'], ['object', 'structure', 'interior']),
+      kind: choice(m['kind'], ['object', 'structure', 'interior', 'ground']),
       linkedInstances: strings(m['linkedInstances']),
       name: string(m['name']),
       nameStatus: choice(m['nameStatus'], ['verified', 'candidate', 'unknown']),
@@ -441,7 +441,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     if (entries.length !== entryCount) {
       fail('table entry count mismatch');
     }
-    const kind = choice(t['kind'], ['object', 'structure', 'interior']);
+    const kind = choice(t['kind'], ['object', 'structure', 'interior', 'ground']);
     for (const id of entries) {
       reference(modelIds, id, 'table model');
       if (models.find(model => model.id === id)!.kind !== kind) {
@@ -490,7 +490,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     instances,
     models,
     places,
-    schemaVersion: 4,
+    schemaVersion: 5,
     source,
     tables
   };

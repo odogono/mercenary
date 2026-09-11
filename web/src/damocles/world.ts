@@ -139,6 +139,10 @@ export const erisSurfaceFrom = (
         `Damocles Instance ${instance.id} names unknown model ${instance.model}`
       );
     }
+    if (model.kind === 'ground') {
+      // Recovered pad/road faces belong to the catalogue; /damocles still paints the authored cell fill (#206).
+      continue;
+    }
     const mesh = exteriorMesh(model);
     placements.push({
       faceCount: mesh?.faces.length ?? 0,

@@ -21,6 +21,7 @@ const search = node<HTMLInputElement>('search'),
 // Legacy dataset kind keys remain stable for existing deep links.
 const kindLabel = (value: Model['kind']) =>
   ({
+    ground: 'Ground',
     interior: 'Building detail',
     object: 'Object',
     structure: 'Surface assembly'
@@ -65,7 +66,9 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
       details,
       model.kind === 'interior'
         ? 'Building-detail geometry can appear outside or inside. This source bank does not identify a model as an interior.'
-        : 'Building plan and linked detail. Available inspection views are listed under Form; original scene visibility remains incomplete.'
+        : model.kind === 'ground'
+          ? 'Per-cell ground, pad and road record. Neighbor-join sentinels are omitted; $7000 road templates and default empty-cell fill remain undecoded.'
+          : 'Building plan and linked detail. Available inspection views are listed under Form; original scene visibility remains incomplete.'
     );
   }
   if (model.reason) {

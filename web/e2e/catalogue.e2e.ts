@@ -200,7 +200,7 @@ test('maps known placements and links a surface assembly to building detail', as
 }) => {
   await page.goto('/catalogue?instance=eris-surface-87&q=structure');
   await expect(page.locator('#details')).toContainText('CAPITAL SPACEPORT');
-  await expect(page.locator('#map a')).toHaveCount(84);
+  await expect(page.locator('#map a')).toHaveCount(174);
   await page
     .locator('#map')
     .getByRole('link', { exact: true, name: 'CAPITAL SPACEPORT' })

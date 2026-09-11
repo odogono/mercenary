@@ -210,6 +210,46 @@ class ThirdHeightTests(unittest.TestCase):
         self.assertEqual(mesh['faces'][0]['colour'], '#00cccc')
 
 
+class GroundTests(unittest.TestCase):
+    def test_pad_strip_keeps_local_vertices_and_omits_join_sentinels(self):
+        from damocleslab.catalogue import decode_ground
+        # Short header $00FF, three plan points around cell centre, white quad
+        # that also names the $F0 neighbor-join slot, then terminator.
+        data = bytes.fromhex(
+            '00ff'
+            '84b080c8 800080c8 7b5080c8 0000'
+            '0777 04 08 0c f0 00'
+            '0000'
+        )
+        mesh, gaps, transform = decode_ground(data, 0, 0, hardware=[0] * 16)
+        self.assertEqual(transform, 0)
+        self.assertEqual(mesh['vertices'][:3], [[1200, 0, 200], [0, 0, 200], [-1200, 0, 200]])
+        self.assertEqual(mesh['faces'][0]['sourceColour'], 0x777)
+        self.assertEqual(mesh['faces'][0]['vertices'], [0, 1, 2])
+        self.assertTrue(any('F0' in gap or 'F4' in gap for gap in gaps))
+
+    def test_empty_record_is_a_gap_not_a_fabricated_quad(self):
+        from damocleslab.catalogue import decode_ground
+        mesh, gaps, transform = decode_ground(bytes.fromhex('00ff 0000 0000'), 0, 0)
+        self.assertEqual(transform, 0)
+        self.assertEqual(mesh['faces'], [])
+        self.assertEqual(mesh['lines'], [])
+        self.assertTrue(any('Empty ground record' in gap for gap in gaps))
+
+    def test_bit13_command_stops_without_inventing_faces(self):
+        from damocleslab.catalogue import decode_ground
+        mesh, gaps, _ = decode_ground(bytes.fromhex('00ff 0000 7000 0000'), 0, 0)
+        self.assertEqual(mesh['faces'], [])
+        self.assertTrue(any('7000' in gap or '53F76' in gap for gap in gaps))
+
+    def test_palette_edge_becomes_a_line(self):
+        from damocleslab.catalogue import decode_ground
+        data = bytes.fromhex('00ff 84b08000 7b508000 0000 c00e 04 08 0000')
+        mesh, gaps, _ = decode_ground(data, 0, 0, hardware=[0x444] * 16)
+        self.assertEqual(len(mesh['lines']), 1)
+        self.assertEqual(mesh['lines'][0]['vertices'], [0, 1])
+
+
 class VisibilityListTests(unittest.TestCase):
     def test_reads_region_face_order_and_retains_special_commands_as_gaps(self):
         from damocleslab.catalogue import decode_visibility_list

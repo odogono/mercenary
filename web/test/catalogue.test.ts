@@ -47,7 +47,7 @@ const fixture = () => ({
     }
   ],
   places: [],
-  schemaVersion: 4,
+  schemaVersion: 5,
   source: {
     authority: 'Synthetic test',
     evidence: 'test',
@@ -253,6 +253,21 @@ it('keeps the spaceport exterior and room layout separate at their shared scale'
   expect(
     data.instances.find(instance => instance.id === 'eris-surface-87')!.model
   ).toBe(spaceport.id);
+});
+
+it('recovers the spaceport pad strip as a per-cell ground record', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const pad = data.models.find(model => model.id === 'ground-021afe-00')!;
+  expect(pad.kind).toBe('ground');
+  expect(pad.status).toBe('partial');
+  const colours = new Set(pad.variants[0]!.mesh.faces.map(face => face.sourceColour));
+  expect(colours.has(0x777)).toBe(true);
+  expect(colours.has(0x800e)).toBe(true);
+  expect(
+    data.instances.find(instance => instance.id === 'eris-ground-88')!.model
+  ).toBe(pad.id);
 });
 
 it('recovers the spaceport wall below the window without closing the opening', async () => {

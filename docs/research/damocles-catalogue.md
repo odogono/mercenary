@@ -26,9 +26,9 @@ first-world scenario hash. It uses the standard library only. A missing capture
 can be regenerated with the existing `lab observe --scenario
 research/damocles-st/scenarios/first-world.json` command. Raw images, RAM and
 Working Disassembly stay in ignored research paths; the browser receives only
-the separately versioned catalogue JSON. Schema version 3 includes per-face
-source indices, structured evidence, nested instance placements, and source key
-display metadata.
+the separately versioned catalogue JSON. Schema version 5 adds the per-cell
+ground/pad/road table. Schema version 3 included per-face source indices,
+structured evidence, nested instance placements, and source key display metadata.
 
 ## Source and census
 
@@ -46,18 +46,19 @@ program SHA-256; model identities depend on kind and source address, never names
 | ------------------------ | --------- | -------------- | -------------------------------------------------------------------- |
 | Object geometry          | `$035700` | 378            | Relative 32-bit pointers, including shared forms and extra templates |
 | Surface assemblies       | `$00E900` | 280            | Relative 32-bit pointers, including scaled/paletted aliases          |
-| Building detail geometry | `$026000` | 130            | Relative 32-bit pointers, with many aliases                          |
+| Ground / pad / road      | `$01E400` | 256            | Word offsets from `$01E000`; shared records, per-cell `$83DC` orientation |
 
 These extents are bounded by the next independently recognised data records:
 object NULL metadata at `$035CE8`, the first surface metadata at `$00ED60`, and
-the interior record preamble after `$026208`. They remain **provisional table
+the interior record preamble after `$026208`. The ground table is a 256-word
+workspace index, not a relative-pointer bank. They remain **provisional table
 extents**, rather than a proven census of every disk-loaded asset or every
 runtime-selectable index. The UI displays that qualification for each table.
 Every slot maps to one model identity; repeated pointers share a model and retain
 all slot indices. No pointer scan is represented as a model census.
 
-Current extraction accounts for **539 unique records**: **166 decoded**,
-**306 partial**, and **67 unresolved**. “Decoded” means the supported record was
+Current extraction accounts for **613 unique records**: **166 decoded**,
+**378 partial**, and **69 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.
 Unresolved records remain searchable and retain their source identity and reason.
@@ -149,6 +150,24 @@ code. Targeted disassembly used to establish them remains ignored at
   surface attachments/openings after the basic wall list are not silently omitted
   from a “decoded” result: their presence makes the model partial.
 
+### Cell ground, pad and road
+
+- After the structure selector, `$054E40` reads a per-cell orientation byte at
+  `$83DC` and a word at `$1E400 + 2×cell`. That word is an offset from `$1E000`.
+  The first-world workspace has a record for every cell; 133 cells share one
+  empty record and 33 share a `$7000` template that this extractor does not yet
+  decode. See [Eris ground findings](damocles-eris-ground.md).
+- Plan vertices are unsigned words relative to `$8000` (cell centre), terminated
+  by a zero X. A PC-relative nybble table at `$54E8E` optionally swaps and
+  negates X/Z from the orientation byte.
+- Faces are colour word plus byte vertex references, as in object polygons.
+  Direct `$777` is the white pad; `$800e` resolves through the hardware palette
+  as the grey apron. `$F0`/`$F4` are neighboring-cell workspace slots and are
+  omitted rather than guessed. `$C00E` is a two-point edge in the same colour
+  family. `$7000` / `$53F76` commands fail closed.
+- `/damocles` still paints an authored green plane; recovered ground instances
+  are catalogue-only until that plane is withdrawn.
+
 ### Surface placements and captured Eris places
 
 - `$054B98` constructs a cell index as `(z << 4) | x`. `$054CBC` indexes four-byte
@@ -171,9 +190,11 @@ code. Targeted disassembly used to establish them remains ignored at
 - The captured Eris workspace yields 76 surface-assembly placements and 11 named
   places. The separately decoded group-$14 cell-$26 assembly brings Eris to **77
   surface assemblies**; its seven surface objects bring that map to **84
-  placements**. Across all bodies the dataset now contains **111 mapped
-  placements**. This is resident
-  state from the pinned first-world capture, not a complete body-surface census.
+  structure and object placements**. Ninety recovered ground/pad/road instances
+  bring the Eris map to **174** plotted locations. Across all bodies the dataset
+  now contains those Eris points plus the previously mapped non-Eris residents.
+  This is resident state from the pinned first-world capture, not a complete
+  body-surface census.
   The slot-180 assembly is recovered from the authored group-$14 map outside the
   captured first-world workspace; other interior-associated and exceptional
   residents remain listed without invented map positions.
@@ -216,7 +237,8 @@ claimed as a completed pixel-fidelity gate.
 Still unexplored or incomplete: other-body placement workspaces and named-place
 lists, disk-load reachability beyond resident tables, remaining object residences/transforms,
 view-conditioned object groups, articulated geometry, special primitives,
-surface attachments/openings, and script-created visual changes. The recovery
+surface attachments/openings, `$7000` road templates, default empty-cell fill,
+and script-created visual changes. The recovery
 ledger exposes this boundary; it does not declare the whole game's extraction
 complete. Further research can replace unresolved records without changing their
 identities or requiring a playable Damocles session.
