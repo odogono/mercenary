@@ -1,9 +1,10 @@
 export type SystemId = 'gamma' | 'targ';
-export type BrowserDocument = 'catalogue' | 'flyover' | 'gameplay';
+export type BrowserDocument = 'catalogue' | 'damocles' | 'flyover' | 'gameplay';
 
 export type DocumentPath =
   | { readonly document: 'gameplay'; readonly kind: 'document' }
   | { readonly document: 'catalogue'; readonly kind: 'document' }
+  | { readonly document: 'damocles'; readonly kind: 'document' }
   | {
       readonly document: 'flyover';
       readonly kind: 'document';
@@ -18,6 +19,10 @@ export type DocumentPath =
 
 const documents = new Map<string, DocumentPath>([
   ['/', { document: 'gameplay', kind: 'document' }],
+  // A Title's path starts its game (ADR 0041). `/targ` is the same document as `/` until
+  // Targ adopts the Title seam; `/damocles` is the Damocles Gameplay Session (ADR 0043).
+  ['/targ', { document: 'gameplay', kind: 'document' }],
+  ['/damocles', { document: 'damocles', kind: 'document' }],
   ['/catalogue', { document: 'catalogue', kind: 'document' }],
   ['/targ/debug', { document: 'flyover', kind: 'document', systemId: 'targ' }],
   [
@@ -28,6 +33,8 @@ const documents = new Map<string, DocumentPath>([
 
 const aliases = new Map<string, string>([
   ['/index.html', '/'],
+  ['/targ/', '/targ'],
+  ['/damocles/', '/damocles'],
   ['/catalogue.html', '/catalogue'],
   ['/catalogue/', '/catalogue'],
   ['/debug', '/targ/debug'],

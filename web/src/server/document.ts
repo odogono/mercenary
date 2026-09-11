@@ -1,6 +1,9 @@
 import { join } from 'node:path';
 
-import { resolveDocumentPath } from '../shell/documentPath.ts';
+import {
+  resolveDocumentPath,
+  type BrowserDocument
+} from '../shell/documentPath.ts';
 
 export const unsupportedMethodResponse = (
   method: string
@@ -11,6 +14,13 @@ export const unsupportedMethodResponse = (
         headers: { allow: 'GET, HEAD' },
         status: 405
       });
+
+const DOCUMENT_FILES: Record<BrowserDocument, string> = {
+  catalogue: 'catalogue.html',
+  damocles: 'damocles.html',
+  flyover: 'flyover.html',
+  gameplay: 'index.html'
+};
 
 export const documentResponse = async (
   request: Request,
@@ -28,12 +38,7 @@ export const documentResponse = async (
     }
     return Response.redirect(url, route.status);
   }
-  const name =
-    route.document === 'gameplay'
-      ? 'index.html'
-      : route.document === 'catalogue'
-        ? 'catalogue.html'
-        : 'flyover.html';
+  const name = DOCUMENT_FILES[route.document];
   const file = Bun.file(join(webRoot, name));
   const headers = { 'content-type': 'text/html; charset=utf-8' };
   return request.method === 'HEAD'

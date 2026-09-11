@@ -13,6 +13,7 @@ describe('the localhost document route', () => {
     const root = await mkdtemp(join(tmpdir(), 'mercenary-documents-'));
     try {
       await writeFile(join(root, 'flyover.html'), 'flyover');
+      await writeFile(join(root, 'damocles.html'), 'damocles');
       const get = await documentResponse(
         new Request('http://localhost/targ/debug'),
         root
@@ -22,6 +23,11 @@ describe('the localhost document route', () => {
         root
       );
       expect(await get?.text()).toBe('flyover');
+      const damocles = await documentResponse(
+        new Request('http://localhost/damocles'),
+        root
+      );
+      expect(await damocles?.text()).toBe('damocles');
       expect(get?.headers.get('content-type')).toContain('text/html');
       expect(await head?.text()).toBe('');
       expect(head?.status).toBe(200);
