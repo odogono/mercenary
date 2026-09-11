@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "titleSlug": "damocles",
+  "body": {
+    "id": "body-11",
+    "name": "ERIS",
+    "provenance": "recovered"
+  },
+  "grid": {
+    "cellUnits": 65536,
+    "cellsPerAxis": 16,
+    "origin": { "x": 64, "z": 128 },
+    "provenance": "recovered",
+    "note": "First-world Eris workspace origin from the $7A92/$7A2C world-local camera pairs; 65,536 raw units per cell (docs/research/damocles-catalogue.md)."
+  },
+  "start": {
+    "position": { "x": 4681905, "y": 63, "z": 8940589 },
+    "positionProvenance": "recovered",
+    "headingRadians": 4.384,
+    "headingProvenance": "authored",
+    "evidence": "research/damocles-st/snapshots/eris-spaceport-onfoot.sav: $7A92 = $004770B1, $7A96 = 63, $7A9A = $00886C2D, on foot ($7A8E = 1), cell $87. The yaw word is undecoded (#204); the authored heading frames the spaceport tower to the right as the start capture does."
+  },
+  "eye": {
+    "heightUnits": 63,
+    "provenance": "recovered"
+  },
+  "walk": {
+    "unitsPerSecond": 327.68,
+    "speedProvenance": "derived",
+    "turnRadiansPerSecond": 1.5708,
+    "turnProvenance": "authored",
+    "evidence": "Speed: 3 cells over 30,000 VBL at 50 Hz (observe-walk-toward-building run, docs/research/damocles-walk-board-flight.md); one observation, no step model (#205). Turn rate is a placeholder."
+  },
+  "orientation": {
+    "modelZ": "negate",
+    "positiveTurn": "toward -x",
+    "zeroFaces": "-z",
+    "provenance": "authored",
+    "note": "Copies Targ's Camera convention so the shared view transform needs no change; the Damocles heading byte's angular convention is undecoded (#204)."
+  },
+  "camera": {
+    "verticalFieldOfViewDegrees": 45,
+    "nearPlane": 16,
+    "farPlane": 3000000,
+    "provenance": "authored"
+  },
+  "palette": {
+    "outdoor": [
+      "000",
+      "000",
+      "000",
+      "543",
+      "044",
+      "444",
+      "066",
+      "333",
+      "030",
+      "322",
+      "246",
+      "411",
+      "777",
+      "432",
+      "555",
+      "654"
+    ],
+    "provenance": "recovered",
+    "note": "Live hardware palette at $06FD00 while outdoors on foot (docs/research/damocles-filled-polygons.md)."
+  },
+  "ground": {
+    "colour": "#006d00",
+    "paletteIndex": 8,
+    "colourProvenance": "recovered",
+    "geometryProvenance": "authored",
+    "extentCells": 24,
+    "note": "A flat plane at y = 0 in the recovered green. No pad, road or terrain geometry is decoded (#206)."
+  },
+  "sky": {
+    "colour": "#4992db",
+    "paletteIndex": 10,
+    "provenance": "authored",
+    "note": "Palette entry 246 read as the daytime sky; no sky model is decoded."
+  },
+  "lighting": {
+    "sunDirection": { "x": -0.4, "y": 0.8, "z": -0.45 },
+    "shadows": false,
+    "provenance": "authored",
+    "note": "Reserved for an Enhanced-preset shadow pass (#209). Faces are drawn flat in their catalogue colours."
+  },
+  "rendering": {
+    "cullBackFaces": true,
+    "unresolvedModels": "nothing",
+    "provenance": "authored"
+  }
+}
