@@ -18,10 +18,9 @@ try {
   const content = await damoclesTitle.load(requiredJson);
   const session = damoclesTitle.create(content);
   const before = damoclesPanelViewModel(session.snapshot, content.doc);
-  // Face -X (heading a quarter turn) so the walk crosses into the western neighbour.
-  const target = Math.PI / 2;
-  const turn = session.snapshot.pose.heading - target;
-  session.intent = intent({ turn: 1 });
+  // Face west (a quarter turn left of north) so the walk crosses into the western neighbour.
+  const turn = session.snapshot.pose.heading + Math.PI / 2;
+  session.intent = intent({ turn: -1 });
   session.advance(turn / content.doc.walk.turnRadiansPerSecond);
   session.intent = intent({ walk: 1 });
   for (let i = 0; i < 90 * 60; i += 1) {

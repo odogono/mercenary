@@ -44,12 +44,20 @@ export interface ErisPresentationDocument {
     readonly shadows: boolean;
     readonly sunDirection: Vector3;
   };
+  /// Eris's axes and camera yaw as recovered from the Working Authority (#204). North is +z
+  /// and east is +x, so seen from above with +y up the world is left-handed; the frame mirrors
+  /// z for the shared right-handed Camera. The yaw word counts a full turn in
+  /// `yawUnitsPerTurn` units, reads `yawNorth` facing north and rises turning right.
   readonly orientation: {
+    readonly east: '+x';
     readonly modelZ: 'keep' | 'negate';
+    readonly modelZProvenance: Provenance;
+    readonly north: '+z';
     readonly note: string;
-    readonly positiveTurn: 'toward -x';
     readonly provenance: Provenance;
-    readonly zeroFaces: '-z';
+    readonly yawNorth: number;
+    readonly yawPositive: 'clockwise';
+    readonly yawUnitsPerTurn: number;
   };
   readonly palette: {
     readonly note: string;
@@ -70,10 +78,11 @@ export interface ErisPresentationDocument {
   };
   readonly start: {
     readonly evidence: string;
-    readonly headingProvenance: Provenance;
-    readonly headingRadians: number;
     readonly position: Vector3;
     readonly positionProvenance: Provenance;
+    /// The camera yaw word as captured, in the orientation's units.
+    readonly yaw: number;
+    readonly yawProvenance: Provenance;
   };
   readonly titleSlug: 'damocles';
   readonly walk: {
@@ -218,8 +227,8 @@ export const readErisPresentation = (
   const start = object(root['start'], 'start', [
     'position',
     'positionProvenance',
-    'headingRadians',
-    'headingProvenance',
+    'yaw',
+    'yawProvenance',
     'evidence'
   ]);
   const eye = object(root['eye'], 'eye', ['heightUnits', 'provenance']);
@@ -231,10 +240,14 @@ export const readErisPresentation = (
     'evidence'
   ]);
   const orientation = object(root['orientation'], 'orientation', [
-    'modelZ',
-    'positiveTurn',
-    'zeroFaces',
+    'north',
+    'east',
+    'yawUnitsPerTurn',
+    'yawNorth',
+    'yawPositive',
     'provenance',
+    'modelZ',
+    'modelZProvenance',
     'note'
   ]);
   const camera = object(root['camera'], 'camera', [
@@ -358,25 +371,31 @@ export const readErisPresentation = (
       sunDirection: point(lighting['sunDirection'], 'lighting.sunDirection')
     },
     orientation: {
+      east: literal(orientation['east'], '+x', 'orientation.east'),
       modelZ: oneOf(
         orientation['modelZ'],
         ['keep', 'negate'],
         'orientation.modelZ'
       ),
-      note: text(orientation['note'], 'orientation.note'),
-      positiveTurn: literal(
-        orientation['positiveTurn'],
-        'toward -x',
-        'orientation.positiveTurn'
+      modelZProvenance: provenance(
+        orientation['modelZProvenance'],
+        'orientation.modelZProvenance'
       ),
+      north: literal(orientation['north'], '+z', 'orientation.north'),
+      note: text(orientation['note'], 'orientation.note'),
       provenance: provenance(
         orientation['provenance'],
         'orientation.provenance'
       ),
-      zeroFaces: literal(
-        orientation['zeroFaces'],
-        '-z',
-        'orientation.zeroFaces'
+      yawNorth: integer(orientation['yawNorth'], 'orientation.yawNorth'),
+      yawPositive: literal(
+        orientation['yawPositive'],
+        'clockwise',
+        'orientation.yawPositive'
+      ),
+      yawUnitsPerTurn: integer(
+        orientation['yawUnitsPerTurn'],
+        'orientation.yawUnitsPerTurn'
       )
     },
     palette: {
@@ -405,16 +424,13 @@ export const readErisPresentation = (
     },
     start: {
       evidence: text(start['evidence'], 'start.evidence'),
-      headingProvenance: provenance(
-        start['headingProvenance'],
-        'start.headingProvenance'
-      ),
-      headingRadians: finite(start['headingRadians'], 'start.headingRadians'),
       position: point(start['position'], 'start.position'),
       positionProvenance: provenance(
         start['positionProvenance'],
         'start.positionProvenance'
-      )
+      ),
+      yaw: integer(start['yaw'], 'start.yaw'),
+      yawProvenance: provenance(start['yawProvenance'], 'start.yawProvenance')
     },
     titleSlug: literal(root['titleSlug'], 'damocles', 'titleSlug'),
     walk: {

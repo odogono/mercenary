@@ -106,7 +106,7 @@ describe('the Damocles Gameplay Session', () => {
       JSON.stringify({
         elapsed: 1,
         pose: { heading: 0, position: { x: 1, y: 2, z: 3 } },
-        schemaVersion: 2
+        schemaVersion: 3
       })
     );
     expect(readDamoclesResume(storage)).toBeUndefined();

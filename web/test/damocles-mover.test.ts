@@ -20,7 +20,8 @@ describe('the Eris on-foot Mover', () => {
     const after = walk(start, intent({ walk: 1 }), 1, rules);
     expect(after.heading).toBe(0);
     expect(after.position.x).toBeCloseTo(start.position.x, 6);
-    expect(after.position.z).toBeCloseTo(start.position.z - 327.68, 6);
+    // A zero bearing is north, which is +z on Eris.
+    expect(after.position.z).toBeCloseTo(start.position.z + 327.68, 6);
     expect(after.position.y).toBe(63);
     const lifted = walk(
       { ...start, position: { ...start.position, y: 500 } },
@@ -37,10 +38,10 @@ describe('the Eris on-foot Mover', () => {
 
   test('turns at the fixed rate, right being positive, and wraps the heading', () => {
     const right = walk(start, intent({ turn: 1 }), 1, rules);
-    expect(right.heading).toBeCloseTo((3 * Math.PI) / 2, 9);
+    expect(right.heading).toBeCloseTo(Math.PI / 2, 9);
     const left = walk(start, intent({ turn: -1 }), 1, rules);
-    expect(left.heading).toBeCloseTo(Math.PI / 2, 9);
-    // A left turn faces -X; walking then moves toward -X, as the Camera convention says.
+    expect(left.heading).toBeCloseTo((3 * Math.PI) / 2, 9);
+    // A left turn from north faces west, which is -X on Eris; walking then moves that way.
     const ahead = walk(left, intent({ walk: 1 }), 1, rules);
     expect(ahead.position.x).toBeCloseTo(start.position.x - 327.68, 6);
     expect(ahead.position.z).toBeCloseTo(start.position.z, 6);

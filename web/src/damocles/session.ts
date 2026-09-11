@@ -23,7 +23,7 @@ export interface DamoclesSnapshot {
   readonly pose: ErisPose;
 }
 
-export const DAMOCLES_RESUME_SCHEMA_VERSION = 1;
+export const DAMOCLES_RESUME_SCHEMA_VERSION = 2;
 
 export interface DamoclesResumeRecord {
   readonly elapsed: number;

@@ -142,6 +142,72 @@ keyboard scancodes during probes and are **not** the velocity word.
 
 Joystick still steers while boarded (`$79C2` poke / stick recording).
 
+### Camera yaw and world axes — Confirmed (Working Authority)
+
+Research for [#204](https://github.com/odogono/mercenary/issues/204). Probe:
+`research/damocles-st/scripts/yaw-probe.py` (`hold`, `period`, `axis` modes),
+booting `snapshots/eris-spaceport-onfoot.sav` headless with fast-forward off
+and driving the joystick-1 soft-copy `$79C2` over the command FIFO. Runs (all
+2026-09-11, gitignored under `work/`): `yaw-probe-20260911T144100Z-e8a58b60`
+(hold), `yaw-wrap-20260911T…` and `yaw-period-20260911T144318Z-5edae64b`
+(period), `yaw-axis-20260911T144519Z-7adc6807` and
+`yaw-axis-20260911T145446Z-e8ff3cfb` (axis).
+
+**The yaw word.** Across rest → right → right → left → left → left holds the
+only bytes that change in `$7A00-$7AFF` are `$7AA2`/`$7AA3`, their twin
+`$7AC2`/`$7AC3`, and derived words at `$7AE0-$7AE5` and `$7AE8`:
+
+| Hold | `$7AA2` | Compass tape |
+|---|---|---|
+| rest | `$0600` | `N` centred |
+| right 1 s | `$0650` | |
+| right 2 s | `$06A0` | `E · N` (N drifting left) |
+| left 1 s | `$0650` | |
+| left 2 s | `$0600` | `N` centred |
+| left 3 s | `$05A0` | `N · W` |
+
+A right stick raises the word; a left stick lowers it by the same amount.
+Writing `$7AA2`/`$7AC2` directly (`axis` mode) retargets the view and the
+compass at once, so the word is the camera yaw and not a readout of it.
+
+**Period and cardinal points.** Holding right for 50 s and comparing every
+frame's viewport with the rest frame, the picture recurs at `$0A02`, `$0E14`,
+`$1218`, `$161E`: **1024 (`$400`) units per turn**, the word free-running past
+`$400` without masking. The compass tape centres `N` at `$0600`, `E` at
+`$0700`, `S` at `$0800`, `W` at `$0900` and `N` again at `$0A00`, so
+
+| Cardinal | `$7AA2` mod `$400` |
+|---|---|
+| S | `$000` |
+| W | `$100` |
+| N | `$200` |
+| E | `$300` |
+
+with the word rising clockwise.
+
+**Turn rate.** `$50` units in the first second of a held stick (80/1024 of a
+turn, about 0.49 rad/s), quickening to about `$70` per second after four
+seconds. The step under a stop/continue FIFO loop is a lower bound; the
+acceleration profile is not decoded (#205).
+
+**World axes.** Walking 6 s at `$0600` (N) raises the camera `z` word `$7A9A`
+from `$00886C2D` to `$00886E2D` and leaves `$7A92` (`x`) alone; at `$0700`
+(E) the same walk raises `$7A92` from `$004770B1` to `$004776E1` and leaves
+`z` alone. So **north is +z and east is +x** in the resident 16.16
+coordinates, which with +y up is left-handed seen from above. The remake
+mirrors z into its right-handed Camera (`web/damocles/eris.json`,
+`orientation`).
+
+**Start pose.** The on-foot snapshot reads `$7AA2 = $0600`: the player starts
+facing due north with the Capital Spaceport tower on the right edge of the
+view, as the Working Authority capture shows and as the remake now draws.
+
+**Still open.** Whether the Damocles Instance heading byte shares this scale
+(256 per turn on the same zero) is untested: only resident objects carry the
+byte and no capture has tied a value to a drawn orientation. Whether a
+model's z runs with world z is authored from the spaceport view (modelZ
+`keep` puts the wing east of the tower as the capture does).
+
 ### Flight / VOID / time under flight — Unresolved
 
 - V.I.P. limo is a ground vehicle; no VOID transition from these snapshots.
@@ -181,4 +247,6 @@ control-rate tables.
 | Walk flag `$7A8E`/`$7AAE` (1 foot / 0 boarded) | four-way RAM compare; reverts on leave |
 | Number keys set panel speed | digit probe PNGs `002`/`024`/`400` |
 | VOID / flight dynamics not reached | limo ground-only; ship not refitted |
+| Camera yaw `$7AA2`/`$7AC2`, 1024 per turn, N = `$200`, clockwise | yaw-probe hold/period runs; compass tape frames |
+| North = +z, east = +x (`$7A9A`, `$7A92`) | yaw-probe axis runs |
 | Snapshots | `eris-spaceport-onfoot`, `boarded-car`, `boarded-limo`, `left-limo` |

@@ -1,4 +1,4 @@
-import { compassDegrees, type PanelViewModel } from '../shell/panel.ts';
+import type { PanelViewModel } from '../shell/panel.ts';
 import type { ErisPresentationDocument } from './documents.ts';
 import type { DamoclesSnapshot } from './session.ts';
 import type { ErisCell } from './world.ts';
@@ -15,6 +15,12 @@ import type { ErisCell } from './world.ts';
 const digits = (value: number): string =>
   value < 0 || value > 99 ? '**' : String(value).padStart(2, '0');
 
+/// A bearing clockwise from north in degrees, which is what the recovered compass tape counts.
+const bearingDegrees = (bearing: number): number => {
+  const wrapped = ((bearing * 180) / Math.PI) % 360;
+  return wrapped < 0 ? wrapped + 360 : wrapped;
+};
+
 export const erisGridReference = (cell: ErisCell): string =>
   `${digits(cell.x)}-${digits(cell.z)}`;
 
@@ -28,10 +34,10 @@ export const damoclesPanelViewModel = (
   attackLamp: false,
   cash: '000,000,000.00',
   clock: '',
-  compassDegrees: compassDegrees(snapshot.pose.heading),
+  compassDegrees: bearingDegrees(snapshot.pose.heading),
   elevationDegrees: 0,
   groundLamp: true,
-  heading: `${String(Math.round(compassDegrees(snapshot.pose.heading))).padStart(3, '0')}°`,
+  heading: `${String(Math.round(bearingDegrees(snapshot.pose.heading)) % 360).padStart(3, '0')}°`,
   inventory: snapshot.carried.at(-1) ?? 'EMPTY',
   inventoryFill: snapshot.carried.length,
   locationLabel: erisGridReference(snapshot.cell),
