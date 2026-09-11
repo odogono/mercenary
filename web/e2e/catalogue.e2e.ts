@@ -116,9 +116,26 @@ test('99 Chevy is mapped on Gaea and links to its key', async ({ page }) => {
     .click();
   await expect(page).toHaveURL(/instance=object-slot-180/);
   await expect(page.locator('#model-name')).toHaveText('KEY - 99 CHEVY');
+  await expect(page.locator('#details')).toContainText(
+    'ERIS selectors · structure group $14 · insertion group $03 · level $01 · cell $26'
+  );
+  await expect(page.locator('#details')).toContainText(
+    'Inside Eris structure group $14 cell $26 · -394, 200, 1846'
+  );
+  await expect(
+    page
+      .locator('#details')
+      .getByRole('link', { name: 'Eris structure group $14 cell $26' })
+  ).toHaveAttribute('href', /instance=eris-structure-0251d7/);
   await expect(
     page.locator('#details').getByRole('link', { name: /99 CHEVY · slot 2/ })
   ).toBeVisible();
+  await page
+    .locator('#details')
+    .getByRole('link', { name: 'Eris structure group $14 cell $26' })
+    .click();
+  await expect(page).toHaveURL(/instance=eris-structure-0251d7/);
+  await expect(page.locator('#model-name')).toHaveText('Structure 145');
 });
 
 test('direct catalogue access, search, inspection and Back never start Targ', async ({
@@ -183,7 +200,7 @@ test('maps known placements and links a surface assembly to building detail', as
 }) => {
   await page.goto('/catalogue?instance=eris-surface-87&q=structure');
   await expect(page.locator('#details')).toContainText('CAPITAL SPACEPORT');
-  await expect(page.locator('#map a')).toHaveCount(83);
+  await expect(page.locator('#map a')).toHaveCount(84);
   await page
     .locator('#map')
     .getByRole('link', { exact: true, name: 'CAPITAL SPACEPORT' })
@@ -207,6 +224,13 @@ test('maps known placements and links a surface assembly to building detail', as
 test('unresolved records, empty filters and invalid links are explained', async ({
   page
 }) => {
+  await page.goto('/catalogue?instance=object-slot-65');
+  await expect(page.locator('#details')).toContainText(
+    'ERIS selectors · structure group $14 · insertion group $03 · level $00 · cell $26'
+  );
+  await expect(page.locator('#details')).toContainText(
+    'no parent or local placement is claimed'
+  );
   await page.goto('/catalogue?model=object-035cfc');
   await expect(page.locator('#viewer-message')).toContainText(
     'Geometry unresolved'
@@ -384,6 +408,9 @@ test('Capital Spaceport exposes its interior layout independently of its exterio
   await expect(page.locator('#details')).toContainText(
     'Observed pickup removes slot 183 from the room queue'
   );
+  await expect(
+    page.locator('#details').getByRole('link', { name: 'CAPITAL SPACEPORT' })
+  ).toHaveAttribute('href', /instance=eris-surface-87/);
   await page.screenshot({ path: 'test-results/catalogue-spaceport-key.png' });
 });
 

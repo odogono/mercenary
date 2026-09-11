@@ -41,6 +41,17 @@ export interface Model {
   }[];
 }
 export interface Instance {
+  readonly association: {
+    readonly body: string;
+    readonly cell: number;
+    readonly insertionGroupSelector: number;
+    readonly insertions: readonly {
+      readonly insertionKey: number;
+      readonly regionSelector: number;
+    }[];
+    readonly levelSelector: number;
+    readonly structureGroupSelector: number;
+  } | null;
   readonly id: string;
   readonly location: {
     readonly body: string;
@@ -75,7 +86,7 @@ export interface Catalogue {
   readonly instances: readonly Instance[];
   readonly models: readonly Model[];
   readonly places: readonly Place[];
-  readonly schemaVersion: 3;
+  readonly schemaVersion: 4;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -114,6 +125,10 @@ const integer = (value: unknown): number => {
   return Number.isSafeInteger(n) && n >= 0
     ? n
     : fail('expected a nonnegative integer');
+};
+const byte = (value: unknown): number => {
+  const n = integer(value);
+  return n <= 0xff ? n : fail('expected a byte');
 };
 const strings = (value: unknown) => list(value).map(string);
 const point = (value: unknown): Point => {
@@ -213,7 +228,7 @@ const mesh = (value: unknown): Mesh => {
 
 export const parseCatalogue = (value: unknown): Catalogue => {
   const r = object(value);
-  if (r['schemaVersion'] !== 3) {
+  if (r['schemaVersion'] !== 4) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -344,7 +359,36 @@ export const parseCatalogue = (value: unknown): Catalogue => {
         position: point(p['position'])
       };
     }
+    let association: Instance['association'] = null;
+    if (i['association'] !== null) {
+      const a = object(i['association']);
+      const body = string(a['body']);
+      reference(bodyIds, body, 'association body');
+      const insertions = list(a['insertions']).map(value => {
+        const insertion = object(value);
+        return {
+          insertionKey: byte(insertion['insertionKey']),
+          regionSelector: byte(insertion['regionSelector'])
+        };
+      });
+      if (
+        insertions.some(item => item.regionSelector === 0) ||
+        new Set(insertions.map(item => item.regionSelector)).size !==
+          insertions.length
+      ) {
+        fail('invalid or duplicate association region selector');
+      }
+      association = {
+        body,
+        cell: byte(a['cell']),
+        insertionGroupSelector: byte(a['insertionGroupSelector']),
+        insertions,
+        levelSelector: byte(a['levelSelector']),
+        structureGroupSelector: byte(a['structureGroupSelector'])
+      };
+    }
     return {
+      association,
       id: string(i['id']),
       location,
       model,
@@ -446,7 +490,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     instances,
     models,
     places,
-    schemaVersion: 3,
+    schemaVersion: 4,
     source,
     tables
   };

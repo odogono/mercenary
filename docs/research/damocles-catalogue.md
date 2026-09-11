@@ -168,12 +168,15 @@ code. Targeted disassembly used to establish them remains ignored at
   This yields **34 surface-object placements across 18 bodies**. Coordinates use
   the resident signed 16.16 X/Y/Z arrays and headings retain the raw source byte.
   Other association bytes are not promoted to named places.
-- The Eris workspace yields **76 surface-assembly placements and 11 named
-  places**. Its seven surface objects bring that map to **83 placements**. Across
-  all bodies the dataset now contains **110 mapped placements**. This is resident
+- The captured Eris workspace yields 76 surface-assembly placements and 11 named
+  places. The separately decoded group-$14 cell-$26 assembly brings Eris to **77
+  surface assemblies**; its seven surface objects bring that map to **84
+  placements**. Across all bodies the dataset now contains **111 mapped
+  placements**. This is resident
   state from the pinned first-world capture, not a complete body-surface census.
-  Interior-associated and exceptional residents remain listed without invented
-  map positions.
+  The slot-180 assembly is recovered from the authored group-$14 map outside the
+  captured first-world workspace; other interior-associated and exceptional
+  residents remain listed without invented map positions.
 
 ## Verification and remaining coverage
 

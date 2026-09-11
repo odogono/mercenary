@@ -74,14 +74,39 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
   const instance = data.instances.find(item => item.id === instanceId);
   if (instance) {
     details.append(element('h3', instance.name));
-    paragraph(
-      details,
-      instance.location
-        ? `${data.bodies.find(b => b.id === instance.location!.body)?.name} · ${instance.location.position.map(value => value.toFixed(3)).join(', ')} · ${instance.location.coordinateSystem}${instance.location.heading === null ? '' : ` · source heading ${instance.location.heading}`}`
-        : instance.placement
-          ? `Inside ${data.instances.find(value => value.id === instance.placement!.parent)?.name} · ${instance.placement.position.join(', ')} · ${instance.placement.coordinateSystem}. ${instance.reason}`
-          : instance.reason
-    );
+    if (instance.location) {
+      paragraph(
+        details,
+        `${data.bodies.find(b => b.id === instance.location!.body)?.name} · ${instance.location.position.map(value => value.toFixed(3)).join(', ')} · ${instance.location.coordinateSystem}${instance.location.heading === null ? '' : ` · source heading ${instance.location.heading}`}`
+      );
+    } else if (instance.placement) {
+      const parent = data.instances.find(
+        value => value.id === instance.placement!.parent
+      )!;
+      const placement = element('p', 'Inside ');
+      placement.append(
+        link(parent.name, 'instance', parent.id),
+        ` · ${instance.placement.position.join(', ')} · ${instance.placement.coordinateSystem}. ${instance.reason}`
+      );
+      details.append(placement);
+    } else {
+      paragraph(details, instance.reason);
+    }
+    if (instance.association) {
+      const association = instance.association;
+      const hex = (value: number) =>
+        `$${value.toString(16).padStart(2, '0').toUpperCase()}`;
+      paragraph(
+        details,
+        `${data.bodies.find(b => b.id === association.body)?.name} selectors · structure group ${hex(association.structureGroupSelector)} · insertion group ${hex(association.insertionGroupSelector)} · level ${hex(association.levelSelector)} · cell ${hex(association.cell)}`
+      );
+      if (association.insertions.length) {
+        paragraph(
+          details,
+          `Authored region/insertion selectors · ${association.insertions.map(item => `${hex(item.regionSelector)}→${hex(item.insertionKey)}`).join(' · ')}`
+        );
+      }
+    }
   }
   const chosen = new URL(location.href).searchParams.get('variant');
   const selected =
@@ -191,7 +216,7 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
     const li = element('li');
     li.append(
       link(
-        `${value.name}${value.location ? '' : ' · location unknown'}`,
+        `${value.name}${value.location || value.placement ? '' : ' · location unknown'}`,
         'instance',
         value.id
       )

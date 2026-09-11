@@ -70,6 +70,64 @@ class SurfaceTests(unittest.TestCase):
         self.assertEqual(mesh['vertices'], [[10, 0, 10], [20, 0, 10], [20, 100, 10], [10, 100, 10]])
 
 class SourceTests(unittest.TestCase):
+    def test_decodes_zero_terminated_structure_association_groups(self):
+        from damocleslab.catalogue import decode_structure_associations
+        data = bytes.fromhex(
+            '01 02 10 03 10 04 10 05 10 09 02 0a 05 0b 05 0c 08 00 '
+            '0c 01 18 02 10 03 10 04 10 05 10 09 02 0a 05 0b 05 00 00'
+        )
+        self.assertEqual(decode_structure_associations(data, 0), {
+            1: {2: 16, 3: 16, 4: 16, 5: 16, 9: 2, 10: 5, 11: 5, 12: 8},
+            12: {1: 24, 2: 16, 3: 16, 4: 16, 5: 16, 9: 2, 10: 5, 11: 5},
+        })
+        self.assertEqual(
+            decode_structure_associations(bytes.fromhex('03 04 00 05 07 00 00'), 0),
+            {3: {4: 0, 5: 7}},
+        )
+
+    def test_rejects_broken_structure_association_lists(self):
+        from damocleslab.catalogue import decode_structure_associations
+        with self.assertRaisesRegex(ValueError, 'insertion key'):
+            decode_structure_associations(bytes.fromhex('01 02'), 0)
+        with self.assertRaisesRegex(ValueError, 'duplicate insertion group'):
+            decode_structure_associations(bytes.fromhex('01 02 10 00 01 03 10 00 00'), 0)
+        with self.assertRaisesRegex(ValueError, 'terminator'):
+            decode_structure_associations(bytes.fromhex('01 02 10 00'), 0)
+
+    def test_decodes_interior_selectors_without_naming_them_as_rooms(self):
+        from damocleslab.catalogue import interior_resident_association
+        self.assertEqual(
+            interior_resident_association(
+                bytes.fromhex('00140404'), bytes.fromhex('2c030126')
+            ),
+            {
+                'body': 11,
+                'structureGroupSelector': 20,
+                'insertionGroupSelector': 3,
+                'levelSelector': 1,
+                'cell': 0x26,
+            },
+        )
+        self.assertIsNone(
+            interior_resident_association(
+                bytes.fromhex('ff072006'), bytes.fromhex('20000017')
+            )
+        )
+
+    def test_resident_coordinates_are_made_local_by_subtracting_the_structure_origin(self):
+        from damocleslab.catalogue import resident_local_position, structure_origin
+        data = bytearray(0x100)
+        for base, value in zip((0x10, 0x30, 0x50), (1138, 20, 739)):
+            struct.pack_into('>i', data, base + 3 * 4, value)
+        self.assertEqual(
+            resident_local_position(bytes(data), 3, (100, 20, -50), (0x10, 0x30, 0x50)),
+            [1038, 0, 789],
+        )
+        self.assertEqual(
+            structure_origin((0x0c067a98, 200, 0x02027890), -33, -125),
+            (0x0c067c22, 0, 0x0202715a),
+        )
+
     def test_surface_residence_requires_a_nonzero_aligned_body_and_surface_selector(self):
         from damocleslab.catalogue import surface_resident_body
         self.assertEqual(surface_resident_body(bytes.fromhex('20000017')), 8)

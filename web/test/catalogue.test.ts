@@ -8,6 +8,14 @@ const fixture = () => ({
   coverage: { complete: false, notes: ['Synthetic fixture'] },
   instances: [
     {
+      association: null as null | {
+        body: string;
+        cell: number;
+        insertionGroupSelector: number;
+        insertions: { insertionKey: number; regionSelector: number }[];
+        levelSelector: number;
+        structureGroupSelector: number;
+      },
       id: 'instance-1',
       location: null,
       model: 'object-1',
@@ -39,7 +47,7 @@ const fixture = () => ({
     }
   ],
   places: [],
-  schemaVersion: 3,
+  schemaVersion: 4,
   source: {
     authority: 'Synthetic test',
     evidence: 'test',
@@ -64,6 +72,45 @@ describe('Damocles catalogue contract', () => {
     expect(data.instances[0]!.location).toBeNull();
     expect(selectModels(data, 'shape', 'object', 'unresolved')).toHaveLength(1);
     expect(selectModels(data, 'missing', '', '')).toHaveLength(0);
+  });
+  it('preserves unresolved authored selectors without turning them into room names', () => {
+    const selected = fixture();
+    selected.instances[0]!.association = {
+      body: 'body-1',
+      cell: 0x26,
+      insertionGroupSelector: 3,
+      insertions: [],
+      levelSelector: 1,
+      structureGroupSelector: 20
+    };
+    const data = parseCatalogue(selected);
+    expect(data.instances[0]!.association).toEqual(
+      selected.instances[0]!.association
+    );
+    expect(data.instances[0]!.placement).toBeNull();
+  });
+  it('rejects broken association references and selector bytes', () => {
+    const missingBody = fixture();
+    missingBody.instances[0]!.association = {
+      body: 'missing',
+      cell: 0x26,
+      insertionGroupSelector: 3,
+      insertions: [],
+      levelSelector: 1,
+      structureGroupSelector: 20
+    };
+    expect(() => parseCatalogue(missingBody)).toThrow('association body');
+
+    const badByte = fixture();
+    badByte.instances[0]!.association = {
+      body: 'body-1',
+      cell: 256,
+      insertionGroupSelector: 3,
+      insertions: [],
+      levelSelector: 1,
+      structureGroupSelector: 20
+    };
+    expect(() => parseCatalogue(badByte)).toThrow('byte');
   });
   it('rejects unsupported versions and broken references', () => {
     expect(() => parseCatalogue({ ...fixture(), schemaVersion: 99 })).toThrow(
@@ -457,10 +504,75 @@ it('links each recovered vehicle to its matching key', async () => {
       source: 'docs/research/damocles-vip-limo.md'
     });
     expect(keyInstance.location).toBeNull();
-    if (keySlot !== 183) {
+    if (keySlot !== 180 && keySlot !== 183) {
       expect(keyInstance.placement).toBeNull();
     }
   }
+});
+
+it('places slot 180 through its decoded structure association', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const key = data.instances.find(
+    instance => instance.id === 'object-slot-180'
+  )!;
+  expect(key.association).toEqual({
+    body: 'body-11',
+    cell: 0x26,
+    insertionGroupSelector: 3,
+    insertions: [
+      { insertionKey: 0, regionSelector: 4 },
+      { insertionKey: 7, regionSelector: 5 },
+      { insertionKey: 7, regionSelector: 6 },
+      { insertionKey: 7, regionSelector: 7 },
+      { insertionKey: 23, regionSelector: 8 }
+    ],
+    levelSelector: 1,
+    structureGroupSelector: 20
+  });
+  expect(key.placement).toEqual({
+    coordinateSystem: 'Eris structure group $14 cell $26 local model units',
+    heading: null,
+    parent: 'eris-structure-0251d7',
+    position: [-394, 200, 1846]
+  });
+  const parent = data.instances.find(
+    instance => instance.id === key.placement!.parent
+  )!;
+  expect(parent.model).toBe('structure-01d188');
+  expect(parent.location).toEqual({
+    body: 'body-11',
+    coordinateSystem: 'ST surface grid units (body-local origin unresolved)',
+    heading: null,
+    place: null,
+    position: [3078.484_893_798_828, 0, 514.442_779_541_015_6]
+  });
+  expect(
+    data.models.find(model => model.id === parent.model)!.relatedModels
+  ).toContain('structure-012f84');
+
+  const spaceportKey = data.instances.find(
+    instance => instance.id === 'object-slot-183'
+  )!;
+  expect(spaceportKey.association).toEqual({
+    body: 'body-11',
+    cell: 0x87,
+    insertionGroupSelector: 12,
+    insertions: [
+      { insertionKey: 24, regionSelector: 1 },
+      { insertionKey: 16, regionSelector: 2 },
+      { insertionKey: 16, regionSelector: 3 },
+      { insertionKey: 16, regionSelector: 4 },
+      { insertionKey: 16, regionSelector: 5 },
+      { insertionKey: 2, regionSelector: 9 },
+      { insertionKey: 5, regionSelector: 10 },
+      { insertionKey: 5, regionSelector: 11 }
+    ],
+    levelSelector: 0,
+    structureGroupSelector: 18
+  });
+  expect(spaceportKey.placement?.parent).toBe('eris-surface-87');
 });
 
 it('places only residents selected by the native surface-body association', async () => {
