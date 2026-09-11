@@ -46,7 +46,10 @@ const rulesFor = (doc: ErisPresentationDocument): WalkRules => ({
 ///
 /// Time reaches it as seconds and is stepped at no more than the shared `MAXIMUM_STEP`, so a
 /// long frame is several short steps rather than one long one, as Targ's session does.
-export class DamoclesSession implements TitleSession<DamoclesSnapshot> {
+export class DamoclesSession implements TitleSession<
+  DamoclesSnapshot,
+  DamoclesResumeRecord
+> {
   intent: Intent = IDLE;
 
   private readonly content: DamoclesContent;

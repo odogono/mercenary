@@ -14,18 +14,18 @@ export interface TitleStorageKeys {
   readonly resume: string;
 }
 
-export interface TitleSession<Snapshot> {
+export interface TitleSession<Snapshot, Resume = unknown> {
   /// Advance Game Semantics time by `seconds` under the current intent and return the
   /// snapshot that results.
   advance(seconds: number): Snapshot;
   /// The record a Session Resume stores, in the Title's own schema.
-  captureResume(): unknown;
+  captureResume(): Resume;
   intent: Intent;
   readonly snapshot: Snapshot;
 }
 
-export interface TitleRuntime<Snapshot, Content> {
-  create(content: Content, restore?: unknown): TitleSession<Snapshot>;
+export interface TitleRuntime<Snapshot, Content, Resume = unknown> {
+  create(content: Content, restore?: Resume): TitleSession<Snapshot, Resume>;
   /// Fetch and validate the Title's Data Payload and authored documents. Called when the
   /// Title's Destination is committed, never at boot of another Title (ADR 0041).
   load(fetchJson: (pathname: string) => Promise<unknown>): Promise<Content>;
