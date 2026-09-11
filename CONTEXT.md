@@ -363,7 +363,7 @@ The Commodore 64 expansion of _Mercenary: Escape from Targ_, and the only expans
 _Avoid_: Mercenary 2, Damocles, mission disk
 
 **Damocles**:
-Novagen's 16-bit sequel (_Mercenary II_), set in the Gamma System after the player has left Targ; not a Content Overlay and not _The Second City_; in programme scope after _The Second City_ inside one multi-title Independent Implementation (ADR 0021).
+Novagen's 16-bit sequel (_Mercenary II_), set in the Gamma System after the player has left Targ; not a Content Overlay and not _The Second City_; a Title of this one multi-title Independent Implementation, playable at its own path with no ordering relative to _The Second City_ (ADR 0021, ADR 0043).
 _Avoid_: Mercenary 2 (for The Second City), expansion, mission disk, second Independent Implementation
 
 **Gamma System**:
@@ -383,15 +383,15 @@ One named location in Damocles that may contain multiple instances and interiors
 _Avoid_: Model, building shape
 
 **Damocles Catalogue**:
-The read-only collection of recovered Damocles Models, Instances, Places, visual variants, and their evidence, including explicit gaps in recovery.
-_Avoid_: Gameplay Session, playable Damocles
+The read-only collection of recovered Damocles Models, Instances, Places, visual variants, and their evidence, including explicit gaps in recovery; the Damocles Gameplay Session reads it as Data Payload but it is not that session.
+_Avoid_: Gameplay Session, Damocles world, level data
 
 **Damocles Script**:
 A program from Damocles's successor 16-bit bytecode VM Confirmed in the Working Authority, distinct from a Benson Script and from the C64 Benson encoding (ADR 0015).
 _Avoid_: Benson Script (for Damocles), game script, ST bytecode dump
 
 **Filled Presentation**:
-Damocles's filled-polygon, palette-driven world view Confirmed in Working-Authority Evidence; a future Game Surface mode for Damocles, not the current wireframe line-list Game Surface (ADR 0019).
+Damocles's filled-polygon, palette-driven world view Confirmed in Working-Authority Evidence; the Game Surface mode of the Damocles Gameplay Session, distinct from Targ's wireframe line-list Game Surface (ADR 0019, ADR 0043).
 _Avoid_: Wireframe view, remastered graphics, Departure Record
 
 **Working Authority**:

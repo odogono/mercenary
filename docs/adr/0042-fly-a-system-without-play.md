@@ -26,3 +26,5 @@ The last option is taken. The rejected designs either create false Session State
 - The Flyover claims no session ownership, reads or writes no Save or Session Resume, persists no Pose or clock, and changes no Golden Trace.
 - The Damocles Catalogue remains canonical at `/catalogue`; `/catalogue.html` redirects there. Its eventual move remains deferred.
 - This ADR amends ADRs 0021, 0039, 0040 and 0041 only to the extents stated above; their playable-product decisions otherwise stand.
+
+_(Status note, 2026-09-11: ADR 0043 admits a Damocles Gameplay Session at `/damocles`. The Flyover is unchanged: sessionless, at `/<title>/debug`, and separate from that session's code and documents.)_

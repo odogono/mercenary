@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- ADR 0043 admits Damocles play alongside _The Second City_, removing ADR 0021's sequencing.
+  Damocles values are governed by tagged provenance (recovered, derived, authored) and the
+  glossary's **Damocles** and **Filled Presentation** entries are amended (#196).
+
 - The Damocles Catalogue now preserves all 195 interior-associated resident selector records
   without presenting selectors as Room, floor, or place names. Decoded structure-association
   lists expose their region-to-render-queue insertion keys, and placed residents link directly

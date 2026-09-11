@@ -7,3 +7,5 @@ The catalogue includes objects, structures, interiors, visual variants, evidence
 We considered keeping all extraction offline until playable integration, and generalising the live session immediately. The former delays useful inspection and fidelity feedback; the latter couples unresolved research to working Targ play. A dedicated catalogue page and data contract make the narrower capability independently useful.
 
 _(Status note, 2026-09-10: ADR 0042 separately admits the shell-owned Flyover to inspect the recovered Gamma System before playable integration. That is a sibling read-only exception, not an expansion of the Catalogue: the two keep separate pages, documents and presentation contracts.)_
+
+_(Status note, 2026-09-11: ADR 0043 admits Damocles play; "playable integration still follows The Second City" no longer holds. The Catalogue stays read-only and separately versioned, and the Damocles Gameplay Session reads it as its Data Payload.)_
