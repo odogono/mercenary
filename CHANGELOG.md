@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `/damocles` is a Browser Shell document of its own and `/targ` names the existing gameplay
   document (ADR 0041); trailing-slash forms canonicalise. `/damocles` boots a Damocles stub that
   loads none of Targ's payload (#197).
+- `web/damocles/eris.json` is the authored Eris presentation document: the recovered start pose,
+  grid origin, eye height and outdoor palette beside authored placeholders for heading, turn rate,
+  camera, ground plane and sky, each tagged with its provenance (ADR 0043) and read by a strict
+  validator (#198).
 
 - The Damocles Catalogue now preserves all 195 interior-associated resident selector records
   without presenting selectors as Room, floor, or place names. Decoded structure-association
