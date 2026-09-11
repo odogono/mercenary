@@ -88,7 +88,7 @@
         left: 0;
         width: min(100%, 1280px);
         margin-inline: auto;
-        aspect-ratio: 1280 / 170;
+        aspect-ratio: 1280 / 244;
         overflow: hidden;
         background: #101010;
         pointer-events: none;
@@ -100,8 +100,27 @@
         scale: var(--panel-scale, 1);
       }
 
+      /* The Flyover's readouts are longer than the ST panel's, so its navigation block grows to
+         hold them at the face's own advance rather than in the narrowed dressing. */
       #flyover-dashboard damocles-panel #damocles-body {
         grid-template-columns: 1fr;
+        justify-items: center;
+      }
+
+      #flyover-dashboard damocles-panel #damocles-nav,
+      #flyover-dashboard damocles-panel .nav-stack,
+      #flyover-dashboard damocles-panel .nav-lcd {
+        width: auto;
+      }
+
+      #flyover-dashboard damocles-panel .nav-lcd {
+        padding-right: calc(2 * var(--u));
+      }
+
+      #flyover-dashboard damocles-panel .nav-lcd .compact {
+        letter-spacing: 0;
+        transform: none;
+        word-spacing: 0;
       }
 
       #flyover-dashboard damocles-panel .tp-gauge,

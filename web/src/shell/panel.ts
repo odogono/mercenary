@@ -43,6 +43,13 @@ const digits = (value: number, width: number): string =>
 
 const degrees = (radians: number): number => (radians * 180) / Math.PI;
 
+/// Credits as the Damocles readout prints them: nine digits in thousands, to the cent.
+///
+/// Targ credits are whole numbers, so the cents are always nought; they are there because the
+/// readout being dressed always shows them.
+const cashReadout = (credits: number): string =>
+  `${digits(credits, 9).replaceAll(/(\d{3})(?=\d)/g, '$1,')}.00`;
+
 /// Keep the Browser Shell's displayed bearings while the simulation uses raw
 /// Reference Build yaw. The original opening yaw is a half turn; it remains
 /// displayed as zero, as do schema-11 Saves after their half-turn migration.
@@ -93,7 +100,7 @@ export const panelViewModel = (
     altitudeLamp: aboard,
     // Targ has no attack warning to report, so the Damocles lamp stays dressing (ADR 0027).
     attackLamp: false,
-    cash: digits(snapshot.credits, 9),
+    cash: cashReadout(snapshot.credits),
     clock: context.clock,
     compassDegrees: compassDegrees(player.heading),
     elevationDegrees: degrees(player.pitch),

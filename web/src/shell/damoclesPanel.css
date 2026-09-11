@@ -1,55 +1,127 @@
+/* The Damocles Panel Rendition, authored on the ST's own grid.
+   One unit is one pixel of the 320-column ST panel: the panel is 320 by 61 of them, and every
+   frame, bevel and readout below is measured in them, so the composition scales as one piece
+   when the shell sets --panel-scale. Bevels are lit from the bottom left, as the original's are:
+   light edges on the left and bottom, dark on the top and right. */
 damocles-panel {
-  --panel-face: #9aa0a0;
-  --panel-face-dark: #7e8484;
-  --panel-hi: #ced4d4;
-  --panel-lo: #43484a;
-  --msg-bg: #060606;
+  --u: 4px;
+  --st-black: #000;
+  --st-4: #444;
+  --st-6: #666;
+  --st-8: #888;
+  --st-a: #aaa;
+  --st-c: #ccc;
+  --st-e: #eee;
+  --panel-face: var(--st-8);
+  --msg-bg: var(--st-black);
   --msg-ink: #3ecf3e;
-  --label-ink: #2c3032;
-  --lamp-off: #2c3032;
-  --lamp-on: #e8c33c;
-  --gauge-sky: #a9c6dc;
-  --gauge-ground: #9dbd85;
-  --gauge-face: #cfe4f2;
-  --gauge-ink: #141414;
-  --nav-face: #86987e;
-  --nav-lcd: #c9d8ba;
-  --nav-ink: #1c2414;
-  --inv-face: #8fb0c8;
-  --inv-lcd: #cfe4f2;
-  --inv-ink: #16303e;
-  --clock-bg: #e8a685;
-  --clock-ink: #301408;
+  --nav-face: #446644;
+  --nav-lcd: #aaccaa;
+  --nav-ink: var(--st-black);
+  --nav-label: #aaccaa;
+  --gauge-sky: #aaccee;
+  --gauge-ground: #aaccaa;
+  --inv-face: #6688aa;
+  --inv-lcd: #aaccee;
+  --inv-ink: var(--st-black);
+  --inv-label: #aaccee;
+  --clock-bg: #eeaa88;
+  --clock-ink: var(--st-black);
+  --lamp-off: var(--st-4);
+  --lamp-on: #aaccaa;
+  --temperature-fill: #ee0000;
+  --power-fill: #0000ee;
+  --capacity-fill: #0000ee;
   display: grid;
-  height: 170px;
-  padding: 6px 10px 8px;
-  gap: 6px;
+  box-sizing: border-box;
+  width: calc(320 * var(--u));
+  height: calc(61 * var(--u));
+  padding: calc(3 * var(--u)) calc(5 * var(--u)) calc(4 * var(--u));
+  row-gap: var(--u);
   background: var(--panel-face);
-  border-radius: 8px;
   box-shadow:
-    inset 3px 3px 0 var(--panel-hi),
-    inset -3px -3px 0 var(--panel-lo);
-  color: var(--label-ink);
+    inset var(--u) 0 0 var(--st-black),
+    inset calc(2 * var(--u)) 0 0 var(--st-4),
+    inset calc(3 * var(--u)) 0 0 var(--st-6),
+    inset calc(-1 * var(--u)) 0 0 var(--st-black),
+    inset calc(-2 * var(--u)) 0 0 var(--st-4),
+    inset calc(-3 * var(--u)) 0 0 var(--st-6),
+    inset 0 var(--u) 0 var(--st-6),
+    inset 0 calc(-1 * var(--u)) 0 var(--st-4),
+    inset 0 calc(-2 * var(--u)) 0 var(--st-6),
+    inset 0 calc(-3 * var(--u)) 0 var(--st-8),
+    inset 0 calc(-4 * var(--u)) 0 var(--st-a),
+    inset 0 calc(-5 * var(--u)) 0 var(--st-c);
+  color: var(--st-black);
   font-family: 'Damocles Interface', 'Courier New', monospace;
-  grid-template-rows: 34px 1fr;
+  font-size: calc(8 * var(--u));
+  font-variant-ligatures: none;
+  grid-template-columns: calc(3 * var(--u)) 1fr calc(3 * var(--u));
+  grid-template-rows: calc(13 * var(--u)) calc(40 * var(--u));
   user-select: none;
 }
 
-damocles-panel .inset {
-  background: var(--panel-face-dark);
-  border-radius: 7px;
-  box-shadow:
-    inset 3px 3px 0 var(--panel-lo),
-    inset -3px -3px 0 var(--panel-hi);
+damocles-panel * {
+  box-sizing: border-box;
 }
 
-damocles-panel .plabel {
-  color: var(--label-ink);
-  font-size: 13px;
-  font-variant-ligatures: none;
-  letter-spacing: 0.08em;
-  text-align: center;
+/* --- Lettering -------------------------------------------------------------------------- */
+/* At eight units the face's pixel grid is the panel's. The face keeps its five-unit glyphs at
+   the foot of an eight-unit em, so a quarter-em line box puts the top of a glyph at the top of
+   its box, and the box is the glyph's own height. */
+damocles-panel .glyphs,
+damocles-panel #damocles-message,
+damocles-panel .nav-lcd,
+damocles-panel #inventory-window,
+damocles-panel #inventory-cash,
+damocles-panel .panel-label,
+damocles-panel .tp-label,
+damocles-panel .aux-title,
+damocles-panel #damocles-clock {
+  line-height: 0.25em;
   white-space: pre;
+}
+
+/* The condensed face the original prints small readouts and labels in has not been extracted,
+   so it is approximated by narrowing the interface face to a four-unit advance (ADR 0027). */
+damocles-panel .compact {
+  display: inline-block;
+  letter-spacing: calc(2 * var(--u) / 3);
+  transform: scaleX(0.6);
+  transform-origin: 0 0;
+  word-spacing: calc(-10 * var(--u) / 3);
+}
+
+/* A label's layout box is its unnarrowed width, so it is given none: it stands where it is put
+   and lets its narrowed lettering run out over the face. */
+damocles-panel .panel-label {
+  width: 0;
+  height: calc(5 * var(--u));
+  flex: none;
+  overflow: visible;
+}
+
+/* --- Frames ----------------------------------------------------------------------------- */
+/* A readout window: a light edge on the left and bottom, a dark one on the top and right. */
+damocles-panel .readout {
+  box-shadow:
+    inset var(--u) 0 0 var(--st-e),
+    inset calc(-1 * var(--u)) 0 0 var(--st-4),
+    inset 0 var(--u) 0 var(--st-4),
+    inset 0 calc(-1 * var(--u)) 0 var(--st-e);
+}
+
+/* A raised block: two-unit edges, light on the left and bottom. */
+damocles-panel .block {
+  box-shadow:
+    inset var(--u) 0 0 var(--st-a),
+    inset calc(2 * var(--u)) 0 0 var(--st-c),
+    inset calc(-1 * var(--u)) 0 0 var(--st-6),
+    inset calc(-2 * var(--u)) 0 0 var(--st-4),
+    inset 0 var(--u) 0 var(--st-6),
+    inset 0 calc(2 * var(--u)) 0 var(--st-4),
+    inset 0 calc(-1 * var(--u)) 0 var(--st-a),
+    inset 0 calc(-2 * var(--u)) 0 var(--st-c);
 }
 
 damocles-panel .instrument-canvas {
@@ -59,33 +131,26 @@ damocles-panel .instrument-canvas {
   image-rendering: pixelated;
 }
 
+/* --- Message bar ------------------------------------------------------------------------ */
 damocles-panel #damocles-message-bar {
-  padding: 6px;
+  overflow: hidden;
+  margin: 0 calc(6 * var(--u));
+  padding: calc(4 * var(--u)) calc(2 * var(--u)) 0;
+  background: var(--msg-bg);
+  grid-column: 2;
+  grid-row: 1;
 }
 
 damocles-panel #damocles-message {
-  display: flex;
-  height: 100%;
-  overflow: hidden;
-  align-items: center;
-  justify-content: center;
-  background: var(--msg-bg);
-  border-radius: 3px;
+  height: calc(5 * var(--u));
   color: var(--msg-ink);
-  font-size: 19px;
-  letter-spacing: 0.14em;
-  text-shadow: 2px 0 0 currentcolor;
-  white-space: nowrap;
+  text-align: center;
 }
 
 damocles-panel #damocles-message.benson-cells {
   display: grid;
-  box-sizing: border-box;
-  column-gap: 0.14em;
-  grid-template-columns: repeat(23, 1ch);
+  grid-template-columns: repeat(23, calc(6 * var(--u)));
   justify-content: center;
-  letter-spacing: 0;
-  white-space: pre;
 }
 
 damocles-panel .benson-cell {
@@ -93,253 +158,298 @@ damocles-panel .benson-cell {
   text-align: center;
 }
 
-damocles-panel #damocles-body {
-  display: grid;
-  min-height: 0;
-  gap: 8px;
-  grid-template-columns: 16px 372px 1fr 300px 16px;
-}
-
-damocles-panel #damocles-body > * {
-  min-height: 0;
-}
-
+/* --- Temperature and power --------------------------------------------------------------- */
 damocles-panel .tp-gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  grid-row: 1 / span 2;
+}
+
+damocles-panel .tp-gauge:first-child {
+  grid-column: 1;
+}
+
+damocles-panel .tp-gauge:last-child {
+  grid-column: 3;
+}
+
+damocles-panel .tp-gauge .tube {
   position: relative;
-  border-radius: 6px;
+  width: calc(3 * var(--u));
+  height: calc(49 * var(--u));
+  margin-top: var(--u);
+  background: var(--st-e);
+  box-shadow:
+    inset var(--u) 0 0 var(--st-black),
+    inset calc(-1 * var(--u)) 0 0 var(--st-4),
+    inset 0 calc(-1 * var(--u)) 0 var(--st-black);
 }
 
 damocles-panel .tp-gauge .fill {
   position: absolute;
-  right: 6px;
-  bottom: 6px;
-  left: 6px;
-  background: #d8d8d8;
-  border-radius: 2px;
+  right: var(--u);
+  bottom: var(--u);
+  left: var(--u);
+  height: calc(var(--fill-rows) * var(--u));
+  background: var(--tube-fill);
 }
 
 damocles-panel .tp-gauge .tp-label {
-  position: absolute;
-  right: 0;
-  bottom: -2px;
-  left: 0;
-  color: var(--label-ink);
-  font-size: 16px;
-  text-align: center;
+  height: calc(5 * var(--u));
+  margin-top: var(--u);
+  color: var(--st-c);
 }
 
+/* --- Body ------------------------------------------------------------------------------- */
+damocles-panel #damocles-body {
+  display: grid;
+  padding: 0 calc(3 * var(--u));
+  column-gap: calc(3 * var(--u));
+  grid-column: 2;
+  grid-row: 2;
+  grid-template-columns: calc(112 * var(--u)) calc(68 * var(--u)) calc(
+      112 * var(--u)
+    );
+  align-items: start;
+}
+
+/* --- Navigation ------------------------------------------------------------------------- */
 damocles-panel #damocles-nav {
   display: flex;
-  min-height: 0;
+  width: calc(112 * var(--u));
+  height: calc(39 * var(--u));
   flex-direction: column;
-  gap: 8px;
-  padding: 8px;
+  gap: calc(2 * var(--u));
+  padding: calc(4 * var(--u)) calc(4 * var(--u)) calc(2 * var(--u));
   background: var(--nav-face);
-  border-radius: 10px;
   box-shadow:
-    inset 4px 4px 0 var(--panel-hi),
-    inset -4px -4px 0 var(--panel-lo);
+    inset var(--u) 0 0 var(--st-a),
+    inset calc(2 * var(--u)) 0 0 var(--st-c),
+    inset calc(-1 * var(--u)) 0 0 var(--st-6),
+    inset calc(-2 * var(--u)) 0 0 var(--st-4),
+    inset 0 var(--u) 0 var(--st-6),
+    inset 0 calc(2 * var(--u)) 0 var(--st-4);
 }
 
-damocles-panel #damocles-nav > .nav-row {
-  flex: 1;
-}
-
-damocles-panel #damocles-nav .nav-lower {
+damocles-panel .nav-row {
   display: flex;
-  flex: 2;
-  gap: 10px;
+  height: calc(9 * var(--u));
+  gap: calc(2 * var(--u));
 }
 
 damocles-panel .nav-lcd {
-  display: flex;
+  height: calc(9 * var(--u));
   overflow: hidden;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 4px;
+  padding: calc(2 * var(--u)) 0 0 calc(2 * var(--u));
   background: var(--nav-lcd);
-  border: 3px solid #3f463c;
-  border-radius: 6px;
   color: var(--nav-ink);
-  font-size: 15px;
-  text-shadow: 2px 0 0 currentcolor;
-  white-space: nowrap;
 }
 
-damocles-panel #damocles-nav .nav-row {
+damocles-panel .nav-lcd.nav-name,
+damocles-panel .nav-lcd.nav-speed {
+  width: calc(51 * var(--u));
+}
+
+damocles-panel .nav-lcd.nav-location {
+  width: calc(35 * var(--u));
+}
+
+damocles-panel .nav-lcd.nav-altitude {
+  width: calc(22 * var(--u));
+}
+
+damocles-panel .nav-lcd.nav-heading {
+  width: calc(27 * var(--u));
+}
+
+damocles-panel .nav-lower {
   display: flex;
-  gap: 10px;
-}
-
-damocles-panel #damocles-nav .nav-row > .nav-lcd {
-  flex: 1;
+  height: calc(22 * var(--u));
+  gap: calc(3 * var(--u));
 }
 
 damocles-panel #damocles-elevation {
-  width: 42px;
-  overflow: hidden;
-  align-self: stretch;
-  border: 4px solid #3f463c;
-  border-radius: 8px;
+  width: calc(13 * var(--u));
+  height: calc(22 * var(--u));
+  padding: var(--u);
+  background: var(--gauge-ground);
   flex: none;
 }
 
-damocles-panel #damocles-nav .nav-stack {
+damocles-panel .nav-stack {
   display: flex;
-  min-height: 0;
-  flex: 1;
+  width: calc(88 * var(--u));
   flex-direction: column;
-  gap: 8px;
+  gap: calc(2 * var(--u));
 }
 
-damocles-panel #damocles-nav .nav-foot {
+damocles-panel .nav-foot {
   display: flex;
-  flex: 1;
-  align-items: center;
+  height: calc(11 * var(--u));
+  align-items: flex-start;
   justify-content: space-between;
 }
 
-damocles-panel #damocles-nav .nav-foot .plabel {
-  font-size: 15px;
-  letter-spacing: 0.12em;
-  text-shadow: 2px 0 0 currentcolor;
+damocles-panel .nav-foot .panel-label {
+  margin: calc(3 * var(--u)) 0 0 calc(6 * var(--u));
+  color: var(--nav-label);
 }
 
 damocles-panel #damocles-compass {
-  width: 114px;
-  height: 27px;
-  overflow: hidden;
-  border: 4px solid #3f463c;
-  border-radius: 8px;
+  flex: none;
+  width: calc(34 * var(--u));
+  height: calc(11 * var(--u));
+  padding: var(--u);
+  background: var(--nav-lcd);
 }
 
+/* --- The window between --------------------------------------------------------------------- */
+/* The original carries its title here. Targ has no Damocles title to show, so the window names
+   the world instead, in the panel's own greys. */
 damocles-panel #damocles-aux {
   display: flex;
+  width: calc(68 * var(--u));
+  height: calc(36 * var(--u));
   align-items: center;
   justify-content: center;
-  background: #060606;
-  border-radius: 8px;
+  margin-top: calc(3 * var(--u));
+  background: var(--st-black);
   box-shadow:
-    inset 4px 4px 0 var(--panel-lo),
-    inset -4px -4px 0 var(--panel-hi);
+    inset var(--u) 0 0 var(--st-a),
+    inset calc(2 * var(--u)) 0 0 var(--st-c),
+    inset calc(-1 * var(--u)) 0 0 var(--st-6),
+    inset calc(-2 * var(--u)) 0 0 var(--st-4),
+    inset 0 var(--u) 0 var(--st-6),
+    inset 0 calc(2 * var(--u)) 0 var(--st-4),
+    inset 0 calc(-1 * var(--u)) 0 var(--st-a),
+    inset 0 calc(-2 * var(--u)) 0 var(--st-c);
 }
 
-damocles-panel #damocles-aux .aux-title {
-  color: #b8bec2;
-  font-size: 32px;
-  letter-spacing: 0.06em;
-  text-shadow: 4px 4px 0 #3a4046;
+damocles-panel .aux-title {
+  height: calc(10 * var(--u));
+  color: var(--st-c);
+  font-size: calc(16 * var(--u));
+  text-shadow:
+    var(--u) var(--u) 0 var(--st-6),
+    calc(2 * var(--u)) calc(2 * var(--u)) 0 var(--st-4);
 }
 
+/* --- Inventory -------------------------------------------------------------------------- */
 damocles-panel #damocles-right {
   display: flex;
-  min-height: 0;
+  width: calc(112 * var(--u));
   flex-direction: column;
-  gap: 8px;
+  gap: var(--u);
 }
 
 damocles-panel #damocles-inventory {
   display: grid;
-  min-height: 0;
-  flex: 1;
-  gap: 8px;
-  padding: 8px;
+  height: calc(28 * var(--u));
+  padding: calc(3 * var(--u)) calc(4 * var(--u)) calc(2 * var(--u));
+  column-gap: calc(2 * var(--u));
   background: var(--inv-face);
-  border-radius: 10px;
-  box-shadow:
-    inset 4px 4px 0 var(--panel-hi),
-    inset -4px -4px 0 var(--panel-lo);
-  grid-template-columns: 20px 1fr;
+  grid-template-columns: calc(3 * var(--u)) calc(99 * var(--u));
 }
 
 damocles-panel #inventory-capacity {
   position: relative;
-  background: var(--inv-lcd);
-  border: 2px solid var(--panel-lo);
-  border-radius: 4px;
+  width: calc(3 * var(--u));
+  height: calc(22 * var(--u));
+  background: var(--st-e);
+  box-shadow:
+    inset var(--u) 0 0 var(--st-black),
+    inset calc(-1 * var(--u)) 0 0 var(--st-4),
+    inset 0 var(--u) 0 var(--st-4),
+    inset 0 calc(-1 * var(--u)) 0 var(--st-black);
 }
 
 damocles-panel #inventory-capacity .fill {
   position: absolute;
-  right: 2px;
-  bottom: 2px;
-  left: 2px;
-  background: var(--inv-ink);
+  right: var(--u);
+  bottom: var(--u);
+  left: var(--u);
+  height: calc(var(--fill-rows) * var(--u));
+  background: var(--capacity-fill);
 }
 
-damocles-panel #damocles-inventory .inventory-stack {
+damocles-panel .inventory-stack {
   display: flex;
-  min-height: 0;
-  flex: 1;
   flex-direction: column;
-  gap: 6px;
+  gap: calc(2 * var(--u));
+  margin-top: var(--u);
 }
 
 damocles-panel #inventory-window {
-  display: flex;
-  min-height: 0;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
+  height: calc(9 * var(--u));
+  overflow: hidden;
+  padding: calc(2 * var(--u)) 0 0 calc(3 * var(--u));
   background: var(--inv-lcd);
-  border: 2px solid var(--panel-lo);
-  border-radius: 4px;
   color: var(--inv-ink);
-  font-size: 19px;
-  letter-spacing: 0.12em;
-  text-shadow: 2px 0 0 currentcolor;
 }
 
-damocles-panel #damocles-inventory .inventory-foot {
+damocles-panel .inventory-foot {
   display: flex;
-  overflow: hidden;
-  gap: 10px;
-  align-items: center;
+  height: calc(9 * var(--u));
+  align-items: flex-start;
+  gap: calc(3 * var(--u));
 }
 
 damocles-panel #inventory-cash {
-  padding: 2px 6px;
+  flex: none;
+  width: calc(59 * var(--u));
+  height: calc(9 * var(--u));
+  overflow: hidden;
+  padding: calc(2 * var(--u)) 0 0 calc(2 * var(--u));
   background: var(--inv-lcd);
-  border: 2px solid var(--panel-lo);
-  border-radius: 4px;
   color: var(--inv-ink);
-  font-size: 15px;
-  text-shadow: 2px 0 0 currentcolor;
-  white-space: nowrap;
 }
 
-damocles-panel #damocles-inventory .inventory-foot .plabel {
-  color: var(--inv-lcd);
-  font-size: 16px;
-  letter-spacing: 0.06em;
+damocles-panel .inventory-foot .panel-label {
+  margin-top: calc(2 * var(--u));
+  color: var(--inv-label);
 }
 
+/* --- Lamps and clock -------------------------------------------------------------------- */
 damocles-panel #damocles-foot {
   display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: flex-end;
+  height: calc(11 * var(--u));
+  gap: calc(5 * var(--u));
+  margin-right: calc(4 * var(--u));
 }
 
-damocles-panel .lamp {
-  width: 17px;
-  height: 17px;
+damocles-panel .damocles-lamp {
+  width: calc(9 * var(--u));
+  height: calc(11 * var(--u));
+  padding: calc(2 * var(--u));
+  background: var(--st-black);
+  box-shadow:
+    inset var(--u) 0 0 var(--st-c),
+    inset calc(-1 * var(--u)) 0 0 var(--st-4),
+    inset 0 var(--u) 0 var(--st-4),
+    inset 0 calc(-1 * var(--u)) 0 var(--st-c);
+}
+
+damocles-panel .damocles-lamp::before {
+  display: block;
+  width: calc(5 * var(--u));
+  height: calc(7 * var(--u));
   background: var(--lamp-off);
-  border-radius: 3px;
-  box-shadow: inset 2px 2px 0 rgb(0 0 0 / 60%);
+  content: '';
 }
 
-damocles-panel .lamp.on {
+damocles-panel .damocles-lamp.on::before {
   background: var(--lamp-on);
-  box-shadow: 0 0 8px var(--lamp-on);
 }
 
 damocles-panel #damocles-clock {
-  padding: 2px 8px 1px;
+  width: calc(67 * var(--u));
+  height: calc(11 * var(--u));
+  overflow: hidden;
+  margin-left: calc(-1 * var(--u));
+  padding: calc(2 * var(--u)) 0 0 calc(3 * var(--u));
   background: var(--clock-bg);
-  border-radius: 4px;
   color: var(--clock-ink);
-  font-size: 18px;
-  letter-spacing: 0.1em;
-  text-shadow: 2px 0 0 currentcolor;
+  font-size: calc(12 * var(--u));
+  letter-spacing: calc(-1 * var(--u));
 }

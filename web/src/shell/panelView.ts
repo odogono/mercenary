@@ -28,7 +28,16 @@ const PITCH_PIXELS_PER_DEGREE = 4;
 /// Ten degrees is a readable step wide, so the window holds about three graduations as the
 /// original's does rather than a crowd of them.
 const COMPASS_PIXELS_PER_DEGREE = 4;
-const DAMOCLES_PIXELS_PER_DEGREE = 0.28;
+/// The Damocles compass shows a half turn across its thirty-two columns: a quarter letter every
+/// sixteen, a long tick between each pair, and a short tick every four.
+const DAMOCLES_COMPASS_PIXELS_PER_DEGREE = 16 / 90;
+/// The Damocles horizon graduates every four rows for ten degrees, longer at every twenty.
+const DAMOCLES_PITCH_PIXELS_PER_DEGREE = 0.4;
+/// The row the Damocles horizon's reading sits on, a little below the middle of its twenty.
+const DAMOCLES_READING_ROW = 11;
+/// At eight pixels the extracted face's grid is the canvas grid, so glyphs land whole.
+const DAMOCLES_GLYPH_FONT = '8px "Damocles Interface", monospace';
+const DAMOCLES_GLYPH_HEIGHT = 5;
 const QUARTER_LETTERS = ['N', 'E', 'S', 'W'] as const;
 
 /// A graduation as the panel prints it: wrapped into one turn, never signed, two digits least.
@@ -140,85 +149,131 @@ export const drawCompass = (
   context.fillRect(Math.round(width / 2), 0, 1, height);
 };
 
-/// The Damocles mini horizon: the same instrument, with its value boxed on the horizon.
+/// Letter the Damocles instruments on their own pixel grid.
+///
+/// The face is drawn at the size where one of its pixels is one canvas pixel and placed by the
+/// left edge of its ink, so a glyph lands whole rather than straddling two columns. Returns the
+/// width of the ink written.
+const damoclesGlyphs = (
+  context: CanvasRenderingContext2D,
+  text: string,
+  left: number,
+  top: number,
+  spacing = 0
+): number => {
+  context.font = DAMOCLES_GLYPH_FONT;
+  context.textAlign = 'left';
+  context.textBaseline = 'alphabetic';
+  context.letterSpacing = `${spacing}px`;
+  const metrics = context.measureText(text);
+  const inkLeft = Math.round(metrics.actualBoundingBoxLeft);
+  context.fillText(text, left + inkLeft, top + DAMOCLES_GLYPH_HEIGHT);
+  return Math.round(metrics.actualBoundingBoxRight + inkLeft);
+};
+
+const damoclesInkWidth = (
+  context: CanvasRenderingContext2D,
+  text: string,
+  spacing = 0
+): number => {
+  context.font = DAMOCLES_GLYPH_FONT;
+  context.letterSpacing = `${spacing}px`;
+  const metrics = context.measureText(text);
+  return Math.round(
+    metrics.actualBoundingBoxRight + metrics.actualBoundingBoxLeft
+  );
+};
+
+/// The Damocles mini horizon: a tape of sky over ground that scrolls with the nose, read
+/// against a fixed line carrying the pitch in degrees.
+///
+/// Graduations ride the tape every ten degrees, longer at twenty, as dots at both edges. The
+/// reading stays put a little below the middle, black on the tape with dashes out to the edges,
+/// so at level flight the line and the horizon coincide.
 export const drawDamoclesElevation = (
   canvas: HTMLCanvasElement,
   root: HTMLElement,
   pitchDegrees: number
 ): void => {
+  void root;
   const surface = surfaceOf(canvas);
   if (surface === undefined) {
     return;
   }
   const { context, height, width } = surface;
   const rowOf = (value: number): number =>
-    height / 2 - (value - pitchDegrees) * PITCH_PIXELS_PER_DEGREE;
-  const horizon = Math.max(0, Math.min(height, rowOf(0)));
-  context.fillStyle = tokenOf(root, '--gauge-sky');
+    DAMOCLES_READING_ROW -
+    (value - pitchDegrees) * DAMOCLES_PITCH_PIXELS_PER_DEGREE;
+  const horizon = Math.max(0, Math.min(height, Math.round(rowOf(0))));
+  const ground = tokenOf(canvas, '--gauge-ground');
+  const ink = tokenOf(canvas, '--nav-ink');
+  context.fillStyle = tokenOf(canvas, '--gauge-sky');
   context.fillRect(0, 0, width, horizon);
-  context.fillStyle = tokenOf(root, '--gauge-ground');
+  context.fillStyle = ground;
   context.fillRect(0, horizon, width, height - horizon);
-  const ink = tokenOf(root, '--nav-ink');
   context.fillStyle = ink;
-  // The graduations scroll with the reading here too, as square dots rather than dashes.
-  const span = height / 2 / PITCH_PIXELS_PER_DEGREE;
-  const firstMark = Math.ceil((pitchDegrees - span) / 5) * 5;
-  for (let mark = firstMark; mark <= pitchDegrees + span; mark += 5) {
+  const span = height / 2 / DAMOCLES_PITCH_PIXELS_PER_DEGREE;
+  const firstMark = Math.ceil((pitchDegrees - span) / 10) * 10;
+  for (let mark = firstMark; mark <= pitchDegrees + span; mark += 10) {
     const y = Math.round(rowOf(mark));
-    if (y >= 1 && y <= height - 3) {
-      context.fillRect(1, y, 2, 2);
-      context.fillRect(width - 3, y, 2, 2);
+    const depth = mark % 20 === 0 ? 2 : 1;
+    if (y >= 0 && y < height) {
+      context.fillRect(0, y, depth, 1);
+      context.fillRect(width - depth, y, depth, 1);
     }
   }
-  const boxTop = Math.round(height / 2) - 6;
-  context.fillRect(0, boxTop + 5, 5, 2);
-  context.fillRect(width - 5, boxTop + 5, 5, 2);
-  context.fillStyle = tokenOf(root, '--nav-lcd');
-  context.fillRect(5, boxTop, width - 10, 13);
-  context.strokeStyle = ink;
-  context.lineWidth = 1;
-  context.strokeRect(5.5, boxTop + 0.5, width - 11, 12);
+  const reading = String(Math.round(pitchDegrees));
+  const spacing = -2;
+  const inkWidth = damoclesInkWidth(context, reading, spacing);
+  const left = Math.max(0, Math.floor((width - inkWidth) / 2));
+  const top = DAMOCLES_READING_ROW - 2;
+  context.fillRect(0, DAMOCLES_READING_ROW, width, 1);
+  context.fillStyle = ground;
+  context.fillRect(left - 1, top, inkWidth + 2, DAMOCLES_GLYPH_HEIGHT);
   context.fillStyle = ink;
-  context.font = '9px "Damocles Interface", monospace';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.fillText(String(Math.round(pitchDegrees)), width / 2, boxTop + 7);
+  damoclesGlyphs(context, reading, left, top, spacing);
 };
 
-/// The Damocles compass strip: bold quarter letters between paired square ticks.
+/// The Damocles compass strip: a tick every twenty-two and a half degrees along both edges,
+/// longer between the quarters, with the quarter letters between the long ticks and a single
+/// index pixel at the centre. The scale falls to the right, as the Targ compass does.
 export const drawDamoclesCompass = (
   canvas: HTMLCanvasElement,
   root: HTMLElement,
   headingDegrees: number
 ): void => {
+  void root;
   const surface = surfaceOf(canvas);
   if (surface === undefined) {
     return;
   }
   const { context, height, width } = surface;
-  context.fillStyle = tokenOf(root, '--nav-lcd');
+  const ink = tokenOf(canvas, '--nav-ink');
+  context.fillStyle = tokenOf(canvas, '--nav-lcd');
   context.fillRect(0, 0, width, height);
-  context.fillStyle = tokenOf(root, '--nav-ink');
-  context.font = '10px "Damocles Interface", monospace';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  const span = width / 2 / DAMOCLES_PIXELS_PER_DEGREE;
-  const first = Math.ceil((headingDegrees - span) / 45) * 45;
-  for (let mark = first; mark <= headingDegrees + span; mark += 45) {
+  context.fillStyle = ink;
+  const centre = width / 2;
+  const span = centre / DAMOCLES_COMPASS_PIXELS_PER_DEGREE;
+  const first = Math.ceil((headingDegrees - span) / 22.5) * 22.5;
+  for (let mark = first; mark <= headingDegrees + span; mark += 22.5) {
     const x = Math.round(
-      width / 2 + (mark - headingDegrees) * DAMOCLES_PIXELS_PER_DEGREE
+      centre - (mark - headingDegrees) * DAMOCLES_COMPASS_PIXELS_PER_DEGREE
     );
-    if (((mark % 90) + 90) % 90 === 0) {
+    if (x < 0 || x >= width) {
+      continue;
+    }
+    const quarter = mark % 90 === 0;
+    const depth = mark % 45 === 0 && !quarter ? 2 : 1;
+    context.fillRect(x, 0, 1, depth);
+    context.fillRect(x, height - depth, 1, depth);
+    if (quarter) {
       const letter =
         QUARTER_LETTERS[((((mark / 90) % 4) + 4) % 4) as 0 | 1 | 2 | 3]!;
-      context.fillText(letter, x, height / 2 + 1);
-      // Struck twice, because the panel's own labels are bolder than one pass.
-      context.fillText(letter, x + 1, height / 2 + 1);
-    } else {
-      context.fillRect(x - 1, 2, 2, 2);
-      context.fillRect(x - 1, height - 4, 2, 2);
+      const inkWidth = damoclesInkWidth(context, letter);
+      damoclesGlyphs(context, letter, x - Math.floor(inkWidth / 2), 2);
     }
   }
+  context.fillRect(Math.floor(centre), Math.floor(height / 2), 1, 1);
 };
 
 /// The width the panel is authored at, and the scale everything inside it is drawn to.

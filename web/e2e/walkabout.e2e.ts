@@ -247,8 +247,8 @@ test('neither rendition overflows the frame it is drawn in', async ({
     'ready'
   );
 
-  // Both renditions are authored to one height, and the frame above them is sized for that
-  // height alone — so anything hanging below the panel is invisible to the player.
+  // Each rendition is authored to one height, and the frame above it is sized for that height
+  // alone — so anything hanging below the panel is invisible to the player.
   for (const rendition of ['targ', 'damocles'] as const) {
     await openPage(page, 'settings');
     await page
