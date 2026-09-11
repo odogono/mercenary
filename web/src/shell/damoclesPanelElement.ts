@@ -3,7 +3,9 @@ const DAMOCLES_PANEL_TAG = 'damocles-panel';
 /// The authored Damocles Benson Panel composition shared by gameplay and Flyover.
 ///
 /// Light DOM keeps the existing renderer and token layer at the same seam: consumers supply a
-/// PanelViewModel instead of maintaining another visual imitation.
+/// PanelViewModel instead of maintaining another visual imitation. The temperature, power and
+/// capacity gauges have no Targ reading to show, so they stand at the levels the original's
+/// opening frame shows (ADR 0027).
 export class DamoclesPanelElement extends HTMLElement {
   connectedCallback(): void {
     if (this.dataset['componentReady'] === 'true') {
@@ -11,28 +13,28 @@ export class DamoclesPanelElement extends HTMLElement {
     }
     this.dataset['componentReady'] = 'true';
     this.innerHTML = `
-      <div id="damocles-message-bar" class="inset">
+      <div class="tp-gauge" style="--tube-fill: var(--temperature-fill)"><div class="tube"><div class="fill" style="--fill-rows: 23"></div></div><div class="tp-label">T</div></div>
+      <div id="damocles-message-bar">
         <div id="damocles-message" data-field="message"></div>
       </div>
       <div id="damocles-body">
-        <div class="tp-gauge inset"><div class="fill" style="height: 34%"></div><div class="tp-label">T</div></div>
         <div id="damocles-nav">
-          <div class="nav-row"><div class="nav-lcd" data-field="locationName"></div><div class="nav-lcd" data-field="speedLabel"></div></div>
+          <div class="nav-row"><div class="nav-lcd readout nav-name" data-field="locationName"></div><div class="nav-lcd readout nav-speed"><span class="compact" data-field="speedLabel"></span></div></div>
           <div class="nav-lower">
-            <div id="damocles-elevation"><canvas id="damocles-elevation-canvas" class="instrument-canvas" width="42" height="84"></canvas></div>
+            <div id="damocles-elevation" class="readout"><canvas id="damocles-elevation-canvas" class="instrument-canvas" width="11" height="20"></canvas></div>
             <div class="nav-stack">
-              <div class="nav-row"><div class="nav-lcd" data-field="locationLabel"></div><div class="nav-lcd" data-field="altitude"></div><div class="nav-lcd" data-field="heading"></div></div>
-              <div class="nav-foot"><div class="plabel">NAVIGATION</div><div id="damocles-compass"><canvas id="damocles-compass-canvas" class="instrument-canvas" width="114" height="27"></canvas></div></div>
+              <div class="nav-row"><div class="nav-lcd readout nav-location"><span class="compact" data-field="locationLabel"></span></div><div class="nav-lcd readout nav-altitude"><span class="compact" data-field="altitude"></span></div><div class="nav-lcd readout nav-heading"><span class="compact" data-field="heading"></span></div></div>
+              <div class="nav-foot"><div class="panel-label compact">NAVIGATION</div><div id="damocles-compass" class="readout"><canvas id="damocles-compass-canvas" class="instrument-canvas" width="32" height="9"></canvas></div></div>
             </div>
           </div>
         </div>
         <div id="damocles-aux"><span class="aux-title">TARG</span></div>
         <div id="damocles-right">
-          <div id="damocles-inventory"><div id="inventory-capacity"><div class="fill" style="height: 4%"></div></div><div class="inventory-stack"><div id="inventory-window" data-field="inventory"></div><div class="inventory-foot"><span id="inventory-cash" data-field="cash"></span><span class="plabel">INVENTORY</span></div></div></div>
-          <div id="damocles-foot"><span class="lamp" data-lamp="groundLamp"></span><span class="lamp" data-lamp="attackLamp"></span><span class="lamp" data-lamp="runLamp"></span><span id="damocles-clock" data-field="clock"></span></div>
+          <div id="damocles-inventory" class="block"><div id="inventory-capacity"><div class="fill" style="--fill-rows: 2"></div></div><div class="inventory-stack"><div id="inventory-window" class="readout" data-field="inventory"></div><div class="inventory-foot"><div id="inventory-cash" class="readout"><span class="compact" data-field="cash"></span></div><div class="panel-label compact">INVENTORY</div></div></div></div>
+          <div id="damocles-foot"><span class="damocles-lamp" data-lamp="groundLamp"></span><span class="damocles-lamp" data-lamp="attackLamp"></span><span class="damocles-lamp" data-lamp="runLamp"></span><span id="damocles-clock" data-field="clock"></span></div>
         </div>
-        <div class="tp-gauge inset"><div class="fill" style="height: 52%"></div><div class="tp-label">P</div></div>
-      </div>`;
+      </div>
+      <div class="tp-gauge" style="--tube-fill: var(--power-fill)"><div class="tube"><div class="fill" style="--fill-rows: 36"></div></div><div class="tp-label">P</div></div>`;
   }
 }
 

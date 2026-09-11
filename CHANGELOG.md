@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-09-11
+
+### Changed
+
+- The Damocles Panel Rendition is re-authored on the Atari ST panel's own grid: one unit per ST
+  pixel across 320 by 61 of them, with the reference's proportions, 16-colour palette,
+  bottom-left bevel lighting and window geometry. The rendition now stands at its true 244-page-
+  pixel height under the 1280-pixel world, so the frame stack is sized per rendition.
+- Panel lettering sits on the extracted face's pixel grid at eight units a glyph. Compact
+  readouts and the NAVIGATION and INVENTORY labels approximate the ST's condensed face by
+  narrowing the extracted one to a four-unit advance, as ADR 0027 allows.
+- The Damocles horizon and compass draw at 1x on 11-by-20 and 32-by-9 canvases, with the
+  reference tick pattern, quarter letters between long ticks, a centre index and a boxed pitch
+  reading on a fixed line.
+- Cash prints as the Damocles readout does, nine digits in thousands to the cent.
+- The duplicate Damocles panel rules in the gameplay page are removed in favour of the shared
+  component stylesheet, and its classes no longer collide with the shell's own `.lcd`,
+  `.plabel` and `.lamp` rules.
+- The Orbital Flyover dashboard grows its navigation block to hold its longer readouts at the
+  face's own advance instead of the narrowed dressing.
+
 ## [0.16.0] - 2026-09-11
 
 ### Added

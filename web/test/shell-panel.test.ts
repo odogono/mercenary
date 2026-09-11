@@ -176,10 +176,13 @@ describe('the Benson Panel view model', () => {
     expect(panelViewModel(mixed, context()).inventoryFill).toBe(1);
   });
 
-  test('pads cash to the width of the Damocles readout', () => {
+  test('prints cash as the Damocles readout does, in thousands to the cent', () => {
     const model = panelViewModel(snapshotOf({ credits: 512 }), context());
 
-    expect(model.cash).toBe('000000512');
+    expect(model.cash).toBe('000,000,512.00');
+    expect(
+      panelViewModel(snapshotOf({ credits: 10_555 }), context()).cash
+    ).toBe('000,010,555.00');
   });
 
   test('lights the altitude lamp aboard and the ground lamp only in flight', () => {
