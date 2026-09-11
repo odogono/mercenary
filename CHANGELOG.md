@@ -28,7 +28,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   authored ground plane, walked with the arrow keys from the recovered start pose, with the
   Damocles Panel Rendition reading ERIS, the cell, an empty inventory and a DAMOCLES badge from
   Damocles's own Session State. The Session Resume is written on suspension and every five
-  seconds (#201, #202).
+  seconds (#201, #202). Playwright covers the boot, the panel readouts, walking, resume, storage
+  isolation from Targ and a malformed document (#203).
 
 - The Damocles Catalogue now preserves all 195 interior-associated resident selector records
   without presenting selectors as Room, floor, or place names. Decoded structure-association
