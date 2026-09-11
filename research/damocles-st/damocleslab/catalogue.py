@@ -159,7 +159,11 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
     else:
         raise ValueError('vertex terminator missing')
     if not vertices:
-        raise ValueError('model has no vertices')
+        raise ValueError(
+            'Empty building-detail record: vertex list terminates immediately.'
+            if kind == 'interior'
+            else 'model has no vertices'
+        )
     body_vertex_count = len(vertices)
     if kind == 'object':
         if reader.word() != 0:
@@ -269,7 +273,13 @@ def decode_structure(data: bytes, start: int, palette: list[int] | None = None,
     else:
         raise ValueError('surface primitive terminator missing')
     if not faces:
-        raise ValueError('no supported surface faces')
+        if any('Surface primitive type' in gap for gap in gaps):
+            raise ValueError('no supported surface faces')
+        gaps.append('Empty surface record: no plan vertices or walls.')
+        return (
+            {'vertices': vertices, 'faces': faces, 'lines': [], 'sourceStart': start, 'sourceEnd': reader.p},
+            sorted(set(gaps)),
+        )
     return {'vertices': vertices, 'faces': faces, 'lines': [], 'sourceStart': start, 'sourceEnd': reader.p}, sorted(set(gaps))
 
 
@@ -562,9 +572,12 @@ def extract(data: bytes, source: dict) -> dict:
                     if identity == 'structure-01484e' and int.from_bytes(data[0x7af0:0x7af2], 'big') == 74:
                         third_height = struct.unpack_from('>h', data, 0x7b2a)[0]
                     mesh, gaps = decode_structure(data, pointer, palette_at(data, palette_index), hardware, scale, third_height)
-                    model['variants'] = [{'id': 'record', 'name': f'Recovered form · palette {palette_index}', 'mesh': mesh}]
-                    model['status'] = 'partial' if gaps else 'decoded'
-                    model['reason'] = ' '.join(gaps)
+                    if mesh['faces']:
+                        model['variants'] = [{'id': 'record', 'name': f'Recovered form · palette {palette_index}', 'mesh': mesh}]
+                        model['status'] = 'partial' if gaps else 'decoded'
+                        model['reason'] = ' '.join(gaps)
+                    else:
+                        model['reason'] = ' '.join(gaps)
                     model['interiorSlot'] = interior
                     continue
                 mesh = decode_mesh(data, address, kind, palette_at(data, 0) if kind == 'interior' else None, hardware)
@@ -942,7 +955,21 @@ def extract(data: bytes, source: dict) -> dict:
         if variant is None:
             if model['status'] == 'decoded':
                 model['status'] = 'partial'
-            model['reason'] = (model['reason'] + ' Linked building detail geometry is unresolved.').strip()
+            if detail['reason'].startswith('Empty building-detail record'):
+                suffix = 'Linked building detail is an empty vertex list.'
+            else:
+                suffix = 'Linked building detail geometry is unresolved.'
+            model['reason'] = (model['reason'] + ' ' + suffix).strip()
+            if identity == 'structure-01a618':
+                model['evidence'] = [{
+                    'claim': (
+                        'Empty plan and wall list at $01A618; linked building detail 1 at '
+                        '$02620E is an immediate $8000 vertex terminator. Nineteen Eris '
+                        'cells share this placeholder; they have no recovered building mesh.'
+                    ),
+                    'confidence': 'verified',
+                    'source': 'docs/research/damocles-eris-structure-01a618.md',
+                }]
             continue
         base = model['variants'][0]['mesh'] if model['variants'] else {'vertices': [], 'faces': [], 'lines': []}
         # Representative split established from matching exterior/interior captures.

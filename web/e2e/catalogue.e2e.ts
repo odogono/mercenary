@@ -235,6 +235,13 @@ test('unresolved records, empty filters and invalid links are explained', async 
   await expect(page.locator('#viewer-message')).toContainText(
     'Geometry unresolved'
   );
+  await page.goto('/catalogue?model=structure-01a618');
+  await expect(page.locator('#model-name')).toHaveText('Structure 100');
+  await expect(page.locator('#viewer-message')).toContainText(
+    'Geometry unresolved'
+  );
+  await expect(page.locator('#details')).toContainText('Empty surface record');
+  await expect(page.locator('#details')).toContainText('empty vertex list');
   await page.locator('#search').fill('no-such-model-name');
   await expect(page.locator('#results')).toContainText('No matching models');
   await page.goto('/catalogue?instance=missing');
