@@ -76,18 +76,21 @@ export const bearingFromYaw = (
     ((yaw - orientation.yawNorth) / orientation.yawUnitsPerTurn) * TURN
   );
 
-/// A Damocles Instance heading byte as a bearing.
+/// A Damocles Instance heading byte as a bearing clockwise from north.
 ///
-/// The byte is read as the camera yaw at a quarter of its resolution, 256 steps per turn on the
-/// same zero. That scale is a hypothesis: only resident objects carry the byte, none of Eris's
-/// surface structures do, and no capture has yet tied a byte to a drawn orientation (#204).
+/// The byte is a quarter of the camera yaw word (256 steps per turn) but its
+/// zero is north, not the yaw word's raw south: camera ≡ byte × (yawUnitsPerTurn / 256) +
+/// yawNorth. Structures with no byte face north (#204).
 export const headingFromByte = (
   byte: number | null,
   orientation: ErisPresentationDocument['orientation']
 ): number =>
   byte === null
     ? 0
-    : bearingFromYaw((byte * orientation.yawUnitsPerTurn) / 256, orientation);
+    : bearingFromYaw(
+        (byte * orientation.yawUnitsPerTurn) / 256 + orientation.yawNorth,
+        orientation
+      );
 
 export const startPose = (doc: ErisPresentationDocument): ErisPose => ({
   heading: bearingFromYaw(doc.start.yaw, doc.orientation),

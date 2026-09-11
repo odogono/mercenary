@@ -1,22 +1,25 @@
 #!/usr/bin/env python3
-"""Camera yaw probe (#204): decode $7AA2 from the on-foot Eris snapshot.
+"""Camera yaw and instance-heading probe (#204).
 
 Boots headless from snapshots/eris-spaceport-onfoot.sav with fast-forward off,
 so wall-clock seconds map to VBLs at 50 Hz, and drives the joystick-1 soft-copy
-$79C2 over the command FIFO (right=$08, left=$04, up=$01). Three modes:
+$79C2 over the command FIFO (right=$08, left=$04, up=$01). Modes:
 
-  hold    rest, two right holds, three left holds; dump $7A00-$7B00 each time
-          and print the words that changed. Finds the yaw word and its sign.
-  period  hold right for N seconds, saving the yaw word and a screenshot every
-          second; print each frame's viewport difference from the rest frame so
-          the wrap (the smallest recurring difference) can be read off.
-  axis    walk forward at rest, poke the yaw word a quarter turn on, walk again;
-          print the camera position words $7A92/$7A9A after each walk.
+  hold     rest, two right holds, three left holds; dump $7A00-$7B00 each time
+           and print the words that changed. Finds the yaw word and its sign.
+  period   hold right for N seconds, saving the yaw word and a screenshot every
+           second; print each frame's viewport difference from the rest frame so
+           the wrap (the smallest recurring difference) can be read off.
+  axis     walk forward at rest, poke the yaw word a quarter turn on, walk again;
+           print the camera position words $7A92/$7A9A after each walk.
+  heading  park the camera south of the V.I.P. limo, poke $79CD+5 through the
+           cardinals, screenshot each, then walk one step and poke $40.
 
 Run from repo root:
   python3 research/damocles-st/scripts/yaw-probe.py hold
   python3 research/damocles-st/scripts/yaw-probe.py period 50
   python3 research/damocles-st/scripts/yaw-probe.py axis
+  python3 research/damocles-st/scripts/yaw-probe.py heading
 
 Output stays in the gitignored work/<run> directory. Findings are recorded in
 docs/research/damocles-walk-board-flight.md as Working-Authority Evidence.
@@ -49,8 +52,11 @@ STICK = 0x79C2
 YAW = 0x7AA2
 YAW_TWIN = 0x7AC2
 CAMERA_BLOCK = 0x7A8E  # walk flag; +4 x, +8 y, +12 z (signed 16.16), +$14 yaw
+HEADING = 0x79CD
+LIMO_SLOT, SHIP_SLOT = 5, 7
 WINDOW_LO, WINDOW_LEN = 0x7A00, 0x100
 RIGHT, LEFT, UP = 0x08, 0x04, 0x01
+CARDINALS = (("00", 0x00), ("40", 0x40), ("80", 0x80), ("C0", 0xC0))
 
 
 class Probe:
@@ -208,10 +214,110 @@ def mode_axis(seconds: float) -> None:
     print(f"run {probe.run}")
 
 
+def _heading_at(table: bytes, slot: int) -> int:
+    return table[slot]
+
+
+def _be32(value: int) -> tuple[int, int, int, int]:
+    value &= 0xFFFFFFFF
+    return (value >> 24) & 0xFF, (value >> 16) & 0xFF, (value >> 8) & 0xFF, value & 0xFF
+
+
+def _poke_u32(probe: Probe, address: int, value: int) -> None:
+    probe.poke(address, *_be32(value))
+
+
+def mode_heading(seconds: float) -> None:
+    from PIL import Image, ImageChops
+
+    probe = Probe("heading")
+    try:
+        rest_headings = probe.dump("rest", HEADING, 256)
+        rest_yaw = int.from_bytes(probe.dump("rest-yaw", YAW, 2, screenshot=False), "big")
+        print(
+            f"rest yaw={rest_yaw:04X} limo=${_heading_at(rest_headings, LIMO_SLOT):02X} "
+            f"ship=${_heading_at(rest_headings, SHIP_SLOT):02X}"
+        )
+        # Standing on the arrival ship: B boards slot 7 (heading $FF) if the
+        # occupancy path runs, giving a second heading-to-yaw sample besides the
+        # parked limo at $00 → $01FC.
+        _fifo_send(probe.fh, ["hatari-event keydown 48"])
+        time.sleep(0.15)
+        _fifo_send(probe.fh, ["hatari-event keyup 176"])
+        time.sleep(0.8)
+        boarded = probe.dump("board-ship", CAMERA_BLOCK, 0x20)
+        print(
+            f"after-B walk={int.from_bytes(boarded[0:2], 'big'):04X} "
+            f"craft={int.from_bytes(boarded[2:4], 'big', signed=True)} "
+            f"yaw={int.from_bytes(boarded[0x14:0x16], 'big'):04X} "
+            f"x={int.from_bytes(boarded[4:8], 'big'):08X} "
+            f"z={int.from_bytes(boarded[12:16], 'big'):08X}"
+        )
+        # Park south of the limo, facing north, so heading 0's long axis is readable.
+        limo_x, limo_z = 0x00478388, 0x0088796F
+        origin_x, origin_z = 0x00400000, 0x00800000
+        cam_x, cam_z = limo_x, limo_z - 0x5000
+        for addr in (0x7A92, 0x7AB2, 0x7A3C):
+            _poke_u32(probe, addr, cam_x)
+        for addr in (0x7A9A, 0x7ABA, 0x7A44):
+            _poke_u32(probe, addr, cam_z)
+        _poke_u32(probe, 0x7A2C, cam_x - origin_x)
+        _poke_u32(probe, 0x7A34, cam_z - origin_z)
+        probe.poke(YAW, 0x06, 0x00)
+        probe.poke(YAW_TWIN, 0x06, 0x00)
+        time.sleep(0.6)
+        probe.dump("south", HEADING, 256)
+        for name, value in CARDINALS:
+            probe.poke(HEADING + LIMO_SLOT, value)
+            time.sleep(0.6)
+            table = probe.dump(f"limo-{name}", HEADING, 256)
+            print(f"limo-{name} poked={value:02X} read=${_heading_at(table, LIMO_SLOT):02X}")
+        probe.poke(HEADING + LIMO_SLOT, 0x00)
+        time.sleep(0.4)
+        probe.hold(UP, 0.3)
+        probe.dump("south-step", HEADING, 256)
+        probe.poke(HEADING + LIMO_SLOT, 0x40)
+        probe.hold(UP, 0.3)
+        probe.dump("south-step-40", HEADING, 256)
+
+        def pixels(a: str, b: str) -> int:
+            left = Image.open(probe.run / f"{a}.png").convert("RGB")
+            right = Image.open(probe.run / f"{b}.png").convert("RGB")
+            crop = (0, 0, left.width, int(left.height * 0.7))
+            return sum(
+                1
+                for px in ImageChops.difference(left.crop(crop), right.crop(crop)).getdata()
+                if px != (0, 0, 0)
+            )
+
+        for pair in (
+            ("rest", "south"),
+            ("south", "limo-00"),
+            ("limo-00", "limo-40"),
+            ("limo-00", "limo-80"),
+            ("limo-00", "limo-C0"),
+            ("south-step", "south-step-40"),
+        ):
+            try:
+                print(f"viewportDiff {pair[0]} vs {pair[1]}={pixels(*pair)}")
+            except FileNotFoundError as error:
+                print(f"missing {error}")
+        print(f"hold-seconds={seconds}")
+    finally:
+        probe.close()
+    print(f"run {probe.run}")
+
+
 def main() -> int:
     mode = sys.argv[1] if len(sys.argv) > 1 else "hold"
-    arg = float(sys.argv[2]) if len(sys.argv) > 2 else {"hold": 1.0, "period": 50.0, "axis": 6.0}[mode]
-    {"hold": mode_hold, "period": mode_period, "axis": mode_axis}[mode](arg)
+    defaults = {"hold": 1.0, "period": 50.0, "axis": 6.0, "heading": 0.0}
+    arg = float(sys.argv[2]) if len(sys.argv) > 2 else defaults[mode]
+    {
+        "hold": mode_hold,
+        "period": mode_period,
+        "axis": mode_axis,
+        "heading": mode_heading,
+    }[mode](arg)
     return 0
 
 

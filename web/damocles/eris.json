@@ -47,7 +47,7 @@
     "provenance": "recovered",
     "modelZ": "keep",
     "modelZProvenance": "authored",
-    "note": "Camera yaw $7AA2 (twin $7AC2) wraps every 1024 units; N is centred at $0200 mod $0400, E at $0300, S at $0000, W at $0100, and a right stick raises it. Walking at N raises $7A9A (z) and at E raises $7A92 (x), so Eris is left-handed seen from above with +y up; the frame mirrors z for the shared right-handed Camera. Whether a model's z runs with world z is not decoded; modelZ is authored to match the Working Authority's spaceport view (docs/research/damocles-walk-board-flight.md)."
+    "note": "Camera yaw $7AA2 (twin $7AC2) wraps every 1024 units; N is centred at $0200 mod $0400, E at $0300, S at $0000, W at $0100, and a right stick raises it. Walking at N raises $7A9A (z) and at E raises $7A92 (x), so Eris is left-handed seen from above with +y up; the frame mirrors z for the shared right-handed Camera. Instance heading bytes at $79CD+slot are 256 steps per turn on the same clockwise sense with zero at north (camera ≡ byte×4+$200 mod $400). Whether a model's z runs with world z is not decoded; modelZ is authored to match the Working Authority's spaceport view (docs/research/damocles-walk-board-flight.md)."
   },
   "camera": {
     "verticalFieldOfViewDegrees": 45,

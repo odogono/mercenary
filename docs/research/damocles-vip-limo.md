@@ -105,12 +105,13 @@ the limo at **(1714, 0, -3241)** in the same raw local frame used for the
 Spaceport assembly. This establishes proximity and a shared surface cell; it
 does not make the limo part of Structure 74 or its Room.
 
-The raw yaw byte at `$79D2` is `$00` in the first-world, fresh on-foot, boarded,
-driving and left-limo captures. The model's long local axis is +Z, but the
-absolute angular convention remains only partially decoded. The catalogue can
-retain heading `0` because the coordinate-system label identifies it as the raw
-ST angle byte; consumers must not present it as degrees or infer a cardinal
-direction from it yet.
+The raw heading byte at `$79D2` is `$00` in the first-world, fresh on-foot, boarded,
+driving and left-limo captures. Byte `$00` is north (256 steps per turn, clockwise,
+the camera yaw at `$200` mod `$400`); see
+[`damocles-walk-board-flight.md`](damocles-walk-board-flight.md).
+The model's long local axis is +Z. Whether that +Z runs with world +z remains
+authored (`modelZ`). Leave does not copy the live camera yaw back into this
+byte, so a driven-then-left pose still stores the parked `$00`.
 
 ## Residence while boarding, driving and leaving
 
@@ -182,9 +183,8 @@ geometry or mutable state embedded in the vehicle model.
 - Boarding temporarily removes slot 5 from surface residence and selects craft
   slot 5 as Occupancy. A future playable implementation must not leave a second
   stationary limo at the initial coordinates while it is driven.
-- The model's `$8001 $0040` header semantics and the absolute yaw convention
-  remain unresolved. The recovered heading `0` is a raw ST angle byte, not a
-  verified degree or cardinal heading.
+- The model's `$8001 $0040` header semantics remain unresolved. The recovered
+  heading `0` is north under the decoded 256-step convention.
 - The source evidence connects key slot 183 to craft slot 5 and shows successful
   keyed boarding. Two untouched-checkpoint replays verify that the same craft
   refuses boarding without the key and emits `VEHICLE KEY REQUIRED`.
