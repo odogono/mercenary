@@ -335,6 +335,12 @@ damocles-panel .aux-title {
     calc(2 * var(--u)) calc(2 * var(--u)) 0 var(--st-4);
 }
 
+/* A Title name longer than TARG is set at half the size so it stays inside the badge. */
+damocles-panel .aux-title.long {
+  font-size: calc(8 * var(--u));
+  line-height: 0.5em;
+}
+
 /* --- Inventory -------------------------------------------------------------------------- */
 damocles-panel #damocles-right {
   display: flex;

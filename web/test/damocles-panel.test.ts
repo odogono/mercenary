@@ -1,0 +1,59 @@
+import { describe, expect, test } from 'bun:test';
+
+import { parseCatalogue } from '../src/catalogue/data.ts';
+import { readErisPresentation } from '../src/damocles/documents.ts';
+import {
+  damoclesPanelViewModel,
+  erisGridReference
+} from '../src/damocles/panel.ts';
+import { DamoclesSession } from '../src/damocles/session.ts';
+import { damoclesTitle } from '../src/damocles/title.ts';
+import { erisSurfaceFrom } from '../src/damocles/world.ts';
+import { intent } from '../src/gameCore/index.ts';
+
+const content = async () => {
+  const [catalogue, presentation] = await Promise.all([
+    Bun.file('../payload/damocles/catalogue.json').json(),
+    Bun.file(new URL('../damocles/eris.json', import.meta.url)).json()
+  ]);
+  const doc = readErisPresentation(presentation);
+  return { doc, surface: erisSurfaceFrom(parseCatalogue(catalogue), doc) };
+};
+
+describe('the Damocles Panel Rendition on Damocles Session State', () => {
+  test('reads ERIS, the start cell and an empty inventory on foot', async () => {
+    const loaded = await content();
+    const session = new DamoclesSession(loaded);
+    const model = damoclesPanelViewModel(session.snapshot, loaded.doc);
+    expect(model.locationName).toBe('ERIS');
+    expect(model.locationLabel).toBe('07-08');
+    expect(model.inventory).toBe('EMPTY');
+    expect(model.inventoryFill).toBe(0);
+    expect(model.speedLabel).toBe('+ 000 000 000');
+    expect(model.clock).toBe('');
+    expect(model.runLamp).toBe(false);
+    expect(damoclesTitle.panelViewModel(session.snapshot, loaded)).toEqual(
+      model
+    );
+  });
+
+  test('follows the cell and heading as the player walks', async () => {
+    const loaded = await content();
+    const session = new DamoclesSession(loaded);
+    session.intent = intent({ walk: 1 });
+    session.advance(120);
+    const model = damoclesPanelViewModel(session.snapshot, loaded.doc, true);
+    expect(model.locationLabel).toMatch(/^\d{2}-\d{2}$/);
+    expect(model.locationLabel).not.toBe('07-08');
+    expect(model.runLamp).toBe(true);
+    expect(model.compassDegrees).toBeGreaterThanOrEqual(0);
+    expect(model.compassDegrees).toBeLessThan(360);
+    expect(model.heading).toMatch(/^\d{3}°$/);
+  });
+
+  test('prints cells two digits an axis and stars beyond the readout', () => {
+    expect(erisGridReference({ x: 6, z: 8 })).toBe('06-08');
+    expect(erisGridReference({ x: 15, z: 0 })).toBe('15-00');
+    expect(erisGridReference({ x: -1, z: 100 })).toBe('**-**');
+  });
+});

@@ -73,8 +73,8 @@ describe('an Eris frame in Filled Presentation', () => {
       (sum, p) => sum + (p.mesh?.faces.length ?? 0),
       0
     );
-    // Every face is at least one triangle; the ground is two.
-    expect(plan.triangleCount).toBeGreaterThanOrEqual(decodedFaces + 2);
+    // Every face is at least one triangle; the ground is two, both ways round.
+    expect(plan.triangleCount).toBeGreaterThanOrEqual(decodedFaces + 4);
     expect(plan.vertices).toHaveLength(plan.triangleCount * 3 * 6);
     expect(plan.skippedFaces).toBe(0);
     expect(plan.clear).toEqual([0x49 / 255, 0x92 / 255, 0xdb / 255]);
@@ -83,15 +83,15 @@ describe('an Eris frame in Filled Presentation', () => {
     );
     expect(
       planErisFrame(withoutMeshes, startPose(doc), doc).triangleCount
-    ).toBe(2);
+    ).toBe(4);
   });
 
   test('puts a face straight ahead at positive view depth in its own colour', async () => {
     const { doc } = await load();
     const plan = planErisFrame(surfaceOf([placement(square())]), origin, doc);
-    expect(plan.triangleCount).toBe(2 + 2);
-    // Skip the ground's six vertices; the face's corners follow, in the triangulator's order.
-    for (let corner = 36; corner < plan.vertices.length; corner += 6) {
+    expect(plan.triangleCount).toBe(4 + 2);
+    // Skip the ground's twelve vertices; the face's corners follow, in the triangulator's order.
+    for (let corner = 72; corner < plan.vertices.length; corner += 6) {
       const view = Array.from(plan.vertices.slice(corner, corner + 6));
       expect(Math.abs(view[0]!)).toBeCloseTo(10, 3);
       expect(view[1]).toBeCloseTo(-63, 3);
@@ -109,8 +109,8 @@ describe('an Eris frame in Filled Presentation', () => {
       doc
     );
     expect(double.triangleCount).toBe(single.triangleCount + 2);
-    const firstFace = Array.from(single.vertices.slice(36, 36 + 18));
-    const reversed = Array.from(double.vertices.slice(36 + 36, 36 + 54));
+    const firstFace = Array.from(single.vertices.slice(72, 72 + 18));
+    const reversed = Array.from(double.vertices.slice(72 + 36, 72 + 54));
     expect(reversed.slice(0, 3)).toEqual(firstFace.slice(12, 15));
     expect(reversed.slice(12, 15)).toEqual(firstFace.slice(0, 3));
   });
@@ -136,7 +136,7 @@ describe('an Eris frame in Filled Presentation', () => {
           surfaceOf([{ ...placement(mesh, { x: 0, y: 0, z: 0 }), heading }]),
           origin,
           document
-        ).vertices.slice(36, 39)
+        ).vertices.slice(72, 75)
       );
     // Camera at the origin facing -Z: a model vertex at +100 z sits behind (negative
     // depth) when kept, ahead when negated.
@@ -161,7 +161,7 @@ describe('an Eris frame in Filled Presentation', () => {
       ]
     };
     const plan = planErisFrame(surfaceOf([placement(degenerate)]), origin, doc);
-    expect(plan.triangleCount).toBe(2);
+    expect(plan.triangleCount).toBe(4);
     expect(plan.skippedFaces).toBe(0);
   });
 });

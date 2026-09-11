@@ -24,6 +24,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - A Damocles Gameplay Session: on foot on Eris with a fixed-step Mover in Damocles units, stepped
   at the shared bound, and a Session Resume of its own under a Damocles key. The Browser Shell
   gains a `TitleRuntime` seam naming what it needs from any Title (ADR 0041, ADR 0043) (#200).
+- `/damocles` plays: Eris is drawn in Filled Presentation from the Catalogue's exteriors over an
+  authored ground plane, walked with the arrow keys from the recovered start pose, with the
+  Damocles Panel Rendition reading ERIS, the cell, an empty inventory and a DAMOCLES badge from
+  Damocles's own Session State. The Session Resume is written on suspension and every five
+  seconds (#201, #202).
 
 - The Damocles Catalogue now preserves all 195 interior-associated resident selector records
   without presenting selectors as Room, floor, or place names. Decoded structure-association

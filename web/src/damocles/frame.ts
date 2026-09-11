@@ -124,7 +124,8 @@ export const planErisFrame = (
   };
 
   // The authored ground: a flat plane at y = 0 under and around the camera, in the recovered
-  // green. Two triangles, wound to face upward under the renderer's front-face rule.
+  // green. Both windings are emitted, so it shows whatever the front-face rule settles on and
+  // from below should the camera ever get there.
   const extent = doc.ground.extentCells * surface.grid.cellUnits;
   const ground = channels(doc.ground.colour);
   const cx = pose.position.x;
@@ -136,7 +137,9 @@ export const planErisFrame = (
   });
   for (const [a, b, c] of [
     [corner(-1, -1), corner(1, -1), corner(1, 1)],
-    [corner(-1, -1), corner(1, 1), corner(-1, 1)]
+    [corner(-1, -1), corner(1, 1), corner(-1, 1)],
+    [corner(1, 1), corner(1, -1), corner(-1, -1)],
+    [corner(-1, 1), corner(1, 1), corner(-1, -1)]
   ] as const) {
     emit(a, ground);
     emit(b, ground);
