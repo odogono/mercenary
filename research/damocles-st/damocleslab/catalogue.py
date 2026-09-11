@@ -273,6 +273,111 @@ def decode_structure(data: bytes, start: int, palette: list[int] | None = None,
     return {'vertices': vertices, 'faces': faces, 'lines': [], 'sourceStart': start, 'sourceEnd': reader.p}, sorted(set(gaps))
 
 
+# Cell-local ground records at $1E000: $54E8E transform nybbles, then $8000-relative X/Z.
+GROUND_ORIENT = bytes.fromhex('0006030501040207')
+GROUND_JOIN = {0xF0, 0xF4}
+
+
+def decode_ground(data: bytes, start: int, orientation: int,
+                  palette: list[int] | None = None,
+                  hardware: list[int] | None = None) -> tuple[dict, list[str], int]:
+    """Decode one per-cell ground/pad/road record. Neighbor-join sentinels are omitted."""
+    reader = Reader(data, start)
+    first, second = reader.take(1)[0], reader.take(1)[0]
+    extra, d5 = 0, orientation & 0xFF
+    if second & 0x80:
+        d5 = (d5 - first) & 0xFF
+    else:
+        extra = first
+        if second:
+            reader.take(second)
+        first = reader.take(1)[0]
+        reader.take(1)
+        d5 = (d5 + extra - first) & 0xFF
+    transform = GROUND_ORIENT[(d5 & 3) + (extra & 4)]
+    plan = []
+    for _ in range(256):
+        x = reader.word()
+        if x == 0:
+            break
+        z = reader.word()
+        if transform & 4:
+            x, z = z, x
+        if transform & 1:
+            x = (-x) & 0xFFFF
+        if transform & 2:
+            z = (-z) & 0xFFFF
+        plan.append([x - 0x8000, 0, z - 0x8000])
+    else:
+        raise ValueError('ground vertex terminator missing')
+    vertices, faces, lines, gaps = [], [], [], []
+    for source_index in range(1024):
+        colour = reader.word()
+        if colour == 0:
+            break
+        if colour & 0x4000:
+            if colour & 0x2000:
+                gaps.append(
+                    'Ground command with bit 13 set ($53F76 family, including $7000 road templates) is not yet decoded.'
+                )
+                break
+            kept, dropped = _ground_indices(list(reader.take(2)), len(plan))
+            if dropped:
+                gaps.append(
+                    'Ground edge references neighboring-cell workspace slots that this cell record does not contain.'
+                )
+            elif len(kept) == 2:
+                rgb = colour_value(colour & ~0x4000, palette, hardware)
+                offset = len(vertices)
+                vertices.extend(plan[index] for index in kept)
+                lines.append({'vertices': [offset, offset + 1], 'colour': rgb,
+                              'sourceColour': colour & ~0x4000, 'sourceIndex': source_index})
+            continue
+        refs = []
+        for _ in range(256):
+            ref = reader.take(1)[0]
+            if ref == 0:
+                break
+            refs.append(ref)
+        else:
+            raise ValueError('ground polygon terminator missing')
+        kept, dropped = _ground_indices(refs, len(plan))
+        if dropped:
+            gaps.append(
+                'Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.'
+            )
+        if len(kept) >= 3:
+            rgb = colour_value(colour, palette, hardware)
+            offset = len(vertices)
+            vertices.extend(plan[index] for index in kept)
+            faces.append({'vertices': list(range(offset, offset + len(kept))), 'colour': rgb,
+                          'sourceColour': colour, 'sourceIndex': source_index, 'doubleSided': True})
+        elif refs:
+            gaps.append('Ground polygon had too few local vertices after omitting neighbor-join sentinels.')
+    else:
+        raise ValueError('ground primitive terminator missing')
+    if not faces and not lines:
+        gaps.append('Empty ground record: default cell fill is not stored as a vertex list.')
+    return ({'vertices': vertices, 'faces': faces, 'lines': lines, 'sourceStart': start,
+             'sourceEnd': reader.p}, sorted(set(gaps)), transform)
+
+
+def _ground_indices(refs: list[int], count: int) -> tuple[list[int], bool]:
+    kept, dropped = [], False
+    for ref in refs:
+        if ref in GROUND_JOIN:
+            dropped = True
+            continue
+        if ref == 0 or ref % 4:
+            raise ValueError('invalid ground vertex reference')
+        index = ref // 4 - 1
+        if not 0 <= index < count:
+            dropped = True
+            continue
+        kept.append(index)
+    return kept, dropped
+
+
 def decode_visibility_list(data: bytes, start: int, face_count: int) -> tuple[list[int], list[str]]:
     """Decode one terminated, one-based plan-face order; retain special commands as gaps."""
     reader = Reader(data, start)
@@ -403,7 +508,7 @@ def structure_origin(resident_position: tuple[int, int, int], dx: int, dz: int) 
 
 
 def extract(data: bytes, source: dict) -> dict:
-    """Catalogue all entries of the three bounded resident tables, never a byte scan."""
+    """Catalogue all entries of the bounded resident tables, never a byte scan."""
     if len(data) != 1048576 or u32(data, 0x4bd10) != 0x35700 or u32(data, 0x4bd22) != 0x26000:
         raise ValueError('not a loaded pinned Damocles world capture')
     models, tables, instances = [], [], []
@@ -483,6 +588,76 @@ def extract(data: bytes, source: dict) -> dict:
                        'extentEvidence': 'Contiguous relative-pointer table up to the following data record; extent is provisional.'})
     for alias, target in structure_aliases:
         by_address[target]['relatedModels'].append(alias)
+    ground_entries = []
+    ground_cells: list[tuple[int, str]] = []
+    for cell in range(256):
+        offset = int.from_bytes(data[0x1e400 + cell * 2:0x1e402 + cell * 2], 'big')
+        address = 0x1e000 + offset
+        structure_slot = struct.unpack_from('>H', data, 0xabdc + cell * 4)[0] & 0x1FF
+        palette = None
+        if structure_slot and structure_slot < len(tables[1]['entries']):
+            palette = palette_at(
+                data, by_address[tables[1]['entries'][structure_slot]].get('paletteIndex') or 0
+            )
+        try:
+            mesh, gaps, transform = decode_ground(
+                data, address, data[0x83dc + cell], palette, hardware
+            )
+        except (ValueError, struct.error) as error:
+            mesh, gaps, transform = (
+                {'vertices': [], 'faces': [], 'lines': [], 'sourceStart': address, 'sourceEnd': address},
+                [str(error)],
+                0xFF,
+            )
+        identity = f'ground-{address:06x}-{transform:02x}'
+        ground_entries.append(identity)
+        ground_cells.append((cell, identity))
+        if identity in by_address:
+            by_address[identity]['slots'].append(cell)
+            continue
+        model = {
+            'id': identity,
+            'kind': 'ground',
+            'name': f'Ground {cell}',
+            'nameStatus': 'unknown',
+            'slots': [cell],
+            'sourceAddress': address,
+            'status': 'unresolved',
+            'reason': '',
+            'variants': [],
+            'relatedModels': [],
+            'linkedInstances': [],
+            'evidence': [{
+                'claim': (
+                    'Per-cell ground/pad/road record at $1E000, selected by the $1E400 word '
+                    'table and $83DC orientation byte ($054E40).'
+                ),
+                'confidence': 'verified',
+                'source': 'docs/research/damocles-eris-ground.md',
+            }],
+        }
+        by_address[identity] = model
+        models.append(model)
+        if mesh['faces'] or mesh['lines']:
+            model['variants'] = [{
+                'id': 'record',
+                'name': f'Recovered cell fill · transform ${transform:02x}',
+                'mesh': mesh,
+            }]
+            model['status'] = 'partial' if gaps else 'decoded'
+            model['reason'] = ' '.join(gaps)
+        else:
+            model['reason'] = ' '.join(gaps) or 'Empty ground record: default cell fill is not stored as a vertex list.'
+    tables.append({
+        'kind': 'ground',
+        'address': 0x1E400,
+        'entryCount': 256,
+        'entries': ground_entries,
+        'extentEvidence': (
+            '256-cell word table at $01E400; each word is an offset from $01E000. '
+            'Records are shared across cells. This is the first-world workspace, not a body census.'
+        ),
+    })
     bodies = [{'id': f'body-{i}', 'name': data[0x81dc + i * 8:0x81e4 + i * 8].decode('ascii').strip()} for i in range(31)]
     # The first 256 object slots have resident state arrays; extra model slots are templates.
     for slot in range(1, 256):
@@ -583,6 +758,31 @@ def extract(data: bytes, source: dict) -> dict:
                             'position': [origin_x + (cell & 15) + 0.5 + dx * 30 / 65536, 0, origin_z + (cell >> 4) + 0.5 + dz * 30 / 65536],
                             'coordinateSystem': 'ST surface grid units (body-local origin unresolved)', 'heading': None},
                           'reason': 'Recovered first-world surface workspace placement; not a census of the whole body.'})
+        if place:
+            next(p for p in places if p['id'] == place[0])['instances'].append(identity)
+    for cell, model_id in ground_cells:
+        model = by_address[model_id]
+        if not model['variants']:
+            continue
+        identity = f'eris-ground-{cell:02x}'
+        place = names.get(cell)
+        instances.append({
+            'id': identity,
+            'name': place[1] + ' ground' if place else f'Eris ground cell {cell & 15},{cell >> 4}',
+            'model': model_id,
+            'sourceAddress': 0x1E400 + cell * 2,
+            'association': None,
+            'placement': None,
+            'location': {
+                'body': 'body-11',
+                'place': place[0] if place else None,
+                'position': [origin_x + (cell & 15) + 0.5, 0, origin_z + (cell >> 4) + 0.5],
+                'coordinateSystem': 'ST surface grid units (body-local origin unresolved)',
+                'heading': None,
+            },
+            'reason': 'Recovered first-world cell ground/pad/road record; default empty cells are omitted.',
+        })
+        model['linkedInstances'].append(identity)
         if place:
             next(p for p in places if p['id'] == place[0])['instances'].append(identity)
     chevy_key = instance_by_id.get('object-slot-180')
@@ -825,10 +1025,11 @@ def extract(data: bytes, source: dict) -> dict:
         for model in group:
             model['variants'] = variants
             model['relatedModels'].extend(other['id'] for other in group if other is not model)
-    return {'schemaVersion': 4, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
+    return {'schemaVersion': 5, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'places': places, 'tables': tables,
             'coverage': {'complete': False, 'notes': ['Resident first-world census; not a claim of complete disk coverage.',
                 'Conditional geometry, surface attachments, scene palette binding, other-body structures and named places remain incomplete.',
+                'Eris cell ground/pad/road records at $1E000 are decoded locally; $7000 road templates, $53F76 attachments and default empty-cell fill remain incomplete.',
                 'Unexamined disk-loaded content and script-created visual changes are not included.']}}
 
 
