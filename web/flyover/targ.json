@@ -5,7 +5,26 @@
     "minimumUnitsPerSecond": 64,
     "maximumUnitsPerSecond": 21361414.86176349
   },
-  "backdropColour": "#000008",
+  "camera": {
+    "overviewAxis": "positive-z",
+    "verticalFieldOfViewDegrees": 60,
+    "framingCoverage": 0.9
+  },
+  "bodyMesh": {
+    "longitudeSegments": 64,
+    "latitudeSegments": 32
+  },
+  "backdrop": {
+    "colour": "#000008",
+    "starColour": "#d8e8ff",
+    "starCount": 2048,
+    "starSeed": 1179408719,
+    "pointSizeCssPixels": 1
+  },
+  "lighting": {
+    "kind": "body",
+    "sourceBodyId": "sun"
+  },
   "bodies": [
     {
       "id": "targ",

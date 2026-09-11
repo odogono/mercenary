@@ -1,6 +1,28 @@
 import type { SystemId } from '../shell/documentPath.ts';
 
 export type FlyoverRange = 'orbital' | 'coastal' | 'surface';
+export interface FlyoverCameraPresentation {
+  readonly framingCoverage: number;
+  readonly overviewAxis: 'positive-z';
+  readonly verticalFieldOfViewDegrees: number;
+}
+
+export interface FlyoverBackdropPresentation {
+  readonly colour: string;
+  readonly pointSizeCssPixels: number;
+  readonly starColour: string;
+  readonly starCount: number;
+  readonly starSeed: number;
+}
+
+export interface FlyoverBodyMeshPresentation {
+  readonly latitudeSegments: number;
+  readonly longitudeSegments: number;
+}
+
+export type FlyoverLighting =
+  | { readonly kind: 'body'; readonly sourceBodyId: string }
+  | { readonly kind: 'camera-headlight' };
 export type RadiusRule =
   | { readonly kind: 'absolute'; readonly radiusUnits: number }
   | {
@@ -35,8 +57,10 @@ export interface IslandPresentation {
 }
 
 interface PresentationBase {
-  readonly backdropColour: string;
+  readonly backdrop: FlyoverBackdropPresentation;
   readonly bodies: readonly FlyoverBodyPresentation[];
+  readonly bodyMesh: FlyoverBodyMeshPresentation;
+  readonly camera: FlyoverCameraPresentation;
   readonly cameraSpeed: {
     readonly maximumUnitsPerSecond: number;
     readonly minimumUnitsPerSecond: number;
@@ -47,6 +71,10 @@ interface PresentationBase {
 
 export interface TargPresentationDocument extends PresentationBase {
   readonly islands: readonly IslandPresentation[];
+  readonly lighting: {
+    readonly kind: 'body';
+    readonly sourceBodyId: 'sun';
+  };
   readonly surfaceColours: {
     readonly coastline: string;
     readonly ground: string;
@@ -56,6 +84,10 @@ export interface TargPresentationDocument extends PresentationBase {
 }
 
 export interface GammaPresentationDocument extends PresentationBase {
+  readonly lighting: Extract<
+    FlyoverLighting,
+    { readonly kind: 'camera-headlight' }
+  >;
   readonly systemId: 'gamma';
 }
 
@@ -135,11 +167,35 @@ const positive = (value: unknown, path: string): number => {
   const number = finite(value, path);
   return number > 0 ? number : fail(path, 'should be positive');
 };
+const boundedPositive = (
+  value: unknown,
+  path: string,
+  maximum: number
+): number => {
+  const number = positive(value, path);
+  return number <= maximum
+    ? number
+    : fail(path, `should not exceed ${maximum}`);
+};
 const integer = (value: unknown, path: string): number => {
   const number = finite(value, path);
   return Number.isSafeInteger(number) && number >= 0
     ? number
     : fail(path, 'should be a nonnegative integer');
+};
+const positiveInteger = (value: unknown, path: string): number => {
+  const number = integer(value, path);
+  return number > 0 ? number : fail(path, 'should be a positive integer');
+};
+const boundedPositiveInteger = (
+  value: unknown,
+  path: string,
+  maximum: number
+): number => {
+  const number = positiveInteger(value, path);
+  return number <= maximum
+    ? number
+    : fail(path, `should not exceed ${maximum}`);
 };
 const boolean = (value: unknown, path: string): boolean =>
   typeof value === 'boolean' ? value : fail(path, 'should be a boolean');
@@ -477,7 +533,10 @@ export function readFlyoverPresentation(
     'schemaVersion',
     'systemId',
     'cameraSpeed',
-    'backdropColour',
+    'camera',
+    'bodyMesh',
+    'backdrop',
+    'lighting',
     'bodies',
     ...(targ ? ['surfaceColours', 'islands'] : [])
   ]);
@@ -497,6 +556,52 @@ export function readFlyoverPresentation(
   if (maximum <= minimum) {
     fail('cameraSpeed', 'maximum should exceed minimum');
   }
+  const rawCamera = object(root['camera'], 'camera', [
+    'overviewAxis',
+    'verticalFieldOfViewDegrees',
+    'framingCoverage'
+  ]);
+  const verticalFieldOfViewDegrees = positive(
+    rawCamera['verticalFieldOfViewDegrees'],
+    'camera.verticalFieldOfViewDegrees'
+  );
+  if (verticalFieldOfViewDegrees >= 180) {
+    fail('camera.verticalFieldOfViewDegrees', 'should be less than 180');
+  }
+  const framingCoverage = positive(
+    rawCamera['framingCoverage'],
+    'camera.framingCoverage'
+  );
+  if (framingCoverage > 1) {
+    fail('camera.framingCoverage', 'should not exceed 1');
+  }
+  const bodyMesh = object(root['bodyMesh'], 'bodyMesh', [
+    'longitudeSegments',
+    'latitudeSegments'
+  ]);
+  const longitudeSegments = boundedPositiveInteger(
+    bodyMesh['longitudeSegments'],
+    'bodyMesh.longitudeSegments',
+    256
+  );
+  const latitudeSegments = boundedPositiveInteger(
+    bodyMesh['latitudeSegments'],
+    'bodyMesh.latitudeSegments',
+    256
+  );
+  if (longitudeSegments < 3 || latitudeSegments < 2) {
+    fail(
+      'bodyMesh',
+      'should contain at least 3 longitude and 2 latitude segments'
+    );
+  }
+  const rawBackdrop = object(root['backdrop'], 'backdrop', [
+    'colour',
+    'starColour',
+    'starCount',
+    'starSeed',
+    'pointSizeCssPixels'
+  ]);
   const bodies = array(root['bodies'], 'bodies').map(
     (raw, index): FlyoverBodyPresentation => {
       const path = `bodies[${index}]`;
@@ -526,9 +631,73 @@ export function readFlyoverPresentation(
       fail('bodies', `has unknown Body ${id}`);
     }
   }
+  const rawLighting = root['lighting'];
+  if (
+    typeof rawLighting !== 'object' ||
+    rawLighting === null ||
+    Array.isArray(rawLighting)
+  ) {
+    fail('lighting', 'should be an object');
+  }
+  const lightingKind = text(
+    (rawLighting as Record<string, unknown>)['kind'],
+    'lighting.kind'
+  );
+  let lighting: FlyoverLighting;
+  if (targ) {
+    const source = object(rawLighting, 'lighting', ['kind', 'sourceBodyId']);
+    literal(source['kind'], 'body', 'lighting.kind');
+    const sourceBodyId = literal(
+      source['sourceBodyId'],
+      'sun',
+      'lighting.sourceBodyId'
+    );
+    if (!bodyIds.has(sourceBodyId)) {
+      fail('lighting.sourceBodyId', 'should reference a Body');
+    }
+    lighting = { kind: 'body', sourceBodyId };
+  } else {
+    if (lightingKind !== 'camera-headlight') {
+      fail('lighting.kind', 'should be camera-headlight');
+    }
+    object(rawLighting, 'lighting', ['kind']);
+    lighting = { kind: 'camera-headlight' };
+  }
   const base = {
-    backdropColour: colour(root['backdropColour'], 'backdropColour'),
+    backdrop: {
+      colour: colour(rawBackdrop['colour'], 'backdrop.colour'),
+      pointSizeCssPixels: boundedPositive(
+        rawBackdrop['pointSizeCssPixels'],
+        'backdrop.pointSizeCssPixels',
+        16
+      ),
+      starColour: colour(rawBackdrop['starColour'], 'backdrop.starColour'),
+      starCount: boundedPositiveInteger(
+        rawBackdrop['starCount'],
+        'backdrop.starCount',
+        10_000
+      ),
+      starSeed: (() => {
+        const seed = integer(rawBackdrop['starSeed'], 'backdrop.starSeed');
+        return seed <= 0xff_ff_ff_ff
+          ? seed
+          : fail(
+              'backdrop.starSeed',
+              'should fit in an unsigned 32-bit integer'
+            );
+      })()
+    },
     bodies,
+    bodyMesh: { latitudeSegments, longitudeSegments },
+    camera: {
+      framingCoverage,
+      overviewAxis: literal(
+        rawCamera['overviewAxis'],
+        'positive-z',
+        'camera.overviewAxis'
+      ),
+      verticalFieldOfViewDegrees
+    },
     cameraSpeed: {
       maximumUnitsPerSecond: maximum,
       minimumUnitsPerSecond: minimum
@@ -536,7 +705,11 @@ export function readFlyoverPresentation(
     schemaVersion: 1 as const
   };
   if (!targ) {
-    return { ...base, systemId: 'gamma' };
+    return {
+      ...base,
+      lighting: lighting as GammaPresentationDocument['lighting'],
+      systemId: 'gamma'
+    };
   }
   const surface = object(root['surfaceColours'], 'surfaceColours', [
     'ocean',
@@ -637,6 +810,7 @@ export function readFlyoverPresentation(
   return {
     ...base,
     islands,
+    lighting: lighting as TargPresentationDocument['lighting'],
     surfaceColours: {
       coastline: colour(surface['coastline'], 'surfaceColours.coastline'),
       ground: colour(surface['ground'], 'surfaceColours.ground'),

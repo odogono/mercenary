@@ -44,9 +44,12 @@ test('Targ and Gamma boot through the isolated Flyover document', async ({
       requests.push(new URL(request.url()).pathname)
     );
     await page.goto(path);
-    await expect(page.getByRole('status')).toContainText(
-      'renderer is not yet available'
+    await expect(page.locator('html')).toHaveAttribute(
+      'data-flyover-ready',
+      'true'
     );
+    await expect(page.locator('#flyover')).toBeVisible();
+    await expect(page.locator('#status')).toBeHidden();
     await expect(page.getByRole('alert')).toBeHidden();
     expect(await page.locator('html').getAttribute('data-body-count')).toBe(
       bodyCount

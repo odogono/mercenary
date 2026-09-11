@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-09-11
+
+### Added
+
+- The Targ and Gamma debug routes now open a sessionless Orbital Flyover with a System-space
+  Camera, deterministic overview and Body-query entry poses, ten geometrically spaced speed
+  notches, and frame-rate-independent keyboard flight. Flyover movement is independent of the
+  Targ Orrery clock, does not track moving Bodies, and never rewrites the URL.
+- A dedicated WebGL2 renderer draws outward-wound Body spheres, a separately seeded 2,048-star
+  Flyover Backdrop, adaptive finite depth planes, and black unlit hemispheres. Targ uses its
+  emissive sun as the live light source; Gamma uses a Camera-position headlight.
+- The Flyover reuses the Browser Shell's Damocles panel component as a trimmed, non-interactive
+  navigation display. It reports the System, nearest Body, Orbital Range, speed and
+  Body-relative Cartesian position directly from Flyover state without creating or reading a
+  Gameplay Session.
+- Strict schema-v1 Flyover presentation documents now carry Camera framing, Body-mesh,
+  Backdrop and lighting contracts with authored, recovered and derived provenance. Blocking
+  diagnostics stop rendering and input after document, WebGL, shader or context-loss failures.
+- Deterministic unit and browser coverage exercises the render-document boundary, generated
+  geometry and Backdrop, camera controls and entry behavior, nearest-Body selection, runtime
+  delta capping, failure handling, shared panel rendering, and four fixed review captures.
+
+### Changed
+
+- Gamma's 29 recovered Bodies now use individually authored colours based on the Damocles
+  System presentation instead of a uniform neutral inspection palette.
+- ADR 0042 records the Camera Pose as System-space, with Body-relative coordinates derived for
+  navigation displays rather than rebasing the Camera when the nearest Body changes.
+
 ## [0.15.0] - 2026-09-08
 
 ### Added
