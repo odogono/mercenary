@@ -17,6 +17,8 @@ export interface ErisCell {
   readonly z: number;
 }
 
+/// Where the player stands and faces, in Eris's own terms: raw engine units with north at +z
+/// and east at +x, and a bearing in radians clockwise from north (#204).
 export interface ErisPose {
   readonly heading: number;
   readonly position: Vector3;
@@ -56,15 +58,39 @@ export const cellOf = (position: Vector3, grid: ErisGrid): ErisCell => ({
   z: Math.floor(position.z / grid.cellUnits) - grid.origin.z
 });
 
-/// A Damocles heading byte as radians under the document's convention.
+const TURN = 2 * Math.PI;
+
+const wrapBearing = (bearing: number): number => {
+  const wrapped = bearing % TURN;
+  return wrapped < 0 ? wrapped + TURN : wrapped;
+};
+
+/// The Damocles camera yaw word as a bearing clockwise from north, under the recovered
+/// convention the document states: `yawUnitsPerTurn` per turn, `yawNorth` facing north,
+/// rising to the right (#204).
+export const bearingFromYaw = (
+  yaw: number,
+  orientation: ErisPresentationDocument['orientation']
+): number =>
+  wrapBearing(
+    ((yaw - orientation.yawNorth) / orientation.yawUnitsPerTurn) * TURN
+  );
+
+/// A Damocles Instance heading byte as a bearing.
 ///
-/// The byte's angular convention is undecoded (#204); the document names the placeholder,
-/// and this is the one place that turns the byte into an angle.
-export const headingFromByte = (byte: number | null): number =>
-  byte === null ? 0 : (byte / 256) * 2 * Math.PI;
+/// The byte is read as the camera yaw at a quarter of its resolution, 256 steps per turn on the
+/// same zero. That scale is a hypothesis: only resident objects carry the byte, none of Eris's
+/// surface structures do, and no capture has yet tied a byte to a drawn orientation (#204).
+export const headingFromByte = (
+  byte: number | null,
+  orientation: ErisPresentationDocument['orientation']
+): number =>
+  byte === null
+    ? 0
+    : bearingFromYaw((byte * orientation.yawUnitsPerTurn) / 256, orientation);
 
 export const startPose = (doc: ErisPresentationDocument): ErisPose => ({
-  heading: doc.start.headingRadians,
+  heading: bearingFromYaw(doc.start.yaw, doc.orientation),
   position: doc.start.position
 });
 
@@ -116,7 +142,7 @@ export const erisSurfaceFrom = (
     const mesh = exteriorMesh(model);
     placements.push({
       faceCount: mesh?.faces.length ?? 0,
-      heading: headingFromByte(location.heading),
+      heading: headingFromByte(location.heading, doc.orientation),
       id: instance.id,
       mesh,
       modelId: model.id,

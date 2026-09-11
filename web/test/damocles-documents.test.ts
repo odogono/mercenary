@@ -23,7 +23,10 @@ describe('the authored Eris presentation document', () => {
       z: 0x00_88_6c_2d
     });
     expect(document.start.positionProvenance).toBe('recovered');
-    expect(document.start.headingProvenance).toBe('authored');
+    expect(document.start.yaw).toBe(0x6_00);
+    expect(document.start.yawProvenance).toBe('recovered');
+    expect(document.orientation.yawUnitsPerTurn).toBe(1024);
+    expect(document.orientation.yawNorth).toBe(0x2_00);
     expect(document.walk.speedProvenance).toBe('derived');
     expect(document.ground.colour).toBe('#006d00');
     expect(document.lighting.shadows).toBe(false);

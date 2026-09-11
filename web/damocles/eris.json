@@ -9,16 +9,23 @@
   "grid": {
     "cellUnits": 65536,
     "cellsPerAxis": 16,
-    "origin": { "x": 64, "z": 128 },
+    "origin": {
+      "x": 64,
+      "z": 128
+    },
     "provenance": "recovered",
     "note": "First-world Eris workspace origin from the $7A92/$7A2C world-local camera pairs; 65,536 raw units per cell (docs/research/damocles-catalogue.md)."
   },
   "start": {
-    "position": { "x": 4681905, "y": 63, "z": 8940589 },
+    "position": {
+      "x": 4681905,
+      "y": 63,
+      "z": 8940589
+    },
     "positionProvenance": "recovered",
-    "headingRadians": 4.384,
-    "headingProvenance": "authored",
-    "evidence": "research/damocles-st/snapshots/eris-spaceport-onfoot.sav: $7A92 = $004770B1, $7A96 = 63, $7A9A = $00886C2D, on foot ($7A8E = 1), cell $87. The yaw word is undecoded (#204); the authored heading frames the spaceport tower to the right as the start capture does."
+    "yaw": 1536,
+    "yawProvenance": "recovered",
+    "evidence": "research/damocles-st/snapshots/eris-spaceport-onfoot.sav: $7A92 = $004770B1, $7A96 = 63, $7A9A = $00886C2D, on foot ($7A8E = 1), cell $87; camera yaw word $7AA2 = $0600, the panel compass centred on N (docs/research/damocles-walk-board-flight.md, yaw-probe runs 2026-09-11)."
   },
   "eye": {
     "heightUnits": 63,
@@ -27,16 +34,20 @@
   "walk": {
     "unitsPerSecond": 327.68,
     "speedProvenance": "derived",
-    "turnRadiansPerSecond": 1.5708,
-    "turnProvenance": "authored",
-    "evidence": "Speed: 3 cells over 30,000 VBL at 50 Hz (observe-walk-toward-building run, docs/research/damocles-walk-board-flight.md); one observation, no step model (#205). Turn rate is a placeholder."
+    "turnRadiansPerSecond": 0.49,
+    "turnProvenance": "derived",
+    "evidence": "Speed: 3 cells over 30,000 VBL at 50 Hz (observe-walk-toward-building run, docs/research/damocles-walk-board-flight.md); one observation, no step model (#205). Turn: $7AA2 advances $50 yaw units in the first second of a held stick (80/1024 of a turn, 0.49 rad/s) and quickens to about $70 per second after four seconds; the constant here is the opening rate and the acceleration is not modelled (#205)."
   },
   "orientation": {
-    "modelZ": "negate",
-    "positiveTurn": "toward -x",
-    "zeroFaces": "-z",
-    "provenance": "authored",
-    "note": "Copies Targ's Camera convention so the shared view transform needs no change; the Damocles heading byte's angular convention is undecoded (#204)."
+    "north": "+z",
+    "east": "+x",
+    "yawUnitsPerTurn": 1024,
+    "yawNorth": 512,
+    "yawPositive": "clockwise",
+    "provenance": "recovered",
+    "modelZ": "keep",
+    "modelZProvenance": "authored",
+    "note": "Camera yaw $7AA2 (twin $7AC2) wraps every 1024 units; N is centred at $0200 mod $0400, E at $0300, S at $0000, W at $0100, and a right stick raises it. Walking at N raises $7A9A (z) and at E raises $7A92 (x), so Eris is left-handed seen from above with +y up; the frame mirrors z for the shared right-handed Camera. Whether a model's z runs with world z is not decoded; modelZ is authored to match the Working Authority's spaceport view (docs/research/damocles-walk-board-flight.md)."
   },
   "camera": {
     "verticalFieldOfViewDegrees": 45,
@@ -81,7 +92,11 @@
     "note": "Palette entry 246 read as the daytime sky; no sky model is decoded."
   },
   "lighting": {
-    "sunDirection": { "x": -0.4, "y": 0.8, "z": -0.45 },
+    "sunDirection": {
+      "x": -0.4,
+      "y": 0.8,
+      "z": -0.45
+    },
     "shadows": false,
     "provenance": "authored",
     "note": "Reserved for an Enhanced-preset shadow pass (#209). Faces are drawn flat in their catalogue colours."

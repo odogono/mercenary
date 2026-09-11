@@ -43,7 +43,7 @@ const square = (doubleSided = false): Mesh => ({
 
 const placement = (
   mesh: Mesh | undefined,
-  position = { x: 0, y: 0, z: -1000 }
+  position = { x: 0, y: 0, z: 1000 }
 ): ErisPlacement => ({
   faceCount: mesh?.faces.length ?? 0,
   heading: 0,
@@ -115,11 +115,39 @@ describe('an Eris frame in Filled Presentation', () => {
     expect(reversed.slice(12, 15)).toEqual(firstFace.slice(0, 3));
   });
 
-  test('applies the document Z convention and the placement heading', async () => {
+  test('puts north ahead and east on the right', async () => {
     const { doc } = await load();
-    const keep: ErisPresentationDocument = {
+    const mesh: Mesh = {
+      faces: [{ colour: '#00ff00', sourceColour: 0, vertices: [0, 1, 2] }],
+      lines: [],
+      vertices: [
+        [0, 0, 0],
+        [10, 0, 0],
+        [0, 10, 0]
+      ]
+    };
+    const seen = (at: { x: number; z: number }, heading: number) =>
+      Array.from(
+        planErisFrame(
+          surfaceOf([placement(mesh, { x: at.x, y: 0, z: at.z })]),
+          { ...origin, heading },
+          doc
+        ).vertices.slice(72, 75)
+      );
+    // Facing north (a zero bearing), a placement at +z is ahead at positive depth and one at
+    // +x is on the right, as the Working Authority's spaceport tower is from the start.
+    expect(seen({ x: 0, z: 1000 }, 0)[2]).toBeCloseTo(1000, 6);
+    expect(seen({ x: 1000, z: 0 }, 0)[0]).toBeCloseTo(1000, 6);
+    // A quarter turn right faces east, so the +x placement is now ahead.
+    expect(seen({ x: 1000, z: 0 }, Math.PI / 2)[2]).toBeCloseTo(1000, 6);
+    expect(seen({ x: 1000, z: 0 }, Math.PI / 2)[0]).toBeCloseTo(0, 6);
+  });
+
+  test('applies the document Z convention and the placement bearing', async () => {
+    const { doc } = await load();
+    const negate: ErisPresentationDocument = {
       ...doc,
-      orientation: { ...doc.orientation, modelZ: 'keep' }
+      orientation: { ...doc.orientation, modelZ: 'negate' }
     };
     const mesh: Mesh = {
       faces: [{ colour: '#00ff00', sourceColour: 0, vertices: [0, 1, 2] }],
@@ -138,13 +166,13 @@ describe('an Eris frame in Filled Presentation', () => {
           document
         ).vertices.slice(72, 75)
       );
-    // Camera at the origin facing -Z: a model vertex at +100 z sits behind (negative
-    // depth) when kept, ahead when negated.
-    expect(at(keep, 0)[2]).toBeCloseTo(-100, 6);
+    // Camera at the origin facing north: a model vertex at +100 z sits ahead (positive
+    // depth) when kept, behind when negated.
     expect(at(doc, 0)[2]).toBeCloseTo(100, 6);
-    // A quarter turn about +Y moves that vertex onto the X axis.
+    expect(at(negate, 0)[2]).toBeCloseTo(-100, 6);
+    // A quarter turn clockwise about +Y moves that vertex onto +x, the right of the view.
     const turned = at(doc, Math.PI / 2);
-    expect(Math.abs(turned[0]!)).toBeCloseTo(100, 6);
+    expect(turned[0]).toBeCloseTo(100, 6);
     expect(turned[2]).toBeCloseTo(0, 6);
   });
 

@@ -23,9 +23,9 @@ const wrap = (heading: number): number => {
 
 /// One step of walking. Pure: the same pose, intent and time always give the same pose.
 ///
-/// Heading zero faces -Z and a positive turn goes toward -X, matching the Camera's reading of
-/// a heading; `intent.turn` is positive to the right, so it is subtracted. Forward is the
-/// direction the Camera looks along.
+/// The heading is a bearing clockwise from north, as the recovered yaw word counts (#204):
+/// `intent.turn` is positive to the right, so it is added. Forward at north is +z and at
+/// east is +x, which is how the camera position words move under a held stick.
 export const walk = (
   pose: ErisPose,
   intent: Intent,
@@ -33,15 +33,15 @@ export const walk = (
   rules: WalkRules
 ): ErisPose => {
   const heading = wrap(
-    pose.heading - intent.turn * rules.turnRadiansPerSecond * seconds
+    pose.heading + intent.turn * rules.turnRadiansPerSecond * seconds
   );
   const step = intent.walk * rules.unitsPerSecond * seconds;
   return {
     heading,
     position: {
-      x: pose.position.x - Math.sin(heading) * step,
+      x: pose.position.x + Math.sin(heading) * step,
       y: rules.eyeHeight,
-      z: pose.position.z - Math.cos(heading) * step
+      z: pose.position.z + Math.cos(heading) * step
     }
   };
 };

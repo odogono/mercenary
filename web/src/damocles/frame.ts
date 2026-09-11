@@ -83,8 +83,18 @@ const trianglesOf = (mesh: Mesh): Triangles => {
   return result;
 };
 
-/// A model vertex in the world: the document's Z convention, the placement's heading about
-/// +Y, then the placement's position.
+/// Eris in the Camera's hands. Eris has north at +z and east at +x, left-handed from above
+/// with +y up; the Camera faces -z at heading zero with +x on its right and turns toward -x
+/// as its heading rises. Mirroring z and negating the bearing maps one onto the other, so
+/// north is straight ahead at a zero bearing and east is on the right (#204).
+const toCameraSpace = (world: Vector3): Vector3 => ({
+  x: world.x,
+  y: world.y,
+  z: -world.z
+});
+
+/// A model vertex in Eris: the document's Z convention, the placement's bearing about +Y
+/// (clockwise from north seen from above), then the placement's position.
 const placed = (
   vertex: readonly [number, number, number],
   placement: ErisPlacement,
@@ -96,9 +106,9 @@ const placed = (
   const sin = Math.sin(placement.heading);
   const cos = Math.cos(placement.heading);
   return {
-    x: placement.position.x + x * cos - z * sin,
+    x: placement.position.x + x * cos + z * sin,
     y: placement.position.y + y,
-    z: placement.position.z + x * sin + z * cos
+    z: placement.position.z - x * sin + z * cos
   };
 };
 
@@ -109,17 +119,17 @@ export const planErisFrame = (
 ): ErisFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
-    heading: pose.heading,
+    heading: -pose.heading,
     nearPlane: doc.camera.nearPlane,
     pitch: 0,
-    position: pose.position
+    position: toCameraSpace(pose.position)
   });
   const negateZ = doc.orientation.modelZ === 'negate';
   const values: number[] = [];
   let triangleCount = 0;
   let skippedFaces = 0;
   const emit = (world: Vector3, colour: readonly [number, number, number]) => {
-    const view = camera.viewSpace(world);
+    const view = camera.viewSpace(toCameraSpace(world));
     values.push(view.x, view.y, view.z, colour[0], colour[1], colour[2]);
   };
 

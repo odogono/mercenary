@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { parseCatalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
+  bearingFromYaw,
   cellOf,
   erisSurfaceFrom,
   headingFromByte,
@@ -77,11 +78,28 @@ describe('the Eris surface from the Damocles Catalogue', () => {
     expect(spaceport.name).toContain('CAPITAL');
   });
 
-  test('reads headings under the documented placeholder convention', () => {
-    expect(headingFromByte(null)).toBe(0);
-    expect(headingFromByte(0)).toBe(0);
-    expect(headingFromByte(64)).toBeCloseTo(Math.PI / 2, 12);
-    expect(headingFromByte(255)).toBeCloseTo((255 / 256) * 2 * Math.PI, 12);
+  test('reads the camera yaw as a bearing clockwise from north', async () => {
+    const { doc } = await load();
+    const orientation = doc.orientation;
+    // $0600 at the start capture, N centred on the compass tape.
+    expect(bearingFromYaw(0x6_00, orientation)).toBeCloseTo(0, 12);
+    expect(startPose(doc).heading).toBeCloseTo(0, 12);
+    // A right turn raises the word; E is a quarter turn on.
+    expect(bearingFromYaw(0x7_00, orientation)).toBeCloseTo(Math.PI / 2, 12);
+    expect(bearingFromYaw(0x0_00, orientation)).toBeCloseTo(Math.PI, 12);
+    expect(bearingFromYaw(0x1_00, orientation)).toBeCloseTo(
+      (3 * Math.PI) / 2,
+      12
+    );
+    // The word wraps every $400.
+    expect(bearingFromYaw(0x12_18, orientation)).toBeCloseTo(
+      bearingFromYaw(0x02_18, orientation),
+      12
+    );
+    // The instance byte is read at a quarter of the yaw resolution.
+    expect(headingFromByte(null, orientation)).toBe(0);
+    expect(headingFromByte(0x80, orientation)).toBeCloseTo(0, 12);
+    expect(headingFromByte(0xc0, orientation)).toBeCloseTo(Math.PI / 2, 12);
     expect(
       cellOf(
         { x: 64 * 65_536 - 1, y: 0, z: 128 * 65_536 },
