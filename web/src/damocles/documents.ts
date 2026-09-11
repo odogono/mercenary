@@ -48,6 +48,7 @@ export interface ErisPresentationDocument {
   /// and east is +x, so seen from above with +y up the world is left-handed; the frame mirrors
   /// z for the shared right-handed Camera. The yaw word counts a full turn in
   /// `yawUnitsPerTurn` units, reads `yawNorth` facing north and rises turning right.
+  /// Instance heading bytes use the same units at 1/4 resolution with zero at north.
   readonly orientation: {
     readonly east: '+x';
     readonly modelZ: 'keep' | 'negate';

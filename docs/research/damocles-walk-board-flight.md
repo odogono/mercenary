@@ -145,7 +145,8 @@ Joystick still steers while boarded (`$79C2` poke / stick recording).
 ### Camera yaw and world axes — Confirmed (Working Authority)
 
 Research for [#204](https://github.com/odogono/mercenary/issues/204). Probe:
-`research/damocles-st/scripts/yaw-probe.py` (`hold`, `period`, `axis` modes),
+`research/damocles-st/scripts/yaw-probe.py` (`hold`, `period`, `axis`, `heading`
+modes),
 booting `snapshots/eris-spaceport-onfoot.sav` headless with fast-forward off
 and driving the joystick-1 soft-copy `$79C2` over the command FIFO. Runs (all
 2026-09-11, gitignored under `work/`): `yaw-probe-20260911T144100Z-e8a58b60`
@@ -202,11 +203,39 @@ mirrors z into its right-handed Camera (`web/damocles/eris.json`,
 facing due north with the Capital Spaceport tower on the right edge of the
 view, as the Working Authority capture shows and as the remake now draws.
 
-**Still open.** Whether the Damocles Instance heading byte shares this scale
-(256 per turn on the same zero) is untested: only resident objects carry the
-byte and no capture has tied a value to a drawn orientation. Whether a
-model's z runs with world z is authored from the spaceport view (modelZ
-`keep` puts the wing east of the tower as the capture does).
+**Instance heading byte.** Resident objects store one byte at **`$79CD+slot`**
+(V.I.P. limo slot 5 = `$79D2`). The byte is **256 steps per turn**, a quarter
+of the camera yaw word: one heading step is four yaw units. It does **not**
+share the yaw word's raw zero. Byte `$00` is **north**, not south.
+
+Boarding the parked limo (`heading = $00`) copies occupancy onto slot 5 and
+sets `$7AA2 = $01FC` (four units shy of `$0200`, still N on the compass). The
+on-foot start at `$0600` is the same cardinal. So:
+
+| Heading byte | Camera yaw mod `$400` | Cardinal |
+|---|---|---|
+| `$00` | `$200` | N |
+| `$40` | `$300` | E |
+| `$80` | `$000` | S |
+| `$C0` | `$100` | W |
+
+`camera ≡ (byte × 4 + $200) mod $400`. A larger byte is a larger yaw word, so
+the byte rises **clockwise** with the camera. Leave does not write the live
+camera yaw back into `$79D2` (left-limo capture still reads `$00` after a
+drive). Poking `$79D2` / `$79D4` sticks in RAM but does not rotate the drawn
+mesh (`yaw-probe.py heading`; runs
+`yaw-heading-20260911T155245Z-12d92efd`,
+`yaw-heading-20260911T155437Z-3fb9e0fc`,
+`yaw-heading-20260911T160048Z-7d9a910d`): the byte is the authored parked
+pose, consumed when the instance is built or boarded, not every frame.
+
+Eris's recovered surface vehicles are `$00` or `$FF` (the arrival ship); no
+second parked cardinal was available on this body. Structures carry
+`heading: null` and stay at bearing 0 (north).
+
+**Still open.** Whether a model's local z runs with world z is authored from
+the spaceport view (modelZ `keep` puts the wing east of the tower as the
+capture does).
 
 ### Flight / VOID / time under flight — Unresolved
 
@@ -249,4 +278,5 @@ control-rate tables.
 | VOID / flight dynamics not reached | limo ground-only; ship not refitted |
 | Camera yaw `$7AA2`/`$7AC2`, 1024 per turn, N = `$200`, clockwise | yaw-probe hold/period runs; compass tape frames |
 | North = +z, east = +x (`$7A9A`, `$7A92`) | yaw-probe axis runs |
+| Instance heading `$79CD+slot`, 256 per turn, `$00` = N, clockwise | occ-boarded `$7AA2=$01FC` at limo `$00`; yaw-probe heading pokes |
 | Snapshots | `eris-spaceport-onfoot`, `boarded-car`, `boarded-limo`, `left-limo` |

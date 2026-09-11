@@ -16,7 +16,7 @@ heading array occupies one byte per slot:
 | Z             | `$6BA8` | signed 16.16 surface-grid coordinate             |
 | Association A | `$6FA8` | draw, structure-group and interaction state      |
 | Association B | `$73A8` | body, surface/interior, level and cell selectors |
-| Heading       | `$79CD` | raw one-byte heading                             |
+| Heading       | `$79CD` | one-byte heading, 256/turn, `$00` = north        |
 
 The arrays in the pinned first-world, fresh on-foot, and captured interior runs
 are byte-identical over `$63A8..$77A7`, with SHA-256
