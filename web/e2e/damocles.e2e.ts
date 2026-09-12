@@ -139,16 +139,16 @@ test('R latches running, which lights the lamp and lengthens the step', async ({
   await page.keyboard.press('KeyR');
   await expect(lamp).toHaveClass(/on/);
   const ran = await leg();
-  // Running is authored at three times the step, so a held walk covers far more
-  // ground; the bounds are loose because the legs are timed in the browser.
-  expect(ran).toBeGreaterThan(walked * 2);
-  expect(ran).toBeLessThan(walked * 4);
+  // Exact-VBL Working Authority traces recover a $50 run update against a
+  // $30 walk update (5/3); the bounds allow browser-timed leg variation.
+  expect(ran).toBeGreaterThan(walked * 1.4);
+  expect(ran).toBeLessThan(walked * 1.9);
 
   // The toggle outlasts the key, and a second press puts it back.
   await expect(lamp).toHaveClass(/on/);
   await page.keyboard.press('KeyR');
   await expect(lamp).not.toHaveClass(/on/);
-  expect(await leg()).toBeLessThan(ran * 0.6);
+  expect(await leg()).toBeLessThan(ran * 0.75);
 });
 
 test('a long walk crosses into the neighbouring cell', async ({ page }) => {

@@ -13,12 +13,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   on; the latch belongs to the Control Profile, so no Save, Session Resume or trace carries it.
   R does not also answer a Benson poll, for the reason firing does not (#205).
 - `/damocles` honours running at all: the Eris on-foot Mover lengthens its step by a new
-  `walk.runMultiplier` in `web/damocles/eris.json`, authored at Targ's own three with
-  provenance `authored` because no held-`R` leg has been measured (#205).
+  `walk.runMultiplier` in `web/damocles/eris.json`.
 
 ### Changed
 
 - Shift no longer runs, and is the browser's key again.
+- Exact-VBL Working Authority traces replace Eris's authored run factor: `R` changes each
+  forward update from `$30` to `$50` (`5/3` times) and the initial north-facing turn from
+  `$10` to `$18` (`3/2` times). The browser retains derived seconds-based base rates because
+  the original applies quantized, heading-dependent updates on its render/game loop rather
+  than once per VBL (#205).
 - The run lamp reports the run toggle rather than movement, in both Panel Renditions. It is the
   only feedback a latched key has, and it stays dark aboard a craft, where running moves
   nothing.
