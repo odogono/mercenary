@@ -190,7 +190,8 @@ describe('the Benson Panel view model', () => {
       snapshotOf({
         player: playerState({ position: { x: 0, y: 0, z: 0 }, speed: 3 })
       }),
-      context()
+      context(),
+      true
     );
     expect(walking.runLamp).toBeTrue();
     expect(walking.altitudeLamp).toBeFalse();
@@ -202,12 +203,23 @@ describe('the Benson Panel view model', () => {
         occupancy: { kind: 'aboard', slot: 2 },
         player: playerState({ position: { x: 0, y: 12, z: 0 }, speed: 40 })
       }),
-      context()
+      context(),
+      true
     );
     expect(flyingLow.groundLamp).toBeTrue();
     expect(flyingLow.altitudeLamp).toBeTrue();
-    // Aboard a craft the player is not running.
+    // Aboard a craft the run toggle moves nothing, so the lamp stays dark.
     expect(flyingLow.runLamp).toBeFalse();
+  });
+
+  test('the run lamp follows the run toggle rather than moving', () => {
+    const moving = snapshotOf({
+      player: playerState({ position: { x: 0, y: 0, z: 0 }, speed: 80 })
+    });
+
+    expect(panelViewModel(moving, context()).runLamp).toBeFalse();
+    expect(panelViewModel(moving, context(), true).runLamp).toBeTrue();
+    expect(panelViewModel(snapshotOf(), context(), true).runLamp).toBeTrue();
   });
 
   test('keeps the attack lamp dark, having nothing on Targ to report', () => {

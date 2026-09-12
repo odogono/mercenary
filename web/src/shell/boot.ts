@@ -562,13 +562,13 @@ try {
       setTime: secondsOfDay =>
         targClock.set(session.snapshot.elapsed, secondsOfDay),
       time: () => targClock.secondsOfDay(session.snapshot.elapsed),
-    typeface: face => {
-      applyTypeface(document.documentElement, face, storage);
-    }
-  },
-  release,
-  { execute: executeConsoleCommand }
-);
+      typeface: face => {
+        applyTypeface(document.documentElement, face, storage);
+      }
+    },
+    release,
+    { execute: executeConsoleCommand }
+  );
   recordBensonMessage = () => {
     shellConsole.write(bensonTranscript.observe(snapshot.bensonMessage));
   };
@@ -859,7 +859,13 @@ try {
       presentation.roads
     );
     const player = snapshot.player;
-    const panelModel = panelViewModel(snapshot, panelContext());
+    const panelModel = panelViewModel(
+      snapshot,
+      panelContext(),
+      // Read from the Control Profile rather than from the session's intent, which the release
+      // path resets to `IDLE` while the toggle itself stays latched.
+      controls.intent.running
+    );
     panel.draw(
       departing || arriving
         ? arrivalPanelViewModel(

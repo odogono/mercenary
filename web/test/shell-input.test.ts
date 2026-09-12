@@ -91,17 +91,35 @@ describe('the browser Control Profile', () => {
     expect(profile.intent.pitch).toBe(1);
   });
 
-  test('either Shift key supplies running without acknowledging a script', () => {
+  test('R latches running on and off without acknowledging a script', () => {
     const { calls, profile } = harness();
 
-    profile.keyDown(input('ShiftLeft'));
+    expect(profile.keyDown(input('KeyR'))).toBeTrue();
     expect(profile.intent.running).toBeTrue();
     expect(calls).toEqual([]);
-    profile.keyDown(input('ShiftRight'));
-    profile.keyUp(input('ShiftLeft'));
+    // Running is a mode, so it outlasts the key that set it.
+    profile.keyUp(input('KeyR'));
     expect(profile.intent.running).toBeTrue();
-    profile.keyUp(input('ShiftRight'));
+    profile.keyDown(input('KeyR'));
     expect(profile.intent.running).toBeFalse();
+  });
+
+  test('R does not retoggle while it is held down', () => {
+    const { profile } = harness();
+
+    profile.keyDown(input('KeyR'));
+    expect(profile.keyDown(input('KeyR', { repeat: true }))).toBeTrue();
+    expect(profile.keyDown(input('KeyR', { repeat: true }))).toBeTrue();
+    expect(profile.intent.running).toBeTrue();
+  });
+
+  test('Shift no longer runs, and returns to the browser', () => {
+    const { calls, profile } = harness();
+
+    expect(profile.keyDown(input('ShiftLeft'))).toBeFalse();
+    expect(profile.keyDown(input('ShiftRight'))).toBeFalse();
+    expect(profile.intent.running).toBeFalse();
+    expect(calls).toEqual([]);
   });
 
   test('F fires, and does not also answer a script', () => {
@@ -286,16 +304,19 @@ describe('the browser Control Profile', () => {
     expect(profile.intent.walk).toBe(0);
   });
 
-  test('releasing all keys clears held movement and running', () => {
+  test('releasing all keys clears held movement but not the run toggle', () => {
     const { profile } = harness();
     profile.keyDown(input('ArrowUp'));
-    profile.keyDown(input('ShiftLeft'));
+    profile.keyDown(input('ArrowRight'));
+    profile.keyDown(input('KeyR'));
 
     profile.releaseAll();
 
+    // Losing focus or opening the System Menu releases the keys the player is
+    // holding; running is a mode they chose, so it is still on when they return.
     expect(profile.intent).toEqual({
       pitch: 0,
-      running: false,
+      running: true,
       turn: 0,
       walk: 0
     });

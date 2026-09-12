@@ -160,6 +160,45 @@ test('the arrow keys walk the player and the Session Resume is Damocles-only', a
   expect(Number(await frame.getAttribute('data-z'))).toBeCloseTo(walkedZ, 3);
 });
 
+test('R latches running, which lights the lamp and lengthens the step', async ({
+  page
+}) => {
+  await page.goto('/damocles');
+  await expect(page.locator('#frame')).toHaveAttribute('data-state', 'ready');
+  const frame = page.locator('#frame');
+  const lamp = page.locator('#panel-damocles [data-lamp=runLamp]');
+
+  // One leg of the same held walk, so the two are compared over equal frames.
+  const leg = async (): Promise<number> => {
+    const fromX = Number(await frame.getAttribute('data-x'));
+    const fromZ = Number(await frame.getAttribute('data-z'));
+    await page.keyboard.down('ArrowUp');
+    await page.waitForTimeout(500);
+    await page.keyboard.up('ArrowUp');
+    return Math.hypot(
+      Number(await frame.getAttribute('data-x')) - fromX,
+      Number(await frame.getAttribute('data-z')) - fromZ
+    );
+  };
+
+  await expect(lamp).not.toHaveClass(/on/);
+  const walked = await leg();
+
+  await page.keyboard.press('KeyR');
+  await expect(lamp).toHaveClass(/on/);
+  const ran = await leg();
+  // Exact-VBL Working Authority traces recover a $50 run update against a
+  // $30 walk update (5/3); the bounds allow browser-timed leg variation.
+  expect(ran).toBeGreaterThan(walked * 1.4);
+  expect(ran).toBeLessThan(walked * 1.9);
+
+  // The toggle outlasts the key, and a second press puts it back.
+  await expect(lamp).toHaveClass(/on/);
+  await page.keyboard.press('KeyR');
+  await expect(lamp).not.toHaveClass(/on/);
+  expect(await leg()).toBeLessThan(ran * 0.75);
+});
+
 test('a long walk crosses into the neighbouring cell', async ({ page }) => {
   await page.goto('/e2e/damocles-fixture.html');
   await expect(page.locator('#result')).not.toHaveText('loading');

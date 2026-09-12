@@ -43,10 +43,14 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
     const session = new DamoclesSession(loaded);
     session.intent = intent({ walk: 1 });
     session.advance(120);
-    const model = damoclesPanelViewModel(session.snapshot, loaded.doc, true);
+    const model = damoclesPanelViewModel(session.snapshot, loaded.doc);
     expect(model.locationLabel).toMatch(/^\d{2}-\d{2}$/);
     expect(model.locationLabel).not.toBe('07-08');
-    expect(model.runLamp).toBe(true);
+    // Walking alone does not light the run lamp; the run toggle does.
+    expect(model.runLamp).toBe(false);
+    expect(
+      damoclesPanelViewModel(session.snapshot, loaded.doc, true).runLamp
+    ).toBe(true);
     expect(model.compassDegrees).toBeGreaterThanOrEqual(0);
     expect(model.compassDegrees).toBeLessThan(360);
     expect(model.heading).toMatch(/^\d{3}°$/);

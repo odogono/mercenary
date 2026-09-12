@@ -86,11 +86,14 @@ export type Composition = "panel" | "strip";
 - Targ rendition mapping: elevation←pitch, LOCATION←position/cellSize grid (ROOM nn
   underground), ALTITUDE←the middle/high bytes of position.y, SPEED signed, the shared
   23-cell Benson Display + `BENSON G9-ST` caption, COMPASS←heading; the red altitude lamp is
-  lit while aboard a craft.
+  lit while aboard a craft, and the lamp beside SPEED reports the run toggle, there being no
+  attack warning in Targ for it to report instead.
 - Damocles rendition: same data in Damocles dressing — inventory window←carried residence
   entries (names via the context map), cash←credits, clock←Targ time-of-day from elapsed;
   T/P gauges and impact-clock semantics are static dressing; ground-proximity and run lamps
-  map, the attack lamp is dressing.
+  map, the attack lamp is dressing. The run lamp reports the run toggle rather than movement,
+  which is the only feedback a latched key has, and stays dark aboard a craft, where running
+  moves nothing.
 - All-cell Structure Reach keeps Road Workspace links exclusive to the occupied Surface Cell.
   Bright Distant Structure Ink fades continuously from occupied-cell white toward `#a0a0a0`
   over horizontal camera distance; dim Ink remains black, and Map Lines remain selected only by
@@ -157,6 +160,10 @@ export type Composition = "panel" | "strip";
   Opening any layer — the console included, though it never pauses — releases held
   keys; the menu pauses stepping (draw continues,
   `clock.reset()` on resume).
+- Running is `R`, as it is on the Working Authority, and it latches rather than following the
+  key: releasing held keys leaves it on, because a mode the player chose is not a key they are
+  holding. The latch belongs to the Control Profile, so no Save, Session Resume or trace
+  carries it, and R does not also answer a Benson poll — for the reason firing does not.
 
 ## Testing strategy
 

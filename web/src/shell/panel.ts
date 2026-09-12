@@ -81,9 +81,12 @@ export const carriedNames = (
     slot => objectNames.get(slot) ?? `OBJECT ${digits(slot, 2)}`
   );
 
+/// `running` arrives beside the Snapshot rather than inside it or inside `PanelContext`: the
+/// run toggle is Control Profile state, which is neither session state nor fixed content.
 export const panelViewModel = (
   snapshot: SessionSnapshot,
-  context: PanelContext
+  context: PanelContext,
+  running = false
 ): PanelViewModel => {
   const player = snapshot.player;
   const carried = carriedNames(snapshot, context.objectNames);
@@ -120,7 +123,7 @@ export const panelViewModel = (
         : 'TARG',
     message: snapshot.bensonMessage?.displayText ?? '',
     messageColour: snapshot.bensonColour,
-    runLamp: !aboard && player.speed !== 0,
+    runLamp: !aboard && running,
     speed: `${speed < 0 ? '-' : '+'}${digits(speed, 4)}`,
     speedLabel: `${speed < 0 ? '-' : '+'} 000 000 ${digits(speed, 3)}`
   };

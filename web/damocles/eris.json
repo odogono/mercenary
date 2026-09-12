@@ -36,7 +36,11 @@
     "speedProvenance": "derived",
     "turnRadiansPerSecond": 0.49,
     "turnProvenance": "derived",
-    "evidence": "Speed: 3 cells over 30,000 VBL at 50 Hz (observe-walk-toward-building run, docs/research/damocles-walk-board-flight.md); one observation, no step model (#205). Turn: $7AA2 advances $50 yaw units in the first second of a held stick (80/1024 of a turn, 0.49 rad/s) and quickens to about $70 per second after four seconds; the constant here is the opening rate and the acceleration is not modelled (#205)."
+    "runMultiplier": 1.6666666666666667,
+    "runTurnMultiplier": 1.5,
+    "runProvenance": "recovered",
+    "runTurnProvenance": "derived",
+    "evidence": "Speed rate: 3 cells over 30,000 VBL at 50 Hz (observe-walk-toward-building, docs/research/damocles-walk-board-flight.md), retained as a derived average because movement runs on the render/game loop rather than every VBL. Turn rate: the opening wall-clock rate is about 0.49 rad/s, retained as a derived average because the recovered increment varies with heading. Exact-VBL #205 traces recover the quantized updates: forward $30 plain and $50 under the latched R mode (5/3 times); initial north-facing right turn $10 plain and $18 under R (3/2 times), with later heading-dependent turn increments. Probe and provenance: research/damocles-st/scripts/walk-step-probe.py and docs/research/damocles-walk-board-flight.md."
   },
   "orientation": {
     "north": "+z",

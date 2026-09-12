@@ -28,6 +28,10 @@ describe('the authored Eris presentation document', () => {
     expect(document.orientation.yawUnitsPerTurn).toBe(1024);
     expect(document.orientation.yawNorth).toBe(0x2_00);
     expect(document.walk.speedProvenance).toBe('derived');
+    expect(document.walk.runMultiplier).toBeCloseTo(5 / 3, 15);
+    expect(document.walk.runTurnMultiplier).toBe(3 / 2);
+    expect(document.walk.runProvenance).toBe('recovered');
+    expect(document.walk.runTurnProvenance).toBe('derived');
     expect(document.ground.colour).toBe('#006d00');
     expect(document.lighting.shadows).toBe(false);
     expect(document.rendering.unresolvedModels).toBe('nothing');
@@ -72,6 +76,11 @@ describe('the authored Eris presentation document', () => {
     const { walk: _walk, ...withoutWalk } = base;
     expect(() => readErisPresentation(withoutWalk)).toThrow(
       '$ is missing field walk'
+    );
+    const walk = base['walk'] as Record<string, unknown>;
+    const { runMultiplier: _run, ...withoutRun } = walk;
+    expect(() => readErisPresentation({ ...base, walk: withoutRun })).toThrow(
+      'walk is missing field runMultiplier'
     );
     expect(() =>
       readErisPresentation({

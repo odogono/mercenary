@@ -103,6 +103,10 @@ export interface ErisPresentationDocument {
   readonly titleSlug: 'damocles';
   readonly walk: {
     readonly evidence: string;
+    readonly runMultiplier: number;
+    readonly runProvenance: Provenance;
+    readonly runTurnMultiplier: number;
+    readonly runTurnProvenance: Provenance;
     readonly speedProvenance: Provenance;
     readonly turnProvenance: Provenance;
     readonly turnRadiansPerSecond: number;
@@ -254,6 +258,10 @@ export const readErisPresentation = (
     'speedProvenance',
     'turnRadiansPerSecond',
     'turnProvenance',
+    'runMultiplier',
+    'runProvenance',
+    'runTurnMultiplier',
+    'runTurnProvenance',
     'evidence'
   ]);
   const orientation = object(root['orientation'], 'orientation', [
@@ -477,6 +485,16 @@ export const readErisPresentation = (
     titleSlug: literal(root['titleSlug'], 'damocles', 'titleSlug'),
     walk: {
       evidence: text(walk['evidence'], 'walk.evidence'),
+      runMultiplier: positive(walk['runMultiplier'], 'walk.runMultiplier'),
+      runProvenance: provenance(walk['runProvenance'], 'walk.runProvenance'),
+      runTurnMultiplier: positive(
+        walk['runTurnMultiplier'],
+        'walk.runTurnMultiplier'
+      ),
+      runTurnProvenance: provenance(
+        walk['runTurnProvenance'],
+        'walk.runTurnProvenance'
+      ),
       speedProvenance: provenance(
         walk['speedProvenance'],
         'walk.speedProvenance'

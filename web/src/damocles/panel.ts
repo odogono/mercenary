@@ -27,7 +27,7 @@ export const erisGridReference = (cell: ErisCell): string =>
 export const damoclesPanelViewModel = (
   snapshot: DamoclesSnapshot,
   doc: ErisPresentationDocument,
-  walking = false
+  running = false
 ): PanelViewModel => ({
   altitude: '00000',
   altitudeLamp: false,
@@ -44,7 +44,7 @@ export const damoclesPanelViewModel = (
   locationName: doc.body.name,
   message: '',
   messageColour: undefined,
-  runLamp: walking,
+  runLamp: running,
   speed: '+0000',
   speedLabel: '+ 000 000 000'
 });

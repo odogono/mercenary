@@ -40,9 +40,7 @@ const HELD_CONTROLS = new Set([
   'ArrowDown',
   'ArrowLeft',
   'ArrowRight',
-  'ArrowUp',
-  'ShiftLeft',
-  'ShiftRight'
+  'ArrowUp'
 ]);
 
 /// Codes the Browser Shell keeps for itself.
@@ -107,6 +105,11 @@ const throttleNotch = (code: string): number | undefined => {
 export class BrowserControlProfile {
   private readonly actions: ControlProfileActions;
   private readonly held = new Set<string>();
+  /// Running latches rather than following a held key, as the run key does on the Working
+  /// Authority. A mode is not a held key, so `releaseAll` leaves it alone: losing focus or
+  /// opening the System Menu must not silently cancel it. It is Control Profile state and not
+  /// Session State, so no Save, Session Resume or trace carries it.
+  private running = false;
 
   constructor(actions: ControlProfileActions) {
     this.actions = actions;
@@ -117,7 +120,7 @@ export class BrowserControlProfile {
     const onFoot = this.actions.occupancy().kind === 'onFoot';
     return intent({
       pitch: onFoot ? 0 : -vertical,
-      running: this.held.has('ShiftLeft') || this.held.has('ShiftRight'),
+      running: this.running,
       turn: axis(this.held, 'ArrowRight', 'ArrowLeft'),
       walk: onFoot ? vertical : 0
     });
@@ -144,10 +147,6 @@ export class BrowserControlProfile {
     }
 
     switch (key.code) {
-      case 'ShiftLeft':
-      case 'ShiftRight':
-        this.held.add(key.code);
-        break;
       case 'ArrowDown':
       case 'ArrowLeft':
       case 'ArrowRight':
@@ -191,6 +190,13 @@ export class BrowserControlProfile {
       // input as detected would let firing answer a question a script asked.
       case 'KeyF':
         this.actions.fire();
+        break;
+      // Running is Movement Intent, so R does not `press` either, for the same
+      // reason firing does not. The key is still held so that its release is
+      // the profile's to swallow.
+      case 'KeyR':
+        this.running = !this.running;
+        this.held.add(key.code);
         break;
       default:
         if (!ordinaryCode(key.code)) {
