@@ -36,7 +36,9 @@
     "speedProvenance": "derived",
     "turnRadiansPerSecond": 0.49,
     "turnProvenance": "derived",
-    "evidence": "Speed: 3 cells over 30,000 VBL at 50 Hz (observe-walk-toward-building run, docs/research/damocles-walk-board-flight.md); one observation, no step model (#205). Turn: $7AA2 advances $50 yaw units in the first second of a held stick (80/1024 of a turn, 0.49 rad/s) and quickens to about $70 per second after four seconds; the constant here is the opening rate and the acceleration is not modelled (#205)."
+    "runMultiplier": 3,
+    "runProvenance": "authored",
+    "evidence": "Speed: 3 cells over 30,000 VBL at 50 Hz (observe-walk-toward-building run, docs/research/damocles-walk-board-flight.md); one observation, no step model (#205). Turn: $7AA2 advances $50 yaw units in the first second of a held stick (80/1024 of a turn, 0.49 rad/s) and quickens to about $70 per second after four seconds; the constant here is the opening rate and the acceleration is not modelled (#205). Run: the Working Authority's R key is confirmed to take effect (research/damocles-st/HATARI-RESEARCH.md), but no run leg has been measured, so the factor is authored to match Targ's own run adaptation (ADR 0016) until #205 pins it."
   },
   "orientation": {
     "north": "+z",

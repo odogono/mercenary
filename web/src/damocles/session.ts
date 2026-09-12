@@ -33,6 +33,7 @@ export interface DamoclesContent {
 
 const rulesFor = (doc: ErisPresentationDocument): WalkRules => ({
   eyeHeight: doc.eye.heightUnits,
+  runMultiplier: doc.walk.runMultiplier,
   turnRadiansPerSecond: doc.walk.turnRadiansPerSecond,
   unitsPerSecond: doc.walk.unitsPerSecond
 });

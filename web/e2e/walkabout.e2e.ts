@@ -582,6 +582,42 @@ test('the live opening loop renders, walks and releases held input', async ({
   expect(errors).toEqual([]);
 });
 
+test('R latches running, which lengthens the on-foot step', async ({
+  page
+}) => {
+  await useComposition(page, 'strip');
+  await page.goto('/');
+  await skipArrival(page);
+  const canvas = page.locator('#frame');
+
+  // One leg of the same held walk, so the two are compared over equal frames.
+  const leg = async (): Promise<number> => {
+    const fromX = Number(await canvas.getAttribute('data-x'));
+    const fromZ = Number(await canvas.getAttribute('data-z'));
+    await page.keyboard.down('ArrowUp');
+    await waitForFrames(page, 24);
+    await page.keyboard.up('ArrowUp');
+    return Math.hypot(
+      Number(await canvas.getAttribute('data-x')) - fromX,
+      Number(await canvas.getAttribute('data-z')) - fromZ
+    );
+  };
+
+  const walked = await leg();
+  await page.keyboard.press('KeyR');
+  const ran = await leg();
+  // The run multiplier is three on the decoded step, and the leg is timed in the
+  // browser rather than counted in simulation steps, so the bounds are loose.
+  expect(ran).toBeGreaterThan(walked * 2);
+  expect(ran).toBeLessThan(walked * 4);
+
+  // The toggle outlasts the key, and a second press puts it back.
+  const stillRunning = await leg();
+  expect(stillRunning).toBeGreaterThan(walked * 2);
+  await page.keyboard.press('KeyR');
+  expect(await leg()).toBeLessThan(ran * 0.6);
+});
+
 test('Session Resume survives reload and New Game preserves Saves', async ({
   page
 }) => {

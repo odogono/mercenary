@@ -6,6 +6,7 @@ import { IDLE, intent } from '../src/gameCore/index.ts';
 
 const rules: WalkRules = {
   eyeHeight: 63,
+  runMultiplier: 3,
   turnRadiansPerSecond: Math.PI / 2,
   unitsPerSecond: 327.68
 };
@@ -34,6 +35,17 @@ describe('the Eris on-foot Mover', () => {
 
   test('changes nothing while idle', () => {
     expect(walk(start, IDLE, 5, rules)).toEqual(start);
+  });
+
+  test('running lengthens the step and leaves the turn alone', () => {
+    const run = walk(start, intent({ running: true, walk: 1 }), 1, rules);
+    expect(run.position.z).toBeCloseTo(start.position.z + 3 * 327.68, 6);
+
+    const turned = walk(start, intent({ running: true, turn: 1 }), 1, rules);
+    expect(turned.heading).toBeCloseTo(Math.PI / 2, 9);
+
+    // Standing still is standing still, however the run toggle is set.
+    expect(walk(start, intent({ running: true }), 5, rules)).toEqual(start);
   });
 
   test('turns at the fixed rate, right being positive, and wraps the heading', () => {

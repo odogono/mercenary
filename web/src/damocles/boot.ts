@@ -472,11 +472,7 @@ try {
     const plan = planErisFrame(content.surface, snapshot.pose, content.doc);
     renderer.render(plan);
     panel.draw(
-      damoclesPanelViewModel(
-        snapshot,
-        content.doc,
-        session.intent.walk !== 0 || session.intent.turn !== 0
-      )
+      damoclesPanelViewModel(snapshot, content.doc, controls.intent.running)
     );
     expose(plan.triangleCount);
     paintNotices();

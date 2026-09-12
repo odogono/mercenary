@@ -84,6 +84,7 @@ Input traces:
 | Board / enter craft | **`B`** | Boarded limo snapshot; arrival-ship probe message |
 | Leave craft | **`L`** (after stop) | Leave recording: digit, Space, then `L`; panel velocity returns to `+ 000 000 000` |
 | Craft speed | **Number keys `1`–`9`** | Panel velocity `002` / `024` / `400` for keys 1 / 4 / 9 |
+| Run on foot | **`R`** | Injected `keydown`/`keyup 19` is effective in recorded walks (`research/damocles-st/HATARI-RESEARCH.md`); by how much it lengthens the step is unmeasured (#205) |
 
 Arrival ship at the pad (`board-probe-…127f768b`): pressing `B` yields message
 **`SHIP NOT REFITTED FOR FURTHER FLIGHT`** — boarding works, further flight is
@@ -261,6 +262,10 @@ control-rate tables.
 
 - FIFO-only leave (`hatari-event` `L` without a prior human stop) did not clear
   `$7A8E`; human Space-then-`L` did — stop/settle may be required.
+- The run factor behind `R`. No held-`R` leg has been read against a plain one, so
+  `web/damocles/eris.json` authors the factor at Targ's own three (ADR 0016) and marks it
+  `authored`; a measured pair of legs replaces it under #205. Whether the original latches the
+  key or reads it held is likewise unread: the app latches it.
 - Panel velocity binary encoding
 - Spaceworthy craft → VOID / near-c time dilation
 - Full craft control-rate / orbital-parameter block decode

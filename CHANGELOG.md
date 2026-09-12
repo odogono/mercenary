@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `R` toggles running, on foot, in both Titles. It latches rather than following the key, as the
+  Working Authority's run key does, so releasing held keys on a blur or a System Menu leaves it
+  on; the latch belongs to the Control Profile, so no Save, Session Resume or trace carries it.
+  R does not also answer a Benson poll, for the reason firing does not (#205).
+- `/damocles` honours running at all: the Eris on-foot Mover lengthens its step by a new
+  `walk.runMultiplier` in `web/damocles/eris.json`, authored at Targ's own three with
+  provenance `authored` because no held-`R` leg has been measured (#205).
+
+### Changed
+
+- Shift no longer runs, and is the browser's key again.
+- The run lamp reports the run toggle rather than movement, in both Panel Renditions. It is the
+  only feedback a latched key has, and it stays dark aboard a craft, where running moves
+  nothing.
+
 ## [0.19.1] - 2026-09-12
 
 ### Fixed
