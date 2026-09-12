@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.18.2] - 2026-09-12
+
+### Fixed
+
+- `/damocles` no longer shows sky through the Capital Spaceport's window. On foot the Working
+  Authority draws every structure's plan walls and its building detail together, and from the
+  start pose the detail's default face list leaves the window open, so the interior belongs in
+  the walk. The spaceport now draws the catalogue's `combined-closed` variant, named in
+  `web/damocles/eris.json` under a new `structures` section with provenance `authored` because
+  the original selects faces by viewer position and that selection is not modelled (#223, #225).
+
+### Changed
+
+- The Eris document validator shares the door state and view vocabulary with the catalogue
+  parser, and a structure with variants but none of the named view fails the boot instead of
+  drawing another variant. The catalogue's `kind` list is a constant too.
+- `docs/research/damocles-structure-draw-selection.md` records the draw dispatch, Structure 74's
+  twelve regions and their plan queues, and Building detail 88's conditioned face lists; the
+  spaceport interior note now says twelve regions rather than eleven.
+
 ## [0.18.1] - 2026-09-12
 
 ### Fixed
