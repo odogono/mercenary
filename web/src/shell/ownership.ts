@@ -118,3 +118,74 @@ export const createSessionOwnership = (
     takeOver: () => request({ steal: true })
   };
 };
+
+export type OwnershipMessage =
+  | { readonly kind: 'takeover-ready'; readonly request: string }
+  | { readonly kind: 'takeover-request'; readonly request: string };
+
+export interface SessionTakeoverChannel {
+  readonly close: () => void;
+  readonly requestCooperativeTakeover: () => Promise<boolean>;
+}
+
+/// Cross-tab yield: the owner flushes Resume, then the requester claims or steals.
+export const installSessionTakeoverChannel = (options: {
+  readonly mayPersist: () => boolean;
+  readonly name: string;
+  readonly onYield: () => void;
+}): SessionTakeoverChannel => {
+  const channel =
+    typeof BroadcastChannel === 'undefined'
+      ? undefined
+      : new BroadcastChannel(options.name);
+  channel?.addEventListener('message', event => {
+    const value = event.data as Partial<OwnershipMessage> | undefined;
+    if (
+      value?.kind !== 'takeover-request' ||
+      typeof value.request !== 'string' ||
+      !options.mayPersist()
+    ) {
+      return;
+    }
+    options.onYield();
+    channel.postMessage({
+      kind: 'takeover-ready',
+      request: value.request
+    } satisfies OwnershipMessage);
+  });
+  return {
+    close: () => {
+      channel?.close();
+    },
+    requestCooperativeTakeover: async () => {
+      if (channel === undefined) {
+        return false;
+      }
+      const request = crypto.randomUUID();
+      return await new Promise<boolean>(resolve => {
+        let settled = false;
+        const finish = (ready: boolean): void => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          clearTimeout(timeout);
+          channel.removeEventListener('message', receive);
+          resolve(ready);
+        };
+        const receive = (event: MessageEvent): void => {
+          const value = event.data as Partial<OwnershipMessage> | undefined;
+          if (value?.kind === 'takeover-ready' && value.request === request) {
+            finish(true);
+          }
+        };
+        const timeout = setTimeout(() => finish(false), 1000);
+        channel.addEventListener('message', receive);
+        channel.postMessage({
+          kind: 'takeover-request',
+          request
+        } satisfies OwnershipMessage);
+      });
+    }
+  };
+};

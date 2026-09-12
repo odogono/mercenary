@@ -16,8 +16,9 @@ const content = async () => {
     Bun.file('../payload/damocles/catalogue.json').json(),
     Bun.file(new URL('../damocles/eris.json', import.meta.url)).json()
   ]);
+  const parsed = parseCatalogue(catalogue);
   const doc = readErisPresentation(presentation);
-  return { doc, surface: erisSurfaceFrom(parseCatalogue(catalogue), doc) };
+  return { catalogue: parsed, doc, surface: erisSurfaceFrom(parsed, doc) };
 };
 
 describe('the Damocles Panel Rendition on Damocles Session State', () => {

@@ -334,19 +334,25 @@ export const parseConsoleCommand = (
   }
 };
 
-export interface ConsoleDeps {
-  readonly cellSize: () => number;
+export interface ConsoleParseContext {
   readonly cellsPerAxis: () => number;
+  readonly objectSlots: () => number;
+}
+
+export interface ConsoleSettingHost {
+  readonly preferences: PreferencesStore;
+  readonly typeface: (face: TypefaceId) => void;
+}
+
+export interface ConsoleDeps extends ConsoleParseContext, ConsoleSettingHost {
+  readonly cellSize: () => number;
   readonly hasRoom: (id: number) => boolean;
   readonly objectName: (slot: number) => string | undefined;
-  readonly objectSlots: () => number;
   readonly persistence: SavePersistence;
-  readonly preferences: PreferencesStore;
   readonly present?: (events: readonly PresentationEvent[]) => void;
   readonly session: () => GameplaySession;
   readonly setTime: (secondsOfDay: number) => void;
   readonly time: () => number;
-  readonly typeface: (face: TypefaceId) => void;
 }
 
 const HELP = [
@@ -599,7 +605,10 @@ const describeOutcome = (outcome: {
   readonly reason?: string;
 }): string => outcome.reason ?? outcome.kind;
 
-const applySetting = (setting: SettingChoice, deps: ConsoleDeps): string => {
+export const applySetting = (
+  setting: SettingChoice,
+  deps: ConsoleSettingHost
+): string => {
   switch (setting.name) {
     case 'composition':
       deps.preferences.update({ composition: setting.value });

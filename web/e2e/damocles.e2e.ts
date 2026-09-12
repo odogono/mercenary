@@ -93,7 +93,9 @@ test('the arrow keys walk the player and the Session Resume is Damocles-only', a
   // Blur suspends and writes the resume; a reload lands where the player stood.
   const walkedX = Number(await frame.getAttribute('data-x'));
   const walkedZ = Number(await frame.getAttribute('data-z'));
-  await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+  await page.evaluate(() =>
+    window.dispatchEvent(new PageTransitionEvent('pagehide'))
+  );
   const calls = await page.evaluate(() => window.storageCalls);
   expect(calls).toContain(`setItem:${DAMOCLES_RESUME_KEY}`);
   expect(calls).not.toContain(`setItem:${TARG_RESUME_KEY}`);
@@ -123,6 +125,64 @@ test('a long walk crosses into the neighbouring cell', async ({ page }) => {
   expect(result.before).toBe('07-08');
   expect(result.after).toBe('06-08');
   expect(result.elapsed).toBeGreaterThan(90);
+});
+
+test('the System Menu, Saves, New Game and Shell Console are on /damocles', async ({
+  page
+}) => {
+  await page.goto('/damocles');
+  await expect(page.locator('#frame')).toHaveAttribute('data-state', 'ready');
+  const surface = page.locator('#game-surface');
+  await page.keyboard.press('Escape');
+  await expect(surface).toHaveAttribute('data-layer', 'menu');
+  await expect(page.getByRole('dialog', { name: 'System Menu' })).toBeVisible();
+  await expect(page.locator('#page-menu .chrome-title')).toHaveText('DAMOCLES');
+  await page.locator('button[data-goto="settings"]').click();
+  await expect(surface).toHaveAttribute('data-layer', 'settings');
+  await page.locator('[data-setting="rendition"] button[value="targ"]').click();
+  await expect(page.locator('#panel-damocles')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(surface).toHaveAttribute('data-layer', 'menu');
+  await page.locator('button[data-goto="saves"]').click();
+  await expect(surface).toHaveAttribute('data-layer', 'saves');
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');
+  await expect(surface).toHaveAttribute('data-layer', 'none');
+  await page.keyboard.press('`');
+  const input = page.locator('#console-input');
+  await expect(input).toBeFocused();
+  await input.fill('goto 3 4');
+  await input.press('Enter');
+  await expect(page.locator('#frame')).toHaveAttribute('data-cell', '3-4');
+  await input.fill('goto room 3');
+  await input.press('Enter');
+  await expect(page.locator('#console-log')).toContainText('no Rooms');
+  await page.keyboard.press('Escape');
+  await expect(surface).toHaveAttribute('data-console', 'closed');
+  await page.keyboard.press('Escape');
+  await expect(surface).toHaveAttribute('data-layer', 'menu');
+  await page.locator('button[data-goto="saves"]').click();
+  await page.locator('[data-slot="1"] button[data-action="save"]').click();
+  await expect(page.locator('[data-slot="1"] .slot-detail')).toContainText(
+    'ERIS 03-04'
+  );
+  await page.keyboard.press('Escape');
+  await expect(surface).toHaveAttribute('data-layer', 'menu');
+  await page.getByRole('button', { name: 'NEW GAME' }).click();
+  await page.getByRole('button', { name: 'CONFIRM NEW GAME' }).click();
+  await expect(page.locator('#frame')).toHaveAttribute('data-cell', '7-8');
+  expect(
+    await page.evaluate(
+      () =>
+        window.localStorage.getItem(
+          'mercenary.browser-shell.damocles.save.v1.slot-1'
+        ) !== null
+    )
+  ).toBe(true);
+  await page.keyboard.press('Escape');
+  await page.locator('button[data-goto="saves"]').click();
+  await page.locator('[data-slot="1"] button[data-action="load"]').click();
+  await expect(page.locator('#frame')).toHaveAttribute('data-cell', '3-4');
 });
 
 test('a malformed presentation document blocks the Damocles boot', async ({

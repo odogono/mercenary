@@ -8,6 +8,7 @@ import {
   writeDamoclesResume,
   type ResumeStorage
 } from '../src/damocles/resume.ts';
+import { damoclesSaveIdentity } from '../src/damocles/save.ts';
 import {
   DamoclesSession,
   type DamoclesContent
@@ -21,8 +22,9 @@ const content = async (): Promise<DamoclesContent> => {
     Bun.file('../payload/damocles/catalogue.json').json(),
     Bun.file(new URL('../damocles/eris.json', import.meta.url)).json()
   ]);
+  const parsed = parseCatalogue(catalogue);
   const doc = readErisPresentation(presentation);
-  return { doc, surface: erisSurfaceFrom(parseCatalogue(catalogue), doc) };
+  return { catalogue: parsed, doc, surface: erisSurfaceFrom(parsed, doc) };
 };
 
 const memoryStorage = (): ResumeStorage & {
@@ -76,10 +78,12 @@ describe('the Damocles Gameplay Session', () => {
 
   test('resumes exactly where it left off, from its own key', async () => {
     const storage = memoryStorage();
-    const session = new DamoclesSession(await content());
+    const loaded = await content();
+    const identity = damoclesSaveIdentity(loaded.catalogue, loaded.doc);
+    const session = new DamoclesSession(loaded);
     session.intent = intent({ turn: -1, walk: 1 });
     session.advance(3);
-    writeDamoclesResume(storage, session.captureResume());
+    writeDamoclesResume(storage, identity, session);
     expect([...storage.map.keys()]).toEqual([DAMOCLES_RESUME_STORAGE_KEY]);
     expect(DAMOCLES_RESUME_STORAGE_KEY).toBe(
       'mercenary.browser-shell.damocles.session-resume.v1'
@@ -87,34 +91,48 @@ describe('the Damocles Gameplay Session', () => {
     expect(titleStorageKeys('targ').resume).toBe(
       'mercenary.browser-shell.session-resume.v1'
     );
+    expect(titleStorageKeys('damocles').save(1)).toBe(
+      'mercenary.browser-shell.damocles.save.v1.slot-1'
+    );
+    const read = readDamoclesResume(storage, identity);
+    expect(read.kind).toBe('restored');
     const restored = new DamoclesSession(
-      await content(),
-      readDamoclesResume(storage)
+      loaded,
+      read.kind === 'restored' ? read.snapshot : undefined
     );
     expect(restored.snapshot).toEqual(session.snapshot);
   });
 
   test('discards a record it cannot read and starts afresh', async () => {
     const storage = memoryStorage();
-    storage.setItem(DAMOCLES_RESUME_STORAGE_KEY, '{"schemaVersion":1}');
-    expect(readDamoclesResume(storage)).toBeUndefined();
+    const loaded = await content();
+    const identity = damoclesSaveIdentity(loaded.catalogue, loaded.doc);
+    storage.setItem(DAMOCLES_RESUME_STORAGE_KEY, '{"schemaVersion":2}');
+    expect(readDamoclesResume(storage, identity).kind).toBe('invalid');
     expect(storage.map.size).toBe(0);
     storage.setItem(DAMOCLES_RESUME_STORAGE_KEY, 'not json');
-    expect(readDamoclesResume(storage)).toBeUndefined();
+    expect(readDamoclesResume(storage, identity).kind).toBe('invalid');
     storage.setItem(
       DAMOCLES_RESUME_STORAGE_KEY,
       JSON.stringify({
         elapsed: 1,
         pose: { heading: 0, position: { x: 1, y: 2, z: 3 } },
-        schemaVersion: 3
+        schemaVersion: 2
       })
     );
-    expect(readDamoclesResume(storage)).toBeUndefined();
-    expect(readDamoclesResume(undefined)).toBeUndefined();
-    const fresh = new DamoclesSession(
-      await content(),
-      readDamoclesResume(storage)
-    );
+    expect(readDamoclesResume(storage, identity).kind).toBe('invalid');
+    expect(readDamoclesResume(undefined, identity).kind).toBe('unavailable');
+    const fresh = new DamoclesSession(loaded);
     expect(fresh.snapshot.cell).toEqual({ x: 7, z: 8 });
+  });
+
+  test('teleports to an Eris cell centre without changing heading', async () => {
+    const session = new DamoclesSession(await content());
+    const heading = session.snapshot.pose.heading;
+    session.teleportToCell(3, 4);
+    expect(session.snapshot.cell).toEqual({ x: 3, z: 4 });
+    expect(session.snapshot.pose.heading).toBe(heading);
+    expect(session.snapshot.pose.position.y).toBe(63);
+    expect(() => session.teleportToCell(99, 0)).toThrow(/not on Eris/);
   });
 });

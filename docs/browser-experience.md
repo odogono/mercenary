@@ -38,9 +38,11 @@ Damocles condensed panel-label face (CSS approximation in v1), or advance Damocl
 
 - `prototypes/browser-experience/` — throwaway mockup page (issue #120); token layer at the
   top of its `<style>` block is the tuning surface and is ported verbatim at implementation.
-- `web/index.html` — panel markup inside `#game-surface` under the canvas; overlays
-  (`#system-menu`, settings, saves, `#console`); composition/rendition via
-  `data-composition` / `data-rendition`; CSS stays inline.
+- `web/index.html` — panel markup inside `#game-surface` under the canvas; composition/rendition via
+  `data-composition` / `data-rendition`. Overlay CSS for the System Menu, save chooser and Shell
+  Console lives in `web/src/shell/chrome.css`; overlay DOM is mounted by `installShellChrome` so
+  `/targ` and `/damocles` share one host (ADR 0044). Panel, Departure and Arrival CSS stay inline
+  on Targ's document.
 - `web/src/shell/router.ts` — key routing: pure `routeKey(state, key)` decision function
   replacing the hardcoded focus checks in `boot.ts`.
 - `web/src/shell/preferences.ts` — versioned localStorage client preferences
