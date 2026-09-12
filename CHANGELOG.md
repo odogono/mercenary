@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.18.1] - 2026-09-12
+
+### Fixed
+
+- `/damocles` draws ground under the whole walk again. A recovered ground record covers only its
+  decoded polygons, so filling only the cells without faces left the rest of the spaceport cell as
+  sky; the authored fill now runs under the first-world workspace, one unit below the recovered
+  faces at `y = 0` so they still draw over it. `ground.extentCells` gives way to
+  `ground.fillDropUnits` (#221).
+
 ## [0.18.0] - 2026-09-11
 
 ### Added

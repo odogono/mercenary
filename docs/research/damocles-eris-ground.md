@@ -135,8 +135,12 @@ Representative:
 
 Kind `ground`, schema version 5, table `$01E400`. Instances
 `eris-ground-{cell}` are plotted on the catalogue map. `/damocles` composes
-those instances into the Eris surface and keeps an authored cell fill only
-where the record has no faces ([#221](https://github.com/odogono/mercenary/issues/221)).
+those instances into the Eris surface and draws them over an authored fill one
+unit below `y = 0`, which stands in for the ground a record does not cover
+([#221](https://github.com/odogono/mercenary/issues/221)). A recovered record
+covers only its decoded polygons: `eris-ground-87` is a strip of roughly
+37,000 × 12,800 units in a 65,536-unit cell, and the `$7000` templates and
+`$F0`/`$F4` joins that would fill the rest are unresolved below.
 
 ## Unresolved
 

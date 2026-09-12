@@ -3,14 +3,11 @@ import { triangulate } from '../catalogue/geometry.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { Camera } from '../projection/index.ts';
 import type { ErisPresentationDocument } from './documents.ts';
-import {
-  cellCentre,
-  cellOf,
-  cellsEqual,
-  hasRecoveredGroundFaces,
-  type ErisPlacement,
-  type ErisPose,
-  type ErisSurface
+import type {
+  ErisGrid,
+  ErisPlacement,
+  ErisPose,
+  ErisSurface
 } from './world.ts';
 
 /// One frame of Eris in Filled Presentation, planned without a graphics context.
@@ -134,45 +131,30 @@ const doubleSidedQuad = (
   [northwest, northeast, southwest]
 ];
 
+/// The authored fill, one quad over the whole first-world workspace.
+///
+/// A recovered ground record covers only the part of its cell the Damocles Catalogue decodes:
+/// the spaceport apron is a strip of cell `$87`, and the `$7000` road templates and `$F0`/`$F4`
+/// neighbour joins that would fill the rest are still undecoded. Filling whole cells left
+/// those remainders as sky, and a fill in the next cell along is half a cell away, which a
+/// 63-unit eye over 65536-unit cells compresses into a pixel at the horizon. So the fill runs
+/// under everything and drops by the document's `fillDropUnits`, which orders depth against
+/// the recovered faces at y = 0 without claiming Eris's ground sits lower (#221).
 const groundFillTriangles = (
-  surface: ErisSurface,
-  pose: ErisPose,
-  extentCells: number
+  grid: ErisGrid,
+  dropUnits: number
 ): readonly WorldTriangle[] => {
-  const cellsWithGroundFaces = surface.placements
-    .filter(hasRecoveredGroundFaces)
-    .map(placement => cellOf(placement.position, surface.grid));
-  const currentCell = cellOf(pose.position, surface.grid);
-  const halfCell = surface.grid.cellUnits / 2;
-  const triangles: WorldTriangle[] = [];
-
-  for (let x = 0; x < surface.grid.cellsPerAxis; x += 1) {
-    for (let z = 0; z < surface.grid.cellsPerAxis; z += 1) {
-      const cell = { x, z };
-      if (
-        Math.max(Math.abs(currentCell.x - x), Math.abs(currentCell.z - z)) >
-          extentCells ||
-        cellsWithGroundFaces.some(occupied => cellsEqual(occupied, cell))
-      ) {
-        continue;
-      }
-      const centre = cellCentre(cell, surface.grid);
-      const corner = (dx: number, dz: number): Vector3 => ({
-        x: centre.x + dx * halfCell,
-        y: 0,
-        z: centre.z + dz * halfCell
-      });
-      triangles.push(
-        ...doubleSidedQuad(
-          corner(-1, -1),
-          corner(1, -1),
-          corner(1, 1),
-          corner(-1, 1)
-        )
-      );
-    }
-  }
-  return triangles;
+  const corner = (x: number, z: number): Vector3 => ({
+    x: (grid.origin.x + x * grid.cellsPerAxis) * grid.cellUnits,
+    y: -dropUnits,
+    z: (grid.origin.z + z * grid.cellsPerAxis) * grid.cellUnits
+  });
+  return doubleSidedQuad(
+    corner(0, 0),
+    corner(1, 0),
+    corner(1, 1),
+    corner(0, 1)
+  );
 };
 
 export const planErisFrame = (
@@ -196,13 +178,10 @@ export const planErisFrame = (
     values.push(view.x, view.y, view.z, colour[0], colour[1], colour[2]);
   };
 
-  // Authored fill for first-world cells whose ground record has no faces (#221). Recovered
-  // pad and road polygons sit at y = 0; a camera-following plane would hide them.
   const ground = channels(doc.ground.colour);
   for (const triangle of groundFillTriangles(
-    surface,
-    pose,
-    doc.ground.extentCells
+    surface.grid,
+    doc.ground.fillDropUnits
   )) {
     for (const vertex of triangle) {
       emit(vertex, ground);

@@ -33,7 +33,9 @@ export interface ErisPresentationDocument {
   readonly ground: {
     readonly colour: string;
     readonly colourProvenance: Provenance;
-    readonly extentCells: number;
+    /// How far below y = 0 the authored fill sits, in raw units, so the recovered ground
+    /// faces at y = 0 draw over it without z-fighting (#221).
+    readonly fillDropUnits: number;
     readonly geometryProvenance: Provenance;
     readonly note: string;
     readonly paletteIndex: number;
@@ -267,7 +269,7 @@ export const readErisPresentation = (
     'paletteIndex',
     'colourProvenance',
     'geometryProvenance',
-    'extentCells',
+    'fillDropUnits',
     'note'
   ]);
   const sky = object(root['sky'], 'sky', [
@@ -357,7 +359,7 @@ export const readErisPresentation = (
         ground['colourProvenance'],
         'ground.colourProvenance'
       ),
-      extentCells: positive(ground['extentCells'], 'ground.extentCells'),
+      fillDropUnits: positive(ground['fillDropUnits'], 'ground.fillDropUnits'),
       geometryProvenance: provenance(
         ground['geometryProvenance'],
         'ground.geometryProvenance'

@@ -55,9 +55,8 @@ export interface ErisSurface {
   readonly grid: ErisGrid;
   readonly placements: readonly ErisPlacement[];
   readonly places: readonly ErisPlace[];
-  /// Object and structure placements whose model has no recovered faces (ADR 0043). Empty
-  /// ground cells have no catalogue instance; their authored fill is the presentation
-  /// placeholder (#221), not a counted gap.
+  /// Placements whose model has no recovered faces: drawn as nothing, counted as a gap
+  /// (ADR 0043).
   readonly unresolvedCount: number;
 }
 
@@ -66,22 +65,6 @@ export const cellOf = (position: Vector3, grid: ErisGrid): ErisCell => ({
   x: Math.floor(position.x / grid.cellUnits) - grid.origin.x,
   z: Math.floor(position.z / grid.cellUnits) - grid.origin.z
 });
-
-export const cellsEqual = (a: ErisCell, b: ErisCell): boolean =>
-  a.x === b.x && a.z === b.z;
-
-/// The cell centre in raw units, matching catalogue ground instance positions.
-export const cellCentre = (cell: ErisCell, grid: ErisGrid): Vector3 => ({
-  x: (grid.origin.x + cell.x + 0.5) * grid.cellUnits,
-  y: 0,
-  z: (grid.origin.z + cell.z + 0.5) * grid.cellUnits
-});
-
-export const hasRecoveredGroundFaces = (placement: ErisPlacement): boolean =>
-  placement.kind === 'ground' && placement.faceCount > 0;
-
-export const isUnrecoveredPlacement = (placement: ErisPlacement): boolean =>
-  placement.mesh === undefined && placement.kind !== 'ground';
 
 const TURN = 2 * Math.PI;
 
@@ -206,6 +189,8 @@ export const erisSurfaceFrom = (
     grid,
     placements,
     places,
-    unresolvedCount: placements.filter(isUnrecoveredPlacement).length
+    unresolvedCount: placements.filter(
+      placement => placement.mesh === undefined
+    ).length
   };
 };

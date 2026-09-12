@@ -7,7 +7,6 @@ import {
   cellOf,
   erisSurfaceFrom,
   headingFromByte,
-  isUnrecoveredPlacement,
   startPose
 } from '../src/damocles/world.ts';
 
@@ -57,7 +56,9 @@ describe('the Eris surface from the Damocles Catalogue', () => {
   test('draws nothing for unrecovered geometry and counts the gap', async () => {
     const { catalogue, doc } = await load();
     const surface = erisSurfaceFrom(catalogue, doc);
-    const unresolved = surface.placements.filter(isUnrecoveredPlacement);
+    const unresolved = surface.placements.filter(
+      placement => placement.mesh === undefined
+    );
     expect(unresolved).toHaveLength(21);
     expect(surface.unresolvedCount).toBe(21);
     expect(unresolved.every(placement => placement.faceCount === 0)).toBe(true);

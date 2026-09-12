@@ -82,8 +82,8 @@
     "paletteIndex": 8,
     "colourProvenance": "recovered",
     "geometryProvenance": "authored",
-    "extentCells": 24,
-    "note": "Authored cell-sized fill at y = 0 in the recovered green, only for cells whose catalogue ground record has no faces; extentCells is the Chebyshev neighbourhood of that fill (#221). Recovered pad and road polygons come from the Damocles Catalogue ground family (docs/research/damocles-eris-ground.md)."
+    "fillDropUnits": 1,
+    "note": "Authored fill in the recovered green over the whole first-world workspace, standing in for the ground the catalogue does not decode: the $7000 road templates and $F0/$F4 neighbour joins that would fill the rest of a cell around its recovered faces (#221). fillDropUnits is how far below y = 0 it sits so those recovered faces draw over it without z-fighting. Recovered pad and road polygons come from the Damocles Catalogue ground family (docs/research/damocles-eris-ground.md)."
   },
   "sky": {
     "colour": "#4992db",

@@ -8,7 +8,6 @@ import {
 import { planErisFrame } from '../src/damocles/frame.ts';
 import { ErisRenderer } from '../src/damocles/renderer.ts';
 import {
-  cellCentre,
   erisSurfaceFrom,
   startPose,
   type ErisPlacement,
@@ -67,6 +66,9 @@ const surfaceOf = (placements: readonly ErisPlacement[]): ErisSurface => ({
 
 const origin = { heading: 0, position: { x: 0, y: 63, z: 0 } };
 
+/// The authored ground fill leads every plan: one double-sided quad, so twelve vertices.
+const FILL_FLOATS = 4 * 3 * 6;
+
 describe('an Eris frame in Filled Presentation', () => {
   test('emits the ground and every decoded face, and nothing for the unrecovered', async () => {
     const { doc, surface } = await load();
@@ -75,7 +77,7 @@ describe('an Eris frame in Filled Presentation', () => {
       (sum, p) => sum + (p.mesh?.faces.length ?? 0),
       0
     );
-    // Every face is at least one triangle; empty first-world cells get a double-sided quad.
+    // Every face is at least one triangle, on top of the fill's double-sided quad.
     expect(plan.triangleCount).toBeGreaterThanOrEqual(decodedFaces + 4);
     expect(plan.vertices).toHaveLength(plan.triangleCount * 3 * 6);
     expect(plan.skippedFaces).toBe(0);
@@ -85,15 +87,14 @@ describe('an Eris frame in Filled Presentation', () => {
     );
     expect(
       planErisFrame(withoutMeshes, startPose(doc), doc).triangleCount
-    ).toBe(surface.grid.cellsPerAxis ** 2 * 4);
+    ).toBe(4);
   });
 
   test('puts a face straight ahead at positive view depth in its own colour', async () => {
     const { doc } = await load();
     const plan = planErisFrame(surfaceOf([placement(square())]), origin, doc);
-    expect(plan.triangleCount).toBe(2);
-    // The pose sits outside the first-world grid, so no authored cell fill precedes the face.
-    for (let corner = 0; corner < plan.vertices.length; corner += 6) {
+    expect(plan.triangleCount).toBe(6);
+    for (let corner = FILL_FLOATS; corner < plan.vertices.length; corner += 6) {
       const view = Array.from(plan.vertices.slice(corner, corner + 6));
       expect(Math.abs(view[0]!)).toBeCloseTo(10, 3);
       expect(view[1]).toBeCloseTo(-63, 3);
@@ -111,8 +112,12 @@ describe('an Eris frame in Filled Presentation', () => {
       doc
     );
     expect(double.triangleCount).toBe(single.triangleCount + 2);
-    const firstFace = Array.from(single.vertices.slice(0, 18));
-    const reversed = Array.from(double.vertices.slice(36, 54));
+    const firstFace = Array.from(
+      single.vertices.slice(FILL_FLOATS, FILL_FLOATS + 18)
+    );
+    const reversed = Array.from(
+      double.vertices.slice(FILL_FLOATS + 36, FILL_FLOATS + 54)
+    );
     expect(reversed.slice(0, 3)).toEqual(firstFace.slice(12, 15));
     expect(reversed.slice(12, 15)).toEqual(firstFace.slice(0, 3));
   });
@@ -134,7 +139,7 @@ describe('an Eris frame in Filled Presentation', () => {
           surfaceOf([placement(mesh, { x: at.x, y: 0, z: at.z })]),
           { ...origin, heading },
           doc
-        ).vertices.slice(0, 3)
+        ).vertices.slice(FILL_FLOATS, FILL_FLOATS + 3)
       );
     // Facing north (a zero bearing), a placement at +z is ahead at positive depth and one at
     // +x is on the right, as the Working Authority's spaceport tower is from the start.
@@ -166,7 +171,7 @@ describe('an Eris frame in Filled Presentation', () => {
           surfaceOf([{ ...placement(mesh, { x: 0, y: 0, z: 0 }), heading }]),
           origin,
           document
-        ).vertices.slice(0, 3)
+        ).vertices.slice(FILL_FLOATS, FILL_FLOATS + 3)
       );
     // Camera at the origin facing north: a model vertex at +100 z sits ahead (positive
     // depth) when kept, behind when negated.
@@ -191,28 +196,32 @@ describe('an Eris frame in Filled Presentation', () => {
       ]
     };
     const plan = planErisFrame(surfaceOf([placement(degenerate)]), origin, doc);
-    expect(plan.triangleCount).toBe(0);
+    expect(plan.triangleCount).toBe(4);
     expect(plan.skippedFaces).toBe(0);
   });
 
-  test('omits authored fill where catalogue ground has faces', async () => {
-    const { doc } = await load();
-    const pose = startPose(doc);
-    const empty = planErisFrame(surfaceOf([]), pose, doc);
-    expect(empty.triangleCount).toBe(doc.grid.cellsPerAxis ** 2 * 4);
-    const padCell = cellCentre({ x: 7, z: 8 }, doc.grid);
-    const withPad = planErisFrame(
-      surfaceOf([
-        {
-          ...placement(square(), padCell),
-          kind: 'ground',
-          id: 'eris-ground-87'
-        }
-      ]),
-      pose,
-      doc
-    );
-    expect(withPad.triangleCount).toBe(empty.triangleCount - 4 + 2);
+  test('lays the authored fill under the walk, below the recovered faces', async () => {
+    const { doc, surface } = await load();
+    const plan = planErisFrame(surface, startPose(doc), doc);
+    const fill = Array.from(plan.vertices.slice(0, FILL_FLOATS));
+    const at = (offset: number) =>
+      fill.filter((_, index) => index % 6 === offset);
+    // The fill surrounds the camera rather than sitting a cell away: a ground plane this far
+    // below the eye projects into a pixel at the horizon by the next cell along (#221).
+    expect(Math.min(...at(0))).toBeLessThan(0);
+    expect(Math.max(...at(0))).toBeGreaterThan(0);
+    expect(Math.min(...at(2))).toBeLessThan(0);
+    expect(Math.max(...at(2))).toBeGreaterThan(0);
+    // One unit under the recovered pad and apron faces, which the eye sees at -63.
+    for (const height of at(1)) {
+      expect(height).toBeCloseTo(
+        -doc.eye.heightUnits - doc.ground.fillDropUnits,
+        3
+      );
+    }
+    expect(fill[3]).toBe(0);
+    expect(fill[4]).toBeCloseTo(0x6d / 255, 6);
+    expect(fill[5]).toBe(0);
   });
 });
 
