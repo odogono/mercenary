@@ -212,5 +212,7 @@ follow-up work.
 | Detail faces come from the first matching box, else a default list  | Confirmed | `$53C06..$53CBE`, `$539DE..$53A14`                |
 | On foot the window aperture is open unless inside the building      | Confirmed | group 2 lists `$306C0..$3074D`                    |
 | Solid window facade drawn only from group 1 (boarded or no structure) | Confirmed | `$3064A..$306A4`, `$53CC2..$53CF6`              |
+| Start pose draws region 11's plan queue under detail default list `$30730` | Confirmed | `$14A66..$14A82`, `$306C0..$30708` bounds     |
+| Visibility is by list membership and paint order, not a facing test  | Observed  | `$5A7D6..$5A80E`, dispatch and list paths read   |
 | Meaning of `$7AF6` sign, region 2's inset bounds, other flag bits   | Unresolved | —                                                |
 | No facing test anywhere in the renderer                             | Unresolved | fill routines not examined                       |

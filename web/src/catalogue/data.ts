@@ -1,5 +1,6 @@
 export type Point = readonly [number, number, number];
-export type Kind = 'object' | 'structure' | 'interior' | 'ground';
+export const KINDS = ['object', 'structure', 'interior', 'ground'] as const;
+export type Kind = (typeof KINDS)[number];
 export type Recovery = 'decoded' | 'partial' | 'unresolved';
 /// The vocabulary of a multi-variant model; the Eris presentation document names one pair.
 export const DOOR_STATES = ['closed', 'open'] as const;
@@ -446,12 +447,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     if (entries.length !== entryCount) {
       fail('table entry count mismatch');
     }
-    const kind = choice(t['kind'], [
-      'object',
-      'structure',
-      'interior',
-      'ground'
-    ]);
+    const kind = choice(t['kind'], KINDS);
     for (const id of entries) {
       reference(modelIds, id, 'table model');
       if (models.find(model => model.id === id)!.kind !== kind) {
