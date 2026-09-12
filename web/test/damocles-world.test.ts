@@ -32,10 +32,9 @@ describe('the Eris surface from the Damocles Catalogue', () => {
     )!;
     expect(spaceport.modelId).toBe('structure-01484e');
     expect(spaceport.status).toBe('partial');
-    // The combined variant with the door closed: 28 plan primitives, the resident key and
-    // the detail with the entrance panel added (#223).
-    expect(spaceport.faceCount).toBe(84);
-    expect(spaceport.mesh!.vertices).toHaveLength(189);
+    // The authored fallback omits the resident key, retaining 28 plan primitives and detail.
+    expect(spaceport.faceCount).toBe(70);
+    expect(spaceport.mesh!.vertices).toHaveLength(163);
     expect(spaceport.position.x / 65_536).toBeCloseTo(71.4876, 3);
     expect(spaceport.position.y).toBe(0);
     expect(spaceport.position.z / 65_536).toBeCloseTo(136.5238, 3);
@@ -59,19 +58,19 @@ describe('the Eris surface from the Damocles Catalogue', () => {
   test('draws the authored variant the document names', async () => {
     const { catalogue, doc } = await load();
     const placement = (
-      structures: (typeof doc)['structures'],
+      structureFallback: (typeof doc)['structureFallback'],
       id: string
     ): { faceCount: number; vertices: number } => {
       const found = erisSurfaceFrom(catalogue, {
         ...doc,
-        structures
+        structureFallback
       }).placements.find(entry => entry.id === id)!;
       return {
         faceCount: found.faceCount,
         vertices: found.mesh!.vertices.length
       };
     };
-    const authored = doc.structures;
+    const authored = doc.structureFallback;
     expect(
       placement({ ...authored, view: 'exterior' }, 'eris-surface-87')
     ).toEqual({
@@ -81,8 +80,8 @@ describe('the Eris surface from the Damocles Catalogue', () => {
     expect(
       placement({ ...authored, doorState: 'open' }, 'eris-surface-87')
     ).toEqual({
-      faceCount: 83,
-      vertices: 189
+      faceCount: 69,
+      vertices: 163
     });
     // An untagged single-variant model is drawn as that variant whatever the document names.
     expect(
@@ -114,7 +113,7 @@ describe('the Eris surface from the Damocles Catalogue', () => {
     const combinedOpen = erisSurfaceFrom(withoutClosed, doc).placements.find(
       entry => entry.id === 'eris-surface-87'
     )!;
-    expect(combinedOpen.faceCount).toBe(83);
+    expect(combinedOpen.faceCount).toBe(69);
     const exteriorOnly = {
       ...catalogue,
       models: catalogue.models.map(model =>

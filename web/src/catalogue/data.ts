@@ -22,6 +22,7 @@ export interface Mesh {
   readonly vertices: readonly Point[];
 }
 export interface Model {
+  readonly detailSelection?: readonly DetailGroup[];
   readonly evidence: readonly {
     readonly claim: string;
     readonly confidence: 'verified' | 'observed' | 'partial' | 'unresolved';
@@ -37,6 +38,7 @@ export interface Model {
   readonly slots: readonly number[];
   readonly sourceAddress: number;
   readonly status: Recovery;
+  readonly structureSelection?: StructureSelection;
   readonly variants: readonly {
     readonly doorState?: DoorState;
     readonly id: string;
@@ -44,7 +46,31 @@ export interface Model {
     readonly mesh: Mesh;
     readonly name: string;
     readonly view?: StructureView;
+    readonly walkMesh?: Mesh;
   }[];
+}
+export type Bounds = readonly (readonly [number, number])[];
+export interface DetailGroup {
+  readonly boxes: readonly {
+    readonly bounds: Bounds;
+    readonly faces: readonly number[];
+  }[];
+  readonly default: readonly number[];
+}
+export interface StructureSelection {
+  readonly attachment: Mesh | null;
+  readonly detailModel: string;
+  readonly detailVariant: string;
+  readonly plan: Mesh;
+  readonly regions: readonly {
+    readonly bounds: Bounds;
+    readonly flags: number;
+    readonly queue: readonly (
+      | { readonly index: number; readonly kind: 'face' }
+      | { readonly kind: 'attachment' }
+    )[];
+  }[];
+  readonly scale: readonly [number, number];
 }
 export interface Instance {
   readonly association: {
@@ -92,7 +118,7 @@ export interface Catalogue {
   readonly instances: readonly Instance[];
   readonly models: readonly Model[];
   readonly places: readonly Place[];
-  readonly schemaVersion: 5;
+  readonly schemaVersion: 6;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -173,10 +199,10 @@ const reference = (ids: ReadonlySet<string>, id: string, kind: string) => {
   }
 };
 
-const mesh = (value: unknown): Mesh => {
+const mesh = (value: unknown, allowEmpty = false): Mesh => {
   const record = object(value);
   const vertices = list(record['vertices']).map(point);
-  if (vertices.length === 0 || vertices.length > 65_536) {
+  if ((!allowEmpty && vertices.length === 0) || vertices.length > 65_536) {
     fail('invalid vertex count');
   }
   const primitives = (value: unknown, minimum: number) =>
@@ -232,9 +258,117 @@ const mesh = (value: unknown): Mesh => {
   };
 };
 
+const fields = (value: unknown, allowed: readonly string[]) => {
+  const r = object(value);
+  if (Object.keys(r).some(key => !allowed.includes(key))) {
+    fail('unknown selector field');
+  }
+  return r;
+};
+const bounds = (value: unknown, axes: number): Bounds => {
+  const result = list(value).map(pair => {
+    const p = list(pair).map(number);
+    if (
+      p.length !== 2 ||
+      p.some(n => !Number.isSafeInteger(n)) ||
+      p[0]! >= p[1]!
+    ) {
+      fail('invalid selector bounds');
+    }
+    return [p[0]!, p[1]!] as const;
+  });
+  if (result.length !== axes) {
+    fail('invalid selector axes');
+  }
+  return result;
+};
+const detailSelection = (value: unknown): readonly DetailGroup[] => {
+  const groups = list(value).map(value => {
+    const g = fields(value, ['boxes', 'default']);
+    return {
+      boxes: list(g['boxes']).map(value => {
+        const b = fields(value, ['bounds', 'faces']);
+        return {
+          bounds: bounds(b['bounds'], 3),
+          faces: list(b['faces']).map(integer)
+        };
+      }),
+      default: list(g['default']).map(integer)
+    };
+  });
+  if (groups.length !== 2) {
+    fail('expected two detail groups');
+  }
+  return groups;
+};
+const structureSelection = (value: unknown): StructureSelection => {
+  const s = fields(value, [
+    'plan',
+    'attachment',
+    'scale',
+    'detailModel',
+    'detailVariant',
+    'regions'
+  ]);
+  const plan = mesh(s['plan'], true);
+  const attachment = s['attachment'] === null ? null : mesh(s['attachment']);
+  const scale = list(s['scale']).map(number);
+  if (
+    scale.length !== 2 ||
+    scale.some(n => !Number.isInteger(n) || n === 0 || n < -128 || n > 127)
+  ) {
+    fail('invalid selector scale');
+  }
+  const sources = new Set(plan.faces.map(face => face.sourceIndex));
+  if (sources.has(undefined) || sources.size !== plan.faces.length) {
+    fail('invalid plan source indices');
+  }
+  const regions = list(s['regions']).map(value => {
+    const r = fields(value, ['flags', 'bounds', 'queue']);
+    const flags = integer(r['flags']);
+    if (flags === 0 || flags > 65_535) {
+      fail('invalid region flags');
+    }
+    return {
+      bounds: bounds(r['bounds'], 2),
+      flags,
+      queue: list(r['queue']).map(value => {
+        const entry = object(value);
+        if (entry['kind'] === 'attachment') {
+          fields(entry, ['kind']);
+          if (attachment === null) {
+            fail('missing region attachment');
+          }
+          return { kind: 'attachment' } as const;
+        }
+        fields(entry, ['kind', 'index']);
+        if (entry['kind'] !== 'face') {
+          fail('unknown region queue tag');
+        }
+        const index = integer(entry['index']);
+        if (!sources.has(index)) {
+          fail('invalid plan face reference');
+        }
+        return { index, kind: 'face' } as const;
+      })
+    };
+  });
+  if (regions.length === 0) {
+    fail('empty region selector');
+  }
+  return {
+    attachment,
+    detailModel: string(s['detailModel']),
+    detailVariant: string(s['detailVariant']),
+    plan,
+    regions,
+    scale: [scale[0]!, scale[1]!]
+  };
+};
+
 export const parseCatalogue = (value: unknown): Catalogue => {
   const r = object(value);
-  if (r['schemaVersion'] !== 5) {
+  if (r['schemaVersion'] !== 6) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -270,6 +404,9 @@ export const parseCatalogue = (value: unknown): Catalogue => {
           ? {}
           : { inspectionAngle: angle(v['inspectionAngle']) }),
         mesh: mesh(v['mesh']),
+        ...(v['walkMesh'] === undefined
+          ? {}
+          : { walkMesh: mesh(v['walkMesh']) }),
         name: string(v['name'])
       };
     });
@@ -306,11 +443,48 @@ export const parseCatalogue = (value: unknown): Catalogue => {
       slots: list(m['slots']).map(integer),
       sourceAddress: integer(m['sourceAddress']),
       status,
-      variants
+      variants,
+      ...(m['structureSelection'] === undefined
+        ? {}
+        : { structureSelection: structureSelection(m['structureSelection']) }),
+      ...(m['detailSelection'] === undefined
+        ? {}
+        : { detailSelection: detailSelection(m['detailSelection']) })
     };
   });
   const modelIds = unique(models);
   for (const model of models) {
+    if (model.detailSelection !== undefined) {
+      if (model.kind !== 'interior') {
+        fail('detail selector requires a detail model');
+      }
+      for (const group of model.detailSelection) {
+        for (const faces of [
+          group.default,
+          ...group.boxes.map(box => box.faces)
+        ]) {
+          if (
+            model.variants.length === 0 ||
+            model.variants.some(v => faces.some(i => i >= v.mesh.faces.length))
+          ) {
+            fail('invalid detail face reference');
+          }
+        }
+      }
+    }
+    const selection = model.structureSelection;
+    if (selection !== undefined) {
+      if (model.kind !== 'structure') {
+        fail('structure selector requires a structure model');
+      }
+      const detail = models.find(m => m.id === selection.detailModel);
+      if (
+        detail?.detailSelection === undefined ||
+        !detail.variants.some(v => v.id === selection.detailVariant)
+      ) {
+        fail('invalid selector detail binding');
+      }
+    }
     for (const id of model.relatedModels) {
       reference(modelIds, id, 'related model');
     }
@@ -496,7 +670,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     instances,
     models,
     places,
-    schemaVersion: 5,
+    schemaVersion: 6,
     source,
     tables
   };

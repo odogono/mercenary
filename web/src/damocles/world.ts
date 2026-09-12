@@ -1,9 +1,11 @@
 import type {
   Catalogue,
+  DetailGroup,
   Kind,
   Mesh,
   Model,
-  Recovery
+  Recovery,
+  StructureSelection
 } from '../catalogue/data.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { ErisPresentationDocument } from './documents.ts';
@@ -35,12 +37,16 @@ export interface ErisPlacement {
   readonly heading: number;
   readonly id: string;
   readonly kind: Kind;
-  /// The variant drawn, or nothing when the model's geometry is unrecovered. Nothing is
-  /// drawn in that case rather than a stand-in, and the gap is counted (ADR 0043).
+  /// Static geometry for ordinary placements; authored fallback for recovered selectors.
   readonly mesh: Mesh | undefined;
   readonly modelId: string;
   readonly name: string;
   readonly position: Vector3;
+  readonly selection?: {
+    readonly detail: Mesh;
+    readonly groups: readonly DetailGroup[];
+    readonly structure: StructureSelection;
+  };
   readonly status: Recovery;
 }
 
@@ -105,17 +111,11 @@ export const startPose = (doc: ErisPresentationDocument): ErisPose => ({
   position: doc.start.position
 });
 
-/// The variant a walk on the surface sees.
-///
-/// Most recovered models have one untagged variant, the union of plan walls and building
-/// detail that the Working Authority draws on foot, and that is what they draw. The
-/// spaceport is split by view and door state, and the document names which pair the walk
-/// draws as an authored choice (#223; see `structures.evidence`). A tagged model prefers the
-/// named door state within the named view and refuses a view it does not have, so a document
-/// that names an absent view fails here rather than drawing something else quietly.
+/// Authored fallback for an unavailable selector or an unmatched region. Inspection-only
+/// residents are excluded via walkMesh; a missing named view remains a document error.
 const structureMesh = (
   model: Model,
-  structures: ErisPresentationDocument['structures']
+  structureFallback: ErisPresentationDocument['structureFallback']
 ): Mesh | undefined => {
   const withFaces = model.variants.filter(
     variant => variant.mesh.faces.length > 0
@@ -124,16 +124,18 @@ const structureMesh = (
   if (tagged.length === 0) {
     return withFaces[0]?.mesh;
   }
-  const ofView = tagged.filter(variant => variant.view === structures.view);
+  const ofView = tagged.filter(
+    variant => variant.view === structureFallback.view
+  );
   const chosen =
-    ofView.find(variant => variant.doorState === structures.doorState) ??
+    ofView.find(variant => variant.doorState === structureFallback.doorState) ??
     ofView[0];
   if (chosen === undefined) {
     throw new Error(
-      `Damocles model ${model.id} has no ${structures.view} variant to draw`
+      `Damocles model ${model.id} has no ${structureFallback.view} variant to draw`
     );
   }
-  return chosen.mesh;
+  return chosen.walkMesh ?? chosen.mesh;
 };
 
 export const erisSurfaceFrom = (
@@ -164,8 +166,22 @@ export const erisSurfaceFrom = (
         `Damocles Instance ${instance.id} names unknown model ${instance.model}`
       );
     }
-    const mesh = structureMesh(model, doc.structures);
+    const mesh = structureMesh(model, doc.structureFallback);
+    const selection = model.structureSelection;
+    const detail =
+      selection === undefined ? undefined : models.get(selection.detailModel);
     placements.push({
+      ...(selection === undefined || detail?.detailSelection === undefined
+        ? {}
+        : {
+            selection: {
+              detail: detail.variants.find(
+                v => v.id === selection.detailVariant
+              )!.mesh,
+              groups: detail.detailSelection,
+              structure: selection
+            }
+          }),
       faceCount: mesh?.faces.length ?? 0,
       heading: headingFromByte(location.heading, doc.orientation),
       id: instance.id,
@@ -204,7 +220,8 @@ export const erisSurfaceFrom = (
     placements,
     places,
     unresolvedCount: placements.filter(
-      placement => placement.mesh === undefined
+      placement =>
+        placement.mesh === undefined && placement.selection === undefined
     ).length
   };
 };
