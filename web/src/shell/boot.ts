@@ -15,7 +15,9 @@ import {
   resolveScript00Milestones,
   withinOpeningScript
 } from './arrivalScript.ts';
+import { installShellChrome } from './chrome.ts';
 import { FixedStepClock } from './clock.ts';
+import { executeConsoleCommand } from './console.ts';
 import { installConsole } from './consoleView.ts';
 
 import './damoclesPanelElement.ts';
@@ -35,6 +37,7 @@ import { createNewGameAction, escapeFrom, installSystemMenu } from './menu.ts';
 import { BensonMessageTranscript } from './messageTranscript.ts';
 import {
   createSessionOwnership,
+  installSessionTakeoverChannel,
   type BrowserLockManager
 } from './ownership.ts';
 import { objectNamesOf, panelViewModel, type PanelContext } from './panel.ts';
@@ -58,6 +61,7 @@ import {
 import { installSettingsView } from './settingsView.ts';
 import { installStorageWatch } from './storage.ts';
 import { installSuspensionHandlers } from './suspension.ts';
+import { titleStorageKeys } from './title.ts';
 import {
   applyTypeface,
   loadTypography,
@@ -67,22 +71,17 @@ import {
 const VIEWPORT = { height: 800, width: 1280 } as const;
 
 const surface = document.getElementById('game-surface')!;
+const chrome = installShellChrome(surface, {
+  catalogueLabel: 'Damocles catalogue',
+  menuTitle: 'BENSON G9-ST SYSTEM'
+});
 const canvas = document.getElementById('frame') as HTMLCanvasElement;
 const message = document.getElementById('message')!;
 const credits = document.getElementById('credits')!;
 const status = document.getElementById('status')!;
 const failure = document.getElementById('failure')!;
-const consoleElements = {
-  input: document.getElementById('console-input') as HTMLInputElement,
-  log: document.getElementById('console-log')!,
-  surface: document.getElementById('game-surface')!
-};
-const chromePages = {
-  menu: document.getElementById('page-menu')!,
-  ownership: document.getElementById('page-ownership')!,
-  saves: document.getElementById('page-saves')!,
-  settings: document.getElementById('page-settings')!
-};
+const consoleElements = chrome.console;
+const chromePages = chrome.pages;
 const panelRoot = document.getElementById('benson-panel')!;
 const panelScale = document.getElementById('panel-scale')!;
 const departureElements = {
@@ -563,12 +562,13 @@ try {
       setTime: secondsOfDay =>
         targClock.set(session.snapshot.elapsed, secondsOfDay),
       time: () => targClock.secondsOfDay(session.snapshot.elapsed),
-      typeface: face => {
-        applyTypeface(document.documentElement, face, storage);
-      }
-    },
-    release
-  );
+    typeface: face => {
+      applyTypeface(document.documentElement, face, storage);
+    }
+  },
+  release,
+  { execute: executeConsoleCommand }
+);
   recordBensonMessage = () => {
     shellConsole.write(bensonTranscript.observe(snapshot.bensonMessage));
   };
@@ -579,67 +579,17 @@ try {
     storage
   });
 
-  type OwnershipMessage =
-    | { readonly kind: 'takeover-ready'; readonly request: string }
-    | { readonly kind: 'takeover-request'; readonly request: string };
-  const ownershipChannel =
-    typeof BroadcastChannel === 'undefined'
-      ? undefined
-      : new BroadcastChannel(
-          'mercenary.browser-shell.session-resume.ownership.v1'
-        );
-  ownershipChannel?.addEventListener('message', event => {
-    const value = event.data as Partial<OwnershipMessage> | undefined;
-    if (
-      value?.kind !== 'takeover-request' ||
-      typeof value.request !== 'string' ||
-      !ownership.mayPersist()
-    ) {
-      return;
+  const takeover = installSessionTakeoverChannel({
+    mayPersist: () => ownership.mayPersist(),
+    name: titleStorageKeys('targ').ownershipChannel,
+    onYield: () => {
+      flushResume();
+      ownership.release();
+      handleOwnershipLost();
     }
-    flushResume();
-    ownership.release();
-    handleOwnershipLost();
-    ownershipChannel.postMessage({
-      kind: 'takeover-ready',
-      request: value.request
-    } satisfies OwnershipMessage);
   });
 
-  const requestCooperativeTakeover = async (): Promise<boolean> => {
-    if (ownershipChannel === undefined) {
-      return false;
-    }
-    const request = crypto.randomUUID();
-    return await new Promise<boolean>(resolve => {
-      let settled = false;
-      const finish = (ready: boolean): void => {
-        if (settled) {
-          return;
-        }
-        settled = true;
-        clearTimeout(timeout);
-        ownershipChannel.removeEventListener('message', receive);
-        resolve(ready);
-      };
-      const receive = (event: MessageEvent): void => {
-        const value = event.data as Partial<OwnershipMessage> | undefined;
-        if (value?.kind === 'takeover-ready' && value.request === request) {
-          finish(true);
-        }
-      };
-      const timeout = setTimeout(() => finish(false), 1000);
-      ownershipChannel.addEventListener('message', receive);
-      ownershipChannel.postMessage({
-        kind: 'takeover-request',
-        request
-      } satisfies OwnershipMessage);
-    });
-  };
-
-  const newGameButton = document.getElementById(
-    'new-game'
-  ) as HTMLButtonElement;
+  const newGameButton = chrome.newGame;
   const newGame = createNewGameAction(() => {
     release();
     replaceWalkabout();
@@ -663,12 +613,10 @@ try {
     refreshNewGame();
   });
 
-  const takeOverButton = document.getElementById(
-    'take-over'
-  ) as HTMLButtonElement;
+  const takeOverButton = chrome.takeOver;
   takeOverButton.addEventListener('click', async () => {
     takeOverButton.disabled = true;
-    const yielded = await requestCooperativeTakeover();
+    const yielded = await takeover.requestCooperativeTakeover();
     let outcome = yielded
       ? await ownership.claim()
       : await ownership.takeOver();
@@ -708,7 +656,7 @@ try {
     }
   });
   window.addEventListener('pagehide', flushResume);
-  window.addEventListener('pagehide', () => ownershipChannel?.close());
+  window.addEventListener('pagehide', () => takeover.close());
   window.addEventListener('pagehide', () => sound.dispose());
   window.addEventListener('blur', () => sound.suspend());
   window.addEventListener('focus', () => {

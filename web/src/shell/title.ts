@@ -11,7 +11,11 @@ import type { PanelViewModel } from './panel.ts';
 export type TitleSlug = 'damocles' | 'targ';
 
 export interface TitleStorageKeys {
+  /// Web Lock name. Targ keeps the Resume key as the lock name so existing tabs still agree.
+  readonly lock: string;
+  readonly ownershipChannel: string;
   readonly resume: string;
+  readonly save: (slot: 1 | 2 | 3) => string;
 }
 
 export interface TitleSession<Snapshot, Resume = unknown> {
@@ -38,9 +42,21 @@ export interface TitleRuntime<Snapshot, Content, Resume = unknown> {
 ///
 /// Targ's key predates the partition and is kept as it is, so nothing a player has in progress
 /// is lost; Damocles takes a namespaced key from the start (ADR 0041).
-export const titleStorageKeys = (slug: TitleSlug): TitleStorageKeys => ({
-  resume:
+export const titleStorageKeys = (slug: TitleSlug): TitleStorageKeys => {
+  const resume =
     slug === 'targ'
       ? 'mercenary.browser-shell.session-resume.v1'
-      : `mercenary.browser-shell.${slug}.session-resume.v1`
-});
+      : `mercenary.browser-shell.${slug}.session-resume.v1`;
+  return {
+    lock: resume,
+    ownershipChannel:
+      slug === 'targ'
+        ? 'mercenary.browser-shell.session-resume.ownership.v1'
+        : `${resume}.ownership`,
+    resume,
+    save: slot =>
+      slug === 'targ'
+        ? `mercenary.browser-shell.save.v1.slot-${slot}`
+        : `mercenary.browser-shell.${slug}.save.v1.slot-${slot}`
+  };
+};

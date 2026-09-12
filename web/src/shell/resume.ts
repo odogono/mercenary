@@ -75,14 +75,16 @@ export interface SessionResumePersistence {
 }
 
 export interface SessionResumePersistenceOptions {
-  readonly capture: () => {
+  readonly capture?: () => {
     readonly location: Location;
     readonly snapshot: SaveSnapshot;
   };
-  readonly environment: SaveEnvironment;
+  readonly encode?: () => string;
+  readonly environment?: SaveEnvironment;
   readonly now?: () => Date;
   readonly onFailure?: (reason: string) => void;
   readonly storage: SessionResumeStorage | undefined;
+  readonly storageKey?: string;
   readonly time?: () => number;
 }
 
@@ -97,6 +99,7 @@ export const createSessionResumePersistence = (
 ): SessionResumePersistence => {
   const now = options.now ?? (() => new Date());
   const time = options.time ?? (() => performance.now());
+  const storageKey = options.storageKey ?? SESSION_RESUME_STORAGE_KEY;
   let changed = false;
   let lastWrite: number | undefined;
   let disabledReason =
@@ -110,10 +113,23 @@ export const createSessionResumePersistence = (
   };
   const removeStale = (): void => {
     try {
-      options.storage?.removeItem(SESSION_RESUME_STORAGE_KEY);
+      options.storage?.removeItem(storageKey);
     } catch {
       // The original write failure is the actionable reason and recovery is already disabled.
     }
+  };
+  const encoded = (): string => {
+    if (options.encode !== undefined) {
+      return options.encode();
+    }
+    const captured = options.capture!();
+    return encodeSave({
+      environment: options.environment!,
+      location: captured.location,
+      savedAt: now().toISOString(),
+      schemaVersion: SAVE_SCHEMA_VERSION,
+      snapshot: captured.snapshot
+    });
   };
 
   return {
@@ -133,17 +149,7 @@ export const createSessionResumePersistence = (
         return { kind: 'throttled' };
       }
       try {
-        const captured = options.capture();
-        options.storage!.setItem(
-          SESSION_RESUME_STORAGE_KEY,
-          encodeSave({
-            environment: options.environment,
-            location: captured.location,
-            savedAt: now().toISOString(),
-            schemaVersion: SAVE_SCHEMA_VERSION,
-            snapshot: captured.snapshot
-          })
-        );
+        options.storage!.setItem(storageKey, encoded());
         changed = false;
         lastWrite = timestamp;
         return { kind: 'written' };
@@ -159,7 +165,7 @@ export const createSessionResumePersistence = (
         return { kind: 'disabled', reason: disabledReason };
       }
       try {
-        options.storage!.removeItem(SESSION_RESUME_STORAGE_KEY);
+        options.storage!.removeItem(storageKey);
         changed = false;
         lastWrite = undefined;
         return { kind: 'written' };

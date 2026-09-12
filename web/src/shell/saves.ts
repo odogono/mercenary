@@ -28,18 +28,21 @@ export const slotStorageKey = (value: number): string =>
   `mercenary.browser-shell.save.v1.slot-${slot(value)}`;
 
 export class SaveSlots {
-  constructor(private readonly storage: SlotStorage) {}
+  constructor(
+    private readonly storage: SlotStorage,
+    private readonly keyFor: (slot: SaveSlot) => string = slotStorageKey
+  ) {}
 
   read(value: number): string | null {
-    return this.storage.getItem(slotStorageKey(value));
+    return this.storage.getItem(this.keyFor(slot(value)));
   }
 
   write(value: number, encoded: string): void {
-    this.storage.setItem(slotStorageKey(value), encoded);
+    this.storage.setItem(this.keyFor(slot(value)), encoded);
   }
 
   delete(value: number): void {
-    this.storage.removeItem(slotStorageKey(value));
+    this.storage.removeItem(this.keyFor(slot(value)));
   }
 }
 
@@ -81,6 +84,22 @@ export type SaveOutcome =
   | { readonly kind: 'done' }
   | { readonly kind: 'failed'; readonly reason: string };
 
+export interface SlotPersistenceOptions<Snapshot, Captured> {
+  readonly capture: () => Captured;
+  readonly decode: (encoded: string) => {
+    readonly savedAt: string;
+    readonly snapshot: Snapshot;
+    readonly where: string;
+  };
+  readonly encode: (captured: Captured, savedAt: string) => string;
+  readonly now?: () => Date;
+  readonly release: () => void;
+  readonly restore: (snapshot: Snapshot, slot: SaveSlot) => void;
+  readonly slotKey: (slot: SaveSlot) => string;
+  readonly storage: SlotStorage | undefined;
+  readonly time?: () => number;
+}
+
 export interface SavePersistenceOptions {
   readonly capture: () => {
     readonly location: Location;
@@ -115,12 +134,15 @@ const reasonOf = (error: unknown): string =>
 /// Own the three Saves: reading, writing, arming, and what to say about each.
 ///
 /// Nothing here draws. The chooser, the console and the current controls all ask the same core,
-/// so a Save made one way is described and refused identically the other way.
-export const createSavePersistence = (
-  options: SavePersistenceOptions
+/// so a Save made one way is described and refused identically the other way. Title-specific
+/// codecs plug in at encode/decode; arming and notices stay here.
+export const createSlotPersistence = <Snapshot, Captured>(
+  options: SlotPersistenceOptions<Snapshot, Captured>
 ): SavePersistence => {
   const slots =
-    options.storage === undefined ? undefined : new SaveSlots(options.storage);
+    options.storage === undefined
+      ? undefined
+      : new SaveSlots(options.storage, options.slotKey);
   const now = options.now ?? (() => new Date());
   const time = options.time ?? (() => performance.now());
   const listeners: (() => void)[] = [];
@@ -195,12 +217,12 @@ export const createSavePersistence = (
       // A structurally valid Save is still unreadable when its payload or settings identity no
       // longer matches. Describe it through the same compatibility gate as Load so the chooser
       // never offers an action that the persistence core must refuse.
-      const saved = decodeSave(encoded, options.environment);
+      const saved = options.decode(encoded);
       return {
         savedAt: new Date(saved.savedAt),
         slot: target,
         state: 'saved',
-        where: locationText(saved.location)
+        where: saved.where
       };
     } catch (error) {
       return { reason: reasonOf(error), slot: target, state: 'invalid' };
@@ -243,7 +265,7 @@ export const createSavePersistence = (
         if (encoded === null) {
           throw new Error(`slot ${target} is empty`);
         }
-        const saved = decodeSave(encoded, options.environment);
+        const saved = options.decode(encoded);
         options.restore(saved.snapshot, target);
         options.release();
         return done(`LOADED SLOT ${target}`);
@@ -271,16 +293,7 @@ export const createSavePersistence = (
         }
         options.release();
         const captured = options.capture();
-        store.write(
-          target,
-          encodeSave({
-            environment: options.environment,
-            location: captured.location,
-            savedAt: now().toISOString(),
-            schemaVersion: SAVE_SCHEMA_VERSION,
-            snapshot: captured.snapshot
-          })
-        );
+        store.write(target, options.encode(captured, now().toISOString()));
         return done(`SAVED SLOT ${target}`);
       } catch (error) {
         return failed('save', error);
@@ -288,6 +301,36 @@ export const createSavePersistence = (
     }
   };
 };
+
+/// Targ Saves: the shared core plus Targ's envelope, Location text, and un-namespaced keys.
+export const createSavePersistence = (
+  options: SavePersistenceOptions
+): SavePersistence =>
+  createSlotPersistence({
+    capture: options.capture,
+    decode: encoded => {
+      const saved = decodeSave(encoded, options.environment);
+      return {
+        savedAt: saved.savedAt,
+        snapshot: saved.snapshot,
+        where: locationText(saved.location)
+      };
+    },
+    encode: (captured, savedAt) =>
+      encodeSave({
+        environment: options.environment,
+        location: captured.location,
+        savedAt,
+        schemaVersion: SAVE_SCHEMA_VERSION,
+        snapshot: captured.snapshot
+      }),
+    release: options.release,
+    restore: options.restore,
+    slotKey: slotStorageKey,
+    storage: options.storage,
+    ...(options.now === undefined ? {} : { now: options.now }),
+    ...(options.time === undefined ? {} : { time: options.time })
+  });
 
 interface SaveControlElements {
   readonly deleteButton: HTMLButtonElement;

@@ -1,0 +1,7 @@
+# Admit Damocles Saves as a Title-scoped thin snapshot
+
+`/damocles` already keeps a Session Resume of on-foot pose and elapsed time. ADR 0043 deferred player-controlled Damocles Saves until interiors, boarding and Damocles Scripts had Session State to record. That wait would have left the System Menu's save chooser empty while the same pose is already durable as Resume, and it would have kept Resume on a private schema instead of ADR 0030's rule that Resume uses the same bounded JSON as Saves.
+
+Damocles therefore gains three Title-scoped Save slots now. Each holds a version-1 Damocles Save Snapshot of today's Session State — pose and elapsed — together with Destination `damocles` and the Catalogue and Eris presentation identity needed to refuse a restore that would continue a different game. The Session Resume uses that same codec and never occupies a slot. Keys are `mercenary.browser-shell.damocles.save.v1.slot-N`; Targ's un-namespaced slots are untouched. Version 1 has no migration: a schema-2 Damocles Resume, a Targ Save, or an identity mismatch is refused and does not change the live session.
+
+This lifts the “Damocles Saves follow as their evidence arrives” clause of ADR 0043. Interiors, Occupancy aboard a craft, the Carried Stack, the impact clock and Damocles Script state still wait on evidence; when they exist they bump this schema deliberately rather than silently widening it.

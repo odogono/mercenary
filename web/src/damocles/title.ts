@@ -3,11 +3,10 @@ import type { PanelViewModel } from '../shell/panel.ts';
 import { titleStorageKeys, type TitleRuntime } from '../shell/title.ts';
 import { readErisPresentation } from './documents.ts';
 import { damoclesPanelViewModel } from './panel.ts';
-import { readDamoclesResume, type ResumeStorage } from './resume.ts';
+import type { DamoclesSaveSnapshot } from './save.ts';
 import {
   DamoclesSession,
   type DamoclesContent,
-  type DamoclesResumeRecord,
   type DamoclesSnapshot
 } from './session.ts';
 import { erisSurfaceFrom } from './world.ts';
@@ -32,7 +31,7 @@ const labelled = <T>(pathname: string, read: () => T): T => {
 export const damoclesTitle: TitleRuntime<
   DamoclesSnapshot,
   DamoclesContent,
-  DamoclesResumeRecord
+  DamoclesSaveSnapshot
 > = {
   create: (content, restore) => new DamoclesSession(content, restore),
   load: async fetchJson => {
@@ -46,14 +45,10 @@ export const damoclesTitle: TitleRuntime<
     const catalogue = labelled(DAMOCLES_CATALOGUE_PATH, () =>
       parseCatalogue(rawCatalogue)
     );
-    return { doc, surface: erisSurfaceFrom(catalogue, doc) };
+    return { catalogue, doc, surface: erisSurfaceFrom(catalogue, doc) };
   },
   panelViewModel: (snapshot, content): PanelViewModel =>
     damoclesPanelViewModel(snapshot, content.doc),
   slug: 'damocles',
   storage: titleStorageKeys('damocles')
 };
-
-export const restoreFor = (
-  storage: ResumeStorage | undefined
-): DamoclesResumeRecord | undefined => readDamoclesResume(storage);

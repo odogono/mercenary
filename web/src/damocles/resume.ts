@@ -1,92 +1,109 @@
+import {
+  createSessionResumePersistence,
+  type SessionResumeStorage
+} from '../shell/resume.ts';
 import { titleStorageKeys } from '../shell/title.ts';
 import {
-  DAMOCLES_RESUME_SCHEMA_VERSION,
-  type DamoclesResumeRecord
-} from './session.ts';
+  DAMOCLES_SAVE_SCHEMA_VERSION,
+  damoclesWhere,
+  decodeDamoclesSave,
+  encodeDamoclesSave,
+  type DamoclesSaveIdentity,
+  type DamoclesSaveSnapshot
+} from './save.ts';
+import type { DamoclesSession } from './session.ts';
 
 /// Damocles's Session Resume: one record, its own key, never Targ's (ADR 0041).
 export const DAMOCLES_RESUME_STORAGE_KEY = titleStorageKeys('damocles').resume;
 
-export interface ResumeStorage {
-  getItem(key: string): string | null;
-  removeItem(key: string): void;
-  setItem(key: string, value: string): void;
-}
+export type { SessionResumeStorage as ResumeStorage };
 
-const finite = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value);
+const reasonOf = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
 
-/// Read a stored record, or nothing. A record that does not parse as exactly this schema is
-/// removed and ignored: an old or damaged resume starts a fresh game rather than a broken one.
+export type DamoclesResumeRead =
+  | { readonly kind: 'empty' }
+  | { readonly kind: 'invalid'; readonly reason: string }
+  | { readonly kind: 'restored'; readonly snapshot: DamoclesSaveSnapshot }
+  | { readonly kind: 'unavailable'; readonly reason: string };
+
 export const readDamoclesResume = (
-  storage: ResumeStorage | undefined
-): DamoclesResumeRecord | undefined => {
+  storage: SessionResumeStorage | undefined,
+  identity: DamoclesSaveIdentity
+): DamoclesResumeRead => {
   if (storage === undefined) {
-    return undefined;
+    return { kind: 'unavailable', reason: 'browser storage is unavailable' };
   }
   let encoded: string | null;
   try {
     encoded = storage.getItem(DAMOCLES_RESUME_STORAGE_KEY);
-  } catch {
-    return undefined;
+  } catch (error) {
+    return { kind: 'unavailable', reason: reasonOf(error) };
   }
   if (encoded === null) {
-    return undefined;
+    return { kind: 'empty' };
   }
-  const record = decode(encoded);
-  if (record === undefined) {
+  try {
+    return {
+      kind: 'restored',
+      snapshot: decodeDamoclesSave(encoded, identity).snapshot
+    };
+  } catch (error) {
+    const reason = reasonOf(error);
     try {
       storage.removeItem(DAMOCLES_RESUME_STORAGE_KEY);
     } catch {
-      // The record is already being ignored; a storage that refuses removal changes nothing.
+      // The record is already being ignored.
     }
+    return { kind: 'invalid', reason };
   }
-  return record;
+};
+
+export const encodeDamoclesResumeRecord = (
+  identity: DamoclesSaveIdentity,
+  session: DamoclesSession,
+  now = () => new Date()
+): string => {
+  const snapshot = session.captureResume();
+  return encodeDamoclesSave({
+    identity,
+    savedAt: now().toISOString(),
+    schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
+    snapshot,
+    where: damoclesWhere(session.snapshot.cell)
+  });
 };
 
 export const writeDamoclesResume = (
-  storage: ResumeStorage | undefined,
-  record: DamoclesResumeRecord
+  storage: SessionResumeStorage | undefined,
+  identity: DamoclesSaveIdentity,
+  session: DamoclesSession,
+  now = () => new Date()
 ): void => {
-  try {
-    storage?.setItem(DAMOCLES_RESUME_STORAGE_KEY, JSON.stringify(record));
-  } catch {
-    // Resume is a convenience over play, not part of it; a full or refused storage loses only
-    // the resume.
-  }
+  storage?.setItem(
+    DAMOCLES_RESUME_STORAGE_KEY,
+    encodeDamoclesResumeRecord(identity, session, now)
+  );
 };
 
-const decode = (encoded: string): DamoclesResumeRecord | undefined => {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(encoded);
-  } catch {
-    return undefined;
-  }
-  if (typeof parsed !== 'object' || parsed === null) {
-    return undefined;
-  }
-  const record = parsed as Record<string, unknown>;
-  const pose = record['pose'] as Record<string, unknown> | undefined;
-  const position = pose?.['position'] as Record<string, unknown> | undefined;
-  if (
-    record['schemaVersion'] !== DAMOCLES_RESUME_SCHEMA_VERSION ||
-    !finite(record['elapsed']) ||
-    pose === undefined ||
-    !finite(pose['heading']) ||
-    position === undefined ||
-    !finite(position['x']) ||
-    !finite(position['y']) ||
-    !finite(position['z'])
-  ) {
-    return undefined;
-  }
-  return {
-    elapsed: record['elapsed'],
-    pose: {
-      heading: pose['heading'],
-      position: { x: position['x'], y: position['y'], z: position['z'] }
-    },
-    schemaVersion: DAMOCLES_RESUME_SCHEMA_VERSION
-  };
+export const removeDamoclesResume = (
+  storage: SessionResumeStorage | undefined
+): void => {
+  storage?.removeItem(DAMOCLES_RESUME_STORAGE_KEY);
 };
+
+export const createDamoclesResumePersistence = (options: {
+  readonly identity: DamoclesSaveIdentity;
+  readonly onFailure?: (reason: string) => void;
+  readonly session: () => DamoclesSession;
+  readonly storage: SessionResumeStorage | undefined;
+}) =>
+  createSessionResumePersistence({
+    encode: () =>
+      encodeDamoclesResumeRecord(options.identity, options.session()),
+    storage: options.storage,
+    storageKey: DAMOCLES_RESUME_STORAGE_KEY,
+    ...(options.onFailure === undefined
+      ? {}
+      : { onFailure: options.onFailure })
+  });
