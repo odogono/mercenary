@@ -25,7 +25,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   than once per VBL (#205).
 - The run lamp reports the run toggle rather than movement, in both Panel Renditions. It is the
   only feedback a latched key has, and it stays dark aboard a craft, where running moves
-  nothing.
+  nothing. In the Targ rendition it is the lamp beside SPEED, which until now was the attack
+  lamp: Targ has no attack warning, so that lamp never lit and the toggle had no feedback
+  there at all (#205).
 
 ## [0.19.1] - 2026-09-12
 

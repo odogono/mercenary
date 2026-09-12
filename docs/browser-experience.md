@@ -86,7 +86,8 @@ export type Composition = "panel" | "strip";
 - Targ rendition mapping: elevation←pitch, LOCATION←position/cellSize grid (ROOM nn
   underground), ALTITUDE←the middle/high bytes of position.y, SPEED signed, the shared
   23-cell Benson Display + `BENSON G9-ST` caption, COMPASS←heading; the red altitude lamp is
-  lit while aboard a craft.
+  lit while aboard a craft, and the lamp beside SPEED reports the run toggle, there being no
+  attack warning in Targ for it to report instead.
 - Damocles rendition: same data in Damocles dressing — inventory window←carried residence
   entries (names via the context map), cash←credits, clock←Targ time-of-day from elapsed;
   T/P gauges and impact-clock semantics are static dressing; ground-proximity and run lamps

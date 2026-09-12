@@ -582,13 +582,14 @@ test('the live opening loop renders, walks and releases held input', async ({
   expect(errors).toEqual([]);
 });
 
-test('R latches running, which lengthens the on-foot step', async ({
+test('R latches running, which lights the lamp and lengthens the on-foot step', async ({
   page
 }) => {
   await useComposition(page, 'strip');
   await page.goto('/');
   await skipArrival(page);
   const canvas = page.locator('#frame');
+  const lamp = page.locator('#panel-targ [data-lamp=runLamp]');
 
   // One leg of the same held walk, so the two are compared over equal frames.
   const leg = async (): Promise<number> => {
@@ -603,8 +604,13 @@ test('R latches running, which lengthens the on-foot step', async ({
     );
   };
 
+  await expect(lamp).not.toHaveClass(/on/);
   const walked = await leg();
+  // Walking alone leaves the lamp dark: it reports the toggle, not movement.
+  await expect(lamp).not.toHaveClass(/on/);
+
   await page.keyboard.press('KeyR');
+  await expect(lamp).toHaveClass(/on/);
   const ran = await leg();
   // The run multiplier is three on the decoded step, and the leg is timed in the
   // browser rather than counted in simulation steps, so the bounds are loose.
@@ -614,7 +620,9 @@ test('R latches running, which lengthens the on-foot step', async ({
   // The toggle outlasts the key, and a second press puts it back.
   const stillRunning = await leg();
   expect(stillRunning).toBeGreaterThan(walked * 2);
+  await expect(lamp).toHaveClass(/on/);
   await page.keyboard.press('KeyR');
+  await expect(lamp).not.toHaveClass(/on/);
   expect(await leg()).toBeLessThan(ran * 0.6);
 });
 
