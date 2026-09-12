@@ -1,5 +1,28 @@
 # Which structure components Damocles draws from outside
 
+## Implementation update — #225
+
+The walk now consumes Catalogue schema 6 selectors. At arrival it selects region 11's
+18 plan primitives and the closed door attachment before group 2's 29-face default.
+The authored assembly remains only as `structureFallback` in Eris document schema 2;
+the walk fallback excludes the baked resident key. Catalogue inspection meshes stay intact.
+The implementation uses the recovered region and detail boundary conventions. It does
+not yet apply structure-active gates, resident insertion, runtime door-region gating or
+animation; raw region-2 bounds therefore remain uninset in this slice.
+
+Additional functional findings from the same ignored `geometry-code.txt` listing:
+the region binder at `$5A270..$5A2BE` preserves signed-word endpoint sentinels while
+scaling ordinary bounds and swapping negative-scale endpoints. The detail binder at
+`$53BDE..$53CAE` expands X/Z endpoint sentinels to ±2147483647, and expands the Y upper
+sentinel likewise. Its negative X/Z scales exchange bound order. The closed `$4200`
+attachment constructor at `$5A140..$5A202` splits X at its midpoint into two leaves,
+each with three wall surfaces coloured by the first three colour words; the fourth
+colour belongs to attachment control. The form-1 surfaces reach the structure's lower
+height, 150 for the spaceport. The static decoder retains these six walls as double-sided
+geometry; the original attachment's own per-view dispatch and motion remain unmodelled.
+
+The findings below describe the research and previous authored implementation at #223.
+
 [#223](https://github.com/odogono/mercenary/issues/223) asked which variant of
 the Capital Spaceport (`structure-01484e`) an exterior walk should draw at
 `/damocles`, and whether the Working Authority shows interior geometry through

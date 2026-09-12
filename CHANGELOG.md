@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.19.2] - 2026-09-12
+
+### Fixed
+
+- `/damocles` selects recovered structure region queues and Building-detail face lists by
+  viewer position. The spaceport arrival draws 18 plan primitives, the closed two-leaf door
+  attachment and the 29-face on-foot detail default (#225).
+- The authored structure choice is now `structureFallback`, used only for unavailable
+  selectors or unmatched regions. Its spaceport assembly excludes the baked resident key.
+- Detail-list decoding aligns odd-addressed face-stream endings to the next word boundary,
+  recovering 22 additional detail selectors and three additional structure selectors,
+  including the structure at Eris cell `$52`.
+
+### Changed
+
+- Catalogue schema 6 carries region queues, detail list groups and static attachments;
+  Eris presentation schema 2 names the fallback explicitly. Inspection variants retain
+  their geometry. Door animation, structure-active gates and resident insertion remain
+  unimplemented.
+- The regenerated payload contains seven complete structure selectors and 44 detail
+  selectors. Selection preserves boundary conventions, list order and empty lists, with
+  triangulation cached across viewer-position changes. Regression tests cover extraction,
+  validation, transformed positions, component order and browser views at the window,
+  doorway and inside the spaceport.
+
 ## [0.19.1] - 2026-09-12
 
 ### Fixed

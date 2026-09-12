@@ -31,26 +31,29 @@ describe('the authored Eris presentation document', () => {
     expect(document.ground.colour).toBe('#006d00');
     expect(document.lighting.shadows).toBe(false);
     expect(document.rendering.unresolvedModels).toBe('nothing');
-    expect(document.structures.view).toBe('combined');
-    expect(document.structures.doorState).toBe('closed');
-    expect(document.structures.provenance).toBe('authored');
+    expect(document.structureFallback.view).toBe('combined');
+    expect(document.structureFallback.doorState).toBe('closed');
+    expect(document.structureFallback.provenance).toBe('authored');
   });
 
   test('holds the structure variant to the recovered views and door states', async () => {
     const base = await tracked();
-    const structures = base['structures'] as Record<string, unknown>;
+    const structureFallback = base['structureFallback'] as Record<
+      string,
+      unknown
+    >;
     expect(() =>
       readErisPresentation({
         ...base,
-        structures: { ...structures, view: 'interior' }
+        structureFallback: { ...structureFallback, view: 'interior' }
       })
-    ).toThrow('structures.view should be one of combined, exterior');
+    ).toThrow('structureFallback.view should be one of combined, exterior');
     expect(() =>
       readErisPresentation({
         ...base,
-        structures: { ...structures, doorState: 'ajar' }
+        structureFallback: { ...structureFallback, doorState: 'ajar' }
       })
-    ).toThrow('structures.doorState should be one of closed, open');
+    ).toThrow('structureFallback.doorState should be one of closed, open');
   });
 
   test('converts three-bit ST palette words over the full channel range', () => {
