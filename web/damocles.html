@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Damocles</title>
     <link rel="stylesheet" href="/src/shell/damoclesPanel.css" />
+    <link rel="stylesheet" href="/src/shell/chrome.css" />
     <style>
       @font-face {
         font-family: 'Damocles Interface';
@@ -37,13 +38,22 @@
           ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       }
 
-      /* The ST screen: a 1280-wide world view over the 244-pixel Damocles panel (ADR 0027). */
-      main {
+      #game-surface {
         display: grid;
         grid-template-rows: 1fr auto;
         width: min(100%, 1280px);
         height: 100%;
         margin-inline: auto;
+        --panel-face: #9aa0a0;
+        --panel-hi: #ced4d4;
+        --panel-lo: #43484a;
+        --lcd-bg: #060606;
+        --lcd-ink: #3ecf3e;
+        --cell-border: #9aa0a0;
+        --label-ink: #2c3032;
+        --lamp-on: #aaccaa;
+        --panel-font: 'Damocles Interface', 'Courier New', monospace;
+        --console-ink: #3ecf3e;
       }
 
       #frame {
@@ -67,7 +77,8 @@
         scale: var(--panel-scale, 1);
       }
 
-      p {
+      #status,
+      #failure {
         position: absolute;
         z-index: 2;
         top: 1rem;
@@ -93,7 +104,11 @@
     </style>
   </head>
   <body>
-    <main>
+    <section
+      id="game-surface"
+      data-layer="none"
+      aria-label="Damocles Game Surface"
+    >
       <canvas id="frame" role="img" aria-label="Eris, on foot" hidden>
         Your browser cannot display the Damocles world view.
       </canvas>
@@ -107,7 +122,7 @@
       </section>
       <p id="status" role="status">Loading Damocles…</p>
       <p id="failure" role="alert" hidden></p>
-    </main>
+    </section>
     <script type="module" src="/src/damocles/boot.ts"></script>
   </body>
 </html>

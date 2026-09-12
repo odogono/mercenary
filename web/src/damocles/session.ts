@@ -1,7 +1,9 @@
+import type { Catalogue } from '../catalogue/data.ts';
 import { IDLE, MAXIMUM_STEP, type Intent } from '../gameCore/index.ts';
 import type { TitleSession } from '../shell/title.ts';
 import type { ErisPresentationDocument } from './documents.ts';
 import { walk, type WalkRules } from './mover.ts';
+import type { DamoclesSaveSnapshot } from './save.ts';
 import {
   cellOf,
   startPose,
@@ -23,15 +25,8 @@ export interface DamoclesSnapshot {
   readonly pose: ErisPose;
 }
 
-export const DAMOCLES_RESUME_SCHEMA_VERSION = 2;
-
-export interface DamoclesResumeRecord {
-  readonly elapsed: number;
-  readonly pose: ErisPose;
-  readonly schemaVersion: typeof DAMOCLES_RESUME_SCHEMA_VERSION;
-}
-
 export interface DamoclesContent {
+  readonly catalogue: Catalogue;
   readonly doc: ErisPresentationDocument;
   readonly surface: ErisSurface;
 }
@@ -48,7 +43,7 @@ const rulesFor = (doc: ErisPresentationDocument): WalkRules => ({
 /// long frame is several short steps rather than one long one, as Targ's session does.
 export class DamoclesSession implements TitleSession<
   DamoclesSnapshot,
-  DamoclesResumeRecord
+  DamoclesSaveSnapshot
 > {
   intent: Intent = IDLE;
 
@@ -57,7 +52,7 @@ export class DamoclesSession implements TitleSession<
   private elapsed: number;
   private pose: ErisPose;
 
-  constructor(content: DamoclesContent, restore?: DamoclesResumeRecord) {
+  constructor(content: DamoclesContent, restore?: DamoclesSaveSnapshot) {
     this.content = content;
     this.rules = rulesFor(content.doc);
     const opening = restore?.pose ?? startPose(content.doc);
@@ -89,11 +84,35 @@ export class DamoclesSession implements TitleSession<
     return this.snapshot;
   }
 
-  captureResume(): DamoclesResumeRecord {
+  captureResume(): DamoclesSaveSnapshot {
     return {
       elapsed: this.elapsed,
-      pose: this.pose,
-      schemaVersion: DAMOCLES_RESUME_SCHEMA_VERSION
+      pose: this.pose
+    };
+  }
+
+  /// Land at an Eris cell's centre, keeping heading and the walk eye height.
+  teleportToCell(x: number, z: number): void {
+    const { grid } = this.content.surface;
+    if (
+      !Number.isInteger(x) ||
+      !Number.isInteger(z) ||
+      x < 0 ||
+      z < 0 ||
+      x >= grid.cellsPerAxis ||
+      z >= grid.cellsPerAxis
+    ) {
+      throw new Error(
+        `cell ${x}-${z} is not on Eris (0 through ${grid.cellsPerAxis - 1})`
+      );
+    }
+    this.pose = {
+      heading: this.pose.heading,
+      position: {
+        x: (x + grid.origin.x + 0.5) * grid.cellUnits,
+        y: this.rules.eyeHeight,
+        z: (z + grid.origin.z + 0.5) * grid.cellUnits
+      }
     };
   }
 }

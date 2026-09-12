@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [0.18.2] - 2026-09-12
+## [0.19.1] - 2026-09-12
 
 ### Fixed
 
@@ -25,6 +25,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `docs/research/damocles-structure-draw-selection.md` records the draw dispatch, Structure 74's
   twelve regions and their plan queues, and Building detail 88's conditioned face lists; the
   spaceport interior note now says twelve regions rather than eleven.
+
+## [0.19.0] - 2026-09-12
+
+### Added
+
+- `/damocles` mounts the shared Browser Shell host: System Menu, settings, three Title-scoped
+  Saves, two-press New Game and the Shell Console. Damocles Saves hold today's Session State
+  (pose and elapsed) on `mercenary.browser-shell.damocles.save.v1.slot-N` and share one codec
+  with Session Resume; Targ's un-namespaced slots are untouched (ADR 0044, #224).
+- The Damocles Shell Console answers `help`, `set`, `save`, `load`, `where` and Eris-cell
+  `goto`; Targ-only verbs are refused with a reason. Settings still write the global prefs and
+  do not restyle Filled Presentation or the Damocles panel.
+
+### Changed
+
+- Damocles Session Resume uses Web Lock ownership and the one-second checkpoint cadence Targ
+  already had, instead of an unlocked five-second write.
 
 ## [0.18.1] - 2026-09-12
 

@@ -1,28 +1,68 @@
 import '../shell/damoclesPanelElement.ts';
 
+import { IDLE } from '../gameCore/index.ts';
+import { installShellChrome } from '../shell/chrome.ts';
 import { FixedStepClock } from '../shell/clock.ts';
+import type { ConsoleParseContext } from '../shell/console.ts';
+import { installConsole } from '../shell/consoleView.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
 import { BrowserControlProfile } from '../shell/input.ts';
+import {
+  createNewGameAction,
+  escapeFrom,
+  installSystemMenu
+} from '../shell/menu.ts';
+import {
+  createSessionOwnership,
+  installSessionTakeoverChannel,
+  type BrowserLockManager
+} from '../shell/ownership.ts';
 import { installPanel, installPanelScale } from '../shell/panelView.ts';
+import { createPreferences } from '../shell/preferences.ts';
+import type { SessionResumePersistence } from '../shell/resume.ts';
+import { createSessionResumeNotices } from '../shell/resumeNotices.ts';
+import { routeKey, type RouterState } from '../shell/router.ts';
+import { installSaveChooser } from '../shell/saveChooser.ts';
+import { ALL_SLOTS } from '../shell/saves.ts';
+import { installSettingsView } from '../shell/settingsView.ts';
+import { installStorageWatch } from '../shell/storage.ts';
 import { installSuspensionHandlers } from '../shell/suspension.ts';
 import {
   applyTypeface,
   loadTypography,
   readTypefacePreference
 } from '../shell/typography.ts';
+import {
+  DAMOCLES_CONSOLE_BANNER,
+  executeDamoclesConsoleCommand,
+  type DamoclesConsoleHost
+} from './console.ts';
 import { planErisFrame } from './frame.ts';
 import { damoclesPanelViewModel } from './panel.ts';
 import { ErisRenderer } from './renderer.ts';
-import { writeDamoclesResume } from './resume.ts';
-import { damoclesTitle, restoreFor } from './title.ts';
+import {
+  createDamoclesResumePersistence,
+  readDamoclesResume
+} from './resume.ts';
+import {
+  damoclesSaveIdentity,
+  damoclesWhere,
+  type DamoclesSaveSnapshot
+} from './save.ts';
+import { createDamoclesSavePersistence } from './saves.ts';
+import { DamoclesSession } from './session.ts';
+import { damoclesTitle } from './title.ts';
 
-/// The Damocles Gameplay Session's document (ADR 0043).
+/// The Damocles Gameplay Session's document (ADR 0043, ADR 0044).
 ///
-/// Templated on the Flyover's boot rather than Targ's: one canvas, one panel, one loop. There
-/// is no Departure, Arrival, Benson, sound, console or System Menu here yet; each arrives with
-/// the evidence that gives it something to show. Nothing of Targ's boot is imported, so this
-/// path loads none of Targ's Data Payload (ADR 0041).
+/// Loads none of Targ's Data Payload. System Menu, Saves and Shell Console are the shared
+/// Browser Shell host; Arrival, Departure, Benson and sound stay in Targ's boot.
 
+const surface = document.getElementById('game-surface')!;
+const chrome = installShellChrome(surface, {
+  catalogueLabel: 'Damocles catalogue',
+  menuTitle: 'DAMOCLES'
+});
 const status = document.getElementById('status')!;
 const failure = document.getElementById('failure')!;
 const canvas = document.getElementById('frame') as HTMLCanvasElement;
@@ -88,8 +128,33 @@ try {
   ]);
   applyTypeface(document.documentElement, readTypefacePreference(storage));
   panelRoot.dataset['rendition'] = 'damocles';
+  const identity = damoclesSaveIdentity(content.catalogue, content.doc);
+  const keys = damoclesTitle.storage;
+  const notices = createSessionResumeNotices();
+  let handleOwnershipLost = (): void => {};
+  const browserLocks =
+    navigator.locks === undefined
+      ? undefined
+      : (navigator.locks as unknown as BrowserLockManager);
+  const ownership = createSessionOwnership({
+    locks: browserLocks,
+    name: keys.lock,
+    onLost: () => handleOwnershipLost()
+  });
+  const ownershipOutcome = await ownership.claim();
+  const resumeRead =
+    ownershipOutcome.kind === 'owned'
+      ? readDamoclesResume(storage, identity)
+      : ({ kind: 'empty' } as const);
 
-  const session = damoclesTitle.create(content, restoreFor(storage));
+  const preferences = createPreferences({
+    storage,
+    surface
+  });
+  let session = new DamoclesSession(
+    content,
+    resumeRead.kind === 'restored' ? resumeRead.snapshot : undefined
+  );
   const renderer = new ErisRenderer(
     canvas,
     { cullBackFaces: content.doc.rendering.cullBackFaces },
@@ -107,9 +172,6 @@ try {
   });
   const panel = installPanel(panelElements);
 
-  // Damocles's confirmed bindings beyond walking (take, board, leave, speed) have nothing to
-  // act on in this slice, so the profile's Semantic Actions are inert and only Movement
-  // Intent is read.
   const controls = new BrowserControlProfile({
     drop: () => undefined,
     fire: () => undefined,
@@ -124,28 +186,279 @@ try {
     throttleNotchValue: () => undefined,
     throttleStep: () => undefined
   });
+  const clock = new FixedStepClock();
+  const release = (): void => {
+    controls.releaseAll();
+    clock.reset();
+    session.intent = IDLE;
+  };
+  installSuspensionHandlers(window, document, release);
+
+  let snapshot = session.snapshot;
+  let publish = (): void => {};
+  const makeResumePersistence = (): SessionResumePersistence =>
+    createDamoclesResumePersistence({
+      identity,
+      onFailure: notices.failed,
+      session: () => session,
+      storage: ownership.mayPersist() ? storage : undefined
+    });
+  let resumePersistence = makeResumePersistence();
+  const checkpointChangedResume = (force = true): void => {
+    if (!ownership.mayPersist()) {
+      return;
+    }
+    resumePersistence.dirty();
+    resumePersistence.checkpoint(force);
+  };
+  const flushResume = (): void => {
+    if (ownership.mayPersist()) {
+      resumePersistence.checkpoint(true);
+    }
+  };
+
+  const menu = installSystemMenu({
+    onLayer: layer => {
+      if (layer === 'menu') {
+        notices.menuOpened();
+        checkpointChangedResume();
+      }
+    },
+    pages: chrome.pages,
+    release,
+    surface
+  });
+  if (ownershipOutcome.kind === 'blocked') {
+    menu.show('ownership');
+  }
+
+  const replaceSession = (restore?: DamoclesSaveSnapshot): void => {
+    session = new DamoclesSession(content, restore);
+    snapshot = session.snapshot;
+    checkpointChangedResume();
+  };
+
+  const persistence = createDamoclesSavePersistence({
+    capture: () => ({
+      snapshot: session.captureResume(),
+      where: damoclesWhere(session.snapshot.cell)
+    }),
+    identity,
+    release,
+    restore: saved => {
+      replaceSession(saved);
+      snapshot = session.snapshot;
+      shellConsole.write(['— LOADED SLOT —']);
+      menu.show('none');
+      publish();
+    },
+    slotKey: keys.save,
+    storage
+  });
+  installStorageWatch(window, ALL_SLOTS.map(keys.save), persistence.dismiss);
+  installSaveChooser({ page: chrome.pages.saves, persistence });
+
+  type DamoclesConsoleDeps = ConsoleParseContext & DamoclesConsoleHost;
+  const consoleHost: DamoclesConsoleDeps = {
+    cellsPerAxis: () => content.doc.grid.cellsPerAxis,
+    objectSlots: () => 64,
+    persistence,
+    preferences,
+    session: () => session,
+    typeface: face => {
+      applyTypeface(document.documentElement, face, storage);
+    }
+  };
+  const shellConsole = installConsole(chrome.console, consoleHost, release, {
+    banner: DAMOCLES_CONSOLE_BANNER,
+    execute: (command, deps) => {
+      const lines = executeDamoclesConsoleCommand(command, deps);
+      snapshot = session.snapshot;
+      if (
+        command.kind === 'gotoCell' ||
+        command.kind === 'load' ||
+        command.kind === 'save'
+      ) {
+        checkpointChangedResume();
+      }
+      publish();
+      return lines;
+    }
+  });
+
+  handleOwnershipLost = () => {
+    release();
+    shellConsole.close();
+    notices.ownership('SESSION OPENED ELSEWHERE');
+    chrome.pages.ownership.querySelector<HTMLElement>(
+      '.chrome-title'
+    )!.textContent = 'SESSION OPENED ELSEWHERE';
+    menu.show('ownership');
+  };
+
+  switch (ownershipOutcome.kind) {
+    case 'blocked':
+      notices.ownership('SESSION ACTIVE IN ANOTHER TAB');
+      break;
+    case 'owned':
+      if (resumeRead.kind === 'restored') {
+        notices.resumed();
+      } else if (resumeRead.kind === 'invalid') {
+        notices.couldNotResume(resumeRead.reason);
+      } else if (resumeRead.kind === 'unavailable') {
+        notices.failed(resumeRead.reason);
+      }
+      break;
+    case 'unsupported':
+      notices.ownershipUnavailable();
+      break;
+  }
+
+  installSettingsView({
+    page: chrome.pages.settings,
+    preferences,
+    root: document.documentElement,
+    storage
+  });
+
+  const takeover = installSessionTakeoverChannel({
+    mayPersist: () => ownership.mayPersist(),
+    name: keys.ownershipChannel,
+    onYield: () => {
+      flushResume();
+      ownership.release();
+      handleOwnershipLost();
+    }
+  });
+
+  const newGame = createNewGameAction(() => {
+    release();
+    replaceSession();
+    snapshot = session.snapshot;
+    shellConsole.write(['— NEW GAME —']);
+    menu.show('none');
+    publish();
+  });
+  const refreshNewGame = (): void => {
+    chrome.newGame.textContent = newGame.armed()
+      ? 'CONFIRM NEW GAME'
+      : 'NEW GAME';
+    chrome.newGame.classList.toggle('armed', newGame.armed());
+  };
+  chrome.newGame.addEventListener('click', () => {
+    newGame.press();
+    refreshNewGame();
+  });
+  chrome.newGame.addEventListener('blur', () => {
+    newGame.disarm();
+    refreshNewGame();
+  });
+
+  chrome.takeOver.addEventListener('click', async () => {
+    chrome.takeOver.disabled = true;
+    const yielded = await takeover.requestCooperativeTakeover();
+    let outcome = yielded
+      ? await ownership.claim()
+      : await ownership.takeOver();
+    if (outcome.kind === 'blocked') {
+      outcome = await ownership.takeOver();
+    }
+    if (outcome.kind === 'owned') {
+      resumePersistence = makeResumePersistence();
+      const recovered = readDamoclesResume(storage, identity);
+      notices.dismiss();
+      if (recovered.kind === 'restored') {
+        replaceSession(recovered.snapshot);
+        notices.resumed();
+      } else {
+        replaceSession();
+        if (recovered.kind === 'invalid') {
+          notices.couldNotResume(recovered.reason);
+        } else if (recovered.kind === 'unavailable') {
+          notices.failed(recovered.reason);
+        }
+      }
+      chrome.pages.ownership.querySelector<HTMLElement>(
+        '.chrome-title'
+      )!.textContent = 'SESSION ACTIVE IN ANOTHER TAB';
+      menu.show('none');
+    }
+    chrome.takeOver.disabled = false;
+  });
+
+  const routerState = (): RouterState => ({
+    chromeFocus: document.activeElement?.closest('[data-shell-chrome]') != null,
+    console: shellConsole.isOpen() ? 'open' : 'closed',
+    layer: menu.layer(),
+    opening: 'none'
+  });
+
   window.addEventListener('keydown', event => {
-    if (controls.keyDown(event)) {
-      event.preventDefault();
+    switch (routeKey(routerState(), event)) {
+      case 'browser':
+      case 'chrome':
+      case 'opening-held':
+      case 'opening':
+        return;
+      case 'escape': {
+        const outcome = escapeFrom(
+          menu.layer(),
+          shellConsole.isOpen() ? 'open' : 'closed'
+        );
+        if (outcome.kind === 'closeConsole') {
+          shellConsole.close();
+        } else {
+          menu.show(outcome.layer);
+        }
+        event.preventDefault();
+        return;
+      }
+      case 'console-toggle':
+        shellConsole.toggle();
+        event.preventDefault();
+        return;
+      case 'game':
+        if (controls.keyDown(event)) {
+          event.preventDefault();
+        }
     }
   });
   window.addEventListener('keyup', event => {
-    if (controls.keyUp(event)) {
+    if (!controls.keyUp(event)) {
+      return;
+    }
+    if (routeKey(routerState(), event) === 'game') {
       event.preventDefault();
     }
   });
-  const clock = new FixedStepClock();
-  const saveResume = (): void => {
-    writeDamoclesResume(storage, session.captureResume());
-  };
-  installSuspensionHandlers(window, document, () => {
-    controls.releaseAll();
-    clock.reset();
-    saveResume();
-  });
-  window.addEventListener('pagehide', saveResume);
 
-  let snapshot = session.snapshot;
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      flushResume();
+    }
+  });
+  window.addEventListener('pagehide', () => {
+    flushResume();
+    takeover.close();
+  });
+
+  const paintNotices = (): void => {
+    const save = persistence.message('');
+    const resume = notices.message();
+    const text =
+      save.source === 'shell'
+        ? save.text
+        : resume.source === 'shell'
+          ? resume.text
+          : '';
+    if (text === '') {
+      status.hidden = true;
+      return;
+    }
+    status.hidden = false;
+    status.textContent = text;
+  };
+
   const expose = (triangles: number): void => {
     const root = canvas.dataset;
     root['cell'] = `${snapshot.cell.x}-${snapshot.cell.z}`;
@@ -166,28 +479,29 @@ try {
       )
     );
     expose(plan.triangleCount);
+    paintNotices();
   };
+  publish = draw;
   draw();
-  status.hidden = true;
   canvas.dataset['state'] = 'ready';
-  let sinceResume = 0;
   const frame = (timestamp: number): void => {
     if (!running) {
       return;
     }
     try {
       const steps = clock.frame(timestamp, seconds => {
-        session.intent = controls.intent;
-        snapshot = session.advance(seconds);
-        sinceResume += seconds;
+        if (menu.layer() === 'none' && ownership.mayAdvance()) {
+          session.intent = controls.intent;
+          snapshot = session.advance(seconds);
+          resumePersistence.dirty();
+        }
       });
       if (steps > 0) {
         draw();
+      } else {
+        paintNotices();
       }
-      if (sinceResume >= 5) {
-        sinceResume = 0;
-        saveResume();
-      }
+      resumePersistence.checkpoint(false);
       animation = requestAnimationFrame(frame);
     } catch (error) {
       fail(error);

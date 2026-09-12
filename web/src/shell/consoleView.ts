@@ -1,7 +1,7 @@
 import {
-  executeConsoleCommand,
   parseConsoleCommand,
-  type ConsoleDeps
+  type ConsoleCommand,
+  type ConsoleParseContext
 } from './console.ts';
 
 /// How much transcript the console keeps.
@@ -56,7 +56,12 @@ export interface ShellConsole {
   readonly write: (lines: readonly string[]) => void;
 }
 
-const BANNER = [
+export interface ConsoleViewOptions<Deps extends ConsoleParseContext> {
+  readonly banner?: readonly string[];
+  readonly execute: (command: ConsoleCommand, deps: Deps) => readonly string[];
+}
+
+const DEFAULT_BANNER = [
   'benson shell console',
   'a development tool: type help for commands'
 ];
@@ -66,13 +71,16 @@ const BANNER = [
 /// It deliberately does not pause: the world runs while the console is open, so a command's effect
 /// is visible in the panel the moment it is typed. `release` empties held input, exactly as any
 /// other layer opening does.
-export const installConsole = (
+export const installConsole = <Deps extends ConsoleParseContext>(
   elements: ConsoleElements,
-  deps: ConsoleDeps,
-  release: () => void
+  deps: Deps,
+  release: () => void,
+  options: ConsoleViewOptions<Deps>
 ): ShellConsole => {
   const history = new CommandHistory();
   let open = false;
+  const execute = options.execute;
+  const banner = options.banner ?? DEFAULT_BANNER;
 
   const print = (lines: readonly string[]): void => {
     for (const line of lines) {
@@ -95,7 +103,7 @@ export const installConsole = (
         deps.objectSlots()
       );
       if (command !== undefined) {
-        print(executeConsoleCommand(command, deps));
+        print(execute(command, deps));
       }
     } catch (error) {
       print([error instanceof Error ? error.message : String(error)]);
@@ -140,7 +148,7 @@ export const installConsole = (
     }
   });
 
-  print(BANNER);
+  print(banner);
   show(false);
   return {
     close: () => {
