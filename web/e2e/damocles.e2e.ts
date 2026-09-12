@@ -10,6 +10,54 @@ const TARG_RESUME_KEY = 'mercenary.browser-shell.session-resume.v1';
 const DAMOCLES_RESUME_KEY =
   'mercenary.browser-shell.damocles.session-resume.v1';
 
+test('structure faces change at the window, doorway and inside the spaceport', async ({
+  page
+}, testInfo) => {
+  await page.addInitScript(
+    key => localStorage.removeItem(key),
+    DAMOCLES_RESUME_KEY
+  );
+  const catalogue = (await (
+    await page.request.get('/payload/damocles/catalogue.json')
+  ).json()) as {
+    instances: { id: string; location: { position: number[] } | null }[];
+  };
+  const origin = catalogue.instances.find(i => i.id === 'eris-surface-87')!
+    .location!.position;
+  const counts: number[] = [];
+  for (const [name, x, z] of [
+    ['window', 700, 0],
+    ['doorway', 1400, -1000],
+    ['inside', 1200, 0]
+  ] as const) {
+    await page.route('**/damocles/eris.json', async route => {
+      const response = await route.fetch();
+      const doc = await response.json();
+      doc.start.yaw = name === 'window' ? 768 : 512;
+      doc.start.position = {
+        x: origin[0]! * 65_536 + x,
+        y: 63,
+        z: origin[2]! * 65_536 + z
+      };
+      await route.fulfill({ json: doc });
+    });
+    await page.goto('/damocles');
+    await expect(page.locator('#frame')).toHaveAttribute('data-state', 'ready');
+    const frame = page.locator('#frame');
+    expect(Number(await frame.getAttribute('data-x'))).toBe(
+      origin[0]! * 65_536 + x
+    );
+    counts.push(Number(await frame.getAttribute('data-triangles')));
+    await page.screenshot({ path: testInfo.outputPath(`${name}.png`) });
+    await page.evaluate(
+      key => localStorage.removeItem(key),
+      DAMOCLES_RESUME_KEY
+    );
+    await page.unroute('**/damocles/eris.json');
+  }
+  expect(new Set(counts).size).toBe(3);
+});
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     window.storageCalls = [];

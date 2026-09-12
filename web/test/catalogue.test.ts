@@ -47,7 +47,7 @@ const fixture = () => ({
     }
   ],
   places: [],
-  schemaVersion: 5,
+  schemaVersion: 6,
   source: {
     authority: 'Synthetic test',
     evidence: 'test',
@@ -262,7 +262,9 @@ it('recovers the spaceport pad strip as a per-cell ground record', async () => {
   const pad = data.models.find(model => model.id === 'ground-021afe-00')!;
   expect(pad.kind).toBe('ground');
   expect(pad.status).toBe('partial');
-  const colours = new Set(pad.variants[0]!.mesh.faces.map(face => face.sourceColour));
+  const colours = new Set(
+    pad.variants[0]!.mesh.faces.map(face => face.sourceColour)
+  );
   expect(colours.has(0x7_77)).toBe(true);
   expect(colours.has(0x80_0e)).toBe(true);
   expect(

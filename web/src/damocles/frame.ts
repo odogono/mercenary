@@ -3,6 +3,7 @@ import { triangulate } from '../catalogue/geometry.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { Camera } from '../projection/index.ts';
 import type { ErisPresentationDocument } from './documents.ts';
+import { structureMeshes } from './selection.ts';
 import type {
   ErisGrid,
   ErisPlacement,
@@ -44,6 +45,7 @@ interface Triangles {
 /// Triangulate a Damocles Model once. The same eight models recur across Eris's placements,
 /// so the ear clipping is keyed by mesh and the frame reuses it.
 const triangulated = new WeakMap<Mesh, Triangles>();
+const faceCorners = new WeakMap<object, WeakMap<object, number[] | null>>();
 
 const appendTriangles = (
   indices: number[],
@@ -65,11 +67,22 @@ const trianglesOf = (mesh: Mesh): Triangles => {
   const indices: number[] = [];
   const colours: (readonly [number, number, number])[] = [];
   let skipped = 0;
+  let byFace = faceCorners.get(mesh.vertices);
+  if (byFace === undefined) {
+    byFace = new WeakMap();
+    faceCorners.set(mesh.vertices, byFace);
+  }
   for (const face of mesh.faces) {
-    let corners: number[];
-    try {
-      corners = triangulate(mesh.vertices, face.vertices);
-    } catch {
+    let corners = byFace.get(face);
+    if (corners === undefined) {
+      try {
+        corners = triangulate(mesh.vertices, face.vertices);
+      } catch {
+        corners = null;
+      }
+      byFace.set(face, corners);
+    }
+    if (corners === null) {
       skipped += 1;
       continue;
     }
@@ -190,25 +203,23 @@ export const planErisFrame = (
   }
 
   for (const placement of surface.placements) {
-    if (placement.mesh === undefined) {
-      continue;
-    }
-    const mesh = placement.mesh;
-    const triangles = trianglesOf(mesh);
-    skippedFaces += triangles.skipped;
-    for (let i = 0; i < triangles.indices.length; i += 3) {
-      const colour = triangles.colours[i / 3]!;
-      for (let corner = 0; corner < 3; corner += 1) {
-        emit(
-          placed(
-            mesh.vertices[triangles.indices[i + corner]!]!,
-            placement,
-            negateZ
-          ),
-          colour
-        );
+    for (const mesh of structureMeshes(placement, pose, negateZ)) {
+      const triangles = trianglesOf(mesh);
+      skippedFaces += triangles.skipped;
+      for (let i = 0; i < triangles.indices.length; i += 3) {
+        const colour = triangles.colours[i / 3]!;
+        for (let corner = 0; corner < 3; corner += 1) {
+          emit(
+            placed(
+              mesh.vertices[triangles.indices[i + corner]!]!,
+              placement,
+              negateZ
+            ),
+            colour
+          );
+        }
+        triangleCount += 1;
       }
-      triangleCount += 1;
     }
   }
 

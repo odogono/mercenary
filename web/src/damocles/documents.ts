@@ -78,7 +78,7 @@ export interface ErisPresentationDocument {
     readonly provenance: Provenance;
     readonly unresolvedModels: 'nothing';
   };
-  readonly schemaVersion: 1;
+  readonly schemaVersion: 2;
   readonly sky: {
     readonly colour: string;
     readonly note: string;
@@ -93,9 +93,8 @@ export interface ErisPresentationDocument {
     readonly yaw: number;
     readonly yawProvenance: Provenance;
   };
-  /// Which catalogue variant a multi-variant structure is drawn as (#223); `evidence` holds
-  /// the recovered draw rule behind the choice.
-  readonly structures: {
+  /// Authored variant used only when a recovered selector is unavailable or unmatched.
+  readonly structureFallback: {
     readonly doorState: DoorState;
     readonly evidence: string;
     readonly provenance: Provenance;
@@ -235,7 +234,7 @@ export const readErisPresentation = (
     'sky',
     'lighting',
     'rendering',
-    'structures'
+    'structureFallback'
   ]);
   const body = object(root['body'], 'body', ['id', 'name', 'provenance']);
   const grid = object(root['grid'], 'grid', [
@@ -312,12 +311,11 @@ export const readErisPresentation = (
     'unresolvedModels',
     'provenance'
   ]);
-  const structures = object(root['structures'], 'structures', [
-    'view',
-    'doorState',
-    'provenance',
-    'evidence'
-  ]);
+  const structureFallback = object(
+    root['structureFallback'],
+    'structureFallback',
+    ['view', 'doorState', 'provenance', 'evidence']
+  );
 
   const outdoorRaw = palette['outdoor'];
   if (!Array.isArray(outdoorRaw) || outdoorRaw.length !== 16) {
@@ -447,7 +445,7 @@ export const readErisPresentation = (
         'rendering.unresolvedModels'
       )
     },
-    schemaVersion: literal(root['schemaVersion'], 1, 'schemaVersion'),
+    schemaVersion: literal(root['schemaVersion'], 2, 'schemaVersion'),
     sky: {
       colour: skyColour,
       note: text(sky['note'], 'sky.note'),
@@ -464,15 +462,25 @@ export const readErisPresentation = (
       yaw: integer(start['yaw'], 'start.yaw'),
       yawProvenance: provenance(start['yawProvenance'], 'start.yawProvenance')
     },
-    structures: {
+    structureFallback: {
       doorState: oneOf(
-        structures['doorState'],
+        structureFallback['doorState'],
         DOOR_STATES,
-        'structures.doorState'
+        'structureFallback.doorState'
       ),
-      evidence: text(structures['evidence'], 'structures.evidence'),
-      provenance: provenance(structures['provenance'], 'structures.provenance'),
-      view: oneOf(structures['view'], STRUCTURE_VIEWS, 'structures.view')
+      evidence: text(
+        structureFallback['evidence'],
+        'structureFallback.evidence'
+      ),
+      provenance: provenance(
+        structureFallback['provenance'],
+        'structureFallback.provenance'
+      ),
+      view: oneOf(
+        structureFallback['view'],
+        STRUCTURE_VIEWS,
+        'structureFallback.view'
+      )
     },
     titleSlug: literal(root['titleSlug'], 'damocles', 'titleSlug'),
     walk: {

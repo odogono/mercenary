@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "titleSlug": "damocles",
   "body": {
     "id": "body-11",
@@ -110,10 +110,10 @@
     "unresolvedModels": "nothing",
     "provenance": "authored"
   },
-  "structures": {
+  "structureFallback": {
     "view": "combined",
     "doorState": "closed",
     "provenance": "authored",
-    "evidence": "Recovered: on foot the Working Authority draws every structure's plan walls and building detail together ($533D4..$53418), and from the start pose the spaceport's detail uses its on-foot default face list ($30730) with the window open, so the interior is visible from outside. Authored: which faces of each component the original draws depends on the viewer's position and is not modelled, so the walk draws the catalogue's combined assembly with the door closed, which is recovered geometry but a different face selection (docs/research/damocles-structure-draw-selection.md, #223; faithful selection is #225)."
+    "evidence": "Fallback only: when a structure has no complete recovered selector or no region matches, draw its combined closed inspection assembly without baked resident objects. Otherwise the viewer selects the recovered region queue and on-foot detail list; the door attachment stays closed. Structure-active gates and runtime door-region state are not modelled (docs/research/damocles-structure-draw-selection.md, #225)."
   }
 }

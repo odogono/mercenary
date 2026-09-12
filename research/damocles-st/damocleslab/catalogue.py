@@ -417,6 +417,104 @@ def assemble_mesh(base: dict, detail: dict, scale: tuple[int, int]) -> dict:
     return result
 
 
+def selection_list(reader: Reader, count: int, attachment: bool = False) -> list:
+    result = []
+    for _ in range(1024):
+        ref = reader.take(1)[0]
+        if ref == 0:
+            if reader.p & 1:
+                if reader.take(1) != b'\0':
+                    raise ValueError('selection list padding is not zero')
+            return result
+        if ref == 255 and attachment:
+            result.append({'kind': 'attachment'})
+        elif 1 <= ref <= count:
+            result.append({'kind': 'face', 'index': ref - 1} if attachment else ref - 1)
+        else:
+            raise ValueError('selection reference outside geometry')
+    raise ValueError('selection list terminator missing')
+
+
+def decode_detail_selection(data: bytes, start: int, count: int) -> list:
+    # Face streams are byte-sized; the bound-group reader starts on the next word.
+    reader = Reader(data, (start + 1) & ~1)
+    groups = []
+    for _ in range(2):
+        boxes = []
+        for _ in range(256):
+            tag = reader.word()
+            if tag == 0:
+                break
+            if tag != 0xffff:
+                raise ValueError('unknown detail selection form')
+            bounds = [[reader.signed(), reader.signed()] for _ in range(3)]
+            if any(lo >= hi for lo, hi in bounds):
+                raise ValueError('invalid detail selection bounds')
+            boxes.append({'bounds': bounds, 'faces': selection_list(reader, count)})
+        else:
+            raise ValueError('detail group terminator missing')
+        groups.append({'boxes': boxes, 'default': selection_list(reader, count)})
+    return groups
+
+
+def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
+                               palette: list[int], hardware: list[int]) -> dict:
+    if 0 in scale:
+        raise ValueError('zero structure selection scale')
+    reader = Reader(data, mesh['sourceEnd'] - 2)
+    attachment = None
+    command = reader.word()
+    if command:
+        if command != 0x4200 or mesh['sourceStart'] != 0x1484e:
+            raise ValueError('unknown structure attachment form')
+        x0, z0, x1, z1 = [reader.signed() for _ in range(4)]
+        colours = [reader.word() for _ in range(3)]
+        if x0 >= x1 or z0 >= z1 or any((colour & 0x7000) != 0x1000 for colour in colours):
+            raise ValueError('unknown closed attachment geometry')
+        reader.word()  # attachment control colour, not a fourth panel
+        reader.take(8)  # proximity box; motion is outside this static selection
+        if reader.word() != 0:
+            raise ValueError('unknown additional structure attachment')
+        x0, x1 = x0 * scale[0], x1 * scale[0]
+        z0, z1 = z0 * scale[1], z1 * scale[1]
+        height = Reader(data, mesh['sourceStart'] + 2).signed()
+        midpoint = (x0 + x1) // 2
+        # Two sliding leaves, each with an outside, edge and inside wall.
+        segments = [((x0,z0),(midpoint,z0)), ((midpoint,z0),(midpoint,z1)), ((midpoint,z1),(x0,z1)),
+                    ((midpoint,z0),(x1,z0)), ((midpoint,z0),(midpoint,z1)), ((x1,z1),(midpoint,z1))]
+        attachment = {'vertices': [], 'lines': [], 'faces': []}
+        for (a, b), colour in zip(segments, colours * 2):
+            offset = len(attachment['vertices'])
+            attachment['vertices'].extend([[a[0],0,a[1]], [b[0],0,b[1]], [b[0],height,b[1]], [a[0],height,a[1]]])
+            attachment['faces'].append({'vertices': list(range(offset, offset + 4)),
+                'colour': colour_value(colour & 0x8fff, palette, hardware),
+                'sourceColour': colour, 'doubleSided': True})
+    regions = []
+    sources = {face['sourceIndex'] for face in mesh['faces']}
+    for _ in range(256):
+        flags = reader.word()
+        if flags == 0:
+            break
+        raw = [[reader.signed(), reader.signed()] for _ in range(2)]
+        if any(lo >= hi for lo, hi in raw):
+            raise ValueError('invalid raw region bounds')
+        bounds = [sorted([(-32768 if factor > 0 else 32767) if lo == -32768 else lo * factor,
+                          (32767 if factor > 0 else -32768) if hi == 32767 else hi * factor])
+                  for (lo, hi), factor in zip(raw, scale)]
+        if any(lo >= hi or lo < -32768 or hi > 32767 for lo, hi in bounds):
+            raise ValueError('invalid region bounds')
+        queue = selection_list(reader, max(sources, default=-1) + 1, True)
+        if any(entry['kind'] == 'attachment' and attachment is None or
+               entry['kind'] == 'face' and entry['index'] not in sources for entry in queue):
+            raise ValueError('region references unrecovered geometry')
+        regions.append({'flags': flags, 'bounds': bounds, 'queue': queue})
+    else:
+        raise ValueError('region terminator missing')
+    if not regions:
+        raise ValueError('no recovered regions')
+    return {'plan': mesh, 'attachment': attachment, 'regions': regions, 'scale': list(scale)}
+
+
 def translate_mesh(mesh: dict, position: tuple[int, int, int]) -> dict:
     """Place reusable geometry without changing its source-local model."""
     result = {**mesh, 'vertices': [[x + position[0], y + position[1], z + position[2]]
@@ -572,6 +670,10 @@ def extract(data: bytes, source: dict) -> dict:
                     if identity == 'structure-01484e' and int.from_bytes(data[0x7af0:0x7af2], 'big') == 74:
                         third_height = struct.unpack_from('>h', data, 0x7b2a)[0]
                     mesh, gaps = decode_structure(data, pointer, palette_at(data, palette_index), hardware, scale, third_height)
+                    try:
+                        model['structureSelection'] = decode_structure_selection(data, mesh, scale, palette_at(data, palette_index), hardware)
+                    except (ValueError, struct.error) as error:
+                        gaps.append(f'Structure selection unavailable: {error}.')
                     if mesh['faces']:
                         model['variants'] = [{'id': 'record', 'name': f'Recovered form · palette {palette_index}', 'mesh': mesh}]
                         model['status'] = 'partial' if gaps else 'decoded'
@@ -581,6 +683,13 @@ def extract(data: bytes, source: dict) -> dict:
                     model['interiorSlot'] = interior
                     continue
                 mesh = decode_mesh(data, address, kind, palette_at(data, 0) if kind == 'interior' else None, hardware)
+                if kind == 'interior':
+                    try:
+                        if mesh['lines']:
+                            raise ValueError('detail selection with mixed line primitives is unresolved')
+                        model['detailSelection'] = decode_detail_selection(data, mesh['sourceEnd'], len(mesh['faces']))
+                    except (ValueError, struct.error) as error:
+                        model['selectionReason'] = str(error)
                 model['variants'] = [{
                     'id': 'record',
                     'name': 'Recovered form' if kind == 'object' else 'Palette 0 (binding unverified)',
@@ -1007,6 +1116,9 @@ def extract(data: bytes, source: dict) -> dict:
                 {'id': 'exterior-closed', 'name': 'Exterior', 'view': 'exterior', 'doorState': 'closed', 'mesh': closed_exterior},
                 {'id': 'combined-closed', 'name': 'Combined interior and exterior', 'view': 'combined', 'doorState': 'closed', 'mesh': assemble_mesh(occupied_base, closed_detail, scale)},
             ])
+            for view in model['variants']:
+                if view.get('view') == 'combined':
+                    view['walkMesh'] = assemble_mesh(base, closed_detail if view['doorState'] == 'closed' else open_detail, scale)
             model['name'] = 'Capital Spaceport'
             model['nameStatus'] = 'candidate'
             model['linkedInstances'] = ['object-slot-183', 'object-slot-5']
@@ -1040,6 +1152,24 @@ def extract(data: bytes, source: dict) -> dict:
         model['status'] = 'partial'
         model['reason'] = (model['reason'] + ' Includes linked exterior/interior detail in its neutral pose; view-conditioned visibility is not simulated.').strip()
     # Model headers which jump to a shared vertex stream provide evidence for visual variants.
+    for identity, (slot, palette_index, scale) in structure_bindings.items():
+        model = by_address[identity]
+        selection = model.get('structureSelection')
+        if selection is None:
+            continue
+        detail = by_address[tables[2]['entries'][slot]] if slot < len(tables[2]['entries']) else None
+        variant_id = f'palette-{palette_index}'
+        if detail is None or 'detailSelection' not in detail or not any(v['id'] == variant_id for v in detail['variants']):
+            del model['structureSelection']
+            model['status'] = 'partial' if model['variants'] else 'unresolved'
+            model['reason'] += ' Linked detail selection unavailable.'
+        else:
+            selection['detailModel'] = detail['id']
+            selection['detailVariant'] = variant_id
+            model['reason'] += ' Region queues and linked detail lists recovered for on-foot drawing; static closed attachments only.'
+    for model in models:
+        if 'selectionReason' in model:
+            model['reason'] += ' Detail selection unavailable: ' + model.pop('selectionReason') + '.'
     forms = {}
     for model in models:
         if model['kind'] == 'object' and model['variants']:
@@ -1052,7 +1182,7 @@ def extract(data: bytes, source: dict) -> dict:
         for model in group:
             model['variants'] = variants
             model['relatedModels'].extend(other['id'] for other in group if other is not model)
-    return {'schemaVersion': 5, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
+    return {'schemaVersion': 6, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'places': places, 'tables': tables,
             'coverage': {'complete': False, 'notes': ['Resident first-world census; not a claim of complete disk coverage.',
                 'Conditional geometry, surface attachments, scene palette binding, other-body structures and named places remain incomplete.',
