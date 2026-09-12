@@ -105,5 +105,11 @@
     "cullBackFaces": true,
     "unresolvedModels": "nothing",
     "provenance": "authored"
+  },
+  "structures": {
+    "view": "combined",
+    "doorState": "closed",
+    "provenance": "authored",
+    "evidence": "On foot the Working Authority draws every structure's plan walls and its building detail together; the region flags at $7B34 only order them ($533D4..$53418). From the start pose the spaceport's outdoor region 11 queues 18 of its 28 plan primitives plus the closed door attachment ($14A66..$14A82), and building detail 88 falls to its on-foot default face list ($30730), which has the window and doorway surrounds and neither solid facade, so the interior shows through the window. Which faces of each component are drawn depends on the viewer's position and is not modelled; the catalogue's combined inspection assembly with the door closed is the authored stand-in nearest that view (docs/research/damocles-structure-draw-selection.md, #223)."
   }
 }

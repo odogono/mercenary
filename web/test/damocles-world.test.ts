@@ -32,7 +32,10 @@ describe('the Eris surface from the Damocles Catalogue', () => {
     )!;
     expect(spaceport.modelId).toBe('structure-01484e');
     expect(spaceport.status).toBe('partial');
-    expect(spaceport.faceCount).toBe(42);
+    // The combined variant with the door closed: 28 plan primitives, the resident key and
+    // the detail with the entrance panel added (#223).
+    expect(spaceport.faceCount).toBe(84);
+    expect(spaceport.mesh!.vertices).toHaveLength(189);
     expect(spaceport.position.x / 65_536).toBeCloseTo(71.4876, 3);
     expect(spaceport.position.y).toBe(0);
     expect(spaceport.position.z / 65_536).toBeCloseTo(136.5238, 3);
@@ -51,6 +54,42 @@ describe('the Eris surface from the Damocles Catalogue', () => {
     )!;
     expect(cellOf(apron.position, surface.grid)).toEqual({ x: 7, z: 8 });
     expect(apron.faceCount).toBeGreaterThan(0);
+  });
+
+  test('draws the structure variant the document names', async () => {
+    const { catalogue, doc } = await load();
+    const spaceportOf = (
+      structures: (typeof doc)['structures']
+    ): { faceCount: number; vertices: number } => {
+      const placement = erisSurfaceFrom(catalogue, {
+        ...doc,
+        structures
+      }).placements.find(entry => entry.id === 'eris-surface-87')!;
+      return {
+        faceCount: placement.faceCount,
+        vertices: placement.mesh!.vertices.length
+      };
+    };
+    const authored = doc.structures;
+    expect(authored.view).toBe('combined');
+    expect(authored.doorState).toBe('closed');
+    expect(authored.provenance).toBe('authored');
+    expect(spaceportOf({ ...authored, view: 'exterior' })).toEqual({
+      faceCount: 42,
+      vertices: 51
+    });
+    expect(spaceportOf({ ...authored, doorState: 'open' })).toEqual({
+      faceCount: 83,
+      vertices: 189
+    });
+    // A model with one variant is drawn as that variant whatever the document names.
+    const tower = (structures: (typeof doc)['structures']) =>
+      erisSurfaceFrom(catalogue, { ...doc, structures }).placements.find(
+        entry => entry.modelId !== 'structure-01484e' && entry.faceCount > 0
+      )!;
+    expect(tower({ ...authored, view: 'exterior' }).faceCount).toBe(
+      tower(authored).faceCount
+    );
   });
 
   test('draws nothing for unrecovered geometry and counts the gap', async () => {

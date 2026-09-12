@@ -105,19 +105,28 @@ export const startPose = (doc: ErisPresentationDocument): ErisPose => ({
   position: doc.start.position
 });
 
-/// The variant an exterior walk sees.
+/// The variant a walk on the surface sees.
 ///
-/// Most recovered models have one variant. The spaceport has several: exterior and combined,
-/// door open and closed. The exterior with its door closed is the one a fresh start shows; a
-/// model with no exterior variant falls back to its first variant with faces.
-const exteriorMesh = (model: Model): Mesh | undefined => {
+/// Most recovered models have one variant, the union of the structure's plan walls and its
+/// building detail, which is what the Working Authority draws on foot: both components, in
+/// an order set by the region the player stands in. The spaceport is split into exterior and
+/// combined variants with the door open or closed, and the document names which of those the
+/// walk draws (#223); it is an authored choice because the original selects faces of each
+/// component by the viewer's position and that selection is not modelled. A model with no
+/// variant of the named view falls back to its first variant with faces.
+const structureMesh = (
+  model: Model,
+  structures: ErisPresentationDocument['structures']
+): Mesh | undefined => {
   const withFaces = model.variants.filter(
     variant => variant.mesh.faces.length > 0
   );
-  const exteriors = withFaces.filter(variant => variant.view === 'exterior');
+  const ofView = withFaces.filter(
+    variant => variant.view === structures.view
+  );
   const chosen =
-    exteriors.find(variant => variant.doorState === 'closed') ??
-    exteriors[0] ??
+    ofView.find(variant => variant.doorState === structures.doorState) ??
+    ofView[0] ??
     withFaces[0];
   return chosen?.mesh;
 };
@@ -150,7 +159,7 @@ export const erisSurfaceFrom = (
         `Damocles Instance ${instance.id} names unknown model ${instance.model}`
       );
     }
-    const mesh = exteriorMesh(model);
+    const mesh = structureMesh(model, doc.structures);
     placements.push({
       faceCount: mesh?.faces.length ?? 0,
       heading: headingFromByte(location.heading, doc.orientation),

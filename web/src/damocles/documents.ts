@@ -87,6 +87,16 @@ export interface ErisPresentationDocument {
     readonly yaw: number;
     readonly yawProvenance: Provenance;
   };
+  /// Which recovered variant a structure with several is drawn as (#223). The Working
+  /// Authority draws a structure's plan walls and its building detail together on foot and
+  /// selects faces of each by the viewer's position; that selection is not modelled, so the
+  /// catalogue's inspection assembly closest to the start pose is named here.
+  readonly structures: {
+    readonly doorState: 'closed' | 'open';
+    readonly evidence: string;
+    readonly provenance: Provenance;
+    readonly view: 'combined' | 'exterior';
+  };
   readonly titleSlug: 'damocles';
   readonly walk: {
     readonly evidence: string;
@@ -216,7 +226,8 @@ export const readErisPresentation = (
     'ground',
     'sky',
     'lighting',
-    'rendering'
+    'rendering',
+    'structures'
   ]);
   const body = object(root['body'], 'body', ['id', 'name', 'provenance']);
   const grid = object(root['grid'], 'grid', [
@@ -288,6 +299,12 @@ export const readErisPresentation = (
     'cullBackFaces',
     'unresolvedModels',
     'provenance'
+  ]);
+  const structures = object(root['structures'], 'structures', [
+    'view',
+    'doorState',
+    'provenance',
+    'evidence'
   ]);
 
   const outdoorRaw = palette['outdoor'];
@@ -434,6 +451,23 @@ export const readErisPresentation = (
       ),
       yaw: integer(start['yaw'], 'start.yaw'),
       yawProvenance: provenance(start['yawProvenance'], 'start.yawProvenance')
+    },
+    structures: {
+      doorState: oneOf(
+        structures['doorState'],
+        ['closed', 'open'],
+        'structures.doorState'
+      ),
+      evidence: text(structures['evidence'], 'structures.evidence'),
+      provenance: provenance(
+        structures['provenance'],
+        'structures.provenance'
+      ),
+      view: oneOf(
+        structures['view'],
+        ['combined', 'exterior'],
+        'structures.view'
+      )
     },
     titleSlug: literal(root['titleSlug'], 'damocles', 'titleSlug'),
     walk: {
