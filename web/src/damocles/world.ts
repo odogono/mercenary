@@ -105,21 +105,35 @@ export const startPose = (doc: ErisPresentationDocument): ErisPose => ({
   position: doc.start.position
 });
 
-/// The variant an exterior walk sees.
+/// The variant a walk on the surface sees.
 ///
-/// Most recovered models have one variant. The spaceport has several: exterior and combined,
-/// door open and closed. The exterior with its door closed is the one a fresh start shows; a
-/// model with no exterior variant falls back to its first variant with faces.
-const exteriorMesh = (model: Model): Mesh | undefined => {
+/// Most recovered models have one untagged variant, the union of plan walls and building
+/// detail that the Working Authority draws on foot, and that is what they draw. The
+/// spaceport is split by view and door state, and the document names which pair the walk
+/// draws as an authored choice (#223; see `structures.evidence`). A tagged model prefers the
+/// named door state within the named view and refuses a view it does not have, so a document
+/// that names an absent view fails here rather than drawing something else quietly.
+const structureMesh = (
+  model: Model,
+  structures: ErisPresentationDocument['structures']
+): Mesh | undefined => {
   const withFaces = model.variants.filter(
     variant => variant.mesh.faces.length > 0
   );
-  const exteriors = withFaces.filter(variant => variant.view === 'exterior');
+  const tagged = withFaces.filter(variant => variant.view !== undefined);
+  if (tagged.length === 0) {
+    return withFaces[0]?.mesh;
+  }
+  const ofView = tagged.filter(variant => variant.view === structures.view);
   const chosen =
-    exteriors.find(variant => variant.doorState === 'closed') ??
-    exteriors[0] ??
-    withFaces[0];
-  return chosen?.mesh;
+    ofView.find(variant => variant.doorState === structures.doorState) ??
+    ofView[0];
+  if (chosen === undefined) {
+    throw new Error(
+      `Damocles model ${model.id} has no ${structures.view} variant to draw`
+    );
+  }
+  return chosen.mesh;
 };
 
 export const erisSurfaceFrom = (
@@ -150,7 +164,7 @@ export const erisSurfaceFrom = (
         `Damocles Instance ${instance.id} names unknown model ${instance.model}`
       );
     }
-    const mesh = exteriorMesh(model);
+    const mesh = structureMesh(model, doc.structures);
     placements.push({
       faceCount: mesh?.faces.length ?? 0,
       heading: headingFromByte(location.heading, doc.orientation),

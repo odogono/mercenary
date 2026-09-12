@@ -1,6 +1,12 @@
 export type Point = readonly [number, number, number];
-export type Kind = 'object' | 'structure' | 'interior' | 'ground';
+export const KINDS = ['object', 'structure', 'interior', 'ground'] as const;
+export type Kind = (typeof KINDS)[number];
 export type Recovery = 'decoded' | 'partial' | 'unresolved';
+/// The vocabulary of a multi-variant model; the Eris presentation document names one pair.
+export const DOOR_STATES = ['closed', 'open'] as const;
+export type DoorState = (typeof DOOR_STATES)[number];
+export const STRUCTURE_VIEWS = ['combined', 'exterior'] as const;
+export type StructureView = (typeof STRUCTURE_VIEWS)[number];
 export interface Primitive {
   readonly colour: string;
   readonly doubleSided?: boolean;
@@ -32,12 +38,12 @@ export interface Model {
   readonly sourceAddress: number;
   readonly status: Recovery;
   readonly variants: readonly {
-    readonly doorState?: 'open' | 'closed';
+    readonly doorState?: DoorState;
     readonly id: string;
     readonly inspectionAngle?: readonly [number, number];
     readonly mesh: Mesh;
     readonly name: string;
-    readonly view?: 'exterior' | 'combined';
+    readonly view?: StructureView;
   }[];
 }
 export interface Instance {
@@ -254,8 +260,8 @@ export const parseCatalogue = (value: unknown): Catalogue => {
         v['doorState'] === undefined
           ? {}
           : {
-              doorState: choice(v['doorState'], ['open', 'closed']),
-              view: choice(v['view'], ['exterior', 'combined'])
+              doorState: choice(v['doorState'], DOOR_STATES),
+              view: choice(v['view'], STRUCTURE_VIEWS)
             };
       return {
         ...door,
@@ -441,7 +447,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     if (entries.length !== entryCount) {
       fail('table entry count mismatch');
     }
-    const kind = choice(t['kind'], ['object', 'structure', 'interior', 'ground']);
+    const kind = choice(t['kind'], KINDS);
     for (const id of entries) {
       reference(modelIds, id, 'table model');
       if (models.find(model => model.id === id)!.kind !== kind) {

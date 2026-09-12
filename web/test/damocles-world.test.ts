@@ -32,7 +32,10 @@ describe('the Eris surface from the Damocles Catalogue', () => {
     )!;
     expect(spaceport.modelId).toBe('structure-01484e');
     expect(spaceport.status).toBe('partial');
-    expect(spaceport.faceCount).toBe(42);
+    // The combined variant with the door closed: 28 plan primitives, the resident key and
+    // the detail with the entrance panel added (#223).
+    expect(spaceport.faceCount).toBe(84);
+    expect(spaceport.mesh!.vertices).toHaveLength(189);
     expect(spaceport.position.x / 65_536).toBeCloseTo(71.4876, 3);
     expect(spaceport.position.y).toBe(0);
     expect(spaceport.position.z / 65_536).toBeCloseTo(136.5238, 3);
@@ -51,6 +54,83 @@ describe('the Eris surface from the Damocles Catalogue', () => {
     )!;
     expect(cellOf(apron.position, surface.grid)).toEqual({ x: 7, z: 8 });
     expect(apron.faceCount).toBeGreaterThan(0);
+  });
+
+  test('draws the authored variant the document names', async () => {
+    const { catalogue, doc } = await load();
+    const placement = (
+      structures: (typeof doc)['structures'],
+      id: string
+    ): { faceCount: number; vertices: number } => {
+      const found = erisSurfaceFrom(catalogue, {
+        ...doc,
+        structures
+      }).placements.find(entry => entry.id === id)!;
+      return {
+        faceCount: found.faceCount,
+        vertices: found.mesh!.vertices.length
+      };
+    };
+    const authored = doc.structures;
+    expect(
+      placement({ ...authored, view: 'exterior' }, 'eris-surface-87')
+    ).toEqual({
+      faceCount: 42,
+      vertices: 51
+    });
+    expect(
+      placement({ ...authored, doorState: 'open' }, 'eris-surface-87')
+    ).toEqual({
+      faceCount: 83,
+      vertices: 189
+    });
+    // An untagged single-variant model is drawn as that variant whatever the document names.
+    expect(
+      placement({ ...authored, view: 'exterior' }, 'object-slot-1')
+    ).toEqual({
+      faceCount: 9,
+      vertices: 8
+    });
+  });
+
+  test('prefers the named view over the named door state and refuses an absent view', async () => {
+    const { catalogue, doc } = await load();
+    const spaceport = catalogue.models.find(
+      model => model.id === 'structure-01484e'
+    )!;
+    const withoutClosed = {
+      ...catalogue,
+      models: catalogue.models.map(model =>
+        model === spaceport
+          ? {
+              ...model,
+              variants: model.variants.filter(
+                variant => variant.doorState !== 'closed'
+              )
+            }
+          : model
+      )
+    };
+    const combinedOpen = erisSurfaceFrom(withoutClosed, doc).placements.find(
+      entry => entry.id === 'eris-surface-87'
+    )!;
+    expect(combinedOpen.faceCount).toBe(83);
+    const exteriorOnly = {
+      ...catalogue,
+      models: catalogue.models.map(model =>
+        model === spaceport
+          ? {
+              ...model,
+              variants: model.variants.filter(
+                variant => variant.view !== 'combined'
+              )
+            }
+          : model
+      )
+    };
+    expect(() => erisSurfaceFrom(exteriorOnly, doc)).toThrow(
+      'Damocles model structure-01484e has no combined variant to draw'
+    );
   });
 
   test('draws nothing for unrecovered geometry and counts the gap', async () => {

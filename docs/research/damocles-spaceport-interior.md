@@ -94,6 +94,15 @@ then the surrounding object stream, then the plan queue. Outdoor region 11 uses
 component ordering for the two observed regions without assigning meanings to
 the remaining flag bits.
 
+**Update, 2026-09-12:** [the draw-selection note](damocles-structure-draw-selection.md)
+closes the dispatch and the region table. `$7B32 = 11` is a `dbra` count and
+the structure record holds **twelve** region descriptors at `$14966..$14AAB`,
+each with its own inline surface queue; region 11, where the start pose lies,
+queues 18 of the 28 primitives. Building detail 88's conditioned lists are
+also decoded there: on foot the first bounding box containing the viewer
+supplies the face list, otherwise a default list with both openings open, so
+the interior is visible through the window from outside.
+
 ### Region 1's exact surface queue
 
 The region-1 pointer `$14970` names an ordered Structure 74 surface queue, not
