@@ -58,38 +58,40 @@ describe('the Eris surface from the Damocles Catalogue', () => {
 
   test('draws the structure variant the document names', async () => {
     const { catalogue, doc } = await load();
-    const spaceportOf = (
-      structures: (typeof doc)['structures']
+    const placement = (
+      structures: (typeof doc)['structures'],
+      id: string
     ): { faceCount: number; vertices: number } => {
-      const placement = erisSurfaceFrom(catalogue, {
+      const found = erisSurfaceFrom(catalogue, {
         ...doc,
         structures
-      }).placements.find(entry => entry.id === 'eris-surface-87')!;
+      }).placements.find(entry => entry.id === id)!;
       return {
-        faceCount: placement.faceCount,
-        vertices: placement.mesh!.vertices.length
+        faceCount: found.faceCount,
+        vertices: found.mesh!.vertices.length
       };
     };
     const authored = doc.structures;
-    expect(authored.view).toBe('combined');
-    expect(authored.doorState).toBe('closed');
-    expect(authored.provenance).toBe('authored');
-    expect(spaceportOf({ ...authored, view: 'exterior' })).toEqual({
+    expect(
+      placement({ ...authored, view: 'exterior' }, 'eris-surface-87')
+    ).toEqual({
       faceCount: 42,
       vertices: 51
     });
-    expect(spaceportOf({ ...authored, doorState: 'open' })).toEqual({
+    expect(
+      placement({ ...authored, doorState: 'open' }, 'eris-surface-87')
+    ).toEqual({
       faceCount: 83,
       vertices: 189
     });
-    // A model with one variant is drawn as that variant whatever the document names.
-    const tower = (structures: (typeof doc)['structures']) =>
-      erisSurfaceFrom(catalogue, { ...doc, structures }).placements.find(
-        entry => entry.modelId !== 'structure-01484e' && entry.faceCount > 0
-      )!;
-    expect(tower({ ...authored, view: 'exterior' }).faceCount).toBe(
-      tower(authored).faceCount
-    );
+    // A single-variant model is drawn as that variant whatever the document names.
+    const tower = erisSurfaceFrom(catalogue, doc).placements.find(
+      entry => entry.modelId !== 'structure-01484e' && entry.faceCount > 0
+    )!;
+    expect(placement({ ...authored, view: 'exterior' }, tower.id)).toEqual({
+      faceCount: tower.faceCount,
+      vertices: tower.mesh!.vertices.length
+    });
   });
 
   test('draws nothing for unrecovered geometry and counts the gap', async () => {

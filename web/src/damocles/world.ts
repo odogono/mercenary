@@ -107,13 +107,10 @@ export const startPose = (doc: ErisPresentationDocument): ErisPose => ({
 
 /// The variant a walk on the surface sees.
 ///
-/// Most recovered models have one variant, the union of the structure's plan walls and its
-/// building detail, which is what the Working Authority draws on foot: both components, in
-/// an order set by the region the player stands in. The spaceport is split into exterior and
-/// combined variants with the door open or closed, and the document names which of those the
-/// walk draws (#223); it is an authored choice because the original selects faces of each
-/// component by the viewer's position and that selection is not modelled. A model with no
-/// variant of the named view falls back to its first variant with faces.
+/// Most recovered models have one variant, the union of plan walls and building detail that
+/// the Working Authority draws on foot. The spaceport is split by view and door state, and
+/// the document names which pair the walk draws (#223; see `structures.evidence`). A model
+/// with no variant of the named view falls back to its first variant with faces.
 const structureMesh = (
   model: Model,
   structures: ErisPresentationDocument['structures']
@@ -121,13 +118,12 @@ const structureMesh = (
   const withFaces = model.variants.filter(
     variant => variant.mesh.faces.length > 0
   );
-  const ofView = withFaces.filter(
-    variant => variant.view === structures.view
-  );
   const chosen =
-    ofView.find(variant => variant.doorState === structures.doorState) ??
-    ofView[0] ??
-    withFaces[0];
+    withFaces.find(
+      variant =>
+        variant.view === structures.view &&
+        variant.doorState === structures.doorState
+    ) ?? withFaces[0];
   return chosen?.mesh;
 };
 

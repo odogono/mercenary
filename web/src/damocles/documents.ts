@@ -1,3 +1,9 @@
+import {
+  DOOR_STATES,
+  STRUCTURE_VIEWS,
+  type DoorState,
+  type StructureView
+} from '../catalogue/data.ts';
 import type { Vector3 } from '../orientation/index.ts';
 
 /// How a value in a Damocles presentation document came to be (ADR 0043).
@@ -87,15 +93,13 @@ export interface ErisPresentationDocument {
     readonly yaw: number;
     readonly yawProvenance: Provenance;
   };
-  /// Which recovered variant a structure with several is drawn as (#223). The Working
-  /// Authority draws a structure's plan walls and its building detail together on foot and
-  /// selects faces of each by the viewer's position; that selection is not modelled, so the
-  /// catalogue's inspection assembly closest to the start pose is named here.
+  /// Which catalogue variant a multi-variant structure is drawn as (#223); `evidence` holds
+  /// the recovered draw rule behind the choice.
   readonly structures: {
-    readonly doorState: 'closed' | 'open';
+    readonly doorState: DoorState;
     readonly evidence: string;
     readonly provenance: Provenance;
-    readonly view: 'combined' | 'exterior';
+    readonly view: StructureView;
   };
   readonly titleSlug: 'damocles';
   readonly walk: {
@@ -455,19 +459,12 @@ export const readErisPresentation = (
     structures: {
       doorState: oneOf(
         structures['doorState'],
-        ['closed', 'open'],
+        DOOR_STATES,
         'structures.doorState'
       ),
       evidence: text(structures['evidence'], 'structures.evidence'),
-      provenance: provenance(
-        structures['provenance'],
-        'structures.provenance'
-      ),
-      view: oneOf(
-        structures['view'],
-        ['combined', 'exterior'],
-        'structures.view'
-      )
+      provenance: provenance(structures['provenance'], 'structures.provenance'),
+      view: oneOf(structures['view'], STRUCTURE_VIEWS, 'structures.view')
     },
     titleSlug: literal(root['titleSlug'], 'damocles', 'titleSlug'),
     walk: {
