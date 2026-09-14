@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "titleSlug": "damocles",
   "body": {
     "id": "body-11",
@@ -112,6 +112,17 @@
     "cullBackFaces": true,
     "unresolvedModels": "nothing",
     "provenance": "authored"
+  },
+  "spaceportEntrance": {
+    "instanceId": "eris-surface-87",
+    "proximityBox": {
+      "x": [1200, 1600],
+      "z": [-1200, -200],
+      "provenance": "recovered"
+    },
+    "planRefusalProvenance": "authored",
+    "latchProvenance": "authored",
+    "evidence": "Structure 74's $4200 Entrance Attachment carries the recovered lower-inclusive, upper-exclusive Proximity Box X 1200–1600, Z -1200–-200 in structure-local units. Plan Refusal and the session-only sticky Entrance Latch are authored stand-ins for unresolved Working-Authority movement and leaf motion (docs/research/damocles-spaceport-interior.md, #237)."
   },
   "structureFallback": {
     "view": "combined",

@@ -41,6 +41,18 @@ describe('the authored Eris presentation document', () => {
       sunColour: '#fff2d0'
     });
     expect(document.rendering.unresolvedModels).toBe('nothing');
+    expect(document.schemaVersion).toBe(3);
+    expect(document.spaceportEntrance).toEqual({
+      evidence: expect.any(String),
+      instanceId: 'eris-surface-87',
+      latchProvenance: 'authored',
+      planRefusalProvenance: 'authored',
+      proximityBox: {
+        provenance: 'recovered',
+        x: [1200, 1600],
+        z: [-1200, -200]
+      }
+    });
     expect(document.structureFallback.view).toBe('combined');
     expect(document.structureFallback.doorState).toBe('closed');
     expect(document.structureFallback.provenance).toBe('authored');
@@ -97,6 +109,20 @@ describe('the authored Eris presentation document', () => {
     expect(() => readErisPresentation({ ...base, titleSlug: 'targ' })).toThrow(
       'titleSlug should be damocles'
     );
+    expect(() => readErisPresentation({ ...base, schemaVersion: 2 })).toThrow(
+      'schemaVersion should be 3'
+    );
+    const entrance = base['spaceportEntrance'] as Record<string, unknown>;
+    const box = entrance['proximityBox'] as Record<string, unknown>;
+    expect(() =>
+      readErisPresentation({
+        ...base,
+        spaceportEntrance: {
+          ...entrance,
+          proximityBox: { ...box, x: [1600, 1200] }
+        }
+      })
+    ).toThrow('lower should be less than upper');
     const lighting = base['lighting'] as Record<string, unknown>;
     const { ambientSky: _ambientSky, ...withoutAmbientSky } = lighting;
     expect(() =>

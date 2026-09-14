@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 
 import { parseCatalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
-import { structureMeshes } from '../src/damocles/selection.ts';
+import { planRefusesStep, structureMeshes } from '../src/damocles/selection.ts';
 import { erisSurfaceFrom, startPose } from '../src/damocles/world.ts';
 
 interface RawModel {
@@ -74,6 +74,63 @@ test('inside, window and doorway replace the detail list, preserving empty and f
   expect(
     structureMeshes(placement, at(800, 0), false).at(-1)!.faces.length
   ).toBeGreaterThan(0);
+});
+
+test('Plan Refusal sweeps grounded walls and the closed Entrance Attachment', () => {
+  expect(
+    planRefusesStep(placement, at(1000, -1000), at(1000, 0), false, false)
+  ).toBeTrue();
+  // The lower window wall refuses even though the 63-unit eye is in its visual opening.
+  expect(
+    planRefusesStep(placement, at(700, 0), at(1000, 0), false, false)
+  ).toBeTrue();
+  // The doorway's raised lintel does not refuse; only the closed attachment does.
+  expect(
+    planRefusesStep(placement, at(1400, -900), at(1400, -700), false, false)
+  ).toBeTrue();
+  expect(
+    planRefusesStep(placement, at(1400, -900), at(1400, -700), false, true)
+  ).toBeFalse();
+});
+
+test('horizontal plan floors and roofs do not refuse an XZ step', () => {
+  const structure = placement.selection!.structure;
+  const horizontal = {
+    ...structure.plan,
+    faces: [
+      {
+        colour: '#000000',
+        sourceColour: 0,
+        vertices: [0, 1, 2, 3]
+      }
+    ],
+    vertices: [
+      [0, 0, 0],
+      [10, 0, 0],
+      [10, 0, 10],
+      [0, 0, 10]
+    ] as const
+  };
+  const p = {
+    ...placement,
+    selection: {
+      ...placement.selection!,
+      structure: { ...structure, attachment: null, plan: horizontal }
+    }
+  };
+  expect(planRefusesStep(p, at(-5, 5), at(15, 5), false, false)).toBeFalse();
+});
+
+test('the Entrance Latch omits the attachment and admits its gated region', () => {
+  expect(structureMeshes(placement, at(1400, -780), false)).toEqual([
+    placement.mesh!
+  ]);
+  const latched = structureMeshes(placement, at(1400, -780), false, true);
+  expect(latched).not.toContain(placement.selection!.structure.attachment!);
+  expect(latched).not.toEqual([placement.mesh!]);
+  expect(latched.some(mesh => mesh.faces[0]?.sourceIndex === 20)).toBeTrue();
+  const room = structureMeshes(placement, at(1200, 0), false, true);
+  expect(room).not.toContain(placement.selection!.structure.attachment!);
 });
 
 test('region boundaries are lower inclusive and upper exclusive, with authored fallback outside', () => {

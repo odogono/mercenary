@@ -5,9 +5,15 @@ import type { ErisPresentationDocument } from './documents.ts';
 import { walk, type WalkRules } from './mover.ts';
 import type { DamoclesSaveSnapshot } from './save.ts';
 import {
+  insideLocalBox,
+  planRefusesStep,
+  structureLocalPosition
+} from './selection.ts';
+import {
   cellOf,
   startPose,
   type ErisCell,
+  type ErisPlacement,
   type ErisPose,
   type ErisSurface
 } from './world.ts';
@@ -21,6 +27,7 @@ export interface DamoclesSnapshot {
   readonly carried: readonly string[];
   readonly cell: ErisCell;
   readonly elapsed: number;
+  readonly entranceLatched: boolean;
   readonly occupancy: { readonly kind: 'onFoot' };
   readonly pose: ErisPose;
 }
@@ -50,19 +57,40 @@ export class DamoclesSession implements TitleSession<
   intent: Intent = IDLE;
 
   private readonly content: DamoclesContent;
+  private readonly entrance: ErisPlacement;
+  private readonly negateModelZ: boolean;
   private readonly rules: WalkRules;
   private elapsed: number;
+  private entranceLatched: boolean;
   private pose: ErisPose;
 
   constructor(content: DamoclesContent, restore?: DamoclesSaveSnapshot) {
     this.content = content;
     this.rules = rulesFor(content.doc);
+    const entrance = content.surface.placements.find(
+      placement => placement.id === content.doc.spaceportEntrance.instanceId
+    );
+    if (entrance === undefined) {
+      throw new Error(
+        `Eris has no ${content.doc.spaceportEntrance.instanceId} spaceport entrance`
+      );
+    }
+    this.entrance = entrance;
+    this.negateModelZ = content.doc.orientation.modelZ === 'negate';
     const opening = restore?.pose ?? startPose(content.doc);
     this.pose = {
       heading: opening.heading,
       position: { ...opening.position, y: this.rules.eyeHeight }
     };
     this.elapsed = restore?.elapsed ?? 0;
+    this.entranceLatched = this.insideProximityBox(this.pose);
+  }
+
+  private insideProximityBox(pose: ErisPose): boolean {
+    return insideLocalBox(
+      structureLocalPosition(this.entrance, pose.position, this.negateModelZ),
+      this.content.doc.spaceportEntrance.proximityBox
+    );
   }
 
   get snapshot(): DamoclesSnapshot {
@@ -70,6 +98,7 @@ export class DamoclesSession implements TitleSession<
       carried: [],
       cell: cellOf(this.pose.position, this.content.surface.grid),
       elapsed: this.elapsed,
+      entranceLatched: this.entranceLatched,
       occupancy: { kind: 'onFoot' },
       pose: this.pose
     };
@@ -79,7 +108,19 @@ export class DamoclesSession implements TitleSession<
     let remaining = Math.max(0, seconds);
     while (remaining > 0) {
       const step = Math.min(MAXIMUM_STEP, remaining);
-      this.pose = walk(this.pose, this.intent, step, this.rules);
+      const moved = walk(this.pose, this.intent, step, this.rules);
+      this.pose = planRefusesStep(
+        this.entrance,
+        this.pose,
+        moved,
+        this.negateModelZ,
+        this.entranceLatched
+      )
+        ? { heading: moved.heading, position: this.pose.position }
+        : moved;
+      if (!this.entranceLatched && this.insideProximityBox(this.pose)) {
+        this.entranceLatched = true;
+      }
       this.elapsed += step;
       remaining -= step;
     }
@@ -116,5 +157,8 @@ export class DamoclesSession implements TitleSession<
         z: (z + grid.origin.z + 0.5) * grid.cellUnits
       }
     };
+    if (!this.entranceLatched && this.insideProximityBox(this.pose)) {
+      this.entranceLatched = true;
+    }
   }
 }

@@ -382,6 +382,22 @@ _Avoid_: Model, mesh
 One named location in Damocles that may contain multiple instances and interiors; a place name alone establishes neither its position nor its contents.
 _Avoid_: Model, building shape
 
+**Entrance Attachment**:
+The recovered Structure 74 post-plan component that constructs Capital Spaceport's closed two-leaf slab and occupies attachment slot `$03FC` in its region queues; omitting it after the Entrance Latch is an authored stand-in for unread leaf motion, not a recovered animation.
+_Avoid_: Doorway, detail door face, animated door
+
+**Proximity Box**:
+The recovered lower-inclusive, upper-exclusive Structure 74-local X/Z bounds carried by the Entrance Attachment and tested by the Working Authority; for Capital Spaceport they are X 1200–1600 and Z −1200–−200.
+_Avoid_: Trigger radius, doorway bounds, collision box
+
+**Entrance Latch**:
+The authored, Gameplay Session-owned condition set the first time its Pose enters the Proximity Box, retained after leaving it but excluded from Damocles Save Snapshot v1; it stands in for unresolved Entrance Attachment motion and does not claim a recovered re-close rule.
+_Avoid_: Doorway state, saved door state, proximity state
+
+**Plan Refusal**:
+The authored post-Mover rule that refuses an on-foot XZ step crossing one of Capital Spaceport's vertical plan boundaries or its closed Entrance Attachment while leaving floors and roofs non-refusing; it is scoped to Structure 74 until generic Working-Authority movement behavior is recovered.
+_Avoid_: Wall Contact, collision system, Mover
+
 **Damocles Catalogue**:
 The read-only collection of recovered Damocles Models, Instances, Places, visual variants, and their evidence, including explicit gaps in recovery; the Damocles Gameplay Session reads it as Data Payload but it is not that session.
 _Avoid_: Gameplay Session, Damocles world, level data

@@ -70,6 +70,16 @@ describe('Damocles Saves', () => {
         catalogueProgramSha256: 'other'
       })
     ).toThrow(/payload identity/);
+    const schema2Identity = encodeDamoclesSave({
+      identity: { ...loaded.identity, erisSchemaVersion: 2 },
+      savedAt: '2026-09-12T08:00:00.000Z',
+      schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
+      snapshot: session.captureResume(),
+      where: damoclesWhere(session.snapshot.cell)
+    });
+    expect(() => decodeDamoclesSave(schema2Identity, loaded.identity)).toThrow(
+      /payload identity/
+    );
   });
 
   test('New Game leaves player Saves standing', async () => {

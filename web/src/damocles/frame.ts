@@ -173,7 +173,8 @@ const groundFillTriangles = (
 export const planErisFrame = (
   surface: ErisSurface,
   pose: ErisPose,
-  doc: ErisPresentationDocument
+  doc: ErisPresentationDocument,
+  entranceLatched = false
 ): ErisFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
@@ -203,7 +204,12 @@ export const planErisFrame = (
   }
 
   for (const placement of surface.placements) {
-    for (const mesh of structureMeshes(placement, pose, negateZ)) {
+    for (const mesh of structureMeshes(
+      placement,
+      pose,
+      negateZ,
+      entranceLatched && placement.id === doc.spaceportEntrance.instanceId
+    )) {
       const triangles = trianglesOf(mesh);
       skippedFaces += triangles.skipped;
       for (let i = 0; i < triangles.indices.length; i += 3) {

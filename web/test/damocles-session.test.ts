@@ -27,6 +27,28 @@ const content = async (): Promise<DamoclesContent> => {
   return { catalogue: parsed, doc, surface: erisSurfaceFrom(parsed, doc) };
 };
 
+const atSpaceport = (
+  loaded: DamoclesContent,
+  x: number,
+  z: number,
+  heading = 0
+): DamoclesSession => {
+  const entrance = loaded.surface.placements.find(
+    placement => placement.id === loaded.doc.spaceportEntrance.instanceId
+  )!;
+  return new DamoclesSession(loaded, {
+    elapsed: 0,
+    pose: {
+      heading,
+      position: {
+        x: entrance.position.x + x,
+        y: loaded.doc.eye.heightUnits,
+        z: entrance.position.z + z
+      }
+    }
+  });
+};
+
 const memoryStorage = (): ResumeStorage & {
   readonly map: Map<string, string>;
 } => {
@@ -74,6 +96,78 @@ describe('the Damocles Gameplay Session', () => {
       3
     );
     expect(whole.elapsed).toBeCloseTo(1, 9);
+  });
+
+  test('refuses swept facade and window steps while preserving free turning', async () => {
+    const loaded = await content();
+    const entrance = loaded.surface.placements.find(
+      placement => placement.id === loaded.doc.spaceportEntrance.instanceId
+    )!;
+    const facade = atSpaceport(loaded, 1000, -1000);
+    facade.intent = intent({ running: true, walk: 1 });
+    const afterFacade = facade.advance(1);
+    expect(afterFacade.pose.position.z).toBeLessThan(entrance.position.z - 760);
+
+    const turning = atSpaceport(loaded, 1000, -765);
+    turning.intent = intent({ turn: 1, walk: 1 });
+    turning.advance(0.03);
+    expect(turning.snapshot.pose.heading).toBeGreaterThan(0);
+    expect(turning.snapshot.pose.position.z).toBeLessThan(
+      entrance.position.z - 760
+    );
+
+    const window = atSpaceport(loaded, 700, 0, Math.PI / 2);
+    window.intent = intent({ running: true, walk: 1 });
+    window.advance(1);
+    expect(window.snapshot.pose.position.x).toBeLessThan(
+      entrance.position.x + 840
+    );
+  });
+
+  test('latches on entry, stays latched on exit and passes through the doorway', async () => {
+    const loaded = await content();
+    const session = atSpaceport(loaded, 1400, -1300);
+    expect(session.snapshot.entranceLatched).toBeFalse();
+    session.intent = intent({ walk: 1 });
+    session.advance(0.5);
+    expect(session.snapshot.entranceLatched).toBeTrue();
+    session.advance(2);
+    const entrance = loaded.surface.placements.find(
+      placement => placement.id === loaded.doc.spaceportEntrance.instanceId
+    )!;
+    expect(session.snapshot.pose.position.z).toBeGreaterThan(
+      entrance.position.z - 760
+    );
+    session.intent = intent({ walk: -1 });
+    session.advance(3);
+    expect(session.snapshot.entranceLatched).toBeTrue();
+  });
+
+  test('derives the non-persisted latch from the opening pose', async () => {
+    const loaded = await content();
+    const fresh = new DamoclesSession(loaded);
+    expect(fresh.snapshot.entranceLatched).toBeFalse();
+    const inside = atSpaceport(loaded, 1400, -1000);
+    expect(inside.snapshot.entranceLatched).toBeTrue();
+    expect(
+      atSpaceport(loaded, 1200, -1200).snapshot.entranceLatched
+    ).toBeTrue();
+    expect(
+      atSpaceport(loaded, 1600, -1000).snapshot.entranceLatched
+    ).toBeFalse();
+    expect(
+      atSpaceport(loaded, 1400, -200).snapshot.entranceLatched
+    ).toBeFalse();
+
+    const left = atSpaceport(loaded, 1400, -1300);
+    left.intent = intent({ walk: 1 });
+    left.advance(0.5);
+    left.intent = intent({ walk: -1 });
+    left.advance(0.5);
+    expect(left.snapshot.entranceLatched).toBeTrue();
+    expect(left.captureResume()).not.toHaveProperty('entranceLatched');
+    const restored = new DamoclesSession(loaded, left.captureResume());
+    expect(restored.snapshot.entranceLatched).toBeFalse();
   });
 
   test('resumes exactly where it left off, from its own key', async () => {
