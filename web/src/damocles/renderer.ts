@@ -1,5 +1,5 @@
 import type { Vector3 } from '../orientation/index.ts';
-import type { ErisFramePlan } from './frame.ts';
+import { FLOATS_PER_VERTEX, type ErisFramePlan } from './frame.ts';
 import {
   lightMatrix,
   type ErisLighting,
@@ -19,15 +19,18 @@ import {
 const VERTEX = `#version 300 es
 in vec3 view;
 in vec3 colour;
+in float order;
 uniform float aspect;
 uniform float tangent;
 uniform vec2 depthRange;
 out vec3 faceColour;
 out float viewDepth;
+flat out float faceOrder;
 
 void main() {
   faceColour = colour;
   viewDepth = view.z;
+  faceOrder = order;
   float nearPlane = depthRange.x;
   float farPlane = depthRange.y;
   float depthA = (farPlane + nearPlane) / (farPlane - nearPlane);
@@ -40,6 +43,24 @@ void main() {
   );
 }`;
 
+/// Depth pulled forward per face of a ground record, two 24-bit steps, so a record's later
+/// faces (the white strip over the grey apron) win their shared plane every frame.
+const ORDER_DEPTH_STEP = 1.2e-7;
+
+/// Depth added per layer, in the [0, 1] window range. Coplanar faces of different layers
+/// differ in interpolated log depth by well under a 24-bit step, and a ground record's face
+/// order spans at most a few dozen steps, so this keeps every record behind every structure
+/// and ahead of the fill. In distance it is six parts in a hundred thousand.
+const LAYER_DEPTH_BIAS = 4e-6;
+
+const STRIDE = FLOATS_PER_VERTEX * 4;
+/// Attribute name, byte offset and float count in a plan vertex.
+const COLOUR_ATTRIBUTES = [
+  ['view', 0, 3],
+  ['colour', 12, 3],
+  ['order', 24, 1]
+] as const;
+
 /// Depth is logarithmic in view distance, written per fragment (#221). The fixed-point z/w
 /// buffer spends nearly all its steps within a few hundred units of a 4-unit near plane; with
 /// a far plane out at the sea horizon, a fill one unit under the recovered pads is
@@ -48,14 +69,11 @@ void main() {
 const LOG_DEPTH = `
 uniform vec2 depthRange;
 uniform float depthBias;
+flat in float faceOrder;
 float logDepth(float viewDepth) {
-  return log2(max(1.0 + viewDepth, 1e-6)) / log2(1.0 + depthRange.y) + depthBias;
+  return log2(max(1.0 + viewDepth, 1e-6)) / log2(1.0 + depthRange.y)
+    + depthBias - faceOrder * ${ORDER_DEPTH_STEP.toExponential()};
 }`;
-
-/// Depth added per layer, in the [0, 1] window range. Coplanar faces of different layers
-/// differ in interpolated log depth by well under a 24-bit step; this is about thirty of
-/// them, which in distance is three parts in a hundred thousand.
-const LAYER_DEPTH_BIAS = 2e-6;
 
 const FRAGMENT = `#version 300 es
 precision highp float;
@@ -88,12 +106,15 @@ vec4 project(vec3 view) {
 const LIT_VERTEX = `#version 300 es
 in vec3 view;
 in vec3 colour;
+in float order;
 ${PROJECT}
 out vec3 faceColour;
 out vec3 viewPosition;
+flat out float faceOrder;
 void main() {
   faceColour = colour;
   viewPosition = view;
+  faceOrder = order;
   gl_Position = project(view);
 }`;
 
@@ -260,9 +281,9 @@ export const shadowCasterVertices = (vertices: Float32Array): Float32Array => {
     let hash = 2_166_136_261;
     for (let step = 0; step < 3; step += 1) {
       const vertex = reversed ? 2 - step : step;
-      for (let value = 0; value < 6; value += 1) {
+      for (let value = 0; value < FLOATS_PER_VERTEX; value += 1) {
         hash = Math.imul(
-          hash ^ words[offset + vertex * 6 + value]!,
+          hash ^ words[offset + vertex * FLOATS_PER_VERTEX + value]!,
           16_777_619
         );
       }
@@ -271,10 +292,10 @@ export const shadowCasterVertices = (vertices: Float32Array): Float32Array => {
   };
   const isReverseOf = (offset: number, previous: number): boolean => {
     for (let vertex = 0; vertex < 3; vertex += 1) {
-      for (let value = 0; value < 6; value += 1) {
+      for (let value = 0; value < FLOATS_PER_VERTEX; value += 1) {
         if (
-          words[offset + vertex * 6 + value] !==
-          words[previous + (2 - vertex) * 6 + value]
+          words[offset + vertex * FLOATS_PER_VERTEX + value] !==
+          words[previous + (2 - vertex) * FLOATS_PER_VERTEX + value]
         ) {
           return false;
         }
@@ -282,8 +303,9 @@ export const shadowCasterVertices = (vertices: Float32Array): Float32Array => {
     }
     return true;
   };
+  const stride = 3 * FLOATS_PER_VERTEX;
   let written = 0;
-  for (let offset = 0; offset < vertices.length; offset += 18) {
+  for (let offset = 0; offset < vertices.length; offset += stride) {
     const reversed = seen.get(hashAt(offset, true));
     if (reversed?.some(previous => isReverseOf(offset, previous)) === true) {
       continue;
@@ -295,8 +317,8 @@ export const shadowCasterVertices = (vertices: Float32Array): Float32Array => {
     } else {
       matching.push(offset);
     }
-    result.set(vertices.subarray(offset, offset + 18), written);
-    written += 18;
+    result.set(vertices.subarray(offset, offset + stride), written);
+    written += stride;
   }
   return result.subarray(0, written);
 };
@@ -400,13 +422,10 @@ export class ErisRenderer {
     gl.useProgram(this.shaderProgram);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
     gl.bufferData(gl.ARRAY_BUFFER, plan.vertices, gl.DYNAMIC_DRAW);
-    for (const [name, offset] of [
-      ['view', 0],
-      ['colour', 12]
-    ] as const) {
+    for (const [name, offset, size] of COLOUR_ATTRIBUTES) {
       const attribute = gl.getAttribLocation(this.shaderProgram, name);
       gl.enableVertexAttribArray(attribute);
-      gl.vertexAttribPointer(attribute, 3, gl.FLOAT, false, 24, offset);
+      gl.vertexAttribPointer(attribute, size, gl.FLOAT, false, STRIDE, offset);
       this.enabledAttributes.add(attribute);
     }
     gl.uniform1f(
@@ -504,14 +523,14 @@ export class ErisRenderer {
   private bindGeometry(
     shaderProgram: WebGLProgram,
     buffer: WebGLBuffer,
-    attributes: readonly (readonly [string, number])[]
+    attributes: readonly (readonly [string, number, number])[]
   ): void {
     const gl = this.gl;
     gl.useProgram(shaderProgram);
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     const locations = attributes.map(
-      ([name, offset]) =>
-        [gl.getAttribLocation(shaderProgram, name), offset] as const
+      ([name, offset, size]) =>
+        [gl.getAttribLocation(shaderProgram, name), offset, size] as const
     );
     const active = new Set(locations.map(([attribute]) => attribute));
     for (const attribute of this.enabledAttributes) {
@@ -520,9 +539,9 @@ export class ErisRenderer {
       }
     }
     this.enabledAttributes.clear();
-    for (const [attribute, offset] of locations) {
+    for (const [attribute, offset, size] of locations) {
       gl.enableVertexAttribArray(attribute);
-      gl.vertexAttribPointer(attribute, 3, gl.FLOAT, false, 24, offset);
+      gl.vertexAttribPointer(attribute, size, gl.FLOAT, false, STRIDE, offset);
       this.enabledAttributes.add(attribute);
     }
   }
@@ -570,7 +589,7 @@ export class ErisRenderer {
       lightMatrix(frame.lighting, frame.heading, frame.eyeWorld, window)
     );
     const casters = shadowCasterVertices(plan.vertices);
-    const casterCount = casters.length / 6;
+    const casterCount = casters.length / FLOATS_PER_VERTEX;
 
     gl.bindBuffer(gl.ARRAY_BUFFER, resources.casterBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, casters, gl.DYNAMIC_DRAW);
@@ -581,7 +600,7 @@ export class ErisRenderer {
     gl.enable(gl.POLYGON_OFFSET_FILL);
     gl.polygonOffset(...SHADOW_POLYGON_OFFSET);
     this.bindGeometry(resources.depthProgram, resources.casterBuffer, [
-      ['view', 0]
+      ['view', 0, 3]
     ]);
     for (let index = 0; index < resources.maps.length; index += 1) {
       gl.bindFramebuffer(gl.FRAMEBUFFER, resources.maps[index]!.framebuffer);
@@ -609,10 +628,7 @@ export class ErisRenderer {
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
     gl.bufferData(gl.ARRAY_BUFFER, plan.vertices, gl.DYNAMIC_DRAW);
-    this.bindGeometry(resources.colourProgram, this.buffer, [
-      ['view', 0],
-      ['colour', 12]
-    ]);
+    this.bindGeometry(resources.colourProgram, this.buffer, COLOUR_ATTRIBUTES);
     this.setProjection(resources.colourProgram, plan);
     this.uniform3(resources.colourProgram, 'sunView', frame.lighting.sunView);
     this.uniform3(
