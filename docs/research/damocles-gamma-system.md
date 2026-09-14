@@ -75,7 +75,7 @@ manual transcription, Mercenary Site). They are search hypotheses only.
 | Seamless spaceflight between bodies      | **Unresolved (place side)**  | Narrative copy and a `VOID` body slot support space as a place class; flight dynamics belong to #81.                                                                                        |
 | Interiors with outward windows           | **Partially confirmed**      | Enterable buildings/places and door-key objects are present; the string `WINDOW` appears in in-game copy. Outward-window rendering is #79.                                                  |
 | Larger city / object set than Targ       | **Confirmed (shape)**        | Dense place-label and takeable-object label pools after load; not a 16×16 / 192-Room / 64-slot Targ layout. Exact censuses left Unresolved.                                                 |
-| 28-bit world coordinates                 | **Unresolved**               | Not proven from the inventory pass; navigation panel digits were observed but not bound to a coordinate encoding.                                                                           |
+| 28-bit world coordinates                 | **Not this panel field**     | `016-283` is `$7A1C`/`$7A20`, independent of the Eris 16.16 camera at `$7A92`/`$7A9A` (#208). Cell `07-08` is the 16.16 pair. A 28-bit world encoding, if any, is not this readout. |
 | Starting place is Eris Capital spaceport | **Confirmed (panel + copy)** | Post-load panel shows `ERIS`; briefing strings name Capital City Spaceport. Fiction name “Eris” matches the body-table slot, not a Targ Location enum.                                      |
 
 ## Bucket findings
@@ -469,6 +469,27 @@ a flight mode word. How occupancy and motion behave there is covered in
 [#81](https://github.com/odogono/mercenary/issues/81) /
 `docs/research/damocles-script-motion-time.md`.
 
+### Navigation digits `016-283` — Confirmed (RAM pair); display map Partial (#208)
+
+The left NAV triple is **not** the Eris 16.16 camera and **not** a 28-bit
+encoding of `$7A92`/`$7A9A`. Those longs are the cell `07-08` pair already
+bound in `damocles-walk-board-flight.md`.
+
+**Source.** Unsigned 32-bit words **`$7A1C`** and **`$7A20`**. On the pinned
+on-foot snapshot they read `17` and `290` while the panel shows `016-283`.
+Writing `$00000099` / `$00000123` (`153` / `291`) redraws `149-284`. Writing
+`16` / `283` redraws `015-276`. Walking 800 VBLs north raised `$7A9A` by 10758
+and left `$7A1C`/`$7A20` and the `016-283` digits unchanged.
+
+The panel is a 3-digit decimal derivation, not `printf` of the integers. Across
+those samples the second field displays as `value - 7`; the first field is
+usually `value - 1` (`17→016`, `16→015`) but `153→149` is not that rule.
+Closed-form mapping and what quantity the pair measures (bearing, intercept,
+…) stay Fog.
+
+Reproduce: `panel-readout-probe.py poke --address 0x7a1c --bytes …` and
+`navigation --vbls 800`.
+
 ## Boundary handoff to #81
 
 | #80 (this note)                                                           | #81 ([damocles-script-motion-time.md](damocles-script-motion-time.md))                     |
@@ -509,7 +530,9 @@ name table). Not completed here:
 - Direct metadata confirmation of the structurally inferred 9+19 partition
 - Place-record control-byte semantics and body-index binding
 - Interior doorway graph
-- Object residence and coordinate encoding (including the 28-bit claim)
+- Object residence and coordinate encoding. The `016-283` panel pair is
+  bound (#208) and is not the Eris camera; a 28-bit world encoding remains
+  Unresolved as a general claim.
 
 ## Provenance summary
 
@@ -524,5 +547,6 @@ name table). Not completed here:
 | 32×4 phase-rate source at `$0082DC`                    | Same runs; equal bounded SHA-256; `$04D648..$04D660` source-to-derived loop                                |
 | Phase-rate slot binding                                | `$051E4E..$051E6A` accumulator loop and current-body indexed reads at `$05935A..$059392`                   |
 | Place labels ~`$023E56+`                               | Same runs; ERIS panel on PNG                                                                               |
+| `016-283` at `$7A1C`/`$7A20`, not `$7A92`/`$7A9A`      | #208 poke and 800-VBL walk; see above                                                                      |
 | Object / key labels ~`$03C000+`                        | Same runs                                                                                                  |
 | Scenario pin                                           | `scenarios/first-world.json`                                                                               |

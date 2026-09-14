@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Exact-VBL Damocles panel readout probe (`research/damocles-st/scripts/panel-readout-probe.py`)
+  for the impact clock, `016-283` digits, and boarded speed field (#208).
+
+### Changed
+
+- Working-Authority notes pin the impact clock at `$793C` (signed remaining seconds) and
+  `016-283` at `$7A1C`/`$7A20`; boarded `+ 000 000 NNN` still has no integer RAM cell.
+
 ## [0.19.4] - 2026-09-14
 
 ### Added

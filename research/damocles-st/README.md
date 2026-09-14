@@ -22,6 +22,14 @@ research/damocles-st/lab observe --scenario research/damocles-st/scenarios/title
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/first-world.json
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/deadline-clock.json
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/script-dispatch.json
+python3 research/damocles-st/scripts/panel-readout-probe.py --roms /path/to/roms \
+  --snapshots /path/to/snapshots clock --vbls 250
+python3 research/damocles-st/scripts/panel-readout-probe.py --roms /path/to/roms \
+  --snapshots /path/to/snapshots poke --address 0x793c --bytes fffff1f0 --vbls 400
+python3 research/damocles-st/scripts/panel-readout-probe.py --roms /path/to/roms \
+  --snapshots /path/to/snapshots navigation --vbls 800
+python3 research/damocles-st/scripts/panel-readout-probe.py --roms /path/to/roms \
+  --snapshots /path/to/snapshots velocity --key 4
 research/damocles-st/lab verify --run research/damocles-st/work/<run-id>
 research/damocles-st/lab export --run research/damocles-st/work/<run-id> --window script-bank
 research/damocles-st/lab xref --run research/damocles-st/work/<run-id> --address 0x781E
