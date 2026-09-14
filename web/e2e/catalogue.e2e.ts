@@ -508,3 +508,139 @@ test('spaceport door states preserve the view and survive direct navigation', as
   await page.goto('/catalogue?model=object-035d12');
   await expect(page.locator('#door-control')).toBeHidden();
 });
+
+test('the placement map zooms, pans and resets by pointer and keyboard without losing pins', async ({
+  page
+}) => {
+  const zoom = async () =>
+    Number(
+      (await page.locator('#map-scale').innerText())
+        .match(/Zoom ([\d,.]+)×/)![1]!
+        .replaceAll(',', '')
+    );
+  const centre = async (name: string) => {
+    const box = (await page
+      .locator('#map')
+      .getByRole('link', { exact: true, name })
+      .boundingBox())!;
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  };
+  await page.goto('/catalogue?instance=eris-surface-89');
+  await expect(page.locator('#model-name')).toHaveText('Structure 75');
+  await expect(page.locator('#map a')).toHaveCount(174);
+  await page.locator('#map').scrollIntoViewIfNeeded();
+  // Opening a placement frames its local workspace: neighbouring cells one
+  // unit apart are separate pins.
+  expect(await zoom()).toBeGreaterThan(150);
+  await expect(page.locator('#map-scale')).toContainText('grid 2 units');
+  const office = await centre('STATE OFFICE'),
+    spaceport = await centre('CAPITAL SPACEPORT');
+  expect(Math.abs(office.x - spaceport.x)).toBeGreaterThan(40);
+  await expect(
+    page
+      .locator('#map')
+      .getByRole('link', { exact: true, name: 'STATE OFFICE' })
+  ).toHaveAttribute('aria-current', 'true');
+  // Fit all collapses the workspace back onto one spot, still 174 pins.
+  await page.getByRole('button', { name: 'Fit all' }).click();
+  expect(await zoom()).toBe(1);
+  await expect(page.locator('#map-scale')).toContainText('grid 500 units');
+  const collapsed = await centre('STATE OFFICE');
+  expect(
+    Math.abs(collapsed.x - (await centre('CAPITAL SPACEPORT')).x)
+  ).toBeLessThan(4);
+  await expect(page.locator('#map a')).toHaveCount(174);
+  // Wheel zoom keeps the world under the pointer still. Marker boxes are
+  // pixel-snapped, so the check stays at a zoom where that error is small.
+  await page.mouse.move(collapsed.x, collapsed.y);
+  await page.mouse.wheel(0, -1000);
+  expect(await zoom()).toBeCloseTo(2.7, 0);
+  const anchored = await centre('STATE OFFICE');
+  expect(Math.abs(anchored.x - collapsed.x)).toBeLessThan(8);
+  expect(Math.abs(anchored.y - collapsed.y)).toBeLessThan(8);
+  await page.mouse.wheel(0, -2000);
+  expect(await zoom()).toBeGreaterThan(15);
+  const underPointer = await centre('STATE OFFICE');
+  // Dragging pans by the pointer distance and does not follow a marker link.
+  await page.mouse.move(underPointer.x, underPointer.y);
+  await page.mouse.down();
+  await page.mouse.move(underPointer.x + 40, underPointer.y + 20, { steps: 4 });
+  await page.mouse.move(underPointer.x + 80, underPointer.y + 40, { steps: 4 });
+  await page.mouse.up();
+  const dragged = await centre('STATE OFFICE');
+  expect(dragged.x - underPointer.x).toBeGreaterThan(70);
+  expect(dragged.y - underPointer.y).toBeGreaterThan(30);
+  await expect(page).toHaveURL(/instance=eris-surface-89/);
+  // Buttons and keys.
+  await page.getByRole('button', { name: 'Zoom map in' }).click();
+  const zoomedIn = await zoom();
+  await page.getByRole('button', { name: 'Zoom map out' }).click();
+  expect(await zoom()).toBeLessThan(zoomedIn);
+  await page.locator('#map').focus();
+  await page.keyboard.press('0');
+  expect(await zoom()).toBe(1);
+  await page.keyboard.press('+');
+  await page.keyboard.press('+');
+  expect(await zoom()).toBeCloseTo(2.3, 0);
+  const beforeArrow = await centre('STATE OFFICE');
+  await page.keyboard.press('ArrowLeft');
+  expect((await centre('STATE OFFICE')).x - beforeArrow.x).toBeGreaterThan(30);
+  await page.keyboard.press('-');
+  await page.keyboard.press('-');
+  await page.keyboard.press('-');
+  expect(await zoom()).toBe(1);
+  // The maximum zoom separates a structure from its own ground record, which
+  // sits 0.023 units away, without inventing positions for the coincident pair
+  // one cell over.
+  const pin = await centre('STATE OFFICE');
+  await page.mouse.move(pin.x, pin.y);
+  await page.mouse.wheel(0, -30_000);
+  expect(await zoom()).toBe(8192);
+  await expect(page.locator('#map-scale')).toContainText('grid 0.05 units');
+  const structure = await centre('STATE OFFICE'),
+    ground = await centre('STATE OFFICE ground');
+  expect(
+    Math.hypot(structure.x - ground.x, structure.y - ground.y)
+  ).toBeGreaterThan(12);
+  await page
+    .locator('#map')
+    .getByRole('link', { exact: true, name: 'STATE OFFICE ground' })
+    .click();
+  await expect(page).toHaveURL(/instance=eris-ground-89/);
+  await expect(page.locator('#map-note')).not.toContainText(
+    'shares its position'
+  );
+  await page
+    .locator('.map-section')
+    .screenshot({ path: 'test-results/catalogue-map-zoomed.png' });
+  // Opening a placement from the list recentres; Back keeps that view.
+  await page
+    .locator('#locations')
+    .getByRole('link', { name: /^PLAYTESTER STORES ground · 73\.500/ })
+    .click();
+  await expect(page).toHaveURL(/instance=eris-ground-29/);
+  await expect(page.locator('#map-note')).toContainText(
+    'shares its position with 1 other'
+  );
+  const opened = await page.locator('#map-scale').innerText();
+  expect(await zoom()).toBeGreaterThan(150);
+  await page.goBack();
+  await expect(page).toHaveURL(/instance=eris-ground-89/);
+  await expect(page.locator('#map-scale')).toHaveText(opened);
+  await expect(
+    page
+      .locator('#map')
+      .getByRole('link', { exact: true, name: 'STATE OFFICE ground' })
+  ).toHaveAttribute('aria-current', 'true');
+  // A lone outlier opens at 8×; changing body fits the new body.
+  await page
+    .locator('#locations')
+    .getByRole('link', { name: /^DART II/ })
+    .click();
+  expect(await zoom()).toBe(8);
+  await page.locator('#body').selectOption('body-8');
+  expect(await zoom()).toBe(1);
+  await expect(page.locator('#map a')).toHaveCount(87);
+  await page.goBack();
+  await expect(page.locator('#map a')).toHaveCount(174);
+});

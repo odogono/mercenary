@@ -6,7 +6,7 @@ import {
   type Model
 } from './data.ts';
 import { address, element, link, node } from './dom.ts';
-import { renderMap } from './map.ts';
+import { mountMap, renderMap, type MapFocus } from './map.ts';
 import { createViewer } from './viewer.ts';
 
 let data: Catalogue;
@@ -229,7 +229,7 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
   details.append(list);
 };
 
-const render = () => {
+const render = (focus: MapFocus) => {
   const params = new URL(location.href).searchParams;
   search.value = params.get('q') ?? '';
   kind.value = params.get('kind') ?? '';
@@ -264,7 +264,7 @@ const render = () => {
   if (!body.value) {
     body.selectedIndex = 0;
   }
-  renderMap(data, body.value, instanceId);
+  renderMap(data, body.value, instanceId, focus);
 };
 
 const start = async () => {
@@ -328,7 +328,7 @@ const start = async () => {
       option.value = item.id;
       body.append(option);
     }
-    render();
+    render('cluster');
   } catch (error) {
     node('catalogue').hidden = true;
     node('error').hidden = false;
@@ -344,7 +344,7 @@ for (const [input, key] of [
 ] as const) {
   input.addEventListener('input', () => {
     replaceQuery(key, input.value);
-    render();
+    render('keep');
   });
 }
 body.addEventListener('change', () => {
@@ -352,7 +352,8 @@ body.addEventListener('change', () => {
   renderMap(
     data,
     body.value,
-    new URL(location.href).searchParams.get('instance')
+    new URL(location.href).searchParams.get('instance'),
+    'fit'
   );
 });
 node('wireframe').addEventListener('change', event =>
@@ -364,10 +365,11 @@ node('zoom-out').addEventListener('click', () => viewer?.zoomOut());
 node('model-view').addEventListener('viewer-error', event =>
   message((event as CustomEvent<string>).detail)
 );
+mountMap();
 node('retry').addEventListener('click', () => void start());
 window.addEventListener('popstate', () => {
   if (data) {
-    render();
+    render('keep');
   }
 });
 document.addEventListener('click', event => {
@@ -388,7 +390,7 @@ document.addEventListener('click', event => {
   }
   event.preventDefault();
   history.pushState(null, '', url);
-  render();
+  render('cluster');
   node('model-name').setAttribute('tabindex', '-1');
   node('model-name').focus();
   node('model-name').scrollIntoView({ block: 'start' });

@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The Damocles Catalogue's per-body Surface placement map zooms and pans: wheel zooms about
+  the pointer, drag pans, `+`, `−` and Fit all buttons and the same keys with arrow panning
+  work from the keyboard, and a readout states the zoom, the span in surface grid units and
+  the grid square. Opening a placement frames its local cluster, so the Eris capital's
+  16×16 workspace separates into cells, a lone outlier opens at 8×, and Back keeps the view.
+  Coincident pins are never merged; the selected pin stays above overlaps and the note says
+  when another placement shares its position (#175).
 - Damocles Catalogue recovers Gaea Birmingham Island's authored surface-assembly map and
   seven source place names from the pinned first-world place pool, so 99 CHEVY inspects
   with neighbouring assemblies and no invented place labels (#172).
