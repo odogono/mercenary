@@ -470,17 +470,15 @@ try {
     root['x'] = String(snapshot.pose.position.x);
     root['z'] = String(snapshot.pose.position.z);
     root['heading'] = String(snapshot.pose.heading);
-    root['entranceLatched'] = String(snapshot.entranceLatched);
+    root['entranceOpenUnits'] = String(snapshot.entranceOpenUnits);
     root['triangles'] = String(triangles);
     root['unresolved'] = String(content.surface.unresolvedCount);
   };
   const draw = (): void => {
-    const plan = planErisFrame(
-      content.surface,
-      snapshot.pose,
-      content.doc,
-      snapshot.entranceLatched
-    );
+    const plan = planErisFrame(content.surface, snapshot.pose, content.doc, {
+      openUnits: snapshot.entranceOpenUnits,
+      region: snapshot.spaceportRegion
+    });
     const preset = preferences.current().presentationPreset;
     const shadows =
       content.doc.lighting.shadows &&

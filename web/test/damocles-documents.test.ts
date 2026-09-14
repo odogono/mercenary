@@ -41,12 +41,13 @@ describe('the authored Eris presentation document', () => {
       sunColour: '#fff2d0'
     });
     expect(document.rendering.unresolvedModels).toBe('nothing');
-    expect(document.schemaVersion).toBe(3);
+    expect(document.camera.nearPlane).toBeLessThan(11);
+    expect(document.schemaVersion).toBe(4);
     expect(document.spaceportEntrance).toEqual({
       evidence: expect.any(String),
+      eyeClampProvenance: 'recovered',
       instanceId: 'eris-surface-87',
-      latchProvenance: 'authored',
-      planRefusalProvenance: 'authored',
+      motionProvenance: 'recovered',
       proximityBox: {
         provenance: 'recovered',
         x: [1200, 1600],
@@ -110,7 +111,7 @@ describe('the authored Eris presentation document', () => {
       'titleSlug should be damocles'
     );
     expect(() => readErisPresentation({ ...base, schemaVersion: 2 })).toThrow(
-      'schemaVersion should be 3'
+      'schemaVersion should be 4'
     );
     const entrance = base['spaceportEntrance'] as Record<string, unknown>;
     const box = entrance['proximityBox'] as Record<string, unknown>;

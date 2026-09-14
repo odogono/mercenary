@@ -81,7 +81,7 @@ export interface ErisPresentationDocument {
     readonly provenance: Provenance;
     readonly unresolvedModels: 'nothing';
   };
-  readonly schemaVersion: 3;
+  readonly schemaVersion: 4;
   readonly sky: {
     readonly colour: string;
     readonly note: string;
@@ -90,9 +90,9 @@ export interface ErisPresentationDocument {
   };
   readonly spaceportEntrance: {
     readonly evidence: string;
+    readonly eyeClampProvenance: 'recovered';
     readonly instanceId: string;
-    readonly latchProvenance: 'authored';
-    readonly planRefusalProvenance: 'authored';
+    readonly motionProvenance: 'recovered';
     readonly proximityBox: {
       readonly provenance: 'recovered';
       readonly x: readonly [number, number];
@@ -343,10 +343,10 @@ export const readErisPresentation = (
     root['spaceportEntrance'],
     'spaceportEntrance',
     [
+      'eyeClampProvenance',
       'instanceId',
       'proximityBox',
-      'planRefusalProvenance',
-      'latchProvenance',
+      'motionProvenance',
       'evidence'
     ]
   );
@@ -499,7 +499,7 @@ export const readErisPresentation = (
         'rendering.unresolvedModels'
       )
     },
-    schemaVersion: literal(root['schemaVersion'], 3, 'schemaVersion'),
+    schemaVersion: literal(root['schemaVersion'], 4, 'schemaVersion'),
     sky: {
       colour: skyColour,
       note: text(sky['note'], 'sky.note'),
@@ -511,19 +511,19 @@ export const readErisPresentation = (
         spaceportEntrance['evidence'],
         'spaceportEntrance.evidence'
       ),
+      eyeClampProvenance: literal(
+        spaceportEntrance['eyeClampProvenance'],
+        'recovered',
+        'spaceportEntrance.eyeClampProvenance'
+      ),
       instanceId: text(
         spaceportEntrance['instanceId'],
         'spaceportEntrance.instanceId'
       ),
-      latchProvenance: literal(
-        spaceportEntrance['latchProvenance'],
-        'authored',
-        'spaceportEntrance.latchProvenance'
-      ),
-      planRefusalProvenance: literal(
-        spaceportEntrance['planRefusalProvenance'],
-        'authored',
-        'spaceportEntrance.planRefusalProvenance'
+      motionProvenance: literal(
+        spaceportEntrance['motionProvenance'],
+        'recovered',
+        'spaceportEntrance.motionProvenance'
       ),
       proximityBox: {
         provenance: literal(

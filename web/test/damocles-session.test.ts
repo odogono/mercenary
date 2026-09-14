@@ -31,13 +31,15 @@ const atSpaceport = (
   loaded: DamoclesContent,
   x: number,
   z: number,
-  heading = 0
+  heading = 0,
+  entranceOpenUnits = 0
 ): DamoclesSession => {
   const entrance = loaded.surface.placements.find(
     placement => placement.id === loaded.doc.spaceportEntrance.instanceId
   )!;
   return new DamoclesSession(loaded, {
     elapsed: 0,
+    entranceOpenUnits,
     pose: {
       heading,
       position: {
@@ -45,7 +47,8 @@ const atSpaceport = (
         y: loaded.doc.eye.heightUnits,
         z: entrance.position.z + z
       }
-    }
+    },
+    spaceportRegion: null
   });
 };
 
@@ -108,12 +111,12 @@ describe('the Damocles Gameplay Session', () => {
     const afterFacade = facade.advance(1);
     expect(afterFacade.pose.position.z).toBeLessThan(entrance.position.z - 760);
 
-    const turning = atSpaceport(loaded, 1000, -765);
+    const turning = atSpaceport(loaded, 1000, -820);
     turning.intent = intent({ turn: 1, walk: 1 });
     turning.advance(0.03);
     expect(turning.snapshot.pose.heading).toBeGreaterThan(0);
     expect(turning.snapshot.pose.position.z).toBeLessThan(
-      entrance.position.z - 760
+      entrance.position.z - 800
     );
 
     const window = atSpaceport(loaded, 700, 0, Math.PI / 2);
@@ -124,50 +127,36 @@ describe('the Damocles Gameplay Session', () => {
     );
   });
 
-  test('latches on entry, stays latched on exit and passes through the doorway', async () => {
+  test('opens over time, admits the doorway only at the endpoint, and re-closes on retreat', async () => {
     const loaded = await content();
-    const session = atSpaceport(loaded, 1400, -1300);
-    expect(session.snapshot.entranceLatched).toBeFalse();
+    const opening = atSpaceport(loaded, 1400, -1000);
+    expect(opening.snapshot.entranceOpenUnits).toBe(0);
+    opening.advance(1);
+    expect(opening.snapshot.entranceOpenUnits).toBeGreaterThan(0);
+    expect(opening.snapshot.entranceOpenUnits).toBeLessThan(92);
+    opening.advance(2);
+    expect(opening.snapshot.entranceOpenUnits).toBe(92);
+
+    const session = atSpaceport(loaded, 1400, -820, 0, 90);
     session.intent = intent({ walk: 1 });
-    session.advance(0.5);
-    expect(session.snapshot.entranceLatched).toBeTrue();
-    session.advance(2);
+    session.advance(0.03);
     const entrance = loaded.surface.placements.find(
       placement => placement.id === loaded.doc.spaceportEntrance.instanceId
     )!;
-    expect(session.snapshot.pose.position.z).toBeGreaterThan(
-      entrance.position.z - 760
+    expect(session.snapshot.pose.position.z).toBeLessThan(
+      entrance.position.z - 800
     );
-    session.intent = intent({ walk: -1 });
-    session.advance(3);
-    expect(session.snapshot.entranceLatched).toBeTrue();
-  });
+    session.advance(0.1);
+    expect(session.snapshot.pose.position.z).toBeGreaterThan(
+      entrance.position.z - 800
+    );
 
-  test('derives the non-persisted latch from the opening pose', async () => {
-    const loaded = await content();
-    const fresh = new DamoclesSession(loaded);
-    expect(fresh.snapshot.entranceLatched).toBeFalse();
-    const inside = atSpaceport(loaded, 1400, -1000);
-    expect(inside.snapshot.entranceLatched).toBeTrue();
-    expect(
-      atSpaceport(loaded, 1200, -1200).snapshot.entranceLatched
-    ).toBeTrue();
-    expect(
-      atSpaceport(loaded, 1600, -1000).snapshot.entranceLatched
-    ).toBeFalse();
-    expect(
-      atSpaceport(loaded, 1400, -200).snapshot.entranceLatched
-    ).toBeFalse();
-
-    const left = atSpaceport(loaded, 1400, -1300);
-    left.intent = intent({ walk: 1 });
-    left.advance(0.5);
-    left.intent = intent({ walk: -1 });
-    left.advance(0.5);
-    expect(left.snapshot.entranceLatched).toBeTrue();
-    expect(left.captureResume()).not.toHaveProperty('entranceLatched');
-    const restored = new DamoclesSession(loaded, left.captureResume());
-    expect(restored.snapshot.entranceLatched).toBeFalse();
+    const retreat = atSpaceport(loaded, 1400, -1300, 0, 92);
+    retreat.advance(1);
+    expect(retreat.snapshot.entranceOpenUnits).toBeGreaterThan(0);
+    expect(retreat.snapshot.entranceOpenUnits).toBeLessThan(92);
+    retreat.advance(2);
+    expect(retreat.snapshot.entranceOpenUnits).toBe(0);
   });
 
   test('resumes exactly where it left off, from its own key', async () => {
@@ -201,7 +190,7 @@ describe('the Damocles Gameplay Session', () => {
     const storage = memoryStorage();
     const loaded = await content();
     const identity = damoclesSaveIdentity(loaded.catalogue, loaded.doc);
-    storage.setItem(DAMOCLES_RESUME_STORAGE_KEY, '{"schemaVersion":2}');
+    storage.setItem(DAMOCLES_RESUME_STORAGE_KEY, '{"schemaVersion":1}');
     expect(readDamoclesResume(storage, identity).kind).toBe('invalid');
     expect(storage.map.size).toBe(0);
     storage.setItem(DAMOCLES_RESUME_STORAGE_KEY, 'not json');

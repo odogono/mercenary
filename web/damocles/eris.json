@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "titleSlug": "damocles",
   "body": {
     "id": "body-11",
@@ -55,7 +55,7 @@
   },
   "camera": {
     "verticalFieldOfViewDegrees": 45,
-    "nearPlane": 16,
+    "nearPlane": 4,
     "farPlane": 3000000,
     "provenance": "authored"
   },
@@ -120,14 +120,14 @@
       "z": [-1200, -200],
       "provenance": "recovered"
     },
-    "planRefusalProvenance": "authored",
-    "latchProvenance": "authored",
-    "evidence": "Structure 74's $4200 Entrance Attachment carries the recovered lower-inclusive, upper-exclusive Proximity Box X 1200–1600, Z -1200–-200 in structure-local units. Plan Refusal and the session-only sticky Entrance Latch are authored stand-ins for unresolved Working-Authority movement and leaf motion (docs/research/damocles-spaceport-interior.md, #237)."
+    "eyeClampProvenance": "recovered",
+    "motionProvenance": "recovered",
+    "evidence": "Structure 74's $4200 Entrance Attachment carries the recovered lower-inclusive, upper-exclusive Proximity Box X 1200–1600, Z -1200–-200. Its inner X edges interpolate from 1400/1400 to 1308/1492 and re-close outside the box; the post-Mover eye is clamped to the selected region's inset XZ, with region 2 admitted only at the $FF endpoint (docs/research/damocles-spaceport-entrance-motion.md, #238)."
   },
   "structureFallback": {
     "view": "combined",
     "doorState": "closed",
     "provenance": "authored",
-    "evidence": "Fallback only: when a structure has no complete recovered selector or no region matches, draw its combined closed inspection assembly without baked resident objects. Otherwise the viewer selects the recovered region queue and on-foot detail list; the door attachment stays closed. Structure-active gates and runtime door-region state are not modelled (docs/research/damocles-structure-draw-selection.md, #225)."
+    "evidence": "Fallback only: when a structure has no complete recovered selector or no region matches, draw its combined closed inspection assembly without baked resident objects. Otherwise the viewer selects the recovered region queue and on-foot detail list, including the runtime Entrance Attachment (docs/research/damocles-structure-draw-selection.md, #225; docs/research/damocles-spaceport-entrance-motion.md, #238)."
   }
 }

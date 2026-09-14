@@ -59,7 +59,7 @@ test('structure faces change at the window, doorway and inside the spaceport', a
   expect(new Set(counts).size).toBe(3);
 });
 
-test('the spaceport latches open, refuses its window, and leaves other structures ghosted', async ({
+test('the spaceport animates open, refuses its window, and leaves other structures ghosted', async ({
   page
 }) => {
   await page.addInitScript(
@@ -102,14 +102,19 @@ test('the spaceport latches open, refuses its window, and leaves other structure
 
   const frame = page.locator('#frame');
   const spaceport = await startAt('eris-surface-87', 1400, -1300, 512);
-  await expect(frame).toHaveAttribute('data-entrance-latched', 'false');
-  const closedTriangles = Number(await frame.getAttribute('data-triangles'));
+  await expect(frame).toHaveAttribute('data-entrance-open-units', '0');
   await page.keyboard.down('ArrowUp');
-  await expect(frame).toHaveAttribute('data-entrance-latched', 'true');
+  await expect
+    .poll(async () =>
+      Number(await frame.getAttribute('data-entrance-open-units'))
+    )
+    .toBeGreaterThan(0);
   await page.keyboard.up('ArrowUp');
-  expect(Number(await frame.getAttribute('data-triangles'))).not.toBe(
-    closedTriangles
-  );
+  await expect
+    .poll(async () =>
+      Number(await frame.getAttribute('data-entrance-open-units'))
+    )
+    .toBe(92);
   await page.keyboard.down('ArrowUp');
   await expect
     .poll(async () => Number(await frame.getAttribute('data-z')))

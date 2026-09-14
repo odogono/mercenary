@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Working-Authority notes pin the impact clock at `$793C` (signed remaining seconds) and
   `016-283` at `$7A1C`/`$7A20`; boarded `+ 000 000 NNN` still has no integer RAM cell.
+- On foot at Capital Spaceport, the Entrance Attachment interpolates and re-closes from the
+  recovered Proximity Box instead of the sticky Entrance Latch. Eye motion is a selected-region
+  AABB clamp (doorway X 1311–1489, region 2 only when fully open). Damocles Save Snapshot is
+  schema 2; schema 1 is refused (#238).
 
 ## [0.19.5] - 2026-09-14
 

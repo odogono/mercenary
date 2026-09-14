@@ -1,8 +1,10 @@
-import type { Mesh, Primitive } from '../catalogue/data.ts';
+import type { Bounds, Mesh, Primitive } from '../catalogue/data.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { ErisPlacement, ErisPose } from './world.ts';
 
 const ATTACHMENT_SLOT = 0x03_fc;
+const EYE_CLEARANCE = 11;
+export const OPEN_ENTRANCE_UNITS = 92;
 
 const subsets = new WeakMap<object, Mesh>();
 const subset = (key: object, mesh: Mesh, faces: readonly Primitive[]): Mesh => {
@@ -45,84 +47,163 @@ export const insideLocalBox = (
   box.z[0] <= point.z &&
   point.z < box.z[1];
 
-type Segment = readonly [readonly [number, number], readonly [number, number]];
+const regionIsAvailable = (flags: number, entranceOpenUnits: number): boolean =>
+  (flags & 0x0f_ff) !== ATTACHMENT_SLOT ||
+  entranceOpenUnits >= OPEN_ENTRANCE_UNITS;
 
-const verticalSegments = (mesh: Mesh): readonly Segment[] =>
-  mesh.faces.flatMap(face => {
-    const points = face.vertices.map(index => mesh.vertices[index]!);
-    const heights = new Set(points.map(point => point[1]));
-    // Plan Refusal follows grounded vertical boundaries. Horizontal floors/roofs and raised
-    // bands such as the doorway lintel do not close an aperture in XZ.
-    if (heights.size < 2 || Math.min(...heights) !== 0) {
-      return [];
-    }
-    const footprint = new Map(
-      points.map(point => [
-        `${point[0]},${point[2]}`,
-        [point[0], point[2]] as const
-      ])
-    );
-    const endpoints = [...footprint.values()];
-    return endpoints.length === 2
-      ? [[endpoints[0]!, endpoints[1]!] as const]
-      : [];
-  });
+/** Bind-time workspace copy: Structure 74's `$4200` is non-negative, so slot `$03FC` insets X. */
+const workspaceBounds = (flags: number, bounds: Bounds): Bounds =>
+  (flags & 0x03_fc) === ATTACHMENT_SLOT
+    ? [
+        [bounds[0]![0] + EYE_CLEARANCE, bounds[0]![1] - EYE_CLEARANCE],
+        bounds[1]!
+      ]
+    : bounds;
 
-const planSegments = new WeakMap<object, readonly Segment[]>();
-const attachmentSegments = new WeakMap<object, readonly Segment[]>();
-
-const crosses = (
-  from: readonly [number, number],
-  to: readonly [number, number],
-  wall: Segment
-): boolean => {
-  const moveX = to[0] - from[0];
-  const moveZ = to[1] - from[1];
-  const wallX = wall[1][0] - wall[0][0];
-  const wallZ = wall[1][1] - wall[0][1];
-  const denominator = moveX * wallZ - moveZ * wallX;
-  if (denominator === 0) {
-    return false;
+export const structureRegionAt = (
+  placement: ErisPlacement,
+  pose: ErisPose,
+  negateZ: boolean,
+  entranceOpenUnits: number
+): number | null => {
+  const selection = placement.selection;
+  if (selection === undefined) {
+    return null;
   }
-  const dx = wall[0][0] - from[0];
-  const dz = wall[0][1] - from[1];
-  const alongMove = (dx * wallZ - dz * wallX) / denominator;
-  const alongWall = (dx * moveZ - dz * moveX) / denominator;
-  return alongMove > 0 && alongMove <= 1 && alongWall >= 0 && alongWall <= 1;
+  const point = structureLocalPosition(placement, pose.position, negateZ);
+  const local = [point.x, point.z];
+  const index = selection.structure.regions.findIndex(region => {
+    const bounds = workspaceBounds(region.flags, region.bounds);
+    return (
+      regionIsAvailable(region.flags, entranceOpenUnits) &&
+      bounds.every(
+        ([min, max], axis) => min <= local[axis]! && local[axis]! < max
+      )
+    );
+  });
+  return index < 0 ? null : index;
 };
 
-/** Whether a free Mover step crosses a vertical plan boundary or closed attachment. */
-export const planRefusesStep = (
+const worldPosition = (
+  placement: ErisPlacement,
+  local: Vector3,
+  negateZ: boolean
+): Vector3 => {
+  const cos = Math.cos(placement.heading);
+  const sin = Math.sin(placement.heading);
+  const z = local.z * (negateZ ? -1 : 1);
+  return {
+    x: placement.position.x + local.x * cos + z * sin,
+    y: placement.position.y + local.y,
+    z: placement.position.z - local.x * sin + z * cos
+  };
+};
+
+/** Extra clamp inset when `$7B35` is non-negative (`tst.b` / `bmi` skip). */
+const clearanceFor = (flags: number): number =>
+  (flags & 0x00_ff) < 0x80 ? EYE_CLEARANCE : 0;
+
+export interface ClampedStructureStep {
+  readonly pose: ErisPose;
+  readonly regionIndex: number | null;
+}
+
+/** Apply the Working Authority's selected-region XZ eye pushback after one Mover step. */
+export const clampStructureStep = (
   placement: ErisPlacement,
   from: ErisPose,
   to: ErisPose,
   negateZ: boolean,
-  entranceLatched: boolean
-): boolean => {
+  entranceOpenUnits: number,
+  selectedRegionIndex: number | null
+): ClampedStructureStep => {
   const selection = placement.selection;
   if (selection === undefined) {
-    return false;
+    return { pose: to, regionIndex: null };
   }
-  const localFrom = structureLocalPosition(placement, from.position, negateZ);
-  const localTo = structureLocalPosition(placement, to.position, negateZ);
-  let plan = planSegments.get(selection.structure);
-  if (plan === undefined) {
-    plan = verticalSegments(selection.structure.plan);
-    planSegments.set(selection.structure, plan);
+  const regions = selection.structure.regions;
+  const currentIndex =
+    selectedRegionIndex ??
+    structureRegionAt(placement, from, negateZ, entranceOpenUnits);
+  const current = currentIndex === null ? undefined : regions[currentIndex];
+  if (current === undefined) {
+    return {
+      pose: to,
+      regionIndex: structureRegionAt(placement, to, negateZ, entranceOpenUnits)
+    };
   }
-  let segments = plan;
-  const attachment = selection.structure.attachment;
-  if (!entranceLatched && attachment !== null) {
-    let closed = attachmentSegments.get(attachment);
-    if (closed === undefined) {
-      closed = verticalSegments(attachment);
-      attachmentSegments.set(attachment, closed);
+
+  const local = structureLocalPosition(placement, to.position, negateZ);
+  const coordinates = [local.x, local.z];
+  const currentBounds = workspaceBounds(current.flags, current.bounds);
+  const clearance = clearanceFor(current.flags);
+  const adjusted = [
+    [currentBounds[0]![0] + clearance, currentBounds[0]![1] - clearance],
+    [currentBounds[1]![0] + clearance, currentBounds[1]![1] - clearance]
+  ] as const;
+
+  const admitsNeighbour = (axis: number, upper: boolean): boolean => {
+    const other = axis === 0 ? 1 : 0;
+    const edge = currentBounds[axis]![upper ? 1 : 0];
+    return regions.some((region, index) => {
+      const bounds = workspaceBounds(region.flags, region.bounds);
+      return (
+        index !== currentIndex &&
+        regionIsAvailable(region.flags, entranceOpenUnits) &&
+        bounds[axis]![upper ? 0 : 1] === edge &&
+        bounds[other]![0] + clearance <= coordinates[other]! &&
+        coordinates[other]! < bounds[other]![1] - clearance
+      );
+    });
+  };
+
+  for (const axis of [0, 1]) {
+    const [min, max] = adjusted[axis]!;
+    if (coordinates[axis]! < min && !admitsNeighbour(axis, false)) {
+      coordinates[axis] = min;
+    } else if (coordinates[axis]! >= max && !admitsNeighbour(axis, true)) {
+      coordinates[axis] = max - 1;
     }
-    segments = [...plan, ...closed];
   }
-  return segments.some(segment =>
-    crosses([localFrom.x, localFrom.z], [localTo.x, localTo.z], segment)
-  );
+
+  const pose = {
+    heading: to.heading,
+    position: worldPosition(
+      placement,
+      { x: coordinates[0]!, y: local.y, z: coordinates[1]! },
+      negateZ
+    )
+  };
+  return {
+    pose,
+    regionIndex:
+      structureRegionAt(placement, pose, negateZ, entranceOpenUnits) ??
+      currentIndex
+  };
+};
+
+const movingAttachment = (mesh: Mesh, openUnits: number): Mesh => {
+  if (openUnits <= 0) {
+    return mesh;
+  }
+  const midpoint =
+    (Math.min(...mesh.vertices.map(vertex => vertex[0])) +
+      Math.max(...mesh.vertices.map(vertex => vertex[0]))) /
+    2;
+  const split = mesh.vertices.length / 2;
+  return {
+    ...mesh,
+    vertices: mesh.vertices.map((vertex, index) => {
+      if (vertex[0] !== midpoint) {
+        return vertex;
+      }
+      return [
+        midpoint + (index < split ? -openUnits : openUnits),
+        vertex[1],
+        vertex[2]
+      ];
+    })
+  };
 };
 
 /** Ordered draw components for today's on-foot session. Empty selections are intentional. */
@@ -130,7 +211,8 @@ export const structureMeshes = (
   placement: ErisPlacement,
   pose: ErisPose,
   negateZ: boolean,
-  entranceLatched = false
+  entranceOpenUnits = 0,
+  selectedRegionIndex?: number | null
 ): readonly Mesh[] => {
   const fallback = () => (placement.mesh === undefined ? [] : [placement.mesh]);
   const selection = placement.selection;
@@ -140,21 +222,17 @@ export const structureMeshes = (
   const { groups, structure } = selection;
   const point = structureLocalPosition(placement, pose.position, negateZ);
   const local = [point.x, point.y, point.z];
-  const region = structure.regions.find(r => {
-    if ((r.flags & 0x0f_ff) === ATTACHMENT_SLOT && !entranceLatched) {
-      return false;
-    }
-    return r.bounds.every(([min, max], axis) => {
-      const p = local[axis === 0 ? 0 : 2]!;
-      return min <= p && p < max;
-    });
-  });
+  const regionIndex =
+    selectedRegionIndex ??
+    structureRegionAt(placement, pose, negateZ, entranceOpenUnits);
+  const region =
+    regionIndex === null ? undefined : structure.regions[regionIndex];
   if (region === undefined) {
     return fallback();
   }
   const plan = region.queue.flatMap(entry => {
     if (entry.kind === 'attachment') {
-      return entranceLatched ? [] : [structure.attachment!];
+      return [movingAttachment(structure.attachment!, entranceOpenUnits)];
     }
     const face = structure.plan.faces.find(f => f.sourceIndex === entry.index)!;
     return [subset(face, structure.plan, [face])];

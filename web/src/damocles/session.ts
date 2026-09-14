@@ -5,9 +5,11 @@ import type { ErisPresentationDocument } from './documents.ts';
 import { walk, type WalkRules } from './mover.ts';
 import type { DamoclesSaveSnapshot } from './save.ts';
 import {
+  OPEN_ENTRANCE_UNITS,
+  clampStructureStep,
   insideLocalBox,
-  planRefusesStep,
-  structureLocalPosition
+  structureLocalPosition,
+  structureRegionAt
 } from './selection.ts';
 import {
   cellOf,
@@ -27,9 +29,10 @@ export interface DamoclesSnapshot {
   readonly carried: readonly string[];
   readonly cell: ErisCell;
   readonly elapsed: number;
-  readonly entranceLatched: boolean;
+  readonly entranceOpenUnits: number;
   readonly occupancy: { readonly kind: 'onFoot' };
   readonly pose: ErisPose;
+  readonly spaceportRegion: number | null;
 }
 
 export interface DamoclesContent {
@@ -46,6 +49,9 @@ const rulesFor = (doc: ErisPresentationDocument): WalkRules => ({
   unitsPerSecond: doc.walk.unitsPerSecond
 });
 
+// The pinned eight-substep trace moved from its first changed sample to fully open in 2.64 s.
+const ENTRANCE_UNITS_PER_SECOND = OPEN_ENTRANCE_UNITS / 2.64;
+
 /// The single owner of Damocles's Session State.
 ///
 /// Time reaches it as seconds and is stepped at no more than the shared `MAXIMUM_STEP`, so a
@@ -61,8 +67,9 @@ export class DamoclesSession implements TitleSession<
   private readonly negateModelZ: boolean;
   private readonly rules: WalkRules;
   private elapsed: number;
-  private entranceLatched: boolean;
+  private entranceOpenUnits: number;
   private pose: ErisPose;
+  private spaceportRegion: number | null;
 
   constructor(content: DamoclesContent, restore?: DamoclesSaveSnapshot) {
     this.content = content;
@@ -83,7 +90,15 @@ export class DamoclesSession implements TitleSession<
       position: { ...opening.position, y: this.rules.eyeHeight }
     };
     this.elapsed = restore?.elapsed ?? 0;
-    this.entranceLatched = this.insideProximityBox(this.pose);
+    this.entranceOpenUnits = restore?.entranceOpenUnits ?? 0;
+    this.spaceportRegion =
+      restore?.spaceportRegion ??
+      structureRegionAt(
+        this.entrance,
+        this.pose,
+        this.negateModelZ,
+        this.entranceOpenUnits
+      );
   }
 
   private insideProximityBox(pose: ErisPose): boolean {
@@ -98,9 +113,10 @@ export class DamoclesSession implements TitleSession<
       carried: [],
       cell: cellOf(this.pose.position, this.content.surface.grid),
       elapsed: this.elapsed,
-      entranceLatched: this.entranceLatched,
+      entranceOpenUnits: this.entranceOpenUnits,
       occupancy: { kind: 'onFoot' },
-      pose: this.pose
+      pose: this.pose,
+      spaceportRegion: this.spaceportRegion
     };
   }
 
@@ -109,18 +125,25 @@ export class DamoclesSession implements TitleSession<
     while (remaining > 0) {
       const step = Math.min(MAXIMUM_STEP, remaining);
       const moved = walk(this.pose, this.intent, step, this.rules);
-      this.pose = planRefusesStep(
+      const opening = this.insideProximityBox(moved);
+      this.entranceOpenUnits = Math.max(
+        0,
+        Math.min(
+          OPEN_ENTRANCE_UNITS,
+          this.entranceOpenUnits +
+            (opening ? 1 : -1) * ENTRANCE_UNITS_PER_SECOND * step
+        )
+      );
+      const clamped = clampStructureStep(
         this.entrance,
         this.pose,
         moved,
         this.negateModelZ,
-        this.entranceLatched
-      )
-        ? { heading: moved.heading, position: this.pose.position }
-        : moved;
-      if (!this.entranceLatched && this.insideProximityBox(this.pose)) {
-        this.entranceLatched = true;
-      }
+        this.entranceOpenUnits,
+        this.spaceportRegion
+      );
+      this.pose = clamped.pose;
+      this.spaceportRegion = clamped.regionIndex;
       this.elapsed += step;
       remaining -= step;
     }
@@ -130,7 +153,9 @@ export class DamoclesSession implements TitleSession<
   captureResume(): DamoclesSaveSnapshot {
     return {
       elapsed: this.elapsed,
-      pose: this.pose
+      entranceOpenUnits: this.entranceOpenUnits,
+      pose: this.pose,
+      spaceportRegion: this.spaceportRegion
     };
   }
 
@@ -157,8 +182,12 @@ export class DamoclesSession implements TitleSession<
         z: (z + grid.origin.z + 0.5) * grid.cellUnits
       }
     };
-    if (!this.entranceLatched && this.insideProximityBox(this.pose)) {
-      this.entranceLatched = true;
-    }
+    this.entranceOpenUnits = 0;
+    this.spaceportRegion = structureRegionAt(
+      this.entrance,
+      this.pose,
+      this.negateModelZ,
+      this.entranceOpenUnits
+    );
   }
 }
