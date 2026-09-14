@@ -85,6 +85,44 @@ class SourceTests(unittest.TestCase):
             {3: {4: 0, 5: 7}},
         )
 
+    def test_decodes_surface_placement_streams_until_ff(self):
+        from damocleslab.catalogue import decode_surface_placements
+        # Selector, cell, structure low/high, signed dx/dz. A zero third byte
+        # skips without a cell. $FF ends the stream so a place list can follow.
+        data = bytes.fromhex('0c 87 4a 00 e5 34 00 00 00 1a 89 4b 12 00 ce ff')
+        data += b'CAPITAL   CITY      '
+        cells, end = decode_surface_placements(data, 0)
+        self.assertEqual(end, 16)
+        self.assertEqual(cells[0x87], {'address': 0, 'slot': 74, 'dx': -27, 'dz': 52, 'selector': 12, 'word': 0x4a})
+        self.assertEqual(cells[0x89], {'address': 9, 'slot': 75, 'dx': 0, 'dz': -50, 'selector': 26, 'word': 0x124b})
+        self.assertNotIn(0, cells)
+
+    def test_rejects_a_truncated_or_duplicate_surface_placement_stream(self):
+        from damocleslab.catalogue import decode_surface_placements
+        with self.assertRaisesRegex(ValueError, 'terminator'):
+            decode_surface_placements(bytes.fromhex('0c 87 4a 00 e5'), 0)
+        with self.assertRaisesRegex(ValueError, 'duplicate'):
+            decode_surface_placements(bytes.fromhex('0c 87 4a 00 e5 34 0d 87 4b 00 00 00 ff'), 0)
+
+    def test_named_area_lists_stop_on_a_zero_cell(self):
+        from damocleslab.catalogue import decode_named_area, find_area_placements
+        data = b'BIRMINGHAMISLAND    \x40ELMDON    SPACEPORT \x70LAWSON    BANK      \x00'
+        area = decode_named_area(data, 0)
+        self.assertEqual(area['name'], 'BIRMINGHAM ISLAND')
+        self.assertEqual(area['places'][0]['cell'], 0x40)
+        self.assertEqual(area['places'][0]['name'], 'ELMDON SPACEPORT')
+        self.assertEqual(area['places'][1]['cell'], 0x70)
+        self.assertEqual(area['places'][1]['name'], 'LAWSON BANK')
+        stream = bytes.fromhex(
+            '20 e3 38 00 ec f1 1a 70 c2 00 c6 17 0c 40 96 00 dd 32 1a 26 4a 00 00 00 ff'
+        )
+        blob = stream + data
+        cells = find_area_placements(blob, len(stream))
+        self.assertEqual(set(cells), {0x26, 0x40, 0x70})
+        self.assertNotIn(0xe3, cells)
+        self.assertEqual(cells[0x40]['slot'], 150)
+        self.assertEqual(cells[0x40]['address'], 12)
+
     def test_rejects_broken_structure_association_lists(self):
         from damocleslab.catalogue import decode_structure_associations
         with self.assertRaisesRegex(ValueError, 'insertion key'):
@@ -164,6 +202,35 @@ class SourceTests(unittest.TestCase):
         second = extract(bytes(data), {})
         self.assertEqual([m['id'] for m in first['models']], [m['id'] for m in second['models']])
         self.assertNotEqual(first['models'][0]['name'], second['models'][0]['name'])
+
+    def test_extracts_authored_gaea_places_without_inventing_names(self):
+        from damocleslab.catalogue import extract
+        data = bytearray(1048576)
+        struct.pack_into('>I', data, 0x4bd10, 0x35700)
+        struct.pack_into('>I', data, 0x4bd22, 0x26000)
+        for base, count in [(0x35700, 378), (0xe900, 280), (0x26000, 130)]:
+            for slot in range(count):
+                struct.pack_into('>I', data, base + slot * 4, 0x1000)
+            struct.pack_into('>H', data, base + 0x1000, 0x8000)
+        struct.pack_into('>i', data, 0x63a8 + 2 * 4, 519 << 16)
+        struct.pack_into('>i', data, 0x6ba8 + 2 * 4, 1793 << 16)
+        stream = bytes.fromhex('0c 40 96 00 dd 32 1a 26 4a 00 00 00 ff')
+        header = b'BIRMINGHAMISLAND    '
+        places = b'\x40ELMDON    SPACEPORT \x00'
+        block = stream + header + places
+        start = 0x23c00
+        data[start:start + len(block)] = block
+        result = extract(bytes(data), {})
+        assemblies = [i for i in result['instances'] if i['id'].startswith('gaea-surface-')]
+        self.assertEqual({i['id'] for i in assemblies}, {'gaea-surface-26', 'gaea-surface-40'})
+        elmdon = next(p for p in result['places'] if p['name'] == 'ELMDON SPACEPORT')
+        self.assertEqual(elmdon['body'], 'body-8')
+        self.assertEqual(elmdon['instances'], ['gaea-surface-40'])
+        neighbor = next(i for i in assemblies if i['id'] == 'gaea-surface-26')
+        self.assertIsNone(neighbor['location']['place'])
+        self.assertEqual(neighbor['location']['position'][0], 512 + 0x26 % 16 + 0.5)
+        self.assertTrue(any('Gaea Birmingham Island' in note for note in result['coverage']['notes']))
+        self.assertEqual([p['name'] for p in result['places'] if p['body'] == 'body-8'], ['ELMDON SPACEPORT'])
 
 class AssemblyTests(unittest.TestCase):
     def test_translation_places_geometry_and_its_label_anchor(self):

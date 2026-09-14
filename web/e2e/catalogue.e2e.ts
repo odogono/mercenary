@@ -106,10 +106,28 @@ test('99 Chevy is mapped on Gaea and links to its key', async ({ page }) => {
     'GAEA · 519.487, 0.000, 1793.487 · ST surface grid units'
   );
   await expect(page.locator('#details')).toContainText('source heading 0');
-  await expect(page.locator('#map a')).toHaveCount(5);
+  await expect(page.locator('#map a')).toHaveCount(87);
   await expect(
     page.locator('#map').getByRole('link', { name: /99 CHEVY/ })
   ).toHaveAttribute('aria-current', 'true');
+  await expect(
+    page
+      .locator('#map')
+      .getByRole('link', { exact: true, name: 'ELMDON SPACEPORT' })
+  ).toHaveAttribute('href', /instance=gaea-surface-40/);
+  await expect(
+    page
+      .locator('#map')
+      .getByRole('link', { exact: true, name: 'Gaea surface cell 8,2' })
+  ).toHaveAttribute('href', /instance=gaea-surface-28/);
+  await page.goto('/catalogue?instance=gaea-surface-40');
+  await expect(page.locator('#details')).toContainText('ELMDON SPACEPORT');
+  await expect(page.locator('#details')).toContainText(
+    'GAEA · 512.484, 0.000, 1796.523 · ST surface grid units'
+  );
+  await expect(page.locator('#ledger')).toContainText('Gaea Birmingham Island');
+  await page.goBack();
+  await expect(page).toHaveURL(/instance=object-slot-2/);
   await page
     .locator('#details')
     .getByRole('link', { name: /KEY - 99 CHEVY/ })

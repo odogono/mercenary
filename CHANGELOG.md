@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Damocles Catalogue recovers Gaea Birmingham Island's authored surface-assembly map and
+  seven source place names from the pinned first-world place pool, so 99 CHEVY inspects
+  with neighbouring assemblies and no invented place labels (#172).
 - Exact-VBL Damocles panel readout probe (`research/damocles-st/scripts/panel-readout-probe.py`)
   for the impact clock, `016-283` digits, and boarded speed field (#208).
 

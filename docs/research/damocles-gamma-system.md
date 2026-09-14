@@ -410,7 +410,10 @@ others are building-scale. This is a named-place catalogue bound to bodies by
 label text, not a Targ `world.json` road grid.
 
 Exact city census and the binary link from place record → body index remain
-**Unresolved** after one follow-up on the best lead (control-byte meaning).
+**Unresolved** after one follow-up on the best lead (control-byte meaning),
+except for Gaea Birmingham Island: the catalogue now recovers that area's
+`$FF`-terminated assembly map and seven source names from this pool. See
+[catalogue extraction](damocles-catalogue.md).
 
 ### Interiors — Partially confirmed / graph Unresolved
 

@@ -129,9 +129,10 @@
     "complete": false,
     "notes": [
       "Resident first-world census; not a claim of complete disk coverage.",
-      "Conditional geometry, surface attachments, scene palette binding, other-body structures and named places remain incomplete.",
+      "Conditional geometry, surface attachments, scene palette binding, and named places outside the captured Eris workspace and authored Gaea Birmingham Island map remain incomplete.",
       "Eris cell ground/pad/road records at $1E000 are decoded locally; $7000 road templates, $53F76 attachments and default empty-cell fill remain incomplete.",
-      "Unexamined disk-loaded content and script-created visual changes are not included."
+      "Unexamined disk-loaded content and script-created visual changes are not included.",
+      "Gaea Birmingham Island: examined the authored 16\u00d716 placement stream ending at $23E57, recovered 82 surface assemblies and 7 named places; 174 cells have no structure (including 99 CHEVY cell $17). Ground/pad records, live Gaea $ABDC, and other Gaea islands remain unresolved."
     ]
   },
   "instances": [
@@ -5841,6 +5842,1646 @@
       "placement": null,
       "reason": "Recovered first-world surface workspace placement; not a census of the whole body.",
       "sourceAddress": 45016
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-14",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          516.5,
+          0,
+          1793.5
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 4,1",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146796
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-19",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          521.4771118164062,
+          0,
+          1793.5
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 9,1",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146700
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-1e",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          526.5,
+          0,
+          1793.5
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 14,1",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146802
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-21",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          513.4908447265625,
+          0,
+          1794.4908447265625
+        ]
+      },
+      "model": "structure-01d1c0",
+      "name": "Gaea surface cell 1,2",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146580
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-22",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          514.5,
+          0,
+          1794.467041015625
+        ]
+      },
+      "model": "structure-01d78e",
+      "name": "Gaea surface cell 2,2",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146592
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-25",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          517.5242614746094,
+          0,
+          1794.5027465820312
+        ]
+      },
+      "model": "structure-01da58",
+      "name": "Gaea surface cell 5,2",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146982
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-26",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          518.5,
+          0,
+          1794.4771118164062
+        ]
+      },
+      "model": "structure-01da22",
+      "name": "Gaea surface cell 6,2",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146892
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-27",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          519.5,
+          0,
+          1794.5228881835938
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 7,2",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146766
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-28",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          520.5,
+          0,
+          1794.5228881835938
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 8,2",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146772
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-2a",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          522.5,
+          0,
+          1794.5228881835938
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 10,2",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146778
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-2b",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          523.5,
+          0,
+          1794.5228881835938
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 11,2",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146784
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-2c",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          524.5,
+          0,
+          1794.4771118164062
+        ]
+      },
+      "model": "structure-01da22",
+      "name": "Gaea surface cell 12,2",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146898
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-2d",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          525.4757385253906,
+          0,
+          1794.5027465820312
+        ]
+      },
+      "model": "structure-01da7c",
+      "name": "Gaea surface cell 13,2",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146976
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-31",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          513.489013671875,
+          0,
+          1795.4954223632812
+        ]
+      },
+      "model": "structure-01a690",
+      "name": "Gaea surface cell 1,3",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146634
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-32",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          514.5457763671875,
+          0,
+          1795.5210571289062
+        ]
+      },
+      "model": "structure-01d7a0",
+      "name": "Gaea surface cell 2,3",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146598
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-35",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          517.5137329101562,
+          0,
+          1795.5
+        ]
+      },
+      "model": "structure-012136",
+      "name": "Gaea surface cell 5,3",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146856
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-39",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          521.5457763671875,
+          0,
+          1795.5
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 9,3",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146706
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-3d",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          525.4725341796875,
+          0,
+          1795.5
+        ]
+      },
+      "model": "structure-012136",
+      "name": "Gaea surface cell 13,3",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146862
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-40",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-023e6b",
+        "position": [
+          512.4839782714844,
+          0,
+          1796.5228881835938
+        ]
+      },
+      "model": "structure-01d1fe",
+      "name": "ELMDON SPACEPORT",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146568
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-41",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          513.489013671875,
+          0,
+          1796.4954223632812
+        ]
+      },
+      "model": "structure-01a690",
+      "name": "Gaea surface cell 1,4",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146640
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-42",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          514.5457763671875,
+          0,
+          1796.5210571289062
+        ]
+      },
+      "model": "structure-01d7a0",
+      "name": "Gaea surface cell 2,4",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146604
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-45",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          517.4771118164062,
+          0,
+          1796.5
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 5,4",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146730
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-47",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          519.5137329101562,
+          0,
+          1796.5091552734375
+        ]
+      },
+      "model": "structure-01da6a",
+      "name": "Gaea surface cell 7,4",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146964
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-49",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          521.5,
+          0,
+          1796.5
+        ]
+      },
+      "model": "structure-01da46",
+      "name": "Gaea surface cell 9,4",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146940
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-4b",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          523.5137329101562,
+          0,
+          1796.5091552734375
+        ]
+      },
+      "model": "structure-01da6a",
+      "name": "Gaea surface cell 11,4",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146952
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-4d",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          525.5457763671875,
+          0,
+          1796.5
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 13,4",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146736
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-50",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          512.53662109375,
+          0,
+          1797.4977111816406
+        ]
+      },
+      "model": "structure-01d716",
+      "name": "Gaea surface cell 0,5",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146550
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-51",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          513.5091552734375,
+          0,
+          1797.5054931640625
+        ]
+      },
+      "model": "structure-011ada",
+      "name": "Gaea surface cell 1,5",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146676
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-52",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          514.5297546386719,
+          0,
+          1797.5
+        ]
+      },
+      "model": "structure-01d7d0",
+      "name": "Gaea surface cell 2,5",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146658
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-55",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          517.5242614746094,
+          0,
+          1797.4972534179688
+        ]
+      },
+      "model": "structure-01da8e",
+      "name": "Gaea surface cell 5,5",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 147012
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-56",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          518.5,
+          0,
+          1797.5228881835938
+        ]
+      },
+      "model": "structure-012136",
+      "name": "Gaea surface cell 6,5",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146844
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-57",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          519.4894714355469,
+          0,
+          1797.518310546875
+        ]
+      },
+      "model": "structure-012136",
+      "name": "Gaea surface cell 7,5",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146868
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-59",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          521.5,
+          0,
+          1797.5
+        ]
+      },
+      "model": "structure-01da34",
+      "name": "Gaea surface cell 9,5",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146934
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-5b",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          523.4894714355469,
+          0,
+          1797.518310546875
+        ]
+      },
+      "model": "structure-012136",
+      "name": "Gaea surface cell 11,5",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146874
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-5c",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          524.5,
+          0,
+          1797.5228881835938
+        ]
+      },
+      "model": "structure-012136",
+      "name": "Gaea surface cell 12,5",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146850
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-5d",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          525.4757385253906,
+          0,
+          1797.4972534179688
+        ]
+      },
+      "model": "structure-01da6a",
+      "name": "Gaea surface cell 13,5",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 147018
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-61",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          513.5457763671875,
+          0,
+          1798.5210571289062
+        ]
+      },
+      "model": "structure-01d7a0",
+      "name": "Gaea surface cell 1,6",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146616
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-62",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          514.5457763671875,
+          0,
+          1798.5210571289062
+        ]
+      },
+      "model": "structure-01d7a0",
+      "name": "Gaea surface cell 2,6",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146610
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-68",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          520.5,
+          0,
+          1798.5
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 8,6",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146820
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-69",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          521.4771118164062,
+          0,
+          1798.5
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 9,6",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146712
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-6a",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          522.5,
+          0,
+          1798.5
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 10,6",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146826
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-70",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-023ee9",
+        "position": [
+          512.4734497070312,
+          0,
+          1799.5105285644531
+        ]
+      },
+      "model": "structure-01d73a",
+      "name": "LAWSON BANK",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146538
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-81",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          513.5457763671875,
+          0,
+          1800.5210571289062
+        ]
+      },
+      "model": "structure-01d7a0",
+      "name": "Gaea surface cell 1,8",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146628
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-82",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          514.5457763671875,
+          0,
+          1800.5210571289062
+        ]
+      },
+      "model": "structure-01d7a0",
+      "name": "Gaea surface cell 2,8",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146622
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-88",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          520.5,
+          0,
+          1800.5
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 8,8",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146808
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-89",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          521.4771118164062,
+          0,
+          1800.5
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 9,8",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146694
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-8a",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          522.5,
+          0,
+          1800.5
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 10,8",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146814
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-90",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          512.53662109375,
+          0,
+          1801.5022888183594
+        ]
+      },
+      "model": "structure-01d728",
+      "name": "Gaea surface cell 0,9",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146556
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-91",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          513.5091552734375,
+          0,
+          1801.5068664550781
+        ]
+      },
+      "model": "structure-01d7e2",
+      "name": "Gaea surface cell 1,9",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146670
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-92",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          514.53662109375,
+          0,
+          1801.4839782714844
+        ]
+      },
+      "model": "structure-01a73e",
+      "name": "Gaea surface cell 2,9",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146664
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-95",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          517.5242614746094,
+          0,
+          1801.5027465820312
+        ]
+      },
+      "model": "structure-01da58",
+      "name": "Gaea surface cell 5,9",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 147006
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-96",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          518.5,
+          0,
+          1801.4771118164062
+        ]
+      },
+      "model": "structure-01da22",
+      "name": "Gaea surface cell 6,9",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146904
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-97",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          519.5105285644531,
+          0,
+          1801.481689453125
+        ]
+      },
+      "model": "structure-01da22",
+      "name": "Gaea surface cell 7,9",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146880
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-99",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          521.5,
+          0,
+          1801.5
+        ]
+      },
+      "model": "structure-01da46",
+      "name": "Gaea surface cell 9,9",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146946
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-9b",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          523.5105285644531,
+          0,
+          1801.481689453125
+        ]
+      },
+      "model": "structure-01da22",
+      "name": "Gaea surface cell 11,9",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146886
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-9c",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          524.5,
+          0,
+          1801.4771118164062
+        ]
+      },
+      "model": "structure-01da22",
+      "name": "Gaea surface cell 12,9",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146910
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-9d",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          525.4757385253906,
+          0,
+          1801.5027465820312
+        ]
+      },
+      "model": "structure-01da7c",
+      "name": "Gaea surface cell 13,9",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 147000
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-a0",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-023eaa",
+        "position": [
+          512.4693298339844,
+          0,
+          1802.5274658203125
+        ]
+      },
+      "model": "structure-01d758",
+      "name": "ERIS PO TEMP HQ",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146562
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-a5",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          517.4771118164062,
+          0,
+          1802.5
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 5,10",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146718
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-a7",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          519.4862670898438,
+          0,
+          1802.4908447265625
+        ]
+      },
+      "model": "structure-01da58",
+      "name": "Gaea surface cell 7,10",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146970
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-a9",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          521.5,
+          0,
+          1802.5
+        ]
+      },
+      "model": "structure-01da34",
+      "name": "Gaea surface cell 9,10",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146928
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-ab",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          523.4862670898438,
+          0,
+          1802.4908447265625
+        ]
+      },
+      "model": "structure-01da58",
+      "name": "Gaea surface cell 11,10",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146958
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-ad",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          525.5457763671875,
+          0,
+          1802.5
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 13,10",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146724
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-b1",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-023ed4",
+        "position": [
+          513.4656677246094,
+          0,
+          1803.4931335449219
+        ]
+      },
+      "model": "structure-01d7b2",
+      "name": "GAEA BANK",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146646
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-b2",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-023e95",
+        "position": [
+          514.4748229980469,
+          0,
+          1803.4771118164062
+        ]
+      },
+      "model": "structure-010ea8",
+      "name": "NOVAGEN OFFICE",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146652
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-b5",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          517.5274658203125,
+          0,
+          1803.5
+        ]
+      },
+      "model": "structure-01da22",
+      "name": "Gaea surface cell 5,11",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146916
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-b9",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          521.5457763671875,
+          0,
+          1803.5
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 9,11",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146688
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-bd",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          525.4725341796875,
+          0,
+          1803.5
+        ]
+      },
+      "model": "structure-01da22",
+      "name": "Gaea surface cell 13,11",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146922
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-c1",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          513.4908447265625,
+          0,
+          1804.5091552734375
+        ]
+      },
+      "model": "structure-01d76a",
+      "name": "Gaea surface cell 1,12",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146574
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-c2",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          514.5,
+          0,
+          1804.532958984375
+        ]
+      },
+      "model": "structure-01d77c",
+      "name": "Gaea surface cell 2,12",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146586
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-c5",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          517.5242614746094,
+          0,
+          1804.4972534179688
+        ]
+      },
+      "model": "structure-01da8e",
+      "name": "Gaea surface cell 5,12",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146988
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-c6",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          518.5,
+          0,
+          1804.5228881835938
+        ]
+      },
+      "model": "structure-012136",
+      "name": "Gaea surface cell 6,12",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146832
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-c7",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          519.5,
+          0,
+          1804.5228881835938
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 7,12",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146742
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-c8",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          520.5,
+          0,
+          1804.5228881835938
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 8,12",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146748
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-ca",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          522.5,
+          0,
+          1804.5228881835938
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 10,12",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146754
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-cb",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          523.5,
+          0,
+          1804.5228881835938
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 11,12",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146760
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-cc",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          524.5,
+          0,
+          1804.5228881835938
+        ]
+      },
+      "model": "structure-012136",
+      "name": "Gaea surface cell 12,12",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146838
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-cd",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          525.4757385253906,
+          0,
+          1804.4972534179688
+        ]
+      },
+      "model": "structure-01da6a",
+      "name": "Gaea surface cell 13,12",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146994
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-d4",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          516.5,
+          0,
+          1805.5
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 4,13",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146790
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-d9",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          521.4771118164062,
+          0,
+          1805.5
+        ]
+      },
+      "model": "structure-0159d0",
+      "name": "Gaea surface cell 9,13",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146682
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-de",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-023e80",
+        "position": [
+          526.52197265625,
+          0,
+          1805.4967956542969
+        ]
+      },
+      "model": "structure-01daa0",
+      "name": "AUTHORS HOUSE",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 147024
+    },
+    {
+      "association": null,
+      "id": "gaea-surface-e3",
+      "location": {
+        "body": "body-8",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-023ebf",
+        "position": [
+          515.4908447265625,
+          0,
+          1806.4931335449219
+        ]
+      },
+      "model": "structure-012b60",
+      "name": "VERDANT PARTY HQ",
+      "placement": null,
+      "reason": "Authored Birmingham Island surface-assembly map recovered from the pinned first-world place pool; not a live Gaea $ABDC workspace. Origin follows the 99 CHEVY resident phase so cell $17 shares this 16\u00d716. A source place name is attached only when this cell is in the area list.",
+      "sourceAddress": 146520
     },
     {
       "association": null,
@@ -564796,6 +566437,62 @@
         "eris-ground-ec"
       ],
       "name": "ERIS POST OFFICE HQ"
+    },
+    {
+      "body": "body-8",
+      "id": "place-023e6b",
+      "instances": [
+        "gaea-surface-40"
+      ],
+      "name": "ELMDON SPACEPORT"
+    },
+    {
+      "body": "body-8",
+      "id": "place-023e80",
+      "instances": [
+        "gaea-surface-de"
+      ],
+      "name": "AUTHORS HOUSE"
+    },
+    {
+      "body": "body-8",
+      "id": "place-023e95",
+      "instances": [
+        "gaea-surface-b2"
+      ],
+      "name": "NOVAGEN OFFICE"
+    },
+    {
+      "body": "body-8",
+      "id": "place-023eaa",
+      "instances": [
+        "gaea-surface-a0"
+      ],
+      "name": "ERIS PO TEMP HQ"
+    },
+    {
+      "body": "body-8",
+      "id": "place-023ebf",
+      "instances": [
+        "gaea-surface-e3"
+      ],
+      "name": "VERDANT PARTY HQ"
+    },
+    {
+      "body": "body-8",
+      "id": "place-023ed4",
+      "instances": [
+        "gaea-surface-b1"
+      ],
+      "name": "GAEA BANK"
+    },
+    {
+      "body": "body-8",
+      "id": "place-023ee9",
+      "instances": [
+        "gaea-surface-70"
+      ],
+      "name": "LAWSON BANK"
     }
   ],
   "schemaVersion": 7,

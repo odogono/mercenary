@@ -88,7 +88,8 @@ The 31 body labels at `$0081DC` include VOID; this does not imply all entries ar
 planets. The first 256 resident object slots are represented as instances; later
 model slots are not invented as placed objects. The native surface-resident
 selector and Association B place 34 resident objects across 18 bodies. Named
-places remain unknown except for slot 5, whose independently reviewed cell places
+places are recovered for the captured Eris workspace and for Gaea Birmingham
+Island's authored area list. Slot 5's independently reviewed cell places
 the V.I.P. LIMO outside Capital Spaceport. Slot 183's source association and
 world-to-structure transform place its key inside Capital Spaceport region 1.
 See [resident object associations](damocles-resident-objects.md).
@@ -194,6 +195,14 @@ code. Targeted disassembly used to establish them remains ignored at
 
 ### Surface placements and captured Eris places
 
+- Authored surface-assembly maps are `$FF`-terminated streams of `selector`,
+  `cell`, structure-low. A zero low byte is a three-byte skip. Otherwise
+  structure-high, signed `dx` and `dz` follow. The low nine bits of the
+  structure word select the surface-assembly slot, matching the consumer at
+  `$4ECCA..$4ED12`. The shortest stream that covers a following named-area
+  place list is the map for that area; extra cells after the first required
+  place remain as unnamed surrounding assemblies. The decoder does not bake
+  Eris or Gaea identities into this grammar.
 - `$054B98` constructs a cell index as `(z << 4) | x`. `$054CBC` indexes four-byte
   records at `$00ABDC`; the low nine bits select a structure. The last two signed
   bytes offset its origin by 30 raw units, matching `$054D48` and `$054D5C`.
@@ -215,10 +224,20 @@ code. Targeted disassembly used to establish them remains ignored at
   places. The separately decoded group-$14 cell-$26 assembly brings Eris to **77
   surface assemblies**; its seven surface objects bring that map to **84
   structure and object placements**. Ninety recovered ground/pad/road instances
-  bring the Eris map to **174** plotted locations. Across all bodies the dataset
-  now contains those Eris points plus the previously mapped non-Eris residents.
-  This is resident state from the pinned first-world capture, not a complete
-  body-surface census.
+  bring the Eris map to **174** plotted locations.
+- The authored Birmingham Island map in the same first-world place pool
+  (`$23C58..$23E56`, SHA-256
+  `e85959b1b659847bb029cc57766ed77ba3822ceb1d1098938619bfa8f96397d9`) yields
+  **82** Gaea surface assemblies. Its place list (`$23E57..$23EFE`, SHA-256
+  `8bd019976d456c39896408849bd380367815a22eef78fd126dcdb9b0e98763f2`) yields
+  **7** source names. Binding that map to 99 CHEVY's resident phase plots those
+  assemblies with the five Gaea residents, **87** Gaea map pins. Cell `$17` is
+  empty in the stream. This is not a live Gaea `$ABDC` workspace; ground/pad
+  records and other Gaea islands remain unresolved.
+  Across all bodies the dataset now contains the Eris points, the Birmingham
+  Island assemblies, and the previously mapped non-Eris residents. This is
+  resident state plus authored pool recovery from the pinned first-world
+  capture, not a complete body-surface census.
   The slot-180 assembly is recovered from the authored group-$14 map outside the
   captured first-world workspace; other interior-associated and exceptional
   residents remain listed without invented map positions.
@@ -234,7 +253,8 @@ triangular roof records and concave faces.
 
 Desktop end-to-end tests cover direct access without loading Targ, search/filter
 navigation, Back, orbit/zoom/reset, wireframe, visual variants, structure/interior
-links, the Eris placement map, unknown bodies, unknown records and unavailable or
+links, the Eris placement map, the Gaea Birmingham Island map around 99 CHEVY,
+unknown bodies, unknown records and unavailable or
 incompatible datasets. A storage sentinel remains unchanged. Targ save/resume
 keys are also seeded and checked byte-for-byte so direct catalogue access cannot
 alter an existing session or save.
@@ -258,8 +278,9 @@ bounded: the catalogue does not reproduce the original camera, scene visibility,
 attachments, or exterior seen through the interior's window. These are not
 claimed as a completed pixel-fidelity gate.
 
-Still unexplored or incomplete: other-body placement workspaces and named-place
-lists, disk-load reachability beyond resident tables, remaining object residences/transforms,
+Still unexplored or incomplete: live non-Eris `$ABDC` workspaces, Gaea ground
+and islands other than Birmingham, remaining named-place lists, disk-load
+reachability beyond resident tables, remaining object residences/transforms,
 view-conditioned object groups, articulated geometry, special primitives,
 surface attachments/openings, `$7000` road templates, default empty-cell fill,
 and script-created visual changes. The recovery
