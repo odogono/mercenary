@@ -3,12 +3,14 @@ import { triangulate } from '../catalogue/geometry.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { Camera } from '../projection/index.ts';
 import type { ErisPresentationDocument } from './documents.ts';
+import type { BoundStructureSnapshot } from './save.ts';
 import { structureMeshes } from './selection.ts';
-import type {
-  ErisGrid,
-  ErisPlacement,
-  ErisPose,
-  ErisSurface
+import {
+  insideCentralCellHalf,
+  type ErisGrid,
+  type ErisPlacement,
+  type ErisPose,
+  type ErisSurface
 } from './world.ts';
 
 /// One frame of Eris in Filled Presentation, planned without a graphics context.
@@ -243,10 +245,7 @@ export const planErisFrame = (
   surface: ErisSurface,
   pose: ErisPose,
   doc: ErisPresentationDocument,
-  entrance: {
-    readonly openUnits: number;
-    readonly region: number | null;
-  } = { openUnits: 0, region: null }
+  structure: BoundStructureSnapshot | null = null
 ): ErisFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
@@ -277,14 +276,19 @@ export const planErisFrame = (
   }
   const fillTriangleCount = triangleCount;
 
+  const active =
+    structure !== null && insideCentralCellHalf(pose.position, surface.grid);
+  const openUnits = new Map(
+    structure?.attachments.map(item => [item.slot, item.openUnits]) ?? []
+  );
   const emitPlacement = (placement: ErisPlacement): void => {
-    const isEntrance = placement.id === doc.spaceportEntrance.instanceId;
+    const isBound = active && placement.id === structure?.instanceId;
     for (const mesh of structureMeshes(
       placement,
       pose,
       negateZ,
-      isEntrance ? entrance.openUnits : 0,
-      isEntrance ? entrance.region : undefined
+      slot => (isBound ? (openUnits.get(slot) ?? 0) : 0),
+      isBound ? structure.regionIndex : null
     )) {
       const triangles = trianglesOf(mesh);
       skippedFaces += triangles.skipped;

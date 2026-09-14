@@ -1,10 +1,16 @@
-import type { Bounds, Mesh, Primitive } from '../catalogue/data.ts';
+import type {
+  Bounds,
+  EntranceAttachment,
+  Mesh,
+  Primitive
+} from '../catalogue/data.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { ErisPlacement, ErisPose } from './world.ts';
 
-const ATTACHMENT_SLOT = 0x03_fc;
 const EYE_CLEARANCE = 11;
-export const OPEN_ENTRANCE_UNITS = 92;
+const LEAF_ENDPOINT_INSET = 8;
+export type AttachmentUnits = (slot: number) => number;
+const closedAttachment: AttachmentUnits = () => 0;
 
 const subsets = new WeakMap<object, Mesh>();
 const subset = (key: object, mesh: Mesh, faces: readonly Primitive[]): Mesh => {
@@ -47,24 +53,55 @@ export const insideLocalBox = (
   box.z[0] <= point.z &&
   point.z < box.z[1];
 
-const regionIsAvailable = (flags: number, entranceOpenUnits: number): boolean =>
-  (flags & 0x0f_ff) !== ATTACHMENT_SLOT ||
-  entranceOpenUnits >= OPEN_ENTRANCE_UNITS;
+export const attachmentOpenLimit = (attachment: EntranceAttachment): number => {
+  const axis = attachment.constructor.motionAxis === 'x' ? 0 : 2;
+  const values = attachment.mesh.vertices.map(vertex => vertex[axis]);
+  const span = Math.max(...values) - Math.min(...values);
+  return (
+    (attachment.constructor.leafCount === 2 ? span / 2 : span) -
+    LEAF_ENDPOINT_INSET
+  );
+};
 
-/** Bind-time workspace copy: Structure 74's `$4200` is non-negative, so slot `$03FC` insets X. */
-const workspaceBounds = (flags: number, bounds: Bounds): Bounds =>
-  (flags & 0x03_fc) === ATTACHMENT_SLOT
-    ? [
-        [bounds[0]![0] + EYE_CLEARANCE, bounds[0]![1] - EYE_CLEARANCE],
-        bounds[1]!
-      ]
-    : bounds;
+const regionIsAvailable = (
+  placement: ErisPlacement,
+  region: NonNullable<
+    ErisPlacement['selection']
+  >['structure']['regions'][number],
+  openUnits: AttachmentUnits
+): boolean => {
+  if (region.gate !== 'attachmentLatch') {
+    return true;
+  }
+  const slot = region.flags & 0x03_fc;
+  const attachment = placement.selection!.structure.attachments.find(
+    item => item.slot === slot
+  )!;
+  return openUnits(slot) >= attachmentOpenLimit(attachment);
+};
+
+/** Bind-time ±11 copy on the resolved axis. `$0200` remains unresolved and uninset. */
+const workspaceBounds = (
+  region: NonNullable<
+    ErisPlacement['selection']
+  >['structure']['regions'][number]
+): Bounds => {
+  if (region.insetAxis === undefined) {
+    return region.bounds;
+  }
+  const axis = region.insetAxis === 'x' ? 0 : 1;
+  return region.bounds.map((pair, index) =>
+    index === axis
+      ? ([pair[0] + EYE_CLEARANCE, pair[1] - EYE_CLEARANCE] as const)
+      : pair
+  );
+};
 
 export const structureRegionAt = (
   placement: ErisPlacement,
   pose: ErisPose,
   negateZ: boolean,
-  entranceOpenUnits: number
+  openUnits: AttachmentUnits = closedAttachment
 ): number | null => {
   const selection = placement.selection;
   if (selection === undefined) {
@@ -73,9 +110,9 @@ export const structureRegionAt = (
   const point = structureLocalPosition(placement, pose.position, negateZ);
   const local = [point.x, point.z];
   const index = selection.structure.regions.findIndex(region => {
-    const bounds = workspaceBounds(region.flags, region.bounds);
+    const bounds = workspaceBounds(region);
     return (
-      regionIsAvailable(region.flags, entranceOpenUnits) &&
+      regionIsAvailable(placement, region, openUnits) &&
       bounds.every(
         ([min, max], axis) => min <= local[axis]! && local[axis]! < max
       )
@@ -114,7 +151,7 @@ export const clampStructureStep = (
   from: ErisPose,
   to: ErisPose,
   negateZ: boolean,
-  entranceOpenUnits: number,
+  openUnits: AttachmentUnits,
   selectedRegionIndex: number | null
 ): ClampedStructureStep => {
   const selection = placement.selection;
@@ -124,18 +161,18 @@ export const clampStructureStep = (
   const regions = selection.structure.regions;
   const currentIndex =
     selectedRegionIndex ??
-    structureRegionAt(placement, from, negateZ, entranceOpenUnits);
+    structureRegionAt(placement, from, negateZ, openUnits);
   const current = currentIndex === null ? undefined : regions[currentIndex];
   if (current === undefined) {
     return {
       pose: to,
-      regionIndex: structureRegionAt(placement, to, negateZ, entranceOpenUnits)
+      regionIndex: structureRegionAt(placement, to, negateZ, openUnits)
     };
   }
 
   const local = structureLocalPosition(placement, to.position, negateZ);
   const coordinates = [local.x, local.z];
-  const currentBounds = workspaceBounds(current.flags, current.bounds);
+  const currentBounds = workspaceBounds(current);
   const clearance = clearanceFor(current.flags);
   const adjusted = [
     [currentBounds[0]![0] + clearance, currentBounds[0]![1] - clearance],
@@ -146,10 +183,10 @@ export const clampStructureStep = (
     const other = axis === 0 ? 1 : 0;
     const edge = currentBounds[axis]![upper ? 1 : 0];
     return regions.some((region, index) => {
-      const bounds = workspaceBounds(region.flags, region.bounds);
+      const bounds = workspaceBounds(region);
       return (
         index !== currentIndex &&
-        regionIsAvailable(region.flags, entranceOpenUnits) &&
+        regionIsAvailable(placement, region, openUnits) &&
         bounds[axis]![upper ? 0 : 1] === edge &&
         bounds[other]![0] + clearance <= coordinates[other]! &&
         coordinates[other]! < bounds[other]![1] - clearance
@@ -177,31 +214,50 @@ export const clampStructureStep = (
   return {
     pose,
     regionIndex:
-      structureRegionAt(placement, pose, negateZ, entranceOpenUnits) ??
-      currentIndex
+      structureRegionAt(placement, pose, negateZ, openUnits) ?? currentIndex
   };
 };
 
-const movingAttachment = (mesh: Mesh, openUnits: number): Mesh => {
+const movingAttachment = (
+  attachment: EntranceAttachment,
+  openUnits: number
+): Mesh => {
+  const { mesh } = attachment;
   if (openUnits <= 0) {
     return mesh;
   }
-  const midpoint =
-    (Math.min(...mesh.vertices.map(vertex => vertex[0])) +
-      Math.max(...mesh.vertices.map(vertex => vertex[0]))) /
-    2;
+  const axis = attachment.constructor.motionAxis === 'x' ? 0 : 2;
+  const values = mesh.vertices.map(vertex => vertex[axis]);
+  const minimum = Math.min(...values);
+  const maximum = Math.max(...values);
+  const midpoint = (minimum + maximum) / 2;
   const split = mesh.vertices.length / 2;
   return {
     ...mesh,
     vertices: mesh.vertices.map((vertex, index) => {
-      if (vertex[0] !== midpoint) {
+      const coordinate = vertex[axis];
+      let delta = 0;
+      if (attachment.constructor.leafCount === 2 && coordinate === midpoint) {
+        delta = index < split ? -openUnits : openUnits;
+      } else if (
+        attachment.constructor.leafCount === 1 &&
+        attachment.constructor.movingSide === 'low' &&
+        coordinate === minimum
+      ) {
+        delta = openUnits;
+      } else if (
+        attachment.constructor.leafCount === 1 &&
+        attachment.constructor.movingSide === 'high' &&
+        coordinate === maximum
+      ) {
+        delta = -openUnits;
+      }
+      if (delta === 0) {
         return vertex;
       }
-      return [
-        midpoint + (index < split ? -openUnits : openUnits),
-        vertex[1],
-        vertex[2]
-      ];
+      const moved = [...vertex] as [number, number, number];
+      moved[axis] += delta;
+      return moved;
     })
   };
 };
@@ -211,7 +267,7 @@ export const structureMeshes = (
   placement: ErisPlacement,
   pose: ErisPose,
   negateZ: boolean,
-  entranceOpenUnits = 0,
+  openUnits: AttachmentUnits = closedAttachment,
   selectedRegionIndex?: number | null
 ): readonly Mesh[] => {
   const fallback = () => (placement.mesh === undefined ? [] : [placement.mesh]);
@@ -223,8 +279,9 @@ export const structureMeshes = (
   const point = structureLocalPosition(placement, pose.position, negateZ);
   const local = [point.x, point.y, point.z];
   const regionIndex =
-    selectedRegionIndex ??
-    structureRegionAt(placement, pose, negateZ, entranceOpenUnits);
+    selectedRegionIndex === undefined
+      ? structureRegionAt(placement, pose, negateZ, openUnits)
+      : selectedRegionIndex;
   const region =
     regionIndex === null ? undefined : structure.regions[regionIndex];
   if (region === undefined) {
@@ -232,7 +289,10 @@ export const structureMeshes = (
   }
   const plan = region.queue.flatMap(entry => {
     if (entry.kind === 'attachment') {
-      return [movingAttachment(structure.attachment!, entranceOpenUnits)];
+      const attachment = structure.attachments.find(
+        item => item.slot === entry.slot
+      )!;
+      return [movingAttachment(attachment, openUnits(entry.slot))];
     }
     const face = structure.plan.faces.find(f => f.sourceIndex === entry.index)!;
     return [subset(face, structure.plan, [face])];

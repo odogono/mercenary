@@ -13,7 +13,14 @@ class SelectionTests(unittest.TestCase):
     def test_lists_preserve_order_repeats_empty_and_attachment(self):
         self.assertEqual(selection_list(Reader(bytes([3, 1, 3, 0]), 0), 3), [2, 0, 2])
         self.assertEqual(selection_list(Reader(bytes([0, 0]), 0), 3), [])
-        self.assertEqual(selection_list(Reader(bytes([255, 0]), 0), 3, True), [{'kind': 'attachment'}])
+        self.assertEqual(
+            selection_list(Reader(bytes([255, 0]), 0), 3, True),
+            [{'kind': 'attachment', 'slot': 0x3FC}],
+        )
+        self.assertEqual(
+            selection_list(Reader(bytes([252, 254, 0, 0]), 0), 3, True),
+            [{'kind': 'attachment', 'slot': 0x3F0}, {'kind': 'attachment', 'slot': 0x3F8}],
+        )
 
     def test_lists_refuse_truncation_bad_padding_and_invalid_references(self):
         for data in (b'\x01', b'\x04\x00', b'\x00\x01', b'\xff\x00'):
@@ -38,7 +45,7 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(result['regions'][0]['bounds'], [[-32768,20],[-60,32767]])
         self.assertEqual(result['regions'][0]['queue'], [{'kind': 'face', 'index': 0}])
         self.assertEqual(result['regions'][1]['queue'], [])
-        self.assertIsNone(result['attachment'])
+        self.assertEqual(result['attachments'], [])
         with self.assertRaises(ValueError):
             decode_structure_selection(bytes.fromhex('4201'), mesh, (2,3), [], [])
         with self.assertRaises(ValueError):
@@ -62,8 +69,44 @@ class SelectionTests(unittest.TestCase):
         palette = [0] * 16
         palette[5], palette[6], palette[8] = 0x333, 0x444, 0x322
         result = decode_structure_selection(bytes(data), mesh, (2,2), palette, [])
-        attachment = result['attachment']
-        self.assertEqual([face['colour'] for face in attachment['faces']], ['#666666','#888888','#664444'] * 2)
-        self.assertEqual(sorted(set(p[0] for p in attachment['vertices'])), [1300,1400,1500])
-        self.assertEqual(sorted(set(p[1] for p in attachment['vertices'])), [0,150])
-        self.assertEqual(sorted(set(p[2] for p in attachment['vertices'])), [-790,-770])
+        attachment = result['attachments'][0]
+        self.assertEqual(attachment['controlWord'], 0x4200)
+        self.assertEqual(attachment['slot'], 0x3FC)
+        self.assertEqual(attachment['constructor'], {'leafCount': 2, 'motionAxis': 'x'})
+        self.assertEqual(attachment['proximityBox'], {'x': [1200, 1600], 'z': [-1200, -200]})
+        self.assertEqual(result['regions'][0]['gate'], 'none')
+        self.assertEqual(result['regions'][0]['queue'], [{'kind': 'attachment', 'slot': 0x3FC}])
+        self.assertEqual([face['colour'] for face in attachment['mesh']['faces']], ['#666666','#888888','#664444'] * 2)
+        self.assertEqual(sorted(set(p[0] for p in attachment['mesh']['vertices'])), [1300,1400,1500])
+        self.assertEqual(sorted(set(p[1] for p in attachment['mesh']['vertices'])), [0,150])
+        self.assertEqual(sorted(set(p[2] for p in attachment['mesh']['vertices'])), [-790,-770])
+
+    def test_two_leaf_z_attachment_splits_the_closed_z_span(self):
+        start = 0x14aec
+        data = bytearray(start + 4)
+        struct.pack_into('>hh', data, start, 150, 110)
+        data += struct.pack(
+            '>H4h4H4h',
+            0x8200, 293, -160, 297, -40,
+            0x9090, 0x9088, 0x9082, 0x9084,
+            100, 500, -200, 0,
+        )
+        data += bytes.fromhex('0000 03fd 0122 012c ff60 ffd8 ff00 0000')
+        mesh = {'sourceStart': start, 'sourceEnd': start + 6, 'faces': []}
+        palette = [0] * 16
+        palette[1], palette[4], palette[8] = 0x411, 0x444, 0x322
+        result = decode_structure_selection(bytes(data), mesh, (1, 1), palette, [])
+        attachment = result['attachments'][0]
+        self.assertEqual(attachment['constructor'], {'leafCount': 2, 'motionAxis': 'z'})
+        self.assertEqual(attachment['proximityBox'], {'x': [100, 500], 'z': [-200, 0]})
+        self.assertEqual(sorted({p[2] for p in attachment['mesh']['vertices']}), [-160, -100, -40])
+        self.assertEqual(result['regions'][0]['gate'], 'attachmentLatch')
+        self.assertEqual(result['regions'][0]['insetAxis'], 'z')
+
+    def test_passage_sentinel_is_not_an_attachment_mesh(self):
+        mesh = {'sourceEnd': 2, 'sourceStart': 0, 'faces': [{'sourceIndex': 0}]}
+        data = bytes.fromhex('0000 8200 0000000a 0000000a 0100 0000')
+        result = decode_structure_selection(data, mesh, (1, 1), [], [])
+        self.assertEqual(result['attachments'], [])
+        self.assertEqual(result['regions'][0]['gate'], 'passage')
+        self.assertNotIn('insetAxis', result['regions'][0])

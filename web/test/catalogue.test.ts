@@ -47,7 +47,7 @@ const fixture = () => ({
     }
   ],
   places: [],
-  schemaVersion: 6,
+  schemaVersion: 7,
   source: {
     authority: 'Synthetic test',
     evidence: 'test',

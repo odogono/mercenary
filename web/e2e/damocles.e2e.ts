@@ -59,7 +59,7 @@ test('structure faces change at the window, doorway and inside the spaceport', a
   expect(new Set(counts).size).toBe(3);
 });
 
-test('the spaceport animates open, refuses its window, and leaves other structures ghosted', async ({
+test('the spaceport and current-cell structures use recovered selector behavior', async ({
   page
 }) => {
   await page.addInitScript(
@@ -102,17 +102,17 @@ test('the spaceport animates open, refuses its window, and leaves other structur
 
   const frame = page.locator('#frame');
   const spaceport = await startAt('eris-surface-87', 1400, -1300, 512);
-  await expect(frame).toHaveAttribute('data-entrance-open-units', '0');
+  await expect(frame).toHaveAttribute('data-attachment-open-units', '0');
   await page.keyboard.down('ArrowUp');
   await expect
     .poll(async () =>
-      Number(await frame.getAttribute('data-entrance-open-units'))
+      Number(await frame.getAttribute('data-attachment-open-units'))
     )
     .toBeGreaterThan(0);
   await page.keyboard.up('ArrowUp');
   await expect
     .poll(async () =>
-      Number(await frame.getAttribute('data-entrance-open-units'))
+      Number(await frame.getAttribute('data-attachment-open-units'))
     )
     .toBe(92);
   await page.keyboard.down('ArrowUp');
@@ -133,10 +133,38 @@ test('the spaceport animates open, refuses its window, and leaves other structur
 
   const other = await startAt('eris-surface-52', -130, -150, 512);
   await page.keyboard.down('ArrowUp');
-  await expect
-    .poll(async () => Number(await frame.getAttribute('data-z')))
-    .toBeGreaterThan(other[2]! * 65_536 - 70);
+  await page.waitForTimeout(700);
+  const otherZ = Number(await frame.getAttribute('data-z'));
+  expect(otherZ).toBeGreaterThan(other[2]! * 65_536 - 150);
+  expect(otherZ).toBeLessThan(other[2]! * 65_536 - 100);
   await page.keyboard.up('ArrowUp');
+  await page.unroute('**/damocles/eris.json');
+
+  const office = await startAt('eris-surface-89', 330, -100, 1280);
+  await expect(frame).toHaveAttribute(
+    'data-structure-instance',
+    'eris-surface-89'
+  );
+  await expect
+    .poll(async () =>
+      Number(await frame.getAttribute('data-attachment-open-units'))
+    )
+    .toBe(52);
+  await page.keyboard.down('ArrowUp');
+  await expect
+    .poll(async () => Number(await frame.getAttribute('data-x')))
+    .toBeLessThan(office[0]! * 65_536 + 280);
+  await page.keyboard.up('ArrowUp');
+  await page.keyboard.down('ArrowDown');
+  await expect
+    .poll(async () => Number(await frame.getAttribute('data-x')))
+    .toBeGreaterThan(office[0]! * 65_536 + 520);
+  await page.keyboard.up('ArrowDown');
+  await expect
+    .poll(async () =>
+      Number(await frame.getAttribute('data-attachment-open-units'))
+    )
+    .toBe(0);
   await page.unroute('**/damocles/eris.json');
 });
 

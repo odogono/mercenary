@@ -51,7 +51,7 @@ describe('Damocles Saves', () => {
     expect(decoded.where).toBe('ERIS 02-03');
   });
 
-  test('refuses a schema-1 Resume, invalid entrance state and a Catalogue mismatch', async () => {
+  test('refuses old schemas, invalid attachment state and a Catalogue mismatch', async () => {
     const loaded = await load();
     expect(() =>
       decodeDamoclesSave('{"schemaVersion":1}', loaded.identity)
@@ -70,11 +70,17 @@ describe('Damocles Saves', () => {
         catalogueProgramSha256: 'other'
       })
     ).toThrow(/payload identity/);
+    expect(() =>
+      decodeDamoclesSave(
+        JSON.stringify({ ...JSON.parse(encoded), schemaVersion: 2 }),
+        loaded.identity
+      )
+    ).toThrow(/schema 2/);
     const invalidEntrance = JSON.parse(encoded);
-    invalidEntrance.snapshot.entranceOpenUnits = 93;
+    invalidEntrance.snapshot.structure.attachments[0].openUnits = -1;
     expect(() =>
       decodeDamoclesSave(JSON.stringify(invalidEntrance), loaded.identity)
-    ).toThrow(/entrance state/);
+    ).toThrow(/attachment state/);
     const schema2Identity = encodeDamoclesSave({
       identity: { ...loaded.identity, erisSchemaVersion: 2 },
       savedAt: '2026-09-12T08:00:00.000Z',

@@ -57,17 +57,36 @@ export interface DetailGroup {
   }[];
   readonly default: readonly number[];
 }
+export const REGION_GATES = ['none', 'attachmentLatch', 'passage'] as const;
+export type RegionGate = (typeof REGION_GATES)[number];
+export interface AttachmentConstructor {
+  readonly leafCount: 1 | 2;
+  readonly motionAxis: 'x' | 'z';
+  readonly movingSide?: 'high' | 'low';
+}
+export interface EntranceAttachment {
+  readonly constructor: AttachmentConstructor;
+  readonly controlWord: number;
+  readonly mesh: Mesh;
+  readonly proximityBox: {
+    readonly x: readonly [number, number];
+    readonly z: readonly [number, number];
+  };
+  readonly slot: number;
+}
 export interface StructureSelection {
-  readonly attachment: Mesh | null;
+  readonly attachments: readonly EntranceAttachment[];
   readonly detailModel: string;
   readonly detailVariant: string;
   readonly plan: Mesh;
   readonly regions: readonly {
     readonly bounds: Bounds;
     readonly flags: number;
+    readonly gate: RegionGate;
+    readonly insetAxis?: 'x' | 'z';
     readonly queue: readonly (
       | { readonly index: number; readonly kind: 'face' }
-      | { readonly kind: 'attachment' }
+      | { readonly kind: 'attachment'; readonly slot: number }
     )[];
   }[];
   readonly scale: readonly [number, number];
@@ -118,7 +137,7 @@ export interface Catalogue {
   readonly instances: readonly Instance[];
   readonly models: readonly Model[];
   readonly places: readonly Place[];
-  readonly schemaVersion: 6;
+  readonly schemaVersion: 7;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -304,14 +323,13 @@ const detailSelection = (value: unknown): readonly DetailGroup[] => {
 const structureSelection = (value: unknown): StructureSelection => {
   const s = fields(value, [
     'plan',
-    'attachment',
+    'attachments',
     'scale',
     'detailModel',
     'detailVariant',
     'regions'
   ]);
   const plan = mesh(s['plan'], true);
-  const attachment = s['attachment'] === null ? null : mesh(s['attachment']);
   const scale = list(s['scale']).map(number);
   if (
     scale.length !== 2 ||
@@ -323,23 +341,112 @@ const structureSelection = (value: unknown): StructureSelection => {
   if (sources.has(undefined) || sources.size !== plan.faces.length) {
     fail('invalid plan source indices');
   }
+  const attachments = list(s['attachments']).map(value => {
+    const a = fields(value, [
+      'constructor',
+      'controlWord',
+      'mesh',
+      'proximityBox',
+      'slot'
+    ]);
+    const c = fields(a['constructor'], [
+      'leafCount',
+      'motionAxis',
+      'movingSide'
+    ]);
+    const leafCount = integer(c['leafCount']);
+    const motionAxis = choice(c['motionAxis'], ['x', 'z'] as const);
+    if (leafCount !== 1 && leafCount !== 2) {
+      fail('invalid attachment leaf count');
+    }
+    const movingSide =
+      c['movingSide'] === undefined
+        ? undefined
+        : choice(c['movingSide'], ['high', 'low'] as const);
+    if (
+      (leafCount === 1 && movingSide === undefined) ||
+      (leafCount === 2 && movingSide !== undefined)
+    ) {
+      fail('invalid attachment moving side');
+    }
+    const controlWord = integer(a['controlWord']);
+    const slot = integer(a['slot']);
+    const controls = [0x40_00, 0x41_00, 0x42_00, 0x80_00, 0x81_00, 0x82_00];
+    if (
+      !controls.includes(controlWord) ||
+      slot === 0 ||
+      slot > 0x03_fc ||
+      slot % 4
+    ) {
+      fail('invalid attachment control or slot');
+    }
+    if (
+      leafCount !== ((controlWord & 0x02_00) === 0 ? 1 : 2) ||
+      motionAxis !== ((controlWord & 0x80_00) === 0 ? 'x' : 'z') ||
+      (leafCount === 1 &&
+        movingSide !== ((controlWord & 0x01_00) === 0 ? 'high' : 'low'))
+    ) {
+      fail('attachment constructor does not match control word');
+    }
+    const box = fields(a['proximityBox'], ['x', 'z']);
+    return {
+      constructor: {
+        leafCount: leafCount as 1 | 2,
+        motionAxis,
+        ...(movingSide === undefined ? {} : { movingSide })
+      },
+      controlWord,
+      mesh: mesh(a['mesh']),
+      proximityBox: {
+        x: bounds([box['x']], 1)[0]!,
+        z: bounds([box['z']], 1)[0]!
+      },
+      slot
+    };
+  });
+  const bySlot = new Map(
+    attachments.map(attachment => [attachment.slot, attachment])
+  );
+  if (bySlot.size !== attachments.length) {
+    fail('duplicate attachment slot');
+  }
   const regions = list(s['regions']).map(value => {
-    const r = fields(value, ['flags', 'bounds', 'queue']);
+    const r = fields(value, ['flags', 'bounds', 'queue', 'gate', 'insetAxis']);
     const flags = integer(r['flags']);
     if (flags === 0 || flags > 65_535) {
       fail('invalid region flags');
     }
+    const gate = choice(r['gate'], REGION_GATES);
+    const slot = flags & 0x03_fc;
+    const attachment = bySlot.get(slot);
+    const insetAxis =
+      r['insetAxis'] === undefined
+        ? undefined
+        : choice(r['insetAxis'], ['x', 'z'] as const);
+    if (
+      (gate === 'none' && slot !== 0) ||
+      (gate === 'passage' && slot !== 0x02_00) ||
+      (gate === 'attachmentLatch' &&
+        (attachment === undefined ||
+          insetAxis !== attachment.constructor.motionAxis)) ||
+      (gate !== 'attachmentLatch' && insetAxis !== undefined)
+    ) {
+      fail('region gate does not match flags and attachment');
+    }
     return {
       bounds: bounds(r['bounds'], 2),
       flags,
+      gate,
+      ...(insetAxis === undefined ? {} : { insetAxis }),
       queue: list(r['queue']).map(value => {
         const entry = object(value);
         if (entry['kind'] === 'attachment') {
-          fields(entry, ['kind']);
-          if (attachment === null) {
+          const item = fields(entry, ['kind', 'slot']);
+          const itemSlot = integer(item['slot']);
+          if (!bySlot.has(itemSlot)) {
             fail('missing region attachment');
           }
-          return { kind: 'attachment' } as const;
+          return { kind: 'attachment', slot: itemSlot } as const;
         }
         fields(entry, ['kind', 'index']);
         if (entry['kind'] !== 'face') {
@@ -357,7 +464,7 @@ const structureSelection = (value: unknown): StructureSelection => {
     fail('empty region selector');
   }
   return {
-    attachment,
+    attachments,
     detailModel: string(s['detailModel']),
     detailVariant: string(s['detailVariant']),
     plan,
@@ -368,7 +475,7 @@ const structureSelection = (value: unknown): StructureSelection => {
 
 export const parseCatalogue = (value: unknown): Catalogue => {
   const r = object(value);
-  if (r['schemaVersion'] !== 6) {
+  if (r['schemaVersion'] !== 7) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -670,7 +777,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     instances,
     models,
     places,
-    schemaVersion: 6,
+    schemaVersion: 7,
     source,
     tables
   };

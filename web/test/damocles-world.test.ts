@@ -7,7 +7,9 @@ import {
   cellOf,
   erisSurfaceFrom,
   headingFromByte,
-  startPose
+  insideCentralCellHalf,
+  startPose,
+  structureInCell
 } from '../src/damocles/world.ts';
 
 const load = async () => {
@@ -53,6 +55,44 @@ describe('the Eris surface from the Damocles Catalogue', () => {
     )!;
     expect(cellOf(apron.position, surface.grid)).toEqual({ x: 7, z: 8 });
     expect(apron.faceCount).toBeGreaterThan(0);
+  });
+
+  test('binds only the current-cell structure and gates its plan to the central half', async () => {
+    const { catalogue, doc } = await load();
+    const surface = erisSurfaceFrom(catalogue, doc);
+    const office = surface.placements.find(
+      placement => placement.id === 'eris-surface-89'
+    )!;
+    expect(structureInCell(surface, office.position)?.id).toBe(office.id);
+    const origin = {
+      x:
+        Math.floor(office.position.x / surface.grid.cellUnits) *
+        surface.grid.cellUnits,
+      y: 63,
+      z:
+        Math.floor(office.position.z / surface.grid.cellUnits) *
+        surface.grid.cellUnits
+    };
+    expect(
+      insideCentralCellHalf(
+        {
+          ...origin,
+          x: origin.x + surface.grid.cellUnits * 0.25,
+          z: origin.z + surface.grid.cellUnits * 0.25
+        },
+        surface.grid
+      )
+    ).toBeTrue();
+    expect(
+      insideCentralCellHalf(
+        {
+          ...origin,
+          x: origin.x + surface.grid.cellUnits * 0.75,
+          z: origin.z + surface.grid.cellUnits * 0.5
+        },
+        surface.grid
+      )
+    ).toBeFalse();
   });
 
   test('draws the authored variant the document names', async () => {

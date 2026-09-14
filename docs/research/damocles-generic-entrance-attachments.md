@@ -20,12 +20,12 @@ Disassembly remain ignored Restricted Material under
 ([ADR 0039](../adr/0039-admit-the-damocles-catalogue-before-playable-integration.md),
 [research boundary](damocles-gap.md)).
 
-| Artifact | SHA-256 |
-| --- | --- |
-| Working Authority STX | `8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef` |
+| Artifact                                                     | SHA-256                                                            |
+| ------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Working Authority STX                                        | `8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef` |
 | `observe-first-world-20260818T101013Z-c5a32b7d/observed.ram` | `b019301ec5ac355301613db8e2bf6cd6d4a0df41311b6efedacfea87f2a9c967` |
 | `observe-first-world-20260818T101117Z-010b9ad3/observed.ram` | `0f2dd8c5bd5c25003f2b29986529cffe4cf8f710a80a4a1fa86ece08d744229b` |
-| `research/damocles-st/work/geometry-code.txt` | `7bdfd0b9125f92ecc22282c2b3056e126ca0e3c6b93f0ab0981b2683dffaf340` |
+| `research/damocles-st/work/geometry-code.txt`                | `7bdfd0b9125f92ecc22282c2b3056e126ca0e3c6b93f0ab0981b2683dffaf340` |
 
 The two cold first-world RAMs are byte-identical over every code, structure and
 workspace range cited below. No runtime capture visits Eris cells `$52`, `$9A`
@@ -52,12 +52,12 @@ negative `$7B02` means there is no active structure workspace: binding,
 region scanning, attachment motion and plan drawing all return early. Both
 cold surface captures hold `$7AA4 = $7B02 = $0000`.
 
-| Range | Decoded role | SHA-256 |
-| --- | --- | --- |
-| `$52CDC..$52D41` | resident structure/level association | `46158686e82a668f4d36e137a94341b10ac6d4f76a88959a695ecca1bb12720d` |
+| Range            | Decoded role                                   | SHA-256                                                            |
+| ---------------- | ---------------------------------------------- | ------------------------------------------------------------------ |
+| `$52CDC..$52D41` | resident structure/level association           | `46158686e82a668f4d36e137a94341b10ac6d4f76a88959a695ecca1bb12720d` |
 | `$54CBC..$54E3F` | current-cell placement and structure selection | `76c1b56f4cfd8d60e531219dffb5ea15542e81618a86edf2d46654e9bb2d4601` |
-| `$55B8E..$55BFF` | level gate and selected-structure bind | `8febb14c400fdfc6c691d84e3931926716793ac2f5a73ec553145ea5ce27523f` |
-| `$59D70..$5A30D` | plan, attachment and region workspace bind | `78a6741c6b481f278506a5cfa3b2ee076a144ac9c9621dfa3c8cce69620d9aae` |
+| `$55B8E..$55BFF` | level gate and selected-structure bind         | `8febb14c400fdfc6c691d84e3931926716793ac2f5a73ec553145ea5ce27523f` |
+| `$59D70..$5A30D` | plan, attachment and region workspace bind     | `78a6741c6b481f278506a5cfa3b2ee076a144ac9c9621dfa3c8cce69620d9aae` |
 
 ### `$7AF6` is the central-half-of-cell gate — Confirmed
 
@@ -88,12 +88,12 @@ instance. It can therefore finish re-closing that instance's leaves after the
 Pose leaves the central square. It never updates attachments belonging to
 another instance.
 
-| Range | Decoded role | SHA-256 |
-| --- | --- | --- |
-| `$5943C..$595BB` | on-foot substep wrapper | `c580d12038ad9c26a05dd822794f1da5933b39a087ac04a0193ac08e552d7dd0` |
-| `$5A30E..$5A385` | region and attachment-slot gate | `9b22a2c4cacfb51c0d8b3eafdf38951ab17e2b78df0dc9ad44777297f6ef94b7` |
+| Range            | Decoded role                                  | SHA-256                                                            |
+| ---------------- | --------------------------------------------- | ------------------------------------------------------------------ |
+| `$5943C..$595BB` | on-foot substep wrapper                       | `c580d12038ad9c26a05dd822794f1da5933b39a087ac04a0193ac08e552d7dd0` |
+| `$5A30E..$5A385` | region and attachment-slot gate               | `9b22a2c4cacfb51c0d8b3eafdf38951ab17e2b78df0dc9ad44777297f6ef94b7` |
 | `$5A64A..$5A72D` | active-square test, handoff and clamp wrapper | `97ca607e5c9907a5401a4ccdd768daf19fdac1161a252de7e992d472c4ad156e` |
-| `$5AA3C..$5AD51` | generic attachment motion handler | `cd936e76d64a368856ff04e411221d249cfa4beeafc82b38e6b47533ec508cdb` |
+| `$5AA3C..$5AD51` | generic attachment motion handler             | `cd936e76d64a368856ff04e411221d249cfa4beeafc82b38e6b47533ec508cdb` |
 
 ## Generic Entrance Attachment family
 
@@ -115,14 +115,14 @@ post-plan controls observed across the resident surface records use six base
 constructor modes, plus `$40F0` and `$82F0` variants whose low byte is resolved
 through live selector state before the same geometry constructors:
 
-| Control | Leaves | Motion and bind-inset axis | Moving edge(s) |
-| --- | ---: | --- | --- |
-| `$4000` | 1 | X | high-X edge moves toward low X |
-| `$4100` | 1 | X | low-X edge moves toward high X |
-| `$4200` | 2 | X | midpoint edges move outward |
-| `$8000` | 1 | Z | high-Z edge moves toward low Z |
-| `$8100` | 1 | Z | low-Z edge moves toward high Z |
-| `$8200` | 2 | Z | midpoint edges move outward |
+| Control | Leaves | Motion and bind-inset axis | Moving edge(s)                 |
+| ------- | -----: | -------------------------- | ------------------------------ |
+| `$4000` |      1 | X                          | high-X edge moves toward low X |
+| `$4100` |      1 | X                          | low-X edge moves toward high X |
+| `$4200` |      2 | X                          | midpoint edges move outward    |
+| `$8000` |      1 | Z                          | high-Z edge moves toward low Z |
+| `$8100` |      1 | Z                          | low-Z edge moves toward high Z |
+| `$8200` |      2 | Z                          | midpoint edges move outward    |
 
 The control-word sign selects the axis everywhere: non-negative means X;
 negative means Z. Bit 9 selects the two-leaf constructor. For a one-leaf
@@ -153,10 +153,10 @@ The region-inset range has SHA-256
 For an attachment allocated at `slot`, the live control word begins at
 `$5A40 + slot`; its low byte at `$5A41 + slot` is the latch:
 
-| Latch | Meaning |
-| --- | --- |
-| `$00` | closed |
-| `$01` | moving |
+| Latch | Meaning    |
+| ----- | ---------- |
+| `$00` | closed     |
+| `$01` | moving     |
 | `$FF` | fully open |
 
 Inside the Proximity Box, each moving edge advances one model unit per handler
@@ -173,6 +173,43 @@ are not named here. Their geometry follows the constructors above, but the
 game-state predicate selecting open versus close remains unresolved. No
 implementation should infer that predicate from `$F0`.
 
+## Structure 75 at Eris STATE OFFICE
+
+[#243](https://github.com/odogono/mercenary/issues/243) applies the family to
+the Working Authority's **STATE OFFICE** at cell `$89` (`09-08`). Damocles
+Instance `eris-surface-89` selects `structure-014ad2`, an alias whose header
+points to Structure 76's plan at `$014AEC` while retaining Structure 75's
+identity, scale 1/1, palette 26 and building-detail slot 43.
+
+The first post-plan record is at `$014C46..$014C5F`:
+
+| Field                  | Recovered value                            |
+| ---------------------- | ------------------------------------------ |
+| Control word           | `$8200`                                    |
+| Closed rectangle       | X 293–297, Z −160–−40                      |
+| Proximity Box          | X 100–500, Z −200–0                        |
+| Constructor            | two-leaf Z; midpoint edges start at Z −100 |
+| Runtime slot           | `$03FC`                                    |
+| Fully-open inner edges | Z −152 and −48 (outer ±8)                  |
+| Doorway-strip region   | flags `$03FD`, X 290–300, Z −160–−40       |
+| Region gate / inset    | `attachmentLatch`; Z ±11                   |
+
+The 26-byte record has SHA-256
+`6432275567adcf5780332fea385df1f33429f4876fe7a4b1529cbf63e4be808c`
+in both pinned cold first-world RAMs. Its control sign, bit 9, slot allocation
+and region flags therefore select the generic two-leaf Z path; no Structure
+75-specific latch or X-motion assumption is needed.
+
+Structure 75 has three more two-leaf Entrance Attachments in slots `$03F8`,
+`$03F4` and `$03F0`. Their 26-byte record SHA-256 values are respectively
+`b6098474a0f05ad342aa81a50f43595162554aab3182044e3ccc4307589c60a5`,
+`9946a18ea783b51d6a62ff3a9baeab8a014c2eb52e9b9c528a10346970f0ddab`
+and
+`f7a8bd056691dacbe3ae013179880e08c106d6cab7dd843daeda922a1f99c259`.
+The first two are `$8200` Z constructors and the last is a `$4200` X
+constructor. They are retained as independent per-slot records; the proving
+walk uses the `$03FC` STATE OFFICE entrance.
+
 ## Slot `$0200` on the shared complete selector
 
 `structure-00ff04`, `structure-010152`, `structure-010164` and
@@ -180,12 +217,12 @@ implementation should infer that predicate from `$F0`.
 at `$FF04`; it contains no post-plan attachment. Its second region has flags
 `$8200` and is a thin strip immediately beyond the central region:
 
-| Model | X/Z scale | Region 2 scaled raw X | Region 2 scaled raw Z | Eris Instances |
-| --- | --- | --- | --- | --- |
-| `structure-00ff04` | 1/1 | −40–40 | −100–−90 | none |
-| `structure-010152` | 2/1 | −80–80 | −100–−90 | cell `$52` (`02-05`) |
-| `structure-010164` | 2/2 | −80–80 | −200–−180 | none |
-| `structure-010176` | 1/1 | −40–40 | −100–−90 | cells `$9A` (`10-09`) and `$D8` (`08-13`) |
+| Model              | X/Z scale | Region 2 scaled raw X | Region 2 scaled raw Z | Eris Instances                            |
+| ------------------ | --------- | --------------------- | --------------------- | ----------------------------------------- |
+| `structure-00ff04` | 1/1       | −40–40                | −100–−90              | none                                      |
+| `structure-010152` | 2/1       | −80–80                | −100–−90              | cell `$52` (`02-05`)                      |
+| `structure-010164` | 2/2       | −80–80                | −200–−180             | none                                      |
+| `structure-010176` | 1/1       | −40–40                | −100–−90              | cells `$9A` (`10-09`) and `$D8` (`08-13`) |
 
 The shared record `$FF04..$10013` has SHA-256
 `386fcda56a8fc0a3486ea9ba0f03ac38c409cf36bbd50087eeef46e966c76c88`;
@@ -269,16 +306,17 @@ runtime scenario. No ST code was copied, translated or tracked.
 
 ## Status
 
-| Claim | Status | Evidence |
-| --- | --- | --- |
-| `$7AF6 >= 0` exactly in the central half-open 50% of both current-cell axes | Confirmed | `$5A650..$5A666`; first-world state words |
-| `$7B02` is the copied level selector; negative means no active structure workspace | Confirmed | `$59468..$59482`, `$55B8E..$55C00`, `$52CDC..$52D41` |
-| Region scan and clamp operate only on the bound current-cell instance and active square | Confirmed | `$54CBC..$54E3F`, `$5A30E..$5A72D` |
-| `$5AA3C` updates only bound-instance attachments but can re-close outside the active square | Confirmed | `$59562..$59586`, `$5AA3C..$5AD51` |
-| Control sign selects X/Z for constructor motion and region inset; bits 9/8 select leaf count/side | Confirmed | `$59FE2..$5A202`, `$5A2C0..$5A2DD`, `$5AA3C..$5AD51` |
-| Generic latch is `$00` closed, `$01` moving, `$FF` open; endpoint is outer ±8 and retreat re-closes | Confirmed | `$5AAA0..$5AD4E` |
-| `$0200` regions are unconditional and have no attachment mesh | Confirmed | shared `$FF04` record, `$5A366..$5A386` |
-| `$5C40` is global scratch and is not rewritten by the no-attachment structure bind | Confirmed | `$570CC..$572B5`, `$59E94..$5A24E`; both RAMs |
-| Natural Eris `$0200` bind always uses X inset | Unresolved | no `$52/$9A/$D8` runtime capture; captured `$5C40` is zero only at cell `$87` |
-| Meaning of `$40F0/$82F0` live selector predicates | Unresolved | constructor decoded; selecting game-state predicate not traced |
-| Schema 6 closed mesh plus flags is sufficient | Disproved | constructor, Proximity Box, gate and scratch-dependent inset facts are absent |
+| Claim                                                                                                             | Status     | Evidence                                                                      |
+| ----------------------------------------------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------- |
+| `$7AF6 >= 0` exactly in the central half-open 50% of both current-cell axes                                       | Confirmed  | `$5A650..$5A666`; first-world state words                                     |
+| `$7B02` is the copied level selector; negative means no active structure workspace                                | Confirmed  | `$59468..$59482`, `$55B8E..$55C00`, `$52CDC..$52D41`                          |
+| Region scan and clamp operate only on the bound current-cell instance and active square                           | Confirmed  | `$54CBC..$54E3F`, `$5A30E..$5A72D`                                            |
+| `$5AA3C` updates only bound-instance attachments but can re-close outside the active square                       | Confirmed  | `$59562..$59586`, `$5AA3C..$5AD51`                                            |
+| Control sign selects X/Z for constructor motion and region inset; bits 9/8 select leaf count/side                 | Confirmed  | `$59FE2..$5A202`, `$5A2C0..$5A2DD`, `$5AA3C..$5AD51`                          |
+| Generic latch is `$00` closed, `$01` moving, `$FF` open; endpoint is outer ±8 and retreat re-closes               | Confirmed  | `$5AAA0..$5AD4E`                                                              |
+| `$0200` regions are unconditional and have no attachment mesh                                                     | Confirmed  | shared `$FF04` record, `$5A366..$5A386`                                       |
+| `$5C40` is global scratch and is not rewritten by the no-attachment structure bind                                | Confirmed  | `$570CC..$572B5`, `$59E94..$5A24E`; both RAMs                                 |
+| Structure 75's STATE OFFICE entrance is `$8200`, two-leaf Z, slot `$03FC`, with an `attachmentLatch` Z-inset gate | Confirmed  | `$14C46..$14C5F`; both RAMs                                                   |
+| Natural Eris `$0200` bind always uses X inset                                                                     | Unresolved | no `$52/$9A/$D8` runtime capture; captured `$5C40` is zero only at cell `$87` |
+| Meaning of `$40F0/$82F0` live selector predicates                                                                 | Unresolved | constructor decoded; selecting game-state predicate not traced                |
+| Schema 6 closed mesh plus flags is sufficient                                                                     | Disproved  | constructor, Proximity Box, gate and scratch-dependent inset facts are absent |

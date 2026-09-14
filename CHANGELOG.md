@@ -15,10 +15,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Working-Authority notes pin the impact clock at `$793C` (signed remaining seconds) and
   `016-283` at `$7A1C`/`$7A20`; boarded `+ 000 000 NNN` still has no integer RAM cell.
+
+## [0.19.6] - 2026-09-14
+
+### Added
+
+- On foot at Eris STATE OFFICE, Structure 75's `$8200` two-leaf Z entrance opens, admits its
+  doorway strip and re-closes from its own recovered Attachment Constructor and Proximity Box,
+  on the same generic path Capital Spaceport's `$4200` two-leaf X entrance uses (#243).
+
+### Changed
+
 - On foot at Capital Spaceport, the Entrance Attachment interpolates and re-closes from the
   recovered Proximity Box instead of the sticky Entrance Latch. Eye motion is a selected-region
-  AABB clamp (doorway X 1311–1489, region 2 only when fully open). Damocles Save Snapshot is
-  schema 2; schema 1 is refused (#238).
+  AABB clamp (doorway X 1311–1489, region 2 only when fully open) (#238).
+- Damocles Catalogue schema 7 carries each Entrance Attachment's control word, Attachment
+  Constructor, slot, closed mesh and Proximity Box, and names every region's Region Gate and
+  inset axis; `$0200` stays an unconditional passage with no invented attachment.
+- `/damocles` binds one Structure Workspace from the current cell and keeps its per-slot
+  attachment progress, so region selection and the ±11 eye clamp apply only inside the central
+  half-cell while leaves may still re-close outside it. Damocles Save Snapshot is schema 3,
+  carrying the bound instance and its per-slot open units; schema 2 is refused. Eris
+  presentation schema 5 drops the `spaceportEntrance` special case (#243).
 
 ## [0.19.5] - 2026-09-14
 

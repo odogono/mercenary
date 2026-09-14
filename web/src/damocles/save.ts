@@ -1,10 +1,9 @@
 import type { Catalogue } from '../catalogue/data.ts';
 import type { ErisPresentationDocument } from './documents.ts';
-import { OPEN_ENTRANCE_UNITS } from './selection.ts';
 import type { ErisPose } from './world.ts';
 
-/// Version 2 adds the recovered Entrance Attachment and selected structure region.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 2 as const;
+/// Version 3 replaces Capital Spaceport fields with the bound structure workspace.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 3 as const;
 export const DAMOCLES_DESTINATION = 'damocles' as const;
 
 export interface DamoclesSaveIdentity {
@@ -14,11 +13,19 @@ export interface DamoclesSaveIdentity {
   readonly title: typeof DAMOCLES_DESTINATION;
 }
 
+export interface BoundStructureSnapshot {
+  readonly attachments: readonly {
+    readonly openUnits: number;
+    readonly slot: number;
+  }[];
+  readonly instanceId: string;
+  readonly regionIndex: number | null;
+}
+
 export interface DamoclesSaveSnapshot {
   readonly elapsed: number;
-  readonly entranceOpenUnits: number;
   readonly pose: ErisPose;
-  readonly spaceportRegion: number | null;
+  readonly structure: BoundStructureSnapshot | null;
 }
 
 export interface DamoclesSaveRecord {
@@ -129,18 +136,49 @@ export const decodeDamoclesSave = (
   if (!finite(snapshot['elapsed'])) {
     return fail('elapsed is not a finite number');
   }
-  const entranceOpenUnits = snapshot['entranceOpenUnits'];
-  const spaceportRegion = snapshot['spaceportRegion'];
-  if (
-    !finite(entranceOpenUnits) ||
-    entranceOpenUnits < 0 ||
-    entranceOpenUnits > OPEN_ENTRANCE_UNITS ||
-    (spaceportRegion !== null &&
-      (!Number.isInteger(spaceportRegion) ||
-        (spaceportRegion as number) < 0 ||
-        (spaceportRegion as number) >= 12))
-  ) {
-    return fail('entrance state is outside its recovered bounds');
+  let structure: BoundStructureSnapshot | null = null;
+  if (snapshot['structure'] !== null) {
+    const bound = object(snapshot['structure'], 'snapshot.structure');
+    const instanceId = bound['instanceId'];
+    const regionIndex = bound['regionIndex'];
+    if (
+      typeof instanceId !== 'string' ||
+      instanceId === '' ||
+      (regionIndex !== null &&
+        (!Number.isInteger(regionIndex) ||
+          (regionIndex as number) < 0 ||
+          (regionIndex as number) >= 256)) ||
+      !Array.isArray(bound['attachments'])
+    ) {
+      return fail('bound structure state is outside its recovered bounds');
+    }
+    const attachments = bound['attachments'].map(value => {
+      const attachment = object(value, 'snapshot.structure.attachments[]');
+      const slot = attachment['slot'];
+      const openUnits = attachment['openUnits'];
+      if (
+        !Number.isInteger(slot) ||
+        (slot as number) <= 0 ||
+        (slot as number) > 0x03_fc ||
+        (slot as number) % 4 !== 0 ||
+        !finite(openUnits) ||
+        openUnits < 0 ||
+        openUnits > 32_767
+      ) {
+        return fail('attachment state is outside its recovered bounds');
+      }
+      return { openUnits, slot: slot as number };
+    });
+    if (
+      new Set(attachments.map(item => item.slot)).size !== attachments.length
+    ) {
+      return fail('attachment slots are duplicated');
+    }
+    structure = {
+      attachments,
+      instanceId,
+      regionIndex: regionIndex as number | null
+    };
   }
   return {
     identity,
@@ -148,9 +186,8 @@ export const decodeDamoclesSave = (
     schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
     snapshot: {
       elapsed: snapshot['elapsed'],
-      entranceOpenUnits,
       pose: poseOf(snapshot['pose']),
-      spaceportRegion: spaceportRegion as number | null
+      structure
     },
     where: record['where']
   };
