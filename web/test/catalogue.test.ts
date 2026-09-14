@@ -678,6 +678,42 @@ it('places only residents selected by the native surface-body association', asyn
     position: [519.487_258_911_132_8, 0, 1793.487_030_029_296_9]
   });
   expect(chevy.reason).toContain('native surface-resident selector');
+  expect(chevy.location!.place).toBeNull();
+  const gaeaAssemblies = data.instances.filter(instance =>
+    instance.id.startsWith('gaea-surface-')
+  );
+  expect(gaeaAssemblies).toHaveLength(82);
+  expect(
+    data.instances.filter(instance => instance.location?.body === 'body-8')
+  ).toHaveLength(87);
+  for (const id of [
+    'gaea-surface-26',
+    'gaea-surface-27',
+    'gaea-surface-28',
+    'gaea-surface-40'
+  ]) {
+    expect(gaeaAssemblies.some(instance => instance.id === id)).toBe(true);
+  }
+  expect(
+    gaeaAssemblies.some(instance => instance.id === 'gaea-surface-17')
+  ).toBe(false);
+  const gaeaPlaces = data.places.filter(place => place.body === 'body-8');
+  expect(gaeaPlaces.map(place => place.name).sort()).toEqual([
+    'AUTHORS HOUSE',
+    'ELMDON SPACEPORT',
+    'ERIS PO TEMP HQ',
+    'GAEA BANK',
+    'LAWSON BANK',
+    'NOVAGEN OFFICE',
+    'VERDANT PARTY HQ'
+  ]);
+  expect(
+    data.instances.find(instance => instance.id === 'gaea-surface-40')!.location
+      ?.place
+  ).toBe('place-023e6b');
+  expect(
+    data.coverage.notes.some(note => note.includes('Gaea Birmingham Island'))
+  ).toBe(true);
   expect(
     data.instances.find(instance => instance.id === 'object-slot-8')!.location
   ).toBeNull();

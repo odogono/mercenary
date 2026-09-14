@@ -695,6 +695,105 @@ def interior_resident_association(association_a: bytes, association_b: bytes) ->
     }
 
 
+def decode_surface_placements(data: bytes, start: int) -> tuple[dict[int, dict], int]:
+    """Decode a $FF-terminated authored surface-cell placement stream.
+
+    Each record is selector, cell, structure-low. A zero low byte consumes the
+    three-byte skip used as padding. Otherwise structure-high, dx and dz follow
+    and the low nine bits of the structure word select the surface-assembly slot,
+    matching the live $ABDC consumer at $4ECCA..$4ED12.
+    """
+    reader = Reader(data, start)
+    cells: dict[int, dict] = {}
+    for _ in range(256):
+        if reader.p >= len(data):
+            raise ValueError('surface placement stream terminator missing')
+        record = reader.p
+        selector = reader.take(1)[0]
+        if selector == 0xff:
+            return cells, reader.p
+        if reader.p + 1 >= len(data):
+            raise ValueError('surface placement stream terminator missing')
+        cell = reader.take(1)[0]
+        low = reader.take(1)[0]
+        if low == 0:
+            continue
+        if reader.p + 2 >= len(data):
+            raise ValueError('surface placement stream terminator missing')
+        high, dx, dz = reader.take(1)[0], reader.take(1)[0], reader.take(1)[0]
+        word = (high << 8) | low
+        slot = word & 0x1ff
+        if slot == 0:
+            raise ValueError(f'surface placement cell ${cell:02X} has no structure slot')
+        if cell in cells:
+            raise ValueError(f'duplicate surface placement cell ${cell:02X}')
+        cells[cell] = {
+            'address': record,
+            'slot': slot,
+            'dx': int.from_bytes(bytes([dx]), 'big', signed=True),
+            'dz': int.from_bytes(bytes([dz]), 'big', signed=True),
+            'selector': selector,
+            'word': word,
+        }
+    raise ValueError('surface placement stream limit exceeded')
+
+
+def decode_named_area(data: bytes, start: int) -> dict:
+    """Decode a 20-byte area header and its zero-cell-terminated place list."""
+    if start + 20 > len(data):
+        raise ValueError('named area header truncated')
+    header = data[start:start + 20]
+    if not all(32 <= byte < 127 for byte in header):
+        raise ValueError('named area header is not source text')
+    name = header[:10].decode('ascii').strip() + ' ' + header[10:].decode('ascii').strip()
+    cursor = start + 20
+    places = []
+    for _ in range(256):
+        if cursor >= len(data):
+            raise ValueError('named area place list terminator missing')
+        cell = data[cursor]
+        if cell == 0:
+            return {'name': name.strip(), 'headerAddress': start, 'places': places, 'end': cursor + 1}
+        if cursor + 21 > len(data):
+            raise ValueError('named area place record truncated')
+        label = data[cursor + 1:cursor + 21]
+        if not all(32 <= byte < 127 for byte in label):
+            raise ValueError('named area place label is not source text')
+        places.append({
+            'cell': cell,
+            'name': label[:10].decode('ascii').strip() + ' ' + label[10:].decode('ascii').strip(),
+            'address': cursor,
+        })
+        cursor += 21
+    raise ValueError('named area place list limit exceeded')
+
+
+def find_area_placements(data: bytes, header_address: int) -> dict[int, dict]:
+    """Return the shortest valid placement stream that covers this area's places."""
+    if header_address < 1 or data[header_address - 1] != 0xff:
+        raise ValueError('named area is not preceded by a placement terminator')
+    area = decode_named_area(data, header_address)
+    needed = {place['cell'] for place in area['places']}
+    terminator = header_address - 1
+    best: dict[int, dict] | None = None
+    best_start = -1
+    for start in range(max(0, header_address - 4096), terminator):
+        try:
+            cells, end = decode_surface_placements(data, start)
+        except ValueError:
+            continue
+        if end - 1 != terminator:
+            continue
+        if needed and not needed <= set(cells):
+            continue
+        if best is None or len(cells) < len(best) or (len(cells) == len(best) and start > best_start):
+            best = cells
+            best_start = start
+    if best is None:
+        raise ValueError(f'no surface placement stream covers {area["name"]}')
+    return best
+
+
 def decode_structure_associations(data: bytes, start: int) -> dict[int, dict[int, int]]:
     """Decode a zero-terminated list of insertion-group records."""
     reader = Reader(data, start)
@@ -990,8 +1089,9 @@ def extract(data: bytes, source: dict) -> dict:
         )
     # Current first-world surface workspace: low nibble X, high nibble Z.
     # Camera world/local coordinates bind this workspace to its system grid origin.
-    origin_x = (u32(data, 0x7a92) - u32(data, 0x7a2c)) / 65536
-    origin_z = (u32(data, 0x7a9a) - u32(data, 0x7a34)) / 65536
+    eris_origin_x = (u32(data, 0x7a92) - u32(data, 0x7a2c)) / 65536
+    eris_origin_z = (u32(data, 0x7a9a) - u32(data, 0x7a34)) / 65536
+    origin_x, origin_z = eris_origin_x, eris_origin_z
     places = []
     names = {}
     place_pointer = u32(data, 0x7a6c)
@@ -1028,6 +1128,62 @@ def extract(data: bytes, source: dict) -> dict:
                           'reason': 'Recovered first-world surface workspace placement; not a census of the whole body.'})
         if place:
             next(p for p in places if p['id'] == place[0])['instances'].append(identity)
+    gaea_coverage = None
+    gaea_header = data.find(b'BIRMINGHAMISLAND    ')
+    if gaea_header > 0 and data[gaea_header - 1] == 0xff:
+        gaea_area = decode_named_area(data, gaea_header)
+        gaea_cells = find_area_placements(data, gaea_header)
+        chevy_raw = [s32(data, base + 2 * 4) for base in (0x63a8, 0x67a8, 0x6ba8)]
+        gaea_origin_x = (chevy_raw[0] >> 16) - (0x17 & 15)
+        gaea_origin_z = (chevy_raw[2] >> 16) - (0x17 >> 4)
+        gaea_names = {}
+        for place in gaea_area['places']:
+            identity = f'place-{place["address"]:06x}'
+            gaea_names[place['cell']] = (identity, place['name'])
+            places.append({'id': identity, 'name': place['name'], 'body': 'body-8', 'instances': []})
+        for cell, placement in sorted(gaea_cells.items()):
+            slot = placement['slot']
+            if not slot or slot >= len(tables[1]['entries']):
+                continue
+            model_id = tables[1]['entries'][slot]
+            identity = f'gaea-surface-{cell:02x}'
+            place = gaea_names.get(cell)
+            dx, dz = placement['dx'], placement['dz']
+            instances.append({
+                'id': identity,
+                'name': place[1] if place else f'Gaea surface cell {cell & 15},{cell >> 4}',
+                'model': model_id,
+                'sourceAddress': placement['address'],
+                'association': None,
+                'placement': None,
+                'location': {
+                    'body': 'body-8',
+                    'place': place[0] if place else None,
+                    'position': [
+                        gaea_origin_x + (cell & 15) + 0.5 + dx * 30 / 65536,
+                        0,
+                        gaea_origin_z + (cell >> 4) + 0.5 + dz * 30 / 65536,
+                    ],
+                    'coordinateSystem': 'ST surface grid units (body-local origin unresolved)',
+                    'heading': None,
+                },
+                'reason': (
+                    'Authored Birmingham Island surface-assembly map recovered from the pinned '
+                    'first-world place pool; not a live Gaea $ABDC workspace. Origin follows '
+                    'the 99 CHEVY resident phase so cell $17 shares this 16×16. A source place '
+                    'name is attached only when this cell is in the area list.'
+                ),
+            })
+            if place:
+                next(p for p in places if p['id'] == place[0])['instances'].append(identity)
+        empty_cells = 256 - len(gaea_cells)
+        gaea_coverage = (
+            f'Gaea Birmingham Island: examined the authored 16×16 placement stream ending at '
+            f'${gaea_header:05X}, recovered {len(gaea_cells)} surface assemblies and '
+            f'{len(gaea_area["places"])} named places; {empty_cells} cells have no structure '
+            '(including 99 CHEVY cell $17). Ground/pad records, live Gaea $ABDC, and other Gaea '
+            'islands remain unresolved.'
+        )
     for cell, model_id in ground_cells:
         model = by_address[model_id]
         if not model['variants']:
@@ -1337,12 +1493,17 @@ def extract(data: bytes, source: dict) -> dict:
         for model in group:
             model['variants'] = variants
             model['relatedModels'].extend(other['id'] for other in group if other is not model)
+    coverage_notes = [
+        'Resident first-world census; not a claim of complete disk coverage.',
+        'Conditional geometry, surface attachments, scene palette binding, and named places outside the captured Eris workspace and authored Gaea Birmingham Island map remain incomplete.',
+        'Eris cell ground/pad/road records at $1E000 are decoded locally; $7000 road templates, $53F76 attachments and default empty-cell fill remain incomplete.',
+        'Unexamined disk-loaded content and script-created visual changes are not included.',
+    ]
+    if gaea_coverage:
+        coverage_notes.append(gaea_coverage)
     return {'schemaVersion': 7, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'places': places, 'tables': tables,
-            'coverage': {'complete': False, 'notes': ['Resident first-world census; not a claim of complete disk coverage.',
-                'Conditional geometry, surface attachments, scene palette binding, other-body structures and named places remain incomplete.',
-                'Eris cell ground/pad/road records at $1E000 are decoded locally; $7000 road templates, $53F76 attachments and default empty-cell fill remain incomplete.',
-                'Unexamined disk-loaded content and script-created visual changes are not included.']}}
+            'coverage': {'complete': False, 'notes': coverage_notes}}
 
 
 def validate_source(manifest: dict, pin: dict) -> None:
