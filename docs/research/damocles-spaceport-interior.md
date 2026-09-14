@@ -347,10 +347,11 @@ The bytes `$1494A..$14965` have SHA-256
 `8902f5715d01e2d56a502a915a083d9d095a8f6eb975af20940b573f85224bee`
 in both examined RAM captures.
 
-For this exact record, the outside-box update path is gated by the zero low byte
-of `$4200`. Automatic re-closing on retreat is therefore not proven. Exact
-timing, sound, the state which may enable re-closing, and a deterministic
-approach/retreat capture remain unresolved.
+For this exact record, the outside-box close interpolator is skipped only while
+the live low byte at `$5E3D` is still zero. Opening overwrites that latch, so
+retreat does re-close; see
+[the entrance-motion note](damocles-spaceport-entrance-motion.md). A
+deterministic approach/retreat vertex trace remains uncaptured.
 
 Detail 88 independently provides an authored closed-door facade face: zero-based
 face32, record `$305EE`, uses source vertices40–43 at `$304C6..$304D8`. With the established

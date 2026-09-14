@@ -132,8 +132,10 @@ Region 1 is the room and region 12 the annex north of it; both carry `$8000`.
 Region 2 is the doorway strip, and its flag bits `$3FC` name the door
 attachment's runtime slot `$03FC`: `$5A366..$5A382` only selects such a region
 when the byte at `$5A41 + slot` is negative. The workspace copy of region 2's
-X bounds is 1311–1489 rather than the scaled 1300–1500; the adjustment is not
-explained here. The `$FF` entry in every non-empty queue is the door
+X bounds is 1311–1489 rather than the scaled 1300–1500 because the binder
+insets X by 11 when the control word `$4200` is non-negative; see
+[the entrance-motion note](damocles-spaceport-entrance-motion.md). The `$FF`
+entry in every non-empty queue is the door
 attachment, as the interior note establishes for region 1.
 
 The start pose (`x 71.44020`, `z 136.42256` cells) is at spaceport-local
@@ -237,5 +239,6 @@ follow-up work.
 | Solid window facade drawn only from group 1 (boarded or no structure) | Confirmed | `$3064A..$306A4`, `$53CC2..$53CF6`              |
 | Start pose draws region 11's plan queue under detail default list `$30730` | Confirmed | `$14A66..$14A82`, `$306C0..$30708` bounds     |
 | Visibility is by list membership and paint order, not a facing test  | Observed  | `$5A7D6..$5A80E`, dispatch and list paths read   |
-| Meaning of `$7AF6` sign, region 2's inset bounds, other flag bits   | Unresolved | —                                                |
+| Region 2 X 1311–1489 is bind-time ±11 on non-negative `$4200`       | Confirmed | `$5A2C6..$5A2DA`; [entrance motion](damocles-spaceport-entrance-motion.md) |
+| Meaning of `$7AF6` sign, other flag bits                            | Unresolved | —                                                |
 | No facing test anywhere in the renderer                             | Unresolved | fill routines not examined                       |
