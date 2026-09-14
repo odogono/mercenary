@@ -2,7 +2,12 @@ import { expect, test } from 'bun:test';
 
 import { parseCatalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
-import { planRefusesStep, structureMeshes } from '../src/damocles/selection.ts';
+import {
+  OPEN_ENTRANCE_UNITS,
+  clampStructureStep,
+  structureMeshes,
+  structureRegionAt
+} from '../src/damocles/selection.ts';
 import { erisSurfaceFrom, startPose } from '../src/damocles/world.ts';
 
 interface RawModel {
@@ -76,61 +81,109 @@ test('inside, window and doorway replace the detail list, preserving empty and f
   ).toBeGreaterThan(0);
 });
 
-test('Plan Refusal sweeps grounded walls and the closed Entrance Attachment', () => {
-  expect(
-    planRefusesStep(placement, at(1000, -1000), at(1000, 0), false, false)
-  ).toBeTrue();
-  // The lower window wall refuses even though the 63-unit eye is in its visual opening.
-  expect(
-    planRefusesStep(placement, at(700, 0), at(1000, 0), false, false)
-  ).toBeTrue();
-  // The doorway's raised lintel does not refuse; only the closed attachment does.
-  expect(
-    planRefusesStep(placement, at(1400, -900), at(1400, -700), false, false)
-  ).toBeTrue();
-  expect(
-    planRefusesStep(placement, at(1400, -900), at(1400, -700), false, true)
-  ).toBeFalse();
+test('region pushback clamps only the blocked axis and preserves wall sliding', () => {
+  const region = structureRegionAt(placement, at(1000, -1000), false, 0);
+  expect(region).toBe(2);
+  const pushed = clampStructureStep(
+    placement,
+    at(1000, -1000),
+    at(1100, 0),
+    false,
+    0,
+    region
+  );
+  expect(pushed.pose.position.x).toBe(placement.position.x + 1100);
+  expect(pushed.pose.position.z).toBe(placement.position.z - 812);
+  expect(pushed.regionIndex).toBe(region);
+
+  // Region 10 and the room do not share an edge: the lower window wall remains solid.
+  const windowRegion = structureRegionAt(placement, at(700, 0), false, 0);
+  const window = clampStructureStep(
+    placement,
+    at(700, 0),
+    at(1000, 0),
+    false,
+    0,
+    windowRegion
+  );
+  expect(window.pose.position.x).toBe(placement.position.x + 788);
 });
 
-test('horizontal plan floors and roofs do not refuse an XZ step', () => {
-  const structure = placement.selection!.structure;
-  const horizontal = {
-    ...structure.plan,
-    faces: [
-      {
-        colour: '#000000',
-        sourceColour: 0,
-        vertices: [0, 1, 2, 3]
-      }
-    ],
-    vertices: [
-      [0, 0, 0],
-      [10, 0, 0],
-      [10, 0, 10],
-      [0, 0, 10]
-    ] as const
-  };
-  const p = {
-    ...placement,
-    selection: {
-      ...placement.selection!,
-      structure: { ...structure, attachment: null, plan: horizontal }
-    }
-  };
-  expect(planRefusesStep(p, at(-5, 5), at(15, 5), false, false)).toBeFalse();
+test('open doorway X uses the bind-time inset, not the catalogue slab span', () => {
+  const inDoor = at(1400, -780);
+  expect(structureRegionAt(placement, inDoor, false, OPEN_ENTRANCE_UNITS)).toBe(
+    1
+  );
+  const left = clampStructureStep(
+    placement,
+    inDoor,
+    at(1300, -780),
+    false,
+    OPEN_ENTRANCE_UNITS,
+    1
+  );
+  expect(left.pose.position.x).toBe(placement.position.x + 1311);
+  expect(left.regionIndex).toBe(1);
+  const right = clampStructureStep(
+    placement,
+    inDoor,
+    at(1500, -780),
+    false,
+    OPEN_ENTRANCE_UNITS,
+    1
+  );
+  expect(right.pose.position.x).toBe(placement.position.x + 1488);
+  expect(right.regionIndex).toBe(1);
 });
 
-test('the Entrance Latch omits the attachment and admits its gated region', () => {
+test('the doorway region is admitted only at the fully-open endpoint', () => {
+  const outside = at(1400, -820);
+  const region = structureRegionAt(placement, outside, false, 0);
+  expect(region).toBe(2);
+  const closed = clampStructureStep(
+    placement,
+    outside,
+    at(1400, -790),
+    false,
+    OPEN_ENTRANCE_UNITS - 1,
+    region
+  );
+  expect(closed.pose.position.z).toBe(placement.position.z - 812);
+  const open = clampStructureStep(
+    placement,
+    outside,
+    at(1400, -790),
+    false,
+    OPEN_ENTRANCE_UNITS,
+    region
+  );
+  expect(open.pose.position.z).toBe(placement.position.z - 790);
+  expect(open.regionIndex).toBe(1);
+});
+
+test('the Entrance Attachment stays rendered and interpolates its inner edges', () => {
   expect(structureMeshes(placement, at(1400, -780), false)).toEqual([
     placement.mesh!
   ]);
-  const latched = structureMeshes(placement, at(1400, -780), false, true);
-  expect(latched).not.toContain(placement.selection!.structure.attachment!);
-  expect(latched).not.toEqual([placement.mesh!]);
-  expect(latched.some(mesh => mesh.faces[0]?.sourceIndex === 20)).toBeTrue();
-  const room = structureMeshes(placement, at(1200, 0), false, true);
-  expect(room).not.toContain(placement.selection!.structure.attachment!);
+  const half = structureMeshes(
+    placement,
+    at(1400, -1000),
+    false,
+    OPEN_ENTRANCE_UNITS / 2
+  ).find(mesh => mesh.faces.length === 6)!;
+  expect(half.vertices[1]![0]).toBe(1354);
+  expect(half.vertices[12]![0]).toBe(1446);
+
+  const open = structureMeshes(
+    placement,
+    at(1400, -780),
+    false,
+    OPEN_ENTRANCE_UNITS
+  );
+  const leaves = open.find(mesh => mesh.faces.length === 6)!;
+  expect(leaves.vertices[1]![0]).toBe(1308);
+  expect(leaves.vertices[12]![0]).toBe(1492);
+  expect(open.some(mesh => mesh.faces[0]?.sourceIndex === 20)).toBeTrue();
 });
 
 test('region boundaries are lower inclusive and upper exclusive, with authored fallback outside', () => {

@@ -174,7 +174,10 @@ export const planErisFrame = (
   surface: ErisSurface,
   pose: ErisPose,
   doc: ErisPresentationDocument,
-  entranceLatched = false
+  entrance: {
+    readonly openUnits: number;
+    readonly region: number | null;
+  } = { openUnits: 0, region: null }
 ): ErisFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
@@ -204,11 +207,13 @@ export const planErisFrame = (
   }
 
   for (const placement of surface.placements) {
+    const isEntrance = placement.id === doc.spaceportEntrance.instanceId;
     for (const mesh of structureMeshes(
       placement,
       pose,
       negateZ,
-      entranceLatched && placement.id === doc.spaceportEntrance.instanceId
+      isEntrance ? entrance.openUnits : 0,
+      isEntrance ? entrance.region : undefined
     )) {
       const triangles = trianglesOf(mesh);
       skippedFaces += triangles.skipped;

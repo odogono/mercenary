@@ -383,19 +383,19 @@ One named location in Damocles that may contain multiple instances and interiors
 _Avoid_: Model, building shape
 
 **Entrance Attachment**:
-The recovered Structure 74 post-plan component that constructs Capital Spaceport's closed two-leaf slab and occupies attachment slot `$03FC` in its region queues; omitting it after the Entrance Latch is an authored stand-in for unread leaf motion, not a recovered animation.
-_Avoid_: Doorway, detail door face, animated door
+The recovered Structure 74 post-plan component that constructs Capital Spaceport's two-leaf slab in attachment slot `$03FC`. While the Pose is inside the Proximity Box, each inner X edge interpolates from the closed midpoint toward its outer jamb; outside the box the inners return. The leaves stay in the region queue for the whole motion. Region 2, the doorway strip, is selectable only at the fully-open endpoint.
+_Avoid_: Doorway, detail door face, Entrance Latch
 
 **Proximity Box**:
 The recovered lower-inclusive, upper-exclusive Structure 74-local X/Z bounds carried by the Entrance Attachment and tested by the Working Authority; for Capital Spaceport they are X 1200–1600 and Z −1200–−200.
 _Avoid_: Trigger radius, doorway bounds, collision box
 
-**Entrance Latch**:
-The authored, Gameplay Session-owned condition set the first time its Pose enters the Proximity Box, retained after leaving it but excluded from Damocles Save Snapshot v1; it stands in for unresolved Entrance Attachment motion and does not claim a recovered re-close rule.
-_Avoid_: Doorway state, saved door state, proximity state
+**Entrance Latch** (historical):
+The #237 Gameplay Session boolean that opened Capital Spaceport's Entrance Attachment on first entry to the Proximity Box and never cleared. Recovered motion uses the live RAM latch `$5E3D` (`$00` closed, `$01` moving, `$FF` fully open) and re-closes outside the box; the session stores that progress as open units, not this sticky flag.
+_Avoid_: Doorway state, proximity state
 
-**Plan Refusal**:
-The authored post-Mover rule that refuses an on-foot XZ step crossing one of Capital Spaceport's vertical plan boundaries or its closed Entrance Attachment while leaving floors and roofs non-refusing; it is scoped to Structure 74 until generic Working-Authority movement behavior is recovered.
+**Plan Refusal** (historical):
+The #237 authored post-Mover test against vertical plan segments and the closed Entrance Attachment. Recovered pushback is a selected-region XZ AABB clamp after the Mover, with neighbour handoff on a shared face; it is not Wall Contact.
 _Avoid_: Wall Contact, collision system, Mover
 
 **Damocles Catalogue**:
