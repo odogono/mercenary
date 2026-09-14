@@ -9,8 +9,11 @@ import {
 /// Eris in Filled Presentation: one WebGL2 program, flat colours, a depth buffer.
 ///
 /// Damocles's original fill order is unrecovered, and a depth buffer is not a claim about it:
-/// it draws the same picture any correct ordering would. Faces are flat in their catalogue
-/// colours with no lighting, which is what the Working Authority shows outdoors (ADR 0043).
+/// it draws the same picture any correct ordering would, except where faces are coplanar.
+/// There the plan's three layers settle the tie: structures over the recovered ground records
+/// over the authored fill, each layer a few depth steps behind the last (`LAYER_DEPTH_BIAS`).
+/// Faces are flat in their catalogue colours with no lighting, which is what the Working
+/// Authority shows outdoors (ADR 0043).
 /// The shape follows the Flyover renderer rather than Targ's line-list `Renderer`, whose
 /// batches are pixel-space lines under the C64 Reference Viewport.
 const VERTEX = `#version 300 es
@@ -20,9 +23,11 @@ uniform float aspect;
 uniform float tangent;
 uniform vec2 depthRange;
 out vec3 faceColour;
+out float viewDepth;
 
 void main() {
   faceColour = colour;
+  viewDepth = view.z;
   float nearPlane = depthRange.x;
   float farPlane = depthRange.y;
   float depthA = (farPlane + nearPlane) / (farPlane - nearPlane);
@@ -35,11 +40,33 @@ void main() {
   );
 }`;
 
+/// Depth is logarithmic in view distance, written per fragment (#221). The fixed-point z/w
+/// buffer spends nearly all its steps within a few hundred units of a 4-unit near plane; with
+/// a far plane out at the sea horizon, a fill one unit under the recovered pads is
+/// unresolvable a cell away. log2(1 + z) / log2(1 + far) keeps a constant relative
+/// resolution, about one part in a million at any range.
+const LOG_DEPTH = `
+uniform vec2 depthRange;
+uniform float depthBias;
+float logDepth(float viewDepth) {
+  return log2(max(1.0 + viewDepth, 1e-6)) / log2(1.0 + depthRange.y) + depthBias;
+}`;
+
+/// Depth added per layer, in the [0, 1] window range. Coplanar faces of different layers
+/// differ in interpolated log depth by well under a 24-bit step; this is about thirty of
+/// them, which in distance is three parts in a hundred thousand.
+const LAYER_DEPTH_BIAS = 2e-6;
+
 const FRAGMENT = `#version 300 es
 precision highp float;
 in vec3 faceColour;
+in float viewDepth;
+${LOG_DEPTH}
 out vec4 pixel;
-void main() { pixel = vec4(faceColour, 1.0); }`;
+void main() {
+  gl_FragDepth = logDepth(viewDepth);
+  pixel = vec4(faceColour, 1.0);
+}`;
 
 const PROJECT = `
 uniform float aspect;
@@ -75,6 +102,7 @@ precision highp float;
 precision highp sampler2DShadow;
 in vec3 faceColour;
 in vec3 viewPosition;
+${LOG_DEPTH}
 uniform vec3 sunView;
 uniform vec3 sunColour;
 uniform vec3 ambientSky;
@@ -127,6 +155,7 @@ void main() {
   float lambert = max(dot(n, sunView), 0.0);
   float shadow = lambert > 0.0 ? shadowAt(viewPosition, n, lambert) : 1.0;
   vec3 ambient = mix(ambientGround, ambientSky, n.y * 0.5 + 0.5);
+  gl_FragDepth = logDepth(viewPosition.z);
   pixel = vec4(faceColour * (ambient + sunColour * lambert * shadow), 1.0);
 }`;
 
@@ -393,7 +422,23 @@ export class ErisRenderer {
       plan.nearPlane,
       plan.farPlane
     );
-    gl.drawArrays(gl.TRIANGLES, 0, plan.triangleCount * 3);
+    this.drawLayers(this.shaderProgram, plan);
+  }
+
+  /// Structures first at zero bias, then the recovered ground records, then the fill, each
+  /// pushed back a step so coplanar faces resolve the same way every frame.
+  private drawLayers(shaderProgram: WebGLProgram, plan: ErisFramePlan): void {
+    const gl = this.gl;
+    const bias = requiredUniform(gl, shaderProgram, 'depthBias');
+    const fill = plan.fillTriangleCount * 3;
+    const ground = plan.groundTriangleCount * 3;
+    const rest = plan.triangleCount * 3 - fill - ground;
+    gl.uniform1f(bias, 0);
+    gl.drawArrays(gl.TRIANGLES, fill + ground, rest);
+    gl.uniform1f(bias, LAYER_DEPTH_BIAS);
+    gl.drawArrays(gl.TRIANGLES, fill, ground);
+    gl.uniform1f(bias, 2 * LAYER_DEPTH_BIAS);
+    gl.drawArrays(gl.TRIANGLES, 0, fill);
   }
 
   private createEnhanced(gl: WebGL2RenderingContext): EnhancedResources {
@@ -607,6 +652,6 @@ export class ErisRenderer {
         index
       );
     }
-    gl.drawArrays(gl.TRIANGLES, 0, plan.triangleCount * 3);
+    this.drawLayers(resources.colourProgram, plan);
   }
 }

@@ -5,7 +5,7 @@ import {
   readErisPresentation,
   type ErisPresentationDocument
 } from '../src/damocles/documents.ts';
-import { planErisFrame } from '../src/damocles/frame.ts';
+import { planErisFrame, type ErisFramePlan } from '../src/damocles/frame.ts';
 import { erisLighting } from '../src/damocles/lighting.ts';
 import {
   ERIS_SHADOW_WINDOWS,
@@ -71,8 +71,10 @@ const surfaceOf = (placements: readonly ErisPlacement[]): ErisSurface => ({
 
 const origin = { heading: 0, position: { x: 0, y: 63, z: 0 } };
 
-/// The authored ground fill leads every plan: one double-sided quad, so twelve vertices.
-const FILL_FLOATS = 4 * 3 * 6;
+/// The authored ground fill leads every plan; its triangle count depends on the eye's place
+/// in the workspace, so read it back from the plan.
+const fillFloats = (plan: ErisFramePlan): number =>
+  plan.fillTriangleCount * 3 * 6;
 
 describe('an Eris frame in Filled Presentation', () => {
   test('emits the ground and every decoded face, and nothing for the unrecovered', async () => {
@@ -82,24 +84,29 @@ describe('an Eris frame in Filled Presentation', () => {
       (sum, p) => sum + (p.mesh?.faces.length ?? 0),
       0
     );
-    // Every face is at least one triangle, on top of the fill's double-sided quad.
-    expect(plan.triangleCount).toBeGreaterThanOrEqual(decodedFaces + 4);
+    // Every face is at least one triangle, on top of the fill.
+    expect(plan.triangleCount).toBeGreaterThanOrEqual(
+      decodedFaces + plan.fillTriangleCount
+    );
     expect(plan.vertices).toHaveLength(plan.triangleCount * 3 * 6);
     expect(plan.skippedFaces).toBe(0);
     expect(plan.clear).toEqual([0x49 / 255, 0x92 / 255, 0xdb / 255]);
     const withoutMeshes = surfaceOf(
       surface.placements.filter(p => p.mesh === undefined)
     );
-    expect(
-      planErisFrame(withoutMeshes, startPose(doc), doc).triangleCount
-    ).toBe(4);
+    const empty = planErisFrame(withoutMeshes, startPose(doc), doc);
+    expect(empty.triangleCount).toBe(empty.fillTriangleCount);
   });
 
   test('puts a face straight ahead at positive view depth in its own colour', async () => {
     const { doc } = await load();
     const plan = planErisFrame(surfaceOf([placement(square())]), origin, doc);
-    expect(plan.triangleCount).toBe(6);
-    for (let corner = FILL_FLOATS; corner < plan.vertices.length; corner += 6) {
+    expect(plan.triangleCount).toBe(plan.fillTriangleCount + 2);
+    for (
+      let corner = fillFloats(plan);
+      corner < plan.vertices.length;
+      corner += 6
+    ) {
       const view = Array.from(plan.vertices.slice(corner, corner + 6));
       expect(Math.abs(view[0]!)).toBeCloseTo(10, 3);
       expect(view[1]).toBeCloseTo(-63, 3);
@@ -117,12 +124,9 @@ describe('an Eris frame in Filled Presentation', () => {
       doc
     );
     expect(double.triangleCount).toBe(single.triangleCount + 2);
-    const firstFace = Array.from(
-      single.vertices.slice(FILL_FLOATS, FILL_FLOATS + 18)
-    );
-    const reversed = Array.from(
-      double.vertices.slice(FILL_FLOATS + 36, FILL_FLOATS + 54)
-    );
+    const fill = fillFloats(single);
+    const firstFace = Array.from(single.vertices.slice(fill, fill + 18));
+    const reversed = Array.from(double.vertices.slice(fill + 36, fill + 54));
     expect(reversed.slice(0, 3)).toEqual(firstFace.slice(12, 15));
     expect(reversed.slice(12, 15)).toEqual(firstFace.slice(0, 3));
   });
@@ -138,14 +142,15 @@ describe('an Eris frame in Filled Presentation', () => {
         [0, 10, 0]
       ]
     };
-    const seen = (at: { x: number; z: number }, heading: number) =>
-      Array.from(
-        planErisFrame(
-          surfaceOf([placement(mesh, { x: at.x, y: 0, z: at.z })]),
-          { ...origin, heading },
-          doc
-        ).vertices.slice(FILL_FLOATS, FILL_FLOATS + 3)
+    const seen = (at: { x: number; z: number }, heading: number) => {
+      const plan = planErisFrame(
+        surfaceOf([placement(mesh, { x: at.x, y: 0, z: at.z })]),
+        { ...origin, heading },
+        doc
       );
+      const fill = fillFloats(plan);
+      return Array.from(plan.vertices.slice(fill, fill + 3));
+    };
     // Facing north (a zero bearing), a placement at +z is ahead at positive depth and one at
     // +x is on the right, as the Working Authority's spaceport tower is from the start.
     expect(seen({ x: 0, z: 1000 }, 0)[2]).toBeCloseTo(1000, 6);
@@ -170,14 +175,15 @@ describe('an Eris frame in Filled Presentation', () => {
         [0, 10, 100]
       ]
     };
-    const at = (document: ErisPresentationDocument, heading: number) =>
-      Array.from(
-        planErisFrame(
-          surfaceOf([{ ...placement(mesh, { x: 0, y: 0, z: 0 }), heading }]),
-          origin,
-          document
-        ).vertices.slice(FILL_FLOATS, FILL_FLOATS + 3)
+    const at = (document: ErisPresentationDocument, heading: number) => {
+      const plan = planErisFrame(
+        surfaceOf([{ ...placement(mesh, { x: 0, y: 0, z: 0 }), heading }]),
+        origin,
+        document
       );
+      const fill = fillFloats(plan);
+      return Array.from(plan.vertices.slice(fill, fill + 3));
+    };
     // Camera at the origin facing north: a model vertex at +100 z sits ahead (positive
     // depth) when kept, behind when negated.
     expect(at(doc, 0)[2]).toBeCloseTo(100, 6);
@@ -201,14 +207,14 @@ describe('an Eris frame in Filled Presentation', () => {
       ]
     };
     const plan = planErisFrame(surfaceOf([placement(degenerate)]), origin, doc);
-    expect(plan.triangleCount).toBe(4);
+    expect(plan.triangleCount).toBe(plan.fillTriangleCount);
     expect(plan.skippedFaces).toBe(0);
   });
 
   test('lays the authored fill under the walk, below the recovered faces', async () => {
     const { doc, surface } = await load();
     const plan = planErisFrame(surface, startPose(doc), doc);
-    const fill = Array.from(plan.vertices.slice(0, FILL_FLOATS));
+    const fill = Array.from(plan.vertices.slice(0, fillFloats(plan)));
     const at = (offset: number) =>
       fill.filter((_, index) => index % 6 === offset);
     // The fill surrounds the camera rather than sitting a cell away: a ground plane this far
@@ -217,6 +223,19 @@ describe('an Eris frame in Filled Presentation', () => {
     expect(Math.max(...at(0))).toBeGreaterThan(0);
     expect(Math.min(...at(2))).toBeLessThan(0);
     expect(Math.max(...at(2))).toBeGreaterThan(0);
+    // It reaches the workspace edge and no further: the start is in cell $87, so the west
+    // edge is closer than the east.
+    const cell = surface.grid.cellUnits;
+    const west = surface.grid.origin.x * cell - doc.start.position.x;
+    const east = west + surface.grid.cellsPerAxis * cell;
+    expect(Math.min(...at(0))).toBeCloseTo(west, 3);
+    expect(Math.max(...at(0))).toBeCloseTo(east, 3);
+    // Rings, not one quad: the nearest triangles are small enough that the rasteriser's
+    // screen-space depth interpolation cannot lift them through the pads (#221).
+    const first = fill.slice(0, 18).filter((_, index) => index % 6 === 0);
+    expect(Math.max(...first) - Math.min(...first)).toBe(512);
+    expect(plan.fillTriangleCount).toBeGreaterThan(100);
+    expect(plan.fillTriangleCount).toBeLessThan(400);
     // One unit under the recovered pad and apron faces, which the eye sees at -63.
     for (const height of at(1)) {
       expect(height).toBeCloseTo(
@@ -382,10 +401,21 @@ describe('the Eris renderer', () => {
     expect(fake.calls).toContain('enable:6');
     expect(fake.calls).toContain('frontFace:7');
     expect(fake.calls).toContain(`buffer:${plan.vertices.length}`);
+    const fill = plan.fillTriangleCount * 3;
+    const ground = plan.groundTriangleCount * 3;
+    const rest = plan.triangleCount * 3 - fill - ground;
+    expect(ground).toBeGreaterThan(0);
+    // Structures, then the recovered ground records, then the fill, each a layer further back.
+    const layered = [
+      `draw:15:${fill + ground}:${rest}`,
+      `draw:15:${fill}:${ground}`,
+      `draw:15:0:${fill}`
+    ];
     expect(fake.calls.filter(c => c.startsWith('draw:'))).toEqual([
-      `draw:15:0:${plan.triangleCount * 3}`,
-      `draw:15:0:${plan.triangleCount * 3}`
+      ...layered,
+      ...layered
     ]);
+    expect(fake.uniforms['depthBias']).toEqual([4e-6]);
     expect(fake.uniforms['aspect']).toEqual([2]);
     expect(fake.uniforms['depthRange']).toEqual([
       doc.camera.nearPlane,
@@ -419,9 +449,7 @@ describe('the Eris renderer', () => {
     expect(fake.calls).not.toContain('texStorage:2048:2048');
     renderer.render(plan);
     expect(fake.compiled).toBe(2);
-    expect(fake.calls.filter(call => call.startsWith('draw:'))).toEqual([
-      `draw:15:0:${plan.triangleCount * 3}`
-    ]);
+    expect(fake.calls.filter(call => call.startsWith('draw:'))).toHaveLength(3);
     expect(fake.calls).not.toContain('texStorage:2048:2048');
   });
 
@@ -434,8 +462,9 @@ describe('the Eris renderer', () => {
       doc
     );
     const casters = shadowCasterVertices(plan.vertices);
-    expect(plan.triangleCount).toBe(8);
-    expect(casters).toHaveLength(4 * 3 * 6);
+    expect(plan.triangleCount).toBe(plan.fillTriangleCount + 4);
+    // Every fill quad and the double-sided face collapse to one winding each.
+    expect(casters).toHaveLength((plan.fillTriangleCount / 2 + 2) * 3 * 6);
 
     const fake = fakeContext();
     const renderer = new ErisRenderer(
@@ -460,13 +489,20 @@ describe('the Eris renderer', () => {
       lighting: erisLighting(doc, origin.heading)
     });
 
+    const casterDraw = `draw:15:0:${casters.length / 6}`;
+    const fill = plan.fillTriangleCount * 3;
+    // Two shadow maps of deduplicated casters, then the three colour layers: no ground
+    // records here, so the middle layer is empty.
+    const once = [
+      casterDraw,
+      casterDraw,
+      `draw:15:${fill}:12`,
+      `draw:15:${fill}:0`,
+      `draw:15:0:${fill}`
+    ];
     expect(fake.calls.filter(call => call.startsWith('draw:'))).toEqual([
-      'draw:15:0:12',
-      'draw:15:0:12',
-      'draw:15:0:24',
-      'draw:15:0:12',
-      'draw:15:0:12',
-      'draw:15:0:24'
+      ...once,
+      ...once
     ]);
     expect(fake.calls).toContain('disableAttribute:1');
     expect(fake.calls).toContain('polygonOffset:1:2');

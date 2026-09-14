@@ -20,6 +20,14 @@ import type {
 export interface ErisFramePlan {
   readonly clear: readonly [number, number, number];
   readonly farPlane: number;
+  /// Triangles of the authored ground fill, which lead the vertex list.
+  readonly fillTriangleCount: number;
+  /// Triangles of the recovered per-cell ground records (pads, aprons, roads), which follow
+  /// the fill and precede every structure and object. Structure base planes share y = 0 with
+  /// these, and Damocles's fill order for that tie is unrecovered; the renderer draws the
+  /// ground records a hair behind so a building's pad lies over the cell's apron, as a
+  /// painter's ground stream drawn before its structures would leave it.
+  readonly groundTriangleCount: number;
   readonly nearPlane: number;
   /// Faces the triangulator refused, drawn as nothing and counted.
   readonly skippedFaces: number;
@@ -144,7 +152,8 @@ const doubleSidedQuad = (
   [northwest, northeast, southwest]
 ];
 
-/// The authored fill, one quad over the whole first-world workspace.
+/// The authored fill: axis-aligned rings of quads around the eye, clipped to the first-world
+/// workspace.
 ///
 /// A recovered ground record covers only the part of its cell the Damocles Catalogue decodes:
 /// the spaceport apron is a strip of cell `$87`, and the `$7000` road templates and `$F0`/`$F4`
@@ -153,21 +162,81 @@ const doubleSidedQuad = (
 /// 63-unit eye over 65536-unit cells compresses into a pixel at the horizon. So the fill runs
 /// under everything and drops by the document's `fillDropUnits`, which orders depth against
 /// the recovered faces at y = 0 without claiming Eris's ground sits lower (#221).
+///
+/// It is rings rather than one workspace-sized quad because the rasteriser interpolates depth
+/// across a triangle in screen space with limited precision, and a triangle a million units
+/// across that is also clipped at the near plane lands its depth a few units off. That is
+/// enough to lift the fill through the recovered pads and stripe them, so each ring is at most
+/// twice the distance of the last, and the triangles under a structure are structure-sized.
+///
+/// The fill stands in for land and sea alike: Eris is an island, and where the ground gives
+/// way to water is not yet recovered, so the same green runs to the workspace edge.
+const FILL_INNER_HALF_UNITS = 256;
+
+const degenerate = (triangle: WorldTriangle): boolean => {
+  const [a, b, c] = triangle;
+  const area = (b.x - a.x) * (c.z - a.z) - (b.z - a.z) * (c.x - a.x);
+  return area === 0;
+};
+
+interface FillBounds {
+  readonly maxX: number;
+  readonly maxZ: number;
+  readonly minX: number;
+  readonly minZ: number;
+}
+
+const workspaceBounds = (grid: ErisGrid): FillBounds => ({
+  maxX: (grid.origin.x + grid.cellsPerAxis) * grid.cellUnits,
+  maxZ: (grid.origin.z + grid.cellsPerAxis) * grid.cellUnits,
+  minX: grid.origin.x * grid.cellUnits,
+  minZ: grid.origin.z * grid.cellUnits
+});
+
 const groundFillTriangles = (
   grid: ErisGrid,
-  dropUnits: number
+  dropUnits: number,
+  eye: Vector3
 ): readonly WorldTriangle[] => {
+  const bounds = workspaceBounds(grid);
+  const clamp = (value: number, min: number, max: number): number =>
+    Math.min(max, Math.max(min, value));
   const corner = (x: number, z: number): Vector3 => ({
-    x: (grid.origin.x + x * grid.cellsPerAxis) * grid.cellUnits,
+    x: clamp(eye.x + x, bounds.minX, bounds.maxX),
     y: -dropUnits,
-    z: (grid.origin.z + z * grid.cellsPerAxis) * grid.cellUnits
+    z: clamp(eye.z + z, bounds.minZ, bounds.maxZ)
   });
-  return doubleSidedQuad(
-    corner(0, 0),
-    corner(1, 0),
-    corner(1, 1),
-    corner(0, 1)
+  const triangles: WorldTriangle[] = [];
+  const rectangle = (x0: number, z0: number, x1: number, z1: number) => {
+    const quad = doubleSidedQuad(
+      corner(x0, z0),
+      corner(x1, z0),
+      corner(x1, z1),
+      corner(x0, z1)
+    );
+    for (const triangle of quad) {
+      if (!degenerate(triangle)) {
+        triangles.push(triangle);
+      }
+    }
+  };
+  const reach = Math.max(
+    Math.abs(bounds.minX - eye.x),
+    Math.abs(bounds.maxX - eye.x),
+    Math.abs(bounds.minZ - eye.z),
+    Math.abs(bounds.maxZ - eye.z)
   );
+  let inner = FILL_INNER_HALF_UNITS;
+  rectangle(-inner, -inner, inner, inner);
+  while (inner < reach) {
+    const outer = inner * 2;
+    rectangle(-outer, inner, outer, outer);
+    rectangle(-outer, -outer, outer, -inner);
+    rectangle(-outer, -inner, -inner, inner);
+    rectangle(inner, -inner, outer, inner);
+    inner = outer;
+  }
+  return triangles;
 };
 
 export const planErisFrame = (
@@ -198,15 +267,17 @@ export const planErisFrame = (
   const ground = channels(doc.ground.colour);
   for (const triangle of groundFillTriangles(
     surface.grid,
-    doc.ground.fillDropUnits
+    doc.ground.fillDropUnits,
+    pose.position
   )) {
     for (const vertex of triangle) {
       emit(vertex, ground);
     }
     triangleCount += 1;
   }
+  const fillTriangleCount = triangleCount;
 
-  for (const placement of surface.placements) {
+  const emitPlacement = (placement: ErisPlacement): void => {
     const isEntrance = placement.id === doc.spaceportEntrance.instanceId;
     for (const mesh of structureMeshes(
       placement,
@@ -232,11 +303,24 @@ export const planErisFrame = (
         triangleCount += 1;
       }
     }
+  };
+  for (const placement of surface.placements) {
+    if (placement.kind === 'ground') {
+      emitPlacement(placement);
+    }
+  }
+  const groundTriangleCount = triangleCount - fillTriangleCount;
+  for (const placement of surface.placements) {
+    if (placement.kind !== 'ground') {
+      emitPlacement(placement);
+    }
   }
 
   return {
     clear: channels(doc.sky.colour),
     farPlane: doc.camera.farPlane,
+    fillTriangleCount,
+    groundTriangleCount,
     nearPlane: doc.camera.nearPlane,
     skippedFaces,
     triangleCount,
