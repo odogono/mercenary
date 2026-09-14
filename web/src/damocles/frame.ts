@@ -15,10 +15,16 @@ import {
 
 /// One frame of Eris in Filled Presentation, planned without a graphics context.
 ///
-/// Vertices are camera-relative view-space positions with a flat colour, six floats each, so
+/// Vertices are camera-relative view-space positions with a flat colour and a face order,
+/// seven floats each (`FLOATS_PER_VERTEX`), so
 /// the GPU never sees a raw world coordinate: Eris positions run to nine million units and
 /// would lose their low bits in binary32. The perspective divide is the renderer's; this plan
 /// says only what the frustum is.
+/// view xyz, colour rgb, then the face's order within its ground record (zero elsewhere):
+/// later faces of a record draw over earlier ones where they share a plane, as a painter's
+/// stream would leave them.
+export const FLOATS_PER_VERTEX = 7;
+
 export interface ErisFramePlan {
   readonly clear: readonly [number, number, number];
   readonly farPlane: number;
@@ -48,6 +54,8 @@ interface Triangles {
   /// Vertex indices, three per triangle, with double-sided faces already reversed and
   /// appended.
   readonly colours: readonly (readonly [number, number, number])[];
+  /// The source face's index in the mesh, one per triangle.
+  readonly faces: readonly number[];
   readonly indices: readonly number[];
   readonly skipped: number;
 }
@@ -60,12 +68,15 @@ const faceCorners = new WeakMap<object, WeakMap<object, number[] | null>>();
 const appendTriangles = (
   indices: number[],
   colours: (readonly [number, number, number])[],
+  faces: number[],
   order: readonly number[],
-  colour: readonly [number, number, number]
+  colour: readonly [number, number, number],
+  face: number
 ): void => {
   for (let i = 0; i < order.length; i += 3) {
     indices.push(order[i]!, order[i + 1]!, order[i + 2]!);
     colours.push(colour);
+    faces.push(face);
   }
 };
 
@@ -76,13 +87,14 @@ const trianglesOf = (mesh: Mesh): Triangles => {
   }
   const indices: number[] = [];
   const colours: (readonly [number, number, number])[] = [];
+  const faces: number[] = [];
   let skipped = 0;
   let byFace = faceCorners.get(mesh.vertices);
   if (byFace === undefined) {
     byFace = new WeakMap();
     faceCorners.set(mesh.vertices, byFace);
   }
-  for (const face of mesh.faces) {
+  for (const [faceIndex, face] of mesh.faces.entries()) {
     let corners = byFace.get(face);
     if (corners === undefined) {
       try {
@@ -97,16 +109,16 @@ const trianglesOf = (mesh: Mesh): Triangles => {
       continue;
     }
     const colour = channels(face.colour);
-    appendTriangles(indices, colours, corners, colour);
+    appendTriangles(indices, colours, faces, corners, colour, faceIndex);
     if (face.doubleSided === true) {
       const reversed: number[] = [];
       for (let i = 0; i < corners.length; i += 3) {
         reversed.push(corners[i + 2]!, corners[i + 1]!, corners[i]!);
       }
-      appendTriangles(indices, colours, reversed, colour);
+      appendTriangles(indices, colours, faces, reversed, colour, faceIndex);
     }
   }
-  const result = { colours, indices, skipped };
+  const result = { colours, faces, indices, skipped };
   triangulated.set(mesh, result);
   return result;
 };
@@ -258,9 +270,13 @@ export const planErisFrame = (
   const values: number[] = [];
   let triangleCount = 0;
   let skippedFaces = 0;
-  const emit = (world: Vector3, colour: readonly [number, number, number]) => {
+  const emit = (
+    world: Vector3,
+    colour: readonly [number, number, number],
+    order: number
+  ) => {
     const view = camera.viewSpace(toCameraSpace(world));
-    values.push(view.x, view.y, view.z, colour[0], colour[1], colour[2]);
+    values.push(view.x, view.y, view.z, colour[0], colour[1], colour[2], order);
   };
 
   const ground = channels(doc.ground.colour);
@@ -270,7 +286,7 @@ export const planErisFrame = (
     pose.position
   )) {
     for (const vertex of triangle) {
-      emit(vertex, ground);
+      emit(vertex, ground, 0);
     }
     triangleCount += 1;
   }
@@ -294,6 +310,7 @@ export const planErisFrame = (
       skippedFaces += triangles.skipped;
       for (let i = 0; i < triangles.indices.length; i += 3) {
         const colour = triangles.colours[i / 3]!;
+        const order = placement.kind === 'ground' ? triangles.faces[i / 3]! : 0;
         for (let corner = 0; corner < 3; corner += 1) {
           emit(
             placed(
@@ -301,7 +318,8 @@ export const planErisFrame = (
               placement,
               negateZ
             ),
-            colour
+            colour,
+            order
           );
         }
         triangleCount += 1;

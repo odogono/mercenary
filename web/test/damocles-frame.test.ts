@@ -5,7 +5,11 @@ import {
   readErisPresentation,
   type ErisPresentationDocument
 } from '../src/damocles/documents.ts';
-import { planErisFrame, type ErisFramePlan } from '../src/damocles/frame.ts';
+import {
+  FLOATS_PER_VERTEX,
+  planErisFrame,
+  type ErisFramePlan
+} from '../src/damocles/frame.ts';
 import { erisLighting } from '../src/damocles/lighting.ts';
 import {
   ERIS_SHADOW_WINDOWS,
@@ -74,7 +78,7 @@ const origin = { heading: 0, position: { x: 0, y: 63, z: 0 } };
 /// The authored ground fill leads every plan; its triangle count depends on the eye's place
 /// in the workspace, so read it back from the plan.
 const fillFloats = (plan: ErisFramePlan): number =>
-  plan.fillTriangleCount * 3 * 6;
+  plan.fillTriangleCount * 3 * FLOATS_PER_VERTEX;
 
 describe('an Eris frame in Filled Presentation', () => {
   test('emits the ground and every decoded face, and nothing for the unrecovered', async () => {
@@ -88,7 +92,9 @@ describe('an Eris frame in Filled Presentation', () => {
     expect(plan.triangleCount).toBeGreaterThanOrEqual(
       decodedFaces + plan.fillTriangleCount
     );
-    expect(plan.vertices).toHaveLength(plan.triangleCount * 3 * 6);
+    expect(plan.vertices).toHaveLength(
+      plan.triangleCount * 3 * FLOATS_PER_VERTEX
+    );
     expect(plan.skippedFaces).toBe(0);
     expect(plan.clear).toEqual([0x49 / 255, 0x92 / 255, 0xdb / 255]);
     const withoutMeshes = surfaceOf(
@@ -105,13 +111,16 @@ describe('an Eris frame in Filled Presentation', () => {
     for (
       let corner = fillFloats(plan);
       corner < plan.vertices.length;
-      corner += 6
+      corner += FLOATS_PER_VERTEX
     ) {
-      const view = Array.from(plan.vertices.slice(corner, corner + 6));
+      const view = Array.from(
+        plan.vertices.slice(corner, corner + FLOATS_PER_VERTEX)
+      );
       expect(Math.abs(view[0]!)).toBeCloseTo(10, 3);
       expect(view[1]).toBeCloseTo(-63, 3);
       expect(Math.abs(view[2]! - 1000)).toBeCloseTo(10, 3);
-      expect(view.slice(3)).toEqual([1, 0, 0]);
+      // Red, and no face order: only ground records carry one.
+      expect(view.slice(3)).toEqual([1, 0, 0, 0]);
     }
   });
 
@@ -125,10 +134,17 @@ describe('an Eris frame in Filled Presentation', () => {
     );
     expect(double.triangleCount).toBe(single.triangleCount + 2);
     const fill = fillFloats(single);
-    const firstFace = Array.from(single.vertices.slice(fill, fill + 18));
-    const reversed = Array.from(double.vertices.slice(fill + 36, fill + 54));
-    expect(reversed.slice(0, 3)).toEqual(firstFace.slice(12, 15));
-    expect(reversed.slice(12, 15)).toEqual(firstFace.slice(0, 3));
+    const stride = 3 * FLOATS_PER_VERTEX;
+    const firstFace = Array.from(single.vertices.slice(fill, fill + stride));
+    const reversed = Array.from(
+      double.vertices.slice(fill + 2 * stride, fill + 3 * stride)
+    );
+    expect(reversed.slice(0, 3)).toEqual(
+      firstFace.slice(2 * FLOATS_PER_VERTEX, 2 * FLOATS_PER_VERTEX + 3)
+    );
+    expect(
+      reversed.slice(2 * FLOATS_PER_VERTEX, 2 * FLOATS_PER_VERTEX + 3)
+    ).toEqual(firstFace.slice(0, 3));
   });
 
   test('puts north ahead and east on the right', async () => {
@@ -216,7 +232,7 @@ describe('an Eris frame in Filled Presentation', () => {
     const plan = planErisFrame(surface, startPose(doc), doc);
     const fill = Array.from(plan.vertices.slice(0, fillFloats(plan)));
     const at = (offset: number) =>
-      fill.filter((_, index) => index % 6 === offset);
+      fill.filter((_, index) => index % FLOATS_PER_VERTEX === offset);
     // The fill surrounds the camera rather than sitting a cell away: a ground plane this far
     // below the eye projects into a pixel at the horizon by the next cell along (#221).
     expect(Math.min(...at(0))).toBeLessThan(0);
@@ -232,7 +248,9 @@ describe('an Eris frame in Filled Presentation', () => {
     expect(Math.max(...at(0))).toBeCloseTo(east, 3);
     // Rings, not one quad: the nearest triangles are small enough that the rasteriser's
     // screen-space depth interpolation cannot lift them through the pads (#221).
-    const first = fill.slice(0, 18).filter((_, index) => index % 6 === 0);
+    const first = fill
+      .slice(0, 3 * FLOATS_PER_VERTEX)
+      .filter((_, index) => index % FLOATS_PER_VERTEX === 0);
     expect(Math.max(...first) - Math.min(...first)).toBe(512);
     expect(plan.fillTriangleCount).toBeGreaterThan(100);
     expect(plan.fillTriangleCount).toBeLessThan(400);
@@ -246,6 +264,27 @@ describe('an Eris frame in Filled Presentation', () => {
     expect(fill[3]).toBe(0);
     expect(fill[4]).toBeCloseTo(0x6d / 255, 6);
     expect(fill[5]).toBe(0);
+    expect(fill[6]).toBe(0);
+  });
+
+  test('numbers each ground record face so later faces win a shared plane', async () => {
+    const { doc, surface } = await load();
+    const plan = planErisFrame(surface, startPose(doc), doc);
+    const fill = fillFloats(plan);
+    const groundEnd = fill + plan.groundTriangleCount * 3 * FLOATS_PER_VERTEX;
+    const orders = (from: number, to: number) =>
+      Array.from(plan.vertices.slice(from, to)).filter(
+        (_, index) => index % FLOATS_PER_VERTEX === 6
+      );
+    // The recovered pads and aprons carry their face index; a cell's white strip is a later
+    // face than its grey apron (docs/research/damocles-eris-ground.md).
+    const groundOrders = orders(fill, groundEnd);
+    expect(Math.max(...groundOrders)).toBeGreaterThanOrEqual(3);
+    expect(Math.max(...groundOrders)).toBeLessThan(32);
+    // Structures and objects do not: they resolve by layer alone.
+    expect(new Set(orders(groundEnd, plan.vertices.length))).toEqual(
+      new Set([0])
+    );
   });
 });
 
@@ -415,7 +454,7 @@ describe('the Eris renderer', () => {
       ...layered,
       ...layered
     ]);
-    expect(fake.uniforms['depthBias']).toEqual([4e-6]);
+    expect(fake.uniforms['depthBias']).toEqual([8e-6]);
     expect(fake.uniforms['aspect']).toEqual([2]);
     expect(fake.uniforms['depthRange']).toEqual([
       doc.camera.nearPlane,
@@ -464,7 +503,9 @@ describe('the Eris renderer', () => {
     const casters = shadowCasterVertices(plan.vertices);
     expect(plan.triangleCount).toBe(plan.fillTriangleCount + 4);
     // Every fill quad and the double-sided face collapse to one winding each.
-    expect(casters).toHaveLength((plan.fillTriangleCount / 2 + 2) * 3 * 6);
+    expect(casters).toHaveLength(
+      (plan.fillTriangleCount / 2 + 2) * 3 * FLOATS_PER_VERTEX
+    );
 
     const fake = fakeContext();
     const renderer = new ErisRenderer(
@@ -489,7 +530,7 @@ describe('the Eris renderer', () => {
       lighting: erisLighting(doc, origin.heading)
     });
 
-    const casterDraw = `draw:15:0:${casters.length / 6}`;
+    const casterDraw = `draw:15:0:${casters.length / FLOATS_PER_VERTEX}`;
     const fill = plan.fillTriangleCount * 3;
     // Two shadow maps of deduplicated casters, then the three colour layers: no ground
     // records here, so the middle layer is empty.
