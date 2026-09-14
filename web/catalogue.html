@@ -84,7 +84,17 @@
             <select id="body"></select
           ></label>
           <p id="map-note" class="muted"></p>
-          <div id="map" aria-label="Surface placement map"></div>
+          <div class="toolbar map-toolbar">
+            <span id="map-scale" class="hint"></span
+            ><button id="map-zoom-out" aria-label="Zoom map out">−</button
+            ><button id="map-zoom-in" aria-label="Zoom map in">+</button
+            ><button id="map-reset">Fit all</button>
+          </div>
+          <div
+            id="map"
+            tabindex="0"
+            aria-label="Surface placement map. Drag to pan, scroll to zoom, arrow keys pan, plus and minus zoom, zero fits all."
+          ></div>
           <div id="locations"></div>
         </section>
       </section>

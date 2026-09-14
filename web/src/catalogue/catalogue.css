@@ -258,6 +258,14 @@ canvas:active {
   min-width: 160px;
   margin: 0 0 12px 8px;
 }
+.map-toolbar {
+  margin: 0 0 8px;
+  max-width: 520px;
+}
+.map-toolbar span {
+  margin-right: auto;
+  margin-top: 0;
+}
 #map {
   position: relative;
   height: 260px;
@@ -267,9 +275,22 @@ canvas:active {
     linear-gradient(90deg, #28445144 1px, transparent 1px);
   background-size: 32px 32px;
   overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+#map.dragging {
+  cursor: grabbing;
+}
+#map.dragging a {
+  pointer-events: none;
 }
 #map:empty {
   display: none;
+}
+#map:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 #map a {
   position: absolute;
@@ -281,8 +302,13 @@ canvas:active {
   border-radius: 50%;
   transform: translate(-50%, -50%);
 }
-#map a[aria-current='true'] {
+#map a:hover,
+#map a:focus-visible {
   z-index: 1;
+  border-color: #fff;
+}
+#map a[aria-current='true'] {
+  z-index: 2;
   width: 18px;
   height: 18px;
   background: #fff;
