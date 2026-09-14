@@ -59,6 +59,82 @@ test('structure faces change at the window, doorway and inside the spaceport', a
   expect(new Set(counts).size).toBe(3);
 });
 
+test('the spaceport latches open, refuses its window, and leaves other structures ghosted', async ({
+  page
+}) => {
+  await page.addInitScript(
+    key => localStorage.removeItem(key),
+    DAMOCLES_RESUME_KEY
+  );
+  const catalogue = (await (
+    await page.request.get('/payload/damocles/catalogue.json')
+  ).json()) as {
+    instances: {
+      id: string;
+      location: { position: number[] } | null;
+    }[];
+  };
+  const originOf = (id: string) =>
+    catalogue.instances.find(instance => instance.id === id)!.location!
+      .position;
+  const startAt = async (
+    instanceId: string,
+    x: number,
+    z: number,
+    yaw: number
+  ) => {
+    const origin = originOf(instanceId);
+    await page.route('**/damocles/eris.json', async route => {
+      const response = await route.fetch();
+      const doc = await response.json();
+      doc.start.yaw = yaw;
+      doc.start.position = {
+        x: origin[0]! * 65_536 + x,
+        y: 63,
+        z: origin[2]! * 65_536 + z
+      };
+      await route.fulfill({ json: doc });
+    });
+    await page.goto('/damocles');
+    await expect(page.locator('#frame')).toHaveAttribute('data-state', 'ready');
+    return origin;
+  };
+
+  const frame = page.locator('#frame');
+  const spaceport = await startAt('eris-surface-87', 1400, -1300, 512);
+  await expect(frame).toHaveAttribute('data-entrance-latched', 'false');
+  const closedTriangles = Number(await frame.getAttribute('data-triangles'));
+  await page.keyboard.down('ArrowUp');
+  await expect(frame).toHaveAttribute('data-entrance-latched', 'true');
+  await page.keyboard.up('ArrowUp');
+  expect(Number(await frame.getAttribute('data-triangles'))).not.toBe(
+    closedTriangles
+  );
+  await page.keyboard.down('ArrowUp');
+  await expect
+    .poll(async () => Number(await frame.getAttribute('data-z')))
+    .toBeGreaterThan(spaceport[2]! * 65_536 - 740);
+  await page.keyboard.up('ArrowUp');
+  await page.unroute('**/damocles/eris.json');
+
+  const windowOrigin = await startAt('eris-surface-87', 700, 0, 768);
+  await page.keyboard.down('ArrowUp');
+  await page.waitForTimeout(700);
+  await page.keyboard.up('ArrowUp');
+  expect(Number(await frame.getAttribute('data-x'))).toBeLessThan(
+    windowOrigin[0]! * 65_536 + 840
+  );
+  await page.unroute('**/damocles/eris.json');
+
+  const other = await startAt('eris-surface-52', -130, -150, 512);
+  await page.keyboard.down('ArrowUp');
+  await expect
+    .poll(async () => Number(await frame.getAttribute('data-z')))
+    .toBeGreaterThan(other[2]! * 65_536 - 70);
+  await page.keyboard.up('ArrowUp');
+  await page.unroute('**/damocles/eris.json');
+});
+
 test('Enhanced sunlight reaches the floor through the spaceport window', async ({
   page
 }, testInfo) => {

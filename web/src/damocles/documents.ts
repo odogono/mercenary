@@ -81,12 +81,23 @@ export interface ErisPresentationDocument {
     readonly provenance: Provenance;
     readonly unresolvedModels: 'nothing';
   };
-  readonly schemaVersion: 2;
+  readonly schemaVersion: 3;
   readonly sky: {
     readonly colour: string;
     readonly note: string;
     readonly paletteIndex: number;
     readonly provenance: Provenance;
+  };
+  readonly spaceportEntrance: {
+    readonly evidence: string;
+    readonly instanceId: string;
+    readonly latchProvenance: 'authored';
+    readonly planRefusalProvenance: 'authored';
+    readonly proximityBox: {
+      readonly provenance: 'recovered';
+      readonly x: readonly [number, number];
+      readonly z: readonly [number, number];
+    };
   };
   readonly start: {
     readonly evidence: string;
@@ -190,6 +201,16 @@ const point = (value: unknown, path: string): Vector3 => {
     z: finite(source['z'], `${path}.z`)
   };
 };
+const interval = (value: unknown, path: string): readonly [number, number] => {
+  if (!Array.isArray(value) || value.length !== 2) {
+    return fail(path, 'should be a lower and upper pair');
+  }
+  const lower = finite(value[0], `${path}[0]`);
+  const upper = finite(value[1], `${path}[1]`);
+  return lower < upper
+    ? [lower, upper]
+    : fail(path, 'lower should be less than upper');
+};
 
 /// One Atari ST palette word as the research notes write it, `RGB` in three-bit octal digits,
 /// to the six-digit colour the rest of the shell speaks. Each channel is scaled over its full
@@ -237,6 +258,7 @@ export const readErisPresentation = (
     'sky',
     'lighting',
     'rendering',
+    'spaceportEntrance',
     'structureFallback'
   ]);
   const body = object(root['body'], 'body', ['id', 'name', 'provenance']);
@@ -317,6 +339,22 @@ export const readErisPresentation = (
     'unresolvedModels',
     'provenance'
   ]);
+  const spaceportEntrance = object(
+    root['spaceportEntrance'],
+    'spaceportEntrance',
+    [
+      'instanceId',
+      'proximityBox',
+      'planRefusalProvenance',
+      'latchProvenance',
+      'evidence'
+    ]
+  );
+  const proximityBox = object(
+    spaceportEntrance['proximityBox'],
+    'spaceportEntrance.proximityBox',
+    ['x', 'z', 'provenance']
+  );
   const structureFallback = object(
     root['structureFallback'],
     'structureFallback',
@@ -461,12 +499,41 @@ export const readErisPresentation = (
         'rendering.unresolvedModels'
       )
     },
-    schemaVersion: literal(root['schemaVersion'], 2, 'schemaVersion'),
+    schemaVersion: literal(root['schemaVersion'], 3, 'schemaVersion'),
     sky: {
       colour: skyColour,
       note: text(sky['note'], 'sky.note'),
       paletteIndex: integer(sky['paletteIndex'], 'sky.paletteIndex'),
       provenance: provenance(sky['provenance'], 'sky.provenance')
+    },
+    spaceportEntrance: {
+      evidence: text(
+        spaceportEntrance['evidence'],
+        'spaceportEntrance.evidence'
+      ),
+      instanceId: text(
+        spaceportEntrance['instanceId'],
+        'spaceportEntrance.instanceId'
+      ),
+      latchProvenance: literal(
+        spaceportEntrance['latchProvenance'],
+        'authored',
+        'spaceportEntrance.latchProvenance'
+      ),
+      planRefusalProvenance: literal(
+        spaceportEntrance['planRefusalProvenance'],
+        'authored',
+        'spaceportEntrance.planRefusalProvenance'
+      ),
+      proximityBox: {
+        provenance: literal(
+          proximityBox['provenance'],
+          'recovered',
+          'spaceportEntrance.proximityBox.provenance'
+        ),
+        x: interval(proximityBox['x'], 'spaceportEntrance.proximityBox.x'),
+        z: interval(proximityBox['z'], 'spaceportEntrance.proximityBox.z')
+      }
     },
     start: {
       evidence: text(start['evidence'], 'start.evidence'),

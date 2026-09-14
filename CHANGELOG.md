@@ -16,6 +16,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Working-Authority notes pin the impact clock at `$793C` (signed remaining seconds) and
   `016-283` at `$7A1C`/`$7A20`; boarded `+ 000 000 NNN` still has no integer RAM cell.
 
+## [0.19.5] - 2026-09-14
+
+### Added
+
+- On foot at Capital Spaceport, Plan Refusal blocks Structure 74's grounded vertical walls
+  and the closed Entrance Attachment. The session-owned Entrance Latch opens the doorway on
+  first entry to the recovered Proximity Box and stays set for the rest of the session
+  (#237).
+
+### Changed
+
+- Eris presentation schema 3 names `spaceportEntrance`. Damocles Save Snapshot v1 is
+  unchanged: the latch is not persisted, and a schema-2 Resume identity is refused.
+
 ## [0.19.4] - 2026-09-14
 
 ### Added
