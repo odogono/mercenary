@@ -2,7 +2,7 @@
 
 **Question:** should the Damocles on-foot renderer at `/damocles` adopt Three.js to carry an Enhanced-preset lighting roadmap (structure shadows including sunlight through the spaceport window, soft PCF shadows with ambient light, sun altitude and day-night colour, sky and haze), or can the project-owned WebGL2 renderer carry it at acceptable cost?
 
-**Verdict:** pending the owner's side-by-side review (ADR 0011). The prototypes' recommendation is below; the owner records the decision on #209.
+**Verdict:** keep the project-owned WebGL2 renderer. Recorded by the owner after side-by-side review on 2026-09-14 (ADR 0011). The first production slice is shadows with PCF softening and ambient light together; day-night and sky follow as separate Enhanced-preset issues. No ADR is needed: ADR 0019's stance stands.
 
 Both prototypes were built in one time-boxed session on 2026-09-14 from a shared base, consume the same `ErisFramePlan`, and light with the same authored colour ramps, so the frames differ only in what each renderer does with them. They are primary-source prototype material, not production code, preserved only on these branches:
 
