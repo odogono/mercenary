@@ -417,6 +417,13 @@ def assemble_mesh(base: dict, detail: dict, scale: tuple[int, int]) -> dict:
     return result
 
 
+# Post-plan Entrance Attachment constructors. Low byte is the live latch, so authored
+# records store these with a zero low byte. Slot bytes $FC–$FF name slots as byte×4.
+ENTRANCE_CONTROLS = {0x4000, 0x4100, 0x4200, 0x8000, 0x8100, 0x8200}
+ATTACHMENT_SLOT_MASK = 0x3FC
+PASSAGE_SLOT = 0x200
+
+
 def selection_list(reader: Reader, count: int, attachment: bool = False) -> list:
     result = []
     for _ in range(1024):
@@ -426,13 +433,77 @@ def selection_list(reader: Reader, count: int, attachment: bool = False) -> list
                 if reader.take(1) != b'\0':
                     raise ValueError('selection list padding is not zero')
             return result
-        if ref == 255 and attachment:
-            result.append({'kind': 'attachment'})
+        if attachment and ref >= 252:
+            result.append({'kind': 'attachment', 'slot': ref * 4})
         elif 1 <= ref <= count:
             result.append({'kind': 'face', 'index': ref - 1} if attachment else ref - 1)
         else:
             raise ValueError('selection reference outside geometry')
     raise ValueError('selection list terminator missing')
+
+
+def entrance_constructor(control: int) -> dict:
+    if control not in ENTRANCE_CONTROLS:
+        raise ValueError('unknown structure attachment form')
+    constructor = {
+        'leafCount': 2 if control & 0x200 else 1,
+        'motionAxis': 'z' if control & 0x8000 else 'x',
+    }
+    if constructor['leafCount'] == 1:
+        constructor['movingSide'] = 'low' if control & 0x100 else 'high'
+    return constructor
+
+
+def closed_attachment_mesh(x0: int, z0: int, x1: int, z1: int, colours: list[int],
+                           height: int, constructor: dict, palette: list[int],
+                           hardware: list[int]) -> dict:
+    if constructor['leafCount'] == 2:
+        if constructor['motionAxis'] == 'x':
+            mid = (x0 + x1) // 2
+            segments = [((x0, z0), (mid, z0)), ((mid, z0), (mid, z1)), ((mid, z1), (x0, z1)),
+                        ((mid, z0), (x1, z0)), ((mid, z0), (mid, z1)), ((x1, z1), (mid, z1))]
+        else:
+            mid = (z0 + z1) // 2
+            segments = [((x0, z0), (x0, mid)), ((x0, mid), (x1, mid)), ((x1, mid), (x1, z0)),
+                        ((x0, mid), (x0, z1)), ((x0, mid), (x1, mid)), ((x1, z1), (x1, mid))]
+        used = colours * 2
+    else:
+        if constructor['motionAxis'] == 'x':
+            edge = x0 if constructor['movingSide'] == 'low' else x1
+            segments = [((x0, z0), (x1, z0)), ((edge, z0), (edge, z1)), ((x1, z1), (x0, z1))]
+        else:
+            edge = z0 if constructor['movingSide'] == 'low' else z1
+            segments = [((x0, z0), (x0, z1)), ((x0, edge), (x1, edge)), ((x1, z1), (x1, z0))]
+        used = colours
+    attachment = {'vertices': [], 'lines': [], 'faces': []}
+    for (a, b), colour in zip(segments, used):
+        offset = len(attachment['vertices'])
+        attachment['vertices'].extend(
+            [[a[0], 0, a[1]], [b[0], 0, b[1]], [b[0], height, b[1]], [a[0], height, a[1]]]
+        )
+        attachment['faces'].append({
+            'vertices': list(range(offset, offset + 4)),
+            'colour': colour_value(colour & 0x8fff, palette, hardware),
+            'sourceColour': colour,
+            'doubleSided': True,
+        })
+    return attachment
+
+
+def skip_other_post_plan(reader: Reader) -> None:
+    """Skip a non-entrance post-plan record whose control low byte is 1–15."""
+    reader.take(2)
+    reader.word()
+    reader.word()
+    reader.word()
+    reader.word()
+    reader.take(4)
+    for _ in range(1024):
+        if reader.take(1) == b'\0':
+            if reader.p & 1:
+                reader.take(1)
+            return
+    raise ValueError('other post-plan record terminator missing')
 
 
 def decode_detail_selection(data: bytes, start: int, count: int) -> list:
@@ -462,33 +533,48 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
     if 0 in scale:
         raise ValueError('zero structure selection scale')
     reader = Reader(data, mesh['sourceEnd'] - 2)
-    attachment = None
-    command = reader.word()
-    if command:
-        if command != 0x4200 or mesh['sourceStart'] != 0x1484e:
-            raise ValueError('unknown structure attachment form')
-        x0, z0, x1, z1 = [reader.signed() for _ in range(4)]
-        colours = [reader.word() for _ in range(3)]
-        if x0 >= x1 or z0 >= z1 or any((colour & 0x7000) != 0x1000 for colour in colours):
-            raise ValueError('unknown closed attachment geometry')
-        reader.word()  # attachment control colour, not a fourth panel
-        reader.take(8)  # proximity box; motion is outside this static selection
-        if reader.word() != 0:
-            raise ValueError('unknown additional structure attachment')
-        x0, x1 = x0 * scale[0], x1 * scale[0]
-        z0, z1 = z0 * scale[1], z1 * scale[1]
-        height = Reader(data, mesh['sourceStart'] + 2).signed()
-        midpoint = (x0 + x1) // 2
-        # Two sliding leaves, each with an outside, edge and inside wall.
-        segments = [((x0,z0),(midpoint,z0)), ((midpoint,z0),(midpoint,z1)), ((midpoint,z1),(x0,z1)),
-                    ((midpoint,z0),(x1,z0)), ((midpoint,z0),(midpoint,z1)), ((x1,z1),(midpoint,z1))]
-        attachment = {'vertices': [], 'lines': [], 'faces': []}
-        for (a, b), colour in zip(segments, colours * 2):
-            offset = len(attachment['vertices'])
-            attachment['vertices'].extend([[a[0],0,a[1]], [b[0],0,b[1]], [b[0],height,b[1]], [a[0],height,a[1]]])
-            attachment['faces'].append({'vertices': list(range(offset, offset + 4)),
-                'colour': colour_value(colour & 0x8fff, palette, hardware),
-                'sourceColour': colour, 'doubleSided': True})
+    attachments = []
+    slot = ATTACHMENT_SLOT_MASK
+    height = Reader(data, mesh['sourceStart'] + 2).signed()
+    for _ in range(64):
+        command = reader.word()
+        if command == 0:
+            break
+        low = command & 0xFF
+        if command in ENTRANCE_CONTROLS:
+            x0, z0, x1, z1 = [reader.signed() for _ in range(4)]
+            colours = [reader.word() for _ in range(4)]
+            box = [reader.signed() for _ in range(4)]
+            if x0 >= x1 or z0 >= z1:
+                raise ValueError('unknown closed attachment geometry')
+            if box[0] >= box[1] or box[2] >= box[3]:
+                raise ValueError('invalid attachment proximity box')
+            constructor = entrance_constructor(command)
+            sx, sz = scale
+            scaled_x = sorted((x0 * sx, x1 * sx))
+            scaled_z = sorted((z0 * sz, z1 * sz))
+            proximity_x = sorted((box[0] * sx, box[1] * sx))
+            proximity_z = sorted((box[2] * sz, box[3] * sz))
+            attachments.append({
+                'controlWord': command,
+                'constructor': constructor,
+                'mesh': closed_attachment_mesh(
+                    scaled_x[0], scaled_z[0], scaled_x[1], scaled_z[1],
+                    colours[:3], height, constructor,
+                    palette, hardware,
+                ),
+                'proximityBox': {'x': proximity_x, 'z': proximity_z},
+                'slot': slot,
+            })
+            slot -= 4
+            continue
+        if 1 <= low < 0x10:
+            skip_other_post_plan(reader)
+            continue
+        raise ValueError('unknown structure attachment form')
+    else:
+        raise ValueError('attachment list terminator missing')
+    by_slot = {item['slot']: item for item in attachments}
     regions = []
     sources = {face['sourceIndex'] for face in mesh['faces']}
     for _ in range(256):
@@ -504,15 +590,32 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
         if any(lo >= hi or lo < -32768 or hi > 32767 for lo, hi in bounds):
             raise ValueError('invalid region bounds')
         queue = selection_list(reader, max(sources, default=-1) + 1, True)
-        if any(entry['kind'] == 'attachment' and attachment is None or
+        named = flags & ATTACHMENT_SLOT_MASK
+        if named == 0:
+            gate, inset_axis = 'none', None
+        elif named == PASSAGE_SLOT:
+            gate, inset_axis = 'passage', None
+        else:
+            bound = by_slot.get(named)
+            if bound is None:
+                raise ValueError('region names unrecovered attachment slot')
+            gate = 'attachmentLatch'
+            inset_axis = bound['constructor']['motionAxis']
+        if any(entry['kind'] == 'attachment' and entry['slot'] not in by_slot or
                entry['kind'] == 'face' and entry['index'] not in sources for entry in queue):
             raise ValueError('region references unrecovered geometry')
-        regions.append({'flags': flags, 'bounds': bounds, 'queue': queue})
+        regions.append({
+            'flags': flags,
+            'bounds': bounds,
+            'queue': queue,
+            'gate': gate,
+            **({} if inset_axis is None else {'insetAxis': inset_axis}),
+        })
     else:
         raise ValueError('region terminator missing')
     if not regions:
         raise ValueError('no recovered regions')
-    return {'plan': mesh, 'attachment': attachment, 'regions': regions, 'scale': list(scale)}
+    return {'plan': mesh, 'attachments': attachments, 'regions': regions, 'scale': list(scale)}
 
 
 def translate_mesh(mesh: dict, position: tuple[int, int, int]) -> dict:
@@ -615,6 +718,15 @@ def structure_origin(resident_position: tuple[int, int, int], dx: int, dz: int) 
     )
 
 
+# Schema 7 names generic Entrance Attachments. This census keeps the seven already
+# complete selectors plus Structure 75 / its Structure 76 alias at STATE OFFICE.
+STRUCTURE_SELECTOR_CENSUS = {
+    'structure-00f5ae', 'structure-00ff04', 'structure-010152', 'structure-010164',
+    'structure-010176', 'structure-01484e', 'structure-01d820',
+    'structure-014ad2', 'structure-014aec',
+}
+
+
 def extract(data: bytes, source: dict) -> dict:
     """Catalogue all entries of the bounded resident tables, never a byte scan."""
     if len(data) != 1048576 or u32(data, 0x4bd10) != 0x35700 or u32(data, 0x4bd22) != 0x26000:
@@ -671,7 +783,17 @@ def extract(data: bytes, source: dict) -> dict:
                         third_height = struct.unpack_from('>h', data, 0x7b2a)[0]
                     mesh, gaps = decode_structure(data, pointer, palette_at(data, palette_index), hardware, scale, third_height)
                     try:
-                        model['structureSelection'] = decode_structure_selection(data, mesh, scale, palette_at(data, palette_index), hardware)
+                        selection = decode_structure_selection(data, mesh, scale, palette_at(data, palette_index), hardware)
+                        if identity in STRUCTURE_SELECTOR_CENSUS:
+                            model['structureSelection'] = selection
+                            gaps = [
+                                gap for gap in gaps
+                                if gap != 'Authored surface attachments/openings are not yet decoded.'
+                            ]
+                        else:
+                            gaps.append(
+                                'Complete selector omitted: outside the STATE OFFICE and previously complete census.'
+                            )
                     except (ValueError, struct.error) as error:
                         gaps.append(f'Structure selection unavailable: {error}.')
                     if mesh['faces']:
@@ -1166,7 +1288,16 @@ def extract(data: bytes, source: dict) -> dict:
         else:
             selection['detailModel'] = detail['id']
             selection['detailVariant'] = variant_id
-            model['reason'] += ' Region queues and linked detail lists recovered for on-foot drawing; static closed attachments only.'
+            model['reason'] += ' Region queues and linked detail lists recovered for on-foot drawing; Entrance Attachments carry constructor, slot and Proximity Box.'
+            if identity in ('structure-014ad2', 'structure-014aec'):
+                model['evidence'].append({
+                    'claim': (
+                        'Structure 75 at STATE OFFICE aliases this plan and binds four generic '
+                        'Entrance Attachments; slot $03FC is a two-leaf Z entrance.'
+                    ),
+                    'confidence': 'verified',
+                    'source': 'docs/research/damocles-generic-entrance-attachments.md',
+                })
     for model in models:
         if 'selectionReason' in model:
             model['reason'] += ' Detail selection unavailable: ' + model.pop('selectionReason') + '.'
@@ -1182,7 +1313,7 @@ def extract(data: bytes, source: dict) -> dict:
         for model in group:
             model['variants'] = variants
             model['relatedModels'].extend(other['id'] for other in group if other is not model)
-    return {'schemaVersion': 6, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
+    return {'schemaVersion': 7, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'places': places, 'tables': tables,
             'coverage': {'complete': False, 'notes': ['Resident first-world census; not a claim of complete disk coverage.',
                 'Conditional geometry, surface attachments, scene palette binding, other-body structures and named places remain incomplete.',

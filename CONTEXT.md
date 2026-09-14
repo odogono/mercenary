@@ -383,12 +383,24 @@ One named location in Damocles that may contain multiple instances and interiors
 _Avoid_: Model, building shape
 
 **Entrance Attachment**:
-The recovered Structure 74 post-plan component that constructs Capital Spaceport's two-leaf slab in attachment slot `$03FC`. While the Pose is inside the Proximity Box, each inner X edge interpolates from the closed midpoint toward its outer jamb; outside the box the inners return. The leaves stay in the region queue for the whole motion. Region 2, the doorway strip, is selectable only at the fully-open endpoint.
-_Avoid_: Doorway, detail door face, Entrance Latch
+One recovered post-plan component of a Damocles Model, allocated its own attachment slot counting down from `$03FC`, whose control word is its Attachment Constructor. While the Pose is inside that attachment's Proximity Box, each moving leaf advances one model unit per tick until it stands eight units inside its outer edge; outside the box the leaves return and re-close. The leaves stay in the region queue for the whole motion, and a region naming the slot is selectable only at the fully-open endpoint. Capital Spaceport's `$4200` two-leaf X entrance and STATE OFFICE's `$8200` two-leaf Z entrance are two members of one family, not two mechanisms.
+_Avoid_: Doorway, detail door face, Entrance Latch, spaceport door
+
+**Attachment Constructor**:
+The recovered reading of an Entrance Attachment's control word: its sign selects the motion and region-inset axis (X or Z), bit 9 selects one or two leaves, and bit 8 selects which side a single leaf moves from. It names how the closed rectangle becomes leaves; it is not the live latch that says where they currently stand.
+_Avoid_: Door type, control flags, attachment kind
 
 **Proximity Box**:
-The recovered lower-inclusive, upper-exclusive Structure 74-local X/Z bounds carried by the Entrance Attachment and tested by the Working Authority; for Capital Spaceport they are X 1200–1600 and Z −1200–−200.
+The recovered lower-inclusive, upper-exclusive model-local X/Z bounds carried by each Entrance Attachment and tested by the Working Authority against the Pose; Capital Spaceport's entrance carries X 1200–1600, Z −1200–−200, and STATE OFFICE's carries X 100–500, Z −200–0.
 _Avoid_: Trigger radius, doorway bounds, collision box
+
+**Region Gate**:
+What a recovered structure region requires before it can be selected: nothing, a named attachment slot's fully-open latch, or the reserved `$0200` unconditional passage. The gate is read from the region's own flags; a passage carries no attachment and no open endpoint.
+_Avoid_: Door flag, region mask, collision layer
+
+**Structure Workspace**:
+The single bound current-cell Damocles Instance whose plan, attachments and regions the Working Authority holds live. Region selection, the selected-region ±11 eye clamp and plan drawing apply only while the Pose is in the central half of that cell on both axes; attachment motion is deliberately broader and may finish re-closing that instance's leaves outside it.
+_Avoid_: Active structure, current building, bound model
 
 **Entrance Latch** (historical):
 The #237 Gameplay Session boolean that opened Capital Spaceport's Entrance Attachment on first entry to the Proximity Box and never cleared. Recovered motion uses the live RAM latch `$5E3D` (`$00` closed, `$01` moving, `$FF` fully open) and re-closes outside the box; the session stores that progress as open units, not this sticky flag.

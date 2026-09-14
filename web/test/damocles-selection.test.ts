@@ -3,7 +3,7 @@ import { expect, test } from 'bun:test';
 import { parseCatalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
-  OPEN_ENTRANCE_UNITS,
+  attachmentOpenLimit,
   clampStructureStep,
   structureMeshes,
   structureRegionAt
@@ -15,10 +15,13 @@ interface RawModel {
   id: string;
   kind: string;
   structureSelection: {
-    attachment: unknown;
+    attachments: unknown[];
     detailModel: string;
     detailVariant: string;
-    regions: { bounds: number[][]; queue: { index: number; kind: string }[] }[];
+    regions: {
+      bounds: number[][];
+      queue: { index: number; kind: string; slot?: number }[];
+    }[];
   };
 }
 const raw: { models: RawModel[] } = await Bun.file(
@@ -29,6 +32,12 @@ const doc = readErisPresentation(await Bun.file('damocles/eris.json').json());
 const placement = erisSurfaceFrom(catalogue, doc).placements.find(
   p => p.id === 'eris-surface-87'
 )!;
+const entrance = placement.selection!.structure.attachments[0]!;
+const OPEN_ENTRANCE_UNITS = attachmentOpenLimit(entrance);
+const units =
+  (value: number) =>
+  (_slot: number): number =>
+    value;
 const at = (x: number, z: number, y = 63) => ({
   heading: 0,
   position: { x: placement.position.x + x, y, z: placement.position.z + z }
@@ -40,6 +49,46 @@ test('Eris cell 52 receives the selector following an odd-addressed detail face 
   )!;
   expect(cell.modelId).toBe('structure-010152');
   expect(cell.selection).toBeDefined();
+  expect(cell.selection!.structure.attachments).toEqual([]);
+  expect(
+    cell.selection!.structure.regions.some(region => region.gate === 'passage')
+  ).toBeTrue();
+});
+
+test('STATE OFFICE moves its recovered two-leaf attachment on Z', () => {
+  const office = erisSurfaceFrom(catalogue, doc).placements.find(
+    p => p.id === 'eris-surface-89'
+  )!;
+  const attachment = office.selection!.structure.attachments[0]!;
+  expect(attachment.controlWord).toBe(0x82_00);
+  expect(attachment.slot).toBe(0x03_fc);
+  expect(attachment.constructor).toEqual({ leafCount: 2, motionAxis: 'z' });
+  const pose = {
+    heading: 0,
+    position: {
+      x: office.position.x + 330,
+      y: 63,
+      z: office.position.z - 100
+    }
+  };
+  const meshes = structureMeshes(
+    office,
+    pose,
+    false,
+    slot => (slot === attachment.slot ? 26 : 0),
+    0
+  );
+  const leaves = meshes.find(
+    mesh =>
+      mesh.faces.length === 6 &&
+      Math.min(...mesh.vertices.map(vertex => vertex[0])) === 293
+  )!;
+  expect(new Set(leaves.vertices.map(vertex => vertex[0]))).toEqual(
+    new Set([293, 297])
+  );
+  expect(new Set(leaves.vertices.map(vertex => vertex[2]))).toEqual(
+    new Set([-160, -126, -74, -40])
+  );
 });
 
 test('arrival draws region eleven in order, its real door, and the on-foot detail default', () => {
@@ -47,7 +96,7 @@ test('arrival draws region eleven in order, its real door, and the on-foot detai
   expect(meshes.slice(0, 18).map(m => m.faces[0]!.sourceIndex! + 1)).toEqual([
     26, 22, 23, 13, 9, 28, 11, 25, 10, 24, 12, 7, 5, 2, 17, 3, 15, 20
   ]);
-  expect(meshes[18]).toBe(placement.selection!.structure.attachment!);
+  expect(meshes[18]).toBe(entrance.mesh);
   expect(meshes[18]!.faces).toHaveLength(6);
   expect(meshes[19]!.faces).toHaveLength(29);
   const detail = placement.selection!.detail;
@@ -82,14 +131,14 @@ test('inside, window and doorway replace the detail list, preserving empty and f
 });
 
 test('region pushback clamps only the blocked axis and preserves wall sliding', () => {
-  const region = structureRegionAt(placement, at(1000, -1000), false, 0);
+  const region = structureRegionAt(placement, at(1000, -1000), false, units(0));
   expect(region).toBe(2);
   const pushed = clampStructureStep(
     placement,
     at(1000, -1000),
     at(1100, 0),
     false,
-    0,
+    units(0),
     region
   );
   expect(pushed.pose.position.x).toBe(placement.position.x + 1100);
@@ -97,13 +146,18 @@ test('region pushback clamps only the blocked axis and preserves wall sliding', 
   expect(pushed.regionIndex).toBe(region);
 
   // Region 10 and the room do not share an edge: the lower window wall remains solid.
-  const windowRegion = structureRegionAt(placement, at(700, 0), false, 0);
+  const windowRegion = structureRegionAt(
+    placement,
+    at(700, 0),
+    false,
+    units(0)
+  );
   const window = clampStructureStep(
     placement,
     at(700, 0),
     at(1000, 0),
     false,
-    0,
+    units(0),
     windowRegion
   );
   expect(window.pose.position.x).toBe(placement.position.x + 788);
@@ -111,15 +165,15 @@ test('region pushback clamps only the blocked axis and preserves wall sliding', 
 
 test('open doorway X uses the bind-time inset, not the catalogue slab span', () => {
   const inDoor = at(1400, -780);
-  expect(structureRegionAt(placement, inDoor, false, OPEN_ENTRANCE_UNITS)).toBe(
-    1
-  );
+  expect(
+    structureRegionAt(placement, inDoor, false, units(OPEN_ENTRANCE_UNITS))
+  ).toBe(1);
   const left = clampStructureStep(
     placement,
     inDoor,
     at(1300, -780),
     false,
-    OPEN_ENTRANCE_UNITS,
+    units(OPEN_ENTRANCE_UNITS),
     1
   );
   expect(left.pose.position.x).toBe(placement.position.x + 1311);
@@ -129,7 +183,7 @@ test('open doorway X uses the bind-time inset, not the catalogue slab span', () 
     inDoor,
     at(1500, -780),
     false,
-    OPEN_ENTRANCE_UNITS,
+    units(OPEN_ENTRANCE_UNITS),
     1
   );
   expect(right.pose.position.x).toBe(placement.position.x + 1488);
@@ -138,14 +192,14 @@ test('open doorway X uses the bind-time inset, not the catalogue slab span', () 
 
 test('the doorway region is admitted only at the fully-open endpoint', () => {
   const outside = at(1400, -820);
-  const region = structureRegionAt(placement, outside, false, 0);
+  const region = structureRegionAt(placement, outside, false, units(0));
   expect(region).toBe(2);
   const closed = clampStructureStep(
     placement,
     outside,
     at(1400, -790),
     false,
-    OPEN_ENTRANCE_UNITS - 1,
+    units(OPEN_ENTRANCE_UNITS - 1),
     region
   );
   expect(closed.pose.position.z).toBe(placement.position.z - 812);
@@ -154,7 +208,7 @@ test('the doorway region is admitted only at the fully-open endpoint', () => {
     outside,
     at(1400, -790),
     false,
-    OPEN_ENTRANCE_UNITS,
+    units(OPEN_ENTRANCE_UNITS),
     region
   );
   expect(open.pose.position.z).toBe(placement.position.z - 790);
@@ -169,7 +223,7 @@ test('the Entrance Attachment stays rendered and interpolates its inner edges', 
     placement,
     at(1400, -1000),
     false,
-    OPEN_ENTRANCE_UNITS / 2
+    units(OPEN_ENTRANCE_UNITS / 2)
   ).find(mesh => mesh.faces.length === 6)!;
   expect(half.vertices[1]![0]).toBe(1354);
   expect(half.vertices[12]![0]).toBe(1446);
@@ -178,7 +232,7 @@ test('the Entrance Attachment stays rendered and interpolates its inner edges', 
     placement,
     at(1400, -780),
     false,
-    OPEN_ENTRANCE_UNITS
+    units(OPEN_ENTRANCE_UNITS)
   );
   const leaves = open.find(mesh => mesh.faces.length === 6)!;
   expect(leaves.vertices[1]![0]).toBe(1308);
@@ -269,7 +323,7 @@ test('selector payload rejects invalid bindings, references, bounds, tags and ki
     m.structureSelection.regions[0]!.bounds[0] = [3, 3];
   });
   change(m => {
-    m.structureSelection.attachment = null;
+    m.structureSelection.attachments = [];
   });
   change(m => {
     m.kind = 'object';
@@ -314,6 +368,7 @@ test('negative detail scales retain lower-exclusive and upper-inclusive world bo
               [-10, 10]
             ] as const,
             flags: 0x80_00,
+            gate: 'none' as const,
             queue: []
           }
         ],

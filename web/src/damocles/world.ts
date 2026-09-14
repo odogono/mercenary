@@ -72,6 +72,35 @@ export const cellOf = (position: Vector3, grid: ErisGrid): ErisCell => ({
   z: Math.floor(position.z / grid.cellUnits) - grid.origin.z
 });
 
+/** `$7AF6 >= 0`: both unsigned cell fractions are in `[0.25, 0.75)`. */
+export const insideCentralCellHalf = (
+  position: Vector3,
+  grid: ErisGrid
+): boolean => {
+  const fraction = (value: number): number => {
+    const cells = value / grid.cellUnits;
+    return cells - Math.floor(cells);
+  };
+  const x = fraction(position.x);
+  const z = fraction(position.z);
+  return x >= 0.25 && x < 0.75 && z >= 0.25 && z < 0.75;
+};
+
+/** The one structure workspace selected by the current surface cell. */
+export const structureInCell = (
+  surface: ErisSurface,
+  position: Vector3
+): ErisPlacement | undefined => {
+  const current = cellOf(position, surface.grid);
+  return surface.placements.find(
+    placement =>
+      placement.selection !== undefined &&
+      placement.kind === 'structure' &&
+      cellOf(placement.position, surface.grid).x === current.x &&
+      cellOf(placement.position, surface.grid).z === current.z
+  );
+};
+
 const TURN = 2 * Math.PI;
 
 const wrapBearing = (bearing: number): number => {

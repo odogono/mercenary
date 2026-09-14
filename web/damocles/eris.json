@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "titleSlug": "damocles",
   "body": {
     "id": "body-11",
@@ -112,17 +112,6 @@
     "cullBackFaces": true,
     "unresolvedModels": "nothing",
     "provenance": "authored"
-  },
-  "spaceportEntrance": {
-    "instanceId": "eris-surface-87",
-    "proximityBox": {
-      "x": [1200, 1600],
-      "z": [-1200, -200],
-      "provenance": "recovered"
-    },
-    "eyeClampProvenance": "recovered",
-    "motionProvenance": "recovered",
-    "evidence": "Structure 74's $4200 Entrance Attachment carries the recovered lower-inclusive, upper-exclusive Proximity Box X 1200–1600, Z -1200–-200. Its inner X edges interpolate from 1400/1400 to 1308/1492 and re-close outside the box; the post-Mover eye is clamped to the selected region's inset XZ, with region 2 admitted only at the $FF endpoint (docs/research/damocles-spaceport-entrance-motion.md, #238)."
   },
   "structureFallback": {
     "view": "combined",

@@ -42,13 +42,16 @@ identical models, tables, instances, body names and places. Their provenance
 records intentionally differ. The emitted source record pins the RAM and
 program SHA-256; model identities depend on kind and source address, never names.
 
-Schema 6 adds `structureSelection` and `detailSelection`. Each structure selector carries
+Schema 7 extends `structureSelection` with generic Entrance Attachment records:
+raw control word, normalized constructor, runtime slot, closed mesh and scaled
+Proximity Box. Regions name their gate kind and resolved inset axis; `$0200`
+remains an unconditional passage with no fictitious attachment. Each selector also carries
 its original plan mesh, scaled region bounds (signed-word endpoint sentinels stay at
-−32768/32767), raw flags, tagged ordered queue, optional closed attachment, and linked
-detail model/variant and X/Z scales. Detail selectors retain two groups of ordered boxes
-and default face indices in raw model coordinates. Unsupported or truncated selectors
-are omitted as a whole and explained in the model reason. The pinned census recovers
-seven complete structure selectors and 44 detail selectors. The first detail group starts
+−32768/32767), raw flags, tagged ordered queue, and linked detail model/variant and X/Z
+scales. Detail selectors retain two groups of ordered boxes and default face indices in raw
+model coordinates. Unsupported or truncated selectors are omitted as a whole and explained
+in the model reason. The bounded census recovers the previous seven complete selectors plus
+Structure 75 and its Structure 76 alias, and 44 detail selectors. The first detail group starts
 on the next word boundary after the byte-sized face stream. Empty plan meshes are valid
 when all queues are empty. The spaceport's combined inspection variants also carry
 `walkMesh`, excluding the resident key from the authored walk fallback.
@@ -56,14 +59,14 @@ when all queues are empty. The spaceport's combined inspection variants also car
 Eris document schema 2 uses `structureFallback` only when a selector is absent or no
 region matches. The on-foot frame uses group 2 and region flags 15/14/12 for detail
 visibility and component order, with per-face triangulation cached across selected lists.
-This does not implement the structure-active gates, surrounding resident-object stream,
-runtime door-region gating, animation or the polygon fill routine's possible facing tests.
+This does not implement the surrounding resident-object stream or the polygon fill
+routine's possible facing tests.
 
-| Resident table           | Address   | Slots examined | Meaning                                                              |
-| ------------------------ | --------- | -------------- | -------------------------------------------------------------------- |
-| Object geometry          | `$035700` | 378            | Relative 32-bit pointers, including shared forms and extra templates |
-| Surface assemblies       | `$00E900` | 280            | Relative 32-bit pointers, including scaled/paletted aliases          |
-| Ground / pad / road      | `$01E400` | 256            | Word offsets from `$01E000`; shared records, per-cell `$83DC` orientation |
+| Resident table      | Address   | Slots examined | Meaning                                                                   |
+| ------------------- | --------- | -------------- | ------------------------------------------------------------------------- |
+| Object geometry     | `$035700` | 378            | Relative 32-bit pointers, including shared forms and extra templates      |
+| Surface assemblies  | `$00E900` | 280            | Relative 32-bit pointers, including scaled/paletted aliases               |
+| Ground / pad / road | `$01E400` | 256            | Word offsets from `$01E000`; shared records, per-cell `$83DC` orientation |
 
 These extents are bounded by the next independently recognised data records:
 object NULL metadata at `$035CE8`, the first surface metadata at `$00ED60`, and

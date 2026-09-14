@@ -9,6 +9,7 @@ import {
   type ResumeStorage
 } from '../src/damocles/resume.ts';
 import { damoclesSaveIdentity } from '../src/damocles/save.ts';
+import { attachmentOpenLimit } from '../src/damocles/selection.ts';
 import {
   DamoclesSession,
   type DamoclesContent
@@ -35,11 +36,10 @@ const atSpaceport = (
   entranceOpenUnits = 0
 ): DamoclesSession => {
   const entrance = loaded.surface.placements.find(
-    placement => placement.id === loaded.doc.spaceportEntrance.instanceId
+    placement => placement.id === 'eris-surface-87'
   )!;
   return new DamoclesSession(loaded, {
     elapsed: 0,
-    entranceOpenUnits,
     pose: {
       heading,
       position: {
@@ -48,7 +48,51 @@ const atSpaceport = (
         z: entrance.position.z + z
       }
     },
-    spaceportRegion: null
+    structure: {
+      attachments: entrance.selection!.structure.attachments.map(
+        (attachment, index) => ({
+          openUnits: index === 0 ? entranceOpenUnits : 0,
+          slot: attachment.slot
+        })
+      ),
+      instanceId: entrance.id,
+      regionIndex: null
+    }
+  });
+};
+
+const firstAttachmentUnits = (session: DamoclesSession): number =>
+  session.snapshot.structure?.attachments[0]?.openUnits ?? 0;
+
+const atStructure = (
+  loaded: DamoclesContent,
+  instanceId: string,
+  x: number,
+  z: number,
+  heading = 0,
+  firstOpenUnits = 0
+): DamoclesSession => {
+  const placement = loaded.surface.placements.find(p => p.id === instanceId)!;
+  return new DamoclesSession(loaded, {
+    elapsed: 0,
+    pose: {
+      heading,
+      position: {
+        x: placement.position.x + x,
+        y: loaded.doc.eye.heightUnits,
+        z: placement.position.z + z
+      }
+    },
+    structure: {
+      attachments: placement.selection!.structure.attachments.map(
+        (attachment, index) => ({
+          openUnits: index === 0 ? firstOpenUnits : 0,
+          slot: attachment.slot
+        })
+      ),
+      instanceId,
+      regionIndex: null
+    }
   });
 };
 
@@ -104,7 +148,7 @@ describe('the Damocles Gameplay Session', () => {
   test('refuses swept facade and window steps while preserving free turning', async () => {
     const loaded = await content();
     const entrance = loaded.surface.placements.find(
-      placement => placement.id === loaded.doc.spaceportEntrance.instanceId
+      placement => placement.id === 'eris-surface-87'
     )!;
     const facade = atSpaceport(loaded, 1000, -1000);
     facade.intent = intent({ running: true, walk: 1 });
@@ -130,18 +174,18 @@ describe('the Damocles Gameplay Session', () => {
   test('opens over time, admits the doorway only at the endpoint, and re-closes on retreat', async () => {
     const loaded = await content();
     const opening = atSpaceport(loaded, 1400, -1000);
-    expect(opening.snapshot.entranceOpenUnits).toBe(0);
+    expect(firstAttachmentUnits(opening)).toBe(0);
     opening.advance(1);
-    expect(opening.snapshot.entranceOpenUnits).toBeGreaterThan(0);
-    expect(opening.snapshot.entranceOpenUnits).toBeLessThan(92);
+    expect(firstAttachmentUnits(opening)).toBeGreaterThan(0);
+    expect(firstAttachmentUnits(opening)).toBeLessThan(92);
     opening.advance(2);
-    expect(opening.snapshot.entranceOpenUnits).toBe(92);
+    expect(firstAttachmentUnits(opening)).toBe(92);
 
     const session = atSpaceport(loaded, 1400, -820, 0, 90);
     session.intent = intent({ walk: 1 });
     session.advance(0.03);
     const entrance = loaded.surface.placements.find(
-      placement => placement.id === loaded.doc.spaceportEntrance.instanceId
+      placement => placement.id === 'eris-surface-87'
     )!;
     expect(session.snapshot.pose.position.z).toBeLessThan(
       entrance.position.z - 800
@@ -153,10 +197,47 @@ describe('the Damocles Gameplay Session', () => {
 
     const retreat = atSpaceport(loaded, 1400, -1300, 0, 92);
     retreat.advance(1);
-    expect(retreat.snapshot.entranceOpenUnits).toBeGreaterThan(0);
-    expect(retreat.snapshot.entranceOpenUnits).toBeLessThan(92);
+    expect(firstAttachmentUnits(retreat)).toBeGreaterThan(0);
+    expect(firstAttachmentUnits(retreat)).toBeLessThan(92);
     retreat.advance(2);
-    expect(retreat.snapshot.entranceOpenUnits).toBe(0);
+    expect(firstAttachmentUnits(retreat)).toBe(0);
+  });
+
+  test('opens and re-closes STATE OFFICE with its recovered two-leaf Z constructor', async () => {
+    const loaded = await content();
+    const office = loaded.surface.placements.find(
+      placement => placement.id === 'eris-surface-89'
+    )!;
+    const attachment = office.selection!.structure.attachments[0]!;
+    expect(attachment.constructor).toEqual({ leafCount: 2, motionAxis: 'z' });
+    expect(attachment.proximityBox).toEqual({
+      x: [100, 500],
+      z: [-200, 0]
+    });
+    expect(attachmentOpenLimit(attachment)).toBe(52);
+
+    const opening = atStructure(
+      loaded,
+      office.id,
+      330,
+      -100,
+      (3 * Math.PI) / 2
+    );
+    opening.advance(1);
+    expect(firstAttachmentUnits(opening)).toBeGreaterThan(0);
+    expect(firstAttachmentUnits(opening)).toBeLessThan(52);
+    opening.advance(1);
+    expect(firstAttachmentUnits(opening)).toBe(52);
+
+    opening.intent = intent({ walk: 1 });
+    opening.advance(0.25);
+    expect(opening.snapshot.pose.position.x).toBeLessThan(
+      office.position.x + 290
+    );
+
+    const retreat = atStructure(loaded, office.id, 550, -100, 0, 52);
+    retreat.advance(2);
+    expect(firstAttachmentUnits(retreat)).toBe(0);
   });
 
   test('resumes exactly where it left off, from its own key', async () => {
