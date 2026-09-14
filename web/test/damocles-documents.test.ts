@@ -33,7 +33,13 @@ describe('the authored Eris presentation document', () => {
     expect(document.walk.runProvenance).toBe('recovered');
     expect(document.walk.runTurnProvenance).toBe('derived');
     expect(document.ground.colour).toBe('#006d00');
-    expect(document.lighting.shadows).toBe(false);
+    expect(document.lighting).toMatchObject({
+      ambientGround: '#263322',
+      ambientSky: '#66809c',
+      provenance: 'authored',
+      shadows: true,
+      sunColour: '#fff2d0'
+    });
     expect(document.rendering.unresolvedModels).toBe('nothing');
     expect(document.structureFallback.view).toBe('combined');
     expect(document.structureFallback.doorState).toBe('closed');
@@ -91,6 +97,17 @@ describe('the authored Eris presentation document', () => {
     expect(() => readErisPresentation({ ...base, titleSlug: 'targ' })).toThrow(
       'titleSlug should be damocles'
     );
+    const lighting = base['lighting'] as Record<string, unknown>;
+    const { ambientSky: _ambientSky, ...withoutAmbientSky } = lighting;
+    expect(() =>
+      readErisPresentation({ ...base, lighting: withoutAmbientSky })
+    ).toThrow('lighting is missing field ambientSky');
+    expect(() =>
+      readErisPresentation({
+        ...base,
+        lighting: { ...lighting, ambientGround: '#fff' }
+      })
+    ).toThrow('lighting.ambientGround should be a lowercase six-digit colour');
   });
 
   test('holds a colour to the palette entry it claims', async () => {

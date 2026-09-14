@@ -9,6 +9,7 @@ declare global {
 const TARG_RESUME_KEY = 'mercenary.browser-shell.session-resume.v1';
 const DAMOCLES_RESUME_KEY =
   'mercenary.browser-shell.damocles.session-resume.v1';
+const PREFERENCES_KEY = 'mercenary.browser-shell.preferences.v1';
 
 test('structure faces change at the window, doorway and inside the spaceport', async ({
   page
@@ -56,6 +57,103 @@ test('structure faces change at the window, doorway and inside the spaceport', a
     await page.unroute('**/damocles/eris.json');
   }
   expect(new Set(counts).size).toBe(3);
+});
+
+test('Enhanced sunlight reaches the floor through the spaceport window', async ({
+  page
+}, testInfo) => {
+  await page.addInitScript(
+    ({ preferences, resume }) => {
+      localStorage.removeItem(resume);
+      localStorage.setItem(
+        preferences,
+        JSON.stringify({ presentationPreset: 'enhanced' })
+      );
+    },
+    { preferences: PREFERENCES_KEY, resume: DAMOCLES_RESUME_KEY }
+  );
+  const catalogue = (await (
+    await page.request.get('/payload/damocles/catalogue.json')
+  ).json()) as {
+    instances: { id: string; location: { position: number[] } | null }[];
+  };
+  const origin = catalogue.instances.find(i => i.id === 'eris-surface-87')!
+    .location!.position;
+  await page.route('**/damocles/eris.json', async route => {
+    const response = await route.fetch();
+    const doc = await response.json();
+    doc.start.yaw = 256;
+    doc.start.position = {
+      x: origin[0]! * 65_536 + 1300,
+      y: 63,
+      z: origin[2]! * 65_536
+    };
+    await route.fulfill({ json: doc });
+  });
+
+  await page.goto('/damocles');
+  const frame = page.locator('#frame');
+  await expect(frame).toHaveAttribute('data-state', 'ready');
+  const luminanceOf = (capture: Buffer) =>
+    page.evaluate(
+      async source => {
+        const image = new Image();
+        image.src = source;
+        await image.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const context = canvas.getContext('2d')!;
+        context.drawImage(image, 0, 0);
+        const region = (top: number, bottom: number): number => {
+          const x = Math.floor(image.width * 0.25);
+          const y = Math.floor(image.height * top);
+          const width = Math.floor(image.width * 0.5);
+          const height = Math.floor(image.height * (bottom - top));
+          const pixels = context.getImageData(x, y, width, height).data;
+          let sum = 0;
+          for (let offset = 0; offset < pixels.length; offset += 4) {
+            sum +=
+              pixels[offset]! * 0.2126 +
+              pixels[offset + 1]! * 0.7152 +
+              pixels[offset + 2]! * 0.0722;
+          }
+          return sum / (pixels.length / 4);
+        };
+        // At the documented inside-west pose, the higher band is the far floor under the
+        // roof; the lower band is the nearer floor reached by the west-window beam.
+        return {
+          roofShadowedFloor: region(0.67, 0.7),
+          windowLitFloor: region(0.75, 0.79)
+        };
+      },
+      `data:image/png;base64,${capture.toString('base64')}`
+    );
+  const capture = await frame.screenshot();
+  await testInfo.attach('damocles-enhanced-window-light', {
+    body: capture,
+    contentType: 'image/png'
+  });
+  const luminance = await luminanceOf(capture);
+  expect(luminance.windowLitFloor).toBeGreaterThan(
+    luminance.roofShadowedFloor + 15
+  );
+
+  await page.keyboard.press('Escape');
+  await page.locator('button[data-goto="settings"]').click();
+  await page.locator('[data-setting="sky"] button[value="authentic"]').click();
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-layer',
+    'none'
+  );
+  await expect
+    .poll(async () => {
+      const authentic = await luminanceOf(await frame.screenshot());
+      return Math.abs(authentic.windowLitFloor - authentic.roofShadowedFloor);
+    })
+    .toBeLessThan(1);
 });
 
 test.beforeEach(async ({ page }) => {

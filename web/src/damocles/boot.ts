@@ -38,6 +38,7 @@ import {
   type DamoclesConsoleHost
 } from './console.ts';
 import { planErisFrame } from './frame.ts';
+import { erisLighting } from './lighting.ts';
 import { damoclesPanelViewModel } from './panel.ts';
 import { ErisRenderer } from './renderer.ts';
 import {
@@ -157,7 +158,10 @@ try {
   );
   const renderer = new ErisRenderer(
     canvas,
-    { cullBackFaces: content.doc.rendering.cullBackFaces },
+    {
+      cullBackFaces: content.doc.rendering.cullBackFaces,
+      ...(content.doc.lighting.shadows ? { lighting: true } : {})
+    },
     () =>
       fail(
         new Error(
@@ -315,6 +319,7 @@ try {
   }
 
   installSettingsView({
+    onPresentationChange: () => publish(),
     page: chrome.pages.settings,
     preferences,
     root: document.documentElement,
@@ -470,7 +475,20 @@ try {
   };
   const draw = (): void => {
     const plan = planErisFrame(content.surface, snapshot.pose, content.doc);
-    renderer.render(plan);
+    const preset = preferences.current().presentationPreset;
+    const shadows =
+      content.doc.lighting.shadows &&
+      (preset === undefined || preset === 'enhanced');
+    renderer.render(
+      plan,
+      shadows
+        ? {
+            eyeWorld: snapshot.pose.position,
+            heading: snapshot.pose.heading,
+            lighting: erisLighting(content.doc, snapshot.pose.heading)
+          }
+        : undefined
+    );
     panel.draw(
       damoclesPanelViewModel(snapshot, content.doc, controls.intent.running)
     );

@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.19.4] - 2026-09-14
+
+### Added
+
+- `/damocles` Enhanced presentation lights Eris structures with the authored sun in
+  `web/damocles/eris.json`, hemisphere ambient, and softened directional shadows. Sunlight
+  through the spaceport window is an opening by omission, not aperture logic. Authentic stays
+  the existing flat frame (#231).
+
+### Changed
+
+- The Eris lighting block now names authored sun and ambient colours and turns shadows on.
+  The Damocles boot reads the Presentation Preset on each draw; switching sky in Settings
+  republishes the frame without a reload.
+
 ## [0.19.3] - 2026-09-12
 
 ### Added

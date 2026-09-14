@@ -97,13 +97,16 @@
   },
   "lighting": {
     "sunDirection": {
-      "x": -0.4,
-      "y": 0.8,
-      "z": -0.45
+      "x": -0.63,
+      "y": 0.31,
+      "z": -0.71
     },
-    "shadows": false,
+    "sunColour": "#fff2d0",
+    "ambientSky": "#66809c",
+    "ambientGround": "#263322",
+    "shadows": true,
     "provenance": "authored",
-    "note": "Reserved for an Enhanced-preset shadow pass (#209). Faces are drawn flat in their catalogue colours."
+    "note": "Authored Enhanced-preset sun, hemisphere ambient and shadow pass (#209, #231). Authentic faces remain flat in their catalogue colours."
   },
   "rendering": {
     "cullBackFaces": true,
