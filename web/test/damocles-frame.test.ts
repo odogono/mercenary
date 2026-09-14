@@ -6,7 +6,12 @@ import {
   type ErisPresentationDocument
 } from '../src/damocles/documents.ts';
 import { planErisFrame } from '../src/damocles/frame.ts';
-import { ErisRenderer } from '../src/damocles/renderer.ts';
+import { erisLighting } from '../src/damocles/lighting.ts';
+import {
+  ERIS_SHADOW_WINDOWS,
+  ErisRenderer,
+  shadowCasterVertices
+} from '../src/damocles/renderer.ts';
 import {
   erisSurfaceFrom,
   startPose,
@@ -228,56 +233,112 @@ describe('an Eris frame in Filled Presentation', () => {
 const fakeContext = () => {
   const calls: string[] = [];
   let compiled = 0;
+  let framebuffer = 0;
   const uniforms: Record<string, number[]> = {};
   const gl = {
+    activeTexture: (texture: number) => calls.push(`activeTexture:${texture}`),
     ARRAY_BUFFER: 1,
     attachShader: () => undefined,
     BACK: 2,
     bindBuffer: () => undefined,
+    bindFramebuffer: (_target: number, value: { id: number } | null) =>
+      calls.push(`framebuffer:${value === null ? 'default' : value.id}`),
+    bindTexture: () => undefined,
     bufferData: (_target: number, data: Float32Array) =>
       calls.push(`buffer:${data.length}`),
+    checkFramebufferStatus: () => 21,
+    CLAMP_TO_EDGE: 34,
     clear: () => calls.push('clear'),
     clearColor: (r: number, g: number, b: number) =>
       calls.push(`clearColor:${r.toFixed(3)},${g.toFixed(3)},${b.toFixed(3)}`),
     COLOR_BUFFER_BIT: 4,
+    COMPARE_REF_TO_TEXTURE: 17,
     COMPILE_STATUS: 5,
     compileShader: () => {
       compiled += 1;
     },
     createBuffer: () => ({}),
+    createFramebuffer: () => ({ id: ++framebuffer }),
     createProgram: () => ({}),
     createShader: () => ({}),
+    createTexture: () => ({}),
     CULL_FACE: 6,
     cullFace: () => calls.push('cullFace'),
     CW: 7,
     deleteShader: () => undefined,
+    DEPTH_ATTACHMENT: 18,
     DEPTH_BUFFER_BIT: 8,
+    DEPTH_COMPONENT24: 19,
     DEPTH_TEST: 9,
     depthFunc: () => undefined,
+    depthMask: () => undefined,
     disable: (flag: number) => calls.push(`disable:${flag}`),
+    disableVertexAttribArray: (attribute: number) =>
+      calls.push(`disableAttribute:${attribute}`),
     drawArrays: (mode: number, first: number, count: number) =>
       calls.push(`draw:${mode}:${first}:${count}`),
+    drawBuffers: () => undefined,
     DYNAMIC_DRAW: 10,
     enable: (flag: number) => calls.push(`enable:${flag}`),
     enableVertexAttribArray: () => undefined,
     FLOAT: 11,
     FRAGMENT_SHADER: 12,
+    FRAMEBUFFER: 20,
+    FRAMEBUFFER_COMPLETE: 21,
+    framebufferTexture2D: () => undefined,
     frontFace: (mode: number) => calls.push(`frontFace:${mode}`),
-    getAttribLocation: () => 0,
+    getAttribLocation: (_program: unknown, name: string) =>
+      name === 'colour' ? 1 : 0,
     getProgramParameter: () => true,
     getShaderParameter: () => true,
     getUniformLocation: (_p: unknown, name: string) => name,
     isContextLost: () => false,
     LEQUAL: 13,
+    LINEAR: 22,
     LINK_STATUS: 14,
     linkProgram: () => undefined,
+    NONE: 23,
+    POLYGON_OFFSET_FILL: 24,
+    polygonOffset: (factor: number, units: number) =>
+      calls.push(`polygonOffset:${factor}:${units}`),
+    readBuffer: () => undefined,
     shaderSource: () => undefined,
+    texParameteri: () => undefined,
+    texStorage2D: (
+      _target: number,
+      _levels: number,
+      _format: number,
+      width: number,
+      height: number
+    ) => calls.push(`texStorage:${width}:${height}`),
+    TEXTURE_2D: 27,
+    TEXTURE_COMPARE_FUNC: 28,
+    TEXTURE_COMPARE_MODE: 29,
+    TEXTURE_MAG_FILTER: 30,
+    TEXTURE_MIN_FILTER: 31,
+    TEXTURE_WRAP_S: 32,
+    TEXTURE_WRAP_T: 33,
+    TEXTURE0: 25,
+    TEXTURE1: 26,
     TRIANGLES: 15,
     uniform1f: (name: string, value: number) => {
       uniforms[name] = [value];
     },
+    uniform1i: (name: string, value: number) => {
+      uniforms[name] = [value];
+    },
     uniform2f: (name: string, a: number, b: number) => {
       uniforms[name] = [a, b];
+    },
+    uniform3f: (name: string, a: number, b: number, c: number) => {
+      uniforms[name] = [a, b, c];
+    },
+    uniformMatrix4fv: (
+      name: string,
+      _transpose: boolean,
+      value: Float32Array
+    ) => {
+      uniforms[name] = Array.from(value);
     },
     useProgram: () => undefined,
     VERTEX_SHADER: 16,
@@ -341,5 +402,93 @@ describe('the Eris renderer', () => {
       () => undefined
     ).render(plan);
     expect(uncull.calls).toContain('disable:6');
+  });
+
+  test('keeps the Authentic draw path lazy when lighting is available', async () => {
+    (globalThis as { window?: unknown }).window ??= { devicePixelRatio: 1 };
+    const { doc, surface } = await load();
+    const plan = planErisFrame(surface, startPose(doc), doc);
+    const fake = fakeContext();
+    const renderer = new ErisRenderer(
+      fake.canvas,
+      { cullBackFaces: true, lighting: true },
+      () => undefined
+    );
+
+    expect(fake.compiled).toBe(2);
+    expect(fake.calls).not.toContain('texStorage:2048:2048');
+    renderer.render(plan);
+    expect(fake.compiled).toBe(2);
+    expect(fake.calls.filter(call => call.startsWith('draw:'))).toEqual([
+      `draw:15:0:${plan.triangleCount * 3}`
+    ]);
+    expect(fake.calls).not.toContain('texStorage:2048:2048');
+  });
+
+  test('draws deduplicated casters into near and far soft-shadow maps', async () => {
+    (globalThis as { window?: unknown }).window ??= { devicePixelRatio: 1 };
+    const { doc, surface } = await load();
+    const plan = planErisFrame(
+      surfaceOf([placement(square(true))]),
+      origin,
+      doc
+    );
+    const casters = shadowCasterVertices(plan.vertices);
+    expect(plan.triangleCount).toBe(8);
+    expect(casters).toHaveLength(4 * 3 * 6);
+
+    const fake = fakeContext();
+    const renderer = new ErisRenderer(
+      fake.canvas,
+      { cullBackFaces: true, lighting: true },
+      () => undefined
+    );
+    expect(fake.compiled).toBe(2);
+
+    renderer.render(plan, {
+      eyeWorld: origin.position,
+      heading: origin.heading,
+      lighting: erisLighting(doc, origin.heading)
+    });
+    expect(fake.compiled).toBe(6);
+    expect(
+      fake.calls.filter(call => call === 'texStorage:2048:2048')
+    ).toHaveLength(2);
+    renderer.render(plan, {
+      eyeWorld: origin.position,
+      heading: origin.heading,
+      lighting: erisLighting(doc, origin.heading)
+    });
+
+    expect(fake.calls.filter(call => call.startsWith('draw:'))).toEqual([
+      'draw:15:0:12',
+      'draw:15:0:12',
+      'draw:15:0:24',
+      'draw:15:0:12',
+      'draw:15:0:12',
+      'draw:15:0:24'
+    ]);
+    expect(fake.calls).toContain('disableAttribute:1');
+    expect(fake.calls).toContain('polygonOffset:1:2');
+    expect(fake.uniforms['nearLightMatrix']).toHaveLength(16);
+    expect(fake.uniforms['farLightMatrix']).toHaveLength(16);
+    expect(fake.uniforms['nearShadowMap']).toEqual([0]);
+    expect(fake.uniforms['farShadowMap']).toEqual([1]);
+    expect(fake.uniforms['ambientSky']).toEqual([
+      0x66 / 255,
+      0x80 / 255,
+      0x9c / 255
+    ]);
+
+    const spaceport = surface.placements.find(
+      candidate => candidate.id === 'eris-surface-87'
+    )!;
+    const startDistance = Math.hypot(
+      doc.start.position.x - spaceport.position.x,
+      doc.start.position.z - spaceport.position.z
+    );
+    expect(ERIS_SHADOW_WINDOWS).toHaveLength(2);
+    expect(ERIS_SHADOW_WINDOWS[0].depthHalfRange).toBeGreaterThan(16_384);
+    expect(ERIS_SHADOW_WINDOWS[1].halfExtent).toBeGreaterThan(startDistance);
   });
 });

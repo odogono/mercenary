@@ -16,6 +16,7 @@ interface SettingRow {
 }
 
 export interface SettingsViewOptions {
+  readonly onPresentationChange?: () => void;
   readonly page: HTMLElement;
   readonly preferences: PreferencesStore;
   readonly root: HTMLElement;
@@ -242,6 +243,9 @@ export const installSettingsView = (
       button.addEventListener('click', () => {
         row.apply(choice.value);
         refresh();
+        if (row.name === 'sky') {
+          options.onPresentationChange?.();
+        }
       });
       group.append(button);
       return button;

@@ -47,9 +47,12 @@ export interface ErisPresentationDocument {
     readonly paletteIndex: number;
   };
   readonly lighting: {
+    readonly ambientGround: string;
+    readonly ambientSky: string;
     readonly note: string;
     readonly provenance: Provenance;
     readonly shadows: boolean;
+    readonly sunColour: string;
     readonly sunDirection: Vector3;
   };
   /// Eris's axes and camera yaw as recovered from the Working Authority (#204). North is +z
@@ -302,6 +305,9 @@ export const readErisPresentation = (
   ]);
   const lighting = object(root['lighting'], 'lighting', [
     'sunDirection',
+    'sunColour',
+    'ambientSky',
+    'ambientGround',
     'shadows',
     'provenance',
     'note'
@@ -353,6 +359,10 @@ export const readErisPresentation = (
   if (fieldOfView >= 180) {
     fail('camera.verticalFieldOfViewDegrees', 'should be under 180');
   }
+  const sunDirection = point(lighting['sunDirection'], 'lighting.sunDirection');
+  if (Math.hypot(sunDirection.x, sunDirection.y, sunDirection.z) === 0) {
+    fail('lighting.sunDirection', 'should be nonzero');
+  }
 
   return {
     body: {
@@ -395,10 +405,16 @@ export const readErisPresentation = (
       paletteIndex: integer(ground['paletteIndex'], 'ground.paletteIndex')
     },
     lighting: {
+      ambientGround: colour(
+        lighting['ambientGround'],
+        'lighting.ambientGround'
+      ),
+      ambientSky: colour(lighting['ambientSky'], 'lighting.ambientSky'),
       note: text(lighting['note'], 'lighting.note'),
       provenance: provenance(lighting['provenance'], 'lighting.provenance'),
       shadows: boolean(lighting['shadows'], 'lighting.shadows'),
-      sunDirection: point(lighting['sunDirection'], 'lighting.sunDirection')
+      sunColour: colour(lighting['sunColour'], 'lighting.sunColour'),
+      sunDirection
     },
     orientation: {
       east: literal(orientation['east'], '+x', 'orientation.east'),
