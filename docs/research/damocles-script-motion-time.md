@@ -118,13 +118,12 @@ building, pick up key, walk to car) was built inside #81.
 ### Flight / space motion — Unresolved (dynamics); place class already #80
 
 Narrative copy confirms atmosphere entry, spaceflight, and “not equipped for
-space travel” vehicle lines. Body slot `VOID` is a place class (#80). This pass
-did not reach VOID or decode motion/coordinate encodings behind the navigation
-panel (`016-283`, `07-08` visible on PNGs; values stable across the standing
-deadline wait). Orbital mechanics and time-dilation-in-flight remain
-**Unresolved**.
+space travel” vehicle lines. Body slot `VOID` is a place class (#80). This pass did not reach VOID. Navigation panel `07-08` is the Eris cell from
+`$7A92`/`$7A9A` (16.16); `016-283` is a separate pair at `$7A1C`/`$7A20` (#208)
+and did not move with an on-foot walk that raised `$7A9A`. Orbital mechanics and
+time-dilation-in-flight remain **Unresolved**.
 
-### Time / comet deadline — Confirmed (panel advances); RAM encoding Unresolved
+### Time / comet deadline — Confirmed (panel advances); RAM encoding Confirmed (#208)
 
 **Working-Authority Evidence** from `deadline-clock` run
 `observe-deadline-clock-20260818T103425Z-e36297b7`:
@@ -139,13 +138,44 @@ label `ERIS` and `EMPTY` inventory stay put. So the impact-deadline clock
 **runs while the player stands still** — Working-Authority Evidence for a
 session time base independent of player motion.
 
-Exact RAM encoding (BCD triple, total seconds, tick counter, …) was **not**
-pinned: searches for matching second totals and BCD `HH MM SS` at shared
-offsets between t0 and t1 did not land a single clear cell. Display advances;
-storage layout stays Unresolved.
-
 Cold `first-world` runs already showed different clock readings (`02-29-05` vs
 `02-29-17`) at capture time, consistent with a live countdown.
+
+**RAM encoding (#208).** The panel field is **not** packed BCD and is **not** a
+`$7482` script record. It is a signed big-endian 32-bit at **`$793C`** whose
+value is **minus remaining seconds**. `abs(value)` formatted as `HH-MM-SS` is
+the readout: idle on-foot snapshot `$FFFFDE7D` = `-8579` displays as
+`02-22-59` (`2×3600 + 22×60 + 59`). The word increases toward zero. Exact-VBL
+idle pairs from `eris-spaceport-onfoot.sav` (`panel-readout-probe.py clock`):
+
+| VBLs | `$793C` | `abs` | Panel (PNG; may lag the RAM dump by one displayed second) |
+| ---: | ------- | ----: | --------------------------------------------------------- |
+|  250 | `-8579` → `-8567` | 12 s | `02-22-59` → `02-22-47` |
+|  500 | `-8579` → `-8554` | 25 s | `02-22-59` → `02-22-33` |
+
+**Tick.** 500 VBLs / 25 displayed seconds = **20 VBLs per displayed second** at
+PAL 50 Hz (2.5 displayed seconds per host second while idle on foot). Packed
+BCD and ASCII `HH-MM-SS` searches of the same dumps are empty; the digits are
+drawn, not stored as text.
+
+**Poke.** Writing `$FFFFF1F0` (`-3600`) at `$793C` and waiting 400 VBLs leaves
+`$FFFFF204` (`-3580`) and redraws the panel as `00-59-39` (magnitude
+`00-59-40` on the RAM capture). A short 80-VBL poke updated `$793C` but not
+yet the bitmap; the renderer needs more than one displayed-second of running
+time. `$7942` is a finer companion word, not the `HH-MM-SS` source. Script
+`$7482` records did not change while the clock ticked.
+
+Reproduce:
+
+```sh
+python3 research/damocles-st/scripts/panel-readout-probe.py \
+  --roms /path/to/roms --snapshots /path/to/snapshots clock --vbls 250
+python3 research/damocles-st/scripts/panel-readout-probe.py \
+  --roms /path/to/roms --snapshots /path/to/snapshots poke \
+  --address 0x793c --bytes fffff1f0 --vbls 400
+```
+
+Residual Fog: whether flight / near-c time changes this word's rate (still #86).
 
 ## Host Callout census (category rows)
 
@@ -183,8 +213,8 @@ Damocles seam *would* need to census — not types to add to `MercenaryKit`.
 - Full script ISA / dispatch-table decode — follow-on [#85](https://github.com/odogono/mercenary/issues/85); **existence answered** in `damocles-script-isa.md` (successor VM); full semantics still open
 - Walk-versus-boarded RAM word and board/leave observe — **answered** in [#86](https://github.com/odogono/mercenary/issues/86) / `damocles-walk-board-flight.md` (walk flag `$7A8E`; VOID / velocity binary / clock-under-flight still Fog there)
 - VOID / deep-space flight and near-c time dilation — still open under #86 residual Fog
-- Impact-clock RAM cell(s) — still Unresolved
-- Craft control-rate / orbital-parameter blocks — partial (number-key panel speed in #86); tables Unresolved
+- Impact-clock RAM cell — **answered** in #208 (`$793C` signed remaining seconds)
+- Craft control-rate / orbital-parameter blocks — partial (number-key panel speed in #86 / #208); integer velocity cell still Fog; tables Unresolved
 
 ## Provenance summary
 
@@ -195,4 +225,5 @@ Damocles seam *would* need to census — not types to add to `MercenaryKit`.
 | Craft/key catalogues | `#80` / `$03E430` band; present after load |
 | Start on foot | Panel `EMPTY` on `first-world` and `deadline-clock` PNGs |
 | Impact clock advances while idle | `deadline-clock` `observed-t0` → `observed-t1` panel `02-29-13` → `02-24-26` |
+| Impact clock is signed seconds at `$793C` | #208 exact-VBL idle pairs; poke `$FFFFF1F0` → panel `00-59-39` |
 | Scenario pins | `first-world.json`, `deadline-clock.json` |

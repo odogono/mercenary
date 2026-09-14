@@ -127,7 +127,7 @@ So walk-versus-boarded is carried by **`$7A8E` / `$7AAE`** (and companions
 `$7A90` / `$7AB0`). `$79B2` looked like a boarded flag until leave proved it
 sticky — likely craft/key association, not the mover mode.
 
-### Ground-craft speed — Confirmed (panel); RAM encoding Partial
+### Ground-craft speed — Confirmed (panel); RAM encoding still Fog (#208)
 
 While boarded, number keys change the large signed field beside `ERIS`:
 
@@ -137,9 +137,14 @@ While boarded, number keys change the large signed field beside `ERIS`:
 |   4 | `024`                   |
 |   9 | `400`                   |
 
-Exact binary cell for that velocity integer was **not** pinned (no BE16/BE32
-equal to 2/24/400 across the digit captures). `$007B60` / `$00797A` track recent
-keyboard scancodes during probes and are **not** the velocity word.
+#208 re-ran keys `1` and `4` from `boarded-limo.sav` with the game loop running
+(`panel-readout-probe.py velocity`). PNGs still show `002` / `024`. A whole-RAM
+search found **no** BE16/BE32/packed-BCD cell equal to 2, 24, or 400 that
+changed with the key. `$007B60` / `$00797A` still track recent scancodes (key 4
+→ `$0006`) and are not the velocity word. A poke of `$4DFE8` (a nearby digit-ish
+scratch) did not retarget the panel. Key `9` did not take under FIFO `keydown 10`
+in this harness (panel stayed `000`); the `400` reading remains the earlier
+human digit-probe.
 
 Joystick still steers while boarded (`$79C2` poke / stick recording).
 
@@ -312,8 +317,8 @@ capture does).
   clock comparison was possible without a spaceworthy craft.
 
 Residual Fog: locate and board a space-capable craft; compare impact-clock
-advance on surface vs in flight; bind the panel velocity word and craft
-control-rate tables.
+advance on surface vs in flight; bind the integer behind `+ 000 000 NNN` and
+craft control-rate tables. The impact clock's idle cell is `$793C` (#208).
 
 ## Implications for #82 (shape signals only)
 
@@ -377,7 +382,8 @@ Disassembly was required or produced.
 | Arrival ship flight-gated                                                                     | `SHIP NOT REFITTED FOR FURTHER FLIGHT`                                                           |
 | Inventory `KEY- V.I.P. LIMO` + `$03E484`                                                      | `$04DDBC` buffer in boarded/left RAM                                                             |
 | Walk flag `$7A8E`/`$7AAE` (1 foot / 0 boarded)                                                | four-way RAM compare; reverts on leave                                                           |
-| Number keys set panel speed                                                                   | digit probe PNGs `002`/`024`/`400`                                                               |
+| Number keys set panel speed                                                                   | digit probe PNGs `002`/`024`/`400`; #208 FIFO keys 1/4 while running                             |
+| Integer RAM cell for `+ 000 000 NNN`                                                          | **Fog** — no BE16/BE32/BCD 2/24/400 that tracks the key (#208)                                   |
 | VOID / flight dynamics not reached                                                            | limo ground-only; ship not refitted                                                              |
 | Camera yaw `$7AA2`/`$7AC2`, 1024 per turn, N = `$200`, clockwise                              | yaw-probe hold/period runs; compass tape frames                                                  |
 | North = +z, east = +x (`$7A9A`, `$7A92`)                                                      | yaw-probe axis runs                                                                              |
