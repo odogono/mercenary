@@ -91,6 +91,34 @@ test('STATE OFFICE moves its recovered two-leaf attachment on Z', () => {
   );
 });
 
+test('STATE OFFICE leaves rise to the soffit of the doorway they fill', () => {
+  const office = erisSurfaceFrom(catalogue, doc).placements.find(
+    p => p.id === 'eris-surface-89'
+  )!;
+  const structure = office.selection!.structure;
+  const north = structure.attachments.find(a => a.slot === 0x03_f0)!;
+  expect(north.constructor).toEqual({ leafCount: 2, motionAxis: 'x' });
+  expect(new Set(north.mesh.vertices.map(vertex => vertex[1]))).toEqual(
+    new Set([0, 150])
+  );
+  const spanning = structure.plan.faces.filter(face => {
+    const points = face.vertices.map(index => structure.plan.vertices[index]!);
+    return (
+      Math.min(...points.map(point => point[0])) <= -100 &&
+      Math.max(...points.map(point => point[0])) >= 100 &&
+      Math.min(...points.map(point => point[2])) <= 185 &&
+      Math.max(...points.map(point => point[2])) >= 200 &&
+      Math.max(...points.map(point => point[1])) > 110 &&
+      Math.min(...points.map(point => point[1])) < 150
+    );
+  });
+  expect(spanning).toEqual([]);
+  const east = structure.attachments.find(a => a.slot === 0x03_fc)!;
+  expect(new Set(east.mesh.vertices.map(vertex => vertex[1]))).toEqual(
+    new Set([0, 110])
+  );
+});
+
 test('arrival draws region eleven in order, its real door, and the on-foot detail default', () => {
   const meshes = structureMeshes(placement, startPose(doc), false);
   expect(meshes.slice(0, 18).map(m => m.faces[0]!.sourceIndex! + 1)).toEqual([

@@ -210,6 +210,44 @@ The first two are `$8200` Z constructors and the last is a `$4200` X
 constructor. They are retained as independent per-slot records; the proving
 walk uses the `$03FC` STATE OFFICE entrance.
 
+## Leaf height belongs to the opening — Confirmed
+
+[#249](https://github.com/odogono/mercenary/issues/249) asks where a closed
+leaf's top edge comes from. Neither constructor writes one. Across
+`$59E94..$5A24D` the leaf writers touch only the X vertex array at `$1640` and
+the Z array at `$1A40`; no instruction in the range references the Y array at
+`$1840`. Leaf height is therefore not a field of the 26-byte record and not
+the structure header's lower wall band, which the first schema 7 extractor
+assumed.
+
+The plan says what the height must be. Every authored opening carries a soffit
+spanning its closed rectangle, and nothing in the plan spans an opening between
+that soffit and the wall top:
+
+| Attachment                 | Closed rectangle       | Soffit over it | Header band |
+| -------------------------- | ---------------------- | -------------: | ----------: |
+| Structure 74 `$03FC`       | X 1300–1500, Z −790–−770 |            150 |         150 |
+| Structure 75 `$03FC`       | X 293–297, Z −160–−40    |            110 |         110 |
+| Structure 75 `$03F8`       | X −607–−603, Z −240–−160 |            110 |         110 |
+| Structure 75 `$03F4`       | X −607–−603, Z −40–40    |            110 |         110 |
+| Structure 75 `$03F0`       | X −100–100, Z 185–200    |            150 |         110 |
+
+Structure 74's opening is closed above its 150 soffit by a 150–250 transom, and
+Structure 75's three 110-high doorways by 110–150 transoms. The `$03F0` north
+entrance has no transom: its jambs and recess ceiling stand at 150 and no plan
+face spans X −100–100 between 110 and 150. A leaf stopping at the header band
+would leave the interior visible through a closed door, which the Working
+Authority does not show.
+
+The catalogue therefore takes each leaf's top from the lowest horizontal plan
+face above the floor that spans its closed rectangle, falling back to the
+header band where an opening authors no soffit. This is a decoded-geometry
+rule, not a traced one: **Unresolved** is which vertex indices the constructors
+inherit their Y words from at bind time. That needs a runtime capture reading
+the `$1840` array over the slot's vertex base while STATE OFFICE is bound, and
+no such capture exists — both pinned RAMs are cold first-world states bound to
+Structure 74 at cell `$87`.
+
 ## Slot `$0200` on the shared complete selector
 
 `structure-00ff04`, `structure-010152`, `structure-010164` and
@@ -317,6 +355,9 @@ runtime scenario. No ST code was copied, translated or tracked.
 | `$0200` regions are unconditional and have no attachment mesh                                                     | Confirmed  | shared `$FF04` record, `$5A366..$5A386`                                       |
 | `$5C40` is global scratch and is not rewritten by the no-attachment structure bind                                | Confirmed  | `$570CC..$572B5`, `$59E94..$5A24E`; both RAMs                                 |
 | Structure 75's STATE OFFICE entrance is `$8200`, two-leaf Z, slot `$03FC`, with an `attachmentLatch` Z-inset gate | Confirmed  | `$14C46..$14C5F`; both RAMs                                                   |
+| Attachment constructors never write the `$1840` Y vertex array, so leaf height is not record-owned                | Confirmed  | `$59E94..$5A24D`                                                              |
+| Leaves rise to the soffit spanning their closed rectangle, 150 for Structure 75's `$03F0`                        | Confirmed  | plan faces of `$1484E` and `$14AEC`; ST screen shows no band                  |
+| Which vertex indices the constructors inherit leaf Y words from at bind time                                     | Unresolved | no runtime capture reads `$1840` with STATE OFFICE bound                      |
 | Natural Eris `$0200` bind always uses X inset                                                                     | Unresolved | no `$52/$9A/$D8` runtime capture; captured `$5C40` is zero only at cell `$87` |
 | Meaning of `$40F0/$82F0` live selector predicates                                                                 | Unresolved | constructor decoded; selecting game-state predicate not traced                |
 | Schema 6 closed mesh plus flags is sufficient                                                                     | Disproved  | constructor, Proximity Box, gate and scratch-dependent inset facts are absent |

@@ -103,6 +103,24 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(result['regions'][0]['gate'], 'attachmentLatch')
         self.assertEqual(result['regions'][0]['insetAxis'], 'z')
 
+    def test_leaves_rise_to_the_soffit_over_their_closed_rectangle(self):
+        start = 0x14aec
+        data = bytearray(start + 4)
+        struct.pack_into('>hh', data, start, 150, 110)
+        record = struct.pack('>H4h4H4h', 0x4200, -100, 185, 100, 200,
+                             0x9090, 0x9088, 0x9082, 0x9084, -300, 300, 100, 400)
+        tail = bytes.fromhex('0000 c000 80007fff80007fff ff00 0000')
+        soffit = {'sourceIndex': 0, 'vertices': [0, 1, 2, 3]}
+        mesh = {'sourceStart': start, 'sourceEnd': start + 6, 'faces': [soffit],
+                'vertices': [[-100, 150, 180], [100, 150, 180], [100, 150, 200], [-100, 150, 200]]}
+        result = decode_structure_selection(bytes(data) + record + tail, mesh, (1, 1), [0] * 16, [])
+        leaves = result['attachments'][0]['mesh']['vertices']
+        self.assertEqual(sorted({point[1] for point in leaves}), [0, 150])
+        mesh['vertices'] = [[point[0], 150, point[2] - 40] for point in mesh['vertices']]
+        aside = decode_structure_selection(bytes(data) + record + tail, mesh, (1, 1), [0] * 16, [])
+        self.assertEqual(sorted({point[1] for point in aside['attachments'][0]['mesh']['vertices']}),
+                         [0, 110])
+
     def test_passage_sentinel_is_not_an_attachment_mesh(self):
         mesh = {'sourceEnd': 2, 'sourceStart': 0, 'faces': [{'sourceIndex': 0}]}
         data = bytes.fromhex('0000 8200 0000000a 0000000a 0100 0000')
