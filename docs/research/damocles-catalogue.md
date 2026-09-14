@@ -44,7 +44,9 @@ program SHA-256; model identities depend on kind and source address, never names
 
 Schema 7 extends `structureSelection` with generic Entrance Attachment records:
 raw control word, normalized constructor, runtime slot, closed mesh and scaled
-Proximity Box. Regions name their gate kind and resolved inset axis; `$0200`
+Proximity Box. A closed mesh rises to the soffit spanning its rectangle, since
+the constructors leave leaf Y words to the opening the leaves fill; openings
+without a soffit fall back to the structure's lower wall band. Regions name their gate kind and resolved inset axis; `$0200`
 remains an unconditional passage with no fictitious attachment. Each selector also carries
 its original plan mesh, scaled region bounds (signed-word endpoint sentinels stay at
 −32768/32767), raw flags, tagged ordered queue, and linked detail model/variant and X/Z

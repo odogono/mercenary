@@ -490,6 +490,29 @@ def closed_attachment_mesh(x0: int, z0: int, x1: int, z1: int, colours: list[int
     return attachment
 
 
+def attachment_leaf_height(mesh: dict, x: list[int], z: list[int], band: int) -> int:
+    """Height of the opening a closed attachment fills.
+
+    Both attachment constructors write only the X and Z vertex arrays, leaving the Y words
+    of the plan's own doorway vertices in place, so leaves rise to the soffit above their
+    closed rectangle. Openings without an authored soffit fall back to the lower wall band.
+    """
+    soffits = []
+    for face in mesh['faces']:
+        points = [mesh['vertices'][index] for index in face['vertices']]
+        levels = {point[1] for point in points}
+        if len(levels) != 1:
+            continue
+        level = levels.pop()
+        if level <= 0:
+            continue
+        if (min(point[0] for point in points) <= x[0] and max(point[0] for point in points) >= x[1]
+                and min(point[2] for point in points) <= z[0]
+                and max(point[2] for point in points) >= z[1]):
+            soffits.append(level)
+    return min(soffits, default=band)
+
+
 def skip_other_post_plan(reader: Reader) -> None:
     """Skip a non-entrance post-plan record whose control low byte is 1–15."""
     reader.take(2)
@@ -535,7 +558,7 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
     reader = Reader(data, mesh['sourceEnd'] - 2)
     attachments = []
     slot = ATTACHMENT_SLOT_MASK
-    height = Reader(data, mesh['sourceStart'] + 2).signed()
+    band = Reader(data, mesh['sourceStart'] + 2).signed()
     for _ in range(64):
         command = reader.word()
         if command == 0:
@@ -560,8 +583,9 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
                 'constructor': constructor,
                 'mesh': closed_attachment_mesh(
                     scaled_x[0], scaled_z[0], scaled_x[1], scaled_z[1],
-                    colours[:3], height, constructor,
-                    palette, hardware,
+                    colours[:3],
+                    attachment_leaf_height(mesh, scaled_x, scaled_z, band),
+                    constructor, palette, hardware,
                 ),
                 'proximityBox': {'x': proximity_x, 'z': proximity_z},
                 'slot': slot,

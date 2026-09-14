@@ -16,6 +16,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Working-Authority notes pin the impact clock at `$793C` (signed remaining seconds) and
   `016-283` at `$7A1C`/`$7A20`; boarded `+ 000 000 NNN` still has no integer RAM cell.
 
+## [0.19.7] - 2026-09-14
+
+### Fixed
+
+- A closed Entrance Attachment fills the opening it covers. Leaves rise to the soffit
+  spanning their closed rectangle rather than to the structure's lower wall band, so Eris
+  STATE OFFICE's north entrance no longer shows the interior above its closed doors.
+  Capital Spaceport and Structure 75's three 110-high doorways are unchanged (#249).
+
 ## [0.19.6] - 2026-09-14
 
 ### Added
