@@ -754,39 +754,63 @@ def decode_structure(data: bytes, start: int, palette: list[int] | None = None,
 # Cell-local ground records at $1E000: $54E8E transform nybbles, then $8000-relative X/Z.
 GROUND_ORIENT = bytes.fromhex('0006030501040207')
 GROUND_HORIZON_SLOTS = {0xF0, 0xF4}
-# $054A64 fills the slots from $7B54 up to $100 from packed bytes at $5E40.
-# Each byte holds a world cell index per axis; $054A8E seeds $80000000 so the
-# swap leaves $8000 in the low word, making every point a cell centre.
-SCENE_POINT_TABLE = 0x5E40
-SCENE_POINT_START = 0x7B54
-SCENE_POINT_LIMIT = 0x100
+# $05493E reads a longword of four packed bytes at $1E000 + cell x 4, rotates it
+# by the cell's transform and seeds slots $F0..$FC with the four bytes. Those are
+# the only slots a ground record references. Each byte holds one world cell index
+# per nybble, and $054A8E seeds $80000000 so the swap at $054AA4 leaves $8000 in
+# the low word, making every point a cell centre.
+SCENE_SEED_TABLE = 0x1E000
+SCENE_SEED_SLOTS = (0xFC, 0xF8, 0xF4, 0xF0)
 CELL_UNITS = 0x10000
 
 
-def scene_points(data: bytes) -> dict[int, tuple[int, int]]:
-    """World cell indices for the scene points a ground record can reference."""
-    start = int.from_bytes(data[SCENE_POINT_START:SCENE_POINT_START + 4], 'big')
-    if not 0 < start <= SCENE_POINT_LIMIT or start % 4:
-        return {}
+def scene_seeds(data: bytes, cell: int, transform: int) -> dict[int, tuple[int, int]]:
+    """World cell indices for the scene points one cell's record can name."""
+    packed = int.from_bytes(
+        data[SCENE_SEED_TABLE + cell * 4:SCENE_SEED_TABLE + cell * 4 + 4], 'big'
+    )
+
+    def swap(value: int) -> int:
+        return ((value << 16) | (value >> 16)) & 0xFFFFFFFF
+
+    def roll_low(value: int) -> int:
+        return (value & 0xFFFF0000) | ((value >> 8) & 0xFF) | ((value & 0xFF) << 8)
+
+    if not transform & 4:
+        packed = swap(packed)
+    if transform & 2:
+        packed = roll_low(packed)
+    if transform & 1:
+        packed = swap(roll_low(swap(packed)))
     points = {}
-    for slot in range(start, SCENE_POINT_LIMIT, 4):
-        packed = data[SCENE_POINT_TABLE + slot]
-        if packed:
-            points[slot] = (packed & 0xF, packed >> 4)
+    for slot in SCENE_SEED_SLOTS:
+        byte = (packed >> 24) & 0xFF
+        if byte:
+            points[slot] = (byte & 0xF, byte >> 4)
+        packed = ((packed << 8) | (packed >> 24)) & 0xFFFFFFFF
     return points
 
 
-def scene_point_offsets(data: bytes, cell: int) -> dict[int, list[int]]:
+def scene_point_offsets(data: bytes, cell: int, transform: int) -> dict[int, list[int]]:
     """Scene points expressed in one cell's local frame, in raw grid units."""
     return {
         slot: [(x - (cell & 15)) * CELL_UNITS, 0, (z - (cell >> 4)) * CELL_UNITS]
-        for slot, (x, z) in scene_points(data).items()
+        for slot, (x, z) in scene_seeds(data, cell, transform).items()
     }
 EMPTY_GROUND_REASON = (
     'Empty ground record: source plan and command streams terminate immediately; '
     'the native $056634 renderer returns at that zero terminator, so this record '
     'intentionally contributes no ground geometry.'
 )
+
+
+def uses_scene_points(mesh: dict) -> bool:
+    """Whether a decoded ground mesh joins any scene point.
+
+    Scene offsets are relative to the cell, so two cells sharing a record draw
+    different geometry and cannot share one model identity.
+    """
+    return any('sceneSlots' in item for item in mesh['faces'] + mesh['lines'])
 
 
 def _scene_tag(refs: list[int], plan: list) -> dict:
@@ -798,15 +822,16 @@ def _scene_tag(refs: list[int], plan: list) -> dict:
 def decode_ground(data: bytes, start: int, orientation: int,
                   palette: list[int] | None = None,
                   hardware: list[int] | None = None,
+                  cell: int | None = None,
                   scene: dict[int, list[int]] | None = None
                   ) -> tuple[dict, list[str], int, list[dict]]:
     """Decode one per-cell ground record.
 
-    `scene` supplies the workspace's scene points in this cell's local frame.
-    Without it, references above the record's own plan stay unplaced and the
-    remaining local shape is kept.
+    Given the cell, scene points come from the authored seed table and every
+    reference resolves. `scene` overrides that for tests. Without either,
+    references above the record's own plan stay unplaced and the remaining
+    local shape is kept.
     """
-    scene = scene or {}
     reader = Reader(data, start)
     first, second = reader.take(1)[0], reader.take(1)[0]
     extra, d5 = 0, orientation & 0xFF
@@ -820,6 +845,8 @@ def decode_ground(data: bytes, start: int, orientation: int,
         reader.take(1)
         d5 = (d5 + extra - first) & 0xFF
     transform = GROUND_ORIENT[(d5 & 3) + (extra & 4)]
+    if scene is None:
+        scene = {} if cell is None else scene_point_offsets(data, cell, transform)
     plan = []
     for _ in range(256):
         x = reader.word()
@@ -1588,7 +1615,7 @@ UNEXPLORED_COVERAGE = [
     'Building detail 69 references projected slots beyond its own vertex list.',
     'Object vector text that resolves through live $CCA0 tokens, indirect text pointers, or the state-conditioned font 4; '
     'post-plan attachment forms other than the documented zero-latch and $F0 constructors.',
-    '$F0/$F4 ground horizon joins are view-conditioned and the separate native surface/background fill path remains unresolved.',
+'Ground scene point joins resolve from the authored $1E000 seed table; the separate native surface/background fill path remains unresolved.',
 ]
 
 BUILDING_VECTOR_TEXT_MODELS = {
@@ -1799,9 +1826,6 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
         if place:
             next(item for item in places if item['id'] == place[0])['instances'].append(identity)
     ground_unique = 0
-    # Scene points are filled for the cell the capture stands in, so only that
-    # cell's record can have its joins placed.
-    scene_cell = int.from_bytes(workspace[0x7B5C:0x7B5E], 'big')
     for cell in range(256):
         offset = int.from_bytes(workspace[0x1e400 + cell * 2:0x1e402 + cell * 2], 'big')
         address = 0x1e000 + offset
@@ -1816,7 +1840,7 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
         try:
             mesh, gaps, transform, _placements = decode_ground(
                 workspace, address, workspace[0x83dc + cell], palette, hardware,
-                scene_point_offsets(workspace, cell) if cell == scene_cell else None,
+                cell,
             )
         except (ValueError, struct.error) as error:
             mesh, gaps, transform, _placements = (
@@ -1830,12 +1854,14 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
         )
         gaps = sorted(set(gaps + template_gaps))
         shared_id = f'ground-{address:06x}-{transform:02x}'
+        if uses_scene_points(mesh):
+            shared_id += f'-{cell:02x}'
         span = workspace[mesh['sourceStart']:mesh['sourceEnd']]
         reuse = (
             shared_id in by_address
             and data[mesh['sourceStart']:mesh['sourceEnd']] == span
         )
-        model_id = shared_id if reuse else f'{slug}-ground-{address:06x}-{transform:02x}'
+        model_id = shared_id if reuse else f'{slug}-{shared_id}'
         if model_id not in by_address:
             ground_unique += 1
             model = {
@@ -2060,7 +2086,6 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         by_address[target]['relatedModels'].append(alias)
     ground_entries = []
     ground_cells: list[tuple[int, str]] = []
-    scene_cell = int.from_bytes(data[0x7B5C:0x7B5E], 'big')
     for cell in range(256):
         offset = int.from_bytes(data[0x1e400 + cell * 2:0x1e402 + cell * 2], 'big')
         address = 0x1e000 + offset
@@ -2073,7 +2098,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         try:
             mesh, gaps, transform, _placements = decode_ground(
                 data, address, data[0x83dc + cell], palette, hardware,
-                scene_point_offsets(data, cell) if cell == scene_cell else None,
+                cell,
             )
         except (ValueError, struct.error) as error:
             mesh, gaps, transform, _placements = (
@@ -2087,11 +2112,14 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         )
         gaps = sorted(set(gaps + template_gaps))
         identity = f'ground-{address:06x}-{transform:02x}'
+        if uses_scene_points(mesh):
+            identity += f'-{cell:02x}'
         ground_entries.append(identity)
         ground_cells.append((cell, identity))
         if identity in by_address:
             by_address[identity]['slots'].append(cell)
             continue
+        scene_joined = uses_scene_points(mesh)
         model = {
             'id': identity,
             'kind': 'ground',
@@ -2113,6 +2141,16 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 'source': 'docs/research/damocles-eris-ground.md',
             }],
         }
+        if scene_joined:
+            model['evidence'].append({
+                'claim': (
+                    f'Scene joins come from the authored seed longword at $1E000+${cell * 4:X} '
+                    '($05493E), so cells sharing this source record draw different geometry '
+                    'and each keeps its own identity.'
+                ),
+                'confidence': 'verified',
+                'source': 'docs/research/damocles-eris-ground.md',
+            })
         by_address[identity] = model
         models.append(model)
         if mesh['faces'] or mesh['lines']:

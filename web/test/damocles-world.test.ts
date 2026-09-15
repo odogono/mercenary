@@ -45,7 +45,7 @@ describe('the Eris surface from the Damocles Catalogue', () => {
       placement => placement.id === 'eris-ground-88'
     )!;
     expect(pad.kind).toBe('ground');
-    expect(pad.modelId).toBe('ground-021afe-00');
+    expect(pad.modelId).toBe('ground-021afe-00-88');
     expect(pad.faceCount).toBeGreaterThan(0);
     const colours = new Set(pad.mesh!.faces.map(face => face.sourceColour));
     expect(colours.has(0x7_77)).toBe(true);
