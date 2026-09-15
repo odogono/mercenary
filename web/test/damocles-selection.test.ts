@@ -360,7 +360,7 @@ test('selector payload rejects invalid bindings, references, bounds, tags and ki
   copy.models.find(
     m => m.id === 'interior-0303d6'
   )!.detailSelection[0]!.default = [999];
-  expect(() => parseCatalogue(copy)).toThrow('detail face');
+  expect(() => parseCatalogue(copy)).toThrow('detail record');
   expect(() => parseCatalogue({ ...raw, schemaVersion: 5 })).toThrow(
     'schema version'
   );
@@ -381,7 +381,7 @@ test('negative detail scales retain lower-exclusive and upper-inclusive world bo
                 [0, 200],
                 [-1, 1]
               ] as const,
-              faces: []
+              records: []
             }
           ],
           default: [0]

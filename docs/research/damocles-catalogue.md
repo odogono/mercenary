@@ -32,7 +32,8 @@ first-world scenario hash. It uses the standard library only. A missing capture
 can be regenerated with the existing `lab observe --scenario
 research/damocles-st/scenarios/first-world.json` command. Raw images, RAM and
 Working Disassembly stay in ignored research paths; the browser receives only
-the separately versioned catalogue JSON. Schema version 5 adds the per-cell
+the separately versioned catalogue JSON. Schema version 8 makes detail selector lists name source records rather than
+drawn polygons, and adds each detail mesh's `recordCount`. Schema version 5 adds the per-cell
 ground/pad/road table. Schema version 3 included per-face source indices,
 structured evidence, nested instance placements, and source key display metadata.
 
@@ -56,12 +57,13 @@ without a soffit fall back to the structure's lower wall band. Regions name thei
 remains an unconditional passage with no fictitious attachment. Each selector also carries
 its original plan mesh, scaled region bounds (signed-word endpoint sentinels stay at
 −32768/32767), raw flags, tagged ordered queue, and linked detail model/variant and X/Z
-scales. Detail selectors retain two groups of ordered boxes and default face indices in raw
-model coordinates. Unsupported or truncated selectors are omitted as a whole and explained
+scales. Detail selectors retain two groups of ordered boxes and default **record**
+indices in raw model coordinates. Unsupported or truncated selectors are omitted as a whole and explained
 in the model reason. The census retains every selector the documented post-plan grammar
-accepts (210 in the current first-world extract, including Structure 75 and its Structure 76
-alias, and `$xxF0` constructor variants such as `$40F0`/`$42F0`/`$82F0`) and 44 detail selectors. The first detail group starts
-on the next word boundary after the byte-sized face stream. Empty plan meshes are valid
+accepts (254 in the current first-world extract, including Structure 75 and its Structure 76
+alias, and `$xxF0` constructor variants such as `$40F0`/`$42F0`/`$82F0`) and 58 detail
+selectors, which is every detail whose geometry decodes. The first detail group starts
+on the next word boundary after the byte-sized record stream. Empty plan meshes are valid
 when all queues are empty. The spaceport's combined inspection variants also carry
 `walkMesh`, excluding the resident key from the authored walk fallback.
 
@@ -214,7 +216,18 @@ code. Targeted disassembly used to establish them remains ignored at
   labels are source-verified names, not verification of gameplay interpretation.
 - Building-detail selection at `$053AA6` uses `$04BD22` → `$026000`. Interior vertex
   triples are followed directly by face records, without the object's visibility
-  header. Drawing every face for free inspection does not reproduce the
+  header.
+- A detail selector byte names a **source primitive record**, not a drawn polygon.
+  `$053BAE` tabulates one longword per record into `$C040` whatever its kind:
+  an ordinary polygon, a two-reference line, or an `$60xx` vector-text record.
+  `$053A46` then indexes that table by the selector byte, so the bytes are
+  one-based record ordinals. One text record can contribute many filled glyph
+  faces, a line record contributes a line rather than a face, and a record whose
+  text expands to nothing still occupies a slot. Counting drawn faces instead
+  rejected nine details outright and silently misaligned Building detail 84,
+  whose text record adds fourteen faces to thirty-nine records. Each detail
+  primitive now carries its `sourceIndex` and each mesh its `recordCount`, so a
+  live-text variant resolves the same selector against its own glyph count. Drawing every face for free inspection does not reproduce the
   original view-conditioned face list.
 - Building-detail `$60xx` records are native vector text, not polygons. Their
   fixed header supplies a model-local anchor, font, advance, glyph scales, plane
@@ -433,7 +446,6 @@ named-place lists, remaining object residences/transforms, live articulation
 angles (rest pose only), Building detail 69's extra projected slots, object text
 through live `$CCA0` tokens, indirect text pointers and font 4, the palette
 binding of unplaced objects 333–338, the live `$7AFB` attachment predicate,
-building-detail selectors for nine details and the 55 structures that link them,
 the separate native surface/background fill path, and script-created visual
 changes. The remaining nine unresolved records are NULL, five empty surface
 records, two empty building details and Building detail 69. Resident model banks do not change between first-world and occupied-Spaceport RAM.

@@ -301,7 +301,7 @@ export const structureMeshes = (
   if ((region.flags & 0x80_00) !== 0) {
     const scales = [structure.scale[0], 1, structure.scale[1]];
     const group = groups[1]!;
-    const faces =
+    const records =
       group.boxes.find(box =>
         box.bounds.every(([min, max], axis) => {
           const scale = scales[axis]!;
@@ -315,7 +315,7 @@ export const structureMeshes = (
             Math.min(a, b) < local[axis]! && local[axis]! <= Math.max(a, b)
           );
         })
-      )?.faces ?? group.default;
+      )?.records ?? group.default;
     let scaled = scaledDetails.get(selection);
     if (scaled === undefined) {
       scaled = {
@@ -334,14 +334,34 @@ export const structureMeshes = (
       lists = new WeakMap();
       detailLists.set(scaled, lists);
     }
-    let selected = lists.get(faces);
+    let selected = lists.get(records);
     if (selected === undefined) {
+      // A selection byte names a source record, which may contribute several
+      // filled glyph faces, a stroke line, or nothing at all.
+      const byRecord = (primitives: readonly Primitive[]) => {
+        const index = new Map<number, Primitive[]>();
+        for (const primitive of primitives) {
+          const key = primitive.sourceIndex;
+          if (key === undefined) {
+            continue;
+          }
+          const bucket = index.get(key);
+          if (bucket === undefined) {
+            index.set(key, [primitive]);
+          } else {
+            bucket.push(primitive);
+          }
+        }
+        return index;
+      };
+      const facesByRecord = byRecord(scaled.faces);
+      const linesByRecord = byRecord(scaled.lines);
       selected = {
         ...scaled,
-        faces: faces.map(i => scaled!.faces[i]!),
-        lines: []
+        faces: records.flatMap(i => facesByRecord.get(i) ?? []),
+        lines: records.flatMap(i => linesByRecord.get(i) ?? [])
       };
-      lists.set(faces, selected);
+      lists.set(records, selected);
     }
     detail.push(selected);
   }

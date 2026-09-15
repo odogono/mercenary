@@ -32,7 +32,7 @@ class SelectionTests(unittest.TestCase):
         box = struct.pack('>H6h', 0xffff, -10, 10, 0, 100, -20, 20)
         data = box + bytes.fromhex('0000 0000 02010000 0000 0300')
         groups = decode_detail_selection(data, 0, 3)
-        self.assertEqual(groups[0]['boxes'][0], {'bounds': [[-10,10],[0,100],[-20,20]], 'faces': []})
+        self.assertEqual(groups[0]['boxes'][0], {'bounds': [[-10,10],[0,100],[-20,20]], 'records': []})
         self.assertEqual(groups[0]['default'], [1,0])
         self.assertEqual(groups[1], {'boxes': [], 'default': [2]})
         for bad in (b'\x00\x01', data[:-1], struct.pack('>H6h', 0xffff, 10, -10, 0, 100, -20, 20)):

@@ -1161,3 +1161,76 @@ class SurfacePrimitiveTests(unittest.TestCase):
         if not seen:
             self.skipTest('no pinned captures in this checkout')
         self.assertEqual(set(seen.values()), {48}, seen)
+
+
+class DetailSelectionTests(unittest.TestCase):
+    """Detail selector bytes name source records, tabulated at $053BAE."""
+
+    @staticmethod
+    def _detail(records: bytes, groups: bytes) -> bytes:
+        body = struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768)
+        return body + records + b'\0\0' + groups
+
+    def test_records_are_numbered_across_faces_lines_and_text(self):
+        from damocleslab.catalogue import decode_mesh
+
+        # A face, a line, a filled-glyph text record, then another face.
+        text = bytes.fromhex('6000 0000 0000 0000 0000 8000 0010 0202 0777') + b'A\0'
+        records = bytes.fromhex('0777 04 08 0c 00') + bytes.fromhex('4543 04 08')
+        records += text + bytes.fromhex('0111 0c 08 04 00')
+        data = bytearray(self._detail(records, b'\0\0').ljust(0x31910, b'\0'))
+        struct.pack_into('>h', data, 0x31700 + (ord('A') - 32) * 2, 0x200)
+        data[0x31900:0x31909] = bytes.fromhex('0000 0202 80 040800 00')
+        mesh = decode_mesh(bytes(data), 0, 'interior', hardware=[0] * 16)
+        self.assertEqual(mesh['recordCount'], 4)
+        self.assertEqual([face['sourceIndex'] for face in mesh['faces']], [0, 2, 3])
+        self.assertEqual([line['sourceIndex'] for line in mesh['lines']], [1])
+
+    def test_a_record_that_draws_nothing_still_occupies_a_slot(self):
+        from damocleslab.catalogue import decode_mesh
+
+        # A $60xx record whose text is empty contributes no primitive but is
+        # still tabulated, so the records after it keep their own ordinals.
+        text = bytes.fromhex('6000 0000 0000 0000 0000 8000 0010 0202 0777') + b'\0'
+        records = bytes.fromhex('0777 04 08 0c 00') + text + bytes.fromhex('0111 0c 08 04 00')
+        data = bytes(self._detail(records, b'\0\0').ljust(0x31910, b'\0'))
+        mesh = decode_mesh(data, 0, 'interior', hardware=[0] * 16)
+        self.assertEqual(mesh['recordCount'], 3)
+        self.assertEqual([face['sourceIndex'] for face in mesh['faces']], [0, 2])
+
+    def test_selection_groups_name_records_not_drawn_polygons(self):
+        from damocleslab.catalogue import decode_detail_selection
+
+        groups = bytes.fromhex('0000 0100 0000 0200')
+        self.assertEqual(
+            decode_detail_selection(b'\xff\x00' + groups, 1, 2),
+            [{'boxes': [], 'default': [0]}, {'boxes': [], 'default': [1]}],
+        )
+        with self.assertRaisesRegex(ValueError, 'selection reference outside geometry'):
+            decode_detail_selection(b'\xff\x00' + bytes.fromhex('0000 0300 0000 0000'), 1, 2)
+
+    def test_every_building_detail_selector_decodes_in_the_pinned_capture(self):
+        from damocleslab.catalogue import (
+            decode_detail_selection, decode_mesh, palette_at, u32,
+        )
+
+        root = Path(__file__).resolve().parents[1]
+        runs = sorted(root.glob('work/observe-first-world-*/observed.ram'))
+        if not runs:
+            self.skipTest('no pinned first-world capture in this checkout')
+        data = runs[0].read_bytes()
+        hardware = list(struct.unpack_from('>16H', data, 0x6fd00))
+        decoded = 0
+        seen = set()
+        for slot in range(130):
+            address = 0x26000 + u32(data, 0x26000 + slot * 4)
+            if address in seen:
+                continue
+            seen.add(address)
+            try:
+                mesh = decode_mesh(data, address, 'interior', palette_at(data, 0), hardware)
+            except ValueError:
+                continue
+            decode_detail_selection(data, mesh['sourceEnd'], mesh['recordCount'])
+            decoded += 1
+        self.assertEqual(decoded, 58)
