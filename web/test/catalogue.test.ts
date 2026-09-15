@@ -218,9 +218,15 @@ it('keeps a generated census ledger that cannot drift from the models', async ()
   expect(data.models.some(model => model.recordClass === 'alias')).toBe(true);
   expect(
     data.models.filter(model => model.structureSelection).length
-  ).toBeGreaterThan(9);
+  ).toBe(88);
+  expect(
+    data.models.filter(model => model.structureSelection?.liveSelector).length
+  ).toBe(2);
   expect(
     data.coverage.diskLoad.some(item => item.path.includes('title-screen'))
+  ).toBe(true);
+  expect(
+    data.coverage.diskLoad.some(item => item.path.includes('Pasti STX'))
   ).toBe(true);
   expect(data.coverage.tables).toHaveLength(4);
   expect(data.coverage.tables.some(table => table.kind === 'interior')).toBe(

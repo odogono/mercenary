@@ -453,3 +453,44 @@ class CensusTests(unittest.TestCase):
         self.assertIn(marker, collapsed)
         self.assertIn('Building detail', text)
         self.assertIn('$026000', text)
+        self.assertIn('Pasti STX', text)
+
+
+class DiskLoadTests(unittest.TestCase):
+    def test_pasti_header_rejects_a_non_stx_image(self):
+        from damocleslab.catalogue import pasti_stx_header
+        with self.assertRaisesRegex(ValueError, 'Pasti'):
+            pasti_stx_header(b'STXFAKE' + b'\0' * 20)
+
+    def test_working_authority_stx_is_pasti_v3_without_resident_labels(self):
+        from damocleslab.catalogue import pasti_stx_header
+        path = (
+            Path(__file__).resolve().parents[3]
+            / 'roms/atarist/damocles_-_mercenary_ii_novagen_software_(uk).stx'
+        )
+        if not path.exists():
+            self.skipTest('Working-Authority STX is Restricted Material')
+        header = pasti_stx_header(path.read_bytes())
+        self.assertEqual(header['magic'], 'RSY')
+        self.assertEqual(header['version'], 3)
+        self.assertEqual(header['size'], 1031930)
+        self.assertEqual(
+            header['sha256'],
+            '8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef',
+        )
+        self.assertFalse(header['containsResidentLabels'])
+
+    def test_title_to_world_writes_the_table_base_block(self):
+        root = Path(__file__).resolve().parents[1] / 'work'
+        title = root / 'title-screen-20260818T100238Z-ba3cfe1d' / 'title-screen.ram'
+        world = root / 'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram'
+        if not title.exists() or not world.exists():
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        a, b = title.read_bytes(), world.read_bytes()
+        self.assertEqual(a[0x4BD00:0x4BD40], b'\0' * 0x40)
+        self.assertEqual(int.from_bytes(b[0x4BD0C:0x4BD10], 'big'), 0xE900)
+        self.assertEqual(int.from_bytes(b[0x4BD10:0x4BD14], 'big'), 0x35700)
+        self.assertEqual(int.from_bytes(b[0x4BD22:0x4BD26], 'big'), 0x26000)
+        self.assertEqual(b[0x7AFB], 0)
+        self.assertNotIn(b'DART II', a)
+        self.assertIn(b'DART II', b)
