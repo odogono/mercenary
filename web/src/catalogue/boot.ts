@@ -7,6 +7,7 @@ import {
 } from './data.ts';
 import { address, element, link, node } from './dom.ts';
 import { mountMap, renderMap, type MapFocus } from './map.ts';
+import { regionForms } from './regions.ts';
 import { createViewer } from './viewer.ts';
 
 let data: Catalogue;
@@ -120,15 +121,26 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
       }
     }
   }
+  // Each recovered region is offered beside the model's own forms, so the
+  // decoded visibility lists can be inspected rather than only described.
+  const forms = [
+    ...model.variants,
+    ...regionForms(
+      model,
+      data.models.find(
+        item => item.id === model.structureSelection?.detailModel
+      )
+    )
+  ];
   const chosen = new URL(location.href).searchParams.get('variant');
   const selected =
-    model.variants.find(form => form.id === chosen) ??
-    model.variants.find(form => form.id === model.id) ??
-    model.variants[0];
+    forms.find(form => form.id === chosen) ??
+    forms.find(form => form.id === model.id) ??
+    forms[0];
   door.value = selected?.doorState ?? 'open';
   const populateForms = (id: string | undefined) => {
     variant.replaceChildren();
-    for (const form of model.variants.filter(
+    for (const form of forms.filter(
       form => !form.doorState || form.doorState === door.value
     )) {
       const option = element('option', form.name);
@@ -142,7 +154,7 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
   populateForms(selected?.id);
   const statistics = element('p');
   const showForm = (preserveView = false) => {
-    const form = model.variants.find(value => value.id === variant.value);
+    const form = forms.find(value => value.id === variant.value);
     node('door-control').hidden = !form?.doorState;
     door.disabled = !viewer;
     statistics.textContent = form
@@ -167,7 +179,7 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
       `${model.name}. Arrow keys orbit, plus and minus zoom, zero resets.`
     );
   };
-  variant.disabled = model.variants.length < 2;
+  variant.disabled = forms.length < 2;
   variant.onchange = () => {
     replaceQuery('variant', variant.value);
     showForm();
@@ -186,7 +198,7 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
   };
   for (const id of ['wireframe', 'zoom-in', 'zoom-out', 'reset']) {
     (node(id) as HTMLInputElement | HTMLButtonElement).disabled =
-      !model.variants.length || !viewer;
+      !forms.length || !viewer;
   }
   showForm();
   details.append(statistics);

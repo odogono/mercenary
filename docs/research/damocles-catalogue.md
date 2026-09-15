@@ -73,6 +73,18 @@ visibility and component order, with per-face triangulation cached across select
 This does not implement the surrounding resident-object stream or the polygon fill
 routine's possible facing tests.
 
+The catalogue viewer now offers **each recovered region as its own inspection
+form** beside a structure's other views: 3,844 forms across the 254 structures
+that retain a selector. A form draws the region's queue in source order (plan
+walls, Entrance Attachments and the faces an attachment contributes) and adds
+the linked detail when region flag 15 is set, ordered by flags 14 and 12. Free
+orbit has no player position, so the detail uses group 2's default record list,
+the list the game draws when no detail box contains the player. The reviewed
+Capital Spaceport is the cross-check: region 1's queue reproduces the
+hand-tuned interior layout's face order exactly, and additionally places the
+authored entrance-door attachment where the source puts it, between plan faces
+19 and 20.
+
 These extents are bounded by the next independently recognised data records:
 object NULL metadata at `$035CE8`, the first surface metadata at `$00ED60`, and
 the interior record preamble after `$026208`. The ground table is a 256-word

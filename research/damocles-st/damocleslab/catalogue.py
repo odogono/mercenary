@@ -2577,7 +2577,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         model['variants'] = [{'id': 'assembly', 'name': f'Structure and detail · palette {palette_index}', 'mesh': combined}]
         # Detail tables include view-conditioned external and internal geometry.
         model['status'] = 'partial'
-        model['reason'] = (model['reason'] + ' Includes linked exterior/interior detail in its neutral pose; view-conditioned visibility is not simulated.').strip()
+        model['reason'] = (model['reason'] + ' Includes linked exterior/interior detail in its neutral pose.').strip()
     # Model headers which jump to a shared vertex stream provide evidence for visual variants.
     for identity, (slot, palette_index, scale) in structure_bindings.items():
         model = by_address[identity]
@@ -2589,11 +2589,19 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         if detail is None or 'detailSelection' not in detail or not any(v['id'] == variant_id for v in detail['variants']):
             del model['structureSelection']
             model['status'] = 'partial' if model['variants'] else 'unresolved'
-            model['reason'] += ' Linked detail selection unavailable.'
+            model['reason'] += (
+                ' Linked detail selection unavailable, so view-conditioned'
+                ' visibility is not simulated for this record.'
+            )
         else:
             selection['detailModel'] = detail['id']
             selection['detailVariant'] = variant_id
-            model['reason'] += ' Region queues and linked detail lists recovered for on-foot drawing; Entrance Attachments carry constructor, slot and Proximity Box.'
+            model['reason'] += (
+                ' Region queues and linked detail lists recovered for on-foot drawing;'
+                ' each region is also offered as its own inspection form, using the'
+                ' detail group default list because a free-orbit view has no player'
+                ' position. Entrance Attachments carry constructor, slot and Proximity Box.'
+            )
             if identity in ('structure-014ad2', 'structure-014aec'):
                 model['evidence'].append({
                     'claim': (

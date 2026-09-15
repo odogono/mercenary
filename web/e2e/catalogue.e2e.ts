@@ -242,6 +242,22 @@ test('maps known placements and links a surface assembly to building detail', as
   ).toBeVisible();
 });
 
+test('a structure offers each recovered region as its own inspection form', async ({
+  page
+}) => {
+  await page.goto('/catalogue?instance=eris-surface-87');
+  await expect(page.locator('#model-name')).toHaveText('Capital Spaceport');
+  const forms = page.locator('#variant option');
+  await expect(forms.filter({ hasText: /^Region / })).toHaveCount(12);
+  await page.locator('#variant').selectOption('region-0');
+  await expect(page.locator('#variant')).toHaveValue('region-0');
+  await expect(page.locator('#details')).toContainText('63 faces');
+  await expect(page.locator('#viewer-message')).toHaveText('');
+  // The region is a real form, so it survives a reload through the query.
+  await page.reload();
+  await expect(page.locator('#variant')).toHaveValue('region-0');
+});
+
 test('unresolved records, empty filters and invalid links are explained', async ({
   page
 }) => {
