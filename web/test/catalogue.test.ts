@@ -86,6 +86,16 @@ describe('Damocles catalogue contract', () => {
     expect(() => parseCatalogue(broken)).toThrow(
       'decoded model has no geometry'
     );
+
+    const procedural = fixture();
+    const proceduralModel = procedural.models[0] as Record<string, unknown>;
+    proceduralModel['recordClass'] = 'procedural';
+    proceduralModel['status'] = 'decoded';
+    proceduralModel['reason'] = 'procedural: native point field.';
+    proceduralModel['conditions'] = ['state $7A60'];
+    const parsed = parseCatalogue(procedural).models[0]!;
+    expect(parsed.recordClass).toBe('procedural');
+    expect(parsed.conditions).toEqual(['state $7A60']);
   });
   it('preserves unresolved authored selectors without turning them into room names', () => {
     const selected = fixture();
@@ -230,7 +240,14 @@ it('keeps a generated census ledger that cannot drift from the models', async ()
   expect(data.models.some(model => model.recordClass === 'null')).toBe(true);
   expect(data.models.some(model => model.recordClass === 'empty')).toBe(true);
   expect(data.models.some(model => model.recordClass === 'alias')).toBe(true);
-  expect(data.models.filter(model => model.structureSelection).length).toBe(88);
+  expect(data.models.some(model => model.recordClass === 'procedural')).toBe(
+    true
+  );
+  expect(
+    data.models.filter(model => model.conditions.includes('viewerPosition'))
+      .length
+  ).toBe(19);
+  expect(data.models.filter(model => model.structureSelection).length).toBe(95);
   expect(
     data.models.filter(model => model.structureSelection?.liveSelector).length
   ).toBe(2);

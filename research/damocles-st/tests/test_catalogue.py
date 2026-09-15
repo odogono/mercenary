@@ -822,3 +822,213 @@ class LiveWorkspaceTests(unittest.TestCase):
             {0x35700 + int.from_bytes(first_bytes[0x35700 + s * 4:0x35704 + s * 4], 'big') for s in range(378)},
             {0x35700 + int.from_bytes(workspace[0x35700 + s * 4:0x35704 + s * 4], 'big') for s in range(378)},
         )
+
+
+class ConditionedObjectFormTests(unittest.TestCase):
+    """Source-conditioned object forms decoded from the $0535A2 header and $0538F4 group chain."""
+
+    @staticmethod
+    def _body(*extra_faces: str) -> bytes:
+        body = struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768)
+        return body
+
+    def test_view_conditioned_groups_become_separate_forms(self):
+        from damocleslab.catalogue import decode_mesh, decode_object_forms
+
+        data = struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768)
+        # Group: skip past a one-face list (6 bytes) plus its terminator (2).
+        group_faces = bytes.fromhex('0543 04 08 0c 00 0000')
+        data += struct.pack('>H6i', len(group_faces), -50, 100, -0x7FFFFF, 0xFFFFFF, -60, 120)
+        data += group_faces
+        data += bytes.fromhex('0000 0777 0c 08 04 00 0000')
+        default = decode_mesh(data, 0, 'object')
+        self.assertEqual([face['sourceColour'] for face in default['faces']], [0x777])
+        self.assertEqual(default['viewGroups'], [{
+            'bounds': [[-50, 50], [-0x7FFFFF, 0x800000], [-60, 60]], 'faces': 1, 'lines': 0,
+        }])
+        inside = decode_mesh(data, 0, 'object', state={'viewGroup': 0})
+        self.assertEqual([face['sourceColour'] for face in inside['faces']], [0x543])
+        variants, conditions, gaps = decode_object_forms(data, 0, None, None)
+        self.assertEqual([v['id'] for v in variants], ['record', 'view-0'])
+        self.assertEqual(variants[1]['name'], 'Viewer within -50 ≤ X < 50, any Y, -60 ≤ Z < 60')
+        self.assertEqual(conditions, ['viewerPosition'])
+        self.assertEqual(gaps, [])
+
+    def test_view_group_skip_must_land_on_the_next_group(self):
+        from damocleslab.catalogue import decode_mesh
+
+        data = struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768)
+        data += struct.pack('>H6i', 20, 0, 1, 0, 1, 0, 1)
+        data += bytes.fromhex('0543 04 08 0c 00 0000' + '00' * 20)
+        with self.assertRaisesRegex(ValueError, 'skip does not match'):
+            decode_mesh(data, 0, 'object')
+
+    def test_target_marker_word_terminates_a_face_list(self):
+        from damocleslab.catalogue import decode_mesh
+
+        data = struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768)
+        data += bytes.fromhex('0000 0777 04 08 0c 00 7000')
+        mesh = decode_mesh(data, 0, 'object')
+        self.assertEqual(len(mesh['faces']), 1)
+        self.assertEqual(mesh['sourceEnd'], len(data))
+
+    def test_beacon_header_patches_lit_and_dark_colours(self):
+        from damocleslab.catalogue import decode_object_forms
+
+        # $8003: unconditional $8000 patch at +$0E from the post-header
+        # position, flash patch at +$16, list end, then a zero jump.
+        # The unconditional patch is relative to the position after its own
+        # offset word (+6); the flash patch to the position after its word (+8).
+        header = bytes.fromhex('8003 8000 001c 0020 0000 0002')
+        body = struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768)
+        faces = bytes.fromhex('0000 0111 04 08 0c 00 0222 0c 08 04 00 0000')
+        data = header + body + faces
+        variants, conditions, gaps = decode_object_forms(data, 0, None, [0x000] * 16)
+        self.assertEqual([v['id'] for v in variants], ['record', 'flash-dark'])
+        lit = [face['sourceColour'] for face in variants[0]['mesh']['faces']]
+        dark = [face['sourceColour'] for face in variants[1]['mesh']['faces']]
+        self.assertEqual(lit, [0x8000, 0x777])
+        self.assertEqual(dark, [0x8000, 0x8000])
+        self.assertEqual(conditions, ['flashTimer'])
+        self.assertEqual(gaps, [])
+
+    def test_beacon_gate_colour_names_its_state_word(self):
+        from damocleslab.catalogue import decode_object_forms
+
+        header = bytes.fromhex('8003 0246 001c 0000 0002')
+        body = struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768)
+        data = header + body + bytes.fromhex('0000 0111 04 08 0c 00 0000')
+        _, conditions, _ = decode_object_forms(data, 0, None, None)
+        self.assertEqual(conditions, ['flashTimer gated by $707E'])
+
+    def test_television_header_cycles_the_source_colour_table(self):
+        from damocleslab.catalogue import decode_object_forms
+
+        header = bytes.fromhex('8006 0018')
+        body = struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768)
+        data = bytearray((header + body + bytes.fromhex('0000 0111 04 08 0c 00 0000')).ljust(0x53440, b'\0'))
+        data[0x53432:0x5343e] = bytes.fromhex('8000 0321 0432 0543 0654 0777')
+        variants, conditions, _ = decode_object_forms(bytes(data), 0, None, [0x000] * 16)
+        self.assertEqual([v['id'] for v in variants], ['record'] + [f'frame-{n}' for n in range(1, 6)])
+        self.assertEqual(
+            [v['mesh']['faces'][0]['sourceColour'] for v in variants],
+            [0x8000, 0x321, 0x432, 0x543, 0x654, 0x777],
+        )
+        self.assertEqual(conditions, ['colourCycle $53432'])
+
+    def test_safe_header_offers_the_7a60_jump_as_a_second_form(self):
+        from damocleslab.catalogue import decode_object_forms
+
+        closed = struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768) + bytes.fromhex('0000 0111 04 08 0c 00 0000')
+        header = struct.pack('>Hh', 0x8009, 2 + len(closed))
+        opened = struct.pack('>10h', 0, 0, 0, 20, 0, 0, 0, 20, 0, -32768) + bytes.fromhex('0000 0222 04 08 0c 00 0000')
+        variants, conditions, _ = decode_object_forms(header + closed + opened, 0, None, None)
+        self.assertEqual([v['id'] for v in variants], ['record', 'open'])
+        self.assertEqual(variants[1]['mesh']['vertices'][1], [20, 0, 0])
+        self.assertEqual(conditions, ['state $7A60'])
+
+    def test_particle_header_is_a_procedural_record(self):
+        from damocleslab.catalogue import decode_mesh
+
+        with self.assertRaisesRegex(ValueError, r'^procedural: \$8004'):
+            decode_mesh(bytes.fromhex('8004 0001 2500'), 0, 'object')
+
+    def test_articulated_object_uses_the_rest_pose_and_names_the_gap(self):
+        from damocleslab.catalogue import decode_object_forms
+
+        header = bytes.fromhex('8001 00ff') + struct.pack('>3h', 0, 25, 28)
+        # A negative Y tags a rotating vertex; its complement is the rest height.
+        body = struct.pack('>10h', 0, -30, 0, 10, 0, 0, 0, 10, 0, -32768)
+        data = header + body + bytes.fromhex('0000 0111 04 08 0c 00 0000')
+        variants, conditions, gaps = decode_object_forms(data, 0, None, None)
+        self.assertEqual(variants[0]['mesh']['vertices'][0], [0, 29, 0])
+        self.assertEqual(variants[0]['mesh']['articulation'], {'axis': 0, 'pivot': [0, 25, 28], 'angle': '$7888'})
+        self.assertEqual(conditions, [])
+        self.assertTrue(gaps[0].startswith('Articulated part shown at its rest angle'))
+
+    def test_articulated_detail_reads_its_pivot_record_before_the_faces(self):
+        from damocleslab.catalogue import decode_mesh
+
+        data = struct.pack('>9h', 0, 0, 0, 10, 0, 0, 0, -10, 0)
+        data += struct.pack('>5h', -32767, 1, -350, 1100, 200)
+        data += bytes.fromhex('0777 04 08 0c 00 0000')
+        mesh = decode_mesh(data, 0, 'interior')
+        self.assertEqual(mesh['vertices'][2], [0, 9, 0])
+        self.assertEqual(mesh['articulation'], {'axis': 1, 'pivot': [-350, 1100, 200], 'angle': '$7888'})
+        self.assertEqual(len(mesh['faces']), 1)
+
+    def _text_world(self, flags: int, text: bytes) -> bytes:
+        body = struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768)
+        record = body + bytes.fromhex('0000 0777 04 08 0c 00 6000')
+        record += struct.pack('>3hHhbbH', 6, 32, 4, flags, 16, 2, 2, 0x0777) + text
+        record += bytes.fromhex('0543 0c 08 04 00 0000')
+        data = bytearray(record.ljust(0x31910, b'\0'))
+        struct.pack_into('>h', data, 0x31700 + (ord('A') - 32) * 2, 0x200)
+        struct.pack_into('>h', data, 0x31700 + (ord('B') - 32) * 2, 0x200)
+        data[0x31900:0x31908] = bytes.fromhex('0000 0202 81 0408 00')
+        return bytes(data)
+
+    def test_object_text_places_glyph_strokes_in_the_selected_plane(self):
+        from damocleslab.catalogue import decode_mesh
+
+        for flags, expected in (
+            (0x8000, [[6, 32, 4], [10, 36, 4]]),
+            (0x8080, [[6, 32, 4], [6, 36, 8]]),
+            (0x8040, [[6, 32, 4], [10, 32, 8]]),
+            (0x80C0, [[6, 32, 4], [10, 32, 8]]),
+        ):
+            mesh = decode_mesh(self._text_world(flags, b'A\0'), 0, 'object')
+            self.assertEqual(mesh['vertices'][3:5], expected, hex(flags))
+            self.assertEqual(len(mesh['faces']), 2)
+            self.assertEqual([line['vertices'] for line in mesh['lines']], [[3, 4]])
+            self.assertEqual(mesh['texts'][0]['text'], 'A')
+
+    def test_object_text_with_two_characters_advances_by_the_record_advance(self):
+        from damocleslab.catalogue import decode_mesh
+
+        mesh = decode_mesh(self._text_world(0x8000, b'AB\0'), 0, 'object')
+        self.assertEqual(mesh['vertices'][5], [22, 32, 4])
+
+    def test_object_text_live_token_is_a_named_gap_not_capture_state(self):
+        from damocleslab.catalogue import decode_mesh, decode_object_forms
+
+        data = self._text_world(0x8001, bytes.fromhex('8700'))
+        mesh = decode_mesh(data, 0, 'object')
+        self.assertEqual(mesh['texts'][0], {'anchor': [6, 32, 4], 'text': '', 'font': 1, 'plane': 0, 'liveToken': 7})
+        self.assertEqual(len(mesh['faces']), 2)
+        self.assertEqual(mesh['lines'], [])
+        _, _, gaps = decode_object_forms(data, 0, None, None)
+        self.assertIn('Object text token $87 resolves through the live $CCA0 workspace', gaps[0])
+
+    def test_object_text_indirect_pointer_and_state_font_fail_closed(self):
+        from damocleslab.catalogue import decode_mesh
+
+        with self.assertRaisesRegex(ValueError, 'indirect object vector text'):
+            decode_mesh(self._text_world(0x0000, b'A\0'), 0, 'object')
+        with self.assertRaisesRegex(ValueError, 'state-conditioned object text font'):
+            decode_mesh(self._text_world(0x8004, b'A\0'), 0, 'object')
+
+    def test_extract_classifies_procedural_and_conditioned_records(self):
+        from damocleslab.catalogue import extract
+
+        data = _empty_world()
+        struct.pack_into('>I', data, 0x35700 + 4, 0x36000 - 0x35700)
+        data[0x36000:0x36006] = bytes.fromhex('8004 0001 2500')
+        struct.pack_into('>I', data, 0x35700 + 8, 0x36100 - 0x35700)
+        closed = struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768) + bytes.fromhex('0000 0111 04 08 0c 00 0000')
+        opened = struct.pack('>10h', 0, 0, 0, 20, 0, 0, 0, 20, 0, -32768) + bytes.fromhex('0000 0222 04 08 0c 00 0000')
+        header = struct.pack('>Hh', 0x8009, 2 + len(closed))
+        record = header + closed + opened
+        data[0x36100:0x36100 + len(record)] = record
+        result = extract(bytes(data), {})
+        by_id = {model['id']: model for model in result['models']}
+        particle = by_id['object-036000']
+        self.assertEqual((particle['status'], particle['recordClass'], particle['variants']), ('decoded', 'procedural', []))
+        safe = by_id['object-036100']
+        self.assertEqual(safe['status'], 'decoded')
+        self.assertEqual(safe['conditions'], ['state $7A60'])
+        self.assertEqual([v['id'] for v in safe['variants']], ['record', 'open'])
+        classes = result['coverage']['classifications']
+        self.assertEqual(classes['procedural'], 1)
+        self.assertEqual(classes['conditionalForms'], 1)
+        self.assertEqual(classes['stateForms'], 1)
