@@ -103,8 +103,8 @@ qualification for each table. Every slot maps to one model identity; repeated
 pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
 
-Current extraction accounts for **832 unique records**: **487 decoded**,
-**336 partial**, and **9 unresolved**. “Decoded” means the supported record was
+Current extraction accounts for **832 unique records**: **489 decoded**,
+**334 partial**, and **9 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.
 Unresolved records remain searchable and retain their source identity and reason.
@@ -178,6 +178,15 @@ code. Targeted disassembly used to establish them remains ignored at
   pinned captures differ at `$8C`, so token lettering is a named `liveText` gap
   and only authored literal text (for example `LAND X` on Objects 352–355, the
   LOTTERY TICKET digits) is baked into glyph geometry.
+- Two of those tokens are **not** live state. `$8007` (`$053512`) and `$8002`
+  (`$05358A`) derive one character from the object's resident slot and store it
+  at `$CD12`, which token `$87` points at: a letter `'A' + slot − 30` and a digit
+  `'0' + (slot & 15)`. So DOOR KEY A's ten slots draw the labels A to J on the
+  key head, and TRANSPORTER's ten draw 0 to 9. Each slot is offered as its own
+  form, crossed with any view-conditioned groups the record also has. A token
+  whose `$CCA0` pointer the record's own header does not write stays a named
+  gap, and the reason gives the workspace address: AUTHORS COMPUTER `$CDCE`,
+  TELEVISION `$CE6A`, EXPLOSIVE-ARMED! `$CD14`.
 - Some `$8001` headers control instance orientation; their neutral local geometry
   is decoded without baking in a particular instance heading. A mode byte with
   bit 7 set (`$053572`) is articulation: an axis byte, a pivot X word and pivot

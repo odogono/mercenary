@@ -244,9 +244,27 @@ BEACON_DARK = 0x8000
 BEACON_GATES = {0x246: '$707E', 0x411: '$7082'}
 
 
+# $053512 ($8007) and $05358A ($8002) derive one character from the object's
+# runtime slot and store it at $CD12, which vector-text token $87 points at.
+SLOT_LABEL_TARGET = 0xCD12
+SLOT_LABEL_RULES = {0x8007: ('letter', 0x41, 0x1E), 0x8002: ('digit', 0x30, 0)}
+
+
+def slot_label(command: int, slot: int | None) -> str | None:
+    """The character a slot-labelled object's header writes for one slot."""
+    rule = SLOT_LABEL_RULES.get(command)
+    if rule is None or slot is None:
+        return None
+    kind, base, bias = rule
+    value = (slot & 0xF) if kind == 'digit' else (slot - bias)
+    if not 0 <= value < 64:
+        return None
+    return chr(base + value)
+
+
 def decode_object_lettering(data: bytes, reader: Reader, vertices: list, faces: list,
                             lines: list, palette: list[int] | None,
-                            hardware: list[int] | None) -> dict:
+                            hardware: list[int] | None, label: str | None = None) -> dict:
     """Decode the object `$6000` vector-text record consumed at `$053F96`.
 
     Three signed word offsets are added to the object's position; the flags,
@@ -256,7 +274,8 @@ def decode_object_lettering(data: bytes, reader: Reader, vertices: list, faces: 
     reader.p &= ~1
     dx, dy, dz = struct.unpack('>3h', reader.take(6))
     return decode_placed_lettering(
-        data, reader, [dx, dy, dz], vertices, faces, lines, palette, hardware, 'object'
+        data, reader, [dx, dy, dz], vertices, faces, lines, palette, hardware,
+        'object', label,
     )
 
 
@@ -281,7 +300,7 @@ def decode_ground_lettering(data: bytes, reader: Reader, vertices: list, faces: 
 def decode_placed_lettering(data: bytes, reader: Reader, anchor: list[int],
                             vertices: list, faces: list, lines: list,
                             palette: list[int] | None, hardware: list[int] | None,
-                            kind: str) -> dict:
+                            kind: str, label: str | None = None) -> dict:
     """Flags, advance, glyph scales, colour and inline text, shared from $053FCA."""
     flags, advance = struct.unpack('>Hh', reader.take(4))
     scale_x, scale_y = struct.unpack('>bb', reader.take(2))
@@ -304,6 +323,10 @@ def decode_placed_lettering(data: bytes, reader: Reader, anchor: list[int],
             if reader.take(1)[0] != 0:
                 raise ValueError('vector-text token is not terminal')
             token = character & 0x7f
+            pointer = int.from_bytes(data[0xCCA0 + token * 4:0xCCA4 + token * 4], 'big')
+            if label is not None and pointer == SLOT_LABEL_TARGET:
+                characters.append(label)
+                token = None
             break
         if not 32 <= character < 127:
             raise ValueError('unsupported vector-text character')
@@ -389,6 +412,7 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
     enumerate every form without guessing.
     """
     state = state or {}
+    label_command = None
     reader = Reader(data, start)
     patches: dict[int, int] = {}
     display_code = None
@@ -462,8 +486,14 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
                     reader.p += offset - 2
                 alternates['open'] = '$7A60'
                 break
-            if command in (0x8002, 0x8007, 0x800b):
-                break  # name substitution / far-distance marker, no local vertex change
+            if command in (0x8002, 0x8007):
+                # A slot-derived label, not a name substitution: the character
+                # reaches the geometry through vector-text token $87.
+                label_command = command
+                alternates['slotLabel'] = SLOT_LABEL_RULES[command][0]
+                break
+            if command == 0x800b:
+                break  # far-distance marker, no local vertex change
             if command == 0x800c:
                 reader.word()  # visibility distance only
                 break
@@ -546,7 +576,8 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
                 continue
             if kind == 'object' and colour & 0x6000 == 0x6000:
                 texts.append(decode_object_lettering(
-                    data, reader, vertices, faces, lines, palette, hardware
+                    data, reader, vertices, faces, lines, palette, hardware,
+                    slot_label(label_command, state.get('slot')),
                 ))
                 continue
             if colour & 0x4000:
@@ -645,13 +676,15 @@ def view_group_name(bounds: list[list[int]]) -> str:
 
 
 def decode_object_forms(data: bytes, address: int, palette: list[int] | None,
-                        hardware: list[int] | None) -> tuple[list[dict], list[str], list[str]]:
+                        hardware: list[int] | None, slot: int | None = None
+                        ) -> tuple[list[dict], list[str], list[str]]:
     """Decode every source-conditioned form of one object record.
 
     Returns the variants, the conditions that select among them in the game,
     and the gaps that keep the record partial.
     """
-    base = decode_mesh(data, address, 'object', palette, hardware)
+    base = decode_mesh(data, address, 'object', palette, hardware,
+                       state={'slot': slot} if slot is not None else None)
     alternates = base.get('alternates', {})
     forms = [('record', 'Recovered form', {}, base)]
     conditions: list[str] = []
@@ -669,6 +702,8 @@ def decode_object_forms(data: bytes, address: int, palette: list[int] | None,
         forms[0] = ('record', 'Recovered form ($7A60 clear)', {}, base)
         forms.append(('open', 'Alternate form ($7A60 set)', {'open': True}, None))
         conditions.append('state $7A60')
+    if 'slotLabel' in alternates:
+        conditions.append(f"resident slot ({alternates['slotLabel']} label)")
     if 'viewGroup' in alternates:
         forms[0] = ('record', 'Viewer elsewhere (default list)', {}, base)
         for index in range(alternates['viewGroup']):
@@ -677,7 +712,10 @@ def decode_object_forms(data: bytes, address: int, palette: list[int] | None,
     variants = []
     for identity, name, state, mesh in forms:
         if mesh is None:
-            mesh = decode_mesh(data, address, 'object', palette, hardware, state=state)
+            mesh = decode_mesh(
+                data, address, 'object', palette, hardware,
+                state=state if slot is None else {**state, 'slot': slot},
+            )
         if name is None:
             name = view_group_name(mesh['viewGroups'][state['viewGroup']]['bounds'])
         if not mesh['faces'] and not mesh['lines']:
@@ -692,9 +730,12 @@ def decode_object_forms(data: bytes, address: int, palette: list[int] | None,
         )
     for text in base.get('texts', []):
         if 'liveToken' in text:
+            token = text['liveToken']
+            pointer = int.from_bytes(data[0xCCA0 + token * 4:0xCCA4 + token * 4], 'big')
             gaps.append(
-                f"Object text token ${text['liveToken'] | 0x80:02X} resolves through the live $CCA0 workspace; "
-                'capture-specific lettering is not baked into the model.'
+                f'Object text token ${token | 0x80:02X} reads the live $CCA0 workspace at '
+                f'${pointer:04X}, which this record\'s header does not write; capture-specific '
+                'lettering is not baked into the model.'
             )
     return variants, conditions, list(dict.fromkeys(gaps))
 
@@ -1596,7 +1637,7 @@ RECORD_OMISSIONS = (
     ('specialPolygon', 'special polygon command unresolved'),
     ('paletteBinding', 'scene colour table binding unresolved'),
     ('paletteBinding', 'Scene colour table binding unverified'),
-    ('liveText', 'resolves through the live $CCA0 workspace'),
+    ('liveText', 'the live $CCA0 workspace'),
     ('attachments', 'Authored surface attachments/openings'),
     ('attachments', 'Structure selection unavailable'),
     ('attachments', 'Live $F0 attachment selector'),
@@ -2786,6 +2827,48 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             own = [variant for variant in model['variants'] if variant['id'] != 'record']
             model['variants'] = shared + own
             model['relatedModels'].extend(other['id'] for other in group if other is not model)
+    # $8007 and $8002 derive a label character from the runtime slot, so a model
+    # shared by ten slots really draws ten different labels.
+    for model in models:
+        if not any(c.startswith('resident slot') for c in model.get('conditions') or []):
+            continue
+        labelled, gaps = [], []
+        for slot in model['slots']:
+            try:
+                forms, _conditions, slot_gaps = decode_object_forms(
+                    data, model['sourceAddress'], None, hardware, slot,
+                )
+            except (ValueError, struct.error):
+                labelled = []
+                break
+            text = next(
+                (item['text'] for item in forms[0]['mesh'].get('texts', []) if item['text']),
+                '',
+            )
+            if not text:
+                labelled = []
+                break
+            gaps += slot_gaps
+            for form in forms:
+                labelled.append({
+                    **form,
+                    'id': f"slot-{slot}-{form['id']}",
+                    'name': f"Slot {slot} · label {text} · {form['name']}",
+                })
+        if labelled:
+            model['variants'] = labelled
+            model['reason'] = ' '.join(dict.fromkeys(gaps))
+            model['status'] = 'partial' if gaps else 'decoded'
+            classify_record(model, False)
+            model['evidence'].append({
+                'claim': (
+                    'Vector-text token $87 reads $CD12, which this record\'s header writes '
+                    'from the runtime slot ($053512 for $8007, $05358A for $8002). Each slot '
+                    'therefore draws its own label.'
+                ),
+                'confidence': 'verified',
+                'source': 'docs/research/damocles-catalogue.md',
+            })
     coverage_notes = [
         'Resident first-world census after examining title-screen, first-world and interior-window RAM; not a claim that every packed disk file has been walked.',
         'Scene palette binding for unplaced objects 333-338, and named places outside the captured Eris workspace, authored Gaea Birmingham Island map, live Gaea UR City overlay, and live Dion overlay remain incomplete.',

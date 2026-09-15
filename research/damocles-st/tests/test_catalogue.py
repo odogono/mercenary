@@ -1007,7 +1007,7 @@ class ConditionedObjectFormTests(unittest.TestCase):
         self.assertEqual(len(mesh['faces']), 2)
         self.assertEqual(mesh['lines'], [])
         _, _, gaps = decode_object_forms(data, 0, None, None)
-        self.assertIn('Object text token $87 resolves through the live $CCA0 workspace', gaps[0])
+        self.assertIn('Object text token $87 reads the live $CCA0 workspace', gaps[0])
 
     def test_object_text_indirect_pointer_and_state_font_fail_closed(self):
         from damocleslab.catalogue import decode_mesh
@@ -1284,3 +1284,77 @@ class GroundLetteringTests(unittest.TestCase):
         _, gaps, transform, _ = decode_ground(bytes(record), 0, 1, hardware=[0] * 16)
         self.assertNotEqual(transform, 0)
         self.assertTrue(any('untransformed' in gap for gap in gaps))
+
+
+class SlotLabelTests(unittest.TestCase):
+    """$8007 and $8002 derive one label character from the object's slot."""
+
+    def test_the_header_rules_give_letters_and_digits(self):
+        from damocleslab.catalogue import slot_label
+
+        self.assertEqual(slot_label(0x8007, 30), 'A')
+        self.assertEqual(slot_label(0x8007, 39), 'J')
+        self.assertEqual(slot_label(0x8002, 64), '0')
+        self.assertEqual(slot_label(0x8002, 73), '9')
+        self.assertIsNone(slot_label(0x8007, None))
+        self.assertIsNone(slot_label(0x800B, 30))
+
+    def test_a_slot_resolves_token_87_instead_of_failing_closed(self):
+        from damocleslab.catalogue import decode_mesh
+
+        # $8007 header, a body, then a $6000 record whose text is token $87.
+        record = bytes.fromhex('8007')
+        record += struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768)
+        record += bytes.fromhex('0000 0777 04 08 0c 00 6000')
+        record += struct.pack('>3hHhbbH', 0, 0, 0, 0x8000, 16, 2, 2, 0x0777)
+        record += bytes.fromhex('8700 0000')
+        data = bytearray(bytes(record).ljust(0x31910, b'\0'))
+        struct.pack_into('>I', data, 0xCCA0 + 7 * 4, 0xCD12)
+        struct.pack_into('>h', data, 0x31700 + (ord('C') - 32) * 2, 0x200)
+        data[0x31900:0x31908] = bytes.fromhex('0000 0202 81 0408 00')
+
+        # Without a slot the token stays live and draws nothing.
+        blind = decode_mesh(bytes(data), 0, 'object', hardware=[0] * 16)
+        self.assertEqual(blind['texts'][0]['liveToken'], 7)
+        self.assertEqual(blind['lines'], [])
+
+        # With one, the header's own character is drawn.
+        placed = decode_mesh(bytes(data), 0, 'object', hardware=[0] * 16, state={'slot': 32})
+        self.assertEqual(placed['texts'][0]['text'], 'C')
+        self.assertNotIn('liveToken', placed['texts'][0])
+        self.assertEqual(len(placed['lines']), 1)
+        self.assertEqual(placed['alternates']['slotLabel'], 'letter')
+
+    def test_a_token_the_header_does_not_write_stays_live(self):
+        from damocleslab.catalogue import decode_mesh
+
+        record = bytes.fromhex('8007')
+        record += struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768)
+        record += bytes.fromhex('0000 0777 04 08 0c 00 6000')
+        record += struct.pack('>3hHhbbH', 0, 0, 0, 0x8000, 16, 2, 2, 0x0777)
+        record += bytes.fromhex('8700 0000')
+        data = bytearray(bytes(record).ljust(0x31910, b'\0'))
+        # Token $87 points somewhere this header never writes.
+        struct.pack_into('>I', data, 0xCCA0 + 7 * 4, 0xCDCE)
+        mesh = decode_mesh(bytes(data), 0, 'object', hardware=[0] * 16, state={'slot': 32})
+        self.assertEqual(mesh['texts'][0]['liveToken'], 7)
+
+    def test_every_key_and_transporter_slot_draws_its_own_label(self):
+        from damocleslab.catalogue import decode_mesh, palette_at, u32
+
+        root = Path(__file__).resolve().parents[1]
+        runs = sorted(root.glob('work/observe-first-world-*/observed.ram'))
+        if not runs:
+            self.skipTest('no pinned first-world capture in this checkout')
+        data = runs[0].read_bytes()
+        hardware = list(struct.unpack_from('>16H', data, 0x6fd00))
+        for base, slots, expected in (
+            (0x36D64, range(30, 40), 'ABCDEFGHIJ'),
+            (0x38820, range(64, 74), '0123456789'),
+        ):
+            labels = []
+            for slot in slots:
+                mesh = decode_mesh(data, base, 'object', None, hardware, state={'slot': slot})
+                labels.append(mesh['texts'][0]['text'])
+            self.assertEqual(''.join(labels), expected)
+        _ = palette_at, u32
