@@ -71,7 +71,7 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
       model.kind === 'interior'
         ? 'Building-detail geometry can appear outside or inside. This source bank does not identify a model as an interior.'
         : model.kind === 'ground'
-          ? 'Per-cell ground, pad and road record. Camera-dependent $F0/$F4 horizon slots are omitted; intentional empty records contribute no geometry, and the native surface/background fill is a separate unresolved path.'
+          ? 'Per-cell ground, pad and road record. Scene point slots resolve to world grid corners for the cell a capture stands in, and stay named but unplaced elsewhere; intentional empty records contribute no geometry, and the native surface/background fill is a separate unresolved path.'
           : 'Building plan and linked detail. Available inspection views are listed under Form; original scene visibility remains incomplete.'
     );
   }
@@ -333,7 +333,7 @@ const start = async () => {
     if (Object.keys(classes).length) {
       paragraph(
         ledger,
-        `Classes: ${classes.geometry ?? 0} geometry · ${classes.alias ?? 0} alias · ${classes.empty ?? 0} empty · ${classes.null ?? 0} NULL · ${classes.procedural ?? 0} procedural · ${classes.conditionalForms ?? 0} conditional forms · ${classes.viewConditioned ?? 0} view-conditioned · ${classes.articulated ?? 0} articulated · ${classes.specialPolygon ?? 0} special polygon · ${classes.paletteBinding ?? 0} palette · ${classes.liveText ?? 0} live text · ${classes.attachments ?? 0} attachments`
+        `Classes: ${classes.geometry ?? 0} geometry · ${classes.alias ?? 0} alias · ${classes.empty ?? 0} empty · ${classes.null ?? 0} NULL · ${classes.procedural ?? 0} procedural · ${classes.conditionalForms ?? 0} conditional forms · ${classes.scenePoint ?? 0} scene point · ${classes.viewConditioned ?? 0} view-conditioned · ${classes.articulated ?? 0} articulated · ${classes.specialPolygon ?? 0} special polygon · ${classes.paletteBinding ?? 0} palette · ${classes.liveText ?? 0} live text · ${classes.attachments ?? 0} attachments`
       );
     }
     const ledgerTables =

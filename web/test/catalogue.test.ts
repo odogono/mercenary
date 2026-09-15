@@ -365,6 +365,23 @@ it('keeps the spaceport exterior and room layout separate at their shared scale'
   ).toBe(spaceport.id);
 });
 
+it('places the scene joins of the cell the capture stands in', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const runway = data.models.find(model => model.id === 'ground-020f8e-00')!;
+  expect(runway.status).toBe('decoded');
+  expect(runway.reason).toBe('');
+  const mesh = runway.variants[0]!.mesh;
+  // $F0 is the centre of the cell four grid steps ahead, so the runway strip
+  // and its centre line both reach 4 x 65,536 raw units.
+  expect(Math.max(...mesh.vertices.map(vertex => vertex[0]))).toBe(4 * 65_536);
+  const joined = mesh.faces.filter(face => face.sceneSlots?.length);
+  expect(joined).toHaveLength(2);
+  expect(joined.every(face => face.vertices.length === 5)).toBe(true);
+  expect(mesh.lines.some(line => line.sceneSlots?.includes(0xf0))).toBe(true);
+});
+
 it('recovers the spaceport pad strip as a per-cell ground record', async () => {
   const data = parseCatalogue(
     await Bun.file('../payload/damocles/catalogue.json').json()
@@ -372,9 +389,14 @@ it('recovers the spaceport pad strip as a per-cell ground record', async () => {
   const pad = data.models.find(model => model.id === 'ground-021afe-00')!;
   expect(pad.kind).toBe('ground');
   expect(pad.status).toBe('partial');
-  expect(pad.omissions).toEqual(['viewConditioned']);
-  expect(pad.reason).toContain('preprojected runtime horizon slot $F0/$F4');
+  expect(pad.omissions).toEqual(['scenePoint']);
+  expect(pad.reason).toContain('scene point slot $F0');
   expect(pad.reason).not.toContain('neighbor');
+  // Cell $88 is not the captured scene's own cell, so the join stays named
+  // rather than placed, and the primitive still records the slot.
+  expect(
+    pad.variants[0]!.mesh.faces.some(face => face.sceneSlots?.includes(0xf0))
+  ).toBe(true);
   const colours = new Set(
     pad.variants[0]!.mesh.faces.map(face => face.sourceColour)
   );

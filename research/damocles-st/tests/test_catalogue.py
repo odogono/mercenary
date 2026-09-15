@@ -349,10 +349,19 @@ class GroundTests(unittest.TestCase):
         self.assertEqual(mesh['vertices'][:3], [[1200, 0, 200], [0, 0, 200], [-1200, 0, 200]])
         self.assertEqual(mesh['faces'][0]['sourceColour'], 0x777)
         self.assertEqual(mesh['faces'][0]['vertices'], [0, 1, 2])
-        self.assertTrue(any('preprojected runtime horizon slot $F0/$F4' in gap for gap in gaps))
+        self.assertTrue(any('scene point slot $F0' in gap for gap in gaps))
         model = {'reason': ' '.join(gaps)}
         classify_record(model, False)
-        self.assertEqual(model['omissions'], ['viewConditioned'])
+        self.assertEqual(model['omissions'], ['scenePoint'])
+
+        # With the scene point placed, the quad keeps its fourth corner.
+        placed, placed_gaps, _, _ = decode_ground(
+            data, 0, 0, hardware=[0] * 16, scene={0xF0: [0x40000, 0, 0]}
+        )
+        self.assertEqual(placed_gaps, [])
+        self.assertEqual(placed['faces'][0]['vertices'], [0, 1, 2, 3])
+        self.assertEqual(placed['vertices'][3], [0x40000, 0, 0])
+        self.assertEqual(placed['faces'][0]['sceneSlots'], [0xF0])
 
     def test_empty_record_is_a_gap_not_a_fabricated_quad(self):
         from damocleslab.catalogue import decode_ground

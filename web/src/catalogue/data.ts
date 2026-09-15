@@ -10,6 +10,8 @@ export type StructureView = (typeof STRUCTURE_VIEWS)[number];
 export interface Primitive {
   readonly colour: string;
   readonly doubleSided?: boolean;
+  /** Scene point slots this ground primitive joins, placed or not. */
+  readonly sceneSlots?: readonly number[];
   readonly sourceColour: number;
   readonly sourceIndex?: number;
   readonly vertices: readonly number[];
@@ -293,6 +295,9 @@ const mesh = (value: unknown, allowEmpty = false): Mesh => {
         ...(p['doubleSided'] === true ? { doubleSided: true } : {}),
         colour,
         sourceColour: integer(p['sourceColour']),
+        ...(p['sceneSlots'] === undefined
+          ? {}
+          : { sceneSlots: list(p['sceneSlots']).map(integer) }),
         ...(p['sourceIndex'] === undefined
           ? {}
           : { sourceIndex: integer(p['sourceIndex']) }),

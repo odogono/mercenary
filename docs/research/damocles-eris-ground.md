@@ -128,7 +128,15 @@ on one axis:
 
 So a horizon reference is **not** a screen-space invention and it is not
 unrepresentable. It is the current scene's ground extent, expressed as a world
-grid corner at a fixed height. A ground record that names `$F0` means "join to
+grid corner at a fixed height. The extractor now resolves one to
+`(nybble − cell) × 65,536` in the record's own local frame. Capital Spaceport
+cell `$87` is the worked example: `$F0` is the centre of the cell four grid
+steps ahead, so the grey apron and the white centre line close into a runway
+and the centre-line edge from `x = 1200` to four cells out comes back. Cell
+`$87` on Eris, `$64` on Vesta, `$24` on Gaea and `$32` on Dion are the four
+records that decode completely; every other record keeps the slot named on the
+primitive as `sceneSlots` and in its reason, because the table is only filled
+for the cell a capture stands in. A ground record that names `$F0` means "join to
 this scene's +X ground extent", which a capture resolves the same way a live
 `$ABDC` workspace resolves a cell's structures. `$054B02` then pairs `$F0` with
 `$F4`, and `$F8` with `$FC`, into edges drawn only when the packed byte is
@@ -231,9 +239,13 @@ geometry. The separate native surface/background path remains unresolved.
 
 - Geometry and draw rule of the separate native **surface/background fill**
   that supplies the recovered outdoor green; it is not an empty-cell record.
-- Whether the packed `$5E40` horizon table is authored per body or derived from
+- Whether the packed `$5E40` scene table is authored per body or derived from
   the player's cell at scene setup; the recovered values bracket the player's
-  own cell in every capture, which suggests derivation.
+  own cell in every capture, which suggests derivation. Until that is settled,
+  a record's joins are only placed for the cell its capture stands in.
+- Scene points a record names that the capture leaves unplaced still lose their
+  whole edge when the edge has one local endpoint; the polygon case keeps its
+  remaining corners.
 - Whether `$00ABDC` high-byte paths `$20..$9F` overlay extra `$1E000` data on
   some cells.
 - Ground records on bodies other than the captured Eris workspace.

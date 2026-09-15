@@ -754,6 +754,34 @@ def decode_structure(data: bytes, start: int, palette: list[int] | None = None,
 # Cell-local ground records at $1E000: $54E8E transform nybbles, then $8000-relative X/Z.
 GROUND_ORIENT = bytes.fromhex('0006030501040207')
 GROUND_HORIZON_SLOTS = {0xF0, 0xF4}
+# $054A64 fills the slots from $7B54 up to $100 from packed bytes at $5E40.
+# Each byte holds a world cell index per axis; $054A8E seeds $80000000 so the
+# swap leaves $8000 in the low word, making every point a cell centre.
+SCENE_POINT_TABLE = 0x5E40
+SCENE_POINT_START = 0x7B54
+SCENE_POINT_LIMIT = 0x100
+CELL_UNITS = 0x10000
+
+
+def scene_points(data: bytes) -> dict[int, tuple[int, int]]:
+    """World cell indices for the scene points a ground record can reference."""
+    start = int.from_bytes(data[SCENE_POINT_START:SCENE_POINT_START + 4], 'big')
+    if not 0 < start <= SCENE_POINT_LIMIT or start % 4:
+        return {}
+    points = {}
+    for slot in range(start, SCENE_POINT_LIMIT, 4):
+        packed = data[SCENE_POINT_TABLE + slot]
+        if packed:
+            points[slot] = (packed & 0xF, packed >> 4)
+    return points
+
+
+def scene_point_offsets(data: bytes, cell: int) -> dict[int, list[int]]:
+    """Scene points expressed in one cell's local frame, in raw grid units."""
+    return {
+        slot: [(x - (cell & 15)) * CELL_UNITS, 0, (z - (cell >> 4)) * CELL_UNITS]
+        for slot, (x, z) in scene_points(data).items()
+    }
 EMPTY_GROUND_REASON = (
     'Empty ground record: source plan and command streams terminate immediately; '
     'the native $056634 renderer returns at that zero terminator, so this record '
@@ -761,10 +789,24 @@ EMPTY_GROUND_REASON = (
 )
 
 
+def _scene_tag(refs: list[int], plan: list) -> dict:
+    """Name the scene slots a primitive joins, so a resolved corner stays auditable."""
+    slots = [ref for ref in refs if not 0 <= ref // 4 - 1 < len(plan)]
+    return {'sceneSlots': slots} if slots else {}
+
+
 def decode_ground(data: bytes, start: int, orientation: int,
                   palette: list[int] | None = None,
-                  hardware: list[int] | None = None) -> tuple[dict, list[str], int, list[dict]]:
-    """Decode one per-cell ground record. View-conditioned horizon slots are omitted."""
+                  hardware: list[int] | None = None,
+                  scene: dict[int, list[int]] | None = None
+                  ) -> tuple[dict, list[str], int, list[dict]]:
+    """Decode one per-cell ground record.
+
+    `scene` supplies the workspace's scene points in this cell's local frame.
+    Without it, references above the record's own plan stay unplaced and the
+    remaining local shape is kept.
+    """
+    scene = scene or {}
     reader = Reader(data, start)
     first, second = reader.take(1)[0], reader.take(1)[0]
     extra, d5 = 0, orientation & 0xFF
@@ -820,18 +862,21 @@ def decode_ground(data: bytes, start: int, orientation: int,
                     'Ground $6000 vector-text command is not yet decoded.'
                 )
                 break
-            kept, dropped = _ground_indices(list(reader.take(2)), len(plan))
-            if dropped:
+            edge_refs = list(reader.take(2))
+            kept, unplaced = _ground_indices(edge_refs, plan, scene)
+            if unplaced:
                 gaps.append(
-                    'Ground edge references preprojected runtime horizon slot $F0/$F4; '
-                    'the camera-conditioned endpoint is omitted from model-space geometry.'
+                    'Ground edge references scene point slot '
+                    + '/'.join(f'${ref:02X}' for ref in sorted(set(unplaced)))
+                    + ', which this capture does not place; the edge is omitted.'
                 )
             elif len(kept) == 2:
                 rgb = colour_value(colour & ~0x4000, palette, hardware)
                 offset = len(vertices)
-                vertices.extend(plan[index] for index in kept)
+                vertices.extend(kept)
                 lines.append({'vertices': [offset, offset + 1], 'colour': rgb,
-                              'sourceColour': colour & ~0x4000, 'sourceIndex': source_index})
+                              'sourceColour': colour & ~0x4000, 'sourceIndex': source_index,
+                              **_scene_tag(edge_refs, plan)})
             continue
         refs = []
         for _ in range(256):
@@ -841,22 +886,24 @@ def decode_ground(data: bytes, start: int, orientation: int,
             refs.append(ref)
         else:
             raise ValueError('ground polygon terminator missing')
-        kept, dropped = _ground_indices(refs, len(plan))
-        if dropped:
+        kept, unplaced = _ground_indices(refs, plan, scene)
+        if unplaced:
             gaps.append(
-                'Ground polygon references preprojected runtime horizon slot $F0/$F4; '
-                'the camera-conditioned point is omitted and the remaining local polygon is kept.'
+                'Ground polygon references scene point slot '
+                + '/'.join(f'${ref:02X}' for ref in sorted(set(unplaced)))
+                + ', which this capture does not place; the remaining local polygon is kept.'
             )
         if len(kept) >= 3:
             rgb = colour_value(colour, palette, hardware)
             offset = len(vertices)
-            vertices.extend(plan[index] for index in kept)
+            vertices.extend(kept)
             faces.append({'vertices': list(range(offset, offset + len(kept))), 'colour': rgb,
-                          'sourceColour': colour, 'sourceIndex': source_index, 'doubleSided': True})
+                          'sourceColour': colour, 'sourceIndex': source_index, 'doubleSided': True,
+                          **_scene_tag(refs, plan)})
         elif refs:
             gaps.append(
-                'Ground polygon had too few model-space vertices after omitting '
-                'view-conditioned horizon slots.'
+                'Ground polygon had too few local vertices after omitting scene points '
+                'this capture does not place.'
             )
     else:
         raise ValueError('ground primitive terminator missing')
@@ -866,20 +913,28 @@ def decode_ground(data: bytes, start: int, orientation: int,
              'sourceEnd': reader.p}, sorted(set(gaps)), transform, placements)
 
 
-def _ground_indices(refs: list[int], count: int) -> tuple[list[int], bool]:
-    kept, dropped = [], False
+def _ground_indices(refs: list[int], plan: list, scene: dict[int, list[int]]
+                    ) -> tuple[list[list[int]], list[int]]:
+    """Resolve ground references to points, naming the scene slots left over.
+
+    A reference indexes the record's own plan or, above it, a scene point the
+    workspace names. References the capture cannot place are reported so the
+    caller can keep the remaining local shape and say what it dropped.
+    """
+    kept, unplaced = [], []
     for ref in refs:
-        if ref in GROUND_HORIZON_SLOTS:
-            dropped = True
-            continue
         if ref == 0 or ref % 4:
             raise ValueError('invalid ground vertex reference')
         index = ref // 4 - 1
-        if not 0 <= index < count:
-            dropped = True
+        if 0 <= index < len(plan):
+            kept.append(list(plan[index]))
             continue
-        kept.append(index)
-    return kept, dropped
+        point = scene.get(ref)
+        if point is None:
+            unplaced.append(ref)
+            continue
+        kept.append(list(point))
+    return kept, unplaced
 
 
 def decode_visibility_list(data: bytes, start: int, face_count: int) -> tuple[list[int], list[str]]:
@@ -1465,7 +1520,7 @@ RECORD_OMISSIONS = (
     ('attachments', 'Structure selection unavailable'),
     ('attachments', 'Live $F0 attachment selector'),
     ('omittedSelector', 'Complete selector omitted'),
-    ('viewConditioned', 'preprojected runtime horizon slot'),
+    ('scenePoint', 'scene point slot'),
     ('roadTemplate', '$7000 road templates'),
     ('headerCommand', 'model command $'),
     ('thirdHeight', 'additional height/shape decoding'),
@@ -1625,6 +1680,7 @@ def coverage_ledger(models: list, tables: list, notes: list[str], disk_load: lis
             'specialPolygon': omissions['specialPolygon'],
             'paletteBinding': omissions['paletteBinding'],
             'liveText': omissions['liveText'],
+            'scenePoint': omissions['scenePoint'],
             'attachments': omissions['attachments'],
             'omittedSelector': omissions['omittedSelector'],
             'roadTemplate': omissions['roadTemplate'],
@@ -1743,6 +1799,9 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
         if place:
             next(item for item in places if item['id'] == place[0])['instances'].append(identity)
     ground_unique = 0
+    # Scene points are filled for the cell the capture stands in, so only that
+    # cell's record can have its joins placed.
+    scene_cell = int.from_bytes(workspace[0x7B5C:0x7B5E], 'big')
     for cell in range(256):
         offset = int.from_bytes(workspace[0x1e400 + cell * 2:0x1e402 + cell * 2], 'big')
         address = 0x1e000 + offset
@@ -1756,7 +1815,8 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
                 )
         try:
             mesh, gaps, transform, _placements = decode_ground(
-                workspace, address, workspace[0x83dc + cell], palette, hardware
+                workspace, address, workspace[0x83dc + cell], palette, hardware,
+                scene_point_offsets(workspace, cell) if cell == scene_cell else None,
             )
         except (ValueError, struct.error) as error:
             mesh, gaps, transform, _placements = (
@@ -2000,6 +2060,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         by_address[target]['relatedModels'].append(alias)
     ground_entries = []
     ground_cells: list[tuple[int, str]] = []
+    scene_cell = int.from_bytes(data[0x7B5C:0x7B5E], 'big')
     for cell in range(256):
         offset = int.from_bytes(data[0x1e400 + cell * 2:0x1e402 + cell * 2], 'big')
         address = 0x1e000 + offset
@@ -2011,7 +2072,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             )
         try:
             mesh, gaps, transform, _placements = decode_ground(
-                data, address, data[0x83dc + cell], palette, hardware
+                data, address, data[0x83dc + cell], palette, hardware,
+                scene_point_offsets(data, cell) if cell == scene_cell else None,
             )
         except (ValueError, struct.error) as error:
             mesh, gaps, transform, _placements = (
