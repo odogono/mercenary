@@ -11,6 +11,7 @@ From the repository root:
 ```sh
 PYTHONPATH=research/damocles-st python3 -m damocleslab.catalogue \
   --run research/damocles-st/work/observe-first-world-20260818T101013Z-c5a32b7d \
+  --workspace research/damocles-st/snapshots/vesta-parliament-4-6.sav \
   --output payload/damocles/catalogue.json
 cd web
 bun run dev
@@ -19,7 +20,8 @@ bun run dev
 Open `http://127.0.0.1:5173/catalogue`, or follow **Damocles catalogue** from the
 game menu. `?model=object-035d12` opens DART II;
 `?instance=eris-surface-87` opens the Capital Spaceport placement;
-`?instance=object-slot-5` opens the V.I.P. LIMO outside it.
+`?instance=vesta-surface-64` opens Vesta Parliament;
+`?instance=object-slot-5` opens the V.I.P. LIMO outside the Spaceport.
 
 The extractor first verifies the run's artifact hashes, program/TOS pins, and
 first-world scenario hash. It uses the standard library only. A missing capture
@@ -83,8 +85,8 @@ qualification for each table. Every slot maps to one model identity; repeated
 pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
 
-Current extraction accounts for **613 unique records**: **166 decoded**,
-**378 partial**, and **69 unresolved**. “Decoded” means the supported record was
+Current extraction accounts for **625 unique records**: **166 decoded**,
+**390 partial**, and **69 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.
 Unresolved records remain searchable and retain their source identity and reason.
@@ -103,14 +105,14 @@ totals disagree with that ledger.
 | Object geometry     | `$035700` | 378            | Relative 32-bit pointers, including shared forms and extra templates      |
 | Surface assemblies  | `$00E900` | 280            | Relative 32-bit pointers, including scaled/paletted aliases               |
 | Building detail     | `$026000` | 130            | Relative 32-bit pointers; exterior and interior geometry share this family |
-| Ground / pad / road | `$01E400` | 256            | Word offsets from `$01E000`; shared records, per-cell `$83DC` orientation |
+| Ground / pad / road | `$01E400` | 256            | Word offsets from `$01E000`; shared records, per-cell `$83DC` orientation. Live Vesta fills append after these 256 first-world entries. |
 
 The 31 body labels at `$0081DC` include VOID; this does not imply all entries are
 planets. The first 256 resident object slots are represented as instances; later
 model slots are not invented as placed objects. The native surface-resident
 selector and Association B place 34 resident objects across 18 bodies. Named
-places are recovered for the captured Eris workspace and for Gaea Birmingham
-Island's authored area list. Slot 5's independently reviewed cell places
+places are recovered for the captured Eris workspace, Gaea Birmingham
+Island's authored area list, and the live Vesta Politburo City workspace. Slot 5's independently reviewed cell places
 the V.I.P. LIMO outside Capital Spaceport. Slot 183's source association and
 world-to-structure transform place its key inside Capital Spaceport region 1.
 See [resident object associations](damocles-resident-objects.md).
@@ -258,9 +260,10 @@ code. Targeted disassembly used to establish them remains ignored at
   empty in the stream. This is not a live Gaea `$ABDC` workspace; ground/pad
   records and other Gaea islands remain unresolved.
   Across all bodies the dataset now contains the Eris points, the Birmingham
-  Island assemblies, and the previously mapped non-Eris residents. This is
-  resident state plus authored pool recovery from the pinned first-world
-  capture, not a complete body-surface census.
+  Island assemblies, the live Vesta Politburo City `$ABDC` overlay, and the
+  previously mapped non-Eris residents. This is resident state plus authored
+  pool recovery from the pinned first-world capture plus one live non-Eris
+  workspace, not a complete body-surface census.
   The slot-180 assembly is recovered from the authored group-$14 map outside the
   captured first-world workspace; other interior-associated and exceptional
   residents remain listed without invented map positions.
@@ -302,8 +305,17 @@ bounded: the catalogue does not reproduce the original camera, scene visibility,
 attachments, or exterior seen through the interior's window. These are not
 claimed as a completed pixel-fidelity gate.
 
+A Hatari GUI memstate with the player on foot outside Vesta Parliament (local
+cell 4,6, `$7B5C=$64`, body selector `$7AA8=$0038`) supplies the live Vesta
+`$ABDC` overlay. Structure and building-detail pointer tables match first-world;
+object unique addresses are unchanged. The overlay places **19** Vesta surface
+assemblies (including `vesta-surface-64` / `place-024101`) and **24** ground
+instances, adding **12** workspace-local ground models while keeping Eris
+`ground-{addr}-{transform}` identities for byte-identical records. See
+[Vesta live workspace](damocles-vesta-workspace.md).
+
 Still unexplored or incomplete: packed Pasti STX track payload, live
-non-Eris `$ABDC` workspaces, Gaea ground and islands other than Birmingham, remaining
+`$ABDC` workspaces other than Eris first-world and Vesta Politburo City, Gaea ground and islands other than Birmingham, remaining
 named-place lists, remaining object residences/transforms, view-conditioned object groups,
 articulated geometry, special primitives, post-plan attachment forms other than the
 documented zero-latch and `$F0` constructors, `$7000` road templates, default empty-cell fill, and script-created visual

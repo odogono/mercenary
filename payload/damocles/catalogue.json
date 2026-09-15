@@ -128,8 +128,8 @@
   "coverage": {
     "census": {
       "decoded": 166,
-      "partial": 378,
-      "unique": 613,
+      "partial": 390,
+      "unique": 625,
       "unresolved": 69
     },
     "classifications": {
@@ -137,12 +137,12 @@
       "articulated": 11,
       "attachments": 130,
       "empty": 12,
-      "geometry": 416,
-      "neighborJoin": 70,
+      "geometry": 428,
+      "neighborJoin": 81,
       "null": 1,
       "omittedSelector": 0,
       "paletteBinding": 6,
-      "roadTemplate": 15,
+      "roadTemplate": 16,
       "specialPolygon": 15,
       "viewConditioned": 19
     },
@@ -163,6 +163,10 @@
       {
         "finding": "Working-Authority image is a Pasti RSY version-3 STX (SHA-256 8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef, 1031930 bytes). Printable resident labels such as DART II are absent from the STX and from title-screen RAM; they appear only after the title-to-world unpack that fills the $04BD00 base block ($04BD0C=$00E900, $04BD10=$035700, $04BD22=$026000). Track payload remains packed.",
         "path": "Pasti STX"
+      },
+      {
+        "finding": "VESTA live $ABDC: body selector $7AA8=$0038, current cell $7B5C=$64; 19 surface assemblies and 12 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
+        "path": "Vesta live workspace"
       }
     ],
     "notes": [
@@ -170,7 +174,8 @@
       "Conditional geometry, scene palette binding, and named places outside the captured Eris workspace and authored Gaea Birmingham Island map remain incomplete.",
       "Eris cell ground/pad/road records at $1E000 are decoded locally; $7000 road templates, $53F76 attachments and default empty-cell fill remain incomplete.",
       "Selectors the documented zero-latch and $F0 post-plan constructors accept are retained; other attachment forms stay named in the model reason.",
-      "Gaea Birmingham Island: examined the authored 16\u00d716 placement stream ending at $23E57, recovered 82 surface assemblies and 7 named places; 174 cells have no structure (including 99 CHEVY cell $17). Ground/pad records, live Gaea $ABDC, and other Gaea islands remain unresolved."
+      "Gaea Birmingham Island: examined the authored 16\u00d716 placement stream ending at $23E57, recovered 82 surface assemblies and 7 named places; 174 cells have no structure (including 99 CHEVY cell $17). Ground/pad records, live Gaea $ABDC, and other Gaea islands remain unresolved.",
+      "VESTA live $ABDC: body selector $7AA8=$0038, current cell $7B5C=$64; 19 surface assemblies and 12 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged."
     ],
     "tables": [
       {
@@ -217,18 +222,18 @@
         "aliases": 0,
         "decoded": 0,
         "empty": 2,
-        "extentEvidence": "256-cell word table at $01E400; each word is an offset from $01E000. Records are shared across cells. This is the first-world workspace, not a body census.",
+        "extentEvidence": "256-cell word table at $01E400; each word is an offset from $01E000. Records are shared across cells. This is the first-world workspace, not a body census. Entries after index 255 are live VESTA workspace-local ground records, not first-world $1E400 slots.",
         "kind": "ground",
         "nullRecords": 0,
-        "partial": 72,
-        "slots": 256,
-        "unique": 74,
+        "partial": 84,
+        "slots": 268,
+        "unique": 86,
         "unresolved": 2
       }
     ],
     "unexplored": [
       "Packed Pasti STX disk track payload still not unpacked into models; fuzzy/copy-protected sectors are not a second pointer bank.",
-      "Live non-Eris $ABDC workspaces and Gaea islands other than authored Birmingham.",
+      "Live $ABDC workspaces other than Eris first-world and Vesta Politburo City; Gaea islands other than authored Birmingham.",
       "Mission-disk or script-created visual changes that would replace a resident slot.",
       "View-conditioned object groups, articulated transforms, special polygon commands, and post-plan attachment forms other than the documented zero-latch and $F0 constructors.",
       "$7000 / $53F76 ground commands and default empty-cell fill."
@@ -9381,6 +9386,866 @@
       "placement": null,
       "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
       "sourceAddress": 124414
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-04",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1087.4839782714844,
+          0,
+          307.52288818359375
+        ]
+      },
+      "model": "structure-01d1fe",
+      "name": "VESTA surface cell 4,0",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $04; not a census of every island on this body.",
+      "sourceAddress": 44012
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-13",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-024140",
+        "position": [
+          1086.4794006347656,
+          0,
+          308.5091552734375
+        ]
+      },
+      "model": "structure-01dd8e",
+      "name": "GAEA BANK",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $13; not a census of every island on this body.",
+      "sourceAddress": 44072
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-14",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1087.5137329101562,
+          0,
+          308.4931335449219
+        ]
+      },
+      "model": "structure-01dd16",
+      "name": "VESTA surface cell 4,1",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $14; not a census of every island on this body.",
+      "sourceAddress": 44076
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-23",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1086.5137329101562,
+          0,
+          309.4931335449219
+        ]
+      },
+      "model": "structure-01dd16",
+      "name": "VESTA surface cell 3,2",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $23; not a census of every island on this body.",
+      "sourceAddress": 44136
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-24",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1087.5137329101562,
+          0,
+          309.4931335449219
+        ]
+      },
+      "model": "structure-01dd16",
+      "name": "VESTA surface cell 4,2",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $24; not a census of every island on this body.",
+      "sourceAddress": 44140
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-31",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1084.5114440917969,
+          0,
+          310.518310546875
+        ]
+      },
+      "model": "structure-01dd6a",
+      "name": "VESTA surface cell 1,3",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $31; not a census of every island on this body.",
+      "sourceAddress": 44192
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-32",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1085.5,
+          0,
+          310.5
+        ]
+      },
+      "model": "structure-01d1e4",
+      "name": "VESTA surface cell 2,3",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $32; not a census of every island on this body.",
+      "sourceAddress": 44196
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-35",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1088.5,
+          0,
+          310.48626708984375
+        ]
+      },
+      "model": "structure-01decc",
+      "name": "VESTA surface cell 5,3",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $35; not a census of every island on this body.",
+      "sourceAddress": 44208
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-36",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1089.5,
+          0,
+          310.48626708984375
+        ]
+      },
+      "model": "structure-01decc",
+      "name": "VESTA surface cell 6,3",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $36; not a census of every island on this body.",
+      "sourceAddress": 44212
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-37",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1090.4542236328125,
+          0,
+          310.53204345703125
+        ]
+      },
+      "model": "structure-01d51a",
+      "name": "VESTA surface cell 7,3",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $37; not a census of every island on this body.",
+      "sourceAddress": 44216
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-40",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-024155",
+        "position": [
+          1083.4844360351562,
+          0,
+          311.5205993652344
+        ]
+      },
+      "model": "structure-01484e",
+      "name": "GLENN SPACEPORT",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $40; not a census of every island on this body.",
+      "sourceAddress": 44252
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-41",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1084.5,
+          0,
+          311.5
+        ]
+      },
+      "model": "structure-01d1e4",
+      "name": "VESTA surface cell 1,4",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $41; not a census of every island on this body.",
+      "sourceAddress": 44256
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-42",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1085.5,
+          0,
+          311.5
+        ]
+      },
+      "model": "structure-01d1e4",
+      "name": "VESTA surface cell 2,4",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $42; not a census of every island on this body.",
+      "sourceAddress": 44260
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-45",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-024116",
+        "position": [
+          1088.4922180175781,
+          0,
+          311.5233459472656
+        ]
+      },
+      "model": "structure-01dd7c",
+      "name": "LLOYDS GROUP 4",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $45; not a census of every island on this body.",
+      "sourceAddress": 44272
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-46",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-02412b",
+        "position": [
+          1089.4913024902344,
+          0,
+          311.4798583984375
+        ]
+      },
+      "model": "structure-01dd3a",
+      "name": "LAWSON BANK",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $46; not a census of every island on this body.",
+      "sourceAddress": 44276
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-53",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1086.5137329101562,
+          0,
+          312.4931335449219
+        ]
+      },
+      "model": "structure-01dd16",
+      "name": "VESTA surface cell 3,5",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $53; not a census of every island on this body.",
+      "sourceAddress": 44328
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-63",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1086.5137329101562,
+          0,
+          313.4931335449219
+        ]
+      },
+      "model": "structure-01dd16",
+      "name": "VESTA surface cell 3,6",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $63; not a census of every island on this body.",
+      "sourceAddress": 44392
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-64",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-024101",
+        "position": [
+          1087.5,
+          0,
+          313.53204345703125
+        ]
+      },
+      "model": "structure-01454e",
+      "name": "VESTA PARLIAMENT",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $64; not a census of every island on this body.",
+      "sourceAddress": 44396
+    },
+    {
+      "association": null,
+      "id": "vesta-surface-73",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-02416a",
+        "position": [
+          1086.5,
+          0,
+          314.525634765625
+        ]
+      },
+      "model": "structure-01dd58",
+      "name": "GUM STORE",
+      "placement": null,
+      "reason": "Live VESTA $ABDC workspace placement at cell $73; not a census of every island on this body.",
+      "sourceAddress": 44456
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-04",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1087.5,
+          0,
+          307.5
+        ]
+      },
+      "model": "vesta-ground-020f8e-05",
+      "name": "VESTA ground cell 4,0",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 123912
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-13",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-024140",
+        "position": [
+          1086.5,
+          0,
+          308.5
+        ]
+      },
+      "model": "vesta-ground-020dee-05",
+      "name": "GAEA BANK ground",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 123942
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-14",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1087.5,
+          0,
+          308.5
+        ]
+      },
+      "model": "vesta-ground-021d70-06",
+      "name": "VESTA ground cell 4,1",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 123944
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-23",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1086.5,
+          0,
+          309.5
+        ]
+      },
+      "model": "vesta-ground-021d70-06",
+      "name": "VESTA ground cell 3,2",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 123974
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-24",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1087.5,
+          0,
+          309.5
+        ]
+      },
+      "model": "vesta-ground-021d70-06",
+      "name": "VESTA ground cell 4,2",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 123976
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-31",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1084.5,
+          0,
+          310.5
+        ]
+      },
+      "model": "vesta-ground-020dee-00",
+      "name": "VESTA ground cell 1,3",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124002
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-32",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1085.5,
+          0,
+          310.5
+        ]
+      },
+      "model": "vesta-ground-021cc6-03",
+      "name": "VESTA ground cell 2,3",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124004
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-33",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1086.5,
+          0,
+          310.5
+        ]
+      },
+      "model": "vesta-ground-02289a-00",
+      "name": "VESTA ground cell 3,3",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124006
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-34",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1087.5,
+          0,
+          310.5
+        ]
+      },
+      "model": "vesta-ground-02289a-00",
+      "name": "VESTA ground cell 4,3",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124008
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-35",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1088.5,
+          0,
+          310.5
+        ]
+      },
+      "model": "ground-021a36-00",
+      "name": "VESTA ground cell 5,3",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124010
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-36",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1089.5,
+          0,
+          310.5
+        ]
+      },
+      "model": "ground-021a36-00",
+      "name": "VESTA ground cell 6,3",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124012
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-37",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1090.5,
+          0,
+          310.5
+        ]
+      },
+      "model": "vesta-ground-020f8e-03",
+      "name": "VESTA ground cell 7,3",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124014
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-40",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-024155",
+        "position": [
+          1083.5,
+          0,
+          311.5
+        ]
+      },
+      "model": "vesta-ground-0210a0-00",
+      "name": "GLENN SPACEPORT ground",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124032
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-41",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1084.5,
+          0,
+          311.5
+        ]
+      },
+      "model": "vesta-ground-021cc6-03",
+      "name": "VESTA ground cell 1,4",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124034
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-42",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1085.5,
+          0,
+          311.5
+        ]
+      },
+      "model": "vesta-ground-021cc6-03",
+      "name": "VESTA ground cell 2,4",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124036
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-43",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1086.5,
+          0,
+          311.5
+        ]
+      },
+      "model": "vesta-ground-02289a-00",
+      "name": "VESTA ground cell 3,4",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124038
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-44",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1087.5,
+          0,
+          311.5
+        ]
+      },
+      "model": "vesta-ground-02289a-00",
+      "name": "VESTA ground cell 4,4",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124040
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-45",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-024116",
+        "position": [
+          1088.5,
+          0,
+          311.5
+        ]
+      },
+      "model": "vesta-ground-021cc6-03",
+      "name": "LLOYDS GROUP 4 ground",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124042
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-46",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-02412b",
+        "position": [
+          1089.5,
+          0,
+          311.5
+        ]
+      },
+      "model": "vesta-ground-020dee-03",
+      "name": "LAWSON BANK ground",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124044
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-53",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1086.5,
+          0,
+          312.5
+        ]
+      },
+      "model": "vesta-ground-021d70-06",
+      "name": "VESTA ground cell 3,5",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124070
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-54",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1087.5,
+          0,
+          312.5
+        ]
+      },
+      "model": "vesta-ground-02195a-06",
+      "name": "VESTA ground cell 4,5",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124072
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-63",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": null,
+        "position": [
+          1086.5,
+          0,
+          313.5
+        ]
+      },
+      "model": "vesta-ground-021d70-06",
+      "name": "VESTA ground cell 3,6",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124102
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-64",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-024101",
+        "position": [
+          1087.5,
+          0,
+          313.5
+        ]
+      },
+      "model": "vesta-ground-020ede-06",
+      "name": "VESTA PARLIAMENT ground",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124104
+    },
+    {
+      "association": null,
+      "id": "vesta-ground-73",
+      "location": {
+        "body": "body-14",
+        "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
+        "heading": null,
+        "place": "place-02416a",
+        "position": [
+          1086.5,
+          0,
+          314.5
+        ]
+      },
+      "model": "vesta-ground-020e42-06",
+      "name": "GUM STORE ground",
+      "placement": null,
+      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "sourceAddress": 124134
     },
     {
       "association": null,
@@ -663251,7 +664116,9 @@
       "id": "ground-021a36-00",
       "kind": "ground",
       "linkedInstances": [
-        "eris-ground-fe"
+        "eris-ground-fe",
+        "vesta-ground-35",
+        "vesta-ground-36"
       ],
       "name": "Ground 254",
       "nameStatus": "unknown",
@@ -663903,6 +664770,3596 @@
           "name": "Recovered cell fill \u00b7 transform $06"
         }
       ]
+    },
+    {
+      "evidence": [
+        {
+          "claim": "Live VESTA per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vesta-workspace.md"
+        }
+      ],
+      "id": "vesta-ground-020f8e-05",
+      "kind": "ground",
+      "linkedInstances": [
+        "vesta-ground-04"
+      ],
+      "name": "VESTA ground 4",
+      "nameStatus": "unknown",
+      "omissions": [
+        "neighborJoin"
+      ],
+      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "recordClass": "geometry",
+      "relatedModels": [],
+      "slots": [
+        256
+      ],
+      "sourceAddress": 135054,
+      "status": "partial",
+      "variants": [
+        {
+          "id": "record",
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 0,
+                "vertices": [
+                  0,
+                  1,
+                  2,
+                  3
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 1,
+                "vertices": [
+                  4,
+                  5,
+                  6,
+                  7
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 2,
+                "vertices": [
+                  8,
+                  9,
+                  10,
+                  11,
+                  12
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 3,
+                "vertices": [
+                  13,
+                  14,
+                  15,
+                  16,
+                  17
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 4,
+                "vertices": [
+                  18,
+                  19,
+                  20,
+                  21
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 5,
+                "vertices": [
+                  22,
+                  23,
+                  24,
+                  25
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 6,
+                "vertices": [
+                  26,
+                  27,
+                  28,
+                  29
+                ]
+              },
+              {
+                "colour": "#666666",
+                "doubleSided": true,
+                "sourceColour": 819,
+                "sourceIndex": 14,
+                "vertices": [
+                  42,
+                  43,
+                  44,
+                  45
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 15,
+                "vertices": [
+                  46,
+                  47,
+                  48,
+                  49
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 16,
+                "vertices": [
+                  50,
+                  51,
+                  52,
+                  53
+                ]
+              },
+              {
+                "colour": "#882222",
+                "doubleSided": true,
+                "sourceColour": 1041,
+                "sourceIndex": 17,
+                "vertices": [
+                  54,
+                  55,
+                  56,
+                  57
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 18,
+                "vertices": [
+                  58,
+                  59,
+                  60,
+                  61
+                ]
+              }
+            ],
+            "lines": [
+              {
+                "colour": "#cccccc",
+                "sourceColour": 32782,
+                "sourceIndex": 8,
+                "vertices": [
+                  30,
+                  31
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "sourceColour": 32782,
+                "sourceIndex": 9,
+                "vertices": [
+                  32,
+                  33
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "sourceColour": 32782,
+                "sourceIndex": 10,
+                "vertices": [
+                  34,
+                  35
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "sourceColour": 32782,
+                "sourceIndex": 11,
+                "vertices": [
+                  36,
+                  37
+                ]
+              },
+              {
+                "colour": "#882222",
+                "sourceColour": 1041,
+                "sourceIndex": 12,
+                "vertices": [
+                  38,
+                  39
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 1911,
+                "sourceIndex": 13,
+                "vertices": [
+                  40,
+                  41
+                ]
+              }
+            ],
+            "sourceEnd": 135328,
+            "sourceStart": 135054,
+            "vertices": [
+              [
+                200,
+                0,
+                32767
+              ],
+              [
+                200,
+                0,
+                1200
+              ],
+              [
+                -200,
+                0,
+                1200
+              ],
+              [
+                -200,
+                0,
+                32767
+              ],
+              [
+                200,
+                0,
+                1200
+              ],
+              [
+                400,
+                0,
+                1000
+              ],
+              [
+                -800,
+                0,
+                800
+              ],
+              [
+                -200,
+                0,
+                1200
+              ],
+              [
+                400,
+                0,
+                1000
+              ],
+              [
+                2000,
+                0,
+                1000
+              ],
+              [
+                2000,
+                0,
+                0
+              ],
+              [
+                -800,
+                0,
+                0
+              ],
+              [
+                -800,
+                0,
+                800
+              ],
+              [
+                4000,
+                0,
+                0
+              ],
+              [
+                3600,
+                0,
+                -1400
+              ],
+              [
+                -4000,
+                0,
+                -1400
+              ],
+              [
+                -4400,
+                0,
+                0
+              ],
+              [
+                -800,
+                0,
+                0
+              ],
+              [
+                -4000,
+                0,
+                -1400
+              ],
+              [
+                -4000,
+                0,
+                -3400
+              ],
+              [
+                -4400,
+                0,
+                -3420
+              ],
+              [
+                -4400,
+                0,
+                0
+              ],
+              [
+                2000,
+                0,
+                -1380
+              ],
+              [
+                2000,
+                0,
+                -3400
+              ],
+              [
+                1600,
+                0,
+                -3420
+              ],
+              [
+                1600,
+                0,
+                -1380
+              ],
+              [
+                4000,
+                0,
+                0
+              ],
+              [
+                4000,
+                0,
+                -3400
+              ],
+              [
+                3600,
+                0,
+                -3420
+              ],
+              [
+                3600,
+                0,
+                -1400
+              ],
+              [
+                4000,
+                0,
+                -3400
+              ],
+              [
+                3600,
+                0,
+                -1400
+              ],
+              [
+                2000,
+                0,
+                -3400
+              ],
+              [
+                1600,
+                0,
+                -1380
+              ],
+              [
+                -4000,
+                0,
+                -3400
+              ],
+              [
+                -4400,
+                0,
+                0
+              ],
+              [
+                3600,
+                0,
+                -1400
+              ],
+              [
+                -4400,
+                0,
+                0
+              ],
+              [
+                -5000,
+                0,
+                -4200
+              ],
+              [
+                -5000,
+                0,
+                -3600
+              ],
+              [
+                6000,
+                0,
+                -3400
+              ],
+              [
+                6000,
+                0,
+                -4400
+              ],
+              [
+                6000,
+                0,
+                -3400
+              ],
+              [
+                6000,
+                0,
+                -4400
+              ],
+              [
+                -6000,
+                0,
+                -4400
+              ],
+              [
+                -6000,
+                0,
+                -3400
+              ],
+              [
+                -5,
+                0,
+                32767
+              ],
+              [
+                5,
+                0,
+                32767
+              ],
+              [
+                5,
+                0,
+                1200
+              ],
+              [
+                -5,
+                0,
+                1200
+              ],
+              [
+                5,
+                0,
+                1200
+              ],
+              [
+                100,
+                0,
+                1050
+              ],
+              [
+                -100,
+                0,
+                1050
+              ],
+              [
+                -5,
+                0,
+                1200
+              ],
+              [
+                -5000,
+                0,
+                -4200
+              ],
+              [
+                -5600,
+                0,
+                -4200
+              ],
+              [
+                -5600,
+                0,
+                -3600
+              ],
+              [
+                -5000,
+                0,
+                -3600
+              ],
+              [
+                6800,
+                0,
+                -3400
+              ],
+              [
+                6800,
+                0,
+                -4400
+              ],
+              [
+                6000,
+                0,
+                -4400
+              ],
+              [
+                6000,
+                0,
+                -3400
+              ]
+            ]
+          },
+          "name": "Recovered cell fill \u00b7 transform $05"
+        }
+      ]
+    },
+    {
+      "evidence": [
+        {
+          "claim": "Live VESTA per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vesta-workspace.md"
+        }
+      ],
+      "id": "vesta-ground-020dee-05",
+      "kind": "ground",
+      "linkedInstances": [
+        "vesta-ground-13"
+      ],
+      "name": "VESTA ground 19",
+      "nameStatus": "unknown",
+      "omissions": [
+        "neighborJoin"
+      ],
+      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "recordClass": "geometry",
+      "relatedModels": [],
+      "slots": [
+        257
+      ],
+      "sourceAddress": 134638,
+      "status": "partial",
+      "variants": [
+        {
+          "id": "record",
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 0,
+                "vertices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 1,
+                "vertices": [
+                  5,
+                  6,
+                  7,
+                  8
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 3,
+                "vertices": [
+                  9,
+                  10,
+                  11,
+                  12,
+                  13
+                ]
+              }
+            ],
+            "lines": [],
+            "sourceEnd": 134721,
+            "sourceStart": 134638,
+            "vertices": [
+              [
+                -200,
+                0,
+                -100
+              ],
+              [
+                -2000,
+                0,
+                -100
+              ],
+              [
+                -2000,
+                0,
+                1570
+              ],
+              [
+                0,
+                0,
+                1570
+              ],
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                200,
+                0,
+                32767
+              ],
+              [
+                200,
+                0,
+                -100
+              ],
+              [
+                -200,
+                0,
+                -100
+              ],
+              [
+                -200,
+                0,
+                32767
+              ],
+              [
+                -5,
+                0,
+                1575
+              ],
+              [
+                -5,
+                0,
+                32767
+              ],
+              [
+                5,
+                0,
+                32767
+              ],
+              [
+                5,
+                0,
+                1575
+              ],
+              [
+                0,
+                0,
+                1570
+              ]
+            ]
+          },
+          "name": "Recovered cell fill \u00b7 transform $05"
+        }
+      ]
+    },
+    {
+      "evidence": [
+        {
+          "claim": "Live VESTA per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vesta-workspace.md"
+        }
+      ],
+      "id": "vesta-ground-021d70-06",
+      "kind": "ground",
+      "linkedInstances": [
+        "vesta-ground-14",
+        "vesta-ground-23",
+        "vesta-ground-24",
+        "vesta-ground-53",
+        "vesta-ground-63"
+      ],
+      "name": "VESTA ground 20",
+      "nameStatus": "unknown",
+      "omissions": [
+        "neighborJoin"
+      ],
+      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "recordClass": "geometry",
+      "relatedModels": [],
+      "slots": [
+        258
+      ],
+      "sourceAddress": 138608,
+      "status": "partial",
+      "variants": [
+        {
+          "id": "record",
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#664444",
+                "doubleSided": true,
+                "sourceColour": 802,
+                "sourceIndex": 0,
+                "vertices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 1,
+                "vertices": [
+                  5,
+                  6,
+                  7,
+                  8,
+                  9,
+                  10
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 4,
+                "vertices": [
+                  11,
+                  12,
+                  13,
+                  14,
+                  15,
+                  16
+                ]
+              }
+            ],
+            "lines": [],
+            "sourceEnd": 138720,
+            "sourceStart": 138608,
+            "vertices": [
+              [
+                1000,
+                0,
+                1800
+              ],
+              [
+                3800,
+                0,
+                1800
+              ],
+              [
+                3800,
+                0,
+                -1800
+              ],
+              [
+                1000,
+                0,
+                -1800
+              ],
+              [
+                5,
+                0,
+                0
+              ],
+              [
+                200,
+                0,
+                32767
+              ],
+              [
+                200,
+                0,
+                0
+              ],
+              [
+                200,
+                0,
+                -32767
+              ],
+              [
+                -200,
+                0,
+                -32767
+              ],
+              [
+                -200,
+                0,
+                0
+              ],
+              [
+                -200,
+                0,
+                32767
+              ],
+              [
+                5,
+                0,
+                32767
+              ],
+              [
+                5,
+                0,
+                0
+              ],
+              [
+                5,
+                0,
+                -32767
+              ],
+              [
+                -5,
+                0,
+                -32767
+              ],
+              [
+                -5,
+                0,
+                0
+              ],
+              [
+                -5,
+                0,
+                32767
+              ]
+            ]
+          },
+          "name": "Recovered cell fill \u00b7 transform $06"
+        }
+      ]
+    },
+    {
+      "evidence": [
+        {
+          "claim": "Live VESTA per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vesta-workspace.md"
+        }
+      ],
+      "id": "vesta-ground-020dee-00",
+      "kind": "ground",
+      "linkedInstances": [
+        "vesta-ground-31"
+      ],
+      "name": "VESTA ground 49",
+      "nameStatus": "unknown",
+      "omissions": [
+        "neighborJoin"
+      ],
+      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "recordClass": "geometry",
+      "relatedModels": [],
+      "slots": [
+        259
+      ],
+      "sourceAddress": 134638,
+      "status": "partial",
+      "variants": [
+        {
+          "id": "record",
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 0,
+                "vertices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 1,
+                "vertices": [
+                  5,
+                  6,
+                  7,
+                  8
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 3,
+                "vertices": [
+                  9,
+                  10,
+                  11,
+                  12,
+                  13
+                ]
+              }
+            ],
+            "lines": [],
+            "sourceEnd": 134721,
+            "sourceStart": 134638,
+            "vertices": [
+              [
+                -100,
+                0,
+                200
+              ],
+              [
+                -100,
+                0,
+                2000
+              ],
+              [
+                1570,
+                0,
+                2000
+              ],
+              [
+                1570,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                32767,
+                0,
+                -200
+              ],
+              [
+                -100,
+                0,
+                -200
+              ],
+              [
+                -100,
+                0,
+                200
+              ],
+              [
+                32767,
+                0,
+                200
+              ],
+              [
+                1575,
+                0,
+                5
+              ],
+              [
+                32767,
+                0,
+                5
+              ],
+              [
+                32767,
+                0,
+                -5
+              ],
+              [
+                1575,
+                0,
+                -5
+              ],
+              [
+                1570,
+                0,
+                0
+              ]
+            ]
+          },
+          "name": "Recovered cell fill \u00b7 transform $00"
+        }
+      ]
+    },
+    {
+      "evidence": [
+        {
+          "claim": "Live VESTA per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vesta-workspace.md"
+        }
+      ],
+      "id": "vesta-ground-021cc6-03",
+      "kind": "ground",
+      "linkedInstances": [
+        "vesta-ground-32",
+        "vesta-ground-41",
+        "vesta-ground-42",
+        "vesta-ground-45"
+      ],
+      "name": "VESTA ground 50",
+      "nameStatus": "unknown",
+      "omissions": [
+        "neighborJoin"
+      ],
+      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "recordClass": "geometry",
+      "relatedModels": [],
+      "slots": [
+        260
+      ],
+      "sourceAddress": 138438,
+      "status": "partial",
+      "variants": [
+        {
+          "id": "record",
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 2,
+                "vertices": [
+                  4,
+                  5,
+                  6,
+                  7
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 3,
+                "vertices": [
+                  8,
+                  9,
+                  10,
+                  11,
+                  12
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 4,
+                "vertices": [
+                  13,
+                  14,
+                  15,
+                  16
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 5,
+                "vertices": [
+                  17,
+                  18,
+                  19,
+                  20,
+                  21
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 6,
+                "vertices": [
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 9,
+                "vertices": [
+                  28,
+                  29,
+                  30,
+                  31,
+                  32,
+                  33
+                ]
+              }
+            ],
+            "lines": [
+              {
+                "colour": "#cccccc",
+                "sourceColour": 32782,
+                "sourceIndex": 0,
+                "vertices": [
+                  0,
+                  1
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "sourceColour": 32782,
+                "sourceIndex": 1,
+                "vertices": [
+                  2,
+                  3
+                ]
+              }
+            ],
+            "sourceEnd": 138608,
+            "sourceStart": 138438,
+            "vertices": [
+              [
+                1200,
+                0,
+                0
+              ],
+              [
+                400,
+                0,
+                -800
+              ],
+              [
+                400,
+                0,
+                -800
+              ],
+              [
+                800,
+                0,
+                -2800
+              ],
+              [
+                800,
+                0,
+                800
+              ],
+              [
+                1200,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                400,
+                0,
+                800
+              ],
+              [
+                -1200,
+                0,
+                2800
+              ],
+              [
+                800,
+                0,
+                2800
+              ],
+              [
+                800,
+                0,
+                800
+              ],
+              [
+                400,
+                0,
+                800
+              ],
+              [
+                -1200,
+                0,
+                2130
+              ],
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                1200,
+                0,
+                0
+              ],
+              [
+                800,
+                0,
+                -800
+              ],
+              [
+                400,
+                0,
+                -800
+              ],
+              [
+                -1200,
+                0,
+                -2130
+              ],
+              [
+                400,
+                0,
+                -800
+              ],
+              [
+                800,
+                0,
+                -800
+              ],
+              [
+                800,
+                0,
+                -2800
+              ],
+              [
+                -1200,
+                0,
+                -2800
+              ],
+              [
+                32767,
+                0,
+                -200
+              ],
+              [
+                0,
+                0,
+                -200
+              ],
+              [
+                -32767,
+                0,
+                -200
+              ],
+              [
+                -32767,
+                0,
+                200
+              ],
+              [
+                0,
+                0,
+                200
+              ],
+              [
+                32767,
+                0,
+                200
+              ],
+              [
+                32767,
+                0,
+                -5
+              ],
+              [
+                0,
+                0,
+                -5
+              ],
+              [
+                -32767,
+                0,
+                -5
+              ],
+              [
+                -32767,
+                0,
+                5
+              ],
+              [
+                0,
+                0,
+                5
+              ],
+              [
+                32767,
+                0,
+                5
+              ]
+            ]
+          },
+          "name": "Recovered cell fill \u00b7 transform $03"
+        }
+      ]
+    },
+    {
+      "evidence": [
+        {
+          "claim": "Live VESTA per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vesta-workspace.md"
+        }
+      ],
+      "id": "vesta-ground-02289a-00",
+      "kind": "ground",
+      "linkedInstances": [
+        "vesta-ground-33",
+        "vesta-ground-34",
+        "vesta-ground-43",
+        "vesta-ground-44"
+      ],
+      "name": "VESTA ground 51",
+      "nameStatus": "unknown",
+      "omissions": [],
+      "reason": "Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "recordClass": "geometry",
+      "relatedModels": [],
+      "slots": [
+        261
+      ],
+      "sourceAddress": 141466,
+      "status": "partial",
+      "variants": [
+        {
+          "id": "record",
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 0,
+                "vertices": [
+                  0,
+                  1,
+                  2,
+                  3
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 1,
+                "vertices": [
+                  4,
+                  5,
+                  6,
+                  7,
+                  8,
+                  9
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 2,
+                "vertices": [
+                  10,
+                  11,
+                  12,
+                  13,
+                  14,
+                  15
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 3,
+                "vertices": [
+                  16,
+                  17,
+                  18,
+                  19,
+                  20
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 4,
+                "vertices": [
+                  21,
+                  22,
+                  23,
+                  24,
+                  25
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 5,
+                "vertices": [
+                  26,
+                  27,
+                  28,
+                  29,
+                  30
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 6,
+                "vertices": [
+                  31,
+                  32,
+                  33,
+                  34,
+                  35
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 7,
+                "vertices": [
+                  36,
+                  37,
+                  38,
+                  39
+                ]
+              }
+            ],
+            "lines": [],
+            "sourceEnd": 141672,
+            "sourceStart": 141466,
+            "vertices": [
+              [
+                0,
+                0,
+                -700
+              ],
+              [
+                -700,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                700
+              ],
+              [
+                700,
+                0,
+                0
+              ],
+              [
+                200,
+                0,
+                32767
+              ],
+              [
+                200,
+                0,
+                0
+              ],
+              [
+                200,
+                0,
+                -32767
+              ],
+              [
+                -200,
+                0,
+                -32767
+              ],
+              [
+                -200,
+                0,
+                0
+              ],
+              [
+                -200,
+                0,
+                32767
+              ],
+              [
+                -32767,
+                0,
+                200
+              ],
+              [
+                0,
+                0,
+                200
+              ],
+              [
+                32767,
+                0,
+                200
+              ],
+              [
+                32767,
+                0,
+                -200
+              ],
+              [
+                0,
+                0,
+                -200
+              ],
+              [
+                -32767,
+                0,
+                -200
+              ],
+              [
+                -32767,
+                0,
+                5
+              ],
+              [
+                -705,
+                0,
+                5
+              ],
+              [
+                -700,
+                0,
+                0
+              ],
+              [
+                -705,
+                0,
+                -5
+              ],
+              [
+                -32767,
+                0,
+                -5
+              ],
+              [
+                32767,
+                0,
+                -5
+              ],
+              [
+                705,
+                0,
+                -5
+              ],
+              [
+                700,
+                0,
+                0
+              ],
+              [
+                705,
+                0,
+                5
+              ],
+              [
+                32767,
+                0,
+                5
+              ],
+              [
+                5,
+                0,
+                32767
+              ],
+              [
+                5,
+                0,
+                705
+              ],
+              [
+                0,
+                0,
+                700
+              ],
+              [
+                -5,
+                0,
+                705
+              ],
+              [
+                -5,
+                0,
+                32767
+              ],
+              [
+                -5,
+                0,
+                -32767
+              ],
+              [
+                -5,
+                0,
+                -705
+              ],
+              [
+                0,
+                0,
+                -700
+              ],
+              [
+                5,
+                0,
+                -705
+              ],
+              [
+                5,
+                0,
+                -32767
+              ],
+              [
+                0,
+                0,
+                -200
+              ],
+              [
+                -200,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                200
+              ],
+              [
+                200,
+                0,
+                0
+              ]
+            ]
+          },
+          "name": "Recovered cell fill \u00b7 transform $00"
+        }
+      ]
+    },
+    {
+      "evidence": [
+        {
+          "claim": "Live VESTA per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vesta-workspace.md"
+        }
+      ],
+      "id": "vesta-ground-020f8e-03",
+      "kind": "ground",
+      "linkedInstances": [
+        "vesta-ground-37"
+      ],
+      "name": "VESTA ground 55",
+      "nameStatus": "unknown",
+      "omissions": [
+        "neighborJoin"
+      ],
+      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "recordClass": "geometry",
+      "relatedModels": [],
+      "slots": [
+        262
+      ],
+      "sourceAddress": 135054,
+      "status": "partial",
+      "variants": [
+        {
+          "id": "record",
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 0,
+                "vertices": [
+                  0,
+                  1,
+                  2,
+                  3
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 1,
+                "vertices": [
+                  4,
+                  5,
+                  6,
+                  7
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 2,
+                "vertices": [
+                  8,
+                  9,
+                  10,
+                  11,
+                  12
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 3,
+                "vertices": [
+                  13,
+                  14,
+                  15,
+                  16,
+                  17
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 4,
+                "vertices": [
+                  18,
+                  19,
+                  20,
+                  21
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 5,
+                "vertices": [
+                  22,
+                  23,
+                  24,
+                  25
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 6,
+                "vertices": [
+                  26,
+                  27,
+                  28,
+                  29
+                ]
+              },
+              {
+                "colour": "#666666",
+                "doubleSided": true,
+                "sourceColour": 819,
+                "sourceIndex": 14,
+                "vertices": [
+                  42,
+                  43,
+                  44,
+                  45
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 15,
+                "vertices": [
+                  46,
+                  47,
+                  48,
+                  49
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 16,
+                "vertices": [
+                  50,
+                  51,
+                  52,
+                  53
+                ]
+              },
+              {
+                "colour": "#882222",
+                "doubleSided": true,
+                "sourceColour": 1041,
+                "sourceIndex": 17,
+                "vertices": [
+                  54,
+                  55,
+                  56,
+                  57
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 18,
+                "vertices": [
+                  58,
+                  59,
+                  60,
+                  61
+                ]
+              }
+            ],
+            "lines": [
+              {
+                "colour": "#cccccc",
+                "sourceColour": 32782,
+                "sourceIndex": 8,
+                "vertices": [
+                  30,
+                  31
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "sourceColour": 32782,
+                "sourceIndex": 9,
+                "vertices": [
+                  32,
+                  33
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "sourceColour": 32782,
+                "sourceIndex": 10,
+                "vertices": [
+                  34,
+                  35
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "sourceColour": 32782,
+                "sourceIndex": 11,
+                "vertices": [
+                  36,
+                  37
+                ]
+              },
+              {
+                "colour": "#882222",
+                "sourceColour": 1041,
+                "sourceIndex": 12,
+                "vertices": [
+                  38,
+                  39
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 1911,
+                "sourceIndex": 13,
+                "vertices": [
+                  40,
+                  41
+                ]
+              }
+            ],
+            "sourceEnd": 135328,
+            "sourceStart": 135054,
+            "vertices": [
+              [
+                -32767,
+                0,
+                200
+              ],
+              [
+                -1200,
+                0,
+                200
+              ],
+              [
+                -1200,
+                0,
+                -200
+              ],
+              [
+                -32767,
+                0,
+                -200
+              ],
+              [
+                -1200,
+                0,
+                200
+              ],
+              [
+                -1000,
+                0,
+                400
+              ],
+              [
+                -800,
+                0,
+                -800
+              ],
+              [
+                -1200,
+                0,
+                -200
+              ],
+              [
+                -1000,
+                0,
+                400
+              ],
+              [
+                -1000,
+                0,
+                2000
+              ],
+              [
+                0,
+                0,
+                2000
+              ],
+              [
+                0,
+                0,
+                -800
+              ],
+              [
+                -800,
+                0,
+                -800
+              ],
+              [
+                0,
+                0,
+                4000
+              ],
+              [
+                1400,
+                0,
+                3600
+              ],
+              [
+                1400,
+                0,
+                -4000
+              ],
+              [
+                0,
+                0,
+                -4400
+              ],
+              [
+                0,
+                0,
+                -800
+              ],
+              [
+                1400,
+                0,
+                -4000
+              ],
+              [
+                3400,
+                0,
+                -4000
+              ],
+              [
+                3420,
+                0,
+                -4400
+              ],
+              [
+                0,
+                0,
+                -4400
+              ],
+              [
+                1380,
+                0,
+                2000
+              ],
+              [
+                3400,
+                0,
+                2000
+              ],
+              [
+                3420,
+                0,
+                1600
+              ],
+              [
+                1380,
+                0,
+                1600
+              ],
+              [
+                0,
+                0,
+                4000
+              ],
+              [
+                3400,
+                0,
+                4000
+              ],
+              [
+                3420,
+                0,
+                3600
+              ],
+              [
+                1400,
+                0,
+                3600
+              ],
+              [
+                3400,
+                0,
+                4000
+              ],
+              [
+                1400,
+                0,
+                3600
+              ],
+              [
+                3400,
+                0,
+                2000
+              ],
+              [
+                1380,
+                0,
+                1600
+              ],
+              [
+                3400,
+                0,
+                -4000
+              ],
+              [
+                0,
+                0,
+                -4400
+              ],
+              [
+                1400,
+                0,
+                3600
+              ],
+              [
+                0,
+                0,
+                -4400
+              ],
+              [
+                4200,
+                0,
+                -5000
+              ],
+              [
+                3600,
+                0,
+                -5000
+              ],
+              [
+                3400,
+                0,
+                6000
+              ],
+              [
+                4400,
+                0,
+                6000
+              ],
+              [
+                3400,
+                0,
+                6000
+              ],
+              [
+                4400,
+                0,
+                6000
+              ],
+              [
+                4400,
+                0,
+                -6000
+              ],
+              [
+                3400,
+                0,
+                -6000
+              ],
+              [
+                -32767,
+                0,
+                -5
+              ],
+              [
+                -32767,
+                0,
+                5
+              ],
+              [
+                -1200,
+                0,
+                5
+              ],
+              [
+                -1200,
+                0,
+                -5
+              ],
+              [
+                -1200,
+                0,
+                5
+              ],
+              [
+                -1050,
+                0,
+                100
+              ],
+              [
+                -1050,
+                0,
+                -100
+              ],
+              [
+                -1200,
+                0,
+                -5
+              ],
+              [
+                4200,
+                0,
+                -5000
+              ],
+              [
+                4200,
+                0,
+                -5600
+              ],
+              [
+                3600,
+                0,
+                -5600
+              ],
+              [
+                3600,
+                0,
+                -5000
+              ],
+              [
+                3400,
+                0,
+                6800
+              ],
+              [
+                4400,
+                0,
+                6800
+              ],
+              [
+                4400,
+                0,
+                6000
+              ],
+              [
+                3400,
+                0,
+                6000
+              ]
+            ]
+          },
+          "name": "Recovered cell fill \u00b7 transform $03"
+        }
+      ]
+    },
+    {
+      "evidence": [
+        {
+          "claim": "Live VESTA per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vesta-workspace.md"
+        }
+      ],
+      "id": "vesta-ground-0210a0-00",
+      "kind": "ground",
+      "linkedInstances": [
+        "vesta-ground-40"
+      ],
+      "name": "VESTA ground 64",
+      "nameStatus": "unknown",
+      "omissions": [
+        "neighborJoin"
+      ],
+      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "recordClass": "geometry",
+      "relatedModels": [],
+      "slots": [
+        263
+      ],
+      "sourceAddress": 135328,
+      "status": "partial",
+      "variants": [
+        {
+          "id": "record",
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 0,
+                "vertices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 1,
+                "vertices": [
+                  5,
+                  6,
+                  7,
+                  8
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 3,
+                "vertices": [
+                  9,
+                  10,
+                  11,
+                  12
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 7,
+                "vertices": [
+                  19,
+                  20,
+                  21,
+                  22
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 8,
+                "vertices": [
+                  23,
+                  24,
+                  25,
+                  26
+                ]
+              },
+              {
+                "colour": "#666666",
+                "doubleSided": true,
+                "sourceColour": 819,
+                "sourceIndex": 9,
+                "vertices": [
+                  27,
+                  28,
+                  29,
+                  30
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 10,
+                "vertices": [
+                  31,
+                  32,
+                  33
+                ]
+              },
+              {
+                "colour": "#882222",
+                "doubleSided": true,
+                "sourceColour": 1041,
+                "sourceIndex": 11,
+                "vertices": [
+                  34,
+                  35,
+                  36,
+                  37
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 12,
+                "vertices": [
+                  38,
+                  39,
+                  40,
+                  41
+                ]
+              }
+            ],
+            "lines": [
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "sourceIndex": 4,
+                "vertices": [
+                  13,
+                  14
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "sourceColour": 32782,
+                "sourceIndex": 5,
+                "vertices": [
+                  15,
+                  16
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "sourceColour": 32782,
+                "sourceIndex": 6,
+                "vertices": [
+                  17,
+                  18
+                ]
+              }
+            ],
+            "sourceEnd": 135519,
+            "sourceStart": 135328,
+            "vertices": [
+              [
+                -2800,
+                0,
+                -200
+              ],
+              [
+                -2400,
+                0,
+                0
+              ],
+              [
+                -2000,
+                0,
+                200
+              ],
+              [
+                900,
+                0,
+                200
+              ],
+              [
+                -200,
+                0,
+                -200
+              ],
+              [
+                -200,
+                0,
+                200
+              ],
+              [
+                32767,
+                0,
+                200
+              ],
+              [
+                32767,
+                0,
+                -200
+              ],
+              [
+                -200,
+                0,
+                -200
+              ],
+              [
+                -200,
+                0,
+                5
+              ],
+              [
+                32767,
+                0,
+                5
+              ],
+              [
+                32767,
+                0,
+                -5
+              ],
+              [
+                -200,
+                0,
+                -5
+              ],
+              [
+                -2800,
+                0,
+                4200
+              ],
+              [
+                -3400,
+                0,
+                -200
+              ],
+              [
+                -2000,
+                0,
+                200
+              ],
+              [
+                900,
+                0,
+                3000
+              ],
+              [
+                -2800,
+                0,
+                4200
+              ],
+              [
+                -1000,
+                0,
+                3000
+              ],
+              [
+                -2000,
+                0,
+                200
+              ],
+              [
+                -2000,
+                0,
+                3000
+              ],
+              [
+                900,
+                0,
+                3000
+              ],
+              [
+                900,
+                0,
+                200
+              ],
+              [
+                -2800,
+                0,
+                4200
+              ],
+              [
+                -2800,
+                0,
+                4600
+              ],
+              [
+                -1000,
+                0,
+                3000
+              ],
+              [
+                -1400,
+                0,
+                3000
+              ],
+              [
+                -3400,
+                0,
+                -600
+              ],
+              [
+                -3400,
+                0,
+                4600
+              ],
+              [
+                -2800,
+                0,
+                4600
+              ],
+              [
+                -2800,
+                0,
+                -600
+              ],
+              [
+                -2800,
+                0,
+                200
+              ],
+              [
+                -2400,
+                0,
+                0
+              ],
+              [
+                -2800,
+                0,
+                -200
+              ],
+              [
+                -3400,
+                0,
+                4600
+              ],
+              [
+                -3400,
+                0,
+                5000
+              ],
+              [
+                -2800,
+                0,
+                5000
+              ],
+              [
+                -2800,
+                0,
+                4600
+              ],
+              [
+                -3400,
+                0,
+                -600
+              ],
+              [
+                -3400,
+                0,
+                -200
+              ],
+              [
+                -2800,
+                0,
+                -200
+              ],
+              [
+                -2800,
+                0,
+                -600
+              ]
+            ]
+          },
+          "name": "Recovered cell fill \u00b7 transform $00"
+        }
+      ]
+    },
+    {
+      "evidence": [
+        {
+          "claim": "Live VESTA per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vesta-workspace.md"
+        }
+      ],
+      "id": "vesta-ground-020dee-03",
+      "kind": "ground",
+      "linkedInstances": [
+        "vesta-ground-46"
+      ],
+      "name": "VESTA ground 70",
+      "nameStatus": "unknown",
+      "omissions": [
+        "neighborJoin"
+      ],
+      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "recordClass": "geometry",
+      "relatedModels": [],
+      "slots": [
+        264
+      ],
+      "sourceAddress": 134638,
+      "status": "partial",
+      "variants": [
+        {
+          "id": "record",
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 0,
+                "vertices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 1,
+                "vertices": [
+                  5,
+                  6,
+                  7,
+                  8
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 3,
+                "vertices": [
+                  9,
+                  10,
+                  11,
+                  12,
+                  13
+                ]
+              }
+            ],
+            "lines": [],
+            "sourceEnd": 134721,
+            "sourceStart": 134638,
+            "vertices": [
+              [
+                100,
+                0,
+                -200
+              ],
+              [
+                100,
+                0,
+                -2000
+              ],
+              [
+                -1570,
+                0,
+                -2000
+              ],
+              [
+                -1570,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                -32767,
+                0,
+                200
+              ],
+              [
+                100,
+                0,
+                200
+              ],
+              [
+                100,
+                0,
+                -200
+              ],
+              [
+                -32767,
+                0,
+                -200
+              ],
+              [
+                -1575,
+                0,
+                -5
+              ],
+              [
+                -32767,
+                0,
+                -5
+              ],
+              [
+                -32767,
+                0,
+                5
+              ],
+              [
+                -1575,
+                0,
+                5
+              ],
+              [
+                -1570,
+                0,
+                0
+              ]
+            ]
+          },
+          "name": "Recovered cell fill \u00b7 transform $03"
+        }
+      ]
+    },
+    {
+      "evidence": [
+        {
+          "claim": "Live VESTA per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vesta-workspace.md"
+        }
+      ],
+      "id": "vesta-ground-02195a-06",
+      "kind": "ground",
+      "linkedInstances": [
+        "vesta-ground-54"
+      ],
+      "name": "VESTA ground 84",
+      "nameStatus": "unknown",
+      "omissions": [
+        "neighborJoin",
+        "roadTemplate"
+      ],
+      "reason": "Ground command with bit 13 set ($53F76 family, including $7000 road templates) is not yet decoded. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "recordClass": "geometry",
+      "relatedModels": [],
+      "slots": [
+        265
+      ],
+      "sourceAddress": 137562,
+      "status": "partial",
+      "variants": [
+        {
+          "id": "record",
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 0,
+                "vertices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 3,
+                "vertices": [
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11
+                ]
+              }
+            ],
+            "lines": [],
+            "sourceEnd": 137650,
+            "sourceStart": 137562,
+            "vertices": [
+              [
+                200,
+                0,
+                32767
+              ],
+              [
+                200,
+                0,
+                0
+              ],
+              [
+                200,
+                0,
+                -32767
+              ],
+              [
+                -200,
+                0,
+                -32767
+              ],
+              [
+                -200,
+                0,
+                0
+              ],
+              [
+                -200,
+                0,
+                32767
+              ],
+              [
+                5,
+                0,
+                32767
+              ],
+              [
+                5,
+                0,
+                0
+              ],
+              [
+                5,
+                0,
+                -32767
+              ],
+              [
+                -5,
+                0,
+                -32767
+              ],
+              [
+                -5,
+                0,
+                0
+              ],
+              [
+                -5,
+                0,
+                32767
+              ]
+            ]
+          },
+          "name": "Recovered cell fill \u00b7 transform $06"
+        }
+      ]
+    },
+    {
+      "evidence": [
+        {
+          "claim": "Live VESTA per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vesta-workspace.md"
+        }
+      ],
+      "id": "vesta-ground-020ede-06",
+      "kind": "ground",
+      "linkedInstances": [
+        "vesta-ground-64"
+      ],
+      "name": "VESTA ground 100",
+      "nameStatus": "unknown",
+      "omissions": [
+        "neighborJoin"
+      ],
+      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "recordClass": "geometry",
+      "relatedModels": [],
+      "slots": [
+        266
+      ],
+      "sourceAddress": 134878,
+      "status": "partial",
+      "variants": [
+        {
+          "id": "record",
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#000000",
+                "doubleSided": true,
+                "sourceColour": 32768,
+                "sourceIndex": 0,
+                "vertices": [
+                  0,
+                  1,
+                  2
+                ]
+              },
+              {
+                "colour": "#000000",
+                "doubleSided": true,
+                "sourceColour": 32768,
+                "sourceIndex": 1,
+                "vertices": [
+                  3,
+                  4,
+                  5
+                ]
+              },
+              {
+                "colour": "#666666",
+                "doubleSided": true,
+                "sourceColour": 819,
+                "sourceIndex": 2,
+                "vertices": [
+                  6,
+                  7,
+                  8,
+                  9,
+                  10,
+                  11
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 3,
+                "vertices": [
+                  12,
+                  13,
+                  14,
+                  15
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 4,
+                "vertices": [
+                  16,
+                  17,
+                  18,
+                  19
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 5,
+                "vertices": [
+                  20,
+                  21,
+                  22,
+                  23
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 6,
+                "vertices": [
+                  24,
+                  25,
+                  26,
+                  27
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 7,
+                "vertices": [
+                  28,
+                  29,
+                  30,
+                  31,
+                  32,
+                  33
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 9,
+                "vertices": [
+                  34,
+                  35,
+                  36,
+                  37
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 10,
+                "vertices": [
+                  38,
+                  39,
+                  40
+                ]
+              }
+            ],
+            "lines": [],
+            "sourceEnd": 135053,
+            "sourceStart": 134878,
+            "vertices": [
+              [
+                1500,
+                0,
+                2200
+              ],
+              [
+                2100,
+                0,
+                1500
+              ],
+              [
+                1500,
+                0,
+                500
+              ],
+              [
+                -2100,
+                0,
+                1500
+              ],
+              [
+                -1500,
+                0,
+                2200
+              ],
+              [
+                -1500,
+                0,
+                500
+              ],
+              [
+                -1500,
+                0,
+                500
+              ],
+              [
+                -1500,
+                0,
+                2200
+              ],
+              [
+                1500,
+                0,
+                2200
+              ],
+              [
+                1500,
+                0,
+                500
+              ],
+              [
+                200,
+                0,
+                -200
+              ],
+              [
+                -200,
+                0,
+                -200
+              ],
+              [
+                1500,
+                0,
+                500
+              ],
+              [
+                800,
+                0,
+                -400
+              ],
+              [
+                300,
+                0,
+                -400
+              ],
+              [
+                200,
+                0,
+                -200
+              ],
+              [
+                -300,
+                0,
+                -400
+              ],
+              [
+                -800,
+                0,
+                -400
+              ],
+              [
+                -1500,
+                0,
+                500
+              ],
+              [
+                -200,
+                0,
+                -200
+              ],
+              [
+                200,
+                0,
+                -200
+              ],
+              [
+                300,
+                0,
+                -400
+              ],
+              [
+                100,
+                0,
+                -600
+              ],
+              [
+                0,
+                0,
+                -600
+              ],
+              [
+                -300,
+                0,
+                -400
+              ],
+              [
+                -200,
+                0,
+                -200
+              ],
+              [
+                0,
+                0,
+                -600
+              ],
+              [
+                -100,
+                0,
+                -600
+              ],
+              [
+                -100,
+                0,
+                -32767
+              ],
+              [
+                -100,
+                0,
+                -600
+              ],
+              [
+                -100,
+                0,
+                -400
+              ],
+              [
+                100,
+                0,
+                -400
+              ],
+              [
+                100,
+                0,
+                -600
+              ],
+              [
+                100,
+                0,
+                -32767
+              ],
+              [
+                -5,
+                0,
+                -32767
+              ],
+              [
+                -5,
+                0,
+                -400
+              ],
+              [
+                5,
+                0,
+                -400
+              ],
+              [
+                5,
+                0,
+                -32767
+              ],
+              [
+                -100,
+                0,
+                -400
+              ],
+              [
+                100,
+                0,
+                -400
+              ],
+              [
+                0,
+                0,
+                -600
+              ]
+            ]
+          },
+          "name": "Recovered cell fill \u00b7 transform $06"
+        }
+      ]
+    },
+    {
+      "evidence": [
+        {
+          "claim": "Live VESTA per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-vesta-workspace.md"
+        }
+      ],
+      "id": "vesta-ground-020e42-06",
+      "kind": "ground",
+      "linkedInstances": [
+        "vesta-ground-73"
+      ],
+      "name": "VESTA ground 115",
+      "nameStatus": "unknown",
+      "omissions": [
+        "neighborJoin"
+      ],
+      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "recordClass": "geometry",
+      "relatedModels": [],
+      "slots": [
+        267
+      ],
+      "sourceAddress": 134722,
+      "status": "partial",
+      "variants": [
+        {
+          "id": "record",
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 0,
+                "vertices": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 1,
+                "vertices": [
+                  6,
+                  7,
+                  8,
+                  9
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 2,
+                "vertices": [
+                  10,
+                  11,
+                  12,
+                  13
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 3,
+                "vertices": [
+                  14,
+                  15,
+                  16,
+                  17
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 4,
+                "vertices": [
+                  18,
+                  19,
+                  20,
+                  21
+                ]
+              },
+              {
+                "colour": "#cccccc",
+                "doubleSided": true,
+                "sourceColour": 32782,
+                "sourceIndex": 5,
+                "vertices": [
+                  22,
+                  23,
+                  24,
+                  25,
+                  26,
+                  27
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 7,
+                "vertices": [
+                  28,
+                  29,
+                  30,
+                  31
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "doubleSided": true,
+                "sourceColour": 1911,
+                "sourceIndex": 8,
+                "vertices": [
+                  32,
+                  33,
+                  34
+                ]
+              }
+            ],
+            "lines": [],
+            "sourceEnd": 134877,
+            "sourceStart": 134722,
+            "vertices": [
+              [
+                -800,
+                0,
+                500
+              ],
+              [
+                -800,
+                0,
+                1000
+              ],
+              [
+                800,
+                0,
+                1000
+              ],
+              [
+                800,
+                0,
+                500
+              ],
+              [
+                200,
+                0,
+                -200
+              ],
+              [
+                -200,
+                0,
+                -200
+              ],
+              [
+                800,
+                0,
+                500
+              ],
+              [
+                800,
+                0,
+                -400
+              ],
+              [
+                300,
+                0,
+                -400
+              ],
+              [
+                200,
+                0,
+                -200
+              ],
+              [
+                -300,
+                0,
+                -400
+              ],
+              [
+                -800,
+                0,
+                -400
+              ],
+              [
+                -800,
+                0,
+                500
+              ],
+              [
+                -200,
+                0,
+                -200
+              ],
+              [
+                200,
+                0,
+                -200
+              ],
+              [
+                300,
+                0,
+                -400
+              ],
+              [
+                100,
+                0,
+                -600
+              ],
+              [
+                0,
+                0,
+                -600
+              ],
+              [
+                -300,
+                0,
+                -400
+              ],
+              [
+                -200,
+                0,
+                -200
+              ],
+              [
+                0,
+                0,
+                -600
+              ],
+              [
+                -100,
+                0,
+                -600
+              ],
+              [
+                -100,
+                0,
+                -32767
+              ],
+              [
+                -100,
+                0,
+                -600
+              ],
+              [
+                -100,
+                0,
+                -400
+              ],
+              [
+                100,
+                0,
+                -400
+              ],
+              [
+                100,
+                0,
+                -600
+              ],
+              [
+                100,
+                0,
+                -32767
+              ],
+              [
+                -5,
+                0,
+                -32767
+              ],
+              [
+                -5,
+                0,
+                -400
+              ],
+              [
+                5,
+                0,
+                -400
+              ],
+              [
+                5,
+                0,
+                -32767
+              ],
+              [
+                -100,
+                0,
+                -400
+              ],
+              [
+                100,
+                0,
+                -400
+              ],
+              [
+                0,
+                0,
+                -600
+              ]
+            ]
+          },
+          "name": "Recovered cell fill \u00b7 transform $06"
+        }
+      ]
     }
   ],
   "places": [
@@ -664061,6 +668518,60 @@
         "gaea-surface-70"
       ],
       "name": "LAWSON BANK"
+    },
+    {
+      "body": "body-14",
+      "id": "place-024101",
+      "instances": [
+        "vesta-surface-64",
+        "vesta-ground-64"
+      ],
+      "name": "VESTA PARLIAMENT"
+    },
+    {
+      "body": "body-14",
+      "id": "place-024116",
+      "instances": [
+        "vesta-surface-45",
+        "vesta-ground-45"
+      ],
+      "name": "LLOYDS GROUP 4"
+    },
+    {
+      "body": "body-14",
+      "id": "place-02412b",
+      "instances": [
+        "vesta-surface-46",
+        "vesta-ground-46"
+      ],
+      "name": "LAWSON BANK"
+    },
+    {
+      "body": "body-14",
+      "id": "place-024140",
+      "instances": [
+        "vesta-surface-13",
+        "vesta-ground-13"
+      ],
+      "name": "GAEA BANK"
+    },
+    {
+      "body": "body-14",
+      "id": "place-024155",
+      "instances": [
+        "vesta-surface-40",
+        "vesta-ground-40"
+      ],
+      "name": "GLENN SPACEPORT"
+    },
+    {
+      "body": "body-14",
+      "id": "place-02416a",
+      "instances": [
+        "vesta-surface-73",
+        "vesta-ground-73"
+      ],
+      "name": "GUM STORE"
     }
   ],
   "schemaVersion": 7,
@@ -665142,10 +669653,22 @@
         "ground-01e790-00",
         "ground-021210-00",
         "ground-021a36-00",
-        "ground-021210-06"
+        "ground-021210-06",
+        "vesta-ground-020f8e-05",
+        "vesta-ground-020dee-05",
+        "vesta-ground-021d70-06",
+        "vesta-ground-020dee-00",
+        "vesta-ground-021cc6-03",
+        "vesta-ground-02289a-00",
+        "vesta-ground-020f8e-03",
+        "vesta-ground-0210a0-00",
+        "vesta-ground-020dee-03",
+        "vesta-ground-02195a-06",
+        "vesta-ground-020ede-06",
+        "vesta-ground-020e42-06"
       ],
-      "entryCount": 256,
-      "extentEvidence": "256-cell word table at $01E400; each word is an offset from $01E000. Records are shared across cells. This is the first-world workspace, not a body census.",
+      "entryCount": 268,
+      "extentEvidence": "256-cell word table at $01E400; each word is an offset from $01E000. Records are shared across cells. This is the first-world workspace, not a body census. Entries after index 255 are live VESTA workspace-local ground records, not first-world $1E400 slots.",
       "kind": "ground"
     }
   ],

@@ -6,6 +6,7 @@ See docs/research/damocles-catalogue.md for the recovered record grammar.
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import json
 import struct
@@ -947,7 +948,7 @@ DISK_LOAD_EXAMINED = [
 
 UNEXPLORED_COVERAGE = [
     'Packed Pasti STX disk track payload still not unpacked into models; fuzzy/copy-protected sectors are not a second pointer bank.',
-    'Live non-Eris $ABDC workspaces and Gaea islands other than authored Birmingham.',
+    'Live $ABDC workspaces other than Eris first-world and Vesta Politburo City; Gaea islands other than authored Birmingham.',
     'Mission-disk or script-created visual changes that would replace a resident slot.',
     'View-conditioned object groups, articulated transforms, special polygon commands, '
     'and post-plan attachment forms other than the documented zero-latch and $F0 constructors.',
@@ -981,7 +982,7 @@ def classify_record(model: dict, is_alias: bool) -> None:
     model['omissions'] = tags
 
 
-def coverage_ledger(models: list, tables: list, notes: list[str]) -> dict:
+def coverage_ledger(models: list, tables: list, notes: list[str], disk_load: list | None = None) -> dict:
     status = Counter(model['status'] for model in models)
     classes = Counter(model['recordClass'] for model in models)
     omissions = Counter(tag for model in models for tag in model.get('omissions') or [])
@@ -1030,11 +1031,215 @@ def coverage_ledger(models: list, tables: list, notes: list[str]) -> dict:
         },
         'tables': rows,
         'unexplored': list(UNEXPLORED_COVERAGE),
-        'diskLoad': list(DISK_LOAD_EXAMINED),
+        'diskLoad': list(DISK_LOAD_EXAMINED if disk_load is None else disk_load),
     }
 
 
-def extract(data: bytes, source: dict) -> dict:
+def hatari_memstate_ram(data: bytes) -> bytes:
+    """Return the 1 MiB ST RAM window from a Hatari 2.6 memory snapshot."""
+    if data[:2] == b'\x1f\x8b':
+        data = gzip.decompress(data)
+    mark = data.find(b'DIALIS  ')
+    if mark < 0:
+        raise ValueError('Hatari memstate has no DIALIS body label')
+    base = mark - 0x81DC
+    if base < 0:
+        raise ValueError('Hatari memstate DIALIS is before $81DC')
+    ram = data[base:base + 1048576]
+    if len(ram) != 1048576 or ram[0x81DC:0x81E4] != b'DIALIS  ':
+        raise ValueError('Hatari memstate ST RAM window is truncated')
+    return ram
+
+
+def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: list,
+                          instances: list, places: list, by_address: dict, bodies: list,
+                          hardware: list[int]) -> str:
+    """Place live $ABDC / ground records from a non-Eris loaded world capture."""
+    if len(workspace) != 1048576 or u32(workspace, 0x4bd10) != 0x35700 or u32(workspace, 0x4bd22) != 0x26000:
+        raise ValueError('live workspace is not a loaded Damocles world capture')
+    if workspace[0xe900:0xe900 + 280 * 4] != data[0xe900:0xe900 + 280 * 4]:
+        raise ValueError('live workspace replaced the surface-assembly pointer table')
+    if workspace[0x26000:0x26000 + 130 * 4] != data[0x26000:0x26000 + 130 * 4]:
+        raise ValueError('live workspace replaced the building-detail pointer table')
+    selector = int.from_bytes(workspace[0x7aa8:0x7aaa], 'big')
+    if selector == 0 or selector % 4:
+        raise ValueError('live workspace body selector is invalid')
+    body = selector // 4
+    if body >= 30:
+        raise ValueError('live workspace body selector is out of range')
+    label = workspace[0x81dc + body * 8:0x81e4 + body * 8].decode('ascii').strip() or bodies[body]['name']
+    slug = label.lower()
+    origin_x = (u32(workspace, 0x7a92) - u32(workspace, 0x7a2c)) / 65536
+    origin_z = (u32(workspace, 0x7a9a) - u32(workspace, 0x7a34)) / 65536
+    names: dict[int, tuple[str, str]] = {}
+    place_pointer = u32(workspace, 0x7a6c)
+    if place_pointer + 20 < len(workspace):
+        try:
+            area = decode_named_area(workspace, place_pointer)
+        except ValueError:
+            area = None
+        if area:
+            for place in area['places']:
+                identity = f"place-{place['address']:06x}"
+                names[place['cell']] = (identity, place['name'])
+                if not any(item['id'] == identity for item in places):
+                    places.append({
+                        'id': identity,
+                        'name': place['name'],
+                        'body': f'body-{body}',
+                        'instances': [],
+                    })
+    occupied = 0
+    for cell in range(256):
+        address = 0xabdc + cell * 4
+        record, dx, dz = struct.unpack_from('>Hbb', workspace, address)
+        slot = record & 0x1ff
+        if not slot or slot >= len(tables[1]['entries']):
+            continue
+        occupied += 1
+        model_id = tables[1]['entries'][slot]
+        identity = f'{slug}-surface-{cell:02x}'
+        place = names.get(cell)
+        instances.append({
+            'id': identity,
+            'name': place[1] if place else f"{label} surface cell {cell & 15},{cell >> 4}",
+            'model': model_id,
+            'sourceAddress': address,
+            'association': None,
+            'placement': None,
+            'location': {
+                'body': f'body-{body}',
+                'place': place[0] if place else None,
+                'position': [
+                    origin_x + (cell & 15) + 0.5 + dx * 30 / 65536,
+                    0,
+                    origin_z + (cell >> 4) + 0.5 + dz * 30 / 65536,
+                ],
+                'coordinateSystem': 'ST surface grid units (body-local origin unresolved)',
+                'heading': None,
+            },
+            'reason': (
+                f"Live {label} $ABDC workspace placement at cell ${cell:02X}; "
+                'not a census of every island on this body.'
+            ),
+        })
+        if place:
+            next(item for item in places if item['id'] == place[0])['instances'].append(identity)
+    ground_unique = 0
+    for cell in range(256):
+        offset = int.from_bytes(workspace[0x1e400 + cell * 2:0x1e402 + cell * 2], 'big')
+        address = 0x1e000 + offset
+        structure_slot = struct.unpack_from('>H', workspace, 0xabdc + cell * 4)[0] & 0x1FF
+        palette = None
+        if structure_slot and structure_slot < len(tables[1]['entries']):
+            structure_model = tables[1]['entries'][structure_slot]
+            if structure_model in by_address:
+                palette = palette_at(
+                    data, by_address[structure_model].get('paletteIndex') or 0
+                )
+        try:
+            mesh, gaps, transform = decode_ground(
+                workspace, address, workspace[0x83dc + cell], palette, hardware
+            )
+        except (ValueError, struct.error) as error:
+            mesh, gaps, transform = (
+                {'vertices': [], 'faces': [], 'lines': [], 'sourceStart': address, 'sourceEnd': address},
+                [str(error)],
+                0xFF,
+            )
+        shared_id = f'ground-{address:06x}-{transform:02x}'
+        span = workspace[mesh['sourceStart']:mesh['sourceEnd']]
+        reuse = (
+            shared_id in by_address
+            and data[mesh['sourceStart']:mesh['sourceEnd']] == span
+        )
+        model_id = shared_id if reuse else f'{slug}-ground-{address:06x}-{transform:02x}'
+        if model_id not in by_address:
+            ground_unique += 1
+            model = {
+                'id': model_id,
+                'kind': 'ground',
+                'name': f"{label} ground {cell}",
+                'nameStatus': 'unknown',
+                'slots': [],
+                'sourceAddress': address,
+                'status': 'unresolved',
+                'reason': '',
+                'variants': [],
+                'relatedModels': [],
+                'linkedInstances': [],
+                'evidence': [{
+                    'claim': (
+                        f"Live {label} per-cell ground/pad/road record at $1E000; "
+                        'this workspace overwrites the Eris first-world index.'
+                    ),
+                    'confidence': 'verified',
+                    'source': 'docs/research/damocles-vesta-workspace.md',
+                }],
+            }
+            if mesh['faces'] or mesh['lines']:
+                model['variants'] = [{
+                    'id': 'record',
+                    'name': f'Recovered cell fill · transform ${transform:02x}',
+                    'mesh': mesh,
+                }]
+                model['status'] = 'partial' if gaps else 'decoded'
+                model['reason'] = ' '.join(gaps)
+            else:
+                model['reason'] = ' '.join(gaps) or (
+                    'Empty ground record: default cell fill is not stored as a vertex list.'
+                )
+            by_address[model_id] = model
+            models.append(model)
+        model = by_address[model_id]
+        if not model['variants']:
+            continue
+        identity = f'{slug}-ground-{cell:02x}'
+        place = names.get(cell)
+        instances.append({
+            'id': identity,
+            'name': place[1] + ' ground' if place else f"{label} ground cell {cell & 15},{cell >> 4}",
+            'model': model_id,
+            'sourceAddress': 0x1E400 + cell * 2,
+            'association': None,
+            'placement': None,
+            'location': {
+                'body': f'body-{body}',
+                'place': place[0] if place else None,
+                'position': [origin_x + (cell & 15) + 0.5, 0, origin_z + (cell >> 4) + 0.5],
+                'coordinateSystem': 'ST surface grid units (body-local origin unresolved)',
+                'heading': None,
+            },
+            'reason': (
+                f"Live {label} cell ground/pad/road record; default empty cells are omitted."
+            ),
+        })
+        model['linkedInstances'].append(identity)
+        if place:
+            next(item for item in places if item['id'] == place[0])['instances'].append(identity)
+    ground_table = next(table for table in tables if table['kind'] == 'ground')
+    extras = [
+        model['id']
+        for model in models
+        if model['id'].startswith(f'{slug}-ground-') and model['id'] not in ground_table['entries']
+    ]
+    for identity in extras:
+        ground_table['entries'].append(identity)
+        by_address[identity]['slots'] = [len(ground_table['entries']) - 1]
+    ground_table['entryCount'] = len(ground_table['entries'])
+    ground_table['extentEvidence'] += (
+        f' Entries after index 255 are live {label} workspace-local ground records, '
+        'not first-world $1E400 slots.'
+    )
+    return (
+        f"{label} live $ABDC: body selector $7AA8=${selector:04X}, current cell "
+        f"$7B5C=${int.from_bytes(workspace[0x7b5c:0x7b5e], 'big'):02X}; {occupied} surface assemblies "
+        f'and {ground_unique} workspace-local ground records. Structure and building-detail pointer '
+        'tables match first-world; object unique addresses are unchanged.'
+    )
+
+
+def extract(data: bytes, source: dict, workspace: bytes | None = None) -> dict:
     """Catalogue all entries of the bounded resident tables, never a byte scan."""
     if len(data) != 1048576 or u32(data, 0x4bd10) != 0x35700 or u32(data, 0x4bd22) != 0x26000:
         raise ValueError('not a loaded pinned Damocles world capture')
@@ -1392,6 +1597,11 @@ def extract(data: bytes, source: dict) -> dict:
         model['linkedInstances'].append(identity)
         if place:
             next(p for p in places if p['id'] == place[0])['instances'].append(identity)
+    workspace_coverage = None
+    if workspace is not None:
+        workspace_coverage = attach_live_workspace(
+            workspace, data, models, tables, instances, places, by_address, bodies, hardware
+        )
     chevy_key = instance_by_id.get('object-slot-180')
     chevy_parent_model = by_address.get('structure-01d188')
     chevy_map_record = data[0x251d7:0x251dd]
@@ -1686,9 +1896,16 @@ def extract(data: bytes, source: dict) -> dict:
     ]
     if gaea_coverage:
         coverage_notes.append(gaea_coverage)
+    disk_load = list(DISK_LOAD_EXAMINED)
+    if workspace_coverage:
+        coverage_notes.append(workspace_coverage)
+        disk_load.append({
+            'path': 'Vesta live workspace',
+            'finding': workspace_coverage,
+        })
     return {'schemaVersion': 7, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'places': places, 'tables': tables,
-            'coverage': coverage_ledger(models, tables, coverage_notes)}
+            'coverage': coverage_ledger(models, tables, coverage_notes, disk_load)}
 
 
 def validate_source(manifest: dict, pin: dict) -> None:
@@ -1703,6 +1920,8 @@ def main():
     parser = argparse.ArgumentParser(description='Extract the private Damocles Catalogue from an attested first-world run')
     parser.add_argument('--run', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--workspace', type=Path,
+                        help='Hatari memstate or 1 MiB RAM of a live non-Eris $ABDC workspace')
     args = parser.parse_args()
     from .laboratory import verify
     verify(args.run)
@@ -1711,11 +1930,15 @@ def main():
     validate_source(manifest, pin)
     artifact = next(a for a in manifest['artifacts'] if a['role'] == 'observed-ram')
     data = (args.run / artifact['path']).read_bytes()
+    workspace = None
+    if args.workspace:
+        blob = args.workspace.read_bytes()
+        workspace = blob if len(blob) == 1048576 else hatari_memstate_ram(blob)
     source = {'authority': 'Damocles Atari ST Working Authority', 'run': args.run.name,
               'ramSha256': hashlib.sha256(data).hexdigest(),
               'programSha256': manifest['authority']['programSha256'],
               'evidence': 'docs/research/damocles-catalogue.md'}
-    result = extract(data, source)
+    result = extract(data, source, workspace)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + '\n')
     from collections import Counter

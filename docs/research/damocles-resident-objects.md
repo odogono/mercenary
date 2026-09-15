@@ -120,8 +120,9 @@ integer X/Z grid nibbles is constant per body. This supports comparing raw
 coordinates within a body. Eris uses the live first-world `$ABDC` workspace and
 `$7A6C` place list. Gaea Birmingham Island uses the authored placement stream
 and place list in the same first-world pool, bound to 99 CHEVY's resident phase;
-it is not a live Gaea `$ABDC` capture. Other bodies still have no recovered
-surface-assembly map.
+it is not a live Gaea `$ABDC` capture. Vesta Politburo City uses a live
+`$ABDC` workspace from a Hatari memstate (body selector `$7AA8=$0038`); other
+bodies still have no recovered surface-assembly map.
 
 ## 99 CHEVY
 
