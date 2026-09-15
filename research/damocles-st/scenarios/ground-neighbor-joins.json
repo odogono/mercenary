@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "name": "ground-neighbor-joins",
+  "checkpoint": "title-screen",
+  "description": "Load the first world, capture its RAM, then disassemble the shared $04F8F2 polygon consumer reached by $056634 for $F0/$F4 ground references. Working-Authority Evidence for the Damocles model census (#173).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "artifacts": ["registers", "ram"]
+    },
+    {
+      "type": "disassemble",
+      "name": "ground-neighbor-joins",
+      "start": "0x04f800",
+      "end": "0x04fc00"
+    }
+  ]
+}

@@ -226,12 +226,14 @@ code. Targeted disassembly used to establish them remains ignored at
   negates X/Z from the orientation byte.
 - Faces are colour word plus byte vertex references, as in object polygons.
   Direct `$777` is the white pad; `$800e` resolves through the hardware palette
-  as the grey apron. `$F0`/`$F4` are neighboring-cell workspace slots and are
-  omitted rather than guessed. `$C00E` is a two-point edge in the same colour
-  family. `$7000` aligns the source address, reads X/Z plus an object-table byte
-  offset, applies the cell orientation, and composes that address-based model.
-  `$53F76` is a separate runtime vector-text path, not the source placement
-  consumer. Two transformed placements still lack scene-palette context.
+  as the grey apron. `$F0`/`$F4` are preprojected runtime horizon slots, not
+  neighboring-cell model vertices; their camera-dependent points are omitted
+  while the remaining local polygon is kept. `$C00E` is a two-point edge in
+  the same colour family. `$7000` aligns the source address, reads X/Z plus an
+  object-table byte offset, applies the cell orientation, and composes that
+  address-based model. `$53F76` is a separate runtime vector-text path, not the
+  source placement consumer. Two transformed placements still lack
+  scene-palette context.
 - `/damocles` still paints an authored green plane; recovered ground instances
   are catalogue-only until the separate native surface/background fill path is
   recovered. The shared empty record does not contain that plane: `$056634`

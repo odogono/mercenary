@@ -334,10 +334,10 @@ class EmptySurfaceTests(unittest.TestCase):
 
 
 class GroundTests(unittest.TestCase):
-    def test_pad_strip_keeps_local_vertices_and_omits_join_sentinels(self):
-        from damocleslab.catalogue import decode_ground
+    def test_pad_strip_keeps_local_vertices_and_classifies_runtime_horizon_slots(self):
+        from damocleslab.catalogue import classify_record, decode_ground
         # Short header $00FF, three plan points around cell centre, white quad
-        # that also names the $F0 neighbor-join slot, then terminator.
+        # that also names the $F0 preprojected horizon slot, then terminator.
         data = bytes.fromhex(
             '00ff'
             '84b080c8 800080c8 7b5080c8 0000'
@@ -349,7 +349,10 @@ class GroundTests(unittest.TestCase):
         self.assertEqual(mesh['vertices'][:3], [[1200, 0, 200], [0, 0, 200], [-1200, 0, 200]])
         self.assertEqual(mesh['faces'][0]['sourceColour'], 0x777)
         self.assertEqual(mesh['faces'][0]['vertices'], [0, 1, 2])
-        self.assertTrue(any('F0' in gap or 'F4' in gap for gap in gaps))
+        self.assertTrue(any('preprojected runtime horizon slot $F0/$F4' in gap for gap in gaps))
+        model = {'reason': ' '.join(gaps)}
+        classify_record(model, False)
+        self.assertEqual(model['omissions'], ['viewConditioned'])
 
     def test_empty_record_is_a_gap_not_a_fabricated_quad(self):
         from damocleslab.catalogue import decode_ground

@@ -170,9 +170,10 @@ const doubleSidedQuad = (
 /// workspace.
 ///
 /// A recovered ground record covers only its stored cell-local primitives: the spaceport apron
-/// is a strip of cell `$87`, `$7000` placements are composed, and `$F0`/`$F4` neighbour joins
-/// remain unresolved. Empty records contain no default quad; their native renderer returns on
-/// the initial zero command. Filling whole cells left uncovered areas as sky, and a fill in the
+/// is a strip of cell `$87`, `$7000` placements are composed, and camera-dependent `$F0`/`$F4`
+/// horizon slots stay outside static model geometry. Empty records contain no default quad;
+/// their native renderer returns on the initial zero command. Filling whole cells left
+/// uncovered areas as sky, and a fill in the
 /// next cell along is half a cell away, which a 63-unit eye over 65536-unit cells compresses
 /// into a pixel at the horizon. So this authored stand-in for the separate native
 /// surface/background path runs under everything and drops by the document's `fillDropUnits`,

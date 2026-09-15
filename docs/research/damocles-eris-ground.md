@@ -17,22 +17,24 @@ terminator; extending the catalogue decoder when a record family is proven.
 
 **Out of scope:** withdrawing the authored `/damocles` ground plane
 ([#195](https://github.com/odogono/mercenary/issues/195) follow-on);
-sky/horizon; other-body workspaces;
+the separate native surface/background fill; other-body workspaces;
 [#207](https://github.com/odogono/mercenary/issues/207) (`structure-01a618`).
 
 ## Working Authority and reproduce path
 
-| Item                  | Value                                                                                               |
-| --------------------- | --------------------------------------------------------------------------------------------------- |
-| Program               | `roms/atarist/damocles_-_mercenary_ii_novagen_software_(uk).stx`                                    |
-| SHA-256               | `8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef`                                  |
-| TOS pin               | EmuTOS 2.06 (`154803e3…8939d5`)                                                                     |
-| Lab                   | `research/damocles-st/` (`damocleslab`)                                                             |
-| Scenario              | `research/damocles-st/scenarios/first-world.json` (SHA-256 `e5383458…8582f96e`)                     |
-| Placement disassembly | `scenarios/ground-road-template.json`; run `observe-ground-road-template-20260915T112757Z-af886487` |
-| Empty-record renderer | `scenarios/default-ground-fill.json`; run `observe-default-ground-fill-20260915T125812Z-6b1062b5`   |
-| Pad view              | `scenarios/approach-spaceport-pad.json`                                                             |
-| Open ground           | `scenarios/walk-toward-building.json` (NAV `07-08` → `07-11`)                                       |
+| Item                  | Value                                                                                                         |
+| --------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Program               | `roms/atarist/damocles_-_mercenary_ii_novagen_software_(uk).stx`                                              |
+| SHA-256               | `8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef`                                            |
+| TOS pin               | EmuTOS 2.06 (`154803e3…8939d5`)                                                                               |
+| Lab                   | `research/damocles-st/` (`damocleslab`)                                                                       |
+| Scenario              | `research/damocles-st/scenarios/first-world.json` (SHA-256 `e5383458…8582f96e`)                               |
+| Placement disassembly | `scenarios/ground-road-template.json`; run `observe-ground-road-template-20260915T112757Z-af886487`           |
+| Empty-record renderer | `scenarios/default-ground-fill.json`; run `observe-default-ground-fill-20260915T125812Z-6b1062b5`             |
+| Polygon consumer      | `scenarios/ground-neighbor-joins.json`; run `observe-ground-neighbor-joins-20260915T132137Z-e51c9ceb`         |
+| Projection workspace  | `scenarios/ground-neighbor-workspace.json`; run `observe-ground-neighbor-workspace-20260915T132312Z-b5965f5b` |
+| Pad view              | `scenarios/approach-spaceport-pad.json`                                                                       |
+| Open ground           | `scenarios/walk-toward-building.json` (NAV `07-08` → `07-11`)                                                 |
 
 Cited RAM:
 
@@ -81,6 +83,16 @@ cell-local X and Z followed by a byte offset into the address-based object
 pointer table at `$04BD10`. `$053F76` belongs to the separate runtime
 vector-text renderer and is not this source command's consumer.
 
+`$F0` and `$F4` are not neighboring-cell model vertices. `$04F8F2` passes
+every polygon reference to `$04EDD4`; that consumer reads each reference's
+already projected coordinates and visibility class from runtime workspaces at
+offsets `$0840`, `$0FC0`, and `$1240`. In the pinned frame, `$F0` and `$F4`
+have valid visibility class `$08` and resolve to opposite projected points on
+the same row (`$2DC4,$0047` and `$0165,$0047`). Their source X/Z slots are
+zero and they are outside the locally projected plan range. They are therefore
+view-conditioned horizon joins, not static 3D coordinates the catalogue can
+append to a model.
+
 ## Hypothesis ledger
 
 | Hypothesis                                                                                | Status                                    | Evidence                                                                                                                                                                                                  |
@@ -90,6 +102,7 @@ vector-text renderer and is not this source command's consumer.
 | Unused bits of `$00ABDC` select pad vs grass vs road                                      | **Refuted for ground**                    | `$054CBE` masks the first byte with `$FE` into `$7AF8` for a different selector (objects / `$1E000` side table when `$20..$9F`). Ground uses `$1E400` + `$83DC`. Low nine bits remain the structure slot. |
 | A separate fill path draws cell rectangles / road strips                                  | **Refuted for empty cells**               | `$054E50` / `$054E40` reconstruct the selected record into `$8C32`; `$056634` returns immediately when that stream starts with zero.                                                                      |
 | The visible green comes from a surface/background path outside the cell record            | **Confirmed as a separate path**          | Open cell `$B7` is visibly green while its `$01E790` source and reconstructed `$8C32` streams are empty; the exact producer remains unresolved.                                                           |
+| `$F0`/`$F4` name neighboring-cell model vertices                                          | **Refuted**                               | `$04F8F2`/`$04EDD4` consume their valid preprojected coordinates and visibility state; source model-space slots are zero and outside the local projection range.                                          |
 | Post-terminator attachments also carry pad polygons                                       | **Partially confirmed (family, not pad)** | Ground records continue with `$C00E` / `$7000` after faces. Structure 74's `$4200` door is the documented wall-list attachment. The pad polygons themselves are ordinary colour+ref faces.                |
 
 ## RAM diff (pad vs open ground)
@@ -121,9 +134,10 @@ Plan: unsigned X/Z words relative to `$8000` (cell centre), terminated by X `0`.
 `±32767` is a cell-edge continuation.
 
 Faces: colour word, then byte references that are one-based multiples of four,
-zero-terminated — the same rule as object polygons at `$04F8F2`. `$F0` and `$F4`
-index a combined neighborhood workspace, not this cell's vertex list; the
-extractor omits them and keeps the remaining local polygon.
+zero-terminated — the same rule as object polygons at `$04F8F2`. Ordinary
+references index local model-space vertices. `$F0` and `$F4` instead index
+preprojected, view-conditioned horizon slots. The extractor omits those
+camera-dependent points and keeps the remaining local polygon.
 
 `$C00E` (bit 14 set, bit 13 clear) is a two-point edge. A command with bits
 14–12 set (`$7000` in the even-aligned records) is a compact object placement:
@@ -144,7 +158,7 @@ remain a named palette-binding gap rather than receiving an invented colour.
 
 First-world census: **50** unique records, **90** cells with local faces or
 lines, **74** catalogue models after grouping by address and transform, **133**
-empty default cells, and **74** transformed `$7000` placements in the unique
+intentional empty cells, and **74** transformed `$7000` placements in the unique
 catalogue models.
 
 Representative:
@@ -153,7 +167,7 @@ Representative:
 | ----: | --------- | ----: | ----------------------------------------------------------- |
 | `$87` | `$020F8E` |    12 | Spaceport cell: `$800E` grey, `$777` white, `$333` / `$411` |
 | `$88` | `$021AFE` |     2 | No structure; grey apron `$800E` plus white pad `$777`      |
-| `$B7` | `$01E790` |     0 | Open ground after the walk; default fill                    |
+| `$B7` | `$01E790` |     0 | Open ground after the walk; intentional empty record        |
 
 ## Catalogue
 
@@ -167,7 +181,8 @@ covers its local polygons plus resolved `$7000` object placements:
 `eris-ground-87` is still bounded by the stored geometry rather than a
 fabricated cell rectangle. The shared `$01E790` record is classified as a
 fully decoded intentional empty, not unresolved geometry. `$F0`/`$F4` joins
-and the separate native surface/background path remain unresolved.
+are classified as view-conditioned omissions rather than neighboring-cell
+geometry. The separate native surface/background path remains unresolved.
 
 ## Unresolved
 
@@ -175,7 +190,8 @@ and the separate native surface/background path remain unresolved.
   that supplies the recovered outdoor green; it is not an empty-cell record.
 - Scene-palette context for two transformed `$7000` copies of
   `object-041b1e`.
-- Neighbor-join slots `$F0`/`$F4` as reconstructed vertices.
+- The camera-dependent rule that seeds preprojected horizon slots `$F0`/`$F4`;
+  they cannot be represented as static model-space vertices.
 - Whether `$00ABDC` high-byte paths `$20..$9F` overlay extra `$1E000` data on
   some cells.
 - Ground records on bodies other than the captured Eris workspace.
