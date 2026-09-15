@@ -155,10 +155,14 @@ def validate_scenario(scenario: dict[str, Any]) -> None:
     )
     actions = scenario.get("actions")
     require(isinstance(actions, list) and bool(actions), "Scenario actions must be a non-empty list")
-    allowed = {"wait_vbls", "keypress", "keydown", "keyup", "stick_hold", "capture", "disassemble"}
+    allowed = {
+        "wait_vbls", "keypress", "keydown", "keyup", "stick_hold", "capture",
+        "disassemble", "watch",
+    }
     capture_count = 0
     prefixes: set[str] = set()
     disassembly_names: set[str] = set()
+    watch_names: set[str] = set()
     uses_stick = False
     for index, action in enumerate(actions):
         require(isinstance(action, dict), f"Scenario action {index} must be an object")
@@ -212,6 +216,39 @@ def validate_scenario(scenario: dict[str, Any]) -> None:
             )
             require(name not in disassembly_names, f"Scenario action {index} disassemble name {name!r} reused")
             disassembly_names.add(name)
+        elif action_type == "watch":
+            # A watch names the code that writes one word of live memory. The
+            # breakpoint condition is evaluated per instruction, so the run is
+            # slow; keep it to a single address the scenario can justify.
+            address = parse_hex_int(action.get("address"), label=f"Scenario action {index} watch address")
+            require(
+                0 <= address <= 0xFFFFE and address % 2 == 0,
+                f"Scenario action {index} watch address must be an even ST RAM word",
+            )
+            seconds = action.get("seconds", 5)
+            require(
+                isinstance(seconds, int) and 0 < seconds <= 60,
+                f"Scenario action {index} watch seconds invalid",
+            )
+            provoke = action.get("provoke")
+            if provoke is not None:
+                require(isinstance(provoke, dict), f"Scenario action {index} watch provoke invalid")
+                require(
+                    provoke.get("direction") in _STICK_DIRECTIONS,
+                    f"Scenario action {index} watch provoke direction invalid",
+                )
+                vbls = provoke.get("vbls")
+                require(
+                    isinstance(vbls, int) and 0 < vbls <= 100000,
+                    f"Scenario action {index} watch provoke vbls invalid",
+                )
+            name = action.get("name")
+            require(
+                isinstance(name, str) and bool(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,31}", name)),
+                f"Scenario action {index} watch name invalid",
+            )
+            require(name not in watch_names, f"Scenario action {index} watch name {name!r} reused")
+            watch_names.add(name)
     require(1 <= capture_count <= 2, "Observation scenarios must contain one or two capture actions")
     # Hatari stops consuming FIFO commands after a `d` listing, so a second
     # disassembly — and any capture behind it — is silently lost. One range per
@@ -219,6 +256,16 @@ def validate_scenario(scenario: dict[str, Any]) -> None:
     require(
         len(disassembly_names) <= 1,
         "Observation scenarios must contain at most one disassemble action",
+    )
+    # A watch ends in the debugger for the same reason, so it is also singular
+    # and must be the last action in the scenario.
+    require(
+        len(watch_names) <= 1,
+        "Observation scenarios must contain at most one watch action",
+    )
+    require(
+        not watch_names or actions[-1]["type"] == "watch",
+        "A watch action must be the last action in the scenario",
     )
     # stick_hold drives locomotion by memwriting the joystick-1 soft-copy at
     # $79C2, so it needs no host keyboard-to-joystick remapping (joyKeysPort).

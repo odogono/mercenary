@@ -98,10 +98,41 @@ every polygon reference to `$04EDD4`; that consumer reads each reference's
 already projected coordinates and visibility class from runtime workspaces at
 offsets `$0840`, `$0FC0`, and `$1240`. In the pinned frame, `$F0` and `$F4`
 have valid visibility class `$08` and resolve to opposite projected points on
-the same row (`$2DC4,$0047` and `$0165,$0047`). Their source X/Z slots are
-zero and they are outside the locally projected plan range. They are therefore
-view-conditioned horizon joins, not static 3D coordinates the catalogue can
-append to a model.
+the same row (`$2DC4,$0047` and `$0165,$0047`).
+
+### The producer, and the world coordinates behind it
+
+A `watch` run breaks on the next write to the projected X word of slot `$F0`
+(`$10B0`) after a sentinel poke, and walks the player forward so the view is
+rebuilt. It stops at `$056E40` with `A0 = $F0`, and the supervisor stack names
+its caller: `$054AC6`, inside the loop at `$054A64`.
+
+That loop is the answer. It walks slots from `$7B54` up to `$100`, so it fills
+the top of the object/ground slot region where `$F0`–`$FC` live, and for each
+slot it reads a **packed byte at `$5E40 + slot`**. The low nybble is a world X
+and the high nybble a world Z, each swapped into the high word of a longword,
+so the nybbles are **cell indices on the same 65,536-units-per-cell world grid
+the catalogue already reports**. The camera position at `$7A2C`/`$7A34` is
+subtracted, the fixed height at `$79BA` (385,152 in every capture) supplies Y,
+and `$056672` projects the result into the slot.
+
+The table is per-scene. In each capture the pair brackets the player's own cell
+on one axis:
+
+| Capture | Player cell | `$F0` | `$F4` | `$F8` | `$FC` |
+| --- | --- | --- | --- | --- | --- |
+| Eris first-world | `$87` = (7,8) | (11,8) | (7,8) | unused | unused |
+| Vesta Parliament | `$64` = (4,6) | (4,0) | (4,6) | unused | unused |
+| Gaea UR City | `$24` = (4,2) | (8,2) | (3,2) | (4,2) | (4,0) |
+| Dion | `$32` = (2,3) | (3,3) | (1,3) | (2,12) | (2,2) |
+
+So a horizon reference is **not** a screen-space invention and it is not
+unrepresentable. It is the current scene's ground extent, expressed as a world
+grid corner at a fixed height. A ground record that names `$F0` means "join to
+this scene's +X ground extent", which a capture resolves the same way a live
+`$ABDC` workspace resolves a cell's structures. `$054B02` then pairs `$F0` with
+`$F4`, and `$F8` with `$FC`, into edges drawn only when the packed byte is
+nonzero, which is why an unused pair reads zero.
 
 ## Hypothesis ledger
 
@@ -114,6 +145,7 @@ append to a model.
 | The visible green comes from a surface/background path outside the cell record            | **Confirmed as a separate path**          | Open cell `$B7` is visibly green while its `$01E790` source and reconstructed `$8C32` streams are empty; the exact producer remains unresolved.                                                           |
 | Structure slot zero means no scene palette is available                                   | **Refuted**                               | `$054D42` indexes surface entry zero and `$054E10` binds its metadata's palette zero to `$7A0E`; `$04F99E` uses that binding for `$808x` object faces.                                                    |
 | `$F0`/`$F4` name neighboring-cell model vertices                                          | **Refuted**                               | `$04F8F2`/`$04EDD4` consume their valid preprojected coordinates and visibility state; source model-space slots are zero and outside the local projection range.                                          |
+| `$F0`/`$F4` have no representable model-space coordinate                                  | **Refuted**                               | The `$054A64` loop projects them from packed cell indices at `$5E40 + slot`, camera-relative, with Y from `$79BA`. A watch breakpoint at `$056E40` with `A0 = $F0` named the writer and the stack named the caller. |
 | Post-terminator attachments also carry pad polygons                                       | **Partially confirmed (family, not pad)** | Ground records continue with `$C00E` / `$7000` after faces. Structure 74's `$4200` door is the documented wall-list attachment. The pad polygons themselves are ordinary colour+ref faces.                |
 
 ## RAM diff (pad vs open ground)
@@ -199,8 +231,9 @@ geometry. The separate native surface/background path remains unresolved.
 
 - Geometry and draw rule of the separate native **surface/background fill**
   that supplies the recovered outdoor green; it is not an empty-cell record.
-- The camera-dependent rule that seeds preprojected horizon slots `$F0`/`$F4`;
-  they cannot be represented as static model-space vertices.
+- Whether the packed `$5E40` horizon table is authored per body or derived from
+  the player's cell at scene setup; the recovered values bracket the player's
+  own cell in every capture, which suggests derivation.
 - Whether `$00ABDC` high-byte paths `$20..$9F` overlay extra `$1E000` data on
   some cells.
 - Ground records on bodies other than the captured Eris workspace.
