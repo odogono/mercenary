@@ -505,3 +505,50 @@ class VersionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class WatchScenarioTests(unittest.TestCase):
+    """A watch names the code that writes one word of live memory."""
+
+    @staticmethod
+    def _scenario(watch: dict) -> dict:
+        return {
+            'schemaVersion': 1,
+            'name': 'watch',
+            'checkpoint': 'title-screen',
+            'actions': [
+                {'type': 'capture', 'artifacts': ['ram']},
+                {'type': 'watch', **watch},
+            ],
+        }
+
+    def test_accepts_an_even_ram_word_with_a_provoking_walk(self):
+        validate_scenario(self._scenario({
+            'name': 'horizon-f0', 'address': '0x10b0', 'seconds': 8,
+            'provoke': {'direction': 'up', 'vbls': 6000},
+        }))
+
+    def test_rejects_an_odd_or_out_of_range_address(self):
+        for address in ('0x10b1', '0x100000'):
+            with self.assertRaisesRegex(Exception, 'watch address'):
+                validate_scenario(self._scenario({'name': 'w', 'address': address}))
+
+    def test_rejects_a_bad_provoke_or_duration(self):
+        with self.assertRaisesRegex(Exception, 'provoke direction'):
+            validate_scenario(self._scenario({
+                'name': 'w', 'address': '0x10b0', 'provoke': {'direction': 'sideways', 'vbls': 1},
+            }))
+        with self.assertRaisesRegex(Exception, 'watch seconds'):
+            validate_scenario(self._scenario({'name': 'w', 'address': '0x10b0', 'seconds': 0}))
+
+    def test_a_watch_must_be_the_last_action(self):
+        scenario = self._scenario({'name': 'w', 'address': '0x10b0'})
+        scenario['actions'].append({'type': 'wait_vbls', 'count': 10})
+        with self.assertRaisesRegex(Exception, 'last action'):
+            validate_scenario(scenario)
+
+    def test_only_one_watch_per_scenario(self):
+        scenario = self._scenario({'name': 'w', 'address': '0x10b0'})
+        scenario['actions'].insert(1, {'type': 'watch', 'name': 'x', 'address': '0x10b4'})
+        with self.assertRaisesRegex(Exception, 'at most one watch'):
+            validate_scenario(scenario)

@@ -389,6 +389,7 @@ def observe(
             disassemble_actions = [
                 action for action in scenario["actions"] if action["type"] == "disassemble"
             ]
+            watch_actions = [action for action in scenario["actions"] if action["type"] == "watch"]
             observe_dump.write_text(
                 "\n".join(
                     render_dump_script(
@@ -465,12 +466,67 @@ def observe(
                             ["hatari-stop", f"hatari-debug d ${start:x}-${end:x}"],
                         )
                         time.sleep(2.0)
+                    elif action_type == "watch":
+                        # Hatari's only memory watch is a per-instruction
+                        # condition on a value changing, and a renderer that
+                        # rewrites the same value each frame never trips it.
+                        # Poking a sentinel first makes the next genuine write a
+                        # change. The breakpoint runs its own command file, so
+                        # the register dump lands in the watch log without the
+                        # run having to talk to a stopped debugger.
+                        address = int(str(action["address"]), 0)
+                        name = str(action["name"])
+                        commands = run_directory / f"{name}.commands"
+                        # `r` names the writer; the supervisor stack window
+                        # carries the return addresses that name its caller.
+                        commands.write_text("r\nm $7ffe0-$80000\n", encoding="utf-8")
+                        watch_log = run_directory / f"{name}.watch.log"
+                        _fifo_send(
+                            fifo_handle,
+                            [
+                                "hatari-stop",
+                                f"hatari-debug logfile {watch_log}",
+                                "hatari-debug setopt hex",
+                                f"hatari-debug w ${address:x} de ad",
+                                f"hatari-debug b (${address:x}).w ! (${address:x}).w "
+                                f":once :file {commands}",
+                                "hatari-cont",
+                            ],
+                        )
+                        provoke = action.get("provoke")
+                        if provoke is None:
+                            time.sleep(float(action.get("seconds", 5)))
+                        else:
+                            # A slot the renderer only fills on scene setup needs
+                            # the player to move before it is written again.
+                            bitmask = resolve_stick_bitmask(str(provoke["direction"]))
+                            remaining = int(provoke["vbls"])
+                            while remaining > 0:
+                                if process.poll() is not None:
+                                    break
+                                chunk = min(2000, remaining)
+                                _fifo_send(
+                                    fifo_handle,
+                                    [
+                                        "hatari-stop",
+                                        "hatari-debug setopt hex",
+                                        f"hatari-debug w ${JOYSTICK1_SOFTCOPY:x} {bitmask:02x}",
+                                        "hatari-cont",
+                                    ],
+                                )
+                                time.sleep(max(0.05, chunk / 2000.0))
+                                remaining -= chunk
+                            time.sleep(float(action.get("seconds", 5)))
                     elif action_type == "capture":
                         prefix = str(action.get("prefix", "observed"))
                         # A disassembly runs last and leaves Hatari unresponsive,
                         # so the final capture must resume rather than quit and
                         # let the cleanup below stop the emulator.
-                        is_final = action is capture_actions[-1] and not disassemble_actions
+                        is_final = (
+                            action is capture_actions[-1]
+                            and not disassemble_actions
+                            and not watch_actions
+                        )
                         dump_parent = run_directory.resolve()
                         commands = [
                             "hatari-stop",

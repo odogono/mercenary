@@ -22,6 +22,7 @@ research/damocles-st/lab observe --scenario research/damocles-st/scenarios/title
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/first-world.json
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/deadline-clock.json
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/script-dispatch.json
+research/damocles-st/lab observe --scenario research/damocles-st/scenarios/horizon-slot-writer.json
 python3 research/damocles-st/scripts/panel-readout-probe.py --roms /path/to/roms \
   --snapshots /path/to/snapshots clock --vbls 250
 python3 research/damocles-st/scripts/panel-readout-probe.py --roms /path/to/roms \
@@ -54,7 +55,12 @@ manifest; and a bounded Space-key observation from that checkpoint.
 `export` cuts addressed RAM windows out of an attested run for external
 analysis; a window's file offset is its ST physical address. `xref` reports the
 68000 instructions that name one absolute address — the cheap way into unknown
-code. A scenario's `disassemble` action produces a listing with Hatari's own
+code. A scenario's `watch` action names the code that *writes* one word, which
+`xref` cannot do when the write goes through a register-indexed address: it
+pokes a sentinel, arms a Hatari change breakpoint whose command file dumps the
+registers and the supervisor stack, and optionally walks the player so a value
+the renderer only fills at scene setup is written again. One watch per
+scenario, last, because the run ends in the debugger. A scenario's `disassemble` action produces a listing with Hatari's own
 68000 disassembler at the state the run reached. `script` decodes the Damocles
 Script bank into a readable listing, walking it by reachability from its entry
 table.
