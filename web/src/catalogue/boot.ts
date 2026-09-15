@@ -74,6 +74,12 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
           : 'Building plan and linked detail. Available inspection views are listed under Form; original scene visibility remains incomplete.'
     );
   }
+  if (model.conditions.length) {
+    paragraph(
+      details,
+      `The game selects among these forms by ${model.conditions.join(', ')}; free inspection shows each form separately.`
+    );
+  }
   if (model.reason) {
     paragraph(details, model.reason);
   }
@@ -146,7 +152,11 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
       viewer?.show(form?.mesh ?? null, preserveView, form?.inspectionAngle);
       message(
         viewerError ||
-          (!form ? 'Geometry unresolved. See the recovery details below.' : '')
+          (form
+            ? ''
+            : model.recordClass === 'procedural'
+              ? 'No authored polygons: the game draws this record with a native routine. See the recovery details below.'
+              : 'Geometry unresolved. See the recovery details below.')
       );
     } catch (error) {
       viewer?.show(null);
@@ -311,7 +321,7 @@ const start = async () => {
     if (Object.keys(classes).length) {
       paragraph(
         ledger,
-        `Classes: ${classes.geometry ?? 0} geometry · ${classes.alias ?? 0} alias · ${classes.empty ?? 0} empty · ${classes.null ?? 0} NULL · ${classes.viewConditioned ?? 0} view-conditioned · ${classes.articulated ?? 0} articulated · ${classes.specialPolygon ?? 0} special polygon · ${classes.paletteBinding ?? 0} palette · ${classes.attachments ?? 0} attachments`
+        `Classes: ${classes.geometry ?? 0} geometry · ${classes.alias ?? 0} alias · ${classes.empty ?? 0} empty · ${classes.null ?? 0} NULL · ${classes.procedural ?? 0} procedural · ${classes.conditionalForms ?? 0} conditional forms · ${classes.viewConditioned ?? 0} view-conditioned · ${classes.articulated ?? 0} articulated · ${classes.specialPolygon ?? 0} special polygon · ${classes.paletteBinding ?? 0} palette · ${classes.liveText ?? 0} live text · ${classes.attachments ?? 0} attachments`
       );
     }
     const ledgerTables =

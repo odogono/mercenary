@@ -21,9 +21,16 @@ export interface Mesh {
   readonly lines: readonly Primitive[];
   readonly vertices: readonly Point[];
 }
-export const RECORD_CLASSES = ['geometry', 'alias', 'empty', 'null'] as const;
+export const RECORD_CLASSES = [
+  'geometry',
+  'alias',
+  'empty',
+  'null',
+  'procedural'
+] as const;
 export type RecordClass = (typeof RECORD_CLASSES)[number];
 export interface Model {
+  readonly conditions: readonly string[];
   readonly detailSelection?: readonly DetailGroup[];
   readonly evidence: readonly {
     readonly claim: string;
@@ -569,7 +576,8 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     if (
       status === 'decoded' &&
       variants.length === 0 &&
-      recordClass !== 'empty'
+      recordClass !== 'empty' &&
+      recordClass !== 'procedural'
     ) {
       fail('decoded model has no geometry');
     }
@@ -577,6 +585,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
       fail('unresolved model needs an explanation');
     }
     return {
+      conditions: m['conditions'] === undefined ? [] : strings(m['conditions']),
       evidence: list(m['evidence']).map(value => {
         const item = object(value);
         return {

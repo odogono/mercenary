@@ -221,13 +221,144 @@ def decode_building_lettering(data: bytes, reader: Reader, vertices: list,
     )
 
 
+def object_text_anchor(anchor: list[int], plane: int, horizontal: int, vertical: int) -> list[int]:
+    """Place a glyph coordinate in the plane selected by bits 6/7 of the text flags.
+
+    The native renderer patches two exchange instructions ($C945 / $C745) into
+    the glyph loop: bit 6 exchanges the glyph vertical axis with Z and bit 7
+    exchanges the glyph horizontal axis with Z.
+    """
+    if plane == 0:
+        return [anchor[0] + horizontal, anchor[1] + vertical, anchor[2]]
+    if plane == 0x80:
+        return [anchor[0], anchor[1] + vertical, anchor[2] + horizontal]
+    if plane == 0x40:
+        return [anchor[0] + horizontal, anchor[1], anchor[2] + vertical]
+    return [anchor[0] + vertical, anchor[1], anchor[2] + horizontal]
+
+
+TELEVISION_FRAME_TABLE = 0x53432
+TELEVISION_FRAMES = 6
+BEACON_LIT = 0x777
+BEACON_DARK = 0x8000
+BEACON_GATES = {0x246: '$707E', 0x411: '$7082'}
+
+
+def decode_object_lettering(data: bytes, reader: Reader, vertices: list, faces: list,
+                            lines: list, palette: list[int] | None,
+                            hardware: list[int] | None) -> dict:
+    """Decode the object `$6000` vector-text record consumed at `$053F96`.
+
+    Three signed word offsets are added to the object's position; the flags,
+    advance, glyph scales and colour follow, then inline text. Indirect text
+    (flags bit 15 clear) replaces the record pointer and fails closed here.
+    """
+    reader.p &= ~1
+    dx, dy, dz, flags, advance = struct.unpack('>3hHh', reader.take(10))
+    scale_x, scale_y = struct.unpack('>bb', reader.take(2))
+    colour = reader.word()
+    if not flags & 0x8000:
+        raise ValueError('indirect object vector text unresolved')
+    font = flags & 0xF
+    if font == 4:
+        raise ValueError('state-conditioned object text font unresolved')
+    plane = flags & 0xC0
+    # Inline literal characters are authored; a $80..$98 token names a live
+    # $CCA0 workspace string whose content is capture state, not model data.
+    characters = []
+    token = None
+    for _ in range(256):
+        character = reader.take(1)[0]
+        if character == 0:
+            break
+        if character & 0x80:
+            if reader.take(1)[0] != 0:
+                raise ValueError('vector-text token is not terminal')
+            token = character & 0x7f
+            break
+        if not 32 <= character < 127:
+            raise ValueError('unsupported vector-text character')
+        characters.append(chr(character))
+    else:
+        raise ValueError('vector-text terminator missing')
+    text = ''.join(characters)
+    anchor = [dx, dy, dz]
+    rgb = colour_value(colour, palette, hardware)
+    for character_index, character in enumerate(text):
+        glyph_index = ord(character) + font * 64 - 32
+        pointer_address = 0x31700 + glyph_index * 2
+        if glyph_index < 0 or pointer_address + 2 > len(data):
+            raise ValueError('vector-text glyph outside source font')
+        pointer = Reader(data, pointer_address).signed()
+        glyph = Reader(data, 0x31700 + pointer)
+        offset = len(vertices)
+        for _ in range(63):
+            x = int.from_bytes(glyph.take(1), 'big', signed=True)
+            if x in (-128, -127):
+                filled = x == -128
+                break
+            y = int.from_bytes(glyph.take(1), 'big', signed=True)
+            vertices.append(object_text_anchor(
+                anchor, plane, character_index * advance + x * scale_x, y * scale_y
+            ))
+        else:
+            raise ValueError('vector-text glyph vertex terminator missing')
+        if filled:
+            for _ in range(256):
+                first = glyph.take(1)[0]
+                if first == 0:
+                    break
+                refs = [first]
+                for _ in range(255):
+                    ref = glyph.take(1)[0]
+                    if ref == 0:
+                        break
+                    refs.append(ref)
+                else:
+                    raise ValueError('filled vector-text polygon terminator missing')
+                if any(ref % 4 or ref // 4 > len(vertices) - offset for ref in refs):
+                    raise ValueError('invalid filled vector-text glyph reference')
+                faces.append({'vertices': [offset + ref // 4 - 1 for ref in refs],
+                              'colour': rgb, 'sourceColour': colour})
+            else:
+                raise ValueError('filled vector-text glyph terminator missing')
+            continue
+        for _ in range(256):
+            a = glyph.take(1)[0]
+            if a == 0:
+                break
+            b = glyph.take(1)[0]
+            if any(ref == 0 or ref % 4 or ref // 4 > len(vertices) - offset for ref in (a, b)):
+                raise ValueError('invalid vector-text glyph reference')
+            lines.append({'vertices': [offset + a // 4 - 1, offset + b // 4 - 1],
+                          'colour': rgb, 'sourceColour': colour})
+        else:
+            raise ValueError('vector-text glyph line terminator missing')
+    return {'anchor': anchor, 'text': text, 'font': font, 'plane': plane,
+            **({'liveToken': token} if token is not None else {})}
+
+
 def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = None,
                 hardware: list[int] | None = None,
-                text_workspace: bytes | None = None) -> dict:
+                text_workspace: bytes | None = None,
+                state: dict | None = None) -> dict:
+    """Decode one object or building-detail record.
+
+    `state` selects among source-conditioned forms of the same record:
+    `flash` (`lit`/`dark`) for `$8003` beacon patches, `frame` (0..5) for the
+    `$8006` television colour cycle, `open` for the `$8009` jump taken when
+    `$7A60` is set, and `viewGroup` for a view-conditioned face group index.
+    The returned mesh names the alternates in `alternates` so callers can
+    enumerate every form without guessing.
+    """
+    state = state or {}
     reader = Reader(data, start)
     patches: dict[int, int] = {}
     display_code = None
     label_anchor = None
+    alternates: dict = {}
+    articulation = None
+    texts: list[dict] = []
     if kind == 'object':
         visited = set()
         for _ in range(32):
@@ -241,10 +372,59 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
             if command == 0x8000:
                 raise ValueError('null model: no geometry')
             if command == 0x8001:
-                mode = reader.word()
+                axis, mode = reader.take(2)
                 if mode & 0x80:
-                    raise ValueError('articulated model transform unresolved')
+                    # $053572: pivot X word, then Y/Z words; negative-Y vertices
+                    # rotate about it by the global angle at $7888.
+                    pivot = [reader.signed(), reader.signed(), reader.signed()]
+                    articulation = {'axis': axis, 'pivot': pivot, 'angle': '$7888'}
                 break  # orientation is an instance property, not baked into the model
+            if command == 0x8004:
+                raise ValueError(
+                    'procedural: $8004 draws the $350E0 point field at $04CFA4; no authored polygon geometry'
+                )
+            if command == 0x8003:
+                # $0534B0: one unconditional byte-pair patch, then offsets that
+                # receive $777 while lit or $8000 while dark. $246/$411 records
+                # also consult $707E/$7082 before flashing with $7AE8.
+                hi, lo = reader.take(2)
+                offset = reader.signed()
+                patches[reader.p + offset] = hi
+                patches[reader.p + offset + 1] = lo
+                gate = BEACON_GATES.get((hi << 8) | lo)
+                colour = BEACON_DARK if state.get('flash') == 'dark' else BEACON_LIT
+                offsets = []
+                for _ in range(64):
+                    offset = reader.signed()
+                    if offset == 0:
+                        break
+                    patches[reader.p + offset] = colour >> 8
+                    patches[reader.p + offset + 1] = colour & 0xFF
+                    offsets.append(offset)
+                else:
+                    raise ValueError('beacon patch list terminator missing')
+                alternates['flash'] = {'offsets': len(offsets), 'gate': gate}
+                offset = reader.signed()
+                reader.p += offset - 2
+                break
+            if command == 0x8006:
+                # $053440 cycles a six-entry colour table at $53432 while bit 0 of $7875 is set.
+                frame = state.get('frame', 0)
+                if not 0 <= frame < TELEVISION_FRAMES:
+                    raise ValueError('television frame outside the colour cycle')
+                offset = reader.signed()
+                colour = data[TELEVISION_FRAME_TABLE + frame * 2:TELEVISION_FRAME_TABLE + frame * 2 + 2]
+                patches[reader.p + offset - 2] = colour[0]
+                patches[reader.p + offset - 1] = colour[1]
+                alternates['frame'] = TELEVISION_FRAMES
+                break
+            if command == 0x8009:
+                # $05355A jumps by the following word when $7A60 is nonzero.
+                offset = reader.signed()
+                if state.get('open'):
+                    reader.p += offset - 2
+                alternates['open'] = '$7A60'
+                break
             if command in (0x8002, 0x8007, 0x800b):
                 break  # name substitution / far-distance marker, no local vertex change
             if command == 0x800c:
@@ -274,14 +454,21 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
     vertices = []
     for _ in range(256):
         x = reader.signed()
-        if x == -32768 or (kind == 'interior' and x == -32767):
-            if x == -32767:
-                raise ValueError('articulated interior unresolved')
+        if x == -32768:
+            break
+        if kind == 'interior' and x == -32767:
+            # $053B4A: axis word, then a pivot scaled like the detail itself.
+            articulation = {
+                'axis': reader.word(),
+                'pivot': [reader.signed(), reader.signed(), reader.signed()],
+                'angle': '$7888',
+            }
             break
         y, z = reader.signed(), reader.signed()
-        # Detail/interior records use a negative Y as an articulation tag.
-        # A neutral inspection pose has zero articulation; the height is complemented.
-        vertices.append([x, ~y if kind == 'interior' and y < 0 else y, z])
+        # Detail records and articulated objects tag rotating vertices with a
+        # negative Y. The rest pose has zero angle; the height is complemented.
+        rest = kind == 'interior' or articulation is not None
+        vertices.append([x, ~y if rest and y < 0 else y, z])
     else:
         raise ValueError('vertex terminator missing')
     if not vertices:
@@ -291,57 +478,179 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
             else 'model has no vertices'
         )
     body_vertex_count = len(vertices)
-    if kind == 'object':
-        if reader.word() != 0:
-            raise ValueError('view-conditioned face groups unresolved')
     faces, lines = [], []
-    for _ in range(2048):
-        address = reader.p
-        raw = reader.take(2)
-        colour = (patches.get(address, raw[0]) << 8) | patches.get(address + 1, raw[1])
-        if colour == 0:
-            if not faces and not lines:
-                raise ValueError('model has no drawable primitives')
-            if display_code is not None and label_anchor is None:
-                raise ValueError('key vector-text record missing')
-            return {'vertices': vertices, 'faces': faces, 'lines': lines,
-                    'sourceStart': start, 'sourceEnd': reader.p, 'geometryStart': geometry_start,
-                    **({'displayCode': display_code, 'labelAnchor': label_anchor}
-                       if label_anchor is not None else {})}
-        if colour == 0x6000 and display_code is not None:
-            # Special records align their parameters to an even RAM address.
-            reader.p &= ~1
-            label_anchor = decode_key_lettering(data, reader, display_code, vertices, lines, hardware)
-            continue
-        if kind == 'interior' and colour & 0xFF00 == 0x6000:
-            decode_building_lettering(
-                data, reader, vertices, faces, lines, palette, hardware, text_workspace
-            )
-            continue
-        if colour & 0x4000:
-            if colour & 0x2000:
-                raise ValueError('special polygon command unresolved')
-            refs = list(reader.take(2))
-            line = True
-            colour &= ~0x4000
-        else:
-            refs = []
-            for _ in range(256):
-                ref = reader.take(1)[0]
-                if ref == 0:
-                    break
-                refs.append(ref)
+
+    def read_primitives(vertices: list, faces: list, lines: list) -> None:
+        nonlocal label_anchor
+        for _ in range(2048):
+            address = reader.p
+            raw = reader.take(2)
+            colour = (patches.get(address, raw[0]) << 8) | patches.get(address + 1, raw[1])
+            if colour == 0:
+                return
+            if colour & 0x7000 == 0x7000:
+                # $05394E: a target marker (or any $F000 word) ends the list.
+                return
+            if colour == 0x6000 and display_code is not None:
+                # Special records align their parameters to an even RAM address.
+                reader.p &= ~1
+                label_anchor = decode_key_lettering(data, reader, display_code, vertices, lines, hardware)
+                continue
+            if kind == 'interior' and colour & 0xFF00 == 0x6000:
+                decode_building_lettering(
+                    data, reader, vertices, faces, lines, palette, hardware, text_workspace
+                )
+                continue
+            if kind == 'object' and colour & 0x6000 == 0x6000:
+                texts.append(decode_object_lettering(
+                    data, reader, vertices, faces, lines, palette, hardware
+                ))
+                continue
+            if colour & 0x4000:
+                if colour & 0x2000:
+                    raise ValueError('special polygon command unresolved')
+                refs = list(reader.take(2))
+                line = True
+                colour &= ~0x4000
             else:
-                raise ValueError('polygon terminator missing')
-            line = False
-        if any(ref == 0 or ref % 4 or ref // 4 > body_vertex_count for ref in refs):
-            raise ValueError(f'invalid vertex reference at ${address:06x}')
-        if len(refs) < (2 if line else 3):
-            raise ValueError('degenerate polygon record')
-        primitive = {'vertices': [ref // 4 - 1 for ref in refs],
-                     'colour': colour_value(colour, palette, hardware), 'sourceColour': colour}
-        (lines if line else faces).append(primitive)
-    raise ValueError('face terminator missing')
+                refs = []
+                for _ in range(256):
+                    ref = reader.take(1)[0]
+                    if ref == 0:
+                        break
+                    refs.append(ref)
+                else:
+                    raise ValueError('polygon terminator missing')
+                line = False
+            if any(ref == 0 or ref % 4 or ref // 4 > body_vertex_count for ref in refs):
+                raise ValueError(
+                    f'invalid vertex reference at ${address:06x}: slot {max(refs) // 4} beyond '
+                    f'{body_vertex_count} vertices'
+                    + (' of an articulated detail' if articulation is not None else '')
+                )
+            if len(refs) < (2 if line else 3):
+                raise ValueError('degenerate polygon record')
+            primitive = {'vertices': [ref // 4 - 1 for ref in refs],
+                         'colour': colour_value(colour, palette, hardware), 'sourceColour': colour}
+            (lines if line else faces).append(primitive)
+        raise ValueError('face terminator missing')
+
+    view_groups = []
+    chosen = state.get('viewGroup')
+    if kind == 'object':
+        # $0538F4: a nonzero word is a skip length past a viewer-relative box
+        # (six longwords: minimum and span on X, Y, Z) and the face list drawn
+        # while the viewer stands inside it. A zero word introduces the list
+        # drawn from everywhere else.
+        for _ in range(64):
+            skip = reader.word()
+            if skip == 0:
+                break
+            box = struct.unpack('>6i', reader.take(24))
+            next_group = reader.p + skip
+            group_vertices = list(vertices)
+            group_faces: list = []
+            group_lines: list = []
+            read_primitives(group_vertices, group_faces, group_lines)
+            if not 0 <= next_group - reader.p <= 1:
+                raise ValueError('view-conditioned group skip does not match its face list')
+            if len(view_groups) == chosen:
+                vertices, faces, lines = group_vertices, group_faces, group_lines
+            view_groups.append({
+                'bounds': [[box[axis * 2], box[axis * 2] + box[axis * 2 + 1]] for axis in range(3)],
+                'faces': len(group_faces),
+                'lines': len(group_lines),
+            })
+            reader.p = next_group
+        else:
+            raise ValueError('view-conditioned group limit exceeded')
+        if chosen is not None and not 0 <= chosen < len(view_groups):
+            raise ValueError('view-conditioned group outside the record')
+        if view_groups:
+            alternates['viewGroup'] = len(view_groups)
+    if chosen is None:
+        read_primitives(vertices, faces, lines)
+    else:
+        read_primitives(list(vertices), [], [])  # the default list must still parse
+    if not faces and not lines and not view_groups:
+        raise ValueError('model has no drawable primitives')
+    if display_code is not None and label_anchor is None:
+        raise ValueError('key vector-text record missing')
+    return {'vertices': vertices, 'faces': faces, 'lines': lines,
+            'sourceStart': start, 'sourceEnd': reader.p, 'geometryStart': geometry_start,
+            **({'displayCode': display_code, 'labelAnchor': label_anchor}
+               if label_anchor is not None else {}),
+            **({'alternates': alternates} if alternates else {}),
+            **({'articulation': articulation} if articulation is not None else {}),
+            **({'viewGroups': view_groups} if view_groups else {}),
+            **({'texts': texts} if texts else {})}
+
+
+def view_group_name(bounds: list[list[int]]) -> str:
+    def span(axis: str, low: int, high: int) -> str:
+        if low <= -0x7FFFFF and high >= 0x7FFFFF:
+            return f'any {axis}'
+        if low <= -0x7FFFFF:
+            return f'{axis} < {high}'
+        if high >= 0x7FFFFF:
+            return f'{axis} ≥ {low}'
+        return f'{low} ≤ {axis} < {high}'
+    return 'Viewer within ' + ', '.join(span(axis, *bounds[index]) for index, axis in enumerate('XYZ'))
+
+
+def decode_object_forms(data: bytes, address: int, palette: list[int] | None,
+                        hardware: list[int] | None) -> tuple[list[dict], list[str], list[str]]:
+    """Decode every source-conditioned form of one object record.
+
+    Returns the variants, the conditions that select among them in the game,
+    and the gaps that keep the record partial.
+    """
+    base = decode_mesh(data, address, 'object', palette, hardware)
+    alternates = base.get('alternates', {})
+    forms = [('record', 'Recovered form', {}, base)]
+    conditions: list[str] = []
+    if 'flash' in alternates:
+        gate = alternates['flash']['gate']
+        forms[0] = ('record', 'Beacon lit ($777 patches)', {}, base)
+        forms.append(('flash-dark', 'Beacon dark ($8000 patches)', {'flash': 'dark'}, None))
+        conditions.append('flashTimer' + (f' gated by {gate}' if gate else ''))
+    if 'frame' in alternates:
+        forms[0] = ('record', 'Screen frame 0', {}, base)
+        for frame in range(1, alternates['frame']):
+            forms.append((f'frame-{frame}', f'Screen frame {frame}', {'frame': frame}, None))
+        conditions.append('colourCycle $53432')
+    if 'open' in alternates:
+        forms[0] = ('record', 'Recovered form ($7A60 clear)', {}, base)
+        forms.append(('open', 'Alternate form ($7A60 set)', {'open': True}, None))
+        conditions.append('state $7A60')
+    if 'viewGroup' in alternates:
+        forms[0] = ('record', 'Viewer elsewhere (default list)', {}, base)
+        for index in range(alternates['viewGroup']):
+            forms.append((f'view-{index}', None, {'viewGroup': index}, None))
+        conditions.append('viewerPosition')
+    variants = []
+    for identity, name, state, mesh in forms:
+        if mesh is None:
+            mesh = decode_mesh(data, address, 'object', palette, hardware, state=state)
+        if name is None:
+            name = view_group_name(mesh['viewGroups'][state['viewGroup']]['bounds'])
+        if not mesh['faces'] and not mesh['lines']:
+            continue
+        variants.append({'id': identity, 'name': name, 'mesh': mesh})
+    if not variants:
+        raise ValueError('model has no drawable primitives')
+    gaps = []
+    if 'articulation' in base:
+        gaps.append(
+            'Articulated part shown at its rest angle; the live rotation about the source pivot by $7888 is not reproduced.'
+        )
+    for text in base.get('texts', []):
+        if 'liveToken' in text:
+            gaps.append(
+                f"Object text token ${text['liveToken'] | 0x80:02X} resolves through the live $CCA0 workspace; "
+                'capture-specific lettering is not baked into the model.'
+            )
+    return variants, conditions, list(dict.fromkeys(gaps))
 
 
 def decode_structure(data: bytes, start: int, palette: list[int] | None = None,
@@ -607,19 +916,17 @@ def compose_ground_templates(mesh: dict, placements: list[dict], object_entries:
         if identity not in related:
             related.append(identity)
         target = by_address[identity]
-        variant = next((item for item in target['variants'] if item['id'] == 'record'), None)
-        if variant is None:
-            try:
-                placed = decode_mesh(
-                    data, target['sourceAddress'], 'object', palette, hardware
-                )
-            except (ValueError, struct.error) as error:
-                gaps.append(
-                    f'Ground $7000 placement references unresolved {identity}: {error}.'
-                )
-                continue
-        else:
-            placed = variant['mesh']
+        # Scene colours bind to the placing cell's palette, so the template is
+        # decoded here rather than copied from the object's own default form.
+        try:
+            placed = decode_mesh(
+                data, target['sourceAddress'], 'object', palette, hardware
+            )
+        except (ValueError, struct.error) as error:
+            gaps.append(
+                f'Ground $7000 placement references unresolved {identity}: {error}.'
+            )
+            continue
         mesh = place_mesh(mesh, placed, placement['position'])
     return mesh, related, gaps
 
@@ -1085,8 +1392,11 @@ RECORD_OMISSIONS = (
     ('viewConditioned', 'view-conditioned face groups unresolved'),
     ('articulated', 'articulated model transform unresolved'),
     ('articulated', 'articulated interior unresolved'),
+    ('articulated', 'Articulated part shown at its rest angle'),
     ('specialPolygon', 'special polygon command unresolved'),
     ('paletteBinding', 'scene colour table binding unresolved'),
+    ('paletteBinding', 'Scene colour table binding unverified'),
+    ('liveText', 'resolves through the live $CCA0 workspace'),
     ('attachments', 'Authored surface attachments/openings'),
     ('attachments', 'Structure selection unavailable'),
     ('attachments', 'Live $F0 attachment selector'),
@@ -1155,8 +1465,10 @@ UNEXPLORED_COVERAGE = [
     'Packed Pasti STX disk track payload still not unpacked into models; fuzzy/copy-protected sectors are not a second pointer bank.',
     'Live $ABDC workspaces other than Eris first-world, Vesta Politburo City, Gaea UR City, and Dion; Gaea islands other than authored Birmingham and live UR City.',
     'Mission-disk or script-created visual changes that would replace a resident slot.',
-    'View-conditioned object groups, articulated transforms, special polygon commands, '
-    'and post-plan attachment forms other than the documented zero-latch and $F0 constructors.',
+    'Live articulation angles ($7888) for articulated objects and details, which the catalogue shows at rest; '
+    'Building detail 69 references projected slots beyond its own vertex list.',
+    'Object vector text that resolves through live $CCA0 tokens, indirect text pointers, or the state-conditioned font 4; '
+    'post-plan attachment forms other than the documented zero-latch and $F0 constructors.',
     '$F0/$F4 ground horizon joins are view-conditioned and the separate native surface/background fill path remains unresolved.',
 ]
 
@@ -1175,6 +1487,8 @@ def classify_record(model: dict, is_alias: bool) -> None:
     reason = model.get('reason') or ''
     if 'null model' in reason or model.get('name') == 'NULL':
         model['recordClass'] = 'null'
+    elif reason.startswith('procedural:'):
+        model['recordClass'] = 'procedural'
     elif is_alias:
         model['recordClass'] = 'alias'
     elif any(
@@ -1201,6 +1515,9 @@ def coverage_ledger(models: list, tables: list, notes: list[str], disk_load: lis
     status = Counter(model['status'] for model in models)
     classes = Counter(model['recordClass'] for model in models)
     omissions = Counter(tag for model in models for tag in model.get('omissions') or [])
+    conditions = Counter(
+        condition.split(' ', 1)[0] for model in models for condition in model.get('conditions') or []
+    )
     by_id = {model['id']: model for model in models}
     rows = []
     for table in tables:
@@ -1235,10 +1552,15 @@ def coverage_ledger(models: list, tables: list, notes: list[str], disk_load: lis
             'alias': classes['alias'],
             'empty': classes['empty'],
             'null': classes['null'],
+            'procedural': classes['procedural'],
+            'conditionalForms': sum(1 for model in models if model.get('conditions')),
+            'viewerPositionForms': conditions['viewerPosition'],
+            'stateForms': conditions['state'] + conditions['flashTimer'] + conditions['colourCycle'],
             'viewConditioned': omissions['viewConditioned'],
             'articulated': omissions['articulated'],
             'specialPolygon': omissions['specialPolygon'],
             'paletteBinding': omissions['paletteBinding'],
+            'liveText': omissions['liveText'],
             'attachments': omissions['attachments'],
             'omittedSelector': omissions['omittedSelector'],
             'roadTemplate': omissions['roadTemplate'],
@@ -1563,7 +1885,31 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                         model['reason'] = ' '.join(gaps)
                     model['interiorSlot'] = interior
                     continue
-                mesh = decode_mesh(data, address, kind, palette_at(data, 0) if kind == 'interior' else None, hardware)
+                if kind == 'object':
+                    try:
+                        variants, conditions, gaps = decode_object_forms(data, address, None, hardware)
+                    except ValueError as error:
+                        if 'scene colour table binding' not in str(error):
+                            raise
+                        variants, conditions, gaps = decode_object_forms(data, address, palette_at(data, 0), hardware)
+                        gaps.append('Scene colour table binding unverified; palette 0 is shown.')
+                        for variant in variants:
+                            variant['name'] += ' · palette 0 (binding unverified)'
+                    if identity == 'object-036176':
+                        variants[0]['inspectionAngle'] = [0.65, 0.3]
+                    mesh = variants[0]['mesh']
+                    model['variants'] = variants
+                    model['conditions'] = conditions
+                    model['status'] = 'partial' if gaps else 'decoded'
+                    model['reason'] = ' '.join(gaps)
+                    if 'displayCode' in mesh:
+                        model['evidence'] = [{
+                            'claim': f"Source $8008 header selects shared key geometry and display code {mesh['displayCode']} at local anchor {mesh['labelAnchor']}.",
+                            'confidence': 'verified',
+                            'source': 'docs/research/damocles-spaceport-interior.md',
+                        }]
+                    continue
+                mesh = decode_mesh(data, address, kind, palette_at(data, 0), hardware)
                 if kind == 'interior':
                     try:
                         if mesh['lines']:
@@ -1573,20 +1919,17 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                         model['selectionReason'] = str(error)
                 model['variants'] = [{
                     'id': 'record',
-                    'name': 'Recovered form' if kind == 'object' else 'Palette 0 (binding unverified)',
+                    'name': 'Palette 0 (binding unverified)',
                     'mesh': mesh,
-                    **({'inspectionAngle': [0.65, 0.3]} if identity == 'object-036176' else {}),
                 }]
-                model['status'] = 'decoded' if kind == 'object' else 'partial'
-                model['reason'] = '' if kind == 'object' else 'Building-detail shape decoded; place-specific palette and visibility groups are not bound.'
-                if kind == 'object' and 'displayCode' in mesh:
-                    model['evidence'] = [{
-                        'claim': f"Source $8008 header selects shared key geometry and display code {mesh['displayCode']} at local anchor {mesh['labelAnchor']}.",
-                        'confidence': 'verified',
-                        'source': 'docs/research/damocles-spaceport-interior.md',
-                    }]
+                model['status'] = 'partial'
+                model['reason'] = 'Building-detail shape decoded; place-specific palette and visibility groups are not bound.'
+                if 'articulation' in mesh:
+                    model['reason'] += ' Articulated part shown at its rest angle; the live rotation about the source pivot by $7888 is not reproduced.'
             except (ValueError, struct.error) as error:
                 model['reason'] = str(error)
+                if str(error).startswith('procedural:'):
+                    model['status'] = 'decoded'
         tables.append({'kind': kind, 'address': base, 'entryCount': count, 'entries': entries,
                        'extentEvidence': 'Contiguous relative-pointer table up to the following data record; extent is provisional.'})
     for alias, target in structure_aliases:
@@ -2055,6 +2398,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         if variants:
             model['variants'] = variants
             model['status'] = 'partial'
+            articulated = any('articulation' in variant['mesh'] for variant in variants)
             if identity in BUILDING_VECTOR_TEXT_MODELS:
                 model['reason'] = (
                     'Shape, structure-bound colours and supported $60xx vector text decoded. '
@@ -2071,6 +2415,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 })
             else:
                 model['reason'] = 'Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.'
+            if articulated:
+                model['reason'] += ' Articulated part shown at its rest angle; the live rotation about the source pivot by $7888 is not reproduced.'
     for identity, (slot, palette_index, scale) in structure_bindings.items():
         if slot >= len(tables[2]['entries']):
             continue
@@ -2206,13 +2552,15 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     for group in forms.values():
         if len(group) < 2:
             continue
-        variants = [{'id': model['id'], 'name': model['name'] + ' · ' + model['id'], 'mesh': model['variants'][0]['mesh']} for model in group]
+        shared = [{'id': model['id'], 'name': model['name'] + ' · ' + model['id'], 'mesh': model['variants'][0]['mesh']} for model in group]
         for model in group:
-            model['variants'] = variants
+            own = [variant for variant in model['variants'] if variant['id'] != 'record']
+            model['variants'] = shared + own
             model['relatedModels'].extend(other['id'] for other in group if other is not model)
     coverage_notes = [
         'Resident first-world census after examining title-screen, first-world and interior-window RAM; not a claim that every packed disk file has been walked.',
-        'Conditional geometry, scene palette binding, and named places outside the captured Eris workspace, authored Gaea Birmingham Island map, live Gaea UR City overlay, and live Dion overlay remain incomplete.',
+        'Scene palette binding for unplaced objects 333-338, and named places outside the captured Eris workspace, authored Gaea Birmingham Island map, live Gaea UR City overlay, and live Dion overlay remain incomplete.',
+        'View-conditioned face groups, $8003/$8006/$8009 header states and object $6000 vector text are decoded as separate forms; the in-game selector for each form is named in the model conditions, not simulated.',
         'Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; surface slot zero supplies palette zero for structureless cells, empty records are intentional and add no geometry at $056634, and $F0/$F4 joins remain view-conditioned.',
         'Selectors the documented zero-latch and $F0 post-plan constructors accept are retained; other attachment forms stay named in the model reason.',
         'Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.',
