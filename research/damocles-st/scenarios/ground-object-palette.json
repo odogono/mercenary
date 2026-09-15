@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "name": "ground-object-palette",
+  "checkpoint": "title-screen",
+  "description": "Load the first world, capture its RAM, then disassemble the object face-colour path that reads the live scene palette at $7A0E. Working-Authority Evidence for the two structureless $7000 object-041b1e placements in the Damocles model census (#173).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "artifacts": ["registers", "ram"]
+    },
+    {
+      "type": "disassemble",
+      "name": "ground-object-palette",
+      "start": "0x04f900",
+      "end": "0x04fa80"
+    }
+  ]
+}

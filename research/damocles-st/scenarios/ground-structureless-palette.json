@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "name": "ground-structureless-palette",
+  "checkpoint": "title-screen",
+  "description": "Load the first world, capture its RAM, then disassemble surface-cell selection around the scene-palette binding. Working-Authority Evidence for whether structureless cells bind a palette for $7000 object placements in the Damocles model census (#173).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "artifacts": ["registers", "ram"]
+    },
+    {
+      "type": "disassemble",
+      "name": "ground-structureless-palette",
+      "start": "0x054c80",
+      "end": "0x054e40"
+    }
+  ]
+}

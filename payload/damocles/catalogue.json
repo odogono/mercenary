@@ -140,7 +140,7 @@
       "geometry": 478,
       "null": 1,
       "omittedSelector": 0,
-      "paletteBinding": 15,
+      "paletteBinding": 6,
       "roadTemplate": 0,
       "specialPolygon": 8,
       "viewConditioned": 148
@@ -179,7 +179,7 @@
     "notes": [
       "Resident first-world census after examining title-screen, first-world and interior-window RAM; not a claim that every packed disk file has been walked.",
       "Conditional geometry, scene palette binding, and named places outside the captured Eris workspace, authored Gaea Birmingham Island map, live Gaea UR City overlay, and live Dion overlay remain incomplete.",
-      "Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; empty records are intentional and add no geometry at $056634, while two transformed placement copies lack scene-palette context and $F0/$F4 joins remain view-conditioned.",
+      "Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; surface slot zero supplies palette zero for structureless cells, empty records are intentional and add no geometry at $056634, and $F0/$F4 joins remain view-conditioned.",
       "Selectors the documented zero-latch and $F0 post-plan constructors accept are retained; other attachment forms stay named in the model reason.",
       "Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.",
       "Gaea Birmingham Island: examined the authored 16\u00d716 placement stream ending at $23E57, recovered 82 surface assemblies and 7 named places; 174 cells have no structure (including 99 CHEVY cell $17). Ground/pad records and Gaea islands other than this authored Birmingham map and any attached live $ABDC overlays remain unresolved.",
@@ -246,7 +246,7 @@
       "Live $ABDC workspaces other than Eris first-world, Vesta Politburo City, Gaea UR City, and Dion; Gaea islands other than authored Birmingham and live UR City.",
       "Mission-disk or script-created visual changes that would replace a resident slot.",
       "View-conditioned object groups, articulated transforms, special polygon commands, and post-plan attachment forms other than the documented zero-latch and $F0 constructors.",
-      "Two $7000 ground-placement copies lack scene-palette context; $F0/$F4 ground horizon joins are view-conditioned and the separate native surface/background fill path remains unresolved."
+      "$F0/$F4 ground horizon joins are view-conditioned and the separate native surface/background fill path remains unresolved."
     ]
   },
   "instances": [
@@ -704119,10 +704119,9 @@
       "name": "Ground 52",
       "nameStatus": "unknown",
       "omissions": [
-        "paletteBinding",
         "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-041b1e: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041b1e"
@@ -704340,6 +704339,351 @@
                   70,
                   71,
                   72
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  82,
+                  83,
+                  85,
+                  89
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  81,
+                  82,
+                  89,
+                  84
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  83,
+                  81,
+                  84,
+                  85
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  89,
+                  85,
+                  88,
+                  87
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  84,
+                  89,
+                  87,
+                  86
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  85,
+                  84,
+                  86,
+                  88
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  86,
+                  87,
+                  88
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  91,
+                  92,
+                  94,
+                  98
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  90,
+                  91,
+                  98,
+                  93
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  92,
+                  90,
+                  93,
+                  94
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  98,
+                  94,
+                  97,
+                  96
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  93,
+                  98,
+                  96,
+                  95
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  94,
+                  93,
+                  95,
+                  97
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  95,
+                  96,
+                  97
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  100,
+                  101,
+                  103,
+                  107
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  99,
+                  100,
+                  107,
+                  102
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  101,
+                  99,
+                  102,
+                  103
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  107,
+                  103,
+                  106,
+                  105
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  102,
+                  107,
+                  105,
+                  104
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  103,
+                  102,
+                  104,
+                  106
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  104,
+                  105,
+                  106
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  109,
+                  110,
+                  112,
+                  116
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  108,
+                  109,
+                  116,
+                  111
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  110,
+                  108,
+                  111,
+                  112
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  116,
+                  112,
+                  115,
+                  114
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  111,
+                  116,
+                  114,
+                  113
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  112,
+                  111,
+                  113,
+                  115
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  113,
+                  114,
+                  115
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  118,
+                  119,
+                  121,
+                  125
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  117,
+                  118,
+                  125,
+                  120
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  119,
+                  117,
+                  120,
+                  121
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  125,
+                  121,
+                  124,
+                  123
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  120,
+                  125,
+                  123,
+                  122
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  121,
+                  120,
+                  122,
+                  124
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  122,
+                  123,
+                  124
                 ]
               }
             ],
@@ -704806,6 +705150,231 @@
                 -5,
                 0,
                 1200
+              ],
+              [
+                -24000,
+                0,
+                309
+              ],
+              [
+                -23992,
+                0,
+                295
+              ],
+              [
+                -24008,
+                0,
+                295
+              ],
+              [
+                -24000,
+                260,
+                309
+              ],
+              [
+                -24008,
+                260,
+                295
+              ],
+              [
+                -24000,
+                320,
+                336
+              ],
+              [
+                -23968,
+                320,
+                280
+              ],
+              [
+                -24032,
+                320,
+                280
+              ],
+              [
+                -23992,
+                260,
+                295
+              ],
+              [
+                -8000,
+                0,
+                -291
+              ],
+              [
+                -7992,
+                0,
+                -305
+              ],
+              [
+                -8008,
+                0,
+                -305
+              ],
+              [
+                -8000,
+                260,
+                -291
+              ],
+              [
+                -8008,
+                260,
+                -305
+              ],
+              [
+                -8000,
+                320,
+                -264
+              ],
+              [
+                -7968,
+                320,
+                -320
+              ],
+              [
+                -8032,
+                320,
+                -320
+              ],
+              [
+                -7992,
+                260,
+                -305
+              ],
+              [
+                300,
+                0,
+                8009
+              ],
+              [
+                308,
+                0,
+                7995
+              ],
+              [
+                292,
+                0,
+                7995
+              ],
+              [
+                300,
+                260,
+                8009
+              ],
+              [
+                292,
+                260,
+                7995
+              ],
+              [
+                300,
+                320,
+                8036
+              ],
+              [
+                332,
+                320,
+                7980
+              ],
+              [
+                268,
+                320,
+                7980
+              ],
+              [
+                308,
+                260,
+                7995
+              ],
+              [
+                -300,
+                0,
+                24009
+              ],
+              [
+                -292,
+                0,
+                23995
+              ],
+              [
+                -308,
+                0,
+                23995
+              ],
+              [
+                -300,
+                260,
+                24009
+              ],
+              [
+                -308,
+                260,
+                23995
+              ],
+              [
+                -300,
+                320,
+                24036
+              ],
+              [
+                -268,
+                320,
+                23980
+              ],
+              [
+                -332,
+                320,
+                23980
+              ],
+              [
+                -292,
+                260,
+                23995
+              ],
+              [
+                -600,
+                0,
+                609
+              ],
+              [
+                -592,
+                0,
+                595
+              ],
+              [
+                -608,
+                0,
+                595
+              ],
+              [
+                -600,
+                260,
+                609
+              ],
+              [
+                -608,
+                260,
+                595
+              ],
+              [
+                -600,
+                320,
+                636
+              ],
+              [
+                -568,
+                320,
+                580
+              ],
+              [
+                -632,
+                320,
+                580
+              ],
+              [
+                -592,
+                260,
+                595
               ]
             ]
           },
@@ -717347,10 +717916,9 @@
       "name": "Ground 148",
       "nameStatus": "unknown",
       "omissions": [
-        "paletteBinding",
         "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-041b1e: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041b1e"
@@ -717568,6 +718136,351 @@
                   70,
                   71,
                   72
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  82,
+                  83,
+                  85,
+                  89
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  81,
+                  82,
+                  89,
+                  84
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  83,
+                  81,
+                  84,
+                  85
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  89,
+                  85,
+                  88,
+                  87
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  84,
+                  89,
+                  87,
+                  86
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  85,
+                  84,
+                  86,
+                  88
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  86,
+                  87,
+                  88
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  91,
+                  92,
+                  94,
+                  98
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  90,
+                  91,
+                  98,
+                  93
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  92,
+                  90,
+                  93,
+                  94
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  98,
+                  94,
+                  97,
+                  96
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  93,
+                  98,
+                  96,
+                  95
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  94,
+                  93,
+                  95,
+                  97
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  95,
+                  96,
+                  97
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  100,
+                  101,
+                  103,
+                  107
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  99,
+                  100,
+                  107,
+                  102
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  101,
+                  99,
+                  102,
+                  103
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  107,
+                  103,
+                  106,
+                  105
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  102,
+                  107,
+                  105,
+                  104
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  103,
+                  102,
+                  104,
+                  106
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  104,
+                  105,
+                  106
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  109,
+                  110,
+                  112,
+                  116
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  108,
+                  109,
+                  116,
+                  111
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  110,
+                  108,
+                  111,
+                  112
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  116,
+                  112,
+                  115,
+                  114
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  111,
+                  116,
+                  114,
+                  113
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  112,
+                  111,
+                  113,
+                  115
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  113,
+                  114,
+                  115
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  118,
+                  119,
+                  121,
+                  125
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  117,
+                  118,
+                  125,
+                  120
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  119,
+                  117,
+                  120,
+                  121
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  125,
+                  121,
+                  124,
+                  123
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  120,
+                  125,
+                  123,
+                  122
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  121,
+                  120,
+                  122,
+                  124
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  122,
+                  123,
+                  124
                 ]
               }
             ],
@@ -718034,6 +718947,231 @@
                 5,
                 0,
                 -1200
+              ],
+              [
+                24000,
+                0,
+                -291
+              ],
+              [
+                24008,
+                0,
+                -305
+              ],
+              [
+                23992,
+                0,
+                -305
+              ],
+              [
+                24000,
+                260,
+                -291
+              ],
+              [
+                23992,
+                260,
+                -305
+              ],
+              [
+                24000,
+                320,
+                -264
+              ],
+              [
+                24032,
+                320,
+                -320
+              ],
+              [
+                23968,
+                320,
+                -320
+              ],
+              [
+                24008,
+                260,
+                -305
+              ],
+              [
+                8000,
+                0,
+                309
+              ],
+              [
+                8008,
+                0,
+                295
+              ],
+              [
+                7992,
+                0,
+                295
+              ],
+              [
+                8000,
+                260,
+                309
+              ],
+              [
+                7992,
+                260,
+                295
+              ],
+              [
+                8000,
+                320,
+                336
+              ],
+              [
+                8032,
+                320,
+                280
+              ],
+              [
+                7968,
+                320,
+                280
+              ],
+              [
+                8008,
+                260,
+                295
+              ],
+              [
+                -300,
+                0,
+                -7991
+              ],
+              [
+                -292,
+                0,
+                -8005
+              ],
+              [
+                -308,
+                0,
+                -8005
+              ],
+              [
+                -300,
+                260,
+                -7991
+              ],
+              [
+                -308,
+                260,
+                -8005
+              ],
+              [
+                -300,
+                320,
+                -7964
+              ],
+              [
+                -268,
+                320,
+                -8020
+              ],
+              [
+                -332,
+                320,
+                -8020
+              ],
+              [
+                -292,
+                260,
+                -8005
+              ],
+              [
+                300,
+                0,
+                -23991
+              ],
+              [
+                308,
+                0,
+                -24005
+              ],
+              [
+                292,
+                0,
+                -24005
+              ],
+              [
+                300,
+                260,
+                -23991
+              ],
+              [
+                292,
+                260,
+                -24005
+              ],
+              [
+                300,
+                320,
+                -23964
+              ],
+              [
+                332,
+                320,
+                -24020
+              ],
+              [
+                268,
+                320,
+                -24020
+              ],
+              [
+                308,
+                260,
+                -24005
+              ],
+              [
+                600,
+                0,
+                -591
+              ],
+              [
+                608,
+                0,
+                -605
+              ],
+              [
+                592,
+                0,
+                -605
+              ],
+              [
+                600,
+                260,
+                -591
+              ],
+              [
+                592,
+                260,
+                -605
+              ],
+              [
+                600,
+                320,
+                -564
+              ],
+              [
+                632,
+                320,
+                -620
+              ],
+              [
+                568,
+                320,
+                -620
+              ],
+              [
+                608,
+                260,
+                -605
               ]
             ]
           },
@@ -730417,10 +731555,9 @@
       "name": "VESTA ground 84",
       "nameStatus": "unknown",
       "omissions": [
-        "paletteBinding",
         "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-04190e: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041992: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041992",
@@ -730462,6 +731599,390 @@
                   9,
                   10,
                   11
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  17,
+                  15,
+                  12,
+                  14
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  15,
+                  16,
+                  13,
+                  12
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  15,
+                  18,
+                  19,
+                  16
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  18,
+                  15,
+                  17,
+                  20
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  18,
+                  21,
+                  19
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  20,
+                  21,
+                  18
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  18,
+                  19,
+                  20
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  16,
+                  17,
+                  14,
+                  13
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  20,
+                  17,
+                  16,
+                  19
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  19,
+                  18,
+                  20
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  24,
+                  22,
+                  25,
+                  27
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  22,
+                  23,
+                  26,
+                  25
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  26,
+                  29,
+                  28,
+                  25
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  30,
+                  27,
+                  25,
+                  28
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  29,
+                  31,
+                  28
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  28,
+                  31,
+                  30
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  30,
+                  29,
+                  28
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  23,
+                  24,
+                  27,
+                  26
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  29,
+                  26,
+                  27,
+                  30
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  30,
+                  28,
+                  29
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  37,
+                  35,
+                  32,
+                  34
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  35,
+                  36,
+                  33,
+                  32
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  35,
+                  38,
+                  39,
+                  36
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  38,
+                  35,
+                  37,
+                  40
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  38,
+                  41,
+                  39
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  40,
+                  41,
+                  38
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  38,
+                  39,
+                  40
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  36,
+                  37,
+                  34,
+                  33
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  40,
+                  37,
+                  36,
+                  39
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  39,
+                  38,
+                  40
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  44,
+                  42,
+                  45,
+                  47
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  42,
+                  43,
+                  46,
+                  45
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  46,
+                  49,
+                  48,
+                  45
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  50,
+                  47,
+                  45,
+                  48
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  49,
+                  51,
+                  48
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  48,
+                  51,
+                  50
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  50,
+                  49,
+                  48
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  43,
+                  44,
+                  47,
+                  46
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  49,
+                  46,
+                  47,
+                  50
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  50,
+                  48,
+                  49
                 ]
               }
             ],
@@ -730528,6 +732049,206 @@
                 -5,
                 0,
                 32767
+              ],
+              [
+                -291,
+                0,
+                -24000
+              ],
+              [
+                -305,
+                0,
+                -23992
+              ],
+              [
+                -305,
+                0,
+                -24008
+              ],
+              [
+                -291,
+                260,
+                -24000
+              ],
+              [
+                -305,
+                270,
+                -23992
+              ],
+              [
+                -305,
+                270,
+                -24008
+              ],
+              [
+                -171,
+                280,
+                -24000
+              ],
+              [
+                -185,
+                290,
+                -23992
+              ],
+              [
+                -185,
+                290,
+                -24008
+              ],
+              [
+                -300,
+                270,
+                -24000
+              ],
+              [
+                291,
+                0,
+                -8000
+              ],
+              [
+                305,
+                0,
+                -7992
+              ],
+              [
+                305,
+                0,
+                -8008
+              ],
+              [
+                291,
+                260,
+                -8000
+              ],
+              [
+                305,
+                270,
+                -7992
+              ],
+              [
+                305,
+                270,
+                -8008
+              ],
+              [
+                171,
+                280,
+                -8000
+              ],
+              [
+                185,
+                290,
+                -7992
+              ],
+              [
+                185,
+                290,
+                -8008
+              ],
+              [
+                300,
+                270,
+                -8000
+              ],
+              [
+                -291,
+                0,
+                8000
+              ],
+              [
+                -305,
+                0,
+                8008
+              ],
+              [
+                -305,
+                0,
+                7992
+              ],
+              [
+                -291,
+                260,
+                8000
+              ],
+              [
+                -305,
+                270,
+                8008
+              ],
+              [
+                -305,
+                270,
+                7992
+              ],
+              [
+                -171,
+                280,
+                8000
+              ],
+              [
+                -185,
+                290,
+                8008
+              ],
+              [
+                -185,
+                290,
+                7992
+              ],
+              [
+                -300,
+                270,
+                8000
+              ],
+              [
+                291,
+                0,
+                24000
+              ],
+              [
+                305,
+                0,
+                24008
+              ],
+              [
+                305,
+                0,
+                23992
+              ],
+              [
+                291,
+                260,
+                24000
+              ],
+              [
+                305,
+                270,
+                24008
+              ],
+              [
+                305,
+                270,
+                23992
+              ],
+              [
+                171,
+                280,
+                24000
+              ],
+              [
+                185,
+                290,
+                24008
+              ],
+              [
+                185,
+                290,
+                23992
+              ],
+              [
+                300,
+                270,
+                24000
               ]
             ]
           },
@@ -733625,10 +735346,9 @@
       "name": "GAEA ground 17",
       "nameStatus": "unknown",
       "omissions": [
-        "paletteBinding",
         "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-041a16: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a9a: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041a16",
@@ -733668,6 +735388,582 @@
                   7,
                   8,
                   9
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  15,
+                  13,
+                  10,
+                  12
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  13,
+                  14,
+                  11,
+                  10
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  13,
+                  16,
+                  17,
+                  14
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  16,
+                  13,
+                  15,
+                  18
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  16,
+                  19,
+                  17
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  18,
+                  19,
+                  16
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  16,
+                  17,
+                  18
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  14,
+                  15,
+                  12,
+                  11
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  18,
+                  15,
+                  14,
+                  17
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  17,
+                  16,
+                  18
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  22,
+                  20,
+                  23,
+                  25
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  20,
+                  21,
+                  24,
+                  23
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  24,
+                  27,
+                  26,
+                  23
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  28,
+                  25,
+                  23,
+                  26
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  27,
+                  29,
+                  26
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  26,
+                  29,
+                  28
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  28,
+                  27,
+                  26
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  21,
+                  22,
+                  25,
+                  24
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  27,
+                  24,
+                  25,
+                  28
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  28,
+                  26,
+                  27
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  35,
+                  33,
+                  30,
+                  32
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  33,
+                  34,
+                  31,
+                  30
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  33,
+                  36,
+                  37,
+                  34
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  36,
+                  33,
+                  35,
+                  38
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  36,
+                  39,
+                  37
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  38,
+                  39,
+                  36
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  36,
+                  37,
+                  38
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  34,
+                  35,
+                  32,
+                  31
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  38,
+                  35,
+                  34,
+                  37
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  37,
+                  36,
+                  38
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  42,
+                  40,
+                  43,
+                  45
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  40,
+                  41,
+                  44,
+                  43
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  44,
+                  47,
+                  46,
+                  43
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  48,
+                  45,
+                  43,
+                  46
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  47,
+                  49,
+                  46
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  46,
+                  49,
+                  48
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  48,
+                  47,
+                  46
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  41,
+                  42,
+                  45,
+                  44
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  47,
+                  44,
+                  45,
+                  48
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  48,
+                  46,
+                  47
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  55,
+                  53,
+                  50,
+                  52
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  53,
+                  54,
+                  51,
+                  50
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  53,
+                  56,
+                  57,
+                  54
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  56,
+                  53,
+                  55,
+                  58
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  56,
+                  59,
+                  57
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  58,
+                  59,
+                  56
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  56,
+                  57,
+                  58
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  54,
+                  55,
+                  52,
+                  51
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  58,
+                  55,
+                  54,
+                  57
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  57,
+                  56,
+                  58
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  62,
+                  60,
+                  63,
+                  65
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  60,
+                  61,
+                  64,
+                  63
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  64,
+                  67,
+                  66,
+                  63
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  68,
+                  65,
+                  63,
+                  66
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  67,
+                  69,
+                  66
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  66,
+                  69,
+                  68
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  68,
+                  67,
+                  66
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  61,
+                  62,
+                  65,
+                  64
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  67,
+                  64,
+                  65,
+                  68
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  68,
+                  66,
+                  67
                 ]
               }
             ],
@@ -733724,6 +736020,306 @@
                 -100,
                 0,
                 32767
+              ],
+              [
+                24000,
+                0,
+                191
+              ],
+              [
+                24008,
+                0,
+                205
+              ],
+              [
+                23992,
+                0,
+                205
+              ],
+              [
+                24000,
+                260,
+                191
+              ],
+              [
+                24008,
+                270,
+                205
+              ],
+              [
+                23992,
+                270,
+                205
+              ],
+              [
+                24000,
+                280,
+                71
+              ],
+              [
+                24008,
+                290,
+                85
+              ],
+              [
+                23992,
+                290,
+                85
+              ],
+              [
+                24000,
+                270,
+                191
+              ],
+              [
+                12000,
+                0,
+                -191
+              ],
+              [
+                12008,
+                0,
+                -205
+              ],
+              [
+                11992,
+                0,
+                -205
+              ],
+              [
+                12000,
+                260,
+                -191
+              ],
+              [
+                12008,
+                270,
+                -205
+              ],
+              [
+                11992,
+                270,
+                -205
+              ],
+              [
+                12000,
+                280,
+                -71
+              ],
+              [
+                12008,
+                290,
+                -85
+              ],
+              [
+                11992,
+                290,
+                -85
+              ],
+              [
+                12000,
+                270,
+                -191
+              ],
+              [
+                4000,
+                0,
+                191
+              ],
+              [
+                4008,
+                0,
+                205
+              ],
+              [
+                3992,
+                0,
+                205
+              ],
+              [
+                4000,
+                260,
+                191
+              ],
+              [
+                4008,
+                270,
+                205
+              ],
+              [
+                3992,
+                270,
+                205
+              ],
+              [
+                4000,
+                280,
+                71
+              ],
+              [
+                4008,
+                290,
+                85
+              ],
+              [
+                3992,
+                290,
+                85
+              ],
+              [
+                4000,
+                270,
+                191
+              ],
+              [
+                -4000,
+                0,
+                -191
+              ],
+              [
+                -3992,
+                0,
+                -205
+              ],
+              [
+                -4008,
+                0,
+                -205
+              ],
+              [
+                -4000,
+                260,
+                -191
+              ],
+              [
+                -3992,
+                270,
+                -205
+              ],
+              [
+                -4008,
+                270,
+                -205
+              ],
+              [
+                -4000,
+                280,
+                -71
+              ],
+              [
+                -3992,
+                290,
+                -85
+              ],
+              [
+                -4008,
+                290,
+                -85
+              ],
+              [
+                -4000,
+                270,
+                -191
+              ],
+              [
+                -12000,
+                0,
+                191
+              ],
+              [
+                -11992,
+                0,
+                205
+              ],
+              [
+                -12008,
+                0,
+                205
+              ],
+              [
+                -12000,
+                260,
+                191
+              ],
+              [
+                -11992,
+                270,
+                205
+              ],
+              [
+                -12008,
+                270,
+                205
+              ],
+              [
+                -12000,
+                280,
+                71
+              ],
+              [
+                -11992,
+                290,
+                85
+              ],
+              [
+                -12008,
+                290,
+                85
+              ],
+              [
+                -12000,
+                270,
+                191
+              ],
+              [
+                -24000,
+                0,
+                -191
+              ],
+              [
+                -23992,
+                0,
+                -205
+              ],
+              [
+                -24008,
+                0,
+                -205
+              ],
+              [
+                -24000,
+                260,
+                -191
+              ],
+              [
+                -23992,
+                270,
+                -205
+              ],
+              [
+                -24008,
+                270,
+                -205
+              ],
+              [
+                -24000,
+                280,
+                -71
+              ],
+              [
+                -23992,
+                290,
+                -85
+              ],
+              [
+                -24008,
+                290,
+                -85
+              ],
+              [
+                -24000,
+                270,
+                -191
               ]
             ]
           },
@@ -733749,10 +736345,9 @@
       "name": "GAEA ground 18",
       "nameStatus": "unknown",
       "omissions": [
-        "paletteBinding",
         "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-041a16: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a9a: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041a9a",
@@ -733792,6 +736387,582 @@
                   7,
                   8,
                   9
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  12,
+                  10,
+                  13,
+                  15
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  10,
+                  11,
+                  14,
+                  13
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  14,
+                  17,
+                  16,
+                  13
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  18,
+                  15,
+                  13,
+                  16
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  17,
+                  19,
+                  16
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  16,
+                  19,
+                  18
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  18,
+                  17,
+                  16
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  11,
+                  12,
+                  15,
+                  14
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  17,
+                  14,
+                  15,
+                  18
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  18,
+                  16,
+                  17
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  25,
+                  23,
+                  20,
+                  22
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  23,
+                  24,
+                  21,
+                  20
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  23,
+                  26,
+                  27,
+                  24
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  26,
+                  23,
+                  25,
+                  28
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  26,
+                  29,
+                  27
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  28,
+                  29,
+                  26
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  26,
+                  27,
+                  28
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  24,
+                  25,
+                  22,
+                  21
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  28,
+                  25,
+                  24,
+                  27
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  27,
+                  26,
+                  28
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  32,
+                  30,
+                  33,
+                  35
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  30,
+                  31,
+                  34,
+                  33
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  34,
+                  37,
+                  36,
+                  33
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  38,
+                  35,
+                  33,
+                  36
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  37,
+                  39,
+                  36
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  36,
+                  39,
+                  38
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  38,
+                  37,
+                  36
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  31,
+                  32,
+                  35,
+                  34
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  37,
+                  34,
+                  35,
+                  38
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  38,
+                  36,
+                  37
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  45,
+                  43,
+                  40,
+                  42
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  43,
+                  44,
+                  41,
+                  40
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  43,
+                  46,
+                  47,
+                  44
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  46,
+                  43,
+                  45,
+                  48
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  46,
+                  49,
+                  47
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  48,
+                  49,
+                  46
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  46,
+                  47,
+                  48
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  44,
+                  45,
+                  42,
+                  41
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  48,
+                  45,
+                  44,
+                  47
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  47,
+                  46,
+                  48
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  52,
+                  50,
+                  53,
+                  55
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  50,
+                  51,
+                  54,
+                  53
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  54,
+                  57,
+                  56,
+                  53
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  58,
+                  55,
+                  53,
+                  56
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  57,
+                  59,
+                  56
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  56,
+                  59,
+                  58
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  58,
+                  57,
+                  56
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  51,
+                  52,
+                  55,
+                  54
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  57,
+                  54,
+                  55,
+                  58
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  58,
+                  56,
+                  57
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  65,
+                  63,
+                  60,
+                  62
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  63,
+                  64,
+                  61,
+                  60
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  63,
+                  66,
+                  67,
+                  64
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  66,
+                  63,
+                  65,
+                  68
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  66,
+                  69,
+                  67
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  68,
+                  69,
+                  66
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  66,
+                  67,
+                  68
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  64,
+                  65,
+                  62,
+                  61
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  68,
+                  65,
+                  64,
+                  67
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  67,
+                  66,
+                  68
                 ]
               }
             ],
@@ -733848,6 +737019,306 @@
                 100,
                 0,
                 -32767
+              ],
+              [
+                -24000,
+                0,
+                -191
+              ],
+              [
+                -23992,
+                0,
+                -205
+              ],
+              [
+                -24008,
+                0,
+                -205
+              ],
+              [
+                -24000,
+                260,
+                -191
+              ],
+              [
+                -23992,
+                270,
+                -205
+              ],
+              [
+                -24008,
+                270,
+                -205
+              ],
+              [
+                -24000,
+                280,
+                -71
+              ],
+              [
+                -23992,
+                290,
+                -85
+              ],
+              [
+                -24008,
+                290,
+                -85
+              ],
+              [
+                -24000,
+                270,
+                -191
+              ],
+              [
+                -12000,
+                0,
+                191
+              ],
+              [
+                -11992,
+                0,
+                205
+              ],
+              [
+                -12008,
+                0,
+                205
+              ],
+              [
+                -12000,
+                260,
+                191
+              ],
+              [
+                -11992,
+                270,
+                205
+              ],
+              [
+                -12008,
+                270,
+                205
+              ],
+              [
+                -12000,
+                280,
+                71
+              ],
+              [
+                -11992,
+                290,
+                85
+              ],
+              [
+                -12008,
+                290,
+                85
+              ],
+              [
+                -12000,
+                270,
+                191
+              ],
+              [
+                -4000,
+                0,
+                -191
+              ],
+              [
+                -3992,
+                0,
+                -205
+              ],
+              [
+                -4008,
+                0,
+                -205
+              ],
+              [
+                -4000,
+                260,
+                -191
+              ],
+              [
+                -3992,
+                270,
+                -205
+              ],
+              [
+                -4008,
+                270,
+                -205
+              ],
+              [
+                -4000,
+                280,
+                -71
+              ],
+              [
+                -3992,
+                290,
+                -85
+              ],
+              [
+                -4008,
+                290,
+                -85
+              ],
+              [
+                -4000,
+                270,
+                -191
+              ],
+              [
+                4000,
+                0,
+                191
+              ],
+              [
+                4008,
+                0,
+                205
+              ],
+              [
+                3992,
+                0,
+                205
+              ],
+              [
+                4000,
+                260,
+                191
+              ],
+              [
+                4008,
+                270,
+                205
+              ],
+              [
+                3992,
+                270,
+                205
+              ],
+              [
+                4000,
+                280,
+                71
+              ],
+              [
+                4008,
+                290,
+                85
+              ],
+              [
+                3992,
+                290,
+                85
+              ],
+              [
+                4000,
+                270,
+                191
+              ],
+              [
+                12000,
+                0,
+                -191
+              ],
+              [
+                12008,
+                0,
+                -205
+              ],
+              [
+                11992,
+                0,
+                -205
+              ],
+              [
+                12000,
+                260,
+                -191
+              ],
+              [
+                12008,
+                270,
+                -205
+              ],
+              [
+                11992,
+                270,
+                -205
+              ],
+              [
+                12000,
+                280,
+                -71
+              ],
+              [
+                12008,
+                290,
+                -85
+              ],
+              [
+                11992,
+                290,
+                -85
+              ],
+              [
+                12000,
+                270,
+                -191
+              ],
+              [
+                24000,
+                0,
+                191
+              ],
+              [
+                24008,
+                0,
+                205
+              ],
+              [
+                23992,
+                0,
+                205
+              ],
+              [
+                24000,
+                260,
+                191
+              ],
+              [
+                24008,
+                270,
+                205
+              ],
+              [
+                23992,
+                270,
+                205
+              ],
+              [
+                24000,
+                280,
+                71
+              ],
+              [
+                24008,
+                290,
+                85
+              ],
+              [
+                23992,
+                290,
+                85
+              ],
+              [
+                24000,
+                270,
+                191
               ]
             ]
           },
@@ -733871,10 +737342,9 @@
       "name": "GAEA ground 19",
       "nameStatus": "unknown",
       "omissions": [
-        "paletteBinding",
         "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-04190e: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041992: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a16: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a9a: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041a16",
@@ -733916,6 +737386,486 @@
                   7,
                   8,
                   9
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  15,
+                  13,
+                  10,
+                  12
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  13,
+                  14,
+                  11,
+                  10
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  13,
+                  16,
+                  17,
+                  14
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  16,
+                  13,
+                  15,
+                  18
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  16,
+                  19,
+                  17
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  18,
+                  19,
+                  16
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  16,
+                  17,
+                  18
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  14,
+                  15,
+                  12,
+                  11
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  18,
+                  15,
+                  14,
+                  17
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  17,
+                  16,
+                  18
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  22,
+                  20,
+                  23,
+                  25
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  20,
+                  21,
+                  24,
+                  23
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  24,
+                  27,
+                  26,
+                  23
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  28,
+                  25,
+                  23,
+                  26
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  27,
+                  29,
+                  26
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  26,
+                  29,
+                  28
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  28,
+                  27,
+                  26
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  21,
+                  22,
+                  25,
+                  24
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  27,
+                  24,
+                  25,
+                  28
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  28,
+                  26,
+                  27
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  32,
+                  30,
+                  33,
+                  35
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  30,
+                  31,
+                  34,
+                  33
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  34,
+                  37,
+                  36,
+                  33
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  38,
+                  35,
+                  33,
+                  36
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  37,
+                  39,
+                  36
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  36,
+                  39,
+                  38
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  38,
+                  37,
+                  36
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  31,
+                  32,
+                  35,
+                  34
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  37,
+                  34,
+                  35,
+                  38
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  38,
+                  36,
+                  37
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  45,
+                  43,
+                  40,
+                  42
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  43,
+                  44,
+                  41,
+                  40
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  43,
+                  46,
+                  47,
+                  44
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  46,
+                  43,
+                  45,
+                  48
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  46,
+                  49,
+                  47
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  48,
+                  49,
+                  46
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  46,
+                  47,
+                  48
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  44,
+                  45,
+                  42,
+                  41
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  48,
+                  45,
+                  44,
+                  47
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  47,
+                  46,
+                  48
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  52,
+                  50,
+                  53,
+                  55
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  50,
+                  51,
+                  54,
+                  53
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  54,
+                  57,
+                  56,
+                  53
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  58,
+                  55,
+                  53,
+                  56
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  57,
+                  59,
+                  56
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  56,
+                  59,
+                  58
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  58,
+                  57,
+                  56
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  51,
+                  52,
+                  55,
+                  54
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  57,
+                  54,
+                  55,
+                  58
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  58,
+                  56,
+                  57
                 ]
               }
             ],
@@ -733972,6 +737922,256 @@
                 -32767,
                 0,
                 -100
+              ],
+              [
+                -24000,
+                0,
+                191
+              ],
+              [
+                -23992,
+                0,
+                205
+              ],
+              [
+                -24008,
+                0,
+                205
+              ],
+              [
+                -24000,
+                260,
+                191
+              ],
+              [
+                -23992,
+                270,
+                205
+              ],
+              [
+                -24008,
+                270,
+                205
+              ],
+              [
+                -24000,
+                280,
+                71
+              ],
+              [
+                -23992,
+                290,
+                85
+              ],
+              [
+                -24008,
+                290,
+                85
+              ],
+              [
+                -24000,
+                270,
+                191
+              ],
+              [
+                -12000,
+                0,
+                -191
+              ],
+              [
+                -11992,
+                0,
+                -205
+              ],
+              [
+                -12008,
+                0,
+                -205
+              ],
+              [
+                -12000,
+                260,
+                -191
+              ],
+              [
+                -11992,
+                270,
+                -205
+              ],
+              [
+                -12008,
+                270,
+                -205
+              ],
+              [
+                -12000,
+                280,
+                -71
+              ],
+              [
+                -11992,
+                290,
+                -85
+              ],
+              [
+                -12008,
+                290,
+                -85
+              ],
+              [
+                -12000,
+                270,
+                -191
+              ],
+              [
+                191,
+                0,
+                0
+              ],
+              [
+                205,
+                0,
+                8
+              ],
+              [
+                205,
+                0,
+                -8
+              ],
+              [
+                191,
+                260,
+                0
+              ],
+              [
+                205,
+                270,
+                8
+              ],
+              [
+                205,
+                270,
+                -8
+              ],
+              [
+                71,
+                280,
+                0
+              ],
+              [
+                85,
+                290,
+                8
+              ],
+              [
+                85,
+                290,
+                -8
+              ],
+              [
+                200,
+                270,
+                0
+              ],
+              [
+                -191,
+                0,
+                12000
+              ],
+              [
+                -205,
+                0,
+                12008
+              ],
+              [
+                -205,
+                0,
+                11992
+              ],
+              [
+                -191,
+                260,
+                12000
+              ],
+              [
+                -205,
+                270,
+                12008
+              ],
+              [
+                -205,
+                270,
+                11992
+              ],
+              [
+                -71,
+                280,
+                12000
+              ],
+              [
+                -85,
+                290,
+                12008
+              ],
+              [
+                -85,
+                290,
+                11992
+              ],
+              [
+                -200,
+                270,
+                12000
+              ],
+              [
+                191,
+                0,
+                24000
+              ],
+              [
+                205,
+                0,
+                24008
+              ],
+              [
+                205,
+                0,
+                23992
+              ],
+              [
+                191,
+                260,
+                24000
+              ],
+              [
+                205,
+                270,
+                24008
+              ],
+              [
+                205,
+                270,
+                23992
+              ],
+              [
+                71,
+                280,
+                24000
+              ],
+              [
+                85,
+                290,
+                24008
+              ],
+              [
+                85,
+                290,
+                23992
+              ],
+              [
+                200,
+                270,
+                24000
               ]
             ]
           },
@@ -734956,10 +739156,9 @@
       "name": "GAEA ground 35",
       "nameStatus": "unknown",
       "omissions": [
-        "paletteBinding",
         "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-04190e: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041992: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041992",
@@ -734999,6 +739198,582 @@
                   7,
                   8,
                   9
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  15,
+                  13,
+                  10,
+                  12
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  13,
+                  14,
+                  11,
+                  10
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  13,
+                  16,
+                  17,
+                  14
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  16,
+                  13,
+                  15,
+                  18
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  16,
+                  19,
+                  17
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  18,
+                  19,
+                  16
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  16,
+                  17,
+                  18
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  14,
+                  15,
+                  12,
+                  11
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  18,
+                  15,
+                  14,
+                  17
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  17,
+                  16,
+                  18
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  22,
+                  20,
+                  23,
+                  25
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  20,
+                  21,
+                  24,
+                  23
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  24,
+                  27,
+                  26,
+                  23
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  28,
+                  25,
+                  23,
+                  26
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  27,
+                  29,
+                  26
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  26,
+                  29,
+                  28
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  28,
+                  27,
+                  26
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  21,
+                  22,
+                  25,
+                  24
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  27,
+                  24,
+                  25,
+                  28
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  28,
+                  26,
+                  27
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  35,
+                  33,
+                  30,
+                  32
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  33,
+                  34,
+                  31,
+                  30
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  33,
+                  36,
+                  37,
+                  34
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  36,
+                  33,
+                  35,
+                  38
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  36,
+                  39,
+                  37
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  38,
+                  39,
+                  36
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  36,
+                  37,
+                  38
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  34,
+                  35,
+                  32,
+                  31
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  38,
+                  35,
+                  34,
+                  37
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  37,
+                  36,
+                  38
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  42,
+                  40,
+                  43,
+                  45
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  40,
+                  41,
+                  44,
+                  43
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  44,
+                  47,
+                  46,
+                  43
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  48,
+                  45,
+                  43,
+                  46
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  47,
+                  49,
+                  46
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  46,
+                  49,
+                  48
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  48,
+                  47,
+                  46
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  41,
+                  42,
+                  45,
+                  44
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  47,
+                  44,
+                  45,
+                  48
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  48,
+                  46,
+                  47
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  55,
+                  53,
+                  50,
+                  52
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  53,
+                  54,
+                  51,
+                  50
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  53,
+                  56,
+                  57,
+                  54
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  56,
+                  53,
+                  55,
+                  58
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  56,
+                  59,
+                  57
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  58,
+                  59,
+                  56
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  56,
+                  57,
+                  58
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  54,
+                  55,
+                  52,
+                  51
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  58,
+                  55,
+                  54,
+                  57
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  57,
+                  56,
+                  58
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  62,
+                  60,
+                  63,
+                  65
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  60,
+                  61,
+                  64,
+                  63
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  64,
+                  67,
+                  66,
+                  63
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  68,
+                  65,
+                  63,
+                  66
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  67,
+                  69,
+                  66
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  66,
+                  69,
+                  68
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  68,
+                  67,
+                  66
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  61,
+                  62,
+                  65,
+                  64
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  67,
+                  64,
+                  65,
+                  68
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  68,
+                  66,
+                  67
                 ]
               }
             ],
@@ -735055,6 +739830,306 @@
                 32767,
                 0,
                 100
+              ],
+              [
+                -191,
+                0,
+                -24000
+              ],
+              [
+                -205,
+                0,
+                -23992
+              ],
+              [
+                -205,
+                0,
+                -24008
+              ],
+              [
+                -191,
+                260,
+                -24000
+              ],
+              [
+                -205,
+                270,
+                -23992
+              ],
+              [
+                -205,
+                270,
+                -24008
+              ],
+              [
+                -71,
+                280,
+                -24000
+              ],
+              [
+                -85,
+                290,
+                -23992
+              ],
+              [
+                -85,
+                290,
+                -24008
+              ],
+              [
+                -200,
+                270,
+                -24000
+              ],
+              [
+                191,
+                0,
+                -12000
+              ],
+              [
+                205,
+                0,
+                -11992
+              ],
+              [
+                205,
+                0,
+                -12008
+              ],
+              [
+                191,
+                260,
+                -12000
+              ],
+              [
+                205,
+                270,
+                -11992
+              ],
+              [
+                205,
+                270,
+                -12008
+              ],
+              [
+                71,
+                280,
+                -12000
+              ],
+              [
+                85,
+                290,
+                -11992
+              ],
+              [
+                85,
+                290,
+                -12008
+              ],
+              [
+                200,
+                270,
+                -12000
+              ],
+              [
+                -191,
+                0,
+                -4000
+              ],
+              [
+                -205,
+                0,
+                -3992
+              ],
+              [
+                -205,
+                0,
+                -4008
+              ],
+              [
+                -191,
+                260,
+                -4000
+              ],
+              [
+                -205,
+                270,
+                -3992
+              ],
+              [
+                -205,
+                270,
+                -4008
+              ],
+              [
+                -71,
+                280,
+                -4000
+              ],
+              [
+                -85,
+                290,
+                -3992
+              ],
+              [
+                -85,
+                290,
+                -4008
+              ],
+              [
+                -200,
+                270,
+                -4000
+              ],
+              [
+                191,
+                0,
+                4000
+              ],
+              [
+                205,
+                0,
+                4008
+              ],
+              [
+                205,
+                0,
+                3992
+              ],
+              [
+                191,
+                260,
+                4000
+              ],
+              [
+                205,
+                270,
+                4008
+              ],
+              [
+                205,
+                270,
+                3992
+              ],
+              [
+                71,
+                280,
+                4000
+              ],
+              [
+                85,
+                290,
+                4008
+              ],
+              [
+                85,
+                290,
+                3992
+              ],
+              [
+                200,
+                270,
+                4000
+              ],
+              [
+                -191,
+                0,
+                12000
+              ],
+              [
+                -205,
+                0,
+                12008
+              ],
+              [
+                -205,
+                0,
+                11992
+              ],
+              [
+                -191,
+                260,
+                12000
+              ],
+              [
+                -205,
+                270,
+                12008
+              ],
+              [
+                -205,
+                270,
+                11992
+              ],
+              [
+                -71,
+                280,
+                12000
+              ],
+              [
+                -85,
+                290,
+                12008
+              ],
+              [
+                -85,
+                290,
+                11992
+              ],
+              [
+                -200,
+                270,
+                12000
+              ],
+              [
+                191,
+                0,
+                24000
+              ],
+              [
+                205,
+                0,
+                24008
+              ],
+              [
+                205,
+                0,
+                23992
+              ],
+              [
+                191,
+                260,
+                24000
+              ],
+              [
+                205,
+                270,
+                24008
+              ],
+              [
+                205,
+                270,
+                23992
+              ],
+              [
+                71,
+                280,
+                24000
+              ],
+              [
+                85,
+                290,
+                24008
+              ],
+              [
+                85,
+                290,
+                23992
+              ],
+              [
+                200,
+                270,
+                24000
               ]
             ]
           },
@@ -736065,10 +741140,9 @@
       "name": "GAEA ground 51",
       "nameStatus": "unknown",
       "omissions": [
-        "paletteBinding",
         "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-04190e: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041992: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a16: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a9a: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041992",
@@ -736108,6 +741182,582 @@
                   5,
                   6,
                   7
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  13,
+                  11,
+                  8,
+                  10
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  11,
+                  12,
+                  9,
+                  8
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  11,
+                  14,
+                  15,
+                  12
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  14,
+                  11,
+                  13,
+                  16
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  14,
+                  17,
+                  15
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  16,
+                  17,
+                  14
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  14,
+                  15,
+                  16
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  12,
+                  13,
+                  10,
+                  9
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  16,
+                  13,
+                  12,
+                  15
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  15,
+                  14,
+                  16
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  20,
+                  18,
+                  21,
+                  23
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  18,
+                  19,
+                  22,
+                  21
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  22,
+                  25,
+                  24,
+                  21
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  26,
+                  23,
+                  21,
+                  24
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  25,
+                  27,
+                  24
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  24,
+                  27,
+                  26
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  26,
+                  25,
+                  24
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  19,
+                  20,
+                  23,
+                  22
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  25,
+                  22,
+                  23,
+                  26
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  26,
+                  24,
+                  25
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  33,
+                  31,
+                  28,
+                  30
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  31,
+                  32,
+                  29,
+                  28
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  31,
+                  34,
+                  35,
+                  32
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  34,
+                  31,
+                  33,
+                  36
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  34,
+                  37,
+                  35
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  36,
+                  37,
+                  34
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  34,
+                  35,
+                  36
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  32,
+                  33,
+                  30,
+                  29
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  36,
+                  33,
+                  32,
+                  35
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  35,
+                  34,
+                  36
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  43,
+                  41,
+                  38,
+                  40
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  41,
+                  42,
+                  39,
+                  38
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  41,
+                  44,
+                  45,
+                  42
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  44,
+                  41,
+                  43,
+                  46
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  44,
+                  47,
+                  45
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  46,
+                  47,
+                  44
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  44,
+                  45,
+                  46
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  42,
+                  43,
+                  40,
+                  39
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  46,
+                  43,
+                  42,
+                  45
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  45,
+                  44,
+                  46
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  50,
+                  48,
+                  51,
+                  53
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  48,
+                  49,
+                  52,
+                  51
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  52,
+                  55,
+                  54,
+                  51
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  56,
+                  53,
+                  51,
+                  54
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  55,
+                  57,
+                  54
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  54,
+                  57,
+                  56
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  56,
+                  55,
+                  54
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  49,
+                  50,
+                  53,
+                  52
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  55,
+                  52,
+                  53,
+                  56
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  56,
+                  54,
+                  55
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  63,
+                  61,
+                  58,
+                  60
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  61,
+                  62,
+                  59,
+                  58
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  61,
+                  64,
+                  65,
+                  62
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  64,
+                  61,
+                  63,
+                  66
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  64,
+                  67,
+                  65
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  66,
+                  67,
+                  64
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  64,
+                  65,
+                  66
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  62,
+                  63,
+                  60,
+                  59
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  66,
+                  63,
+                  62,
+                  65
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  65,
+                  64,
+                  66
                 ]
               }
             ],
@@ -736154,6 +741804,306 @@
                 100,
                 0,
                 -32767
+              ],
+              [
+                -191,
+                0,
+                -24000
+              ],
+              [
+                -205,
+                0,
+                -23992
+              ],
+              [
+                -205,
+                0,
+                -24008
+              ],
+              [
+                -191,
+                260,
+                -24000
+              ],
+              [
+                -205,
+                270,
+                -23992
+              ],
+              [
+                -205,
+                270,
+                -24008
+              ],
+              [
+                -71,
+                280,
+                -24000
+              ],
+              [
+                -85,
+                290,
+                -23992
+              ],
+              [
+                -85,
+                290,
+                -24008
+              ],
+              [
+                -200,
+                270,
+                -24000
+              ],
+              [
+                191,
+                0,
+                -12000
+              ],
+              [
+                205,
+                0,
+                -11992
+              ],
+              [
+                205,
+                0,
+                -12008
+              ],
+              [
+                191,
+                260,
+                -12000
+              ],
+              [
+                205,
+                270,
+                -11992
+              ],
+              [
+                205,
+                270,
+                -12008
+              ],
+              [
+                71,
+                280,
+                -12000
+              ],
+              [
+                85,
+                290,
+                -11992
+              ],
+              [
+                85,
+                290,
+                -12008
+              ],
+              [
+                200,
+                270,
+                -12000
+              ],
+              [
+                -191,
+                0,
+                -4000
+              ],
+              [
+                -205,
+                0,
+                -3992
+              ],
+              [
+                -205,
+                0,
+                -4008
+              ],
+              [
+                -191,
+                260,
+                -4000
+              ],
+              [
+                -205,
+                270,
+                -3992
+              ],
+              [
+                -205,
+                270,
+                -4008
+              ],
+              [
+                -71,
+                280,
+                -4000
+              ],
+              [
+                -85,
+                290,
+                -3992
+              ],
+              [
+                -85,
+                290,
+                -4008
+              ],
+              [
+                -200,
+                270,
+                -4000
+              ],
+              [
+                4000,
+                0,
+                191
+              ],
+              [
+                4008,
+                0,
+                205
+              ],
+              [
+                3992,
+                0,
+                205
+              ],
+              [
+                4000,
+                260,
+                191
+              ],
+              [
+                4008,
+                270,
+                205
+              ],
+              [
+                3992,
+                270,
+                205
+              ],
+              [
+                4000,
+                280,
+                71
+              ],
+              [
+                4008,
+                290,
+                85
+              ],
+              [
+                3992,
+                290,
+                85
+              ],
+              [
+                4000,
+                270,
+                191
+              ],
+              [
+                12000,
+                0,
+                -191
+              ],
+              [
+                12008,
+                0,
+                -205
+              ],
+              [
+                11992,
+                0,
+                -205
+              ],
+              [
+                12000,
+                260,
+                -191
+              ],
+              [
+                12008,
+                270,
+                -205
+              ],
+              [
+                11992,
+                270,
+                -205
+              ],
+              [
+                12000,
+                280,
+                -71
+              ],
+              [
+                12008,
+                290,
+                -85
+              ],
+              [
+                11992,
+                290,
+                -85
+              ],
+              [
+                12000,
+                270,
+                -191
+              ],
+              [
+                24000,
+                0,
+                191
+              ],
+              [
+                24008,
+                0,
+                205
+              ],
+              [
+                23992,
+                0,
+                205
+              ],
+              [
+                24000,
+                260,
+                191
+              ],
+              [
+                24008,
+                270,
+                205
+              ],
+              [
+                23992,
+                270,
+                205
+              ],
+              [
+                24000,
+                280,
+                71
+              ],
+              [
+                24008,
+                290,
+                85
+              ],
+              [
+                23992,
+                290,
+                85
+              ],
+              [
+                24000,
+                270,
+                191
               ]
             ]
           },
@@ -736179,10 +742129,9 @@
       "name": "GAEA ground 52",
       "nameStatus": "unknown",
       "omissions": [
-        "paletteBinding",
         "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-041a16: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a9a: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041a9a",
@@ -736210,6 +742159,582 @@
                   3,
                   4,
                   5
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  8,
+                  6,
+                  9,
+                  11
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  6,
+                  7,
+                  10,
+                  9
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  10,
+                  13,
+                  12,
+                  9
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  14,
+                  11,
+                  9,
+                  12
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  13,
+                  15,
+                  12
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  12,
+                  15,
+                  14
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  14,
+                  13,
+                  12
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  7,
+                  8,
+                  11,
+                  10
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  13,
+                  10,
+                  11,
+                  14
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  14,
+                  12,
+                  13
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  21,
+                  19,
+                  16,
+                  18
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  19,
+                  20,
+                  17,
+                  16
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  19,
+                  22,
+                  23,
+                  20
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  22,
+                  19,
+                  21,
+                  24
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  22,
+                  25,
+                  23
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  24,
+                  25,
+                  22
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  22,
+                  23,
+                  24
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  20,
+                  21,
+                  18,
+                  17
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  24,
+                  21,
+                  20,
+                  23
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  23,
+                  22,
+                  24
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  28,
+                  26,
+                  29,
+                  31
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  26,
+                  27,
+                  30,
+                  29
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  30,
+                  33,
+                  32,
+                  29
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  34,
+                  31,
+                  29,
+                  32
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  33,
+                  35,
+                  32
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  32,
+                  35,
+                  34
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  34,
+                  33,
+                  32
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  27,
+                  28,
+                  31,
+                  30
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  33,
+                  30,
+                  31,
+                  34
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  34,
+                  32,
+                  33
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  41,
+                  39,
+                  36,
+                  38
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  39,
+                  40,
+                  37,
+                  36
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  39,
+                  42,
+                  43,
+                  40
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  42,
+                  39,
+                  41,
+                  44
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  42,
+                  45,
+                  43
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  44,
+                  45,
+                  42
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  42,
+                  43,
+                  44
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  40,
+                  41,
+                  38,
+                  37
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  44,
+                  41,
+                  40,
+                  43
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  43,
+                  42,
+                  44
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  48,
+                  46,
+                  49,
+                  51
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  46,
+                  47,
+                  50,
+                  49
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  50,
+                  53,
+                  52,
+                  49
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  54,
+                  51,
+                  49,
+                  52
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  53,
+                  55,
+                  52
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  52,
+                  55,
+                  54
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  54,
+                  53,
+                  52
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  47,
+                  48,
+                  51,
+                  50
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  53,
+                  50,
+                  51,
+                  54
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  54,
+                  52,
+                  53
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  61,
+                  59,
+                  56,
+                  58
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  59,
+                  60,
+                  57,
+                  56
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  59,
+                  62,
+                  63,
+                  60
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32896,
+                "vertices": [
+                  62,
+                  59,
+                  61,
+                  64
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  62,
+                  65,
+                  63
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  64,
+                  65,
+                  62
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  62,
+                  63,
+                  64
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  60,
+                  61,
+                  58,
+                  57
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  64,
+                  61,
+                  60,
+                  63
+                ]
+              },
+              {
+                "colour": "#664444",
+                "sourceColour": 802,
+                "vertices": [
+                  63,
+                  62,
+                  64
                 ]
               }
             ],
@@ -736246,6 +742771,306 @@
                 -32767,
                 0,
                 -100
+              ],
+              [
+                -24000,
+                0,
+                -191
+              ],
+              [
+                -23992,
+                0,
+                -205
+              ],
+              [
+                -24008,
+                0,
+                -205
+              ],
+              [
+                -24000,
+                260,
+                -191
+              ],
+              [
+                -23992,
+                270,
+                -205
+              ],
+              [
+                -24008,
+                270,
+                -205
+              ],
+              [
+                -24000,
+                280,
+                -71
+              ],
+              [
+                -23992,
+                290,
+                -85
+              ],
+              [
+                -24008,
+                290,
+                -85
+              ],
+              [
+                -24000,
+                270,
+                -191
+              ],
+              [
+                -16000,
+                0,
+                191
+              ],
+              [
+                -15992,
+                0,
+                205
+              ],
+              [
+                -16008,
+                0,
+                205
+              ],
+              [
+                -16000,
+                260,
+                191
+              ],
+              [
+                -15992,
+                270,
+                205
+              ],
+              [
+                -16008,
+                270,
+                205
+              ],
+              [
+                -16000,
+                280,
+                71
+              ],
+              [
+                -15992,
+                290,
+                85
+              ],
+              [
+                -16008,
+                290,
+                85
+              ],
+              [
+                -16000,
+                270,
+                191
+              ],
+              [
+                -8000,
+                0,
+                -191
+              ],
+              [
+                -7992,
+                0,
+                -205
+              ],
+              [
+                -8008,
+                0,
+                -205
+              ],
+              [
+                -8000,
+                260,
+                -191
+              ],
+              [
+                -7992,
+                270,
+                -205
+              ],
+              [
+                -8008,
+                270,
+                -205
+              ],
+              [
+                -8000,
+                280,
+                -71
+              ],
+              [
+                -7992,
+                290,
+                -85
+              ],
+              [
+                -8008,
+                290,
+                -85
+              ],
+              [
+                -8000,
+                270,
+                -191
+              ],
+              [
+                8000,
+                0,
+                191
+              ],
+              [
+                8008,
+                0,
+                205
+              ],
+              [
+                7992,
+                0,
+                205
+              ],
+              [
+                8000,
+                260,
+                191
+              ],
+              [
+                8008,
+                270,
+                205
+              ],
+              [
+                7992,
+                270,
+                205
+              ],
+              [
+                8000,
+                280,
+                71
+              ],
+              [
+                8008,
+                290,
+                85
+              ],
+              [
+                7992,
+                290,
+                85
+              ],
+              [
+                8000,
+                270,
+                191
+              ],
+              [
+                16000,
+                0,
+                -191
+              ],
+              [
+                16008,
+                0,
+                -205
+              ],
+              [
+                15992,
+                0,
+                -205
+              ],
+              [
+                16000,
+                260,
+                -191
+              ],
+              [
+                16008,
+                270,
+                -205
+              ],
+              [
+                15992,
+                270,
+                -205
+              ],
+              [
+                16000,
+                280,
+                -71
+              ],
+              [
+                16008,
+                290,
+                -85
+              ],
+              [
+                15992,
+                290,
+                -85
+              ],
+              [
+                16000,
+                270,
+                -191
+              ],
+              [
+                24000,
+                0,
+                191
+              ],
+              [
+                24008,
+                0,
+                205
+              ],
+              [
+                23992,
+                0,
+                205
+              ],
+              [
+                24000,
+                260,
+                191
+              ],
+              [
+                24008,
+                270,
+                205
+              ],
+              [
+                23992,
+                270,
+                205
+              ],
+              [
+                24000,
+                280,
+                71
+              ],
+              [
+                24008,
+                290,
+                85
+              ],
+              [
+                23992,
+                290,
+                85
+              ],
+              [
+                24000,
+                270,
+                191
               ]
             ]
           },

@@ -1157,7 +1157,7 @@ UNEXPLORED_COVERAGE = [
     'Mission-disk or script-created visual changes that would replace a resident slot.',
     'View-conditioned object groups, articulated transforms, special polygon commands, '
     'and post-plan attachment forms other than the documented zero-latch and $F0 constructors.',
-    'Two $7000 ground-placement copies lack scene-palette context; $F0/$F4 ground horizon joins are view-conditioned and the separate native surface/background fill path remains unresolved.',
+    '$F0/$F4 ground horizon joins are view-conditioned and the separate native surface/background fill path remains unresolved.',
 ]
 
 BUILDING_VECTOR_TEXT_MODELS = {
@@ -1362,7 +1362,7 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
         address = 0x1e000 + offset
         structure_slot = struct.unpack_from('>H', workspace, 0xabdc + cell * 4)[0] & 0x1FF
         palette = None
-        if structure_slot and structure_slot < len(tables[1]['entries']):
+        if structure_slot < len(tables[1]['entries']):
             structure_model = tables[1]['entries'][structure_slot]
             if structure_model in by_address:
                 palette = palette_at(
@@ -1598,7 +1598,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         address = 0x1e000 + offset
         structure_slot = struct.unpack_from('>H', data, 0xabdc + cell * 4)[0] & 0x1FF
         palette = None
-        if structure_slot and structure_slot < len(tables[1]['entries']):
+        if structure_slot < len(tables[1]['entries']):
             palette = palette_at(
                 data, by_address[tables[1]['entries'][structure_slot]].get('paletteIndex') or 0
             )
@@ -2213,7 +2213,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     coverage_notes = [
         'Resident first-world census after examining title-screen, first-world and interior-window RAM; not a claim that every packed disk file has been walked.',
         'Conditional geometry, scene palette binding, and named places outside the captured Eris workspace, authored Gaea Birmingham Island map, live Gaea UR City overlay, and live Dion overlay remain incomplete.',
-        'Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; empty records are intentional and add no geometry at $056634, while two transformed placement copies lack scene-palette context and $F0/$F4 joins remain view-conditioned.',
+        'Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; surface slot zero supplies palette zero for structureless cells, empty records are intentional and add no geometry at $056634, and $F0/$F4 joins remain view-conditioned.',
         'Selectors the documented zero-latch and $F0 post-plan constructors accept are retained; other attachment forms stay named in the model reason.',
         'Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.',
     ]
