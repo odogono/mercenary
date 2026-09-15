@@ -53,8 +53,8 @@ its original plan mesh, scaled region bounds (signed-word endpoint sentinels sta
 scales. Detail selectors retain two groups of ordered boxes and default face indices in raw
 model coordinates. Unsupported or truncated selectors are omitted as a whole and explained
 in the model reason. The census retains every selector the documented post-plan grammar
-accepts (86 in the current first-world extract, including Structure 75 and its Structure 76
-alias) and 44 detail selectors. The first detail group starts
+accepts (88 in the current first-world extract, including Structure 75 and its Structure 76
+alias, and `$xxF0` constructor variants such as `$40F0`/`$42F0`/`$82F0`) and 44 detail selectors. The first detail group starts
 on the next word boundary after the byte-sized face stream. Empty plan meshes are valid
 when all queues are empty. The spaceport's combined inspection variants also carry
 `walkMesh`, excluding the resident key from the authored walk fallback.
@@ -72,8 +72,13 @@ workspace index, not a relative-pointer bank. They remain **provisional table
 extents**, rather than a proven census of every packed disk file. Title-screen
 RAM has zero table bases. Two independent first-world loads and the occupied
 Spaceport interior RAM share the same pointer tables and object record heads:
-entering a building does not disk-load a replacement model bank. The packed STX
-layout and the title-to-world loader remain unexplored. The UI displays that
+entering a building does not disk-load a replacement model bank. The Working
+Authority Pasti STX is an RSY version-3 image (1031930 bytes, SHA-256
+`8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef`). Printable
+resident labels such as `DART II` are absent from that STX and from title-screen
+RAM; they appear only after the title-to-world unpack that fills the `$04BD00`
+base block (`$04BD0C=$00E900`, `$04BD10=$035700`, `$04BD22=$026000`). Track
+payload remains packed. The UI displays that
 qualification for each table. Every slot maps to one model identity; repeated
 pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
@@ -189,7 +194,9 @@ code. Targeted disassembly used to establish them remains ignored at
 - Negative structure headers select an alias, scales, palette and interior.
   Alias indirection which the decoder cannot resolve remains unresolved. Authored
   surface attachments/openings after the basic wall list are not silently omitted
-  from a “decoded” result: their presence makes the model partial.
+  from a “decoded” result: their presence makes the model partial. `$40F0` and
+  `$82F0` use the same 26-byte constructors as `$4000`/`$8200` when `$7AFB` is
+  zero (pinned first-world); the live `$7AFB≠0` predicate remains unresolved.
 
 ### Cell ground, pad and road
 
@@ -295,11 +302,11 @@ bounded: the catalogue does not reproduce the original camera, scene visibility,
 attachments, or exterior seen through the interior's window. These are not
 claimed as a completed pixel-fidelity gate.
 
-Still unexplored or incomplete: the packed STX layout and title-to-world loader, live
+Still unexplored or incomplete: packed Pasti STX track payload, live
 non-Eris `$ABDC` workspaces, Gaea ground and islands other than Birmingham, remaining
 named-place lists, remaining object residences/transforms, view-conditioned object groups,
-articulated geometry, special primitives, post-plan attachment forms the generic selector
-rejects, `$7000` road templates, default empty-cell fill, and script-created visual
+articulated geometry, special primitives, post-plan attachment forms other than the
+documented zero-latch and `$F0` constructors, `$7000` road templates, default empty-cell fill, and script-created visual
 changes. Resident model banks do not change between first-world and occupied-Spaceport RAM.
 The recovery ledger exposes this boundary; it does not declare the whole game's extraction
 complete. Further research can replace unresolved records without changing their

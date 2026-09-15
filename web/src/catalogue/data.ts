@@ -82,6 +82,7 @@ export interface StructureSelection {
   readonly attachments: readonly EntranceAttachment[];
   readonly detailModel: string;
   readonly detailVariant: string;
+  readonly liveSelector?: boolean;
   readonly plan: Mesh;
   readonly regions: readonly {
     readonly bounds: Bounds;
@@ -357,7 +358,8 @@ const structureSelection = (value: unknown): StructureSelection => {
     'scale',
     'detailModel',
     'detailVariant',
-    'regions'
+    'regions',
+    'liveSelector'
   ]);
   const plan = mesh(s['plan'], true);
   const scale = list(s['scale']).map(number);
@@ -401,9 +403,12 @@ const structureSelection = (value: unknown): StructureSelection => {
     }
     const controlWord = integer(a['controlWord']);
     const slot = integer(a['slot']);
+    const authored = controlWord & 0xff_00;
+    const latch = controlWord & 0xff;
     const controls = [0x40_00, 0x41_00, 0x42_00, 0x80_00, 0x81_00, 0x82_00];
     if (
-      !controls.includes(controlWord) ||
+      !controls.includes(authored) ||
+      (latch !== 0 && latch !== 0xf0) ||
       slot === 0 ||
       slot > 0x03_fc ||
       slot % 4
@@ -493,10 +498,14 @@ const structureSelection = (value: unknown): StructureSelection => {
   if (regions.length === 0) {
     fail('empty region selector');
   }
+  if (s['liveSelector'] !== undefined && typeof s['liveSelector'] !== 'boolean') {
+    fail('invalid live selector flag');
+  }
   return {
     attachments,
     detailModel: string(s['detailModel']),
     detailVariant: string(s['detailVariant']),
+    ...(s['liveSelector'] === true ? { liveSelector: true } : {}),
     plan,
     regions,
     scale: [scale[0]!, scale[1]!]

@@ -128,3 +128,46 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(result['attachments'], [])
         self.assertEqual(result['regions'][0]['gate'], 'passage')
         self.assertNotIn('insetAxis', result['regions'][0])
+
+    def test_f0_selector_variant_uses_the_same_constructor_as_the_zero_latch(self):
+        start = 0x10ec2
+        data = bytearray(start + 4)
+        struct.pack_into('>hh', data, start, 250, 150)
+        data += struct.pack(
+            '>H4h4H4hH',
+            0x40F0, 75, -198, 125, -192,
+            0x1246, 0x1432, 0x1444, 0x001E,
+            170, -450, -100, -32768, 0,
+        )
+        data += bytes.fromhex('c000 80007fff80007fff 0000 0000')
+        mesh = {'sourceStart': start, 'sourceEnd': start + 6, 'faces': []}
+        result = decode_structure_selection(bytes(data), mesh, (2, 2), [0] * 16, [])
+        attachment = result['attachments'][0]
+        self.assertEqual(attachment['controlWord'], 0x40F0)
+        self.assertEqual(attachment['constructor'], {
+            'leafCount': 1, 'motionAxis': 'x', 'movingSide': 'high',
+        })
+        self.assertEqual(attachment['proximityBox'], {'x': [-900, 340], 'z': [-32768, -200]})
+        self.assertTrue(result['liveSelector'])
+
+    def test_z_f0_variant_is_two_leaf_z(self):
+        start = 0x1532a
+        data = bytearray(start + 4)
+        struct.pack_into('>hh', data, start, 150, 110)
+        data += struct.pack(
+            '>H4h4H4hH',
+            0x82F0, -407, -200, -403, 0,
+            0x9086, 0x9082, 0x9086, 0x9084,
+            -600, -200, -200, 0, 0,
+        )
+        data += bytes.fromhex('c000 80007fff80007fff ff00 0000')
+        mesh = {'sourceStart': start, 'sourceEnd': start + 6, 'faces': []}
+        result = decode_structure_selection(bytes(data), mesh, (1, 1), [0] * 16, [])
+        self.assertEqual(result['attachments'][0]['constructor'], {
+            'leafCount': 2, 'motionAxis': 'z',
+        })
+
+    def test_non_f0_low_byte_is_still_not_an_entrance_record(self):
+        mesh = {'sourceEnd': 2, 'sourceStart': 0, 'faces': [{'sourceIndex': 0}]}
+        with self.assertRaisesRegex(ValueError, 'unknown structure attachment form'):
+            decode_structure_selection(bytes.fromhex('40ff') + b'\0' * 32, mesh, (1, 1), [], [])

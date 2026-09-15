@@ -113,7 +113,9 @@ constructor is:
 The Proximity Box is tested lower-inclusive and upper-exclusive. The first
 post-plan controls observed across the resident surface records use six base
 constructor modes, plus `$40F0` and `$82F0` variants whose low byte is resolved
-through live selector state before the same geometry constructors:
+through live selector state before the same geometry constructors. The catalogue
+retains those `$F0` records from the pinned first-world RAM (`$7AFB = 0`) as
+`liveSelector` geometry; the `$7AFB ≠ 0` predicate is still unresolved.
 
 | Control | Leaves | Motion and bind-inset axis | Moving edge(s)                 |
 | ------- | -----: | -------------------------- | ------------------------------ |
@@ -359,5 +361,5 @@ runtime scenario. No ST code was copied, translated or tracked.
 | Leaves rise to the soffit spanning their closed rectangle, 150 for Structure 75's `$03F0`                        | Confirmed  | plan faces of `$1484E` and `$14AEC`; ST screen shows no band                  |
 | Which vertex indices the constructors inherit leaf Y words from at bind time                                     | Unresolved | no runtime capture reads `$1840` with STATE OFFICE bound                      |
 | Natural Eris `$0200` bind always uses X inset                                                                     | Unresolved | no `$52/$9A/$D8` runtime capture; captured `$5C40` is zero only at cell `$87` |
-| Meaning of `$40F0/$82F0` live selector predicates                                                                 | Unresolved | constructor decoded; selecting game-state predicate not traced                |
+| Meaning of `$40F0/$82F0` live selector predicates                                                                 | Partial    | first-world `$7AFB=0` takes the documented constructors; live `$7AFB≠0` path not traced |
 | Schema 6 closed mesh plus flags is sufficient                                                                     | Disproved  | constructor, Proximity Box, gate and scratch-dependent inset facts are absent |

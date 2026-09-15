@@ -443,8 +443,31 @@ def selection_list(reader: Reader, count: int, attachment: bool = False) -> list
     raise ValueError('selection list terminator missing')
 
 
+def authored_entrance_control(command: int) -> int | None:
+    """Return the constructor word for an authored Entrance Attachment control.
+
+    `$59EA2` takes a zero low byte straight to the constructors. `$59F50` also
+    does so for a `$F0` low byte when `$7AFB` is zero (pinned first-world). Other
+    low bytes are a different post-plan family.
+    """
+    high = command & 0xFF00
+    low = command & 0xFF
+    if high in ENTRANCE_CONTROLS and low in (0, 0xF0):
+        return high
+    return None
+
+
+def scale_endpoint(value: int, factor: int) -> int:
+    if value == -32768:
+        return -32768 if factor > 0 else 32767
+    if value == 32767:
+        return 32767 if factor > 0 else -32768
+    return value * factor
+
+
 def entrance_constructor(control: int) -> dict:
-    if control not in ENTRANCE_CONTROLS:
+    control = authored_entrance_control(control)
+    if control is None:
         raise ValueError('unknown structure attachment form')
     constructor = {
         'leafCount': 2 if control & 0x200 else 1,
@@ -565,20 +588,20 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
         if command == 0:
             break
         low = command & 0xFF
-        if command in ENTRANCE_CONTROLS:
+        if authored_entrance_control(command) is not None:
             x0, z0, x1, z1 = [reader.signed() for _ in range(4)]
             colours = [reader.word() for _ in range(4)]
             box = [reader.signed() for _ in range(4)]
             if x0 >= x1 or z0 >= z1:
                 raise ValueError('unknown closed attachment geometry')
-            if box[0] >= box[1] or box[2] >= box[3]:
-                raise ValueError('invalid attachment proximity box')
             constructor = entrance_constructor(command)
             sx, sz = scale
-            scaled_x = sorted((x0 * sx, x1 * sx))
-            scaled_z = sorted((z0 * sz, z1 * sz))
-            proximity_x = sorted((box[0] * sx, box[1] * sx))
-            proximity_z = sorted((box[2] * sz, box[3] * sz))
+            scaled_x = sorted((scale_endpoint(x0, sx), scale_endpoint(x1, sx)))
+            scaled_z = sorted((scale_endpoint(z0, sz), scale_endpoint(z1, sz)))
+            proximity_x = sorted((scale_endpoint(box[0], sx), scale_endpoint(box[1], sx)))
+            proximity_z = sorted((scale_endpoint(box[2], sz), scale_endpoint(box[3], sz)))
+            if proximity_x[0] >= proximity_x[1] or proximity_z[0] >= proximity_z[1]:
+                raise ValueError('invalid attachment proximity box')
             attachments.append({
                 'controlWord': command,
                 'constructor': constructor,
@@ -640,7 +663,13 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
         raise ValueError('region terminator missing')
     if not regions:
         raise ValueError('no recovered regions')
-    return {'plan': mesh, 'attachments': attachments, 'regions': regions, 'scale': list(scale)}
+    return {
+        'plan': mesh,
+        'attachments': attachments,
+        'regions': regions,
+        'scale': list(scale),
+        'liveSelector': any(item['controlWord'] & 0xFF == 0xF0 for item in attachments),
+    }
 
 
 def translate_mesh(mesh: dict, position: tuple[int, int, int]) -> dict:
@@ -854,12 +883,30 @@ RECORD_OMISSIONS = (
     ('paletteBinding', 'scene colour table binding unresolved'),
     ('attachments', 'Authored surface attachments/openings'),
     ('attachments', 'Structure selection unavailable'),
+    ('attachments', 'Live $F0 attachment selector'),
     ('omittedSelector', 'Complete selector omitted'),
     ('neighborJoin', 'neighboring-cell workspace'),
     ('roadTemplate', '$7000 road templates'),
     ('headerCommand', 'model command $'),
     ('thirdHeight', 'additional height/shape decoding'),
 )
+
+def pasti_stx_header(data: bytes) -> dict:
+    """File-level Pasti header only; track payload stays packed."""
+    if len(data) < 6 or data[:4] != b'RSY\x00':
+        raise ValueError('not a Pasti STX image')
+    version = int.from_bytes(data[4:6], 'little')
+    if version != 3:
+        raise ValueError('unsupported Pasti STX version')
+    labels = (b'DART II', b'      NULL      ', b'V.I.P. LIMO')
+    return {
+        'magic': 'RSY',
+        'version': version,
+        'size': len(data),
+        'sha256': hashlib.sha256(data).hexdigest(),
+        'containsResidentLabels': any(label in data for label in labels),
+    }
+
 
 DISK_LOAD_EXAMINED = [
     {
@@ -885,14 +932,25 @@ DISK_LOAD_EXAMINED = [
             'Entering Capital Spaceport does not disk-load a different model bank.'
         ),
     },
+    {
+        'path': 'Pasti STX',
+        'finding': (
+            'Working-Authority image is a Pasti RSY version-3 STX '
+            '(SHA-256 8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef, '
+            '1031930 bytes). Printable resident labels such as DART II are absent from the '
+            'STX and from title-screen RAM; they appear only after the title-to-world unpack '
+            'that fills the $04BD00 base block ($04BD0C=$00E900, $04BD10=$035700, '
+            '$04BD22=$026000). Track payload remains packed.'
+        ),
+    },
 ]
 
 UNEXPLORED_COVERAGE = [
-    'Packed STX file layout and the title-to-world loader that writes $04BD10/$04BD0C/$04BD22.',
+    'Packed Pasti STX disk track payload still not unpacked into models; fuzzy/copy-protected sectors are not a second pointer bank.',
     'Live non-Eris $ABDC workspaces and Gaea islands other than authored Birmingham.',
     'Mission-disk or script-created visual changes that would replace a resident slot.',
     'View-conditioned object groups, articulated transforms, special polygon commands, '
-    'and post-plan attachment forms the generic selector grammar rejects.',
+    'and post-plan attachment forms other than the documented zero-latch and $F0 constructors.',
     '$7000 / $53F76 ground commands and default empty-cell fill.',
 ]
 
@@ -1038,6 +1096,10 @@ def extract(data: bytes, source: dict) -> dict:
                             gap for gap in gaps
                             if gap != 'Authored surface attachments/openings are not yet decoded.'
                         ]
+                        if selection.get('liveSelector'):
+                            gaps.append(
+                                'Live $F0 attachment selector predicate ($7AFB) is unresolved.'
+                            )
                     except (ValueError, struct.error) as error:
                         gaps.append(f'Structure selection unavailable: {error}.')
                     if mesh['faces']:
@@ -1620,7 +1682,7 @@ def extract(data: bytes, source: dict) -> dict:
         'Resident first-world census after examining title-screen, first-world and interior-window RAM; not a claim that every packed disk file has been walked.',
         'Conditional geometry, scene palette binding, and named places outside the captured Eris workspace and authored Gaea Birmingham Island map remain incomplete.',
         'Eris cell ground/pad/road records at $1E000 are decoded locally; $7000 road templates, $53F76 attachments and default empty-cell fill remain incomplete.',
-        'Selectors the documented post-plan grammar accepts are retained; rejected attachment forms stay named in the model reason.',
+        'Selectors the documented zero-latch and $F0 post-plan constructors accept are retained; other attachment forms stay named in the model reason.',
     ]
     if gaea_coverage:
         coverage_notes.append(gaea_coverage)
