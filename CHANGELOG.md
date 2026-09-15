@@ -6,8 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.19.9] - 2026-09-15
+
 ### Added
 
+- Damocles ground references `$F0`/`$F4` are now evidenced as preprojected,
+  camera-dependent horizon joins rather than neighboring-cell model vertices;
+  the Catalogue keeps their local polygon portions and classifies the missing
+  horizon points as view-conditioned (#173).
 - The Damocles Catalogue proves the 133 first-world cells sharing `$01E790`
   reference one fully decoded intentional empty ground record: `$056634`
   returns on its initial zero command, so the visible green belongs to a

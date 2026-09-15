@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "name": "ground-neighbor-workspace",
+  "checkpoint": "title-screen",
+  "description": "Load the first world, capture its RAM, then disassemble the $04EDD4 vertex-reference consumer and surrounding surface workspace setup used by $F0/$F4 ground records. Working-Authority Evidence for the Damocles model census (#173).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "artifacts": ["registers", "ram"]
+    },
+    {
+      "type": "disassemble",
+      "name": "ground-neighbor-workspace",
+      "start": "0x04ec00",
+      "end": "0x04f000"
+    }
+  ]
+}

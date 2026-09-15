@@ -416,7 +416,7 @@ def decode_structure(data: bytes, start: int, palette: list[int] | None = None,
 
 # Cell-local ground records at $1E000: $54E8E transform nybbles, then $8000-relative X/Z.
 GROUND_ORIENT = bytes.fromhex('0006030501040207')
-GROUND_JOIN = {0xF0, 0xF4}
+GROUND_HORIZON_SLOTS = {0xF0, 0xF4}
 EMPTY_GROUND_REASON = (
     'Empty ground record: source plan and command streams terminate immediately; '
     'the native $056634 renderer returns at that zero terminator, so this record '
@@ -427,7 +427,7 @@ EMPTY_GROUND_REASON = (
 def decode_ground(data: bytes, start: int, orientation: int,
                   palette: list[int] | None = None,
                   hardware: list[int] | None = None) -> tuple[dict, list[str], int, list[dict]]:
-    """Decode one per-cell ground/pad/road record. Neighbor-join sentinels are omitted."""
+    """Decode one per-cell ground record. View-conditioned horizon slots are omitted."""
     reader = Reader(data, start)
     first, second = reader.take(1)[0], reader.take(1)[0]
     extra, d5 = 0, orientation & 0xFF
@@ -486,7 +486,8 @@ def decode_ground(data: bytes, start: int, orientation: int,
             kept, dropped = _ground_indices(list(reader.take(2)), len(plan))
             if dropped:
                 gaps.append(
-                    'Ground edge references neighboring-cell workspace slots that this cell record does not contain.'
+                    'Ground edge references preprojected runtime horizon slot $F0/$F4; '
+                    'the camera-conditioned endpoint is omitted from model-space geometry.'
                 )
             elif len(kept) == 2:
                 rgb = colour_value(colour & ~0x4000, palette, hardware)
@@ -506,7 +507,8 @@ def decode_ground(data: bytes, start: int, orientation: int,
         kept, dropped = _ground_indices(refs, len(plan))
         if dropped:
             gaps.append(
-                'Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.'
+                'Ground polygon references preprojected runtime horizon slot $F0/$F4; '
+                'the camera-conditioned point is omitted and the remaining local polygon is kept.'
             )
         if len(kept) >= 3:
             rgb = colour_value(colour, palette, hardware)
@@ -515,7 +517,10 @@ def decode_ground(data: bytes, start: int, orientation: int,
             faces.append({'vertices': list(range(offset, offset + len(kept))), 'colour': rgb,
                           'sourceColour': colour, 'sourceIndex': source_index, 'doubleSided': True})
         elif refs:
-            gaps.append('Ground polygon had too few local vertices after omitting neighbor-join sentinels.')
+            gaps.append(
+                'Ground polygon had too few model-space vertices after omitting '
+                'view-conditioned horizon slots.'
+            )
     else:
         raise ValueError('ground primitive terminator missing')
     if not faces and not lines and not placements:
@@ -527,7 +532,7 @@ def decode_ground(data: bytes, start: int, orientation: int,
 def _ground_indices(refs: list[int], count: int) -> tuple[list[int], bool]:
     kept, dropped = [], False
     for ref in refs:
-        if ref in GROUND_JOIN:
+        if ref in GROUND_HORIZON_SLOTS:
             dropped = True
             continue
         if ref == 0 or ref % 4:
@@ -1086,7 +1091,7 @@ RECORD_OMISSIONS = (
     ('attachments', 'Structure selection unavailable'),
     ('attachments', 'Live $F0 attachment selector'),
     ('omittedSelector', 'Complete selector omitted'),
-    ('neighborJoin', 'neighboring-cell workspace'),
+    ('viewConditioned', 'preprojected runtime horizon slot'),
     ('roadTemplate', '$7000 road templates'),
     ('headerCommand', 'model command $'),
     ('thirdHeight', 'additional height/shape decoding'),
@@ -1152,7 +1157,7 @@ UNEXPLORED_COVERAGE = [
     'Mission-disk or script-created visual changes that would replace a resident slot.',
     'View-conditioned object groups, articulated transforms, special polygon commands, '
     'and post-plan attachment forms other than the documented zero-latch and $F0 constructors.',
-    'Two $7000 ground-placement copies lack scene-palette context; neighbor joins and the separate native surface/background fill path remain unresolved.',
+    'Two $7000 ground-placement copies lack scene-palette context; $F0/$F4 ground horizon joins are view-conditioned and the separate native surface/background fill path remains unresolved.',
 ]
 
 BUILDING_VECTOR_TEXT_MODELS = {
@@ -1236,7 +1241,6 @@ def coverage_ledger(models: list, tables: list, notes: list[str], disk_load: lis
             'paletteBinding': omissions['paletteBinding'],
             'attachments': omissions['attachments'],
             'omittedSelector': omissions['omittedSelector'],
-            'neighborJoin': omissions['neighborJoin'],
             'roadTemplate': omissions['roadTemplate'],
         },
         'tables': rows,
@@ -2209,7 +2213,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     coverage_notes = [
         'Resident first-world census after examining title-screen, first-world and interior-window RAM; not a claim that every packed disk file has been walked.',
         'Conditional geometry, scene palette binding, and named places outside the captured Eris workspace, authored Gaea Birmingham Island map, live Gaea UR City overlay, and live Dion overlay remain incomplete.',
-        'Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; empty records are intentional and add no geometry at $056634, while two transformed placement copies lack scene-palette context and neighbor joins remain incomplete.',
+        'Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; empty records are intentional and add no geometry at $056634, while two transformed placement copies lack scene-palette context and $F0/$F4 joins remain view-conditioned.',
         'Selectors the documented zero-latch and $F0 post-plan constructors accept are retained; other attachment forms stay named in the model reason.',
         'Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.',
     ]

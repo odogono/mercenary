@@ -345,6 +345,9 @@ it('recovers the spaceport pad strip as a per-cell ground record', async () => {
   const pad = data.models.find(model => model.id === 'ground-021afe-00')!;
   expect(pad.kind).toBe('ground');
   expect(pad.status).toBe('partial');
+  expect(pad.omissions).toEqual(['viewConditioned']);
+  expect(pad.reason).toContain('preprojected runtime horizon slot $F0/$F4');
+  expect(pad.reason).not.toContain('neighbor');
   const colours = new Set(
     pad.variants[0]!.mesh.faces.map(face => face.sourceColour)
   );

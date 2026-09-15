@@ -70,7 +70,7 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
       model.kind === 'interior'
         ? 'Building-detail geometry can appear outside or inside. This source bank does not identify a model as an interior.'
         : model.kind === 'ground'
-          ? 'Per-cell ground, pad and road record. Neighbor-join sentinels are omitted; intentional empty records contribute no geometry, and the native surface/background fill is a separate unresolved path.'
+          ? 'Per-cell ground, pad and road record. Camera-dependent $F0/$F4 horizon slots are omitted; intentional empty records contribute no geometry, and the native surface/background fill is a separate unresolved path.'
           : 'Building plan and linked detail. Available inspection views are listed under Form; original scene visibility remains incomplete.'
     );
   }

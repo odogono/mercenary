@@ -138,13 +138,12 @@
       "attachments": 130,
       "empty": 11,
       "geometry": 478,
-      "neighborJoin": 127,
       "null": 1,
       "omittedSelector": 0,
       "paletteBinding": 15,
       "roadTemplate": 0,
       "specialPolygon": 8,
-      "viewConditioned": 28
+      "viewConditioned": 148
     },
     "complete": false,
     "diskLoad": [
@@ -180,7 +179,7 @@
     "notes": [
       "Resident first-world census after examining title-screen, first-world and interior-window RAM; not a claim that every packed disk file has been walked.",
       "Conditional geometry, scene palette binding, and named places outside the captured Eris workspace, authored Gaea Birmingham Island map, live Gaea UR City overlay, and live Dion overlay remain incomplete.",
-      "Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; empty records are intentional and add no geometry at $056634, while two transformed placement copies lack scene-palette context and neighbor joins remain incomplete.",
+      "Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; empty records are intentional and add no geometry at $056634, while two transformed placement copies lack scene-palette context and $F0/$F4 joins remain view-conditioned.",
       "Selectors the documented zero-latch and $F0 post-plan constructors accept are retained; other attachment forms stay named in the model reason.",
       "Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.",
       "Gaea Birmingham Island: examined the authored 16\u00d716 placement stream ending at $23E57, recovered 82 surface assemblies and 7 named places; 174 cells have no structure (including 99 CHEVY cell $17). Ground/pad records and Gaea islands other than this authored Birmingham map and any attached live $ABDC overlays remain unresolved.",
@@ -247,7 +246,7 @@
       "Live $ABDC workspaces other than Eris first-world, Vesta Politburo City, Gaea UR City, and Dion; Gaea islands other than authored Birmingham and live UR City.",
       "Mission-disk or script-created visual changes that would replace a resident slot.",
       "View-conditioned object groups, articulated transforms, special polygon commands, and post-plan attachment forms other than the documented zero-latch and $F0 constructors.",
-      "Two $7000 ground-placement copies lack scene-palette context; neighbor joins and the separate native surface/background fill path remain unresolved."
+      "Two $7000 ground-placement copies lack scene-palette context; $F0/$F4 ground horizon joins are view-conditioned and the separate native surface/background fill path remains unresolved."
     ]
   },
   "instances": [
@@ -699771,9 +699770,9 @@
       "name": "Ground 17",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -700343,9 +700342,9 @@
       "name": "Ground 18",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -700734,9 +700733,9 @@
       "name": "Ground 20",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -700936,9 +700935,9 @@
       "name": "Ground 32",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -701080,9 +701079,9 @@
       "name": "Ground 33",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -701330,9 +701329,9 @@
       "name": "Ground 34",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -701475,9 +701474,9 @@
       "name": "Ground 35",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -701679,9 +701678,9 @@
       "name": "Ground 36",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -702030,9 +702029,9 @@
       "name": "Ground 48",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -702212,9 +702211,9 @@
       "name": "Ground 49",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -702784,9 +702783,9 @@
       "name": "Ground 50",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -703052,9 +703051,9 @@
       "name": "Ground 51",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041b1e",
@@ -704121,9 +704120,9 @@
       "nameStatus": "unknown",
       "omissions": [
         "paletteBinding",
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-041b1e: scene colour table binding unresolved. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-041b1e: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041b1e"
@@ -704830,9 +704829,9 @@
       "name": "Ground 54",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -705082,9 +705081,9 @@
       "name": "Ground 55",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -705285,9 +705284,9 @@
       "name": "Ground 60",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -705408,9 +705407,9 @@
       "name": "Ground 61",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -705496,9 +705495,9 @@
       "name": "Ground 63",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -705604,9 +705603,9 @@
       "name": "Ground 64",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -705751,9 +705750,9 @@
       "name": "Ground 65",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -705965,9 +705964,9 @@
       "name": "Ground 66",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -706109,9 +706108,9 @@
       "name": "Ground 67",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -706221,9 +706220,9 @@
       "name": "Ground 68",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041b1e"
@@ -707040,9 +707039,9 @@
       "name": "Ground 69",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -707260,9 +707259,9 @@
       "name": "Ground 70",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -707500,9 +707499,9 @@
       "name": "Ground 75",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -707702,9 +707701,9 @@
       "name": "Ground 76",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -708089,9 +708088,9 @@
       "name": "Ground 77",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -708291,9 +708290,9 @@
       "name": "Ground 78",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -708589,9 +708588,9 @@
       "name": "Ground 79",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -708676,9 +708675,9 @@
       "name": "Ground 82",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -708838,9 +708837,9 @@
       "name": "Ground 83",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -709004,9 +709003,9 @@
       "name": "Ground 84",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041b1e",
@@ -711439,9 +711438,9 @@
       "name": "Ground 92",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -711659,9 +711658,9 @@
       "name": "Ground 94",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -711894,9 +711893,9 @@
       "name": "Ground 95",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -712000,9 +711999,9 @@
       "name": "Ground 99",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -712123,9 +712122,9 @@
       "name": "Ground 100",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041b1e",
@@ -712922,9 +712921,9 @@
       "name": "Ground 107",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -713500,9 +713499,9 @@
       "name": "Ground 108",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -713822,9 +713821,9 @@
       "name": "Ground 109",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -714166,9 +714165,9 @@
       "name": "Ground 123",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -714334,9 +714333,9 @@
       "name": "Ground 135",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -714887,9 +714886,9 @@
       "name": "Ground 136",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041edc",
@@ -716074,9 +716073,9 @@
       "name": "Ground 137",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -716440,9 +716439,9 @@
       "name": "Ground 138",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -716762,9 +716761,9 @@
       "name": "Ground 139",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -717349,9 +717348,9 @@
       "nameStatus": "unknown",
       "omissions": [
         "paletteBinding",
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-041b1e: scene colour table binding unresolved. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-041b1e: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041b1e"
@@ -718076,9 +718075,9 @@
       "name": "Ground 149",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041b1e",
@@ -718875,9 +718874,9 @@
       "name": "Ground 153",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-04255a",
@@ -720110,9 +720109,9 @@
       "name": "Ground 154",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -720421,9 +720420,9 @@
       "name": "Ground 163",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -720739,9 +720738,9 @@
       "name": "Ground 180",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -720895,9 +720894,9 @@
       "name": "Ground 181",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -721007,9 +721006,9 @@
       "name": "Ground 190",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -721119,9 +721118,9 @@
       "name": "Ground 200",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -721231,9 +721230,9 @@
       "name": "Ground 205",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -721573,9 +721572,9 @@
       "name": "Ground 206",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041b1e"
@@ -722372,9 +722371,9 @@
       "name": "Ground 207",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -722950,9 +722949,9 @@
       "name": "Ground 216",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -723164,9 +723163,9 @@
       "name": "Ground 217",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041b1e"
@@ -724443,9 +724442,9 @@
       "name": "Ground 222",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041b1e"
@@ -725550,9 +725549,9 @@
       "name": "Ground 223",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -725882,9 +725881,9 @@
       "name": "Ground 232",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -725994,9 +725993,9 @@
       "name": "Ground 236",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -726106,9 +726105,9 @@
       "name": "Ground 237",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -726329,9 +726328,9 @@
       "name": "Ground 238",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -726441,9 +726440,9 @@
       "name": "Ground 253",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -726977,9 +726976,9 @@
       "name": "Ground 254",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -727107,9 +727106,9 @@
       "name": "Ground 255",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -727641,9 +727640,9 @@
       "name": "VESTA ground 4",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -728194,9 +728193,9 @@
       "name": "VESTA ground 19",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -728348,9 +728347,9 @@
       "name": "VESTA ground 20",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -728516,9 +728515,9 @@
       "name": "VESTA ground 49",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -728669,9 +728668,9 @@
       "name": "VESTA ground 50",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -728980,8 +728979,10 @@
       ],
       "name": "VESTA ground 51",
       "nameStatus": "unknown",
-      "omissions": [],
-      "reason": "Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "omissions": [
+        "viewConditioned"
+      ],
+      "reason": "Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -729325,9 +729326,9 @@
       "name": "VESTA ground 55",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -729878,9 +729879,9 @@
       "name": "VESTA ground 64",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -730266,9 +730267,9 @@
       "name": "VESTA ground 70",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -730417,9 +730418,9 @@
       "nameStatus": "unknown",
       "omissions": [
         "paletteBinding",
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-04190e: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041992: scene colour table binding unresolved. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-04190e: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041992: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041992",
@@ -730550,9 +730551,9 @@
       "name": "VESTA ground 100",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -730918,9 +730919,9 @@
       "name": "VESTA ground 115",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -731235,9 +731236,9 @@
       "name": "GAEA ground 2",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -731437,9 +731438,9 @@
       "name": "GAEA ground 3",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -733044,9 +733045,9 @@
       "name": "GAEA ground 16",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $6000 vector-text command is not yet decoded. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $6000 vector-text command is not yet decoded. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -733625,9 +733626,9 @@
       "nameStatus": "unknown",
       "omissions": [
         "paletteBinding",
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-041a16: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a9a: scene colour table binding unresolved. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-041a16: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a9a: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041a16",
@@ -733749,9 +733750,9 @@
       "nameStatus": "unknown",
       "omissions": [
         "paletteBinding",
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-041a16: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a9a: scene colour table binding unresolved. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-041a16: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a9a: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041a9a",
@@ -733871,9 +733872,9 @@
       "nameStatus": "unknown",
       "omissions": [
         "paletteBinding",
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-04190e: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041992: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a16: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a9a: scene colour table binding unresolved. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-04190e: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041992: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a16: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a9a: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041a16",
@@ -733994,9 +733995,9 @@
       "name": "GAEA ground 20",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -734247,9 +734248,9 @@
       "name": "GAEA ground 22",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -734488,9 +734489,9 @@
       "name": "GAEA ground 33",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -734715,9 +734716,9 @@
       "name": "GAEA ground 34",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -734956,9 +734957,9 @@
       "nameStatus": "unknown",
       "omissions": [
         "paletteBinding",
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-04190e: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041992: scene colour table binding unresolved. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-04190e: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041992: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041992",
@@ -735078,9 +735079,9 @@
       "name": "GAEA ground 36",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -735330,9 +735331,9 @@
       "name": "GAEA ground 48",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -735532,9 +735533,9 @@
       "name": "GAEA ground 49",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -735862,9 +735863,9 @@
       "name": "GAEA ground 50",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -736065,9 +736066,9 @@
       "nameStatus": "unknown",
       "omissions": [
         "paletteBinding",
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-04190e: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041992: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a16: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a9a: scene colour table binding unresolved. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-04190e: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041992: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a16: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a9a: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041992",
@@ -736179,9 +736180,9 @@
       "nameStatus": "unknown",
       "omissions": [
         "paletteBinding",
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-041a16: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a9a: scene colour table binding unresolved. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-041a16: scene colour table binding unresolved. Ground $7000 placement references unresolved object-041a9a: scene colour table binding unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041a9a",
@@ -736268,9 +736269,9 @@
       "name": "DION ground 9",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -736686,9 +736687,9 @@
       "name": "DION ground 33",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -737003,9 +737004,9 @@
       "name": "DION ground 35",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041b1e"
@@ -737822,9 +737823,9 @@
       "name": "DION ground 37",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -737967,9 +737968,9 @@
       "name": "DION ground 41",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -738226,9 +738227,9 @@
       "name": "DION ground 45",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -738371,9 +738372,9 @@
       "name": "DION ground 49",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -738532,9 +738533,9 @@
       "name": "DION ground 50",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -738802,9 +738803,9 @@
       "name": "DION ground 64",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -739356,10 +739357,9 @@
       "name": "DION ground 81",
       "nameStatus": "unknown",
       "omissions": [
-        "viewConditioned",
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-0413e8: view-conditioned face groups unresolved. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-0413e8: view-conditioned face groups unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-0413e8"
@@ -739522,10 +739522,9 @@
       "name": "DION ground 82",
       "nameStatus": "unknown",
       "omissions": [
-        "viewConditioned",
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-041224: view-conditioned face groups unresolved. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-041224: view-conditioned face groups unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041224"
@@ -739708,9 +739707,9 @@
       "name": "DION ground 85",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -739852,9 +739851,9 @@
       "name": "DION ground 91",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -739959,9 +739958,9 @@
       "name": "DION ground 93",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -740104,9 +740103,9 @@
       "name": "DION ground 96",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -740426,9 +740425,9 @@
       "name": "DION ground 112",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -740793,10 +740792,9 @@
       "name": "DION ground 113",
       "nameStatus": "unknown",
       "omissions": [
-        "viewConditioned",
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-041306: view-conditioned face groups unresolved. Ground $7000 placement references unresolved object-0414ca: view-conditioned face groups unresolved. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-041306: view-conditioned face groups unresolved. Ground $7000 placement references unresolved object-0414ca: view-conditioned face groups unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-0414ca",
@@ -741260,7 +741258,7 @@
       "omissions": [
         "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-041306: view-conditioned face groups unresolved. Ground $7000 placement references unresolved object-0416ae: view-conditioned face groups unresolved. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-041306: view-conditioned face groups unresolved. Ground $7000 placement references unresolved object-0416ae: view-conditioned face groups unresolved. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-0416ae",
@@ -741607,10 +741605,9 @@
       "name": "DION ground 121",
       "nameStatus": "unknown",
       "omissions": [
-        "viewConditioned",
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-041306: view-conditioned face groups unresolved. Ground $7000 placement references unresolved object-0416ae: view-conditioned face groups unresolved. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-041306: view-conditioned face groups unresolved. Ground $7000 placement references unresolved object-0416ae: view-conditioned face groups unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-0416ae",
@@ -742073,10 +742070,9 @@
       "name": "DION ground 127",
       "nameStatus": "unknown",
       "omissions": [
-        "viewConditioned",
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-0416ae: view-conditioned face groups unresolved. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-0416ae: view-conditioned face groups unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-0416ae"
@@ -742347,9 +742343,9 @@
       "name": "DION ground 160",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -742926,10 +742922,9 @@
       "name": "DION ground 161",
       "nameStatus": "unknown",
       "omissions": [
-        "viewConditioned",
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-041144: view-conditioned face groups unresolved. Ground $7000 placement references unresolved object-0414ca: view-conditioned face groups unresolved. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-041144: view-conditioned face groups unresolved. Ground $7000 placement references unresolved object-0414ca: view-conditioned face groups unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-0414ca",
@@ -743392,9 +743387,9 @@
       "name": "DION ground 167",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -743594,9 +743589,9 @@
       "name": "DION ground 177",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -743846,10 +743841,9 @@
       "name": "DION ground 178",
       "nameStatus": "unknown",
       "omissions": [
-        "viewConditioned",
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-041224: view-conditioned face groups unresolved. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-041224: view-conditioned face groups unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041224"
@@ -744011,9 +744005,9 @@
       "name": "DION ground 193",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -744322,9 +744316,9 @@
       "name": "DION ground 194",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -744632,9 +744626,9 @@
       "name": "DION ground 233",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -745050,10 +745044,9 @@
       "name": "DION ground 238",
       "nameStatus": "unknown",
       "omissions": [
-        "viewConditioned",
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground $7000 placement references unresolved object-04273a: view-conditioned face groups unresolved. Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground $7000 placement references unresolved object-04273a: view-conditioned face groups unresolved. Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041b1e",
@@ -746155,9 +746148,9 @@
       "name": "DION ground 239",
       "nameStatus": "unknown",
       "omissions": [
-        "neighborJoin"
+        "viewConditioned"
       ],
-      "reason": "Ground edge references neighboring-cell workspace slots that this cell record does not contain. Neighbor-join sentinels $F0/$F4 were omitted; the remaining local polygon is kept.",
+      "reason": "Ground edge references preprojected runtime horizon slot $F0/$F4; the camera-conditioned endpoint is omitted from model-space geometry. Ground polygon references preprojected runtime horizon slot $F0/$F4; the camera-conditioned point is omitted and the remaining local polygon is kept.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
