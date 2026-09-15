@@ -127,10 +127,10 @@
   ],
   "coverage": {
     "census": {
-      "decoded": 167,
-      "partial": 446,
+      "decoded": 170,
+      "partial": 444,
       "unique": 674,
-      "unresolved": 61
+      "unresolved": 60
     },
     "classifications": {
       "alias": 184,
@@ -180,7 +180,7 @@
     "notes": [
       "Resident first-world census after examining title-screen, first-world and interior-window RAM; not a claim that every packed disk file has been walked.",
       "Conditional geometry, scene palette binding, and named places outside the captured Eris workspace, authored Gaea Birmingham Island map, live Gaea UR City overlay, and live Dion overlay remain incomplete.",
-      "Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; two transformed copies lack scene-palette context, while neighbor joins and default empty-cell fill remain incomplete.",
+      "Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; empty records are intentional and add no geometry at $056634, while two transformed placement copies lack scene-palette context and neighbor joins remain incomplete.",
       "Selectors the documented zero-latch and $F0 post-plan constructors accept are retained; other attachment forms stay named in the model reason.",
       "Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.",
       "Gaea Birmingham Island: examined the authored 16\u00d716 placement stream ending at $23E57, recovered 82 surface assemblies and 7 named places; 174 cells have no structure (including 99 CHEVY cell $17). Ground/pad records and Gaea islands other than this authored Birmingham map and any attached live $ABDC overlays remain unresolved.",
@@ -231,15 +231,15 @@
       {
         "address": 123904,
         "aliases": 0,
-        "decoded": 1,
+        "decoded": 4,
         "empty": 1,
         "extentEvidence": "256-cell word table at $01E400; each word is an offset from $01E000. Records are shared across cells. This is the first-world workspace, not a body census. Entries after index 255 are live VESTA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots.",
         "kind": "ground",
         "nullRecords": 0,
-        "partial": 133,
+        "partial": 131,
         "slots": 317,
         "unique": 135,
-        "unresolved": 1
+        "unresolved": 0
       }
     ],
     "unexplored": [
@@ -247,7 +247,7 @@
       "Live $ABDC workspaces other than Eris first-world, Vesta Politburo City, Gaea UR City, and Dion; Gaea islands other than authored Birmingham and live UR City.",
       "Mission-disk or script-created visual changes that would replace a resident slot.",
       "View-conditioned object groups, articulated transforms, special polygon commands, and post-plan attachment forms other than the documented zero-latch and $F0 constructors.",
-      "Two $7000 ground-placement copies lack scene-palette context; neighbor joins and default empty-cell fill remain unresolved."
+      "Two $7000 ground-placement copies lack scene-palette context; neighbor joins and the separate native surface/background fill path remain unresolved."
     ]
   },
   "instances": [
@@ -7615,7 +7615,7 @@
       "model": "ground-021534-05",
       "name": "EXCHEQUER DISTRICT A ground",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123938
     },
     {
@@ -7635,7 +7635,7 @@
       "model": "ground-0210a0-03",
       "name": "Eris ground cell 2,1",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123940
     },
     {
@@ -7655,7 +7655,7 @@
       "model": "ground-0206fa-05",
       "name": "Eris ground cell 4,1",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123944
     },
     {
@@ -7675,7 +7675,7 @@
       "model": "ground-01efb8-05",
       "name": "Eris ground cell 0,2",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123968
     },
     {
@@ -7695,7 +7695,7 @@
       "model": "ground-022500-06",
       "name": "Eris ground cell 1,2",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123970
     },
     {
@@ -7715,7 +7715,7 @@
       "model": "ground-01efb8-03",
       "name": "Eris ground cell 2,2",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123972
     },
     {
@@ -7735,7 +7735,7 @@
       "model": "ground-0206fa-00",
       "name": "Eris ground cell 3,2",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123974
     },
     {
@@ -7755,7 +7755,7 @@
       "model": "ground-0209a2-06",
       "name": "Eris ground cell 4,2",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123976
     },
     {
@@ -7775,7 +7775,7 @@
       "model": "ground-0205d2-00",
       "name": "PLAYTESTER STORES ground",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123986
     },
     {
@@ -7795,7 +7795,7 @@
       "model": "ground-01f29c-06",
       "name": "Eris ground cell 0,3",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124000
     },
     {
@@ -7815,7 +7815,7 @@
       "model": "ground-021534-00",
       "name": "Eris ground cell 1,3",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124002
     },
     {
@@ -7835,7 +7835,7 @@
       "model": "ground-022502-00",
       "name": "Eris ground cell 2,3",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124004
     },
     {
@@ -7855,7 +7855,7 @@
       "model": "ground-021de0-00",
       "name": "Eris ground cell 3,3",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124006
     },
     {
@@ -7875,7 +7875,7 @@
       "model": "ground-021f7c-04",
       "name": "Eris ground cell 4,3",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124008
     },
     {
@@ -7895,7 +7895,7 @@
       "model": "ground-0206fa-00",
       "name": "Eris ground cell 5,3",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124010
     },
     {
@@ -7915,7 +7915,7 @@
       "model": "ground-0209a2-03",
       "name": "Eris ground cell 6,3",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124012
     },
     {
@@ -7935,7 +7935,7 @@
       "model": "ground-0206fa-03",
       "name": "Eris ground cell 7,3",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124014
     },
     {
@@ -7955,7 +7955,7 @@
       "model": "ground-01ee54-05",
       "name": "Eris ground cell 12,3",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124024
     },
     {
@@ -7975,7 +7975,7 @@
       "model": "ground-01f1b4-00",
       "name": "Eris ground cell 13,3",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124026
     },
     {
@@ -7995,7 +7995,7 @@
       "model": "ground-01f1b4-00",
       "name": "Eris ground cell 14,3",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124028
     },
     {
@@ -8015,7 +8015,7 @@
       "model": "ground-01ee54-03",
       "name": "Eris ground cell 15,3",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124030
     },
     {
@@ -8035,7 +8035,7 @@
       "model": "ground-01efb8-00",
       "name": "Eris ground cell 0,4",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124032
     },
     {
@@ -8055,7 +8055,7 @@
       "model": "ground-01f826-03",
       "name": "Eris ground cell 1,4",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124034
     },
     {
@@ -8075,7 +8075,7 @@
       "model": "ground-01efb8-06",
       "name": "Eris ground cell 2,4",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124036
     },
     {
@@ -8095,7 +8095,7 @@
       "model": "ground-01e932-05",
       "name": "Eris ground cell 3,4",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124038
     },
     {
@@ -8115,7 +8115,7 @@
       "model": "ground-02219a-05",
       "name": "Eris ground cell 4,4",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124040
     },
     {
@@ -8135,7 +8135,7 @@
       "model": "ground-02091c-00",
       "name": "Eris ground cell 5,4",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124042
     },
     {
@@ -8155,7 +8155,7 @@
       "model": "ground-020894-06",
       "name": "Eris ground cell 6,4",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124044
     },
     {
@@ -8175,7 +8175,7 @@
       "model": "ground-020822-00",
       "name": "Eris ground cell 11,4",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124054
     },
     {
@@ -8195,7 +8195,7 @@
       "model": "ground-020bf6-00",
       "name": "Eris ground cell 12,4",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124056
     },
     {
@@ -8215,7 +8215,7 @@
       "model": "ground-01f9fa-01",
       "name": "Eris ground cell 13,4",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124058
     },
     {
@@ -8235,7 +8235,7 @@
       "model": "ground-01e86e-05",
       "name": "Eris ground cell 14,4",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124060
     },
     {
@@ -8255,7 +8255,7 @@
       "model": "ground-01f1b4-06",
       "name": "Eris ground cell 15,4",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124062
     },
     {
@@ -8275,7 +8275,7 @@
       "model": "ground-01efb8-00",
       "name": "Eris ground cell 1,5",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124066
     },
     {
@@ -8295,7 +8295,7 @@
       "model": "ground-01f380-00",
       "name": "Eris ground cell 2,5",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124068
     },
     {
@@ -8315,7 +8315,7 @@
       "model": "ground-01f75a-06",
       "name": "Eris ground cell 3,5",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124070
     },
     {
@@ -8335,7 +8335,7 @@
       "model": "ground-021de0-06",
       "name": "Eris ground cell 4,5",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124072
     },
     {
@@ -8355,7 +8355,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 9,5",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124082
     },
     {
@@ -8375,7 +8375,7 @@
       "model": "ground-02091c-06",
       "name": "Eris ground cell 12,5",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124088
     },
     {
@@ -8395,7 +8395,7 @@
       "model": "ground-01f012-00",
       "name": "ERIS POWER GENERATION ground",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124092
     },
     {
@@ -8415,7 +8415,7 @@
       "model": "ground-01ee54-06",
       "name": "Eris ground cell 15,5",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124094
     },
     {
@@ -8435,7 +8435,7 @@
       "model": "ground-01e932-06",
       "name": "Eris ground cell 3,6",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124102
     },
     {
@@ -8455,7 +8455,7 @@
       "model": "ground-021b8e-06",
       "name": "Eris ground cell 4,6",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124104
     },
     {
@@ -8475,7 +8475,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 7,6",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124110
     },
     {
@@ -8495,7 +8495,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 8,6",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124112
     },
     {
@@ -8515,7 +8515,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 9,6",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124114
     },
     {
@@ -8535,7 +8535,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 10,6",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124116
     },
     {
@@ -8555,7 +8555,7 @@
       "model": "ground-021644-05",
       "name": "Eris ground cell 11,6",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124118
     },
     {
@@ -8575,7 +8575,7 @@
       "model": "ground-0220e2-00",
       "name": "Eris ground cell 12,6",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124120
     },
     {
@@ -8595,7 +8595,7 @@
       "model": "ground-020d06-03",
       "name": "Eris ground cell 13,6",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124122
     },
     {
@@ -8615,7 +8615,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 1,7",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124130
     },
     {
@@ -8635,7 +8635,7 @@
       "model": "ground-021de0-06",
       "name": "Eris ground cell 4,7",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124136
     },
     {
@@ -8655,7 +8655,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 8,7",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124144
     },
     {
@@ -8675,7 +8675,7 @@
       "model": "ground-021a8e-06",
       "name": "Eris ground cell 11,7",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124150
     },
     {
@@ -8695,7 +8695,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 1,8",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124162
     },
     {
@@ -8715,7 +8715,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 2,8",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124164
     },
     {
@@ -8735,7 +8735,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 3,8",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124166
     },
     {
@@ -8755,7 +8755,7 @@
       "model": "ground-021b8e-06",
       "name": "Eris ground cell 4,8",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124168
     },
     {
@@ -8775,7 +8775,7 @@
       "model": "ground-020f8e-00",
       "name": "CAPITAL SPACEPORT ground",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124174
     },
     {
@@ -8795,7 +8795,7 @@
       "model": "ground-021afe-00",
       "name": "Eris ground cell 8,8",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124176
     },
     {
@@ -8815,7 +8815,7 @@
       "model": "ground-022426-03",
       "name": "STATE OFFICE ground",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124178
     },
     {
@@ -8835,7 +8835,7 @@
       "model": "ground-0220e2-03",
       "name": "Eris ground cell 10,8",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124180
     },
     {
@@ -8855,7 +8855,7 @@
       "model": "ground-021420-06",
       "name": "Eris ground cell 11,8",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124182
     },
     {
@@ -8875,7 +8875,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 12,8",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124184
     },
     {
@@ -8895,7 +8895,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 13,8",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124186
     },
     {
@@ -8915,7 +8915,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 14,8",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124188
     },
     {
@@ -8935,7 +8935,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 1,9",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124194
     },
     {
@@ -8955,7 +8955,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 2,9",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124196
     },
     {
@@ -8975,7 +8975,7 @@
       "model": "ground-021f7c-07",
       "name": "Eris ground cell 4,9",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124200
     },
     {
@@ -8995,7 +8995,7 @@
       "model": "ground-021b8e-00",
       "name": "Eris ground cell 5,9",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124202
     },
     {
@@ -9015,7 +9015,7 @@
       "model": "ground-021de0-00",
       "name": "Eris ground cell 6,9",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124204
     },
     {
@@ -9035,7 +9035,7 @@
       "model": "ground-021b8e-00",
       "name": "Eris ground cell 7,9",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124206
     },
     {
@@ -9055,7 +9055,7 @@
       "model": "ground-021de0-00",
       "name": "Eris ground cell 8,9",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124208
     },
     {
@@ -9075,7 +9075,7 @@
       "model": "ground-022a58-06",
       "name": "MOORBY SCH OF FLYING ground",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124210
     },
     {
@@ -9095,7 +9095,7 @@
       "model": "ground-0218ac-06",
       "name": "Eris ground cell 10,9",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124212
     },
     {
@@ -9115,7 +9115,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 12,9",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124216
     },
     {
@@ -9135,7 +9135,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 13,9",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124218
     },
     {
@@ -9155,7 +9155,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 1,10",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124226
     },
     {
@@ -9175,7 +9175,7 @@
       "model": "ground-01e970-05",
       "name": "Eris ground cell 3,10",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124230
     },
     {
@@ -9195,7 +9195,7 @@
       "model": "ground-01f1b4-06",
       "name": "Eris ground cell 4,10",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124232
     },
     {
@@ -9215,7 +9215,7 @@
       "model": "ground-021b8e-06",
       "name": "Eris ground cell 9,10",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124242
     },
     {
@@ -9235,7 +9235,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 11,10",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124246
     },
     {
@@ -9255,7 +9255,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 12,10",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124248
     },
     {
@@ -9275,7 +9275,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 1,11",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124258
     },
     {
@@ -9295,7 +9295,7 @@
       "model": "ground-01efb8-00",
       "name": "Eris ground cell 3,11",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124262
     },
     {
@@ -9315,7 +9315,7 @@
       "model": "ground-01f75a-00",
       "name": "GUM STORE ground",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124264
     },
     {
@@ -9335,7 +9335,7 @@
       "model": "ground-01e7bc-03",
       "name": "Eris ground cell 5,11",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124266
     },
     {
@@ -9355,7 +9355,7 @@
       "model": "ground-021de0-06",
       "name": "Eris ground cell 9,11",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124274
     },
     {
@@ -9375,7 +9375,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 10,11",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124276
     },
     {
@@ -9395,7 +9395,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 11,11",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124278
     },
     {
@@ -9415,7 +9415,7 @@
       "model": "ground-01e830-05",
       "name": "Eris ground cell 14,11",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124284
     },
     {
@@ -9435,7 +9435,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 4,12",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124296
     },
     {
@@ -9455,7 +9455,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 5,12",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124298
     },
     {
@@ -9475,7 +9475,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 6,12",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124300
     },
     {
@@ -9495,7 +9495,7 @@
       "model": "ground-01e7bc-05",
       "name": "Eris ground cell 8,12",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124304
     },
     {
@@ -9515,7 +9515,7 @@
       "model": "ground-021b8e-06",
       "name": "Eris ground cell 9,12",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124306
     },
     {
@@ -9535,7 +9535,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 12,12",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124312
     },
     {
@@ -9555,7 +9555,7 @@
       "model": "ground-020d06-00",
       "name": "Eris ground cell 13,12",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124314
     },
     {
@@ -9575,7 +9575,7 @@
       "model": "ground-022968-03",
       "name": "Eris ground cell 14,12",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124316
     },
     {
@@ -9595,7 +9595,7 @@
       "model": "ground-021644-03",
       "name": "LAWSON BANK HQ ground",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124318
     },
     {
@@ -9615,7 +9615,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 3,13",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124326
     },
     {
@@ -9635,7 +9635,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 4,13",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124328
     },
     {
@@ -9655,7 +9655,7 @@
       "model": "ground-01f826-05",
       "name": "Eris ground cell 8,13",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124336
     },
     {
@@ -9675,7 +9675,7 @@
       "model": "ground-021f7e-00",
       "name": "Eris ground cell 9,13",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124338
     },
     {
@@ -9695,7 +9695,7 @@
       "model": "ground-021b8e-00",
       "name": "Eris ground cell 10,13",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124340
     },
     {
@@ -9715,7 +9715,7 @@
       "model": "ground-021de0-00",
       "name": "Eris ground cell 11,13",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124342
     },
     {
@@ -9735,7 +9735,7 @@
       "model": "ground-021b8e-00",
       "name": "Eris ground cell 12,13",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124344
     },
     {
@@ -9755,7 +9755,7 @@
       "model": "ground-021b8e-00",
       "name": "Eris ground cell 13,13",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124346
     },
     {
@@ -9775,7 +9775,7 @@
       "model": "ground-021304-06",
       "name": "Eris ground cell 14,13",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124348
     },
     {
@@ -9795,7 +9795,7 @@
       "model": "ground-021ef6-05",
       "name": "Eris ground cell 15,13",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124350
     },
     {
@@ -9815,7 +9815,7 @@
       "model": "ground-02060e-00",
       "name": "PLAYTESTER STORES ground",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124354
     },
     {
@@ -9835,7 +9835,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 2,14",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124356
     },
     {
@@ -9855,7 +9855,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 3,14",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124358
     },
     {
@@ -9875,7 +9875,7 @@
       "model": "ground-01e830-06",
       "name": "TRADING POST ground",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124368
     },
     {
@@ -9895,7 +9895,7 @@
       "model": "ground-01e7bc-00",
       "name": "ERIS POST OFFICE HQ ground",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124376
     },
     {
@@ -9915,7 +9915,7 @@
       "model": "ground-01f4ae-03",
       "name": "Eris ground cell 13,14",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124378
     },
     {
@@ -9935,7 +9935,7 @@
       "model": "ground-01e7f6-03",
       "name": "Eris ground cell 14,14",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124380
     },
     {
@@ -9955,7 +9955,7 @@
       "model": "ground-021ef6-05",
       "name": "Eris ground cell 15,14",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124382
     },
     {
@@ -9975,7 +9975,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 2,15",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124388
     },
     {
@@ -9995,7 +9995,7 @@
       "model": "ground-02066c-00",
       "name": "Eris ground cell 3,15",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124390
     },
     {
@@ -10015,7 +10015,7 @@
       "model": "ground-021210-00",
       "name": "Eris ground cell 13,15",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124410
     },
     {
@@ -10035,7 +10035,7 @@
       "model": "ground-021a36-00",
       "name": "Eris ground cell 14,15",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124412
     },
     {
@@ -10055,7 +10055,7 @@
       "model": "ground-021210-06",
       "name": "Eris ground cell 15,15",
       "placement": null,
-      "reason": "Recovered first-world cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124414
     },
     {
@@ -10455,7 +10455,7 @@
       "model": "vesta-ground-020f8e-05",
       "name": "VESTA ground cell 4,0",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123912
     },
     {
@@ -10475,7 +10475,7 @@
       "model": "vesta-ground-020dee-05",
       "name": "GAEA BANK ground",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123942
     },
     {
@@ -10495,7 +10495,7 @@
       "model": "vesta-ground-021d70-06",
       "name": "VESTA ground cell 4,1",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123944
     },
     {
@@ -10515,7 +10515,7 @@
       "model": "vesta-ground-021d70-06",
       "name": "VESTA ground cell 3,2",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123974
     },
     {
@@ -10535,7 +10535,7 @@
       "model": "vesta-ground-021d70-06",
       "name": "VESTA ground cell 4,2",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123976
     },
     {
@@ -10555,7 +10555,7 @@
       "model": "vesta-ground-020dee-00",
       "name": "VESTA ground cell 1,3",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124002
     },
     {
@@ -10575,7 +10575,7 @@
       "model": "vesta-ground-021cc6-03",
       "name": "VESTA ground cell 2,3",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124004
     },
     {
@@ -10595,7 +10595,7 @@
       "model": "vesta-ground-02289a-00",
       "name": "VESTA ground cell 3,3",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124006
     },
     {
@@ -10615,7 +10615,7 @@
       "model": "vesta-ground-02289a-00",
       "name": "VESTA ground cell 4,3",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124008
     },
     {
@@ -10635,7 +10635,7 @@
       "model": "ground-021a36-00",
       "name": "VESTA ground cell 5,3",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124010
     },
     {
@@ -10655,7 +10655,7 @@
       "model": "ground-021a36-00",
       "name": "VESTA ground cell 6,3",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124012
     },
     {
@@ -10675,7 +10675,7 @@
       "model": "vesta-ground-020f8e-03",
       "name": "VESTA ground cell 7,3",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124014
     },
     {
@@ -10695,7 +10695,7 @@
       "model": "vesta-ground-0210a0-00",
       "name": "GLENN SPACEPORT ground",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124032
     },
     {
@@ -10715,7 +10715,7 @@
       "model": "vesta-ground-021cc6-03",
       "name": "VESTA ground cell 1,4",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124034
     },
     {
@@ -10735,7 +10735,7 @@
       "model": "vesta-ground-021cc6-03",
       "name": "VESTA ground cell 2,4",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124036
     },
     {
@@ -10755,7 +10755,7 @@
       "model": "vesta-ground-02289a-00",
       "name": "VESTA ground cell 3,4",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124038
     },
     {
@@ -10775,7 +10775,7 @@
       "model": "vesta-ground-02289a-00",
       "name": "VESTA ground cell 4,4",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124040
     },
     {
@@ -10795,7 +10795,7 @@
       "model": "vesta-ground-021cc6-03",
       "name": "LLOYDS GROUP 4 ground",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124042
     },
     {
@@ -10815,7 +10815,7 @@
       "model": "vesta-ground-020dee-03",
       "name": "LAWSON BANK ground",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124044
     },
     {
@@ -10835,7 +10835,7 @@
       "model": "vesta-ground-021d70-06",
       "name": "VESTA ground cell 3,5",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124070
     },
     {
@@ -10855,7 +10855,7 @@
       "model": "vesta-ground-02195a-06",
       "name": "VESTA ground cell 4,5",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124072
     },
     {
@@ -10875,7 +10875,7 @@
       "model": "vesta-ground-021d70-06",
       "name": "VESTA ground cell 3,6",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124102
     },
     {
@@ -10895,7 +10895,7 @@
       "model": "vesta-ground-020ede-06",
       "name": "VESTA PARLIAMENT ground",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124104
     },
     {
@@ -10915,7 +10915,7 @@
       "model": "vesta-ground-020e42-06",
       "name": "GUM STORE ground",
       "placement": null,
-      "reason": "Live VESTA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live VESTA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124134
     },
     {
@@ -11375,7 +11375,7 @@
       "model": "gaea-ground-0206f8-04",
       "name": "GAEA ground cell 2,0",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123908
     },
     {
@@ -11395,7 +11395,7 @@
       "model": "gaea-ground-01e8e0-05",
       "name": "GAEA ground cell 3,0",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123910
     },
     {
@@ -11415,7 +11415,7 @@
       "model": "ground-0206fa-05",
       "name": "GAEA ground cell 4,0",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123912
     },
     {
@@ -11435,7 +11435,7 @@
       "model": "gaea-ground-0206f8-04",
       "name": "GAEA ground cell 5,0",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123914
     },
     {
@@ -11455,7 +11455,7 @@
       "model": "gaea-ground-0206b2-00",
       "name": "GAEA ground cell 6,0",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123916
     },
     {
@@ -11475,7 +11475,7 @@
       "model": "gaea-ground-0206b2-00",
       "name": "GAEA ground cell 7,0",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123918
     },
     {
@@ -11495,7 +11495,7 @@
       "model": "gaea-ground-0206b2-00",
       "name": "GAEA ground cell 8,0",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123920
     },
     {
@@ -11515,7 +11515,7 @@
       "model": "gaea-ground-0206b2-00",
       "name": "GAEA ground cell 9,0",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123922
     },
     {
@@ -11535,7 +11535,7 @@
       "model": "gaea-ground-01ecc0-00",
       "name": "GAEA ground cell 0,1",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123936
     },
     {
@@ -11555,7 +11555,7 @@
       "model": "gaea-ground-01f582-03",
       "name": "GAEA ground cell 1,1",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123938
     },
     {
@@ -11575,7 +11575,7 @@
       "model": "gaea-ground-01f5fa-00",
       "name": "GAEA ground cell 2,1",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123940
     },
     {
@@ -11595,7 +11595,7 @@
       "model": "gaea-ground-01f672-06",
       "name": "GAEA ground cell 3,1",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123942
     },
     {
@@ -11615,7 +11615,7 @@
       "model": "gaea-ground-0209a2-05",
       "name": "GAEA ground cell 4,1",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123944
     },
     {
@@ -11635,7 +11635,7 @@
       "model": "ground-0209a2-06",
       "name": "GAEA ground cell 5,1",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123946
     },
     {
@@ -11655,7 +11655,7 @@
       "model": "gaea-ground-020894-05",
       "name": "GAEA ground cell 6,1",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123948
     },
     {
@@ -11675,7 +11675,7 @@
       "model": "ground-01f9fa-01",
       "name": "HANTZENS NEW HOUSE ground",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123950
     },
     {
@@ -11695,7 +11695,7 @@
       "model": "gaea-ground-0206b2-00",
       "name": "GAEA ground cell 8,1",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123952
     },
     {
@@ -11715,7 +11715,7 @@
       "model": "gaea-ground-0206b2-00",
       "name": "GAEA ground cell 9,1",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123954
     },
     {
@@ -11735,7 +11735,7 @@
       "model": "gaea-ground-020894-05",
       "name": "GAEA ground cell 0,2",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123968
     },
     {
@@ -11755,7 +11755,7 @@
       "model": "gaea-ground-020ade-00",
       "name": "INDUSTRIAL CO-OP HSE1 ground",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123970
     },
     {
@@ -11775,7 +11775,7 @@
       "model": "gaea-ground-020894-03",
       "name": "GAEA ground cell 2,2",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123972
     },
     {
@@ -11795,7 +11795,7 @@
       "model": "gaea-ground-01f6e2-05",
       "name": "GAEA ground cell 3,2",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123974
     },
     {
@@ -11815,7 +11815,7 @@
       "model": "gaea-ground-0209a2-00",
       "name": "GAEA ground cell 4,2",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123976
     },
     {
@@ -11835,7 +11835,7 @@
       "model": "gaea-ground-020ade-00",
       "name": "INDUSTRIAL CO-OP HSE2 ground",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123978
     },
     {
@@ -11855,7 +11855,7 @@
       "model": "gaea-ground-0209a2-00",
       "name": "GAEA ground cell 6,2",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123980
     },
     {
@@ -11875,7 +11875,7 @@
       "model": "ground-02091c-00",
       "name": "GAEA ground cell 7,2",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123982
     },
     {
@@ -11895,7 +11895,7 @@
       "model": "gaea-ground-020894-03",
       "name": "GAEA ground cell 8,2",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123984
     },
     {
@@ -11915,7 +11915,7 @@
       "model": "ground-0205d2-00",
       "name": "GAEA ground cell 9,2",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123986
     },
     {
@@ -11935,7 +11935,7 @@
       "model": "gaea-ground-0206f8-07",
       "name": "GAEA ground cell 0,3",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124000
     },
     {
@@ -11955,7 +11955,7 @@
       "model": "gaea-ground-02076c-06",
       "name": "GUM STORE ground",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124002
     },
     {
@@ -11975,7 +11975,7 @@
       "model": "gaea-ground-0206fa-06",
       "name": "GAEA ground cell 2,3",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124004
     },
     {
@@ -11995,7 +11995,7 @@
       "model": "gaea-ground-01ef4a-00",
       "name": "GAEA ground cell 3,3",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124006
     },
     {
@@ -12015,7 +12015,7 @@
       "model": "gaea-ground-01f238-00",
       "name": "GAEA ground cell 4,3",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124008
     },
     {
@@ -12035,7 +12035,7 @@
       "model": "gaea-ground-01f5fa-00",
       "name": "GAEA ground cell 5,3",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124010
     },
     {
@@ -12055,7 +12055,7 @@
       "model": "gaea-ground-01f238-00",
       "name": "GAEA ground cell 6,3",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124012
     },
     {
@@ -12075,7 +12075,7 @@
       "model": "gaea-ground-01f238-00",
       "name": "GAEA ground cell 7,3",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124014
     },
     {
@@ -12095,7 +12095,7 @@
       "model": "gaea-ground-01f5fa-00",
       "name": "GAEA ground cell 8,3",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124016
     },
     {
@@ -12115,7 +12115,7 @@
       "model": "ground-01e7f6-03",
       "name": "GAEA ground cell 9,3",
       "placement": null,
-      "reason": "Live GAEA cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live GAEA cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124018
     },
     {
@@ -14935,7 +14935,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 0,0",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123904
     },
     {
@@ -14955,7 +14955,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 1,0",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123906
     },
     {
@@ -14975,7 +14975,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 2,0",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123908
     },
     {
@@ -14995,7 +14995,7 @@
       "model": "ground-021644-05",
       "name": "DION ground cell 3,0",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123910
     },
     {
@@ -15015,7 +15015,7 @@
       "model": "ground-021b8e-00",
       "name": "DION ground cell 4,0",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123912
     },
     {
@@ -15035,7 +15035,7 @@
       "model": "ground-021de0-00",
       "name": "DION ground cell 5,0",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123914
     },
     {
@@ -15055,7 +15055,7 @@
       "model": "ground-021de0-00",
       "name": "DION ground cell 6,0",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123916
     },
     {
@@ -15075,7 +15075,7 @@
       "model": "ground-021b8e-00",
       "name": "DION ground cell 7,0",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123918
     },
     {
@@ -15095,7 +15095,7 @@
       "model": "ground-021b8e-00",
       "name": "DION ground cell 8,0",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123920
     },
     {
@@ -15115,7 +15115,7 @@
       "model": "dion-ground-02228e-03",
       "name": "DION ground cell 9,0",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123922
     },
     {
@@ -15135,7 +15135,7 @@
       "model": "ground-021de0-00",
       "name": "DION ground cell 10,0",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123924
     },
     {
@@ -15155,7 +15155,7 @@
       "model": "ground-021b8e-00",
       "name": "DION ground cell 11,0",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123926
     },
     {
@@ -15175,7 +15175,7 @@
       "model": "ground-021de0-00",
       "name": "DION ground cell 12,0",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123928
     },
     {
@@ -15195,7 +15195,7 @@
       "model": "ground-021de0-00",
       "name": "DION ground cell 13,0",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123930
     },
     {
@@ -15215,7 +15215,7 @@
       "model": "ground-021b8e-00",
       "name": "DION ground cell 14,0",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123932
     },
     {
@@ -15235,7 +15235,7 @@
       "model": "ground-021644-03",
       "name": "DION ground cell 15,0",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123934
     },
     {
@@ -15255,7 +15255,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 0,1",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123936
     },
     {
@@ -15275,7 +15275,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 1,1",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123938
     },
     {
@@ -15295,7 +15295,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 2,1",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123940
     },
     {
@@ -15315,7 +15315,7 @@
       "model": "ground-021de0-06",
       "name": "DION ground cell 3,1",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123942
     },
     {
@@ -15335,7 +15335,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 5,1",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123946
     },
     {
@@ -15355,7 +15355,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 6,1",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123948
     },
     {
@@ -15375,7 +15375,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 7,1",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123950
     },
     {
@@ -15395,7 +15395,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 8,1",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123952
     },
     {
@@ -15415,7 +15415,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 9,1",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123954
     },
     {
@@ -15435,7 +15435,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 10,1",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123956
     },
     {
@@ -15455,7 +15455,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 11,1",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123958
     },
     {
@@ -15475,7 +15475,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 12,1",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123960
     },
     {
@@ -15495,7 +15495,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 13,1",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123962
     },
     {
@@ -15515,7 +15515,7 @@
       "model": "ground-021b8e-06",
       "name": "DION ground cell 15,1",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123966
     },
     {
@@ -15535,7 +15535,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 0,2",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123968
     },
     {
@@ -15555,7 +15555,7 @@
       "model": "dion-ground-0218ac-05",
       "name": "DION ground cell 1,2",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123970
     },
     {
@@ -15575,7 +15575,7 @@
       "model": "ground-01f826-03",
       "name": "DION ground cell 2,2",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123972
     },
     {
@@ -15595,7 +15595,7 @@
       "model": "dion-ground-02219a-06",
       "name": "DION ground cell 3,2",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123974
     },
     {
@@ -15615,7 +15615,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 4,2",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123976
     },
     {
@@ -15635,7 +15635,7 @@
       "model": "dion-ground-01f088-05",
       "name": "DION ground cell 5,2",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123978
     },
     {
@@ -15655,7 +15655,7 @@
       "model": "ground-01f1b4-00",
       "name": "DION ground cell 6,2",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123980
     },
     {
@@ -15675,7 +15675,7 @@
       "model": "ground-01f1b4-00",
       "name": "DION ground cell 7,2",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123982
     },
     {
@@ -15695,7 +15695,7 @@
       "model": "ground-01f1b4-00",
       "name": "DION ground cell 8,2",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123984
     },
     {
@@ -15715,7 +15715,7 @@
       "model": "dion-ground-01fac6-00",
       "name": "DION ground cell 9,2",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123986
     },
     {
@@ -15735,7 +15735,7 @@
       "model": "ground-01f1b4-00",
       "name": "DION ground cell 10,2",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123988
     },
     {
@@ -15755,7 +15755,7 @@
       "model": "ground-01f1b4-00",
       "name": "DION ground cell 11,2",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123990
     },
     {
@@ -15775,7 +15775,7 @@
       "model": "ground-01f1b4-00",
       "name": "DION ground cell 12,2",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123992
     },
     {
@@ -15795,7 +15795,7 @@
       "model": "dion-ground-01f088-03",
       "name": "DION ground cell 13,2",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123994
     },
     {
@@ -15815,7 +15815,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 14,2",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123996
     },
     {
@@ -15835,7 +15835,7 @@
       "model": "ground-021de0-06",
       "name": "DION ground cell 15,2",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 123998
     },
     {
@@ -15855,7 +15855,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 0,3",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124000
     },
     {
@@ -15875,7 +15875,7 @@
       "model": "dion-ground-01f7c0-05",
       "name": "DION ground cell 1,3",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124002
     },
     {
@@ -15895,7 +15895,7 @@
       "model": "dion-ground-020a38-00",
       "name": "DION ground cell 2,3",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124004
     },
     {
@@ -15915,7 +15915,7 @@
       "model": "dion-ground-02219a-06",
       "name": "DION ground cell 3,3",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124006
     },
     {
@@ -15935,7 +15935,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 4,3",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124008
     },
     {
@@ -15955,7 +15955,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 5,3",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124010
     },
     {
@@ -15975,7 +15975,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 6,3",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124012
     },
     {
@@ -15995,7 +15995,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 7,3",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124014
     },
     {
@@ -16015,7 +16015,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 8,3",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124016
     },
     {
@@ -16035,7 +16035,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 9,3",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124018
     },
     {
@@ -16055,7 +16055,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 10,3",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124020
     },
     {
@@ -16075,7 +16075,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 11,3",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124022
     },
     {
@@ -16095,7 +16095,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 12,3",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124024
     },
     {
@@ -16115,7 +16115,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 13,3",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124026
     },
     {
@@ -16135,7 +16135,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 14,3",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124028
     },
     {
@@ -16155,7 +16155,7 @@
       "model": "ground-021de0-06",
       "name": "DION ground cell 15,3",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124030
     },
     {
@@ -16175,7 +16175,7 @@
       "model": "dion-ground-020f8e-05",
       "name": "DION ground cell 0,4",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124032
     },
     {
@@ -16195,7 +16195,7 @@
       "model": "dion-ground-01f7c0-05",
       "name": "DION ground cell 1,4",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124034
     },
     {
@@ -16215,7 +16215,7 @@
       "model": "dion-ground-020a38-00",
       "name": "DION ground cell 2,4",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124036
     },
     {
@@ -16235,7 +16235,7 @@
       "model": "dion-ground-02219a-06",
       "name": "DION ground cell 3,4",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124038
     },
     {
@@ -16255,7 +16255,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 4,4",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124040
     },
     {
@@ -16275,7 +16275,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 5,4",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124042
     },
     {
@@ -16295,7 +16295,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 6,4",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124044
     },
     {
@@ -16315,7 +16315,7 @@
       "model": "ground-0206fa-05",
       "name": "DION ground cell 7,4",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124046
     },
     {
@@ -16335,7 +16335,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 8,4",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124048
     },
     {
@@ -16355,7 +16355,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 9,4",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124050
     },
     {
@@ -16375,7 +16375,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 10,4",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124052
     },
     {
@@ -16395,7 +16395,7 @@
       "model": "ground-0206fa-05",
       "name": "DION ground cell 11,4",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124054
     },
     {
@@ -16415,7 +16415,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 12,4",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124056
     },
     {
@@ -16435,7 +16435,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 13,4",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124058
     },
     {
@@ -16455,7 +16455,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 14,4",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124060
     },
     {
@@ -16475,7 +16475,7 @@
       "model": "ground-021b8e-06",
       "name": "DION ground cell 15,4",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124062
     },
     {
@@ -16495,7 +16495,7 @@
       "model": "ground-021a8e-06",
       "name": "DION ground cell 0,5",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124064
     },
     {
@@ -16515,7 +16515,7 @@
       "model": "dion-ground-01f3e6-06",
       "name": "DION ground cell 1,5",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124066
     },
     {
@@ -16535,7 +16535,7 @@
       "model": "dion-ground-01f306-06",
       "name": "DION ground cell 2,5",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124068
     },
     {
@@ -16555,7 +16555,7 @@
       "model": "ground-021b8e-06",
       "name": "DION ground cell 3,5",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124070
     },
     {
@@ -16575,7 +16575,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 4,5",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124072
     },
     {
@@ -16595,7 +16595,7 @@
       "model": "dion-ground-01f088-00",
       "name": "DION ground cell 5,5",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124074
     },
     {
@@ -16615,7 +16615,7 @@
       "model": "ground-01f1b4-00",
       "name": "DION ground cell 6,5",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124076
     },
     {
@@ -16635,7 +16635,7 @@
       "model": "ground-01ee54-06",
       "name": "DION ground cell 7,5",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124078
     },
     {
@@ -16655,7 +16655,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 8,5",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124080
     },
     {
@@ -16675,7 +16675,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 9,5",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124082
     },
     {
@@ -16695,7 +16695,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 10,5",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124084
     },
     {
@@ -16715,7 +16715,7 @@
       "model": "dion-ground-01ee54-00",
       "name": "DION ground cell 11,5",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124086
     },
     {
@@ -16735,7 +16735,7 @@
       "model": "ground-01f1b4-00",
       "name": "DION ground cell 12,5",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124088
     },
     {
@@ -16755,7 +16755,7 @@
       "model": "dion-ground-01f088-06",
       "name": "DION ground cell 13,5",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124090
     },
     {
@@ -16775,7 +16775,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 14,5",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124092
     },
     {
@@ -16795,7 +16795,7 @@
       "model": "ground-021b8e-06",
       "name": "DION ground cell 15,5",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124094
     },
     {
@@ -16815,7 +16815,7 @@
       "model": "dion-ground-0220e2-05",
       "name": "DION ground cell 0,6",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124096
     },
     {
@@ -16835,7 +16835,7 @@
       "model": "dion-ground-020a38-00",
       "name": "DION ground cell 1,6",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124098
     },
     {
@@ -16855,7 +16855,7 @@
       "model": "dion-ground-020a38-00",
       "name": "DION ground cell 2,6",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124100
     },
     {
@@ -16875,7 +16875,7 @@
       "model": "dion-ground-02219a-06",
       "name": "DION ground cell 3,6",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124102
     },
     {
@@ -16895,7 +16895,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 4,6",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124104
     },
     {
@@ -16915,7 +16915,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 5,6",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124106
     },
     {
@@ -16935,7 +16935,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 6,6",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124108
     },
     {
@@ -16955,7 +16955,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 7,6",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124110
     },
     {
@@ -16975,7 +16975,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 9,6",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124114
     },
     {
@@ -16995,7 +16995,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 11,6",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124118
     },
     {
@@ -17015,7 +17015,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 12,6",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124120
     },
     {
@@ -17035,7 +17035,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 13,6",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124122
     },
     {
@@ -17055,7 +17055,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 14,6",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124124
     },
     {
@@ -17075,7 +17075,7 @@
       "model": "ground-021de0-06",
       "name": "DION ground cell 15,6",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124126
     },
     {
@@ -17095,7 +17095,7 @@
       "model": "dion-ground-022426-05",
       "name": "DION ground cell 0,7",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124128
     },
     {
@@ -17115,7 +17115,7 @@
       "model": "dion-ground-0225a6-00",
       "name": "DION ground cell 1,7",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124130
     },
     {
@@ -17135,7 +17135,7 @@
       "model": "dion-ground-0225a6-00",
       "name": "DION ground cell 2,7",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124132
     },
     {
@@ -17155,7 +17155,7 @@
       "model": "dion-ground-0227bc-00",
       "name": "DION ground cell 3,7",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124134
     },
     {
@@ -17175,7 +17175,7 @@
       "model": "ground-021b8e-00",
       "name": "DION ground cell 4,7",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124136
     },
     {
@@ -17195,7 +17195,7 @@
       "model": "ground-021de0-00",
       "name": "DION ground cell 5,7",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124138
     },
     {
@@ -17215,7 +17215,7 @@
       "model": "ground-021de0-00",
       "name": "DION ground cell 6,7",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124140
     },
     {
@@ -17235,7 +17235,7 @@
       "model": "ground-021b8e-00",
       "name": "DION ground cell 7,7",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124142
     },
     {
@@ -17255,7 +17255,7 @@
       "model": "ground-021b8e-00",
       "name": "DION ground cell 8,7",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124144
     },
     {
@@ -17275,7 +17275,7 @@
       "model": "dion-ground-02270a-00",
       "name": "DION ground cell 9,7",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124146
     },
     {
@@ -17295,7 +17295,7 @@
       "model": "ground-021de0-00",
       "name": "DION ground cell 10,7",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124148
     },
     {
@@ -17315,7 +17315,7 @@
       "model": "ground-021b8e-00",
       "name": "DION ground cell 11,7",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124150
     },
     {
@@ -17335,7 +17335,7 @@
       "model": "ground-021de0-00",
       "name": "DION ground cell 12,7",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124152
     },
     {
@@ -17355,7 +17355,7 @@
       "model": "ground-021de0-00",
       "name": "DION ground cell 13,7",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124154
     },
     {
@@ -17375,7 +17375,7 @@
       "model": "ground-021b8e-00",
       "name": "DION ground cell 14,7",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124156
     },
     {
@@ -17395,7 +17395,7 @@
       "model": "dion-ground-02237a-06",
       "name": "DION ground cell 15,7",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124158
     },
     {
@@ -17415,7 +17415,7 @@
       "model": "dion-ground-0220e2-05",
       "name": "DION ground cell 0,8",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124160
     },
     {
@@ -17435,7 +17435,7 @@
       "model": "dion-ground-020a38-00",
       "name": "DION ground cell 1,8",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124162
     },
     {
@@ -17455,7 +17455,7 @@
       "model": "dion-ground-020a38-00",
       "name": "DION ground cell 2,8",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124164
     },
     {
@@ -17475,7 +17475,7 @@
       "model": "dion-ground-02219a-06",
       "name": "DION ground cell 3,8",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124166
     },
     {
@@ -17495,7 +17495,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 4,8",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124168
     },
     {
@@ -17515,7 +17515,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 5,8",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124170
     },
     {
@@ -17535,7 +17535,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 6,8",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124172
     },
     {
@@ -17555,7 +17555,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 7,8",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124174
     },
     {
@@ -17575,7 +17575,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 9,8",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124178
     },
     {
@@ -17595,7 +17595,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 11,8",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124182
     },
     {
@@ -17615,7 +17615,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 12,8",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124184
     },
     {
@@ -17635,7 +17635,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 13,8",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124186
     },
     {
@@ -17655,7 +17655,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 14,8",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124188
     },
     {
@@ -17675,7 +17675,7 @@
       "model": "ground-021b8e-06",
       "name": "DION ground cell 15,8",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124190
     },
     {
@@ -17695,7 +17695,7 @@
       "model": "ground-021a8e-06",
       "name": "DION ground cell 0,9",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124192
     },
     {
@@ -17715,7 +17715,7 @@
       "model": "dion-ground-01f3e6-06",
       "name": "DION ground cell 1,9",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124194
     },
     {
@@ -17735,7 +17735,7 @@
       "model": "dion-ground-01f306-06",
       "name": "DION ground cell 2,9",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124196
     },
     {
@@ -17755,7 +17755,7 @@
       "model": "ground-021de0-06",
       "name": "DION ground cell 3,9",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124198
     },
     {
@@ -17775,7 +17775,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 4,9",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124200
     },
     {
@@ -17795,7 +17795,7 @@
       "model": "dion-ground-01f088-05",
       "name": "DION ground cell 5,9",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124202
     },
     {
@@ -17815,7 +17815,7 @@
       "model": "ground-01f1b4-00",
       "name": "DION ground cell 6,9",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124204
     },
     {
@@ -17835,7 +17835,7 @@
       "model": "ground-01ee54-03",
       "name": "DION ground cell 7,9",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124206
     },
     {
@@ -17855,7 +17855,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 8,9",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124208
     },
     {
@@ -17875,7 +17875,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 9,9",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124210
     },
     {
@@ -17895,7 +17895,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 10,9",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124212
     },
     {
@@ -17915,7 +17915,7 @@
       "model": "ground-01ee54-05",
       "name": "DION ground cell 11,9",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124214
     },
     {
@@ -17935,7 +17935,7 @@
       "model": "ground-01f1b4-00",
       "name": "DION ground cell 12,9",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124216
     },
     {
@@ -17955,7 +17955,7 @@
       "model": "dion-ground-01f088-03",
       "name": "DION ground cell 13,9",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124218
     },
     {
@@ -17975,7 +17975,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 14,9",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124220
     },
     {
@@ -17995,7 +17995,7 @@
       "model": "ground-021de0-06",
       "name": "DION ground cell 15,9",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124222
     },
     {
@@ -18015,7 +18015,7 @@
       "model": "dion-ground-021644-00",
       "name": "DION ground cell 0,10",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124224
     },
     {
@@ -18035,7 +18035,7 @@
       "model": "dion-ground-022658-00",
       "name": "DION ground cell 1,10",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124226
     },
     {
@@ -18055,7 +18055,7 @@
       "model": "dion-ground-022658-00",
       "name": "DION ground cell 2,10",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124228
     },
     {
@@ -18075,7 +18075,7 @@
       "model": "dion-ground-02237a-06",
       "name": "DION ground cell 3,10",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124230
     },
     {
@@ -18095,7 +18095,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 4,10",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124232
     },
     {
@@ -18115,7 +18115,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 5,10",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124234
     },
     {
@@ -18135,7 +18135,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 6,10",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124236
     },
     {
@@ -18155,7 +18155,7 @@
       "model": "dion-ground-0206fa-06",
       "name": "DION ground cell 7,10",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124238
     },
     {
@@ -18175,7 +18175,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 8,10",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124240
     },
     {
@@ -18195,7 +18195,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 9,10",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124242
     },
     {
@@ -18215,7 +18215,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 10,10",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124244
     },
     {
@@ -18235,7 +18235,7 @@
       "model": "dion-ground-0206fa-06",
       "name": "DION ground cell 11,10",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124246
     },
     {
@@ -18255,7 +18255,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 12,10",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124248
     },
     {
@@ -18275,7 +18275,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 13,10",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124250
     },
     {
@@ -18295,7 +18295,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 14,10",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124252
     },
     {
@@ -18315,7 +18315,7 @@
       "model": "ground-021de0-06",
       "name": "DION ground cell 15,10",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124254
     },
     {
@@ -18335,7 +18335,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 0,11",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124256
     },
     {
@@ -18355,7 +18355,7 @@
       "model": "dion-ground-0209a2-05",
       "name": "DION ground cell 1,11",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124258
     },
     {
@@ -18375,7 +18375,7 @@
       "model": "dion-ground-020b7c-00",
       "name": "DION ground cell 2,11",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124260
     },
     {
@@ -18395,7 +18395,7 @@
       "model": "dion-ground-02219a-06",
       "name": "DION ground cell 3,11",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124262
     },
     {
@@ -18415,7 +18415,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 4,11",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124264
     },
     {
@@ -18435,7 +18435,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 5,11",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124266
     },
     {
@@ -18455,7 +18455,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 6,11",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124268
     },
     {
@@ -18475,7 +18475,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 7,11",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124270
     },
     {
@@ -18495,7 +18495,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 8,11",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124272
     },
     {
@@ -18515,7 +18515,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 9,11",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124274
     },
     {
@@ -18535,7 +18535,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 10,11",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124276
     },
     {
@@ -18555,7 +18555,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 11,11",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124278
     },
     {
@@ -18575,7 +18575,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 12,11",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124280
     },
     {
@@ -18595,7 +18595,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 13,11",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124282
     },
     {
@@ -18615,7 +18615,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 14,11",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124284
     },
     {
@@ -18635,7 +18635,7 @@
       "model": "ground-021b8e-06",
       "name": "DION ground cell 15,11",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124286
     },
     {
@@ -18655,7 +18655,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 0,12",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124288
     },
     {
@@ -18675,7 +18675,7 @@
       "model": "dion-ground-0218ac-00",
       "name": "DION ground cell 1,12",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124290
     },
     {
@@ -18695,7 +18695,7 @@
       "model": "dion-ground-01f826-00",
       "name": "DION ground cell 2,12",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124292
     },
     {
@@ -18715,7 +18715,7 @@
       "model": "dion-ground-02219a-06",
       "name": "DION ground cell 3,12",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124294
     },
     {
@@ -18735,7 +18735,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 4,12",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124296
     },
     {
@@ -18755,7 +18755,7 @@
       "model": "dion-ground-01f088-00",
       "name": "DION ground cell 5,12",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124298
     },
     {
@@ -18775,7 +18775,7 @@
       "model": "ground-01f1b4-00",
       "name": "DION ground cell 6,12",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124300
     },
     {
@@ -18795,7 +18795,7 @@
       "model": "ground-01f1b4-00",
       "name": "DION ground cell 7,12",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124302
     },
     {
@@ -18815,7 +18815,7 @@
       "model": "ground-01f1b4-00",
       "name": "DION ground cell 8,12",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124304
     },
     {
@@ -18835,7 +18835,7 @@
       "model": "dion-ground-01fac6-00",
       "name": "DION ground cell 9,12",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124306
     },
     {
@@ -18855,7 +18855,7 @@
       "model": "ground-01f1b4-00",
       "name": "DION ground cell 10,12",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124308
     },
     {
@@ -18875,7 +18875,7 @@
       "model": "ground-01f1b4-00",
       "name": "DION ground cell 11,12",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124310
     },
     {
@@ -18895,7 +18895,7 @@
       "model": "ground-01f1b4-00",
       "name": "DION ground cell 12,12",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124312
     },
     {
@@ -18915,7 +18915,7 @@
       "model": "dion-ground-01f088-06",
       "name": "DION ground cell 13,12",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124314
     },
     {
@@ -18935,7 +18935,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 14,12",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124316
     },
     {
@@ -18955,7 +18955,7 @@
       "model": "ground-021de0-06",
       "name": "DION ground cell 15,12",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124318
     },
     {
@@ -18975,7 +18975,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 0,13",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124320
     },
     {
@@ -18995,7 +18995,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 1,13",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124322
     },
     {
@@ -19015,7 +19015,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 2,13",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124324
     },
     {
@@ -19035,7 +19035,7 @@
       "model": "ground-021b8e-06",
       "name": "DION ground cell 3,13",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124326
     },
     {
@@ -19055,7 +19055,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 5,13",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124330
     },
     {
@@ -19075,7 +19075,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 6,13",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124332
     },
     {
@@ -19095,7 +19095,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 7,13",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124334
     },
     {
@@ -19115,7 +19115,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 8,13",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124336
     },
     {
@@ -19135,7 +19135,7 @@
       "model": "ground-01f1b4-06",
       "name": "DION ground cell 9,13",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124338
     },
     {
@@ -19155,7 +19155,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 10,13",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124340
     },
     {
@@ -19175,7 +19175,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 11,13",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124342
     },
     {
@@ -19195,7 +19195,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 12,13",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124344
     },
     {
@@ -19215,7 +19215,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 13,13",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124346
     },
     {
@@ -19235,7 +19235,7 @@
       "model": "dion-ground-020428-00",
       "name": "DION ground cell 14,13",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124348
     },
     {
@@ -19255,7 +19255,7 @@
       "model": "ground-021b8e-06",
       "name": "DION ground cell 15,13",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124350
     },
     {
@@ -19275,7 +19275,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 0,14",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124352
     },
     {
@@ -19295,7 +19295,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 1,14",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124354
     },
     {
@@ -19315,7 +19315,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 2,14",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124356
     },
     {
@@ -19335,7 +19335,7 @@
       "model": "dion-ground-021644-00",
       "name": "DION ground cell 3,14",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124358
     },
     {
@@ -19355,7 +19355,7 @@
       "model": "ground-021b8e-00",
       "name": "DION ground cell 4,14",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124360
     },
     {
@@ -19375,7 +19375,7 @@
       "model": "ground-021de0-00",
       "name": "DION ground cell 5,14",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124362
     },
     {
@@ -19395,7 +19395,7 @@
       "model": "ground-021de0-00",
       "name": "DION ground cell 6,14",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124364
     },
     {
@@ -19415,7 +19415,7 @@
       "model": "ground-021b8e-00",
       "name": "DION ground cell 7,14",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124366
     },
     {
@@ -19435,7 +19435,7 @@
       "model": "ground-021b8e-00",
       "name": "DION ground cell 8,14",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124368
     },
     {
@@ -19455,7 +19455,7 @@
       "model": "dion-ground-02228e-00",
       "name": "DION ground cell 9,14",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124370
     },
     {
@@ -19475,7 +19475,7 @@
       "model": "ground-021de0-00",
       "name": "DION ground cell 10,14",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124372
     },
     {
@@ -19495,7 +19495,7 @@
       "model": "ground-021b8e-00",
       "name": "DION ground cell 11,14",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124374
     },
     {
@@ -19515,7 +19515,7 @@
       "model": "ground-021de0-00",
       "name": "DION ground cell 12,14",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124376
     },
     {
@@ -19535,7 +19535,7 @@
       "model": "ground-021de0-00",
       "name": "DION ground cell 13,14",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124378
     },
     {
@@ -19555,7 +19555,7 @@
       "model": "dion-ground-021c16-00",
       "name": "DION ground cell 14,14",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124380
     },
     {
@@ -19575,7 +19575,7 @@
       "model": "dion-ground-021644-06",
       "name": "DION ground cell 15,14",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124382
     },
     {
@@ -19595,7 +19595,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 0,15",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124384
     },
     {
@@ -19615,7 +19615,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 1,15",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124386
     },
     {
@@ -19635,7 +19635,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 2,15",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124388
     },
     {
@@ -19655,7 +19655,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 3,15",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124390
     },
     {
@@ -19675,7 +19675,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 4,15",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124392
     },
     {
@@ -19695,7 +19695,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 5,15",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124394
     },
     {
@@ -19715,7 +19715,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 6,15",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124396
     },
     {
@@ -19735,7 +19735,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 7,15",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124398
     },
     {
@@ -19755,7 +19755,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 8,15",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124400
     },
     {
@@ -19775,7 +19775,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 9,15",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124402
     },
     {
@@ -19795,7 +19795,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 10,15",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124404
     },
     {
@@ -19815,7 +19815,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 11,15",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124406
     },
     {
@@ -19835,7 +19835,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 12,15",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124408
     },
     {
@@ -19855,7 +19855,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 13,15",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124410
     },
     {
@@ -19875,7 +19875,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 14,15",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124412
     },
     {
@@ -19895,7 +19895,7 @@
       "model": "ground-02066c-00",
       "name": "DION ground cell 15,15",
       "placement": null,
-      "reason": "Live DION cell ground/pad/road record; default empty cells are omitted.",
+      "reason": "Live DION cell ground/pad/road record; intentional empty records have no drawable instance.",
       "sourceAddress": 124414
     },
     {
@@ -699613,7 +699613,7 @@
       "name": "Ground 0",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Empty ground record: default cell fill is not stored as a vertex list.",
+      "reason": "Empty ground record: source plan and command streams terminate immediately; the native $056634 renderer returns at that zero terminator, so this record intentionally contributes no ground geometry.",
       "recordClass": "empty",
       "relatedModels": [],
       "slots": [
@@ -699752,7 +699752,7 @@
         252
       ],
       "sourceAddress": 124816,
-      "status": "unresolved",
+      "status": "decoded",
       "variants": []
     },
     {
@@ -710207,7 +710207,7 @@
       "name": "Ground 89",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Ground record has only $7000 object placements; default cell fill is not stored as a vertex list.",
+      "reason": "",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041f9c",
@@ -710250,7 +710250,7 @@
         243
       ],
       "sourceAddress": 132716,
-      "status": "partial",
+      "status": "decoded",
       "variants": [
         {
           "id": "record",
@@ -731572,7 +731572,7 @@
       "name": "GAEA ground 6",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Ground record has only $7000 object placements; default cell fill is not stored as a vertex list.",
+      "reason": "",
       "recordClass": "geometry",
       "relatedModels": [
         "object-041f3c",
@@ -731582,7 +731582,7 @@
         270
       ],
       "sourceAddress": 132786,
-      "status": "partial",
+      "status": "decoded",
       "variants": [
         {
           "id": "record",

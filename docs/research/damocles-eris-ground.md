@@ -30,6 +30,7 @@ sky/horizon; other-body workspaces;
 | Lab                   | `research/damocles-st/` (`damocleslab`)                                                             |
 | Scenario              | `research/damocles-st/scenarios/first-world.json` (SHA-256 `e5383458…8582f96e`)                     |
 | Placement disassembly | `scenarios/ground-road-template.json`; run `observe-ground-road-template-20260915T112757Z-af886487` |
+| Empty-record renderer | `scenarios/default-ground-fill.json`; run `observe-default-ground-fill-20260915T125812Z-6b1062b5`   |
 | Pad view              | `scenarios/approach-spaceport-pad.json`                                                             |
 | Open ground           | `scenarios/walk-toward-building.json` (NAV `07-08` → `07-11`)                                       |
 
@@ -63,10 +64,12 @@ indexed by a 256-word table at `$01E400` and oriented by a 256-byte table at
 structure from `$00ABDC`.
 
 Empty cells (133 of 256 in this workspace, including the walk's open ground at
-`$B7`) share one record with **no vertices**. Their green fill is a default
-cell rectangle, not a stored mesh; `/damocles` still authors that fill. Direct
-`$777` faces in the cell-`$88` record are the white pad; `$800e` faces are the
-grey apron.
+`$B7`) share one intentional empty record with **no vertices or commands**.
+There is no default cell rectangle in this record path: `$056634` reads the
+reconstructed `$8C32` command stream and returns immediately on its initial
+zero word. The visible green therefore belongs to a separate surface/background
+path; `/damocles` still authors that presentation fill. Direct `$777` faces in
+the cell-`$88` record are the white pad; `$800e` faces are the grey apron.
 
 Surface attachments after a structure wall terminator share the ground stream's
 bit-classed command envelope (`$C00E` edges, `$7000` object placements,
@@ -85,7 +88,8 @@ vector-text renderer and is not this source command's consumer.
 | Pad/road are already structure form-4/6 polygons at `y = 0`, hidden by the authored plane | **Refuted as the store**                  | Structure 74's recovered faces are walls and building planes. The white/grey strips decode from `$020F8E` / `$021AFE`, not from `$01484E`.                                                                |
 | The two skipped structure-header colour words are the cell fill                           | **Refuted for the pad**                   | Structure 74's words are `$809A` / `$808E` (scene-palette greys/blues), not `$777` / `$444`. The pad colours are in the ground stream.                                                                    |
 | Unused bits of `$00ABDC` select pad vs grass vs road                                      | **Refuted for ground**                    | `$054CBE` masks the first byte with `$FE` into `$7AF8` for a different selector (objects / `$1E000` side table when `$20..$9F`). Ground uses `$1E400` + `$83DC`. Low nine bits remain the structure slot. |
-| A separate fill path draws cell rectangles / road strips                                  | **Confirmed**                             | `$054E50` `$1E400`; `$054E40` `$83DC`; vertex/face stream then `$8C32` / `$056634`.                                                                                                                       |
+| A separate fill path draws cell rectangles / road strips                                  | **Refuted for empty cells**               | `$054E50` / `$054E40` reconstruct the selected record into `$8C32`; `$056634` returns immediately when that stream starts with zero.                                                                      |
+| The visible green comes from a surface/background path outside the cell record            | **Confirmed as a separate path**          | Open cell `$B7` is visibly green while its `$01E790` source and reconstructed `$8C32` streams are empty; the exact producer remains unresolved.                                                           |
 | Post-terminator attachments also carry pad polygons                                       | **Partially confirmed (family, not pad)** | Ground records continue with `$C00E` / `$7000` after faces. Structure 74's `$4200` door is the documented wall-list attachment. The pad polygons themselves are ordinary colour+ref faces.                |
 
 ## RAM diff (pad vs open ground)
@@ -156,16 +160,19 @@ Representative:
 Kind `ground`, schema version 5, table `$01E400`. Instances
 `eris-ground-{cell}` are plotted on the catalogue map. `/damocles` composes
 those instances into the Eris surface and draws them over an authored fill one
-unit below `y = 0`, which stands in for the ground a record does not cover
+unit below `y = 0`, which stands in for the separate native surface/background
+fill that has not been geometrically recovered
 ([#221](https://github.com/odogono/mercenary/issues/221)). A recovered record
 covers its local polygons plus resolved `$7000` object placements:
 `eris-ground-87` is still bounded by the stored geometry rather than a
-fabricated cell rectangle. `$F0`/`$F4` joins and default fill remain unresolved.
+fabricated cell rectangle. The shared `$01E790` record is classified as a
+fully decoded intentional empty, not unresolved geometry. `$F0`/`$F4` joins
+and the separate native surface/background path remain unresolved.
 
 ## Unresolved
 
-- Colour and exact rectangle of the **default empty-cell fill** (the recovered
-  outdoor green).
+- Geometry and draw rule of the separate native **surface/background fill**
+  that supplies the recovered outdoor green; it is not an empty-cell record.
 - Scene-palette context for two transformed `$7000` copies of
   `object-041b1e`.
 - Neighbor-join slots `$F0`/`$F4` as reconstructed vertices.

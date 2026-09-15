@@ -89,8 +89,8 @@ qualification for each table. Every slot maps to one model identity; repeated
 pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
 
-Current extraction accounts for **674 unique records**: **167 decoded**,
-**446 partial**, and **61 unresolved**. “Decoded” means the supported record was
+Current extraction accounts for **674 unique records**: **170 decoded**,
+**444 partial**, and **60 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.
 Unresolved records remain searchable and retain their source identity and reason.
@@ -233,7 +233,10 @@ code. Targeted disassembly used to establish them remains ignored at
   `$53F76` is a separate runtime vector-text path, not the source placement
   consumer. Two transformed placements still lack scene-palette context.
 - `/damocles` still paints an authored green plane; recovered ground instances
-  are catalogue-only until that plane is withdrawn.
+  are catalogue-only until the separate native surface/background fill path is
+  recovered. The shared empty record does not contain that plane: `$056634`
+  returns immediately on its initial zero command, so it is a fully decoded
+  intentional empty rather than an unresolved default-cell quad.
 
 ### Surface placements and captured Eris places
 
@@ -357,7 +360,7 @@ Still unexplored or incomplete: packed Pasti STX track payload, live
 named-place lists, remaining object residences/transforms, view-conditioned object groups,
 articulated geometry, special primitives, post-plan attachment forms other than the
 documented zero-latch and `$F0` constructors, two `$7000` placement palette contexts,
-default empty-cell fill, and script-created visual
+the separate native surface/background fill path, and script-created visual
 changes. Resident model banks do not change between first-world and occupied-Spaceport RAM.
 The recovery ledger exposes this boundary; it does not declare the whole game's extraction
 complete. Further research can replace unresolved records without changing their

@@ -73,6 +73,20 @@ describe('Damocles catalogue contract', () => {
     expect(selectModels(data, 'shape', 'object', 'unresolved')).toHaveLength(1);
     expect(selectModels(data, 'missing', '', '')).toHaveLength(0);
   });
+  it('accepts a decoded intentional empty but still rejects empty geometry', () => {
+    const intentional = fixture();
+    const intentionalModel = intentional.models[0] as Record<string, unknown>;
+    intentionalModel['recordClass'] = 'empty';
+    intentionalModel['status'] = 'decoded';
+    intentionalModel['reason'] = 'Source record intentionally has no geometry.';
+    expect(parseCatalogue(intentional).models[0]!.recordClass).toBe('empty');
+
+    const broken = fixture();
+    broken.models[0]!.status = 'decoded';
+    expect(() => parseCatalogue(broken)).toThrow(
+      'decoded model has no geometry'
+    );
+  });
   it('preserves unresolved authored selectors without turning them into room names', () => {
     const selected = fixture();
     selected.instances[0]!.association = {
@@ -148,9 +162,9 @@ describe('Damocles catalogue contract', () => {
   it('rejects a coverage census that does not match the models', () => {
     const bad = fixture();
     (bad.coverage as { census?: object }).census = {
-      unique: 99,
       decoded: 1,
       partial: 0,
+      unique: 99,
       unresolved: 0
     };
     expect(() => parseCatalogue(bad)).toThrow('census');
