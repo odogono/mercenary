@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Damocles first-world ground `$7000` records now compose 74 cell-local
+  placements through six existing address-based object models; the source
+  loader disassembly also corrects the former `$53F76` road-template
+  interpretation (#173).
+
 ## [0.19.8] - 2026-09-15
 
 ### Added

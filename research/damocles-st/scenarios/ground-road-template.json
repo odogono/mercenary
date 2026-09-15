@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "name": "ground-road-template",
+  "checkpoint": "title-screen",
+  "description": "Load the first world, capture its RAM, then disassemble the $053F76 ground bit-13 command path used by $7000 road templates. Working-Authority Evidence for the Damocles model census (#173).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "artifacts": ["registers", "ram"]
+    },
+    {
+      "type": "disassemble",
+      "name": "ground-road-template",
+      "start": "0x054e40",
+      "end": "0x055050"
+    }
+  ]
+}
