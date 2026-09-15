@@ -229,6 +229,15 @@ it('keeps a generated census ledger that cannot drift from the models', async ()
   expect(data.coverage.diskLoad.some(item => item.path.includes('Vesta'))).toBe(
     true
   );
+  expect(data.coverage.diskLoad.some(item => item.path.includes('Gaea'))).toBe(
+    true
+  );
+  expect(data.coverage.diskLoad.some(item => item.path.includes('Dion'))).toBe(
+    true
+  );
+  expect(
+    data.instances.some(instance => instance.id === 'dion-surface-32')
+  ).toBe(true);
   expect(
     data.instances.some(instance => instance.id === 'vesta-surface-64')
   ).toBe(true);
@@ -477,7 +486,11 @@ it('accounts for Structure 100 as an empty placeholder, not missing walls', asyn
   const detail = data.models.find(item => item.id === 'interior-02620e')!;
   expect(detail.reason).toContain('Empty building-detail record');
   expect(
-    data.instances.filter(instance => instance.model === 'structure-01a618')
+    data.instances.filter(
+      instance =>
+        instance.model === 'structure-01a618' &&
+        instance.id.startsWith('eris-surface-')
+    )
   ).toHaveLength(19);
 });
 
@@ -752,7 +765,14 @@ it('places only residents selected by the native surface-body association', asyn
   expect(gaeaAssemblies).toHaveLength(82);
   expect(
     data.instances.filter(instance => instance.location?.body === 'body-8')
-  ).toHaveLength(87);
+  ).toHaveLength(147);
+  expect(
+    data.instances.some(instance => instance.id === 'gaea-ur-city-surface-24')
+  ).toBe(true);
+  expect(
+    data.instances.find(instance => instance.id === 'gaea-ur-city-surface-17')!
+      .name
+  ).toBe('HANTZENS NEW HOUSE');
   for (const id of [
     'gaea-surface-26',
     'gaea-surface-27',
@@ -770,6 +790,10 @@ it('places only residents selected by the native surface-body association', asyn
     'ELMDON SPACEPORT',
     'ERIS PO TEMP HQ',
     'GAEA BANK',
+    'GUM STORE',
+    'HANTZENS NEW HOUSE',
+    'INDUSTRIAL CO-OP HSE1',
+    'INDUSTRIAL CO-OP HSE2',
     'LAWSON BANK',
     'NOVAGEN OFFICE',
     'VERDANT PARTY HQ'
