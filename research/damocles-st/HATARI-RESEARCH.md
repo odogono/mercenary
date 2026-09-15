@@ -62,6 +62,9 @@ destination** and `--memstate <file>` to boot straight back into it:
 
 - `snapshots/eris-spaceport-onfoot.sav` — on-foot at the Eris spaceport,
   skipping the ~3-minute intro (made by `record-play.py snapshot`).
+- `snapshots/vesta-parliament-4-6.sav` — on-foot outside Vesta Parliament,
+  local cell 4,6 (`$7B5C=$64`). Hatari GUI memstate; carve ST RAM on `DIALIS  `
+  at `$81DC`. Lab `--memstate` with pinned EmuTOS will not restore it.
 - `snapshots/interior-window.sav` — standing inside the spaceport building at a
   window (human walk from the on-foot snapshot via `record-play.py record
   --memstate … --snapshot-out …`, which `statesave`s on Ctrl-C).

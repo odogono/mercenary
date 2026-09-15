@@ -454,6 +454,8 @@ class CensusTests(unittest.TestCase):
         self.assertIn('Building detail', text)
         self.assertIn('$026000', text)
         self.assertIn('Pasti STX', text)
+        self.assertIn('Vesta', text)
+        self.assertIn('vesta-surface-64', text)
 
 
 class DiskLoadTests(unittest.TestCase):
@@ -494,3 +496,54 @@ class DiskLoadTests(unittest.TestCase):
         self.assertEqual(b[0x7AFB], 0)
         self.assertNotIn(b'DART II', a)
         self.assertIn(b'DART II', b)
+
+
+class LiveWorkspaceTests(unittest.TestCase):
+    def test_hatari_memstate_ram_aligns_dialis_at_81dc(self):
+        from damocleslab.catalogue import hatari_memstate_ram
+        ram = bytearray(1048576)
+        ram[0x81DC:0x81E4] = b'DIALIS  '
+        blob = b'2.6.1\0' + b'\0' * 100 + bytes(ram)
+        self.assertEqual(hatari_memstate_ram(blob)[0x81DC:0x81E4], b'DIALIS  ')
+        with self.assertRaisesRegex(ValueError, 'DIALIS'):
+            hatari_memstate_ram(b'nope')
+
+    def test_live_workspace_places_the_selected_body_cell(self):
+        from damocleslab.catalogue import extract
+        data = _empty_world()
+        workspace = bytearray(data)
+        struct.pack_into('>H', workspace, 0x7AA8, 14 * 4)
+        workspace[0x81DC + 14 * 8:0x81E4 + 14 * 8] = b'VESTA   '
+        struct.pack_into('>H', workspace, 0x7B5C, 0x64)
+        struct.pack_into('>I', workspace, 0x7A92, 1087 << 16)
+        struct.pack_into('>I', workspace, 0x7A9A, 313 << 16)
+        struct.pack_into('>I', workspace, 0x7A2C, 4 << 16)
+        struct.pack_into('>I', workspace, 0x7A34, 6 << 16)
+        struct.pack_into('>Hbb', workspace, 0xABDC + 0x64 * 4, 70, 0, 0x46)
+        result = extract(bytes(data), {}, bytes(workspace))
+        placed = next(i for i in result['instances'] if i['id'] == 'vesta-surface-64')
+        self.assertEqual(placed['location']['body'], 'body-14')
+        self.assertEqual(placed['model'], result['tables'][1]['entries'][70])
+        self.assertTrue(any(item['path'] == 'Vesta live workspace' for item in result['coverage']['diskLoad']))
+
+    def test_pinned_vesta_memstate_rewrites_abdc_without_new_object_banks(self):
+        from damocleslab.catalogue import extract, hatari_memstate_ram
+        root = Path(__file__).resolve().parents[1]
+        first = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram'
+        sav = root / 'snapshots' / 'vesta-parliament-4-6.sav'
+        if not first.exists() or not sav.exists():
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        workspace = hatari_memstate_ram(sav.read_bytes())
+        self.assertEqual(workspace[0x7AA8:0x7AAA], b'\x00\x38')
+        self.assertEqual(workspace[0x7B5C:0x7B5E], b'\x00\x64')
+        self.assertIn(b'VESTA     PARLIAMENT', workspace)
+        first_bytes = first.read_bytes()
+        result = extract(first_bytes, {}, workspace)
+        parliament = next(i for i in result['instances'] if i['id'] == 'vesta-surface-64')
+        self.assertEqual(parliament['location']['body'], 'body-14')
+        self.assertEqual(parliament['location']['place'], 'place-024101')
+        self.assertEqual(
+            {0x35700 + int.from_bytes(first_bytes[0x35700 + s * 4:0x35704 + s * 4], 'big') for s in range(378)},
+            {0x35700 + int.from_bytes(workspace[0x35700 + s * 4:0x35704 + s * 4], 'big') for s in range(378)},
+        )
+        self.assertNotEqual(first_bytes[0xABDC:0xABDC + 1024], workspace[0xABDC:0xABDC + 1024])

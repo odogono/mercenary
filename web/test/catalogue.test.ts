@@ -228,6 +228,12 @@ it('keeps a generated census ledger that cannot drift from the models', async ()
   expect(
     data.coverage.diskLoad.some(item => item.path.includes('Pasti STX'))
   ).toBe(true);
+  expect(
+    data.coverage.diskLoad.some(item => item.path.includes('Vesta'))
+  ).toBe(true);
+  expect(data.instances.some(instance => instance.id === 'vesta-surface-64')).toBe(
+    true
+  );
   expect(data.coverage.tables).toHaveLength(4);
   expect(data.coverage.tables.some(table => table.kind === 'interior')).toBe(
     true
