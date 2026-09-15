@@ -9,6 +9,7 @@ import argparse
 import hashlib
 import json
 import struct
+from collections import Counter
 from pathlib import Path
 
 
@@ -841,13 +842,138 @@ def structure_origin(resident_position: tuple[int, int, int], dx: int, dz: int) 
     )
 
 
-# Schema 7 names generic Entrance Attachments. This census keeps the seven already
-# complete selectors plus Structure 75 / its Structure 76 alias at STATE OFFICE.
-STRUCTURE_SELECTOR_CENSUS = {
-    'structure-00f5ae', 'structure-00ff04', 'structure-010152', 'structure-010164',
-    'structure-010176', 'structure-01484e', 'structure-01d820',
-    'structure-014ad2', 'structure-014aec',
-}
+# Schema 7 names generic Entrance Attachments. Every selector the documented
+# grammar accepts is retained; records that fail closed stay partial/unresolved.
+
+
+RECORD_OMISSIONS = (
+    ('viewConditioned', 'view-conditioned face groups unresolved'),
+    ('articulated', 'articulated model transform unresolved'),
+    ('articulated', 'articulated interior unresolved'),
+    ('specialPolygon', 'special polygon command unresolved'),
+    ('paletteBinding', 'scene colour table binding unresolved'),
+    ('attachments', 'Authored surface attachments/openings'),
+    ('attachments', 'Structure selection unavailable'),
+    ('omittedSelector', 'Complete selector omitted'),
+    ('neighborJoin', 'neighboring-cell workspace'),
+    ('roadTemplate', '$7000 road templates'),
+    ('headerCommand', 'model command $'),
+    ('thirdHeight', 'additional height/shape decoding'),
+)
+
+DISK_LOAD_EXAMINED = [
+    {
+        'path': 'title-screen RAM',
+        'finding': (
+            'Table bases at $04BD10, $04BD0C and $04BD22 are zero. The object, '
+            'surface-assembly and building-detail pointer banks are not resident.'
+        ),
+    },
+    {
+        'path': 'first-world RAM pair',
+        'finding': (
+            'Independent cold loads observe-first-world-20260818T101013Z-c5a32b7d and '
+            'observe-first-world-20260818T101117Z-010b9ad3 pin bases $035700, $00E900 and '
+            '$026000. Pointer tables and extracted models are identical; only provenance differs.'
+        ),
+    },
+    {
+        'path': 'interior-window RAM',
+        'finding': (
+            'interior-window-ram-20260818T172346Z-e3772e4d keeps the same three pointer '
+            'tables, ground workspace index and object record heads as the first-world load. '
+            'Entering Capital Spaceport does not disk-load a different model bank.'
+        ),
+    },
+]
+
+UNEXPLORED_COVERAGE = [
+    'Packed STX file layout and the title-to-world loader that writes $04BD10/$04BD0C/$04BD22.',
+    'Live non-Eris $ABDC workspaces and Gaea islands other than authored Birmingham.',
+    'Mission-disk or script-created visual changes that would replace a resident slot.',
+    'View-conditioned object groups, articulated transforms, special polygon commands, '
+    'and post-plan attachment forms the generic selector grammar rejects.',
+    '$7000 / $53F76 ground commands and default empty-cell fill.',
+]
+
+
+def classify_record(model: dict, is_alias: bool) -> None:
+    reason = model.get('reason') or ''
+    if 'null model' in reason or model.get('name') == 'NULL':
+        model['recordClass'] = 'null'
+    elif is_alias:
+        model['recordClass'] = 'alias'
+    elif any(
+        token in reason
+        for token in (
+            'Empty surface record',
+            'Empty building-detail record',
+            'Empty ground record',
+            'model has no vertices',
+            'model has no drawable primitives',
+        )
+    ):
+        model['recordClass'] = 'empty'
+    else:
+        model['recordClass'] = 'geometry'
+    tags = []
+    for tag, token in RECORD_OMISSIONS:
+        if token in reason and tag not in tags:
+            tags.append(tag)
+    model['omissions'] = tags
+
+
+def coverage_ledger(models: list, tables: list, notes: list[str]) -> dict:
+    status = Counter(model['status'] for model in models)
+    classes = Counter(model['recordClass'] for model in models)
+    omissions = Counter(tag for model in models for tag in model.get('omissions') or [])
+    by_id = {model['id']: model for model in models}
+    rows = []
+    for table in tables:
+        unique_ids = list(dict.fromkeys(table['entries']))
+        records = [by_id[identity] for identity in unique_ids]
+        row_status = Counter(model['status'] for model in records)
+        row_class = Counter(model['recordClass'] for model in records)
+        rows.append({
+            'kind': table['kind'],
+            'address': table['address'],
+            'slots': table['entryCount'],
+            'unique': len(unique_ids),
+            'decoded': row_status['decoded'],
+            'partial': row_status['partial'],
+            'unresolved': row_status['unresolved'],
+            'aliases': row_class['alias'],
+            'empty': row_class['empty'],
+            'nullRecords': row_class['null'],
+            'extentEvidence': table['extentEvidence'],
+        })
+    return {
+        'complete': False,
+        'notes': notes,
+        'census': {
+            'unique': len(models),
+            'decoded': status['decoded'],
+            'partial': status['partial'],
+            'unresolved': status['unresolved'],
+        },
+        'classifications': {
+            'geometry': classes['geometry'],
+            'alias': classes['alias'],
+            'empty': classes['empty'],
+            'null': classes['null'],
+            'viewConditioned': omissions['viewConditioned'],
+            'articulated': omissions['articulated'],
+            'specialPolygon': omissions['specialPolygon'],
+            'paletteBinding': omissions['paletteBinding'],
+            'attachments': omissions['attachments'],
+            'omittedSelector': omissions['omittedSelector'],
+            'neighborJoin': omissions['neighborJoin'],
+            'roadTemplate': omissions['roadTemplate'],
+        },
+        'tables': rows,
+        'unexplored': list(UNEXPLORED_COVERAGE),
+        'diskLoad': list(DISK_LOAD_EXAMINED),
+    }
 
 
 def extract(data: bytes, source: dict) -> dict:
@@ -907,16 +1033,11 @@ def extract(data: bytes, source: dict) -> dict:
                     mesh, gaps = decode_structure(data, pointer, palette_at(data, palette_index), hardware, scale, third_height)
                     try:
                         selection = decode_structure_selection(data, mesh, scale, palette_at(data, palette_index), hardware)
-                        if identity in STRUCTURE_SELECTOR_CENSUS:
-                            model['structureSelection'] = selection
-                            gaps = [
-                                gap for gap in gaps
-                                if gap != 'Authored surface attachments/openings are not yet decoded.'
-                            ]
-                        else:
-                            gaps.append(
-                                'Complete selector omitted: outside the STATE OFFICE and previously complete census.'
-                            )
+                        model['structureSelection'] = selection
+                        gaps = [
+                            gap for gap in gaps
+                            if gap != 'Authored surface attachments/openings are not yet decoded.'
+                        ]
                     except (ValueError, struct.error) as error:
                         gaps.append(f'Structure selection unavailable: {error}.')
                     if mesh['faces']:
@@ -1478,9 +1599,11 @@ def extract(data: bytes, source: dict) -> dict:
                     'confidence': 'verified',
                     'source': 'docs/research/damocles-generic-entrance-attachments.md',
                 })
+    alias_ids = {identity for identity, _ in structure_aliases}
     for model in models:
         if 'selectionReason' in model:
             model['reason'] += ' Detail selection unavailable: ' + model.pop('selectionReason') + '.'
+        classify_record(model, model['id'] in alias_ids)
     forms = {}
     for model in models:
         if model['kind'] == 'object' and model['variants']:
@@ -1494,16 +1617,16 @@ def extract(data: bytes, source: dict) -> dict:
             model['variants'] = variants
             model['relatedModels'].extend(other['id'] for other in group if other is not model)
     coverage_notes = [
-        'Resident first-world census; not a claim of complete disk coverage.',
-        'Conditional geometry, surface attachments, scene palette binding, and named places outside the captured Eris workspace and authored Gaea Birmingham Island map remain incomplete.',
+        'Resident first-world census after examining title-screen, first-world and interior-window RAM; not a claim that every packed disk file has been walked.',
+        'Conditional geometry, scene palette binding, and named places outside the captured Eris workspace and authored Gaea Birmingham Island map remain incomplete.',
         'Eris cell ground/pad/road records at $1E000 are decoded locally; $7000 road templates, $53F76 attachments and default empty-cell fill remain incomplete.',
-        'Unexamined disk-loaded content and script-created visual changes are not included.',
+        'Selectors the documented post-plan grammar accepts are retained; rejected attachment forms stay named in the model reason.',
     ]
     if gaea_coverage:
         coverage_notes.append(gaea_coverage)
     return {'schemaVersion': 7, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'places': places, 'tables': tables,
-            'coverage': {'complete': False, 'notes': coverage_notes}}
+            'coverage': coverage_ledger(models, tables, coverage_notes)}
 
 
 def validate_source(manifest: dict, pin: dict) -> None:

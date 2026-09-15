@@ -9,3 +9,5 @@ We considered keeping all extraction offline until playable integration, and gen
 _(Status note, 2026-09-10: ADR 0042 separately admits the shell-owned Flyover to inspect the recovered Gamma System before playable integration. That is a sibling read-only exception, not an expansion of the Catalogue: the two keep separate pages, documents and presentation contracts.)_
 
 _(Status note, 2026-09-11: ADR 0043 admits Damocles play; "playable integration still follows The Second City" no longer holds. The Catalogue stays read-only and separately versioned, and the Damocles Gameplay Session reads it as its Data Payload.)_
+
+_(Status note, 2026-09-15: Catalogue unique-record totals live in the generated `coverage.census` ledger rather than in this ADR.)_

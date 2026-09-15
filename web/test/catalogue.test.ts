@@ -145,6 +145,16 @@ describe('Damocles catalogue contract', () => {
     );
     expect(data.models.some(model => model.status === 'decoded')).toBe(true);
   });
+  it('rejects a coverage census that does not match the models', () => {
+    const bad = fixture();
+    (bad.coverage as { census?: object }).census = {
+      unique: 99,
+      decoded: 1,
+      partial: 0,
+      unresolved: 0
+    };
+    expect(() => parseCatalogue(bad)).toThrow('census');
+  });
 });
 
 it('triangulates a concave polygon without filling its notch', () => {
@@ -195,6 +205,27 @@ it('can triangulate every exposed recovered face', async () => {
       }
     }
   }
+});
+
+it('keeps a generated census ledger that cannot drift from the models', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  expect(data.coverage.census.unique).toBe(data.models.length);
+  expect(data.coverage.complete).toBe(false);
+  expect(data.models.some(model => model.recordClass === 'null')).toBe(true);
+  expect(data.models.some(model => model.recordClass === 'empty')).toBe(true);
+  expect(data.models.some(model => model.recordClass === 'alias')).toBe(true);
+  expect(
+    data.models.filter(model => model.structureSelection).length
+  ).toBeGreaterThan(9);
+  expect(
+    data.coverage.diskLoad.some(item => item.path.includes('title-screen'))
+  ).toBe(true);
+  expect(data.coverage.tables).toHaveLength(4);
+  expect(data.coverage.tables.some(table => table.kind === 'interior')).toBe(
+    true
+  );
 });
 
 it('rejects contradictory slot and place relationships', () => {
