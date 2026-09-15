@@ -1243,3 +1243,44 @@ class DetailSelectionTests(unittest.TestCase):
             decode_detail_selection(data, mesh['sourceEnd'], mesh['recordCount'])
             decoded += 1
         self.assertEqual(decoded, 58)
+
+
+class GroundLetteringTests(unittest.TestCase):
+    """Ground $6000 records consumed at $053F76 share the object text tail."""
+
+    def test_position_words_are_cell_local_and_glyphs_lie_flat(self):
+        from damocleslab.catalogue import decode_ground
+
+        # Header, one plan point, a $6000 record with plane bit 6 set, then the
+        # stream terminator. Font 0 glyph 'A' is a stroke pair.
+        record = bytes.fromhex('00ff 84b0 80c8 0000')
+        record += bytes.fromhex('6000') + struct.pack(
+            '>3hHhbbH', 0x7D44, 0, 0x8096 - 0x10000, 0x8040, 16, 2, 2, 0x0777
+        ) + b'A\0'
+        record += bytes.fromhex('0000')
+        data = bytearray(bytes(record).ljust(0x31910, b'\0'))
+        struct.pack_into('>h', data, 0x31700 + (ord('A') - 32) * 2, 0x200)
+        data[0x31900:0x31908] = bytes.fromhex('0000 0202 81 0408 00')
+        mesh, gaps, transform, _ = decode_ground(bytes(data), 0, 0, hardware=[0] * 16)
+        self.assertEqual(gaps, [])
+        self.assertEqual(transform, 0)
+        self.assertEqual(mesh['texts'], [
+            {'anchor': [-700, 0, 150], 'font': 0, 'plane': 0x40, 'text': 'A'},
+        ])
+        # Plane bit 6 lays the glyph flat: the vertical axis runs along Z. The
+        # plan vertex is absent because no polygon in this record uses it.
+        self.assertEqual(mesh['vertices'], [[-700, 0, 150], [-696, 0, 154]])
+        self.assertEqual(len(mesh['lines']), 1)
+
+    def test_a_rotated_cell_keeps_the_text_as_a_named_gap(self):
+        from damocleslab.catalogue import decode_ground
+
+        record = bytes.fromhex('00ff 84b0 80c8 0000')
+        record += bytes.fromhex('6000') + struct.pack(
+            '>3hHhbbH', 0, 0, 0, 0x8040, 16, 2, 2, 0x0777
+        ) + b'A\0' + bytes.fromhex('0000')
+        # Orientation 1 selects a transform that swaps or negates the plan, and
+        # the text record is copied into the frame stream untransformed.
+        _, gaps, transform, _ = decode_ground(bytes(record), 0, 1, hardware=[0] * 16)
+        self.assertNotEqual(transform, 0)
+        self.assertTrue(any('untransformed' in gap for gap in gaps))

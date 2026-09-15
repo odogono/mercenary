@@ -915,3 +915,22 @@ it('records the cell background colours a surface record carries', async () => {
     { colour: '#4488cc', sourceColour: 0x80_8e }
   ]);
 });
+
+it('paints the runway designations a ground record carries as vector text', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const runway = data.models.find(model => model.id === 'ground-0205d2-00')!;
+  expect(runway.status).toBe('decoded');
+  expect(runway.reason).toBe('');
+  const mesh = runway.variants[0]!.mesh;
+  // One apron polygon, then the stroke glyphs of the painted number.
+  expect(mesh.faces).toHaveLength(1);
+  expect(mesh.lines.length).toBeGreaterThan(30);
+  // Every ground record now decodes, so none of them names this gap.
+  expect(
+    data.models.filter(
+      model => model.kind === 'ground' && model.status !== 'decoded'
+    )
+  ).toHaveLength(0);
+});

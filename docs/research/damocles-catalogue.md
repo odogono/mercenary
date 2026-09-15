@@ -103,8 +103,8 @@ qualification for each table. Every slot maps to one model identity; repeated
 pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
 
-Current extraction accounts for **832 unique records**: **484 decoded**,
-**339 partial**, and **9 unresolved**. “Decoded” means the supported record was
+Current extraction accounts for **832 unique records**: **487 decoded**,
+**336 partial**, and **9 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.
 Unresolved records remain searchable and retain their source identity and reason.
@@ -345,7 +345,16 @@ code. Targeted disassembly used to establish them remains ignored at
   decode dropped. See the [watch run and register evidence](damocles-eris-ground.md). `$C00E` is a two-point edge in
   the same colour family. `$7000` aligns the source address, reads X/Z plus an
   object-table byte offset, applies the cell orientation, and composes that
-  address-based model. `$53F76` is a separate runtime vector-text path, not the
+  address-based model. `$53F76` is the ground vector-text path: it aligns the source address down,
+  reads X, Y and Z, and shares the flags, advance, glyph scales, colour and
+  inline text tail at `$053FCA` with the object records. X and Z use the same
+  `$8000`-relative cell-local encoding as the plan vertices because the consumer
+  subtracts only the camera's low word; Y is already a world height. Plane bit 6
+  lays the glyphs flat, so the Eris spaceport cells carry their runway
+  designations `09-02` and `01-14` painted on the apron, and a Gaea cell carries
+  a `3`. The record is copied into the frame stream untransformed, so a cell with
+  a nonzero orientation would need separate evidence and stays a named gap.
+  This is not the
   source placement consumer. Structure slot zero still indexes surface-table
   entry zero, whose metadata binds palette zero at `$054E10`; this supplies the
   scene colour for the two transformed `object-041b1e` placement groups.
@@ -478,7 +487,6 @@ named-place lists, remaining object residences/transforms, live articulation
 angles (rest pose only), Building detail 69's extra projected slots, object text
 through live `$CCA0` tokens, indirect text pointers and font 4, the palette
 binding of unplaced objects 333–338, the live `$7AFB` attachment predicate,
-the `$6000` ground vector-text command in three records,
 the producer of the ground band below the horizon, and script-created visual
 changes. The remaining nine unresolved records are NULL, five empty surface
 records, two empty building details and Building detail 69. Resident model banks do not change between first-world and occupied-Spaceport RAM.
