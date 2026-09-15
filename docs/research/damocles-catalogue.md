@@ -103,8 +103,8 @@ qualification for each table. Every slot maps to one model identity; repeated
 pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
 
-Current extraction accounts for **832 unique records**: **489 decoded**,
-**334 partial**, and **9 unresolved**. “Decoded” means the supported record was
+Current extraction accounts for **832 unique records**: **495 decoded**,
+**328 partial**, and **9 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.
 Unresolved records remain searchable and retain their source identity and reason.
@@ -192,9 +192,15 @@ code. Targeted disassembly used to establish them remains ignored at
   bit 7 set (`$053572`) is articulation: an axis byte, a pivot X word and pivot
   Y/Z words follow, and at `$0537B0` every vertex with a negative Y is
   complemented and rotated about that pivot by the global angle at `$7888`. The
-  catalogue shows the rest pose (angle zero) and keeps the record partial with
-  the `articulated` omission (six objects, for example WASHING MACHINE and
-  NOVABOMB). Supported name/far-marker headers do not change local vertices.
+  `$7888` is a free-running byte: it differs between two cold boots of the same
+  scene and in every other capture, so no frame is canonical. It indexes the
+  256-entry sine table at `$925A`, where `T[a]` is the sine and `T[a + 64]` the
+  cosine of `a × 360/256`. `$0537B0` translates a tagged vertex to the pivot,
+  applies `x·cos − y·sin` and `x·sin + y·cos` keeping only each product's high
+  word doubled, and translates back; the axis byte picks the plane, negative
+  Y/Z, zero X/Z and positive X/Y. The catalogue reproduces that fixed point,
+  truncation included, and offers **eight sampled angles** as forms for the six
+  articulated objects, so NOVABOMB and the beacons can be inspected turning. Supported name/far-marker headers do not change local vertices.
   Relative header jumps and colour patches expose related visual forms with the
   same vertex stream; the browser offers those forms in its selector.
 - `$8003` (`$0534B0`) is the beacon flasher: one unconditional byte-pair patch,
@@ -493,7 +499,8 @@ Birmingham Island; those Gaea place identities are not applied to Dion. See
 Still unexplored or incomplete: packed Pasti STX track payload, live
 `$ABDC` workspaces other than Eris first-world, Vesta Politburo City, Gaea UR City and Dion, Gaea islands other than Birmingham and UR City, remaining
 named-place lists, remaining object residences/transforms, live articulation
-angles (rest pose only), Building detail 69's extra projected slots, object text
+angles for the four articulated building details, whose rotation happens in the
+structure-scaled frame, Building detail 69's extra projected slots, object text
 through live `$CCA0` tokens, indirect text pointers and font 4, the palette
 binding of unplaced objects 333–338, the live `$7AFB` attachment predicate,
 the producer of the ground band below the horizon, and script-created visual

@@ -1,4 +1,5 @@
 import json
+import math
 import struct
 import sys
 import unittest
@@ -942,18 +943,37 @@ class ConditionedObjectFormTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, r'^procedural: \$8004'):
             decode_mesh(bytes.fromhex('8004 0001 2500'), 0, 'object')
 
-    def test_articulated_object_uses_the_rest_pose_and_names_the_gap(self):
+    def test_articulated_object_samples_its_rotation(self):
         from damocleslab.catalogue import decode_object_forms
 
         header = bytes.fromhex('8001 00ff') + struct.pack('>3h', 0, 25, 28)
         # A negative Y tags a rotating vertex; its complement is the rest height.
         body = struct.pack('>10h', 0, -30, 0, 10, 0, 0, 0, 10, 0, -32768)
-        data = header + body + bytes.fromhex('0000 0111 04 08 0c 00 0000')
+        record = header + body + bytes.fromhex('0000 0111 04 08 0c 00 0000')
+        data = bytearray(bytes(record).ljust(0x92_5a + 0x280, b'\0'))
+        for index in range(320):
+            struct.pack_into(
+                '>h', data, 0x92_5a + index * 2,
+                max(-32768, min(32767, round(32768 * math.sin(2 * math.pi * index / 256)))),
+            )
+        data = bytes(data)
         variants, conditions, gaps = decode_object_forms(data, 0, None, None)
         self.assertEqual(variants[0]['mesh']['vertices'][0], [0, 29, 0])
-        self.assertEqual(variants[0]['mesh']['articulation'], {'axis': 0, 'pivot': [0, 25, 28], 'angle': '$7888'})
-        self.assertEqual(conditions, [])
-        self.assertTrue(gaps[0].startswith('Articulated part shown at its rest angle'))
+        self.assertEqual(variants[0]['mesh']['articulation'], {'axis': 0, 'pivot': [0, 25, 28], 'angle': '$7888', 'vertices': [0]})
+        self.assertEqual(conditions, ['articulation angle ($7888)'])
+        self.assertEqual(gaps, [])
+        self.assertEqual(
+            [form['id'] for form in variants],
+            ['record', 'angle-20', 'angle-40', 'angle-60',
+             'angle-80', 'angle-a0', 'angle-c0', 'angle-e0'],
+        )
+        # Axis byte 0 turns the tagged vertex in the X/Z plane about the pivot;
+        # a quarter turn moves it from the pivot's Z line onto its X line. The
+        # native routine keeps only the product's high word, so 28 comes back
+        # as 26 rather than being rounded.
+        quarter = next(form for form in variants if form['id'] == 'angle-40')
+        self.assertEqual(quarter['mesh']['vertices'][0], [26, 29, 28])
+        self.assertEqual(quarter['mesh']['vertices'][1:], variants[0]['mesh']['vertices'][1:])
 
     def test_articulated_detail_reads_its_pivot_record_before_the_faces(self):
         from damocleslab.catalogue import decode_mesh
@@ -963,7 +983,7 @@ class ConditionedObjectFormTests(unittest.TestCase):
         data += bytes.fromhex('0777 04 08 0c 00 0000')
         mesh = decode_mesh(data, 0, 'interior')
         self.assertEqual(mesh['vertices'][2], [0, 9, 0])
-        self.assertEqual(mesh['articulation'], {'axis': 1, 'pivot': [-350, 1100, 200], 'angle': '$7888'})
+        self.assertEqual(mesh['articulation'], {'axis': 1, 'pivot': [-350, 1100, 200], 'angle': '$7888', 'vertices': [2]})
         self.assertEqual(len(mesh['faces']), 1)
 
     def _text_world(self, flags: int, text: bytes) -> bytes:
