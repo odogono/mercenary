@@ -60,7 +60,10 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
   node('model-kind').textContent = kindLabel(model.kind);
   node('model-id').textContent =
     `${model.id} · ${model.nameStatus === 'unknown' ? 'Unidentified' : `${model.nameStatus} name`}`;
-  node('model-status').textContent = model.status;
+  node('model-status').textContent =
+    model.recordClass === 'geometry'
+      ? model.status
+      : `${model.status} · ${model.recordClass}`;
   if (model.kind !== 'object') {
     paragraph(
       details,
@@ -256,7 +259,14 @@ const render = (focus: MapFocus) => {
   for (const entry of results) {
     const a = link(entry.name, 'model', entry.id);
     a.setAttribute('aria-current', String(entry.id === model?.id));
-    a.append(element('small', `${kindLabel(entry.kind)} · ${entry.status}`));
+    a.append(
+      element(
+        'small',
+        `${kindLabel(entry.kind)} · ${entry.status}${
+          entry.recordClass === 'geometry' ? '' : ` · ${entry.recordClass}`
+        }`
+      )
+    );
     nav.append(a);
   }
   showModel(model, instanceId);
@@ -292,18 +302,46 @@ const start = async () => {
     }
     const ledger = node('ledger');
     ledger.replaceChildren();
-    for (const table of data.tables) {
+    const census = data.coverage.census;
+    paragraph(
+      ledger,
+      `${census.unique} unique records · ${census.decoded} decoded · ${census.partial} partial · ${census.unresolved} unresolved`
+    );
+    const classes = data.coverage.classifications;
+    if (Object.keys(classes).length) {
+      paragraph(
+        ledger,
+        `Classes: ${classes.geometry ?? 0} geometry · ${classes.alias ?? 0} alias · ${classes.empty ?? 0} empty · ${classes.null ?? 0} NULL · ${classes.viewConditioned ?? 0} view-conditioned · ${classes.articulated ?? 0} articulated · ${classes.specialPolygon ?? 0} special polygon · ${classes.paletteBinding ?? 0} palette · ${classes.attachments ?? 0} attachments`
+      );
+    }
+    const ledgerTables =
+      data.coverage.tables.length > 0
+        ? data.coverage.tables
+        : data.tables.map(table => ({
+            kind: table.kind,
+            slots: table.entryCount,
+            unique: new Set(table.entries).size,
+            address: table.address,
+            decoded: 0,
+            partial: 0,
+            unresolved: 0,
+            aliases: 0,
+            empty: 0,
+            nullRecords: 0,
+            extentEvidence: table.extentEvidence
+          }));
+    for (const table of ledgerTables) {
       const row = element('div');
       row.className = 'ledger-row';
       row.append(
         element('span', kindLabel(table.kind)),
-        element('span', `${table.entryCount} entries`)
+        element('span', `${table.slots} slots · ${table.unique} unique`)
       );
       ledger.append(row);
       paragraph(ledger, table.extentEvidence);
       paragraph(
         ledger,
-        `${new Set(table.entries).size} unique records · ${address(table.address)}`
+        `${table.decoded} decoded · ${table.partial} partial · ${table.unresolved} unresolved · ${table.aliases} alias · ${table.empty} empty · ${table.nullRecords} NULL · ${address(table.address)}`
       );
     }
     paragraph(
@@ -312,6 +350,22 @@ const start = async () => {
         ? 'Source census complete'
         : 'Source coverage incomplete'
     );
+    if (data.coverage.diskLoad.length) {
+      paragraph(ledger, 'Examined disk-load and resident-bank paths');
+      const loads = element('ul');
+      for (const item of data.coverage.diskLoad) {
+        loads.append(element('li', `${item.path}: ${item.finding}`));
+      }
+      ledger.append(loads);
+    }
+    if (data.coverage.unexplored.length) {
+      paragraph(ledger, 'Unexplored coverage');
+      const missing = element('ul');
+      for (const note of data.coverage.unexplored) {
+        missing.append(element('li', note));
+      }
+      ledger.append(missing);
+    }
     const notes = element('ul');
     for (const note of data.coverage.notes) {
       notes.append(element('li', note));

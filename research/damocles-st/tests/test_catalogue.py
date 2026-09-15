@@ -1,3 +1,4 @@
+import json
 import struct
 import sys
 import unittest
@@ -351,3 +352,104 @@ class VisibilityListTests(unittest.TestCase):
         from damocleslab.catalogue import decode_visibility_list
         with self.assertRaisesRegex(ValueError, 'visibility face reference'):
             decode_visibility_list(bytes([4, 0]), 0, 3)
+
+
+def _empty_world():
+    data = bytearray(1048576)
+    struct.pack_into('>I', data, 0x4bd10, 0x35700)
+    struct.pack_into('>I', data, 0x4bd22, 0x26000)
+    for base, count in [(0x35700, 378), (0xe900, 280), (0x26000, 130)]:
+        for slot in range(count):
+            struct.pack_into('>I', data, base + slot * 4, 0x1000)
+        struct.pack_into('>H', data, base + 0x1000, 0x8000)
+    return data
+
+
+class CensusTests(unittest.TestCase):
+    def test_ledger_classifies_null_and_empty_records_and_matches_counts(self):
+        from damocleslab.catalogue import extract
+        result = extract(bytes(_empty_world()), {})
+        coverage = result['coverage']
+        census = coverage['census']
+        models = result['models']
+        self.assertEqual(census['unique'], len(models))
+        self.assertEqual(
+            census['decoded'] + census['partial'] + census['unresolved'],
+            census['unique'],
+        )
+        self.assertEqual(census['decoded'], sum(m['status'] == 'decoded' for m in models))
+        self.assertEqual(census['partial'], sum(m['status'] == 'partial' for m in models))
+        self.assertEqual(census['unresolved'], sum(m['status'] == 'unresolved' for m in models))
+        self.assertFalse(coverage['complete'])
+        self.assertTrue(any(m['recordClass'] == 'null' for m in models))
+        self.assertTrue(any(m['recordClass'] == 'empty' for m in models))
+        self.assertEqual(
+            coverage['classifications']['null'],
+            sum(m['recordClass'] == 'null' for m in models),
+        )
+        self.assertEqual(len(coverage['tables']), 4)
+        kinds = {row['kind'] for row in coverage['tables']}
+        self.assertEqual(kinds, {'object', 'structure', 'interior', 'ground'})
+        self.assertTrue(any('disk' in note.lower() for note in coverage['unexplored']))
+        self.assertTrue(any('title-screen' in item['path'] for item in coverage['diskLoad']))
+
+    def test_keeps_a_selector_that_the_generic_grammar_accepts(self):
+        from damocleslab.catalogue import extract
+        data = _empty_world()
+        start = 0x1a000
+        interior = 0x27000
+        struct.pack_into('>I', data, 0xe900 + 200 * 4, start - 0xe900)
+        struct.pack_into('>I', data, 0x26000 + 5 * 4, interior - 0x26000)
+        data[start - 8:start] = bytes.fromhex('01010005 00000000')
+        body = bytes.fromhex('0064 0050 0777 0444 000a000a 0014000a 0000 01020777 0000 0000')
+        regions = bytes.fromhex('c000 0000000a0000000a 0100 0000')
+        data[start:start + len(body) + len(regions)] = body + regions
+        mesh = struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768)
+        mesh += bytes.fromhex('0777 04 08 0c 00 0000 0000 0100 0000 0000')
+        data[interior:interior + len(mesh)] = mesh
+        result = extract(bytes(data), {})
+        model = next(m for m in result['models'] if m['id'] == f'structure-{start:06x}')
+        self.assertIn('structureSelection', model)
+        self.assertNotEqual(model['id'], 'structure-01484e')
+
+    def test_pinned_first_world_captures_extract_equal_models_when_present(self):
+        from damocleslab.catalogue import extract
+        root = Path(__file__).resolve().parents[1] / 'work'
+        runs = [
+            root / 'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram',
+            root / 'observe-first-world-20260818T101117Z-010b9ad3' / 'observed.ram',
+        ]
+        if not all(path.exists() for path in runs):
+            self.skipTest('pinned first-world RAM captures are Restricted Material')
+        first = extract(runs[0].read_bytes(), {'run': 'a'})
+        second = extract(runs[1].read_bytes(), {'run': 'b'})
+        first['source'] = second['source'] = {}
+        self.assertEqual(first, second)
+
+    def test_interior_window_ram_does_not_replace_resident_model_tables(self):
+        root = Path(__file__).resolve().parents[1] / 'work'
+        first = root / 'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram'
+        interior = root / 'interior-window-ram-20260818T172346Z-e3772e4d' / 'interior.ram'
+        if not first.exists() or not interior.exists():
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        a, b = first.read_bytes(), interior.read_bytes()
+        self.assertEqual(a[0x35700:0x35700 + 378 * 4], b[0x35700:0x35700 + 378 * 4])
+        self.assertEqual(a[0xe900:0xe900 + 280 * 4], b[0xe900:0xe900 + 280 * 4])
+        self.assertEqual(a[0x26000:0x26000 + 130 * 4], b[0x26000:0x26000 + 130 * 4])
+        self.assertEqual(a[0x1e400:0x1e400 + 512], b[0x1e400:0x1e400 + 512])
+
+    def test_research_note_totals_match_the_tracked_payload_census(self):
+        root = Path(__file__).resolve().parents[3]
+        payload = root / 'payload' / 'damocles' / 'catalogue.json'
+        note = root / 'docs' / 'research' / 'damocles-catalogue.md'
+        document = json.loads(payload.read_text())
+        census = document['coverage']['census']
+        text = note.read_text()
+        collapsed = ' '.join(text.split())
+        marker = (
+            f"**{census['unique']} unique records**: **{census['decoded']} decoded**, "
+            f"**{census['partial']} partial**, and **{census['unresolved']} unresolved**"
+        )
+        self.assertIn(marker, collapsed)
+        self.assertIn('Building detail', text)
+        self.assertIn('$026000', text)

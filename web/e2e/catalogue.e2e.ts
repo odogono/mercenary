@@ -126,6 +126,9 @@ test('99 Chevy is mapped on Gaea and links to its key', async ({ page }) => {
     'GAEA · 512.484, 0.000, 1796.523 · ST surface grid units'
   );
   await expect(page.locator('#ledger')).toContainText('Gaea Birmingham Island');
+  await expect(page.locator('#ledger')).toContainText('title-screen RAM');
+  await expect(page.locator('#ledger')).toContainText('NULL');
+  await expect(page.locator('#ledger')).toContainText('Building detail');
   await page.goBack();
   await expect(page).toHaveURL(/instance=object-slot-2/);
   await page
@@ -250,6 +253,7 @@ test('unresolved records, empty filters and invalid links are explained', async 
     'no parent or local placement is claimed'
   );
   await page.goto('/catalogue?model=object-035cfc');
+  await expect(page.locator('#model-status')).toContainText('null');
   await expect(page.locator('#viewer-message')).toContainText(
     'Geometry unresolved'
   );

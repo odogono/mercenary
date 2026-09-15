@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The Damocles Catalogue coverage ledger classifies every resident record (decoded,
+  partial, unresolved, alias, empty, NULL) and records examined disk-load paths
+  from title-screen, first-world and interior-window RAM. Selectors the documented
+  post-plan grammar accepts are retained instead of an allowlist (#173).
 - The Damocles Catalogue's per-body Surface placement map zooms and pans: wheel zooms about
   the pointer, drag pans, `+`, `−` and Fit all buttons and the same keys with arrow panning
   work from the keyboard, and a readout states the zoom, the span in surface grid units and

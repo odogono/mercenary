@@ -21,6 +21,8 @@ export interface Mesh {
   readonly lines: readonly Primitive[];
   readonly vertices: readonly Point[];
 }
+export const RECORD_CLASSES = ['geometry', 'alias', 'empty', 'null'] as const;
+export type RecordClass = (typeof RECORD_CLASSES)[number];
 export interface Model {
   readonly detailSelection?: readonly DetailGroup[];
   readonly evidence: readonly {
@@ -33,7 +35,9 @@ export interface Model {
   readonly linkedInstances: readonly string[];
   readonly name: string;
   readonly nameStatus: 'verified' | 'candidate' | 'unknown';
+  readonly omissions: readonly string[];
   readonly reason: string;
+  readonly recordClass: RecordClass;
   readonly relatedModels: readonly string[];
   readonly slots: readonly number[];
   readonly sourceAddress: number;
@@ -128,11 +132,37 @@ export interface Place {
   readonly instances: readonly string[];
   readonly name: string;
 }
+export interface CoverageTable {
+  readonly address: number;
+  readonly aliases: number;
+  readonly decoded: number;
+  readonly empty: number;
+  readonly extentEvidence: string;
+  readonly kind: Kind;
+  readonly nullRecords: number;
+  readonly partial: number;
+  readonly slots: number;
+  readonly unique: number;
+  readonly unresolved: number;
+}
 export interface Catalogue {
   readonly bodies: readonly { readonly id: string; readonly name: string }[];
   readonly coverage: {
+    readonly census: {
+      readonly decoded: number;
+      readonly partial: number;
+      readonly unique: number;
+      readonly unresolved: number;
+    };
+    readonly classifications: Readonly<Record<string, number>>;
     readonly complete: boolean;
+    readonly diskLoad: readonly {
+      readonly finding: string;
+      readonly path: string;
+    }[];
     readonly notes: readonly string[];
+    readonly tables: readonly CoverageTable[];
+    readonly unexplored: readonly string[];
   };
   readonly instances: readonly Instance[];
   readonly models: readonly Model[];
@@ -545,7 +575,12 @@ export const parseCatalogue = (value: unknown): Catalogue => {
       linkedInstances: strings(m['linkedInstances']),
       name: string(m['name']),
       nameStatus: choice(m['nameStatus'], ['verified', 'candidate', 'unknown']),
+      omissions: m['omissions'] === undefined ? [] : strings(m['omissions']),
       reason,
+      recordClass:
+        m['recordClass'] === undefined
+          ? 'geometry'
+          : choice(m['recordClass'], RECORD_CLASSES),
       relatedModels: strings(m['relatedModels']),
       slots: list(m['slots']).map(integer),
       sourceAddress: integer(m['sourceAddress']),
@@ -768,11 +803,76 @@ export const parseCatalogue = (value: unknown): Catalogue => {
   if (typeof coverage['complete'] !== 'boolean') {
     fail('invalid coverage status');
   }
+  const counted = {
+    unique: models.length,
+    decoded: models.filter(model => model.status === 'decoded').length,
+    partial: models.filter(model => model.status === 'partial').length,
+    unresolved: models.filter(model => model.status === 'unresolved').length
+  };
+  const census =
+    coverage['census'] === undefined
+      ? counted
+      : {
+          unique: integer(object(coverage['census'])['unique']),
+          decoded: integer(object(coverage['census'])['decoded']),
+          partial: integer(object(coverage['census'])['partial']),
+          unresolved: integer(object(coverage['census'])['unresolved'])
+        };
+  if (
+    census.unique !== counted.unique ||
+    census.decoded !== counted.decoded ||
+    census.partial !== counted.partial ||
+    census.unresolved !== counted.unresolved
+  ) {
+    fail('coverage census does not match models');
+  }
+  const classifications: Record<string, number> =
+    coverage['classifications'] === undefined
+      ? {}
+      : Object.fromEntries(
+          Object.entries(object(coverage['classifications'])).map(
+            ([key, value]) => [key, integer(value)]
+          )
+        );
+  const coverageTables: CoverageTable[] =
+    coverage['tables'] === undefined
+      ? []
+      : list(coverage['tables']).map(item => {
+          const row = object(item);
+          return {
+            address: integer(row['address']),
+            aliases: integer(row['aliases']),
+            decoded: integer(row['decoded']),
+            empty: integer(row['empty']),
+            extentEvidence: string(row['extentEvidence']),
+            kind: choice(row['kind'], KINDS),
+            nullRecords: integer(row['nullRecords']),
+            partial: integer(row['partial']),
+            slots: integer(row['slots']),
+            unique: integer(row['unique']),
+            unresolved: integer(row['unresolved'])
+          };
+        });
+  const diskLoad =
+    coverage['diskLoad'] === undefined
+      ? []
+      : list(coverage['diskLoad']).map(item => {
+          const row = object(item);
+          return { finding: string(row['finding']), path: string(row['path']) };
+        });
   return {
     bodies,
     coverage: {
+      census,
+      classifications,
       complete: coverage['complete'] as boolean,
-      notes: strings(coverage['notes'])
+      diskLoad,
+      notes: strings(coverage['notes']),
+      tables: coverageTables,
+      unexplored:
+        coverage['unexplored'] === undefined
+          ? []
+          : strings(coverage['unexplored'])
     },
     instances,
     models,
@@ -795,7 +895,7 @@ export const selectModels = (
       (!kind || model.kind === kind) &&
       (!status || model.status === status) &&
       words.every(word =>
-        `${model.name} ${model.id} ${model.slots.join(' ')}`
+        `${model.name} ${model.id} ${model.slots.join(' ')} ${model.recordClass}`
           .toLowerCase()
           .includes(word)
       )
