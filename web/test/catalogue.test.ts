@@ -934,3 +934,33 @@ it('paints the runway designations a ground record carries as vector text', asyn
     )
   ).toHaveLength(0);
 });
+
+it('gives each door key and transporter slot its own label form', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const key = data.models.find(model => model.id === 'object-036d64')!;
+  expect(key.status).toBe('decoded');
+  expect(key.conditions).toContain('resident slot (letter label)');
+  expect(key.variants.map(form => form.id)).toEqual(
+    Array.from({ length: 10 }, (_, index) => `slot-${30 + index}-record`)
+  );
+  expect(key.variants[0]!.name).toContain('label A');
+  expect(key.variants[9]!.name).toContain('label J');
+  // The label is filled glyph geometry, so a later slot is not the same mesh.
+  expect(key.variants[0]!.mesh.faces.length).toBeGreaterThan(14);
+
+  // Three tokens no header writes stay named, with their workspace address.
+  const live = data.models.filter(model =>
+    model.omissions.includes('liveText')
+  );
+  expect(live).toHaveLength(3);
+  expect(live.map(model => model.name).sort()).toEqual([
+    'AUTHORS COMPUTER',
+    'EXPLOSIVE-ARMED!',
+    'TELEVISION'
+  ]);
+  expect(live.every(model => /\$C[DE][\dA-F]{2}/.test(model.reason))).toBe(
+    true
+  );
+});
