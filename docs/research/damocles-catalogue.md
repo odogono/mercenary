@@ -103,8 +103,8 @@ qualification for each table. Every slot maps to one model identity; repeated
 pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
 
-Current extraction accounts for **674 unique records**: **202 decoded**,
-**463 partial**, and **9 unresolved**. “Decoded” means the supported record was
+Current extraction accounts for **832 unique records**: **484 decoded**,
+**339 partial**, and **9 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.
 Unresolved records remain searchable and retain their source identity and reason.
@@ -325,13 +325,18 @@ code. Targeted disassembly used to establish them remains ignored at
   `$100` from packed bytes at `$5E40`: one world cell index per nybble, seeded
   from `$80000000` so the swap leaves `$8000` in the low word and every point is
   a cell centre. A reference therefore resolves to `(nybble − cell) × 65,536` in
-  the record's own local frame. The table is filled for the cell a capture
-  stands in, so those four records decode completely and every other record
-  keeps the slot named but unplaced, on the primitive and in its reason.
-  Capital Spaceport cell `$87` is the worked example: `$F0` is the centre of the
-  cell four grid steps ahead, which closes the grey apron and the white centre
-  line into a runway and restores the centre-line edge the old decode dropped.
-  See the [watch run and register evidence](damocles-eris-ground.md). `$C00E` is a two-point edge in
+  the record's own local frame. The four slots a record can name are **authored
+  per cell**: `$05493E` reads a longword of four packed bytes at
+  `$1E000 + cell × 4` and rotates it by the cell's transform, so `$1E000` holds
+  a 1 KiB seed table before the `$1E400` word index and the records themselves.
+  Every scene reference in the bank therefore resolves without a capture of the
+  player standing in that cell. Because the offsets are cell-relative, cells
+  sharing one source record draw different geometry, so a scene-joined ground
+  model carries its cell in its identity and names the shared record in its
+  evidence. Capital Spaceport cell `$87` is the worked example: `$F0` is the
+  centre of the cell four grid steps ahead, which closes the grey apron and the
+  white centre line into a runway and restores the centre-line edge the old
+  decode dropped. See the [watch run and register evidence](damocles-eris-ground.md). `$C00E` is a two-point edge in
   the same colour family. `$7000` aligns the source address, reads X/Z plus an
   object-table byte offset, applies the cell orientation, and composes that
   address-based model. `$53F76` is a separate runtime vector-text path, not the
@@ -467,7 +472,7 @@ named-place lists, remaining object residences/transforms, live articulation
 angles (rest pose only), Building detail 69's extra projected slots, object text
 through live `$CCA0` tokens, indirect text pointers and font 4, the palette
 binding of unplaced objects 333–338, the live `$7AFB` attachment predicate,
-scene point joins for every cell but the four a capture stands in,
+the `$6000` ground vector-text command in three records,
 the separate native surface/background fill path, and script-created visual
 changes. The remaining nine unresolved records are NULL, five empty surface
 records, two empty building details and Building detail 69. Resident model banks do not change between first-world and occupied-Spaceport RAM.

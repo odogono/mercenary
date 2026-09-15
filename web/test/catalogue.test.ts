@@ -369,7 +369,7 @@ it('places the scene joins of the cell the capture stands in', async () => {
   const data = parseCatalogue(
     await Bun.file('../payload/damocles/catalogue.json').json()
   );
-  const runway = data.models.find(model => model.id === 'ground-020f8e-00')!;
+  const runway = data.models.find(model => model.id === 'ground-020f8e-00-87')!;
   expect(runway.status).toBe('decoded');
   expect(runway.reason).toBe('');
   const mesh = runway.variants[0]!.mesh;
@@ -386,14 +386,14 @@ it('recovers the spaceport pad strip as a per-cell ground record', async () => {
   const data = parseCatalogue(
     await Bun.file('../payload/damocles/catalogue.json').json()
   );
-  const pad = data.models.find(model => model.id === 'ground-021afe-00')!;
+  const pad = data.models.find(model => model.id === 'ground-021afe-00-88')!;
   expect(pad.kind).toBe('ground');
-  expect(pad.status).toBe('partial');
-  expect(pad.omissions).toEqual(['scenePoint']);
-  expect(pad.reason).toContain('scene point slot $F0');
+  expect(pad.status).toBe('decoded');
+  expect(pad.omissions).toEqual([]);
   expect(pad.reason).not.toContain('neighbor');
-  // Cell $88 is not the captured scene's own cell, so the join stays named
-  // rather than placed, and the primitive still records the slot.
+  // The cell suffix is there because the joins are cell-relative, so cells
+  // sharing this source record cannot share one identity.
+  expect(pad.sourceAddress).toBe(0x2_1a_fe);
   expect(
     pad.variants[0]!.mesh.faces.some(face => face.sceneSlots?.includes(0xf0))
   ).toBe(true);
@@ -410,15 +410,18 @@ it('recovers the spaceport pad strip as a per-cell ground record', async () => {
     'object-041e7c',
     'object-041f9c'
   ]);
-  expect(pad.variants[0]!.mesh.vertices).toHaveLength(88);
+  // Eight vertices more than before the scene joins resolved, and the two
+  // edges that used to be dropped whole are back.
+  expect(pad.variants[0]!.mesh.vertices).toHaveLength(96);
   expect(pad.variants[0]!.mesh.faces).toHaveLength(75);
+  expect(pad.variants[0]!.mesh.lines).toHaveLength(2);
 });
 
 it('uses surface slot zero palette for structureless ground objects', async () => {
   const data = parseCatalogue(
     await Bun.file('../payload/damocles/catalogue.json').json()
   );
-  for (const id of ['ground-021f7c-04', 'ground-021f7c-07']) {
+  for (const id of ['ground-021f7c-04-34', 'ground-021f7c-07-94']) {
     const ground = data.models.find(model => model.id === id)!;
     expect(ground.relatedModels).toContain('object-041b1e');
     expect(ground.omissions).not.toContain('paletteBinding');
