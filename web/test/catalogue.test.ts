@@ -330,6 +330,13 @@ it('recovers the spaceport pad strip as a per-cell ground record', async () => {
   expect(
     data.instances.find(instance => instance.id === 'eris-ground-88')!.model
   ).toBe(pad.id);
+  expect(pad.relatedModels).toEqual([
+    'object-041edc',
+    'object-041e7c',
+    'object-041f9c'
+  ]);
+  expect(pad.variants[0]!.mesh.vertices).toHaveLength(88);
+  expect(pad.variants[0]!.mesh.faces).toHaveLength(75);
 });
 
 it('recovers the spaceport wall below the window without closing the opening', async () => {

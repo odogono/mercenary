@@ -420,7 +420,7 @@ GROUND_JOIN = {0xF0, 0xF4}
 
 def decode_ground(data: bytes, start: int, orientation: int,
                   palette: list[int] | None = None,
-                  hardware: list[int] | None = None) -> tuple[dict, list[str], int]:
+                  hardware: list[int] | None = None) -> tuple[dict, list[str], int, list[dict]]:
     """Decode one per-cell ground/pad/road record. Neighbor-join sentinels are omitted."""
     reader = Reader(data, start)
     first, second = reader.take(1)[0], reader.take(1)[0]
@@ -450,15 +450,31 @@ def decode_ground(data: bytes, start: int, orientation: int,
         plan.append([x - 0x8000, 0, z - 0x8000])
     else:
         raise ValueError('ground vertex terminator missing')
-    vertices, faces, lines, gaps = [], [], [], []
+    vertices, faces, lines, gaps, placements = [], [], [], [], []
     for source_index in range(1024):
         colour = reader.word()
         if colour == 0:
             break
         if colour & 0x4000:
             if colour & 0x2000:
+                if colour & 0x1000:
+                    reader.p &= ~1
+                    x, z, object_offset = struct.unpack('>HHH', reader.take(6))
+                    if transform & 4:
+                        x, z = z, x
+                    if transform & 1:
+                        x = (-x) & 0xFFFF
+                    if transform & 2:
+                        z = (-z) & 0xFFFF
+                    if object_offset % 4:
+                        raise ValueError('invalid ground object-template table offset')
+                    placements.append({
+                        'objectSlot': object_offset // 4,
+                        'position': [x - 0x8000, 0, z - 0x8000],
+                    })
+                    continue
                 gaps.append(
-                    'Ground command with bit 13 set ($53F76 family, including $7000 road templates) is not yet decoded.'
+                    'Ground $6000 vector-text command is not yet decoded.'
                 )
                 break
             kept, dropped = _ground_indices(list(reader.take(2)), len(plan))
@@ -497,9 +513,13 @@ def decode_ground(data: bytes, start: int, orientation: int,
     else:
         raise ValueError('ground primitive terminator missing')
     if not faces and not lines:
-        gaps.append('Empty ground record: default cell fill is not stored as a vertex list.')
+        gaps.append(
+            'Ground record has only $7000 object placements; default cell fill is not stored as a vertex list.'
+            if placements
+            else 'Empty ground record: default cell fill is not stored as a vertex list.'
+        )
     return ({'vertices': vertices, 'faces': faces, 'lines': lines, 'sourceStart': start,
-             'sourceEnd': reader.p}, sorted(set(gaps)), transform)
+             'sourceEnd': reader.p}, sorted(set(gaps)), transform, placements)
 
 
 def _ground_indices(refs: list[int], count: int) -> tuple[list[int], bool]:
@@ -545,6 +565,56 @@ def assemble_mesh(base: dict, detail: dict, scale: tuple[int, int]) -> dict:
         x, y, z = detail['labelAnchor']
         result['labelAnchor'] = [x * scale[0], y, z * scale[1]]
     return result
+
+
+def place_mesh(base: dict, placed: dict, position: list[int]) -> dict:
+    """Append one addressed model at a cell-local ground-template position."""
+    offset = len(base['vertices'])
+    px, py, pz = position
+    result = {
+        **base,
+        'vertices': base['vertices'] + [
+            [x + px, y + py, z + pz] for x, y, z in placed['vertices']
+        ],
+    }
+    for kind in ('faces', 'lines'):
+        result[kind] = base[kind] + [
+            {**primitive, 'vertices': [index + offset for index in primitive['vertices']]}
+            for primitive in placed[kind]
+        ]
+    return result
+
+
+def compose_ground_templates(mesh: dict, placements: list[dict], object_entries: list[str],
+                             by_address: dict[str, dict], data: bytes,
+                             palette: list[int] | None, hardware: list[int] | None
+                             ) -> tuple[dict, list[str], list[str]]:
+    """Resolve native $7000 ground placements through the addressed object table."""
+    related, gaps = [], []
+    for placement in placements:
+        slot = placement['objectSlot']
+        if not 0 <= slot < len(object_entries):
+            gaps.append(f'Ground $7000 placement references object slot {slot} outside the resident table.')
+            continue
+        identity = object_entries[slot]
+        if identity not in related:
+            related.append(identity)
+        target = by_address[identity]
+        variant = next((item for item in target['variants'] if item['id'] == 'record'), None)
+        if variant is None:
+            try:
+                placed = decode_mesh(
+                    data, target['sourceAddress'], 'object', palette, hardware
+                )
+            except (ValueError, struct.error) as error:
+                gaps.append(
+                    f'Ground $7000 placement references unresolved {identity}: {error}.'
+                )
+                continue
+        else:
+            placed = variant['mesh']
+        mesh = place_mesh(mesh, placed, placement['position'])
+    return mesh, related, gaps
 
 
 # Post-plan Entrance Attachment constructors. Low byte is the live latch, so authored
@@ -1080,7 +1150,7 @@ UNEXPLORED_COVERAGE = [
     'Mission-disk or script-created visual changes that would replace a resident slot.',
     'View-conditioned object groups, articulated transforms, special polygon commands, '
     'and post-plan attachment forms other than the documented zero-latch and $F0 constructors.',
-    '$7000 / $53F76 ground commands and default empty-cell fill.',
+    'Two $7000 ground-placement copies lack scene-palette context; neighbor joins and default empty-cell fill remain unresolved.',
 ]
 
 BUILDING_VECTOR_TEXT_MODELS = {
@@ -1276,15 +1346,20 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
                     data, by_address[structure_model].get('paletteIndex') or 0
                 )
         try:
-            mesh, gaps, transform = decode_ground(
+            mesh, gaps, transform, _placements = decode_ground(
                 workspace, address, workspace[0x83dc + cell], palette, hardware
             )
         except (ValueError, struct.error) as error:
-            mesh, gaps, transform = (
+            mesh, gaps, transform, _placements = (
                 {'vertices': [], 'faces': [], 'lines': [], 'sourceStart': address, 'sourceEnd': address},
                 [str(error)],
                 0xFF,
+                [],
             )
+        mesh, template_models, template_gaps = compose_ground_templates(
+            mesh, _placements, tables[0]['entries'], by_address, workspace, palette, hardware
+        )
+        gaps = sorted(set(gaps + template_gaps))
         shared_id = f'ground-{address:06x}-{transform:02x}'
         span = workspace[mesh['sourceStart']:mesh['sourceEnd']]
         reuse = (
@@ -1304,7 +1379,7 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
                 'status': 'unresolved',
                 'reason': '',
                 'variants': [],
-                'relatedModels': [],
+                'relatedModels': template_models,
                 'linkedInstances': [],
                 'evidence': [{
                     'claim': (
@@ -1493,15 +1568,20 @@ def extract(data: bytes, source: dict, workspace: bytes | None = None) -> dict:
                 data, by_address[tables[1]['entries'][structure_slot]].get('paletteIndex') or 0
             )
         try:
-            mesh, gaps, transform = decode_ground(
+            mesh, gaps, transform, _placements = decode_ground(
                 data, address, data[0x83dc + cell], palette, hardware
             )
         except (ValueError, struct.error) as error:
-            mesh, gaps, transform = (
+            mesh, gaps, transform, _placements = (
                 {'vertices': [], 'faces': [], 'lines': [], 'sourceStart': address, 'sourceEnd': address},
                 [str(error)],
                 0xFF,
+                [],
             )
+        mesh, template_models, template_gaps = compose_ground_templates(
+            mesh, _placements, tables[0]['entries'], by_address, data, palette, hardware
+        )
+        gaps = sorted(set(gaps + template_gaps))
         identity = f'ground-{address:06x}-{transform:02x}'
         ground_entries.append(identity)
         ground_cells.append((cell, identity))
@@ -1518,7 +1598,7 @@ def extract(data: bytes, source: dict, workspace: bytes | None = None) -> dict:
             'status': 'unresolved',
             'reason': '',
             'variants': [],
-            'relatedModels': [],
+            'relatedModels': template_models,
             'linkedInstances': [],
             'evidence': [{
                 'claim': (
@@ -2096,7 +2176,7 @@ def extract(data: bytes, source: dict, workspace: bytes | None = None) -> dict:
     coverage_notes = [
         'Resident first-world census after examining title-screen, first-world and interior-window RAM; not a claim that every packed disk file has been walked.',
         'Conditional geometry, scene palette binding, and named places outside the captured Eris workspace and authored Gaea Birmingham Island map remain incomplete.',
-        'Eris cell ground/pad/road records at $1E000 are decoded locally; $7000 road templates, $53F76 attachments and default empty-cell fill remain incomplete.',
+        'Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; two transformed copies lack scene-palette context, while neighbor joins and default empty-cell fill remain incomplete.',
         'Selectors the documented zero-latch and $F0 post-plan constructors accept are retained; other attachment forms stay named in the model reason.',
         'Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.',
     ]

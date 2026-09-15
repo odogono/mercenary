@@ -344,7 +344,7 @@ class GroundTests(unittest.TestCase):
             '0777 04 08 0c f0 00'
             '0000'
         )
-        mesh, gaps, transform = decode_ground(data, 0, 0, hardware=[0] * 16)
+        mesh, gaps, transform, _ = decode_ground(data, 0, 0, hardware=[0] * 16)
         self.assertEqual(transform, 0)
         self.assertEqual(mesh['vertices'][:3], [[1200, 0, 200], [0, 0, 200], [-1200, 0, 200]])
         self.assertEqual(mesh['faces'][0]['sourceColour'], 0x777)
@@ -353,22 +353,51 @@ class GroundTests(unittest.TestCase):
 
     def test_empty_record_is_a_gap_not_a_fabricated_quad(self):
         from damocleslab.catalogue import decode_ground
-        mesh, gaps, transform = decode_ground(bytes.fromhex('00ff 0000 0000'), 0, 0)
+        mesh, gaps, transform, _ = decode_ground(bytes.fromhex('00ff 0000 0000'), 0, 0)
         self.assertEqual(transform, 0)
         self.assertEqual(mesh['faces'], [])
         self.assertEqual(mesh['lines'], [])
         self.assertTrue(any('Empty ground record' in gap for gap in gaps))
 
-    def test_bit13_command_stops_without_inventing_faces(self):
+    def test_7000_command_places_an_addressed_object_template(self):
         from damocleslab.catalogue import decode_ground
-        mesh, gaps, _ = decode_ground(bytes.fromhex('00ff 0000 7000 0000'), 0, 0)
+
+        data = bytes.fromhex(
+            '00ff'
+            '0000'
+            '7000 800a 7ff6 0004'
+            '0000'
+        )
+        mesh, gaps, _, placements = decode_ground(data, 0, 0)
+
         self.assertEqual(mesh['faces'], [])
-        self.assertTrue(any('7000' in gap or '53F76' in gap for gap in gaps))
+        self.assertEqual(placements, [{
+            'objectSlot': 1,
+            'position': [10, 0, -10],
+        }])
+        self.assertEqual(gaps, [
+            'Ground record has only $7000 object placements; default cell fill is not stored as a vertex list.'
+        ])
+
+    def test_7000_command_reuses_its_low_byte_when_word_is_odd_aligned(self):
+        from damocleslab.catalogue import decode_ground
+
+        data = bytes.fromhex(
+            '0101 00 01 00'
+            '0000'
+            '7080 0a 7ff6 0004'
+            '0000'
+        )
+        _, _, transform, placements = decode_ground(data, 0, 0)
+
+        self.assertEqual(transform, 0)
+        self.assertEqual(placements[0]['position'], [10, 0, -10])
+        self.assertEqual(placements[0]['objectSlot'], 1)
 
     def test_palette_edge_becomes_a_line(self):
         from damocleslab.catalogue import decode_ground
         data = bytes.fromhex('00ff 84b08000 7b508000 0000 c00e 04 08 0000')
-        mesh, gaps, _ = decode_ground(data, 0, 0, hardware=[0x444] * 16)
+        mesh, gaps, _, _ = decode_ground(data, 0, 0, hardware=[0x444] * 16)
         self.assertEqual(len(mesh['lines']), 1)
         self.assertEqual(mesh['lines'][0]['vertices'], [0, 1])
 
@@ -398,6 +427,47 @@ def _empty_world():
 
 
 class CensusTests(unittest.TestCase):
+    def test_ground_7000_placement_composes_the_addressed_object_model(self):
+        from damocleslab.catalogue import extract
+
+        data = _empty_world()
+        object_address = 0x36000
+        struct.pack_into('>I', data, 0x35700 + 4, object_address - 0x35700)
+        structure_address = 0xfA00
+        struct.pack_into('>I', data, 0xe900 + 4, structure_address - 0xe900)
+        data[structure_address - 8:structure_address] = bytes.fromhex('0101 0100 00000000')
+        struct.pack_into('>H', data, 0xd200 + 2, 0x100)
+        struct.pack_into('>64H', data, 0xd300, 0x000, 0x777, *([0x000] * 62))
+        object_mesh = bytes.fromhex(
+            '0000 0000 0000'
+            '000a 0000 0000'
+            '0000 000a 0000'
+            '8000'
+            '0000'
+            '8082 04 08 0c 00'
+            '0000'
+        )
+        data[object_address:object_address + len(object_mesh)] = object_mesh
+
+        ground_address = 0x1e100
+        for cell in range(256):
+            struct.pack_into('>H', data, 0x1e400 + cell * 2, ground_address - 0x1e000)
+        struct.pack_into('>H', data, 0xabdc, 1)
+        ground = bytes.fromhex('00ff 0000 7000 800a 7ff6 0004 0000')
+        data[ground_address:ground_address + len(ground)] = ground
+
+        result = extract(bytes(data), {})
+        target_id = f'object-{object_address:06x}'
+        model = next(m for m in result['models'] if m['id'] == f'ground-{ground_address:06x}-00')
+
+        self.assertEqual(model['relatedModels'], [target_id])
+        self.assertEqual(model['recordClass'], 'geometry')
+        self.assertEqual(model['variants'][0]['mesh']['vertices'][:3], [
+            [10, 0, -10],
+            [20, 0, -10],
+            [10, 10, -10],
+        ])
+
     def test_ledger_classifies_null_and_empty_records_and_matches_counts(self):
         from damocleslab.catalogue import extract
         result = extract(bytes(_empty_world()), {})
