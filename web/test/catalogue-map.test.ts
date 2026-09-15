@@ -85,7 +85,7 @@ it('opens the Eris capital as one 16-unit cluster and the outliers alone at 8×'
   expect(zoomOf(fit, fit)).toBe(1);
   const spaceport = located.findIndex(i => i.id === 'eris-surface-87');
   const cluster = clusterOf(points, spaceport, fit);
-  expect(cluster).toHaveLength(172);
+  expect(cluster).toHaveLength(205);
   const view = clusterView(points, spaceport, fit);
   expect(view.span).toBeGreaterThan(16);
   expect(view.span).toBeLessThan(25);

@@ -417,6 +417,11 @@ def decode_structure(data: bytes, start: int, palette: list[int] | None = None,
 # Cell-local ground records at $1E000: $54E8E transform nybbles, then $8000-relative X/Z.
 GROUND_ORIENT = bytes.fromhex('0006030501040207')
 GROUND_JOIN = {0xF0, 0xF4}
+EMPTY_GROUND_REASON = (
+    'Empty ground record: source plan and command streams terminate immediately; '
+    'the native $056634 renderer returns at that zero terminator, so this record '
+    'intentionally contributes no ground geometry.'
+)
 
 
 def decode_ground(data: bytes, start: int, orientation: int,
@@ -513,12 +518,8 @@ def decode_ground(data: bytes, start: int, orientation: int,
             gaps.append('Ground polygon had too few local vertices after omitting neighbor-join sentinels.')
     else:
         raise ValueError('ground primitive terminator missing')
-    if not faces and not lines:
-        gaps.append(
-            'Ground record has only $7000 object placements; default cell fill is not stored as a vertex list.'
-            if placements
-            else 'Empty ground record: default cell fill is not stored as a vertex list.'
-        )
+    if not faces and not lines and not placements:
+        gaps.append(EMPTY_GROUND_REASON)
     return ({'vertices': vertices, 'faces': faces, 'lines': lines, 'sourceStart': start,
              'sourceEnd': reader.p}, sorted(set(gaps)), transform, placements)
 
@@ -1151,7 +1152,7 @@ UNEXPLORED_COVERAGE = [
     'Mission-disk or script-created visual changes that would replace a resident slot.',
     'View-conditioned object groups, articulated transforms, special polygon commands, '
     'and post-plan attachment forms other than the documented zero-latch and $F0 constructors.',
-    'Two $7000 ground-placement copies lack scene-palette context; neighbor joins and default empty-cell fill remain unresolved.',
+    'Two $7000 ground-placement copies lack scene-palette context; neighbor joins and the separate native surface/background fill path remain unresolved.',
 ]
 
 BUILDING_VECTOR_TEXT_MODELS = {
@@ -1426,8 +1427,10 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
                 model['reason'] = ' '.join(gaps)
             else:
                 model['reason'] = ' '.join(gaps) or (
-                    'Empty ground record: default cell fill is not stored as a vertex list.'
+                    EMPTY_GROUND_REASON
                 )
+                if gaps == [EMPTY_GROUND_REASON]:
+                    model['status'] = 'decoded'
             by_address[model_id] = model
             models.append(model)
         model = by_address[model_id]
@@ -1450,7 +1453,7 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
                 'heading': None,
             },
             'reason': (
-                f"Live {label} cell ground/pad/road record; default empty cells are omitted."
+                f"Live {label} cell ground/pad/road record; intentional empty records have no drawable instance."
             ),
         })
         model['linkedInstances'].append(identity)
@@ -1648,7 +1651,9 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             model['status'] = 'partial' if gaps else 'decoded'
             model['reason'] = ' '.join(gaps)
         else:
-            model['reason'] = ' '.join(gaps) or 'Empty ground record: default cell fill is not stored as a vertex list.'
+            model['reason'] = ' '.join(gaps) or EMPTY_GROUND_REASON
+            if gaps == [EMPTY_GROUND_REASON]:
+                model['status'] = 'decoded'
     tables.append({
         'kind': 'ground',
         'address': 0x1E400,
@@ -1838,7 +1843,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 'coordinateSystem': 'ST surface grid units (body-local origin unresolved)',
                 'heading': None,
             },
-            'reason': 'Recovered first-world cell ground/pad/road record; default empty cells are omitted.',
+            'reason': 'Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.',
         })
         model['linkedInstances'].append(identity)
         if place:
@@ -2204,7 +2209,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     coverage_notes = [
         'Resident first-world census after examining title-screen, first-world and interior-window RAM; not a claim that every packed disk file has been walked.',
         'Conditional geometry, scene palette binding, and named places outside the captured Eris workspace, authored Gaea Birmingham Island map, live Gaea UR City overlay, and live Dion overlay remain incomplete.',
-        'Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; two transformed copies lack scene-palette context, while neighbor joins and default empty-cell fill remain incomplete.',
+        'Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; empty records are intentional and add no geometry at $056634, while two transformed placement copies lack scene-palette context and neighbor joins remain incomplete.',
         'Selectors the documented zero-latch and $F0 post-plan constructors accept are retained; other attachment forms stay named in the model reason.',
         'Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.',
     ]

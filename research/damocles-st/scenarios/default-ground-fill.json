@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "name": "default-ground-fill",
+  "checkpoint": "title-screen",
+  "description": "Load the first world, capture its RAM, then disassemble the $056634 consumer of the reconstructed $008C32 ground workspace. Working-Authority Evidence for the native default empty-cell fill in the Damocles model census (#173).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "artifacts": ["registers", "ram"]
+    },
+    {
+      "type": "disassemble",
+      "name": "default-ground-fill",
+      "start": "0x056500",
+      "end": "0x056a00"
+    }
+  ]
+}

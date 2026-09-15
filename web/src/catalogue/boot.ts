@@ -70,7 +70,7 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
       model.kind === 'interior'
         ? 'Building-detail geometry can appear outside or inside. This source bank does not identify a model as an interior.'
         : model.kind === 'ground'
-          ? 'Per-cell ground, pad and road record. Neighbor-join sentinels are omitted; $7000 road templates and default empty-cell fill remain undecoded.'
+          ? 'Per-cell ground, pad and road record. Neighbor-join sentinels are omitted; intentional empty records contribute no geometry, and the native surface/background fill is a separate unresolved path.'
           : 'Building plan and linked detail. Available inspection views are listed under Form; original scene visibility remains incomplete.'
     );
   }
@@ -318,17 +318,17 @@ const start = async () => {
       data.coverage.tables.length > 0
         ? data.coverage.tables
         : data.tables.map(table => ({
+            address: table.address,
+            aliases: 0,
+            decoded: 0,
+            empty: 0,
+            extentEvidence: table.extentEvidence,
             kind: table.kind,
+            nullRecords: 0,
+            partial: 0,
             slots: table.entryCount,
             unique: new Set(table.entries).size,
-            address: table.address,
-            decoded: 0,
-            partial: 0,
-            unresolved: 0,
-            aliases: 0,
-            empty: 0,
-            nullRecords: 0,
-            extentEvidence: table.extentEvidence
+            unresolved: 0
           }));
     for (const table of ledgerTables) {
       const row = element('div');

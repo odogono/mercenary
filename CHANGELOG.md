@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The Damocles Catalogue proves the 133 first-world cells sharing `$01E790`
+  reference one fully decoded intentional empty ground record: `$056634`
+  returns on its initial zero command, so the visible green belongs to a
+  separate surface/background path rather than a fabricated default-cell quad
+  (#173).
 - The Damocles Catalogue places Dion's live `$ABDC` workspace (140 surface
   assemblies at `dion-surface-*`, including unnamed cell 2,3) from a Hatari GUI
   memstate without borrowing Gaea Birmingham place names (#173).

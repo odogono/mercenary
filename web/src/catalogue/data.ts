@@ -498,7 +498,10 @@ const structureSelection = (value: unknown): StructureSelection => {
   if (regions.length === 0) {
     fail('empty region selector');
   }
-  if (s['liveSelector'] !== undefined && typeof s['liveSelector'] !== 'boolean') {
+  if (
+    s['liveSelector'] !== undefined &&
+    typeof s['liveSelector'] !== 'boolean'
+  ) {
     fail('invalid live selector flag');
   }
   return {
@@ -559,7 +562,15 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     unique(variants);
     const status = choice(m['status'], ['decoded', 'partial', 'unresolved']);
     const reason = string(m['reason']);
-    if (status === 'decoded' && variants.length === 0) {
+    const recordClass =
+      m['recordClass'] === undefined
+        ? 'geometry'
+        : choice(m['recordClass'], RECORD_CLASSES);
+    if (
+      status === 'decoded' &&
+      variants.length === 0 &&
+      recordClass !== 'empty'
+    ) {
       fail('decoded model has no geometry');
     }
     if (status !== 'decoded' && !reason.trim()) {
@@ -586,10 +597,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
       nameStatus: choice(m['nameStatus'], ['verified', 'candidate', 'unknown']),
       omissions: m['omissions'] === undefined ? [] : strings(m['omissions']),
       reason,
-      recordClass:
-        m['recordClass'] === undefined
-          ? 'geometry'
-          : choice(m['recordClass'], RECORD_CLASSES),
+      recordClass,
       relatedModels: strings(m['relatedModels']),
       slots: list(m['slots']).map(integer),
       sourceAddress: integer(m['sourceAddress']),
@@ -813,18 +821,18 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     fail('invalid coverage status');
   }
   const counted = {
-    unique: models.length,
     decoded: models.filter(model => model.status === 'decoded').length,
     partial: models.filter(model => model.status === 'partial').length,
+    unique: models.length,
     unresolved: models.filter(model => model.status === 'unresolved').length
   };
   const census =
     coverage['census'] === undefined
       ? counted
       : {
-          unique: integer(object(coverage['census'])['unique']),
           decoded: integer(object(coverage['census'])['decoded']),
           partial: integer(object(coverage['census'])['partial']),
+          unique: integer(object(coverage['census'])['unique']),
           unresolved: integer(object(coverage['census'])['unresolved'])
         };
   if (

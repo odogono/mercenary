@@ -28,7 +28,7 @@ describe('the Eris surface from the Damocles Catalogue', () => {
     const { catalogue, doc } = await load();
     const surface = erisSurfaceFrom(catalogue, doc);
     expect(surface.body).toEqual({ id: 'body-11', name: 'ERIS' });
-    expect(surface.placements).toHaveLength(174);
+    expect(surface.placements).toHaveLength(207);
     const spaceport = surface.placements.find(
       placement => placement.id === 'eris-surface-87'
     )!;

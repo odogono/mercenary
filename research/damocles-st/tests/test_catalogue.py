@@ -375,9 +375,7 @@ class GroundTests(unittest.TestCase):
             'objectSlot': 1,
             'position': [10, 0, -10],
         }])
-        self.assertEqual(gaps, [
-            'Ground record has only $7000 object placements; default cell fill is not stored as a vertex list.'
-        ])
+        self.assertEqual(gaps, [])
 
     def test_7000_command_reuses_its_low_byte_when_word_is_odd_aligned(self):
         from damocleslab.catalogue import decode_ground
@@ -494,6 +492,21 @@ class CensusTests(unittest.TestCase):
         self.assertEqual(kinds, {'object', 'structure', 'interior', 'ground'})
         self.assertTrue(any('disk' in note.lower() for note in coverage['unexplored']))
         self.assertTrue(any('title-screen' in item['path'] for item in coverage['diskLoad']))
+
+    def test_empty_ground_record_is_a_fully_decoded_intentional_empty(self):
+        from damocleslab.catalogue import extract
+
+        result = extract(bytes(_empty_world()), {})
+        model = next(
+            item for item in result['models']
+            if item['id'] == 'ground-01e000-00'
+        )
+
+        self.assertEqual(model['status'], 'decoded')
+        self.assertEqual(model['recordClass'], 'empty')
+        self.assertEqual(model['variants'], [])
+        self.assertIn('$056634', model['reason'])
+        self.assertNotIn('default cell fill', model['reason'])
 
     def test_keeps_a_selector_that_the_generic_grammar_accepts(self):
         from damocleslab.catalogue import extract

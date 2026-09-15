@@ -277,10 +277,11 @@ describe('an Eris frame in Filled Presentation', () => {
         (_, index) => index % FLOATS_PER_VERTEX === 6
       );
     // The recovered pads and aprons carry their face index; a cell's white strip is a later
-    // face than its grey apron (docs/research/damocles-eris-ground.md).
+    // face than its grey apron. Composed $7000 objects retain their own bounded source index,
+    // so the combined ground mesh may exceed the old pre-composition 32-face ceiling.
     const groundOrders = orders(fill, groundEnd);
     expect(Math.max(...groundOrders)).toBeGreaterThanOrEqual(3);
-    expect(Math.max(...groundOrders)).toBeLessThan(32);
+    expect(Math.max(...groundOrders)).toBeLessThan(1024);
     // Structures and objects do not: they resolve by layer alone.
     expect(new Set(orders(groundEnd, plan.vertices.length))).toEqual(
       new Set([0])

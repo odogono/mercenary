@@ -169,13 +169,15 @@ const doubleSidedQuad = (
 /// The authored fill: axis-aligned rings of quads around the eye, clipped to the first-world
 /// workspace.
 ///
-/// A recovered ground record covers only the part of its cell the Damocles Catalogue decodes:
-/// the spaceport apron is a strip of cell `$87`, and the `$7000` road templates and `$F0`/`$F4`
-/// neighbour joins that would fill the rest are still undecoded. Filling whole cells left
-/// those remainders as sky, and a fill in the next cell along is half a cell away, which a
-/// 63-unit eye over 65536-unit cells compresses into a pixel at the horizon. So the fill runs
-/// under everything and drops by the document's `fillDropUnits`, which orders depth against
-/// the recovered faces at y = 0 without claiming Eris's ground sits lower (#221).
+/// A recovered ground record covers only its stored cell-local primitives: the spaceport apron
+/// is a strip of cell `$87`, `$7000` placements are composed, and `$F0`/`$F4` neighbour joins
+/// remain unresolved. Empty records contain no default quad; their native renderer returns on
+/// the initial zero command. Filling whole cells left uncovered areas as sky, and a fill in the
+/// next cell along is half a cell away, which a 63-unit eye over 65536-unit cells compresses
+/// into a pixel at the horizon. So this authored stand-in for the separate native
+/// surface/background path runs under everything and drops by the document's `fillDropUnits`,
+/// which orders depth against recovered faces at y = 0 without claiming Eris's ground sits
+/// lower (#221).
 ///
 /// It is rings rather than one workspace-sized quad because the rasteriser interpolates depth
 /// across a triangle in screen space with limited precision, and a triangle a million units
