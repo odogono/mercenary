@@ -338,6 +338,15 @@ def decode_object_lettering(data: bytes, reader: Reader, vertices: list, faces: 
             **({'liveToken': token} if token is not None else {})}
 
 
+def tag_record(kind: str, faces: list, lines: list, first_face: int,
+               first_line: int, record: int) -> None:
+    """Name the source record every primitive of a building detail came from."""
+    if kind != 'interior':
+        return
+    for primitive in faces[first_face:] + lines[first_line:]:
+        primitive['sourceIndex'] = record
+
+
 def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = None,
                 hardware: list[int] | None = None,
                 text_workspace: bytes | None = None,
@@ -481,15 +490,20 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
     faces, lines = [], []
 
     def read_primitives(vertices: list, faces: list, lines: list) -> None:
-        nonlocal label_anchor
-        for _ in range(2048):
+        nonlocal label_anchor, record_count
+        # $053BAE tabulates one entry per primitive record, whatever its kind,
+        # so a detail selector names records rather than drawn polygons.
+        for record in range(2048):
+            first_face, first_line = len(faces), len(lines)
             address = reader.p
             raw = reader.take(2)
             colour = (patches.get(address, raw[0]) << 8) | patches.get(address + 1, raw[1])
             if colour == 0:
+                record_count = record
                 return
             if colour & 0x7000 == 0x7000:
                 # $05394E: a target marker (or any $F000 word) ends the list.
+                record_count = record
                 return
             if colour == 0x6000 and display_code is not None:
                 # Special records align their parameters to an even RAM address.
@@ -500,6 +514,7 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
                 decode_building_lettering(
                     data, reader, vertices, faces, lines, palette, hardware, text_workspace
                 )
+                tag_record(kind, faces, lines, first_face, first_line, record)
                 continue
             if kind == 'object' and colour & 0x6000 == 0x6000:
                 texts.append(decode_object_lettering(
@@ -533,8 +548,10 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
             primitive = {'vertices': [ref // 4 - 1 for ref in refs],
                          'colour': colour_value(colour, palette, hardware), 'sourceColour': colour}
             (lines if line else faces).append(primitive)
+            tag_record(kind, faces, lines, first_face, first_line, record)
         raise ValueError('face terminator missing')
 
+    record_count = 0
     view_groups = []
     chosen = state.get('viewGroup')
     if kind == 'object':
@@ -578,6 +595,7 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
         raise ValueError('key vector-text record missing')
     return {'vertices': vertices, 'faces': faces, 'lines': lines,
             'sourceStart': start, 'sourceEnd': reader.p, 'geometryStart': geometry_start,
+            **({'recordCount': record_count} if kind == 'interior' else {}),
             **({'displayCode': display_code, 'labelAnchor': label_anchor}
                if label_anchor is not None else {}),
             **({'alternates': alternates} if alternates else {}),
@@ -1099,7 +1117,7 @@ def skip_other_post_plan(reader: Reader) -> None:
 
 
 def decode_detail_selection(data: bytes, start: int, count: int) -> list:
-    # Face streams are byte-sized; the bound-group reader starts on the next word.
+    # Record streams are byte-sized; the bound-group reader starts on the next word.
     reader = Reader(data, (start + 1) & ~1)
     groups = []
     for _ in range(2):
@@ -1113,7 +1131,7 @@ def decode_detail_selection(data: bytes, start: int, count: int) -> list:
             bounds = [[reader.signed(), reader.signed()] for _ in range(3)]
             if any(lo >= hi for lo, hi in bounds):
                 raise ValueError('invalid detail selection bounds')
-            boxes.append({'bounds': bounds, 'faces': selection_list(reader, count)})
+            boxes.append({'bounds': bounds, 'records': selection_list(reader, count)})
         else:
             raise ValueError('detail group terminator missing')
         groups.append({'boxes': boxes, 'default': selection_list(reader, count)})
@@ -1958,9 +1976,9 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 mesh = decode_mesh(data, address, kind, palette_at(data, 0), hardware)
                 if kind == 'interior':
                     try:
-                        if mesh['lines']:
-                            raise ValueError('detail selection with mixed line primitives is unresolved')
-                        model['detailSelection'] = decode_detail_selection(data, mesh['sourceEnd'], len(mesh['faces']))
+                        model['detailSelection'] = decode_detail_selection(
+                            data, mesh['sourceEnd'], mesh['recordCount']
+                        )
                     except (ValueError, struct.error) as error:
                         model['selectionReason'] = str(error)
                 model['variants'] = [{
@@ -2621,7 +2639,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'path': f'{label.title()} live workspace',
             'finding': note,
         })
-    return {'schemaVersion': 7, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
+    return {'schemaVersion': 8, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'places': places, 'tables': tables,
             'coverage': coverage_ledger(models, tables, coverage_notes, disk_load)}
 

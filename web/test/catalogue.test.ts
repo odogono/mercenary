@@ -47,7 +47,7 @@ const fixture = () => ({
     }
   ],
   places: [],
-  schemaVersion: 7,
+  schemaVersion: 8,
   source: {
     authority: 'Synthetic test',
     evidence: 'test',
@@ -248,8 +248,9 @@ it('keeps a generated census ledger that cannot drift from the models', async ()
       .length
   ).toBe(19);
   expect(data.models.filter(model => model.structureSelection).length).toBe(
-    210
+    254
   );
+  expect(data.models.filter(model => model.detailSelection).length).toBe(58);
   expect(
     data.models.some(model =>
       model.structureSelection?.regions.some(region =>
@@ -259,7 +260,7 @@ it('keeps a generated census ledger that cannot drift from the models', async ()
   ).toBe(true);
   expect(
     data.models.filter(model => model.structureSelection?.liveSelector).length
-  ).toBe(2);
+  ).toBe(13);
   expect(
     data.coverage.diskLoad.some(item => item.path.includes('title-screen'))
   ).toBe(true);

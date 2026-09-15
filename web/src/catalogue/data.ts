@@ -19,6 +19,8 @@ export interface Mesh {
   readonly faces: readonly Primitive[];
   readonly labelAnchor?: Point;
   readonly lines: readonly Primitive[];
+  /** Source primitive records this detail holds, drawn or not. */
+  readonly recordCount?: number;
   readonly vertices: readonly Point[];
 }
 export const RECORD_CLASSES = [
@@ -64,7 +66,7 @@ export type Bounds = readonly (readonly [number, number])[];
 export interface DetailGroup {
   readonly boxes: readonly {
     readonly bounds: Bounds;
-    readonly faces: readonly number[];
+    readonly records: readonly number[];
   }[];
   readonly default: readonly number[];
 }
@@ -180,7 +182,7 @@ export interface Catalogue {
   readonly instances: readonly Instance[];
   readonly models: readonly Model[];
   readonly places: readonly Place[];
-  readonly schemaVersion: 7;
+  readonly schemaVersion: 8;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -316,6 +318,9 @@ const mesh = (value: unknown, allowEmpty = false): Mesh => {
     faces: primitives(record['faces'], 3),
     ...(labelAnchor === undefined ? {} : { labelAnchor }),
     lines: primitives(record['lines'], 2),
+    ...(record['recordCount'] === undefined
+      ? {}
+      : { recordCount: integer(record['recordCount']) }),
     vertices
   };
 };
@@ -349,10 +354,10 @@ const detailSelection = (value: unknown): readonly DetailGroup[] => {
     const g = fields(value, ['boxes', 'default']);
     return {
       boxes: list(g['boxes']).map(value => {
-        const b = fields(value, ['bounds', 'faces']);
+        const b = fields(value, ['bounds', 'records']);
         return {
           bounds: bounds(b['bounds'], 3),
-          faces: list(b['faces']).map(integer)
+          records: list(b['records']).map(integer)
         };
       }),
       default: list(g['default']).map(integer)
@@ -544,7 +549,7 @@ const structureSelection = (value: unknown): StructureSelection => {
 
 export const parseCatalogue = (value: unknown): Catalogue => {
   const r = object(value);
-  if (r['schemaVersion'] !== 7) {
+  if (r['schemaVersion'] !== 8) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -647,15 +652,17 @@ export const parseCatalogue = (value: unknown): Catalogue => {
         fail('detail selector requires a detail model');
       }
       for (const group of model.detailSelection) {
-        for (const faces of [
+        for (const records of [
           group.default,
-          ...group.boxes.map(box => box.faces)
+          ...group.boxes.map(box => box.records)
         ]) {
           if (
             model.variants.length === 0 ||
-            model.variants.some(v => faces.some(i => i >= v.mesh.faces.length))
+            model.variants.some(v =>
+              records.some(i => i < 0 || i >= (v.mesh.recordCount ?? 0))
+            )
           ) {
-            fail('invalid detail face reference');
+            fail('invalid detail record reference');
           }
         }
       }
@@ -923,7 +930,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     instances,
     models,
     places,
-    schemaVersion: 7,
+    schemaVersion: 8,
     source,
     tables
   };
