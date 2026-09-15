@@ -6,8 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.19.8] - 2026-09-15
+
 ### Added
 
+- Building-detail `$60xx` vector text now preserves seven formerly unresolved
+  exterior records, including Vesta Parliament's live filled `E` entrance marker
+  from token `$91` (#173).
 - The Damocles Catalogue places Vesta Politburo City's live `$ABDC` workspace
   (19 surface assemblies including Vesta Parliament at `vesta-surface-64`) from a
   Hatari GUI memstate without replacing Eris ground identities (#173).

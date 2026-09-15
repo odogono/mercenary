@@ -216,9 +216,7 @@ it('keeps a generated census ledger that cannot drift from the models', async ()
   expect(data.models.some(model => model.recordClass === 'null')).toBe(true);
   expect(data.models.some(model => model.recordClass === 'empty')).toBe(true);
   expect(data.models.some(model => model.recordClass === 'alias')).toBe(true);
-  expect(
-    data.models.filter(model => model.structureSelection).length
-  ).toBe(88);
+  expect(data.models.filter(model => model.structureSelection).length).toBe(88);
   expect(
     data.models.filter(model => model.structureSelection?.liveSelector).length
   ).toBe(2);
@@ -228,12 +226,12 @@ it('keeps a generated census ledger that cannot drift from the models', async ()
   expect(
     data.coverage.diskLoad.some(item => item.path.includes('Pasti STX'))
   ).toBe(true);
-  expect(
-    data.coverage.diskLoad.some(item => item.path.includes('Vesta'))
-  ).toBe(true);
-  expect(data.instances.some(instance => instance.id === 'vesta-surface-64')).toBe(
+  expect(data.coverage.diskLoad.some(item => item.path.includes('Vesta'))).toBe(
     true
   );
+  expect(
+    data.instances.some(instance => instance.id === 'vesta-surface-64')
+  ).toBe(true);
   expect(data.coverage.tables).toHaveLength(4);
   expect(data.coverage.tables.some(table => table.kind === 'interior')).toBe(
     true
@@ -256,6 +254,25 @@ it('rejects contradictory slot and place relationships', () => {
     ]
   };
   expect(() => parseCatalogue(badPlace)).toThrow('place');
+});
+
+it('keeps the live Vesta Parliament exterior and filled E marker', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const parliament = data.instances.find(
+    instance => instance.id === 'vesta-surface-64'
+  )!;
+  const assembly = data.models
+    .find(model => model.id === parliament.model)!
+    .variants.find(variant => variant.id === 'assembly')!;
+  const detail = data.models.find(model => model.id === 'interior-02e910')!;
+  const liveDetail = detail.variants.find(
+    variant => variant.id === 'palette-30-live-vesta'
+  )!;
+
+  expect(assembly.mesh.faces).toHaveLength(117);
+  expect(liveDetail.mesh.faces).toHaveLength(54);
 });
 
 it('keeps the spaceport exterior and room layout separate at their shared scale', async () => {

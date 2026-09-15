@@ -51,6 +51,38 @@ class CatalogueTests(unittest.TestCase):
         data = struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768)
         data += bytes.fromhex('0777 04 08 0c 00 0000')
         self.assertEqual(len(decode_mesh(data, 0, 'interior')['faces']), 1)
+
+    def test_building_detail_keeps_faces_and_expands_live_vector_text(self):
+        data = struct.pack('>10h', 0, 0, 0, 10, 0, 0, 0, 10, 0, -32768)
+        data += bytes.fromhex('0777 04 08 0c 00')
+        # $6000: offset, anchor X/Y/Z, flags/font, advance, glyph scales,
+        # colour, then terminal token $91.
+        data += bytes.fromhex(
+            '6000 ff2e 0000 005a 0000 8001 0018 0304 0777 9100 0000'
+        )
+        end = len(data)
+        data = bytearray(data.ljust(0x31910, b'\0'))
+        struct.pack_into('>I', data, 0xCCA0 + 17 * 4, 0xCD3F)
+        data[0xCD3F:0xCD41] = b' \0'
+        font_one_e = ord('E') + 64 - 32
+        struct.pack_into('>h', data, 0x31700 + font_one_e * 2, 0x200)
+        data[0x31900:0x31910] = bytes.fromhex(
+            '0000 0200 0202 0002 80 04080c10 00 00'
+        )
+        workspace = bytearray(data)
+        workspace[0xCD3F:0xCD41] = b'E\0'
+
+        mesh = decode_mesh(
+            data, 0, 'interior', hardware=[0], text_workspace=workspace
+        )
+
+        self.assertEqual(len(mesh['faces']), 2)
+        self.assertEqual(mesh['sourceEnd'], end)
+        self.assertEqual(mesh['vertices'][3:], [
+            [-210, 90, 0], [-204, 90, 0], [-204, 98, 0], [-210, 98, 0],
+        ])
+        self.assertEqual(mesh['faces'][-1]['vertices'], [3, 4, 5, 6])
+
     def test_truncated_record_fails(self):
         with self.assertRaises(ValueError):
             decode_mesh(b'\x00', 0, 'object')
@@ -542,6 +574,12 @@ class LiveWorkspaceTests(unittest.TestCase):
         parliament = next(i for i in result['instances'] if i['id'] == 'vesta-surface-64')
         self.assertEqual(parliament['location']['body'], 'body-14')
         self.assertEqual(parliament['location']['place'], 'place-024101')
+        parliament_model = next(m for m in result['models'] if m['id'] == parliament['model'])
+        assembly = parliament_model['variants'][0]['mesh']
+        self.assertEqual(len(assembly['faces']), 117)
+        detail = next(m for m in result['models'] if m['id'] == 'interior-02e910')
+        live = next(v for v in detail['variants'] if v['id'] == 'palette-30-live-vesta')
+        self.assertEqual(len(live['mesh']['faces']), 54)
         self.assertEqual(
             {0x35700 + int.from_bytes(first_bytes[0x35700 + s * 4:0x35704 + s * 4], 'big') for s in range(378)},
             {0x35700 + int.from_bytes(workspace[0x35700 + s * 4:0x35704 + s * 4], 'big') for s in range(378)},

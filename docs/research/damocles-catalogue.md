@@ -86,7 +86,7 @@ pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
 
 Current extraction accounts for **625 unique records**: **166 decoded**,
-**390 partial**, and **69 unresolved**. “Decoded” means the supported record was
+**397 partial**, and **62 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.
 Unresolved records remain searchable and retain their source identity and reason.
@@ -166,6 +166,14 @@ code. Targeted disassembly used to establish them remains ignored at
   triples are followed directly by face records, without the object's visibility
   header. Articulated interior terminators remain unresolved. Drawing every face
   for free inspection does not reproduce the original view-conditioned face list.
+- Building-detail `$60xx` records are native vector text, not polygons. Their
+  fixed header supplies a model-local anchor, font, advance, glyph scales, plane
+  and colour; the following NUL-terminated text may end in a live `$CCA0` token.
+  Source glyph `$80` records are filled polygons and `$81` records are strokes.
+  Seven formerly unresolved details now retain their preceding geometry and text.
+  Vesta Parliament binds token `$91` to the live `E` at `$CD3F`, adding its four
+  filled glyph faces to the captured assembly. See
+  [building-detail vector text](damocles-building-vector-text.md).
 
 ### Colours and surface structures
 

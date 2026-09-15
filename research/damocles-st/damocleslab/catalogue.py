@@ -98,8 +98,131 @@ def decode_key_lettering(data: bytes, reader: Reader, code: str, vertices: list,
     return anchor
 
 
+def expand_vector_text(data: bytes, reader: Reader, token_data: bytes | None = None,
+                       seen: frozenset[int] = frozenset()) -> str:
+    """Expand the native two-byte $80..$98 text tokens through the $CCA0 table."""
+    if token_data is None:
+        token_data = data
+    result = []
+    for _ in range(256):
+        character = reader.take(1)[0]
+        if character == 0:
+            return ''.join(result)
+        if character & 0x80:
+            if reader.take(1)[0] != 0:
+                raise ValueError('vector-text token is not terminal')
+            index = character & 0x7f
+            pointer_address = 0xCCA0 + index * 4
+            if pointer_address + 4 > len(token_data):
+                raise ValueError('vector-text token table is truncated')
+            pointer = int.from_bytes(token_data[pointer_address:pointer_address + 4], 'big')
+            if pointer in seen or pointer >= len(token_data):
+                raise ValueError('invalid vector-text token reference')
+            result.append(expand_vector_text(
+                token_data, Reader(token_data, pointer), token_data, seen | {pointer}
+            ))
+            return ''.join(result)
+        elif 32 <= character < 127:
+            result.append(chr(character))
+        else:
+            raise ValueError('unsupported vector-text character')
+    raise ValueError('vector-text terminator missing')
+
+
+def append_vector_text(data: bytes, text: str, font: int, anchor: list[int],
+                       advance: int, scale_x: int, scale_y: int, plane: int,
+                       colour: int, vertices: list, faces: list, lines: list,
+                       palette: list[int] | None, hardware: list[int] | None) -> None:
+    """Append source font fills or strokes in a building detail's text plane."""
+    rgb = colour_value(colour, palette, hardware)
+    for character_index, character in enumerate(text):
+        glyph_index = ord(character) + font * 64 - 32
+        pointer_address = 0x31700 + glyph_index * 2
+        if glyph_index < 0 or pointer_address + 2 > len(data):
+            raise ValueError('vector-text glyph outside source font')
+        pointer = Reader(data, pointer_address).signed()
+        glyph = Reader(data, 0x31700 + pointer)
+        offset = len(vertices)
+        for _ in range(63):
+            x = int.from_bytes(glyph.take(1), 'big', signed=True)
+            if x in (-128, -127):
+                filled = x == -128
+                break
+            y = int.from_bytes(glyph.take(1), 'big', signed=True)
+            horizontal = character_index * advance + x * scale_x
+            vertices.append(
+                [anchor[0] + horizontal, anchor[1] + y * scale_y, anchor[2]]
+                if plane == 0
+                else [anchor[0], anchor[1] + y * scale_y, anchor[2] + horizontal]
+            )
+        else:
+            raise ValueError('vector-text glyph vertex terminator missing')
+        if filled:
+            for _ in range(256):
+                first = glyph.take(1)[0]
+                if first == 0:
+                    break
+                refs = [first]
+                for _ in range(255):
+                    ref = glyph.take(1)[0]
+                    if ref == 0:
+                        break
+                    refs.append(ref)
+                else:
+                    raise ValueError('filled vector-text polygon terminator missing')
+                if any(ref % 4 or ref // 4 > len(vertices) - offset for ref in refs):
+                    raise ValueError('invalid filled vector-text glyph reference')
+                faces.append({
+                    'vertices': [offset + ref // 4 - 1 for ref in refs],
+                    'colour': rgb,
+                    'sourceColour': colour,
+                })
+            else:
+                raise ValueError('filled vector-text glyph terminator missing')
+            continue
+        for _ in range(256):
+            a = glyph.take(1)[0]
+            if a == 0:
+                break
+            b = glyph.take(1)[0]
+            if any(ref == 0 or ref % 4 or ref // 4 > len(vertices) - offset for ref in (a, b)):
+                raise ValueError('invalid vector-text glyph reference')
+            lines.append({
+                'vertices': [offset + a // 4 - 1, offset + b // 4 - 1],
+                'colour': rgb,
+                'sourceColour': colour,
+            })
+        else:
+            raise ValueError('vector-text glyph line terminator missing')
+
+
+def decode_building_lettering(data: bytes, reader: Reader, vertices: list,
+                               faces: list, lines: list,
+                               palette: list[int] | None, hardware: list[int] | None,
+                               text_workspace: bytes | None) -> None:
+    """Decode the $60xx building-detail record consumed by the native text renderer."""
+    reader.p &= ~1
+    offset, x, y, z, flags, advance = struct.unpack('>4hHh', reader.take(12))
+    scale_x, scale_y = struct.unpack('>bb', reader.take(2))
+    colour = reader.word()
+    if not flags & 0x8000:
+        raise ValueError('indirect building vector text unresolved')
+    plane = flags & 0xC0
+    if plane not in (0, 0x80):
+        raise ValueError('building vector-text plane unresolved')
+    if text_workspace is None:
+        text_workspace = data
+    text = expand_vector_text(data, reader, text_workspace)
+    anchor = [x + offset, y, z] if plane == 0 else [x, y, z + offset]
+    append_vector_text(
+        data, text, flags & 0xF, anchor, advance, scale_x, scale_y, plane,
+        colour, vertices, faces, lines, palette, hardware,
+    )
+
+
 def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = None,
-                hardware: list[int] | None = None) -> dict:
+                hardware: list[int] | None = None,
+                text_workspace: bytes | None = None) -> dict:
     reader = Reader(data, start)
     patches: dict[int, int] = {}
     display_code = None
@@ -188,6 +311,11 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
             # Special records align their parameters to an even RAM address.
             reader.p &= ~1
             label_anchor = decode_key_lettering(data, reader, display_code, vertices, lines, hardware)
+            continue
+        if kind == 'interior' and colour & 0xFF00 == 0x6000:
+            decode_building_lettering(
+                data, reader, vertices, faces, lines, palette, hardware, text_workspace
+            )
             continue
         if colour & 0x4000:
             if colour & 0x2000:
@@ -954,6 +1082,16 @@ UNEXPLORED_COVERAGE = [
     'and post-plan attachment forms other than the documented zero-latch and $F0 constructors.',
     '$7000 / $53F76 ground commands and default empty-cell fill.',
 ]
+
+BUILDING_VECTOR_TEXT_MODELS = {
+    'interior-027592',
+    'interior-02a18c',
+    'interior-02cab0',
+    'interior-02d656',
+    'interior-02db92',
+    'interior-02e910',
+    'interior-02fcb6',
+}
 
 
 def classify_record(model: dict, is_alias: bool) -> None:
@@ -1737,6 +1875,27 @@ def extract(data: bytes, source: dict, workspace: bytes | None = None) -> dict:
                 model['relatedModels'].append(target)
                 interior_palettes.setdefault(target, set()).add(model['paletteIndex'])
         model.pop('paletteIndex', None)
+    live_text_binding = None
+    if workspace is not None:
+        current_cell = int.from_bytes(workspace[0x7B5C:0x7B5E], 'big')
+        if current_cell < 256:
+            surface_slot = int.from_bytes(
+                workspace[0xABDC + current_cell * 4:0xABDE + current_cell * 4], 'big'
+            ) & 0x1FF
+            if surface_slot < len(tables[1]['entries']):
+                structure_id = tables[1]['entries'][surface_slot]
+                binding = structure_bindings.get(structure_id)
+                if binding is not None and binding[0] < len(tables[2]['entries']):
+                    body = int.from_bytes(workspace[0x7AA8:0x7AAA], 'big') // 4
+                    body_name = bodies[body]['name']
+                    live_text_binding = (
+                        structure_id,
+                        tables[2]['entries'][binding[0]],
+                        binding[1],
+                        body_name.lower(),
+                        body_name,
+                    )
+    live_detail_variant = None
     for identity, palettes in interior_palettes.items():
         model = by_address[identity]
         variants = []
@@ -1746,16 +1905,62 @@ def extract(data: bytes, source: dict, workspace: bytes | None = None) -> dict:
                 variants.append({'id': f'palette-{index}', 'name': f'Structure-bound palette {index}', 'mesh': mesh})
             except ValueError:
                 continue
+        if live_text_binding is not None and identity == live_text_binding[1]:
+            _, _, palette_index, body_slug, body_name = live_text_binding
+            try:
+                mesh = decode_mesh(
+                    data, model['sourceAddress'], 'interior',
+                    palette_at(data, palette_index), hardware, workspace,
+                )
+                live_detail_variant = f'palette-{palette_index}-live-{body_slug}'
+                variants.append({
+                    'id': live_detail_variant,
+                    'name': f'Live {body_name} text · palette {palette_index}',
+                    'mesh': mesh,
+                })
+                model['evidence'].append({
+                    'claim': (
+                        f'Live {body_name} Structure Workspace supplies dynamic vector-text '
+                        'tokens for this captured detail variant.'
+                    ),
+                    'confidence': 'observed',
+                    'source': 'docs/research/damocles-building-vector-text.md',
+                })
+            except ValueError:
+                pass
         if variants:
             model['variants'] = variants
             model['status'] = 'partial'
-            model['reason'] = 'Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.'
+            if identity in BUILDING_VECTOR_TEXT_MODELS:
+                model['reason'] = (
+                    'Shape, structure-bound colours and supported $60xx vector text decoded. '
+                    'View-conditioned visibility, articulated parts and uncaptured dynamic '
+                    'token states are not simulated.'
+                )
+                model['evidence'].append({
+                    'claim': (
+                        'Native $60xx building-detail text retains preceding faces and uses '
+                        '$80 filled or $81 stroke glyphs from the $31700 font table.'
+                    ),
+                    'confidence': 'verified',
+                    'source': 'docs/research/damocles-building-vector-text.md',
+                })
+            else:
+                model['reason'] = 'Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.'
     for identity, (slot, palette_index, scale) in structure_bindings.items():
         if slot >= len(tables[2]['entries']):
             continue
         model = by_address[identity]
         detail = by_address[tables[2]['entries'][slot]]
-        variant = next((v for v in detail['variants'] if v['id'] == f'palette-{palette_index}'), None)
+        variant_id = (
+            live_detail_variant
+            if live_detail_variant is not None
+            and live_text_binding is not None
+            and identity == live_text_binding[0]
+            and detail['id'] == live_text_binding[1]
+            else f'palette-{palette_index}'
+        )
+        variant = next((v for v in detail['variants'] if v['id'] == variant_id), None)
         if variant is None:
             if model['status'] == 'decoded':
                 model['status'] = 'partial'
@@ -1893,6 +2098,7 @@ def extract(data: bytes, source: dict, workspace: bytes | None = None) -> dict:
         'Conditional geometry, scene palette binding, and named places outside the captured Eris workspace and authored Gaea Birmingham Island map remain incomplete.',
         'Eris cell ground/pad/road records at $1E000 are decoded locally; $7000 road templates, $53F76 attachments and default empty-cell fill remain incomplete.',
         'Selectors the documented zero-latch and $F0 post-plan constructors accept are retained; other attachment forms stay named in the model reason.',
+        'Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.',
     ]
     if gaea_coverage:
         coverage_notes.append(gaea_coverage)

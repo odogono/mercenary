@@ -63,6 +63,9 @@ PYTHONPATH=research/damocles-st python3 -m damocleslab.catalogue \
   two of which reuse Eris records).
 - Instance IDs are `vesta-surface-{cell}` and `vesta-ground-{cell}`. Parliament
   is `vesta-surface-64` / `place-024101`.
+- Parliament's live face-marker token `$91` resolves through `$CCA0` to the `E`
+  at `$CD3F`. Its filled font-1 glyph is part of the building-detail exterior;
+  see [building-detail vector text](damocles-building-vector-text.md).
 
 The coverage ledger remains incomplete: other bodies, other Vesta islands, and
 live Gaea `$ABDC` are unexplored.
