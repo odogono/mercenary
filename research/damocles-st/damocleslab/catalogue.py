@@ -254,14 +254,43 @@ def decode_object_lettering(data: bytes, reader: Reader, vertices: list, faces: 
     (flags bit 15 clear) replaces the record pointer and fails closed here.
     """
     reader.p &= ~1
-    dx, dy, dz, flags, advance = struct.unpack('>3hHh', reader.take(10))
+    dx, dy, dz = struct.unpack('>3h', reader.take(6))
+    return decode_placed_lettering(
+        data, reader, [dx, dy, dz], vertices, faces, lines, palette, hardware, 'object'
+    )
+
+
+def decode_ground_lettering(data: bytes, reader: Reader, vertices: list, faces: list,
+                            lines: list, palette: list[int] | None,
+                            hardware: list[int] | None) -> dict:
+    """Decode the ground `$6000` vector-text record consumed at `$053F76`.
+
+    The consumer subtracts the camera word from each position word, so X and Z
+    use the same `$8000`-relative cell-local encoding as the record's own plan
+    vertices while Y is already a world height. The record is copied into the
+    reconstructed stream untransformed, so the cell orientation does not apply.
+    """
+    reader.p &= ~1
+    x, y, z = struct.unpack('>3h', reader.take(6))
+    anchor = [(x & 0xFFFF) - 0x8000, y, (z & 0xFFFF) - 0x8000]
+    return decode_placed_lettering(
+        data, reader, anchor, vertices, faces, lines, palette, hardware, 'ground'
+    )
+
+
+def decode_placed_lettering(data: bytes, reader: Reader, anchor: list[int],
+                            vertices: list, faces: list, lines: list,
+                            palette: list[int] | None, hardware: list[int] | None,
+                            kind: str) -> dict:
+    """Flags, advance, glyph scales, colour and inline text, shared from $053FCA."""
+    flags, advance = struct.unpack('>Hh', reader.take(4))
     scale_x, scale_y = struct.unpack('>bb', reader.take(2))
     colour = reader.word()
     if not flags & 0x8000:
-        raise ValueError('indirect object vector text unresolved')
+        raise ValueError(f'indirect {kind} vector text unresolved')
     font = flags & 0xF
     if font == 4:
-        raise ValueError('state-conditioned object text font unresolved')
+        raise ValueError(f'state-conditioned {kind} text font unresolved')
     plane = flags & 0xC0
     # Inline literal characters are authored; a $80..$98 token names a live
     # $CCA0 workspace string whose content is capture state, not model data.
@@ -282,7 +311,6 @@ def decode_object_lettering(data: bytes, reader: Reader, vertices: list, faces: 
     else:
         raise ValueError('vector-text terminator missing')
     text = ''.join(characters)
-    anchor = [dx, dy, dz]
     rgb = colour_value(colour, palette, hardware)
     for character_index, character in enumerate(text):
         glyph_index = ord(character) + font * 64 - 32
@@ -881,7 +909,7 @@ def decode_ground(data: bytes, start: int, orientation: int,
         plan.append([x - 0x8000, 0, z - 0x8000])
     else:
         raise ValueError('ground vertex terminator missing')
-    vertices, faces, lines, gaps, placements = [], [], [], [], []
+    vertices, faces, lines, gaps, placements, texts = [], [], [], [], [], []
     for source_index in range(1024):
         colour = reader.word()
         if colour == 0:
@@ -904,10 +932,16 @@ def decode_ground(data: bytes, start: int, orientation: int,
                         'position': [x - 0x8000, 0, z - 0x8000],
                     })
                     continue
-                gaps.append(
-                    'Ground $6000 vector-text command is not yet decoded.'
-                )
-                break
+                if transform:
+                    gaps.append(
+                        'Ground $6000 vector text is copied into the frame stream '
+                        'untransformed, and this cell has a nonzero orientation.'
+                    )
+                    break
+                texts.append(decode_ground_lettering(
+                    data, reader, vertices, faces, lines, palette, hardware
+                ))
+                continue
             edge_refs = list(reader.take(2))
             kept, unplaced = _ground_indices(edge_refs, plan, scene)
             if unplaced:
@@ -956,7 +990,8 @@ def decode_ground(data: bytes, start: int, orientation: int,
     if not faces and not lines and not placements:
         gaps.append(EMPTY_GROUND_REASON)
     return ({'vertices': vertices, 'faces': faces, 'lines': lines, 'sourceStart': start,
-             'sourceEnd': reader.p}, sorted(set(gaps)), transform, placements)
+             'sourceEnd': reader.p, **({'texts': texts} if texts else {})},
+            sorted(set(gaps)), transform, placements)
 
 
 def _ground_indices(refs: list[int], plan: list, scene: dict[int, list[int]]
