@@ -99,6 +99,11 @@ export interface StructureSelection {
     readonly queue: readonly (
       | { readonly index: number; readonly kind: 'face' }
       | { readonly kind: 'attachment'; readonly slot: number }
+      | {
+          readonly index: number;
+          readonly kind: 'attachmentFace';
+          readonly slot: number;
+        }
     )[];
   }[];
   readonly scale: readonly [number, number];
@@ -489,6 +494,21 @@ const structureSelection = (value: unknown): StructureSelection => {
             fail('missing region attachment');
           }
           return { kind: 'attachment', slot: itemSlot } as const;
+        }
+        if (entry['kind'] === 'attachmentFace') {
+          const item = fields(entry, ['kind', 'slot', 'index']);
+          const itemSlot = integer(item['slot']);
+          const owner =
+            bySlot.get(itemSlot) ?? fail('missing region attachment');
+          const face = integer(item['index']);
+          if (face < 0 || face >= owner.mesh.faces.length) {
+            fail('invalid attachment face reference');
+          }
+          return {
+            index: face,
+            kind: 'attachmentFace',
+            slot: itemSlot
+          } as const;
         }
         fields(entry, ['kind', 'index']);
         if (entry['kind'] !== 'face') {

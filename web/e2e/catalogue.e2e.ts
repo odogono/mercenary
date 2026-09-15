@@ -221,7 +221,7 @@ test('maps known placements and links a surface assembly to building detail', as
 }) => {
   await page.goto('/catalogue?instance=eris-surface-87&q=structure');
   await expect(page.locator('#details')).toContainText('CAPITAL SPACEPORT');
-  await expect(page.locator('#map a')).toHaveCount(174);
+  await expect(page.locator('#map a')).toHaveCount(207);
   await page
     .locator('#map')
     .getByRole('link', { exact: true, name: 'CAPITAL SPACEPORT' })
@@ -531,7 +531,7 @@ test('the placement map zooms, pans and resets by pointer and keyboard without l
   };
   await page.goto('/catalogue?instance=eris-surface-89');
   await expect(page.locator('#model-name')).toHaveText('Structure 75');
-  await expect(page.locator('#map a')).toHaveCount(174);
+  await expect(page.locator('#map a')).toHaveCount(207);
   await page.locator('#map').scrollIntoViewIfNeeded();
   // Opening a placement frames its local workspace: neighbouring cells one
   // unit apart are separate pins.
@@ -545,7 +545,7 @@ test('the placement map zooms, pans and resets by pointer and keyboard without l
       .locator('#map')
       .getByRole('link', { exact: true, name: 'STATE OFFICE' })
   ).toHaveAttribute('aria-current', 'true');
-  // Fit all collapses the workspace back onto one spot, still 174 pins.
+  // Fit all collapses the workspace back onto one spot, still 207 pins.
   await page.getByRole('button', { name: 'Fit all' }).click();
   expect(await zoom()).toBe(1);
   await expect(page.locator('#map-scale')).toContainText('grid 500 units');
@@ -553,7 +553,7 @@ test('the placement map zooms, pans and resets by pointer and keyboard without l
   expect(
     Math.abs(collapsed.x - (await centre('CAPITAL SPACEPORT')).x)
   ).toBeLessThan(4);
-  await expect(page.locator('#map a')).toHaveCount(174);
+  await expect(page.locator('#map a')).toHaveCount(207);
   // Wheel zoom keeps the world under the pointer still. Marker boxes are
   // pixel-snapped, so the check stays at a zoom where that error is small.
   await page.mouse.move(collapsed.x, collapsed.y);
@@ -646,5 +646,5 @@ test('the placement map zooms, pans and resets by pointer and keyboard without l
   expect(await zoom()).toBe(1);
   await expect(page.locator('#map a')).toHaveCount(147);
   await page.goBack();
-  await expect(page.locator('#map a')).toHaveCount(174);
+  await expect(page.locator('#map a')).toHaveCount(207);
 });

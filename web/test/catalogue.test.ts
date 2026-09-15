@@ -247,7 +247,16 @@ it('keeps a generated census ledger that cannot drift from the models', async ()
     data.models.filter(model => model.conditions.includes('viewerPosition'))
       .length
   ).toBe(19);
-  expect(data.models.filter(model => model.structureSelection).length).toBe(95);
+  expect(data.models.filter(model => model.structureSelection).length).toBe(
+    210
+  );
+  expect(
+    data.models.some(model =>
+      model.structureSelection?.regions.some(region =>
+        region.queue.some(entry => entry.kind === 'attachmentFace')
+      )
+    )
+  ).toBe(true);
   expect(
     data.models.filter(model => model.structureSelection?.liveSelector).length
   ).toBe(2);

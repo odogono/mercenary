@@ -59,7 +59,7 @@ its original plan mesh, scaled region bounds (signed-word endpoint sentinels sta
 scales. Detail selectors retain two groups of ordered boxes and default face indices in raw
 model coordinates. Unsupported or truncated selectors are omitted as a whole and explained
 in the model reason. The census retains every selector the documented post-plan grammar
-accepts (95 in the current first-world extract, including Structure 75 and its Structure 76
+accepts (210 in the current first-world extract, including Structure 75 and its Structure 76
 alias, and `$xxF0` constructor variants such as `$40F0`/`$42F0`/`$82F0`) and 44 detail selectors. The first detail group starts
 on the next word boundary after the byte-sized face stream. Empty plan meshes are valid
 when all queues are empty. The spaceport's combined inspection variants also carry
@@ -247,8 +247,17 @@ code. Targeted disassembly used to establish them remains ignored at
   Types 3–6 contain two additional references; type 7 does not. Supported ordinary
   and lower-height walls, upper wall bands (type 7), and ground/lower/top planes
   become independent polygons.
-  Types requiring the third height remain gaps except for the reviewed spaceport,
-  whose captured height binding now recovers the lower window wall and sill.
+  Types 2 and 3 use a **third wall height**. `$059D9A` loads a record's two
+  heights into `$7B26`/`$7B28`, and `$05A756` projects four levels: ground,
+  `$7B26`, `$7B28` and `$7B2A`. No instruction anywhere in the 1 MiB image
+  writes `$7B2A`; an exhaustive scan of extension words finds the single read at
+  `$05A762`, and the word holds **48** in all seven pinned captures, spanning
+  five structures on four bodies with different record heights. The extractor
+  therefore binds it from the workspace for every structure rather than for the
+  reviewed spaceport alone. Type 2 is a wall from the ground to that height with
+  its two plan references swapped (`$05AD52`); type 3 is a flat four-reference
+  polygon at it (`$05AEA8`). Together they recover 563 further faces across 106
+  records, typically a plinth or window sill under the main wall band.
   An immediate plan terminator and wall-list zero word is an empty placeholder,
   not a failed decode: Structure 100 (`structure-01a618`) and its linked
   building detail 1 (`$02620E`, `$8000` vertex terminator) are accounted that
@@ -257,8 +266,20 @@ code. Targeted disassembly used to establish them remains ignored at
   Alias indirection which the decoder cannot resolve remains unresolved. Authored
   surface attachments/openings after the basic wall list are not silently omitted
   from a “decoded” result: their presence makes the model partial. `$40F0` and
-  `$82F0` use the same 26-byte constructors as `$4000`/`$8200` when `$7AFB` is
+  `$82F0` use the same constructors as `$4000`/`$8200` when `$7AFB` is
   zero (pinned first-world); the live `$7AFB≠0` predicate remains unresolved.
+- An Entrance Attachment record is a control word, four rectangle words, its
+  leaf colours and a four-word Proximity Box. The **one-leaf** path stores three
+  colours at `$05A08A` and so occupies **24 bytes**; the two-leaf path at
+  `$05A202` reads a fourth word for its own record slot and occupies 26. Reading
+  26 for both drifted every following record, which is why one-leaf structures
+  previously reported an invalid Proximity Box and lost their whole selector.
+- Each attachment also appends faces to the structure's drawable list: three for
+  one leaf (`$05A0D4`) and six for two (`$05A234`). A region queue byte therefore
+  names a plan wall, an attachment slot, or a face an attachment contributed.
+  Slots count down from `$3FC` in stream order, so a structure with five or six
+  attachments names slots as bytes 251 and 250; the byte threshold is the lowest
+  assigned slot, not a fixed `$FC`.
 
 ### Cell ground, pad and road
 
@@ -319,8 +340,8 @@ code. Targeted disassembly used to establish them remains ignored at
 - The captured Eris workspace yields 76 surface-assembly placements and 11 named
   places. The separately decoded group-$14 cell-$26 assembly brings Eris to **77
   surface assemblies**; its seven surface objects bring that map to **84
-  structure and object placements**. Ninety recovered ground/pad/road instances
-  bring the Eris map to **174** plotted locations.
+  structure and object placements**. One hundred and twenty-three recovered ground/pad/road
+  instances bring the Eris map to **207** plotted locations.
 - The authored Birmingham Island map in the same first-world place pool
   (`$23C58..$23E56`, SHA-256
   `e85959b1b659847bb029cc57766ed77ba3822ceb1d1098938619bfa8f96397d9`) yields
@@ -411,8 +432,8 @@ Still unexplored or incomplete: packed Pasti STX track payload, live
 named-place lists, remaining object residences/transforms, live articulation
 angles (rest pose only), Building detail 69's extra projected slots, object text
 through live `$CCA0` tokens, indirect text pointers and font 4, the palette
-binding of unplaced objects 333–338, post-plan attachment forms other than the
-documented zero-latch and `$F0` constructors,
+binding of unplaced objects 333–338, the live `$7AFB` attachment predicate,
+building-detail selectors for nine details and the 55 structures that link them,
 the separate native surface/background fill path, and script-created visual
 changes. The remaining nine unresolved records are NULL, five empty surface
 records, two empty building details and Building detail 69. Resident model banks do not change between first-world and occupied-Spaceport RAM.
