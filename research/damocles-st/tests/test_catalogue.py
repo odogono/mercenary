@@ -1032,3 +1032,132 @@ class ConditionedObjectFormTests(unittest.TestCase):
         self.assertEqual(classes['procedural'], 1)
         self.assertEqual(classes['conditionalForms'], 1)
         self.assertEqual(classes['stateForms'], 1)
+
+
+class SurfacePrimitiveTests(unittest.TestCase):
+    """Third wall height and post-plan record lengths established at $059D6C..$05A24E."""
+
+    @staticmethod
+    def _surface(plan: list[tuple[int, int]], walls: bytes, post: bytes = b'\0\0') -> bytearray:
+        record = struct.pack('>2h', 250, 150) + bytes.fromhex('0777 0777')
+        for x, z in plan:
+            record += struct.pack('>2h', x, z)
+        record += struct.pack('>h', 0) + walls + b'\0\0' + post
+        data = bytearray(0x40000)
+        data[0x1000:0x1000 + len(record)] = record
+        data[0x1000 - 8:0x1000] = bytes.fromhex('0101 0000 0000 0000')
+        struct.pack_into('>h', data, 0x7B2A, 48)
+        return data
+
+    def test_third_wall_height_comes_from_the_workspace_word(self):
+        from damocleslab.catalogue import third_wall_height
+
+        data = bytearray(0x10000)
+        struct.pack_into('>h', data, 0x7B2A, 48)
+        self.assertEqual(third_wall_height(bytes(data)), 48)
+
+    def test_type_two_is_a_wall_from_the_ground_to_the_third_height(self):
+        from damocleslab.catalogue import decode_structure
+
+        data = self._surface([(5, 0), (15, 0)], bytes.fromhex('0102 2777'))
+        mesh, gaps = decode_structure(bytes(data), 0x1000, None, None, (1, 1), 48)
+        self.assertEqual(gaps, [])
+        self.assertEqual(len(mesh['faces']), 1)
+        # $05AD52 swaps the two plan references before building the quad.
+        self.assertEqual(mesh['vertices'], [[5, 48, 0], [15, 48, 0], [15, 0, 0], [5, 0, 0]])
+
+    def test_type_three_is_a_flat_quad_at_the_third_height(self):
+        from damocleslab.catalogue import decode_structure
+
+        data = self._surface(
+            [(5, 5), (15, 5), (15, 15), (5, 15)], bytes.fromhex('0102 3777 0304')
+        )
+        mesh, gaps = decode_structure(bytes(data), 0x1000, None, None, (1, 1), 48)
+        self.assertEqual(gaps, [])
+        self.assertEqual([point[1] for point in mesh['vertices']], [48] * 4)
+
+    def test_an_unbound_third_height_still_names_the_gap(self):
+        from damocleslab.catalogue import decode_structure
+
+        data = self._surface([(5, 0), (15, 0)], bytes.fromhex('0102 2777 0102 0777'))
+        mesh, gaps = decode_structure(bytes(data), 0x1000, None, None, (1, 1), None)
+        self.assertEqual(gaps, ['Surface primitive type 2 needs additional height/shape decoding.'])
+        self.assertEqual(len(mesh['faces']), 1)
+
+    def _selection_world(self, control: int, colours: str) -> bytearray:
+        # One wall, one entrance attachment, one region naming its slot.
+        post = struct.pack('>H', control)
+        post += struct.pack('>4h', 10, 10, 40, 40) + bytes.fromhex(colours)
+        post += struct.pack('>4h', 0, 100, 0, 100)
+        post += struct.pack('>H', 0) + struct.pack('>H', 0x3FC)
+        post += struct.pack('>4h', -100, 100, -100, 100)
+        post += bytes.fromhex('01 FF 00 00')
+        return self._surface(
+            [(5, 5), (60, 5), (60, 60), (5, 60)], bytes.fromhex('0102 0777'), post
+        )
+
+    def test_one_leaf_entrance_record_is_twenty_four_bytes(self):
+        from damocleslab.catalogue import decode_structure, decode_structure_selection
+
+        data = self._selection_world(0x4000, '0777 0666 0555')
+        mesh, _ = decode_structure(bytes(data), 0x1000, None, None, (1, 1), 48)
+        selection = decode_structure_selection(bytes(data), mesh, (1, 1), [0] * 16, [0] * 16)
+        self.assertEqual(len(selection['attachments']), 1)
+        attachment = selection['attachments'][0]
+        self.assertEqual(attachment['constructor']['leafCount'], 1)
+        self.assertEqual(attachment['proximityBox'], {'x': [0, 100], 'z': [0, 100]})
+        self.assertEqual(
+            [entry['kind'] for entry in selection['regions'][0]['queue']],
+            ['face', 'attachment'],
+        )
+
+    def test_two_leaf_entrance_record_reads_its_extra_slot_colour(self):
+        from damocleslab.catalogue import decode_structure, decode_structure_selection
+
+        data = self._selection_world(0x4200, '0777 0666 0555 0444')
+        mesh, _ = decode_structure(bytes(data), 0x1000, None, None, (1, 1), 48)
+        selection = decode_structure_selection(bytes(data), mesh, (1, 1), [0] * 16, [0] * 16)
+        self.assertEqual(selection['attachments'][0]['constructor']['leafCount'], 2)
+        self.assertEqual(selection['attachments'][0]['proximityBox'], {'x': [0, 100], 'z': [0, 100]})
+
+    def test_region_reference_resolves_slots_below_the_last_byte(self):
+        from damocleslab.catalogue import resolve_region_reference
+
+        slots = {0x3FC: {}, 0x3F8: {}, 0x3F4: {}, 0x3F0: {}, 0x3EC: {}}
+        self.assertEqual(
+            resolve_region_reference(251, 63, slots, []),
+            {'kind': 'attachment', 'slot': 0x3EC},
+        )
+        self.assertEqual(
+            resolve_region_reference(10, 63, slots, []), {'kind': 'face', 'index': 9}
+        )
+
+    def test_region_reference_resolves_faces_an_attachment_appends(self):
+        from damocleslab.catalogue import resolve_region_reference
+
+        faces = [(0x3FC, 21, 6), (0x3F8, 27, 3)]
+        self.assertEqual(
+            resolve_region_reference(22, 21, {0x3FC: {}, 0x3F8: {}}, faces),
+            {'kind': 'attachmentFace', 'slot': 0x3FC, 'index': 0},
+        )
+        self.assertEqual(
+            resolve_region_reference(28, 21, {0x3FC: {}, 0x3F8: {}}, faces),
+            {'kind': 'attachmentFace', 'slot': 0x3F8, 'index': 0},
+        )
+        with self.assertRaisesRegex(ValueError, 'selection reference outside geometry'):
+            resolve_region_reference(31, 21, {0x3FC: {}, 0x3F8: {}}, faces)
+
+    def test_every_pinned_capture_agrees_on_the_third_wall_height(self):
+        from damocleslab.catalogue import hatari_memstate_ram, third_wall_height
+
+        root = Path(__file__).resolve().parents[1]
+        paths = sorted(root.glob('work/observe-first-world-*/observed.ram'))
+        paths += sorted(root.glob('snapshots/*.sav'))
+        seen = {}
+        for path in paths:
+            blob = path.read_bytes()
+            ram = blob if len(blob) == 1048576 else hatari_memstate_ram(blob)
+            seen[path.name] = third_wall_height(ram)
+        if not seen:
+            self.skipTest('no pinned captures in this checkout')
+        self.assertEqual(set(seen.values()), {48}, seen)

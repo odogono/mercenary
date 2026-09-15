@@ -653,6 +653,16 @@ def decode_object_forms(data: bytes, address: int, palette: list[int] | None,
     return variants, conditions, list(dict.fromkeys(gaps))
 
 
+# $059D9A loads the record's two heights into $7B26/$7B28. The third wall
+# height at $7B2A is read at $05A762 but no instruction in RAM writes it; it
+# holds 48 in every pinned capture, across five structures on four bodies.
+THIRD_HEIGHT_WORD = 0x7B2A
+
+
+def third_wall_height(data: bytes) -> int:
+    return struct.unpack_from('>h', data, THIRD_HEIGHT_WORD)[0]
+
+
 def decode_structure(data: bytes, start: int, palette: list[int] | None = None,
                      hardware: list[int] | None = None, scale: tuple[int, int] | None = None,
                      third_height: int | None = None) -> tuple[dict, list[str]]:
@@ -938,7 +948,27 @@ ATTACHMENT_SLOT_MASK = 0x3FC
 PASSAGE_SLOT = 0x200
 
 
-def selection_list(reader: Reader, count: int, attachment: bool = False) -> list:
+def resolve_region_reference(ref: int, wall_count: int, slots: dict,
+                             attachment_faces: list) -> dict:
+    """Resolve one region queue byte against the structure's drawable list.
+
+    Plan walls occupy one-based indices. Each Entrance Attachment appends its
+    own faces to the same list ($05A0D4 adds three for one leaf, $05A234 adds
+    six for two) and owns a slot counted down from $3FC, which the queue names
+    as byte x 4.
+    """
+    if ref * 4 in slots:
+        return {'kind': 'attachment', 'slot': ref * 4}
+    if 1 <= ref <= wall_count:
+        return {'kind': 'face', 'index': ref - 1}
+    for slot, first, added in attachment_faces:
+        if first < ref <= first + added:
+            return {'kind': 'attachmentFace', 'slot': slot, 'index': ref - first - 1}
+    raise ValueError('selection reference outside geometry')
+
+
+def selection_list(reader: Reader, count: int, attachment: bool = False,
+                   slots: dict | None = None, attachment_faces: list | None = None) -> list:
     result = []
     for _ in range(1024):
         ref = reader.take(1)[0]
@@ -947,10 +977,12 @@ def selection_list(reader: Reader, count: int, attachment: bool = False) -> list
                 if reader.take(1) != b'\0':
                     raise ValueError('selection list padding is not zero')
             return result
-        if attachment and ref >= 252:
-            result.append({'kind': 'attachment', 'slot': ref * 4})
+        if attachment:
+            result.append(resolve_region_reference(
+                ref, count, slots or {}, attachment_faces or []
+            ))
         elif 1 <= ref <= count:
-            result.append({'kind': 'face', 'index': ref - 1} if attachment else ref - 1)
+            result.append(ref - 1)
         else:
             raise ValueError('selection reference outside geometry')
     raise ValueError('selection list terminator missing')
@@ -1102,12 +1134,17 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
             break
         low = command & 0xFF
         if authored_entrance_control(command) is not None:
+            constructor = entrance_constructor(command)
             x0, z0, x1, z1 = [reader.signed() for _ in range(4)]
-            colours = [reader.word() for _ in range(4)]
+            # $05A08A stores three leaf colours. The two-leaf path at $05A202
+            # reads a fourth word for its own record slot; the one-leaf path
+            # does not, so those records are 24 bytes rather than 26.
+            colours = [reader.word() for _ in range(3)]
+            if constructor['leafCount'] == 2:
+                colours.append(reader.word())
             box = [reader.signed() for _ in range(4)]
             if x0 >= x1 or z0 >= z1:
                 raise ValueError('unknown closed attachment geometry')
-            constructor = entrance_constructor(command)
             sx, sz = scale
             scaled_x = sorted((scale_endpoint(x0, sx), scale_endpoint(x1, sx)))
             scaled_z = sorted((scale_endpoint(z0, sz), scale_endpoint(z1, sz)))
@@ -1136,6 +1173,13 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
     else:
         raise ValueError('attachment list terminator missing')
     by_slot = {item['slot']: item for item in attachments}
+    # Attachment faces follow the plan walls in stream order.
+    attachment_faces = []
+    next_face = max((face['sourceIndex'] for face in mesh['faces']), default=-1) + 1
+    for item in attachments:
+        added = 3 * item['constructor']['leafCount']
+        attachment_faces.append((item['slot'], next_face, added))
+        next_face += added
     regions = []
     sources = {face['sourceIndex'] for face in mesh['faces']}
     for _ in range(256):
@@ -1150,7 +1194,9 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
                   for (lo, hi), factor in zip(raw, scale)]
         if any(lo >= hi or lo < -32768 or hi > 32767 for lo, hi in bounds):
             raise ValueError('invalid region bounds')
-        queue = selection_list(reader, max(sources, default=-1) + 1, True)
+        queue = selection_list(
+            reader, max(sources, default=-1) + 1, True, by_slot, attachment_faces
+        )
         named = flags & ATTACHMENT_SLOT_MASK
         if named == 0:
             gate, inset_axis = 'none', None
@@ -1162,7 +1208,7 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
                 raise ValueError('region names unrecovered attachment slot')
             gate = 'attachmentLatch'
             inset_axis = bound['constructor']['motionAxis']
-        if any(entry['kind'] == 'attachment' and entry['slot'] not in by_slot or
+        if any(entry['kind'] in ('attachment', 'attachmentFace') and entry['slot'] not in by_slot or
                entry['kind'] == 'face' and entry['index'] not in sources for entry in queue):
             raise ValueError('region references unrecovered geometry')
         regions.append({
@@ -1860,10 +1906,10 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                     structure_bindings[identity] = (interior, palette_index, scale)
                     # Bind the live third-height workspace only to the reviewed
                     # occupied spaceport record; other records remain unresolved.
-                    third_height = None
-                    if identity == 'structure-01484e' and int.from_bytes(data[0x7af0:0x7af2], 'big') == 74:
-                        third_height = struct.unpack_from('>h', data, 0x7b2a)[0]
-                    mesh, gaps = decode_structure(data, pointer, palette_at(data, palette_index), hardware, scale, third_height)
+                    mesh, gaps = decode_structure(
+                        data, pointer, palette_at(data, palette_index), hardware, scale,
+                        third_wall_height(data),
+                    )
                     try:
                         selection = decode_structure_selection(data, mesh, scale, palette_at(data, palette_index), hardware)
                         model['structureSelection'] = selection

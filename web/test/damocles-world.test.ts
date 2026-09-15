@@ -178,11 +178,13 @@ describe('the Eris surface from the Damocles Catalogue', () => {
     const unresolved = surface.placements.filter(
       placement => placement.mesh === undefined
     );
-    expect(unresolved).toHaveLength(21);
-    expect(surface.unresolvedCount).toBe(21);
+    // INTERSTELLARSHIP and RED BEACON now draw; only the intentional empty
+    // surface record has nothing to place.
+    expect(unresolved).toHaveLength(19);
+    expect(surface.unresolvedCount).toBe(19);
     expect(unresolved.every(placement => placement.faceCount === 0)).toBe(true);
     expect(new Set(unresolved.map(placement => placement.modelId))).toEqual(
-      new Set(['object-036324', 'object-03e30e', 'structure-01a618'])
+      new Set(['structure-01a618'])
     );
   });
 

@@ -309,7 +309,7 @@ test('/damocles boots the Damocles Gameplay Session on foot at Eris Capital Spac
   expect(Number(await frame.getAttribute('data-triangles'))).toBeGreaterThan(
     1000
   );
-  expect(await frame.getAttribute('data-unresolved')).toBe('21');
+  expect(await frame.getAttribute('data-unresolved')).toBe('19');
 
   await testInfo.attach('damocles-start', {
     body: await page.screenshot(),

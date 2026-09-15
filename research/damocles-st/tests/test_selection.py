@@ -13,12 +13,13 @@ class SelectionTests(unittest.TestCase):
     def test_lists_preserve_order_repeats_empty_and_attachment(self):
         self.assertEqual(selection_list(Reader(bytes([3, 1, 3, 0]), 0), 3), [2, 0, 2])
         self.assertEqual(selection_list(Reader(bytes([0, 0]), 0), 3), [])
+        slots = {0x3FC: {}, 0x3F8: {}, 0x3F4: {}, 0x3F0: {}}
         self.assertEqual(
-            selection_list(Reader(bytes([255, 0]), 0), 3, True),
+            selection_list(Reader(bytes([255, 0]), 0), 3, True, slots),
             [{'kind': 'attachment', 'slot': 0x3FC}],
         )
         self.assertEqual(
-            selection_list(Reader(bytes([252, 254, 0, 0]), 0), 3, True),
+            selection_list(Reader(bytes([252, 254, 0, 0]), 0), 3, True, slots),
             [{'kind': 'attachment', 'slot': 0x3F0}, {'kind': 'attachment', 'slot': 0x3F8}],
         )
 
@@ -133,11 +134,13 @@ class SelectionTests(unittest.TestCase):
         start = 0x10ec2
         data = bytearray(start + 4)
         struct.pack_into('>hh', data, start, 250, 150)
+        # A one-leaf record carries three leaf colours, so its Proximity Box
+        # starts at the word the two-leaf path would spend on its slot colour.
         data += struct.pack(
-            '>H4h4H4hH',
+            '>H4h3H4hH',
             0x40F0, 75, -198, 125, -192,
-            0x1246, 0x1432, 0x1444, 0x001E,
-            170, -450, -100, -32768, 0,
+            0x1246, 0x1432, 0x1444,
+            30, 170, -450, -100, 0,
         )
         data += bytes.fromhex('c000 80007fff80007fff 0000 0000')
         mesh = {'sourceStart': start, 'sourceEnd': start + 6, 'faces': []}
@@ -147,7 +150,7 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(attachment['constructor'], {
             'leafCount': 1, 'motionAxis': 'x', 'movingSide': 'high',
         })
-        self.assertEqual(attachment['proximityBox'], {'x': [-900, 340], 'z': [-32768, -200]})
+        self.assertEqual(attachment['proximityBox'], {'x': [60, 340], 'z': [-900, -200]})
         self.assertTrue(result['liveSelector'])
 
     def test_z_f0_variant_is_two_leaf_z(self):
