@@ -964,3 +964,36 @@ it('gives each door key and transporter slot its own label form', async () => {
     true
   );
 });
+
+it('samples the free-running articulation angle for the six turning objects', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const turning = data.models.filter(model =>
+    model.conditions.some(condition =>
+      condition.startsWith('articulation angle')
+    )
+  );
+  expect(turning).toHaveLength(6);
+  expect(turning.every(model => model.status === 'decoded')).toBe(true);
+  expect(turning.every(model => model.variants.length === 8)).toBe(true);
+
+  const bomb = data.models.find(model => model.id === 'object-036b46')!;
+  const rest = bomb.variants[0]!.mesh.vertices;
+  const quarter = bomb.variants.find(form => form.id === 'angle-40')!.mesh
+    .vertices;
+  // Only the tagged vertices move, and they do move.
+  const moved = rest.filter(
+    (point, index) => point.join() !== quarter[index]!.join()
+  );
+  expect(moved.length).toBeGreaterThan(0);
+  expect(moved.length).toBeLessThan(rest.length);
+
+  // The four articulated building details keep a gap that says why.
+  const details = data.models.filter(model =>
+    model.omissions.includes('articulated')
+  );
+  expect(details).toHaveLength(4);
+  expect(details.every(model => model.kind === 'interior')).toBe(true);
+  expect(details[0]!.reason).toContain('structure X and Z scales');
+});

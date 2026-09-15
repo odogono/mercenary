@@ -389,6 +389,52 @@ def decode_placed_lettering(data: bytes, reader: Reader, anchor: list[int],
             **({'liveToken': token} if token is not None else {})}
 
 
+# $0537B0 rotates an articulated object's tagged vertices about its pivot by the
+# free-running angle at $7888, indexing the 256-entry sine table at $925A. The
+# angle advances every frame and differs even between two cold boots, so no
+# single frame is canonical; the catalogue samples it instead.
+TRIG_TABLE = 0x925A
+ARTICULATION_STEPS = 8
+ARTICULATION_PLANES = {'positive': (0, 1), 'zero': (0, 2), 'negative': (1, 2)}
+
+
+def _word(value: int) -> int:
+    return ((value + 0x8000) & 0xFFFF) - 0x8000
+
+
+def articulation_plane(axis: int) -> tuple[int, int]:
+    """The two coordinate indices an articulation axis byte rotates."""
+    signed = _word(axis if axis < 0x80 else axis - 0x100)
+    if signed < 0:
+        return ARTICULATION_PLANES['negative']
+    return ARTICULATION_PLANES['zero' if signed == 0 else 'positive']
+
+
+def rotate_articulated(data: bytes, vertices: list, tagged: list[int],
+                       articulation: dict, angle: int) -> list:
+    """Apply one sampled articulation angle, in the native fixed point.
+
+    `$053D84` multiplies each coordinate by a table word, keeps the product's
+    high word and doubles it, so the result carries the game's own truncation
+    rather than a cleaner float rotation.
+    """
+    if not angle % 256:
+        return vertices
+    index = (angle % 256) * 2
+    sine = struct.unpack_from('>h', data, TRIG_TABLE + index)[0]
+    cosine = struct.unpack_from('>h', data, TRIG_TABLE + index + 0x80)[0]
+    first, second = articulation_plane(articulation['axis'])
+    pivot = articulation['pivot']
+    result = [list(point) for point in vertices]
+    for position in tagged:
+        point = result[position]
+        a = point[first] - pivot[first]
+        b = point[second] - pivot[second]
+        point[first] = _word((((a * cosine - b * sine) >> 16) & 0xFFFF) * 2) + pivot[first]
+        point[second] = _word((((a * sine + b * cosine) >> 16) & 0xFFFF) * 2) + pivot[second]
+    return result
+
+
 def tag_record(kind: str, faces: list, lines: list, first_face: int,
                first_line: int, record: int) -> None:
     """Name the source record every primitive of a building detail came from."""
@@ -518,7 +564,8 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
         else:
             raise ValueError('model header limit exceeded')
     geometry_start = reader.p
-    vertices = []
+    vertices: list = []
+    tagged: list[int] = []
     for _ in range(256):
         x = reader.signed()
         if x == -32768:
@@ -535,6 +582,8 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
         # Detail records and articulated objects tag rotating vertices with a
         # negative Y. The rest pose has zero angle; the height is complemented.
         rest = kind == 'interior' or articulation is not None
+        if rest and y < 0:
+            tagged.append(len(vertices))
         vertices.append([x, ~y if rest and y < 0 else y, z])
     else:
         raise ValueError('vertex terminator missing')
@@ -644,6 +693,10 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
             raise ValueError('view-conditioned group outside the record')
         if view_groups:
             alternates['viewGroup'] = len(view_groups)
+    if articulation is not None and state.get('angle'):
+        vertices = rotate_articulated(
+            data, vertices, tagged, articulation, state['angle']
+        )
     if chosen is None:
         read_primitives(vertices, faces, lines)
     else:
@@ -658,7 +711,8 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
             **({'displayCode': display_code, 'labelAnchor': label_anchor}
                if label_anchor is not None else {}),
             **({'alternates': alternates} if alternates else {}),
-            **({'articulation': articulation} if articulation is not None else {}),
+            **({'articulation': {**articulation, 'vertices': tagged}}
+               if articulation is not None else {}),
             **({'viewGroups': view_groups} if view_groups else {}),
             **({'texts': texts} if texts else {})}
 
@@ -704,6 +758,14 @@ def decode_object_forms(data: bytes, address: int, palette: list[int] | None,
         conditions.append('state $7A60')
     if 'slotLabel' in alternates:
         conditions.append(f"resident slot ({alternates['slotLabel']} label)")
+    if 'articulation' in base and base['articulation']['vertices']:
+        step = 256 // ARTICULATION_STEPS
+        forms[0] = ('record', 'Articulation angle $00', {}, base)
+        for index in range(1, ARTICULATION_STEPS):
+            angle = index * step
+            forms.append((f'angle-{angle:02x}', f'Articulation angle ${angle:02X}',
+                          {'angle': angle}, None))
+        conditions.append('articulation angle ($7888)')
     if 'viewGroup' in alternates:
         forms[0] = ('record', 'Viewer elsewhere (default list)', {}, base)
         for index in range(alternates['viewGroup']):
@@ -724,9 +786,9 @@ def decode_object_forms(data: bytes, address: int, palette: list[int] | None,
     if not variants:
         raise ValueError('model has no drawable primitives')
     gaps = []
-    if 'articulation' in base:
+    if 'articulation' in base and not base['articulation']['vertices']:
         gaps.append(
-            'Articulated part shown at its rest angle; the live rotation about the source pivot by $7888 is not reproduced.'
+            'Articulated header names a pivot but tags no vertex, so nothing rotates.'
         )
     for text in base.get('texts', []):
         if 'liveToken' in text:
@@ -2173,7 +2235,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 model['status'] = 'partial'
                 model['reason'] = 'Building-detail shape decoded; place-specific palette and visibility groups are not bound.'
                 if 'articulation' in mesh:
-                    model['reason'] += ' Articulated part shown at its rest angle; the live rotation about the source pivot by $7888 is not reproduced.'
+                    model['reason'] += ' Articulated part shown at its rest angle. $053D74 rotates a detail after the structure X and Z scales are applied, so sampling the $7888 angle here would need the scaled frame this model is not held in.'
             except (ValueError, struct.error) as error:
                 model['reason'] = str(error)
                 if str(error).startswith('procedural:'):
@@ -2678,7 +2740,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             else:
                 model['reason'] = 'Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.'
             if articulated:
-                model['reason'] += ' Articulated part shown at its rest angle; the live rotation about the source pivot by $7888 is not reproduced.'
+                model['reason'] += ' Articulated part shown at its rest angle. $053D74 rotates a detail after the structure X and Z scales are applied, so sampling the $7888 angle here would need the scaled frame this model is not held in.'
     for identity, (slot, palette_index, scale) in structure_bindings.items():
         if slot >= len(tables[2]['entries']):
             continue
