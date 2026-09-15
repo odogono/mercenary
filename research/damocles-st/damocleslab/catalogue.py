@@ -681,6 +681,18 @@ def third_wall_height(data: bytes) -> int:
     return struct.unpack_from('>h', data, THIRD_HEIGHT_WORD)[0]
 
 
+def _scene_colours(words: list[int], palette: list[int] | None,
+                   hardware: list[int] | None) -> list[dict]:
+    """The cell background colours a surface record carries after its heights."""
+    resolved = []
+    for word in words:
+        try:
+            resolved.append({'colour': colour_value(word, palette, hardware), 'sourceColour': word})
+        except ValueError:
+            resolved.append({'sourceColour': word})
+    return resolved
+
+
 def decode_structure(data: bytes, start: int, palette: list[int] | None = None,
                      hardware: list[int] | None = None, scale: tuple[int, int] | None = None,
                      third_height: int | None = None) -> tuple[dict, list[str]]:
@@ -688,7 +700,10 @@ def decode_structure(data: bytes, start: int, palette: list[int] | None = None,
     height, lower = reader.signed(), reader.signed()
     if height < 0:
         raise ValueError('structure alias must be resolved before geometry')
-    reader.take(4)  # two ground/scene colours, not wall colours
+    # $059DA2 resolves these two through the structure's scene palette into
+    # $7C82/$7C84 and installs them in the frame colour table at $059600. They
+    # are the cell's background colours, not wall colours.
+    scene_colours = [reader.word(), reader.word()]
     if scale is None:
         scale = struct.unpack_from('>bb', data, start - 8)
     plan = []
@@ -745,10 +760,14 @@ def decode_structure(data: bytes, start: int, palette: list[int] | None = None,
             raise ValueError('no supported surface faces')
         gaps.append('Empty surface record: no plan vertices or walls.')
         return (
-            {'vertices': vertices, 'faces': faces, 'lines': [], 'sourceStart': start, 'sourceEnd': reader.p},
+            {'vertices': vertices, 'faces': faces, 'lines': [],
+             'sourceStart': start, 'sourceEnd': reader.p,
+             'sceneColours': _scene_colours(scene_colours, palette, hardware)},
             sorted(set(gaps)),
         )
-    return {'vertices': vertices, 'faces': faces, 'lines': [], 'sourceStart': start, 'sourceEnd': reader.p}, sorted(set(gaps))
+    return {'vertices': vertices, 'faces': faces, 'lines': [],
+            'sourceStart': start, 'sourceEnd': reader.p,
+            'sceneColours': _scene_colours(scene_colours, palette, hardware)}, sorted(set(gaps))
 
 
 # Cell-local ground records at $1E000: $54E8E transform nybbles, then $8000-relative X/Z.
@@ -1615,7 +1634,7 @@ UNEXPLORED_COVERAGE = [
     'Building detail 69 references projected slots beyond its own vertex list.',
     'Object vector text that resolves through live $CCA0 tokens, indirect text pointers, or the state-conditioned font 4; '
     'post-plan attachment forms other than the documented zero-latch and $F0 constructors.',
-'Ground scene point joins resolve from the authored $1E000 seed table; the separate native surface/background fill path remains unresolved.',
+'The viewport background is a raster block fill at $059CE2 using the surface record\'s two scene colours, so it holds no geometry; the producer of the ground band below the horizon is still unexplored.',
 ]
 
 BUILDING_VECTOR_TEXT_MODELS = {
@@ -2014,6 +2033,9 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                         data, pointer, palette_at(data, palette_index), hardware, scale,
                         third_wall_height(data),
                     )
+                    # The frame's background is a raster fill, so these belong to
+                    # the record rather than to any mesh.
+                    model['sceneColours'] = mesh.pop('sceneColours')
                     try:
                         selection = decode_structure_selection(data, mesh, scale, palette_at(data, palette_index), hardware)
                         model['structureSelection'] = selection
