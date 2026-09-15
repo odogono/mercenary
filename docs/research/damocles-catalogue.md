@@ -232,8 +232,9 @@ code. Targeted disassembly used to establish them remains ignored at
   the same colour family. `$7000` aligns the source address, reads X/Z plus an
   object-table byte offset, applies the cell orientation, and composes that
   address-based model. `$53F76` is a separate runtime vector-text path, not the
-  source placement consumer. Two transformed placements still lack
-  scene-palette context.
+  source placement consumer. Structure slot zero still indexes surface-table
+  entry zero, whose metadata binds palette zero at `$054E10`; this supplies the
+  scene colour for the two transformed `object-041b1e` placement groups.
 - `/damocles` still paints an authored green plane; recovered ground instances
   are catalogue-only until the separate native surface/background fill path is
   recovered. The shared empty record does not contain that plane: `$056634`
@@ -361,7 +362,7 @@ Still unexplored or incomplete: packed Pasti STX track payload, live
 `$ABDC` workspaces other than Eris first-world, Vesta Politburo City, Gaea UR City and Dion, Gaea islands other than Birmingham and UR City, remaining
 named-place lists, remaining object residences/transforms, view-conditioned object groups,
 articulated geometry, special primitives, post-plan attachment forms other than the
-documented zero-latch and `$F0` constructors, two `$7000` placement palette contexts,
+documented zero-latch and `$F0` constructors,
 the separate native surface/background fill path, and script-created visual
 changes. Resident model banks do not change between first-world and occupied-Spaceport RAM.
 The recovery ledger exposes this boundary; it does not declare the whole game's extraction

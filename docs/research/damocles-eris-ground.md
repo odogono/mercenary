@@ -22,19 +22,21 @@ the separate native surface/background fill; other-body workspaces;
 
 ## Working Authority and reproduce path
 
-| Item                  | Value                                                                                                         |
-| --------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Program               | `roms/atarist/damocles_-_mercenary_ii_novagen_software_(uk).stx`                                              |
-| SHA-256               | `8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef`                                            |
-| TOS pin               | EmuTOS 2.06 (`154803e3…8939d5`)                                                                               |
-| Lab                   | `research/damocles-st/` (`damocleslab`)                                                                       |
-| Scenario              | `research/damocles-st/scenarios/first-world.json` (SHA-256 `e5383458…8582f96e`)                               |
-| Placement disassembly | `scenarios/ground-road-template.json`; run `observe-ground-road-template-20260915T112757Z-af886487`           |
-| Empty-record renderer | `scenarios/default-ground-fill.json`; run `observe-default-ground-fill-20260915T125812Z-6b1062b5`             |
-| Polygon consumer      | `scenarios/ground-neighbor-joins.json`; run `observe-ground-neighbor-joins-20260915T132137Z-e51c9ceb`         |
-| Projection workspace  | `scenarios/ground-neighbor-workspace.json`; run `observe-ground-neighbor-workspace-20260915T132312Z-b5965f5b` |
-| Pad view              | `scenarios/approach-spaceport-pad.json`                                                                       |
-| Open ground           | `scenarios/walk-toward-building.json` (NAV `07-08` → `07-11`)                                                 |
+| Item                   | Value                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Program                | `roms/atarist/damocles_-_mercenary_ii_novagen_software_(uk).stx`                                                    |
+| SHA-256                | `8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef`                                                  |
+| TOS pin                | EmuTOS 2.06 (`154803e3…8939d5`)                                                                                     |
+| Lab                    | `research/damocles-st/` (`damocleslab`)                                                                             |
+| Scenario               | `research/damocles-st/scenarios/first-world.json` (SHA-256 `e5383458…8582f96e`)                                     |
+| Placement disassembly  | `scenarios/ground-road-template.json`; run `observe-ground-road-template-20260915T112757Z-af886487`                 |
+| Empty-record renderer  | `scenarios/default-ground-fill.json`; run `observe-default-ground-fill-20260915T125812Z-6b1062b5`                   |
+| Polygon consumer       | `scenarios/ground-neighbor-joins.json`; run `observe-ground-neighbor-joins-20260915T132137Z-e51c9ceb`               |
+| Projection workspace   | `scenarios/ground-neighbor-workspace.json`; run `observe-ground-neighbor-workspace-20260915T132312Z-b5965f5b`       |
+| Object colour consumer | `scenarios/ground-object-palette.json`; run `observe-ground-object-palette-20260915T135717Z-0f83cadd`               |
+| Zero-slot palette      | `scenarios/ground-structureless-palette.json`; run `observe-ground-structureless-palette-20260915T140156Z-c3c1db95` |
+| Pad view               | `scenarios/approach-spaceport-pad.json`                                                                             |
+| Open ground            | `scenarios/walk-toward-building.json` (NAV `07-08` → `07-11`)                                                       |
 
 Cited RAM:
 
@@ -83,6 +85,14 @@ cell-local X and Z followed by a byte offset into the address-based object
 pointer table at `$04BD10`. `$053F76` belongs to the separate runtime
 vector-text renderer and is not this source command's consumer.
 
+Structure slot zero is a valid palette source, not an absent structure.
+`$054D42` masks the low nine bits of the `$ABDC` record and indexes the surface
+table without rejecting zero. Entry zero's preceding metadata binds palette
+zero through `$054E10`–`$054E1C`. The object colour consumer at
+`$04F992`–`$04F9AA` dereferences `$808x` words through that live `$7A0E`
+binding. This supplies the scene colour for all five `object-041b1e`
+placements in each of transforms `$04` and `$07`.
+
 `$F0` and `$F4` are not neighboring-cell model vertices. `$04F8F2` passes
 every polygon reference to `$04EDD4`; that consumer reads each reference's
 already projected coordinates and visibility class from runtime workspaces at
@@ -102,6 +112,7 @@ append to a model.
 | Unused bits of `$00ABDC` select pad vs grass vs road                                      | **Refuted for ground**                    | `$054CBE` masks the first byte with `$FE` into `$7AF8` for a different selector (objects / `$1E000` side table when `$20..$9F`). Ground uses `$1E400` + `$83DC`. Low nine bits remain the structure slot. |
 | A separate fill path draws cell rectangles / road strips                                  | **Refuted for empty cells**               | `$054E50` / `$054E40` reconstruct the selected record into `$8C32`; `$056634` returns immediately when that stream starts with zero.                                                                      |
 | The visible green comes from a surface/background path outside the cell record            | **Confirmed as a separate path**          | Open cell `$B7` is visibly green while its `$01E790` source and reconstructed `$8C32` streams are empty; the exact producer remains unresolved.                                                           |
+| Structure slot zero means no scene palette is available                                   | **Refuted**                               | `$054D42` indexes surface entry zero and `$054E10` binds its metadata's palette zero to `$7A0E`; `$04F99E` uses that binding for `$808x` object faces.                                                    |
 | `$F0`/`$F4` name neighboring-cell model vertices                                          | **Refuted**                               | `$04F8F2`/`$04EDD4` consume their valid preprojected coordinates and visibility state; source model-space slots are zero and outside the local projection range.                                          |
 | Post-terminator attachments also carry pad polygons                                       | **Partially confirmed (family, not pad)** | Ground records continue with `$C00E` / `$7000` after faces. Structure 74's `$4200` door is the documented wall-list attachment. The pad polygons themselves are ordinary colour+ref faces.                |
 
@@ -152,9 +163,9 @@ expands those to **74** placements across **13** address-and-transform catalogue
 models, referencing **six** existing object models; 57 table cells instantiate
 those records. The catalogue composes models whose literal, hardware or
 contextual scene palette is available and keeps every referenced object
-identity in `relatedModels`. Two transformed records still reference
-`object-041b1e` without a structure palette context, so those particular copies
-remain a named palette-binding gap rather than receiving an invented colour.
+identity in `relatedModels`. Structure slot zero resolves through surface
+entry zero's palette metadata, so transforms `$04` and `$07` include all five
+`object-041b1e` placements apiece instead of treating zero as no context.
 
 First-world census: **50** unique records, **90** cells with local faces or
 lines, **74** catalogue models after grouping by address and transform, **133**
@@ -188,8 +199,6 @@ geometry. The separate native surface/background path remains unresolved.
 
 - Geometry and draw rule of the separate native **surface/background fill**
   that supplies the recovered outdoor green; it is not an empty-cell record.
-- Scene-palette context for two transformed `$7000` copies of
-  `object-041b1e`.
 - The camera-dependent rule that seeds preprojected horizon slots `$F0`/`$F4`;
   they cannot be represented as static model-space vertices.
 - Whether `$00ABDC` high-byte paths `$20..$9F` overlay extra `$1E000` data on

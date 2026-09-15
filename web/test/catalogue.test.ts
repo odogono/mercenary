@@ -365,6 +365,25 @@ it('recovers the spaceport pad strip as a per-cell ground record', async () => {
   expect(pad.variants[0]!.mesh.faces).toHaveLength(75);
 });
 
+it('uses surface slot zero palette for structureless ground objects', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  for (const id of ['ground-021f7c-04', 'ground-021f7c-07']) {
+    const ground = data.models.find(model => model.id === id)!;
+    expect(ground.relatedModels).toContain('object-041b1e');
+    expect(ground.omissions).not.toContain('paletteBinding');
+    expect(ground.reason).not.toContain(
+      'Ground $7000 placement references unresolved object-041b1e'
+    );
+    expect(
+      ground.variants[0]!.mesh.faces.filter(
+        face => face.sourceColour === 0x80_82 && face.colour === '#eeee22'
+      )
+    ).toHaveLength(15);
+  }
+});
+
 it('recovers the spaceport wall below the window without closing the opening', async () => {
   const data = parseCatalogue(
     await Bun.file('../payload/damocles/catalogue.json').json()

@@ -428,14 +428,14 @@ def _empty_world():
 
 
 class CensusTests(unittest.TestCase):
-    def test_ground_7000_placement_composes_the_addressed_object_model(self):
+    def test_ground_7000_placement_uses_zero_surface_slot_palette(self):
         from damocleslab.catalogue import extract
 
         data = _empty_world()
         object_address = 0x36000
         struct.pack_into('>I', data, 0x35700 + 4, object_address - 0x35700)
         structure_address = 0xfA00
-        struct.pack_into('>I', data, 0xe900 + 4, structure_address - 0xe900)
+        struct.pack_into('>I', data, 0xe900, structure_address - 0xe900)
         data[structure_address - 8:structure_address] = bytes.fromhex('0101 0100 00000000')
         struct.pack_into('>H', data, 0xd200 + 2, 0x100)
         struct.pack_into('>64H', data, 0xd300, 0x000, 0x777, *([0x000] * 62))
@@ -453,7 +453,7 @@ class CensusTests(unittest.TestCase):
         ground_address = 0x1e100
         for cell in range(256):
             struct.pack_into('>H', data, 0x1e400 + cell * 2, ground_address - 0x1e000)
-        struct.pack_into('>H', data, 0xabdc, 1)
+        struct.pack_into('>H', data, 0xabdc, 0)
         ground = bytes.fromhex('00ff 0000 7000 800a 7ff6 0004 0000')
         data[ground_address:ground_address + len(ground)] = ground
 
@@ -468,6 +468,7 @@ class CensusTests(unittest.TestCase):
             [20, 0, -10],
             [10, 10, -10],
         ])
+        self.assertEqual(model['variants'][0]['mesh']['faces'][0]['colour'], '#eeeeee')
 
     def test_ledger_classifies_null_and_empty_records_and_matches_counts(self):
         from damocleslab.catalogue import extract
