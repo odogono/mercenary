@@ -558,6 +558,10 @@ class CensusTests(unittest.TestCase):
         self.assertIn('Pasti STX', text)
         self.assertIn('Vesta', text)
         self.assertIn('vesta-surface-64', text)
+        self.assertIn('UR City', text)
+        self.assertIn('gaea-ur-city-surface-24', text)
+        self.assertIn('Dion', text)
+        self.assertIn('dion-surface-32', text)
 
 
 class DiskLoadTests(unittest.TestCase):
@@ -628,6 +632,78 @@ class LiveWorkspaceTests(unittest.TestCase):
         self.assertEqual(placed['model'], result['tables'][1]['entries'][70])
         self.assertTrue(any(item['path'] == 'Vesta live workspace' for item in result['coverage']['diskLoad']))
 
+    def test_live_gaea_workspace_keeps_birmingham_surface_identities(self):
+        from damocleslab.catalogue import extract
+        data = bytearray(_empty_world())
+        struct.pack_into('>i', data, 0x63a8 + 2 * 4, 519 << 16)
+        struct.pack_into('>i', data, 0x6ba8 + 2 * 4, 1793 << 16)
+        stream = bytes.fromhex('0c 40 96 00 dd 32 1a 26 4a 00 00 00 ff')
+        header = b'BIRMINGHAMISLAND    '
+        places = b'\x40ELMDON    SPACEPORT \x00'
+        block = stream + header + places
+        data[0x23c00:0x23c00 + len(block)] = block
+
+        workspace = bytearray(data)
+        struct.pack_into('>H', workspace, 0x7AA8, 8 * 4)
+        workspace[0x81DC + 8 * 8:0x81E4 + 8 * 8] = b'GAEA    '
+        struct.pack_into('>H', workspace, 0x7B5C, 0x24)
+        struct.pack_into('>I', workspace, 0x7A92, 516 << 16)
+        struct.pack_into('>I', workspace, 0x7A9A, 1794 << 16)
+        struct.pack_into('>I', workspace, 0x7A2C, 4 << 16)
+        struct.pack_into('>I', workspace, 0x7A34, 2 << 16)
+        struct.pack_into('>I', workspace, 0x7A6C, 0x30000)
+        workspace[0x30000:0x30000 + 20] = b'UR        CITY      '
+        workspace[0x30014:0x30014 + 22] = b'\x24HANTZENS  NEW HOUSE \x00'
+        struct.pack_into('>Hbb', workspace, 0xABDC + 0x24 * 4, 70, 0, 0)
+        struct.pack_into('>Hbb', workspace, 0xABDC + 0x26 * 4, 70, 0, 0)
+
+        result = extract(bytes(data), {}, bytes(workspace))
+        birmingham = next(i for i in result['instances'] if i['id'] == 'gaea-surface-26')
+        live = next(i for i in result['instances'] if i['id'] == 'gaea-ur-city-surface-24')
+        self.assertIsNone(birmingham['location']['place'])
+        self.assertEqual(live['location']['body'], 'body-8')
+        self.assertEqual(live['location']['place'], 'place-030014')
+        self.assertEqual(live['name'], 'HANTZENS NEW HOUSE')
+        self.assertFalse(any(i['id'] == 'gaea-surface-24' for i in result['instances']))
+        self.assertEqual(
+            [i['id'] for i in result['instances'] if i['id'].startswith('gaea-surface-')],
+            ['gaea-surface-26', 'gaea-surface-40'],
+        )
+
+    def test_live_dion_workspace_does_not_reuse_gaea_place_names(self):
+        from damocleslab.catalogue import extract
+        data = bytearray(_empty_world())
+        struct.pack_into('>i', data, 0x63a8 + 2 * 4, 519 << 16)
+        struct.pack_into('>i', data, 0x6ba8 + 2 * 4, 1793 << 16)
+        stream = bytes.fromhex('0c 40 96 00 dd 32 1a 26 4a 00 00 00 ff')
+        header = b'BIRMINGHAMISLAND    '
+        places = b'\x40ELMDON    SPACEPORT \x00'
+        block = stream + header + places
+        data[0x23c00:0x23c00 + len(block)] = block
+
+        workspace = bytearray(data)
+        struct.pack_into('>H', workspace, 0x7AA8, 4 * 4)
+        workspace[0x81DC + 4 * 8:0x81E4 + 4 * 8] = b'DION    '
+        struct.pack_into('>H', workspace, 0x7B5C, 0x32)
+        struct.pack_into('>I', workspace, 0x7A92, 3254 << 16)
+        struct.pack_into('>I', workspace, 0x7A9A, 1317 << 16)
+        struct.pack_into('>I', workspace, 0x7A2C, 2 << 16)
+        struct.pack_into('>I', workspace, 0x7A34, 3 << 16)
+        struct.pack_into('>I', workspace, 0x7A6C, 0x23c00 + len(stream))
+        struct.pack_into('>Hbb', workspace, 0xABDC + 0x32 * 4, 70, 0, 0)
+        struct.pack_into('>Hbb', workspace, 0xABDC + 0x40 * 4, 70, 0, 0)
+
+        result = extract(bytes(data), {}, bytes(workspace))
+        current = next(i for i in result['instances'] if i['id'] == 'dion-surface-32')
+        other = next(i for i in result['instances'] if i['id'] == 'dion-surface-40')
+        elmdon = next(p for p in result['places'] if p['name'] == 'ELMDON SPACEPORT')
+        self.assertEqual(current['location']['body'], 'body-4')
+        self.assertIsNone(current['location']['place'])
+        self.assertIsNone(other['location']['place'])
+        self.assertEqual(other['name'], 'DION surface cell 0,4')
+        self.assertEqual(elmdon['body'], 'body-8')
+        self.assertEqual(elmdon['instances'], ['gaea-surface-40'])
+
     def test_pinned_vesta_memstate_rewrites_abdc_without_new_object_banks(self):
         from damocleslab.catalogue import extract, hatari_memstate_ram
         root = Path(__file__).resolve().parents[1]
@@ -655,3 +731,77 @@ class LiveWorkspaceTests(unittest.TestCase):
             {0x35700 + int.from_bytes(workspace[0x35700 + s * 4:0x35704 + s * 4], 'big') for s in range(378)},
         )
         self.assertNotEqual(first_bytes[0xABDC:0xABDC + 1024], workspace[0xABDC:0xABDC + 1024])
+
+    def test_pinned_gaea_memstate_places_ur_city_without_birmingham_ids(self):
+        from damocleslab.catalogue import extract, hatari_memstate_ram
+        root = Path(__file__).resolve().parents[1]
+        first = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram'
+        sav = root / 'snapshots' / 'gaea-ur-city-4-2.sav'
+        if not first.exists() or not sav.exists():
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        workspace = hatari_memstate_ram(sav.read_bytes())
+        self.assertEqual(workspace[0x7AA8:0x7AAA], b'\x00\x20')
+        self.assertEqual(workspace[0x7B5C:0x7B5E], b'\x00\x24')
+        self.assertIn(b'UR        CITY', workspace)
+        first_bytes = first.read_bytes()
+        result = extract(first_bytes, {}, workspace)
+        current = next(i for i in result['instances'] if i['id'] == 'gaea-ur-city-surface-24')
+        house = next(i for i in result['instances'] if i['id'] == 'gaea-ur-city-surface-17')
+        self.assertEqual(current['location']['body'], 'body-8')
+        self.assertIsNone(current['location']['place'])
+        self.assertEqual(house['name'], 'HANTZENS NEW HOUSE')
+        self.assertTrue(any(i['id'] == 'gaea-surface-40' for i in result['instances']))
+        self.assertFalse(any(i['id'] == 'gaea-surface-24' for i in result['instances']))
+        self.assertEqual(
+            {0x35700 + int.from_bytes(first_bytes[0x35700 + s * 4:0x35704 + s * 4], 'big') for s in range(378)},
+            {0x35700 + int.from_bytes(workspace[0x35700 + s * 4:0x35704 + s * 4], 'big') for s in range(378)},
+        )
+
+    def test_multiple_live_workspaces_keep_each_capture_text_tokens(self):
+        from damocleslab.catalogue import extract, hatari_memstate_ram
+        root = Path(__file__).resolve().parents[1]
+        first = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram'
+        vesta = root / 'snapshots' / 'vesta-parliament-4-6.sav'
+        gaea = root / 'snapshots' / 'gaea-ur-city-4-2.sav'
+        dion = root / 'snapshots' / 'dion-2-3.sav'
+        if not first.exists() or not vesta.exists() or not gaea.exists() or not dion.exists():
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        result = extract(
+            first.read_bytes(),
+            {},
+            [
+                hatari_memstate_ram(vesta.read_bytes()),
+                hatari_memstate_ram(gaea.read_bytes()),
+                hatari_memstate_ram(dion.read_bytes()),
+            ],
+        )
+        parliament = next(i for i in result['instances'] if i['id'] == 'vesta-surface-64')
+        assembly = next(m for m in result['models'] if m['id'] == parliament['model'])['variants'][0]['mesh']
+        self.assertEqual(len(assembly['faces']), 117)
+        self.assertTrue(any(i['id'] == 'gaea-ur-city-surface-24' for i in result['instances']))
+        self.assertTrue(any(i['id'] == 'dion-surface-32' for i in result['instances']))
+
+    def test_pinned_dion_memstate_places_cell_2_3_without_gaea_names(self):
+        from damocleslab.catalogue import extract, hatari_memstate_ram
+        root = Path(__file__).resolve().parents[1]
+        first = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram'
+        sav = root / 'snapshots' / 'dion-2-3.sav'
+        if not first.exists() or not sav.exists():
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        workspace = hatari_memstate_ram(sav.read_bytes())
+        self.assertEqual(workspace[0x7AA8:0x7AAA], b'\x00\x10')
+        self.assertEqual(workspace[0x7B5C:0x7B5E], b'\x00\x32')
+        first_bytes = first.read_bytes()
+        result = extract(first_bytes, {}, workspace)
+        current = next(i for i in result['instances'] if i['id'] == 'dion-surface-32')
+        self.assertEqual(current['location']['body'], 'body-4')
+        self.assertIsNone(current['location']['place'])
+        self.assertEqual(current['name'], 'DION surface cell 2,3')
+        self.assertFalse(any(
+            i['id'].startswith('dion-') and i['location']['place']
+            for i in result['instances']
+        ))
+        self.assertEqual(
+            {0x35700 + int.from_bytes(first_bytes[0x35700 + s * 4:0x35704 + s * 4], 'big') for s in range(378)},
+            {0x35700 + int.from_bytes(workspace[0x35700 + s * 4:0x35704 + s * 4], 'big') for s in range(378)},
+        )

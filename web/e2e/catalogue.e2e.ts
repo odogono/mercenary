@@ -106,7 +106,7 @@ test('99 Chevy is mapped on Gaea and links to its key', async ({ page }) => {
     'GAEA · 519.487, 0.000, 1793.487 · ST surface grid units'
   );
   await expect(page.locator('#details')).toContainText('source heading 0');
-  await expect(page.locator('#map a')).toHaveCount(87);
+  await expect(page.locator('#map a')).toHaveCount(147);
   await expect(
     page.locator('#map').getByRole('link', { name: /99 CHEVY/ })
   ).toHaveAttribute('aria-current', 'true');
@@ -644,7 +644,7 @@ test('the placement map zooms, pans and resets by pointer and keyboard without l
   expect(await zoom()).toBe(8);
   await page.locator('#body').selectOption('body-8');
   expect(await zoom()).toBe(1);
-  await expect(page.locator('#map a')).toHaveCount(87);
+  await expect(page.locator('#map a')).toHaveCount(147);
   await page.goBack();
   await expect(page.locator('#map a')).toHaveCount(174);
 });

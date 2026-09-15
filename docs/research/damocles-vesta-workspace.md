@@ -14,20 +14,20 @@ terms in `CONTEXT.md`.
 live `$00ABDC` surface assemblies and `$01E000` ground records of the selected
 body without treating them as a new geometry bank.
 
-**Out of scope:** other bodies' live workspaces; other Vesta islands; live Gaea
-`$ABDC`; unpacking Pasti STX tracks; claiming `coverage.complete`.
+**Out of scope:** other bodies' live workspaces; other Vesta islands;
+unpacking Pasti STX tracks; claiming `coverage.complete`.
 
 ## Working Authority and reproduce path
 
-| Item     | Value |
-| -------- | ----- |
-| Program  | `roms/atarist/damocles_-_mercenary_ii_novagen_software_(uk).stx` |
-| SHA-256  | `8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef` |
-| First-world RAM | `observe-first-world-20260818T101013Z-c5a32b7d/observed.ram` |
-| Workspace | Hatari GUI memstate `snapshots/vesta-parliament-4-6.sav` |
-| Memstate SHA-256 | `47d817a931e54eeb1999cc5ca62c7ee3891e44464191741e3bcfffca94f362c1` |
+| Item                  | Value                                                              |
+| --------------------- | ------------------------------------------------------------------ |
+| Program               | `roms/atarist/damocles_-_mercenary_ii_novagen_software_(uk).stx`   |
+| SHA-256               | `8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef` |
+| First-world RAM       | `observe-first-world-20260818T101013Z-c5a32b7d/observed.ram`       |
+| Workspace             | Hatari GUI memstate `snapshots/vesta-parliament-4-6.sav`           |
+| Memstate SHA-256      | `47d817a931e54eeb1999cc5ca62c7ee3891e44464191741e3bcfffca94f362c1` |
 | Carved ST RAM SHA-256 | `7dca6fcbb9f4194c9c8f4bc23c95e2344bd40b686761efccf0ab2299e539721e` |
-| Player | On foot outside Vesta Parliament, local cell 4,6 |
+| Player                | On foot outside Vesta Parliament, local cell 4,6                   |
 
 The memstate is Restricted Material (`*.sav`). Do not commit it. The extractor
 aligns the uncompressed snapshot on the `DIALIS  ` body label at `$81DC` (file
@@ -67,5 +67,5 @@ PYTHONPATH=research/damocles-st python3 -m damocleslab.catalogue \
   at `$CD3F`. Its filled font-1 glyph is part of the building-detail exterior;
   see [building-detail vector text](damocles-building-vector-text.md).
 
-The coverage ledger remains incomplete: other bodies, other Vesta islands, and
-live Gaea `$ABDC` are unexplored.
+The coverage ledger remains incomplete: other bodies and other Vesta islands
+are unexplored.

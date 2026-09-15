@@ -42,12 +42,12 @@ itself a building, Room, floor, or named-place identity.
 scans resident slots 255 down to 1. For each resident, the builder requires all
 of the following byte comparisons:
 
-| Resident field | Runtime selector | Meaning established by the consumer |
-| -------------- | ---------------- | ----------------------------------- |
-| Association B byte 3 (`$73AB+4*slot`) | `$7B5C` | surface cell |
-| Association A byte 1 (`$6FA9+4*slot`) | `$794E` | structure-group selector |
-| Association B byte 2 (`$73AA+4*slot`) | `$7AA4` | level selector |
-| Association B byte 1 (`$73A9+4*slot`) | record selector in `$7B0E` | insertion-group selector |
+| Resident field                        | Runtime selector           | Meaning established by the consumer |
+| ------------------------------------- | -------------------------- | ----------------------------------- |
+| Association B byte 3 (`$73AB+4*slot`) | `$7B5C`                    | surface cell                        |
+| Association A byte 1 (`$6FA9+4*slot`) | `$794E`                    | structure-group selector            |
+| Association B byte 2 (`$73AA+4*slot`) | `$7AA4`                    | level selector                      |
+| Association B byte 1 (`$73A9+4*slot`) | record selector in `$7B0E` | insertion-group selector            |
 
 The names above describe selector roles only. In particular, `$7AA4=$01` is
 not evidence for a named or ordinal floor, and an insertion-group or region
@@ -120,9 +120,14 @@ integer X/Z grid nibbles is constant per body. This supports comparing raw
 coordinates within a body. Eris uses the live first-world `$ABDC` workspace and
 `$7A6C` place list. Gaea Birmingham Island uses the authored placement stream
 and place list in the same first-world pool, bound to 99 CHEVY's resident phase;
-it is not a live Gaea `$ABDC` capture. Vesta Politburo City uses a live
-`$ABDC` workspace from a Hatari memstate (body selector `$7AA8=$0038`); other
-bodies still have no recovered surface-assembly map.
+it is not a live Gaea `$ABDC` capture. Gaea UR City uses a live `$ABDC`
+workspace from a Hatari memstate (body selector `$7AA8=$0020`, cell `$24`)
+with `gaea-ur-city-surface-*` identities so Birmingham IDs stay stable.
+Vesta Politburo City uses a live
+`$ABDC` workspace from a Hatari memstate (body selector `$7AA8=$0038`). Dion
+uses a live `$ABDC` workspace (`$7AA8=$0010`, cell `$32`) without borrowing
+Gaea Birmingham place names. Other bodies still have no recovered
+surface-assembly map.
 
 ## 99 CHEVY
 

@@ -65,6 +65,12 @@ destination** and `--memstate <file>` to boot straight back into it:
 - `snapshots/vesta-parliament-4-6.sav` — on-foot outside Vesta Parliament,
   local cell 4,6 (`$7B5C=$64`). Hatari GUI memstate; carve ST RAM on `DIALIS  `
   at `$81DC`. Lab `--memstate` with pinned EmuTOS will not restore it.
+- `snapshots/gaea-ur-city-4-2.sav` — on-foot in Gaea UR City, local cell 4,2
+  (`$7B5C=$24`). Hatari GUI memstate; carve ST RAM on `DIALIS  ` at `$81DC`.
+  Lab `--memstate` with pinned EmuTOS will not restore it.
+- `snapshots/dion-2-3.sav` — on-foot on Dion, local cell 2,3 (`$7B5C=$32`).
+  Hatari GUI memstate; carve ST RAM on `DIALIS  ` at `$81DC`. Lab `--memstate`
+  with pinned EmuTOS will not restore it.
 - `snapshots/interior-window.sav` — standing inside the spaceport building at a
   window (human walk from the on-foot snapshot via `record-play.py record
   --memstate … --snapshot-out …`, which `statesave`s on Ctrl-C).

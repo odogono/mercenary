@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The Damocles Catalogue places Dion's live `$ABDC` workspace (140 surface
+  assemblies at `dion-surface-*`, including unnamed cell 2,3) from a Hatari GUI
+  memstate without borrowing Gaea Birmingham place names (#173).
+- The Damocles Catalogue places Gaea UR City's live `$ABDC` workspace (22
+  surface assemblies at `gaea-ur-city-surface-*`, including cell 4,2) from a
+  Hatari GUI memstate without replacing Birmingham `gaea-surface-*` identities
+  (#173).
 - Damocles first-world ground `$7000` records now compose 74 cell-local
   placements through six existing address-based object models; the source
   loader disassembly also corrects the former `$53F76` road-template

@@ -12,6 +12,8 @@ From the repository root:
 PYTHONPATH=research/damocles-st python3 -m damocleslab.catalogue \
   --run research/damocles-st/work/observe-first-world-20260818T101013Z-c5a32b7d \
   --workspace research/damocles-st/snapshots/vesta-parliament-4-6.sav \
+  --workspace research/damocles-st/snapshots/gaea-ur-city-4-2.sav \
+  --workspace research/damocles-st/snapshots/dion-2-3.sav \
   --output payload/damocles/catalogue.json
 cd web
 bun run dev
@@ -21,6 +23,8 @@ Open `http://127.0.0.1:5173/catalogue`, or follow **Damocles catalogue** from th
 game menu. `?model=object-035d12` opens DART II;
 `?instance=eris-surface-87` opens the Capital Spaceport placement;
 `?instance=vesta-surface-64` opens Vesta Parliament;
+`?instance=gaea-ur-city-surface-24` opens the live UR City cell 4,2 overlay;
+`?instance=dion-surface-32` opens the live Dion cell 2,3 overlay;
 `?instance=object-slot-5` opens the V.I.P. LIMO outside the Spaceport.
 
 The extractor first verifies the run's artifact hashes, program/TOS pins, and
@@ -85,8 +89,8 @@ qualification for each table. Every slot maps to one model identity; repeated
 pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
 
-Current extraction accounts for **625 unique records**: **166 decoded**,
-**398 partial**, and **61 unresolved**. “Decoded” means the supported record was
+Current extraction accounts for **674 unique records**: **167 decoded**,
+**446 partial**, and **61 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.
 Unresolved records remain searchable and retain their source identity and reason.
@@ -271,12 +275,14 @@ code. Targeted disassembly used to establish them remains ignored at
   **7** source names. Binding that map to 99 CHEVY's resident phase plots those
   assemblies with the five Gaea residents, **87** Gaea map pins. Cell `$17` is
   empty in the stream. This is not a live Gaea `$ABDC` workspace; ground/pad
-  records and other Gaea islands remain unresolved.
+  records and other Gaea islands remain unresolved except the live UR City
+  `$ABDC` overlay. See [Gaea UR City live workspace](damocles-gaea-ur-city-workspace.md).
   Across all bodies the dataset now contains the Eris points, the Birmingham
-  Island assemblies, the live Vesta Politburo City `$ABDC` overlay, and the
+  Island assemblies, the live Vesta Politburo City `$ABDC` overlay, the live
+  Gaea UR City `$ABDC` overlay, the live Dion `$ABDC` overlay, and the
   previously mapped non-Eris residents. This is resident state plus authored
-  pool recovery from the pinned first-world capture plus one live non-Eris
-  workspace, not a complete body-surface census.
+  pool recovery from the pinned first-world capture plus live non-Eris
+  workspaces, not a complete body-surface census.
   The slot-180 assembly is recovered from the authored group-$14 map outside the
   captured first-world workspace; other interior-associated and exceptional
   residents remain listed without invented map positions.
@@ -327,8 +333,27 @@ instances, adding **12** workspace-local ground models while keeping Eris
 `ground-{addr}-{transform}` identities for byte-identical records. See
 [Vesta live workspace](damocles-vesta-workspace.md).
 
+A Hatari GUI memstate with the player on foot in Gaea UR City (local cell 4,2,
+`$7B5C=$24`, body selector `$7AA8=$0020`) supplies the live Gaea `$ABDC`
+overlay. Structure and building-detail pointer tables match first-world;
+object unique addresses are unchanged. The overlay places **22** UR City
+surface assemblies (including unnamed `gaea-ur-city-surface-24` and
+`gaea-ur-city-surface-17` / HANTZENS NEW HOUSE) and **38** ground instances,
+adding **18** workspace-local ground models. Authored Birmingham
+`gaea-surface-{cell}` identities are unchanged. See
+[Gaea UR City live workspace](damocles-gaea-ur-city-workspace.md).
+
+A Hatari GUI memstate with the player on foot on Dion (local cell 2,3,
+`$7B5C=$32`, body selector `$7AA8=$0010`) supplies the live Dion `$ABDC`
+overlay. Structure and building-detail pointer tables match first-world;
+object unique addresses are unchanged. The overlay places **140** surface
+assemblies (including unnamed `dion-surface-32`) and **249** ground instances,
+adding **31** workspace-local ground models. `$7A6C` still names first-world
+Birmingham Island; those Gaea place identities are not applied to Dion. See
+[Dion live workspace](damocles-dion-workspace.md).
+
 Still unexplored or incomplete: packed Pasti STX track payload, live
-`$ABDC` workspaces other than Eris first-world and Vesta Politburo City, Gaea ground and islands other than Birmingham, remaining
+`$ABDC` workspaces other than Eris first-world, Vesta Politburo City, Gaea UR City and Dion, Gaea islands other than Birmingham and UR City, remaining
 named-place lists, remaining object residences/transforms, view-conditioned object groups,
 articulated geometry, special primitives, post-plan attachment forms other than the
 documented zero-latch and `$F0` constructors, two `$7000` placement palette contexts,
