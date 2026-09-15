@@ -50,6 +50,11 @@ export interface Model {
   readonly reason: string;
   readonly recordClass: RecordClass;
   readonly relatedModels: readonly string[];
+  /** Background colours the frame loop installs for a cell, not wall colours. */
+  readonly sceneColours?: readonly {
+    readonly colour?: string;
+    readonly sourceColour: number;
+  }[];
   readonly slots: readonly number[];
   readonly sourceAddress: number;
   readonly status: Recovery;
@@ -616,6 +621,19 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     }
     return {
       conditions: m['conditions'] === undefined ? [] : strings(m['conditions']),
+      ...(m['sceneColours'] === undefined
+        ? {}
+        : {
+            sceneColours: list(m['sceneColours']).map(value => {
+              const entry = object(value);
+              return {
+                ...(entry['colour'] === undefined
+                  ? {}
+                  : { colour: string(entry['colour']) }),
+                sourceColour: integer(entry['sourceColour'])
+              };
+            })
+          }),
       evidence: list(m['evidence']).map(value => {
         const item = object(value);
         return {

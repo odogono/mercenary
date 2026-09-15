@@ -173,6 +173,31 @@ nonzero, which is why an unused pair reads zero.
 | `$F0`/`$F4` have no representable model-space coordinate                                  | **Refuted**                               | The `$054A64` loop projects them from packed cell indices at `$5E40 + slot`, camera-relative, with Y from `$79BA`. A watch breakpoint at `$056E40` with `A0 = $F0` named the writer and the stack named the caller. |
 | Post-terminator attachments also carry pad polygons                                       | **Partially confirmed (family, not pad)** | Ground records continue with `$C00E` / `$7000` after faces. Structure 74's `$4200` door is the documented wall-list attachment. The pad polygons themselves are ordinary colour+ref faces.                |
 
+## The background is a raster fill, not geometry
+
+A `watch` run breaks on the next write to a screen word inside the uniform sky
+band (`$078BA0`, line 10 of the framebuffer at `$42C00`) while the player walks.
+It stops inside `$059CE2`, reached from the frame loop at `$0595EC`.
+
+That routine is a block fill, not a draw: it loads a constant four-plane pattern
+into thirteen registers and unrolls `movem.l d0-d7/a0-a5, -(a6)` thirty-eight
+times over ten copies plus eight more, filling bytes 32 to 21,760 of the
+framebuffer. At 160 bytes a line that is the 136-line viewport, in one colour
+index.
+
+The colours come from the surface record. Each record carries **two words after
+its two heights** which the loader resolves through the structure's scene
+palette into `$7C82`/`$7C84` (`$059DA2`) and the frame loop installs into the
+colour table alongside the constants `$654`, `$543` and `$432` (`$059600`).
+Capital Spaceport's pair is `$809A` → `#AAAAAA` and `$808E` → `#4488CC`, and the
+second is the sky blue behind it in the captured display.
+
+The extractor previously skipped those four bytes. It now decodes them onto the
+structure model as `sceneColours`. The background therefore has **no model-space
+geometry to recover**: it is a raster fill whose colours are authored per
+surface record. What remains open is the producer of the ground band below the
+horizon, which this fill does not draw.
+
 ## RAM diff (pad vs open ground)
 
 `$00ABDC`, `$0083DC`, `$01E400` and `$01E000` are **byte-identical** across
@@ -258,6 +283,8 @@ geometry. The separate native surface/background path remains unresolved.
   that supplies the recovered outdoor green; it is not an empty-cell record.
 - The route list at `$05499E` that allocates the scene slots below `$F0`; no
   ground record names one, so it is unexplored rather than blocking.
+- The producer of the ground band below the horizon. The sky fill and the
+  record's scene colours are settled (below); the band itself is not.
 - The `$6000` ground vector-text command, which leaves three records partial.
 - Whether `$00ABDC` high-byte paths `$20..$9F` overlay extra `$1E000` data on
   some cells.

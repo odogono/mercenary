@@ -268,6 +268,12 @@ code. Targeted disassembly used to establish them remains ignored at
 - Surface selection at `$054D78` uses `$04BD0C` → `$00E900`. Ordinary records have
   eight preceding metadata bytes, two heights, two scene colours, then signed X/Z
   plan coordinates terminated by zero X. Signed scale factors come from metadata.
+  The two scene colours are the **cell background**, not wall colours: `$059DA2`
+  resolves them through the structure's scene palette into `$7C82`/`$7C84` and
+  the frame loop installs them at `$059600`. They are now decoded onto the model
+  as `sceneColours` (265 records). The viewport itself is a raster block fill at
+  `$059CE2`, an unrolled `movem.l` over the 136-line viewport, so the background
+  holds no geometry a model could carry.
 - Wall records contain two one-based plan references and a type/colour word.
   Types 3–6 contain two additional references; type 7 does not. Supported ordinary
   and lower-height walls, upper wall bands (type 7), and ground/lower/top planes
@@ -473,7 +479,7 @@ angles (rest pose only), Building detail 69's extra projected slots, object text
 through live `$CCA0` tokens, indirect text pointers and font 4, the palette
 binding of unplaced objects 333–338, the live `$7AFB` attachment predicate,
 the `$6000` ground vector-text command in three records,
-the separate native surface/background fill path, and script-created visual
+the producer of the ground band below the horizon, and script-created visual
 changes. The remaining nine unresolved records are NULL, five empty surface
 records, two empty building details and Building detail 69. Resident model banks do not change between first-world and occupied-Spaceport RAM.
 The recovery ledger exposes this boundary; it does not declare the whole game's extraction

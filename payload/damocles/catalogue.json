@@ -141226,6 +141226,16 @@
       "relatedModels": [
         "interior-02620e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeee22",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32914
+        }
+      ],
       "slots": [
         0,
         47,
@@ -141265,6 +141275,16 @@
         "structure-01a72c",
         "structure-01d176",
         "interior-02d3a8"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32914
+        }
       ],
       "slots": [
         1
@@ -143970,6 +143990,16 @@
         "structure-00ed8e",
         "interior-02d3a8"
       ],
+      "sceneColours": [
+        {
+          "colour": "#cccc66",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32914
+        }
+      ],
       "slots": [
         2
       ],
@@ -146673,6 +146703,16 @@
       "relatedModels": [
         "structure-00ed8e",
         "interior-02d3a8"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32914
+        }
       ],
       "slots": [
         3
@@ -149388,6 +149428,16 @@
         "structure-01de60",
         "interior-027592"
       ],
+      "sceneColours": [
+        {
+          "colour": "#662222",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        }
+      ],
       "slots": [
         4
       ],
@@ -151220,6 +151270,16 @@
       "relatedModels": [
         "structure-01dcc2",
         "interior-02736c"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32914
+        }
       ],
       "slots": [
         5
@@ -153173,6 +153233,16 @@
       "recordClass": "geometry",
       "relatedModels": [
         "interior-027914"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32898
+        }
       ],
       "slots": [
         6
@@ -155434,6 +155504,16 @@
       "recordClass": "geometry",
       "relatedModels": [
         "interior-02b17a"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#cccccc",
+          "sourceColour": 1638
+        },
+        {
+          "colour": "#cccccc",
+          "sourceColour": 1638
+        }
       ],
       "slots": [
         7
@@ -159282,6 +159362,16 @@
       "relatedModels": [
         "interior-028668"
       ],
+      "sceneColours": [
+        {
+          "colour": "#000000",
+          "sourceColour": 0
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 0
+        }
+      ],
       "slots": [
         8
       ],
@@ -162082,6 +162172,16 @@
       "relatedModels": [
         "structure-00f88e",
         "interior-030c0c"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         9
@@ -165071,6 +165171,16 @@
         "structure-00f88e",
         "interior-030c0c"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         10
       ],
@@ -168058,6 +168168,16 @@
       "relatedModels": [
         "structure-00f88e",
         "interior-0313da"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         11
@@ -171054,6 +171174,16 @@
         "structure-01a71a",
         "interior-02f0ee"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         12
       ],
@@ -173979,6 +174109,16 @@
       "relatedModels": [
         "interior-02c020"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32912
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32904
+        }
+      ],
       "slots": [
         13
       ],
@@ -176646,6 +176786,16 @@
         "structure-01280a",
         "interior-02cab0"
       ],
+      "sceneColours": [
+        {
+          "colour": "#888888",
+          "sourceColour": 32912
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32902
+        }
+      ],
       "slots": [
         14
       ],
@@ -179257,6 +179407,16 @@
         "structure-011af4",
         "interior-02a67c"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32910
+        },
+        {
+          "colour": "#444444",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         15
       ],
@@ -180916,6 +181076,16 @@
       "recordClass": "geometry",
       "relatedModels": [
         "interior-02a67c"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeaa00",
+          "sourceColour": 32928
+        },
+        {
+          "colour": "#662200",
+          "sourceColour": 32920
+        }
       ],
       "slots": [
         16
@@ -183444,6 +183614,16 @@
         "structure-011af4",
         "interior-02a67c"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32910
+        },
+        {
+          "colour": "#aa8800",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         17
       ],
@@ -185105,6 +185285,16 @@
         "structure-010014",
         "interior-02d3a8"
       ],
+      "sceneColours": [
+        {
+          "colour": "#886688",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32896
+        }
+      ],
       "slots": [
         18
       ],
@@ -186558,6 +186748,16 @@
       "relatedModels": [
         "structure-010014",
         "interior-02d3a8"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32896
+        }
       ],
       "slots": [
         19
@@ -188013,6 +188213,16 @@
         "structure-010014",
         "structure-01a636",
         "interior-02d3a8"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#888844",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32896
+        }
       ],
       "slots": [
         20
@@ -189471,6 +189681,16 @@
         "structure-01d3b2",
         "structure-01d3c4",
         "interior-030924"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#666666",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32896
+        }
       ],
       "slots": [
         21
@@ -190962,6 +191182,16 @@
         "structure-01d76a",
         "structure-01d7e2",
         "interior-0311a8"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#660000",
+          "sourceColour": 32896
+        }
       ],
       "slots": [
         22
@@ -192693,6 +192923,16 @@
         "structure-010014",
         "interior-03102a"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32896
+        }
+      ],
       "slots": [
         23
       ],
@@ -194249,6 +194489,16 @@
         "structure-00ff04",
         "interior-030a8e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#aaaa66",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32896
+        }
+      ],
       "slots": [
         24
       ],
@@ -195711,6 +195961,16 @@
         "structure-00ff04",
         "interior-02d3a8"
       ],
+      "sceneColours": [
+        {
+          "colour": "#444466",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32896
+        }
+      ],
       "slots": [
         25
       ],
@@ -197032,6 +197292,16 @@
       "relatedModels": [
         "structure-00ff04",
         "interior-030e42"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32896
+        }
       ],
       "slots": [
         26
@@ -198577,6 +198847,16 @@
       "relatedModels": [
         "structure-0101ae",
         "interior-03006a"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         27
@@ -205436,6 +205716,16 @@
         "structure-01dd8e",
         "interior-03006a"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         28
       ],
@@ -212286,6 +212576,16 @@
       "relatedModels": [
         "interior-03006a"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#224444",
+          "sourceColour": 32916
+        }
+      ],
       "slots": [
         29
       ],
@@ -214621,6 +214921,16 @@
       "recordClass": "geometry",
       "relatedModels": [
         "interior-03006a"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32898
+        }
       ],
       "slots": [
         30
@@ -218022,6 +218332,16 @@
       "relatedModels": [
         "structure-0101ae",
         "interior-02fcb6"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         31
@@ -225295,6 +225615,16 @@
         "structure-01832e",
         "interior-02d47e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#666666",
+          "sourceColour": 32904
+        },
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32908
+        }
+      ],
       "slots": [
         32
       ],
@@ -232503,6 +232833,16 @@
         "structure-010d0c",
         "interior-02620e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#aaaaaa",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         33
       ],
@@ -233076,6 +233416,16 @@
       "relatedModels": [
         "structure-010bb4",
         "interior-02620e"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeee66",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#2266aa",
+          "sourceColour": 32910
+        }
       ],
       "slots": [
         34
@@ -233651,6 +234001,16 @@
         "structure-010e8a",
         "interior-02620e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#888888",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32922
+        }
+      ],
       "slots": [
         35
       ],
@@ -234224,6 +234584,16 @@
       "relatedModels": [
         "structure-010d32",
         "interior-02620e"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#888844",
+          "sourceColour": 32922
+        }
       ],
       "slots": [
         36
@@ -234800,6 +235170,16 @@
       "relatedModels": [
         "structure-010ec2",
         "interior-02db92"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#664444",
+          "sourceColour": 802
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 1041
+        }
       ],
       "slots": [
         37
@@ -240783,6 +241163,16 @@
         "structure-010ea8",
         "interior-02db92"
       ],
+      "sceneColours": [
+        {
+          "colour": "#664444",
+          "sourceColour": 802
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 1041
+        }
+      ],
       "slots": [
         38
       ],
@@ -246761,6 +247151,16 @@
       "recordClass": "geometry",
       "relatedModels": [
         "interior-02db92"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#664444",
+          "sourceColour": 802
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 1041
+        }
       ],
       "slots": [
         39
@@ -256761,6 +257161,16 @@
         "structure-011af4",
         "interior-02a67c"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ee6622",
+          "sourceColour": 32910
+        },
+        {
+          "colour": "#444444",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         40
       ],
@@ -258429,6 +258839,16 @@
         "structure-01d382",
         "interior-02a67c"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32910
+        },
+        {
+          "colour": "#444444",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         41
       ],
@@ -260089,6 +260509,16 @@
       "relatedModels": [
         "structure-011c52",
         "interior-02c3b8"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32924
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         42
@@ -264161,6 +264591,16 @@
         "structure-01ddbe",
         "interior-02c3b8"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32924
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         43
       ],
@@ -268230,6 +268670,16 @@
       "relatedModels": [
         "interior-02c3b8"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32924
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         44
       ],
@@ -271106,6 +271556,16 @@
         "structure-01dde2",
         "interior-02c6f6"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         45
       ],
@@ -273967,6 +274427,16 @@
         "structure-01a5f2",
         "interior-0262e8"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#cc8800",
+          "sourceColour": 32914
+        }
+      ],
       "slots": [
         46
       ],
@@ -273987,6 +274457,16 @@
       "relatedModels": [
         "structure-01231c",
         "interior-02bc56"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32902
+        }
       ],
       "slots": [
         50
@@ -277952,6 +278432,16 @@
         "structure-01dd7c",
         "interior-02bc56"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32902
+        }
+      ],
       "slots": [
         51
       ],
@@ -281913,6 +282403,16 @@
       "relatedModels": [
         "interior-02bc56"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32902
+        }
+      ],
       "slots": [
         52
       ],
@@ -284972,6 +285472,16 @@
         "structure-01280a",
         "interior-02c020"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32912
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32902
+        }
+      ],
       "slots": [
         53
       ],
@@ -287501,6 +288011,16 @@
         "structure-01a73e",
         "interior-02c020"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32912
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32902
+        }
+      ],
       "slots": [
         54
       ],
@@ -290024,6 +290544,16 @@
       "recordClass": "geometry",
       "relatedModels": [
         "interior-02c020"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32912
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32902
+        }
       ],
       "slots": [
         55
@@ -292940,6 +293470,16 @@
         "structure-012b7a",
         "interior-02cab0"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32912
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32902
+        }
+      ],
       "slots": [
         56
       ],
@@ -295562,6 +296102,16 @@
         "structure-01de3c",
         "interior-02cab0"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32912
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32902
+        }
+      ],
       "slots": [
         57
       ],
@@ -298176,6 +298726,16 @@
       "recordClass": "geometry",
       "relatedModels": [
         "interior-02cab0"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32912
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32902
+        }
       ],
       "slots": [
         58
@@ -302122,6 +302682,16 @@
         "structure-012f84",
         "interior-02ce86"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeee66",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         59
       ],
@@ -305881,6 +306451,16 @@
         "structure-01d758",
         "interior-02ce86"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ee6622",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         60
       ],
@@ -309635,6 +310215,16 @@
       "relatedModels": [
         "interior-02ce86"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ee6622",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         61
       ],
@@ -312253,6 +312843,16 @@
       "relatedModels": [
         "interior-02ce86"
       ],
+      "sceneColours": [
+        {
+          "colour": "#aa8866",
+          "sourceColour": 32900
+        },
+        {
+          "colour": "#aaaaaa",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         63
       ],
@@ -314455,6 +315055,16 @@
       "relatedModels": [
         "structure-0135d6",
         "interior-02cfdc"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         64
@@ -321515,6 +322125,16 @@
         "structure-01def0",
         "interior-02cfdc"
       ],
+      "sceneColours": [
+        {
+          "colour": "#662200",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#aa6600",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         65
       ],
@@ -328569,6 +329189,16 @@
       "relatedModels": [
         "interior-02cfdc"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         66
       ],
@@ -333594,6 +334224,16 @@
       "recordClass": "geometry",
       "relatedModels": [
         "interior-02cfdc"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         67
@@ -340480,6 +341120,16 @@
         "structure-01dc9e",
         "interior-02a87e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeaaaa",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         68
       ],
@@ -341868,6 +342518,16 @@
         "structure-01d49c",
         "interior-02b030"
       ],
+      "sceneColours": [
+        {
+          "colour": "#aaaa66",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#aaaa66",
+          "sourceColour": 32898
+        }
+      ],
       "slots": [
         69
       ],
@@ -343170,6 +343830,16 @@
       "relatedModels": [
         "structure-01730e",
         "interior-02e910"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#888888",
+          "sourceColour": 32902
+        }
       ],
       "slots": [
         70
@@ -351009,6 +351679,16 @@
         "structure-01d430",
         "interior-02aece"
       ],
+      "sceneColours": [
+        {
+          "colour": "#aa8800",
+          "sourceColour": 32900
+        },
+        {
+          "colour": "#aa8800",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         71
       ],
@@ -352374,6 +353054,16 @@
         "structure-01d466",
         "structure-01d478",
         "interior-02ad48"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeaaaa",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32910
+        }
       ],
       "slots": [
         72
@@ -354587,6 +355277,16 @@
       "relatedModels": [
         "structure-012f84",
         "interior-02ce86"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeecc",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         73
@@ -358378,6 +359078,16 @@
         "structure-01db5a",
         "structure-01dc56",
         "interior-0303d6"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#aaaaaa",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32910
+        }
       ],
       "slots": [
         74
@@ -370222,6 +370932,16 @@
         "structure-014aec",
         "interior-02a9a4"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32914
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         75
       ],
@@ -376447,6 +377167,16 @@
         "structure-014ad2",
         "interior-02a9a4"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32914
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         76
       ],
@@ -382666,6 +383396,16 @@
         "structure-01dc8c",
         "interior-02eccc"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32896
+        }
+      ],
       "slots": [
         77
       ],
@@ -387845,6 +388585,16 @@
       "recordClass": "geometry",
       "relatedModels": [
         "interior-02a9a4"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeaa00",
+          "sourceColour": 32928
+        },
+        {
+          "colour": "#662200",
+          "sourceColour": 32920
+        }
       ],
       "slots": [
         78
@@ -393820,6 +394570,16 @@
       "relatedModels": [
         "interior-02a9a4"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32906
+        },
+        {
+          "colour": "#006666",
+          "sourceColour": 32916
+        }
+      ],
       "slots": [
         79
       ],
@@ -398539,6 +399299,16 @@
         "structure-01ddd0",
         "interior-02dfb4"
       ],
+      "sceneColours": [
+        {
+          "colour": "#888888",
+          "sourceColour": 32904
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32902
+        }
+      ],
       "slots": [
         80
       ],
@@ -400861,6 +401631,16 @@
         "structure-01ddac",
         "interior-02e44e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32920
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         81
       ],
@@ -402171,6 +402951,16 @@
         "structure-01deba",
         "structure-01decc",
         "interior-02b798"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#664444",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32900
+        }
       ],
       "slots": [
         82
@@ -410296,6 +411086,16 @@
         "structure-01669e",
         "interior-02f2c8"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         83
       ],
@@ -414966,6 +415766,16 @@
         "structure-01d3fa",
         "interior-02f2c8"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         84
       ],
@@ -419633,6 +420443,16 @@
       "recordClass": "geometry",
       "relatedModels": [
         "interior-02f2c8"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeee22",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#662200",
+          "sourceColour": 32920
+        }
       ],
       "slots": [
         85
@@ -424600,6 +425420,16 @@
       "relatedModels": [
         "structure-016c86",
         "interior-02f7a6"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#ee6600",
+          "sourceColour": 32902
+        }
       ],
       "slots": [
         86
@@ -430368,6 +431198,16 @@
         "structure-01d40c",
         "interior-02f7a6"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#ee6600",
+          "sourceColour": 32902
+        }
+      ],
       "slots": [
         87
       ],
@@ -436133,6 +436973,16 @@
       "relatedModels": [
         "interior-02f7a6"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeaa00",
+          "sourceColour": 32928
+        },
+        {
+          "colour": "#662200",
+          "sourceColour": 32920
+        }
+      ],
       "slots": [
         88
       ],
@@ -439214,6 +440064,16 @@
       "relatedModels": [
         "structure-01929a",
         "interior-02d83e"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         89
@@ -452218,6 +453078,16 @@
         "structure-01454e",
         "interior-02e910"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#888888",
+          "sourceColour": 32902
+        }
+      ],
       "slots": [
         90
       ],
@@ -459951,6 +460821,16 @@
       "relatedModels": [
         "interior-02e910"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#000066",
+          "sourceColour": 32896
+        }
+      ],
       "slots": [
         91
       ],
@@ -464528,6 +465408,16 @@
       "recordClass": "geometry",
       "relatedModels": [
         "interior-02e910"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#cceecc",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#446644",
+          "sourceColour": 32922
+        }
       ],
       "slots": [
         92
@@ -472107,6 +472997,16 @@
       "relatedModels": [
         "interior-02e910"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#000066",
+          "sourceColour": 32896
+        }
+      ],
       "slots": [
         93
       ],
@@ -476279,6 +477179,16 @@
         "structure-01dab2",
         "structure-01dad6",
         "interior-02d47e"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#888888",
+          "sourceColour": 32904
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32908
+        }
       ],
       "slots": [
         94
@@ -483493,6 +484403,16 @@
         "structure-01d52c",
         "structure-01daa0",
         "interior-02d656"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        }
       ],
       "slots": [
         95
@@ -494985,6 +495905,16 @@
         "structure-01de06",
         "structure-01de18",
         "interior-02d83e"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         96
@@ -507986,6 +508916,16 @@
       "relatedModels": [
         "interior-02d83e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         97
       ],
@@ -520263,6 +521203,16 @@
         "structure-0188d2",
         "interior-02d656"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        }
+      ],
       "slots": [
         98
       ],
@@ -531745,6 +532695,16 @@
         "structure-0122fa",
         "interior-02620e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeee22",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32914
+        }
+      ],
       "slots": [
         99
       ],
@@ -531770,6 +532730,16 @@
       "recordClass": "empty",
       "relatedModels": [
         "interior-02620e"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeee22",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#66aaaa",
+          "sourceColour": 32914
+        }
       ],
       "slots": [
         100
@@ -531981,6 +532951,16 @@
       "relatedModels": [
         "structure-011af4",
         "interior-02a67c"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ee6622",
+          "sourceColour": 32910
+        },
+        {
+          "colour": "#444444",
+          "sourceColour": 32900
+        }
       ],
       "slots": [
         103
@@ -533644,6 +534624,16 @@
       "relatedModels": [
         "structure-0188d2",
         "interior-02d656"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        }
       ],
       "slots": [
         104
@@ -545127,6 +546117,16 @@
         "structure-01280a",
         "interior-02c020"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32912
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32902
+        }
+      ],
       "slots": [
         105
       ],
@@ -547651,6 +548651,16 @@
       "relatedModels": [
         "structure-00f88e",
         "interior-030c0c"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         106
@@ -550640,6 +551650,16 @@
         "structure-00f88e",
         "interior-030c0c"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         107
       ],
@@ -553628,6 +554648,16 @@
         "structure-011af4",
         "interior-02a67c"
       ],
+      "sceneColours": [
+        {
+          "colour": "#664444",
+          "sourceColour": 32910
+        },
+        {
+          "colour": "#444444",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         108
       ],
@@ -555288,6 +556318,16 @@
       "relatedModels": [
         "structure-01280a",
         "interior-02cab0"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#888888",
+          "sourceColour": 32912
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32902
+        }
       ],
       "slots": [
         109
@@ -557899,6 +558939,16 @@
       "relatedModels": [
         "structure-00ed8e",
         "interior-02d3a8"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#aaaaaa",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32914
+        }
       ],
       "slots": [
         110
@@ -560604,6 +561654,16 @@
         "structure-00ed8e",
         "interior-02d3a8"
       ],
+      "sceneColours": [
+        {
+          "colour": "#cccc66",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32914
+        }
+      ],
       "slots": [
         111
       ],
@@ -563307,6 +564367,16 @@
       "relatedModels": [
         "structure-00f88e",
         "interior-030c0c"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         112
@@ -566296,6 +567366,16 @@
         "structure-00f88e",
         "interior-030c0c"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         113
       ],
@@ -569283,6 +570363,16 @@
       "relatedModels": [
         "structure-00f88e",
         "interior-030c0c"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         114
@@ -572272,6 +573362,16 @@
         "structure-00ed8e",
         "interior-02d3a8"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32914
+        }
+      ],
       "slots": [
         115
       ],
@@ -574976,6 +576076,16 @@
         "structure-01280a",
         "interior-02c020"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32912
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32902
+        }
+      ],
       "slots": [
         116
       ],
@@ -577500,6 +578610,16 @@
       "relatedModels": [
         "structure-012b7a",
         "interior-02cab0"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32912
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32902
+        }
       ],
       "slots": [
         117
@@ -580117,6 +581237,16 @@
         "structure-011af4",
         "interior-02a67c"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ee6622",
+          "sourceColour": 32910
+        },
+        {
+          "colour": "#444444",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         118
       ],
@@ -581777,6 +582907,16 @@
       "relatedModels": [
         "structure-01a7a0",
         "interior-028e74"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#000044",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         119
@@ -585861,6 +587001,16 @@
       "relatedModels": [
         "structure-01a7a0",
         "interior-028e74"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#000044",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         120
@@ -589952,6 +591102,16 @@
         "structure-01da8e",
         "interior-029148"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#000044",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         121
       ],
@@ -594026,6 +595186,16 @@
       "recordClass": "geometry",
       "relatedModels": [
         "interior-029c66"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#668866",
+          "sourceColour": 32896
+        }
       ],
       "slots": [
         123
@@ -607721,6 +608891,16 @@
         "structure-01b83a",
         "interior-029392"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32958
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         127
       ],
@@ -609457,6 +610637,16 @@
         "structure-01b728",
         "interior-029392"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32958
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         128
       ],
@@ -611192,6 +612382,16 @@
       "relatedModels": [
         "structure-01b95a",
         "interior-0296d0"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#000088",
+          "sourceColour": 32902
+        },
+        {
+          "colour": "#000066",
+          "sourceColour": 32904
+        }
       ],
       "slots": [
         129
@@ -613289,6 +614489,16 @@
         "structure-01b854",
         "interior-0296d0"
       ],
+      "sceneColours": [
+        {
+          "colour": "#000088",
+          "sourceColour": 32902
+        },
+        {
+          "colour": "#000066",
+          "sourceColour": 32904
+        }
+      ],
       "slots": [
         130
       ],
@@ -615385,6 +616595,16 @@
         "structure-01ba8c",
         "interior-029c66"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         131
       ],
@@ -617435,6 +618655,16 @@
         "structure-01b974",
         "interior-029c66"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         132
       ],
@@ -619484,6 +620714,16 @@
       "relatedModels": [
         "interior-029c66"
       ],
+      "sceneColours": [
+        {
+          "colour": "#888888",
+          "sourceColour": 1092
+        },
+        {
+          "colour": "#668866",
+          "sourceColour": 835
+        }
+      ],
       "slots": [
         133
       ],
@@ -620715,6 +621955,16 @@
       "relatedModels": [
         "structure-01dac4",
         "interior-02b43c"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#888888",
+          "sourceColour": 1092
+        },
+        {
+          "colour": "#888888",
+          "sourceColour": 1092
+        }
       ],
       "slots": [
         134
@@ -623039,6 +624289,16 @@
       "relatedModels": [
         "interior-02831a"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#cccccc",
+          "sourceColour": 32904
+        }
+      ],
       "slots": [
         135
       ],
@@ -625112,6 +626372,16 @@
       "recordClass": "geometry",
       "relatedModels": [
         "interior-02a18c"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32908
+        }
       ],
       "slots": [
         136
@@ -632007,6 +633277,16 @@
         "structure-01dbea",
         "interior-028984"
       ],
+      "sceneColours": [
+        {
+          "colour": "#884400",
+          "sourceColour": 1056
+        },
+        {
+          "colour": "#884400",
+          "sourceColour": 1056
+        }
+      ],
       "slots": [
         137
       ],
@@ -634399,6 +635679,16 @@
       "relatedModels": [
         "structure-01caa4",
         "interior-027dfe"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#004444",
+          "sourceColour": 32918
+        }
       ],
       "slots": [
         138
@@ -640244,6 +641534,16 @@
         "structure-01db06",
         "interior-027dfe"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32898
+        }
+      ],
       "slots": [
         139
       ],
@@ -642596,6 +643896,16 @@
       "recordClass": "geometry",
       "relatedModels": [
         "interior-02b030"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32906
+        }
       ],
       "slots": [
         140
@@ -646879,6 +648189,16 @@
         "structure-01d806",
         "structure-01dd58",
         "interior-027dfe"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#004444",
+          "sourceColour": 32918
+        }
       ],
       "slots": [
         141
@@ -652721,6 +654041,16 @@
       "relatedModels": [
         "interior-027dfe"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#004444",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         142
       ],
@@ -656143,6 +657473,16 @@
       "relatedModels": [
         "structure-01caa4",
         "interior-027dfe"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#004444",
+          "sourceColour": 32918
+        }
       ],
       "slots": [
         143
@@ -661986,6 +663326,16 @@
         "structure-00ed8e",
         "interior-02d3a8"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32914
+        }
+      ],
       "slots": [
         144
       ],
@@ -664697,6 +666047,16 @@
       "relatedModels": [
         "structure-012f84",
         "interior-02ce86"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#aa88aa",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         145
@@ -668452,6 +669812,16 @@
       "relatedModels": [
         "interior-02620e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32914
+        }
+      ],
       "slots": [
         146
       ],
@@ -668472,6 +669842,16 @@
       "relatedModels": [
         "structure-010014",
         "interior-03102a"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32896
+        }
       ],
       "slots": [
         147
@@ -670030,6 +671410,16 @@
       "relatedModels": [
         "structure-0188d2",
         "interior-02d656"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        }
       ],
       "slots": [
         148
@@ -681513,6 +682903,16 @@
         "structure-0135d6",
         "interior-02cfdc"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#222244",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         149
       ],
@@ -688576,6 +689976,16 @@
         "structure-01de84",
         "interior-029392"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32958
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         150
       ],
@@ -690311,6 +691721,16 @@
       "relatedModels": [
         "structure-01d1fe",
         "interior-029392"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32958
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32918
+        }
       ],
       "slots": [
         151
@@ -692048,6 +693468,16 @@
         "structure-01d1fe",
         "interior-029392"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32958
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         152
       ],
@@ -693784,6 +695214,16 @@
         "structure-01d1fe",
         "interior-029392"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32958
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         153
       ],
@@ -695519,6 +696959,16 @@
       "relatedModels": [
         "structure-012b7a",
         "interior-02cab0"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32912
+        },
+        {
+          "colour": "#444444",
+          "sourceColour": 32902
+        }
       ],
       "slots": [
         154
@@ -698136,6 +699586,16 @@
         "structure-012b7a",
         "interior-02cab0"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32912
+        },
+        {
+          "colour": "#444444",
+          "sourceColour": 32902
+        }
+      ],
       "slots": [
         155
       ],
@@ -700752,6 +702212,16 @@
         "structure-011af4",
         "interior-02a56a"
       ],
+      "sceneColours": [
+        {
+          "colour": "#664444",
+          "sourceColour": 32910
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         156
       ],
@@ -702256,6 +703726,16 @@
         "structure-011af4",
         "interior-02a56a"
       ],
+      "sceneColours": [
+        {
+          "colour": "#664444",
+          "sourceColour": 32910
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         157
       ],
@@ -703759,6 +705239,16 @@
       "relatedModels": [
         "structure-01c522",
         "interior-027dfe"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32898
+        }
       ],
       "slots": [
         158
@@ -706114,6 +707604,16 @@
         "structure-00ff04",
         "interior-030768"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaacc",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32896
+        }
+      ],
       "slots": [
         159
       ],
@@ -707645,6 +709145,16 @@
         "structure-00ff04",
         "interior-030768"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaacc",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32896
+        }
+      ],
       "slots": [
         160
       ],
@@ -709175,6 +710685,16 @@
       "relatedModels": [
         "structure-00efa6",
         "interior-027592"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#662222",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        }
       ],
       "slots": [
         161
@@ -711009,6 +712529,16 @@
         "structure-00efa6",
         "interior-027592"
       ],
+      "sceneColours": [
+        {
+          "colour": "#662222",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        }
+      ],
       "slots": [
         162
       ],
@@ -712841,6 +714371,16 @@
       "relatedModels": [
         "structure-01669e",
         "interior-02f2c8"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32918
+        }
       ],
       "slots": [
         163
@@ -717510,6 +719050,16 @@
       "relatedModels": [
         "structure-016c86",
         "interior-02f7a6"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#ee6600",
+          "sourceColour": 32902
+        }
       ],
       "slots": [
         164
@@ -723277,6 +724827,16 @@
         "structure-014440",
         "interior-02b030"
       ],
+      "sceneColours": [
+        {
+          "colour": "#aaaa66",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#aaaa66",
+          "sourceColour": 32898
+        }
+      ],
       "slots": [
         165
       ],
@@ -724577,6 +726137,16 @@
       "relatedModels": [
         "structure-014574",
         "interior-02aece"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#aa8800",
+          "sourceColour": 32900
+        },
+        {
+          "colour": "#aa8800",
+          "sourceColour": 32900
+        }
       ],
       "slots": [
         166
@@ -725940,6 +727510,16 @@
       "relatedModels": [
         "structure-014690",
         "interior-02ad48"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeaaaa",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32910
+        }
       ],
       "slots": [
         167
@@ -728154,6 +729734,16 @@
         "structure-014690",
         "interior-02ad48"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeaaaa",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         168
       ],
@@ -730366,6 +731956,16 @@
       "relatedModels": [
         "structure-014690",
         "interior-02ad48"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeaaaa",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32910
+        }
       ],
       "slots": [
         169
@@ -732580,6 +734180,16 @@
         "structure-014690",
         "interior-02ad48"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeaaaa",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         170
       ],
@@ -734793,6 +736403,16 @@
         "structure-014440",
         "interior-02b030"
       ],
+      "sceneColours": [
+        {
+          "colour": "#aa8800",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#aa8800",
+          "sourceColour": 32898
+        }
+      ],
       "slots": [
         171
       ],
@@ -736094,6 +737714,16 @@
         "structure-014440",
         "interior-02b030"
       ],
+      "sceneColours": [
+        {
+          "colour": "#aa8800",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#aa8800",
+          "sourceColour": 32898
+        }
+      ],
       "slots": [
         172
       ],
@@ -737394,6 +739024,16 @@
       "relatedModels": [
         "structure-01430c",
         "interior-026b08"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32910
+        }
       ],
       "slots": [
         173
@@ -738903,6 +740543,16 @@
         "structure-01430c",
         "interior-026b08"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         174
       ],
@@ -740410,6 +742060,16 @@
       "relatedModels": [
         "structure-012f84",
         "interior-02ce86"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#aaaa66",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         175
@@ -744165,6 +745825,16 @@
       "relatedModels": [
         "structure-01929a",
         "interior-02d83e"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         176
@@ -757167,6 +758837,16 @@
         "structure-01929a",
         "interior-02d83e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         177
       ],
@@ -770167,6 +771847,16 @@
       "relatedModels": [
         "structure-01929a",
         "interior-02d83e"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         178
@@ -783169,6 +784859,16 @@
         "structure-01d1fe",
         "interior-029392"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32958
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         179
       ],
@@ -784906,6 +786606,16 @@
       "relatedModels": [
         "structure-0188d2",
         "interior-02d656"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        }
       ],
       "slots": [
         180
@@ -796389,6 +798099,16 @@
         "structure-01430c",
         "interior-026b08"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#444444",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         181
       ],
@@ -797896,6 +799616,16 @@
       "relatedModels": [
         "structure-015eea",
         "interior-02b798"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32900
+        }
       ],
       "slots": [
         182
@@ -806020,6 +807750,16 @@
       "relatedModels": [
         "interior-0296d0"
       ],
+      "sceneColours": [
+        {
+          "colour": "#000088",
+          "sourceColour": 32902
+        },
+        {
+          "colour": "#000066",
+          "sourceColour": 32904
+        }
+      ],
       "slots": [
         183
       ],
@@ -808116,6 +809856,16 @@
         "structure-01d1fe",
         "interior-029392"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32958
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         184
       ],
@@ -809852,6 +811602,16 @@
         "structure-01d1fe",
         "interior-029392"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32958
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         185
       ],
@@ -811587,6 +813347,16 @@
       "relatedModels": [
         "structure-0101ae",
         "interior-02fcb6"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         186
@@ -818860,6 +820630,16 @@
         "structure-01caa4",
         "interior-027dfe"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#004400",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         187
       ],
@@ -824702,6 +826482,16 @@
         "structure-00efa6",
         "interior-027592"
       ],
+      "sceneColours": [
+        {
+          "colour": "#000000",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        }
+      ],
       "slots": [
         188
       ],
@@ -826534,6 +828324,16 @@
       "relatedModels": [
         "structure-00efa6",
         "interior-027592"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#000000",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        }
       ],
       "slots": [
         189
@@ -828368,6 +830168,16 @@
         "structure-00efa6",
         "interior-027592"
       ],
+      "sceneColours": [
+        {
+          "colour": "#664444",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        }
+      ],
       "slots": [
         190
       ],
@@ -830200,6 +832010,16 @@
       "relatedModels": [
         "structure-00efa6",
         "interior-027592"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#000000",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        }
       ],
       "slots": [
         191
@@ -832034,6 +833854,16 @@
         "structure-01430c",
         "interior-026b08"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         192
       ],
@@ -833542,6 +835372,16 @@
         "structure-01430c",
         "interior-026b08"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         193
       ],
@@ -835049,6 +836889,16 @@
       "relatedModels": [
         "structure-0101ae",
         "interior-03006a"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#004444",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         194
@@ -841901,6 +843751,16 @@
         "structure-012f84",
         "interior-02ce86"
       ],
+      "sceneColours": [
+        {
+          "colour": "#aaaa66",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         195
       ],
@@ -845656,6 +847516,16 @@
         "structure-010014",
         "interior-03102a"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32896
+        }
+      ],
       "slots": [
         196
       ],
@@ -847211,6 +849081,16 @@
       "relatedModels": [
         "structure-01caa4",
         "interior-027dfe"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32918
+        }
       ],
       "slots": [
         197
@@ -853054,6 +854934,16 @@
         "structure-01caa4",
         "interior-027dfe"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         198
       ],
@@ -858896,6 +860786,16 @@
         "structure-01a7a0",
         "interior-028e74"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         199
       ],
@@ -862979,6 +864879,16 @@
       "relatedModels": [
         "structure-0101ae",
         "interior-02fcb6"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         200
@@ -870252,6 +872162,16 @@
         "structure-01430c",
         "interior-026b08"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#444444",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         201
       ],
@@ -871759,6 +873679,16 @@
       "relatedModels": [
         "structure-010014",
         "interior-0311a8"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#660000",
+          "sourceColour": 32896
+        }
       ],
       "slots": [
         202
@@ -873489,6 +875419,16 @@
       "relatedModels": [
         "structure-012b7a",
         "interior-02cab0"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32912
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32902
+        }
       ],
       "slots": [
         203
@@ -876105,6 +878045,16 @@
       "relatedModels": [
         "structure-01caa4",
         "interior-027dfe"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#004444",
+          "sourceColour": 32918
+        }
       ],
       "slots": [
         204
@@ -881947,6 +883897,16 @@
       "relatedModels": [
         "interior-026c9e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 1911
+        },
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 1911
+        }
+      ],
       "slots": [
         205
       ],
@@ -882744,6 +884704,16 @@
       "relatedModels": [
         "interior-02630e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 1911
+        },
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 1911
+        }
+      ],
       "slots": [
         206
       ],
@@ -883357,6 +885327,16 @@
         "structure-01dbd8",
         "structure-01dd6a",
         "interior-026556"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        }
       ],
       "slots": [
         207
@@ -885536,6 +887516,16 @@
       "relatedModels": [
         "interior-0268ee"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 1911
+        },
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 1911
+        }
+      ],
       "slots": [
         208
       ],
@@ -886014,6 +888004,16 @@
       "relatedModels": [
         "structure-012136",
         "interior-02c6f6"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32900
+        }
       ],
       "slots": [
         209
@@ -888876,6 +890876,16 @@
         "structure-012136",
         "interior-02c6f6"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         210
       ],
@@ -891737,6 +893747,16 @@
         "structure-012136",
         "interior-02c6f6"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         211
       ],
@@ -894597,6 +896617,16 @@
       "relatedModels": [
         "structure-01a7a0",
         "interior-028e74"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         212
@@ -898682,6 +900712,16 @@
         "structure-01a7a0",
         "interior-028e74"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         213
       ],
@@ -902766,6 +904806,16 @@
         "structure-01a7a0",
         "interior-028e74"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         214
       ],
@@ -906849,6 +908899,16 @@
       "relatedModels": [
         "structure-01a7a0",
         "interior-028e74"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         215
@@ -910935,6 +912995,16 @@
       "relatedModels": [
         "structure-0188d2",
         "interior-02d656"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        }
       ],
       "slots": [
         216
@@ -922418,6 +924488,16 @@
         "structure-01832e",
         "interior-02d47e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32904
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32908
+        }
+      ],
       "slots": [
         217
       ],
@@ -929626,6 +931706,16 @@
         "structure-01bb46",
         "interior-02b43c"
       ],
+      "sceneColours": [
+        {
+          "colour": "#888888",
+          "sourceColour": 1092
+        },
+        {
+          "colour": "#888888",
+          "sourceColour": 1092
+        }
+      ],
       "slots": [
         218
       ],
@@ -931949,6 +934039,16 @@
       "relatedModels": [
         "structure-01832e",
         "interior-02d47e"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#444444",
+          "sourceColour": 32904
+        },
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32908
+        }
       ],
       "slots": [
         219
@@ -939158,6 +941258,16 @@
         "structure-01c522",
         "interior-027dfe"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#442288",
+          "sourceColour": 32898
+        }
+      ],
       "slots": [
         220
       ],
@@ -941511,6 +943621,16 @@
       "relatedModels": [
         "structure-01c522",
         "interior-027dfe"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#442288",
+          "sourceColour": 32898
+        }
       ],
       "slots": [
         221
@@ -943866,6 +945986,16 @@
         "structure-01430c",
         "interior-026b08"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#442288",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         222
       ],
@@ -945374,6 +947504,16 @@
         "structure-01430c",
         "interior-026b08"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#442288",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         223
       ],
@@ -946881,6 +949021,16 @@
       "relatedModels": [
         "structure-01484e",
         "interior-0303d6"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#aaaaaa",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32910
+        }
       ],
       "slots": [
         224
@@ -950597,6 +952747,16 @@
         "structure-01484e",
         "interior-0303d6"
       ],
+      "sceneColours": [
+        {
+          "colour": "#aaaaaa",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         225
       ],
@@ -954312,6 +956472,16 @@
         "structure-01d8b4",
         "interior-026556"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        }
+      ],
       "slots": [
         226
       ],
@@ -956490,6 +958660,16 @@
       "relatedModels": [
         "structure-015eea",
         "interior-02b798"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32900
+        }
       ],
       "slots": [
         227
@@ -964615,6 +966795,16 @@
         "structure-015eea",
         "interior-02b798"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         228
       ],
@@ -972738,6 +974928,16 @@
       "relatedModels": [
         "structure-015eea",
         "interior-02b798"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32900
+        }
       ],
       "slots": [
         229
@@ -980863,6 +983063,16 @@
         "structure-015eea",
         "interior-02b798"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         230
       ],
@@ -988987,6 +991197,16 @@
         "structure-01d8b4",
         "interior-026556"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        }
+      ],
       "slots": [
         231
       ],
@@ -991166,6 +993386,16 @@
         "structure-01d8b4",
         "interior-026556"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        }
+      ],
       "slots": [
         232
       ],
@@ -993344,6 +995574,16 @@
       "relatedModels": [
         "structure-01c3dc",
         "interior-028984"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#884400",
+          "sourceColour": 1056
+        },
+        {
+          "colour": "#884400",
+          "sourceColour": 1056
+        }
       ],
       "slots": [
         233
@@ -995738,6 +997978,16 @@
         "structure-00efa6",
         "interior-027592"
       ],
+      "sceneColours": [
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32896
+        }
+      ],
       "slots": [
         234
       ],
@@ -997570,6 +999820,16 @@
       "relatedModels": [
         "structure-00efa6",
         "interior-027592"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32896
+        }
       ],
       "slots": [
         235
@@ -999404,6 +1001664,16 @@
         "structure-00efa6",
         "interior-027592"
       ],
+      "sceneColours": [
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32896
+        }
+      ],
       "slots": [
         236
       ],
@@ -1001236,6 +1003506,16 @@
       "relatedModels": [
         "structure-00efa6",
         "interior-027592"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        }
       ],
       "slots": [
         237
@@ -1003070,6 +1005350,16 @@
         "structure-01d1fe",
         "interior-029392"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32958
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         238
       ],
@@ -1004805,6 +1007095,16 @@
       "relatedModels": [
         "structure-01484e",
         "interior-0303d6"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#aaaaaa",
+          "sourceColour": 32922
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32910
+        }
       ],
       "slots": [
         239
@@ -1008521,6 +1010821,16 @@
         "structure-01430c",
         "interior-026b08"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         240
       ],
@@ -1010029,6 +1012339,16 @@
         "structure-01430c",
         "interior-026b08"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         241
       ],
@@ -1011536,6 +1013856,16 @@
       "relatedModels": [
         "structure-01560c",
         "interior-02eccc"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32896
+        }
       ],
       "slots": [
         242
@@ -1016718,6 +1019048,16 @@
         "structure-01430c",
         "interior-026b08"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32930
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32910
+        }
+      ],
       "slots": [
         243
       ],
@@ -1018225,6 +1020565,16 @@
       "relatedModels": [
         "structure-01231c",
         "interior-02bc56"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32902
+        }
       ],
       "slots": [
         244
@@ -1022188,6 +1024538,16 @@
         "structure-00f0b8",
         "interior-027134"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32914
+        }
+      ],
       "slots": [
         245
       ],
@@ -1024141,6 +1026501,16 @@
       "relatedModels": [
         "structure-0101ae",
         "interior-03006a"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         246
@@ -1030992,6 +1033362,16 @@
       "relatedModels": [
         "structure-01929a",
         "interior-02d83e"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         247
@@ -1043994,6 +1046374,16 @@
         "structure-01929a",
         "interior-02d83e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         248
       ],
@@ -1056994,6 +1059384,16 @@
       "relatedModels": [
         "structure-01929a",
         "interior-02d83e"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         249
@@ -1069996,6 +1072396,16 @@
         "structure-01929a",
         "interior-02d83e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         250
       ],
@@ -1082997,6 +1085407,16 @@
         "structure-0101ae",
         "interior-03006a"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         251
       ],
@@ -1089848,6 +1092268,16 @@
         "structure-01caa4",
         "interior-027dfe"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32916
+        },
+        {
+          "colour": "#000066",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         252
       ],
@@ -1095690,6 +1098120,16 @@
         "structure-01d8b4",
         "interior-026556"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        }
+      ],
       "slots": [
         253
       ],
@@ -1097868,6 +1100308,16 @@
       "relatedModels": [
         "structure-01231c",
         "interior-02bc56"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32902
+        }
       ],
       "slots": [
         255
@@ -1101830,6 +1104280,16 @@
       "relatedModels": [
         "structure-0101ae",
         "interior-02fcb6"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32896
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         257
@@ -1109103,6 +1111563,16 @@
         "structure-015b9e",
         "interior-02e44e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32920
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         258
       ],
@@ -1110405,6 +1112875,16 @@
       "relatedModels": [
         "structure-011c52",
         "interior-02c3b8"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32924
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         259
@@ -1114476,6 +1116956,16 @@
         "structure-0159d0",
         "interior-02dfb4"
       ],
+      "sceneColours": [
+        {
+          "colour": "#888888",
+          "sourceColour": 32904
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32902
+        }
+      ],
       "slots": [
         260
       ],
@@ -1116797,6 +1119287,16 @@
       "relatedModels": [
         "structure-012136",
         "interior-02c6f6"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#666666",
+          "sourceColour": 32900
+        }
       ],
       "slots": [
         261
@@ -1119658,6 +1122158,16 @@
       "relatedModels": [
         "structure-01929a",
         "interior-02d83e"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         262
@@ -1132660,6 +1135170,16 @@
         "structure-01929a",
         "interior-02d83e"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         263
       ],
@@ -1145660,6 +1148180,16 @@
       "relatedModels": [
         "structure-01929a",
         "interior-02d83e"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#664444",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         264
@@ -1158662,6 +1161192,16 @@
         "structure-012b7a",
         "interior-02cab0"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32912
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32902
+        }
+      ],
       "slots": [
         265
       ],
@@ -1161278,6 +1163818,16 @@
         "structure-012b7a",
         "interior-02cab0"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32912
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32902
+        }
+      ],
       "slots": [
         266
       ],
@@ -1163893,6 +1166443,16 @@
       "relatedModels": [
         "structure-0135d6",
         "interior-02cfdc"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#882222",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         267
@@ -1170949,6 +1173509,16 @@
         "structure-00efa6",
         "interior-027592"
       ],
+      "sceneColours": [
+        {
+          "colour": "#882222",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32896
+        }
+      ],
       "slots": [
         268
       ],
@@ -1172782,6 +1175352,16 @@
         "structure-01d1fe",
         "interior-029392"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32958
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         269
       ],
@@ -1174518,6 +1177098,16 @@
         "structure-01d1fe",
         "interior-029392"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32958
+        },
+        {
+          "colour": "#000000",
+          "sourceColour": 32918
+        }
+      ],
       "slots": [
         270
       ],
@@ -1176253,6 +1178843,16 @@
       "relatedModels": [
         "structure-015eea",
         "interior-02b798"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32900
+        }
       ],
       "slots": [
         271
@@ -1184378,6 +1186978,16 @@
         "structure-015eea",
         "interior-02b798"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         272
       ],
@@ -1192501,6 +1195111,16 @@
       "relatedModels": [
         "structure-015eea",
         "interior-02b798"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32900
+        }
       ],
       "slots": [
         273
@@ -1200626,6 +1203246,16 @@
         "structure-015eea",
         "interior-02b798"
       ],
+      "sceneColours": [
+        {
+          "colour": "#ccaa88",
+          "sourceColour": 32898
+        },
+        {
+          "colour": "#4488cc",
+          "sourceColour": 32900
+        }
+      ],
       "slots": [
         274
       ],
@@ -1208750,6 +1211380,16 @@
         "structure-0135d6",
         "interior-02cfdc"
       ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#222244",
+          "sourceColour": 32912
+        }
+      ],
       "slots": [
         275
       ],
@@ -1215804,6 +1218444,16 @@
       "relatedModels": [
         "structure-0135d6",
         "interior-02cfdc"
+      ],
+      "sceneColours": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 32908
+        },
+        {
+          "colour": "#222244",
+          "sourceColour": 32912
+        }
       ],
       "slots": [
         276

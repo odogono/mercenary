@@ -75,6 +75,12 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
           : 'Building plan and linked detail. Available inspection views are listed under Form; original scene visibility remains incomplete.'
     );
   }
+  if (model.sceneColours?.length) {
+    paragraph(
+      details,
+      `Cell background colours ${model.sceneColours.map(entry => entry.colour ?? `$${entry.sourceColour.toString(16).toUpperCase()}`).join(' and ')}. The frame loop pre-fills the viewport with a raster block at $059CE2 and installs these from the record, so the background is not geometry this model can hold.`
+    );
+  }
   if (model.conditions.length) {
     paragraph(
       details,

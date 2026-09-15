@@ -897,3 +897,21 @@ it('places only residents selected by the native surface-body association', asyn
     data.instances.find(instance => instance.id === 'object-slot-8')!.location
   ).toBeNull();
 });
+
+it('records the cell background colours a surface record carries', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const withColours = data.models.filter(model => model.sceneColours?.length);
+  expect(withColours).toHaveLength(265);
+  expect(withColours.every(model => model.kind === 'structure')).toBe(true);
+  // Capital Spaceport resolves both through its own scene palette; the frame
+  // loop installs them for a raster fill, so they are not wall colours.
+  const port = data.models.find(model => model.id === 'structure-01484e')!;
+  // Both are scene palette references; the second is the sky blue the frame
+  // loop installs behind the Capital Spaceport.
+  expect(port.sceneColours).toEqual([
+    { colour: '#aaaaaa', sourceColour: 0x80_9a },
+    { colour: '#4488cc', sourceColour: 0x80_8e }
+  ]);
+});

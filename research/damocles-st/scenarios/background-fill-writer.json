@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "background-fill-writer",
+  "checkpoint": "title-screen",
+  "description": "From the title screen, enter the first world and let it settle, then poke a sentinel into a screen word inside the uniform sky band of the 3D viewport ($078BA0, line 10 of the $078800 framebuffer) and break on the next write while walking forward. Names the native surface/background fill path that paints the sky and ground the cell records do not contain (#173).",
+  "actions": [
+    { "type": "keypress", "key": 57 },
+    { "type": "wait_vbls", "count": 90000 },
+    { "type": "capture", "artifacts": ["display", "registers", "ram"] },
+    {
+      "type": "watch",
+      "name": "sky-fill",
+      "address": "0x78ba0",
+      "seconds": 8,
+      "provoke": { "direction": "up", "vbls": 4000 }
+    }
+  ]
+}
