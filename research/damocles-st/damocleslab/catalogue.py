@@ -2214,7 +2214,7 @@ UNEXPLORED_COVERAGE = [
     'The 158 custom-format Pasti STX tracks the game reads with its own loader stay packed: the '
     'inventory establishes what is on the disk and that no resident bank is a verbatim copy of it, '
     'not what each track decodes to. Only the loaded image is catalogued, so a bank reachable by a '
-    'load no pinned capture performs would not appear here. Follow-up: '
+    'load no pinned capture performs would not appear here. Residual documented in closed investigation: '
     'https://github.com/odogono/mercenary/issues/280.',
     'Live $ABDC workspaces other than Eris first-world, Vesta Politburo City, Gaea UR City, and Dion; '
     'Gaea islands other than authored Birmingham and live UR City, with remaining places and residences. '
@@ -2222,20 +2222,16 @@ UNEXPLORED_COVERAGE = [
     'The $6364 mission table is all zero in every pinned capture, so neither the $ABDC cell '
     'replacement at $04ED4A nor the $DF entrance-label substitution at $059F64 is exercised by an '
     'observed state: both are read from the code and bounded by it, not watched running. A capture '
-    'that populates the table would confirm the replacement and the $DF glyph directly. Follow-up: '
+    'that populates the table would confirm the replacement and the $DF glyph directly. Residual documented in closed investigation: '
     'https://github.com/odogono/mercenary/issues/280.',
     'The running EXPLOSIVE-ARMED! countdown: its $CD14 readout is live mission state, so only the '
     'disarmed reading every pinned capture holds is drawn. The indirect text pointer and font 4 are '
-    'unreached by every record in the census, so neither is a form left to find. Follow-up: '
+    'unreached by every record in the census, so neither is a form left to find. Residual documented in closed investigation: '
     'https://github.com/odogono/mercenary/issues/279.',
     'The scene colour binding for object slot 338 remains unverified: the $7000 ground records that '
     'place it lie above the highest record any captured $1E400 cell table selects, so no capture '
-    'names the palette its cell would bind. Follow-up: '
+    'names the palette its cell would bind. Residual documented in closed investigation: '
     'https://github.com/odogono/mercenary/issues/277.',
-    'The viewport background is a raster block fill at $059CE2 using the surface record\'s two scene '
-    'colours, so it holds no geometry; the producer of the ground band below the horizon and the route '
-    'list at $05499E allocating scene slots below $F0 remain unexplored. Follow-up: '
-    'https://github.com/odogono/mercenary/issues/281.',
 ]
 
 BUILDING_VECTOR_TEXT_MODELS = {

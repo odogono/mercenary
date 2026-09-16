@@ -685,15 +685,17 @@ on every captured RAM image in the work tree. See
 [Eris ground](damocles-eris-ground.md).
 
 The census gives every discovered record a verdict, but `coverage.complete`
-remains **false**. The remaining work is tracked separately:
+remains **false**. The reconciled census is **832 records: 510 decoded, 322 partial,
+0 unresolved**. Open coverage work and documented residual limits are distinguished
+below; closing an investigation does not resolve its residual limits.
 
-| Coverage gap | Follow-up |
+| Coverage gap or residual limit | Tracking / disposition |
 | --- | --- |
 | Unexamined `$ABDC` workspaces, Gaea islands, named places and associated residences/transforms beyond the captured coverage | [#172](https://github.com/odogono/mercenary/issues/172) |
-| Unverified scene palette binding for object slot 338 (one record) | [#277](https://github.com/odogono/mercenary/issues/277) |
-| The running EXPLOSIVE-ARMED! `$CD14` countdown, the one remaining live `$CCA0` object-text case | [#279](https://github.com/odogono/mercenary/issues/279) |
-| The 158 packed custom-format STX tracks, and the `$6364` branches that no capture exercises | [#280](https://github.com/odogono/mercenary/issues/280) |
-| The scanline `$7BFC` the sky/ground raster split fires on; rendering-only, and not a record the catalogue would carry | [#281](https://github.com/odogono/mercenary/issues/281) |
+| Unverified scene palette binding for object slot 338 (one record) | [#277](https://github.com/odogono/mercenary/issues/277) — closed investigation; residual retained |
+| The running EXPLOSIVE-ARMED! `$CD14` countdown, the one remaining live `$CCA0` object-text case | [#279](https://github.com/odogono/mercenary/issues/279) — closed investigation; residual retained |
+| The 158 packed custom-format STX tracks, and the `$6364` branches that no capture exercises | [#280](https://github.com/odogono/mercenary/issues/280) — closed investigation; residual retained |
+| The scanline `$7BFC` the sky/ground raster split fires on; rendering-only, and not a record the catalogue would carry | [#281](https://github.com/odogono/mercenary/issues/281) — closed investigation; residual retained |
 | Representative visual fidelity against Working Authority captures | [#174](https://github.com/odogono/mercenary/issues/174) |
 
 Building detail 69's unreachable projected-slot records, authored empty/NULL
@@ -702,7 +704,7 @@ in, and the cell-derived `$7AFB` attachment label are accounted for; they are
 not outstanding decode failures. Resident model banks do not change between
 first-world and occupied-Spaceport RAM. Partial records still include neutral-pose
 assemblies and inspection limits, so the partial total is not a count of distinct
-unknown grammars. These follow-ups preserve the boundary between a reconciled
+unknown grammars. These explicit limits preserve the boundary between a reconciled
 census of examined evidence and a claim that the whole game's extraction is complete.
 
 ## Viewer correction after inspection
