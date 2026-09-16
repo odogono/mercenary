@@ -1,0 +1,142 @@
+:root {
+  color-scheme: dark;
+  --background: #111719;
+  --surface: #1b2427;
+  --text: #e4ebe8;
+  --muted: #b2c2bb;
+  --border: #566960;
+  --accent: #a8e1c1;
+  --error: #ffb5a8;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--background);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+main {
+  max-width: 72rem;
+  margin: auto;
+  padding: 1.5rem;
+}
+header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+}
+h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin: 0.5rem 0 1rem;
+}
+h2 {
+  font-size: 1.25rem;
+}
+p {
+  color: var(--muted);
+}
+.eyebrow {
+  color: var(--accent);
+  margin: 0;
+}
+.columns {
+  display: grid;
+  gap: 2rem;
+}
+section {
+  min-width: 0;
+  padding: 0.5rem 0 1rem;
+}
+dl {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 0.5rem 1rem;
+}
+dt {
+  color: var(--muted);
+}
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: monospace;
+}
+label {
+  display: block;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  padding: 0.75rem;
+  max-width: 100%;
+}
+button {
+  cursor: pointer;
+  margin: 0.5rem 0;
+}
+button:hover {
+  border-color: var(--accent);
+}
+input,
+select,
+textarea {
+  display: block;
+  width: 100%;
+}
+textarea,
+pre {
+  font-family: ui-monospace, monospace;
+  font-size: 0.875rem;
+}
+textarea {
+  resize: vertical;
+}
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--surface);
+  padding: 1rem;
+}
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+summary {
+  cursor: pointer;
+}
+#error {
+  color: var(--error);
+  overflow-wrap: anywhere;
+}
+#notice {
+  color: var(--accent);
+}
+#prompt {
+  border-left: 3px solid var(--accent);
+  padding-left: 1rem;
+}
+@media (min-width: 48rem) {
+  .columns {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 25rem) {
+  main {
+    padding: 1rem;
+  }
+}

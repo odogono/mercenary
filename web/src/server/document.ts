@@ -18,6 +18,7 @@ export const unsupportedMethodResponse = (
 const DOCUMENT_FILES: Record<BrowserDocument, string> = {
   catalogue: 'catalogue.html',
   damocles: 'damocles.html',
+  'first-offer': 'first-offer.html',
   flyover: 'flyover.html',
   gameplay: 'index.html'
 };

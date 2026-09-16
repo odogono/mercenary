@@ -1,7 +1,9 @@
 export type SystemId = 'gamma' | 'targ';
-export type BrowserDocument = 'catalogue' | 'damocles' | 'flyover' | 'gameplay';
+export type BrowserDocument =
+  'catalogue' | 'damocles' | 'first-offer' | 'flyover' | 'gameplay';
 
 export type DocumentPath =
+  | { readonly document: 'first-offer'; readonly kind: 'document' }
   | { readonly document: 'gameplay'; readonly kind: 'document' }
   | { readonly document: 'catalogue'; readonly kind: 'document' }
   | { readonly document: 'damocles'; readonly kind: 'document' }
@@ -23,6 +25,7 @@ const documents = new Map<string, DocumentPath>([
   // Targ adopts the Title seam; `/damocles` is the Damocles Gameplay Session (ADR 0043).
   ['/targ', { document: 'gameplay', kind: 'document' }],
   ['/damocles', { document: 'damocles', kind: 'document' }],
+  ['/damocles/first-offer', { document: 'first-offer', kind: 'document' }],
   ['/catalogue', { document: 'catalogue', kind: 'document' }],
   ['/targ/debug', { document: 'flyover', kind: 'document', systemId: 'targ' }],
   [
@@ -32,6 +35,8 @@ const documents = new Map<string, DocumentPath>([
 ]);
 
 const aliases = new Map<string, string>([
+  ['/damocles/first-offer/', '/damocles/first-offer'],
+  ['/first-offer.html', '/damocles/first-offer'],
   ['/index.html', '/'],
   ['/targ/', '/targ'],
   ['/damocles/', '/damocles'],

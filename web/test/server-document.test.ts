@@ -14,6 +14,12 @@ describe('the localhost document route', () => {
     try {
       await writeFile(join(root, 'flyover.html'), 'flyover');
       await writeFile(join(root, 'damocles.html'), 'damocles');
+      await writeFile(join(root, 'first-offer.html'), 'offer demo');
+      const demo = await documentResponse(
+        new Request('http://localhost/damocles/first-offer'),
+        root
+      );
+      expect(await demo?.text()).toBe('offer demo');
       const get = await documentResponse(
         new Request('http://localhost/targ/debug'),
         root
