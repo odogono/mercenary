@@ -74,7 +74,10 @@ Separately bounded, because each needs evidence this contract must not invent:
   in `$0523B8` are divided between, and whether an input can end one early. The row is revealed
   progressively rather than appearing whole, so this is display state a mid-message restore must
   carry, and the save contract is not final without it. The research recovered the gate and the
-  duration but never located the native routine behind them.
+  duration but never located the native routine behind them. A maintainer screenshot measures the
+  row as a fixed monospaced cell grid about 48 cells wide, holding a complete 45-character message
+  — so `Reveal` is expected to be a revealed-character count rather than a shift register, which
+  #307 confirms or corrects.
 - **The message text** ([#304](https://github.com/odogono/mercenary/issues/304)). Script slot 2's three inline strings and system-string slot 50 are
   recovered material that no Data Payload yet carries. They belong in `payload/damocles/` as an
   extraction, under ADR 0029 and the [publication policy](../publication-policy.md), not as a
