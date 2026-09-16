@@ -222,7 +222,7 @@ rows marked *probable* are single-pass readings that were not re-derived.
 | `$11` | `$051B34` | `not`+`and` operand into `$7BD8` — **clear flags** |
 | `$12` | `$051B42` | Predicate on `$7BD8` — **test flags** |
 | `$13` | `$051B50` | Predicate on `$7C40` |
-| `$14` | `$051B5C` | **Indexed message**: bounded (`$01E0`) read from `$7A42`, treat as string pointer, set `$7B98`, bump `$7B9A`, set `$7BA0` = 1 |
+| `$14` | `$051B5C` | **Indexed message**: doubles the operand; **below** `$01E0` that doubled value indexes the system string table at `$070000` directly, and only at or above it is a slot fetched from `$7A42` first. Either way it sets `$7B98`, bumps `$7B9A` and sets `$7BA0` = 1. Corrected in [#298](https://github.com/odogono/mercenary/issues/298) — see [the limo-key pickup note](damocles-limo-key-pickup.md#the-response-is-script-slot-2) |
 | `$15` | `$051B98` | **BCD three-operand**: gathers three `$7482` records, copies one into scratch at `$7968`, then six `abcd` steps — packed-decimal arithmetic between entities |
 | `$16` | `$051BE2` | `add.w` operand into counter `$7BD2` |
 | `$17` | `$051BEE` | Predicate on `$7BD2` vs operand |
@@ -368,6 +368,13 @@ script PC**: `movea.l $6266,a0; move.w $7820,-(a0); move.w D1,$7820;
 move.w a0,$6268`. So `$7A88` names a *pending script* and this routine enters
 it, with `$6266`/`$6268` bounding the script return stack that opcode `$05`
 pops.
+
+#298 adds the other caller: native gameplay enters the same routine at
+**`$054770`**, past the busy test and the `$7A88` clear, so a trigger raised
+while a script is already running is queued in `$7A88` only when bit 5 of its
+`$7CB4` byte is set and is otherwise discarded. The object pickup path reaches
+it through a slot-to-trigger table at `$0543EC`; see
+[the limo-key pickup note](damocles-limo-key-pickup.md).
 
 **`$0547C6` — message resume.** Reached by `bne.w` **branch**, not a call, from
 `$051948`, so it runs on the dispatch loop's own frame and its `rts` returns to

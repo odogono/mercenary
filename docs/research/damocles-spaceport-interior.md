@@ -220,6 +220,10 @@ In the same post-pickup RAM, slot 183's association words change from
 queue value `$FFFF00B7` is absent. The initial, interior-window and supplied
 at-key states all retain the original coordinates and queue tag.
 
+The native handler behind that transition, the script it launches, and the
+repeat/drop/re-pick behaviour are recovered in
+[the limo-key pickup note](damocles-limo-key-pickup.md).
+
 The boarded and subsequently left-limo captures retain exactly those
 post-pickup slot values, the inventory entry, and the absent room-queue tag.
 This establishes a persistent transition from placed resident to held key,

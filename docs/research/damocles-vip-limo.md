@@ -167,6 +167,10 @@ at `$072DC4` (text begins at `$072DD2` after padding). The successful keyed
 capture and the two legal no-key captures therefore verify the V.I.P. limo key
 requirement. The native branch implementing the comparison remains undecoded.
 
+The pickup itself — its native handler, preconditions and the Damocles Script it
+launches — is recovered in
+[the limo-key pickup note](damocles-limo-key-pickup.md).
+
 The key's pickup transition occurs before boarding and persists after leaving;
 see the slot-183 values in
 [`damocles-spaceport-interior.md`](damocles-spaceport-interior.md#pickup-removes-the-resident-placement).
