@@ -3,7 +3,9 @@
 Working-Authority Evidence for where Damocles stores the grey pad, roads and
 ground colouring around Capital Spaceport, and what the catalogue's unread
 surface-attachment records are. Research note for
-[#206](https://github.com/odogono/mercenary/issues/206).
+[#206](https://github.com/odogono/mercenary/issues/206), extended by
+[#173](https://github.com/odogono/mercenary/issues/173) and
+[#281](https://github.com/odogono/mercenary/issues/281).
 
 Authoritative Evidence remains bound to the C64 Reference Build. Observations
 here are Working-Authority Evidence only. This note does not mint Damocles world
@@ -17,8 +19,11 @@ terminator; extending the catalogue decoder when a record family is proven.
 
 **Out of scope:** withdrawing the authored `/damocles` ground plane
 ([#195](https://github.com/odogono/mercenary/issues/195) follow-on);
-the separate native surface/background fill; other-body workspaces;
+other-body workspaces;
 [#207](https://github.com/odogono/mercenary/issues/207) (`structure-01a618`).
+
+Under #281 the native sky/ground fill moved *into* scope, and is answered below
+as rendering-only state rather than geometry.
 
 ## Working Authority and reproduce path
 
@@ -35,6 +40,13 @@ the separate native surface/background fill; other-body workspaces;
 | Projection workspace   | `scenarios/ground-neighbor-workspace.json`; run `observe-ground-neighbor-workspace-20260915T132312Z-b5965f5b`       |
 | Object colour consumer | `scenarios/ground-object-palette.json`; run `observe-ground-object-palette-20260915T135717Z-0f83cadd`               |
 | Zero-slot palette      | `scenarios/ground-structureless-palette.json`; run `observe-ground-structureless-palette-20260915T140156Z-c3c1db95` |
+| Ground-band fill       | `scenarios/ground-band-fill.json`; run `observe-ground-band-fill-20260916T121334Z-97e979b5`                          |
+| Split-colour latch     | `scenarios/ground-band-split-colour.json`; run `observe-ground-band-split-colour-20260916T121718Z-ea775864`          |
+| Split-colour install   | `scenarios/ground-band-split-install.json`; run `observe-ground-band-split-install-20260916T121824Z-77e0f448`        |
+| Split scanline         | `scenarios/ground-band-split-line.json`; run `observe-ground-band-split-line-20260916T122557Z-10da2173` (no write)   |
+| Route-list slots       | `scenarios/ground-route-slots.json`; run `observe-ground-route-slots-20260916T121931Z-d4780775`                      |
+| Route-list allocator   | `scenarios/ground-route-allocator.json`; run `observe-ground-route-allocator-20260916T122219Z-faeaf379` (no write)   |
+| Reconstruction check   | `scripts/ground-extent-check.py`                                                                                    |
 | Pad view               | `scenarios/approach-spaceport-pad.json`                                                                             |
 | Open ground            | `scenarios/walk-toward-building.json` (NAV `07-08` → `07-11`)                                                       |
 
@@ -49,9 +61,13 @@ Reproduce:
 
 ```sh
 research/damocles-st/lab doctor
+# Eris ground records alone. The committed payload also needs the three
+# --workspace snapshots; see docs/research/damocles-catalogue.md.
 PYTHONPATH=research/damocles-st python3 -m damocleslab.catalogue \
   --run research/damocles-st/work/observe-first-world-20260818T101013Z-c5a32b7d \
-  --output payload/damocles/catalogue.json
+  --output /tmp/eris-ground-catalogue.json
+python3 research/damocles-st/scripts/ground-extent-check.py \
+  --run research/damocles-st/work/observe-first-world-20260818T101013Z-c5a32b7d
 ```
 
 Working Disassembly listings stay ignored under `research/damocles-st/work/`.
@@ -71,9 +87,12 @@ Empty cells (133 of 256 in this workspace, including the walk's open ground at
 `$B7`) share one intentional empty record with **no vertices or commands**.
 There is no default cell rectangle in this record path: `$056634` reads the
 reconstructed `$8C32` command stream and returns immediately on its initial
-zero word. The visible green therefore belongs to a separate surface/background
-path; `/damocles` still authors that presentation fill. Direct `$777` faces in
-the cell-`$88` record are the white pad; `$800e` faces are the grey apron.
+zero word. The visible green is not a record at all: it is the viewport block
+fill recoloured below the horizon by a raster split
+([below](#sky-and-ground-band-are-one-fill-and-one-raster-split)), and
+`/damocles` still authors a presentation fill to stand in for it. Direct `$777`
+faces in the cell-`$88` record are the white pad; `$800e` faces are the grey
+apron.
 
 Surface attachments after a structure wall terminator share the ground stream's
 bit-classed command envelope (`$C00E` edges, `$7000` object placements,
@@ -143,7 +162,8 @@ The computed seeds match the live `$5E40` bytes exactly in every capture.
 So `$1E000` holds a 1 KiB seed table, then the `$1E400` word index, then the
 records. Every scene reference in the bank resolves from authored data, with no
 capture of the player standing in that cell. The slots below `$F0` are
-allocated at `$05499E` from a route list and no record names them.
+allocated at `$05499E`; no record names them, and the next section says what
+they are.
 
 Capital Spaceport cell `$87` is the worked example: `$F0` is the centre of the
 cell four grid steps ahead, so the grey apron and the white centre line close
@@ -159,6 +179,99 @@ this scene's +X ground extent", which a capture resolves the same way a live
 `$F4`, and `$F8` with `$FC`, into edges drawn only when the packed byte is
 nonzero, which is why an unused pair reads zero.
 
+### The slots below `$F0` are the visible cells' ground extents
+
+The list at `$05499E` allocates the scene slots below `$F0`. It is not a route
+in the road sense: it is the **deduplicated set of ground-extent corners for
+every cell in view**, and the slots below `$F0` are those corners' projections.
+
+`$054888` chooses the window. It takes a radius `r`, forms the side `2r + 1`,
+and clamps a square of cells centred on the camera cell (`$7A2C`, `$7A34`)
+against the grid dimensions at `$7BB2`/`$7BB4`, aborting to an unbuilt list when
+the square misses the grid entirely. `r` is read at `$054BD4` from a 256-byte
+table at `$00915A` indexed by the camera altitude `$7A30 >> 11`, so **the ground
+extent reaches further the higher you are**; `$054BD6` calls the rebuild only
+when that byte differs from the cached `$7B62`. In the pinned on-foot capture
+`$7B62` is `3`, giving a 7 × 7 window over cells x 4–10, z 5–11 around cell
+`$87` at (7, 8). It was latched from a higher altitude: the table's entry for
+the on-foot altitude index 0 is `0`, and the cache is what keeps the wider
+window standing.
+
+`$05499E` then walks that window row by row, reading each cell's authored
+longword from `$1E000` and passing both of its words to `$054A52`, which appends
+a word to a list based at `$84DC` only if it is nonzero and not already there.
+The own cell's unrotated longword is written to `$84DC` first, so its two words
+are already in the dedup search and are never re-appended.
+
+`$0549D2` turns that list of corner words into slots. It clears a 256-byte map
+at `$8B32`, pre-binds the own cell's four rotated corner bytes to `$F0`–`$FC`,
+then walks the list: each byte that has no slot yet takes the next slot counting
+down in fours from `$F0`, is written to `$5E40 + slot` — the same table the
+`$054A64` projector reads — and the list word is rewritten in place as a **pair
+of slot numbers**. `$7B56` keeps the lowest slot issued and `$7B58` the end of
+the list.
+
+`$054AD2` consumes it. It walks the rewritten list backwards from `$7B58` down
+to `$84E0`, unpacks each word into two slot numbers and calls the two-point edge
+routine `$576C4` on them. The first longword, the own cell's, is skipped there
+and drawn separately by `$054B02`/`$054B18` with the nonzero guards already
+documented. So **every word in the list is one ground-extent edge**, and the
+slots below `$F0` exist only as those edges' endpoints.
+
+A `watch` run confirms the slots are produced by the already-recovered
+projector, not by a second path. Poking a sentinel into the projected X word of
+slot `$E8` (`$10A8`) and walking forward breaks at `$056E40` with **`A0 = $E8`**
+and `A2 = $5E080`, the fixed height from `$79BA`; the supervisor stack names the
+caller `$054AC6`, inside the `$054A64` loop. That is the same instruction, the
+same caller and the same height the `$F0` probe reported — one loop fills the
+whole slot range from `$7B54` up to `$100`.
+
+The pinned capture reads out cleanly. Thirteen slot entries are bound —
+`$F0`–`$FC` plus nine below — `$7B56` is `$CC`, and the seven list words are:
+
+| Word address | Slots | Corner bytes | Grid corners |
+| --- | --- | --- | --- |
+| `$84DC` | `$F0`, `$F4` | `8B`, `87` | (11,8) – (7,8) — own cell, drawn at `$054B02` |
+| `$84DE` | – | `00` | unused own-cell pair |
+| `$84E0` | `$EC`, `$E8` | `14`, `B4` | (4,1) – (4,11) |
+| `$84E2` | `$E4`, `$E0` | `89`, `D9` | (9,8) – (9,13) |
+| `$84E4` | `$DC`, `$D8` | `8A`, `9A` | (10,8) – (10,9) |
+| `$84E6` | `$D4`, `$D8` | `94`, `9A` | (4,9) – (10,9) |
+| `$84E8` | `$D0`, `$CC` | `B3`, `B5` | (3,11) – (5,11) |
+
+Every corner is a cell index pair on the same 65,536-units-per-cell grid the
+catalogue already reports, at the fixed height `$79BA`, so these are
+axis-aligned world-space segments lying in the ground plane.
+
+`$7B62` also explains a pair of negative probes. Watching the allocator's own
+output byte (`$5F28`, slot `$E8`) across 40,000 VBLs of walking never breaks:
+on foot the altitude byte never changes, `$054BD6` never calls `$054888`, and
+the list built on arrival simply stands while `$054A64` re-projects it every
+frame. Captures taken at radius zero show the other end of the same rule —
+`$7B56` is `$F0`, `$7B58` is `$84E0`, and `$84DC` still holds raw corner bytes
+because `$05497E` skipped the list entirely.
+
+### Disposition: already-extracted data, no new geometry
+
+The route list creates **no authored data the catalogue does not already hold**.
+Its whole input is the per-cell `$1E000` corner longwords the extractor already
+decodes, and its whole output is a per-frame, camera-dependent slot numbering
+over them. Which corners get slots, and which numbers, changes with the camera
+cell and the altitude radius; the corners themselves do not. It is therefore
+**rendering-only state**, and the catalogue records it as an exclusion rather
+than a new record family, on the same footing as the `$F0`/`$F4` joins it
+extends.
+
+`scripts/ground-extent-check.py` makes that claim checkable. From a capture's
+RAM alone it re-derives the window from `$7A2C`/`$7A34`/`$7BB2`/`$7BB4`/`$7B62`,
+replays `$05493E`'s rotation, `$05499E`'s dedup walk and `$0549D2`'s slot
+assignment, and compares the result against the live `$84DC` list, `$7B56` and
+the `$5E40` bytes, with invalid-reference checks that every slot named is
+four-byte aligned, within `[$7B56, $FC]`, and carries an on-grid corner. All
+five checks pass on **82 of 82** captured RAM images in the work tree, covering
+first-world, pad, walk, boarded, replay and the new probe runs, and covering the
+built, radius-zero and off-grid states.
+
 ## Hypothesis ledger
 
 | Hypothesis                                                                                | Status                                    | Evidence                                                                                                                                                                                                  |
@@ -171,9 +284,14 @@ nonzero, which is why an unused pair reads zero.
 | Structure slot zero means no scene palette is available                                   | **Refuted**                               | `$054D42` indexes surface entry zero and `$054E10` binds its metadata's palette zero to `$7A0E`; `$04F99E` uses that binding for `$808x` object faces.                                                    |
 | `$F0`/`$F4` name neighboring-cell model vertices                                          | **Refuted**                               | `$04F8F2`/`$04EDD4` consume their valid preprojected coordinates and visibility state; source model-space slots are zero and outside the local projection range.                                          |
 | `$F0`/`$F4` have no representable model-space coordinate                                  | **Refuted**                               | The `$054A64` loop projects them from packed cell indices at `$5E40 + slot`, camera-relative, with Y from `$79BA`. A watch breakpoint at `$056E40` with `A0 = $F0` named the writer and the stack named the caller. |
+| The band below the horizon is drawn by a producer the sky fill does not reach              | **Refuted**                               | A sentinel in the band (`$06A140`) breaks at `$059D34`, inside the same `$059CE2` block fill, returning to `$0595F0`. Sky and band are one colour index; the Timer B handler at `$052280` recolours `$FF8250` at scanline `$7BFC`.                       |
+| The surface record's `sceneColours` are the sky and ground of the outdoor view             | **Refuted for this view**                 | `$7C82`/`$7C84` are installed only at `$059600`, on the `$7B34`-clear branch. The pinned frame has `$7B34 = $C000` and uses `$7C86` (`$001`) and `$7A1A` (`$030`) instead.                                                                              |
+| The `$05499E` route list allocates slots for a road or path network                        | **Refuted**                               | `$054888` clamps a `2r+1` cell square around the camera; `$05499E` dedups those cells' `$1E000` corner words; `$0549D2` assigns slots down from `$F0`; `$054AD2` draws each word as one two-point edge through `$576C4`.                                |
+| The slots below `$F0` need a projector the `$F0`/`$F4` joins do not use                    | **Refuted**                               | A sentinel in slot `$E8`'s projected X (`$10A8`) breaks at `$056E40` with `A0 = $E8`, `A2 = $5E080`, caller `$054AC6` — the same instruction, loop and height the `$F0` probe named.                                                                    |
+| The route list introduces authored data the catalogue has not read                         | **Refuted**                               | Its only input is the per-cell `$1E000` corner longwords the extractor already decodes. `scripts/ground-extent-check.py` reconstructs the live list, lowest slot and `$5E40` bytes from RAM alone on 82 of 82 captures.                                 |
 | Post-terminator attachments also carry pad polygons                                       | **Partially confirmed (family, not pad)** | Ground records continue with `$C00E` / `$7000` after faces. Structure 74's `$4200` door is the documented wall-list attachment. The pad polygons themselves are ordinary colour+ref faces.                |
 
-## The background is a raster fill, not geometry
+## Sky and ground band are one fill and one raster split
 
 A `watch` run breaks on the next write to a screen word inside the uniform sky
 band (`$078BA0`, line 10 of the framebuffer at `$42C00`) while the player walks.
@@ -183,20 +301,83 @@ That routine is a block fill, not a draw: it loads a constant four-plane pattern
 into thirteen registers and unrolls `movem.l d0-d7/a0-a5, -(a6)` thirty-eight
 times over ten copies plus eight more, filling bytes 32 to 21,760 of the
 framebuffer. At 160 bytes a line that is the 136-line viewport, in one colour
-index.
+index. The constant pattern is planes `0/0/0/$FFFF`, so that index is **8**.
 
-The colours come from the surface record. Each record carries **two words after
-its two heights** which the loader resolves through the structure's scene
-palette into `$7C82`/`$7C84` (`$059DA2`) and the frame loop installs into the
-colour table alongside the constants `$654`, `$543` and `$432` (`$059600`).
-Capital Spaceport's pair is `$809A` → `#AAAAAA` and `$808E` → `#4488CC`, and the
-second is the sky blue behind it in the captured display.
+**The band below the horizon is the same fill.** A second `watch` run pokes a
+sentinel into a screen word in the green band left of the runway (line 85 of the
+`$068000` framebuffer, `$06A140`) and breaks on the next write. It stops at
+`$059D34` — one of that routine's own `movem.l` instructions, with `A6` at
+`$06A128` and the constant pattern still in all fourteen registers — and the
+supervisor stack names the return address `$0595F0`, the instruction after the
+`bsr.w $59CE2` at `$0595EC`. Nothing draws the ground band; the viewport is one
+colour index from top to bottom.
 
-The extractor previously skipped those four bytes. It now decodes them onto the
-structure model as `sceneColours`. The background therefore has **no model-space
-geometry to recover**: it is a raster fill whose colours are authored per
-surface record. What remains open is the producer of the ground band below the
-horizon, which this fill does not draw.
+Decoding the pinned framebuffer agrees. Lines 0–67 hold index **8** everywhere
+the stars and the distant tower (indices 9–12) are not drawn, and lines 69–88
+hold index **8** everywhere the pad (index 7) and the index-14 lines are not.
+Sky and ground are the same index and cannot differ by palette alone. Line 68
+is index 14 across all 320 pixels — a full-width line where the one changes to
+the other.
+
+They differ because the palette changes part-way down the frame. The VBL handler
+at `$051D9A` copies sixteen words from the colour record at `$7C14` to
+`$FF8240`, then reads a **seventeenth word**: `$051DC8` latches it into `$7C8A`
+and `$051DCC` loads the scanline at `$7BFC` into MFP Timer B's data register
+`$FFFA21`, enabling the Timer B interrupt at `$FFFA15`/`$FFFA1B`. The Timer B
+handler at `$052280` then does one thing before re-arming for the panel split:
+
+```
+052280 move.w $7c8a.w, $ff8250.l
+```
+
+`$FF8250` is hardware colour **8**. A `watch` on `$7C8A` breaks at `$051DCC`
+with `A0 = $8EF4` (the seventeenth word of the record at `$8ED4`), `A1 =
+$FF8260` (just past the sixteen words it has copied) and `D0` low word `$0030`;
+the disassembly prints the scanline it is about to read inline as `[0044]`.
+
+The pinned capture makes the pair concrete: colour 8 is `$001`, the night sky;
+the seventeenth word is `$030`, the green; `$7C8A` is `$030`; and `$7BFC` is
+`$0044` — **line 68**, exactly the full-width line the framebuffer decode found
+between the two bands. The ground band below the horizon is therefore
+**rendering-only state**: one block fill, recoloured mid-frame by a raster
+split.
+
+### Where the two colours come from
+
+A third `watch` run pokes the seventeenth word of the build record (`$8F16`) and
+breaks at `$0599D4`, the `rts` of a routine reached from `$0595E8`. The writer
+is `$0599D2`, the last of a run of `move.l`/`move.w` at `$0599B8`–`$0599D2` that
+copies **seventeen words** — sixteen colours plus the split colour — from a
+template at `$8EB2` into the record `$7C18` points at. The frame loop refreshes
+the whole record from that template every frame, then overwrites two words:
+
+- `$059638` writes `$7C86` into `$10(a0)`, colour 8 — the sky. `$050562`
+  selects it per frame from `$7946` or `$7948`, the world record's two authored
+  sky colours (`$357` day and `$001` night here), by testing the camera's
+  position against the terminator words at `$42C6C`/`$42C70`.
+- `$05963E` writes `$7A1A` into `$20(a0)`, the seventeenth word — the ground
+  band. Besides the world-record load at `$0592B8`, `$04EB50` is the only writer
+  of `$7A1A` in the bank, and it takes it from `$8(a0)` of a record whose first
+  two words it puts in `$789A` and `$789E`. In the pinned RAM exactly one
+  address carries that triple — `$063272`, holding `$0040`, `$0080`, … ,
+  `$0030` — so the band colour is an authored per-workspace word, not a
+  computed one. Which record family `$063272` belongs to is not established
+  here and is not needed for the disposition.
+
+This refines, and in one respect corrects, the earlier reading of the surface
+record's `sceneColours`. `$7C82`/`$7C84` — the record's two words after its two
+heights, resolved through the scene palette at `$059DA2` — are real authored
+data and the extractor still decodes them. But they are installed only by
+`$059600`, on the branch the frame loop takes when `$7B34` is **clear**. The
+pinned outdoor on-foot frame has `$7B34 = $C000` and takes the `$059622` branch
+instead, so Capital Spaceport's `$809A` → `#AAAAAA` and `$808E` → `#4488CC` are
+*not* the sky and ground of that display; `$001` and `$030` are. The earlier
+note that the second of the pair "is the sky blue behind it in the captured
+display" is withdrawn.
+
+Either way the conclusion about geometry is unchanged and now covers both bands:
+the background has **no model-space geometry to recover** above or below the
+horizon.
 
 ## RAM diff (pad vs open ground)
 
@@ -267,24 +448,30 @@ Representative:
 Kind `ground`, schema version 5, table `$01E400`. Instances
 `eris-ground-{cell}` are plotted on the catalogue map. `/damocles` composes
 those instances into the Eris surface and draws them over an authored fill one
-unit below `y = 0`, which stands in for the separate native surface/background
-fill that has not been geometrically recovered
-([#221](https://github.com/odogono/mercenary/issues/221)). A recovered record
-covers its local polygons plus resolved `$7000` object placements:
-`eris-ground-87` is still bounded by the stored geometry rather than a
-fabricated cell rectangle. The shared `$01E790` record is classified as a
-fully decoded intentional empty, not unresolved geometry. `$F0`/`$F4` joins
-are classified as view-conditioned omissions rather than neighboring-cell
-geometry. The separate native surface/background path remains unresolved.
+unit below `y = 0`, which stands in for the native sky/ground fill
+([#221](https://github.com/odogono/mercenary/issues/221)). That fill is now
+accounted for rather than unresolved: it has no model-space geometry, being one
+block fill at `$059CE2` in colour index 8 with a Timer B raster split at
+`$052280` recolouring it below the horizon, so the catalogue records it as a
+**rendering-only exclusion** and `/damocles` keeps its presentation stand-in.
+A recovered record covers its local polygons plus resolved `$7000` object
+placements: `eris-ground-87` is still bounded by the stored geometry rather than
+a fabricated cell rectangle. The shared `$01E790` record is classified as a
+fully decoded intentional empty, not unresolved geometry. `$F0`/`$F4` joins are
+classified as view-conditioned omissions rather than neighboring-cell geometry,
+and the scene slots below `$F0` are the same joins for the other cells in view:
+a per-frame slot numbering over the `$1E000` corner longwords the extractor
+already reads, excluded for the same reason and checked by
+`scripts/ground-extent-check.py`.
 
 ## Unresolved
 
-- Geometry and draw rule of the separate native **surface/background fill**
-  that supplies the recovered outdoor green; it is not an empty-cell record.
-- The route list at `$05499E` that allocates the scene slots below `$F0`; no
-  ground record names one, so it is unexplored rather than blocking.
-- The producer of the ground band below the horizon. The sky fill and the
-  record's scene colours are settled (below); the band itself is not.
+- The producer of `$7BFC`, the scanline the sky/ground raster split fires on.
+  `lab xref` finds only the read at `$051DCC`, so it is written through a
+  register-indexed address, and it is not rewritten while the player walks: a
+  `watch` over 40,000 VBLs never breaks. Next probe: arm the same watch and
+  provoke a **view change** rather than locomotion — board or leave a vehicle —
+  since on foot the camera pitch, and so the horizon line, never moves.
 - The `$6000` ground vector-text command, which leaves three records partial.
 - Whether `$00ABDC` high-byte paths `$20..$9F` overlay extra `$1E000` data on
   some cells.

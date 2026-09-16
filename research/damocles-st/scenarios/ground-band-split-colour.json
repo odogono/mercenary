@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "name": "ground-band-split-colour",
+  "checkpoint": "title-screen",
+  "description": "From the title screen, enter the first world and let it settle, then poke a sentinel into $7C8A, the colour the MFP Timer B handler at $052280 writes into hardware colour 8 ($FF8250) part-way down the frame, and break on the next write. Names the latch that turns the lower half of the one-colour viewport fill into the ground band below the horizon (#281).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "artifacts": [
+        "display",
+        "registers",
+        "ram"
+      ]
+    },
+    {
+      "type": "watch",
+      "name": "split-colour",
+      "address": "0x7c8a",
+      "seconds": 8
+    }
+  ]
+}

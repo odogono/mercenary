@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "ground-band-fill",
+  "checkpoint": "title-screen",
+  "description": "From the title screen, enter the first world and let it settle, then poke a sentinel into a screen word inside the uniform ground band below the horizon (left edge of line 85 of the $068000 framebuffer) and break on the next write while walking forward. Names the producer of the band the cell ground records do not contain (#281).",
+  "actions": [
+    { "type": "keypress", "key": 57 },
+    { "type": "wait_vbls", "count": 90000 },
+    { "type": "capture", "artifacts": ["display", "registers", "ram"] },
+    {
+      "type": "watch",
+      "name": "ground-band",
+      "address": "0x6a140",
+      "seconds": 8,
+      "provoke": { "direction": "up", "vbls": 4000 }
+    }
+  ]
+}

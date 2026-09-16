@@ -629,6 +629,20 @@ adding **31** workspace-local ground models. `$7A6C` still names first-world
 Birmingham Island; those Gaea place identities are not applied to Dion. See
 [Dion live workspace](damocles-dion-workspace.md).
 
+The sky and the ground band below the horizon are **excluded as rendering-only
+state** rather than left as omitted geometry. `$059CE2` fills the whole 136-line
+viewport in colour index 8, and the MFP Timer B handler at `$052280` rewrites
+hardware colour 8 (`$FF8250`) at scanline `$7BFC`, so one fill reads as sky
+above the horizon and ground below it. The sky colour comes from the world
+record's day/night pair through `$7C86`, the band from the body workspace word
+at `$7A1A`. The scene slots below `$F0` that `$05499E` allocates are excluded on
+the same footing: they are a per-frame slot numbering over the `$1E000` corner
+longwords the extractor already decodes, drawn as two-point ground-extent edges
+at `$054AD2`. `research/damocles-st/scripts/ground-extent-check.py` reconstructs
+the live list, lowest slot and `$5E40` bytes from captured RAM alone and passes
+on every captured RAM image in the work tree. See
+[Eris ground](damocles-eris-ground.md).
+
 The census gives every discovered record a verdict, but `coverage.complete`
 remains **false**. The remaining work is tracked separately:
 
@@ -638,7 +652,7 @@ remains **false**. The remaining work is tracked separately:
 | Unverified scene palette binding for object slot 338 (one record) | [#277](https://github.com/odogono/mercenary/issues/277) |
 | The running EXPLOSIVE-ARMED! `$CD14` countdown, the one remaining live `$CCA0` object-text case | [#279](https://github.com/odogono/mercenary/issues/279) |
 | Packed Pasti STX load paths, provisional bank extents and mission/script-created visual replacements | [#280](https://github.com/odogono/mercenary/issues/280) |
-| Ground-band producer and the `$05499E` route list allocating scene slots below `$F0` | [#281](https://github.com/odogono/mercenary/issues/281) |
+| The scanline `$7BFC` the sky/ground raster split fires on; rendering-only, and not a record the catalogue would carry | [#281](https://github.com/odogono/mercenary/issues/281) |
 | Representative visual fidelity against Working Authority captures | [#174](https://github.com/odogono/mercenary/issues/174) |
 
 Building detail 69's unreachable projected-slot records, authored empty/NULL
