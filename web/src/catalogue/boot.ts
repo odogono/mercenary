@@ -85,6 +85,13 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
       `${keyed.length === 1 ? 'One entrance takes' : `${keyed.length} entrances take`} a key letter from the cell rather than from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base, and $059FA0 forms the label as key index plus base plus $23, so base $1E reads A. ${keyed.map(item => `Slot $${item.slot.toString(16).toUpperCase()} key index ${item.keyIndex}`).join(' · ')}. The constructor reads only bits 8, 9 and 15, so the shape is the same whichever path runs; observed letters are listed under evidence.`
     );
   }
+  const unreferenced = model.variants[0]?.mesh.unreferencedRecords;
+  if (unreferenced?.length) {
+    paragraph(
+      details,
+      `Records ${unreferenced.join(', ')} name shared vertex slots above this record's own list, which $053D32 never fills, so they could only draw whatever the previous model left behind. No box list or group default selects them, so the game never tabulates them and they are kept here as selector ordinals that draw nothing.`
+    );
+  }
   if (model.detailSelection?.length) {
     paragraph(
       details,
@@ -192,7 +199,9 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
             ? ''
             : model.recordClass === 'procedural'
               ? 'No authored polygons: the game draws this record with a native routine. See the recovery details below.'
-              : 'Geometry unresolved. See the recovery details below.')
+              : model.recordClass === 'empty' || model.recordClass === 'null'
+                ? 'Authored empty: this record parses cleanly to its terminator and holds no geometry. See the recovery details below.'
+                : 'Geometry unresolved. See the recovery details below.')
       );
     } catch (error) {
       viewer?.show(null);

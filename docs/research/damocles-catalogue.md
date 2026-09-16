@@ -100,9 +100,9 @@ authored entrance-door attachment where the source puts it, between plan faces
 19 and 20.
 
 Building details are offered the same way: **every authored box list and group
-default is its own inspection form**, 407 forms across the 58 details that
+default is its own inspection form**, 416 forms across the 59 details that
 retain a selector. Free orbit has no player position and no structure scale, so
-naming one list would be a guess; listing them all is not. 60 of the 467
+naming one list would be a guess; listing them all is not. 61 of the 477
 authored lists name no record at all — inside those boxes the game draws none of
 the detail — and those are left out rather than offered as an empty view. Box
 bounds are stated in raw model coordinates, which a placement scales by its
@@ -127,11 +127,23 @@ qualification for each table. Every slot maps to one model identity; repeated
 pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
 
-Current extraction accounts for **832 unique records**: **495 decoded**,
-**328 partial**, and **9 unresolved**. “Decoded” means the supported record was
+Current extraction accounts for **832 unique records**: **503 decoded**,
+**329 partial**, and **0 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.
 Unresolved records remain searchable and retain their source identity and reason.
+
+A record that parses cleanly to its own terminator and holds no geometry by
+construction is authored that way, not a decode failure, so it is **decoded**
+with `recordClass` `empty` or `null` whichever bank it came from. An empty
+ground record already read that way; the equivalent surface, building-detail
+and NULL records read as unresolved, which gave one question three answers. A
+record only keeps that settlement while every clause of its reason stays a
+settled statement, so anything that appends a real gap drops out. The eight
+records this covers are the NULL object, five empty surface records (one of
+them an alias of another, now classed `empty` rather than `alias` since
+`relatedModels` already carries the alias link) and two empty building
+details.
 NULL is explicitly accounted for as an empty record (`object-035cfc`, 36 slots),
 not a fabricated mesh. Alias, empty, NULL, procedural, view-conditioned, articulated, special
 polygon, palette-binding, live-text and attachment omissions are counted separately in
@@ -263,6 +275,16 @@ code. Targeted disassembly used to establish them remains ignored at
   records. Details 6, 7, 8 and 68 decode this way and keep the `articulated`
   omission. Detail 69's faces reference projected slots 56–63 beyond its 55
   vertices, so it stays unresolved with that reason.
+- `$053A1E` gives a building detail 63 shared vertex slots and `$053D32` fills
+  only the ones the record's own vertex list supplies, so a face record naming a
+  higher slot would draw whatever the previous model left behind. Building
+  detail 69 has four such records, 17 to 20, referencing slots 56 to 63 past its
+  55 vertices. Neither visibility group names any of them — the selector lists
+  cover records 0 to 16 and 21 to 45 — so the game never tabulates them into
+  `$C040` and never draws them. They are kept as selector ordinals contributing
+  no primitives, which is what keeps the later selector bytes aligned, and
+  `unreferencedRecords` names them. A record like this is only safe to keep when
+  no list selects it; `check_unreferenced` raises if one does.
 - Object names are the 16 printable bytes preceding the model pointer. Printable
   labels are source-verified names, not verification of gameplay interpretation.
 - Building-detail selection at `$053AA6` uses `$04BD22` → `$026000`. Interior vertex

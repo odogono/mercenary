@@ -435,6 +435,17 @@ def rotate_articulated(data: bytes, vertices: list, tagged: list[int],
     return result
 
 
+# A record that parses cleanly to its own terminator and holds no geometry by
+# construction is authored that way, not a decode failure. These three reasons
+# name the whole of what such a record says; they are matched exactly, so
+# rewording one retires the settlement rather than silently keeping it.
+NULL_MODEL_REASON = 'null model: no geometry'
+EMPTY_SURFACE_REASON = 'Empty surface record: no plan vertices or walls.'
+EMPTY_DETAIL_REASON = (
+    'Empty building-detail record: vertex list terminates immediately.'
+)
+
+
 def tag_record(kind: str, faces: list, lines: list, first_face: int,
                first_line: int, record: int) -> None:
     """Name the source record every primitive of a building detail came from."""
@@ -477,7 +488,7 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
                 reader.p -= 2
                 break
             if command == 0x8000:
-                raise ValueError('null model: no geometry')
+                raise ValueError(NULL_MODEL_REASON)
             if command == 0x8001:
                 axis, mode = reader.take(2)
                 if mode & 0x80:
@@ -589,12 +600,13 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
         raise ValueError('vertex terminator missing')
     if not vertices:
         raise ValueError(
-            'Empty building-detail record: vertex list terminates immediately.'
+            EMPTY_DETAIL_REASON
             if kind == 'interior'
             else 'model has no vertices'
         )
     body_vertex_count = len(vertices)
     faces, lines = [], []
+    unreferenced: list[int] = []
 
     def read_primitives(vertices: list, faces: list, lines: list) -> None:
         nonlocal label_anchor, record_count
@@ -645,12 +657,24 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
                 else:
                     raise ValueError('polygon terminator missing')
                 line = False
-            if any(ref == 0 or ref % 4 or ref // 4 > body_vertex_count for ref in refs):
-                raise ValueError(
-                    f'invalid vertex reference at ${address:06x}: slot {max(refs) // 4} beyond '
-                    f'{body_vertex_count} vertices'
-                    + (' of an articulated detail' if articulation is not None else '')
-                )
+            if any(ref == 0 or ref % 4 for ref in refs):
+                raise ValueError(f'misaligned vertex reference at ${address:06x}')
+            if any(ref // 4 > body_vertex_count for ref in refs):
+                # $053A1E gives every record 63 shared vertex slots, and
+                # $053D32 only fills the ones this record's own list supplies.
+                # A record naming a higher slot would draw whatever the last
+                # model left there. Only a building detail can prove such a
+                # record is unreachable, because only its selector lists say
+                # which records the game ever tabulates; check_unreferenced
+                # raises this reason if one of them names it after all.
+                if kind != 'interior':
+                    raise ValueError(
+                        f'invalid vertex reference at ${address:06x}: slot '
+                        f'{max(refs) // 4} beyond {body_vertex_count} vertices'
+                    )
+                unreferenced.append(record)
+                tag_record(kind, faces, lines, first_face, first_line, record)
+                continue
             if len(refs) < (2 if line else 3):
                 raise ValueError('degenerate polygon record')
             primitive = {'vertices': [ref // 4 - 1 for ref in refs],
@@ -708,6 +732,7 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
     return {'vertices': vertices, 'faces': faces, 'lines': lines,
             'sourceStart': start, 'sourceEnd': reader.p, 'geometryStart': geometry_start,
             **({'recordCount': record_count} if kind == 'interior' else {}),
+            **({'unreferencedRecords': unreferenced} if unreferenced else {}),
             **({'displayCode': display_code, 'labelAnchor': label_anchor}
                if label_anchor is not None else {}),
             **({'alternates': alternates} if alternates else {}),
@@ -889,7 +914,7 @@ def decode_structure(data: bytes, start: int, palette: list[int] | None = None,
     if not faces:
         if any('Surface primitive type' in gap for gap in gaps):
             raise ValueError('no supported surface faces')
-        gaps.append('Empty surface record: no plan vertices or walls.')
+        gaps.append(EMPTY_SURFACE_REASON)
         return (
             {'vertices': vertices, 'faces': faces, 'lines': [],
              'sourceStart': start, 'sourceEnd': reader.p,
@@ -1401,6 +1426,28 @@ def skip_other_post_plan(reader: Reader) -> None:
     raise ValueError('other post-plan record terminator missing')
 
 
+def check_unreferenced(mesh: dict, groups: list) -> None:
+    """Reject a record that names a shared vertex slot its own list never fills.
+
+    Such a record can only be kept as a selector ordinal, never drawn, so a
+    visibility list that names one would put undefined geometry on screen.
+    """
+    unreferenced = set(mesh.get('unreferencedRecords') or ())
+    if not unreferenced:
+        return
+    named = set()
+    for group in groups:
+        named.update(group['default'])
+        for box in group['boxes']:
+            named.update(box['records'])
+    overlap = sorted(unreferenced & named)
+    if overlap:
+        raise ValueError(
+            f'record {overlap[0]} names a vertex slot beyond this list and a '
+            'visibility group selects it'
+        )
+
+
 def decode_detail_selection(data: bytes, start: int, count: int) -> list:
     # Record streams are byte-sized; the bound-group reader starts on the next word.
     reader = Reader(data, (start + 1) & ~1)
@@ -1852,8 +1899,6 @@ def classify_record(model: dict, is_alias: bool) -> None:
         model['recordClass'] = 'null'
     elif reason.startswith('procedural:'):
         model['recordClass'] = 'procedural'
-    elif is_alias:
-        model['recordClass'] = 'alias'
     elif any(
         token in reason
         for token in (
@@ -1864,7 +1909,12 @@ def classify_record(model: dict, is_alias: bool) -> None:
             'model has no drawable primitives',
         )
     ):
+        # An alias of an empty record is an empty record; relatedModels still
+        # carries the alias link, and only 'empty' says the record holds
+        # nothing by construction.
         model['recordClass'] = 'empty'
+    elif is_alias:
+        model['recordClass'] = 'alias'
     else:
         model['recordClass'] = 'geometry'
     tags = []
@@ -1872,6 +1922,25 @@ def classify_record(model: dict, is_alias: bool) -> None:
         if token in reason and tag not in tags:
             tags.append(tag)
     model['omissions'] = tags
+
+
+def settle_intentional_empties(models: list) -> None:
+    """Give an authored empty the same verdict whatever bank it came from.
+
+    An empty ground record was already decoded; the equivalent surface,
+    building-detail and NULL records were unresolved or partial, which read as
+    three answers to one question. A record keeps the marker only while every
+    clause of its reason stays a settled statement, so anything that appends a
+    real gap drops out of this pass on its own.
+    """
+    for model in models:
+        if not model.pop('intentionalEmpty', False):
+            continue
+        if model['variants'] or model['omissions']:
+            continue
+        if model['recordClass'] not in ('empty', 'null', 'alias'):
+            continue
+        model['status'] = 'decoded'
 
 
 def coverage_ledger(models: list, tables: list, notes: list[str], disk_load: list | None = None) -> dict:
@@ -2249,6 +2318,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                         model['reason'] = ' '.join(gaps)
                     else:
                         model['reason'] = ' '.join(gaps)
+                        if gaps == [EMPTY_SURFACE_REASON]:
+                            model['intentionalEmpty'] = True
                     if model.get('structureSelection', {}).get('liveSelector'):
                         model['reason'] = (model['reason'] + ' ' + KEY_ATTACHMENT_NOTE).strip()
                     model['interiorSlot'] = interior
@@ -2280,9 +2351,11 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 mesh = decode_mesh(data, address, kind, palette_at(data, 0), hardware)
                 if kind == 'interior':
                     try:
-                        model['detailSelection'] = decode_detail_selection(
+                        groups = decode_detail_selection(
                             data, mesh['sourceEnd'], mesh['recordCount']
                         )
+                        check_unreferenced(mesh, groups)
+                        model['detailSelection'] = groups
                     except (ValueError, struct.error) as error:
                         model['selectionReason'] = str(error)
                 model['variants'] = [{
@@ -2296,6 +2369,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                     model['reason'] += ' Articulated part shown at its rest angle. $053D74 rotates a detail after the structure X and Z scales are applied, so sampling the $7888 angle here would need the scaled frame this model is not held in.'
             except (ValueError, struct.error) as error:
                 model['reason'] = str(error)
+                if model['reason'] in (EMPTY_DETAIL_REASON, NULL_MODEL_REASON):
+                    model['intentionalEmpty'] = True
                 if str(error).startswith('procedural:'):
                     model['status'] = 'decoded'
         tables.append({'kind': kind, 'address': base, 'entryCount': count, 'entries': entries,
@@ -2836,6 +2911,23 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 model['reason'] = (
                     'Shape and structure-bound colours decoded. ' + selection_note(model)
                 )
+            unreferenced = variants[0]['mesh'].get('unreferencedRecords')
+            if unreferenced:
+                names = ', '.join(str(index) for index in unreferenced)
+                model['reason'] += (
+                    f' Records {names} name shared vertex slots above this list, which'
+                    ' $053D32 never fills, so they could only draw whatever the previous'
+                    ' model left behind. No box list or group default selects them, so'
+                    ' they are kept as selector ordinals and drawn by nothing.'
+                )
+                model['evidence'].append({
+                    'claim': (
+                        f'Records {names} reference slots beyond the record\'s own vertex '
+                        'list and no visibility list in either group names them.'
+                    ),
+                    'confidence': 'verified',
+                    'source': 'docs/research/damocles-catalogue.md',
+                })
             if articulated:
                 model['reason'] += ' Articulated part shown at its rest angle. $053D74 rotates a detail after the structure X and Z scales are applied, so sampling the $7888 angle here would need the scaled frame this model is not held in.'
     for identity, (slot, palette_index, scale) in structure_bindings.items():
@@ -2848,10 +2940,12 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         if variant is None:
             if model['status'] == 'decoded':
                 model['status'] = 'partial'
-            if detail['reason'].startswith('Empty building-detail record'):
-                suffix = 'Linked building detail is an empty vertex list.'
+            if detail.get('intentionalEmpty'):
+                suffix = ('The linked building detail is itself an intentionally empty'
+                          ' record, so there is no detail geometry to place.')
             else:
                 suffix = 'Linked building detail geometry is unresolved.'
+                model.pop('intentionalEmpty', None)
             model['reason'] = (model['reason'] + ' ' + suffix).strip()
             if identity == 'structure-01a618':
                 model['evidence'] = [{
@@ -2945,11 +3039,19 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         variant_id = f'palette-{palette_index}'
         if detail is None or 'detailSelection' not in detail or not any(v['id'] == variant_id for v in detail['variants']):
             del model['structureSelection']
-            model['status'] = 'partial' if model['variants'] else 'unresolved'
-            model['reason'] += (
-                ' Linked detail selection unavailable, so view-conditioned'
-                ' visibility is not simulated for this record.'
-            )
+            if detail is not None and detail.get('intentionalEmpty'):
+                model['reason'] += (
+                    ' That empty detail carries no visibility groups either, so this'
+                    ' record keeps no structure selector and its region queues are'
+                    ' not retained.'
+                )
+            else:
+                model.pop('intentionalEmpty', None)
+                model['status'] = 'partial' if model['variants'] else 'unresolved'
+                model['reason'] += (
+                    ' Linked detail selection unavailable, so view-conditioned'
+                    ' visibility is not simulated for this record.'
+                )
         else:
             selection['detailModel'] = detail['id']
             selection['detailVariant'] = variant_id
@@ -3028,6 +3130,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 'confidence': 'verified',
                 'source': 'docs/research/damocles-catalogue.md',
             })
+    settle_intentional_empties(models)
     coverage_notes = [
         'Resident first-world census after examining title-screen, first-world and interior-window RAM; not a claim that every packed disk file has been walked.',
         'Scene palette binding for unplaced objects 333-338, and named places outside the captured Eris workspace, authored Gaea Birmingham Island map, live Gaea UR City overlay, and live Dion overlay remain incomplete.',

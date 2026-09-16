@@ -167,8 +167,8 @@ test('every retained structure selector offers its regions', async () => {
         data.models.find(m => m.id === model.structureSelection?.detailModel)
       ).length > 0
   );
-  expect(withSelector).toHaveLength(254);
-  expect(offered).toHaveLength(254);
+  expect(withSelector).toHaveLength(256);
+  expect(offered).toHaveLength(256);
 });
 
 test('the spaceport region 1 form reproduces the reviewed interior order', async () => {
