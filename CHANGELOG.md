@@ -34,8 +34,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   placing surface assemblies offers the same angles on its combined form. No
   record is left carrying the `articulated` omission (#278).
 
+- `research/damocles-st/scripts/stx-inventory.py` inventories the Working
+  Authority Pasti STX by structure and reconciles it against captured RAM. The
+  image holds 164 track records: cylinders 0-79 formatted on both sides, only
+  cylinder 0 side 0 readable as ten standard sectors behind an executable boot
+  sector, cylinder 1 side 0 the copy-protection track (512 fuzzy-mask bytes, an
+  unstable CRC-failing sector and a bogus id with no data record), and 158 raw
+  track images the game reads with its own loader. No resident table or bank
+  appears verbatim in that payload, so it is packed and the protected sectors
+  are not a second, directly readable model bank (#280).
+- `docs/research/damocles-disk-loads-and-bank-extents.md` records the disk-load,
+  bank-extent and visual-replacement inventory, with its residuals (#280).
+
 ### Fixed
 
+- The Damocles Catalogue presented object slots 248-255 as fixed model
+  identities. They are a world binding: `$055026` consumes the world's
+  resident-object stream and at `$05503C` copies one pointer-table entry onto
+  the entry's own slot, filling downwards from `$3FC`. Across ten pinned
+  captures slots 250-255 land on a different model between Eris, Vesta and
+  Gaea, so those records now carry the qualification and name the worlds that
+  bind them elsewhere. The extractor raises if a capture repoints a slot below
+  the block or at an address the table does not already hold (#280).
 - Articulation about the zero axis turned the wrong way. `$053806` and `$053DB2`
   read Z before X; the catalogue read X before Z, which reversed the turn and
   its truncation for five of the six articulated objects as well as for details
@@ -50,6 +70,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   running countdown is live mission state and stays a named omission (#279).
 - Damocles catalogue schema 10: a mesh's `articulation` record names the `scale`
   frame and `sampledAngle` of the form it belongs to (#278).
+- The three Damocles pointer-bank extents are no longer provisional. Each entry
+  count is bounded above by the first record's own preamble and below by every
+  entry decoding, and each bank is bounded by hundreds of zero bytes and an
+  independently recognised follower; the extractor measures all of it and raises
+  if a bank reaches its follower. Ten pinned captures agree byte for byte on the
+  surface, building-detail, ground and glyph banks, and all 212 unique object
+  records decode identically in every captured world (#280).
+- The `$DF` attachment branch is accounted for rather than unexamined. `$059F64`
+  reads the nine-record `$6364` table and substitutes character `$DF` for an
+  entrance label glyph, while `$04ED4A` replays the same table over the rebuilt
+  `$ABDC` cell workspace to replace or clear an already-resident surface
+  assembly; neither introduces a record. The table is empty in every pinned
+  capture, which is now stated as the bound it is (#280).
+- Damocles catalogue schema 11: `tables[].extent` carries each bank's measured
+  bounds and `models[].worldConditionedSlots` names the slots a world binds
+  (#280).
 
 ## [0.19.9] - 2026-09-15
 

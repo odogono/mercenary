@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "name": "object-slot-250-writer",
+  "checkpoint": "title-screen",
+  "description": "From the title screen, press Space and immediately poke a sentinel into the low word of object pointer-table slot 250 ($035AEA), then break on the next write while the title-to-world unpack runs. Slot 250-255 are the only object-table entries that differ between the pinned first-world capture and the live Vesta/Gaea/Dion workspaces, so this names the code that fills them (#280).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 100
+    },
+    {
+      "type": "capture",
+      "artifacts": [
+        "registers",
+        "ram"
+      ],
+      "prefix": "presentinel"
+    },
+    {
+      "type": "watch",
+      "name": "object-slot-250",
+      "address": "0x35aea",
+      "seconds": 30
+    }
+  ]
+}

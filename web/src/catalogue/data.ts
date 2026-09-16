@@ -70,6 +70,8 @@ export interface Model {
     readonly view?: StructureView;
     readonly walkMesh?: Mesh;
   }[];
+  /** Slots a world binds at load time; this record's claim on them is one capture's. */
+  readonly worldConditionedSlots?: readonly number[];
 }
 export type Bounds = readonly (readonly [number, number])[];
 export interface DetailGroup {
@@ -158,6 +160,18 @@ export interface Place {
   readonly instances: readonly string[];
   readonly name: string;
 }
+export interface BankExtent {
+  readonly bankEnd: number;
+  readonly entryCount: number;
+  readonly firstRecord: number;
+  readonly followedAt: number;
+  readonly followedBy: string;
+  readonly lastRecord: number;
+  readonly preambleBytes: number;
+  readonly tableEnd: number;
+  readonly tableStart: number;
+  readonly zeroFillBytes: number;
+}
 export interface CoverageTable {
   readonly address: number;
   readonly aliases: number;
@@ -193,7 +207,7 @@ export interface Catalogue {
   readonly instances: readonly Instance[];
   readonly models: readonly Model[];
   readonly places: readonly Place[];
-  readonly schemaVersion: 10;
+  readonly schemaVersion: 11;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -205,6 +219,8 @@ export interface Catalogue {
     readonly address: number;
     readonly entries: readonly string[];
     readonly entryCount: number;
+    /** Measured bank bounds; absent for the ground workspace index. */
+    readonly extent?: BankExtent;
     readonly extentEvidence: string;
     readonly kind: Kind;
   }[];
@@ -272,6 +288,37 @@ const reference = (ids: ReadonlySet<string>, id: string, kind: string) => {
   if (!ids.has(id)) {
     fail(`missing ${kind} ${id}`);
   }
+};
+
+const bankExtent = (value: unknown): BankExtent => {
+  const record = object(value);
+  const extent = {
+    bankEnd: integer(record['bankEnd']),
+    entryCount: integer(record['entryCount']),
+    firstRecord: integer(record['firstRecord']),
+    followedAt: integer(record['followedAt']),
+    followedBy: string(record['followedBy']),
+    lastRecord: integer(record['lastRecord']),
+    preambleBytes: integer(record['preambleBytes']),
+    tableEnd: integer(record['tableEnd']),
+    tableStart: integer(record['tableStart']),
+    zeroFillBytes: integer(record['zeroFillBytes'])
+  };
+  // The bound only means something while the table stops short of its first
+  // record and the bank stops short of the item that follows it.
+  if (extent.tableEnd !== extent.tableStart + extent.entryCount * 4) {
+    fail('table extent disagrees with its entry count');
+  }
+  if (extent.tableEnd > extent.firstRecord) {
+    fail('table extent overruns its first record');
+  }
+  if (
+    extent.lastRecord >= extent.bankEnd ||
+    extent.bankEnd >= extent.followedAt
+  ) {
+    fail('bank extent overruns what follows it');
+  }
+  return extent;
 };
 
 const mesh = (value: unknown, allowEmpty = false): Mesh => {
@@ -579,7 +626,7 @@ const structureSelection = (value: unknown): StructureSelection => {
 
 export const parseCatalogue = (value: unknown): Catalogue => {
   const r = object(value);
-  if (r['schemaVersion'] !== 10) {
+  if (r['schemaVersion'] !== 11) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -682,6 +729,11 @@ export const parseCatalogue = (value: unknown): Catalogue => {
       relatedModels: strings(m['relatedModels']),
       slots: list(m['slots']).map(integer),
       sourceAddress: integer(m['sourceAddress']),
+      ...(m['worldConditionedSlots'] === undefined
+        ? {}
+        : {
+            worldConditionedSlots: list(m['worldConditionedSlots']).map(integer)
+          }),
       status,
       variants,
       ...(m['structureSelection'] === undefined
@@ -875,7 +927,8 @@ export const parseCatalogue = (value: unknown): Catalogue => {
       entries,
       entryCount,
       extentEvidence: string(t['extentEvidence']),
-      kind
+      kind,
+      ...(t['extent'] === undefined ? {} : { extent: bankExtent(t['extent']) })
     };
   });
   if (new Set(tables.map(table => table.kind)).size !== tables.length) {
@@ -977,7 +1030,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     instances,
     models,
     places,
-    schemaVersion: 10,
+    schemaVersion: 11,
     source,
     tables
   };

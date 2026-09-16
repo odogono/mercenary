@@ -1972,6 +1972,114 @@ RECORD_OMISSIONS = (
     ('thirdHeight', 'additional height/shape decoding'),
 )
 
+# The object pointer table is not wholly resident. $055026 consumes the world's
+# resident-object stream: for each entry it writes the signed 16.16 X/Y/Z arrays
+# at $63A8/$67A8/$6BA8 and then, at $05503C, copies one table entry onto the
+# entry's own slot (`move.l (a2,d0.w),(a2,d1.w)` with a2 from $04BD10), filling
+# slots downwards from $3FC. So a world binds a model to a slot; it never writes
+# a record. Across the ten pinned captures slots 248-255 are the block this
+# stream rewrites, and only 250-255 land on a different model. A capture that
+# repointed a slot below the block, or at an address the table does not already
+# hold, would be a load this census has not examined, so it raises.
+WORLD_CONDITIONED_OBJECT_SLOTS = tuple(range(248, 256))
+
+
+def object_slot_bindings(data: bytes, workspace: bytes, count: int = 378) -> list[dict]:
+    """Report the object slots a live world capture repoints, and check the window.
+
+    Raises when a capture repoints a slot outside the evidenced window, or points
+    one at an address the resident table does not already hold: either would be a
+    model the first-world census has not examined.
+    """
+    resident = {base: u32(data, 0x35700 + base * 4) for base in range(count)}
+    known = set(resident.values())
+    bindings = []
+    for slot in range(count):
+        live = u32(workspace, 0x35700 + slot * 4)
+        if live == resident[slot]:
+            continue
+        if slot not in WORLD_CONDITIONED_OBJECT_SLOTS:
+            raise ValueError(
+                f'live workspace repoints object slot {slot}, outside the '
+                f'world-conditioned window {WORLD_CONDITIONED_OBJECT_SLOTS[0]}'
+                f'-{WORLD_CONDITIONED_OBJECT_SLOTS[-1]}'
+            )
+        if live not in known:
+            raise ValueError(
+                f'live workspace points object slot {slot} at ${0x35700 + live:06X}, '
+                'which the resident table does not name'
+            )
+        bindings.append({
+            'slot': slot,
+            'residentModel': f'object-{0x35700 + resident[slot]:06x}',
+            'liveModel': f'object-{0x35700 + live:06x}',
+        })
+    return bindings
+
+
+# A bank is bounded above by the next resident item the capture recognises
+# independently of this decode. Everything between the bank's last record byte
+# and that item must be zero, which the extractor checks rather than assumes.
+BANK_FOLLOWERS = {
+    'object': (0x042C00, 'the live projection workspace at $042C00'),
+    'structure': (0x01E000, 'the $01E000 ground workspace seed table'),
+    'interior': (0x031700, 'the $031700 glyph source table'),
+}
+
+# Bytes between the last table entry and the first record, and what they are.
+BANK_PREAMBLE = {
+    'object': "a zero longword and the first record's 16-byte name field",
+    'structure': "the first record's eight metadata bytes",
+    'interior': "the first record's $8000 vertex-terminator preamble",
+}
+
+
+def bank_extent(data: bytes, kind: str, base: int, count: int,
+                addresses: list[int], ends: list[int]) -> dict:
+    """Bound one resident bank from the capture, and prove the bound."""
+    table_end = base + count * 4
+    first, last = min(addresses), max(addresses)
+    follows_at, follows = BANK_FOLLOWERS[kind]
+    if not table_end <= first:
+        raise ValueError(f'{kind} table overruns its first record')
+    cursor = follows_at
+    while cursor > last and data[cursor - 1] == 0:
+        cursor -= 1
+    bank_end = max(max(ends, default=last), cursor)
+    # The upper bound only holds while the bank stops short of its follower. A
+    # capture whose records reached it would have outgrown this evidence.
+    if bank_end >= follows_at:
+        raise ValueError(f'{kind} bank runs into {follows}')
+    return {
+        'tableStart': base,
+        'tableEnd': table_end,
+        'entryCount': count,
+        'preambleBytes': first - table_end,
+        'firstRecord': first,
+        'lastRecord': last,
+        'bankEnd': bank_end,
+        'zeroFillBytes': follows_at - bank_end,
+        'followedBy': follows,
+        'followedAt': follows_at,
+    }
+
+
+def bank_extent_evidence(kind: str, extent: dict) -> str:
+    """Prose for one bank extent, generated from the measured bounds."""
+    return (
+        f"Relative-pointer table ${extent['tableStart']:06X}-"
+        f"${extent['tableEnd'] - 1:06X}, {extent['entryCount']} entries. "
+        f"The {extent['preambleBytes']} bytes that follow are "
+        f"{BANK_PREAMBLE[kind]}, so a further entry would overlap authored record "
+        f"data: the entry count is bounded above, not assumed. Records run "
+        f"${extent['firstRecord']:06X}-${extent['bankEnd'] - 1:06X} "
+        f"(highest table target ${extent['lastRecord']:06X}), then "
+        f"{extent['zeroFillBytes']} zero bytes up to {extent['followedBy']}. "
+        "The bank is bounded in this capture; it is not a census of every packed "
+        "disk file."
+    )
+
+
 def pasti_stx_header(data: bytes) -> dict:
     """File-level Pasti header only; track payload stays packed."""
     if len(data) < 6 or data[:4] != b'RSY\x00':
@@ -2024,17 +2132,97 @@ DISK_LOAD_EXAMINED = [
             '$04BD22=$026000). Track payload remains packed.'
         ),
     },
+    {
+        'path': 'Pasti STX track inventory',
+        'finding': (
+            '164 track records: cylinders 0-79 formatted on both sides, cylinders 80-81 '
+            'unformatted and empty. Only two tracks carry sector descriptors. Cylinder 0 '
+            'side 0 holds ten standard 512-byte sectors and an executable boot sector '
+            '(checksum $1234). Cylinder 1 side 0 is the copy-protection track: 512 '
+            'fuzzy-mask bytes, sector 1 unstable and failing its data CRC, and a bogus id '
+            'naming cylinder 6 head 48 with no data record. The other 158 formatted tracks '
+            'carry raw track images and no sector descriptors, so the game reads them with '
+            'its own loader: 1017812 bytes of track image against 10240 bytes of '
+            'standard-format sector data. No resident pointer table, record bank, glyph '
+            'table or body-label table appears verbatim anywhere in the payload, so the '
+            'payload is packed and the protected sectors are not a second, directly '
+            'readable model bank. Reproduced by '
+            'research/damocles-st/scripts/stx-inventory.py.'
+        ),
+    },
+    {
+        'path': 'ten-capture bank comparison',
+        'finding': (
+            'Two independent first-world loads and eight live memstates (Eris on foot and '
+            'boarded, the Spaceport interior, Vesta, Gaea UR City and Dion) agree byte for '
+            'byte on the surface-assembly table and bank, the building-detail table and '
+            'bank, the ground record bank $01E790-$023FFF and the $031700 glyph table. All '
+            '212 unique object records decode identically in every captured world and no '
+            'world introduces a record address the first-world table does not already name. '
+            'Three byte pairs inside the object bank do differ: $03E415 is the $8003 '
+            'unconditional patch site the three beacons share, and $03AEED and $03B302 lie '
+            'outside every decoded record stream, so none of them reaches the census.'
+        ),
+    },
+    {
+        'path': 'world resident-object stream',
+        'finding': (
+            'The object pointer table is not wholly resident. $055026 consumes the world\'s '
+            'resident-object stream, writing the signed 16.16 X/Y/Z arrays at '
+            '$63A8/$67A8/$6BA8 and then copying one table entry onto the entry\'s own slot '
+            'at $05503C, filling slots downwards from $3FC. Slots 248-255 are the block the '
+            'stream rewrites across the pinned captures; slots 250-255 land on a different '
+            'model between Eris, Vesta and Gaea. Every copied value is another entry of the '
+            'same table, so a world binds an existing model to a slot and never introduces '
+            'a record. Slot 247 and below are identical in all ten captures.'
+        ),
+    },
+    {
+        'path': '$6364 mission table and the $DF branch',
+        'finding': (
+            'Exactly three instructions in the 1 MiB image name $6364. $04CC48 appends a '
+            'six-byte record to a nine-entry table starting at $636A. $04ED4A replays it '
+            'after $04EC94 has rebuilt the $ABDC cell workspace from the authored map: for '
+            'each record whose first byte matches the world index $794E it writes the '
+            'record\'s non-negative word into $ABDC + cell*4, replacing or clearing the '
+            'surface assembly that cell places. $059F64 reads the same table on the '
+            'negative-word records and substitutes character $DF for the entrance label '
+            'glyph the cell-derived $7AFB base would otherwise give; its cell comparison at '
+            '$059F7A is dead, because the $059F7E tst.w overwrites the flags before any '
+            'branch reads them. So the table changes '
+            'which already-resident structure a cell places, or one door label character; '
+            'neither path introduces a record or repoints a pointer bank. The table is all '
+            'zero in every one of the ten pinned captures, so no capture exercises either '
+            'branch.'
+        ),
+    },
+    {
+        'path': 'script bank',
+        'finding': (
+            'The decoded script ISA reaches 497 ops from all 64 entry slots with nothing '
+            'undecodable and no reachable inline-native escape. Its only stores are to the '
+            'interpreter\'s own state ($7482 records, the $7A42 word table, $6FAA bit '
+            'records, flag word $7BD8, counter $7BD2, key $7B61, PC $7820) and, through '
+            '$19, to the script bank at $070000 + operand. No opcode and none of the four '
+            'native routines the handlers reach can write a pointer table, a record bank or '
+            '$6364. See docs/research/damocles-script-isa.md.'
+        ),
+    },
 ]
 
 UNEXPLORED_COVERAGE = [
-    'Packed Pasti STX disk track payload and provisional resident bank extents remain unreconciled; '
-    'fuzzy/copy-protected sectors are not a second pointer bank. Follow-up: '
+    'The 158 custom-format Pasti STX tracks the game reads with its own loader stay packed: the '
+    'inventory establishes what is on the disk and that no resident bank is a verbatim copy of it, '
+    'not what each track decodes to. Only the loaded image is catalogued, so a bank reachable by a '
+    'load no pinned capture performs would not appear here. Follow-up: '
     'https://github.com/odogono/mercenary/issues/280.',
     'Live $ABDC workspaces other than Eris first-world, Vesta Politburo City, Gaea UR City, and Dion; '
     'Gaea islands other than authored Birmingham and live UR City, with remaining places and residences. '
     'Follow-up: https://github.com/odogono/mercenary/issues/172.',
-    'Mission-disk or script-created visual changes that would replace a resident slot, including the '
-    '$DF attachment branch whose $6364 table is empty in the pinned captures. Follow-up: '
+    'The $6364 mission table is all zero in every pinned capture, so neither the $ABDC cell '
+    'replacement at $04ED4A nor the $DF entrance-label substitution at $059F64 is exercised by an '
+    'observed state: both are read from the code and bounded by it, not watched running. A capture '
+    'that populates the table would confirm the replacement and the $DF glyph directly. Follow-up: '
     'https://github.com/odogono/mercenary/issues/280.',
     'The running EXPLOSIVE-ARMED! countdown: its $CD14 readout is live mission state, so only the '
     'disarmed reading every pinned capture holds is drawn. The indirect text pointer and font 4 are '
@@ -2570,8 +2758,16 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                     model['intentionalEmpty'] = True
                 if str(error).startswith('procedural:'):
                     model['status'] = 'decoded'
+        bank_models = [by_address[identity] for identity in dict.fromkeys(entries)]
+        extent = bank_extent(
+            data, kind, base, count,
+            [model['sourceAddress'] for model in bank_models],
+            [variant['mesh']['sourceEnd'] for model in bank_models
+             for variant in model['variants'] if 'sourceEnd' in variant.get('mesh', {})],
+        )
         tables.append({'kind': kind, 'address': base, 'entryCount': count, 'entries': entries,
-                       'extentEvidence': 'Contiguous relative-pointer table up to the following data record; extent is provisional.'})
+                       'extent': extent,
+                       'extentEvidence': bank_extent_evidence(kind, extent)})
     for alias, target in structure_aliases:
         by_address[target]['relatedModels'].append(alias)
     ground_entries = []
@@ -2852,12 +3048,18 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         if place:
             next(p for p in places if p['id'] == place[0])['instances'].append(identity)
     workspace_notes = []
+    slot_bindings: list[dict] = []
     if workspaces:
         for workspace in workspaces:
-            workspace_notes.append(attach_live_workspace(
+            note = attach_live_workspace(
                 workspace, data, models, tables, instances, places, by_address, bodies,
                 hardware, template_palettes,
-            ))
+            )
+            workspace_notes.append(note)
+            slot_bindings.append({
+                'world': note.split(' live $ABDC', 1)[0],
+                'bindings': object_slot_bindings(data, workspace),
+            })
     chevy_key = instance_by_id.get('object-slot-180')
     chevy_parent_model = by_address.get('structure-01d188')
     chevy_map_record = data[0x251d7:0x251dd]
@@ -3454,6 +3656,35 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 'confidence': 'verified',
                 'source': 'docs/research/damocles-catalogue.md',
             })
+    # The pinned first-world capture is one world's binding of the repointed
+    # slots, not a resident fact, so every model the window reaches says so.
+    rebound: dict[int, list[tuple[str, str]]] = {}
+    for entry in slot_bindings:
+        for binding in entry['bindings']:
+            rebound.setdefault(binding['slot'], []).append(
+                (entry['world'], binding['liveModel'])
+            )
+    for model in models:
+        if model['kind'] != 'object':
+            continue
+        window = [slot for slot in model['slots'] if slot in WORLD_CONDITIONED_OBJECT_SLOTS]
+        if not window or model.get('intentionalEmpty'):
+            continue
+        model['worldConditionedSlots'] = window
+        elsewhere = sorted({
+            f'{world} holds it as {identity}'
+            for slot in window for world, identity in rebound.get(slot, [])
+        })
+        plural = 's' if len(window) > 1 else ''
+        model['reason'] = (model['reason'] + ' ' + (
+            f"Resident slot{plural} "
+            + ', '.join(str(slot) for slot in window)
+            + f" differ{'' if plural else 's'} between captured worlds, so this "
+            'binding is the pinned first-world capture\'s rather than a resident '
+            'fact'
+            + ('; ' + '; '.join(elsewhere) + '.' if elsewhere
+               else '; no other captured world binds it yet.')
+        )).strip()
     settle_intentional_empties(models)
     coverage_notes = [
         'Resident first-world census after examining title-screen, first-world and interior-window RAM; not a claim that every packed disk file has been walked.',
@@ -3461,7 +3692,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         'View-conditioned face groups, $8003/$8006/$8009 header states and object $6000 vector text are decoded as separate forms; the in-game selector for each form is named in the model conditions, not simulated.',
         'Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; surface slot zero supplies palette zero for structureless cells, empty records are intentional and add no geometry at $056634, and $F0/$F4 joins remain view-conditioned.',
         'The sky and the ground band below the horizon are excluded as rendering-only state, not omitted geometry: $059CE2 fills the whole viewport in colour index 8 and the MFP Timer B handler at $052280 rewrites $FF8250 at scanline $7BFC, taking the sky from $7C86 and the band from the body workspace word at $7A1A. The scene slots below $F0 that $05499E allocates are excluded on the same footing: they are a per-frame slot numbering over the $1E000 corner longwords already decoded here, drawn as two-point edges at $054AD2, and research/damocles-st/scripts/ground-extent-check.py reconstructs the live list, lowest slot and $5E40 bytes from captured RAM alone.',
-        'The documented zero-latch and $F0 post-plan constructors are retained, including the cell-derived door-key label; no discovered record carries an attachment omission. The $DF visual-change branch remains unexamined because $6364 is empty in the pinned captures.',
+        'The documented zero-latch and $F0 post-plan constructors are retained, including the cell-derived door-key label; no discovered record carries an attachment omission. The $DF visual-change branch is accounted for: $059F64 reads the nine-entry $6364 table and substitutes character $DF for the entrance label glyph, while $04ED4A replays the same table over the $ABDC cell workspace to replace or clear an already-resident surface assembly. Neither introduces a record, and the table is all zero in every pinned capture, so neither branch is exercised by an observed state.',
         'Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.',
         'Every $6000 vector-text record in the census was inventoried: all 41 set the inline flag and none selects font 4, so the indirect-pointer and font-4 paths are unreached rather than unresolved. $CCA0 tokens divide into slot-derived labels, frame animations whose script is model data, structure-workspace face markers, and one live countdown.',
     ]
@@ -3475,7 +3706,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'path': f'{label.title()} live workspace',
             'finding': note,
         })
-    return {'schemaVersion': 10, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
+    return {'schemaVersion': 11, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'places': places, 'tables': tables,
             'coverage': coverage_ledger(models, tables, coverage_notes, disk_load)}
 

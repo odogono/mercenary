@@ -32,7 +32,9 @@ first-world scenario hash. It uses the standard library only. A missing capture
 can be regenerated with the existing `lab observe --scenario
 research/damocles-st/scenarios/first-world.json` command. Raw images, RAM and
 Working Disassembly stay in ignored research paths; the browser receives only
-the separately versioned catalogue JSON. Schema version 10 turns a placed
+the separately versioned catalogue JSON. Schema version 11 carries each pointer bank's measured extent as
+`tables[].extent` and names the slots a world binds rather than the resident
+table, as `models[].worldConditionedSlots`. Schema version 10 turns a placed
 articulated building detail in its placing structure's scaled frame and names
 that frame on the mesh: `articulation.scale` and `articulation.sampledAngle`.
 Schema version 8 makes detail selector lists name source records rather than
@@ -120,22 +122,54 @@ bounds are stated in raw model coordinates, which a placement scales by its
 structure X and Z factors. A detail's palette variants share a record count, so
 the forms are drawn from the first palette listed.
 
-These extents are bounded by the next independently recognised data records:
-object NULL metadata at `$035CE8`, the first surface metadata at `$00ED60`, and
-the interior record preamble after `$026208`. The ground table is a 256-word
-workspace index, not a relative-pointer bank. They remain **provisional table
-extents**, rather than a proven census of every packed disk file. Title-screen
-RAM has zero table bases. Two independent first-world loads and the occupied
-Spaceport interior RAM share the same pointer tables and object record heads:
-entering a building does not disk-load a replacement model bank. The Working
-Authority Pasti STX is an RSY version-3 image (1031930 bytes, SHA-256
-`8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef`). Printable
-resident labels such as `DART II` are absent from that STX and from title-screen
-RAM; they appear only after the title-to-world unpack that fills the `$04BD00`
-base block (`$04BD0C=$00E900`, `$04BD10=$035700`, `$04BD22=$026000`). Track
-payload remains packed. The UI displays that
-qualification for each table. Every slot maps to one model identity; repeated
-pointers share a model and retain all slot indices. No pointer scan is
+Each pointer-table extent is now **measured from the capture at both ends**
+rather than assumed, and emitted as `tables[].extent`. The entry count is bounded
+above because one further entry would overlap authored record data: a zero
+longword and the `      NULL      ` name field at `$035CE8`, the first surface
+record's eight metadata bytes at `$00ED60`, and the `$8000` vertex-terminator
+preamble at `$026208`. It is bounded below because every entry resolves to a
+record the extractor decodes or explains. Each bank's last record is followed by
+hundreds of zero bytes and then by an independently recognised item — the live
+projection workspace at `$042C00`, the `$01E000` ground workspace seed table and
+the `$031700` glyph source table — and the extractor raises if a bank ever
+reaches its follower. The ground table keeps its own qualification: it is a
+256-word workspace index, not a relative-pointer bank, and it is one body's
+workspace. Bounding the banks is still not a census of every packed disk file.
+
+Title-screen RAM has zero table bases. Across **ten pinned captures** — two
+independent cold first-world loads, Eris on foot and boarded, the occupied
+Spaceport interior, and the live Vesta, Gaea UR City and Dion workspaces — the
+surface-assembly table and bank, the building-detail table and bank, the ground
+record bank and the glyph table are byte identical, all 212 unique object records
+decode identically, and no world introduces a record address the first-world
+table does not already name. Entering a building, boarding a vehicle and
+travelling between bodies do not disk-load a replacement model bank.
+
+The one bank that is not wholly resident is the object pointer table. `$055026`
+consumes the world's resident-object stream, writing the 16.16 X/Y/Z arrays at
+`$63A8`/`$67A8`/`$6BA8` and then copying one table entry onto the entry's own
+slot at `$05503C`, filling slots downwards from `$3FC`. Slots **248–255** are the
+block this rewrites; slots 250–255 land on a different model between Eris, Vesta
+and Gaea. A world therefore binds an existing model to a slot and never writes a
+record. Those models carry the qualification in their reason, and the extractor
+raises if a capture repoints a slot below the block or at an address the table
+does not already hold.
+
+The Working Authority Pasti STX is an RSY version-3 image (1031930 bytes, SHA-256
+`8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef`) of 164 track
+records: cylinders 0–79 formatted on both sides, 80–81 unformatted. Only two
+tracks carry sector descriptors — cylinder 0 side 0's ten standard sectors with
+an executable boot sector, and cylinder 1 side 0's copy-protection track. The
+other 158 formatted tracks are raw track images the game reads with its own
+loader. No resident table or bank appears verbatim anywhere in that payload, so
+the payload is packed and **the protected sectors are not a second, directly
+readable model bank**. Printable resident labels such as `DART II` are absent
+from the STX and from title-screen RAM; they appear only after the
+title-to-world unpack that fills the `$04BD00` base block (`$04BD0C=$00E900`,
+`$04BD10=$035700`, `$04BD22=$026000`). See
+[disk loads and bank extents](damocles-disk-loads-and-bank-extents.md). The UI
+displays each table's qualification. Every slot maps to one model identity;
+repeated pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
 
 Current extraction accounts for **832 unique records**: **510 decoded**,
@@ -168,7 +202,7 @@ totals disagree with that ledger.
 
 | Resident table      | Address   | Slots examined | Meaning                                                                                                                                 |
 | ------------------- | --------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Object geometry     | `$035700` | 378            | Relative 32-bit pointers, including shared forms and extra templates                                                                    |
+| Object geometry     | `$035700` | 378            | Relative 32-bit pointers, including shared forms and extra templates. Slots 248–255 are a world binding, not a resident fact            |
 | Surface assemblies  | `$00E900` | 280            | Relative 32-bit pointers, including scaled/paletted aliases                                                                             |
 | Building detail     | `$026000` | 130            | Relative 32-bit pointers; exterior and interior geometry share this family                                                              |
 | Ground / pad / road | `$01E400` | 256            | Word offsets from `$01E000`; shared records, per-cell `$83DC` orientation. Live Vesta fills append after these 256 first-world entries. |
@@ -445,8 +479,15 @@ code. Targeted disassembly used to establish them remains ignored at
   supported constructors; no record currently carries an `attachments` omission.
   `$40F0` and `$82F0` use the same geometry as `$4000`/`$8200`. The low byte
   selects a door-key label through the cell-derived `$7AFB` base, not a shape;
-  schema 9 retains that rule as `keyIndex`. The `$DF` visual-change branch
-  still needs evidence from a populated `$6364` table (see the disk-load follow-up).
+  schema 9 retains that rule as `keyIndex`. The `$DF` visual-change branch is
+  accounted for: `$059F64` reads the nine-record `$6364` table and, on its
+  negative-word records, substitutes character `$DF` for the entrance label glyph
+  the `$7AFB` base would otherwise give. It is a glyph code, not a shape change.
+  `$04ED4A` replays the same table's non-negative records over the rebuilt
+  `$ABDC` cell workspace, replacing or clearing the surface assembly a cell
+  places — again without introducing a record. The table is all zero in every
+  pinned capture, so neither branch is exercised by an observed state. See
+  [disk loads and bank extents](damocles-disk-loads-and-bank-extents.md).
 - An Entrance Attachment record is a control word, four rectangle words, its
   leaf colours and a four-word Proximity Box. The **one-leaf** path stores three
   colours at `$05A08A` and so occupies **24 bytes**; the two-leaf path at
@@ -651,7 +692,7 @@ remains **false**. The remaining work is tracked separately:
 | Unexamined `$ABDC` workspaces, Gaea islands, named places and associated residences/transforms beyond the captured coverage | [#172](https://github.com/odogono/mercenary/issues/172) |
 | Unverified scene palette binding for object slot 338 (one record) | [#277](https://github.com/odogono/mercenary/issues/277) |
 | The running EXPLOSIVE-ARMED! `$CD14` countdown, the one remaining live `$CCA0` object-text case | [#279](https://github.com/odogono/mercenary/issues/279) |
-| Packed Pasti STX load paths, provisional bank extents and mission/script-created visual replacements | [#280](https://github.com/odogono/mercenary/issues/280) |
+| The 158 packed custom-format STX tracks, and the `$6364` branches that no capture exercises | [#280](https://github.com/odogono/mercenary/issues/280) |
 | The scanline `$7BFC` the sky/ground raster split fires on; rendering-only, and not a record the catalogue would carry | [#281](https://github.com/odogono/mercenary/issues/281) |
 | Representative visual fidelity against Working Authority captures | [#174](https://github.com/odogono/mercenary/issues/174) |
 
