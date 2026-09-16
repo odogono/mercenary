@@ -1,0 +1,109 @@
+{
+  "description": "Walk from the empty-inventory Spaceport checkpoint into the Capital Spaceport room and stop beside resident slot 183 (KEY- V.I.P. LIMO). The take input itself is supplied by the limo-key pickup probe, not by this route.",
+  "memstate": "research/damocles-st/snapshots/eris-spaceport-onfoot.sav",
+  "takeAtSeconds": 38.478,
+  "segments": [
+    {
+      "rawByte": 0,
+      "seconds": 5.742
+    },
+    {
+      "rawByte": 8,
+      "seconds": 1.41
+    },
+    {
+      "rawByte": 0,
+      "seconds": 1.038
+    },
+    {
+      "rawByte": 1,
+      "seconds": 2.101
+    },
+    {
+      "rawByte": 5,
+      "seconds": 0.077
+    },
+    {
+      "rawByte": 1,
+      "seconds": 16.078
+    },
+    {
+      "rawByte": 0,
+      "seconds": 0.236
+    },
+    {
+      "rawByte": 8,
+      "seconds": 0.233
+    },
+    {
+      "rawByte": 0,
+      "seconds": 0.474
+    },
+    {
+      "rawByte": 1,
+      "seconds": 0.468
+    },
+    {
+      "rawByte": 0,
+      "seconds": 0.8
+    },
+    {
+      "rawByte": 1,
+      "seconds": 0.16
+    },
+    {
+      "rawByte": 0,
+      "seconds": 0.999
+    },
+    {
+      "rawByte": 1,
+      "seconds": 0.154
+    },
+    {
+      "rawByte": 0,
+      "seconds": 0.396
+    },
+    {
+      "rawByte": 1,
+      "seconds": 0.393
+    },
+    {
+      "rawByte": 5,
+      "seconds": 0.161
+    },
+    {
+      "rawByte": 4,
+      "seconds": 0.863
+    },
+    {
+      "rawByte": 1,
+      "seconds": 0.623
+    },
+    {
+      "rawByte": 5,
+      "seconds": 0.162
+    },
+    {
+      "rawByte": 1,
+      "seconds": 2.214
+    },
+    {
+      "rawByte": 0,
+      "seconds": 4.912
+    }
+  ],
+  "keyboardEvents": [
+    {
+      "t": 7.731,
+      "type": "keydown",
+      "stScancode": 19,
+      "name": "R"
+    },
+    {
+      "t": 7.902,
+      "type": "keyup",
+      "stScancode": 19,
+      "name": "R"
+    }
+  ]
+}

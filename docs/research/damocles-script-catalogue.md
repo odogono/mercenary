@@ -100,6 +100,11 @@ handle a security system triggering and a scolding for taking something.
 The briefing script at `$070110` is the one the intro runs; it ends in the idle
 jump-to-self at `$0703FC` that the resident PC parks in.
 
+Slot `$02` at `$07042A` — the exit-road instructions — is now bound to a
+trigger: taking the V.I.P. limo key launches it through a one-shot entry in the
+byte table at `$7CB4`, and it returns to the idle jump. See
+[the limo-key pickup note](damocles-limo-key-pickup.md).
+
 ### Plot and faction messages (slots `$07`–`$1F`, `$3C`–`$3F`)
 
 The bulk of the game's driven narrative, each opening with an attributed

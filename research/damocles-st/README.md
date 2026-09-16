@@ -59,6 +59,28 @@ checkpoint behaviour, not physical-input timing or audible output. See
 [the first-offer research](../../docs/research/damocles-first-offer.md) for the
 pinned evidence, results and unresolved host meanings.
 
+## Limo-key pickup probe (#298)
+
+```sh
+python3 research/damocles-st/scripts/limo-key-pickup-probe.py --roms /path/to/roms
+python3 research/damocles-st/scripts/limo-key-pickup-probe.py --roms /path/to/roms --tick-rate 20
+```
+
+Replays the tracked `scenarios/limo-key-pickup-route.json` walk from the on-foot
+Spaceport checkpoint into the room holding `KEY- V.I.P. LIMO`, supplies the take
+input, and samples the carried list, the resident slot, the script program
+counter and return stack, the trigger byte table and the message gate. The five
+cases cover a control run that takes nothing, an ordinary take, repeat attempts,
+a drop and re-pick, and a mid-response state save resumed in a second process.
+`--tick-rate` measures the script wait counter against the machine's VBL count.
+
+The walk stops the player at a slightly different distance on every run and the
+take is refused outright when the selection is out of range, so a case that
+needs the pickup is retried (`--attempts`). Nothing is written into the guest:
+samples are `savebin` windows taken while the emulator is stopped. Results,
+captures and screenshots stay in the ignored `work/` run directory. See
+[the pickup research](../../docs/research/damocles-limo-key-pickup.md).
+
 ## Failures and acceptance
 
 Hard failure on a wrong STX, wrong TOS, missing Hatari, missed title-screen
