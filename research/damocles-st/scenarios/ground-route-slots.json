@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "name": "ground-route-slots",
+  "checkpoint": "title-screen",
+  "description": "From the title screen, enter the first world and let it settle, then poke a sentinel into the projected X word of ground-extent slot $E8 ($10A8), one of the slots the list at $05499E allocates below $F0, and break on the next write while walking forward. Establishes whether the slots below $F0 are filled by the same $054A64 projector as the recovered $F0/$F4 scene joins (#281).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "artifacts": [
+        "display",
+        "registers",
+        "ram"
+      ]
+    },
+    {
+      "type": "watch",
+      "name": "route-slot-e8",
+      "address": "0x10a8",
+      "seconds": 10,
+      "provoke": {
+        "direction": "up",
+        "vbls": 40000
+      }
+    }
+  ]
+}

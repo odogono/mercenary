@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "name": "ground-route-allocator",
+  "checkpoint": "title-screen",
+  "description": "From the title screen, enter the first world and let it settle, then poke a sentinel into $5F28, the packed world-grid corner byte the renderer reads as $5E40 + slot for ground-extent slot $E8, and break on the next write while walking forward. Names the code that allocates the scene slots below $F0 from the list at $05499E (#281).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "artifacts": [
+        "display",
+        "registers",
+        "ram"
+      ]
+    },
+    {
+      "type": "watch",
+      "name": "route-allocator",
+      "address": "0x5f28",
+      "seconds": 10,
+      "provoke": {
+        "direction": "up",
+        "vbls": 40000
+      }
+    }
+  ]
+}

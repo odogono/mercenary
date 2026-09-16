@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "name": "ground-band-split-line",
+  "checkpoint": "title-screen",
+  "description": "From the title screen, enter the first world and let it settle, then poke a sentinel into $7BFC, the scanline the VBL handler at $051DCC loads into MFP Timer B ($FFFA21), and break on the next write while walking forward. Names the producer of the horizon scanline at which the Timer B handler at $052280 recolours hardware colour 8 from sky to ground (#281).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "artifacts": [
+        "display",
+        "registers",
+        "ram"
+      ]
+    },
+    {
+      "type": "watch",
+      "name": "split-line",
+      "address": "0x7bfc",
+      "seconds": 10,
+      "provoke": {
+        "direction": "up",
+        "vbls": 40000
+      }
+    }
+  ]
+}

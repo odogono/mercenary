@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "name": "ground-band-split-install",
+  "checkpoint": "title-screen",
+  "description": "From the title screen, enter the first world and let it settle, then poke a sentinel into $8F16, the seventeenth word of the colour record at $7C18 that the VBL handler at $051DC4 reads as the Timer B split colour, and break on the next write. Names the frame-loop code that installs the outdoor ground-band colour (#281).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "artifacts": [
+        "display",
+        "registers",
+        "ram"
+      ]
+    },
+    {
+      "type": "watch",
+      "name": "split-install",
+      "address": "0x8f16",
+      "seconds": 8
+    }
+  ]
+}
