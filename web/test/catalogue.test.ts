@@ -981,19 +981,39 @@ it('gives each door key and transporter slot its own label form', async () => {
   // The label is filled glyph geometry, so a later slot is not the same mesh.
   expect(key.variants[0]!.mesh.faces.length).toBeGreaterThan(14);
 
-  // Three tokens no header writes stay named, with their workspace address.
+  // Only live mission state stays named now, with its workspace address.
   const live = data.models.filter(model =>
     model.omissions.includes('liveText')
   );
-  expect(live).toHaveLength(3);
-  expect(live.map(model => model.name).sort()).toEqual([
+  expect(live.map(model => model.name)).toEqual(['EXPLOSIVE-ARMED!']);
+  expect(live[0]!.reason).toContain('$CD14');
+
+  // The two frame animations became sampled forms instead of a named gap.
+  const animated = data.models.filter(model =>
+    model.conditions.some(condition =>
+      condition.startsWith('vector-text frame script')
+    )
+  );
+  expect(animated.map(model => model.name).sort()).toEqual([
     'AUTHORS COMPUTER',
-    'EXPLOSIVE-ARMED!',
     'TELEVISION'
   ]);
-  expect(live.every(model => /\$C[DE][\dA-F]{2}/.test(model.reason))).toBe(
-    true
+  for (const model of animated) {
+    expect(model.status).toBe('decoded');
+    expect(model.omissions).toEqual([]);
+    expect(
+      model.variants.filter(form => form.id.startsWith('text-frame-'))
+    ).toHaveLength(7);
+  }
+  // Every sampled frame draws a glyph, and the script really varies.
+  const computer = animated.find(model => model.name === 'AUTHORS COMPUTER')!;
+  expect(computer.conditions).toContain(
+    'vector-text frame script $CDCE (12 frames)'
   );
+  const drawn = new Set(
+    computer.variants.map(form => JSON.stringify(form.mesh.vertices))
+  );
+  expect(drawn.size).toBeGreaterThan(1);
 });
 
 it('samples the free-running articulation angle for the six turning objects', async () => {

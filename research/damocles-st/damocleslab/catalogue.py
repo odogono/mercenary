@@ -119,6 +119,17 @@ def expand_vector_text(data: bytes, reader: Reader, token_data: bytes | None = N
             pointer = int.from_bytes(token_data[pointer_address:pointer_address + 4], 'big')
             if pointer in seen or pointer >= len(token_data):
                 raise ValueError('invalid vector-text token reference')
+            if pointer in TEXT_ANIMATION_TARGETS:
+                # A frame animation reached from a building detail draws one
+                # frame of its script. Only a script whose every frame is the
+                # same character has a form independent of the free-running
+                # index; anything else would need the detail offered per frame,
+                # which no captured detail requires, so it fails closed.
+                script = text_animation_script(token_data, pointer)
+                if len(set(script)) != 1:
+                    raise ValueError('building vector-text frame animation unresolved')
+                result.append(chr(script[0]))
+                return ''.join(result)
             result.append(expand_vector_text(
                 token_data, Reader(token_data, pointer), token_data, seen | {pointer}
             ))
@@ -250,6 +261,59 @@ SLOT_LABEL_TARGET = 0xCD12
 SLOT_LABEL_RULES = {0x8007: ('letter', 0x41, 0x1E), 0x8002: ('digit', 0x30, 0)}
 
 
+# Three $CCA0 targets are frame animations rather than live state. Each is a
+# descriptor `[character][NUL][index word][NUL-terminated frame script]`, and in
+# all ten pinned captures the character equals `script[index]` while the script
+# itself is byte-identical. The script is therefore the complete set of forms
+# the record can ever draw, and no single frame is canonical — the same standing
+# as the free-running articulation angle at $7888. Recognition is an evidenced
+# list rather than a shape match, so an unnamed target keeps failing closed.
+TEXT_ANIMATION_TARGETS = (0xCD9C, 0xCDCE, 0xCE6A)
+TEXT_FRAME_STEPS = 8
+
+# $04DAFC formats the explosive readout as `M.SS`: $04DAD0 takes the armed
+# deadline less the clock at $793E, floors it at zero into $786A, divides by 60
+# for the minute digit and indexes the two-digit second pairs at $0526C2. Every
+# pinned capture reads the floor, so the disarmed reading is evidenced and the
+# running countdown is not.
+EXPLOSIVE_COUNTDOWN_TARGET = 0xCD14
+EXPLOSIVE_COUNTDOWN_DISARMED = '0.00'
+
+
+def text_animation_script(data: bytes, pointer: int) -> bytes:
+    """The frame script of a `$CCA0` animation descriptor, or fail closed.
+
+    Validates the whole descriptor against the capture it came from: the
+    character field is NUL-terminated, the index addresses the script, the
+    script is printable, and the displayed character is the frame the index
+    names. A capture that breaks any of those is not this grammar.
+    """
+    if pointer + 5 > len(data):
+        raise ValueError('vector-text animation descriptor is truncated')
+    if data[pointer + 1] != 0:
+        raise ValueError('vector-text animation character is not NUL-terminated')
+    index = int.from_bytes(data[pointer + 2:pointer + 4], 'big')
+    start = pointer + 4
+    end = data.find(b'\0', start)
+    if end < 0:
+        raise ValueError('vector-text animation script terminator missing')
+    script = data[start:end]
+    if not script:
+        raise ValueError('vector-text animation script is empty')
+    if not all(32 <= character < 127 for character in script):
+        raise ValueError('unsupported vector-text animation character')
+    if index >= len(script):
+        raise ValueError('vector-text animation index outside its script')
+    if data[pointer] != script[index]:
+        raise ValueError('vector-text animation character is not its indexed frame')
+    return script
+
+
+def text_animation_frame(script: bytes, ordinal: int) -> str:
+    """The character one sampled frame ordinal draws from a frame script."""
+    return chr(script[ordinal * len(script) // TEXT_FRAME_STEPS])
+
+
 def slot_label(command: int, slot: int | None) -> str | None:
     """The character a slot-labelled object's header writes for one slot."""
     rule = SLOT_LABEL_RULES.get(command)
@@ -264,7 +328,8 @@ def slot_label(command: int, slot: int | None) -> str | None:
 
 def decode_object_lettering(data: bytes, reader: Reader, vertices: list, faces: list,
                             lines: list, palette: list[int] | None,
-                            hardware: list[int] | None, label: str | None = None) -> dict:
+                            hardware: list[int] | None, label: str | None = None,
+                            frame: int = 0) -> dict:
     """Decode the object `$6000` vector-text record consumed at `$053F96`.
 
     Three signed word offsets are added to the object's position; the flags,
@@ -275,7 +340,7 @@ def decode_object_lettering(data: bytes, reader: Reader, vertices: list, faces: 
     dx, dy, dz = struct.unpack('>3h', reader.take(6))
     return decode_placed_lettering(
         data, reader, [dx, dy, dz], vertices, faces, lines, palette, hardware,
-        'object', label,
+        'object', label, frame,
     )
 
 
@@ -300,8 +365,14 @@ def decode_ground_lettering(data: bytes, reader: Reader, vertices: list, faces: 
 def decode_placed_lettering(data: bytes, reader: Reader, anchor: list[int],
                             vertices: list, faces: list, lines: list,
                             palette: list[int] | None, hardware: list[int] | None,
-                            kind: str, label: str | None = None) -> dict:
-    """Flags, advance, glyph scales, colour and inline text, shared from $053FCA."""
+                            kind: str, label: str | None = None,
+                            frame: int = 0) -> dict:
+    """Flags, advance, glyph scales, colour and inline text, shared from $053FCA.
+
+    `frame` is the sampled ordinal a `$CCA0` frame animation draws; every
+    animated record in one model shares the ordinal because one per-frame tick
+    drives them all.
+    """
     flags, advance = struct.unpack('>Hh', reader.take(4))
     scale_x, scale_y = struct.unpack('>bb', reader.take(2))
     colour = reader.word()
@@ -311,10 +382,13 @@ def decode_placed_lettering(data: bytes, reader: Reader, anchor: list[int],
     if font == 4:
         raise ValueError(f'state-conditioned {kind} text font unresolved')
     plane = flags & 0xC0
-    # Inline literal characters are authored; a $80..$98 token names a live
-    # $CCA0 workspace string whose content is capture state, not model data.
+    # Inline literal characters are authored. A $80..$98 token names a $CCA0
+    # workspace string: a slot-derived label, a frame animation whose script is
+    # model data, or live state that stays a named omission.
     characters = []
     token = None
+    animation = None
+    countdown = False
     for _ in range(256):
         character = reader.take(1)[0]
         if character == 0:
@@ -326,6 +400,15 @@ def decode_placed_lettering(data: bytes, reader: Reader, anchor: list[int],
             pointer = int.from_bytes(data[0xCCA0 + token * 4:0xCCA4 + token * 4], 'big')
             if label is not None and pointer == SLOT_LABEL_TARGET:
                 characters.append(label)
+                token = None
+            elif pointer in TEXT_ANIMATION_TARGETS:
+                script = text_animation_script(data, pointer)
+                characters.append(text_animation_frame(script, frame))
+                animation = {'target': pointer, 'frames': len(script)}
+                token = None
+            elif pointer == EXPLOSIVE_COUNTDOWN_TARGET:
+                characters.append(EXPLOSIVE_COUNTDOWN_DISARMED)
+                countdown = True
                 token = None
             break
         if not 32 <= character < 127:
@@ -386,7 +469,9 @@ def decode_placed_lettering(data: bytes, reader: Reader, anchor: list[int],
         else:
             raise ValueError('vector-text glyph line terminator missing')
     return {'anchor': anchor, 'text': text, 'font': font, 'plane': plane,
-            **({'liveToken': token} if token is not None else {})}
+            **({'liveToken': token} if token is not None else {}),
+            **({'animation': animation} if animation is not None else {}),
+            **({'countdown': True} if countdown else {})}
 
 
 # $0537B0 (objects) and $053D4A (building details) turn an articulated record's
@@ -489,8 +574,9 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
     `state` selects among source-conditioned forms of the same record:
     `flash` (`lit`/`dark`) for `$8003` beacon patches, `frame` (0..5) for the
     `$8006` television colour cycle, `open` for the `$8009` jump taken when
-    `$7A60` is set, and `viewGroup` for a view-conditioned face group index.
-    The returned mesh names the alternates in `alternates` so callers can
+    `$7A60` is set, `viewGroup` for a view-conditioned face group index, and
+    `textFrame` for the sampled ordinal of a `$CCA0` vector-text frame
+    animation. The returned mesh names the alternates in `alternates` so callers can
     enumerate every form without guessing.
     """
     state = state or {}
@@ -664,10 +750,14 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
                 tag_record(kind, faces, lines, first_face, first_line, record)
                 continue
             if kind == 'object' and colour & 0x6000 == 0x6000:
-                texts.append(decode_object_lettering(
+                item = decode_object_lettering(
                     data, reader, vertices, faces, lines, palette, hardware,
                     slot_label(label_command, state.get('slot')),
-                ))
+                    state.get('textFrame', 0),
+                )
+                texts.append(item)
+                if 'animation' in item:
+                    alternates['textFrame'] = TEXT_FRAME_STEPS
                 continue
             if colour & 0x4000:
                 if colour & 0x2000:
@@ -811,6 +901,19 @@ def decode_object_forms(data: bytes, address: int, palette: list[int] | None,
         conditions.append('state $7A60')
     if 'slotLabel' in alternates:
         conditions.append(f"resident slot ({alternates['slotLabel']} label)")
+    if 'textFrame' in alternates:
+        scripts = ', '.join(
+            f"${text['animation']['target']:04X} ({text['animation']['frames']} frames)"
+            for text in base.get('texts', []) if 'animation' in text
+        )
+        # $8006 already named form zero for its own cycle; keep the more
+        # specific name and let the text frames say what they vary.
+        if forms[0][1] == 'Recovered form':
+            forms[0] = ('record', 'Vector-text frame 0', {}, base)
+        for ordinal in range(1, alternates['textFrame']):
+            forms.append((f'text-frame-{ordinal}', f'Vector-text frame {ordinal}',
+                          {'textFrame': ordinal}, None))
+        conditions.append(f'vector-text frame script {scripts}')
     if 'articulation' in base and base['articulation']['vertices']:
         step = 256 // ARTICULATION_STEPS
         forms[0] = ('record', 'Articulation angle $00', {}, base)
@@ -844,6 +947,13 @@ def decode_object_forms(data: bytes, address: int, palette: list[int] | None,
             'Articulated header names a pivot but tags no vertex, so nothing rotates.'
         )
     for text in base.get('texts', []):
+        if text.get('countdown'):
+            gaps.append(
+                f'Object text draws the explosive readout at ${EXPLOSIVE_COUNTDOWN_TARGET:04X} as the '
+                f'disarmed {EXPLOSIVE_COUNTDOWN_DISARMED!r} every pinned capture reads. $04DAFC formats '
+                'that field as M.SS from the armed deadline less the clock at $793E, so the running '
+                'countdown is live mission state and is not baked into the model.'
+            )
         if 'liveToken' in text:
             token = text['liveToken']
             pointer = int.from_bytes(data[0xCCA0 + token * 4:0xCCA4 + token * 4], 'big')
@@ -1851,6 +1961,7 @@ RECORD_OMISSIONS = (
     ('paletteBinding', 'scene colour table binding unresolved'),
     ('paletteBinding', 'Scene colour table binding unverified'),
     ('liveText', 'the live $CCA0 workspace'),
+    ('liveText', 'the running countdown is live mission state'),
     ('attachments', 'Authored surface attachments/openings'),
     ('attachments', 'Structure selection unavailable'),
     ('attachments', 'Live $F0 attachment selector'),
@@ -1925,8 +2036,9 @@ UNEXPLORED_COVERAGE = [
     'Mission-disk or script-created visual changes that would replace a resident slot, including the '
     '$DF attachment branch whose $6364 table is empty in the pinned captures. Follow-up: '
     'https://github.com/odogono/mercenary/issues/280.',
-    'Object vector text whose live $CCA0 token is not a slot-derived label, and text that resolves through '
-    'indirect pointers or the state-conditioned font 4. Follow-up: '
+    'The running EXPLOSIVE-ARMED! countdown: its $CD14 readout is live mission state, so only the '
+    'disarmed reading every pinned capture holds is drawn. The indirect text pointer and font 4 are '
+    'unreached by every record in the census, so neither is a form left to find. Follow-up: '
     'https://github.com/odogono/mercenary/issues/279.',
     'The scene colour binding for object slot 338 remains unverified: the $7000 ground records that '
     'place it lie above the highest record any captured $1E400 cell table selects, so no capture '
@@ -3350,6 +3462,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         'Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; surface slot zero supplies palette zero for structureless cells, empty records are intentional and add no geometry at $056634, and $F0/$F4 joins remain view-conditioned.',
         'The documented zero-latch and $F0 post-plan constructors are retained, including the cell-derived door-key label; no discovered record carries an attachment omission. The $DF visual-change branch remains unexamined because $6364 is empty in the pinned captures.',
         'Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.',
+        'Every $6000 vector-text record in the census was inventoried: all 41 set the inline flag and none selects font 4, so the indirect-pointer and font-4 paths are unreached rather than unresolved. $CCA0 tokens divide into slot-derived labels, frame animations whose script is model data, structure-workspace face markers, and one live countdown.',
     ]
     if gaea_coverage:
         coverage_notes.append(gaea_coverage)

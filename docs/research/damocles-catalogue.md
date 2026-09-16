@@ -138,8 +138,8 @@ qualification for each table. Every slot maps to one model identity; repeated
 pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
 
-Current extraction accounts for **832 unique records**: **508 decoded**,
-**324 partial**, and **0 unresolved**. “Decoded” means the supported record was
+Current extraction accounts for **832 unique records**: **510 decoded**,
+**322 partial**, and **0 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.
 Unresolved records remain searchable and retain their source identity and reason.
@@ -220,20 +220,45 @@ code. Targeted disassembly used to establish them remains ignored at
   4 is state-conditioned and fails closed). Bits 6 and 7 patch the glyph loop
   with `exg` instructions (`$C945`, `$C745`): `$00` keeps glyph X/Y, `$80` puts
   glyph X along Z, `$40` lays the glyph flat with Y along Z, and `$C0` lays it
-  flat with X along Z. A `$80..$98` token names a live `$CCA0` workspace string
-  (DOOR KEY A `$87`, EXPLOSIVE-ARMED! `$88`, AUTHORS COMPUTER `$8C`); the two
-  pinned captures differ at `$8C`, so token lettering is a named `liveText` gap
-  and only authored literal text (for example `LAND X` on Objects 352–355, the
-  LOTTERY TICKET digits) is baked into glyph geometry.
-- Two of those tokens are **not** live state. `$8007` (`$053512`) and `$8002`
-  (`$05358A`) derive one character from the object's resident slot and store it
-  at `$CD12`, which token `$87` points at: a letter `'A' + slot − 30` and a digit
-  `'0' + (slot & 15)`. So DOOR KEY A's ten slots draw the labels A to J on the
-  key head, and TRANSPORTER's ten draw 0 to 9. Each slot is offered as its own
-  form, crossed with any view-conditioned groups the record also has. A token
-  whose `$CCA0` pointer the record's own header does not write stays a named
-  gap, and the reason gives the workspace address: AUTHORS COMPUTER `$CDCE`,
-  TELEVISION `$CE6A`, EXPLOSIVE-ARMED! `$CD14`.
+  flat with X along Z. Authored literal text (for example `LAND X` on Objects
+  352–355, the LOTTERY TICKET digits) is baked straight into glyph geometry; a
+  `$80..$98` token instead names a `$CCA0` workspace string.
+- **The whole census sets the inline flag and none of it selects font 4.** All
+  41 `$6000` records — 28 object, 3 ground, 10 building-detail — carry flags bit
+  15 and fonts 0, 1, 2, 3 or 5. The indirect text pointer and the
+  state-conditioned font 4 are therefore paths the decoder fails closed on
+  rather than forms waiting to be recovered; neither adds a catalogue form. A
+  unit test re-inventories every record so a later decode cannot quietly
+  introduce one.
+- `$CCA0` tokens divide into four kinds, only the last of which is live state.
+- **Slot-derived labels.** `$8007` (`$053512`) and `$8002` (`$05358A`) derive one
+  character from the object's resident slot and store it at `$CD12`, which token
+  `$87` points at: a letter `'A' + slot − 30` and a digit `'0' + (slot & 15)`. So
+  DOOR KEY A's ten slots draw the labels A to J on the key head, and
+  TRANSPORTER's ten draw 0 to 9. Each slot is offered as its own form, crossed
+  with any view-conditioned groups the record also has.
+- **Frame animations.** `$CD9C` (`$89`), `$CDCE` (`$8C`) and `$CE6A` (`$82`) are
+  descriptors `[character][NUL][index word][NUL-terminated frame script]`. In all
+  ten independent captures the script is byte-identical and the displayed
+  character is exactly `script[index]`, while the index differs between captures
+  — the same standing as the free-running articulation angle at `$7888`. The
+  script is model data, so it is the complete set of forms the record can draw,
+  and no single frame is canonical. The catalogue samples eight evenly-spaced
+  frames as `text-frame-n` forms and names the script in the model conditions:
+  AUTHORS COMPUTER cycles the 12-frame `IPQRQPIMNONM` in font 2, and TELEVISION
+  runs a 697-frame script through all 63 printable font-5 glyphs. `$89`'s script
+  is one character repeated, so the two building details reaching it draw the
+  same space whatever the index holds; `expand_vector_text` fails closed rather
+  than pick a frame if a building detail ever reaches a varying script.
+- **Structure-workspace face markers.** `$8D`–`$96` (`$CD37`–`$CD49`) are ten
+  two-byte fields the placing structure writes, covered by the live-workspace
+  detail variants.
+- **Live mission state.** Only EXPLOSIVE-ARMED!'s `$88` (`$CD14`) remains. `$04DAFC`
+  formats that field as `M.SS`: `$04DAD0` takes the armed deadline less the clock
+  at `$793E`, floors it at zero into `$786A`, divides by 60 for the minute digit
+  and indexes the two-digit second pairs at `$0526C2`. Every pinned capture reads
+  the floor, so the disarmed `0.00` is drawn as the evidenced reading and the
+  running countdown stays the record's one named `liveText` gap.
 - Some `$8001` headers control instance orientation; their neutral local geometry
   is decoded without baking in a particular instance heading. A mode byte with
   bit 7 set (`$053572`) is articulation: an axis byte, a pivot X word and pivot
@@ -611,7 +636,7 @@ remains **false**. The remaining work is tracked separately:
 | --- | --- |
 | Unexamined `$ABDC` workspaces, Gaea islands, named places and associated residences/transforms beyond the captured coverage | [#172](https://github.com/odogono/mercenary/issues/172) |
 | Unverified scene palette binding for object slot 338 (one record) | [#277](https://github.com/odogono/mercenary/issues/277) |
-| Three live `$CCA0` object-text cases, indirect text pointers and state-conditioned font 4 | [#279](https://github.com/odogono/mercenary/issues/279) |
+| The running EXPLOSIVE-ARMED! `$CD14` countdown, the one remaining live `$CCA0` object-text case | [#279](https://github.com/odogono/mercenary/issues/279) |
 | Packed Pasti STX load paths, provisional bank extents and mission/script-created visual replacements | [#280](https://github.com/odogono/mercenary/issues/280) |
 | Ground-band producer and the `$05499E` route list allocating scene slots below `$F0` | [#281](https://github.com/odogono/mercenary/issues/281) |
 | Representative visual fidelity against Working Authority captures | [#174](https://github.com/odogono/mercenary/issues/174) |

@@ -11,9 +11,10 @@ captures remain ignored Restricted Material.
 ## Scope
 
 This note establishes enough of the native grammar to retain the surrounding
-building geometry and render the evidenced inline text forms. Indirect text,
-other text planes, and glyph forms outside those encountered here remain
-unresolved rather than guessed.
+building geometry and render the evidenced inline text forms. Other text planes
+and glyph forms outside those encountered here remain unresolved rather than
+guessed. [#279](https://github.com/odogono/mercenary/issues/279) added the
+`$CCA0` token census below and settled the indirect-text and font 4 questions.
 
 Evidence uses:
 
@@ -53,10 +54,83 @@ byte references use the normal one-based multiples-of-four convention.
 Terminator `$81` selects stroke pairs.
 
 Negative text bytes are substitutions through the longword table at `$CCA0`.
-The native routine indexes the low seven bits, renders the pointed
-NUL-terminated workspace string, and returns after the token. `$97` and `$98`
-point to the current ten-character place name and kind at `$CD4C`/`$CD58`.
-`$91` points to the current one-character face marker at `$CD3F`.
+The native routine at `$05408E` indexes the low seven bits, renders the pointed
+NUL-terminated workspace string, and returns after the token. The table runs
+`$80`–`$98`; entry 25 onwards is already the `$CD04` panel block, so the token
+range is bounded by the workspace it points into. `$97` and `$98` point to the
+current ten-character place name and kind at `$CD4C`/`$CD58`. `$91` points to
+the current one-character face marker at `$CD3F`.
+
+## `$CCA0` token census
+
+Ten independent captures — two first-world observation runs and eight Hatari
+memstates taken on foot, in a car, in a limousine, inside a building and on
+three bodies — agree on everything in the `$CC00`–`$D000` workspace except
+`$CC00`–`$CC1B`, `$CD3F`, `$CD4C`–`$CD52`, `$CD58`–`$CD61`, `$CD9F`, `$CDCE`,
+`$CDD1`, `$CE6A` and `$CE6C`–`$CE6D`. That short difference list is what divides
+the tokens:
+
+| Kind | Tokens | Evidence |
+| --- | --- | --- |
+| Slot-derived label | `$87` (`$CD12`) | Written by the record's own `$8007`/`$8002` header |
+| Frame animation | `$89` (`$CD9C`), `$8C` (`$CDCE`), `$82` (`$CE6A`) | Descriptor plus static script; see below |
+| Structure-workspace face marker | `$8D`–`$96` (`$CD37`–`$CD49`) | Written by the placing structure |
+| Place name and kind | `$97`, `$98` (`$CD4C`, `$CD58`) | Written by the current workspace |
+| Live mission state | `$88` (`$CD14`) | Formatted at `$04DAFC`; see below |
+
+### Frame animations
+
+Three targets are descriptors, not strings:
+
+| Field | Encoding |
+| --- | --- |
+| character | the byte the renderer draws |
+| terminator | NUL, so the renderer stops after one character |
+| index | unsigned word |
+| script | NUL-terminated printable bytes |
+
+In every one of the ten captures the script is byte-identical and the character
+is exactly `script[index]`, while the index differs between captures — including
+between two cold starts of the same scenario. The script is therefore model
+data and the index is a free-running phase, the same standing as the
+articulation angle at `$7888`. Nothing in RAM names `$CDD0` or `$CE6C`
+absolutely, so the routine that advances the index reaches it through a
+register; the advance rule is not claimed here, only that the character is
+always the frame the index names.
+
+- `$CDCE` (`$8C`) is AUTHORS COMPUTER's screen: 12 frames, `IPQRQPIMNONM`, drawn
+  in font 2.
+- `$CE6A` (`$82`) is TELEVISION's screen: 697 frames running through all 63
+  printable font 5 glyphs.
+- `$CD9C` (`$89`) has a 19-frame script of nothing but spaces, so the two
+  building details that reach it draw the same space in every frame.
+
+The catalogue offers eight evenly-spaced frames of each object script as
+`text-frame-n` forms. A building detail reaching a script with more than one
+distinct character would need per-frame detail forms, which no captured detail
+requires, so that case fails closed instead of picking a frame.
+
+### The explosive countdown
+
+`$04DAFC` loads `$CD14` and formats four characters `M.SS`. `$04DAD0` subtracts
+the clock at `$793E` from the armed deadline; a result at or below zero clears
+the value, sets `$7A78` to 3, patches `$4BF54` and sets `$7834` to −1 — the
+detonation path — and either way the remainder is stored at `$786A`. The
+formatter divides it by 60 for the minute digit and indexes the two-digit second
+pairs at `$0526C2` for the rest, adding `$30` to each.
+
+All ten captures read `0.00`, which is both the disarmed reading and the
+formatter's floor. The catalogue draws that reading and keeps the running
+countdown as the record's one named `liveText` gap.
+
+### Indirect text and font 4
+
+Both were named as unresolved because the decoder fails closed on them, not
+because a record was seen selecting either. Inventorying all 41 `$6000` records
+in the census — 28 object, 3 ground, 10 building-detail — shows every one sets
+the inline flag (bit 15) and selects font 0, 1, 2, 3 or 5. Neither path is
+reached, so neither hides a catalogue form. A unit test re-runs the inventory so
+a later decode cannot quietly introduce one.
 
 ## Vesta Parliament
 
@@ -94,6 +168,6 @@ first `$60xx` record:
 - `interior-02fcb6`
 
 All seven move from unresolved to partial. The census remains incomplete:
-view-conditioned selection, articulated forms, unsupported text planes,
-remaining special commands, and non-captured dynamic token states are still
-explicit gaps.
+view-conditioned selection, articulated forms, unsupported text planes and
+remaining special commands are still explicit gaps. Of the dynamic token states,
+only the running explosive countdown is still one.
