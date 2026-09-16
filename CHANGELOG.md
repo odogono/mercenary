@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- The Damocles Catalogue turns building details 6, 7, 8, 68 and 69 in the
+  structure-scaled frame `$053D74` actually uses. `$054D98` installs the placing
+  record's X/Z scale bytes at `$539CE`/`$539D2`, `$053B4A` scales the pivot the
+  same way and `$053D52` scales each vertex before the turn, so a nonuniform or
+  mirrored structure changes the shape of the turn. Each detail keeps one model
+  identity and carries a set of sampled `$7888` angles per frame that places it —
+  detail 7 covers five frames including 4×2 and −4×−2 — and each of the 11
+  placing surface assemblies offers the same angles on its combined form. No
+  record is left carrying the `articulated` omission (#278).
+
+### Fixed
+
+- Articulation about the zero axis turned the wrong way. `$053806` and `$053DB2`
+  read Z before X; the catalogue read X before Z, which reversed the turn and
+  its truncation for five of the six articulated objects as well as for details
+  6 and 7 (#278).
+
+### Changed
+
+- Damocles catalogue schema 10: a mesh's `articulation` record names the `scale`
+  frame and `sampledAngle` of the form it belongs to (#278).
+
 ## [0.19.9] - 2026-09-15
 
 ### Added

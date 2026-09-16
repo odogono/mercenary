@@ -608,12 +608,11 @@ class CensusTests(unittest.TestCase):
         def carrying(tag):
             return [m for m in models if tag in (m.get('omissions') or [])]
 
-        articulation = next(note for note in unexplored if '$7888' in note)
-        kinds = {m['kind'] for m in carrying('articulated')}
-        self.assertEqual(kinds, {'interior'})
-        for kind, word in (('object', 'object'), ('ground', 'ground')):
-            if kind not in kinds:
-                self.assertNotIn(word, articulation)
+        # Nothing carries the articulated omission any more, so no ledger entry
+        # may still describe one. $7888 free-runs, which the models say for
+        # themselves; it is a sampling decision rather than an unexplored gap.
+        self.assertEqual(carrying('articulated'), [])
+        self.assertEqual([note for note in unexplored if '$7888' in note], [])
 
         live = next(note for note in unexplored if '$CCA0' in note)
         self.assertEqual(len(carrying('liveText')), 3)
@@ -696,6 +695,164 @@ class IntentionalEmptyTests(unittest.TestCase):
         self.assertTrue(all('intentionalEmpty' not in m for m in models))
 
 
+class ScaledArticulationTests(unittest.TestCase):
+    """A building detail turns in the frame its placing structure scales it into."""
+
+    AXIS_Z_BEFORE_X = 0
+
+    def _world(self, axis: int = AXIS_Z_BEFORE_X) -> bytes:
+        # One tagged vertex on the X axis, two plain ones, then the $8001
+        # articulation record and a single face.
+        record = struct.pack('>9h', 100, -1, 0, 0, 50, 0, 0, 0, 100)
+        record += struct.pack('>5h', -32767, axis, 10, 0, 0)
+        record += bytes.fromhex('0777 04 08 0c 00 0000')
+        data = bytearray(record.ljust(0x92_5a + 0x280, b'\0'))
+        for index in range(320):
+            struct.pack_into(
+                '>h', data, 0x92_5a + index * 2,
+                max(-32768, min(32767, round(32768 * math.sin(2 * math.pi * index / 256)))),
+            )
+        return bytes(data)
+
+    def test_the_pivot_and_the_vertices_are_scaled_before_the_turn(self):
+        from damocleslab.catalogue import decode_mesh, turn_detail_mesh
+
+        data = self._world()
+        mesh = decode_mesh(data, 0, 'interior')
+        self.assertEqual(mesh['articulation']['pivot'], [10, 0, 0])
+        self.assertEqual(mesh['articulation']['vertices'], [0])
+
+        # $053B4A scales the pivot by the structure's X/Z bytes and $053D52
+        # scales every vertex, so a quarter turn happens 360 units out rather
+        # than the model-local 90.
+        turned = turn_detail_mesh(data, mesh, (4, 2), 0x40)
+        self.assertEqual(turned['vertices'][0], [40, 0, -360])
+        # Untagged vertices are only scaled. $539D0 is never written, so Y is not.
+        self.assertEqual(turned['vertices'][1:], [[0, 50, 0], [0, 0, 200]])
+        self.assertEqual(turned['articulation']['scale'], [4, 2])
+        self.assertEqual(turned['articulation']['sampledAngle'], 0x40)
+
+    def test_a_nonuniform_frame_is_not_a_scaled_copy_of_a_uniform_one(self):
+        from damocleslab.catalogue import decode_mesh, turn_detail_mesh
+
+        data = self._world()
+        mesh = decode_mesh(data, 0, 'interior')
+        uniform = turn_detail_mesh(data, mesh, (2, 2), 0x40)['vertices'][0]
+        nonuniform = turn_detail_mesh(data, mesh, (4, 2), 0x40)['vertices'][0]
+        # Under a uniform frame, turning after scaling and scaling after
+        # turning agree: the arm keeps its length either way.
+        self.assertEqual(uniform, [20, 0, -180])
+        # Under 4x2 they do not. Scaling the model-local turn would put the arm
+        # at -180 on Z; the native order doubles it, because the arm is scaled
+        # on X before it swings onto Z.
+        self.assertEqual(nonuniform, [40, 0, -360])
+
+    def test_a_mirrored_frame_turns_the_other_way(self):
+        """Mirroring is not a sign flip: the high-word keep floors both ways."""
+        from damocleslab.catalogue import decode_mesh, turn_detail_mesh
+
+        data = self._world()
+        mesh = decode_mesh(data, 0, 'interior')
+        self.assertEqual(
+            turn_detail_mesh(data, mesh, (-4, -2), 0x40)['vertices'][0],
+            [-40, 0, 358],
+        )
+
+    def test_the_axis_value_names_which_coordinate_leads(self):
+        from damocleslab.catalogue import articulation_plane
+
+        # $053DB2 reads Z before X, $053D6A reads X before Y, and $053DF8 reads
+        # Y before Z. Leading with the wrong one turns the part backwards.
+        self.assertEqual(articulation_plane(0), (2, 0))
+        self.assertEqual(articulation_plane(1), (0, 1))
+        self.assertEqual(articulation_plane(-1), (1, 2))
+
+    def test_a_turned_form_keeps_the_record_ordinals_it_was_decoded_with(self):
+        from damocleslab.catalogue import decode_mesh, turn_detail_mesh
+
+        data = self._world()
+        mesh = decode_mesh(data, 0, 'interior')
+        turned = turn_detail_mesh(data, mesh, (4, 2), 0x60)
+        # A frame moves vertices. It may not renumber, drop or add the source
+        # records a detail selector indexes by ordinal.
+        self.assertEqual(turned['recordCount'], mesh['recordCount'])
+        self.assertEqual(
+            [face['sourceIndex'] for face in turned['faces']],
+            [face['sourceIndex'] for face in mesh['faces']],
+        )
+        self.assertEqual(
+            [face['vertices'] for face in turned['faces']],
+            [face['vertices'] for face in mesh['faces']],
+        )
+
+
+class ArticulatedDetailPayloadTests(unittest.TestCase):
+    """The five placed articulated details, as the payload offers them."""
+
+    def payload(self):
+        root = Path(__file__).resolve().parents[3]
+        return json.loads(
+            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
+        )
+
+    def test_every_placed_articulated_detail_is_turned_in_each_frame(self):
+        document = self.payload()
+        details = [
+            model for model in document['models']
+            if model['kind'] == 'interior'
+            and any(c.startswith('structure scale') for c in model.get('conditions') or [])
+        ]
+        self.assertEqual(
+            [model['id'] for model in details],
+            ['interior-02630e', 'interior-026556', 'interior-0268ee',
+             'interior-02dfb4', 'interior-02e44e'],
+        )
+        for model in details:
+            self.assertEqual(model['omissions'], [])
+            frames = {
+                tuple(variant['mesh']['articulation']['scale'])
+                for variant in model['variants']
+                if 'scale' in variant['mesh'].get('articulation', {})
+            }
+            self.assertTrue(frames, model['id'])
+            for frame in frames:
+                # One frame may be worn in more than one palette, so compare
+                # the angles it offers rather than how many forms carry them.
+                angles = {
+                    variant['mesh']['articulation']['sampledAngle']
+                    for variant in model['variants']
+                    if variant['mesh'].get('articulation', {}).get('scale') == list(frame)
+                }
+                self.assertEqual(angles, {index * 32 for index in range(8)})
+            self.assertIn('$054D98', model['reason'])
+            self.assertIn('$053B4A', model['reason'])
+
+    def test_one_detail_identity_carries_every_frame_that_reuses_it(self):
+        models = {model['id']: model for model in self.payload()['models']}
+        reused = models['interior-026556']
+        frames = {
+            tuple(variant['mesh']['articulation']['scale'])
+            for variant in reused['variants']
+            if 'scale' in variant['mesh'].get('articulation', {})
+        }
+        self.assertEqual(frames, {(3, 3), (-3, -3), (4, 2), (-4, -2), (-5, -5)})
+        # Five structures place it; there is still one detail model.
+        placing = [
+            model for model in self.payload()['models']
+            if 'interior-026556' in model['relatedModels']
+        ]
+        self.assertEqual(len(placing), 5)
+
+    def test_the_unreachable_records_stay_excluded_in_every_frame(self):
+        models = {model['id']: model for model in self.payload()['models']}
+        excluded = models['interior-02e44e']
+        for variant in excluded['variants']:
+            self.assertEqual(
+                variant['mesh']['unreferencedRecords'], [17, 18, 19, 20]
+            )
+            self.assertEqual(variant['mesh']['recordCount'], 46)
+
+
 class UnreferencedRecordTests(unittest.TestCase):
     """A face record naming a vertex slot its own list never fills."""
 
@@ -748,10 +905,16 @@ class UnreferencedRecordTests(unittest.TestCase):
         )
         carrying = [
             model for model in document['models']
-            for variant in model['variants']
-            if 'unreferencedRecords' in variant['mesh']
+            if any('unreferencedRecords' in variant['mesh']
+                   for variant in model['variants'])
         ]
         self.assertEqual([m['id'] for m in carrying], ['interior-02e44e'])
+        # Every turned form of detail 69 keeps the same excluded ordinals: a
+        # scaled frame changes where its vertices are, not which records draw.
+        self.assertTrue(all(
+            variant['mesh']['unreferencedRecords'] == [17, 18, 19, 20]
+            for variant in carrying[0]['variants']
+        ))
         self.assertTrue(all(m['kind'] == 'interior' for m in carrying))
 
 
@@ -1200,11 +1363,13 @@ class ConditionedObjectFormTests(unittest.TestCase):
              'angle-80', 'angle-a0', 'angle-c0', 'angle-e0'],
         )
         # Axis byte 0 turns the tagged vertex in the X/Z plane about the pivot;
-        # a quarter turn moves it from the pivot's Z line onto its X line. The
-        # native routine keeps only the product's high word, so 28 comes back
-        # as 26 rather than being rounded.
+        # a quarter turn moves it from the pivot's Z line onto its X line.
+        # $053806 reads Z as the first of the pair and X as the second, so the
+        # vertex lands on -X rather than +X. The native routine keeps only each
+        # product's high word, which floors rather than rounds: the same 28
+        # comes back as 26 turning one way and as -28 turning the other.
         quarter = next(form for form in variants if form['id'] == 'angle-40')
-        self.assertEqual(quarter['mesh']['vertices'][0], [26, 29, 28])
+        self.assertEqual(quarter['mesh']['vertices'][0], [-28, 29, 28])
         self.assertEqual(quarter['mesh']['vertices'][1:], variants[0]['mesh']['vertices'][1:])
 
     def test_articulated_detail_reads_its_pivot_record_before_the_faces(self):
