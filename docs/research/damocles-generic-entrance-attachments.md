@@ -112,10 +112,47 @@ constructor is:
 
 The Proximity Box is tested lower-inclusive and upper-exclusive. The first
 post-plan controls observed across the resident surface records use six base
-constructor modes, plus `$40F0` and `$82F0` variants whose low byte is resolved
-through live selector state before the same geometry constructors. The catalogue
-retains those `$F0` records from the pinned first-world RAM (`$7AFB = 0`) as
-`liveSelector` geometry; the `$7AFB ≠ 0` predicate is still unresolved.
+constructor modes, plus `$xxF0` variants that pass through `$059F50` first.
+
+## The `$F0` low byte is a door key letter, not a shape
+
+`$054CBE` reads the current cell's `$ABDC` entry byte, masks it with `$FE` and
+keeps it in `$7AF8`. A value from 2 to `$1E` becomes `(value >> 1) + $1D` in the
+word at `$7AFA`, whose low byte is `$7AFB`; the empty-cell, `$1E000` ground
+template and `$CD74` text pointer branches all clear the word instead. Bit 0 of
+the entry byte is not part of this: it is bit 8 of the cell's surface slot.
+
+`$059F50` reads `$7AFB` for a low byte of `$F0` or above. When it is zero the
+control goes straight to the authored constructors at `$059FAE` with label byte
+`$20`, a space. Otherwise `$059FA0` forms `(low nybble + $7AFB) + $23` and
+`$059FC4` writes it into the shared `$CD35` label table at `$CD35 - slot/2` —
+the same table `$8007` writes a slot letter into at `$CD12`. Base `$1E` is
+therefore `A`. `$059FAA` then clears **only the low byte** before `$059FB0`
+stores the control, and the constructor reads bits 8, 9 and 15, so the key path
+never changes the geometry.
+
+A third outcome at `$059F96` writes `$DF` when the resident visual-change table
+at `$6364` holds a record naming this cell and slot. That table is empty in
+every capture, which is the existing ledger entry for mission-disk or
+script-created visual changes.
+
+The pinned first-world extract has `$7AFB = 0` in every cell that carries one of
+these structures, so the Eris catalogue shows them without a letter. The other
+captures pin four:
+
+| Structure | Capture | Cell | `$7AFB` | Slot   | Letter        |
+| --------- | ------- | ---: | ------- | ------ | ------------- |
+| 70        | VESTA   |  100 | `$22`   | `$3EC` | `E` (`$CD3F`) |
+| 37        | DION    |  178 | `$21`   | `$3FC` | `D` (`$CD37`) |
+| 216       | DION    |  222 | `$1E`   | `$3FC` | `A` (`$CD37`) |
+| 180       | GAEA    |   23 | `$1F`   | `$3FC` | `B` (`$CD37`) |
+
+Vesta cell 100 is the direct check: it is that capture's current cell, so
+`$CD3F` is readable and holds `$45`, exactly what the rule predicts, while the
+structure's four zero-latch entrances at `$CD37`–`$CD3D` stay blank. That `E` is
+the same live glyph the Parliament vector-text note binds token `$91` to, found
+independently. All fourteen `$F0` controls in the bank carry key index 0, so the
+letter is the cell's base letter; the nybble is still what the source adds.
 
 | Control | Leaves | Motion and bind-inset axis | Moving edge(s)                 |
 | ------- | -----: | -------------------------- | ------------------------------ |
@@ -361,5 +398,5 @@ runtime scenario. No ST code was copied, translated or tracked.
 | Leaves rise to the soffit spanning their closed rectangle, 150 for Structure 75's `$03F0`                        | Confirmed  | plan faces of `$1484E` and `$14AEC`; ST screen shows no band                  |
 | Which vertex indices the constructors inherit leaf Y words from at bind time                                     | Unresolved | no runtime capture reads `$1840` with STATE OFFICE bound                      |
 | Natural Eris `$0200` bind always uses X inset                                                                     | Unresolved | no `$52/$9A/$D8` runtime capture; captured `$5C40` is zero only at cell `$87` |
-| Meaning of `$40F0/$82F0` live selector predicates                                                                 | Partial    | first-world `$7AFB=0` takes the documented constructors; live `$7AFB≠0` path not traced |
+| Meaning of `$40F0/$82F0` live selector predicates                                                                 | Decoded    | low nybble plus the cell's `$7AFB` base is a door key letter; geometry is unchanged     |
 | Schema 6 closed mesh plus flags is sufficient                                                                     | Disproved  | constructor, Proximity Box, gate and scratch-dependent inset facts are absent |

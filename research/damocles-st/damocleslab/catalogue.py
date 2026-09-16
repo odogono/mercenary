@@ -1245,12 +1245,58 @@ def selection_list(reader: Reader, count: int, attachment: bool = False,
     raise ValueError('selection list terminator missing')
 
 
+KEY_LETTER_ORIGIN = 0x1E
+KEY_LETTER_BIAS = 0x23
+NO_KEY_LABEL = 0x20
+CELL_WORKSPACE = 0xABDC
+
+
+KEY_ATTACHMENT_NOTE = (
+    'An $F0 entrance takes its key letter from the cell it stands in, not from this record: '
+    '$054CBE turns the cell\'s $ABDC entry byte into the $7AFB base and $059FA0 forms the '
+    'label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, '
+    'so the geometry is the same whichever path runs.'
+)
+
+
+def cell_key_base(entry: int) -> int:
+    """The `$7AFB` door-key base a cell's `$ABDC` entry byte installs.
+
+    `$054CBE` masks the entry's first byte with `$FE` and keeps it in `$7AF8`.
+    Values from 2 to `$1E` become `(value >> 1) + $1D` in the word at `$7AFA`,
+    whose low byte is `$7AFB`; every other value clears the word. The three
+    branches that clear it are the empty cell, the `$1E000` ground template
+    lookup and the `$CD74` text pointer table, none of which reach `$7AFA`.
+    """
+    entry &= 0xFE
+    if 0 < entry <= 0x1E:
+        return (entry >> 1) + 0x1D
+    return 0
+
+
+def attachment_key_label(base: int, command: int) -> int:
+    """The label byte `$059FC4` writes for an attachment's control word.
+
+    `$059FAE` reaches the constructors with `$20`, a space, whenever the low
+    byte is zero or the cell installed no key base. Otherwise `$059FA0` forms
+    `(low nybble + base) + $23`, which is `A` at base `$1E`, and the shared
+    `$CD35` label table takes it. The `$DF` alternative at `$059F96` needs a
+    resident visual-change record at `$6364` naming this cell and slot, and no
+    capture holds one.
+    """
+    if base == 0 or command & 0xFF == 0:
+        return NO_KEY_LABEL
+    return (command & 0x0F) + base + KEY_LETTER_BIAS
+
+
 def authored_entrance_control(command: int) -> int | None:
     """Return the constructor word for an authored Entrance Attachment control.
 
-    `$59EA2` takes a zero low byte straight to the constructors. `$59F50` also
-    does so for a `$F0` low byte when `$7AFB` is zero (pinned first-world). Other
-    low bytes are a different post-plan family.
+    `$59EA2` takes a zero low byte straight to the constructors. A `$F0` low
+    byte reaches the same constructors through `$59F50`, either directly when
+    the cell installed no key base or after `$59FAA` clears the low byte. The
+    constructor reads only bits 8, 9 and 15, so the key path never changes the
+    geometry. Other low bytes are a different post-plan family.
     """
     high = command & 0xFF00
     low = command & 0xFF
@@ -1423,6 +1469,7 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
             attachments.append({
                 'controlWord': command,
                 'constructor': constructor,
+                **({'keyIndex': command & 0x0F} if command & 0xFF else {}),
                 'mesh': closed_attachment_mesh(
                     scaled_x[0], scaled_z[0], scaled_x[1], scaled_z[1],
                     colours[:3],
@@ -2194,10 +2241,6 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                             gap for gap in gaps
                             if gap != 'Authored surface attachments/openings are not yet decoded.'
                         ]
-                        if selection.get('liveSelector'):
-                            gaps.append(
-                                'Live $F0 attachment selector predicate ($7AFB) is unresolved.'
-                            )
                     except (ValueError, struct.error) as error:
                         gaps.append(f'Structure selection unavailable: {error}.')
                     if mesh['faces']:
@@ -2206,6 +2249,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                         model['reason'] = ' '.join(gaps)
                     else:
                         model['reason'] = ' '.join(gaps)
+                    if model.get('structureSelection', {}).get('liveSelector'):
+                        model['reason'] = (model['reason'] + ' ' + KEY_ATTACHMENT_NOTE).strip()
                     model['interiorSlot'] = interior
                     continue
                 if kind == 'object':
@@ -2697,6 +2742,43 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             body_name,
             ram,
         ))
+    # A cell with a nonzero $7AFB base names the key letter of every $F0
+    # entrance the cell's structure carries, so a workspace pins letters for
+    # structures the Eris extract can only show without one.
+    for ram in workspaces + [data]:
+        body_index = int.from_bytes(ram[0x7AA8:0x7AAA], 'big') // 4
+        if body_index >= len(bodies):
+            continue
+        body_name = bodies[body_index]['name']
+        current_cell = int.from_bytes(ram[0x7B5C:0x7B5E], 'big')
+        for cell in range(256):
+            entry = CELL_WORKSPACE + cell * 4
+            base = cell_key_base(ram[entry])
+            if base == 0:
+                continue
+            surface_slot = int.from_bytes(ram[entry:entry + 2], 'big') & 0x1FF
+            if surface_slot >= len(tables[1]['entries']):
+                continue
+            model = by_address.get(tables[1]['entries'][surface_slot])
+            selection = (model or {}).get('structureSelection')
+            if model is None or selection is None or not selection.get('liveSelector'):
+                continue
+            for item in selection['attachments']:
+                if 'keyIndex' not in item:
+                    continue
+                label = attachment_key_label(base, item['controlWord'])
+                low = item['slot'] & 0xFF
+                address = 0xCD35 - ((low - 0x100 if low >= 0x80 else low) >> 1)
+                observed = cell == current_cell and ram[address] == label
+                model['evidence'].append({
+                    'claim': (
+                        f"{body_name} cell {cell} installs $7AFB base ${base:02X}, so the $F0 "
+                        f"entrance in slot ${item['slot']:03X} carries key letter "
+                        f"{chr(label)} at ${address:04X}."
+                    ),
+                    'confidence': 'verified' if observed else 'observed',
+                    'source': 'docs/research/damocles-generic-entrance-attachments.md',
+                })
     live_detail_by_structure = {}
     for identity, palettes in interior_palettes.items():
         model = by_address[identity]
@@ -2964,7 +3046,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'path': f'{label.title()} live workspace',
             'finding': note,
         })
-    return {'schemaVersion': 8, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
+    return {'schemaVersion': 9, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'places': places, 'tables': tables,
             'coverage': coverage_ledger(models, tables, coverage_notes, disk_load)}
 

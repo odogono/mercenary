@@ -47,7 +47,7 @@ const fixture = () => ({
     }
   ],
   places: [],
-  schemaVersion: 8,
+  schemaVersion: 9,
   source: {
     authority: 'Synthetic test',
     evidence: 'test',
@@ -996,4 +996,39 @@ it('samples the free-running articulation angle for the six turning objects', as
   expect(details).toHaveLength(4);
   expect(details.every(model => model.kind === 'interior')).toBe(true);
   expect(details[0]!.reason).toContain('structure X and Z scales');
+});
+
+it('an $F0 entrance names a key index the cell resolves to a letter', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const live = data.models.filter(
+    model => model.structureSelection?.liveSelector
+  );
+  expect(live).toHaveLength(13);
+  const keyed = live.flatMap(model =>
+    model.structureSelection!.attachments.filter(
+      item => item.keyIndex !== undefined
+    )
+  );
+  // Every $F0 control in the bank carries key index 0, so the letter is the
+  // cell's base letter; the nybble is still what the source adds.
+  expect(keyed).toHaveLength(14);
+  expect(keyed.every(item => item.keyIndex === 0)).toBe(true);
+  expect(keyed.every(item => (item.controlWord & 0xff) === 0xf0)).toBe(true);
+  // A zero-latch entrance has no key index at all.
+  const plain = data.models
+    .flatMap(model => model.structureSelection?.attachments ?? [])
+    .filter(item => (item.controlWord & 0xff) === 0);
+  expect(plain.length).toBeGreaterThan(0);
+  expect(plain.every(item => item.keyIndex === undefined)).toBe(true);
+
+  // The live selector no longer leaves an omission behind.
+  expect(
+    data.models.filter(model => model.omissions.includes('attachments'))
+  ).toHaveLength(0);
+  const vesta = live.find(model => model.name === 'Structure 70')!;
+  expect(
+    vesta.evidence.find(item => item.claim.includes('key letter E'))?.confidence
+  ).toBe('verified');
 });
