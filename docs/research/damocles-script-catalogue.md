@@ -139,13 +139,25 @@ A prompt ending `- (OK?)` is followed by this shape:
 reset.wait                     ; clear the wait counter
 if.key <accept> -> <accepted>  ; scancode $15 or $18
 if.key <decline> -> <next>     ; scancode $31
-if.wait <ticks>  -> <re-poll>  ; timeout loops back to the first if.key
+if.wait <ticks>  -> <re-poll>  ; unsigned counter < limit loops to first if.key
 ```
 
 Both `$15` and `$18` branch to the same accepted path, and `$31` advances. On ST
 scancodes those are **Y**, **O** and **N** — so the prompt accepts either Y or
-O, and N moves on. `if.wait` re-polls rather than blocking, which is what makes
-the prompt sit there indefinitely.
+O, and N moves on. `if.wait` re-polls only while the unsigned counter is below
+its operand; equality or greater falls through. In slot `$04`'s first offer,
+`$07082A` compares against 500 and falls through to the next offer at `$070830`
+on timeout. The earlier indefinite-wait interpretation was incorrect. Individual
+key tests and the counter test execute in separate native dispatches, so an
+input arriving between them is not equivalent to input present at the first
+polling checkpoint. See [the first-offer research](damocles-first-offer.md)
+for recovered-address provenance and the bounded slice.
+
+Before that first prompt, `$0707E6` uses `$1C` to write word `$00FF` to
+`$7B60`, clearing key byte `$7B61` to `$FF`. The message at `$0707E8` raises
+the message gate and commits `$070816`; only when dispatch resumes can that
+instruction reset the counter. Reset-wait itself does not clear the key, and
+the key predicate does not consume it.
 
 ### The bargaining ladder
 
@@ -168,30 +180,36 @@ BCD — consistent with slots `$0E`/`$15` running `abcd` over 6-byte fields. Not
 the record index `$00F9`, adjacent to the `$00F8` the interpreter special-cases,
 so the high indices look like system rather than world records. #136 adds a
 detail for #80: the `$00F8` special case in both `$0E` and `$15` does nothing to
-the record itself — it fires the sound effect at `$054848` and falls through to
+the record itself — it requests the sound effect at `$054848` and falls through to
 the ordinary BCD path.
 
 ### Timed delays are subroutines
 
-Pacing is not an opcode. Scripts `call` into a bank of tiny subroutines at
-`$072CD6`–`$072D2E`, each `reset.wait` / `if.wait <n>` / `return`, one per
-duration. A script sequences narration by calling the delay it wants between
-messages.
+Scripts compose delays from the counter predicate `$07`: they `call` into a
+bank of tiny subroutines at `$072CD6`–`$072D2E`, each `reset.wait` /
+`if.wait <n>` / `return`, one per duration. The predicate branches back to
+itself while the unsigned counter is below `<n>`, then falls through to return.
+The reset happens once on entry, not on every re-poll. A script sequences
+narration by calling the delay it wants between messages. These are counter
+ticks; a seconds-per-tick conversion is not established by this catalogue.
 
 ### Messages suspend rather than block
 
 `message` sets the gate at `$7BA0`, and the dispatch loop returns immediately
-while it is set. A script therefore does not wait for its own text; the
-interpreter simply stops running until native code clears the gate. Any port
-needs a resumable message effect for this.
+while it is set. The script commits its successor PC but cannot execute that
+instruction until native code clears the gate. Any port needs a resumable
+message effect for this.
 
-#136 decoded the native side of that gate: the pending message is a source word
-`$7B98` plus the gate `$7BA0`, and the resume path at `$0547C6` is what raises
+#136 decoded the native side of that gate: the pending message is a long source
+pointer at `$7B98` plus the gate `$7BA0`, and the resume path at `$0547C6` is what raises
 them again after a prompt, reloading a display timer at `$0005 23B8`. The same
 shape is used by a system-string helper at `$054820` reading the `$070000`
-table. Scripts also fire a **sound effect** natively — `$0B` on a key match, and
-`$0E`/`$15` on record index `$00F8`, all call `$054848`, which arms a one-shot
-PSG programme and returns at once.
+table. Scripts also request a **sound effect** natively — `$0B` on a key match,
+and `$0E`/`$15` on record index `$00F8`, all call `$054848`. That call may arm a
+one-shot PSG programme and returns at once; it does not guarantee audible output. Its first guard can prevent arming,
+and later guards affect immediate PSG writes and vector execution. See the
+[ISA sound description](damocles-script-isa.md#the-native-routines-the-handlers-call-136)
+for the corrected guard ordering.
 
 ## Not decoded
 

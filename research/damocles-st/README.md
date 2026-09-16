@@ -43,6 +43,22 @@ Place the Working Authority STX at
 TOS image at `roms/atarist/tos/emutos206.img`. `doctor` fails if either hash
 does not match `config/working-authority.json`.
 
+## First-offer checkpoint probe (#287)
+
+```sh
+python3 research/damocles-st/scripts/first-offer-probe.py \
+  --roms /path/to/roms \
+  --snapshot /path/to/snapshots/eris-spaceport-onfoot.sav
+```
+
+Runs 20 controlled cases through the original native handlers, including
+499/500 counter ticks, Y/O/N and unrelated input, message gating, and sound
+requests. It records hashed evidence under ignored `work/`. Interrupts and
+normal host dispatch are held during the checks, so these establish instruction
+checkpoint behaviour, not physical-input timing or audible output. See
+[the first-offer research](../../docs/research/damocles-first-offer.md) for the
+pinned evidence, results and unresolved host meanings.
+
 ## Failures and acceptance
 
 Hard failure on a wrong STX, wrong TOS, missing Hatari, missed title-screen
