@@ -76,6 +76,15 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
           : 'Building plan and linked detail. Available inspection views are listed under Form; original scene visibility remains incomplete.'
     );
   }
+  const keyed = model.structureSelection?.attachments.filter(
+    item => item.keyIndex !== undefined
+  );
+  if (keyed?.length) {
+    paragraph(
+      details,
+      `${keyed.length === 1 ? 'One entrance takes' : `${keyed.length} entrances take`} a key letter from the cell rather than from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base, and $059FA0 forms the label as key index plus base plus $23, so base $1E reads A. ${keyed.map(item => `Slot $${item.slot.toString(16).toUpperCase()} key index ${item.keyIndex}`).join(' · ')}. The constructor reads only bits 8, 9 and 15, so the shape is the same whichever path runs; observed letters are listed under evidence.`
+    );
+  }
   if (model.detailSelection?.length) {
     paragraph(
       details,

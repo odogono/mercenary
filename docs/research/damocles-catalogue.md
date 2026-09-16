@@ -49,6 +49,13 @@ identical models, tables, instances, body names and places. Their provenance
 records intentionally differ. The emitted source record pins the RAM and
 program SHA-256; model identities depend on kind and source address, never names.
 
+Schema 9 adds `keyIndex` to an Entrance Attachment whose control carries the
+`$F0` low byte: the key index the cell's `$7AFB` base offsets into a door key
+letter. See
+[generic entrance attachments](damocles-generic-entrance-attachments.md). The
+geometry is unaffected, so these 13 structures no longer keep an attachment
+omission.
+
 Schema 7 extends `structureSelection` with generic Entrance Attachment records:
 raw control word, normalized constructor, runtime slot, closed mesh and scaled
 Proximity Box. A closed mesh rises to the soffit spanning its rectangle, since

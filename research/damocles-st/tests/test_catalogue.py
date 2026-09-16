@@ -633,6 +633,74 @@ class CensusTests(unittest.TestCase):
             self.assertNotIn('visibility is not simulated', model['reason'])
 
 
+class AttachmentKeyTests(unittest.TestCase):
+    def test_the_cell_entry_byte_installs_the_key_base(self):
+        from damocleslab.catalogue import cell_key_base
+
+        # $054CBE masks with $FE, so bit 0 belongs to the surface slot.
+        self.assertEqual(cell_key_base(0x0A), 0x22)
+        self.assertEqual(cell_key_base(0x0B), 0x22)
+        self.assertEqual(cell_key_base(0x02), 0x1E)
+        self.assertEqual(cell_key_base(0x1E), 0x2C)
+        # Empty cells, the $1E000 ground template range and the $CD74 text
+        # pointer range all clear the word.
+        self.assertEqual(cell_key_base(0x00), 0)
+        self.assertEqual(cell_key_base(0x20), 0)
+        self.assertEqual(cell_key_base(0xA0), 0)
+
+    def test_the_label_is_a_space_without_a_base_and_a_letter_with_one(self):
+        from damocleslab.catalogue import attachment_key_label
+
+        self.assertEqual(attachment_key_label(0x22, 0x4200), 0x20)
+        self.assertEqual(attachment_key_label(0x00, 0x42F0), 0x20)
+        self.assertEqual(chr(attachment_key_label(0x1E, 0x42F0)), 'A')
+        self.assertEqual(chr(attachment_key_label(0x22, 0x42F0)), 'E')
+        self.assertEqual(chr(attachment_key_label(0x1E, 0x42F2)), 'C')
+
+    def test_an_f0_control_keeps_the_constructor_of_its_zero_latch_twin(self):
+        from damocleslab.catalogue import entrance_constructor
+
+        # $059FAA clears only the low byte, so bits 8, 9 and 15 decide the shape.
+        for high in (0x4000, 0x4100, 0x4200, 0x8000, 0x8100, 0x8200):
+            self.assertEqual(
+                entrance_constructor(high), entrance_constructor(high | 0xF0)
+            )
+
+    def test_the_vesta_capture_pins_the_predicted_key_letter(self):
+        """The $CD3F letter #271 observed is the one this rule predicts."""
+        from damocleslab.catalogue import (
+            attachment_key_label, cell_key_base, hatari_memstate_ram,
+        )
+
+        root = Path(__file__).resolve().parents[1]
+        ram = hatari_memstate_ram(
+            (root / 'snapshots' / 'vesta-parliament-4-6.sav').read_bytes()
+        )
+        cell = int.from_bytes(ram[0x7B5C:0x7B5E], 'big')
+        base = cell_key_base(ram[0xABDC + cell * 4])
+
+        self.assertEqual(cell, 100)
+        self.assertEqual(base, ram[0x7AFB])
+        self.assertEqual(base, 0x22)
+        # Slot $3EC is the fifth attachment, so $059FC4 writes $CD35 + 10.
+        self.assertEqual(ram[0xCD3F], attachment_key_label(base, 0x42F0))
+        self.assertEqual(chr(ram[0xCD3F]), 'E')
+        # Its four zero-latch neighbours stay blank.
+        self.assertEqual(
+            [ram[a] for a in (0xCD37, 0xCD39, 0xCD3B, 0xCD3D)], [0x20] * 4
+        )
+
+    def test_no_capture_holds_a_visual_change_record_for_the_df_branch(self):
+        from damocleslab.catalogue import hatari_memstate_ram
+
+        root = Path(__file__).resolve().parents[1]
+        for name in ('vesta-parliament-4-6', 'gaea-ur-city-4-2', 'dion-2-3'):
+            ram = hatari_memstate_ram(
+                (root / 'snapshots' / f'{name}.sav').read_bytes()
+            )
+            self.assertEqual(ram[0x6364 + 6], 0, name)
+
+
 class DiskLoadTests(unittest.TestCase):
     def test_pasti_header_rejects_a_non_stx_image(self):
         from damocleslab.catalogue import pasti_stx_header

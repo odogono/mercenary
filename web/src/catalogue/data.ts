@@ -87,6 +87,8 @@ export interface AttachmentConstructor {
 export interface EntranceAttachment {
   readonly constructor: AttachmentConstructor;
   readonly controlWord: number;
+  /** Low nybble of an $F0 control: the key index the cell's base offsets. */
+  readonly keyIndex?: number;
   readonly mesh: Mesh;
   readonly proximityBox: {
     readonly x: readonly [number, number];
@@ -189,7 +191,7 @@ export interface Catalogue {
   readonly instances: readonly Instance[];
   readonly models: readonly Model[];
   readonly places: readonly Place[];
-  readonly schemaVersion: 8;
+  readonly schemaVersion: 9;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -404,6 +406,7 @@ const structureSelection = (value: unknown): StructureSelection => {
     const a = fields(value, [
       'constructor',
       'controlWord',
+      'keyIndex',
       'mesh',
       'proximityBox',
       'slot'
@@ -450,6 +453,15 @@ const structureSelection = (value: unknown): StructureSelection => {
     ) {
       fail('attachment constructor does not match control word');
     }
+    const keyIndex =
+      a['keyIndex'] === undefined ? undefined : integer(a['keyIndex']);
+    // A key index exists exactly when the control carries the $F0 low byte.
+    if (
+      (keyIndex === undefined) !== (latch === 0) ||
+      (keyIndex !== undefined && keyIndex !== (controlWord & 0x0f))
+    ) {
+      fail('invalid attachment key index');
+    }
     const box = fields(a['proximityBox'], ['x', 'z']);
     return {
       constructor: {
@@ -458,6 +470,7 @@ const structureSelection = (value: unknown): StructureSelection => {
         ...(movingSide === undefined ? {} : { movingSide })
       },
       controlWord,
+      ...(keyIndex === undefined ? {} : { keyIndex }),
       mesh: mesh(a['mesh']),
       proximityBox: {
         x: bounds([box['x']], 1)[0]!,
@@ -559,7 +572,7 @@ const structureSelection = (value: unknown): StructureSelection => {
 
 export const parseCatalogue = (value: unknown): Catalogue => {
   const r = object(value);
-  if (r['schemaVersion'] !== 8) {
+  if (r['schemaVersion'] !== 9) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -953,7 +966,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     instances,
     models,
     places,
-    schemaVersion: 8,
+    schemaVersion: 9,
     source,
     tables
   };

@@ -135,7 +135,7 @@
     "classifications": {
       "alias": 184,
       "articulated": 4,
-      "attachments": 13,
+      "attachments": 0,
       "conditionalForms": 31,
       "empty": 11,
       "geometry": 635,
@@ -237095,10 +237095,8 @@
       "linkedInstances": [],
       "name": "Structure 30",
       "nameStatus": "unknown",
-      "omissions": [
-        "attachments"
-      ],
-      "reason": "Live $F0 attachment selector predicate ($7AFB) is unresolved. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+      "omissions": [],
+      "reason": "An $F0 entrance takes its key letter from the cell it stands in, not from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base and $059FA0 forms the label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, so the geometry is the same whichever path runs. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
       "recordClass": "geometry",
       "relatedModels": [
         "interior-03006a"
@@ -237337,6 +237335,7 @@
               "motionAxis": "x"
             },
             "controlWord": 17136,
+            "keyIndex": 0,
             "mesh": {
               "faces": [
                 {
@@ -257337,16 +257336,20 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "DION cell 178 installs $7AFB base $21, so the $F0 entrance in slot $3FC carries key letter D at $CD37.",
+          "confidence": "observed",
+          "source": "docs/research/damocles-generic-entrance-attachments.md"
+        }
+      ],
       "id": "structure-010ea8",
       "kind": "structure",
       "linkedInstances": [],
       "name": "Structure 37",
       "nameStatus": "unknown",
-      "omissions": [
-        "attachments"
-      ],
-      "reason": "Live $F0 attachment selector predicate ($7AFB) is unresolved. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+      "omissions": [],
+      "reason": "An $F0 entrance takes its key letter from the cell it stands in, not from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base and $059FA0 forms the label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, so the geometry is the same whichever path runs. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
       "recordClass": "alias",
       "relatedModels": [
         "structure-010ec2",
@@ -257376,6 +257379,7 @@
               "movingSide": "high"
             },
             "controlWord": 16624,
+            "keyIndex": 0,
             "mesh": {
               "faces": [
                 {
@@ -263335,10 +263339,8 @@
       "linkedInstances": [],
       "name": "Structure 38",
       "nameStatus": "unknown",
-      "omissions": [
-        "attachments"
-      ],
-      "reason": "Live $F0 attachment selector predicate ($7AFB) is unresolved. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+      "omissions": [],
+      "reason": "An $F0 entrance takes its key letter from the cell it stands in, not from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base and $059FA0 forms the label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, so the geometry is the same whichever path runs. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
       "recordClass": "geometry",
       "relatedModels": [
         "structure-010ea8",
@@ -263368,6 +263370,7 @@
               "movingSide": "high"
             },
             "controlWord": 16624,
+            "keyIndex": 0,
             "mesh": {
               "faces": [
                 {
@@ -365997,16 +366000,20 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "VESTA cell 100 installs $7AFB base $22, so the $F0 entrance in slot $3EC carries key letter E at $CD3F.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-generic-entrance-attachments.md"
+        }
+      ],
       "id": "structure-01454e",
       "kind": "structure",
       "linkedInstances": [],
       "name": "Structure 70",
       "nameStatus": "unknown",
-      "omissions": [
-        "attachments"
-      ],
-      "reason": "Live $F0 attachment selector predicate ($7AFB) is unresolved. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+      "omissions": [],
+      "reason": "An $F0 entrance takes its key letter from the cell it stands in, not from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base and $059FA0 forms the label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, so the geometry is the same whichever path runs. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
       "recordClass": "alias",
       "relatedModels": [
         "structure-01730e",
@@ -366879,6 +366886,7 @@
               "motionAxis": "x"
             },
             "controlWord": 17136,
+            "keyIndex": 0,
             "mesh": {
               "faces": [
                 {
@@ -416743,10 +416751,8 @@
       "linkedInstances": [],
       "name": "Structure 79",
       "nameStatus": "unknown",
-      "omissions": [
-        "attachments"
-      ],
-      "reason": "Live $F0 attachment selector predicate ($7AFB) is unresolved. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+      "omissions": [],
+      "reason": "An $F0 entrance takes its key letter from the cell it stands in, not from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base and $059FA0 forms the label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, so the geometry is the same whichever path runs. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
       "recordClass": "geometry",
       "relatedModels": [
         "interior-02a9a4"
@@ -416774,6 +416780,7 @@
               "motionAxis": "z"
             },
             "controlWord": 33520,
+            "keyIndex": 0,
             "mesh": {
               "faces": [
                 {
@@ -475250,10 +475257,8 @@
       "linkedInstances": [],
       "name": "Structure 90",
       "nameStatus": "unknown",
-      "omissions": [
-        "attachments"
-      ],
-      "reason": "Live $F0 attachment selector predicate ($7AFB) is unresolved. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+      "omissions": [],
+      "reason": "An $F0 entrance takes its key letter from the cell it stands in, not from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base and $059FA0 forms the label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, so the geometry is the same whichever path runs. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
       "recordClass": "geometry",
       "relatedModels": [
         "structure-01454e",
@@ -476126,6 +476131,7 @@
               "motionAxis": "x"
             },
             "controlWord": 17136,
+            "keyIndex": 0,
             "mesh": {
               "faces": [
                 {
@@ -506572,10 +506578,8 @@
       "linkedInstances": [],
       "name": "Structure 95",
       "nameStatus": "unknown",
-      "omissions": [
-        "attachments"
-      ],
-      "reason": "Live $F0 attachment selector predicate ($7AFB) is unresolved. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+      "omissions": [],
+      "reason": "An $F0 entrance takes its key letter from the cell it stands in, not from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base and $059FA0 forms the label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, so the geometry is the same whichever path runs. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
       "recordClass": "geometry",
       "relatedModels": [
         "structure-01a5d8",
@@ -506608,6 +506612,7 @@
               "motionAxis": "z"
             },
             "controlWord": 33520,
+            "keyIndex": 0,
             "mesh": {
               "faces": [
                 {
@@ -543375,10 +543380,8 @@
       "linkedInstances": [],
       "name": "Structure 98",
       "nameStatus": "unknown",
-      "omissions": [
-        "attachments"
-      ],
-      "reason": "Live $F0 attachment selector predicate ($7AFB) is unresolved. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+      "omissions": [],
+      "reason": "An $F0 entrance takes its key letter from the cell it stands in, not from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base and $059FA0 forms the label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, so the geometry is the same whichever path runs. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
       "recordClass": "alias",
       "relatedModels": [
         "structure-0188d2",
@@ -543407,6 +543410,7 @@
               "motionAxis": "z"
             },
             "controlWord": 33520,
+            "keyIndex": 0,
             "mesh": {
               "faces": [
                 {
@@ -556797,10 +556801,8 @@
       "linkedInstances": [],
       "name": "Structure 104",
       "nameStatus": "unknown",
-      "omissions": [
-        "attachments"
-      ],
-      "reason": "Live $F0 attachment selector predicate ($7AFB) is unresolved. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+      "omissions": [],
+      "reason": "An $F0 entrance takes its key letter from the cell it stands in, not from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base and $059FA0 forms the label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, so the geometry is the same whichever path runs. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
       "recordClass": "alias",
       "relatedModels": [
         "structure-0188d2",
@@ -556829,6 +556831,7 @@
               "motionAxis": "z"
             },
             "controlWord": 33520,
+            "keyIndex": 0,
             "mesh": {
               "faces": [
                 {
@@ -648546,10 +648549,8 @@
       "linkedInstances": [],
       "name": "Structure 136",
       "nameStatus": "unknown",
-      "omissions": [
-        "attachments"
-      ],
-      "reason": "Live $F0 attachment selector predicate ($7AFB) is unresolved. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+      "omissions": [],
+      "reason": "An $F0 entrance takes its key letter from the cell it stands in, not from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base and $059FA0 forms the label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, so the geometry is the same whichever path runs. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
       "recordClass": "geometry",
       "relatedModels": [
         "interior-02a18c"
@@ -648577,6 +648578,7 @@
               "motionAxis": "z"
             },
             "controlWord": 33520,
+            "keyIndex": 0,
             "mesh": {
               "faces": [
                 {
@@ -648788,6 +648790,7 @@
               "motionAxis": "z"
             },
             "controlWord": 33520,
+            "keyIndex": 0,
             "mesh": {
               "faces": [
                 {
@@ -693583,10 +693586,8 @@
       "linkedInstances": [],
       "name": "Structure 148",
       "nameStatus": "unknown",
-      "omissions": [
-        "attachments"
-      ],
-      "reason": "Live $F0 attachment selector predicate ($7AFB) is unresolved. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+      "omissions": [],
+      "reason": "An $F0 entrance takes its key letter from the cell it stands in, not from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base and $059FA0 forms the label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, so the geometry is the same whichever path runs. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
       "recordClass": "alias",
       "relatedModels": [
         "structure-0188d2",
@@ -693615,6 +693616,7 @@
               "motionAxis": "z"
             },
             "controlWord": 33520,
+            "keyIndex": 0,
             "mesh": {
               "faces": [
                 {
@@ -808773,16 +808775,20 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "GAEA cell 23 installs $7AFB base $1F, so the $F0 entrance in slot $3FC carries key letter B at $CD37.",
+          "confidence": "observed",
+          "source": "docs/research/damocles-generic-entrance-attachments.md"
+        }
+      ],
       "id": "structure-01d52c",
       "kind": "structure",
       "linkedInstances": [],
       "name": "Structure 180",
       "nameStatus": "unknown",
-      "omissions": [
-        "attachments"
-      ],
-      "reason": "Live $F0 attachment selector predicate ($7AFB) is unresolved. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+      "omissions": [],
+      "reason": "An $F0 entrance takes its key letter from the cell it stands in, not from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base and $059FA0 forms the label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, so the geometry is the same whichever path runs. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
       "recordClass": "alias",
       "relatedModels": [
         "structure-0188d2",
@@ -808811,6 +808817,7 @@
               "motionAxis": "z"
             },
             "controlWord": 33520,
+            "keyIndex": 0,
             "mesh": {
               "faces": [
                 {
@@ -935162,16 +935169,20 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "DION cell 222 installs $7AFB base $1E, so the $F0 entrance in slot $3FC carries key letter A at $CD37.",
+          "confidence": "observed",
+          "source": "docs/research/damocles-generic-entrance-attachments.md"
+        }
+      ],
       "id": "structure-01daa0",
       "kind": "structure",
       "linkedInstances": [],
       "name": "Structure 216",
       "nameStatus": "unknown",
-      "omissions": [
-        "attachments"
-      ],
-      "reason": "Live $F0 attachment selector predicate ($7AFB) is unresolved. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+      "omissions": [],
+      "reason": "An $F0 entrance takes its key letter from the cell it stands in, not from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base and $059FA0 forms the label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, so the geometry is the same whichever path runs. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
       "recordClass": "alias",
       "relatedModels": [
         "structure-0188d2",
@@ -935200,6 +935211,7 @@
               "motionAxis": "z"
             },
             "controlWord": 33520,
+            "keyIndex": 0,
             "mesh": {
               "faces": [
                 {
@@ -1501349,7 +1501361,7 @@
       "name": "GUM STORE"
     }
   ],
-  "schemaVersion": 8,
+  "schemaVersion": 9,
   "source": {
     "authority": "Damocles Atari ST Working Authority",
     "evidence": "docs/research/damocles-catalogue.md",

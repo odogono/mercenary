@@ -258,6 +258,20 @@ test('a structure offers each recovered region as its own inspection form', asyn
   await expect(page.locator('#variant')).toHaveValue('region-0');
 });
 
+test('an $F0 entrance explains the key letter the cell supplies', async ({
+  page
+}) => {
+  await page.goto('/catalogue?model=structure-01454e');
+  await expect(page.locator('#model-name')).toHaveText('Structure 70');
+  await expect(page.locator('#details')).toContainText(
+    'One entrance takes a key letter from the cell rather than from this record'
+  );
+  await expect(page.locator('#details')).toContainText('Slot $3EC key index 0');
+  await expect(page.locator('#details')).toContainText(
+    'VESTA cell 100 installs $7AFB base $22, so the $F0 entrance in slot $3EC carries key letter E at $CD3F.'
+  );
+});
+
 test('a building detail offers each recovered visibility list as a form', async ({
   page
 }) => {
