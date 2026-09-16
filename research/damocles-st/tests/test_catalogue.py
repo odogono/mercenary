@@ -591,6 +591,48 @@ class CensusTests(unittest.TestCase):
         self.assertIn('dion-surface-32', text)
 
 
+    def test_unexplored_notes_name_only_kinds_that_still_carry_the_omission(self):
+        """A decode that lands must retire the ledger entry that described it.
+
+        The articulation and live-text entries each outlived a decode once,
+        because the entry text is a constant and nothing tied it to the
+        omissions it describes.
+        """
+        root = Path(__file__).resolve().parents[3]
+        document = json.loads(
+            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
+        )
+        models = document['models']
+        unexplored = document['coverage']['unexplored']
+
+        def carrying(tag):
+            return [m for m in models if tag in (m.get('omissions') or [])]
+
+        articulation = next(note for note in unexplored if '$7888' in note)
+        kinds = {m['kind'] for m in carrying('articulated')}
+        self.assertEqual(kinds, {'interior'})
+        for kind, word in (('object', 'object'), ('ground', 'ground')):
+            if kind not in kinds:
+                self.assertNotIn(word, articulation)
+
+        live = next(note for note in unexplored if '$CCA0' in note)
+        self.assertEqual(len(carrying('liveText')), 3)
+        # Slot-derived labels were decoded, so the entry may not claim every
+        # token is unresolved.
+        self.assertIn('not a slot-derived label', live)
+
+    def test_a_decoded_detail_selector_does_not_claim_unsimulated_visibility(self):
+        root = Path(__file__).resolve().parents[3]
+        document = json.loads(
+            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
+        )
+        details = [m for m in document['models'] if 'detailSelection' in m]
+        self.assertEqual(len(details), 58)
+        for model in details:
+            self.assertIn('Both view-conditioned visibility groups', model['reason'])
+            self.assertNotIn('visibility is not simulated', model['reason'])
+
+
 class DiskLoadTests(unittest.TestCase):
     def test_pasti_header_rejects_a_non_stx_image(self):
         from damocleslab.catalogue import pasti_stx_header

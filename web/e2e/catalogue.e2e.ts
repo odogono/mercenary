@@ -258,6 +258,29 @@ test('a structure offers each recovered region as its own inspection form', asyn
   await expect(page.locator('#variant')).toHaveValue('region-0');
 });
 
+test('a building detail offers each recovered visibility list as a form', async ({
+  page
+}) => {
+  await page.goto('/catalogue?model=interior-0303d6');
+  await expect(page.locator('#model-name')).toHaveText('Building detail 88');
+  await expect(page.locator('#details')).toContainText(
+    '$053CC2 picks group 2 on foot inside a structure and group 1 otherwise'
+  );
+  const forms = page.locator('#variant option');
+  await expect(forms.filter({ hasText: /^Group / })).toHaveCount(7);
+  await expect(forms.filter({ hasText: /^Group 2 · box 1 / })).toHaveCount(0);
+  await page.locator('#variant').selectOption('group-0-box-0');
+  await expect(
+    forms.filter({ hasText: 'Group 1 · box 1 · viewer within' })
+  ).toHaveText(/X 200–1000, Y 600–1200, Z 200–800/);
+  await expect(page.locator('#details')).toContainText('30 faces');
+  await expect(page.locator('#viewer-message')).toHaveText('');
+  await page.screenshot({ path: 'test-results/catalogue-detail-form.png' });
+  // The list is a real form, so it survives a reload through the query.
+  await page.reload();
+  await expect(page.locator('#variant')).toHaveValue('group-0-box-0');
+});
+
 test('unresolved records, empty filters and invalid links are explained', async ({
   page
 }) => {

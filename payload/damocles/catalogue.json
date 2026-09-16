@@ -252,8 +252,8 @@
       "Packed Pasti STX disk track payload still not unpacked into models; fuzzy/copy-protected sectors are not a second pointer bank.",
       "Live $ABDC workspaces other than Eris first-world, Vesta Politburo City, Gaea UR City, and Dion; Gaea islands other than authored Birmingham and live UR City.",
       "Mission-disk or script-created visual changes that would replace a resident slot.",
-      "Live articulation angles ($7888) for articulated objects and details, which the catalogue shows at rest; Building detail 69 references projected slots beyond its own vertex list.",
-      "Object vector text that resolves through live $CCA0 tokens, indirect text pointers, or the state-conditioned font 4; post-plan attachment forms other than the documented zero-latch and $F0 constructors.",
+      "Live articulation angles ($7888) for articulated building details, which the catalogue shows at rest because $053D74 rotates a detail in the structure-scaled frame this model is not held in; Building detail 69 references projected slots beyond its own vertex list.",
+      "Object vector text whose live $CCA0 token is not a slot-derived label, and text that resolves through indirect pointers or the state-conditioned font 4; post-plan attachment forms other than the documented zero-latch and $F0 constructors.",
       "The viewport background is a raster block fill at $059CE2 using the surface record's two scene colours, so it holds no geometry; the producer of the ground band below the horizon is still unexplored."
     ]
   },
@@ -1247703,7 +1247703,7 @@
       "name": "Building detail 0",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1249487,7 +1249487,7 @@
       "omissions": [
         "articulated"
       ],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated. Articulated part shown at its rest angle. $053D74 rotates a detail after the structure X and Z scales are applied, so sampling the $7888 angle here would need the scaled frame this model is not held in.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with. Articulated part shown at its rest angle. $053D74 rotates a detail after the structure X and Z scales are applied, so sampling the $7888 angle here would need the scaled frame this model is not held in.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1250327,7 +1250327,7 @@
       "omissions": [
         "articulated"
       ],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated. Articulated part shown at its rest angle. $053D74 rotates a detail after the structure X and Z scales are applied, so sampling the $7888 angle here would need the scaled frame this model is not held in.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with. Articulated part shown at its rest angle. $053D74 rotates a detail after the structure X and Z scales are applied, so sampling the $7888 angle here would need the scaled frame this model is not held in.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1252864,7 +1252864,7 @@
       "omissions": [
         "articulated"
       ],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated. Articulated part shown at its rest angle. $053D74 rotates a detail after the structure X and Z scales are applied, so sampling the $7888 angle here would need the scaled frame this model is not held in.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with. Articulated part shown at its rest angle. $053D74 rotates a detail after the structure X and Z scales are applied, so sampling the $7888 angle here would need the scaled frame this model is not held in.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1253419,7 +1253419,7 @@
       "name": "Building detail 20",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1255500,7 +1255500,7 @@
       "name": "Building detail 21",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1256336,7 +1256336,7 @@
       "name": "Building detail 23",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1256920,7 +1256920,7 @@
       "name": "Building detail 24",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1257768,7 +1257768,7 @@
       "name": "Building detail 28",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape, structure-bound colours and supported $60xx vector text decoded. View-conditioned visibility, articulated parts and uncaptured dynamic token states are not simulated.",
+      "reason": "Shape, structure-bound colours and supported $60xx vector text decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with. Uncaptured dynamic token states are not simulated.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1263070,7 +1263070,7 @@
       "name": "Building detail 29",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1264503,7 +1264503,7 @@
       "name": "Building detail 30",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1271473,7 +1271473,7 @@
       "name": "Building detail 31",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1272208,7 +1272208,7 @@
       "name": "Building detail 32",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1273505,7 +1273505,7 @@
       "name": "Building detail 33",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1274810,7 +1274810,7 @@
       "name": "Building detail 34",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1276623,7 +1276623,7 @@
       "name": "Building detail 35",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1277492,7 +1277492,7 @@
       "name": "Building detail 36",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1280655,7 +1280655,7 @@
       "name": "Building detail 37",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1282127,7 +1282127,7 @@
       "name": "Building detail 38",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1284104,7 +1284104,7 @@
       "name": "Building detail 39",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape, structure-bound colours and supported $60xx vector text decoded. View-conditioned visibility, articulated parts and uncaptured dynamic token states are not simulated.",
+      "reason": "Shape, structure-bound colours and supported $60xx vector text decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with. Uncaptured dynamic token states are not simulated.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1284985,7 +1284985,7 @@
       "name": "Building detail 40",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1285325,7 +1285325,7 @@
       "name": "Building detail 41",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1287280,7 +1287280,7 @@
       "name": "Building detail 42",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1287767,7 +1287767,7 @@
       "name": "Building detail 43",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1288608,7 +1288608,7 @@
       "name": "Building detail 44",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1289257,7 +1289257,7 @@
       "name": "Building detail 45",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1289607,7 +1289607,7 @@
       "name": "Building detail 46",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1290387,7 +1290387,7 @@
       "name": "Building detail 47",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1291299,7 +1291299,7 @@
       "name": "Building detail 49",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1292413,7 +1292413,7 @@
       "name": "Building detail 50",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1297977,7 +1297977,7 @@
       "name": "Building detail 51",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1299649,7 +1299649,7 @@
       "name": "Building detail 53",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1301284,7 +1301284,7 @@
       "name": "Building detail 54",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1302819,7 +1302819,7 @@
       "name": "Building detail 55",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1304773,7 +1304773,7 @@
       "name": "Building detail 56",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape, structure-bound colours and supported $60xx vector text decoded. View-conditioned visibility, articulated parts and uncaptured dynamic token states are not simulated.",
+      "reason": "Shape, structure-bound colours and supported $60xx vector text decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with. Uncaptured dynamic token states are not simulated.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1309568,7 +1309568,7 @@
       "name": "Building detail 58",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1311260,7 +1311260,7 @@
       "name": "Building detail 59",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1313938,7 +1313938,7 @@
       "name": "Building detail 64",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1315573,7 +1315573,7 @@
       "name": "Building detail 65",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape, structure-bound colours and supported $60xx vector text decoded. View-conditioned visibility, articulated parts and uncaptured dynamic token states are not simulated.",
+      "reason": "Shape, structure-bound colours and supported $60xx vector text decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with. Uncaptured dynamic token states are not simulated.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1317312,7 +1317312,7 @@
       "name": "Building detail 66",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1320057,7 +1320057,7 @@
       "name": "Building detail 67",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape, structure-bound colours and supported $60xx vector text decoded. View-conditioned visibility, articulated parts and uncaptured dynamic token states are not simulated.",
+      "reason": "Shape, structure-bound colours and supported $60xx vector text decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with. Uncaptured dynamic token states are not simulated.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1322510,7 +1322510,7 @@
       "omissions": [
         "articulated"
       ],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated. Articulated part shown at its rest angle. $053D74 rotates a detail after the structure X and Z scales are applied, so sampling the $7888 angle here would need the scaled frame this model is not held in.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with. Articulated part shown at its rest angle. $053D74 rotates a detail after the structure X and Z scales are applied, so sampling the $7888 angle here would need the scaled frame this model is not held in.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1324522,7 +1324522,7 @@
       "name": "Building detail 70",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape, structure-bound colours and supported $60xx vector text decoded. View-conditioned visibility, articulated parts and uncaptured dynamic token states are not simulated.",
+      "reason": "Shape, structure-bound colours and supported $60xx vector text decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with. Uncaptured dynamic token states are not simulated.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1326568,7 +1326568,7 @@
       "name": "Building detail 77",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1328493,7 +1328493,7 @@
       "name": "Building detail 82",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1329246,7 +1329246,7 @@
       "name": "Building detail 83",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1330724,7 +1330724,7 @@
       "name": "Building detail 84",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1332017,7 +1332017,7 @@
       "name": "Building detail 86",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape, structure-bound colours and supported $60xx vector text decoded. View-conditioned visibility, articulated parts and uncaptured dynamic token states are not simulated.",
+      "reason": "Shape, structure-bound colours and supported $60xx vector text decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with. Uncaptured dynamic token states are not simulated.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1334373,7 +1334373,7 @@
       "name": "Building detail 87",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1338100,7 +1338100,7 @@
       "name": "Building detail 88",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [
         "structure-01484e"
@@ -1339759,7 +1339759,7 @@
       "name": "Building detail 89",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1340218,7 +1340218,7 @@
       "name": "Building detail 90",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1340631,7 +1340631,7 @@
       "name": "Building detail 91",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1341181,7 +1341181,7 @@
       "name": "Building detail 92",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1342041,7 +1342041,7 @@
       "name": "Building detail 94",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1342576,7 +1342576,7 @@
       "name": "Building detail 95",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1342973,7 +1342973,7 @@
       "name": "Building detail 96",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -1343659,7 +1343659,7 @@
       "name": "Building detail 100",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.",
+      "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [

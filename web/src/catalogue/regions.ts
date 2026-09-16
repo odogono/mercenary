@@ -1,4 +1,5 @@
 import type { Mesh, Model, Point, Primitive } from './data.ts';
+import { HIGH_SENTINEL, LOW_SENTINEL, axisLabel, byRecord } from './forms.ts';
 
 /**
  * Inspection forms built from a structure's recovered region selector.
@@ -16,10 +17,6 @@ import type { Mesh, Model, Point, Primitive } from './data.ts';
 const WITH_DETAIL = 0x80_00;
 const PLAN_FIRST = 0x40_00;
 const DETAIL_FIRST = 0x10_00;
-
-/** Signed-word endpoint sentinels an unbounded region axis keeps. */
-const LOW_SENTINEL = -32_768;
-const HIGH_SENTINEL = 32_767;
 
 const shifted = (primitive: Primitive, offset: number): Primitive => ({
   ...primitive,
@@ -43,35 +40,6 @@ const scaled = (mesh: Mesh, [x, z]: readonly [number, number]): Mesh => ({
   ...mesh,
   vertices: mesh.vertices.map(([a, b, c]) => [a * x, b, c * z] as Point)
 });
-
-const byRecord = (primitives: readonly Primitive[]) => {
-  const index = new Map<number, Primitive[]>();
-  for (const primitive of primitives) {
-    if (primitive.sourceIndex === undefined) {
-      continue;
-    }
-    const bucket = index.get(primitive.sourceIndex);
-    if (bucket === undefined) {
-      index.set(primitive.sourceIndex, [primitive]);
-    } else {
-      bucket.push(primitive);
-    }
-  }
-  return index;
-};
-
-const axisLabel = (name: string, [low, high]: readonly [number, number]) => {
-  if (low <= LOW_SENTINEL && high >= HIGH_SENTINEL) {
-    return `any ${name}`;
-  }
-  if (low <= LOW_SENTINEL) {
-    return `${name} < ${high}`;
-  }
-  if (high >= HIGH_SENTINEL) {
-    return `${name} ≥ ${low}`;
-  }
-  return `${name} ${low}–${high}`;
-};
 
 export interface RegionForm {
   /** Region forms never carry the spaceport's door or camera extras. */
