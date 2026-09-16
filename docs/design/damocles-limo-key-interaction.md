@@ -74,10 +74,11 @@ Separately bounded, because each needs evidence this contract must not invent:
   in `$0523B8` are divided between, and whether an input can end one early. The row is revealed
   progressively rather than appearing whole, so this is display state a mid-message restore must
   carry, and the save contract is not final without it. The research recovered the gate and the
-  duration but never located the native routine behind them. A maintainer screenshot measures the
-  row as a fixed monospaced cell grid about 48 cells wide, holding a complete 45-character message
-  — so `Reveal` is expected to be a revealed-character count rather than a shift register, which
-  #307 confirms or corrects.
+  duration but never located the native routine behind them. Two measurements narrow it: a
+  maintainer screenshot shows a fixed monospaced row about 48 cells wide holding a complete
+  message, and the decoded bank holds no message record longer than 49 characters. Nothing ever
+  needs to scroll through the row, so `Reveal` is expected to be a revealed-character count rather
+  than a shift register, which #307 confirms or corrects.
 - **The message text** ([#304](https://github.com/odogono/mercenary/issues/304)). Script slot 2's three inline strings and system-string slot 50 are
   recovered material that no Data Payload yet carries. They belong in `payload/damocles/` as an
   extraction, under ADR 0029 and the [publication policy](../publication-policy.md), not as a
@@ -277,10 +278,9 @@ Damocles Script slot 2, reached through entry-table word `$070084` = `$042A`.
 | `clear-busy` | `busy = false`; next `return` | `$0704C2` |
 | `return` | Pop `idle`; execution becomes null | `$0704C6` |
 
-`clear-line` gates like the inline messages and uses the ordinary duration; that string's record
-begins with blank padding, which is consistent with clearing the message line rather than speaking
-a fourth time — and, under a progressively revealed row, with padding that pushes the previous
-text off it. The gating of the indexed form is derived from the shared helper path, not observed
+`clear-line` gates like the inline messages and uses the ordinary duration. Its record is not
+merely blank-padded: all 49 characters of system string slot 50 are spaces, so it is a full-width
+line clear rather than a fourth statement. The gating of the indexed form is derived from the shared helper path, not observed
 separately. Four messages at 200 frames and one 200-frame wait make the whole response **1000
 display frames**, consistent within sampling granularity with the ~20 s the probe measured.
 
