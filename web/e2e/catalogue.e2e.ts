@@ -725,3 +725,28 @@ test('the placement map zooms, pans and resets by pointer and keyboard without l
   await page.goBack();
   await expect(page.locator('#map a')).toHaveCount(207);
 });
+
+test('the ledger states measured bank extents and the loads behind them', async ({
+  page
+}) => {
+  await page.goto('/catalogue');
+  const ledger = page.locator('#ledger');
+  // The extents were provisional until #280 measured both of their bounds.
+  await expect(ledger).not.toContainText('extent is provisional');
+  await expect(ledger).toContainText('378 entries');
+  await expect(ledger).toContainText('bounded above, not assumed');
+  await expect(ledger).toContainText('the $031700 glyph source table');
+  await expect(ledger).toContainText('Pasti STX track inventory');
+  await expect(ledger).toContainText(
+    'protected sectors are not a second, directly readable model bank'
+  );
+  await expect(ledger).toContainText('world resident-object stream');
+  await expect(ledger).toContainText('Source coverage incomplete');
+
+  // A slot a world binds says so on the record that holds it here.
+  await page.goto('/catalogue?model=object-041e7c');
+  await expect(page.locator('#details')).toContainText(
+    'differ between captured worlds'
+  );
+  await expect(page.locator('#details')).toContainText('GAEA holds it as');
+});

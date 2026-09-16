@@ -170,6 +170,26 @@
         "path": "Pasti STX"
       },
       {
+        "finding": "164 track records: cylinders 0-79 formatted on both sides, cylinders 80-81 unformatted and empty. Only two tracks carry sector descriptors. Cylinder 0 side 0 holds ten standard 512-byte sectors and an executable boot sector (checksum $1234). Cylinder 1 side 0 is the copy-protection track: 512 fuzzy-mask bytes, sector 1 unstable and failing its data CRC, and a bogus id naming cylinder 6 head 48 with no data record. The other 158 formatted tracks carry raw track images and no sector descriptors, so the game reads them with its own loader: 1017812 bytes of track image against 10240 bytes of standard-format sector data. No resident pointer table, record bank, glyph table or body-label table appears verbatim anywhere in the payload, so the payload is packed and the protected sectors are not a second, directly readable model bank. Reproduced by research/damocles-st/scripts/stx-inventory.py.",
+        "path": "Pasti STX track inventory"
+      },
+      {
+        "finding": "Two independent first-world loads and eight live memstates (Eris on foot and boarded, the Spaceport interior, Vesta, Gaea UR City and Dion) agree byte for byte on the surface-assembly table and bank, the building-detail table and bank, the ground record bank $01E790-$023FFF and the $031700 glyph table. All 212 unique object records decode identically in every captured world and no world introduces a record address the first-world table does not already name. Three byte pairs inside the object bank do differ: $03E415 is the $8003 unconditional patch site the three beacons share, and $03AEED and $03B302 lie outside every decoded record stream, so none of them reaches the census.",
+        "path": "ten-capture bank comparison"
+      },
+      {
+        "finding": "The object pointer table is not wholly resident. $055026 consumes the world's resident-object stream, writing the signed 16.16 X/Y/Z arrays at $63A8/$67A8/$6BA8 and then copying one table entry onto the entry's own slot at $05503C, filling slots downwards from $3FC. Slots 248-255 are the block the stream rewrites across the pinned captures; slots 250-255 land on a different model between Eris, Vesta and Gaea. Every copied value is another entry of the same table, so a world binds an existing model to a slot and never introduces a record. Slot 247 and below are identical in all ten captures.",
+        "path": "world resident-object stream"
+      },
+      {
+        "finding": "Exactly three instructions in the 1 MiB image name $6364. $04CC48 appends a six-byte record to a nine-entry table starting at $636A. $04ED4A replays it after $04EC94 has rebuilt the $ABDC cell workspace from the authored map: for each record whose first byte matches the world index $794E it writes the record's non-negative word into $ABDC + cell*4, replacing or clearing the surface assembly that cell places. $059F64 reads the same table on the negative-word records and substitutes character $DF for the entrance label glyph the cell-derived $7AFB base would otherwise give; its cell comparison at $059F7A is dead, because the $059F7E tst.w overwrites the flags before any branch reads them. So the table changes which already-resident structure a cell places, or one door label character; neither path introduces a record or repoints a pointer bank. The table is all zero in every one of the ten pinned captures, so no capture exercises either branch.",
+        "path": "$6364 mission table and the $DF branch"
+      },
+      {
+        "finding": "The decoded script ISA reaches 497 ops from all 64 entry slots with nothing undecodable and no reachable inline-native escape. Its only stores are to the interpreter's own state ($7482 records, the $7A42 word table, $6FAA bit records, flag word $7BD8, counter $7BD2, key $7B61, PC $7820) and, through $19, to the script bank at $070000 + operand. No opcode and none of the four native routines the handlers reach can write a pointer table, a record bank or $6364. See docs/research/damocles-script-isa.md.",
+        "path": "script bank"
+      },
+      {
         "finding": "VESTA live $ABDC (POLITBURO CITY): body selector $7AA8=$0038, current cell $7B5C=$64; 19 surface assemblies and 24 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
         "path": "Vesta live workspace"
       },
@@ -188,7 +208,7 @@
       "View-conditioned face groups, $8003/$8006/$8009 header states and object $6000 vector text are decoded as separate forms; the in-game selector for each form is named in the model conditions, not simulated.",
       "Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; surface slot zero supplies palette zero for structureless cells, empty records are intentional and add no geometry at $056634, and $F0/$F4 joins remain view-conditioned.",
       "The sky and the ground band below the horizon are excluded as rendering-only state, not omitted geometry: $059CE2 fills the whole viewport in colour index 8 and the MFP Timer B handler at $052280 rewrites $FF8250 at scanline $7BFC, taking the sky from $7C86 and the band from the body workspace word at $7A1A. The scene slots below $F0 that $05499E allocates are excluded on the same footing: they are a per-frame slot numbering over the $1E000 corner longwords already decoded here, drawn as two-point edges at $054AD2, and research/damocles-st/scripts/ground-extent-check.py reconstructs the live list, lowest slot and $5E40 bytes from captured RAM alone.",
-      "The documented zero-latch and $F0 post-plan constructors are retained, including the cell-derived door-key label; no discovered record carries an attachment omission. The $DF visual-change branch remains unexamined because $6364 is empty in the pinned captures.",
+      "The documented zero-latch and $F0 post-plan constructors are retained, including the cell-derived door-key label; no discovered record carries an attachment omission. The $DF visual-change branch is accounted for: $059F64 reads the nine-entry $6364 table and substitutes character $DF for the entrance label glyph, while $04ED4A replays the same table over the $ABDC cell workspace to replace or clear an already-resident surface assembly. Neither introduces a record, and the table is all zero in every pinned capture, so neither branch is exercised by an observed state.",
       "Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.",
       "Every $6000 vector-text record in the census was inventoried: all 41 set the inline flag and none selects font 4, so the indirect-pointer and font-4 paths are unreached rather than unresolved. $CCA0 tokens divide into slot-derived labels, frame animations whose script is model data, structure-workspace face markers, and one live countdown.",
       "Gaea Birmingham Island: examined the authored 16\u00d716 placement stream ending at $23E57, recovered 82 surface assemblies and 7 named places; 174 cells have no structure (including 99 CHEVY cell $17). Ground/pad records and Gaea islands other than this authored Birmingham map and any attached live $ABDC overlays remain unresolved.",
@@ -202,7 +222,7 @@
         "aliases": 0,
         "decoded": 210,
         "empty": 0,
-        "extentEvidence": "Contiguous relative-pointer table up to the following data record; extent is provisional.",
+        "extentEvidence": "Relative-pointer table $035700-$035CE7, 378 entries. The 20 bytes that follow are a zero longword and the first record's 16-byte name field, so a further entry would overlap authored record data: the entry count is bounded above, not assumed. Records run $035CFC-$042BBD (highest table target $042B0C), then 66 zero bytes up to the live projection workspace at $042C00. The bank is bounded in this capture; it is not a census of every packed disk file.",
         "kind": "object",
         "nullRecords": 1,
         "partial": 2,
@@ -215,7 +235,7 @@
         "aliases": 183,
         "decoded": 5,
         "empty": 9,
-        "extentEvidence": "Contiguous relative-pointer table up to the following data record; extent is provisional.",
+        "extentEvidence": "Relative-pointer table $00E900-$00ED5F, 280 entries. The 8 bytes that follow are the first record's eight metadata bytes, so a further entry would overlap authored record data: the entry count is bounded above, not assumed. Records run $00ED68-$01DEFA (highest table target $01DEF0), then 261 zero bytes up to the $01E000 ground workspace seed table. The bank is bounded in this capture; it is not a census of every packed disk file.",
         "kind": "structure",
         "nullRecords": 0,
         "partial": 261,
@@ -228,7 +248,7 @@
         "aliases": 0,
         "decoded": 2,
         "empty": 2,
-        "extentEvidence": "Contiguous relative-pointer table up to the following data record; extent is provisional.",
+        "extentEvidence": "Relative-pointer table $026000-$026207, 130 entries. The 6 bytes that follow are the first record's $8000 vertex-terminator preamble, so a further entry would overlap authored record data: the entry count is bounded above, not assumed. Records run $02620E-$0315D9 (highest table target $0313DA), then 294 zero bytes up to the $031700 glyph source table. The bank is bounded in this capture; it is not a census of every packed disk file.",
         "kind": "interior",
         "nullRecords": 0,
         "partial": 59,
@@ -251,9 +271,9 @@
       }
     ],
     "unexplored": [
-      "Packed Pasti STX disk track payload and provisional resident bank extents remain unreconciled; fuzzy/copy-protected sectors are not a second pointer bank. Follow-up: https://github.com/odogono/mercenary/issues/280.",
+      "The 158 custom-format Pasti STX tracks the game reads with its own loader stay packed: the inventory establishes what is on the disk and that no resident bank is a verbatim copy of it, not what each track decodes to. Only the loaded image is catalogued, so a bank reachable by a load no pinned capture performs would not appear here. Follow-up: https://github.com/odogono/mercenary/issues/280.",
       "Live $ABDC workspaces other than Eris first-world, Vesta Politburo City, Gaea UR City, and Dion; Gaea islands other than authored Birmingham and live UR City, with remaining places and residences. Follow-up: https://github.com/odogono/mercenary/issues/172.",
-      "Mission-disk or script-created visual changes that would replace a resident slot, including the $DF attachment branch whose $6364 table is empty in the pinned captures. Follow-up: https://github.com/odogono/mercenary/issues/280.",
+      "The $6364 mission table is all zero in every pinned capture, so neither the $ABDC cell replacement at $04ED4A nor the $DF entrance-label substitution at $059F64 is exercised by an observed state: both are read from the code and bounded by it, not watched running. A capture that populates the table would confirm the replacement and the $DF glyph directly. Follow-up: https://github.com/odogono/mercenary/issues/280.",
       "The running EXPLOSIVE-ARMED! countdown: its $CD14 readout is live mission state, so only the disarmed reading every pinned capture holds is drawn. The indirect text pointer and font 4 are unreached by every record in the census, so neither is a form left to find. Follow-up: https://github.com/odogono/mercenary/issues/279.",
       "The scene colour binding for object slot 338 remains unverified: the $7000 ground records that place it lie above the highest record any captured $1E400 cell table selects, so no capture names the palette its cell would bind. Follow-up: https://github.com/odogono/mercenary/issues/277.",
       "The viewport background is a raster block fill at $059CE2 using the surface record's two scene colours, so it holds no geometry; the producer of the ground band below the horizon and the route list at $05499E allocating scene slots below $F0 remain unexplored. Follow-up: https://github.com/odogono/mercenary/issues/281."
@@ -148319,7 +148339,7 @@
       "name": "Object 248",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "",
+      "reason": "Resident slots 248, 249, 250 differ between captured worlds, so this binding is the pinned first-world capture's rather than a resident fact; GAEA holds it as object-04190e; VESTA holds it as object-041cbe.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -148448,6 +148468,11 @@
           },
           "name": "Recovered form"
         }
+      ],
+      "worldConditionedSlots": [
+        248,
+        249,
+        250
       ]
     },
     {
@@ -148459,7 +148484,7 @@
       "name": "Object 251",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "",
+      "reason": "Resident slots 251, 252, 253 differ between captured worlds, so this binding is the pinned first-world capture's rather than a resident fact; GAEA holds it as object-04190e; GAEA holds it as object-041992; VESTA holds it as object-04190e; VESTA holds it as object-041992; VESTA holds it as object-041b1e.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -148588,6 +148613,11 @@
           },
           "name": "Recovered form"
         }
+      ],
+      "worldConditionedSlots": [
+        251,
+        252,
+        253
       ]
     },
     {
@@ -148599,7 +148629,7 @@
       "name": "Object 254",
       "nameStatus": "unknown",
       "omissions": [],
-      "reason": "",
+      "reason": "Resident slots 254, 255 differ between captured worlds, so this binding is the pinned first-world capture's rather than a resident fact; GAEA holds it as object-04190e; GAEA holds it as object-041992; VESTA holds it as object-04190e; VESTA holds it as object-041992.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
@@ -148893,6 +148923,10 @@
           },
           "name": "Recovered form"
         }
+      ],
+      "worldConditionedSlots": [
+        254,
+        255
       ]
     },
     {
@@ -1676361,7 +1676395,7 @@
       "name": "GUM STORE"
     }
   ],
-  "schemaVersion": 10,
+  "schemaVersion": 11,
   "source": {
     "authority": "Damocles Atari ST Working Authority",
     "evidence": "docs/research/damocles-catalogue.md",
@@ -1676753,7 +1676787,19 @@
         "object-035cfc"
       ],
       "entryCount": 378,
-      "extentEvidence": "Contiguous relative-pointer table up to the following data record; extent is provisional.",
+      "extent": {
+        "bankEnd": 273342,
+        "entryCount": 378,
+        "firstRecord": 220412,
+        "followedAt": 273408,
+        "followedBy": "the live projection workspace at $042C00",
+        "lastRecord": 273164,
+        "preambleBytes": 20,
+        "tableEnd": 220392,
+        "tableStart": 218880,
+        "zeroFillBytes": 66
+      },
+      "extentEvidence": "Relative-pointer table $035700-$035CE7, 378 entries. The 20 bytes that follow are a zero longword and the first record's 16-byte name field, so a further entry would overlap authored record data: the entry count is bounded above, not assumed. Records run $035CFC-$042BBD (highest table target $042B0C), then 66 zero bytes up to the live projection workspace at $042C00. The bank is bounded in this capture; it is not a census of every packed disk file.",
       "kind": "object"
     },
     {
@@ -1677041,7 +1677087,19 @@
         "structure-00ed68"
       ],
       "entryCount": 280,
-      "extentEvidence": "Contiguous relative-pointer table up to the following data record; extent is provisional.",
+      "extent": {
+        "bankEnd": 122619,
+        "entryCount": 280,
+        "firstRecord": 60776,
+        "followedAt": 122880,
+        "followedBy": "the $01E000 ground workspace seed table",
+        "lastRecord": 122608,
+        "preambleBytes": 8,
+        "tableEnd": 60768,
+        "tableStart": 59648,
+        "zeroFillBytes": 261
+      },
+      "extentEvidence": "Relative-pointer table $00E900-$00ED5F, 280 entries. The 8 bytes that follow are the first record's eight metadata bytes, so a further entry would overlap authored record data: the entry count is bounded above, not assumed. Records run $00ED68-$01DEFA (highest table target $01DEF0), then 261 zero bytes up to the $01E000 ground workspace seed table. The bank is bounded in this capture; it is not a census of every packed disk file.",
       "kind": "structure"
     },
     {
@@ -1677179,7 +1677237,19 @@
         "interior-02d3a8"
       ],
       "entryCount": 130,
-      "extentEvidence": "Contiguous relative-pointer table up to the following data record; extent is provisional.",
+      "extent": {
+        "bankEnd": 202202,
+        "entryCount": 130,
+        "firstRecord": 156174,
+        "followedAt": 202496,
+        "followedBy": "the $031700 glyph source table",
+        "lastRecord": 201690,
+        "preambleBytes": 6,
+        "tableEnd": 156168,
+        "tableStart": 155648,
+        "zeroFillBytes": 294
+      },
+      "extentEvidence": "Relative-pointer table $026000-$026207, 130 entries. The 6 bytes that follow are the first record's $8000 vertex-terminator preamble, so a further entry would overlap authored record data: the entry count is bounded above, not assumed. Records run $02620E-$0315D9 (highest table target $0313DA), then 294 zero bytes up to the $031700 glyph source table. The bank is bounded in this capture; it is not a census of every packed disk file.",
       "kind": "interior"
     },
     {

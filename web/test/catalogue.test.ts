@@ -43,11 +43,12 @@ const fixture = () => ({
       slots: [0],
       sourceAddress: 1,
       status: 'unresolved',
-      variants: []
+      variants: [],
+      worldConditionedSlots: undefined as number[] | undefined
     }
   ],
   places: [],
-  schemaVersion: 10,
+  schemaVersion: 11,
   source: {
     authority: 'Synthetic test',
     evidence: 'test',
@@ -60,6 +61,18 @@ const fixture = () => ({
       address: 0,
       entries: ['object-1'],
       entryCount: 1,
+      extent: {
+        bankEnd: 40,
+        entryCount: 1,
+        firstRecord: 8,
+        followedAt: 64,
+        followedBy: 'a synthetic follower',
+        lastRecord: 8,
+        preambleBytes: 4,
+        tableEnd: 4,
+        tableStart: 0,
+        zeroFillBytes: 24
+      },
       extentEvidence: 'Synthetic',
       kind: 'object'
     }
@@ -136,6 +149,28 @@ describe('Damocles catalogue contract', () => {
     };
     expect(() => parseCatalogue(badByte)).toThrow('byte');
   });
+  it('keeps a measured bank extent and the slots a world binds', () => {
+    const data = parseCatalogue(fixture());
+    expect(data.tables[0]!.extent!.followedAt).toBe(64);
+    const bound = fixture();
+    bound.models[0]!.worldConditionedSlots = [0];
+    expect(parseCatalogue(bound).models[0]!.worldConditionedSlots).toEqual([0]);
+  });
+
+  it('rejects a bank extent that does not bound anything', () => {
+    // The extent is only evidence while the table stops short of its first
+    // record and the bank stops short of what follows it.
+    const overrun = fixture();
+    overrun.tables[0]!.extent.firstRecord = 2;
+    expect(() => parseCatalogue(overrun)).toThrow('overruns its first record');
+    const past = fixture();
+    past.tables[0]!.extent.bankEnd = 64;
+    expect(() => parseCatalogue(past)).toThrow('overruns what follows');
+    const miscounted = fixture();
+    miscounted.tables[0]!.extent.entryCount = 2;
+    expect(() => parseCatalogue(miscounted)).toThrow('entry count');
+  });
+
   it('rejects unsupported versions and broken references', () => {
     expect(() => parseCatalogue({ ...fixture(), schemaVersion: 99 })).toThrow(
       'version'

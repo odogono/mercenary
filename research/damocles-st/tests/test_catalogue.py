@@ -2003,3 +2003,258 @@ class SceneColourTemplateTests(unittest.TestCase):
             bindings,
             {'object-041b1e': {62: ['first-world cell $33'], 2: ['DION cell $23']}},
         )
+
+
+class BankExtentTests(unittest.TestCase):
+    """A bank extent is measured from the capture, not asserted."""
+
+    def payload(self):
+        root = Path(__file__).resolve().parents[3]
+        return json.loads(
+            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
+        )
+
+    def test_each_pointer_bank_reports_measured_bounds(self):
+        document = self.payload()
+        extents = {
+            table['kind']: table['extent']
+            for table in document['tables'] if 'extent' in table
+        }
+        self.assertEqual(sorted(extents), ['interior', 'object', 'structure'])
+        # The entry count is bounded above: one more entry would land on the
+        # first record's own preamble, which each bank names.
+        self.assertEqual(extents['object']['tableEnd'], 0x035CE8)
+        self.assertEqual(extents['object']['firstRecord'], 0x035CFC)
+        self.assertEqual(extents['object']['preambleBytes'], 20)
+        self.assertEqual(extents['object']['bankEnd'], 0x042BBE)
+        self.assertEqual(extents['object']['followedAt'], 0x042C00)
+        self.assertEqual(extents['structure']['tableEnd'], 0x00ED60)
+        self.assertEqual(extents['structure']['preambleBytes'], 8)
+        self.assertEqual(extents['structure']['followedAt'], 0x01E000)
+        self.assertEqual(extents['interior']['tableEnd'], 0x026208)
+        self.assertEqual(extents['interior']['preambleBytes'], 6)
+        self.assertEqual(extents['interior']['followedAt'], 0x031700)
+        for kind, extent in extents.items():
+            self.assertGreater(extent['zeroFillBytes'], 0, kind)
+            evidence = next(
+                table['extentEvidence'] for table in document['tables']
+                if table['kind'] == kind
+            )
+            self.assertNotIn('provisional', evidence)
+            self.assertIn('bounded above', evidence)
+
+    def test_a_bank_that_reaches_its_follower_has_outgrown_the_bound(self):
+        from damocleslab.catalogue import bank_extent
+
+        data = bytearray(0x100000)
+        data[0x035CFC:0x035D00] = b'\x01\x02\x03\x04'
+        data[0x042BFF] = 0x01
+        with self.assertRaisesRegex(ValueError, 'runs into'):
+            bank_extent(bytes(data), 'object', 0x35700, 378, [0x035CFC], [0x035D00])
+
+
+class WorldConditionedSlotTests(unittest.TestCase):
+    """The top object slots are a world binding, not a resident fact."""
+
+    def ram(self, name):
+        from damocleslab.catalogue import hatari_memstate_ram
+
+        root = Path(__file__).resolve().parents[1]
+        return hatari_memstate_ram((root / 'snapshots' / f'{name}.sav').read_bytes())
+
+    def first_world(self):
+        root = Path(__file__).resolve().parents[1]
+        run = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d'
+        if not (run / 'observed.ram').is_file():
+            self.skipTest('first-world capture lives in the ignored research workspace')
+        return (run / 'observed.ram').read_bytes()
+
+    def test_live_worlds_repoint_only_the_evidenced_slot_window(self):
+        from damocleslab.catalogue import (
+            WORLD_CONDITIONED_OBJECT_SLOTS, object_slot_bindings,
+        )
+
+        data = self.first_world()
+        seen = set()
+        for name in ('vesta-parliament-4-6', 'gaea-ur-city-4-2', 'dion-2-3'):
+            for binding in object_slot_bindings(data, self.ram(name)):
+                self.assertIn(binding['slot'], WORLD_CONDITIONED_OBJECT_SLOTS)
+                seen.add(binding['slot'])
+        # Dion happens to agree with the first world, so the union is 250-255.
+        self.assertEqual(sorted(seen), [250, 251, 252, 253, 254, 255])
+
+    def test_a_slot_outside_the_window_is_a_load_to_examine(self):
+        from damocleslab.catalogue import object_slot_bindings
+
+        data = self.first_world()
+        workspace = bytearray(data)
+        struct.pack_into('>I', workspace, 0x35700 + 12 * 4,
+                         struct.unpack_from('>I', data, 0x35700 + 13 * 4)[0])
+        with self.assertRaisesRegex(ValueError, 'outside the world-conditioned window'):
+            object_slot_bindings(data, bytes(workspace))
+
+    def test_a_slot_pointed_at_an_unnamed_address_is_rejected(self):
+        from damocleslab.catalogue import object_slot_bindings
+
+        data = self.first_world()
+        workspace = bytearray(data)
+        struct.pack_into('>I', workspace, 0x35700 + 250 * 4, 0x12345)
+        with self.assertRaisesRegex(ValueError, 'resident table does not name'):
+            object_slot_bindings(data, bytes(workspace))
+
+    def test_the_payload_qualifies_every_model_the_window_reaches(self):
+        root = Path(__file__).resolve().parents[3]
+        document = json.loads(
+            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
+        )
+        qualified = {
+            model['id']: model for model in document['models']
+            if model.get('worldConditionedSlots')
+        }
+        self.assertEqual(
+            sorted(qualified), ['object-041e7c', 'object-041edc', 'object-041f9c']
+        )
+        for model in qualified.values():
+            self.assertIn('differ', model['reason'])
+            self.assertIn('pinned first-world capture', model['reason'])
+        self.assertIn('GAEA holds it as', qualified['object-041e7c']['reason'])
+
+    def test_no_captured_world_introduces_an_object_record(self):
+        from damocleslab.catalogue import decode_object_forms
+
+        data = self.first_world()
+        hardware = list(struct.unpack_from('>16H', data, 0x6fd00))
+
+        def census(image):
+            records = {}
+            for slot in range(378):
+                address = 0x35700 + struct.unpack_from('>I', image, 0x35700 + slot * 4)[0]
+                if address in records:
+                    continue
+                for palette in (None, 0):
+                    try:
+                        variants, _conditions, _gaps = decode_object_forms(
+                            image, address, None if palette is None else
+                            [0] * 16, hardware,
+                        )
+                    except (ValueError, struct.error):
+                        continue
+                    records[address] = json.dumps(
+                        [variant['mesh'] for variant in variants], sort_keys=True
+                    )
+                    break
+                else:
+                    records[address] = 'undecoded'
+            return records
+
+        resident = census(data)
+        for name in ('vesta-parliament-4-6', 'gaea-ur-city-4-2', 'dion-2-3'):
+            live = census(self.ram(name))
+            self.assertEqual(set(live), set(resident), name)
+            self.assertEqual(live, resident, name)
+
+
+class ResidentBankIdentityTests(unittest.TestCase):
+    """Every captured world shares the surface, detail and ground banks."""
+
+    RANGES = {
+        'surface table': (0x00E900, 0x00ED60),
+        'surface bank': (0x00ED60, 0x01DEFB),
+        'detail table': (0x026000, 0x026208),
+        'detail bank': (0x026208, 0x0315DA),
+        'ground records': (0x01E790, 0x024000),
+        'glyph table': (0x031700, 0x031C00),
+    }
+
+    def captures(self):
+        from damocleslab.catalogue import hatari_memstate_ram
+
+        root = Path(__file__).resolve().parents[1]
+        run = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d'
+        if not (run / 'observed.ram').is_file():
+            self.skipTest('captures live in the ignored research workspace')
+        images = {'first-world': (run / 'observed.ram').read_bytes()}
+        for path in sorted((root / 'snapshots').glob('*.sav')):
+            images[path.stem] = hatari_memstate_ram(path.read_bytes())
+        return images
+
+    def test_the_shared_banks_are_byte_identical(self):
+        images = self.captures()
+        self.assertGreaterEqual(len(images), 9)
+        base = images['first-world']
+        for name, (start, end) in self.RANGES.items():
+            for label, image in images.items():
+                self.assertEqual(image[start:end], base[start:end], f'{name} / {label}')
+
+    def test_the_object_bank_differs_only_where_the_census_does_not_read(self):
+        images = self.captures()
+        base = images['first-world']
+        differing = {
+            offset for image in images.values()
+            for offset in range(0x035CE8, 0x042BBE)
+            if image[offset] != base[offset]
+        }
+        # $03E415 is the $8003 unconditional patch site the three beacons share;
+        # the decoder writes its own patch there, so the live value never reaches
+        # a mesh. The other two lie outside every decoded record stream.
+        self.assertEqual(
+            sorted(differing),
+            [0x03AEED, 0x03AEEE, 0x03B302, 0x03B303, 0x03E415, 0x03E416],
+        )
+
+
+class PastiInventoryTests(unittest.TestCase):
+    """The disk image is inventoried by structure; its payload stays packed."""
+
+    def inventory(self):
+        import importlib.util
+
+        root = Path(__file__).resolve().parents[1]
+        stx = (
+            root.parents[1]
+            / 'roms/atarist/damocles_-_mercenary_ii_novagen_software_(uk).stx'
+        )
+        if not stx.exists():
+            self.skipTest('Working-Authority STX is Restricted Material')
+        spec = importlib.util.spec_from_file_location(
+            'stx_inventory', root / 'scripts' / 'stx-inventory.py'
+        )
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module, module.parse(stx.read_bytes())
+
+    def test_the_container_accounts_for_every_byte(self):
+        module, image = self.inventory()
+        self.assertEqual(image['version'], 3)
+        self.assertEqual(image['trackCount'], 164)
+        self.assertEqual(image['size'], 1031930)
+
+    def test_only_two_tracks_are_readable_as_standard_sectors(self):
+        module, image = self.inventory()
+        report = module.report(image, [])
+        self.assertEqual(
+            report['geometry']['trackKinds'],
+            {'sectored': 2, 'raw-image': 158, 'unformatted': 4},
+        )
+        self.assertEqual(report['geometry']['describedSectorBytes'], 10240)
+        self.assertEqual(report['geometry']['trackImageBytes'], 1017812)
+        self.assertEqual(report['geometry']['formattedCylinders'], [0, 79])
+        self.assertTrue(report['bootSector']['executable'])
+
+    def test_the_protection_track_is_not_a_second_model_bank(self):
+        module, image = self.inventory()
+        report = module.report(image, [])
+        self.assertEqual(len(report['protection']), 1)
+        entry = report['protection'][0]
+        self.assertEqual((entry['cylinder'], entry['side']), (1, 0))
+        self.assertIn('512 fuzzy-mask bytes', entry['notes'])
+
+    def test_no_resident_bank_is_a_verbatim_copy_of_the_payload(self):
+        module, image = self.inventory()
+        root = Path(__file__).resolve().parents[1]
+        run = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d'
+        if not (run / 'observed.ram').is_file():
+            self.skipTest('first-world capture lives in the ignored research workspace')
+        report = module.report(image, [('observed.ram', (run / 'observed.ram').read_bytes())])
+        for item in report['reconciliation'][0]['ranges']:
+            self.assertEqual(item['verbatimTracks'], [], item['range'])
