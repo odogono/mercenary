@@ -1870,16 +1870,27 @@ DISK_LOAD_EXAMINED = [
 ]
 
 UNEXPLORED_COVERAGE = [
-    'Packed Pasti STX disk track payload still not unpacked into models; fuzzy/copy-protected sectors are not a second pointer bank.',
-    'Live $ABDC workspaces other than Eris first-world, Vesta Politburo City, Gaea UR City, and Dion; Gaea islands other than authored Birmingham and live UR City.',
-    'Mission-disk or script-created visual changes that would replace a resident slot.',
+    'Packed Pasti STX disk track payload and provisional resident bank extents remain unreconciled; '
+    'fuzzy/copy-protected sectors are not a second pointer bank. Follow-up: '
+    'https://github.com/odogono/mercenary/issues/280.',
+    'Live $ABDC workspaces other than Eris first-world, Vesta Politburo City, Gaea UR City, and Dion; '
+    'Gaea islands other than authored Birmingham and live UR City, with remaining places and residences. '
+    'Follow-up: https://github.com/odogono/mercenary/issues/172.',
+    'Mission-disk or script-created visual changes that would replace a resident slot, including the '
+    '$DF attachment branch whose $6364 table is empty in the pinned captures. Follow-up: '
+    'https://github.com/odogono/mercenary/issues/280.',
     'Live articulation angles ($7888) for articulated building details, which the catalogue shows at rest '
-    'because $053D74 rotates a detail in the structure-scaled frame this model is not held in; '
-    'Building detail 69 references projected slots beyond its own vertex list.',
+    'because $053D74 rotates a detail in the structure-scaled frame this model is not held in. '
+    'Follow-up: https://github.com/odogono/mercenary/issues/278.',
     'Object vector text whose live $CCA0 token is not a slot-derived label, and text that resolves through '
-    'indirect pointers or the state-conditioned font 4; '
-    'post-plan attachment forms other than the documented zero-latch and $F0 constructors.',
-'The viewport background is a raster block fill at $059CE2 using the surface record\'s two scene colours, so it holds no geometry; the producer of the ground band below the horizon is still unexplored.',
+    'indirect pointers or the state-conditioned font 4. Follow-up: '
+    'https://github.com/odogono/mercenary/issues/279.',
+    'Scene colour bindings for unplaced object slots 333-338 remain unverified. Follow-up: '
+    'https://github.com/odogono/mercenary/issues/277.',
+    'The viewport background is a raster block fill at $059CE2 using the surface record\'s two scene '
+    'colours, so it holds no geometry; the producer of the ground band below the horizon and the route '
+    'list at $05499E allocating scene slots below $F0 remain unexplored. Follow-up: '
+    'https://github.com/odogono/mercenary/issues/281.',
 ]
 
 BUILDING_VECTOR_TEXT_MODELS = {
@@ -3136,7 +3147,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         'Scene palette binding for unplaced objects 333-338, and named places outside the captured Eris workspace, authored Gaea Birmingham Island map, live Gaea UR City overlay, and live Dion overlay remain incomplete.',
         'View-conditioned face groups, $8003/$8006/$8009 header states and object $6000 vector text are decoded as separate forms; the in-game selector for each form is named in the model conditions, not simulated.',
         'Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; surface slot zero supplies palette zero for structureless cells, empty records are intentional and add no geometry at $056634, and $F0/$F4 joins remain view-conditioned.',
-        'Selectors the documented zero-latch and $F0 post-plan constructors accept are retained; other attachment forms stay named in the model reason.',
+        'The documented zero-latch and $F0 post-plan constructors are retained, including the cell-derived door-key label; no discovered record carries an attachment omission. The $DF visual-change branch remains unexamined because $6364 is empty in the pinned captures.',
         'Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.',
     ]
     if gaea_coverage:

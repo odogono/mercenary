@@ -67,8 +67,8 @@ its original plan mesh, scaled region bounds (signed-word endpoint sentinels sta
 scales. Detail selectors retain two groups of ordered boxes and default **record**
 indices in raw model coordinates. Unsupported or truncated selectors are omitted as a whole and explained
 in the model reason. The census retains every selector the documented post-plan grammar
-accepts (254 in the current first-world extract, including Structure 75 and its Structure 76
-alias, and `$xxF0` constructor variants such as `$40F0`/`$42F0`/`$82F0`) and 58 detail
+accepts (256 in the current first-world extract, including Structure 75 and its Structure 76
+alias, and `$xxF0` constructor variants such as `$40F0`/`$42F0`/`$82F0`) and 59 detail
 selectors, which is every detail whose geometry decodes. The first detail group starts
 on the next word boundary after the byte-sized record stream. Empty plan meshes are valid
 when all queues are empty. The spaceport's combined inspection variants also carry
@@ -88,7 +88,7 @@ takes the first that contains the player, and otherwise falls back to the list
 stored after the box terminator.
 
 The catalogue viewer now offers **each recovered region as its own inspection
-form** beside a structure's other views: 3,844 forms across the 254 structures
+form** beside a structure's other views: 3,885 forms across the 256 structures
 that retain a selector. A form draws the region's queue in source order (plan
 walls, Entrance Attachments and the faces an attachment contributes) and adds
 the linked detail when region flag 15 is set, ordered by flags 14 and 12. Free
@@ -272,9 +272,10 @@ code. Targeted disassembly used to establish them remains ignored at
   (`$053D4A`); the viewer uses the neutral pose, not a below-ground coordinate.
   An `$8001` X word ends an articulated detail's vertices; `$053B4A` then reads
   an axis word and a pivot scaled by the detail's X/Y/Z factors before the face
-  records. Details 6, 7, 8 and 68 decode this way and keep the `articulated`
-  omission. Detail 69's faces reference projected slots 56–63 beyond its 55
-  vertices, so it stays unresolved with that reason.
+  records. Details 6, 7, 8, 68 and 69 decode this way and keep the `articulated`
+  omission because their rotation needs the structure-scaled frame. Detail 69's
+  extra projected-slot references are proven unreachable as described below;
+  they no longer constitute a decode failure.
 - `$053A1E` gives a building detail 63 shared vertex slots and `$053D32` fills
   only the ones the record's own vertex list supplies, so a face record naming a
   higher slot would draw whatever the previous model left behind. Building
@@ -356,10 +357,12 @@ code. Targeted disassembly used to establish them remains ignored at
   way. See [Structure 100](damocles-eris-structure-01a618.md).
 - Negative structure headers select an alias, scales, palette and interior.
   Alias indirection which the decoder cannot resolve remains unresolved. Authored
-  surface attachments/openings after the basic wall list are not silently omitted
-  from a “decoded” result: their presence makes the model partial. `$40F0` and
-  `$82F0` use the same constructors as `$4000`/`$8200` when `$7AFB` is
-  zero (pinned first-world); the live `$7AFB≠0` predicate remains unresolved.
+  surface attachments/openings after the basic wall list are retained by the
+  supported constructors; no record currently carries an `attachments` omission.
+  `$40F0` and `$82F0` use the same geometry as `$4000`/`$8200`. The low byte
+  selects a door-key label through the cell-derived `$7AFB` base, not a shape;
+  schema 9 retains that rule as `keyIndex`. The `$DF` visual-change branch
+  still needs evidence from a populated `$6364` table (see the disk-load follow-up).
 - An Entrance Attachment record is a control word, four rectangle words, its
   leaf colours and a four-word Proximity Box. The **one-leaf** path stores three
   colours at `$05A08A` and so occupies **24 bytes**; the two-leaf path at
@@ -542,19 +545,26 @@ adding **31** workspace-local ground models. `$7A6C` still names first-world
 Birmingham Island; those Gaea place identities are not applied to Dion. See
 [Dion live workspace](damocles-dion-workspace.md).
 
-Still unexplored or incomplete: packed Pasti STX track payload, live
-`$ABDC` workspaces other than Eris first-world, Vesta Politburo City, Gaea UR City and Dion, Gaea islands other than Birmingham and UR City, remaining
-named-place lists, remaining object residences/transforms, live articulation
-angles for the four articulated building details, whose rotation happens in the
-structure-scaled frame, Building detail 69's extra projected slots, object text
-through live `$CCA0` tokens, indirect text pointers and font 4, the palette
-binding of unplaced objects 333–338, the live `$7AFB` attachment predicate,
-the producer of the ground band below the horizon, and script-created visual
-changes. The remaining nine unresolved records are NULL, five empty surface
-records, two empty building details and Building detail 69. Resident model banks do not change between first-world and occupied-Spaceport RAM.
-The recovery ledger exposes this boundary; it does not declare the whole game's extraction
-complete. Further research can replace unresolved records without changing their
-identities or requiring a playable Damocles session.
+The census gives every discovered record a verdict, but `coverage.complete`
+remains **false**. The remaining work is tracked separately:
+
+| Coverage gap | Follow-up |
+| --- | --- |
+| Unexamined `$ABDC` workspaces, Gaea islands, named places and associated residences/transforms beyond the captured coverage | [#172](https://github.com/odogono/mercenary/issues/172) |
+| Unverified scene palette bindings for object slots 333–338 (six records) | [#277](https://github.com/odogono/mercenary/issues/277) |
+| Five articulated building details in the structure-scaled frame | [#278](https://github.com/odogono/mercenary/issues/278) |
+| Three live `$CCA0` object-text cases, indirect text pointers and state-conditioned font 4 | [#279](https://github.com/odogono/mercenary/issues/279) |
+| Packed Pasti STX load paths, provisional bank extents and mission/script-created visual replacements | [#280](https://github.com/odogono/mercenary/issues/280) |
+| Ground-band producer and the `$05499E` route list allocating scene slots below `$F0` | [#281](https://github.com/odogono/mercenary/issues/281) |
+| Representative visual fidelity against Working Authority captures | [#174](https://github.com/odogono/mercenary/issues/174) |
+
+Building detail 69's unreachable projected-slot records, authored empty/NULL
+records, and the cell-derived `$7AFB` attachment label are accounted for; they
+are not outstanding decode failures. Resident model banks do not change between
+first-world and occupied-Spaceport RAM. Partial records still include neutral-pose
+assemblies and inspection limits, so the partial total is not a count of distinct
+unknown grammars. These follow-ups preserve the boundary between a reconciled
+census of examined evidence and a claim that the whole game's extraction is complete.
 
 ## Viewer correction after inspection
 
