@@ -203,17 +203,17 @@ rows marked *probable* are single-pass readings that were not re-derived.
 | Op | Handler | Decoded meaning |
 |---:|---|---|
 | `$00`, `$1A` | `$051972` | Unused (offset `$0000`, points at the table) |
-| `$01` | `$0519BC` | **Message**: stash text pointer in `$7B98`, scan to `$00`, word-align PC, set `$7BA0` = 1 (suspends the VM) |
+| `$01` | `$0519BC` | **Message**: stash long text pointer at `$7B98`, scan to `$00`, word-align PC, set `$7BA0` = 1 (suspends the VM) |
 | `$02` | `$0519E2` | Clear `$7B9C`, the counter `$07` tests — **reset wait** |
 | `$03` | `$0519EE` | **Jump**: operand → `$7820` |
 | `$04` | `$0519F6` | **Call**: push PC word on the script stack at `$6266`/`$6268`, then jump |
 | `$05` | `$051A08` | **Return**: pop the script stack into `$7820` |
 | `$06` | `$051A16` | Predicate: two byte operands vs `$7A2D` and `$7A35` |
-| `$07` | `$051A42` | **Wait**: predicate on `$7B9C` vs operand |
+| `$07` | `$051A42` | **Wait**: unsigned word `$7B9C` < operand; unmodified `$0007` branches while below, falls through at equality or above (#287) |
 | `$08` | `$051A4C` | `jsr (a0)` — **native 68k code inline in the script stream**, then skip 4 |
 | `$09` | `$051A56` | As `$08`, then predicate on the result |
 | `$0A` | `$051A5E` | Predicate against a pseudo-random word walked from the `$7E18`/`$7E1A` pointer |
-| `$0B` | `$051A7E` | **Key/case**: operand vs `$7B61`; on match `bsr $054848` |
+| `$0B` | `$051A7E` | **Key/case**: operand low byte vs `$7B61`; on match request sound via `bsr $054848`; does not clear the key |
 | `$0C` | `$051A8C` | Predicate on the sign of a `$6FAA` record indexed by `$7C3E` |
 | `$0D` | `$051AA6` | Write 6 bytes into an 8-byte-strided record table at `$7482`, indexed by operand |
 | `$0E` | `$051AE6` | **BCD add**: six `abcd` steps over a 6-byte packed-decimal field of a `$7482` record, with an `$00F8` special case calling `$054848` |
@@ -229,7 +229,7 @@ rows marked *probable* are single-pass readings that were not re-derived.
 | `$18` | `$051BFC` | Predicate on the word at `$070000` + operand |
 | `$19` | `$051C10` | **Store word** into the script bank at `$070000` + operand |
 | `$1B` | `$051C2C` | Random message: pseudo-random index into a bank table, then the `$01`-style message commit |
-| `$1C` | `$051C74` | Set `$7B60` = `$00FF` |
+| `$1C` | `$051C74` | Write word `$00FF` at `$7B60`: byte `$7B60` = 0, key byte `$7B61` = `$FF` |
 | `$1D` | `$051C80` | Predicate on `$7C40` vs bytes at the `$7C3E` pointer |
 | `$1E` | `$051C92` | Copy one `$7A42` word to another (double-indexed) |
 | `$1F` | `$051CAA` | Predicate on `$7C3C` vs `$7B5C` |
@@ -241,9 +241,18 @@ rows marked *probable* are single-pass readings that were not re-derived.
 
 Interpreter state named by the handlers: script PC `$00781E` (low word
 `$007820`), call stack `$006266`/`$006268`, message pointer `$007B98` with
-counter `$007B9A`, message gate `$007BA0`, wait counter `$007B9C`, flag word
+low word `$007B9A`, message gate `$007BA0`, wait counter `$007B9C`, flag word
 `$007BD8`, counter `$007BD2`, key `$007B61`, record table `$007482`, word table
 `$007A42`, bit records `$006FAA`, RNG pointer `$007E18`/`$007E1A`.
+
+#287 rechecks the first offer in [the first-offer research](damocles-first-offer.md).
+The native caller at `$0594FA` dispatches one opcode at a time; the counter is
+incremented separately at `$051E3A` in the interrupt routine, subject to the
+`$7A26` guard. Therefore a Y/O/N/counter polling sequence is not atomic.
+The message gate holds the successor PC before reset-wait executes, and neither
+reset-wait nor a matched key predicate consumes key byte `$7B61`. The first
+offer's explicit `$1C` precedes its message. Counter ticks remain distinct from
+a proven seconds-per-tick conversion.
 
 ### Bank layout and full decode
 
@@ -300,11 +309,14 @@ Working Disassembly of two bounded windows — `$054700`–`$0556FF` and
 `$04C400`–`$04D3FF` — decodes all four. They are **not** one kind of thing:
 two drive the script/message scheduler, two are the sound driver.
 
-**`$054848` — sound-effect trigger (stage 1).** Guarded three times: it returns
-immediately if `$7A0C`, `$7C0C`, or `$0003 3F68` is non-zero. Otherwise it sets
-the tick counter `$7A78` = 3, stores `$0004C556` into the vector slot
-`$0004BF54`, sets `$7C06` = `$0A`, and writes the YM2149 directly — register
-`$0A` (channel C amplitude) ← `$00`.
+**`$054848` — sound-effect request (stage 1).** The #287 static recheck
+corrects the original guard ordering: `$054848` first tests `$7A0C` and returns
+without arming if it is non-zero. Otherwise `$054850` sets the tick counter
+`$7A78` = 3 and `$054856` stores `$0004C556` into vector slot `$0004BF54`.
+Only **after arming** does it test `$7C0C` at `$054860` and `$00033F68` at
+`$054868`. If either is non-zero it skips the immediate PSG writes; otherwise
+it sets `$7C06` = `$0A` and writes YM2149 register `$0A` (channel C amplitude)
+← `$00`. Request entry, vector arming and emitted sound are distinct facts.
 
 It is reached from three script handlers: `bsr` at `$051A86` (`$0B` key/case,
 on match), and `jsr` at `$051AEE` (`$0E`) and `$051BAA` (`$15`), both on the
@@ -315,8 +327,11 @@ this is a shared engine entry point rather than a script-only one.
 **`$0004BF54` — a per-pass sound-step vector.** `$051E0E` does
 `movea.l $0004BF54,a0` and `$051E14` `jsr (a0)`; a sibling slot `$0004BF58` is
 called the same way immediately after. The slot's idle value is `$00051E86`,
-which is a bare `rts`. So `$054848` arms a step to run on the next pass and
-returns at once — a fire-and-forget effect, not a blocking one.
+which is a bare `rts`. When its first guard permits, `$054848` arms a step
+and returns at once.
+At `$051DFE`, non-zero `$00033F68` selects an alternate native sound path,
+bypassing both vectors. Thus even an armed step is not proof that PSG writes
+have occurred, still less that a player heard the effect.
 
 **`$0004C556` — stage 2, the effect body.** Sets `$7A78` = `$0F`, programs the
 envelope period (registers `$0B`/`$0C` ← `$00`/`$1F`) and the channel B tone
@@ -413,14 +428,14 @@ Against `BensonHostState` / `BensonEffect` concerns (not field-identical):
 
 | Concern | Damocles evidence | vs Targ Host Callout |
 |---|---|---|
-| Play message | `$0001` inline text; the pending message is a source word `$7B98` plus the gate `$7BA0`, raised by `$14`, by `$0547C6`, and by the system-string helper at `$054820`, with display timer `$0005 23B8` (#136) | **would-map (concern)** — needs Damocles text encoding; the effect is resumable rather than synchronous |
+| Play message | `$0001` inline text; the pending message is a long source pointer at `$7B98` plus the gate `$7BA0`, raised by `$14`, by `$0547C6`, and by the system-string helper at `$054820`, with display timer `$0005 23B8` (#136) | **would-map (concern)** — needs Damocles text encoding; the effect is resumable rather than synchronous |
 | Wait / pacing | `$0007` tick waits; delay subs | **would-map (concern)** — tick unit Unresolved |
-| Key / OK prompt | `$0002` / `$000B` after `(OK?)`; on match `$0B` also fires the sound effect at `$054848` (#136) | **would-map (concern)** — not proven identical to `pendingKey`, and the match carries an audible effect as well as a branch |
+| Key / OK prompt | `$0002` / `$000B` after `(OK?)`; on match `$0B` requests sound at `$054848` (#136, guard ordering corrected in #287) | **would-map (concern)** — not proven identical to `pendingKey`, and the match requests sound without consuming the key; audible output depends on native guards and scheduling |
 | Control flow | `$0003` jmp, `$0004` call, `$0005` ret | **interpreter-local** — not Host Callout fields |
 | Random branch | `$000A` | **would-map (concern)** |
 | Object / craft / room tests | Predicates over `$7482` records (`$0C`, `$21`, `$23`), `$7A42` words (`$14`), and bank words (`$18`); branch via the bit-6/bit-7 epilogue | **would-map (concern)** — needs a Damocles state map before fields can be named |
 | Decimal / flags / inventory writes | Flag word `$7BD8` set/clear/test (`$10`–`$12`), counter `$7BD2` (`$16`, `$17`), record writes (`$0D`, `$15`), bank store (`$19`) | **would-map (concern)** — a flag word plus counters, not Targ's field list |
-| Effects (sound, finished) | No dedicated opcode; scripts fire sound by native call to `$054848` from `$0B` (key match) and from `$0E`/`$15` on record index `$00F8`. It arms a one-shot PSG step through the vector `$0004BF54` and returns immediately (#136) | **would-map (concern)** — a fire-and-forget effect maps to the Targ method, but the effect *identity* is a PSG programme, not a named sound; re-authoring is required either way (ADR 0002) |
+| Effects (sound, finished) | No dedicated opcode; scripts request sound by native call to `$054848` from `$0B` (key match) and from `$0E`/`$15` on record index `$00F8`. It may arm a one-shot PSG step through vector `$0004BF54` and returns immediately (#136, #287) | **would-map (concern)** — a fire-and-forget effect maps to the Targ method, but the effect *identity* is a PSG programme, not a named sound; re-authoring is required either way (ADR 0002) |
 
 A future Damocles Host Callout would need its **own** seam: same *method* as
 Targ, new field list after a full opcode census. Live Targ `BensonHostState`
@@ -440,7 +455,7 @@ principle.
   capability rather than a live constraint; an extract should still detect them,
   because one occurrence would desynchronise a linear parse.
 - The native routines the handlers call are **host effects, not hidden game
-  logic** (#136): a fire-and-forget PSG sound (`$054848`), a pending-script
+  logic** (#136): a guarded PSG sound request (`$054848`), a pending-script
   launcher (`$054764`), and a message resume (`$0547C6`). None of them
   interprets script bytes, so none of them widens the bytecode a port must
   understand — they widen the *effect list* the seam must offer, which is the
@@ -477,3 +492,4 @@ principle.
 | Caller side (`$051A86`, `$051AEE`, `$051BAA`, `$051944`, `$05194C`, `$051D62`) re-confirmed | `scenarios/script-dispatch.json`, run `observe-script-dispatch-20260821T163011Z-697e5300` |
 | 497 ops, 0 undecodable, no inline-native sites | `lab script --run observe-script-dispatch-20260821T163011Z-697e5300` |
 | `$00070080` occurs once in the 1 MiB image, at `$0547AC` | Byte scan of `observed.ram`, same run |
+| First-offer comparison, key-byte reset, dispatch/counter separation and sound guard ordering (#287) | Static recheck of `observe-first-world-20260818T101013Z-c5a32b7d/observed.ram`, SHA-256 `b019301ec5ac355301613db8e2bf6cd6d4a0df41311b6efedacfea87f2a9c967`; [first-offer research](damocles-first-offer.md) |
