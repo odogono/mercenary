@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The Damocles Catalogue draws AUTHORS COMPUTER and TELEVISION, whose `$CCA0`
+  vector-text tokens were a named `liveText` gap because independent captures
+  disagreed about the lettering. `$CD9C`, `$CDCE` and `$CE6A` are not live
+  strings but descriptors `[character][NUL][index word][NUL-terminated frame
+  script]`: across ten independent captures the script is byte-identical and the
+  character is always `script[index]`, so the script is model data and the index
+  is a free-running phase like `$7888`. Each object offers eight evenly-spaced
+  `text-frame-n` forms — AUTHORS COMPUTER's 12-frame `IPQRQPIMNONM` in font 2 and
+  TELEVISION's 697-frame run through all 63 printable font 5 glyphs — and both
+  records move from partial to decoded (#279).
+- Every `$6000` vector-text record in the census is inventoried by a test. All 41
+  set the inline flag and none selects font 4, so the indirect text pointer and
+  the state-conditioned font 4 are paths the decoder fails closed on rather than
+  forms left to recover, and the ledger no longer presents them as unexplored
+  (#279).
+
 - The Damocles Catalogue turns building details 6, 7, 8, 68 and 69 in the
   structure-scaled frame `$053D74` actually uses. `$054D98` installs the placing
   record's X/Z scale bytes at `$539CE`/`$539D2`, `$053B4A` scales the pivot the
@@ -27,6 +43,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- EXPLOSIVE-ARMED! draws its `$CD14` readout as the disarmed `0.00` rather than
+  nothing. `$04DAFC` formats that field as `M.SS` from the armed deadline less
+  the clock at `$793E`, floored at zero into `$786A`, and every pinned capture
+  reads the floor. It is the catalogue's one remaining `liveText` record: the
+  running countdown is live mission state and stays a named omission (#279).
 - Damocles catalogue schema 10: a mesh's `articulation` record names the `scale`
   frame and `sampledAngle` of the form it belongs to (#278).
 

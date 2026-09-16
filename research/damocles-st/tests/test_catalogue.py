@@ -614,11 +614,20 @@ class CensusTests(unittest.TestCase):
         self.assertEqual(carrying('articulated'), [])
         self.assertEqual([note for note in unexplored if '$7888' in note], [])
 
-        live = next(note for note in unexplored if '$CCA0' in note)
-        self.assertEqual(len(carrying('liveText')), 3)
-        # Slot-derived labels were decoded, so the entry may not claim every
-        # token is unresolved.
-        self.assertIn('not a slot-derived label', live)
+        # Only the EXPLOSIVE-ARMED! countdown is still live text; the frame
+        # animations and slot-derived labels were decoded, so the entry may not
+        # claim any other token is unresolved.
+        live = next(note for note in unexplored if '$CD14' in note)
+        self.assertEqual(
+            [m['name'] for m in carrying('liveText')], ['EXPLOSIVE-ARMED!']
+        )
+        self.assertIn('EXPLOSIVE-ARMED!', live)
+        # The indirect-pointer and font-4 paths are unreached, not unresolved,
+        # so no entry may present them as something still to be found.
+        self.assertEqual(
+            [note for note in unexplored
+             if 'indirect' in note and 'unreached' not in note], []
+        )
 
     def test_a_decoded_detail_selector_does_not_claim_unsimulated_visibility(self):
         root = Path(__file__).resolve().parents[3]
@@ -974,6 +983,130 @@ class AttachmentKeyTests(unittest.TestCase):
         self.assertEqual(
             [ram[a] for a in (0xCD37, 0xCD39, 0xCD3B, 0xCD3D)], [0x20] * 4
         )
+
+    def _every_capture(self):
+        """Every independent capture in this checkout, first-world runs first."""
+        from damocleslab.catalogue import hatari_memstate_ram
+
+        root = Path(__file__).resolve().parents[1]
+        captures = [
+            (path.parent.name, path.read_bytes())
+            for path in sorted(root.glob('work/observe-first-world-*/observed.ram'))
+        ]
+        captures += [
+            (path.stem, hatari_memstate_ram(path.read_bytes()))
+            for path in sorted(root.glob('snapshots/*.sav'))
+        ]
+        if len(captures) < 2:
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        return captures
+
+    def test_every_capture_agrees_the_animation_character_is_its_indexed_frame(self):
+        """The claim that makes a frame script model data rather than capture state.
+
+        Independent captures disagree about the index, which is why baking one
+        capture's character in was never deterministic. They agree exactly about
+        the script and about the character being the frame the index names, so
+        the script is the whole set of forms the record can draw.
+        """
+        from damocleslab.catalogue import TEXT_ANIMATION_TARGETS, text_animation_script
+
+        captures = self._every_capture()
+        for target in TEXT_ANIMATION_TARGETS:
+            scripts, indices = set(), set()
+            for name, ram in captures:
+                # Raises unless character, index and script agree in this capture.
+                script = text_animation_script(ram, target)
+                scripts.add(script)
+                indices.add(int.from_bytes(ram[target + 2:target + 4], 'big'))
+            self.assertEqual(len(scripts), 1, f'${target:04X} script differs')
+            self.assertGreater(len(indices), 1, f'${target:04X} index never moved')
+
+    def test_the_pinned_scripts_are_the_ones_the_catalogue_offers_frames_from(self):
+        from damocleslab.catalogue import text_animation_script
+
+        captures = self._every_capture()
+        ram = captures[0][1]
+        # $89's script is one character repeated, so a building detail reaching
+        # it draws the same space whatever the free-running index holds.
+        self.assertEqual(set(text_animation_script(ram, 0xCD9C)), {ord(' ')})
+        self.assertEqual(text_animation_script(ram, 0xCDCE), b'IPQRQPIMNONM')
+        self.assertEqual(len(text_animation_script(ram, 0xCE6A)), 697)
+
+    def test_every_capture_reads_the_explosive_countdown_as_disarmed(self):
+        from damocleslab.catalogue import (
+            EXPLOSIVE_COUNTDOWN_DISARMED, EXPLOSIVE_COUNTDOWN_TARGET,
+        )
+
+        for name, ram in self._every_capture():
+            start = EXPLOSIVE_COUNTDOWN_TARGET
+            reading = ram[start:ram.index(b'\0', start)].decode('ascii')
+            self.assertEqual(reading, EXPLOSIVE_COUNTDOWN_DISARMED, name)
+
+    def test_a_descriptor_that_does_not_hold_together_fails_closed(self):
+        from damocleslab.catalogue import text_animation_script
+
+        good = bytearray(b'B\x00\x00\x01ABC\x00'.ljust(0x20, b'\0'))
+        self.assertEqual(text_animation_script(bytes(good), 0), b'ABC')
+
+        for label, mutate in (
+            ('character is not its indexed frame', lambda d: d.__setitem__(0, ord('Z'))),
+            ('not NUL-terminated', lambda d: d.__setitem__(1, ord('!'))),
+            ('outside its script', lambda d: d.__setitem__(3, 9)),
+            ('unsupported', lambda d: d.__setitem__(5, 0x01)),
+            ('script is empty', lambda d: d.__setitem__(4, 0)),
+        ):
+            broken = bytearray(good)
+            mutate(broken)
+            with self.assertRaisesRegex(ValueError, label):
+                text_animation_script(bytes(broken), 0)
+        with self.assertRaisesRegex(ValueError, 'truncated'):
+            text_animation_script(b'B\x00\x00\x00', 0)
+        with self.assertRaisesRegex(ValueError, 'terminator missing'):
+            text_animation_script(b'A\x00\x00\x00ABC', 0)
+
+    def test_no_record_in_the_census_reaches_indirect_text_or_font_4(self):
+        """Why neither path adds a catalogue form: nothing selects them.
+
+        Both were named as unresolved because the decoder fails closed on them,
+        not because a record was seen taking either. Inventorying every record
+        settles that without needing either path decoded.
+        """
+        import damocleslab.catalogue as catalogue
+
+        root = Path(__file__).resolve().parents[1]
+        run = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d'
+        if not (run / 'observed.ram').exists():
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        data = (run / 'observed.ram').read_bytes()
+        workspaces = [
+            catalogue.hatari_memstate_ram((root / 'snapshots' / f'{name}.sav').read_bytes())
+            for name in ('vesta-parliament-4-6', 'gaea-ur-city-4-2', 'dion-2-3')
+        ]
+
+        seen = {}
+        originals = {}
+        for name, flags_at in (('decode_object_lettering', 6),
+                               ('decode_ground_lettering', 6),
+                               ('decode_building_lettering', 8)):
+            originals[name] = getattr(catalogue, name)
+
+            def spy(data, reader, *args, _name=name, _at=flags_at, **kwargs):
+                start = (reader.p & ~1) + _at
+                seen[start] = struct.unpack_from('>H', data, start)[0]
+                return originals[_name](data, reader, *args, **kwargs)
+
+            setattr(catalogue, name, spy)
+        try:
+            catalogue.extract(data, {'runId': 'inventory'}, workspaces)
+        finally:
+            for name, original in originals.items():
+                setattr(catalogue, name, original)
+
+        self.assertEqual(len(seen), 41)
+        self.assertEqual([hex(a) for a, f in seen.items() if not f & 0x8000], [])
+        self.assertEqual([hex(a) for a, f in seen.items() if f & 0xF == 4], [])
+        self.assertEqual(sorted({f & 0xF for f in seen.values()}), [0, 1, 2, 3, 5])
 
     def test_no_capture_holds_a_visual_change_record_for_the_df_branch(self):
         from damocleslab.catalogue import hatari_memstate_ram
@@ -1754,8 +1887,9 @@ class SlotLabelTests(unittest.TestCase):
         record += struct.pack('>3hHhbbH', 0, 0, 0, 0x8000, 16, 2, 2, 0x0777)
         record += bytes.fromhex('8700 0000')
         data = bytearray(bytes(record).ljust(0x31910, b'\0'))
-        # Token $87 points somewhere this header never writes.
-        struct.pack_into('>I', data, 0xCCA0 + 7 * 4, 0xCDCE)
+        # Token $87 points somewhere this header never writes, and which is
+        # neither a frame animation nor the explosive readout.
+        struct.pack_into('>I', data, 0xCCA0 + 7 * 4, 0xCE00)
         mesh = decode_mesh(bytes(data), 0, 'object', hardware=[0] * 16, state={'slot': 32})
         self.assertEqual(mesh['texts'][0]['liveToken'], 7)
 
