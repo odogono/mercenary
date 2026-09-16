@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Damocles · First-offer research demo</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/src/damocles/firstOfferDemo.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="eyebrow">Damocles / Developer research</p>
+        <h1>First-offer research demo</h1>
+        <p>
+          Isolated instruction-checkpoint demonstration, not the original game
+          display. Stops at accepted or next-offer handoffs, before payment or
+          mission consequences.
+        </p>
+        <details>
+          <summary>Evidence limits</summary>
+          <p>
+            No claim of frame-exact timing, seconds per tick, physical key
+            behavior, natural message completion, audible output or whole-game
+            equivalence. Counter wrapping follows the recovered word counter;
+            natural wrapping was not measured. Message-resume arbitration is
+            excluded.
+          </p>
+        </details>
+      </header>
+      <div class="columns">
+        <section aria-labelledby="execution-heading">
+          <h2 id="execution-heading">Execution</h2>
+          <dl id="state" aria-live="polite">
+            <dt>Next named step</dt>
+            <dd id="step"></dd>
+            <dt>Proposed reward</dt>
+            <dd id="reward"></dd>
+            <dt>Message</dt>
+            <dd id="message"></dd>
+            <dt>Wait</dt>
+            <dd id="wait"></dd>
+            <dt>Latched response</dt>
+            <dd id="key"></dd>
+            <dt>Counter</dt>
+            <dd id="counter"></dd>
+          </dl>
+          <p>
+            Reward words have unresolved economic encoding and scale; this is
+            not a payment.
+          </p>
+          <p id="prompt" hidden>
+            Presentation-only paraphrase: accept the proposed offer? Y/O
+            accepts; N declines.
+          </p>
+          <div class="buttons">
+            <button id="execute" type="button">Execute one step</button>
+            <button id="complete" type="button">Complete message</button>
+            <button id="reset" type="button">Reset demo</button>
+          </div>
+          <p>
+            Start with three steps to request the prompt. Complete it, then
+            execute the counter reset. Each further step checks Y, O, N or
+            timeout. Pending messages suspend execution.
+          </p>
+        </section>
+        <section aria-labelledby="input-heading">
+          <h2 id="input-heading">Supplied inputs</h2>
+          <label for="response">Response latch</label>
+          <select id="response">
+            <option value="none">None / clear latch</option>
+            <option value="y">Y — accept</option>
+            <option value="o">O — accept</option>
+            <option value="n">N — decline</option>
+            <option value="other">Unrelated response</option>
+          </select>
+          <button id="set-key" type="button">Set response only</button>
+          <label for="ticks">Counter ticks to add</label>
+          <input
+            id="ticks"
+            type="number"
+            min="0"
+            max="9007199254740991"
+            step="1"
+            value="0"
+          />
+          <button id="advance" type="button">Advance ticks only</button>
+          <button id="combined" type="button">
+            Apply inputs and execute one step
+          </button>
+          <p>
+            Combined order: set latch → add ticks → execute one named step. No
+            automatic timer. Inputs persist; crossing 500 only branches when
+            check-timeout executes. A key supplied after its check may lose to
+            timeout.
+          </p>
+        </section>
+      </div>
+      <p id="error" role="alert"></p>
+      <section aria-labelledby="snapshot-heading">
+        <h2 id="snapshot-heading">Prototype snapshot</h2>
+        <p>
+          Save copies state into this text area; restore validates it before
+          replacing state. Copy JSON elsewhere to keep it after closing this
+          page. No game Saves or Session Resume storage is read or written.
+          Reset and successful restore clear effect history.
+        </p>
+        <label for="snapshot">Prototype snapshot JSON</label>
+        <textarea id="snapshot" rows="9" spellcheck="false"></textarea>
+        <div class="buttons">
+          <button id="save" type="button">Save snapshot</button>
+          <button id="restore" type="button">Restore snapshot</button>
+        </div>
+        <p id="notice" role="status"></p>
+      </section>
+      <section aria-labelledby="effects-heading">
+        <h2 id="effects-heading">Emitted effects</h2>
+        <p>
+          Ordered diagnostic history. Acknowledgements record sound requests; no
+          audio is played. Restore reconstructs the prompt from state without
+          emitting it again.
+        </p>
+        <pre id="effects"></pre>
+      </section>
+    </main>
+    <script type="module" src="/src/damocles/firstOfferDemo.ts"></script>
+  </body>
+</html>

@@ -145,3 +145,26 @@ At `check-timeout`, counter 65535, supply one tick: counter becomes zero without
 - Reject malformed shapes, inconsistent phase state and identity/version mismatches without changing current state. Verify that previous state values and snapshot inputs are never mutated.
 - The developer-only page exposes single-step execution and separate key, tick, completion, reset, save and restore controls. Show step, reward, latch, counter, message/wait and effect history; label its evidence limits and paraphrase. No browser timer, main-game navigation entry or production storage access.
 - Follow #290's desktop/narrow-screen, keyboard accessibility, console-error and invalid-restore checks. No live Gameplay Session integration or shared Targ framework is part of these tests.
+
+## Running the developer demo
+
+Run `cd web && bun run dev`, then open
+`http://127.0.0.1:5173/damocles/first-offer`. The page is available only through
+the existing localhost development server and has no main-game navigation entry.
+Execute three steps to reach the pending prompt, complete the message, then
+execute the counter reset to reach `check-y`. Set a response and supply ticks
+independently, or use the combined control (set latch, add ticks, execute one
+step, in that order). No time advances automatically.
+
+Save writes prototype JSON to the editable text area. Copy it elsewhere to keep
+it across page closure; restore validates the entire record before replacing
+state and clears diagnostic effect history without replay. Reset preserves the
+text area so a saved checkpoint can be revisited. Neither operation accesses
+game Saves or Session Resume.
+
+`cd web && bunx playwright test e2e/first-offer.e2e.ts` checks boundary input
+precedence, pending-message and mid-wait restoration, invalid restore/input
+recovery, keyboard operation, browser errors, storage isolation and layouts at
+320, 768, 1024 and 1440 pixels. Harness unit tests remain the deterministic
+future-state/effect comparison authority; the page makes no stronger original
+runtime claim.
