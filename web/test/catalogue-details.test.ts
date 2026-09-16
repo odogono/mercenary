@@ -102,7 +102,7 @@ test('every retained detail selector offers its visibility lists', async () => {
     await Bun.file('../payload/damocles/catalogue.json').json()
   );
   const withSelector = data.models.filter(model => model.detailSelection);
-  expect(withSelector).toHaveLength(58);
+  expect(withSelector).toHaveLength(59);
   expect(withSelector.every(model => detailForms(model).length > 0)).toBe(true);
   const lists = withSelector.flatMap(model =>
     model.detailSelection!.flatMap(group => [
@@ -110,11 +110,11 @@ test('every retained detail selector offers its visibility lists', async () => {
       group.default
     ])
   );
-  // 60 authored lists name no record at all: inside those boxes the game draws
+  // 61 authored lists name no record at all: inside those boxes the game draws
   // none of the detail, which is not something a form can show.
-  expect(lists).toHaveLength(467);
-  expect(lists.filter(records => records.length === 0)).toHaveLength(60);
+  expect(lists).toHaveLength(477);
+  expect(lists.filter(records => records.length === 0)).toHaveLength(61);
   expect(
     withSelector.reduce((count, model) => count + detailForms(model).length, 0)
-  ).toBe(407);
+  ).toBe(416);
 });

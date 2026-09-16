@@ -305,18 +305,18 @@ test('unresolved records, empty filters and invalid links are explained', async 
   await expect(page.locator('#details')).toContainText(
     'no parent or local placement is claimed'
   );
+  // An authored empty is decoded, so it says so rather than claiming a failure.
   await page.goto('/catalogue?model=object-035cfc');
-  await expect(page.locator('#model-status')).toContainText('null');
-  await expect(page.locator('#viewer-message')).toContainText(
-    'Geometry unresolved'
-  );
+  await expect(page.locator('#model-status')).toContainText('decoded · null');
+  await expect(page.locator('#viewer-message')).toContainText('Authored empty');
   await page.goto('/catalogue?model=structure-01a618');
   await expect(page.locator('#model-name')).toHaveText('Structure 100');
-  await expect(page.locator('#viewer-message')).toContainText(
-    'Geometry unresolved'
-  );
+  await expect(page.locator('#model-status')).toContainText('decoded · empty');
+  await expect(page.locator('#viewer-message')).toContainText('Authored empty');
   await expect(page.locator('#details')).toContainText('Empty surface record');
-  await expect(page.locator('#details')).toContainText('empty vertex list');
+  await expect(page.locator('#details')).toContainText(
+    'intentionally empty record'
+  );
   await page.locator('#search').fill('no-such-model-name');
   await expect(page.locator('#results')).toContainText('No matching models');
   await page.goto('/catalogue?instance=missing');

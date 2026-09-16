@@ -23,6 +23,8 @@ export interface Mesh {
   readonly lines: readonly Primitive[];
   /** Source primitive records this detail holds, drawn or not. */
   readonly recordCount?: number;
+  /** Records that name a shared vertex slot this list never fills. */
+  readonly unreferencedRecords?: readonly number[];
   readonly vertices: readonly Point[];
 }
 export const RECORD_CLASSES = [
@@ -333,6 +335,11 @@ const mesh = (value: unknown, allowEmpty = false): Mesh => {
     ...(record['recordCount'] === undefined
       ? {}
       : { recordCount: integer(record['recordCount']) }),
+    ...(record['unreferencedRecords'] === undefined
+      ? {}
+      : {
+          unreferencedRecords: list(record['unreferencedRecords']).map(integer)
+        }),
     vertices
   };
 };
@@ -621,10 +628,14 @@ export const parseCatalogue = (value: unknown): Catalogue => {
       m['recordClass'] === undefined
         ? 'geometry'
         : choice(m['recordClass'], RECORD_CLASSES);
+    // A decoded model may show nothing only when its class says the record
+    // holds nothing by construction: an authored empty, the NULL record, or a
+    // record the game draws with a native routine.
     if (
       status === 'decoded' &&
       variants.length === 0 &&
       recordClass !== 'empty' &&
+      recordClass !== 'null' &&
       recordClass !== 'procedural'
     ) {
       fail('decoded model has no geometry');

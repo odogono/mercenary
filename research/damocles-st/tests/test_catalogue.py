@@ -627,10 +627,132 @@ class CensusTests(unittest.TestCase):
             (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
         )
         details = [m for m in document['models'] if 'detailSelection' in m]
-        self.assertEqual(len(details), 58)
+        self.assertEqual(len(details), 59)
         for model in details:
             self.assertIn('Both view-conditioned visibility groups', model['reason'])
             self.assertNotIn('visibility is not simulated', model['reason'])
+
+
+class IntentionalEmptyTests(unittest.TestCase):
+    """One verdict for a record that is authored to hold nothing."""
+
+    def payload(self):
+        root = Path(__file__).resolve().parents[3]
+        return json.loads(
+            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
+        )
+
+    def test_every_empty_or_null_record_reads_decoded(self):
+        models = self.payload()['models']
+        settled = [
+            m for m in models if m['recordClass'] in ('empty', 'null')
+        ]
+        self.assertEqual(len(settled), 13)
+        kinds = {m['kind'] for m in settled}
+        self.assertEqual(kinds, {'object', 'structure', 'interior', 'ground'})
+        for model in settled:
+            self.assertTrue(model['reason'].strip(), model['id'])
+            if model['variants']:
+                # Four empty surface records still show a linked detail's mesh,
+                # so they stay partial for that detail's own limitations.
+                self.assertEqual(model['status'], 'partial', model['id'])
+            else:
+                self.assertEqual(model['status'], 'decoded', model['id'])
+        self.assertEqual(sum(1 for m in settled if m['variants']), 4)
+        self.assertEqual(sum(1 for m in settled if not m['variants']), 9)
+
+    def test_nothing_is_left_unresolved(self):
+        document = self.payload()
+        census = document['coverage']['census']
+        self.assertEqual(census['unresolved'], 0)
+        self.assertEqual(
+            [m['id'] for m in document['models'] if m['status'] == 'unresolved'],
+            [],
+        )
+        # The census is still incomplete: a full bank is not a full account.
+        self.assertFalse(document['coverage']['complete'])
+
+    def test_a_settled_empty_still_needs_an_empty_record_class(self):
+        from damocleslab.catalogue import settle_intentional_empties
+
+        keeps = {
+            'recordClass': 'empty', 'status': 'unresolved', 'omissions': [],
+            'variants': [], 'intentionalEmpty': True,
+        }
+        drops = [
+            # A real gap was appended after the empty was recognised.
+            {**keeps, 'omissions': ['articulated']},
+            # The record draws something, so it is not an empty.
+            {**keeps, 'variants': [{'id': 'record'}]},
+            # Nothing marked it as an authored empty in the first place.
+            {**keeps, 'intentionalEmpty': False},
+        ]
+        models = [dict(keeps)] + [dict(m) for m in drops]
+        settle_intentional_empties(models)
+        self.assertEqual(models[0]['status'], 'decoded')
+        for model in models[1:]:
+            self.assertEqual(model['status'], 'unresolved')
+        # The marker never reaches the payload.
+        self.assertTrue(all('intentionalEmpty' not in m for m in models))
+
+
+class UnreferencedRecordTests(unittest.TestCase):
+    """A face record naming a vertex slot its own list never fills."""
+
+    def test_building_detail_69_keeps_four_records_nothing_selects(self):
+        root = Path(__file__).resolve().parents[3]
+        document = json.loads(
+            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
+        )
+        model = next(
+            m for m in document['models'] if m['id'] == 'interior-02e44e'
+        )
+        mesh = model['variants'][0]['mesh']
+
+        self.assertEqual(model['status'], 'partial')
+        self.assertEqual(mesh['recordCount'], 46)
+        self.assertEqual(mesh['unreferencedRecords'], [17, 18, 19, 20])
+        # They occupy ordinals so the later selector bytes still line up, but
+        # contribute nothing drawable.
+        drawn = {
+            p['sourceIndex'] for p in mesh['faces'] + mesh['lines']
+            if 'sourceIndex' in p
+        }
+        self.assertEqual(drawn & {17, 18, 19, 20}, set())
+        self.assertEqual(max(drawn), 45)
+        named = set()
+        for group in model['detailSelection']:
+            named.update(group['default'])
+            for box in group['boxes']:
+                named.update(box['records'])
+        self.assertEqual(named & {17, 18, 19, 20}, set())
+        self.assertEqual(max(named), 45)
+
+    def test_a_selected_unreferenced_record_is_still_an_error(self):
+        from damocleslab.catalogue import check_unreferenced
+
+        mesh = {'unreferencedRecords': [17]}
+        check_unreferenced(mesh, [{'boxes': [], 'default': [16]}])
+        with self.assertRaisesRegex(ValueError, 'visibility group selects it'):
+            check_unreferenced(mesh, [{'boxes': [], 'default': [17]}])
+        with self.assertRaisesRegex(ValueError, 'visibility group selects it'):
+            check_unreferenced(
+                mesh, [{'boxes': [{'records': [17]}], 'default': []}]
+            )
+
+    def test_only_a_building_detail_may_keep_one(self):
+        """Only a detail has selector lists that can prove unreachability."""
+        root = Path(__file__).resolve().parents[3]
+        document = json.loads(
+            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
+        )
+        carrying = [
+            model for model in document['models']
+            for variant in model['variants']
+            if 'unreferencedRecords' in variant['mesh']
+        ]
+        self.assertEqual([m['id'] for m in carrying], ['interior-02e44e'])
+        self.assertTrue(all(m['kind'] == 'interior' for m in carrying))
 
 
 class AttachmentKeyTests(unittest.TestCase):
@@ -1350,7 +1472,7 @@ class DetailSelectionTests(unittest.TestCase):
 
     def test_every_building_detail_selector_decodes_in_the_pinned_capture(self):
         from damocleslab.catalogue import (
-            decode_detail_selection, decode_mesh, palette_at, u32,
+            check_unreferenced, decode_detail_selection, decode_mesh, palette_at, u32,
         )
 
         root = Path(__file__).resolve().parents[1]
@@ -1370,9 +1492,12 @@ class DetailSelectionTests(unittest.TestCase):
                 mesh = decode_mesh(data, address, 'interior', palette_at(data, 0), hardware)
             except ValueError:
                 continue
-            decode_detail_selection(data, mesh['sourceEnd'], mesh['recordCount'])
+            groups = decode_detail_selection(
+                data, mesh['sourceEnd'], mesh['recordCount']
+            )
+            check_unreferenced(mesh, groups)
             decoded += 1
-        self.assertEqual(decoded, 58)
+        self.assertEqual(decoded, 59)
 
 
 class GroundLetteringTests(unittest.TestCase):

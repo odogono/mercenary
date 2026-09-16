@@ -248,9 +248,9 @@ it('keeps a generated census ledger that cannot drift from the models', async ()
       .length
   ).toBe(19);
   expect(data.models.filter(model => model.structureSelection).length).toBe(
-    254
+    256
   );
-  expect(data.models.filter(model => model.detailSelection).length).toBe(58);
+  expect(data.models.filter(model => model.detailSelection).length).toBe(59);
   expect(
     data.models.some(model =>
       model.structureSelection?.regions.some(region =>
@@ -560,10 +560,13 @@ it('accounts for Structure 100 as an empty placeholder, not missing walls', asyn
     await Bun.file('../payload/damocles/catalogue.json').json()
   );
   const model = data.models.find(item => item.id === 'structure-01a618')!;
-  expect(model.status).toBe('unresolved');
+  // An authored empty is decoded: the record parses cleanly to its terminator
+  // and holds no geometry by construction, like an empty ground record.
+  expect(model.status).toBe('decoded');
+  expect(model.recordClass).toBe('empty');
   expect(model.variants).toEqual([]);
   expect(model.reason).toContain('Empty surface record');
-  expect(model.reason).toContain('empty vertex list');
+  expect(model.reason).toContain('intentionally empty record');
   expect(model.relatedModels).toEqual(['interior-02620e']);
   expect(model.evidence).toContainEqual({
     claim:
@@ -993,7 +996,7 @@ it('samples the free-running articulation angle for the six turning objects', as
   const details = data.models.filter(model =>
     model.omissions.includes('articulated')
   );
-  expect(details).toHaveLength(4);
+  expect(details).toHaveLength(5);
   expect(details.every(model => model.kind === 'interior')).toBe(true);
   expect(details[0]!.reason).toContain('structure X and Z scales');
 });
@@ -1031,4 +1034,52 @@ it('an $F0 entrance names a key index the cell resolves to a letter', async () =
   expect(
     vesta.evidence.find(item => item.claim.includes('key letter E'))?.confidence
   ).toBe('verified');
+});
+
+it('an unreachable record stays an ordinal and draws nothing', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const carrying = data.models.filter(model =>
+    model.variants.some(form => form.mesh.unreferencedRecords?.length)
+  );
+  expect(carrying.map(model => model.id)).toEqual(['interior-02e44e']);
+  const mesh = carrying[0]!.variants[0]!.mesh;
+  expect(mesh.unreferencedRecords).toEqual([17, 18, 19, 20]);
+  // They hold ordinals so the later selector bytes line up, but contribute
+  // nothing, and no visibility list names them.
+  expect(mesh.recordCount).toBe(46);
+  const drawn = new Set(
+    [...mesh.faces, ...mesh.lines].map(item => item.sourceIndex)
+  );
+  for (const record of mesh.unreferencedRecords!) {
+    expect(drawn.has(record)).toBe(false);
+  }
+  const named = new Set(
+    carrying[0]!.detailSelection!.flatMap(group => [
+      ...group.default,
+      ...group.boxes.flatMap(box => box.records)
+    ])
+  );
+  for (const record of mesh.unreferencedRecords!) {
+    expect(named.has(record)).toBe(false);
+  }
+});
+
+it('every record now carries a verdict and none is unresolved', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  expect(data.coverage.census.unresolved).toBe(0);
+  expect(data.models.filter(model => model.status === 'unresolved')).toEqual(
+    []
+  );
+  // A full bank is not a full account: the ledger stays incomplete.
+  expect(data.coverage.complete).toBe(false);
+  // A decoded model may show nothing only when its class says so.
+  for (const model of data.models) {
+    if (model.status === 'decoded' && model.variants.length === 0) {
+      expect(['empty', 'null', 'procedural']).toContain(model.recordClass);
+    }
+  }
 });
