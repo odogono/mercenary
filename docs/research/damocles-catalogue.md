@@ -32,7 +32,10 @@ first-world scenario hash. It uses the standard library only. A missing capture
 can be regenerated with the existing `lab observe --scenario
 research/damocles-st/scenarios/first-world.json` command. Raw images, RAM and
 Working Disassembly stay in ignored research paths; the browser receives only
-the separately versioned catalogue JSON. Schema version 8 makes detail selector lists name source records rather than
+the separately versioned catalogue JSON. Schema version 10 turns a placed
+articulated building detail in its placing structure's scaled frame and names
+that frame on the mesh: `articulation.scale` and `articulation.sampledAngle`.
+Schema version 8 makes detail selector lists name source records rather than
 drawn polygons, and adds each detail mesh's `recordCount`. Schema version 5 adds the per-cell
 ground/pad/road table. Schema version 3 included per-face source indices,
 structured evidence, nested instance placements, and source key display metadata.
@@ -48,6 +51,14 @@ Both are independently captured cold first-world loads. Extracting both gives
 identical models, tables, instances, body names and places. Their provenance
 records intentionally differ. The emitted source record pins the RAM and
 program SHA-256; model identities depend on kind and source address, never names.
+
+Schema 10 adds the structure-scaled articulation frame. Each placed articulated
+building detail gains one `palette-<index>-scale-<x>x<z>-angle-<aa>` form per
+placing frame per sampled `$7888` angle, and each placing surface assembly gains
+`assembly-angle-<aa>` forms beside its neutral `assembly`. The mesh's
+`articulation` record carries `scale` and `sampledAngle` for the form it belongs
+to; a neutral model-local form has neither. The five details this covers no
+longer carry the `articulated` omission.
 
 Schema 9 adds `keyIndex` to an Entrance Attachment whose control carries the
 `$F0` low byte: the key index the cell's `$7AFB` base offsets into a door key
@@ -233,8 +244,9 @@ code. Targeted disassembly used to establish them remains ignored at
   256-entry sine table at `$925A`, where `T[a]` is the sine and `T[a + 64]` the
   cosine of `a × 360/256`. `$0537B0` translates a tagged vertex to the pivot,
   applies `x·cos − y·sin` and `x·sin + y·cos` keeping only each product's high
-  word doubled, and translates back; the axis byte picks the plane, negative
-  Y/Z, zero X/Z and positive X/Y. The catalogue reproduces that fixed point,
+  word doubled, and translates back; the axis byte picks the plane and
+  which of its two coordinates leads: negative Y before Z, zero Z before X, and
+  positive X before Y. The catalogue reproduces that fixed point,
   truncation included, and offers **eight sampled angles** as forms for the six
   articulated objects, so NOVABOMB and the beacons can be inspected turning. Supported name/far-marker headers do not change local vertices.
   Relative header jumps and colour patches expose related visual forms with the
@@ -272,10 +284,36 @@ code. Targeted disassembly used to establish them remains ignored at
   (`$053D4A`); the viewer uses the neutral pose, not a below-ground coordinate.
   An `$8001` X word ends an articulated detail's vertices; `$053B4A` then reads
   an axis word and a pivot scaled by the detail's X/Y/Z factors before the face
-  records. Details 6, 7, 8, 68 and 69 decode this way and keep the `articulated`
-  omission because their rotation needs the structure-scaled frame. Detail 69's
-  extra projected-slot references are proven unreachable as described below;
-  they no longer constitute a decode failure.
+  records. Details 6, 7, 8, 68 and 69 decode this way. Detail 69's extra
+  projected-slot references are proven unreachable as described below; they no
+  longer constitute a decode failure.
+- A detail turns in its **placing structure's frame**, not in its own. `$054D98`
+  sign-extends the two scale bytes the surface record carries — at `−8`/`−7` from
+  a plan record's pointer, or at `+2`/`+3` for an alias — into `$539CE` (X) and
+  `$539D2` (Z). Nothing in resident RAM writes the Y factor at `$539D0`, which
+  stays 1, so a detail is scaled on X and Z only. `$053D52` multiplies every
+  vertex by those three factors *before* `$053D5E` reads the axis, and `$053B4A`
+  has already scaled the pivot the same way. A nonuniform or mirrored structure
+  therefore changes the shape of the turn, not only its size: the same arm scaled
+  ×4 on X sweeps onto a ×2 Z and comes back a different length. The two
+  coordinates in the turning plane are words there, sign-extended back to longs
+  at `$053DAA`, while the third keeps its full 32-bit product.
+  The axis value names which coordinate leads: positive X before Y (`$053D6A`),
+  zero **Z before X** (`$053DB2`), negative Y before Z (`$053DF8`). The object
+  routine agrees at `$0537C2`/`$053806`/`$05384A`. Leading with X in the zero
+  case turns the part backwards; the catalogue did that until this was read off
+  the code, and the six articulated objects moved when it was corrected.
+  The catalogue now offers each placed articulated detail at eight sampled
+  `$7888` angles **per frame it is placed in**, under one reusable detail
+  identity: detail 7 is placed by five structures at 3×3, −3×−3, 4×2, −4×−2 and
+  −5×−5, and carries all five. Read from run
+  `observe-first-world-20260818T101013Z-c5a32b7d`, `observed.ram` SHA-256
+  `b019301ec5ac355301613db8e2bf6cd6d4a0df41311b6efedacfea87f2a9c967`, program
+  SHA-256 `8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef`. Each placing surface assembly offers the same
+  eight angles on its own combined form. `$7888` free-runs, so no sampled angle
+  is canonical — the same reason the articulated objects are sampled rather than
+  pinned. A detail no captured structure places keeps the `articulated` omission,
+  naming the missing scale frame as its evidence gap; none of the five does.
 - `$053A1E` gives a building detail 63 shared vertex slots and `$053D32` fills
   only the ones the record's own vertex list supplies, so a face record naming a
   higher slot would draw whatever the previous model left behind. Building
@@ -573,15 +611,15 @@ remains **false**. The remaining work is tracked separately:
 | --- | --- |
 | Unexamined `$ABDC` workspaces, Gaea islands, named places and associated residences/transforms beyond the captured coverage | [#172](https://github.com/odogono/mercenary/issues/172) |
 | Unverified scene palette binding for object slot 338 (one record) | [#277](https://github.com/odogono/mercenary/issues/277) |
-| Five articulated building details in the structure-scaled frame | [#278](https://github.com/odogono/mercenary/issues/278) |
 | Three live `$CCA0` object-text cases, indirect text pointers and state-conditioned font 4 | [#279](https://github.com/odogono/mercenary/issues/279) |
 | Packed Pasti STX load paths, provisional bank extents and mission/script-created visual replacements | [#280](https://github.com/odogono/mercenary/issues/280) |
 | Ground-band producer and the `$05499E` route list allocating scene slots below `$F0` | [#281](https://github.com/odogono/mercenary/issues/281) |
 | Representative visual fidelity against Working Authority captures | [#174](https://github.com/odogono/mercenary/issues/174) |
 
 Building detail 69's unreachable projected-slot records, authored empty/NULL
-records, and the cell-derived `$7AFB` attachment label are accounted for; they
-are not outstanding decode failures. Resident model banks do not change between
+records, the structure-scaled frame the five articulated building details turn
+in, and the cell-derived `$7AFB` attachment label are accounted for; they are
+not outstanding decode failures. Resident model banks do not change between
 first-world and occupied-Spaceport RAM. Partial records still include neutral-pose
 assemblies and inspection limits, so the partial total is not a count of distinct
 unknown grammars. These follow-ups preserve the boundary between a reconciled

@@ -295,6 +295,30 @@ test('a building detail offers each recovered visibility list as a form', async 
   await expect(page.locator('#variant')).toHaveValue('group-0-box-0');
 });
 
+test('an articulated detail is inspectable in every frame that places it', async ({
+  page
+}) => {
+  await page.goto('/catalogue?model=interior-026556');
+  await expect(page.locator('#model-name')).toHaveText('Building detail 7');
+  await expect(page.locator('#details')).toContainText(
+    'The game selects among these forms by articulation angle ($7888), structure scale ($539CE/$539D2)'
+  );
+  const forms = page.locator('#variant option');
+  // Five structures place this one detail, two of them at a nonuniform scale.
+  await expect(forms.filter({ hasText: /^Scale 4×2 · / })).toHaveCount(8);
+  await expect(forms.filter({ hasText: /^Scale -4×-2 · / })).toHaveCount(8);
+  await page.locator('#variant').selectOption('palette-129-scale-4x2-angle-40');
+  await expect(page.locator('#viewer-message')).toHaveText('');
+  await page.screenshot({
+    path: 'test-results/catalogue-articulated-frame.png'
+  });
+  // The frame is a real form, so it survives a reload through the query.
+  await page.reload();
+  await expect(page.locator('#variant')).toHaveValue(
+    'palette-129-scale-4x2-angle-40'
+  );
+});
+
 test('unresolved records, empty filters and invalid links are explained', async ({
   page
 }) => {

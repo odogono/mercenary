@@ -193,7 +193,7 @@ export interface Catalogue {
   readonly instances: readonly Instance[];
   readonly models: readonly Model[];
   readonly places: readonly Place[];
-  readonly schemaVersion: 9;
+  readonly schemaVersion: 10;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -579,7 +579,7 @@ const structureSelection = (value: unknown): StructureSelection => {
 
 export const parseCatalogue = (value: unknown): Catalogue => {
   const r = object(value);
-  if (r['schemaVersion'] !== 9) {
+  if (r['schemaVersion'] !== 10) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -977,7 +977,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     instances,
     models,
     places,
-    schemaVersion: 9,
+    schemaVersion: 10,
     source,
     tables
   };

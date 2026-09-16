@@ -47,7 +47,7 @@ const fixture = () => ({
     }
   ],
   places: [],
-  schemaVersion: 9,
+  schemaVersion: 10,
   source: {
     authority: 'Synthetic test',
     evidence: 'test',
@@ -1000,10 +1000,12 @@ it('samples the free-running articulation angle for the six turning objects', as
   const data = parseCatalogue(
     await Bun.file('../payload/damocles/catalogue.json').json()
   );
-  const turning = data.models.filter(model =>
-    model.conditions.some(condition =>
-      condition.startsWith('articulation angle')
-    )
+  const turning = data.models.filter(
+    model =>
+      model.kind === 'object' &&
+      model.conditions.some(condition =>
+        condition.startsWith('articulation angle')
+      )
   );
   expect(turning).toHaveLength(6);
   expect(turning.every(model => model.status === 'decoded')).toBe(true);
@@ -1019,14 +1021,91 @@ it('samples the free-running articulation angle for the six turning objects', as
   );
   expect(moved.length).toBeGreaterThan(0);
   expect(moved.length).toBeLessThan(rest.length);
+});
 
-  // The four articulated building details keep a gap that says why.
-  const details = data.models.filter(model =>
-    model.omissions.includes('articulated')
+it('turns each articulated building detail in every structure frame that places it', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
   );
-  expect(details).toHaveLength(5);
-  expect(details.every(model => model.kind === 'interior')).toBe(true);
-  expect(details[0]!.reason).toContain('structure X and Z scales');
+  // Nothing is left holding the articulated omission.
+  expect(data.models.filter(m => m.omissions.includes('articulated'))).toEqual(
+    []
+  );
+
+  const details = data.models.filter(
+    model =>
+      model.kind === 'interior' &&
+      model.conditions.some(condition =>
+        condition.startsWith('structure scale')
+      )
+  );
+  expect(details.map(model => model.id)).toEqual([
+    'interior-02630e',
+    'interior-026556',
+    'interior-0268ee',
+    'interior-02dfb4',
+    'interior-02e44e'
+  ]);
+  for (const model of details) {
+    // Every turned form names the frame it was turned in, and there are eight
+    // sampled angles for each one.
+    const frames = new Set(
+      model.variants
+        .map(
+          variant =>
+            /^(.+-scale--?\d+x-?\d+)-angle-[\da-f]{2}$/.exec(variant.id)?.[1]
+        )
+        .filter((frame): frame is string => frame !== undefined)
+    );
+    expect(frames.size).toBeGreaterThan(0);
+    for (const frame of frames) {
+      const forms = model.variants.filter(variant =>
+        variant.id.startsWith(`${frame}-angle-`)
+      );
+      expect(forms).toHaveLength(8);
+    }
+    expect(model.reason).toContain('$539CE/$539D2');
+  }
+
+  // Detail 7 is placed by five structures, two of them at a nonuniform scale.
+  // Scaling before the turn is what makes those frames different shapes, so
+  // one reusable detail identity has to carry them all.
+  const reused = data.models.find(model => model.id === 'interior-026556')!;
+  const wide = reused.variants.find(
+    v => v.id === 'palette-129-scale-4x2-angle-40'
+  )!.mesh.vertices;
+  const mirrored = reused.variants.find(
+    v => v.id === 'palette-129-scale--4x-2-angle-40'
+  )!.mesh.vertices;
+  const square = reused.variants.find(
+    v => v.id === 'palette-114-scale-3x3-angle-40'
+  )!.mesh.vertices;
+  expect(wide).not.toEqual(mirrored);
+  expect(wide).not.toEqual(square);
+  // A uniform frame keeps the turned arm's length; a 4x2 one does not.
+  const neutral = reused.variants.find(
+    v => v.id === 'palette-129-scale-4x2-angle-00'
+  )!.mesh.vertices;
+  expect(wide).not.toEqual(neutral);
+  expect(wide.filter((p, i) => p.join() !== neutral[i]!.join())).toHaveLength(
+    40
+  );
+
+  // Detail 69's unreachable records stay excluded in every turned form.
+  const excluded = data.models.find(model => model.id === 'interior-02e44e')!;
+  expect(
+    excluded.variants.every(
+      variant =>
+        (variant.mesh.unreferencedRecords ?? []).join() === '17,18,19,20'
+    )
+  ).toBe(true);
+
+  // Each placing structure offers its own assembly at the same eight angles.
+  const placing = data.models.filter(model =>
+    model.variants.some(variant => variant.id.startsWith('assembly-angle-'))
+  );
+  expect(placing).toHaveLength(11);
+  expect(placing.every(model => model.variants.length === 8)).toBe(true);
 });
 
 it('an $F0 entrance names a key index the cell resolves to a letter', async () => {

@@ -389,13 +389,21 @@ def decode_placed_lettering(data: bytes, reader: Reader, anchor: list[int],
             **({'liveToken': token} if token is not None else {})}
 
 
-# $0537B0 rotates an articulated object's tagged vertices about its pivot by the
-# free-running angle at $7888, indexing the 256-entry sine table at $925A. The
-# angle advances every frame and differs even between two cold boots, so no
-# single frame is canonical; the catalogue samples it instead.
+# $0537B0 (objects) and $053D4A (building details) turn an articulated record's
+# tagged vertices about its pivot by the free-running angle at $7888, indexing
+# the 256-entry sine table at $925A. The angle advances every frame and differs
+# even between two cold boots, so no single frame is canonical; the catalogue
+# samples it instead.
 TRIG_TABLE = 0x925A
 ARTICULATION_STEPS = 8
-ARTICULATION_PLANES = {'positive': (0, 1), 'zero': (0, 2), 'negative': (1, 2)}
+# The axis value names the turning plane and, with it, which coordinate the
+# routine treats as the first of the pair. $053806/$053DB2 read Z before X, so
+# the zero axis turns the other way round from the naive X-then-Z reading.
+ARTICULATION_PLANES = {'positive': (0, 1), 'zero': (2, 0), 'negative': (1, 2)}
+# $054D98 copies the record's two scale bytes into $539CE and $539D2; nothing in
+# resident RAM writes the Y factor at $539D0, which stays 1. A detail is
+# therefore scaled on X and Z only.
+DETAIL_Y_SCALE = 1
 
 
 def _word(value: int) -> int:
@@ -403,35 +411,52 @@ def _word(value: int) -> int:
 
 
 def articulation_plane(axis: int) -> tuple[int, int]:
-    """The two coordinate indices an articulation axis byte rotates."""
-    signed = _word(axis if axis < 0x80 else axis - 0x100)
-    if signed < 0:
+    """The two coordinate indices an articulation axis turns, in source order."""
+    if axis < 0:
         return ARTICULATION_PLANES['negative']
-    return ARTICULATION_PLANES['zero' if signed == 0 else 'positive']
+    return ARTICULATION_PLANES['zero' if axis == 0 else 'positive']
 
 
-def rotate_articulated(data: bytes, vertices: list, tagged: list[int],
-                       articulation: dict, angle: int) -> list:
+def turn_articulated(data: bytes, vertices: list, tagged: list[int],
+                     articulation: dict, angle: int,
+                     scale: tuple[int, int] | None = None) -> list:
     """Apply one sampled articulation angle, in the native fixed point.
 
     `$053D84` multiplies each coordinate by a table word, keeps the product's
     high word and doubles it, so the result carries the game's own truncation
     rather than a cleaner float rotation.
+
+    `scale` names the structure X/Z factors a building detail is turned in.
+    `$053D52` multiplies every vertex by those factors *before* the pivot
+    subtraction, and `$053B4A` scales the pivot the same way, so a nonuniform or
+    mirrored structure changes the shape of the turn rather than only its size.
+    The two coordinates in the turning plane are words there — `$053DAA`
+    sign-extends them back to longs afterwards — so they carry the native wrap
+    as well as the truncation, while the third keeps its full product.
     """
-    if not angle % 256:
-        return vertices
-    index = (angle % 256) * 2
-    sine = struct.unpack_from('>h', data, TRIG_TABLE + index)[0]
-    cosine = struct.unpack_from('>h', data, TRIG_TABLE + index + 0x80)[0]
+    factors = (1, 1, 1) if scale is None else (scale[0], DETAIL_Y_SCALE, scale[1])
+    pivot = [_word(component * factor)
+             for component, factor in zip(articulation['pivot'], factors)]
     first, second = articulation_plane(articulation['axis'])
-    pivot = articulation['pivot']
-    result = [list(point) for point in vertices]
-    for position in tagged:
-        point = result[position]
-        a = point[first] - pivot[first]
-        b = point[second] - pivot[second]
-        point[first] = _word((((a * cosine - b * sine) >> 16) & 0xFFFF) * 2) + pivot[first]
-        point[second] = _word((((a * sine + b * cosine) >> 16) & 0xFFFF) * 2) + pivot[second]
+    turning = angle % 256
+    sine = cosine = 0
+    if turning:
+        index = turning * 2
+        sine = struct.unpack_from('>h', data, TRIG_TABLE + index)[0]
+        cosine = struct.unpack_from('>h', data, TRIG_TABLE + index + 0x80)[0]
+    positions = set(tagged)
+    result = []
+    for position, point in enumerate(vertices):
+        scaled = [value * factor for value, factor in zip(point, factors)]
+        if position in positions:
+            a = _word(_word(scaled[first]) - pivot[first])
+            b = _word(_word(scaled[second]) - pivot[second])
+            if turning:
+                a, b = (_word((((a * cosine - b * sine) >> 16) & 0xFFFF) * 2),
+                        _word((((a * sine + b * cosine) >> 16) & 0xFFFF) * 2))
+            scaled[first] = _word(a + pivot[first])
+            scaled[second] = _word(b + pivot[second])
+        result.append(scaled)
     return result
 
 
@@ -495,7 +520,10 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
                     # $053572: pivot X word, then Y/Z words; negative-Y vertices
                     # rotate about it by the global angle at $7888.
                     pivot = [reader.signed(), reader.signed(), reader.signed()]
-                    articulation = {'axis': axis, 'pivot': pivot, 'angle': '$7888'}
+                    # $0537B8 tests the axis as a byte; $053D5E tests the
+                    # detail's as a word. Both are kept signed here.
+                    articulation = {'axis': axis - 0x100 if axis & 0x80 else axis,
+                                    'pivot': pivot, 'angle': '$7888'}
                 break  # orientation is an instance property, not baked into the model
             if command == 0x8004:
                 raise ValueError(
@@ -584,7 +612,7 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
         if kind == 'interior' and x == -32767:
             # $053B4A: axis word, then a pivot scaled like the detail itself.
             articulation = {
-                'axis': reader.word(),
+                'axis': reader.signed(),
                 'pivot': [reader.signed(), reader.signed(), reader.signed()],
                 'angle': '$7888',
             }
@@ -718,7 +746,7 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
         if view_groups:
             alternates['viewGroup'] = len(view_groups)
     if articulation is not None and state.get('angle'):
-        vertices = rotate_articulated(
+        vertices = turn_articulated(
             data, vertices, tagged, articulation, state['angle']
         )
     if chosen is None:
@@ -1173,6 +1201,22 @@ def assemble_mesh(base: dict, detail: dict, scale: tuple[int, int]) -> dict:
         x, y, z = detail['labelAnchor']
         result['labelAnchor'] = [x * scale[0], y, z * scale[1]]
     return result
+
+
+def turn_detail_mesh(data: bytes, mesh: dict, scale: tuple[int, int], angle: int) -> dict:
+    """One articulated building detail, scaled into a structure frame and turned there.
+
+    The result is already in the structure's frame, so `assemble_mesh` must not
+    scale it a second time.
+    """
+    articulation = mesh['articulation']
+    return {
+        **mesh,
+        'vertices': turn_articulated(
+            data, mesh['vertices'], articulation['vertices'], articulation, angle, scale
+        ),
+        'articulation': {**articulation, 'scale': list(scale), 'sampledAngle': angle},
+    }
 
 
 def place_mesh(base: dict, placed: dict, position: list[int]) -> dict:
@@ -1800,7 +1844,9 @@ RECORD_OMISSIONS = (
     ('viewConditioned', 'view-conditioned face groups unresolved'),
     ('articulated', 'articulated model transform unresolved'),
     ('articulated', 'articulated interior unresolved'),
-    ('articulated', 'Articulated part shown at its rest angle'),
+    # A detail no captured structure places has no evidenced scale frame to be
+    # turned in, so it keeps the omission; a placed one no longer does.
+    ('articulated', 'no evidenced X/Z scale frame'),
     ('specialPolygon', 'special polygon command unresolved'),
     ('paletteBinding', 'scene colour table binding unresolved'),
     ('paletteBinding', 'Scene colour table binding unverified'),
@@ -1879,9 +1925,6 @@ UNEXPLORED_COVERAGE = [
     'Mission-disk or script-created visual changes that would replace a resident slot, including the '
     '$DF attachment branch whose $6364 table is empty in the pinned captures. Follow-up: '
     'https://github.com/odogono/mercenary/issues/280.',
-    'Live articulation angles ($7888) for articulated building details, which the catalogue shows at rest '
-    'because $053D74 rotates a detail in the structure-scaled frame this model is not held in. '
-    'Follow-up: https://github.com/odogono/mercenary/issues/278.',
     'Object vector text whose live $CCA0 token is not a slot-derived label, and text that resolves through '
     'indirect pointers or the state-conditioned font 4. Follow-up: '
     'https://github.com/odogono/mercenary/issues/279.',
@@ -2404,7 +2447,11 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 model['status'] = 'partial'
                 model['reason'] = 'Building-detail shape decoded; place-specific palette and visibility groups are not bound.'
                 if 'articulation' in mesh:
-                    model['reason'] += ' Articulated part shown at its rest angle. $053D74 rotates a detail after the structure X and Z scales are applied, so sampling the $7888 angle here would need the scaled frame this model is not held in.'
+                    model['reason'] += (
+                        ' Articulated part shown in model-local coordinates at its rest'
+                        ' angle: no captured structure record binds this detail, so'
+                        ' $053D74 has no evidenced X/Z scale frame to turn it in.'
+                    )
             except (ValueError, struct.error) as error:
                 model['reason'] = str(error)
                 if model['reason'] in (EMPTY_DETAIL_REASON, NULL_MODEL_REASON):
@@ -2870,6 +2917,9 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         ])
         model['status'] = 'partial' if base_gaps else 'decoded'
     interior_palettes = {}
+    # One detail is reused by structures of different scale, so an articulated
+    # one needs every frame it is turned in, not only every palette it wears.
+    interior_frames: dict[str, set[tuple[int, int, int]]] = {}
     for model in models:
         if 'interiorSlot' in model:
             slot = model.pop('interiorSlot')
@@ -2877,6 +2927,11 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 target = tables[2]['entries'][slot]
                 model['relatedModels'].append(target)
                 interior_palettes.setdefault(target, set()).add(model['paletteIndex'])
+                scale = structure_bindings.get(model['id'], (None, None, None))[2]
+                if scale is not None:
+                    interior_frames.setdefault(target, set()).add(
+                        (model['paletteIndex'], scale[0], scale[1])
+                    )
         model.pop('paletteIndex', None)
     live_text_bindings = []
     for ram in workspaces:
@@ -2974,10 +3029,31 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 })
             except ValueError:
                 pass
+        # $053D74 turns a detail only after $054D98 has installed the placing
+        # structure's X/Z scale, so each frame the detail is reused in is its
+        # own set of sampled angles under one reusable detail identity.
+        articulated = any('articulation' in variant['mesh'] for variant in variants)
+        frames = sorted(interior_frames.get(identity, ()))
+        if articulated and frames:
+            step = 256 // ARTICULATION_STEPS
+            for index, scale_x, scale_z in frames:
+                neutral = next(
+                    (variant['mesh'] for variant in variants
+                     if variant['id'] == f'palette-{index}'), None
+                )
+                if neutral is None or 'articulation' not in neutral:
+                    continue
+                for sample in range(ARTICULATION_STEPS):
+                    angle = sample * step
+                    variants.append({
+                        'id': f'palette-{index}-scale-{scale_x}x{scale_z}-angle-{angle:02x}',
+                        'name': (f'Scale {scale_x}×{scale_z} · articulation angle '
+                                 f'${angle:02X} · palette {index}'),
+                        'mesh': turn_detail_mesh(data, neutral, (scale_x, scale_z), angle),
+                    })
         if variants:
             model['variants'] = variants
             model['status'] = 'partial'
-            articulated = any('articulation' in variant['mesh'] for variant in variants)
             if identity in BUILDING_VECTOR_TEXT_MODELS:
                 model['reason'] = (
                     'Shape, structure-bound colours and supported $60xx vector text decoded. '
@@ -3013,8 +3089,39 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                     'confidence': 'verified',
                     'source': 'docs/research/damocles-catalogue.md',
                 })
-            if articulated:
-                model['reason'] += ' Articulated part shown at its rest angle. $053D74 rotates a detail after the structure X and Z scales are applied, so sampling the $7888 angle here would need the scaled frame this model is not held in.'
+            if articulated and frames:
+                shown = ', '.join(
+                    f'{scale_x}\u00d7{scale_z}'
+                    for scale_x, scale_z in sorted({(x, z) for _p, x, z in frames})
+                )
+                model['reason'] += (
+                    ' Articulated part. $054D98 installs the placing structure\'s X and Z'
+                    ' scale bytes at $539CE/$539D2, $053B4A scales this record\'s pivot the'
+                    ' same way, and $053D52 scales each vertex before $053D74 turns the'
+                    ' tagged ones by $7888, so the turn belongs to the structure frame'
+                    f' rather than to the model. Frames evidenced here: {shown}, each'
+                    f' offered at {ARTICULATION_STEPS} sampled angles. $7888 free-runs, so'
+                    ' no single frame of it is canonical.'
+                )
+                model['conditions'] = [
+                    'articulation angle ($7888)',
+                    'structure scale ($539CE/$539D2)',
+                ]
+                model['evidence'].append({
+                    'claim': (
+                        'Articulation axis and pivot follow the $8001 vertex terminator at '
+                        '$053B4A and are scaled by the structure X/Z factors $054D98 copies '
+                        'from the placing record\'s scale bytes.'
+                    ),
+                    'confidence': 'verified',
+                    'source': 'docs/research/damocles-catalogue.md',
+                })
+            elif articulated:
+                model['reason'] += (
+                    ' Articulated part shown in model-local coordinates at its rest angle:'
+                    ' no captured structure record binds this detail, so $053D74 has no'
+                    ' evidenced X/Z scale frame to turn it in.'
+                )
     for identity, (slot, palette_index, scale) in structure_bindings.items():
         if slot >= len(tables[2]['entries']):
             continue
@@ -3109,11 +3216,31 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             model['reason'] = (model['reason'] + ' ' + ' '.join(region_gaps) + ' Capital Spaceport at Eris cell $87: the captured interior selects region 1 of this same structure, with local X 840–1560 and Z -760–760. Exterior, interior layout and combined views are available. The interior layout follows region 1 source face ordering. Its $FF entry identifies the authored dynamic entrance-door attachment. The exterior and combined views select the authored open-window and open-door surrounds rather than overlapping them with closed facades. Open and closed detail endpoints are available for inspection; the recovered dynamic door motion, timing and retreat behaviour are not simulated. The closed panel is visible from both sides for inspection. Original region-dependent detail visibility is not fully simulated. Ordinary walls are shown from both sides for inspection; their source records do not specify polygon winding. The blue floor and cyan lower window wall are consistent with the supplied original-game interior view. See docs/research/damocles-spaceport-interior.md.').strip()
             detail['relatedModels'].append(identity)
             continue
-        combined = assemble_mesh(base, variant['mesh'], scale)
-        model['variants'] = [{'id': 'assembly', 'name': f'Structure and detail · palette {palette_index}', 'mesh': combined}]
+        if 'articulation' in variant['mesh']:
+            # The detail is turned in this structure's own scaled frame, so it
+            # arrives already scaled and must not be scaled again.
+            step = 256 // ARTICULATION_STEPS
+            model['variants'] = [{
+                'id': 'assembly' if sample == 0 else f'assembly-angle-{sample * step:02x}',
+                'name': (f'Structure and detail · palette {palette_index} · '
+                         f'articulation angle ${sample * step:02X}'),
+                'mesh': assemble_mesh(
+                    base, turn_detail_mesh(data, variant['mesh'], scale, sample * step), (1, 1)
+                ),
+            } for sample in range(ARTICULATION_STEPS)]
+            model['conditions'] = ['articulation angle ($7888)']
+            detail_note = (
+                ' Includes its linked articulated detail, turned in this record\'s own'
+                f' {scale[0]}\u00d7{scale[1]} frame at {ARTICULATION_STEPS} sampled $7888'
+                ' angles.'
+            )
+        else:
+            combined = assemble_mesh(base, variant['mesh'], scale)
+            model['variants'] = [{'id': 'assembly', 'name': f'Structure and detail · palette {palette_index}', 'mesh': combined}]
+            detail_note = ' Includes linked exterior/interior detail in its neutral pose.'
         # Detail tables include view-conditioned external and internal geometry.
         model['status'] = 'partial'
-        model['reason'] = (model['reason'] + ' Includes linked exterior/interior detail in its neutral pose.').strip()
+        model['reason'] = (model['reason'] + detail_note).strip()
     # Model headers which jump to a shared vertex stream provide evidence for visual variants.
     for identity, (slot, palette_index, scale) in structure_bindings.items():
         model = by_address[identity]
@@ -3234,7 +3361,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'path': f'{label.title()} live workspace',
             'finding': note,
         })
-    return {'schemaVersion': 9, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
+    return {'schemaVersion': 10, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'places': places, 'tables': tables,
             'coverage': coverage_ledger(models, tables, coverage_notes, disk_load)}
 
