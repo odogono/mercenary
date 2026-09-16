@@ -38,14 +38,16 @@ re-arm; and Damocles Save Snapshot and Session Resume across every one of those 
 | The full-Carried-Stack path at capacity 10 | The capacity is recovered and enforced; what the original does when it is reached is not, and this slice has one takeable object, so it cannot be reached. |
 | `$7AA8` = `$78` and `$04DDD0` ≠ 0 | Both refuse the take; both are unresolved words that held their permitting values throughout every observed run. Not modelled, not invented. |
 | The other five entries of the `$0543EC` trigger table (slots 181, 151, 95, 101, 94) | Source facts only; their scripts are untested and their objects unreachable in this slice. The table carries one bound entry and the rest take the no-match path. |
-| Early completion of a presenting message by a key | No skip input was recovered for Damocles. Messages end on their frame timer alone. Targ's `SKIP_MESSAGE_CODE` is Targ's. |
+| The reveal model — how a message's text arrives on the row, and how `$0523B8` divides between arrival and reading hold | Unrecovered: the native routine that consumes `$7B98` and clears `$7BA0` was never located. It becomes the `Reveal` seam below and [#307](https://github.com/odogono/mercenary/issues/307). |
+| Early completion of a presenting message by a key | No skip input was recovered for Damocles. Targ's `SKIP_MESSAGE_CODE` is Targ's, and whether Damocles has an equivalent is part of the same open question. |
 | The mission the messages describe, boarding, driving, the other objects' responses | Past the stopping boundary. |
 
 **Stopping boundary.** The interaction ends when the script's final step pops the idle jump
 `$0703FC` back off the return stack and execution parks. That is the recovered stable completion
 point and the state every pre-take and post-response sample held.
 
-**What the evidence does not establish.** Frame-exact input timing; the interpreter's instruction
+**What the evidence does not establish.** How a message is revealed on the panel row, or what the
+200 frames are divided between; frame-exact input timing; the interpreter's instruction
 dispatch rate between gates; the seconds per display frame of the original hardware configuration;
 audible output, since the laboratory ran with sound off; the meaning of the association bits or of
 the low X/Z values written while an object is held; why the drop path writes insertion-group
@@ -55,7 +57,7 @@ and is stated as a convention, never as a recovered fact.
 ## Prerequisites
 
 The research listed six minimum prerequisites. This contract carries five of them, pushes the sixth
-out as separately bounded work, and adds one the six did not name. Both of those block #300.
+out as separately bounded work, and adds two the six did not name. All three of those block #300.
 
 Carried here: Object Residence for resident instances; the Damocles Carried Stack and its panel
 label; frame-counted message presentation and the panel message line; the Damocles Script Host with
@@ -68,6 +70,11 @@ Separately bounded, because each needs evidence this contract must not invent:
   what the `≤ 8` measure counts, and which per-object association bit answers takeability. Until
   it is recovered the ordinary pickup path cannot be claimed faithful, so #300 waits on it rather
   than on an authored substitute.
+- **The message reveal model** ([#307](https://github.com/odogono/mercenary/issues/307)). How a message's text arrives on the panel row, what the 200 frames
+  in `$0523B8` are divided between, and whether an input can end one early. The row is revealed
+  progressively rather than appearing whole, so this is display state a mid-message restore must
+  carry, and the save contract is not final without it. The research recovered the gate and the
+  duration but never located the native routine behind them.
 - **The message text** ([#304](https://github.com/odogono/mercenary/issues/304)). Script slot 2's three inline strings and system-string slot 50 are
   recovered material that no Data Payload yet carries. They belong in `payload/damocles/` as an
   extraction, under ADR 0029 and the [publication policy](../publication-policy.md), not as a
@@ -109,8 +116,18 @@ type MessageId =
   | 'script2-inline-3' // $070488
   | 'system-string-50'; // $0704BE, operand $0032
 
+/// Supplied by the unrecovered message-presentation rule, as `Selection` is. The message is
+/// revealed progressively rather than appearing whole, so the row's position within its text is
+/// display state that a mid-message restore has to carry. This contract consumes it, requires it
+/// to be JSON-compatible and validated, and does not define it.
+type Reveal = unknown;
+
 /// The message gate $7BA0 as state: non-null is raised, null is lowered.
-type Presenting = { readonly id: MessageId; readonly remainingFrames: number } | null;
+type Presenting = {
+  readonly id: MessageId;
+  readonly remainingFrames: number;
+  readonly reveal: Reveal;
+} | null;
 
 type ScriptId = 'damocles.script.slot-2';
 
@@ -188,7 +205,8 @@ the same time steps produce the same frames at the same points.
 **Per-frame order inside `runFrame`.**
 
 1. `counter = (counter + 1) % 65536`.
-2. If a message is presenting, decrement `remainingFrames`; at zero, clear it — the gate falls.
+2. If a message is presenting, advance its `Reveal` by one frame and decrement `remainingFrames`;
+   at zero, clear it — the gate falls.
 3. Execute steps until the script blocks or parks. Only two things block: a raised gate, and
    `poll-wait` below its threshold. The step table is acyclic apart from `poll-wait`, so this
    terminates without a step budget.
@@ -258,7 +276,8 @@ Damocles Script slot 2, reached through entry-table word `$070084` = `$042A`.
 
 `clear-line` gates like the inline messages and uses the ordinary duration; that string's record
 begins with blank padding, which is consistent with clearing the message line rather than speaking
-a fourth time. The gating of the indexed form is derived from the shared helper path, not observed
+a fourth time — and, under a progressively revealed row, with padding that pushes the previous
+text off it. The gating of the indexed form is derived from the shared helper path, not observed
 separately. Four messages at 200 frames and one 200-frame wait make the whole response **1000
 display frames**, consistent within sampling granularity with the ~20 s the probe measured.
 
@@ -336,7 +355,8 @@ restore, no best-effort migration. The rules:
   residence is `carried`.
 - `counter` is an integer in 0–65535. `frameAccumulator` is a number in [0, 1).
 - `message`, when present, names a known `MessageId` with an integer `remainingFrames` in
-  1–`messageFrames`.
+  1–`messageFrames`, and a `Reveal` its own validator accepts and finds consistent with that
+  remaining count.
 - `triggers` lists each modelled entry once. An armed entry requires its object to be at its
   Catalogue placement and absent from the Carried Stack. A non-null `execution` requires the
   launching entry to be disarmed.
@@ -380,10 +400,10 @@ armed, null execution, null message. Restoring it and then taking the key produc
 ordered frames and effects as an uninterrupted run from the same point.
 
 **Save during a message.** Saved at frame 300, the record holds step `announce-3`, message
-`script2-inline-2` with 100 remaining frames, `busy` true, return stack `['idle']`, the key
-carried, trigger 2 disarmed. Restoring re-presents message 2 with 100 frames left and emits no
-message request. Frame 100 after the restore hands over to message 3 exactly as the uninterrupted
-run does at frame 400.
+`script2-inline-2` with 100 remaining frames and its reveal position, `busy` true, return stack
+`['idle']`, the key carried, trigger 2 disarmed. Restoring re-presents message 2 at the same point
+in its reveal with 100 frames left, and emits no message request. Frame 100 after the restore hands
+over to message 3 exactly as the uninterrupted run does at frame 400.
 
 **Save mid-wait.** Saved with step `poll-wait` and `counter` at 137, the restored session blocks
 for 63 more frames and then proceeds. A record with `poll-wait` and `counter` at 240 is refused:
@@ -414,8 +434,9 @@ Deterministic unit tests are the authority; #301's browser pass is confirmation,
   with steps that straddle frame boundaries; the resulting step and message sequence is identical.
 - **Repeat, drop and re-pick.** No second response, no duplicated message, no second sound request,
   and the trigger stays disarmed across an arbitrary number of drop/take cycles.
-- **Save round-trip.** Round-trip each of the five reachable frame-boundary states plus parked and
-  pre-pickup through JSON. Apply the same remaining frame and action sequence to the restored and
+- **Save round-trip.** Round-trip each of the five reachable commit-boundary states plus parked and
+  pre-pickup through JSON, taking the three message states at a partly revealed row rather than at
+  its start. Apply the same remaining frame and action sequence to the restored and
   uninterrupted runs, and compare every state and every ordered effect array.
 - **Refusal.** Each row of the refused-restore list, asserting both the reason and that the live
   session is byte-identical afterwards.
@@ -429,18 +450,19 @@ Deterministic unit tests are the authority; #301's browser pass is confirmation,
 
 ## Implementation prerequisites for #300
 
-In dependency order, with the two blocking issues first:
+In dependency order, with the three blocking issues first:
 
 1. Object selection and takeability recovered — [#303](https://github.com/odogono/mercenary/issues/303).
-2. The message strings extracted into `payload/damocles/` — [#304](https://github.com/odogono/mercenary/issues/304).
-3. `web/damocles/eris.json` schema 6 with its `time` block.
-4. Resident instances placed in the world: `erisSurfaceFrom` currently skips every instance whose
+2. The message reveal model recovered — [#307](https://github.com/odogono/mercenary/issues/307).
+3. The message strings extracted into `payload/damocles/` — [#304](https://github.com/odogono/mercenary/issues/304).
+4. `web/damocles/eris.json` schema 6 with its `time` block.
+5. Resident instances placed in the world: `erisSurfaceFrom` currently skips every instance whose
    `location` is null, which is every structure-anchored resident including slot 183. Placement
    comes from `placement.parent`, `placement.position` and the recovered world-to-local transform;
    residence becomes mutable session state.
-5. The Damocles Script Host: `ScriptState`, `runFrame`, `fireTrigger`, the trigger table and the
+6. The Damocles Script Host: `ScriptState`, `runFrame`, `fireTrigger`, the trigger table and the
    named steps of slot 2, as new modules beside — not inside — `firstOffer.ts`.
-6. Carried Stack, message presentation and the panel's inventory and message lines.
-7. `take()` and `drop()` on `DamoclesSession`, wired from `boot.ts`'s currently no-op `reach` and
+7. Carried Stack, message presentation and the panel's inventory and message lines.
+8. `take()` and `drop()` on `DamoclesSession`, wired from `boot.ts`'s currently no-op `reach` and
    `drop` Control Profile actions.
-8. Save schema 4 in `web/src/damocles/save.ts` with the validation table above.
+9. Save schema 4 in `web/src/damocles/save.ts` with the validation table above.
