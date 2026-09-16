@@ -1885,7 +1885,9 @@ UNEXPLORED_COVERAGE = [
     'Object vector text whose live $CCA0 token is not a slot-derived label, and text that resolves through '
     'indirect pointers or the state-conditioned font 4. Follow-up: '
     'https://github.com/odogono/mercenary/issues/279.',
-    'Scene colour bindings for unplaced object slots 333-338 remain unverified. Follow-up: '
+    'The scene colour binding for object slot 338 remains unverified: the $7000 ground records that '
+    'place it lie above the highest record any captured $1E400 cell table selects, so no capture '
+    'names the palette its cell would bind. Follow-up: '
     'https://github.com/odogono/mercenary/issues/277.',
     'The viewport background is a raster block fill at $059CE2 using the surface record\'s two scene '
     'colours, so it holds no geometry; the producer of the ground band below the horizon and the route '
@@ -2039,9 +2041,24 @@ def live_overlay_prefix(slug: str, area_name: str | None, instances: list) -> st
     return f'{slug}-{area}'
 
 
+def record_template_palettes(template_palettes: dict, template_models: list[str],
+                             palette_index: int | None, label: str, cell: int) -> None:
+    """Record which scene palette a cell binds to each $7000 template it places.
+
+    A template object's own record carries no palette: its scene colours resolve
+    through the palette the placing cell's surface record selects. Collecting the
+    placements is therefore the only evidence a template's colours have.
+    """
+    if palette_index is None:
+        return
+    for identity in template_models:
+        cells = template_palettes.setdefault(identity, {}).setdefault(palette_index, [])
+        cells.append(f'{label} cell ${cell:02X}')
+
+
 def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: list,
                           instances: list, places: list, by_address: dict, bodies: list,
-                          hardware: list[int]) -> str:
+                          hardware: list[int], template_palettes: dict) -> str:
     """Place live $ABDC / ground records from a non-Eris loaded world capture."""
     if len(workspace) != 1048576 or u32(workspace, 0x4bd10) != 0x35700 or u32(workspace, 0x4bd22) != 0x26000:
         raise ValueError('live workspace is not a loaded Damocles world capture')
@@ -2127,13 +2144,12 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
         offset = int.from_bytes(workspace[0x1e400 + cell * 2:0x1e402 + cell * 2], 'big')
         address = 0x1e000 + offset
         structure_slot = struct.unpack_from('>H', workspace, 0xabdc + cell * 4)[0] & 0x1FF
-        palette = None
+        palette, palette_index = None, None
         if structure_slot < len(tables[1]['entries']):
             structure_model = tables[1]['entries'][structure_slot]
             if structure_model in by_address:
-                palette = palette_at(
-                    data, by_address[structure_model].get('paletteIndex') or 0
-                )
+                palette_index = by_address[structure_model].get('paletteIndex') or 0
+                palette = palette_at(data, palette_index)
         try:
             mesh, gaps, transform, _placements = decode_ground(
                 workspace, address, workspace[0x83dc + cell], palette, hardware,
@@ -2148,6 +2164,9 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
             )
         mesh, template_models, template_gaps = compose_ground_templates(
             mesh, _placements, tables[0]['entries'], by_address, workspace, palette, hardware
+        )
+        record_template_palettes(
+            template_palettes, template_models, palette_index, label, cell
         )
         gaps = sorted(set(gaps + template_gaps))
         shared_id = f'ground-{address:06x}-{transform:02x}'
@@ -2267,6 +2286,10 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     by_address = {}
     structure_bindings = {}
     structure_aliases = []
+    # Object records whose faces name the scene colour table, and the palettes
+    # the cells that place them as $7000 templates bind.
+    scene_colour_objects: dict[str, list[str]] = {}
+    template_palettes: dict[str, dict[int, list[str]]] = {}
     for kind, base, count in specs:
         entries = []
         for slot in range(count):
@@ -2342,6 +2365,10 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                         if 'scene colour table binding' not in str(error):
                             raise
                         variants, conditions, gaps = decode_object_forms(data, address, palette_at(data, 0), hardware)
+                        # A record with no own palette is a $7000 template. The
+                        # placing cells are collected below; until then it keeps
+                        # the unverified palette 0 form.
+                        scene_colour_objects[identity] = list(gaps)
                         gaps.append('Scene colour table binding unverified; palette 0 is shown.')
                         for variant in variants:
                             variant['name'] += ' · palette 0 (binding unverified)'
@@ -2394,11 +2421,10 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         offset = int.from_bytes(data[0x1e400 + cell * 2:0x1e402 + cell * 2], 'big')
         address = 0x1e000 + offset
         structure_slot = struct.unpack_from('>H', data, 0xabdc + cell * 4)[0] & 0x1FF
-        palette = None
+        palette, palette_index = None, None
         if structure_slot < len(tables[1]['entries']):
-            palette = palette_at(
-                data, by_address[tables[1]['entries'][structure_slot]].get('paletteIndex') or 0
-            )
+            palette_index = by_address[tables[1]['entries'][structure_slot]].get('paletteIndex') or 0
+            palette = palette_at(data, palette_index)
         try:
             mesh, gaps, transform, _placements = decode_ground(
                 data, address, data[0x83dc + cell], palette, hardware,
@@ -2413,6 +2439,9 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             )
         mesh, template_models, template_gaps = compose_ground_templates(
             mesh, _placements, tables[0]['entries'], by_address, data, palette, hardware
+        )
+        record_template_palettes(
+            template_palettes, template_models, palette_index, 'first-world', cell
         )
         gaps = sorted(set(gaps + template_gaps))
         identity = f'ground-{address:06x}-{transform:02x}'
@@ -2667,7 +2696,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     if workspaces:
         for workspace in workspaces:
             workspace_notes.append(attach_live_workspace(
-                workspace, data, models, tables, instances, places, by_address, bodies, hardware
+                workspace, data, models, tables, instances, places, by_address, bodies,
+                hardware, template_palettes,
             ))
     chevy_key = instance_by_id.get('object-slot-180')
     chevy_parent_model = by_address.get('structure-01d188')
@@ -2795,6 +2825,50 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                             'coordinateSystem': 'Capital Spaceport local model units'}
         key['reason'] = ('Recovered resident placement in Capital Spaceport region 1. Raw yaw is zero; '
                          'the absolute angular convention remains unresolved.')
+    # Scene colour bindings for $7000 ground templates. A template object record
+    # carries no palette of its own, so the only evidence its face colours have is
+    # the palette each placing cell's surface record selects. Every evidenced
+    # palette becomes its own variant instead of one unverified palette 0 form.
+    for identity, base_gaps in scene_colour_objects.items():
+        model = by_address[identity]
+        bindings = template_palettes.get(identity) or {}
+        if not bindings:
+            model['reason'] = ' '.join(base_gaps + [
+                'No captured surface workspace places this template, so its scene colour '
+                'words have no evidenced palette. Scene colour table binding unverified; '
+                'palette 0 is shown. Binding it needs a capture whose $1E400 cell table '
+                'selects one of the ground records that place it.'
+            ])
+            continue
+        variants = []
+        for index in sorted(bindings):
+            forms, conditions, gaps = decode_object_forms(
+                data, model['sourceAddress'], palette_at(data, index), hardware
+            )
+            for form in forms:
+                variants.append({
+                    **form,
+                    'id': f'palette-{index}' if form['id'] == 'record' else f"{form['id']}-palette-{index}",
+                    'name': f"{form['name']} \u00b7 palette {index}",
+                })
+            cells = list(dict.fromkeys(bindings[index]))
+            shown = ', '.join(cells[:6]) + (', and more' if len(cells) > 6 else '')
+            model['evidence'].append({
+                'claim': (
+                    f'{len(cells)} authored $7000 ground placement'
+                    f'{"" if len(cells) == 1 else "s"} bind this template to '
+                    f'scene palette {index}: {shown}.'
+                ),
+                'confidence': 'verified',
+                'source': 'docs/research/damocles-catalogue.md',
+            })
+        model['variants'] = variants
+        indexes = ', '.join(str(index) for index in sorted(bindings))
+        model['reason'] = ' '.join(base_gaps + [
+            'Shape decoded; its scene colours resolve through the palette each placing '
+            f'cell selects, evidenced here as palette {indexes}.'
+        ])
+        model['status'] = 'partial' if base_gaps else 'decoded'
     interior_palettes = {}
     for model in models:
         if 'interiorSlot' in model:

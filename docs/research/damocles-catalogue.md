@@ -127,8 +127,8 @@ qualification for each table. Every slot maps to one model identity; repeated
 pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
 
-Current extraction accounts for **832 unique records**: **503 decoded**,
-**329 partial**, and **0 unresolved**. “Decoded” means the supported record was
+Current extraction accounts for **832 unique records**: **508 decoded**,
+**324 partial**, and **0 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.
 Unresolved records remain searchable and retain their source identity and reason.
@@ -320,8 +320,29 @@ code. Targeted disassembly used to establish them remains ignored at
   These exact RGB values were checked in both the first-world and interior-window
   viewport captures; normalising the maximum to 255 would brighten the artwork. Palette references resolve through the
   scene's soft colour table; direct hardware-slot references require its palette.
-  Objects 333–338 use scene colours but are not placed by any decoded
-  workspace, so they are shown with palette 0 as a named `paletteBinding` gap.
+  Objects 333–338 are the only six object records whose faces name the scene
+  colour table, and none carries a palette of its own: they are `$7000` ground
+  templates, so their colours resolve through the palette the **placing cell's**
+  surface record selects. Five are placed by authored `$7000` records in the
+  captured workspaces and now carry one variant per evidenced palette: objects
+  333–336 bind palette 1 through structureless cells on Vesta and Gaea UR City,
+  and object 337 binds palettes 1, 2, 51 and 62 across first-world and Dion
+  cells. Object 338 keeps the `paletteBinding` gap; see below.
+- Object 338 is object 337's colour variant: identical nine vertices and seven
+  face index lists, with `$8092`/`$8094`/`$0322` where 337 has
+  `$0444`/`$8082`/`$0333`. Its colours therefore vary far more between palettes
+  than 337's do — word 9 is `$411` in palette 1 but `$355` in palette 62 — so
+  showing it through palette 0 stays an unverified binding rather than a
+  cosmetic detail. The authored `$7000` records that name slot 338 (eleven
+  placements, in ground records ending at `$023734`, `$023884` and `$0239C0`)
+  sit above `$022A58`, the highest ground record any captured `$1E400` cell
+  table selects. The ground record bank `$01E790..$023FFF` is byte-identical in
+  all four captures — only the `$1E000..$01E64B` workspace header and the cell
+  table change per body — so the records are authored and resident, just
+  unselected. The next probe is a surface workspace capture on a further body
+  whose cell table reaches `$0236xx..$0239xx`; that cell's surface record names
+  the palette. This overlaps the unexamined-workspace follow-up
+  [#172](https://github.com/odogono/mercenary/issues/172).
 - Scene palette offsets begin at `$00D200`. Selection at `$054E10` establishes
   the relative word offset and `$7A0E` binding. Structure metadata carries the
   palette index and interior index, so a shared interior can expose more than one
@@ -551,7 +572,7 @@ remains **false**. The remaining work is tracked separately:
 | Coverage gap | Follow-up |
 | --- | --- |
 | Unexamined `$ABDC` workspaces, Gaea islands, named places and associated residences/transforms beyond the captured coverage | [#172](https://github.com/odogono/mercenary/issues/172) |
-| Unverified scene palette bindings for object slots 333–338 (six records) | [#277](https://github.com/odogono/mercenary/issues/277) |
+| Unverified scene palette binding for object slot 338 (one record) | [#277](https://github.com/odogono/mercenary/issues/277) |
 | Five articulated building details in the structure-scaled frame | [#278](https://github.com/odogono/mercenary/issues/278) |
 | Three live `$CCA0` object-text cases, indirect text pointers and state-conditioned font 4 | [#279](https://github.com/odogono/mercenary/issues/279) |
 | Packed Pasti STX load paths, provisional bank extents and mission/script-created visual replacements | [#280](https://github.com/odogono/mercenary/issues/280) |

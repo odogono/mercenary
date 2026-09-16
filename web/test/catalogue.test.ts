@@ -436,6 +436,34 @@ it('uses surface slot zero palette for structureless ground objects', async () =
   }
 });
 
+it('offers a ground template one form per evidenced scene palette', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  // Object 337's faces name scene colour word 1, which palette 2 fills with
+  // $777 and the other three evidenced palettes fill with $771. Showing a
+  // single palette 0 form hid that difference behind an unbound default.
+  const template = data.models.find(model => model.id === 'object-041b1e')!;
+  expect(template.variants.map(variant => variant.id)).toEqual([
+    'palette-1',
+    'palette-2',
+    'palette-51',
+    'palette-62'
+  ]);
+  expect(template.omissions).not.toContain('paletteBinding');
+  const sceneColour = (index: number) =>
+    template.variants[index]!.mesh.faces.find(
+      face => face.sourceColour === 0x80_82
+    )!.colour;
+  expect([0, 2, 3].map(sceneColour)).toEqual(['#eeee22', '#eeee22', '#eeee22']);
+  expect(sceneColour(1)).toBe('#eeeeee');
+
+  // The one template no captured cell table places keeps the named gap.
+  const unplaced = data.models.find(model => model.id === 'object-041b8a')!;
+  expect(unplaced.omissions).toContain('paletteBinding');
+  expect(unplaced.variants).toHaveLength(1);
+});
+
 it('recovers the spaceport wall below the window without closing the opening', async () => {
   const data = parseCatalogue(
     await Bun.file('../payload/damocles/catalogue.json').json()
