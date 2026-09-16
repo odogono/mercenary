@@ -127,8 +127,8 @@
   ],
   "coverage": {
     "census": {
-      "decoded": 503,
-      "partial": 329,
+      "decoded": 508,
+      "partial": 324,
       "unique": 832,
       "unresolved": 0
     },
@@ -142,7 +142,7 @@
       "liveText": 3,
       "null": 1,
       "omittedSelector": 0,
-      "paletteBinding": 6,
+      "paletteBinding": 1,
       "procedural": 1,
       "roadTemplate": 0,
       "scenePoint": 0,
@@ -198,12 +198,12 @@
       {
         "address": 218880,
         "aliases": 0,
-        "decoded": 203,
+        "decoded": 208,
         "empty": 0,
         "extentEvidence": "Contiguous relative-pointer table up to the following data record; extent is provisional.",
         "kind": "object",
         "nullRecords": 1,
-        "partial": 9,
+        "partial": 4,
         "slots": 378,
         "unique": 212,
         "unresolved": 0
@@ -254,7 +254,7 @@
       "Mission-disk or script-created visual changes that would replace a resident slot, including the $DF attachment branch whose $6364 table is empty in the pinned captures. Follow-up: https://github.com/odogono/mercenary/issues/280.",
       "Live articulation angles ($7888) for articulated building details, which the catalogue shows at rest because $053D74 rotates a detail in the structure-scaled frame this model is not held in. Follow-up: https://github.com/odogono/mercenary/issues/278.",
       "Object vector text whose live $CCA0 token is not a slot-derived label, and text that resolves through indirect pointers or the state-conditioned font 4. Follow-up: https://github.com/odogono/mercenary/issues/279.",
-      "Scene colour bindings for unplaced object slots 333-338 remain unverified. Follow-up: https://github.com/odogono/mercenary/issues/277.",
+      "The scene colour binding for object slot 338 remains unverified: the $7000 ground records that place it lie above the highest record any captured $1E400 cell table selects, so no capture names the palette its cell would bind. Follow-up: https://github.com/odogono/mercenary/issues/277.",
       "The viewport background is a raster block fill at $059CE2 using the surface record's two scene colours, so it holds no geometry; the producer of the ground band below the horizon and the route list at $05499E allocating scene slots below $F0 remain unexplored. Follow-up: https://github.com/odogono/mercenary/issues/281."
     ]
   },
@@ -156298,26 +156298,30 @@
     },
     {
       "conditions": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "4 authored $7000 ground placements bind this template to scene palette 1: VESTA cell $54, GAEA cell $13, GAEA cell $23, GAEA cell $33.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-catalogue.md"
+        }
+      ],
       "id": "object-04190e",
       "kind": "object",
       "linkedInstances": [],
       "name": "Object 333",
       "nameStatus": "unknown",
-      "omissions": [
-        "paletteBinding"
-      ],
-      "reason": "Scene colour table binding unverified; palette 0 is shown.",
+      "omissions": [],
+      "reason": "Shape decoded; its scene colours resolve through the palette each placing cell selects, evidenced here as palette 1.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
         333
       ],
       "sourceAddress": 268558,
-      "status": "partial",
+      "status": "decoded",
       "variants": [
         {
-          "id": "record",
+          "id": "palette-1",
           "mesh": {
             "faces": [
               {
@@ -156474,32 +156478,36 @@
               ]
             ]
           },
-          "name": "Recovered form \u00b7 palette 0 (binding unverified)"
+          "name": "Recovered form \u00b7 palette 1"
         }
       ]
     },
     {
       "conditions": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "4 authored $7000 ground placements bind this template to scene palette 1: VESTA cell $54, GAEA cell $13, GAEA cell $23, GAEA cell $33.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-catalogue.md"
+        }
+      ],
       "id": "object-041992",
       "kind": "object",
       "linkedInstances": [],
       "name": "Object 334",
       "nameStatus": "unknown",
-      "omissions": [
-        "paletteBinding"
-      ],
-      "reason": "Scene colour table binding unverified; palette 0 is shown.",
+      "omissions": [],
+      "reason": "Shape decoded; its scene colours resolve through the palette each placing cell selects, evidenced here as palette 1.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
         334
       ],
       "sourceAddress": 268690,
-      "status": "partial",
+      "status": "decoded",
       "variants": [
         {
-          "id": "record",
+          "id": "palette-1",
           "mesh": {
             "faces": [
               {
@@ -156656,32 +156664,36 @@
               ]
             ]
           },
-          "name": "Recovered form \u00b7 palette 0 (binding unverified)"
+          "name": "Recovered form \u00b7 palette 1"
         }
       ]
     },
     {
       "conditions": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "9 authored $7000 ground placements bind this template to scene palette 1: GAEA cell $11, GAEA cell $12, GAEA cell $13, GAEA cell $33, GAEA cell $34, GAEA cell $35, and more.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-catalogue.md"
+        }
+      ],
       "id": "object-041a16",
       "kind": "object",
       "linkedInstances": [],
       "name": "Object 335",
       "nameStatus": "unknown",
-      "omissions": [
-        "paletteBinding"
-      ],
-      "reason": "Scene colour table binding unverified; palette 0 is shown.",
+      "omissions": [],
+      "reason": "Shape decoded; its scene colours resolve through the palette each placing cell selects, evidenced here as palette 1.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
         335
       ],
       "sourceAddress": 268822,
-      "status": "partial",
+      "status": "decoded",
       "variants": [
         {
-          "id": "record",
+          "id": "palette-1",
           "mesh": {
             "faces": [
               {
@@ -156838,32 +156850,36 @@
               ]
             ]
           },
-          "name": "Recovered form \u00b7 palette 0 (binding unverified)"
+          "name": "Recovered form \u00b7 palette 1"
         }
       ]
     },
     {
       "conditions": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "9 authored $7000 ground placements bind this template to scene palette 1: GAEA cell $11, GAEA cell $12, GAEA cell $13, GAEA cell $33, GAEA cell $34, GAEA cell $35, and more.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-catalogue.md"
+        }
+      ],
       "id": "object-041a9a",
       "kind": "object",
       "linkedInstances": [],
       "name": "Object 336",
       "nameStatus": "unknown",
-      "omissions": [
-        "paletteBinding"
-      ],
-      "reason": "Scene colour table binding unverified; palette 0 is shown.",
+      "omissions": [],
+      "reason": "Shape decoded; its scene colours resolve through the palette each placing cell selects, evidenced here as palette 1.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
         336
       ],
       "sourceAddress": 268954,
-      "status": "partial",
+      "status": "decoded",
       "variants": [
         {
-          "id": "record",
+          "id": "palette-1",
           "mesh": {
             "faces": [
               {
@@ -157020,32 +157036,51 @@
               ]
             ]
           },
-          "name": "Recovered form \u00b7 palette 0 (binding unverified)"
+          "name": "Recovered form \u00b7 palette 1"
         }
       ]
     },
     {
       "conditions": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "3 authored $7000 ground placements bind this template to scene palette 1: first-world cell $34, first-world cell $94, first-world cell $99.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-catalogue.md"
+        },
+        {
+          "claim": "7 authored $7000 ground placements bind this template to scene palette 2: DION cell $23, DION cell $33, DION cell $43, DION cell $63, DION cell $83, DION cell $B3, and more.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-catalogue.md"
+        },
+        {
+          "claim": "1 authored $7000 ground placement bind this template to scene palette 51: first-world cell $44.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-catalogue.md"
+        },
+        {
+          "claim": "65 authored $7000 ground placements bind this template to scene palette 62: first-world cell $33, first-world cell $54, first-world cell $64, first-world cell $74, first-world cell $84, first-world cell $95, and more.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-catalogue.md"
+        }
+      ],
       "id": "object-041b1e",
       "kind": "object",
       "linkedInstances": [],
       "name": "Object 337",
       "nameStatus": "unknown",
-      "omissions": [
-        "paletteBinding"
-      ],
-      "reason": "Scene colour table binding unverified; palette 0 is shown.",
+      "omissions": [],
+      "reason": "Shape decoded; its scene colours resolve through the palette each placing cell selects, evidenced here as palette 1, 2, 51, 62.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [
         337
       ],
       "sourceAddress": 269086,
-      "status": "partial",
+      "status": "decoded",
       "variants": [
         {
-          "id": "record",
+          "id": "palette-1",
           "mesh": {
             "faces": [
               {
@@ -157170,7 +157205,391 @@
               ]
             ]
           },
-          "name": "Recovered form \u00b7 palette 0 (binding unverified)"
+          "name": "Recovered form \u00b7 palette 1"
+        },
+        {
+          "id": "palette-2",
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  1,
+                  2,
+                  4,
+                  8
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  0,
+                  1,
+                  8,
+                  3
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  2,
+                  0,
+                  3,
+                  4
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32898,
+                "vertices": [
+                  8,
+                  4,
+                  7,
+                  6
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32898,
+                "vertices": [
+                  3,
+                  8,
+                  6,
+                  5
+                ]
+              },
+              {
+                "colour": "#eeeeee",
+                "sourceColour": 32898,
+                "vertices": [
+                  4,
+                  3,
+                  5,
+                  7
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  5,
+                  6,
+                  7
+                ]
+              }
+            ],
+            "geometryStart": 269086,
+            "lines": [],
+            "sourceEnd": 269194,
+            "sourceStart": 269086,
+            "vertices": [
+              [
+                0,
+                0,
+                9
+              ],
+              [
+                8,
+                0,
+                -5
+              ],
+              [
+                -8,
+                0,
+                -5
+              ],
+              [
+                0,
+                260,
+                9
+              ],
+              [
+                -8,
+                260,
+                -5
+              ],
+              [
+                0,
+                320,
+                36
+              ],
+              [
+                32,
+                320,
+                -20
+              ],
+              [
+                -32,
+                320,
+                -20
+              ],
+              [
+                8,
+                260,
+                -5
+              ]
+            ]
+          },
+          "name": "Recovered form \u00b7 palette 2"
+        },
+        {
+          "id": "palette-51",
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  1,
+                  2,
+                  4,
+                  8
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  0,
+                  1,
+                  8,
+                  3
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  2,
+                  0,
+                  3,
+                  4
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  8,
+                  4,
+                  7,
+                  6
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  3,
+                  8,
+                  6,
+                  5
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  4,
+                  3,
+                  5,
+                  7
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  5,
+                  6,
+                  7
+                ]
+              }
+            ],
+            "geometryStart": 269086,
+            "lines": [],
+            "sourceEnd": 269194,
+            "sourceStart": 269086,
+            "vertices": [
+              [
+                0,
+                0,
+                9
+              ],
+              [
+                8,
+                0,
+                -5
+              ],
+              [
+                -8,
+                0,
+                -5
+              ],
+              [
+                0,
+                260,
+                9
+              ],
+              [
+                -8,
+                260,
+                -5
+              ],
+              [
+                0,
+                320,
+                36
+              ],
+              [
+                32,
+                320,
+                -20
+              ],
+              [
+                -32,
+                320,
+                -20
+              ],
+              [
+                8,
+                260,
+                -5
+              ]
+            ]
+          },
+          "name": "Recovered form \u00b7 palette 51"
+        },
+        {
+          "id": "palette-62",
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  1,
+                  2,
+                  4,
+                  8
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  0,
+                  1,
+                  8,
+                  3
+                ]
+              },
+              {
+                "colour": "#888888",
+                "sourceColour": 1092,
+                "vertices": [
+                  2,
+                  0,
+                  3,
+                  4
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  8,
+                  4,
+                  7,
+                  6
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  3,
+                  8,
+                  6,
+                  5
+                ]
+              },
+              {
+                "colour": "#eeee22",
+                "sourceColour": 32898,
+                "vertices": [
+                  4,
+                  3,
+                  5,
+                  7
+                ]
+              },
+              {
+                "colour": "#666666",
+                "sourceColour": 819,
+                "vertices": [
+                  5,
+                  6,
+                  7
+                ]
+              }
+            ],
+            "geometryStart": 269086,
+            "lines": [],
+            "sourceEnd": 269194,
+            "sourceStart": 269086,
+            "vertices": [
+              [
+                0,
+                0,
+                9
+              ],
+              [
+                8,
+                0,
+                -5
+              ],
+              [
+                -8,
+                0,
+                -5
+              ],
+              [
+                0,
+                260,
+                9
+              ],
+              [
+                -8,
+                260,
+                -5
+              ],
+              [
+                0,
+                320,
+                36
+              ],
+              [
+                32,
+                320,
+                -20
+              ],
+              [
+                -32,
+                320,
+                -20
+              ],
+              [
+                8,
+                260,
+                -5
+              ]
+            ]
+          },
+          "name": "Recovered form \u00b7 palette 62"
         }
       ]
     },
@@ -157185,7 +157604,7 @@
       "omissions": [
         "paletteBinding"
       ],
-      "reason": "Scene colour table binding unverified; palette 0 is shown.",
+      "reason": "No captured surface workspace places this template, so its scene colour words have no evidenced palette. Scene colour table binding unverified; palette 0 is shown. Binding it needs a capture whose $1E400 cell table selects one of the ground records that place it.",
       "recordClass": "geometry",
       "relatedModels": [],
       "slots": [

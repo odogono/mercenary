@@ -1613,3 +1613,94 @@ class SlotLabelTests(unittest.TestCase):
                 labels.append(mesh['texts'][0]['text'])
             self.assertEqual(''.join(labels), expected)
         _ = palette_at, u32
+
+
+class SceneColourTemplateTests(unittest.TestCase):
+    """Objects whose faces name the scene colour table carry no palette.
+
+    They are `$7000` ground templates, so the placing cell's surface record is
+    the only evidence their colours have. Showing every such record through
+    palette 0 read as a decode, when it was an unbound default.
+    """
+
+    SCENE_COLOUR_OBJECTS = {
+        'object-04190e': 333,
+        'object-041992': 334,
+        'object-041a16': 335,
+        'object-041a9a': 336,
+        'object-041b1e': 337,
+        'object-041b8a': 338,
+    }
+
+    def payload(self):
+        root = Path(__file__).resolve().parents[3]
+        return json.loads(
+            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
+        )
+
+    def test_only_these_six_records_name_the_scene_colour_table(self):
+        document = self.payload()
+        carrying = {
+            model['id']
+            for model in document['models']
+            for variant in model['variants']
+            for face in variant['mesh']['faces'] + variant['mesh']['lines']
+            if model['kind'] == 'object'
+            and face['sourceColour'] & 0x8000
+            and face['sourceColour'] & 0x80
+        }
+        self.assertEqual(carrying, set(self.SCENE_COLOUR_OBJECTS))
+
+    def test_a_placed_template_carries_one_variant_per_evidenced_palette(self):
+        document = self.payload()
+        models = {model['id']: model for model in document['models']}
+        expected = {
+            'object-04190e': ['palette-1'],
+            'object-041992': ['palette-1'],
+            'object-041a16': ['palette-1'],
+            'object-041a9a': ['palette-1'],
+            'object-041b1e': ['palette-1', 'palette-2', 'palette-51', 'palette-62'],
+        }
+        for identity, variant_ids in expected.items():
+            model = models[identity]
+            self.assertEqual([v['id'] for v in model['variants']], variant_ids)
+            self.assertEqual(model['status'], 'decoded')
+            self.assertNotIn('paletteBinding', model['omissions'])
+            # Every evidenced palette names the placements that bind it.
+            self.assertEqual(
+                len([e for e in model['evidence'] if 'ground placement' in e['claim']]),
+                len(variant_ids),
+            )
+            for variant in model['variants']:
+                for face in variant['mesh']['faces'] + variant['mesh']['lines']:
+                    self.assertRegex(face['colour'], r'^#[0-9a-f]{6}$')
+
+    def test_the_unplaced_template_keeps_the_gap_and_names_the_next_probe(self):
+        document = self.payload()
+        model = next(m for m in document['models'] if m['id'] == 'object-041b8a')
+        self.assertEqual(model['status'], 'partial')
+        self.assertEqual(model['omissions'], ['paletteBinding'])
+        self.assertIn('No captured surface workspace places this template', model['reason'])
+        self.assertIn('$1E400 cell table', model['reason'])
+        self.assertEqual(
+            document['coverage']['classifications']['paletteBinding'], 1
+        )
+        note = next(
+            entry for entry in document['coverage']['unexplored']
+            if 'issues/277' in entry
+        )
+        self.assertIn('object slot 338', note)
+
+    def test_a_template_palette_is_recorded_per_placing_cell(self):
+        from damocleslab.catalogue import record_template_palettes
+
+        bindings: dict = {}
+        record_template_palettes(bindings, ['object-041b1e'], 62, 'first-world', 0x33)
+        record_template_palettes(bindings, ['object-041b1e'], 2, 'DION', 0x23)
+        # A cell whose surface slot resolves to no model binds nothing, rather
+        # than defaulting the template to palette 0.
+        record_template_palettes(bindings, ['object-041b1e'], None, 'DION', 0x24)
+        self.assertEqual(
+            bindings,
+            {'object-041b1e': {62: ['first-world cell $33'], 2: ['DION cell $23']}},
+        )
