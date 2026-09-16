@@ -1377,6 +1377,17 @@ def decode_detail_selection(data: bytes, start: int, count: int) -> list:
     return groups
 
 
+def selection_note(model: dict) -> str:
+    """How a building detail's two view-conditioned visibility groups stand."""
+    if 'detailSelection' not in model:
+        return 'View-conditioned visibility is not simulated: the group lists did not decode.'
+    return (
+        'Both view-conditioned visibility groups are recovered, and every authored box list and '
+        'group default is offered as its own inspection form because a free-orbit view has no '
+        'player position to select one with.'
+    )
+
+
 def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
                                palette: list[int], hardware: list[int]) -> dict:
     if 0 in scale:
@@ -1768,9 +1779,11 @@ UNEXPLORED_COVERAGE = [
     'Packed Pasti STX disk track payload still not unpacked into models; fuzzy/copy-protected sectors are not a second pointer bank.',
     'Live $ABDC workspaces other than Eris first-world, Vesta Politburo City, Gaea UR City, and Dion; Gaea islands other than authored Birmingham and live UR City.',
     'Mission-disk or script-created visual changes that would replace a resident slot.',
-    'Live articulation angles ($7888) for articulated objects and details, which the catalogue shows at rest; '
+    'Live articulation angles ($7888) for articulated building details, which the catalogue shows at rest '
+    'because $053D74 rotates a detail in the structure-scaled frame this model is not held in; '
     'Building detail 69 references projected slots beyond its own vertex list.',
-    'Object vector text that resolves through live $CCA0 tokens, indirect text pointers, or the state-conditioned font 4; '
+    'Object vector text whose live $CCA0 token is not a slot-derived label, and text that resolves through '
+    'indirect pointers or the state-conditioned font 4; '
     'post-plan attachment forms other than the documented zero-latch and $F0 constructors.',
 'The viewport background is a raster block fill at $059CE2 using the surface record\'s two scene colours, so it holds no geometry; the producer of the ground band below the horizon is still unexplored.',
 ]
@@ -2726,8 +2739,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             if identity in BUILDING_VECTOR_TEXT_MODELS:
                 model['reason'] = (
                     'Shape, structure-bound colours and supported $60xx vector text decoded. '
-                    'View-conditioned visibility, articulated parts and uncaptured dynamic '
-                    'token states are not simulated.'
+                    + selection_note(model)
+                    + ' Uncaptured dynamic token states are not simulated.'
                 )
                 model['evidence'].append({
                     'claim': (
@@ -2738,7 +2751,9 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                     'source': 'docs/research/damocles-building-vector-text.md',
                 })
             else:
-                model['reason'] = 'Shape and structure-bound colours decoded. View-conditioned visibility, articulated parts, and external view are not simulated.'
+                model['reason'] = (
+                    'Shape and structure-bound colours decoded. ' + selection_note(model)
+                )
             if articulated:
                 model['reason'] += ' Articulated part shown at its rest angle. $053D74 rotates a detail after the structure X and Z scales are applied, so sampling the $7888 angle here would need the scaled frame this model is not held in.'
     for identity, (slot, palette_index, scale) in structure_bindings.items():

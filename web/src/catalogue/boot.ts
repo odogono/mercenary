@@ -5,6 +5,7 @@ import {
   type Catalogue,
   type Model
 } from './data.ts';
+import { detailForms } from './details.ts';
 import { address, element, link, node } from './dom.ts';
 import { mountMap, renderMap, type MapFocus } from './map.ts';
 import { regionForms } from './regions.ts';
@@ -75,6 +76,12 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
           : 'Building plan and linked detail. Available inspection views are listed under Form; original scene visibility remains incomplete.'
     );
   }
+  if (model.detailSelection?.length) {
+    paragraph(
+      details,
+      'Both recovered visibility groups are listed under Form: one box list per authored box, plus the default list the game draws when no box contains the player. $053CC2 picks group 2 on foot inside a structure and group 1 otherwise. Boxes are stated in raw model coordinates, which a placement scales by its structure X and Z factors. Record lists do not vary by palette, so the forms use the first palette listed.'
+    );
+  }
   if (model.sceneColours?.length) {
     paragraph(
       details,
@@ -127,8 +134,9 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
       }
     }
   }
-  // Each recovered region is offered beside the model's own forms, so the
-  // decoded visibility lists can be inspected rather than only described.
+  // Each recovered region, and each building-detail visibility list, is offered
+  // beside the model's own forms, so the decoded lists can be inspected rather
+  // than only described.
   const forms = [
     ...model.variants,
     ...regionForms(
@@ -136,7 +144,8 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
       data.models.find(
         item => item.id === model.structureSelection?.detailModel
       )
-    )
+    ),
+    ...detailForms(model)
   ];
   const chosen = new URL(location.href).searchParams.get('variant');
   const selected =

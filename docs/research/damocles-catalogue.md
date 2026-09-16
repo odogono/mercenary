@@ -73,6 +73,13 @@ visibility and component order, with per-face triangulation cached across select
 This does not implement the surrounding resident-object stream or the polygon fill
 routine's possible facing tests.
 
+`$053BF2` builds a detail's first group into `$C13C` and its second into
+`$C2FE`. `$053CC2` picks the second when the player is on foot inside a
+structure — `$7A8E` is 1, `$7AF6` and `$7B02` are clear and `$7B34` is negative
+— and the first otherwise. `$0539DC` walks the chosen group's boxes in order,
+takes the first that contains the player, and otherwise falls back to the list
+stored after the box terminator.
+
 The catalogue viewer now offers **each recovered region as its own inspection
 form** beside a structure's other views: 3,844 forms across the 254 structures
 that retain a selector. A form draws the region's queue in source order (plan
@@ -84,6 +91,16 @@ Capital Spaceport is the cross-check: region 1's queue reproduces the
 hand-tuned interior layout's face order exactly, and additionally places the
 authored entrance-door attachment where the source puts it, between plan faces
 19 and 20.
+
+Building details are offered the same way: **every authored box list and group
+default is its own inspection form**, 407 forms across the 58 details that
+retain a selector. Free orbit has no player position and no structure scale, so
+naming one list would be a guess; listing them all is not. 60 of the 467
+authored lists name no record at all — inside those boxes the game draws none of
+the detail — and those are left out rather than offered as an empty view. Box
+bounds are stated in raw model coordinates, which a placement scales by its
+structure X and Z factors. A detail's palette variants share a record count, so
+the forms are drawn from the first palette listed.
 
 These extents are bounded by the next independently recognised data records:
 object NULL metadata at `$035CE8`, the first surface metadata at `$00ED60`, and
