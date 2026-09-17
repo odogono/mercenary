@@ -78,20 +78,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Carrying an object stages it in body VOID (`$78`) with its whole Association B
   cleared, so residence belongs to the body byte a drop writes and never to the
   bound structure. Draw membership is rebuilt from residence at every region
-  change and is therefore derived, not saved. The Carried Stack at `$61CE` is an
-  ordered LIFO the player rotates, drop always acts on its head, and a
-  multi-object drop issues one more sound request and queue rebuild than a
-  sole-object drop. Capacity is state — 10, or 20 while BRIEFCASE is carried —
-  and the Trading Post credits a sale **before** its placement checks run, so a
-  refused sale drop has already paid. Two new ordinary-route refusals are
+  change and is therefore derived, not saved. Drop always acts on the head of the
+  Carried Stack, and a multi-object drop issues one more sound request and queue
+  rebuild than a sole-object drop. The Trading Post credits a sale **before** its
+  placement checks run, so a refused sale drop has already paid. Two new
+  ordinary-route refusals are
   observed for the first time: the inventory-label scroll window refuses a drop
   pressed 0.2 s after a take and permits the same drop 3 s later, and a take
   refused by the handling byte leaves the Carried Stack, the scroll counter and
   the script untouched, moving only the message gate. A quantified blocker
   replaces the previous silence: the only replayable arrival pose has exactly one
   takeable resident in reach, and the Dion, Gaea and Vesta memstates cannot be
-  restored at all, so support placement, capacity and multi-object ordering
-  remain instruction-derived. New probe
+  restored at all, so support placement and multi-object ordering remain
+  instruction-derived. New probe
   `research/damocles-st/scripts/object-drop-probe.py`; see
   `docs/research/damocles-object-drops.md`.
 

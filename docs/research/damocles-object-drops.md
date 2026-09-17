@@ -121,11 +121,12 @@ drops the original refuses.
 
 A recovered exception sits at `$0545AC`: `tst.b $7046.w` / `bmi $0545D4` skips the
 rank comparison entirely when bit 7 of the handling byte at `$7046` is set. `$7046`
-is `$6FAA + 4 * 39`, that is resident slot 39 — the tenth `DOOR KEY` instance, the
-one the panel labels `J` (the label code at `$04DD78` maps slots 30–39 to letters
-A–J). Why carrying that particular key should relax the support rules is
-**unresolved**; the instruction is recorded, its purpose is not claimed. Do not
-implement it as a feature on this evidence alone.
+is `$6FAA + 4 * 39`, that is resident slot 39, the `DOOR KEY A` instance
+[the capacity research](damocles-carry-capacity.md) names for the same bypass. It is
+the tenth `DOOR KEY` slot, the one the panel labels `J`: the label code at `$04DD78`
+maps slots 30–39 to letters A–J. Why carrying that particular key should relax the
+support rules is **unresolved**; the instruction is recorded, its purpose is not
+claimed. Do not implement it as a feature on this evidence alone.
 
 ## Support geometry: the height gate
 
@@ -225,7 +226,7 @@ drop writes the insertion group from the current region while the authored recor
 may use a different group, a dropped object's drawing order differs from its
 authored order even when both are visible in the same region.
 
-## The Carried Stack is an ordered LIFO the player can rotate
+## The Carried Stack is an ordered list with a head the player can rotate
 
 `$61CE` is a byte array of resident slots and `$61CC` is its count.
 
@@ -237,7 +238,10 @@ authored order even when both are visible in the same region.
 | Scroll backward | `$04DCF6` | rotates the tail to the head; scroll counter `-16` |
 
 Drop always acts on the head. The player chooses what to drop by rotating the stack,
-so the order is behaviour, not presentation, and it must survive a save.
+so the order is behaviour, not presentation, and it must survive a save. It is **not**
+a last-in-first-out stack: the object a drop removes is the one the panel names, which
+rotation can make any carried object. [The capacity research](damocles-carry-capacity.md)
+records the same rotation and the `CONTEXT.md` glossary amendment it needs.
 
 There is an ordering asymmetry worth preserving. When the dropped object was **not**
 the only carried object, `$04DC40` falls through `$04DC9E`–`$04DCC2`, which sets the
@@ -248,19 +252,15 @@ issues one extra sound request and one extra queue rebuild compared with a
 sole-object drop, in addition to the drop handler's own calls at `$0546A4`/`$0546CC`
 and `$05473C`.
 
-## Capacity and the BRIEFCASE
+## Capacity and the BRIEFCASE are owned elsewhere
 
-`$7A04` is the capacity the take handler compares the count against at `$054244`; a
-full stack refuses silently. Taking `BRIEFCASE` (slot 108, `$6C`) at `$05426C` sets
-capacity to 20 and, if `$61CA` holds a previously stashed overflow, restores those
-entries and the count. Dropping it at `$054632` sets capacity back to 10, records the
-overflow `count - 10` in `$61CA`, shows system-string index 1 and forces the count to
-10. `$0543BE` then reports the load as the count, doubled unless capacity is 20.
-
-The overflow entries are left in the array beyond index 10 rather than removed. That
-is what the instructions do; whether a sequence of intervening takes and drops can
-corrupt the stash is **not established here** and belongs with the capacity work in
-[#317](https://github.com/odogono/mercenary/issues/317).
+`$7A04` is the capacity the take handler tests at `$054244`, and the `BRIEFCASE`
+paths at `$05426C` and `$054632` move it between 10 and 20 while stashing any
+overflow in `$61CA`. [The capacity research](damocles-carry-capacity.md) recovered
+all of that in full — including that the comparison is an **equality**, so a count
+already above capacity is accepted, and that the overflow is an exact round trip it
+reproduced at instruction checkpoints. This note does not restate it and does not
+contradict it; capacity appears here only as state a drop can change.
 
 ## Refusal taxonomy
 
@@ -283,10 +283,18 @@ Every refusal in both handlers, with what the player is shown:
 | Drop | support requirement zero, support rank zero, rank too low, unsupported model form, or support top above the player | message index 9 |
 | Drop | Trading Post sale while `$795C` already records a sold slot | message index `$0B` |
 
-Carrying `ANTIGRAV` bypasses the take-side classification entirely: `$054224` and
-`$05422A` test bit 7 of the handling bytes of slots 158 and 157, the two `ANTIGRAV`
-instances, and jump past both the bit-4 and bit-5 checks. This is a general
-takeability rule, not a movement effect.
+The take-side overrides are recovered in
+[the capacity research](damocles-carry-capacity.md) and its ordering is the one to
+follow: the slot-0 test at `$054214` is ahead of the bit-4 check, while the two
+`ANTIGRAV` tests at `$054224` and `$05422A` sit **between** the two refusals and can
+therefore only reach bit 5. Carrying an ANTIGRAV never makes a bit-4 object takeable.
+
+The rank comparison above was recovered independently by that ticket, which reached
+the same assignment of demand and supply and the same finding about the payload's
+field names, and reproduced refused, met and bypassed rank cases at instruction
+checkpoints. What this note adds to it is that the branch is forced rather than
+optional, the geometry gate that follows the comparison, and the residence and
+draw-queue consequences of an accepted placement.
 
 ## Trading Post credit and buy-back
 
@@ -429,7 +437,7 @@ Half-open ranges in the pinned first-world RAM.
 | `$04DC40`–`$04DD90` Carried Stack and panel label | `38b6d2e4fc22af452eff273d943d65149f4f8820e8aee1bc9be8912eb673c877` |
 | `$052C9C`–`$052D42` surface list and association builder | `e971ecc94ff748bdc2f704c678c5b219c197ce9835a7c80f9f78187469837546` |
 | `$05A30E`–`$05A3DE` region resolve and membership clear | `a66ed42e20865d824b72b4b8057529aded4ed7b8d751801a5c1add4d931a77f9` |
-| `$054770`–`$0547C6` trigger dispatch | `0e5267c71f7f6d5985f4971cca82a53268e86ad3909048cefa3b9e87142027f0` |
+| `$054770`–`$0547C6` trigger dispatch (see [pickup responses](damocles-pickup-responses.md)) | `0e5267c71f7f6d5985f4971cca82a53268e86ad3909048cefa3b9e87142027f0` |
 | `$0543BE`–`$0543FA` carry-dependent panel and effect lookup | `7a3b3721bf94f953f3536b63be6c9de7aa7f9c2bfe41c34793b5596d14e9d059` |
 | `$04E05A`–`$04E17E` price, credit and debit | `eb977e835d0a228a83fde200d0c9744c9dcc695b7aefee5d1873c176fb36726e` |
 
@@ -460,23 +468,27 @@ a persistence test can assert it without replaying actions.
    cancels it: the one-shot trigger stays disarmed and the script continues. The
    `scroll-control` run above is one instance of the drop half, mid-response, and the
    key research records the full drop-and-re-pick sequence.
-7. Capacity is state, not a constant: 10 normally and 20 while `BRIEFCASE` is carried,
-   with the stashed overflow count in its own field. A restore must reproduce
-   capacity, count, order and stash together.
+7. Capacity is state, not a constant, and a drop can change it. A restore must
+   reproduce capacity, count, order and the BRIEFCASE overflow store together; their
+   rules are in [the capacity research](damocles-carry-capacity.md).
 
 ## Open blockers for #315
 
 - Nearby-support placement, the support-rank refusal, the model-form refusal and the
   height refusal have no ordinary-route observation. All four are instruction-derived.
-- Multiple simultaneously carried ordinary objects, Carried Stack rotation, capacity
-  refusal and multi-object drop ordering have no ordinary-route observation.
+- Multiple simultaneously carried ordinary objects, Carried Stack rotation and
+  multi-object drop ordering have no ordinary-route observation. The capacity and
+  special-item behaviour in the same area has instruction-checkpoint coverage from
+  #316, which is also not an ordinary route.
 - Every interior other than Capital Spaceport region 1, every no-structure cell, every
   passage and every unbound placement remain uncovered, as the key research already
   recorded.
 - The DION, GAEA and VESTA memstates must be recaptured before any runtime claim can
   be made about those bodies.
 - The `$7046` support-rank bypass and the slot-0 contact bypass are recorded but
-  unexplained.
+  unexplained here and in [the capacity research](damocles-carry-capacity.md), which
+  additionally shows that the fourth take-side test's operand is self-modified by the
+  unidentified restore path at `$055190`.
 - Whether the drop's level byte `$7AC5` and the association builder's `$7AA5` are the
   same quantity is unverified at non-zero levels.
 
