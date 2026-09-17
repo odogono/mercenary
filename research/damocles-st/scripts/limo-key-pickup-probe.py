@@ -7,19 +7,23 @@ state that the pickup path writes: the inventory list, resident slot 183, the
 Damocles Script program counter and return stack, the script trigger byte
 table, the message gate and the script wait counter.
 
-Five cases run in separate Hatari processes from the same snapshot:
+Eight cases run in separate Hatari processes from the same snapshot:
 
 ``control``           walk the route, stand beside the key, press nothing.
 ``take``              one ordinary take input.
 ``take-repeat``       a take, a second take while the response is running, and
                       a third after it has finished.
 ``take-drop``         a take, then the drop input, then a second take.
+``midresponse-drop``  drop and re-pick while the initial response is running.
+``reverse-surface``   reverse the walk, then drop and re-pick outside.
+``surface-leave-return``  leave the surface drop cell and return to re-pick.
 ``take-save-resume``  a take, an emulator state save partway through the
                       response, and that state resumed in a second process.
 
 Each sample is a ``savebin`` of three small windows while the emulator is
-stopped; nothing is written back into the guest, so these are ordinary
-gameplay observations rather than debugger-forced state. Captures, listings and
+stopped. Joystick softcopy writes supply movement input; no player-position,
+object-association or script-state fields are injected. These are gameplay
+observations rather than forced placement state. Captures, listings and
 RAM stay in the ignored run directory (docs/research/damocles-gap.md); only
 decoded facts belong in tracked notes.
 
@@ -116,6 +120,13 @@ CASES: dict[str, dict] = {
         "inputs": _take(0.0) + _drop(24.0) + _take(28.0),
         "samples": [1.4, 12.0, 23.0, 25.4, 27.0, 29.4, 31.0, 34.0],
     },
+    # Movement inputs are built from the route by _reverse_surface_case.
+    "reverse-surface": {"inputs": _take(0.0)},
+    "surface-leave-return": {"inputs": _take(0.0)},
+    "midresponse-drop": {
+        "inputs": _take(0.0) + _drop(3.0) + _take(6.0),
+        "samples": [1.4, 2.5, 4.4, 5.5, 7.4, 10.0, 16.0, 24.0],
+    },
     # Emulator state is saved while the response is still presenting messages,
     # then a second process boots from that state and is sampled again. Damocles
     # has no in-game save here, so this measures whether the interaction is
@@ -127,6 +138,51 @@ CASES: dict[str, dict] = {
         "resumeSamples": [1.0, 4.0, 8.0, 12.0, 18.0, 24.0],
     },
 }
+
+
+def _reverse_surface_case(route: dict, *, leave_return: bool = False) -> dict:
+    """Replay the successful #312 route candidate; samples establish actual location.
+
+    Host timing drifts, so reversing inputs does not itself prove a surface arrival.
+    The initial idle segment is omitted, as in the pinned exploratory run.
+    """
+    inputs = _take(0.0)
+    cursor = 24.0
+    for segment in reversed(route["segments"][1:]):
+        bits = segment["rawByte"]
+        reversed_bits = (
+            ((bits & 1) << 1)
+            | ((bits & 2) >> 1)
+            | ((bits & 4) << 1)
+            | ((bits & 8) >> 1)
+        )
+        inputs.append({"t": cursor, "kind": "stick", "byte": reversed_bits})
+        cursor += segment["seconds"]
+    inputs.append({"t": cursor, "kind": "stick", "byte": 0})
+    inputs.extend(_drop(cursor + 2))
+    if leave_return:
+        inputs.extend([
+            {"t": cursor + 5, "kind": "stick", "byte": 2},
+            {"t": cursor + 105, "kind": "stick", "byte": 0},
+            {"t": cursor + 108, "kind": "stick", "byte": 1},
+            {"t": cursor + 208, "kind": "stick", "byte": 0},
+        ])
+        inputs.extend(_take(cursor + 212))
+        return {
+            "inputs": inputs,
+            "samples": [1.4, 23] + [
+                cursor + offset
+                for offset in [3.4, 25, 65, 106, 130, 170, 209, 213.4]
+            ],
+        }
+    inputs.extend(_take(cursor + 6))
+    return {
+        "inputs": inputs,
+        "samples": [
+            1.4, 23, *range(26, int(cursor), 5),
+            cursor + 1, cursor + 3.4, cursor + 7.4,
+        ],
+    }
 
 
 def _u16(data: bytes, base: int, address: int) -> int:
@@ -152,6 +208,19 @@ def _decode(sample: dict[str, bytes]) -> dict:
         "keySlotAssociationA": f"0x{_u32(low, lb, 0x6FA8 + slot):08x}",
         "keySlotAssociationB": f"0x{_u32(low, lb, 0x73A8 + slot):08x}",
         "keySlotX": f"0x{_u32(low, lb, 0x63A8 + slot):08x}",
+        "keySlotY": f"0x{_u32(low, lb, 0x67A8 + slot):08x}",
+        "eyeX": _u32(low, lb, 0x7A92),
+        "eyeY": _u32(low, lb, 0x7A96),
+        "eyeZ": _u32(low, lb, 0x7A9A),
+        "region": _u16(low, lb, 0x7AFC),
+        "regionFlags": _u16(low, lb, 0x7B34),
+        "body": _u16(low, lb, 0x7AA8),
+        "level": _u16(low, lb, 0x7B02),
+        "cell": _u16(low, lb, 0x7B5C),
+        "structureSlot": _u16(low, lb, 0x7AF0),
+        "placementMode": _u16(low, lb, 0x7AAE),
+        "groundContact": _u16(low, lb, 0x7ACA),
+        "soundGuard": _u16(low, lb, 0x7A0C),
         "keySlotZ": f"0x{_u32(low, lb, 0x6BA8 + slot):08x}",
         "scriptPc": f"0x{_u32(low, lb, 0x781E):08x}",
         "scriptStack": f"0x{_u32(low, lb, 0x6266):08x}",
@@ -320,6 +389,8 @@ def _resume_run(
 def run_case(name: str, roms_root: Path | None, settle: float) -> dict:
     case = CASES[name]
     route = json.loads(ROUTE.read_text(encoding="utf-8"))
+    if name in ("reverse-surface", "surface-leave-return"):
+        case = _reverse_surface_case(route, leave_return=name == "surface-leave-return")
     actions, take_at = _timeline(route, case)
 
     authority, config = load_configuration()
