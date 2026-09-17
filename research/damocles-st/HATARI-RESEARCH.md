@@ -180,6 +180,14 @@ names the cause.
   dialog nobody can dismiss. `build_hatari_command` therefore passes
   `--alert-level fatal`. `--log-level fatal` alone does **not** suppress it: the
   alert level is a separate threshold.
+
+  Suppressing the dialog is not the same as restoring the memstate. That message
+  means the snapshot was written by a Hatari built **with** CAPS/IPF support, and
+  the skip path in Hatari 2.6.1 skips `IPF_STRUCT` without skipping the 1344-byte
+  raw-stream trailer that follows it, so every later section misreads and the
+  restore is abandoned. `scripts/memstate-rehost.py` converts such a snapshot to
+  the pinned build's form; see
+  [the object-drop research](../../docs/research/damocles-object-drops.md).
 - **macOS offers to restore windows.** Once the app has crash history —
   which repeated `SIGKILL` of stuck runs creates — AppKit blocks in
   `NSPersistentUIRestorer promptToIgnorePersistentStateWithCrashHistory` before
