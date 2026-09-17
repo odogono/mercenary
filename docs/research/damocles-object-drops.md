@@ -73,7 +73,8 @@ The tracked `payload/damocles/catalogue.json` already extracts this byte, but it
 field names invert the recovered roles: its `objectRank` is bits 0–1 (supplied)
 and its `supportRank` is bits 2–3 (required). The extraction is correct; only the
 names mislead. Do not build placement logic on the names without re-reading them
-here.
+here. The rename is tracked as
+[#332](https://github.com/odogono/mercenary/issues/332).
 
 Census over the 241 catalogue residents that carry a handling byte:
 
@@ -472,7 +473,7 @@ a persistence test can assert it without replaying actions.
    reproduce capacity, count, order and the BRIEFCASE overflow store together; their
    rules are in [the capacity research](damocles-carry-capacity.md).
 
-## Open blockers for #315
+## Open blockers, now tracked as #331
 
 - Nearby-support placement, the support-rank refusal, the model-form refusal and the
   height refusal have no ordinary-route observation. All four are instruction-derived.
@@ -494,5 +495,8 @@ a persistence test can assert it without replaying actions.
 
 These are the concrete prerequisites, and they sit behind
 [#324](https://github.com/odogono/mercenary/issues/324)–[#327](https://github.com/odogono/mercenary/issues/327)
-rather than behind more work on the Eris route. #315 is not complete and
-[#318](https://github.com/odogono/mercenary/issues/318) stays blocked.
+rather than behind more work on the Eris route. The rules above are delivered and
+[#315](https://github.com/odogono/mercenary/issues/315) is closed; the
+observations these blockers gate moved to
+[#331](https://github.com/odogono/mercenary/issues/331), which blocks
+[#318](https://github.com/odogono/mercenary/issues/318) in its place.
