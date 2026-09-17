@@ -8,6 +8,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The Damocles display frame rate is recovered. The Working Authority runs in ST
+  low resolution and **never programs the Shifter's sync mode**: a static pass
+  over the resident image finds no reference to `$FF820A` or `$FF8260` — while
+  finding the video base at `$059984` and the palette base at `$05090C` and
+  `$051DA0` as positive controls — and change watchpoints armed from power-on
+  through the loader, the title screen and the first world's load report only
+  EmuTOS's own two writes at `$E10348` and `$E104F6`. The field rate is
+  therefore the machine's, it cannot vary by scene, and on the PAL machine the
+  Novagen UK release was sold for it is 50 Hz, measured at 50.053 Hz and 160256
+  cycles per field against the 60 Hz laboratory default's 133604. So one display
+  frame is 20.0 ms and the recovered 200-frame wait and message durations are
+  4.00 s each, correcting the pickup note's laboratory figure of about 3.3 s. A
+  debugger poke of `$FFFF820A` mid-session moves the rate and the program never
+  writes it back, four pinned scenes read identically, and the derived walk rate
+  at 327.68 units per second is re-checked and unchanged. `time.vblHertz` is
+  recommended at 50 with provenance `derived` rather than `authored`. Atmospheric
+  flight and VOID were not reached and rest on the program-wide argument. New
+  tracked `display-mode-probe.py`; no application behaviour change (#305).
+
 - The Damocles object-selection rule and take range gate are recovered. `$7B46`
   and `$7B42` are not an input-path calculation: the scene pass that draws
   objects writes them once per object as a running minimum, so `$7B46` holds the
