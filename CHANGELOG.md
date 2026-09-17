@@ -8,6 +8,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The Damocles object-selection rule and take range gate are recovered. `$7B46`
+  and `$7B42` are not an input-path calculation: the scene pass that draws
+  objects writes them once per object as a running minimum, so `$7B46` holds the
+  nearest drawn object's slot and `$7B42` the binary exponent of its distance
+  from the eye, both reset to `$7FFF` at the top of every pass. The measure is
+  therefore a distance, computed through the program's own log-table float
+  (exponent in the high word, 12-bit mantissa in the low), and the take
+  handler's `≤ 8` admits a distance under 512 source units — 1/128 of the
+  surface-grid unit the payload's positions already use. Nine runs of the new
+  tracked `object-selection-probe.py` bracket the gate at runtime between 281.4
+  units taken and 521.4 refused, and two approach runs match the sampled
+  exponent and mantissa to the log tables' own granularity. Candidates are the
+  current body's surface residents plus the room's own object list; a resident
+  in neither is never selected. Selection is identical aboard a craft. The
+  carried-object coordinates the pickup research left open are written by the
+  scene rebuild at `$052D42`, which parks the whole Carried Stack on a fixed
+  column (#303).
+- Every resident-slot instance in `payload/damocles/catalogue.json` (schema 12)
+  carries `handling`, the interaction byte at `$6FAA + 4*slot` decoded: bit 4
+  refuses a take silently, bit 5 diverts it to a refusal message, bit 7 is the
+  live carried flag and the low nibble is the drop handler's rank pair. All 241
+  resident slots with a model carry it — 161 ordinary takeable objects, 49
+  pieces of furniture, 21 craft that refuse with a message and 10 unlabelled
+  slots that refuse silently — and it is null on every other instance (#303).
+
 - The Damocles Script bank's message text is extracted into
   `payload/damocles/strings.json` by the tracked `damocleslab.strings` extractor:
   the whole 64-slot system string table at `$070000` and all 206 inline `$01`

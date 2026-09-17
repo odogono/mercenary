@@ -186,6 +186,28 @@ class SourceTests(unittest.TestCase):
             )
         )
 
+    def test_decodes_the_interaction_byte_the_take_handler_tests(self):
+        # $6FAA + 4*slot. Bit 4 refuses silently at $05421E, bit 5 diverts to
+        # the refusal message at $054238, and the low nibble is the rank pair
+        # the drop handler compares. Nothing here decides which object is
+        # selected; that is the per-frame nearest-drawn rule.
+        from damocleslab.catalogue import resident_handling
+        self.assertEqual(
+            resident_handling(bytes.fromhex('00120404')),
+            {'byte': 4, 'takeable': True, 'refusal': None, 'objectRank': 0,
+             'supportRank': 1, 'carried': False},
+        )
+        self.assertEqual(resident_handling(bytes.fromhex('ff122002'))['refusal'], 'message')
+        self.assertEqual(resident_handling(bytes.fromhex('00001000'))['refusal'], 'silent')
+        self.assertFalse(resident_handling(bytes.fromhex('ff122002'))['takeable'])
+        self.assertEqual(
+            resident_handling(bytes.fromhex('00000f00')),
+            {'byte': 15, 'takeable': True, 'refusal': None, 'objectRank': 3,
+             'supportRank': 3, 'carried': False},
+        )
+        self.assertTrue(resident_handling(bytes.fromhex('00318404'))['carried'])
+        self.assertIsNone(resident_handling(b'\x00\x12'))
+
     def test_resident_coordinates_are_made_local_by_subtracting_the_structure_origin(self):
         from damocleslab.catalogue import resident_local_position, structure_origin
         data = bytearray(0x100)

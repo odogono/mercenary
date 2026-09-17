@@ -18,6 +18,13 @@ heading array occupies one byte per slot:
 | Association B | `$73A8` | body, surface/interior, level and cell selectors |
 | Heading       | `$79CD` | one-byte heading, 256/turn, `$00` = north        |
 
+Association A's byte 2 (`$6FAA + 4*slot`) is the interaction byte: bit 4 makes
+an object silently untakeable, bit 5 diverts a take to a refusal message, bit 7
+is the live carried flag, and the low nibble is the rank pair the drop handler
+compares. It is the only per-object input to takeability, and the Catalogue
+carries it per resident instance as `handling`. See
+[object selection and the take range gate](damocles-object-selection.md#the-association-byte).
+
 The arrays in the pinned first-world, fresh on-foot, and captured interior runs
 are byte-identical over `$63A8..$77A7`, with SHA-256
 `9e71dcdc45aba40a7d6db0068f7e5e9076dff7226e31406eb4dffcc0474eae4c`.
