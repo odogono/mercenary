@@ -138,9 +138,9 @@ export interface Instance {
   readonly handling: {
     readonly byte: number;
     readonly carried: boolean;
-    readonly objectRank: number;
     readonly refusal: 'message' | 'silent' | null;
-    readonly supportRank: number;
+    readonly requiredSupportRank: number;
+    readonly suppliedSupportRank: number;
     readonly takeable: boolean;
   } | null;
   readonly id: string;
@@ -215,7 +215,7 @@ export interface Catalogue {
   readonly instances: readonly Instance[];
   readonly models: readonly Model[];
   readonly places: readonly Place[];
-  readonly schemaVersion: 12;
+  readonly schemaVersion: 13;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -636,7 +636,7 @@ const structureSelection = (value: unknown): StructureSelection => {
 
 export const parseCatalogue = (value: unknown): Catalogue => {
   const r = object(value);
-  if (r['schemaVersion'] !== 12) {
+  if (r['schemaVersion'] !== 13) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -877,10 +877,10 @@ export const parseCatalogue = (value: unknown): Catalogue => {
       handling = {
         byte: byte(h['byte']),
         carried: boolean(h['carried']),
-        objectRank: byte(h['objectRank']),
         refusal:
           h['refusal'] === null ? null : choice(h['refusal'], ['message', 'silent'] as const),
-        supportRank: byte(h['supportRank']),
+        requiredSupportRank: byte(h['requiredSupportRank']),
+        suppliedSupportRank: byte(h['suppliedSupportRank']),
         takeable: boolean(h['takeable'])
       };
     }
@@ -1054,7 +1054,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     instances,
     models,
     places,
-    schemaVersion: 12,
+    schemaVersion: 13,
     source,
     tables
   };
