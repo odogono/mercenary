@@ -48,7 +48,7 @@ point and the state every pre-take and post-response sample held.
 
 **What the evidence does not establish.** How a message is revealed on the panel row, or what the
 200 frames are divided between; frame-exact input timing; the interpreter's instruction
-dispatch rate between gates; the seconds per display frame of the original hardware configuration;
+dispatch rate between gates;
 audible output, since the laboratory ran with sound off; the meaning of the association bits or of
 the low X/Z values written while an object is held; why the drop path writes insertion-group
 selector 1 rather than the authored 12. Where a rule is needed anyway it is marked authored below
@@ -91,11 +91,14 @@ Separately bounded, because each needed evidence this contract must not invent:
   [the strings note](../research/damocles-script-strings.md) records the encoding. A paraphrase
   authored into the app is still not a substitute and must never become claimed faithful content.
 
-One authored value with a research issue behind it ([#305](https://github.com/odogono/mercenary/issues/305)): the display frame rate. The wait and message
-durations are recovered as **frames**; seconds are not. The Eris presentation document gains a
-`time` block carrying `vblHertz` as `authored`, at 50, consistent with the 50 Hz already used to
-derive the walk rate, with `waitFrames` and `messageFrames` at 200 recorded as `recovered`. Its
-schema goes 5 → 6.
+The display frame rate ([#305](https://github.com/odogono/mercenary/issues/305)). *Settled, and no longer authored.* The wait and message
+durations remain recovered as **frames**; the conversion to seconds is now sourced.
+[The display-rate note](../research/damocles-display-rate.md) recovers that the program runs in ST
+low resolution and never programs the Shifter's sync mode, so the field rate is the machine's and
+cannot vary by scene; a UK PAL machine gives **50 Hz**, measured at 50.053 Hz. The Eris presentation
+document gains a `time` block carrying `vblHertz` at 50 with provenance **`derived`** rather than
+`authored`, and `waitFrames` and `messageFrames` at 200 as `recovered`. Its schema goes 5 → 6. Each
+200-frame duration is therefore 4.00 s and the whole response is 20.0 s.
 
 ## Values and interface
 
