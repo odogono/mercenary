@@ -32,7 +32,7 @@ re-arm; and Damocles Save Snapshot and Session Resume across every one of those 
 
 | Excluded | Why |
 | --- | --- |
-| The object-selection rule behind `$7B46`/`$7B42` | Unrecovered. It becomes the `Selection` seam below and its own research issue; no interim rule is authored. |
+| The object-selection rule behind `$7B46`/`$7B42` | **Recovered** by [#303](https://github.com/odogono/mercenary/issues/303) and no longer excluded: `Selection` is the nearest drawn instance, in range below 1/128 of a surface-grid unit. See [the selection note](../research/damocles-object-selection.md). |
 | The busy-path trigger arbitration (queue on bit 5, discard otherwise) and the sticky bit 6 variant | Derived from instructions, never reproduced, and unreachable here: trigger 2 disarms on its first fire, so no second dispatch can find the host busy. |
 | The refusal messages at system-string indices `$02` and `$0C`, and the `$04E158` check behind the second | Unreachable for this object: the key's association byte is `$04`, so neither refusal applies. |
 | The full-Carried-Stack path at capacity 10 | The capacity is recovered and enforced; what the original does when it is reached is not, and this slice has one takeable object, so it cannot be reached. |
@@ -64,12 +64,16 @@ label; frame-counted message presentation and the panel message line; the Damocl
 named steps, a return stack, a one-shot trigger table and a frame wait; and the Save Snapshot bump
 those additions require.
 
-Separately bounded, because each needs evidence this contract must not invent:
+Separately bounded, because each needed evidence this contract must not invent:
 
-- **Object selection and the take range gate** ([#303](https://github.com/odogono/mercenary/issues/303)). How `$7B46` and `$7B42` are computed each frame,
-  what the `≤ 8` measure counts, and which per-object association bit answers takeability. Until
-  it is recovered the ordinary pickup path cannot be claimed faithful, so #300 waits on it rather
-  than on an authored substitute.
+- **Object selection and the take range gate** ([#303](https://github.com/odogono/mercenary/issues/303)). *Settled.* Both words are written by the
+  scene pass that draws objects, as a running minimum over the objects it draws: `$7B46` is the
+  nearest one's slot and `$7B42` is the binary exponent of its distance from the eye, so `≤ 8`
+  admits a distance under 512 source units — 1/128 of the surface-grid unit the payload's
+  positions already use. Takeability is Association A byte 2, which
+  `payload/damocles/catalogue.json` schema 12 now carries per resident instance as `handling`.
+  [The selection note](../research/damocles-object-selection.md) records the evidence and the
+  session-side rule; the `Selection` seam below is unchanged in shape and is now filled.
 - **The message reveal model** ([#307](https://github.com/odogono/mercenary/issues/307)). How a message's text arrives on the panel row, what the 200 frames
   in `$0523B8` are divided between, and whether an input can end one early. The row is revealed
   progressively rather than appearing whole, so this is display state a mid-message restore must
@@ -111,7 +115,9 @@ type Residence =
       readonly position: { readonly x: number; readonly y: number; readonly z: number };
     };
 
-/// Supplied by the unrecovered selection rule. This contract consumes it and does not define it.
+/// Supplied by the recovered selection rule (#303): the nearest drawn instance by straight-line
+/// distance from the eye, with `inRange` below 1/128 of a surface-grid unit. This contract
+/// consumes it and does not define it.
 type Selection =
   | { readonly kind: 'none' }
   | { readonly kind: 'object'; readonly instance: InstanceId; readonly inRange: boolean };
@@ -175,9 +181,10 @@ declare function runFrame(state: ScriptState): ScriptTransition;
 declare function fireTrigger(state: ScriptState, index: number): ScriptTransition;
 ```
 
-`Selection` is the seam the unrecovered rule fills. It offers only instances whose takeability is
-recovered, so the take action never has to answer a question the evidence has not answered; a
-non-takeable object is outside this contract rather than silently takeable.
+`Selection` is the seam the recovered rule fills. It offers only instances whose takeability is
+recovered — now every resident instance, through the payload's `handling` record — so the take
+action never has to answer a question the evidence has not answered; a non-takeable object is
+outside this contract rather than silently takeable.
 
 The Damocles Host Callout is exactly `ScriptState` plus `Effect`. A Damocles Script may read and
 write the counter, the message gate, the busy flag, the trigger table and its own execution
@@ -458,7 +465,9 @@ Deterministic unit tests are the authority; #301's browser pass is confirmation,
 
 In dependency order, with the three blocking issues first:
 
-1. Object selection and takeability recovered — [#303](https://github.com/odogono/mercenary/issues/303).
+1. ~~Object selection and takeability recovered~~ — [#303](https://github.com/odogono/mercenary/issues/303), delivered as
+   [the selection note](../research/damocles-object-selection.md) and the `handling` record in
+   `payload/damocles/catalogue.json`.
 2. The message reveal model recovered — [#307](https://github.com/odogono/mercenary/issues/307).
 3. ~~The message strings extracted into `payload/damocles/`~~ — [#304](https://github.com/odogono/mercenary/issues/304), delivered as
    `payload/damocles/strings.json`.

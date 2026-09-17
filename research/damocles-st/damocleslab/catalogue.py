@@ -1800,6 +1800,29 @@ def interior_resident_association(association_a: bytes, association_b: bytes) ->
     }
 
 
+def resident_handling(association_a: bytes) -> dict | None:
+    """Decode the interaction byte the take and drop handlers test.
+
+    Association A byte 2 ($6FAA + 4*slot) is the only per-object input to the
+    take handler's takeability decision at $05421E and $054238: bit 4 set
+    refuses silently, bit 5 set diverts to the refusal message helper, and bit 7
+    is the live carried flag the take path sets. The low nibble is the pair of
+    ranks the drop handler compares at $0545B2..$0545D0. See
+    docs/research/damocles-object-selection.md.
+    """
+    if len(association_a) != 4:
+        return None
+    byte = association_a[2]
+    return {
+        'byte': byte,
+        'takeable': not byte & 0x30,
+        'refusal': 'silent' if byte & 0x10 else ('message' if byte & 0x20 else None),
+        'objectRank': byte & 0x03,
+        'supportRank': (byte >> 2) & 0x03,
+        'carried': bool(byte & 0x80),
+    }
+
+
 def decode_surface_placements(data: bytes, start: int) -> tuple[dict[int, dict], int]:
     """Decode a $FF-terminated authored surface-cell placement stream.
 
@@ -2459,6 +2482,7 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
             'model': model_id,
             'sourceAddress': address,
             'association': None,
+            'handling': None,
             'placement': None,
             'location': {
                 'body': f'body-{body}',
@@ -2575,6 +2599,7 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
             'model': model_id,
             'sourceAddress': 0x1E400 + cell * 2,
             'association': None,
+            'handling': None,
             'placement': None,
             'location': {
                 'body': f'body-{body}',
@@ -2870,6 +2895,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                   'Resident object slot; body/residence and coordinate interpretation remain unresolved.')
         instances.append({'id': f'object-slot-{slot}', 'model': model_id, 'name': f"{by_address[model_id]['name']} · slot {slot}",
                           'association': None,
+                          'handling': resident_handling(data[0x6fa8 + slot * 4:0x6fac + slot * 4]),
                           'location': None, 'placement': None, 'reason': reason,
                           'sourceAddress': 0x63a8 + slot * 4})
     instance_by_id = {instance['id']: instance for instance in instances}
@@ -2955,6 +2981,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         instances.append({'id': identity, 'name': place[1] if place else f'Eris surface cell {cell & 15},{cell >> 4}',
                           'model': model_id, 'sourceAddress': address,
                           'association': None,
+                          'handling': None,
                           'placement': None,
                           'location': {'body': 'body-11', 'place': place[0] if place else None,
                             'position': [origin_x + (cell & 15) + 0.5 + dx * 30 / 65536, 0, origin_z + (cell >> 4) + 0.5 + dz * 30 / 65536],
@@ -2989,6 +3016,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 'model': model_id,
                 'sourceAddress': placement['address'],
                 'association': None,
+                'handling': None,
                 'placement': None,
                 'location': {
                     'body': 'body-8',
@@ -3030,6 +3058,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'model': model_id,
             'sourceAddress': 0x1E400 + cell * 2,
             'association': None,
+            'handling': None,
             'placement': None,
             'location': {
                 'body': 'body-11',
@@ -3076,6 +3105,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'model': chevy_parent_model['id'],
             'sourceAddress': 0x251d7,
             'association': None,
+            'handling': None,
             'placement': None,
             'location': {
                 'body': 'body-11', 'place': None,
@@ -3691,6 +3721,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         'The documented zero-latch and $F0 post-plan constructors are retained, including the cell-derived door-key label; no discovered record carries an attachment omission. The $DF visual-change branch is accounted for: $059F64 reads the nine-entry $6364 table and substitutes character $DF for the entrance label glyph, while $04ED4A replays the same table over the $ABDC cell workspace to replace or clear an already-resident surface assembly. Neither introduces a record, and the table is all zero in every pinned capture, so neither branch is exercised by an observed state.',
         'Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.',
         'Every $6000 vector-text record in the census was inventoried: all 41 set the inline flag and none selects font 4, so the indirect-pointer and font-4 paths are unreached rather than unresolved. $CCA0 tokens divide into slot-derived labels, frame animations whose script is model data, structure-workspace face markers, and one live countdown.',
+        'Every resident slot carries the interaction byte the take handler tests, decoded as handling. Bit 4 refuses silently, bit 5 diverts to the refusal message, and the low nibble is the drop handler\'s rank pair; bits 6 and 7 are live state and are zero in the pinned capture. Nothing here selects a candidate: which object is selected is the per-frame nearest-drawn rule in docs/research/damocles-object-selection.md, not a catalogue field.',
     ]
     if gaea_coverage:
         coverage_notes.append(gaea_coverage)
@@ -3702,7 +3733,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'path': f'{label.title()} live workspace',
             'finding': note,
         })
-    return {'schemaVersion': 11, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
+    return {'schemaVersion': 12, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'places': places, 'tables': tables,
             'coverage': coverage_ledger(models, tables, coverage_notes, disk_load)}
 

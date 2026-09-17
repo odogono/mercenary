@@ -81,6 +81,28 @@ samples are `savebin` windows taken while the emulator is stopped. Results,
 captures and screenshots stay in the ignored `work/` run directory. See
 [the pickup research](../../docs/research/damocles-limo-key-pickup.md).
 
+## Object selection probe (#303)
+
+```sh
+python3 research/damocles-st/scripts/object-selection-probe.py --roms /path/to/roms --case approach
+python3 research/damocles-st/scripts/object-selection-probe.py --roms /path/to/roms \
+  --case boundary --take-at 28.2 --take-at 29.5
+python3 research/damocles-st/scripts/object-selection-probe.py --roms /path/to/roms --case aboard
+```
+
+Observes the two words the take handler tests first: `$7B46`, the selected
+object, and `$7B42`, the measure it refuses above 8. `approach` walks the
+tracked pickup route with no take input and samples the selection words, the eye
+position, both candidate lists and the resident arrays all the way in; every
+sample ranks every resident slot by distance, so the rule is checked against the
+whole field. `boundary` presses take once at a route time given by `--take-at`,
+sampling immediately before the press and after it, which puts successes and
+silent refusals on one scale. `aboard` runs the same observation from the
+boarded-limo snapshot.
+
+Nothing is written into the guest. See
+[the selection research](../../docs/research/damocles-object-selection.md).
+
 ## Failures and acceptance
 
 Hard failure on a wrong STX, wrong TOS, missing Hatari, missed title-screen

@@ -217,6 +217,13 @@ the V.I.P. LIMO outside Capital Spaceport. Slot 183's source association and
 world-to-structure transform place its key inside Capital Spaceport region 1.
 See [resident object associations](damocles-resident-objects.md).
 
+Every resident-slot instance also carries `handling`, the interaction byte at
+`$6FAA + 4*slot` decoded into `takeable`, `refusal`, the drop handler's two
+ranks and the capture-time `carried` flag, with the raw byte beside them. It is
+null on every instance that is not a resident slot. Nothing in the catalogue
+selects a candidate: which object a take acts on is the per-frame nearest-drawn
+rule in [object selection and the take range gate](damocles-object-selection.md).
+
 ## Recovered data grammar
 
 These are independently documented functional findings, not translated renderer

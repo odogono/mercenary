@@ -40,7 +40,7 @@ Bit 5 of the same association byte diverts to `$0542DA`, and a failed `$04E158` 
 
 On success `$054264`–`$0542D0` performs, in order: insert the slot into the carried list at `$61CE` and bump the count at `$61CC`; call the panel writer `$04DCE4`; `bset #7` on the object's association byte at `$6FAA`+slot×4; call `$0543BE`, which copies the carried count into `$787C`, doubled unless the capacity is 20, and then `$0543D2`; clear the association long at `$73A8`+slot×4 and store `$78` in its top byte; and, while on foot (`$7A8E` = 1), call `$05A30E` to rebuild the room's render queue so the taken object stops being drawn.
 
-Those writes alone would leave association B at `$78000000`, but the sampled value after every pickup is `$78010010`, and the held X/Z values are written by neither this handler nor anything it calls here. Some later pass fills them; which one is unresolved.
+Those writes alone would leave association B at `$78000000`, but the sampled value after every pickup is `$78010010`, and the held X/Z values are written by neither this handler nor anything it calls here. The later pass that fills them is `$052D42`, recovered in [the selection note](damocles-object-selection.md#the-carried-coordinates): every scene rebuild parks the whole carried list on a fixed column of its own.
 
 ## The object-to-script trigger table
 
@@ -123,7 +123,9 @@ Damocles exposes no in-game save at this point, so the resumability that matters
 
 **Derived from instructions, not reproduced at runtime**: the busy-path arbitration (queue on trigger-byte bit 5, otherwise discard); the sticky variant on trigger-byte bit 6; the refusal message indices `$02` and `$0C` and the `$04E158` check behind the second; the other five entries of the trigger table.
 
-**Unresolved**: how `$7B46` and `$7B42` are computed each frame, so the "range/priority" measure has no units yet; the meanings of the individual association bits and of the low X/Z values written while an object is held; why the drop path writes insertion-group selector 1 instead of the authored 12; the meanings of `$7AA8` = `$78` and of `$04DDD0`, whose writer was not found; whether the display timer `$0523B8` counts in frames; and the seconds-per-VBL of the original hardware configuration, as distinct from this laboratory's.
+**Recovered since, by [#303](https://github.com/odogono/mercenary/issues/303)**: how `$7B46` and `$7B42` are computed each frame and what the measure counts — the nearest drawn object and the binary exponent of its distance from the eye, so `≤ 8` is a distance under 512 source units; the association byte's takeability bits; and the low X/Z values written while an object is held. See [the selection note](damocles-object-selection.md).
+
+**Unresolved**: why the drop path writes insertion-group selector 1 instead of the authored 12; the meanings of `$7AA8` = `$78` and of `$04DDD0`, whose writer was not found; whether the display timer `$0523B8` counts in frames; and the seconds-per-VBL of the original hardware configuration, as distinct from this laboratory's.
 
 ## Smallest faithful implementation boundary
 
@@ -134,7 +136,7 @@ Today's Damocles Gameplay Session (`web/src/damocles/session.ts`) is on foot, ca
 Minimum missing prerequisites, in dependency order:
 
 1. **Resident object instances in the Damocles session** — place catalogue instances in the world with mutable residence, and remove a taken one from the drawn set.
-2. **Object selection and a take/drop action** — the session needs the equivalent of `$7B46`/`$7B42` before "the ordinary pickup path" exists at all. Its exact rule is unresolved, so this is the one place a faithful implementation needs either more research or an explicitly labelled interim rule.
+2. **Object selection and a take/drop action** — the session needs the equivalent of `$7B46`/`$7B42` before "the ordinary pickup path" exists at all. Its rule is now recovered in [the selection note](damocles-object-selection.md): the nearest drawn instance, taken only within 1/128 of a surface-grid unit.
 3. **A Damocles Carried Stack and the panel inventory label**, saved with the session.
 4. **A message queue with frame-counted presentation** and the panel message line, since the response is mostly messages and the script suspends behind the gate.
 5. **A Damocles script host** with named steps (per [ADR 0045](../adr/0045-author-scripts-as-named-typescript-steps.md)), an idle/parked state, a return stack, a one-shot trigger table and a frame-tick wait — the first-offer prototype (`web/src/damocles/firstOffer.ts`) is an isolated state machine and is not wired to a session.

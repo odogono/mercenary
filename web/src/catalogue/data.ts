@@ -135,6 +135,14 @@ export interface Instance {
     readonly levelSelector: number;
     readonly structureGroupSelector: number;
   } | null;
+  readonly handling: {
+    readonly byte: number;
+    readonly carried: boolean;
+    readonly objectRank: number;
+    readonly refusal: 'message' | 'silent' | null;
+    readonly supportRank: number;
+    readonly takeable: boolean;
+  } | null;
   readonly id: string;
   readonly location: {
     readonly body: string;
@@ -207,7 +215,7 @@ export interface Catalogue {
   readonly instances: readonly Instance[];
   readonly models: readonly Model[];
   readonly places: readonly Place[];
-  readonly schemaVersion: 11;
+  readonly schemaVersion: 12;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -253,6 +261,8 @@ const byte = (value: unknown): number => {
   const n = integer(value);
   return n <= 0xff ? n : fail('expected a byte');
 };
+const boolean = (value: unknown): boolean =>
+  typeof value === 'boolean' ? value : fail('expected a flag');
 const strings = (value: unknown) => list(value).map(string);
 const point = (value: unknown): Point => {
   const p = list(value).map(number);
@@ -626,7 +636,7 @@ const structureSelection = (value: unknown): StructureSelection => {
 
 export const parseCatalogue = (value: unknown): Catalogue => {
   const r = object(value);
-  if (r['schemaVersion'] !== 11) {
+  if (r['schemaVersion'] !== 12) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -861,8 +871,22 @@ export const parseCatalogue = (value: unknown): Catalogue => {
         structureGroupSelector: byte(a['structureGroupSelector'])
       };
     }
+    let handling: Instance['handling'] = null;
+    if (i['handling'] !== null && i['handling'] !== undefined) {
+      const h = object(i['handling']);
+      handling = {
+        byte: byte(h['byte']),
+        carried: boolean(h['carried']),
+        objectRank: byte(h['objectRank']),
+        refusal:
+          h['refusal'] === null ? null : choice(h['refusal'], ['message', 'silent'] as const),
+        supportRank: byte(h['supportRank']),
+        takeable: boolean(h['takeable'])
+      };
+    }
     return {
       association,
+      handling,
       id: string(i['id']),
       location,
       model,
@@ -1030,7 +1054,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     instances,
     models,
     places,
-    schemaVersion: 11,
+    schemaVersion: 12,
     source,
     tables
   };

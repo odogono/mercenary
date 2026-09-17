@@ -16,6 +16,14 @@ const fixture = () => ({
         levelSelector: number;
         structureGroupSelector: number;
       },
+      handling: null as null | {
+        byte: number;
+        carried: boolean;
+        objectRank: number;
+        refusal: string | null;
+        supportRank: number;
+        takeable: boolean;
+      },
       id: 'instance-1',
       location: null,
       model: 'object-1',
@@ -48,7 +56,7 @@ const fixture = () => ({
     }
   ],
   places: [],
-  schemaVersion: 11,
+  schemaVersion: 12,
   source: {
     authority: 'Synthetic test',
     evidence: 'test',
@@ -149,6 +157,39 @@ describe('Damocles catalogue contract', () => {
     };
     expect(() => parseCatalogue(badByte)).toThrow('byte');
   });
+  it('carries the take handler\'s interaction byte for a resident slot', () => {
+    // $6FAA + 4*slot is the only per-object input to takeability; the catalogue
+    // reports it rather than deciding anything with it.
+    const taken = fixture();
+    taken.instances[0]!.handling = {
+      byte: 0x20,
+      carried: false,
+      objectRank: 0,
+      refusal: 'message',
+      supportRank: 0,
+      takeable: false
+    };
+    expect(parseCatalogue(taken).instances[0]!.handling).toEqual({
+      byte: 0x20,
+      carried: false,
+      objectRank: 0,
+      refusal: 'message',
+      supportRank: 0,
+      takeable: false
+    });
+    expect(parseCatalogue(fixture()).instances[0]!.handling).toBeNull();
+    const badRefusal = fixture();
+    badRefusal.instances[0]!.handling = {
+      byte: 4,
+      carried: false,
+      objectRank: 0,
+      refusal: 'shrug',
+      supportRank: 1,
+      takeable: true
+    };
+    expect(() => parseCatalogue(badRefusal)).toThrow('message/silent');
+  });
+
   it('keeps a measured bank extent and the slots a world binds', () => {
     const data = parseCatalogue(fixture());
     expect(data.tables[0]!.extent!.followedAt).toBe(64);
