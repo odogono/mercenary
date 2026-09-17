@@ -8,6 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The Damocles Script bank's message text is extracted into
+  `payload/damocles/strings.json` by the tracked `damocleslab.strings` extractor:
+  the whole 64-slot system string table at `$070000` and all 206 inline `$01`
+  messages, with per-record source addresses and SHA-256 digests over their
+  stored text. Records are ASCII, NUL-terminated and word-aligned, carry no
+  formatting code of any kind, and are stored with their padding intact, because
+  the pool's centring is a presentation fact #307 still reads. The pool is
+  variable-length and packed rather than the fixed 49-character `$32`-stride
+  field it looks like: thirteen of its 36 distinct records are shorter and one is
+  empty. The limo-key contract's four message ids — `script2-inline-1` to `-3`
+  and `system-string-50`, whose 49 characters are all spaces — resolve, and all
+  14 indexed `$14` sites name slot 50 with none taking the indirect `$7A42` path.
+  `web/src/damocles/strings.ts` validates the document whole on load; no surface
+  reads it yet (#304).
+
 - The Damocles Catalogue draws AUTHORS COMPUTER and TELEVISION, whose `$CCA0`
   vector-text tokens were a named `liveText` gap because independent captures
   disagreed about the lettering. `$CD9C`, `$CDCE` and `$CE6A` are not live
