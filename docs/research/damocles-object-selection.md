@@ -108,7 +108,7 @@ The `aboard` case boots the boarded-limo snapshot and samples the same words whi
 | Bits | Role | Evidence |
 |---|---|---|
 | 0–1 | One object's own rank | `$0545C2` masks one of the two bytes with `$03` |
-| 2–3 | The rank the other object demands | `$0545B6` masks the other byte with `$0C`; `$0545CE` refuses the drop when the first, scaled by four, is below it. Which byte belongs to the dropped object is not established here |
+| 2–3 | The support rank this object demands when it is dropped | `$0545B6` masks the dropped object's byte with `$0C`; `$0545CE` refuses the drop when the support's own rank, scaled by four, is below it. [#316](damocles-carry-capacity.md#the-drop-handler-which-side-of-the-rank-comparison-is-which) establishes which side is which: `a0` is built from the Carried Stack head and `a1` from the selection |
 | 4 | Not takeable. The handler returns with no message and no sound | `$05421E` |
 | 5 | Takeable only through a refusal: diverts to the system-string helper with index `$02` | `$054238`, `$0542DA` |
 | 6 | Not set on any slot in the pinned capture | — |
@@ -123,7 +123,7 @@ Across the 241 resident slots that have a model, the byte takes twelve values, a
 | `$10` | 10 | Not takeable, silently: slots 74, 156 and 248–255, none of which has a source label. Slots 0, 9 and 29 carry it too and have no model |
 | `$20` | 21 | Every craft, including the V.I.P. LIMO in slot 5, and the three TRANSPORTERs. These refuse with a message |
 
-Four tests at `$054214`–`$054236` bypass the bit 4 and bit 5 refusals entirely when slot 157, slot 158 or slot 0 has bit 7 set — that is, **while an ANTIGRAV is carried**. Slots 157 and 158 are the two ANTIGRAV residents. This is read from the handler and was not reproduced at runtime.
+Four tests at `$054214`–`$054236` bypass a refusal when a particular object has bit 7 set, and **they are not one bypass but two**. Only `$054214`, which tests slot 0, sits ahead of the bit 4 test and skips both refusals. The tests on slot 158, slot 157 and the long-form operand at `$054230` sit between the two refusals and can skip **only the bit 5 refusal**, so carrying an ANTIGRAV never makes a bit-4 object takeable. `$054230`'s operand is self-modified by the restore path at `$055190` and holds the array base as its default. [#316](damocles-carry-capacity.md#the-take-handlers-refusal-order) corrects this paragraph and reproduces both halves at runtime, including a craft taken while an ANTIGRAV is carried.
 
 ## The carried coordinates
 

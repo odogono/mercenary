@@ -46,6 +46,9 @@ whose selector equals the current region; absence refuses through system-string 
 This is evidence that a region number is used to *choose* the drop's insertion group, not that
 an insertion group is synonymous with one visible region.
 
+[#316](damocles-carry-capacity.md#the-drop-handler-which-side-of-the-rank-comparison-is-which) settles
+the two sides of the rank comparison and adds the `DOOR KEY A` bypass that skips it entirely.
+
 **Support placement** is entered when a selected resident exists within distance exponent 6
 (distance below 128 source units), except slot 74. The dropped key's handling byte requires
 support rank at least 1. The selected support's own rank is its low two handling bits, while

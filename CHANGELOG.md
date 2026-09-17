@@ -30,6 +30,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   placements the location ledger records remain the blocker. See
   `docs/research/damocles-pickup-responses.md`.
 
+- Damocles carrying capacity, refusal and special carried items are recovered.
+  The Carried Stack is a **rotatable** byte list: a take pushes at the head, a
+  drop removes the head, and two rotate actions move the head around it — so the
+  object a Drop removes is the one the panel names, **not** necessarily the most
+  recently acquired, which contradicts `CONTEXT.md`'s Carried Stack entry and
+  needs a glossary amendment. Capacity has **one** comparison, and it is an
+  equality against `$7A04`, so a count already above capacity is accepted; the
+  word has exactly four references in the whole image and no initialiser. The
+  count feeds a **twenty-segment panel gauge**, doubled unless capacity is 20,
+  which is why ten objects and twenty objects both read as full. **BRIEFCASE**
+  (slot 108) raises capacity to 20 on take and puts it back on drop, and the
+  reverse is not a discard: a drop with more than ten carried **stores the
+  overflow inside the briefcase**, presents system string 1 and truncates the
+  stack, and taking it back merges that store to the tail — an exact round trip,
+  reproduced. Taking it is refused at capacity before it can expand. Either
+  **ANTIGRAV** (slots 157, 158 — one reference each in the whole image) overrides
+  the bit-5 refusal and **nothing else**, which makes all twenty-one craft-class
+  objects takeable; carrying both adds nothing, and the override follows the live
+  handling bit rather than stack membership. It does **not** override the bit-4
+  refusal: that has a separate, earlier bypass keyed on resident slot 0, and the
+  fourth test's operand is **self-modified** by the restore path at `$055190`.
+  The drop's rank comparison is settled — the dropped object's bits 2–3 demand
+  and the support's bits 0–1 supply, which is the opposite way round from the
+  payload's field names — and carrying `DOOR KEY A` skips it. Three paths that
+  are not the input handler are recovered: a scripted gift that skips every gate
+  but capacity, a scripted removal that takes an object out of the world by
+  identity, and script opcodes that write and test the handling byte directly.
+  `$0543FA` is an environment hazard evaluator conditioned entirely on carried
+  objects — `ACME UNIVERSAL` suppresses every warning, two `PRESSURE SUIT`s, two
+  cold items and two heat items gate the other three — and it runs on drop but
+  **not** on take. Thirty-eight checkpoint cases against the original handlers
+  reproduce capacity, every handling class, both ANTIGRAV overrides, the whole
+  BRIEFCASE cycle, the shared refusal words and the monetary check. The identity
+  of the `$055190` restore path is recorded as a **blocker**: the original's own
+  persistence format for the Carried Stack is not recovered. See
+  `docs/research/damocles-carry-capacity.md`.
+
 - The Gamma System location coverage ledger is established. Across 241 resident
   object instances, **210 are takeable**, **34** have a recovered surface
   location and **195** are interior-associated — of which only **two**, both
