@@ -79,11 +79,13 @@ Separately bounded, because each needs evidence this contract must not invent:
   message, and the decoded bank holds no message record longer than 49 characters. Nothing ever
   needs to scroll through the row, so `Reveal` is expected to be a revealed-character count rather
   than a shift register, which #307 confirms or corrects.
-- **The message text** ([#304](https://github.com/odogono/mercenary/issues/304)). Script slot 2's three inline strings and system-string slot 50 are
-  recovered material that no Data Payload yet carries. They belong in `payload/damocles/` as an
-  extraction, under ADR 0029 and the [publication policy](../publication-policy.md), not as a
-  paraphrase authored into the app. A demonstration paraphrase must never become claimed faithful
-  content.
+- **The message text** ([#304](https://github.com/odogono/mercenary/issues/304)). *Settled.* Script slot 2's three inline strings and
+  system-string slot 50 are extracted into `payload/damocles/strings.json` along with the whole
+  64-slot system string table and all 206 inline messages, under ADR 0029 and the
+  [publication policy](../publication-policy.md). The four `MessageId` values below are the ids
+  that payload names, records are stored with their padding intact, and
+  [the strings note](../research/damocles-script-strings.md) records the encoding. A paraphrase
+  authored into the app is still not a substitute and must never become claimed faithful content.
 
 One authored value with a research issue behind it ([#305](https://github.com/odogono/mercenary/issues/305)): the display frame rate. The wait and message
 durations are recovered as **frames**; seconds are not. The Eris presentation document gains a
@@ -114,6 +116,7 @@ type Selection =
   | { readonly kind: 'none' }
   | { readonly kind: 'object'; readonly instance: InstanceId; readonly inRange: boolean };
 
+/// The ids `payload/damocles/strings.json` names these records with (#304).
 type MessageId =
   | 'script2-inline-1' // $07042A
   | 'script2-inline-2' // $07045A
@@ -457,7 +460,8 @@ In dependency order, with the three blocking issues first:
 
 1. Object selection and takeability recovered — [#303](https://github.com/odogono/mercenary/issues/303).
 2. The message reveal model recovered — [#307](https://github.com/odogono/mercenary/issues/307).
-3. The message strings extracted into `payload/damocles/` — [#304](https://github.com/odogono/mercenary/issues/304).
+3. ~~The message strings extracted into `payload/damocles/`~~ — [#304](https://github.com/odogono/mercenary/issues/304), delivered as
+   `payload/damocles/strings.json`.
 4. `web/damocles/eris.json` schema 6 with its `time` block.
 5. Resident instances placed in the world: `erisSurfaceFrom` currently skips every instance whose
    `location` is null, which is every structure-anchored resident including slot 183. Placement

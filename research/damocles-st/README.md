@@ -109,7 +109,23 @@ Disassembly of the Working Authority follows the rules in
 
 `script` is research instrumentation, **not an extractor**. It prints a report
 for a researcher to read and must never grow a machine-readable output, a
-payload writer, or a schema (ADR 0021, ADR 0002).
+payload writer, or a schema (ADR 0021, ADR 0002). Payload writing lives in its
+own modules beside it, as the Catalogue does: `damocleslab.strings` (#304)
+reuses `script`'s pure decode functions so the instruction grammar has one home,
+and writes `payload/damocles/strings.json` itself.
+
+## Message string extraction (#304)
+
+```sh
+PYTHONPATH=research/damocles-st python3 -m damocleslab.strings \
+  --run research/damocles-st/work/observe-first-world-20260818T101013Z-c5a32b7d \
+  --output payload/damocles/strings.json
+```
+
+Extracts the 64-slot system string table at `$070000` and all 206 inline `$01`
+messages from the resident script bank, verbatim padding included, with per-record
+source addresses and digests. See
+[the strings note](../../docs/research/damocles-script-strings.md).
 
 See [`SPEC.md`](SPEC.md), [`BOOT-AND-UNPACKING.md`](BOOT-AND-UNPACKING.md), and
 [`HATARI-RESEARCH.md`](HATARI-RESEARCH.md).

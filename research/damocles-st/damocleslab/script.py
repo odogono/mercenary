@@ -2,11 +2,15 @@
 
 Research instrumentation, **not** an extractor. It prints a human-readable
 report for a researcher to read and must never grow a machine-readable output,
-a payload writer, or a schema: a Damocles Data Payload is out of scope until
-after *The Second City* (ADR 0021), and the Independent Implementation may not
-be written from a mechanical translation of this program (ADR 0002). Listings
-it produces are untracked Restricted Material; only decoded facts belong in
-`docs/research/` notes. See `docs/research/damocles-gap.md`.
+a payload writer, or a schema; the Independent Implementation may not be written
+from a mechanical translation of this program (ADR 0002). Listings it produces
+are untracked Restricted Material; only decoded facts belong in `docs/research/`
+notes. See `docs/research/damocles-gap.md`.
+
+Payload writing is a separate module's job, as it is for the Catalogue:
+`damocleslab.strings` (#304) imports the pure decode functions below and writes
+`payload/damocles/strings.json`, so the instruction grammar has one home and
+this module keeps its single output. ADRs 0039 and 0043 admit those payloads.
 
 Operand widths come from the handler census in
 `docs/research/damocles-script-isa.md`, read out of the interpreter at

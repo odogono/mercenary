@@ -1,0 +1,2421 @@
+{
+  "coverage": {
+    "complete": false,
+    "notes": [
+      "Resident script bank only. The Working Authority loads further banks from disk and their text is not covered.",
+      "36 distinct records back the 64 system string slots; repeated pointers are unused slots sharing a target, not separate messages.",
+      "191 inline messages belong to the 64 entry-table scripts and 15 to entries outside that table.",
+      "Records are stored verbatim, padding included: the pool centres each line within its field and that alignment is a presentation fact (#307), not decoration.",
+      "0 of 14 indexed message references resolve through the $7A42 table rather than straight into the slot table, and carry no target rather than a guessed one.",
+      "4 slots point at the pool terminator and resolve to an empty record; that is what the table holds, not a failed read."
+    ]
+  },
+  "encoding": {
+    "alignment": "word",
+    "characterSet": "ascii-printable",
+    "formattingCodes": 0,
+    "note": "Records are NUL-terminated printable ASCII; the decode fails closed outside $20-$7E. Every byte of every record in this bank falls in $20-$5A: no lowercase, no control code, no escape and no formatting marker appears in either form.",
+    "terminator": 0,
+    "unsupportedRecords": 0
+  },
+  "indexedReferences": [
+    {
+      "address": "0x0701f8",
+      "operand": 50,
+      "target": "system-string-50"
+    },
+    {
+      "address": "0x070228",
+      "operand": 50,
+      "target": "system-string-50"
+    },
+    {
+      "address": "0x070254",
+      "operand": 50,
+      "target": "system-string-50"
+    },
+    {
+      "address": "0x0702c0",
+      "operand": 50,
+      "target": "system-string-50"
+    },
+    {
+      "address": "0x0702fa",
+      "operand": 50,
+      "target": "system-string-50"
+    },
+    {
+      "address": "0x070364",
+      "operand": 50,
+      "target": "system-string-50"
+    },
+    {
+      "address": "0x07039e",
+      "operand": 50,
+      "target": "system-string-50"
+    },
+    {
+      "address": "0x0703f2",
+      "operand": 50,
+      "target": "system-string-50"
+    },
+    {
+      "address": "0x0704be",
+      "operand": 50,
+      "target": "system-string-50"
+    },
+    {
+      "address": "0x07135e",
+      "operand": 50,
+      "target": "system-string-50"
+    },
+    {
+      "address": "0x0714ca",
+      "operand": 50,
+      "target": "system-string-50"
+    },
+    {
+      "address": "0x072cb4",
+      "operand": 50,
+      "target": "system-string-50"
+    },
+    {
+      "address": "0x072cce",
+      "operand": 50,
+      "target": "system-string-50"
+    },
+    {
+      "address": "0x072d22",
+      "operand": 50,
+      "target": "system-string-50"
+    }
+  ],
+  "inlineMessages": [
+    {
+      "address": "0x070116",
+      "id": "script070110-inline-1",
+      "ordinal": 1,
+      "script": "script070110",
+      "scriptAddress": "0x070110",
+      "sha256": "dfab24bb126c76262fcb6127f73e9fca099efc453581cf21b671019f930fc4ee",
+      "text": "                 GOOD MORNING"
+    },
+    {
+      "address": "0x070136",
+      "id": "script070110-inline-2",
+      "ordinal": 2,
+      "script": "script070110",
+      "scriptAddress": "0x070110",
+      "sha256": "2778085370a54184165f6408e79cef8a437eab006cdb3c6826f3dbf4c1d8e332",
+      "text": "   ARRIVING CONSIDERABLY LATER THAN FORECAST"
+    },
+    {
+      "address": "0x070170",
+      "id": "script070110-inline-3",
+      "ordinal": 3,
+      "script": "script070110",
+      "scriptAddress": "0x070110",
+      "sha256": "b8ff561ac9760d1f70014f7ae0c7350d3259b2c4b9b043f8cce9a67b59b8a7a3",
+      "text": "             DISENGAGING NOVADRIVE"
+    },
+    {
+      "address": "0x07019a",
+      "id": "script070110-inline-4",
+      "ordinal": 4,
+      "script": "script070110",
+      "scriptAddress": "0x070110",
+      "sha256": "d6a412255911787ee48f722c6fdbc14123bfcecab45bd4bcb955d6d4e9d10bc7",
+      "text": "           ENTERING THE GAMMA SYSTEM"
+    },
+    {
+      "address": "0x0701c2",
+      "id": "script070110-inline-5",
+      "ordinal": 5,
+      "script": "script070110",
+      "scriptAddress": "0x070110",
+      "sha256": "b79c96d234731ec6c9647b0d054dff1ff6f6a169487dc1b65274600916cdc25f",
+      "text": "   ON COURSE FOR GAMMA FIVE - THE PLANET ERIS"
+    },
+    {
+      "address": "0x070202",
+      "id": "script070110-inline-6",
+      "ordinal": 6,
+      "script": "script070110",
+      "scriptAddress": "0x070110",
+      "sha256": "c873015d08fdc3eaee5307e3b90d84c1892584e7f36e44900adfd5ac49739a46",
+      "text": "             ECLIPTIC PLANE LOCK ON"
+    },
+    {
+      "address": "0x07022c",
+      "id": "script070110-inline-7",
+      "ordinal": 7,
+      "script": "script070110",
+      "scriptAddress": "0x070110",
+      "sha256": "381d2be79a62f77e016641c7c5a39549c986d54e64a2d23726706432484d2508",
+      "text": "            ENTERING ERIS ATMOSPHERE"
+    },
+    {
+      "address": "0x070258",
+      "id": "script070110-inline-8",
+      "ordinal": 8,
+      "script": "script070110",
+      "scriptAddress": "0x070110",
+      "sha256": "d29a9adb945114f2c7ef8a2c1f351afbd38da3244132f3446f48fe5faef8999c",
+      "text": "        PROCEEDING UNDER AUTOMATIC PILOT"
+    },
+    {
+      "address": "0x070288",
+      "id": "script070110-inline-9",
+      "ordinal": 9,
+      "script": "script070110",
+      "scriptAddress": "0x070110",
+      "sha256": "4e1e332e899b2e2289cc61028f8f02e8371e6babc389f3870a88efc9f51ed046",
+      "text": "ARRIVING 1 MIN 20 SECONDS CAPITAL CITY SPACEPORT"
+    },
+    {
+      "address": "0x0702c8",
+      "id": "script070110-inline-10",
+      "ordinal": 10,
+      "script": "script070110",
+      "scriptAddress": "0x070110",
+      "sha256": "7b75051c9432c1dce6431a56978fed10f75ad808433a6802a0d97c7dd83356b9",
+      "text": " MESSAGE RECEIVED FROM STATE PRESIDENTS OFFICE:"
+    },
+    {
+      "address": "0x0702fe",
+      "id": "script070110-inline-11",
+      "ordinal": 11,
+      "script": "script070110",
+      "scriptAddress": "0x070110",
+      "sha256": "634b88c6535df56c1e898080aed50dc072b580e1dbea90c2589500a3feeefeb2",
+      "text": "   ON ARRIVAL PLEASE PROCEED BY CAR PROVIDED"
+    },
+    {
+      "address": "0x07032e",
+      "id": "script070110-inline-12",
+      "ordinal": 12,
+      "script": "script070110",
+      "scriptAddress": "0x070110",
+      "sha256": "56936832ec709fe7aa33731e5f434b88175fb2dc0fef21798738a04e8baea21a",
+      "text": " THE KEY IS HELD FOR YOU IN SPACEPORT RECEPTION"
+    },
+    {
+      "address": "0x07036c",
+      "id": "script070110-inline-13",
+      "ordinal": 13,
+      "script": "script070110",
+      "scriptAddress": "0x070110",
+      "sha256": "31b991ee8fe216469bc1c8edbf82e76f13153d9906433d23f016a4971f07f409",
+      "text": "          CAPITAL CITY SPACEPORT AHEAD"
+    },
+    {
+      "address": "0x0703a6",
+      "id": "script070110-inline-14",
+      "ordinal": 14,
+      "script": "script070110",
+      "scriptAddress": "0x070110",
+      "sha256": "d98bae6cb81f03b08a29b989543e2c5a943ee1708c188a8ac211037db2a6637f",
+      "text": "               LANDING COMPLETED"
+    },
+    {
+      "address": "0x0703ce",
+      "id": "script070110-inline-15",
+      "ordinal": 15,
+      "script": "script070110",
+      "scriptAddress": "0x070110",
+      "sha256": "7107082a9c765dee9a2b2eb9ffefb798094c018f1739ae0c04d10a0b8c3d82e4",
+      "text": "              YOU ARE DISEMBARKED"
+    },
+    {
+      "address": "0x07042a",
+      "id": "script2-inline-1",
+      "ordinal": 1,
+      "script": "script2",
+      "scriptAddress": "0x07042a",
+      "sha256": "6a6c27719c95ac5659e0c123965a67ebb64801319012ab182bb8e781f8c103a2",
+      "text": "    PROCEED BY CAR ALONG SPACEPORT EXIT ROAD"
+    },
+    {
+      "address": "0x07045a",
+      "id": "script2-inline-2",
+      "ordinal": 2,
+      "script": "script2",
+      "scriptAddress": "0x07042a",
+      "sha256": "d9945810904c50b64cf3eebbc9e1e5af474a5028004bb1e7a6f3106164307fe9",
+      "text": "     THE STATE PRESIDENTS OFFICE IS LOCATED"
+    },
+    {
+      "address": "0x070488",
+      "id": "script2-inline-3",
+      "ordinal": 3,
+      "script": "script2",
+      "scriptAddress": "0x07042a",
+      "sha256": "341faea21d88d896e7e343f5cf2e81ae269c459498ad579d8991439316404d3d",
+      "text": " AT THE FIRST ROAD JUNCTION - ENTER ON ARRIVAL"
+    },
+    {
+      "address": "0x0704c8",
+      "id": "script3-inline-1",
+      "ordinal": 1,
+      "script": "script3",
+      "scriptAddress": "0x0704c8",
+      "sha256": "7d1f1c53239c38afa16da3222504fd12bdac7ea9ef0bb3fcb9a472e355e16d29",
+      "text": "      COMMUNICATION FROM STATE PRESIDENT:"
+    },
+    {
+      "address": "0x0704f4",
+      "id": "script3-inline-2",
+      "ordinal": 2,
+      "script": "script3",
+      "scriptAddress": "0x0704c8",
+      "sha256": "55b97d01e048437a688da942c9c52acc8defa4c8ca6487a2b500a4c38eced102",
+      "text": "         THANK YOU FOR COMING - FINALLY"
+    },
+    {
+      "address": "0x07051e",
+      "id": "script3-inline-3",
+      "ordinal": 3,
+      "script": "script3",
+      "scriptAddress": "0x0704c8",
+      "sha256": "ea4b1460f2c7d9840f827264ade862dc429d0161fe661cc5e5fc01669b68529f",
+      "text": "     YOU WERE SUPPOSED TO BE HERE MONTHS AGO"
+    },
+    {
+      "address": "0x07054e",
+      "id": "script3-inline-4",
+      "ordinal": 4,
+      "script": "script3",
+      "scriptAddress": "0x0704c8",
+      "sha256": "d9a497bf0eb26875bb6723d5b85a26e9f2f3c953a931434e0471f5284a449247",
+      "text": "   ERIS WILL BE DESTROYED IN A FEW HOURS TIME"
+    },
+    {
+      "address": "0x070582",
+      "id": "script3-inline-5",
+      "ordinal": 5,
+      "script": "script3",
+      "scriptAddress": "0x0704c8",
+      "sha256": "3235cc4c5b2101013ec02773598e7ee5f2d62455e0437fb2921d2276186d64fd",
+      "text": "         PLEASE READ THE DAMOCLES FILE"
+    },
+    {
+      "address": "0x0705ac",
+      "id": "script3-inline-6",
+      "ordinal": 6,
+      "script": "script3",
+      "scriptAddress": "0x0704c8",
+      "sha256": "d2ed3d11e22ed6258c9f35ec1c84cd012ac85dd3e1f0ebb29937e96910223272",
+      "text": "THE FILE IS IN THE ROOM TO LEFT OF THE ENTRANCE "
+    },
+    {
+      "address": "0x0705e6",
+      "id": "script6-inline-1",
+      "ordinal": 1,
+      "script": "script6",
+      "scriptAddress": "0x0705e6",
+      "sha256": "13792c37696c6066f47c02118be65a0e5f25c4c2aed006322fae11fc50c0e562",
+      "text": "PLEASE USE THE FOLLOWING KEYPAD KEYS TO OPERATE"
+    },
+    {
+      "address": "0x070618",
+      "id": "script6-inline-2",
+      "ordinal": 2,
+      "script": "script6",
+      "scriptAddress": "0x0705e6",
+      "sha256": "26bddbe7afcdac77135f60ffbd8f5a8a6525d620efab0a31a1b02f83c9489691",
+      "text": "'ENTER' TO OPEN  '*' TO READ  '+' FOR NEXT ITEM"
+    },
+    {
+      "address": "0x070650",
+      "id": "script4-inline-1",
+      "ordinal": 1,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "7d1f1c53239c38afa16da3222504fd12bdac7ea9ef0bb3fcb9a472e355e16d29",
+      "text": "      COMMUNICATION FROM STATE PRESIDENT:"
+    },
+    {
+      "address": "0x07067c",
+      "id": "script4-inline-2",
+      "ordinal": 2,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "3fa68e43efe6882dc4e0524d7243e213de5e5453c6e8f7ff55329bfa0ea10207",
+      "text": "IT WAS MY INITIATIVE TO CALL FOR YOU 4 YEARS AGO"
+    },
+    {
+      "address": "0x0706b0",
+      "id": "script4-inline-3",
+      "ordinal": 3,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "903fd60b0de998265ca4608970e4c5d6e6a749164366ba9279e86021ccd08e68",
+      "text": "BUT I KNOW THERE HAS GENERALLY BEEN A DELAY SO:"
+    },
+    {
+      "address": "0x0706e2",
+      "id": "script4-inline-4",
+      "ordinal": 4,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "bab19ae2a7e31310798233612d33f202358660252bf4cde4ab945e493de21f71",
+      "text": "I HAVE NOW FOLLOWED THE POPULATION IN EVACUATION"
+    },
+    {
+      "address": "0x07071a",
+      "id": "script4-inline-5",
+      "ordinal": 5,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "38c1dd647a94ba4ac61d1bd05b476e3f2bbe27d1ebb01317bce25a65cb491747",
+      "text": "I DO HOPE THAT YOU WILL ACCEPT THE ASSIGNMENT TO"
+    },
+    {
+      "address": "0x07074e",
+      "id": "script4-inline-6",
+      "ordinal": 6,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "f01a0f53197c1daa1a4ffd2e8d55a43085c82b497265ed6ad6213e6eff9c042e",
+      "text": "            SAVE ERIS FROM DAMOCLES"
+    },
+    {
+      "address": "0x070778",
+      "id": "script4-inline-7",
+      "ordinal": 7,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "76731d8991abecb5dab9ebdc24898fa33382d0cadcdbf41ccf8ffa3912a5cf09",
+      "text": "WE SHALL OF COURSE REWARD YOU RICHLY FOR SUCCESS"
+    },
+    {
+      "address": "0x0707ac",
+      "id": "script4-inline-8",
+      "ordinal": 8,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "0f804a5e31343c87623ddd090cedd1f3e3193eeecbe51e36eb55f948ae6b90f2",
+      "text": "  THE SUM OF TEN MILLION ECU'S SHOULD SUFFICE"
+    },
+    {
+      "address": "0x0707e8",
+      "id": "script4-inline-9",
+      "ordinal": 9,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "d90966cea8846e9cb2f9f048ac1d55b087a5c03bebbbbee9edc4542a6db2369f",
+      "text": "     DO YOU ACCEPT THE ASSIGNMENT? - (OK?)"
+    },
+    {
+      "address": "0x07083c",
+      "id": "script4-inline-10",
+      "ordinal": 10,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "4e43cac292439ace597b4cca0b613a3a615311789517033d849e4e3c4d91280f",
+      "text": " WELL - HOW ABOUT FIFTEEN MILLION THEN? - (OK?)"
+    },
+    {
+      "address": "0x070892",
+      "id": "script4-inline-11",
+      "ordinal": 11,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "b9f6d4d1a2c9b599ed1b82dc1139782d58dbe723a73be39d581f8caaf320ad51",
+      "text": "   VERY WELL THEN - YOU DRIVE A HARD BARGAIN"
+    },
+    {
+      "address": "0x0708c4",
+      "id": "script4-inline-12",
+      "ordinal": 12,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "a268f3374594b899db6f266e6e14cf442a1e6331691276aa3bd15dd49c479adc",
+      "text": "  POSITIVELY MY LAST OFFER - 20 MILLION - OK?"
+    },
+    {
+      "address": "0x070920",
+      "id": "script4-inline-13",
+      "ordinal": 13,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "dbf633630709c7f9aaadbc651c1a9a23a28369f87be5dd9ac794290b3a170153",
+      "text": "     WOULD YOU CONSIDER IT FOR 25 MILLION ?"
+    },
+    {
+      "address": "0x070972",
+      "id": "script4-inline-14",
+      "ordinal": 14,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "10732b9f7d1edbb17212fc4e3823cde27f51e529ecb64760676f8087e5c1c775",
+      "text": "WHY ON ERIS DID YOU BOTHER COMING - PLEASE LEAVE"
+    },
+    {
+      "address": "0x0709b8",
+      "id": "script4-inline-15",
+      "ordinal": 15,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "32ec562cb27872ee0858e4facefe8ecf2a61eef5aaea27357518db792af3b711",
+      "text": "  EXCELLENT - AND REMEMBER, WE'RE ALL WITH YOU"
+    },
+    {
+      "address": "0x0709ea",
+      "id": "script4-inline-16",
+      "ordinal": 16,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "d9376179ea2fe76ed181a1125445d8bdc817a68509b14dd3b2cfe62844457147",
+      "text": "WELL NOT HERE ACTUALLY - BUT WITH YOU IN SPIRIT"
+    },
+    {
+      "address": "0x070a20",
+      "id": "script4-inline-17",
+      "ordinal": 17,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "9d1e777c45d7ce22e50c4f17ed9a3b443592b2e19cc5889114c27ec4b55cf7e5",
+      "text": "MAY I SUGGEST THAT YOU MAKE A START BY GOING TO"
+    },
+    {
+      "address": "0x070a52",
+      "id": "script4-inline-18",
+      "ordinal": 18,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "1c015d1b53ed953f927fc72ab2294f8afa0e90f914ee22351412c0d6b23dfcbc",
+      "text": "PROF HANTZEN'S LABORATORY AT 06-05 BARE ISLAND"
+    },
+    {
+      "address": "0x070a88",
+      "id": "script4-inline-19",
+      "ordinal": 19,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "6f7f7572328cec8a518252970d472da4c21018d05a0627466600b9097dcba666",
+      "text": "        FOR REFERENCE SEE CHART D 1745"
+    },
+    {
+      "address": "0x070ab6",
+      "id": "script4-inline-20",
+      "ordinal": 20,
+      "script": "script4",
+      "scriptAddress": "0x070650",
+      "sha256": "62e3119db222d4cb2b4979af82d9a00eee61c9fda46924d3a320e01555a1928a",
+      "text": "     YOUR SPACECRAFT KEY IS IN THE BASEMENT"
+    },
+    {
+      "address": "0x070aea",
+      "id": "script5-inline-1",
+      "ordinal": 1,
+      "script": "script5",
+      "scriptAddress": "0x070aea",
+      "sha256": "d2a1fcd494a263517095907468160ee2c0edca2feede2ba066bb2fcccad1a700",
+      "text": "  YOUR SPACECRAFT IS WAITING READY ON THE PAD"
+    },
+    {
+      "address": "0x070b1a",
+      "id": "script5-inline-2",
+      "ordinal": 2,
+      "script": "script5",
+      "scriptAddress": "0x070aea",
+      "sha256": "907a8cfe1724717ae5c065ae5318d8d9aecc5e171cf5683676a583fd9429b422",
+      "text": "         AT THE MOORBY SCHOOL OF FLYING"
+    },
+    {
+      "address": "0x070b44",
+      "id": "script5-inline-3",
+      "ordinal": 3,
+      "script": "script5",
+      "scriptAddress": "0x070aea",
+      "sha256": "619c0915510b3e42b62038c9b6ec60fc45cf1766fdb9115382b35fe67fb339d9",
+      "text": "TAKE THE ROAD OPPOSITE ON LEAVING THIS BUILDING!"
+    },
+    {
+      "address": "0x070b80",
+      "id": "script10-inline-1",
+      "ordinal": 1,
+      "script": "script10",
+      "scriptAddress": "0x070b80",
+      "sha256": "52a2eb558551bdd1b89839c954da80d4aa176347871d920610d88bef39890917",
+      "text": "           SECURITY SYSTEM ACTIVATED"
+    },
+    {
+      "address": "0x070ba8",
+      "id": "script10-inline-2",
+      "ordinal": 2,
+      "script": "script10",
+      "scriptAddress": "0x070b80",
+      "sha256": "2dcff951f82d7690bdaa39004f4c3e57eaac3bc44205a83997002a4fef33a62f",
+      "text": " YOU'RE TRESPASSING - PLEASE LEAVE IMMEDIATELY"
+    },
+    {
+      "address": "0x070bde",
+      "id": "script11-inline-1",
+      "ordinal": 1,
+      "script": "script11",
+      "scriptAddress": "0x070bde",
+      "sha256": "93c0dbfd8cd9e5e9a0742c0c52f21c77a1cdf8c7dd462b4d9b8e18957884612f",
+      "text": "      PUT THAT COMPUTER BACK IMMEDIATELY!"
+    },
+    {
+      "address": "0x070c0a",
+      "id": "script11-inline-2",
+      "ordinal": 2,
+      "script": "script11",
+      "scriptAddress": "0x070bde",
+      "sha256": "b3214a9e77af553be7368ed2ae5e46ae7837e440aa33e20f9d30e680c2221ebf",
+      "text": "     YOU ARE BEING WATCHED - VERY CAREFULLY"
+    },
+    {
+      "address": "0x070c40",
+      "id": "script1-inline-1",
+      "ordinal": 1,
+      "script": "script1",
+      "scriptAddress": "0x070c3c",
+      "sha256": "b4731445b7b27bcc072ab7972dbc042da3527b0ae54122e6a0e378338a9a2a40",
+      "text": "  THE AUTHORS COMPUTER HAS JUST BEEN DESTROYED"
+    },
+    {
+      "address": "0x070c72",
+      "id": "script1-inline-2",
+      "ordinal": 2,
+      "script": "script1",
+      "scriptAddress": "0x070c3c",
+      "sha256": "f7deb43ab73acd04b37a7b22d41e6678d999674715d09bf9533b4396f60c335c",
+      "text": "     THIS WAS HOLDING THE UNIVERSE TOGETHER"
+    },
+    {
+      "address": "0x070ca0",
+      "id": "script1-inline-3",
+      "ordinal": 3,
+      "script": "script1",
+      "scriptAddress": "0x070c3c",
+      "sha256": "0f9c69e4e694cf722d72e797cec129825d4f0f4f964cbc80ca8620086d93dec5",
+      "text": " THE FABRIC OF WHICH IS NOW SLOWLY UNRAVELLING"
+    },
+    {
+      "address": "0x070cd6",
+      "id": "script26-inline-1",
+      "ordinal": 1,
+      "script": "script26",
+      "scriptAddress": "0x070cd6",
+      "sha256": "7662716607878440f3404934c8e8f27a0ee0dba08fb5d8032db575fc4b6f24c2",
+      "text": "   CONGRATULATIONS - YOU ARE RESPONSIBLE FOR"
+    },
+    {
+      "address": "0x070d06",
+      "id": "script26-inline-2",
+      "ordinal": 2,
+      "script": "script26",
+      "scriptAddress": "0x070cd6",
+      "sha256": "788cb23a7f29850f73074487fc8c5b34e79722e912d2369317b21c4ea8f82f9d",
+      "text": "     THE DEMISE OF A COMPLETE SOLAR SYSTEM"
+    },
+    {
+      "address": "0x070d34",
+      "id": "script26-inline-3",
+      "ordinal": 3,
+      "script": "script26",
+      "scriptAddress": "0x070cd6",
+      "sha256": "31deef2c8295850e9b1ccf06327606bc9a48dfda29cb6830873c3ce3d63ba4cf",
+      "text": "             TIME FOR A SHARP EXIT!"
+    },
+    {
+      "address": "0x070d6a",
+      "id": "script26-inline-4",
+      "ordinal": 4,
+      "script": "script26",
+      "scriptAddress": "0x070cd6",
+      "sha256": "19b09aabdbe89740cd9f1c0e48ea1f750d01373c188f5d25bebfa49e8b80125b",
+      "text": "              ARE YOU STILL HERE!"
+    },
+    {
+      "address": "0x070d8e",
+      "id": "script26-inline-5",
+      "ordinal": 5,
+      "script": "script26",
+      "scriptAddress": "0x070cd6",
+      "sha256": "66a0bb78179ed059a57649ef6579948126f3cb27bf70e738917de39a4ebf6b11",
+      "text": "   WE THOUGHT YOU WOULD HAVE GONE MINUTES AGO"
+    },
+    {
+      "address": "0x070dbe",
+      "id": "script26-inline-6",
+      "ordinal": 6,
+      "script": "script26",
+      "scriptAddress": "0x070cd6",
+      "sha256": "b01a0e73d3a1a09901b4d2ef8c63a910c9563b2196f5046bae97cc1016a7300f",
+      "text": "    IT'S ALL OVER - YOU'VE DESTROYED IT ALL"
+    },
+    {
+      "address": "0x070dec",
+      "id": "script26-inline-7",
+      "ordinal": 7,
+      "script": "script26",
+      "scriptAddress": "0x070cd6",
+      "sha256": "f3fe3f50f0e38943ce798644a983980e9bafc575191bfe59bd659c367635dcc9",
+      "text": "   THERE'S NOTHING LEFT - ALL GONE - BLOWN UP"
+    },
+    {
+      "address": "0x070e22",
+      "id": "script9-inline-1",
+      "ordinal": 1,
+      "script": "script9",
+      "scriptAddress": "0x070e22",
+      "sha256": "5aef6faa60c7c17adc75af5efb5b6e11dc7425b6d2f02e0859c1ff181b24f526",
+      "text": "           HELLO EVERYBODY - I'M HOME"
+    },
+    {
+      "address": "0x070e4e",
+      "id": "script12-inline-1",
+      "ordinal": 1,
+      "script": "script12",
+      "scriptAddress": "0x070e4e",
+      "sha256": "9323db96cc6eb815b9c3f5b1f4e96b64dcc325cb9a3e46793af46c00de2b30f8",
+      "text": "   TYPICAL - NO ONE HERE - JUST THE ANSAFONE"
+    },
+    {
+      "address": "0x070e82",
+      "id": "script7-inline-1",
+      "ordinal": 1,
+      "script": "script7",
+      "scriptAddress": "0x070e82",
+      "sha256": "ce1547a15c59ece700a94f1be4376051e07258e25edc3179f285889bae249295",
+      "text": " MESSAGE FROM CHAIRMAN - GUM DEPARTMENT STORES"
+    },
+    {
+      "address": "0x070eb4",
+      "id": "script7-inline-2",
+      "ordinal": 2,
+      "script": "script7",
+      "scriptAddress": "0x070e82",
+      "sha256": "761ed8ff244355440e9070d173b463eea4267ece50b69a9a4502b18217e5e894",
+      "text": " CONGRATULATIONS! - YOU ARE OUR SECOND CUSTOMER"
+    },
+    {
+      "address": "0x070ee6",
+      "id": "script7-inline-3",
+      "ordinal": 3,
+      "script": "script7",
+      "scriptAddress": "0x070e82",
+      "sha256": "19c9087732c845515b06eec6d99219b4553665e440be13c7d960e18daa673340",
+      "text": " PLEASE ACCEPT OUR GIFT OF TEN THOUSAND IGC'S"
+    },
+    {
+      "address": "0x070f24",
+      "id": "script8-inline-1",
+      "ordinal": 1,
+      "script": "script8",
+      "scriptAddress": "0x070f24",
+      "sha256": "ae5980e7d0524849d2e7641ee83a3d0781309c6fb9df7f0a99e47ee43fed9d7c",
+      "text": "   I REALLY DO NOT APPROVE OF ROBBING A BANK"
+    },
+    {
+      "address": "0x070f54",
+      "id": "script8-inline-2",
+      "ordinal": 2,
+      "script": "script8",
+      "scriptAddress": "0x070f24",
+      "sha256": "f071f79610bbaacbd87ce8777735e78506f20dff2961e86b0bb6413728cfff7d",
+      "text": "    PARTICULARLY AS YOU'VE SET OFF THE ALARM"
+    },
+    {
+      "address": "0x070f88",
+      "id": "script13-inline-1",
+      "ordinal": 1,
+      "script": "script13",
+      "scriptAddress": "0x070f88",
+      "sha256": "634eebd063f45d388e200ad2f7b4e499181c8d322ddb8140ff643a6bfe7c9511",
+      "text": "     THE STATE LOTTERY HAS JUST BEEN DRAWN"
+    },
+    {
+      "address": "0x070fc2",
+      "id": "script13-inline-2",
+      "ordinal": 2,
+      "script": "script13",
+      "scriptAddress": "0x070f88",
+      "sha256": "cbd999fc11988377de98601edd846af6fc2e02090ffe71bac6cad7e5781a00f5",
+      "text": "         PITY YOU DIDN'T HAVE A TICKET"
+    },
+    {
+      "address": "0x070ff6",
+      "id": "script13-inline-3",
+      "ordinal": 3,
+      "script": "script13",
+      "scriptAddress": "0x070f88",
+      "sha256": "61f618bf37b39f458ed8bda9f64d83830c1bcc69675896ad6e2a8a4190d582a0",
+      "text": "  YOU HAVE WON THE FIRST PRIZE OF ONE MILLION   "
+    },
+    {
+      "address": "0x07103e",
+      "id": "script13-inline-4",
+      "ordinal": 4,
+      "script": "script13",
+      "scriptAddress": "0x070f88",
+      "sha256": "b144724c9a85a22ed83e6afb13970c4c0c018b940b82a48ed708805d579cdfa9",
+      "text": " YOU HAVE WON THE SECOND PRIZE OF ONE THOUSAND  "
+    },
+    {
+      "address": "0x071080",
+      "id": "script13-inline-5",
+      "ordinal": 5,
+      "script": "script13",
+      "scriptAddress": "0x070f88",
+      "sha256": "5aaa3d23f585f3076aec9de80e087b89d849cf527416576b73f5087c2c08fbe3",
+      "text": "         THE WINNING NUMBER WAS 12938          "
+    },
+    {
+      "address": "0x0710b6",
+      "id": "script20-inline-1",
+      "ordinal": 1,
+      "script": "script20",
+      "scriptAddress": "0x0710b6",
+      "sha256": "e585ad24121b1a50a07d6ff9f60fec557ea9fdf1b4ce7520a01d85988e8af9a2",
+      "text": " THE MAGIC CRYSTAL WILL GRANT YOU A SINGLE WISH "
+    },
+    {
+      "address": "0x071110",
+      "id": "script24-inline-1",
+      "ordinal": 1,
+      "script": "script24",
+      "scriptAddress": "0x071108",
+      "sha256": "3e61ec5e8f7c56c96df9c04930e15230ec07c9a11594fdc45352f10fd9767632",
+      "text": "     TO ACTIVATE - BOARD THE AUTHOR'S CHAIR     "
+    },
+    {
+      "address": "0x07114c",
+      "id": "script25-inline-1",
+      "ordinal": 1,
+      "script": "script25",
+      "scriptAddress": "0x07114c",
+      "sha256": "223a0b29bd1558f67a9e5f31b6d79ee2e5a862384e5efe13e7218f7929fcfb3b",
+      "text": " WE SAID WE'D GRANT YOU A WISH - NOT A MIRACLE  "
+    },
+    {
+      "address": "0x071184",
+      "id": "script21-inline-1",
+      "ordinal": 1,
+      "script": "script21",
+      "scriptAddress": "0x0710ee",
+      "sha256": "74145977deb6f872db47f93cdd7cf76be5abb54142ad3c382256d9f5057caa66",
+      "text": "THE MYSTICAL ORDER OF CARPENTERS GRANT YOUR WISH"
+    },
+    {
+      "address": "0x0711c6",
+      "id": "script23-inline-1",
+      "ordinal": 1,
+      "script": "script23",
+      "scriptAddress": "0x0711ba",
+      "sha256": "bdb106f3e4c5afe557af0550f9bb793a2622f85f3fd11462ba804dea2c240c0a",
+      "text": "        MESSAGE FROM THE STATE PRESIDENT"
+    },
+    {
+      "address": "0x0711f2",
+      "id": "script23-inline-2",
+      "ordinal": 2,
+      "script": "script23",
+      "scriptAddress": "0x0711ba",
+      "sha256": "d75d49264e2c48e0d895b1553e6fec93642c88e43b2d189ac5ae6f6f683c918b",
+      "text": "         CONGRATULATIONS ON SAVING ERIS"
+    },
+    {
+      "address": "0x07121c",
+      "id": "script23-inline-3",
+      "ordinal": 3,
+      "script": "script23",
+      "scriptAddress": "0x0711ba",
+      "sha256": "490cffb01691a7bacb9162144dee7f0c71856ceb7ca0eb3f99f62ed7bd05687a",
+      "text": "     WE DON'T KNOW HOW YOU'VE DONE IT - BUT"
+    },
+    {
+      "address": "0x071260",
+      "id": "script60-inline-1",
+      "ordinal": 1,
+      "script": "script60",
+      "scriptAddress": "0x071254",
+      "sha256": "f6535431d15fdba60100e2399a087d714a5788bc69be59173979c335a594070e",
+      "text": "     MESSAGE FROM CHAIRMAN - LLOYDS GROUP 4"
+    },
+    {
+      "address": "0x07128e",
+      "id": "script60-inline-2",
+      "ordinal": 2,
+      "script": "script60",
+      "scriptAddress": "0x071254",
+      "sha256": "e4946fca0b5834f218e24392e88c4d059155aef54b6e1fbbcaf369ae1e03c044",
+      "text": "   WE HAVE REPORTS OF DAMOCLES CHANGING COURSE"
+    },
+    {
+      "address": "0x0712c0",
+      "id": "script60-inline-3",
+      "ordinal": 3,
+      "script": "script60",
+      "scriptAddress": "0x071254",
+      "sha256": "fcc35d9832ad4b0767d4c4b539c4ec7b4691d1678447f41531215d02ac5478cf",
+      "text": "  CALCULATIONS SHOW ERIS AND DAMOCLES ARE SAVED"
+    },
+    {
+      "address": "0x0712f2",
+      "id": "script60-inline-4",
+      "ordinal": 4,
+      "script": "script60",
+      "scriptAddress": "0x071254",
+      "sha256": "1d1886b765ab3936ddcb3d02a46a986f7ebc957e091f5e8c888fbede07318f5c",
+      "text": "    IN THE BELIEF THAT YOU MAY BE RESPONSIBLE"
+    },
+    {
+      "address": "0x071322",
+      "id": "script60-inline-5",
+      "ordinal": 5,
+      "script": "script60",
+      "scriptAddress": "0x071254",
+      "sha256": "1732b4eb11eba496da50741f8b333b418d5a37fe17ed441a69c55a33c3e5fc23",
+      "text": "  WE HAVE CREDITED YOU WITH OUR SPECIAL REWARD"
+    },
+    {
+      "address": "0x0713fc",
+      "id": "script16-inline-1",
+      "ordinal": 1,
+      "script": "script16",
+      "scriptAddress": "0x0713f8",
+      "sha256": "f6535431d15fdba60100e2399a087d714a5788bc69be59173979c335a594070e",
+      "text": "     MESSAGE FROM CHAIRMAN - LLOYDS GROUP 4"
+    },
+    {
+      "address": "0x07142a",
+      "id": "script16-inline-2",
+      "ordinal": 2,
+      "script": "script16",
+      "scriptAddress": "0x0713f8",
+      "sha256": "e55e882ac7bd8a0ac24dc18847f0fb81207f13ee3d3d7c34d16fc680363d98ac",
+      "text": "CONGRATULATIONS ON A REALLY INSPIRED PERFORMANCE"
+    },
+    {
+      "address": "0x07145e",
+      "id": "script16-inline-3",
+      "ordinal": 3,
+      "script": "script16",
+      "scriptAddress": "0x0713f8",
+      "sha256": "43e2cb929a7e28ed0eb7219891ad01b21c4d2b9a8b4f534331914394adae81b2",
+      "text": "CALCULATIONS SHOW YOU'VE SAVED ERIS AND DAMOCLES"
+    },
+    {
+      "address": "0x071492",
+      "id": "script16-inline-4",
+      "ordinal": 4,
+      "script": "script16",
+      "scriptAddress": "0x0713f8",
+      "sha256": "8c0533738896a5b68daeb07af24d8ec7c94eba8845784b7092fc48cfc813dbcc",
+      "text": "     OUR SPECIAL REWARD IS CREDITED TO YOU"
+    },
+    {
+      "address": "0x0714dc",
+      "id": "script16-inline-5",
+      "ordinal": 5,
+      "script": "script16",
+      "scriptAddress": "0x0713f8",
+      "sha256": "bdb106f3e4c5afe557af0550f9bb793a2622f85f3fd11462ba804dea2c240c0a",
+      "text": "        MESSAGE FROM THE STATE PRESIDENT"
+    },
+    {
+      "address": "0x071508",
+      "id": "script16-inline-6",
+      "ordinal": 6,
+      "script": "script16",
+      "scriptAddress": "0x0713f8",
+      "sha256": "d75d49264e2c48e0d895b1553e6fec93642c88e43b2d189ac5ae6f6f683c918b",
+      "text": "         CONGRATULATIONS ON SAVING ERIS"
+    },
+    {
+      "address": "0x071532",
+      "id": "script16-inline-7",
+      "ordinal": 7,
+      "script": "script16",
+      "scriptAddress": "0x0713f8",
+      "sha256": "ac90d09c904c92c47b7d3f0742a469b3002834a8a40ebb51bb6c582352877871",
+      "text": "    THE REWARD I PROMISED IS CREDITED TO YOU"
+    },
+    {
+      "address": "0x07156e",
+      "id": "script16-inline-8",
+      "ordinal": 8,
+      "script": "script16",
+      "scriptAddress": "0x0713f8",
+      "sha256": "bdb106f3e4c5afe557af0550f9bb793a2622f85f3fd11462ba804dea2c240c0a",
+      "text": "        MESSAGE FROM THE STATE PRESIDENT"
+    },
+    {
+      "address": "0x07159a",
+      "id": "script16-inline-9",
+      "ordinal": 9,
+      "script": "script16",
+      "scriptAddress": "0x0713f8",
+      "sha256": "d75d49264e2c48e0d895b1553e6fec93642c88e43b2d189ac5ae6f6f683c918b",
+      "text": "         CONGRATULATIONS ON SAVING ERIS"
+    },
+    {
+      "address": "0x0715c4",
+      "id": "script16-inline-10",
+      "ordinal": 10,
+      "script": "script16",
+      "scriptAddress": "0x0713f8",
+      "sha256": "47829d9c5619d3570beb0a5a26c6779375585973ee267524e52126c0d5e30b72",
+      "text": "I CANNOT UNDERSTAND YOUR NOT WANTING THE REWARD"
+    },
+    {
+      "address": "0x0715f6",
+      "id": "script16-inline-11",
+      "ordinal": 11,
+      "script": "script16",
+      "scriptAddress": "0x0713f8",
+      "sha256": "7da1413669bad3d329cbac48490c18156c8234070438602b1d7b22eb7a10834d",
+      "text": "IT'S JUST NOT THE WAY TO GET ON -  EXTRAORDINARY"
+    },
+    {
+      "address": "0x071638",
+      "id": "script17-inline-1",
+      "ordinal": 1,
+      "script": "script17",
+      "scriptAddress": "0x07162e",
+      "sha256": "14b8a8e2e84eea25a998a14e5fe9581e2ff7982d7b1585fd8cc3ab4e3cb0d263",
+      "text": "          MESSAGE FROM STATE PRESIDENT"
+    },
+    {
+      "address": "0x071662",
+      "id": "script17-inline-2",
+      "ordinal": 2,
+      "script": "script17",
+      "scriptAddress": "0x07162e",
+      "sha256": "c08e185e207e33f9006f5d89ae0ef85658b622192838255ba8f6ff5cb5bf778f",
+      "text": " GOOD IDEA BUT IT APPEARS TO BE RATHER TOO LATE"
+    },
+    {
+      "address": "0x0716a8",
+      "id": "script15-inline-1",
+      "ordinal": 1,
+      "script": "script15",
+      "scriptAddress": "0x07169e",
+      "sha256": "f500cbb8d7a168b148851191ab4ce2db1c9a0760efb77cc658b3328eccc15023",
+      "text": "        MESSAGE FROM EX STATE PRESIDENT"
+    },
+    {
+      "address": "0x0716d2",
+      "id": "script15-inline-2",
+      "ordinal": 2,
+      "script": "script15",
+      "scriptAddress": "0x07169e",
+      "sha256": "0a01e5c24faa36296e57b6c253df9b9b90d2eb7892e7b6de4bc68c09bbc85b5a",
+      "text": "   YOU HAVE FAILED -  ERIS HAS BEEN DESTROYED"
+    },
+    {
+      "address": "0x071702",
+      "id": "script15-inline-3",
+      "ordinal": 3,
+      "script": "script15",
+      "scriptAddress": "0x07169e",
+      "sha256": "a4740e15f9a15fa85e077da457e997e58a4afa7c0ab888bec27c0a2eb18831aa",
+      "text": " MY THANKS FOR TRYING - PITY YOU WERE TOO LATE"
+    },
+    {
+      "address": "0x071734",
+      "id": "script15-inline-4",
+      "ordinal": 4,
+      "script": "script15",
+      "scriptAddress": "0x07169e",
+      "sha256": "b00c66c4867bcf6cc96a77b8c5a24f3bdc8a4ae5a7323dc54dc4d08aa78041da",
+      "text": " AS IT IS - IF EVER I NEED YOUR SERVICES AGAIN"
+    },
+    {
+      "address": "0x071766",
+      "id": "script15-inline-5",
+      "ordinal": 5,
+      "script": "script15",
+      "scriptAddress": "0x07169e",
+      "sha256": "a7e1f71990d6be99ffb3ba5f045679ec03c8d7a73a79e0ac137cf52de99aa385",
+      "text": "     I STILL HAVE THE REWARD MONEY AVAILABLE"
+    },
+    {
+      "address": "0x07179a",
+      "id": "script15-inline-6",
+      "ordinal": 6,
+      "script": "script15",
+      "scriptAddress": "0x07169e",
+      "sha256": "f500cbb8d7a168b148851191ab4ce2db1c9a0760efb77cc658b3328eccc15023",
+      "text": "        MESSAGE FROM EX STATE PRESIDENT"
+    },
+    {
+      "address": "0x0717c4",
+      "id": "script15-inline-7",
+      "ordinal": 7,
+      "script": "script15",
+      "scriptAddress": "0x07169e",
+      "sha256": "941e57201c39441b1511879998d83479ab54421ac8d25f6cf2dc43defffdc66b",
+      "text": "            ERIS HAS BEEN DESTROYED"
+    },
+    {
+      "address": "0x0717ea",
+      "id": "script15-inline-8",
+      "ordinal": 8,
+      "script": "script15",
+      "scriptAddress": "0x07169e",
+      "sha256": "19e3ad454ee5ca7a0cb9fc8055fcd7e005b055bf1f47d41df39db93bf1f9ccef",
+      "text": " IN THE EVENT - IT WAS NO GOOD CALLING FOR YOU"
+    },
+    {
+      "address": "0x07181c",
+      "id": "script15-inline-9",
+      "ordinal": 9,
+      "script": "script15",
+      "scriptAddress": "0x07169e",
+      "sha256": "b7a86c812c0349263540131851b216358db551d4600d8dfa57a4d61630f1bcf9",
+      "text": "    YOU'RE NOTHING BUT A SELFISH OPPORTUNIST"
+    },
+    {
+      "address": "0x07184c",
+      "id": "script15-inline-10",
+      "ordinal": 10,
+      "script": "script15",
+      "scriptAddress": "0x07169e",
+      "sha256": "d1ab577a10cedc38627f22387d5614e4743ea2decd182cb8f48cc71ca65bb276",
+      "text": "  THAT SAID - IT IS A QUALITY I USUALY ADMIRE"
+    },
+    {
+      "address": "0x071884",
+      "id": "script14-inline-1",
+      "ordinal": 1,
+      "script": "script14",
+      "scriptAddress": "0x071880",
+      "sha256": "1798226520ffeaa3812733e656d95459049096f6102ad7efaf687b89de394589",
+      "text": "   REPORTS ARE COMING IN OF A MAJOR DISASTER"
+    },
+    {
+      "address": "0x0718b4",
+      "id": "script14-inline-2",
+      "ordinal": 2,
+      "script": "script14",
+      "scriptAddress": "0x071880",
+      "sha256": "afc1b82a211d76a1d625128e9e9282228a6b48b95e706728b2c201e0e5e9e4e9",
+      "text": "         PLANET GAEA HAS BEEN DESTROYED"
+    },
+    {
+      "address": "0x0718de",
+      "id": "script14-inline-3",
+      "ordinal": 3,
+      "script": "script14",
+      "scriptAddress": "0x071880",
+      "sha256": "c3883549a7ae41ea5577f49008f59870f0b98503a5f1de75bab2202d291ac152",
+      "text": " POLICE ARE LOOKING FOR A MERCENARY SEEN AT THE"
+    },
+    {
+      "address": "0x071910",
+      "id": "script14-inline-4",
+      "ordinal": 4,
+      "script": "script14",
+      "scriptAddress": "0x071880",
+      "sha256": "8d8a5543af83dd61569d8606f0bb28c8c3ec823cc2a186e6aec438b1b577e851",
+      "text": "HANTZEN HOUSE TO HELP THEM WITH THEIR ENQUIRIES"
+    },
+    {
+      "address": "0x07194a",
+      "id": "script19-inline-1",
+      "ordinal": 1,
+      "script": "script19",
+      "scriptAddress": "0x071946",
+      "sha256": "f500cbb8d7a168b148851191ab4ce2db1c9a0760efb77cc658b3328eccc15023",
+      "text": "        MESSAGE FROM EX STATE PRESIDENT"
+    },
+    {
+      "address": "0x071974",
+      "id": "script19-inline-2",
+      "ordinal": 2,
+      "script": "script19",
+      "scriptAddress": "0x071946",
+      "sha256": "c029eb0c39f3c0401d5ade84a25c03e56b9d8283896048ec091940f9250a7570",
+      "text": "    ARE YOU SURE YOU UNDERSTOOD THE MISSION"
+    },
+    {
+      "address": "0x0719a2",
+      "id": "script19-inline-3",
+      "ordinal": 3,
+      "script": "script19",
+      "scriptAddress": "0x071946",
+      "sha256": "6df1a83d0c7f84259ea628eb13667787dde21ba70ed0b406905c56c197e0c123",
+      "text": "YOU WERE MEANT TO BLOW UP THE COMET TO SAVE ERIS"
+    },
+    {
+      "address": "0x0719d6",
+      "id": "script19-inline-4",
+      "ordinal": 4,
+      "script": "script19",
+      "scriptAddress": "0x071946",
+      "sha256": "17d01b9311a0cb0e48ba6aebbe849670fcfdfd8c392f9ef44ce759f1a11309f1",
+      "text": "     NOT TO BLOW UP ERIS TO SAVE THE COMET"
+    },
+    {
+      "address": "0x071a0c",
+      "id": "script27-inline-1",
+      "ordinal": 1,
+      "script": "script27",
+      "scriptAddress": "0x071a08",
+      "sha256": "1798226520ffeaa3812733e656d95459049096f6102ad7efaf687b89de394589",
+      "text": "   REPORTS ARE COMING IN OF A MAJOR DISASTER"
+    },
+    {
+      "address": "0x071a3c",
+      "id": "script27-inline-2",
+      "ordinal": 2,
+      "script": "script27",
+      "scriptAddress": "0x071a08",
+      "sha256": "a7a7d2161ff2ee5c5c49d052cd39f3fc31a11aeadd88d728f9d6d157d7005fc7",
+      "text": "         PLANET DION HAS BEEN DESTROYED"
+    },
+    {
+      "address": "0x071a66",
+      "id": "script27-inline-3",
+      "ordinal": 3,
+      "script": "script27",
+      "scriptAddress": "0x071a08",
+      "sha256": "c3883549a7ae41ea5577f49008f59870f0b98503a5f1de75bab2202d291ac152",
+      "text": " POLICE ARE LOOKING FOR A MERCENARY SEEN AT THE"
+    },
+    {
+      "address": "0x071a98",
+      "id": "script27-inline-4",
+      "ordinal": 4,
+      "script": "script27",
+      "scriptAddress": "0x071a08",
+      "sha256": "a42fb5af42afea540bf6e41f27fb38cb988e19b1276747197c4b79182efa1f71",
+      "text": "AUTHORS HOUSE TO HELP THEM WITH THEIR ENQUIRIES"
+    },
+    {
+      "address": "0x071ace",
+      "id": "script28-inline-1",
+      "ordinal": 1,
+      "script": "script28",
+      "scriptAddress": "0x071ace",
+      "sha256": "8f8fe18ae402e7b7e67041ed6f97dc64af351b9ccdcf10d4fa5660c05c333980",
+      "text": "      ERIS POST OFFICE PUBLIC ANNOUNCEMENT"
+    },
+    {
+      "address": "0x071afc",
+      "id": "script28-inline-2",
+      "ordinal": 2,
+      "script": "script28",
+      "scriptAddress": "0x071ace",
+      "sha256": "f8d4bfe0db29ea51f5211f891e395823724cb54cdb23431e93767a220de63ed8",
+      "text": "DUE TO FORSEEN CIRCUMSTANCES - WE HAVE MOVED TO"
+    },
+    {
+      "address": "0x071b2e",
+      "id": "script28-inline-3",
+      "ordinal": 3,
+      "script": "script28",
+      "scriptAddress": "0x071ace",
+      "sha256": "53acf4ff54905c66eb0f668318ab407ffa552432df2323450ed72d8b45b190b4",
+      "text": "NEW OFFICES AT 00-10 - BIRMINGHAM ISLAND - DION"
+    },
+    {
+      "address": "0x071b64",
+      "id": "script29-inline-1",
+      "ordinal": 1,
+      "script": "script29",
+      "scriptAddress": "0x071b64",
+      "sha256": "0fa54343c0be1b54848df304dbbca0a6dfc2cf2aef4da76cda94a6e562bb499d",
+      "text": "      MESSAGE FROM THE COLLECTOR OF TAXES"
+    },
+    {
+      "address": "0x071b90",
+      "id": "script29-inline-2",
+      "ordinal": 2,
+      "script": "script29",
+      "scriptAddress": "0x071b64",
+      "sha256": "f9169b2100bf88bd992a956e80cfcf7ab2693966e770e22594d7ab98383baa44",
+      "text": "         WELCOME MERCENARY - DO COME IN"
+    },
+    {
+      "address": "0x071bba",
+      "id": "script29-inline-3",
+      "ordinal": 3,
+      "script": "script29",
+      "scriptAddress": "0x071b64",
+      "sha256": "029219ada191f851fe14c007d221a86067a284a6301dc7f6ee39bd5d3d9e8405",
+      "text": "  ON THE MATTER OF THE BACK TAXES THAT YOU OWE"
+    },
+    {
+      "address": "0x071bec",
+      "id": "script29-inline-4",
+      "ordinal": 4,
+      "script": "script29",
+      "scriptAddress": "0x071b64",
+      "sha256": "f9560c6e324429942fad3123583c3f54becbe488152ad6cf4462fa9b94e568f9",
+      "text": "  THANK YOU FOR BRINGING IN THIS PART PAYMENT"
+    },
+    {
+      "address": "0x071c2a",
+      "id": "script30-inline-1",
+      "ordinal": 1,
+      "script": "script30",
+      "scriptAddress": "0x071c2a",
+      "sha256": "bd6d055a2ebe028bed20c87d7f1eff9b72d246b12a7c1c2f629fde9322958ade",
+      "text": "  MESSAGE FROM YOUNG MR DOOBERRY'S CHIEF CLERK"
+    },
+    {
+      "address": "0x071c5c",
+      "id": "script30-inline-2",
+      "ordinal": 2,
+      "script": "script30",
+      "scriptAddress": "0x071c2a",
+      "sha256": "c563cd1652a78355444c41524919adee50e2561813cd992d425ec641248a6eae",
+      "text": "   THE PALYAR COMMANDER'S BROTHER-IN-LAW HAS"
+    },
+    {
+      "address": "0x071c8c",
+      "id": "script30-inline-3",
+      "ordinal": 3,
+      "script": "script30",
+      "scriptAddress": "0x071c2a",
+      "sha256": "fd2071c65d6c1151153f7d85feb329afd4834830e56c3f5266e7a7784cf7e1cf",
+      "text": "SUCESSFULLY SUED YOU FOR REPARATIONS- WITH COSTS"
+    },
+    {
+      "address": "0x071cc0",
+      "id": "script30-inline-4",
+      "ordinal": 4,
+      "script": "script30",
+      "scriptAddress": "0x071c2a",
+      "sha256": "865dce7e55f0615f71f84b5fb4b7a925089e0fb4872009b2e547fa3cf7230d1a",
+      "text": "       THANK YOU FOR BRINGING IN THE FUNDS"
+    },
+    {
+      "address": "0x071cfc",
+      "id": "script31-inline-1",
+      "ordinal": 1,
+      "script": "script31",
+      "scriptAddress": "0x071cfc",
+      "sha256": "3879c88cb06c335c2d892099eed0108078e106c0370b562ffa03379362d11e57",
+      "text": "   MESSAGE FROM MR C ROOK - THE ESTATE AGENT"
+    },
+    {
+      "address": "0x071d2c",
+      "id": "script31-inline-2",
+      "ordinal": 2,
+      "script": "script31",
+      "scriptAddress": "0x071cfc",
+      "sha256": "8bd1cf51e81c56c0c42ea6eb23fa1f4af9985062bd4d7359ed00d0ee475025de",
+      "text": "     THIS IS AN OFFER YOU JUST CAN'T REFUSE"
+    },
+    {
+      "address": "0x071d5a",
+      "id": "script31-inline-3",
+      "ordinal": 3,
+      "script": "script31",
+      "scriptAddress": "0x071cfc",
+      "sha256": "04dda5435f498173f7c83f982745fc1102e88f2cae6f23181fc2afff0c190fd2",
+      "text": "THE MOST DESIRABLE RESIDENCE 02-05 ERIS CAPITAL"
+    },
+    {
+      "address": "0x071d8c",
+      "id": "script31-inline-4",
+      "ordinal": 4,
+      "script": "script31",
+      "scriptAddress": "0x071cfc",
+      "sha256": "fa2ea2425874c64357611c22436f0383541ef7b46cdaba2e8bd0441774c7049b",
+      "text": "IS NOW YOURS- THANKS FOR COMPLETING THE PURCHASE"
+    },
+    {
+      "address": "0x071dce",
+      "id": "script61-inline-1",
+      "ordinal": 1,
+      "script": "script61",
+      "scriptAddress": "0x071dce",
+      "sha256": "d5606335c6adbb5c35adce8c0d4fe5d1857d2696bfaf4df6f5d3f5d47a47cbf5",
+      "text": "     MESSAGE FROM THE CHIEF PRISON OFFICER"
+    },
+    {
+      "address": "0x071dfc",
+      "id": "script61-inline-2",
+      "ordinal": 2,
+      "script": "script61",
+      "scriptAddress": "0x071dce",
+      "sha256": "e323d1da93c506bda6e1f1cf291a432f3fc12b0593e068cfa7aa8ff480939576",
+      "text": "  YOU HAVE BEEN SENTENCED TO TWO YEARS MINIMUM"
+    },
+    {
+      "address": "0x071e2e",
+      "id": "script61-inline-3",
+      "ordinal": 3,
+      "script": "script61",
+      "scriptAddress": "0x071dce",
+      "sha256": "dad00c33be8f9e869d901e3aaa10994db121126674e6b00936bcc93a9fcf4ab8",
+      "text": "         UNTIL MERCENARY 3 IS PUBLISHED"
+    },
+    {
+      "address": "0x071e58",
+      "id": "script61-inline-4",
+      "ordinal": 4,
+      "script": "script61",
+      "scriptAddress": "0x071dce",
+      "sha256": "ac4d6a4d9866768c986f0db1d6eed40a4088265ea38900ce852113c351940cd4",
+      "text": "     DON'T HOLD YOUR BREATH! - PRESS 'HELP'"
+    },
+    {
+      "address": "0x071e8e",
+      "id": "script62-inline-1",
+      "ordinal": 1,
+      "script": "script62",
+      "scriptAddress": "0x071e8a",
+      "sha256": "ce1547a15c59ece700a94f1be4376051e07258e25edc3179f285889bae249295",
+      "text": " MESSAGE FROM CHAIRMAN - GUM DEPARTMENT STORES"
+    },
+    {
+      "address": "0x071ec0",
+      "id": "script62-inline-2",
+      "ordinal": 2,
+      "script": "script62",
+      "scriptAddress": "0x071e8a",
+      "sha256": "b0740e4926084038b172166bd570b2dbb97d7705663a3fc09fecaf96f4f78012",
+      "text": "  THAT'S A BIT MEAN - FIRST WE MAKE YOU A GIFT"
+    },
+    {
+      "address": "0x071ef2",
+      "id": "script62-inline-3",
+      "ordinal": 3,
+      "script": "script62",
+      "scriptAddress": "0x071e8a",
+      "sha256": "3aaf49141b9970f216fc79d7b024890f55853275ea1d608e2cc87d2d92a68317",
+      "text": "           AND THEN YOU STEAL OUR TILL"
+    },
+    {
+      "address": "0x071f20",
+      "id": "script63-inline-1",
+      "ordinal": 1,
+      "script": "script63",
+      "scriptAddress": "0x071f20",
+      "sha256": "b9720c0b36b39fde45d3b7f254be47f5dac71e3c223dfc05aaea56c3c178b782",
+      "text": "     WELCOME TO UNCLES CASINO - HIGH ROLLER"
+    },
+    {
+      "address": "0x071f50",
+      "id": "script63-inline-2",
+      "ordinal": 2,
+      "script": "script63",
+      "scriptAddress": "0x071f20",
+      "sha256": "02d4778f11c21bd38ee19e0359f4d53dca530b7317cfe426d9d49272e4f1a1fd",
+      "text": "    HOW ABOUT A DOUBLE OR QUITS BET? - (OK?)"
+    },
+    {
+      "address": "0x071fa0",
+      "id": "script63-inline-3",
+      "ordinal": 3,
+      "script": "script63",
+      "scriptAddress": "0x071f20",
+      "sha256": "2692baad68030594c73c551a9d1633a8efbe22ebf1ca0698e5cc92403681ac2a",
+      "text": "     BAD LUCK! - YOU LOOSE - HAVE A NICE DAY"
+    },
+    {
+      "address": "0x071fde",
+      "id": "script63-inline-4",
+      "ordinal": 4,
+      "script": "script63",
+      "scriptAddress": "0x071f20",
+      "sha256": "d0b535188e6a45cb8235606d2fd2538340ef5a4e94cf20c38c025bf47300f09c",
+      "text": "      YOU WIN - WE SHALLN'T ASK YOU AGAIN"
+    },
+    {
+      "address": "0x072016",
+      "id": "script63-inline-5",
+      "ordinal": 5,
+      "script": "script63",
+      "scriptAddress": "0x071f20",
+      "sha256": "4924c278b6d030b2d3f6702a6a0e09c100c021eefd07fed0b0d69c5a6b99c6d4",
+      "text": "  ARE YOU SURE YOU BELONG IN A GROWN-UPS PLACE"
+    },
+    {
+      "address": "0x072050",
+      "id": "script42-inline-1",
+      "ordinal": 1,
+      "script": "script42",
+      "scriptAddress": "0x07204c",
+      "sha256": "ea024623165e3f0011ce53f714ebe8182b91cb45ca00fd1aa8aea88b6c09d404",
+      "text": " WARNING - UNINFORMED USE OF AUTHORS COMPUTERS"
+    },
+    {
+      "address": "0x072082",
+      "id": "script42-inline-2",
+      "ordinal": 2,
+      "script": "script42",
+      "scriptAddress": "0x07204c",
+      "sha256": "700b5036faab375995afaeaba44b025ae86b6455ef3666e883b6846485bac500",
+      "text": "       CAN SERIOUSLY DAMAGE YOUR UNIVERSE"
+    },
+    {
+      "address": "0x0720bc",
+      "id": "script32-inline-1",
+      "ordinal": 1,
+      "script": "script32",
+      "scriptAddress": "0x0720b2",
+      "sha256": "5d6939dcc069fd4640682835d39e063272fffdd8b498b9c462e7e31b89ec8e80",
+      "text": " ICARUS WAS FIRST EXPLORED FOR MINERALS IN 1286"
+    },
+    {
+      "address": "0x0720ee",
+      "id": "script32-inline-2",
+      "ordinal": 2,
+      "script": "script32",
+      "scriptAddress": "0x0720b2",
+      "sha256": "92d321567fa25e47efd09882f87633642106be4cd5681757d9c82c054a62e0f3",
+      "text": "           AND FOUND TO BE WORTHLESS"
+    },
+    {
+      "address": "0x072124",
+      "id": "script33-inline-1",
+      "ordinal": 1,
+      "script": "script33",
+      "scriptAddress": "0x07211a",
+      "sha256": "8f9d3a7352eeaaf47a9fdcdb9c6b0699f5aa044b4e0c8f581424269ae8c31317",
+      "text": "     IN 1922 A SELF-REPRODUCING MACHINE WAS"
+    },
+    {
+      "address": "0x072152",
+      "id": "script33-inline-2",
+      "ordinal": 2,
+      "script": "script33",
+      "scriptAddress": "0x07211a",
+      "sha256": "1f785f18941068897186a604b06be78ccf3109533c4bce89dae330dd11dcdcca",
+      "text": "       TASKED TO BUILD SOME PYRAMIDS HERE"
+    },
+    {
+      "address": "0x07217e",
+      "id": "script33-inline-3",
+      "ordinal": 3,
+      "script": "script33",
+      "scriptAddress": "0x07211a",
+      "sha256": "a54f41f92fb65d423e69d6064d2a77bafcce3ddb21afaa9ff20cbe650d41d50b",
+      "text": "      SIXTEEN MILLION OR SO ARE NOW BUILT!"
+    },
+    {
+      "address": "0x0721ba",
+      "id": "script34-inline-1",
+      "ordinal": 1,
+      "script": "script34",
+      "scriptAddress": "0x0721b0",
+      "sha256": "e90314c0de4d24e7ae07453e60175d2a29b1482875699865e644ad7dd76b80d6",
+      "text": "  MEAR BURDOCK OWNS BOTH MIDAS AND ACHERON AND"
+    },
+    {
+      "address": "0x0721ec",
+      "id": "script34-inline-2",
+      "ordinal": 2,
+      "script": "script34",
+      "scriptAddress": "0x0721b0",
+      "sha256": "fa9c7499fb1b2ad5d9936d7268d8b452956f49643629c649dbb4cb9aa428a6f7",
+      "text": " HAS BUILT REPLICAS OF ANCIENT STRUCTURES HERE"
+    },
+    {
+      "address": "0x07222c",
+      "id": "script35-inline-1",
+      "ordinal": 1,
+      "script": "script35",
+      "scriptAddress": "0x072222",
+      "sha256": "c783d67243915969fdb457ac80e9c099a103e2d18fe1bc9322203a8c3b9a7205",
+      "text": " DION WAS THE FIRST PLANET COLONISED BY GAEANS"
+    },
+    {
+      "address": "0x07225e",
+      "id": "script35-inline-2",
+      "ordinal": 2,
+      "script": "script35",
+      "scriptAddress": "0x072222",
+      "sha256": "ee89d66dec5b1a0b55f3f8220fc875db3e86a2c6ddbc118613a43febbda87ed0",
+      "text": "   A POPULAR REVOLUTION OF CIVIL DISOBEDIENCE"
+    },
+    {
+      "address": "0x07228e",
+      "id": "script35-inline-3",
+      "ordinal": 3,
+      "script": "script35",
+      "scriptAddress": "0x072222",
+      "sha256": "1aeb3c90c6b7890a163f276d8ec67e8c4e26e1bb4ee4964f0de2cfa7049a49f7",
+      "text": "     GAINED INDEPENDANCE FROM GAEA IN 1789"
+    },
+    {
+      "address": "0x0722ca",
+      "id": "script37-inline-1",
+      "ordinal": 1,
+      "script": "script37",
+      "scriptAddress": "0x0722c0",
+      "sha256": "f6db9e1bd7d5c0f3f2bb0ce00583a1d235973ce6046cb4f249f3ebefd508c65d",
+      "text": "       CLOTHO NEW TOWN WAS BUILT IN 1810"
+    },
+    {
+      "address": "0x0722f6",
+      "id": "script37-inline-2",
+      "ordinal": 2,
+      "script": "script37",
+      "scriptAddress": "0x0722c0",
+      "sha256": "89fddb00dd2237b66276135a2ba31729272984ac3d24fccbf4a52a5532a956c8",
+      "text": "   PROBABLY BEEN ABSOLUTELY BORING EVER SINCE"
+    },
+    {
+      "address": "0x072334",
+      "id": "script38-inline-1",
+      "ordinal": 1,
+      "script": "script38",
+      "scriptAddress": "0x07232a",
+      "sha256": "e971a2e2362202d2ad360bf023b6bbd9c3f01f7068f73cd1fce427ebb3baa364",
+      "text": "THIS MOON WAS ANNEXED 1375 BY THE GAEAN OVERLORD"
+    },
+    {
+      "address": "0x072368",
+      "id": "script38-inline-2",
+      "ordinal": 2,
+      "script": "script38",
+      "scriptAddress": "0x07232a",
+      "sha256": "7f899230dac1c9bdedb549aaed937b99c4a3fde576821665d8ce222d4e6be368",
+      "text": "  HISLER - SOLD IN 1879 FOR PULVIN EXTRACTION"
+    },
+    {
+      "address": "0x072398",
+      "id": "script38-inline-3",
+      "ordinal": 3,
+      "script": "script38",
+      "scriptAddress": "0x07232a",
+      "sha256": "f762357d4c3ce8b4b06b0c31d4e9480b9e6ba39209320769b4ef78c18e8a48c9",
+      "text": "         THE WORKINGS ARE NOW ABANDONED"
+    },
+    {
+      "address": "0x0723d0",
+      "id": "script36-inline-1",
+      "ordinal": 1,
+      "script": "script36",
+      "scriptAddress": "0x0723c6",
+      "sha256": "4e83f1d5fe9851a23931e24c061ec9edd6c614aeb7272998d9be701b861fcd32",
+      "text": " THIS WAS LEASED FROM THE DIONISIANS IN 1896 BY"
+    },
+    {
+      "address": "0x072402",
+      "id": "script36-inline-2",
+      "ordinal": 2,
+      "script": "script36",
+      "scriptAddress": "0x0723c6",
+      "sha256": "3d2817eb555cc9ebbf1ec9c467975bfbde48099213167a22d30fc7fa7c83edcf",
+      "text": "LLOYDS GROUP 4 INVESTMENTS - IT'S A WAY STATION"
+    },
+    {
+      "address": "0x072442",
+      "id": "script39-inline-1",
+      "ordinal": 1,
+      "script": "script39",
+      "scriptAddress": "0x072438",
+      "sha256": "ed834e0f64fe54abce48e262938bc6c18aa47e73c4c1b4ede93e1c83d3b77c65",
+      "text": "  THE GAEAN CIVILISATION HAS A WRITTEN HISTORY"
+    },
+    {
+      "address": "0x072474",
+      "id": "script39-inline-2",
+      "ordinal": 2,
+      "script": "script39",
+      "scriptAddress": "0x072438",
+      "sha256": "c2100c8af1d4438ab77a38618220ef8f1f5c5a64c504be9a941bacd29cf28b70",
+      "text": "COVERING EIGHTY MILLENIA- THE LAST ONE OF THESE"
+    },
+    {
+      "address": "0x0724a6",
+      "id": "script39-inline-3",
+      "ordinal": 3,
+      "script": "script39",
+      "scriptAddress": "0x072438",
+      "sha256": "9bed74cd097046838bc35943176ea2cb38f762b90810ae7a71a9c62b08542427",
+      "text": "     HAS BEEN FREE OF TERRESTRIAL CONFLICT"
+    },
+    {
+      "address": "0x0724e2",
+      "id": "script41-inline-1",
+      "ordinal": 1,
+      "script": "script41",
+      "scriptAddress": "0x0724d8",
+      "sha256": "2dca57c40fc693c15fe63fe369088578ed9da15f595e6aa8cfef948e0c6ee9ef",
+      "text": " THE I D I  HOLIDAY CENTRE HERE OPENED IN 1190"
+    },
+    {
+      "address": "0x072514",
+      "id": "script41-inline-2",
+      "ordinal": 2,
+      "script": "script41",
+      "scriptAddress": "0x0724d8",
+      "sha256": "4ce5bb320dfc51b66c50b7ee6195ad9d868f7d137519b18c6ffd4aaea5140609",
+      "text": "         IT WAS BUILT BY RICHMAL PICKLE"
+    },
+    {
+      "address": "0x07253e",
+      "id": "script41-inline-3",
+      "ordinal": 3,
+      "script": "script41",
+      "scriptAddress": "0x0724d8",
+      "sha256": "1f9820be51ab6871b5b05831c31fe8790b58200a8601a685db526761e812a69d",
+      "text": "  HE'S THE ONE WITH THE SPACELINE - ZODIAC SIX"
+    },
+    {
+      "address": "0x07257e",
+      "id": "script40-inline-1",
+      "ordinal": 1,
+      "script": "script40",
+      "scriptAddress": "0x072574",
+      "sha256": "e097328defeb01cf520f76585508782c73c48298b9d9757f3f67716a326572c2",
+      "text": "    THERE'S A MUSEUM HERE AT THE LANDING SITE"
+    },
+    {
+      "address": "0x0725ae",
+      "id": "script40-inline-2",
+      "ordinal": 2,
+      "script": "script40",
+      "scriptAddress": "0x072574",
+      "sha256": "2e55598893794e5bf352541909764f9a4016d23d531793401498b33cd0c39ab8",
+      "text": "   OF THE FIRST GAEAN PERSONNED SPACE FLIGHT"
+    },
+    {
+      "address": "0x0725ec",
+      "id": "script46-inline-1",
+      "ordinal": 1,
+      "script": "script46",
+      "scriptAddress": "0x0725e2",
+      "sha256": "9938d840c4719669b6aa90c1806fd1836b0803a0db2bc6c69f8b1848b0d664b7",
+      "text": "   THIS IS THE PLACE FOR LITIGATION - HOME OF"
+    },
+    {
+      "address": "0x07261c",
+      "id": "script46-inline-2",
+      "ordinal": 2,
+      "script": "script46",
+      "scriptAddress": "0x0725e2",
+      "sha256": "424a56351d8544abc52bd7122947f2cc5587032d12a8d7d2d0f5354fbed3e500",
+      "text": "    THE NIXON INTERSTELLAR COURT OF JUSTICE"
+    },
+    {
+      "address": "0x072658",
+      "id": "script43-inline-1",
+      "ordinal": 1,
+      "script": "script43",
+      "scriptAddress": "0x07264e",
+      "sha256": "60a985c2abb5e6ba57708e900464c8c9c4d4efb57c4806035d64d0d98a71c296",
+      "text": " THE PENN SCHOOL OF LITERATURE WAS ESTABLISHED"
+    },
+    {
+      "address": "0x07268a",
+      "id": "script43-inline-2",
+      "ordinal": 2,
+      "script": "script43",
+      "scriptAddress": "0x07264e",
+      "sha256": "98fd49fcb619a6fb56327fd476e82c81156dc64e529b7bc3855b09585de80343",
+      "text": "HERE IN 1985 - BUT THEY DON'T ENCOURAGE VISITORS"
+    },
+    {
+      "address": "0x0726cc",
+      "id": "script45-inline-1",
+      "ordinal": 1,
+      "script": "script45",
+      "scriptAddress": "0x0726c2",
+      "sha256": "231210198f5b6946d16ee6ed81bf293fded73b1ff638f2d96b1473fe13485447",
+      "text": "  VESTA IS HOME OF THE GAMMA SYSTEM PARLIAMENT"
+    },
+    {
+      "address": "0x0726fe",
+      "id": "script45-inline-2",
+      "ordinal": 2,
+      "script": "script45",
+      "scriptAddress": "0x0726c2",
+      "sha256": "d647eb32402cfa52032cd942a16ffe69999fb839711d6a2a064c442b72ce9e1d",
+      "text": " ESTABLISHED IN 1810 BY THE TREATY OF BETHESDA"
+    },
+    {
+      "address": "0x07273e",
+      "id": "script47-inline-1",
+      "ordinal": 1,
+      "script": "script47",
+      "scriptAddress": "0x072734",
+      "sha256": "929f3b8967685c993e136110bf237d65fe2fb654e3c41a7be63a19d4dce2108b",
+      "text": " LUCAN WAS SETTLED IN THE 20TH CENTURY BY LORD"
+    },
+    {
+      "address": "0x072770",
+      "id": "script47-inline-2",
+      "ordinal": 2,
+      "script": "script47",
+      "scriptAddress": "0x072734",
+      "sha256": "8317a8061c4c7fe7ed9939652b58ab192605452ab6cf69a04ccd38c894a70d39",
+      "text": "   A FLIGHT TECHNOLOGY EXPERT - LONG GONE NOW"
+    },
+    {
+      "address": "0x0727ae",
+      "id": "script44-inline-1",
+      "ordinal": 1,
+      "script": "script44",
+      "scriptAddress": "0x0727a4",
+      "sha256": "5edcf5aee1a3cc650327a363d31ce5832d1aac27ffd102a29c31f08edc8e3eb1",
+      "text": "  THE INTERSTELLAR COMMUNICATIONS LINK HERE IS"
+    },
+    {
+      "address": "0x0727e0",
+      "id": "script44-inline-2",
+      "ordinal": 2,
+      "script": "script44",
+      "scriptAddress": "0x0727a4",
+      "sha256": "dd5a6c027434a5b33e376814ec3c40b4f40572df6073009a062381f817e87c42",
+      "text": "BUZZING WITH NETWORK TRANSMISSIONS ON THE COMET"
+    },
+    {
+      "address": "0x072820",
+      "id": "script48-inline-1",
+      "ordinal": 1,
+      "script": "script48",
+      "scriptAddress": "0x072816",
+      "sha256": "6755f97f42ca3beb8df1f7175b5fe8a2f5191f7406cb29dd495529bed89eb744",
+      "text": "    LOGOS IS A SELF-CONTAINED YUPPIE COLONY"
+    },
+    {
+      "address": "0x07285c",
+      "id": "script49-inline-1",
+      "ordinal": 1,
+      "script": "script49",
+      "scriptAddress": "0x072852",
+      "sha256": "9301e4a329ef454289f02af85a4def390508e8a41bdaf7f90f232b833bf8ef34",
+      "text": "THE MOON WAS EXPLORED IN 1410 BUT NEVER SETTLED"
+    },
+    {
+      "address": "0x07289c",
+      "id": "script50-inline-1",
+      "ordinal": 1,
+      "script": "script50",
+      "scriptAddress": "0x072892",
+      "sha256": "add806faa1409f331b20f9fd57028a489c33f1fc5f3f048df322c25456a0d427",
+      "text": "TRITON IS A GAS PLANET UNSUITABLE FOR HABITATION"
+    },
+    {
+      "address": "0x0728de",
+      "id": "script51-inline-1",
+      "ordinal": 1,
+      "script": "script51",
+      "scriptAddress": "0x0728d4",
+      "sha256": "e05ce3108369945a7ec5b1a94e3fe9631da467e41ab021175a8d79ad2e6804e6",
+      "text": "THE HADES LABOUR CAMP HERE IS A PENAL COLONY FOR"
+    },
+    {
+      "address": "0x072912",
+      "id": "script51-inline-2",
+      "ordinal": 2,
+      "script": "script51",
+      "scriptAddress": "0x0728d4",
+      "sha256": "3569726fc31f9cb11a3409a88020a6d0c7676343a6a93e2d7f757bd012ab1003",
+      "text": "  MORAL DEVIATES SENTENCED TO THE PULVIN MINES"
+    },
+    {
+      "address": "0x072952",
+      "id": "script52-inline-1",
+      "ordinal": 1,
+      "script": "script52",
+      "scriptAddress": "0x072948",
+      "sha256": "ee88c0f99b7ff204a4ef4d62393d26129577a643d34a7480c0c36227599ee517",
+      "text": "THALIA MILITARY BASE WAS RECENTLY ESTABLISHED TO"
+    },
+    {
+      "address": "0x072986",
+      "id": "script52-inline-2",
+      "ordinal": 2,
+      "script": "script52",
+      "scriptAddress": "0x072948",
+      "sha256": "d4b6196c082b1efdebf2ffb9aeeb894e74af46e538b7553bb48201f3dd3bb2cb",
+      "text": " PROTECT PULVIN SOURCES FROM MYCRECIAN PIRATES"
+    },
+    {
+      "address": "0x0729c6",
+      "id": "script53-inline-1",
+      "ordinal": 1,
+      "script": "script53",
+      "scriptAddress": "0x0729bc",
+      "sha256": "584ba503e84878cf714417df9d6bc1cd9f2f3a1242a1b3e50db906f93e6aa34e",
+      "text": " JUNO IS A GAS GIANT UNSUITABLE FOR HABITATION"
+    },
+    {
+      "address": "0x072a06",
+      "id": "script57-inline-1",
+      "ordinal": 1,
+      "script": "script57",
+      "scriptAddress": "0x0729fc",
+      "sha256": "95c86ea197992b04e447fc52c43742132e095ebc4e497029c499e7ba54e5a944",
+      "text": "THERE ARE METHANE SEAS ON THIS INHOSPITABLE MOON"
+    },
+    {
+      "address": "0x072a3a",
+      "id": "script57-inline-2",
+      "ordinal": 2,
+      "script": "script57",
+      "scriptAddress": "0x0729fc",
+      "sha256": "6ddbf94e892eebb11f213e245b707cd42eee50aea57413d16167dc833c4fb0bd",
+      "text": "   ONLY ALKANE ISLAND RESEARCH CENTRE IS HERE"
+    },
+    {
+      "address": "0x072a7c",
+      "id": "script56-inline-1",
+      "ordinal": 1,
+      "script": "script56",
+      "scriptAddress": "0x072a6e",
+      "sha256": "f17d32533e96df80302f4cbd39a7b85d1a86b4a15ce0d0ab28a1ec404db253fa",
+      "text": "   TOLOSA HOUSES THE ERISEAN CURRENCY RESERVES"
+    },
+    {
+      "address": "0x072aae",
+      "id": "script56-inline-2",
+      "ordinal": 2,
+      "script": "script56",
+      "scriptAddress": "0x072a6e",
+      "sha256": "b2e8795fc54d82ba2c11706d8677187a33b03fe01f91b8452a452773ccbf9001",
+      "text": "HEAVILY DEFENDED AGAINST UNAUTHORISED VISITORS!"
+    },
+    {
+      "address": "0x072ae8",
+      "id": "script56-inline-3",
+      "ordinal": 3,
+      "script": "script56",
+      "scriptAddress": "0x072a6e",
+      "sha256": "1182799f48ed0eb667346b9c6428615a0b593e052c741be0e1738d5db71e8bce",
+      "text": "    REPOSITORY DEFENCE FORCES ARE ATTACKING"
+    },
+    {
+      "address": "0x072b2a",
+      "id": "script55-inline-1",
+      "ordinal": 1,
+      "script": "script55",
+      "scriptAddress": "0x072b20",
+      "sha256": "3b7b3a11e833eea4678ff037ce562d4f12f2d97677b7c771355bd19ebf42c72b",
+      "text": " AT PRESENT VOID BUT A LONG TERM LEASE IS TAKEN"
+    },
+    {
+      "address": "0x072b5c",
+      "id": "script55-inline-2",
+      "ordinal": 2,
+      "script": "script55",
+      "scriptAddress": "0x072b20",
+      "sha256": "2abcc0ad965c5c85a5143ee36b63d599b548a326623acd02f8c1af6ff1ed5140",
+      "text": " BY THE WHITTAM-SMITH INTERGALACTIC CORPORATION"
+    },
+    {
+      "address": "0x072b9c",
+      "id": "script54-inline-1",
+      "ordinal": 1,
+      "script": "script54",
+      "scriptAddress": "0x072b92",
+      "sha256": "a2bba7198e89955a0db3fa3b3a75cad725c604088088da162c7457eead4a1f07",
+      "text": " THIS WAY STATION ENJOYS A WIDE REPUTATION FOR"
+    },
+    {
+      "address": "0x072bce",
+      "id": "script54-inline-2",
+      "ordinal": 2,
+      "script": "script54",
+      "scriptAddress": "0x072b92",
+      "sha256": "d4ea088fa85d4f82f6f02292c4454888ac69e65667dc4ad603a985823f13b10b",
+      "text": " HOSPITALITY - THERE ARE REGULAR FLIGHTS TO PAN"
+    },
+    {
+      "address": "0x072c0e",
+      "id": "script58-inline-1",
+      "ordinal": 1,
+      "script": "script58",
+      "scriptAddress": "0x072c04",
+      "sha256": "33999ca416337f9dde9ee8f32d21324f756dbff3923664e056e289fc758f3756",
+      "text": "THE LAST FILL-UP BEFORE DEEP SPACE - TOR CITY -"
+    },
+    {
+      "address": "0x072c40",
+      "id": "script58-inline-2",
+      "ordinal": 2,
+      "script": "script58",
+      "scriptAddress": "0x072c04",
+      "sha256": "a5cded77b5702236c53ef6407da54ac9ed9af0cd3962abdfc2d3ddaf4d58677f",
+      "text": "         DUTY-FREE TRADING POSTS ABOUND"
+    },
+    {
+      "address": "0x072c78",
+      "id": "script59-inline-1",
+      "ordinal": 1,
+      "script": "script59",
+      "scriptAddress": "0x072c6e",
+      "sha256": "297b02816b4a5dc14d30b325fbfcc2bb04fc73c1a464e2643cfc889f8e44a2cc",
+      "text": " HAS INSPIRED MANY POPULAR SONGS - BUT IS VOID"
+    }
+  ],
+  "schemaVersion": 1,
+  "source": {
+    "authority": "Damocles Atari ST Working Authority",
+    "evidence": "docs/research/damocles-script-strings.md",
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "ramSha256": "b019301ec5ac355301613db8e2bf6cd6d4a0df41311b6efedacfea87f2a9c967",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  },
+  "statistics": {
+    "inlineLengthMaximum": 48,
+    "inlineLengthMinimum": 29,
+    "systemStringLengthMaximum": 49,
+    "systemStringLengthMinimum": 0
+  },
+  "systemStrings": {
+    "entries": [
+      {
+        "address": "0x072d2e",
+        "id": "system-string-0",
+        "sha256": "0d68502d67faeb0ca634763410a9e12c3ac969e11b695fd4abb6360ce87f6159",
+        "slot": 0,
+        "text": "                    LOCKED                       "
+      },
+      {
+        "address": "0x072d60",
+        "id": "system-string-1",
+        "sha256": "529cac4a39babb700ac2ccfd532479173bbfef1ebab4941ceffaa609fa0dad9d",
+        "slot": 1,
+        "text": "        WARNING - OBJECTS LEFT IN CASE!          "
+      },
+      {
+        "address": "0x072d92",
+        "id": "system-string-2",
+        "sha256": "6fdb8aba7c838e979afda45f872ed33bdbc1b4de4793382a257bd3e6971a87f4",
+        "slot": 2,
+        "text": "                   TOO HEAVY                     "
+      },
+      {
+        "address": "0x072dc4",
+        "id": "system-string-3",
+        "sha256": "052d902fb4c9cf2e23964d45aaf275788ae129a9293ee5c8ff97c2bc4a42fd0d",
+        "slot": 3,
+        "text": "              VEHICLE KEY REQUIRED               "
+      },
+      {
+        "address": "0x072df6",
+        "id": "system-string-4",
+        "sha256": "6a7412efabb3465763a2eb6325ad5c620c4344fd15a668e8512d182db397c022",
+        "slot": 4,
+        "text": "   TOO COLD! YOU CAN SURVIVE FOR TEN SECONDS     "
+      },
+      {
+        "address": "0x072e28",
+        "id": "system-string-5",
+        "sha256": "ca56b1776e6a75e9d8cda7dfb49c9af9f84729ac5bfffb563e8e6fd35223d401",
+        "slot": 5,
+        "text": "    TOO HOT! YOU CAN SURVIVE FOR TEN SECONDS     "
+      },
+      {
+        "address": "0x072e5a",
+        "id": "system-string-6",
+        "sha256": "fb91048883f5976b255c6b73b0fb5a86c4a330b7607439ece898495037306c13",
+        "slot": 6,
+        "text": "    NO AIR! YOU CAN SURVIVE FOR TEN SECONDS      "
+      },
+      {
+        "address": "0x072e8c",
+        "id": "system-string-7",
+        "sha256": "927750a7bee501a7a1171f736b39b21c038ac33c59e4e5af54df836d9b272c8d",
+        "slot": 7,
+        "text": " PRESSURE TOO HIGH - EMERGENCY ESCAPE ACTIVATED  "
+      },
+      {
+        "address": "0x072e8c",
+        "id": "system-string-8",
+        "sha256": "927750a7bee501a7a1171f736b39b21c038ac33c59e4e5af54df836d9b272c8d",
+        "slot": 8,
+        "text": " PRESSURE TOO HIGH - EMERGENCY ESCAPE ACTIVATED  "
+      },
+      {
+        "address": "0x072ebe",
+        "id": "system-string-9",
+        "sha256": "de63a4d57568e26c00f8231de308a2b7b59b0c4c34b3e83cdae026ff24b09f02",
+        "slot": 9,
+        "text": "                    NO ROOM                      "
+      },
+      {
+        "address": "0x072ef0",
+        "id": "system-string-10",
+        "sha256": "f0315ffc2b7b724438f6c25c91d454b78d0fc87c87b09c43cfd8966f884e1979",
+        "slot": 10,
+        "text": "F1=SAVE  F2=LOAD  F10=QUIT  OTHER=RETURN TO GAME"
+      },
+      {
+        "address": "0x072f22",
+        "id": "system-string-11",
+        "sha256": "2f23e3895a81210fa7e821474336cf06922beb2ff6ad61c1716fa97f49421084",
+        "slot": 11,
+        "text": "    ONLY ONE OBJECT CAN BE TRADED AT A TIME      "
+      },
+      {
+        "address": "0x072f54",
+        "id": "system-string-12",
+        "sha256": "e8523cfce20f2475d01c8473b407309ae9e5feacfbed32c19d896f7c2958f531",
+        "slot": 12,
+        "text": "               INSUFFICIENT FUNDS                "
+      },
+      {
+        "address": "0x072f86",
+        "id": "system-string-13",
+        "sha256": "3e52121b3e6248bfb297787a6458854a82202cfe74853b9edb8da21d2dd88bc4",
+        "slot": 13,
+        "text": "  SELECT EXPLOSIVE IN INVENTORY WINDOW TO ARM    "
+      },
+      {
+        "address": "0x072fb8",
+        "id": "system-string-14",
+        "sha256": "409646ca411c8d2e4085672240b3654d38b187b8048c90014791b771c1d8bd38",
+        "slot": 14,
+        "text": "          MERCENARY I LOAD NUMBER 0-9"
+      },
+      {
+        "address": "0x072fde",
+        "id": "system-string-15",
+        "sha256": "480436ee0932bca4e4870297bc2d674ae0af419c221ed4d9ddef9a45eebf3d1a",
+        "slot": 15,
+        "text": "          SECOND CITY LOAD NUMBER 0-9"
+      },
+      {
+        "address": "0x073004",
+        "id": "system-string-16",
+        "sha256": "0e76b9d9a8b89015d9ac895c5b75a14632f5afefeec9ddbe47e0c8b62d91f03a",
+        "slot": 16,
+        "text": "       GAME SAVE NOT A WINNING SUITUATION        "
+      },
+      {
+        "address": "0x073036",
+        "id": "system-string-17",
+        "sha256": "4b2bf949c00590c5cad94858bdceaec672862a6878c5b8ce8e154fdb4e019fb5",
+        "slot": 17,
+        "text": "        NO OTHER TRANSPORTERS AVAILABLE          "
+      },
+      {
+        "address": "0x073068",
+        "id": "system-string-18",
+        "sha256": "0d6d2118a186bacb87171d4f16ed9c354d58d72579b755e83cd36f18de9b4060",
+        "slot": 18,
+        "text": "    INTERMEDIATE TRANSPORTERS NOT AVAILABLE      "
+      },
+      {
+        "address": "0x07309a",
+        "id": "system-string-19",
+        "sha256": "0586a16a28e0813226b15b02d3a854afd23b471f16b03b732079e0a14d1a3ef0",
+        "slot": 19,
+        "text": " MERCENARY I LOAD MUST BE AT THE GAME BEGINNING  "
+      },
+      {
+        "address": "0x0730cc",
+        "id": "system-string-20",
+        "sha256": "872f6c339a193ba6982eeac42dfe6611f7cf7f0ea269ec5972d814197f580905",
+        "slot": 20,
+        "text": "           TRANSPORTER NOT AVAILABLE             "
+      },
+      {
+        "address": "0x0730fe",
+        "id": "system-string-21",
+        "sha256": "8bd0fecfaee1a181d079fe14bca2653e345eee23b1b37e2007124b67f2bb385e",
+        "slot": 21,
+        "text": "     VEHICLE NOT EQUIPPED FOR SPACE TRAVEL       "
+      },
+      {
+        "address": "0x073130",
+        "id": "system-string-22",
+        "sha256": "79aeba216013386d0d28181b6afaf552e3b7bd80096517560897bfce99ff3933",
+        "slot": 22,
+        "text": "      SHIP NOT REFITTED FOR FURTHER FLIGHT       "
+      },
+      {
+        "address": "0x073162",
+        "id": "system-string-23",
+        "sha256": "e67b229a3b9b8b165cd5e2ab6297d55e070c99cd047a74279e0c6c2867e1ac54",
+        "slot": 23,
+        "text": "               YOU'VE BEEN FROZEN"
+      },
+      {
+        "address": "0x073162",
+        "id": "system-string-24",
+        "sha256": "e67b229a3b9b8b165cd5e2ab6297d55e070c99cd047a74279e0c6c2867e1ac54",
+        "slot": 24,
+        "text": "               YOU'VE BEEN FROZEN"
+      },
+      {
+        "address": "0x073162",
+        "id": "system-string-25",
+        "sha256": "e67b229a3b9b8b165cd5e2ab6297d55e070c99cd047a74279e0c6c2867e1ac54",
+        "slot": 25,
+        "text": "               YOU'VE BEEN FROZEN"
+      },
+      {
+        "address": "0x073162",
+        "id": "system-string-26",
+        "sha256": "e67b229a3b9b8b165cd5e2ab6297d55e070c99cd047a74279e0c6c2867e1ac54",
+        "slot": 26,
+        "text": "               YOU'VE BEEN FROZEN"
+      },
+      {
+        "address": "0x073162",
+        "id": "system-string-27",
+        "sha256": "e67b229a3b9b8b165cd5e2ab6297d55e070c99cd047a74279e0c6c2867e1ac54",
+        "slot": 27,
+        "text": "               YOU'VE BEEN FROZEN"
+      },
+      {
+        "address": "0x073162",
+        "id": "system-string-28",
+        "sha256": "e67b229a3b9b8b165cd5e2ab6297d55e070c99cd047a74279e0c6c2867e1ac54",
+        "slot": 28,
+        "text": "               YOU'VE BEEN FROZEN"
+      },
+      {
+        "address": "0x073162",
+        "id": "system-string-29",
+        "sha256": "e67b229a3b9b8b165cd5e2ab6297d55e070c99cd047a74279e0c6c2867e1ac54",
+        "slot": 29,
+        "text": "               YOU'VE BEEN FROZEN"
+      },
+      {
+        "address": "0x073162",
+        "id": "system-string-30",
+        "sha256": "e67b229a3b9b8b165cd5e2ab6297d55e070c99cd047a74279e0c6c2867e1ac54",
+        "slot": 30,
+        "text": "               YOU'VE BEEN FROZEN"
+      },
+      {
+        "address": "0x073184",
+        "id": "system-string-31",
+        "sha256": "fcb88ab635aeb0e6ef28f2a32f61cbe3f718add0ab4b59c91b18466f436d2c93",
+        "slot": 31,
+        "text": "               YOU'VE BEEN FRIED"
+      },
+      {
+        "address": "0x0731a6",
+        "id": "system-string-32",
+        "sha256": "e42d772e809e3f7edde50cabdccf6996a748c6e3bab0caee7daf670206d377e7",
+        "slot": 32,
+        "text": "             YOU'VE BEEN SUFFOCATED"
+      },
+      {
+        "address": "0x0731ca",
+        "id": "system-string-33",
+        "sha256": "6aa3de8e29e8862dece45fdbeb7669962755a2c84ad582a7cf61b66fc264f7b2",
+        "slot": 33,
+        "text": " YOU'RE A BIT DEAD - TO QUIT OR LOAD PRESS HELP"
+      },
+      {
+        "address": "0x0731fa",
+        "id": "system-string-34",
+        "sha256": "e3423b132b8378a11dd28013de4954336a15a51ec31389e1a32a4bd3ba946684",
+        "slot": 34,
+        "text": "        OOPS! - YOU'VE BLOWN YOURSELF UP"
+      },
+      {
+        "address": "0x073224",
+        "id": "system-string-35",
+        "sha256": "0455e6e2bbd11454a666df6e428aa0b3968d95de3fe8b89103eff0f68b4ddfab",
+        "slot": 35,
+        "text": "   YOU WERE TOO CLOSE - YOU'VE BEEN BLOWN UP"
+      },
+      {
+        "address": "0x073252",
+        "id": "system-string-36",
+        "sha256": "b644125155e4a10ef2101f6f966b2ed2d27df48a882cc5a42a8be6dd55dc0859",
+        "slot": 36,
+        "text": "               YOU'VE BEEN ZAPPED"
+      },
+      {
+        "address": "0x073252",
+        "id": "system-string-37",
+        "sha256": "b644125155e4a10ef2101f6f966b2ed2d27df48a882cc5a42a8be6dd55dc0859",
+        "slot": 37,
+        "text": "               YOU'VE BEEN ZAPPED"
+      },
+      {
+        "address": "0x073252",
+        "id": "system-string-38",
+        "sha256": "b644125155e4a10ef2101f6f966b2ed2d27df48a882cc5a42a8be6dd55dc0859",
+        "slot": 38,
+        "text": "               YOU'VE BEEN ZAPPED"
+      },
+      {
+        "address": "0x073252",
+        "id": "system-string-39",
+        "sha256": "b644125155e4a10ef2101f6f966b2ed2d27df48a882cc5a42a8be6dd55dc0859",
+        "slot": 39,
+        "text": "               YOU'VE BEEN ZAPPED"
+      },
+      {
+        "address": "0x073252",
+        "id": "system-string-40",
+        "sha256": "b644125155e4a10ef2101f6f966b2ed2d27df48a882cc5a42a8be6dd55dc0859",
+        "slot": 40,
+        "text": "               YOU'VE BEEN ZAPPED"
+      },
+      {
+        "address": "0x073252",
+        "id": "system-string-41",
+        "sha256": "b644125155e4a10ef2101f6f966b2ed2d27df48a882cc5a42a8be6dd55dc0859",
+        "slot": 41,
+        "text": "               YOU'VE BEEN ZAPPED"
+      },
+      {
+        "address": "0x073252",
+        "id": "system-string-42",
+        "sha256": "b644125155e4a10ef2101f6f966b2ed2d27df48a882cc5a42a8be6dd55dc0859",
+        "slot": 42,
+        "text": "               YOU'VE BEEN ZAPPED"
+      },
+      {
+        "address": "0x073252",
+        "id": "system-string-43",
+        "sha256": "b644125155e4a10ef2101f6f966b2ed2d27df48a882cc5a42a8be6dd55dc0859",
+        "slot": 43,
+        "text": "               YOU'VE BEEN ZAPPED"
+      },
+      {
+        "address": "0x073252",
+        "id": "system-string-44",
+        "sha256": "b644125155e4a10ef2101f6f966b2ed2d27df48a882cc5a42a8be6dd55dc0859",
+        "slot": 44,
+        "text": "               YOU'VE BEEN ZAPPED"
+      },
+      {
+        "address": "0x073252",
+        "id": "system-string-45",
+        "sha256": "b644125155e4a10ef2101f6f966b2ed2d27df48a882cc5a42a8be6dd55dc0859",
+        "slot": 45,
+        "text": "               YOU'VE BEEN ZAPPED"
+      },
+      {
+        "address": "0x073252",
+        "id": "system-string-46",
+        "sha256": "b644125155e4a10ef2101f6f966b2ed2d27df48a882cc5a42a8be6dd55dc0859",
+        "slot": 46,
+        "text": "               YOU'VE BEEN ZAPPED"
+      },
+      {
+        "address": "0x073252",
+        "id": "system-string-47",
+        "sha256": "b644125155e4a10ef2101f6f966b2ed2d27df48a882cc5a42a8be6dd55dc0859",
+        "slot": 47,
+        "text": "               YOU'VE BEEN ZAPPED"
+      },
+      {
+        "address": "0x073252",
+        "id": "system-string-48",
+        "sha256": "b644125155e4a10ef2101f6f966b2ed2d27df48a882cc5a42a8be6dd55dc0859",
+        "slot": 48,
+        "text": "               YOU'VE BEEN ZAPPED"
+      },
+      {
+        "address": "0x073274",
+        "id": "system-string-49",
+        "sha256": "1486301a4b7e36d8f7421e073944ffbcb75c547d0b4a8c9f50d56596d5207b7d",
+        "slot": 49,
+        "text": "              ENEMY SHIP DESTROYED               "
+      },
+      {
+        "address": "0x0732a6",
+        "id": "system-string-50",
+        "sha256": "46eeb544a6fa04c6b61a6518255b3385159ee70e7282b66733cd33f1c586be69",
+        "slot": 50,
+        "text": "                                                 "
+      },
+      {
+        "address": "0x0732d8",
+        "id": "system-string-51",
+        "sha256": "9e9b77a32c8ac6463cae4618c654deb4be762d6fadd8072395be650d2345a0ec",
+        "slot": 51,
+        "text": "                 DISK ERROR                      "
+      },
+      {
+        "address": "0x07330a",
+        "id": "system-string-52",
+        "sha256": "270768ade968a04274b1f9bdc43cbc8c2756f4d4ebe90f2e35850aec32c64565",
+        "slot": 52,
+        "text": "            PRESS RETURN WHEN READY"
+      },
+      {
+        "address": "0x07330a",
+        "id": "system-string-53",
+        "sha256": "270768ade968a04274b1f9bdc43cbc8c2756f4d4ebe90f2e35850aec32c64565",
+        "slot": 53,
+        "text": "            PRESS RETURN WHEN READY"
+      },
+      {
+        "address": "0x07330a",
+        "id": "system-string-54",
+        "sha256": "270768ade968a04274b1f9bdc43cbc8c2756f4d4ebe90f2e35850aec32c64565",
+        "slot": 54,
+        "text": "            PRESS RETURN WHEN READY"
+      },
+      {
+        "address": "0x07330a",
+        "id": "system-string-55",
+        "sha256": "270768ade968a04274b1f9bdc43cbc8c2756f4d4ebe90f2e35850aec32c64565",
+        "slot": 55,
+        "text": "            PRESS RETURN WHEN READY"
+      },
+      {
+        "address": "0x07330a",
+        "id": "system-string-56",
+        "sha256": "270768ade968a04274b1f9bdc43cbc8c2756f4d4ebe90f2e35850aec32c64565",
+        "slot": 56,
+        "text": "            PRESS RETURN WHEN READY"
+      },
+      {
+        "address": "0x07332e",
+        "id": "system-string-57",
+        "sha256": "54b93ca64300c507f512c13279e222cd54e595776aff26c3812436ac0a515f0e",
+        "slot": 57,
+        "text": "                LOAD NUMBER 0-9"
+      },
+      {
+        "address": "0x07332e",
+        "id": "system-string-58",
+        "sha256": "54b93ca64300c507f512c13279e222cd54e595776aff26c3812436ac0a515f0e",
+        "slot": 58,
+        "text": "                LOAD NUMBER 0-9"
+      },
+      {
+        "address": "0x07334e",
+        "id": "system-string-59",
+        "sha256": "d25fcd390e9b76facea38b4b062a5413d254b647057fa4e107ab055a75162a23",
+        "slot": 59,
+        "text": "                SAVE NUMBER 0-9"
+      },
+      {
+        "address": "0x07336e",
+        "id": "system-string-60",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "slot": 60,
+        "text": ""
+      },
+      {
+        "address": "0x07336e",
+        "id": "system-string-61",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "slot": 61,
+        "text": ""
+      },
+      {
+        "address": "0x07336e",
+        "id": "system-string-62",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "slot": 62,
+        "text": ""
+      },
+      {
+        "address": "0x07336e",
+        "id": "system-string-63",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "slot": 63,
+        "text": ""
+      }
+    ],
+    "poolEndAddress": "0x07336f",
+    "poolStartAddress": "0x072d2e",
+    "scriptTableAddress": "0x070080",
+    "slotCount": 64,
+    "tableAddress": "0x070000"
+  },
+  "title": "Damocles"
+}
