@@ -8,6 +8,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The Damocles message reveal model is recovered. The routine behind the message
+  gate is `$052402`, called once per display frame from the frame interrupt. The
+  panel message row is **48 six-pixel character cells** — 288 pixels, six
+  scanlines, at scanline 144 — and a record enters it **from the right at eight
+  pixels per frame for 36 frames**, which is 4/3 characters a frame; on the 37th
+  the finished row is copied into the other screen buffer, and it is then held,
+  untouched, until the duration expires. So the recovered 200 frames divide into
+  **36 of arrival and 164 of reading hold**, with no departure: the row keeps its
+  last message until the next scrolls over it, which is why the limo-key response
+  ends by presenting a line of spaces. Character *k* of a record lands in cell
+  *k*, so there is no centring and a record's leading spaces are the original's
+  own. A record shorter than the row arrives padded with blanks; one longer is
+  shown in 48-character blocks. `$0523B8` counts display frames — it advanced in
+  exact lockstep with `$7B9C` at all 215 stops of every trace, closing the pickup
+  note's open question — except that the native system-string helper's
+  `$0523BC` flag cuts a message to 50 frames once its text runs out. **No input
+  ends a message early**: a decode of all resident RAM finds fifteen instructions
+  naming `$7BA0` and only the routine's own completion lowers it, and the
+  response ran unchanged with eight keys and the joystick fire bit held down.
+  Damocles has no equivalent of Targ's skip. The reveal is also audible — one
+  YM2149 channel A tone per frame, pitched from that frame's character —
+  recovered statically, with sound off in the laboratory. The limo-key
+  interaction contract's `Reveal` seam takes the recovered shape, and its
+  expectation of a revealed-character count is corrected: eight pixels a frame
+  through a six-pixel pitch is not cell-granular. New tracked
+  `message-reveal-probe.py`; no application behaviour change (#307).
+
 - The Damocles display frame rate is recovered. The Working Authority runs in ST
   low resolution and **never programs the Shifter's sync mode**: a static pass
   over the resident image finds no reference to `$FF820A` or `$FF8260` — while
