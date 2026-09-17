@@ -165,6 +165,34 @@ Two constraints, both found the hard way:
   stops the emulator. Widen the single range rather than adding a second action
   (the whole script dispatch loop, table, and handler block fit one `d`).
 
+### Two modal dialogs that silently freeze a headless run (solved)
+
+Both look identical from the outside: Hatari starts, the parse script reports
+`Returning to emulation...`, and then the process sits at 0% CPU for ever,
+ignoring every FIFO command. `sample <pid>` is what tells them apart — the
+blocked stack ends in `-[NSAlert runModal]` either way, but the frame above it
+names the cause.
+
+- **An error-level log message opens an alert.** A memstate whose IPF floppy
+  block does not match the current Hatari build logs
+  `Memory snapshot IPF floppy data incompatible with this Hatari version` from
+  inside `IPF_MemorySnapShot_Capture`, and `Log_AlertDlg` turns it into a modal
+  dialog nobody can dismiss. `build_hatari_command` therefore passes
+  `--alert-level fatal`. `--log-level fatal` alone does **not** suppress it: the
+  alert level is a separate threshold.
+- **macOS offers to restore windows.** Once the app has crash history —
+  which repeated `SIGKILL` of stuck runs creates — AppKit blocks in
+  `NSPersistentUIRestorer promptToIgnorePersistentStateWithCrashHistory` before
+  Hatari's main loop ever starts. Clear it once per machine with
+  `defaults write org.hatari-emu.Hatari ApplePersistenceIgnoreState -bool YES`.
+  The `ApplePersistenceIgnoreState` environment variable is **not** honoured, so
+  this stays a machine prerequisite rather than something the harness can set.
+
+A run blocked this way still creates its run directory, its FIFO and its log, so
+an empty run directory is the symptom to look for. Prefer `terminate` over
+`kill -9` when abandoning a run, to avoid manufacturing the crash history that
+triggers the second dialog.
+
 ## What this lab does not do
 
 No Damocles Data Payload, extractor, or schema. No second Independent

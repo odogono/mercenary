@@ -199,6 +199,30 @@ store and exact round trip, the shared refusal words and the drop's rank compari
 walk and the scene pass would otherwise produce, and none of the three special items
 has a recovered placement, so no case is a claim that ordinary play reaches it. See
 [the carry capacity research](../../docs/research/damocles-carry-capacity.md).
+## General object drop probe (#315)
+
+```sh
+python3 research/damocles-st/scripts/object-drop-probe.py --roms /path/to/roms
+python3 research/damocles-st/scripts/object-drop-probe.py --case scroll-refusal
+python3 research/damocles-st/scripts/object-drop-probe.py --case take-refusal --breakpoint
+```
+
+Reproduces the take and drop gates that apply to every resident object rather
+than only to the limo key. `take-refusal` and `empty-drop` run from the Eris
+arrival pose, where `INTERSTELLARSHIP` is the nearest drawn object at distance
+exponent 5: the take is refused through the handling byte's message branch and
+the empty-stack drop is refused silently, both with the ship well inside the
+nearby-support distance. `scroll-refusal` and `scroll-control` take the key on
+the tracked pickup route and press drop 0.2 s and 3 s later, which puts the
+inventory-label scroll window's refusal and an ordinary placement on one scale.
+
+`--breakpoint` arms one observational breakpoint on the refusal instruction of
+the handler under test; its callback only saves memory windows and continues.
+Samples scheduled after a callback have been seen to go missing, so the
+breakpoint cases are run separately from the sampled ones.
+
+Nothing is written into the guest. See
+[the object drop research](../../docs/research/damocles-object-drops.md).
 
 ## Object selection probe (#303)
 

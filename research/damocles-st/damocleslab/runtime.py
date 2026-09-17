@@ -74,6 +74,11 @@ def build_hatari_command(
         str(parse_script.resolve()),
         "--log-level",
         "fatal",
+        # A headless run has nobody to dismiss a modal dialog. Without this, an
+        # error-level log message (for example an incompatible IPF block inside a
+        # memstate) opens an alert that blocks the emulator for ever.
+        "--alert-level",
+        "fatal",
         "--screenshot-format",
         "png",
         "--crop",

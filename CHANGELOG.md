@@ -67,6 +67,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   persistence format for the Carried Stack is not recovered. See
   `docs/research/damocles-carry-capacity.md`.
 
+- The general Damocles object drop and residence rules are recovered. The
+  handling byte at `$6FAA` is four independent fields, and the drop handler's
+  rank comparison is now resolved: bits 2–3 are the support rank the **dropped**
+  object requires, bits 0–1 are the rank the **selected** object supplies, and
+  the handler refuses unless supplied ≥ required, with zero on either side
+  refusing. The nearby-support branch is **not opt-in** — any drawn resident
+  within distance exponent 6 (other than slot 74) forces it, so an unsuitable
+  neighbour refuses the drop outright instead of falling back to the ground.
+  Carrying an object stages it in body VOID (`$78`) with its whole Association B
+  cleared, so residence belongs to the body byte a drop writes and never to the
+  bound structure. Draw membership is rebuilt from residence at every region
+  change and is therefore derived, not saved. Drop always acts on the head of the
+  Carried Stack, and a multi-object drop issues one more sound request and queue
+  rebuild than a sole-object drop. The Trading Post credits a sale **before** its
+  placement checks run, so a refused sale drop has already paid. Two new
+  ordinary-route refusals are
+  observed for the first time: the inventory-label scroll window refuses a drop
+  pressed 0.2 s after a take and permits the same drop 3 s later, and a take
+  refused by the handling byte leaves the Carried Stack, the scroll counter and
+  the script untouched, moving only the message gate. A quantified blocker
+  replaces the previous silence: the only replayable arrival pose has exactly one
+  takeable resident in reach, and the Dion, Gaea and Vesta memstates cannot be
+  restored at all, so support placement and multi-object ordering remain
+  instruction-derived. New probe
+  `research/damocles-st/scripts/object-drop-probe.py`; see
+  `docs/research/damocles-object-drops.md`.
+
 - The Gamma System location coverage ledger is established. Across 241 resident
   object instances, **210 are takeable**, **34** have a recovered surface
   location and **195** are interior-associated — of which only **two**, both
@@ -209,6 +236,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   bank-extent and visual-replacement inventory, with its residuals (#280).
 
 ### Fixed
+
+- A headless Damocles ST laboratory run could freeze for ever behind a modal
+  macOS dialog, leaving an empty run directory and an emulator at 0% CPU. There
+  are two causes and `sample <pid>` distinguishes them: an error-level Hatari log
+  message opens an alert, which `build_hatari_command` now suppresses with
+  `--alert-level fatal` (`--log-level` does not cover it), and AppKit's
+  restore-windows prompt blocks the app once it has crash history, which needs
+  `defaults write org.hatari-emu.Hatari ApplePersistenceIgnoreState -bool YES`
+  once per machine. Both are written up in
+  `research/damocles-st/HATARI-RESEARCH.md`.
 
 - The Damocles Catalogue presented object slots 248-255 as fixed model
   identities. They are a world binding: `$055026` consumes the world's
