@@ -22,6 +22,10 @@ _Avoid_: Shell notice, message fragment, console output
 The Gameplay Session's persistent row of exactly 23 character cells through which Benson Messages move from right to left in the Reference Build's recovered 50 Hz bursts and `$E1` pauses. It is one shared display shown by both Benson Panel Renditions and the communications strip; Arrival Narration and Browser Shell notices may cover those surfaces but never alter its cells.
 _Avoid_: Message ticker, visible Benson Message, narration line, shell notice
 
+**Damocles Display**:
+The persistent 48-cell message row of a Damocles Gameplay Session, over which a new message scrolls and whose last contents remain until another message replaces them. It remains visible when no message is holding script execution and is distinct from Targ's Benson Display.
+_Avoid_: Benson Display (for Damocles), message gate, shell notice
+
 **Craft Parameter Block**:
 The set of values that makes one craft handle as it does—its control routine and its rates, limits, and gains—re-extracted into the Data Payload as plain numbers and selected by the craft the player currently occupies; a landed craft taxis on a block of its own, while a player on foot runs a separate fixed-step mover rather than this loop (ADR 0016).
 _Avoid_: Flight profile, craft config, tuning block, vehicle stats
@@ -47,7 +51,7 @@ What the player is currently inside, being either on foot or aboard one identifi
 _Avoid_: Vehicle state, mount, mode
 
 **Object Residence**:
-Where one object currently is: somewhere on the surface, in a Room, carried by the player, or out of the world; and, when it has been moved from where the Data Payload placed it, the place it was left.
+Where one object currently is: on a surface, in an interior, carried by the player, or out of the world, including the place it was left after being moved. In Targ an interior is a Room; in Damocles a placed object belongs to a Body and, where applicable, a structure region, independently of which Body or structure the player currently occupies.
 _Avoid_: Object position, inventory flag, room membership
 
 **Carried Stack**:
