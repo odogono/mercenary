@@ -108,6 +108,11 @@ The sampled progression through one response is: each of the three messages rais
 
 ## Proximity, repeats, drop and re-pick
 
+**Extension, #312:** [the drop research](damocles-limo-key-drops.md) explains insertion group
+12 → 1, adds mid-response and exterior drop traces, and recovers the inventory-label busy gate,
+support placement and guarded drop sound. Its coverage ledger distinguishes what is now
+observed from remaining route and persistence prerequisites.
+
 - **Control.** Walking the same route and pressing nothing left the carried count at 0, the trigger byte at `$80`, `$7BD8` at `$0000` and the PC parked at `$0703FC` for the whole sampling window. Standing beside the key, entering the room and the pre-existing script activity do **not** produce the response; the take input does.
 - **Silent refusal.** Runs whose walk ended slightly short did nothing at all on the take — no message, no state change, nothing written. Their samples show a selection the handler rejects: twice slot 183 selected (`$7B46` = `$2DC`) with `$7B42` = 10, once craft slot 5 selected at 12, against `$7B42` = 7 in the control run that stopped in range. Samples are taken a second or so after the press rather than at it, so they identify the class of failure rather than the exact instant. `$7B42` ≤ 8 is a real precondition and failing it is silent. The probe retries such a run rather than reporting it as a result.
 - **Repeat attempts.** A second take four seconds into the response and a third after it finished changed nothing: the carried count stayed 1, the trigger byte stayed `$00`, `$7BD8` stayed clear and the PC stayed at the idle jump. The one-shot trigger byte is what makes this true; the handler's other refusals are not needed, because the object is no longer resident.

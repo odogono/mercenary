@@ -75,8 +75,11 @@ Both selectors and the insertion key are bytes. The group terminator is a
 **zero region selector**, not an arbitrary zero byte: insertion key `$00` is
 valid. `$52D14..$52D22` skips nonmatching groups as pairs and stops the root on
 a zero group selector. For a matching group, `$52D24..$52D34` writes the
-resident slot, its insertion-group selector and a zero sentinel to `$AFDC`,
-then copies the authored pairs through their zero-region terminator. `$52D3C`
+resident slot, then its insertion-group selector paired with insertion key zero to `$AFDC`,
+then copies the authored pairs through their zero-region terminator. The first pair is an
+**implicit own-region insertion**, not a sentinel: group 1 supplies `(1,0)` even if its
+authored list never names region 1. [The drop research](damocles-limo-key-drops.md) establishes
+this distinction from the builder and queue consumer; it explains the key's group 12 → 1 drop. `$52D3C`
 writes two final zero bytes after the last resident. This also fixes ordering:
 matching residents occur in descending slot order.
 

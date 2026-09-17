@@ -94,9 +94,15 @@ python3 research/damocles-st/scripts/limo-key-pickup-probe.py --roms /path/to/ro
 Replays the tracked `scenarios/limo-key-pickup-route.json` walk from the on-foot
 Spaceport checkpoint into the room holding `KEY- V.I.P. LIMO`, supplies the take
 input, and samples the carried list, the resident slot, the script program
-counter and return stack, the trigger byte table and the message gate. The five
-cases cover a control run that takes nothing, an ordinary take, repeat attempts,
+counter and return stack, the trigger byte table and the message gate. The cases cover a control run that takes nothing, an ordinary take, repeat attempts,
 a drop and re-pick, and a mid-response state save resumed in a second process.
+`--case midresponse-drop` drops and re-picks during the initial response;
+`--case reverse-surface --settle 2` reverses the recorded movement segments before
+dropping and re-picking outside. `--case surface-leave-return --settle 2`
+adds a walk into a neighbouring cell and back before re-pick. These host-timed routes can drift: inspect the
+sampled region flags and association before claiming a surface arrival.
+See [the drop research](../../docs/research/damocles-limo-key-drops.md) for
+provenance, location coverage and remaining prerequisites.
 `--tick-rate` measures the script wait counter against the machine's VBL count.
 
 The walk stops the player at a slightly different distance on every run and the
