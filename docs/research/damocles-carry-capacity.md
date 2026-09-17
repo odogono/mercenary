@@ -112,7 +112,7 @@ All 241 resident slots that carry a model, from `payload/damocles/catalogue.json
 | `$10` | 10 | no | silent | Slots 0, 9, 29, 74, 156 and 248–255; only 74 and 156 have a model |
 | `$20` | 21 | no | message `$02` | Every craft and all three TRANSPORTERs |
 
-Bit 6 is set on no slot. The low nibble is not one rank but two: bits 0–1 and bits 2–3 are compared against each other by the drop handler, and their roles are the opposite way round from the payload's field names.
+Bit 6 is set on no slot. The low nibble is not one rank but two: bits 0–1 and bits 2–3 are compared against each other by the drop handler, and the payload names them `suppliedSupportRank` and `requiredSupportRank` after those roles.
 
 ## The drop handler: which side of the rank comparison is which
 
@@ -126,7 +126,7 @@ if d2 = 0 → refuse, system string index 9
 if d2 * 4 < d0 → refuse, system string index 9
 ```
 
-So the **demand** is bits 2–3 of the dropped object and the **supply** is bits 0–1 of the support. The payload calls bits 2–3 `supportRank` and bits 0–1 `objectRank`, which reads as the opposite assignment; the data is right and only the naming misleads. An ordinary key (`$04`, `$05`) demands rank 1 and supplies rank 0 or 1; a table (`$0F`) supplies 3. That is why a key can be put on a table and not on another key.
+So the **demand** is bits 2–3 of the dropped object and the **supply** is bits 0–1 of the support, which is what the payload's `requiredSupportRank` and `suppliedSupportRank` name. An ordinary key (`$04`, `$05`) demands rank 1 and supplies rank 0 or 1; a table (`$0F`) supplies 3. That is why a key can be put on a table and not on another key.
 
 `$0545AC` bypasses the entire comparison when **resident slot 39 — `DOOR KEY A`** — has its carried bit set. Like the ANTIGRAV addresses, `$7046` appears once in the whole image. `$054622` similarly lets a carried **slot 0** skip the ground-contact requirement `$7ACA` on the direct-placement path. Neither has a recovered writer for its carried bit other than an ordinary take, and slot 39's placement is not recovered, so both are reachable-in-principle rather than observed in play.
 

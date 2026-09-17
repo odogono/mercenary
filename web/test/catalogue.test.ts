@@ -19,9 +19,9 @@ const fixture = () => ({
       handling: null as null | {
         byte: number;
         carried: boolean;
-        objectRank: number;
         refusal: string | null;
-        supportRank: number;
+        requiredSupportRank: number;
+        suppliedSupportRank: number;
         takeable: boolean;
       },
       id: 'instance-1',
@@ -56,7 +56,7 @@ const fixture = () => ({
     }
   ],
   places: [],
-  schemaVersion: 12,
+  schemaVersion: 13,
   source: {
     authority: 'Synthetic test',
     evidence: 'test',
@@ -164,17 +164,17 @@ describe('Damocles catalogue contract', () => {
     taken.instances[0]!.handling = {
       byte: 0x20,
       carried: false,
-      objectRank: 0,
       refusal: 'message',
-      supportRank: 0,
+      requiredSupportRank: 0,
+      suppliedSupportRank: 0,
       takeable: false
     };
     expect(parseCatalogue(taken).instances[0]!.handling).toEqual({
       byte: 0x20,
       carried: false,
-      objectRank: 0,
       refusal: 'message',
-      supportRank: 0,
+      requiredSupportRank: 0,
+      suppliedSupportRank: 0,
       takeable: false
     });
     expect(parseCatalogue(fixture()).instances[0]!.handling).toBeNull();
@@ -182,9 +182,9 @@ describe('Damocles catalogue contract', () => {
     badRefusal.instances[0]!.handling = {
       byte: 4,
       carried: false,
-      objectRank: 0,
       refusal: 'shrug',
-      supportRank: 1,
+      requiredSupportRank: 1,
+      suppliedSupportRank: 0,
       takeable: true
     };
     expect(() => parseCatalogue(badRefusal)).toThrow('message/silent');

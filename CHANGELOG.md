@@ -174,10 +174,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   carried-object coordinates the pickup research left open are written by the
   scene rebuild at `$052D42`, which parks the whole Carried Stack on a fixed
   column (#303).
-- Every resident-slot instance in `payload/damocles/catalogue.json` (schema 12)
+- Every resident-slot instance in `payload/damocles/catalogue.json` (schema 13)
   carries `handling`, the interaction byte at `$6FAA + 4*slot` decoded: bit 4
   refuses a take silently, bit 5 diverts it to a refusal message, bit 7 is the
-  live carried flag and the low nibble is the drop handler's rank pair. All 241
+  live carried flag and the low nibble is the drop handler's rank pair —
+  `suppliedSupportRank` in bits 0-1 and `requiredSupportRank` in bits 2-3. All 241
   resident slots with a model carry it — 161 ordinary takeable objects, 49
   pieces of furniture, 21 craft that refuse with a message and 10 unlabelled
   slots that refuse silently — and it is null on every other instance (#303).
@@ -255,6 +256,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Gaea, so those records now carry the qualification and name the worlds that
   bind them elsewhere. The extractor raises if a capture repoints a slot below
   the block or at an address the table does not already hold (#280).
+- The catalogue's two drop rank fields named their roles the wrong way round.
+  The drop handler at `$0545AC`–`$0545D2` reads bits 0-1 of the support as the
+  rank it supplies and bits 2-3 of the dropped object as the rank it requires,
+  so `objectRank` and `supportRank` are now `suppliedSupportRank` and
+  `requiredSupportRank` (Damocles catalogue schema 13). The extracted values are
+  unchanged; anyone reading the old names would have inverted the comparison and
+  admitted drops the original refuses (#332).
 - Articulation about the zero axis turned the wrong way. `$053806` and `$053DB2`
   read Z before X; the catalogue read X before Z, which reversed the turn and
   its truncation for five of the six articulated objects as well as for details

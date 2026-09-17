@@ -69,12 +69,10 @@ live carried flag that take sets (`$0542A4`) and drop clears (`$05467C`).
 | 6 | unused in these handlers; zero in the pinned capture | — |
 | 7 | carried | `$0542A4`, `$05467C` |
 
-The tracked `payload/damocles/catalogue.json` already extracts this byte, but its
-field names invert the recovered roles: its `objectRank` is bits 0–1 (supplied)
-and its `supportRank` is bits 2–3 (required). The extraction is correct; only the
-names mislead. Do not build placement logic on the names without re-reading them
-here. The rename is tracked as
-[#332](https://github.com/odogono/mercenary/issues/332).
+The tracked `payload/damocles/catalogue.json` extracts this byte under names that
+state the roles: `suppliedSupportRank` is bits 0–1 and `requiredSupportRank` is
+bits 2–3. A placement is admitted when the support's supplied rank is at least
+the dropped object's required rank, and refused when either is zero.
 
 Census over the 241 catalogue residents that carry a handling byte:
 
@@ -291,11 +289,10 @@ follow: the slot-0 test at `$054214` is ahead of the bit-4 check, while the two
 therefore only reach bit 5. Carrying an ANTIGRAV never makes a bit-4 object takeable.
 
 The rank comparison above was recovered independently by that ticket, which reached
-the same assignment of demand and supply and the same finding about the payload's
-field names, and reproduced refused, met and bypassed rank cases at instruction
-checkpoints. What this note adds to it is that the branch is forced rather than
-optional, the geometry gate that follows the comparison, and the residence and
-draw-queue consequences of an accepted placement.
+the same assignment of demand and supply, and reproduced refused, met and bypassed
+rank cases at instruction checkpoints. What this note adds to it is that the branch
+is forced rather than optional, the geometry gate that follows the comparison, and
+the residence and draw-queue consequences of an accepted placement.
 
 ## Trading Post credit and buy-back
 
