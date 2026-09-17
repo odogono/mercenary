@@ -232,6 +232,14 @@ The correct attachment is therefore “Eris, structure group `$14`, cell `$26`,
 structure slot 145, level selector `$01`,” not a speculative building, floor,
 or place name.
 
+## Coverage ledger
+
+The per-body census built on these associations — how many residents each body
+carries, which are takeable, which scene selectors the unplaced ones still need,
+and where the player has been observed standing — is
+[the Gamma System location coverage ledger](damocles-gamma-system-location-ledger.md)
+for [#314](https://github.com/odogono/mercenary/issues/314).
+
 ## Deferred records
 
 The other ordinary-body records with a nonzero Association B byte 1 remain

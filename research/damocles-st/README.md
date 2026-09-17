@@ -112,6 +112,31 @@ samples are `savebin` windows taken while the emulator is stopped. Results,
 captures and screenshots stay in the ignored `work/` run directory. See
 [the pickup research](../../docs/research/damocles-limo-key-pickup.md).
 
+## Location ledger (#314)
+
+```sh
+python3 research/damocles-st/scripts/location-ledger.py ledger
+python3 research/damocles-st/scripts/location-ledger.py poses \
+  --memstate eris-spaceport-onfoot=research/damocles-st/snapshots/eris-spaceport-onfoot.sav \
+  --memstate dion-2-3=research/damocles-st/snapshots/dion-2-3.sav \
+  --memstate gaea-ur-city-4-2=research/damocles-st/snapshots/gaea-ur-city-4-2.sav \
+  --memstate vesta-parliament-4-6=research/damocles-st/snapshots/vesta-parliament-4-6.sav \
+  --payload
+```
+
+`ledger` counts resident object slots per celestial body straight out of the
+tracked `payload/damocles/catalogue.json`: residence form, takeability,
+recovered placements and the distinct interior scene selectors each unplaced
+resident still needs. It reads no Restricted Material.
+
+`poses` decodes one on-foot arrival pose per Hatari memstate — the occupancy
+word, body selector, camera longwords and yaw — and derives the workspace cell
+from the recovered body-local origin, which must agree with the cell that body's
+workspace note already records. The memstates stay ignored; `--payload` writes
+the tracked `payload/damocles/arrival-poses.json`. A body with no recovered
+origin is reported with no cell rather than a guessed one. See
+[the location coverage ledger](../../docs/research/damocles-gamma-system-location-ledger.md).
+
 ## Object selection probe (#303)
 
 ```sh
