@@ -148,10 +148,15 @@ string, the opcode word's address for an inline message.
 loads further banks from disk, and any text they carry is outside this extraction; nothing here
 claims the 270 records are all the game's text.
 
-Not established: what the native display routine does with a record, how a record reaches the panel
-row, or what the field width is in cells. A maintainer screenshot measured about 48 cells and the
-longest record here is 49 characters, which is consistent, but the routine that consumes `$7B98` was
-never located and this note does not guess at it. That remains #307.
+**Settled since, by [#307](https://github.com/odogono/mercenary/issues/307)**: the routine is
+`$052402`, the row is **48 six-pixel cells**, and a record enters it from the right at eight pixels
+a frame for 36 frames. Character *k* of a record lands in cell *k* — the routine does not centre,
+so the leading run this note keeps verbatim is the original's own hand-centring, and stripping it
+would move the line. Two details bear on this extraction directly and neither changes it: opcode
+`$14` publishes a system string's pointer **plus one**, so it displays a record from its second
+character — harmless here, because slot 50 is the only record any indexed site names and all of its
+characters are spaces; and a record of 49 characters needs a second 36-frame block, of which the
+first block shows 48 characters. See [the reveal note](damocles-message-reveal.md).
 
 Nothing in the application changed: the payload is available and validated, and no surface reads it
 yet. #300 is what makes the limo-key response present these records.

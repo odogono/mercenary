@@ -59,6 +59,31 @@ checkpoint behaviour, not physical-input timing or audible output. See
 [the first-offer research](../../docs/research/damocles-first-offer.md) for the
 pinned evidence, results and unresolved host meanings.
 
+## Message reveal probe (#307)
+
+```sh
+python3 research/damocles-st/scripts/message-reveal-probe.py --roms /path/to/roms
+python3 research/damocles-st/scripts/message-reveal-probe.py --roms /path/to/roms --case reveal
+```
+
+Recovers what the native display routine `$052402` does to the panel message row
+while the gate `$7BA0` is raised. Each traced case runs in two processes: the
+first replays a tracked route and saves whole-machine state mid-response, and the
+second boots that state, arms one breakpoint and then stops on 215 consecutive
+VBLs, saving the message workspace, the routine's own variables and the row's six
+scanlines in both screen buffers at every stop. The `reveal`, `clear` and
+`system` cases trace an inline message, the clearing line and a native refusal;
+`indexed` records the pointer the `$14` opcode publishes; `keys` holds every
+plausible input down across the whole response and samples it, because a
+breakpoint chain does not arm under held input.
+
+Only structural comparisons of the row leave the run directory -- whether a frame
+equals the previous one shifted left eight pixels, and how many pixels are lit.
+The pixels themselves are game text. The route stops the player at a slightly
+different distance every run, so a run whose take did not land is detected from
+phase one and retried (`--attempts`). See
+[the reveal research](../../docs/research/damocles-message-reveal.md).
+
 ## Limo-key pickup probe (#298)
 
 ```sh

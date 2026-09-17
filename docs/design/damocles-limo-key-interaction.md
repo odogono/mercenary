@@ -38,16 +38,15 @@ re-arm; and Damocles Save Snapshot and Session Resume across every one of those 
 | The full-Carried-Stack path at capacity 10 | The capacity is recovered and enforced; what the original does when it is reached is not, and this slice has one takeable object, so it cannot be reached. |
 | `$7AA8` = `$78` and `$04DDD0` ≠ 0 | Both refuse the take; both are unresolved words that held their permitting values throughout every observed run. Not modelled, not invented. |
 | The other five entries of the `$0543EC` trigger table (slots 181, 151, 95, 101, 94) | Source facts only; their scripts are untested and their objects unreachable in this slice. The table carries one bound entry and the rest take the no-match path. |
-| The reveal model — how a message's text arrives on the row, and how `$0523B8` divides between arrival and reading hold | Unrecovered: the native routine that consumes `$7B98` and clears `$7BA0` was never located. It becomes the `Reveal` seam below and [#307](https://github.com/odogono/mercenary/issues/307). |
-| Early completion of a presenting message by a key | No skip input was recovered for Damocles. Targ's `SKIP_MESSAGE_CODE` is Targ's, and whether Damocles has an equivalent is part of the same open question. |
+| The reveal model — how a message's text arrives on the row, and how `$0523B8` divides between arrival and reading hold | **Recovered** by [#307](https://github.com/odogono/mercenary/issues/307) and no longer excluded: `$052402` scrolls a 48-cell row left by eight pixels a frame for 36 frames, then holds it for the remaining 164. See [the reveal note](../research/damocles-message-reveal.md). |
+| Early completion of a presenting message by a key | **Answered** by [#307](https://github.com/odogono/mercenary/issues/307): there is none. Nothing outside the display routine's own completion ever lowers `$7BA0`, so no input shortens, skips or cancels a message. Targ's `SKIP_MESSAGE_CODE` has no Damocles equivalent. |
 | The mission the messages describe, boarding, driving, the other objects' responses | Past the stopping boundary. |
 
 **Stopping boundary.** The interaction ends when the script's final step pops the idle jump
 `$0703FC` back off the return stack and execution parks. That is the recovered stable completion
 point and the state every pre-take and post-response sample held.
 
-**What the evidence does not establish.** How a message is revealed on the panel row, or what the
-200 frames are divided between; frame-exact input timing; the interpreter's instruction
+**What the evidence does not establish.** Frame-exact input timing; the interpreter's instruction
 dispatch rate between gates;
 audible output, since the laboratory ran with sound off; the meaning of the association bits or of
 the low X/Z values written while an object is held; why the drop path writes insertion-group
@@ -74,15 +73,19 @@ Separately bounded, because each needed evidence this contract must not invent:
   `payload/damocles/catalogue.json` schema 12 now carries per resident instance as `handling`.
   [The selection note](../research/damocles-object-selection.md) records the evidence and the
   session-side rule; the `Selection` seam below is unchanged in shape and is now filled.
-- **The message reveal model** ([#307](https://github.com/odogono/mercenary/issues/307)). How a message's text arrives on the panel row, what the 200 frames
-  in `$0523B8` are divided between, and whether an input can end one early. The row is revealed
-  progressively rather than appearing whole, so this is display state a mid-message restore must
-  carry, and the save contract is not final without it. The research recovered the gate and the
-  duration but never located the native routine behind them. Two measurements narrow it: a
-  maintainer screenshot shows a fixed monospaced row about 48 cells wide holding a complete
-  message, and the decoded bank holds no message record longer than 49 characters. Nothing ever
-  needs to scroll through the row, so `Reveal` is expected to be a revealed-character count rather
-  than a shift register, which #307 confirms or corrects.
+- **The message reveal model** ([#307](https://github.com/odogono/mercenary/issues/307)). *Settled.* The routine is `$052402`, called once per display frame
+  from the frame interrupt. The panel row is **48 six-pixel character cells wide**, and a record
+  enters it **from the right at eight pixels per frame for 36 frames** — 4/3 characters a frame —
+  after which the finished row is copied into the other screen buffer and held, untouched, until
+  the duration expires. So the 200 frames are **36 of arrival and 164 of reading hold**, with no
+  departure: the row keeps its last message until the next one scrolls over it, which is why the
+  response ends by presenting a line of spaces. Character *k* of a record lands in cell *k*; there
+  is no centring, and a record's leading spaces are the original's own hand-centring. The
+  expectation recorded here — that `Reveal` would be a revealed-character count — is **corrected**:
+  eight pixels a frame through a six-pixel pitch means the row's left edge falls inside a character
+  for two frames in every three, so the reveal is measured in pixels.
+  [The reveal note](../research/damocles-message-reveal.md) records the evidence and the
+  recommended shape, which the `Reveal` seam below now takes.
 - **The message text** ([#304](https://github.com/odogono/mercenary/issues/304)). *Settled.* Script slot 2's three inline strings and
   system-string slot 50 are extracted into `payload/damocles/strings.json` along with the whole
   64-slot system string table and all 206 inline messages, under ADR 0029 and the
@@ -132,11 +135,20 @@ type MessageId =
   | 'script2-inline-3' // $070488
   | 'system-string-50'; // $0704BE, operand $0032
 
-/// Supplied by the unrecovered message-presentation rule, as `Selection` is. The message is
-/// revealed progressively rather than appearing whole, so the row's position within its text is
-/// display state that a mid-message restore has to carry. This contract consumes it, requires it
-/// to be JSON-compatible and validated, and does not define it.
-type Reveal = unknown;
+/// The message row as the recovered display routine keeps it (#307): a 288-pixel window, 48
+/// six-pixel cells wide, that a record's characters enter from the right at eight pixels a frame
+/// for 36 frames and that is then held untouched for the rest of the duration.
+type Reveal = {
+  /// Pixels of this block's character stream already inside the row. Advances by 8 a frame and
+  /// stops at 288, the whole row. Always a multiple of 8.
+  readonly pixels: number;
+  /// The character offset into the record this block started from. 0 for all four messages here;
+  /// non-zero only for a record longer than 48 characters, which the routine shows in blocks.
+  readonly offset: number;
+  /// The 48 characters the row showed when this block began, which the message scrolls over.
+  /// Spaces for a row that was blank.
+  readonly beneath: string;
+};
 
 /// The message gate $7BA0 as state: non-null is raised, null is lowered.
 type Presenting = {
@@ -293,8 +305,10 @@ Damocles Script slot 2, reached through entry-table word `$070084` = `$042A`.
 
 `clear-line` gates like the inline messages and uses the ordinary duration. Its record is not
 merely blank-padded: all 49 characters of system string slot 50 are spaces, so it is a full-width
-line clear rather than a fourth statement. The gating of the indexed form is derived from the shared helper path, not observed
-separately. Four messages at 200 frames and one 200-frame wait make the whole response **1000
+line clear rather than a fourth statement. #307 observed it and adds two things. The indexed form
+publishes the record's pointer **plus one**, so 48 of the 49 spaces are shown — exactly the row —
+and the step is not an instantaneous clear: it is 48 blank cells scrolling the previous message off
+over 36 frames, then 164 frames of a blank row. Four messages at 200 frames and one 200-frame wait make the whole response **1000
 display frames**, consistent within sampling granularity with the ~20 s the probe measured.
 
 Because both `runFrame` and `fireTrigger` run to the next block, execution is only ever observed at
@@ -386,7 +400,10 @@ restore, no best-effort migration. The rules:
 | `poll-wait` | true | null | `['idle', 'return-from-delay']` | < `waitFrames` |
 | `clear-busy` | true | `system-string-50` | `['idle']` | any |
 
-  A null `execution` requires `busy` false and `message` null. Any other step — `announce-1`,
+  A `Reveal` is refused unless `pixels` is a multiple of 8 in `0..288` and equal to
+  `Math.min(288, 8 * (messageFrames - remainingFrames))`, `offset` indexes the record, and
+  `beneath` is exactly 48 printable-ASCII characters. A null `execution` requires `busy` false and
+  `message` null. Any other step — `announce-1`,
   `reset-wait`, `return-from-delay`, `clear-line`, `return` — cannot survive a commit boundary and
   is refused.
 
@@ -415,11 +432,19 @@ and no script runs, because trigger 2 is still disarmed. Execution never leaves 
 armed, null execution, null message. Restoring it and then taking the key produces the same
 ordered frames and effects as an uninterrupted run from the same point.
 
-**Save during a message.** Saved at frame 300, the record holds step `announce-3`, message
-`script2-inline-2` with 100 remaining frames and its reveal position, `busy` true, return stack
-`['idle']`, the key carried, trigger 2 disarmed. Restoring re-presents message 2 at the same point
-in its reveal with 100 frames left, and emits no message request. Frame 100 after the restore hands
-over to message 3 exactly as the uninterrupted run does at frame 400.
+**Save during a message, after it has arrived.** Saved at frame 300, the record holds step
+`announce-3`, message `script2-inline-2` with 100 remaining frames, `busy` true, return stack
+`['idle']`, the key carried, trigger 2 disarmed. Its `Reveal` is `pixels` 288 — message 2 finished
+arriving at frame 236 and the row has been held since — with `offset` 0 and `beneath` the 48 cells
+message 1 left. Restoring re-presents message 2 on the same row with 100 frames left and emits no
+message request. Frame 100 after the restore hands over to message 3 exactly as the uninterrupted
+run does at frame 400.
+
+**Save during a message, while it is still arriving.** Saved at frame 210, ten frames into message
+2, the record is the same except for 190 remaining frames and `pixels` 80. Restoring puts the row
+back 80 pixels into the scroll — thirteen and a third characters in, not thirteen — and the
+remaining 26 arrival frames run as they would have. A record whose `pixels` disagrees with
+`8 × (messageFrames − remainingFrames)` is refused.
 
 **Save mid-wait.** Saved with step `poll-wait` and `counter` at 137, the restored session blocks
 for 63 more frames and then proceeds. A record with `poll-wait` and `counter` at 240 is refused:
@@ -451,8 +476,8 @@ Deterministic unit tests are the authority; #301's browser pass is confirmation,
 - **Repeat, drop and re-pick.** No second response, no duplicated message, no second sound request,
   and the trigger stays disarmed across an arbitrary number of drop/take cycles.
 - **Save round-trip.** Round-trip each of the five reachable commit-boundary states plus parked and
-  pre-pickup through JSON, taking the three message states at a partly revealed row rather than at
-  its start. Apply the same remaining frame and action sequence to the restored and
+  pre-pickup through JSON, taking the three message states both at a partly revealed row — inside
+  the 36 arrival frames, where `pixels` is not yet 288 — and after it has arrived. Apply the same remaining frame and action sequence to the restored and
   uninterrupted runs, and compare every state and every ordered effect array.
 - **Refusal.** Each row of the refused-restore list, asserting both the reason and that the live
   session is byte-identical afterwards.
@@ -471,7 +496,9 @@ In dependency order, with the three blocking issues first:
 1. ~~Object selection and takeability recovered~~ — [#303](https://github.com/odogono/mercenary/issues/303), delivered as
    [the selection note](../research/damocles-object-selection.md) and the `handling` record in
    `payload/damocles/catalogue.json`.
-2. The message reveal model recovered — [#307](https://github.com/odogono/mercenary/issues/307).
+2. ~~The message reveal model recovered~~ — [#307](https://github.com/odogono/mercenary/issues/307),
+   delivered: the row is 48 cells, the reveal is 8 pixels a frame for 36 frames, the remaining 164
+   frames are reading hold, and no input ends a message early. `Reveal` above is the recovered shape.
 3. ~~The message strings extracted into `payload/damocles/`~~ — [#304](https://github.com/odogono/mercenary/issues/304), delivered as
    `payload/damocles/strings.json`.
 4. `web/damocles/eris.json` schema 6 with its `time` block.
