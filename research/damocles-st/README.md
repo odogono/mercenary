@@ -43,6 +43,45 @@ Place the Working Authority STX at
 TOS image at `roms/atarist/tos/emutos206.img`. `doctor` fails if either hash
 does not match `config/working-authority.json`.
 
+## Rehosting an off-build memstate (#331)
+
+A memstate captured by a Hatari built with CAPS/IPF floppy support does not restore
+under the pinned build: it fails with
+`Memory snapshot IPF floppy data incompatible with this Hatari version` and the
+restore is abandoned. Convert it once, then use it like any other snapshot:
+
+```sh
+python3 research/damocles-st/scripts/memstate-rehost.py \
+    --input /path/to/captured/dion-2-3.sav \
+    --output research/damocles-st/snapshots/dion-2-3.sav
+python3 research/damocles-st/scripts/memstate-rehost.py --input ... --inspect
+```
+
+Only the snapshot's IPF section changes. The tool re-decodes the 1 MiB ST RAM window
+before and after and refuses to write if it differs, so the captured machine is
+preserved exactly; the rehosted file is a different container, not a new capture.
+The three rehosted memstates are Restricted Material and stay uncommitted; the
+repository's `*.sav` rule already ignores them.
+
+## Support placement and multi-object drops on Vesta (#331)
+
+```sh
+python3 research/damocles-st/scripts/support-drop-probe.py --list
+python3 research/damocles-st/scripts/support-drop-probe.py --case inventory
+python3 research/damocles-st/scripts/support-drop-probe.py --case multi-drop
+python3 research/damocles-st/scripts/support-drop-probe.py --case pair-drop --gap 12 --nudge 0.3
+python3 research/damocles-st/scripts/support-drop-probe.py --case pair-drop --gap 12 --rotate 1
+```
+
+Boots the rehosted `vesta-parliament-4-6` pose, which restores with three objects
+carried a short walk from an authored support pair, and replays ordinary joystick
+and keyboard input. `pair-drop` drops one object, waits for it to become the
+selection, and drops a second onto it; `--nudge` walks a fraction of a second
+between the two so the same sequence crosses the support branch's exponent-6
+boundary, which separates support placement from direct placement on position alone.
+See [the object-drop research](../../docs/research/damocles-object-drops.md) for the
+pinned runs and what they do and do not close.
+
 ## First-offer checkpoint probe (#287)
 
 ```sh

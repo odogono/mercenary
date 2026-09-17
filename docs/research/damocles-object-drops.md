@@ -13,10 +13,14 @@ listings, screenshots and experimental probe output stay ignored under
 `research/damocles-st/work/`. Authoritative Evidence remains bound to the C64
 Reference Build; everything here is Working-Authority Evidence.
 
-**This note does not close #315.** It resolves the handler rules the ticket asks
-for, and it replaces "not yet reproduced" with a measured, quantified statement of
-what an ordinary route can and cannot reach. The location blockers are in
-[Ordinary-route coverage and what blocks it](#ordinary-route-coverage-and-what-blocks-it).
+Extended for [#331](https://github.com/odogono/mercenary/issues/331) on 2026-09-17
+with the ordinary-route observations #315 could not reach, from the rehosted VESTA
+arrival pose. The three sections whose headings carry "(#331)" are that work; where
+it supersedes a #315 statement it says so in place rather than deleting it.
+
+#315's handler rules are delivered and that ticket is closed. What #331 has since
+observed, and the one prerequisite the remaining uncertainties share, is in
+[Open blockers, and what #331 closed](#open-blockers-and-what-331-closed).
 
 ## Evidence identity and runtime
 
@@ -35,6 +39,14 @@ SHA-256 `52e591b0c70b05713ae166554d103d730e64d4ff47917e3328210e247c0b180d`.
 Movement is the joystick softcopy byte the laboratory already uses; take and drop
 are real key events. No object, player-position, association or script field is
 injected.
+
+#331's runs boot the rehosted `snapshots/vesta-parliament-4-6.sav` and are produced
+by the tracked
+[`scripts/support-drop-probe.py`](../../research/damocles-st/scripts/support-drop-probe.py),
+SHA-256 `f5495ef47a71f56ffd4c8193db526faea959d473788f89fa53731fa34ce39676`, with the
+memstate prepared by
+[`scripts/memstate-rehost.py`](../../research/damocles-st/scripts/memstate-rehost.py).
+`lab doctor` passed again on 2026-09-17 with the same toolchain identities.
 
 ## Resident state layout used throughout
 
@@ -385,11 +397,364 @@ drop took the direct path because no resident was within exponent 6 at the momen
 the drop. It is recorded as an unsuccessful support attempt and a successful surface
 placement, not as a support observation.
 
-## Ordinary-route coverage and what blocks it
+## The DION, GAEA and VESTA memstates were an off-build capture, not a lost one (#331)
+
+Recovered for [#331](https://github.com/odogono/mercenary/issues/331) on 2026-09-17.
+This **replaces** the claim above that those three memstates cannot be replayed.
+
+The failing message is real and the diagnosis in it was incomplete. The three
+memstates were not captured by the pinned laboratory binary at all. Their Hatari
+header names the TOS image
+`/Users/alex/Applications/Hatari.app/Contents/Resources/tos.img`, while every
+memstate that restores names the pinned `roms/atarist/tos/emutos206.img`. Both are
+Hatari 2.6.1 and both TOS images have SHA-256
+`154803e3ff4851f3dc358b91b16d6b6110d187a81d8132ecb665af49878939d5`, so the
+emulated machine is the pinned one; what differs is the build. The application
+bundle is built **with** CAPS/IPF floppy support and the pinned binary is not.
+
+`IPF_MemorySnapShot_Capture` in Hatari 2.6.1 writes, in order, an `int32`
+`StructSize`, `StructSize` bytes of `IPF_STRUCT`, and then one `int32` track size
+for each of `MAX_FLOPPYDRIVES × 84 × 2` raw-stream slots — 1344 bytes, all zero
+whenever no `.raw` stream image was ever inserted. `IPF_STRUCT` is 600 bytes in a
+CAPS build and 8 bytes without CAPS, because its one unconditional member is
+`int64_t FdcClock`; the source comment claiming the struct is empty without CAPS
+is wrong. On restore, the mismatch branch logs
+
+```
+Memory snapshot IPF floppy data incompatible with this Hatari version -> skip
+```
+
+and skips `StructSize` bytes — **but not the 1344-byte trailer**. Every later
+section then reads from the wrong offset, the end-of-file magic check fails, and
+`MemorySnapShot_Restore_Do` abandons the restore. That is why the emulator never
+ran. The uncompressed streams differ by exactly 592 bytes, which is `600 − 8`.
+
+`--alert-level fatal`, added by [#315](https://github.com/odogono/mercenary/issues/315),
+is still required and still correct: without it the message opens a modal dialog
+that hangs a headless run. It suppresses the dialog; it does not make the restore
+succeed.
+
+### Rehosting
+
+The tracked [`scripts/memstate-rehost.py`](../../research/damocles-st/scripts/memstate-rehost.py)
+rewrites only that section, from the CAPS form to the pinned form, preserving
+`FdcClock` — the member both builds share. It locates the section deterministically
+rather than by scanning: `Floppy_MemorySnapShot_Capture` stores the inserted disk
+image byte for byte, so the Working Authority STX locates itself in the stream, and
+the offset from the end of that buffer to the IPF section is read from the tracked
+`eris-spaceport-onfoot` memstate, which the pinned build demonstrably restores. It
+refuses to write if the raw-stream trailer is not all zero, and it re-decodes the
+1 MiB ST RAM window before and after and refuses to write if it changed.
+
+The IPF state it discards is inert for this Authority. Drive A holds an STX, which
+Hatari routes through `floppy_stx.c`; `IPF_Insert` is only called for
+`FLOPPY_IMAGE_TYPE_IPF`.
+
+```sh
+python3 research/damocles-st/scripts/memstate-rehost.py \
+    --input <captured>/dion-2-3.sav \
+    --output research/damocles-st/snapshots/dion-2-3.sav
+```
+
+This is a **container conversion, not a recapture**. An observation taken from a
+rehosted memstate is Working-Authority Evidence from the original capture; what
+changed is that the pinned toolchain can now run it. The rehosted files stay
+Restricted Material and uncommitted, under the repository's existing `*.sav` rule.
+
+| Memstate | IPF section | Captured SHA-256 | Rehosted SHA-256 | RAM SHA-256 |
+| --- | --- | --- | --- | --- |
+| `dion-2-3` | `$423201`, 600 → 8 | `38bb0835…b142872` | `42866869…fba95d1e6` | `cefccd95…eabcf3734` |
+| `gaea-ur-city-4-2` | `$423201`, 600 → 8 | `de82797d…b8b8f3b3` | `eddc5f1c…5160e673e` | `12798fcb…2a925fab7` |
+| `vesta-parliament-4-6` | `$423201`, 600 → 8 | `47d817a9…94f362c1` | `d6aac9e0…55275a1ac` | `7dca6fcb…e539721e` |
+
+The RAM SHA-256 of each is unchanged, and
+`payload/damocles/arrival-poses.json` regenerates with only the memstate hashes
+different: every decoded position, yaw, body selector and derived cell is
+byte-identical to [#314](https://github.com/odogono/mercenary/issues/314)'s static
+decode.
+
+### The runtime decode agrees with the static decode
+
+All three now restore and run. Booted through the tracked probe below, the live
+player words match the published pose exactly:
+
+| Pose | Live position | Live yaw | Live body | Live cell | Agrees with payload |
+| --- | --- | ---: | --- | ---: | --- |
+| `dion-2-3` | `213288851, 63, 86343888` | `63008` | `$0010` | 50 | yes |
+| `gaea-ur-city-4-2` | `33847828, 63, 117602545` | `559` | `$0020` | 36 | yes |
+| `vesta-parliament-4-6` | `71270097, 63, 20544365` | `1556` | `$0038` | 100 | yes |
+
+Runs `support-drop-inventory-20260917T200926Z-3636e862` (DION, `result.json`
+SHA-256 `df96b1bd19fb7f94db6e1a696cd4876233e465446a03d6e2152e0adb6fe73ec7`),
+`support-drop-inventory-20260917T200956Z-c8202fdc` (GAEA,
+`baf6a2edce01c43fbfec4327200af7f0c6ed79ec6b815e00f02baa63c4a54a5a`) and
+`support-drop-inventory-20260917T200856Z-ef7eaf88` (VESTA,
+`e110d29f9bd4d3b93f4946be9614f6e83bf79f4e2c3c4091aba45d041340d7dc`).
+
+## Ordinary-route observations from the Vesta arrival pose (#331)
+
+Every run in this section boots the rehosted `vesta-parliament-4-6.sav`, SHA-256
+`d6aac9e01c44dad24b92665d1ba51cdcd7b42746aab616c09d68b5a55275a1ac`, and is produced
+by the tracked
+[`scripts/support-drop-probe.py`](../../research/damocles-st/scripts/support-drop-probe.py),
+SHA-256 `f5495ef47a71f56ffd4c8193db526faea959d473788f89fa53731fa34ce39676`. Walking
+is the joystick softcopy byte; take, drop and inventory scrolling are real key
+events; every sample is a `savebin` taken while the machine is stopped. Nothing is
+injected.
+
+### What the pose gives
+
+The player stands outdoors on VESTA — body byte `$38`, cell `$64`, region 9 with
+region flags `$C000`, bound structure 90, placement mode 1, ground contact 63,
+player Y 63 — carrying three objects with capacity 10, Carried Stack
+`151, 181, 183`. `$7046` reads `$05`, so the unexplained support-rank bypass is
+**not** active in any run here.
+
+| Slot | Object | Handling | Supplies | Requires | Y | Where |
+| ---: | --- | --- | ---: | ---: | ---: | --- |
+| 151 | `DAMOCLES FILE` | `$85` | 1 | 1 | — | carried |
+| 181 | `KEY - EAGLE 9SE` | `$84` | 0 | 1 | — | carried |
+| 183 | `KEY- V.I.P. LIMO` | `$84` | 0 | 1 | — | carried |
+| 3 | `EAGLE NINE S E` | `$20` | 0 | 0 | 0 | outdoors, 194 units away |
+| 108 | `BRIEFCASE` | `$04` | 0 | 1 | 951 | Parliament interior |
+| 230 | `PROCESSORS DESK` | `$0E` | 2 | 3 | 317 | Parliament interior |
+| 202 | `TABLE` | `$0F` | 3 | 3 | 634 | Parliament interior |
+| 153 | `SCROLL` | `$04` | 0 | 1 | 682 | Parliament interior, on slot 202 |
+
+"Supplies" and "requires" are the catalogue's `suppliedSupportRank` and
+`requiredSupportRank`.
+
+The one resident that supplies a non-zero support rank and is reachable on foot is
+the carried `DAMOCLES FILE`. That is what makes the support branch observable here:
+drop it, and it becomes a support.
+
+### The Carried Stack rotates, and rotation re-indexes the carried staging
+
+`support-drop-scroll-right-20260917T201026Z-50155d47`, `result.json` SHA-256
+`92bb4100bf5e3bdd65b371a589985479c15b38227aab6b99a9abe327be4d9859`, and
+`support-drop-scroll-left-20260917T201102Z-cbb55dc1`, `result.json` SHA-256
+`0ae718dc08528b03dce82937f149a2c3091d2446508906b6aad1e484e057788f`.
+
+Right Shift with the right cursor key rotates tail to head; with the left cursor
+key, head to tail. Three presses in either direction restore the original order, so
+this is a rotation of the whole list, not a swap of two entries:
+
+| Presses | Right | Left |
+| ---: | --- | --- |
+| 0 | `151, 181, 183` | `151, 181, 183` |
+| 1 | `183, 151, 181` | `181, 183, 151` |
+| 2 | `181, 183, 151` | `183, 151, 181` |
+| 3 | `151, 181, 183` | `151, 181, 183` |
+
+The panel label pointer `$04DDCC` follows the head every time — `$0003DD56` for
+slot 151, `$0003E450` for 181, `$0003E484` for 183.
+
+Rotation also rewrites state a port would otherwise treat as fixed. A carried
+object is parked at X `33237`, Z `99100` with Association B `$78 01 nn 10`, where
+`nn` is its **index in the Carried Stack**, and its Y is `300 × index`. Both follow
+the rotation immediately:
+
+| Stack | 151 | 181 | 183 |
+| --- | --- | --- | --- |
+| `151, 181, 183` | B `…0010`, Y 0 | B `…0110`, Y 300 | B `…0210`, Y 600 |
+| `183, 151, 181` | B `…0110`, Y 300 | B `…0210`, Y 600 | B `…0010`, Y 0 |
+
+So the level byte of a **carried** object is its stack index, not a residence
+level, and a drop re-indexes every object still carried. This is new: the note
+above recorded only that take clears Association B and writes body `$78`.
+
+### A multi-object drop, and the support branch forcing itself on the second one
+
+`support-drop-multi-drop-20260917T201138Z-07f26b0c`, `result.json` SHA-256
+`390a1d786750f0fb59a964d0bdc73042a9ad7afae2efa233e9a9ed57f39bcbde`. Four ordinary
+drops from the arrival pose, without moving.
+
+| Drop | Head | Outcome | Count | Stack after | Panel label |
+| ---: | --- | --- | ---: | --- | --- |
+| 1 | 151 | placed directly, Y 0 | 3 → 2 | `181, 183` | `$0003E450` |
+| 2 | 181 | placed **on** slot 151, Y 2 | 2 → 1 | `183` | `$0003E484` |
+| 3 | 183 | refused | 1 | `183` | `$0003E484` |
+| 4 | 183 | refused | 1 | `183` | `$0003E484` |
+
+The landing Y separates the paths, by the matched pair in the next section: direct
+placement writes 0 here and a support placement writes the support's top. Drop 1
+landed at Y 0 with the only resident inside the take range, slot 3, at exponent 7 —
+outside the support range. Drop 2 landed at Y 2, on slot 151. Drops 3 and 4 were
+refused with the message gate `$7BA0` moving `$0000` → `$FFFF` → `$0000`, and by then
+the selection was slot 181, which supplies rank 0.
+
+This is the "not opt-in" property of the support branch observed rather than derived:
+**dropping a second object where you have just dropped a first one is a support
+placement, and a third is refused.**
+
+Ordering is the documented one. Each accepted drop takes the head, the list shifts
+left, and the panel label pointer moves to the new head. The sole-object path, which
+clears the label instead, is not reached here — no run emptied the stack, because the
+third drop was refused.
+
+### An accepted support placement, with the field inheritance, and its control
+
+The two runs differ only in how far the player steps between the two drops. That
+step is what moves the support across the exponent-6 boundary, so the pair
+separates the support path from the direct path on ordinary input alone, with no
+breakpoint.
+
+**Accepted.** `support-drop-pair-drop-20260917T201219Z-0a3d554a`, `result.json`
+SHA-256 `9c867ba789cff0edafb167ba8ce31dad79a31ea1c52c4038a8c8e7e264107420`
+(`--gap 12 --nudge 0.3`). Slot 151 `DAMOCLES FILE` (supplies 1) was dropped at
+`71270097, 0, 20544365`. The player then stepped to `71270105, 63, 20544445`,
+leaving the support at exponent 6, and dropped slot 181 `KEY - EAGLE 9SE`
+(requires 1). Slot 181 landed at
+
+- X `71270097`, Z `20544365` — **the support's**, not the player's;
+- Y `2` — the support's Y 0 plus the model top the handler computes;
+- Association B `$38000064` — all four bytes copied from the support;
+- Association A `$00050401` — byte 1 `$05` and byte 3 `$01` from the support, its
+  own handling byte `$04` untouched.
+
+That is the acceptance write set at `$0546A4`–`$0546CA`, observed end to end.
+
+**Control.** `support-drop-pair-drop-20260917T201308Z-653f570f`, `result.json`
+SHA-256 `0931937acdc24cce7563cc0c0751026dc03a2e4508bf3d4b532796ff47894865`
+(`--nudge 0.4`). The identical sequence with a longer step put the support at
+exponent 7. The drop took the direct path: slot 181 landed at the **player's**
+`71270113, 20544525` with Y `0`.
+
+Y therefore separates the two paths cleanly at this pose: direct placement writes
+player Y minus 63, which is 0 here, and the support placement wrote 2.
+
+### The support-rank refusal
+
+`support-drop-pair-drop-20260917T201358Z-439d4df8`, `result.json` SHA-256
+`f80a059a047416f9db30e4589fb0e912935de51e5f8cffe94e5b4111faf8755a`
+(`--gap 12 --rotate 1`). One inventory rotation makes slot 183 `KEY- V.I.P. LIMO`
+(supplies 0) the head, so the object on the ground supplies nothing. The player
+does not move, leaving it selected at exponent 5, and drops slot 151.
+
+Refused. The carried count stayed 2, the Carried Stack stayed `151, 181`, the panel
+label pointer stayed `$0003DD56`, every resident field was unchanged, and the
+message gate `$7BA0` moved `$0000` → `$FFFF` → `$0000`.
+
+The matched breakpoint run
+`support-drop-pair-drop-20260917T201449Z-a02e1a3c`, `result.json` SHA-256
+`516263468bec47f473184688179056453cfaaae7973b037124c4a30f7646e384`, armed
+`pc = $54514` and caught it:
+
+```
+CPU=$54514, VBL=391386
+00054514 7209                     moveq #$09,d1
+```
+
+— the refusal target loading system-string index 9. Against the acceptance run the
+**only** difference is which object is lying on the ground, so this isolates the
+`$0545BE`/`$0545C6` comparison and nothing else.
+
+### The exponent the support gate reads is three-dimensional
+
+`$7B42` is not a plan distance. An object dropped at the player's feet reads
+exponent 5, not −1: the player's Y is 63 above where a direct drop puts an object,
+and that 63 is what the exponent measures. Every run above shows it. A port that
+computes the support range from X and Z alone will accept support drops at
+distances the original refuses, and will treat an object underfoot as being at
+distance zero when the original treats it as 63.
+
+### This pose's drop writes insertion group zero, outdoors, with a structure bound
+
+Both accepted placements wrote Association B `$38000064`: body `$38`, insertion
+group `$00`, level `$00`, cell `$64` — the surface form, while structure 90 was
+bound and region 9 was current, with region flags `$C000`. Slot 3
+`EAGLE NINE S E`, authored outdoors in the same cell, carries exactly the same
+Association B. This is the same shape as the Eris surface drop recorded above, at a
+second body, and it corroborates the region-flag gate rather than the
+current-region write.
+
+## What the Vesta pose still cannot reach, and why (#331)
+
+### The model-form refusal and the height refusal have no route from this pose
+
+Both gates sit **after** the rank comparison, so reaching either needs a support
+that supplies a rank at least as high as the dropped object requires. In VESTA cell
+`$64` there are exactly three such residents:
+
+- the carried `DAMOCLES FILE` slot 151, supplies 1. Its model passes the form gate
+  and its computed top is 2, far below the player's Y of 63, so it exercises the
+  accepted path and cannot produce either refusal;
+- `PROCESSORS DESK` slot 230, supplies 2, Y 317;
+- `TABLE` slot 202, supplies 3, Y 634, with `SCROLL` slot 153 resting on it.
+
+The last two are **inside Vesta Parliament**: Association B `$380A0164` and
+`$380C0264`, insertion groups `$0A` and `$0C` and levels 1 and 2, against the
+pose's insertion group `$00` and level `$00`. Two on-foot approaches were run and
+both stop outside:
+
+- `support-drop-walk-20260917T201539Z-da9dfa02`, `result.json` SHA-256
+  `ede003f4d1ecb0ae75087a6bc024ce394de6ea5ae37f02954a061df3ae057423`. Twenty
+  seconds of forward walking on the pose's own heading. Z stops advancing at
+  `20547564` against an exterior wall — the screenshot is a full-frame flat fill —
+  while X keeps sliding along it. `BRIEFCASE` slot 108 gets no closer than
+  exponent 7; `TABLE` and `PROCESSORS DESK` stay at exponent 9 and beyond.
+- `support-drop-walk-20260917T201629Z-cf006d1c`, `result.json` SHA-256
+  `886e7d4146da395ebdbfae1209e800f4248d3f78b4c0c56d5625dff5a496d710`. A one-second
+  right turn then twenty-five seconds forward, to try the wall's other side. The
+  turn rate is high enough that the route leaves the building behind entirely,
+  ending at `71283696, 20550409` with every interior resident at exponent 13.
+
+No entrance to Vesta Parliament has been located from this pose. The
+[generic entrance attachments](damocles-generic-entrance-attachments.md) and the
+[entrance motion](damocles-spaceport-entrance-motion.md) notes are the route a
+later ticket should follow. Until an interior is entered:
+
+- **the model-form refusal is unobserved**, with the specific reason that every
+  reachable support that clears the rank comparison is the `DAMOCLES FILE`, whose
+  model the handler accepts;
+- **the height refusal is unobserved**, with the specific reason that the only
+  supports standing above the player's eye — `PROCESSORS DESK` at Y 317 and `TABLE`
+  at Y 634 against a player Y of 63 — are both behind that wall. Their authored
+  heights make them the right test: the recovered gate predicts that **both refuse**,
+  including the table `SCROLL` is already sitting on. A port must not assume the
+  authored arrangement is reproducible by dropping.
+
+### The requirement-zero refusal is unobserved for the same shape of reason
+
+The branch refuses when the **dropped** object requires rank 0. Only four residents
+in the whole catalogue are takeable and require 0, and none of them can be dropped
+from this pose. `NEUTRON FUEL` slot 8 is not a candidate at all: it is an entry in
+the moving-object pool, out of the player's reach for the whole of its flight and
+cleared when that flight ends ([moving objects](damocles-moving-objects.md)). Of the
+three `BENCH` instances, slot 215 is in this cell but 3806 units away and carries
+insertion group `$14`, so it is inside a structure and not on the surface the pose
+stands on; slot 115 is on ERIS and slot 216 on CLOTHO. Nothing requiring rank 0 is
+carried at any replayable pose, so the refusal has no route rather than an untried
+one.
+
+### `$7AC5` against `$7AA5` is still undecided
+
+Both read 0 in every sample of every run here, as they did in the #315 captures,
+because this pose is outdoors at level 0. Deciding whether they are the same
+quantity needs a drop at a non-zero level, and the nearest non-zero levels — 1 and
+2 inside Vesta Parliament — are behind the same wall. This stays **unverified** and
+stays a blocker on [#318](https://github.com/odogono/mercenary/issues/318).
+
+### The two bypasses are still unexplained
+
+`$7046` reads `$05` throughout, so bit 7 is clear and the support-rank bypass never
+fired in any run above. Nothing here explains why resident slot 39 — the tenth
+`DOOR KEY`, the one the panel labels `J` — should relax the support rules, and
+nothing here explains the slot-0 ground-contact bypass. Both remain recorded
+instructions with no recovered purpose, alongside the self-modified fourth take-side
+test at `$055190` that [the capacity research](damocles-carry-capacity.md) reports.
+Reaching the `$7046` bypass needs that key carried, which needs an interior this
+programme has not yet entered.
+
+## Ordinary-route coverage from the Eris pose, and what blocked it
+
+This section records what #315 measured from the Eris pose. Its first finding stands;
+its second is **superseded** by the rehosting above, which is why the Vesta
+observations exist.
 
 The support branch, a multi-object Carried Stack, capacity, and drop/re-pick with more
 than one object all need at least two reachable takeable objects in one place. Two
-measurements say that no such place is reachable today.
+measurements said that no such place was reachable from Eris.
 
 **Only one takeable resident is in reach of the only replayable pose.** Decoding the
 tracked Eris memstate's resident arrays for the player's body `$2C` and cell `$87`
@@ -401,7 +766,10 @@ on-foot speed on this route is about 120 source units per second and a cell is 6
 units, so either is roughly forty-five minutes of emulated walking per axis. That is
 not a route this ticket should manufacture.
 
-**The other three arrival poses cannot be replayed at all.** The `dion-2-3`,
+**The other three arrival poses could not be replayed.** Superseded: they are
+replayable now, and the cause was the capturing Hatari build, not the memstates.
+The original diagnosis, kept because the symptom is worth recognising, was: the
+`dion-2-3`,
 `gaea-ur-city-4-2` and `vesta-parliament-4-6` memstates that #314 established were
 only ever decoded statically. Restoring them in Hatari 2.6.1 emits
 `Memory snapshot IPF floppy data incompatible with this Hatari version`, which
@@ -473,31 +841,66 @@ a persistence test can assert it without replaying actions.
 7. Capacity is state, not a constant, and a drop can change it. A restore must
    reproduce capacity, count, order and the BRIEFCASE overflow store together; their
    rules are in [the capacity research](damocles-carry-capacity.md).
+8. Carried staging is derived from the Carried Stack, not stored. A carried object's
+   Association B level byte is its index in the stack and its Y is `300 × index`, and
+   both are rewritten by every rotation and every drop. A restore that reproduces the
+   stack order must reproduce these without saving them; a save that persists them
+   independently will disagree with the stack after the first rotation. Observed at
+   the Vesta pose.
+9. The support range is a three-dimensional exponent. An object lying where the player
+   is standing is 63 units below the player's Y and reads exponent 5, not zero. A port
+   that measures the support range in the plan alone diverges from the original at
+   every drop onto an object at the player's feet. Observed at the Vesta pose.
+10. A drop onto a support writes the support's X and Z, the support's Association B in
+    full, and Association A bytes 1 and 3, and leaves the dropped object's handling
+    byte alone. A drop with no eligible selection inside the support range writes the
+    player's X and Z and Y minus 63 instead. A persistence test can separate the two
+    by position alone. Observed at the Vesta pose as a matched pair.
 
-## Open blockers, now tracked as #331
+## Open blockers, and what #331 closed
 
-- Nearby-support placement, the support-rank refusal, the model-form refusal and the
-  height refusal have no ordinary-route observation. All four are instruction-derived.
-- Multiple simultaneously carried ordinary objects, Carried Stack rotation and
-  multi-object drop ordering have no ordinary-route observation. The capacity and
-  special-item behaviour in the same area has instruction-checkpoint coverage from
-  #316, which is also not an ordinary route.
+Closed by the Vesta observations above:
+
+- **Nearby-support placement** — observed and accepted, with the full field
+  inheritance, against a matched direct-placement control.
+- **The support-rank refusal** — observed, with a matched breakpoint run stopping at
+  `$054514`.
+- **Multiple simultaneously carried ordinary objects, Carried Stack rotation, and
+  multi-object drop ordering** — all observed on ordinary input, including the panel
+  label following the head and the carried staging being re-indexed.
+- **The DION, GAEA and VESTA memstates** — rehosted rather than recaptured, and their
+  runtime decode agrees with #314's static decode.
+
+Still open:
+
+- The **model-form refusal** and the **height refusal** have no ordinary-route
+  observation. The reason is specific and is recorded above: every reachable support
+  that clears the rank comparison is the `DAMOCLES FILE`, and the supports that would
+  fail either gate are inside Vesta Parliament, which no route has yet entered.
+- The **requirement-zero refusal** likewise has no route: nothing requiring rank 0 is
+  carried at any replayable pose.
 - Every interior other than Capital Spaceport region 1, every no-structure cell, every
   passage and every unbound placement remain uncovered, as the key research already
-  recorded.
-- The DION, GAEA and VESTA memstates must be recaptured before any runtime claim can
-  be made about those bodies.
+  recorded. The Vesta pose adds a second **outdoor** cell, not an interior.
 - The `$7046` support-rank bypass and the slot-0 contact bypass are recorded but
   unexplained here and in [the capacity research](damocles-carry-capacity.md), which
   additionally shows that the fourth take-side test's operand is self-modified by the
-  unidentified restore path at `$055190`.
+  unidentified restore path at `$055190`. `$7046` read `$05` in every #331 run, so the
+  bypass never fired; reaching it needs `DOOR KEY` slot 39 carried, which needs an
+  interior.
 - Whether the drop's level byte `$7AC5` and the association builder's `$7AA5` are the
-  same quantity is unverified at non-zero levels.
+  same quantity is unverified at non-zero levels. Both read 0 at every pose that can
+  be replayed.
 
-These are the concrete prerequisites, and they sit behind
-[#324](https://github.com/odogono/mercenary/issues/324)–[#327](https://github.com/odogono/mercenary/issues/327)
-rather than behind more work on the Eris route. The rules above are delivered and
-[#315](https://github.com/odogono/mercenary/issues/315) is closed; the
-observations these blockers gate moved to
-[#331](https://github.com/odogono/mercenary/issues/331), which blocks
-[#318](https://github.com/odogono/mercenary/issues/318) in its place.
+The rules above are delivered and
+[#315](https://github.com/odogono/mercenary/issues/315) is closed. The observations
+it could not reach were tracked as
+[#331](https://github.com/odogono/mercenary/issues/331), and most of them are now
+made; what is left no longer sits behind the location work in
+[#324](https://github.com/odogono/mercenary/issues/324)–[#327](https://github.com/odogono/mercenary/issues/327).
+
+The three remaining uncertainties that affect admitted behaviour — the model-form
+gate, the height gate and the `$7AC5`/`$7AA5` identity — share one prerequisite: an
+ordinary route into a structure interior at a non-zero level. That is the blocker to
+carry into [#318](https://github.com/odogono/mercenary/issues/318), and it is a
+smaller and sharper one than the location blockers #315 recorded.

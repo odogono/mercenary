@@ -302,6 +302,11 @@ def payload_document(poses: list[dict], catalogue: dict) -> dict:
                 'and agrees with the cell each workspace note records independently.',
                 'Source memstates are Restricted Material and are not published; their SHA-256 '
                 'values identify them.',
+                'The DION, GAEA and VESTA memstates were captured by an IPF-capable Hatari 2.6.1 '
+                'build and were rehosted onto the pinned build by '
+                'research/damocles-st/scripts/memstate-rehost.py (#331). Only the snapshot '
+                'container changed: each pose decodes to the same words and the same ramSha256 '
+                'as before, and all three now restore and run in the pinned laboratory.',
             ],
         },
         'orientation': {
