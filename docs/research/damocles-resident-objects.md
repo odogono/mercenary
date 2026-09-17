@@ -249,3 +249,13 @@ selector match alone is insufficient. Twenty-three records with body byte
 `$00`, two VOID staging records with `$78`, and special slot 74 with `$FF` also
 remain spatially unresolved. They stay in the searchable census. No unresolved
 selector is promoted to an interior, named place, or floor.
+
+## Association A byte 0 is draw membership, not residence
+
+The region resolver `$05A30E` clears Association A byte 0 for every resident slot on
+every region change, and the queue assembler that follows it writes the drawn entries.
+The byte is therefore rebuilt from residence each time the player's region changes and
+is not part of a resident's saved state. The remaining three Association A bytes are
+the structure-group selector, the handling byte and the placement class; the handling
+byte's four fields are recovered in
+[the object drop research](damocles-object-drops.md).

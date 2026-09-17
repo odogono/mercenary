@@ -399,6 +399,16 @@ The tracked `surface-leave-return` case retains the successful wrapper's input r
 existence makes the route reproducible; it does not imply an additional runtime result beyond
 the hashed run recorded above.
 
+## General-object generalisation
+
+[#315's object drop research](damocles-object-drops.md) resolves the rank comparison
+this note describes: the dropped object's bits 2-3 are the rank it *requires* and the
+selected object's bits 0-1 are the rank it *supplies*, and the nearby-support branch is
+entered for any drawn resident inside exponent 6, with no fallback to direct placement.
+It also observes the inventory-label scroll refusal this note lists as unobserved, and
+records why the remaining support and multi-object cases have no reachable ordinary
+route.
+
 ## Coverage decision for #312
 
 | Location/transition class | Ordinary runtime evidence | Static recovery / remaining gap |
