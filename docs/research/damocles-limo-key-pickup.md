@@ -55,7 +55,7 @@ Those writes alone would leave association B at `$78000000`, but the sampled val
 | 101 | `$0B` |
 | 94 | `$3E` |
 
-A match calls **`$054770`** with the trigger index; whether or not it matches, `$0543D2` falls through to the guarded sound request at `$054848` described in [the first-offer note](damocles-first-offer.md#sound-request-is-not-emitted-sound). Only slot 183's mapping is claimed here; the other five are recorded as source facts, not as tested behaviour.
+A match calls **`$054770`** with the trigger index; whether or not it matches, `$0543D2` falls through to the guarded sound request at `$054848` described in [the first-offer note](damocles-first-offer.md#sound-request-is-not-emitted-sound). Only slot 183's mapping is claimed here; the other five are recorded as source facts, not as tested behaviour. **Extension, [#317](https://github.com/odogono/mercenary/issues/317):** [the pickup-response note](damocles-pickup-responses.md) has since exercised all five through this table walk, recovered each response and reproduced the busy arbitration below.
 
 `$054770` is the **middle** of the pending-script launcher `$054764` already described in [the ISA note](damocles-script-isa.md): entering at `$054770` skips the busy test and the `$7A88` clear that the dispatch-loop path performs. It indexes the byte table at `$7CB4` by the trigger index and:
 
@@ -126,7 +126,9 @@ Damocles exposes no in-game save at this point, so the resumability that matters
 
 **Confirmed** (static recovery plus reproduced runtime observation): the take handler and the range gate that refuses silently; the object-to-trigger table and slot 183's index 2; the one-shot trigger byte; script slot 2's address, body and return to the idle jump; the busy flag bit being set by the trigger and cleared by the script; the wait counter's one-tick-per-VBL rate and its 200-frame threshold; the carried-list, panel, association and render-queue writes; repeat, drop and re-pick behaviour; resumability across a whole-machine state save.
 
-**Derived from instructions, not reproduced at runtime**: the busy-path arbitration (queue on trigger-byte bit 5, otherwise discard); the sticky variant on trigger-byte bit 6; the refusal message indices `$02` and `$0C` and the `$04E158` check behind the second; the other five entries of the trigger table.
+**Derived from instructions, not reproduced at runtime**: the refusal message indices `$02` and `$0C` and the `$04E158` check behind the second.
+
+**Recovered since, by [#317](https://github.com/odogono/mercenary/issues/317)**: the busy-path arbitration — queue on trigger-byte bit 5, otherwise discard, and a second queued index replaces the first — the fact that a queued response nests inside the script it interrupted rather than following it, and the other five entries of the trigger table with their responses. Index `$38` is the table's only sticky byte and is not a pickup trigger. See [the pickup-response note](damocles-pickup-responses.md).
 
 **Recovered since, by [#303](https://github.com/odogono/mercenary/issues/303)**: how `$7B46` and `$7B42` are computed each frame and what the measure counts — the nearest drawn object and the binary exponent of its distance from the eye, so `≤ 8` is a distance under 512 source units; the association byte's takeability bits; and the low X/Z values written while an object is held. See [the selection note](damocles-object-selection.md).
 

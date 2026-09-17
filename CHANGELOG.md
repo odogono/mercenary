@@ -8,6 +8,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The remaining five Damocles pickup responses are recovered, and with them the
+  script system's **busy arbitration**. Slots 181, 151, 95, 101 and 94 launch
+  triggers `$05`, `$06`, `$14`, `$0B` and `$3E`, each exercised through the
+  program's own object-to-script table walk. Every response is messages, waits
+  and a return: three inline messages, a 500-frame wait and a 50-frame clearing
+  line for KEY - EAGLE 9SE (1150 frames, 23.00 s); two messages and **no
+  clearing line** for DAMOCLES FILE, which leaves its last line on the display
+  (400 frames, 8.00 s); two messages and the shared epilogue for AUTHORS
+  COMPUTER (450, 9.00 s); one message and the epilogue for MAGIC CRYSTAL (250,
+  5.00 s); a 150-frame wait, three messages and the epilogue for CASH REGISTER
+  (800, 16.00 s). **None writes any world, object or record state**, so the
+  responses need no new Host Callout effect — only a pending-trigger index, two
+  more arming bits, a cross-script return stack and the display duration as
+  state. A pickup while a script is running is **queued only when bit 5 of its
+  arming byte is set** and discarded otherwise; a second queued index replaces
+  the first; and a queued response **nests inside the script it interrupted**,
+  because the interrupted script clears the busy flag one instruction before it
+  returns. All six pickup triggers are one-shot, nothing in the program re-arms
+  one, and none of the five objects is reachable by an ordinary route — the
+  placements the location ledger records remain the blocker. See
+  `docs/research/damocles-pickup-responses.md`.
+
 - The Gamma System location coverage ledger is established. Across 241 resident
   object instances, **210 are takeable**, **34** have a recovered surface
   location and **195** are interior-associated — of which only **two**, both

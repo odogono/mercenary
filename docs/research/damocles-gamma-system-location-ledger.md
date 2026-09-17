@@ -354,9 +354,11 @@ coordinates on a surface that has never been captured.
 
 The object-to-script trigger table at `$0543EC` names six resident slots, from
 [the limo-key pickup note](damocles-limo-key-pickup.md#the-object-to-script-trigger-table).
-All six are accounted for here. Only slot 183's response has been observed; the
-other five mappings are source facts, and none of the other five objects is
-reachable, because none has a recovered placement.
+All six are accounted for here. None of the other five objects is reachable,
+because none has a recovered placement. Their mappings and responses have since
+been recovered by [#317](https://github.com/odogono/mercenary/issues/317) —
+see [the pickup-response note](damocles-pickup-responses.md) — which changes
+nothing about the placements this table records.
 
 | Slot | Object           | Trigger | Body  | Group / cell / level | Placement          | Blocked on                                       |
 | ---: | ---------------- | ------: | ----- | -------------------- | ------------------ | ------------------------------------------------ |
@@ -436,7 +438,7 @@ and 14 do not.
 | Body switch to DION / GAEA / VESTA at a pose   | **Yes**, for the pose itself               | `payload/damocles/arrival-poses.json`; each pose is one standing position only   |
 | Surface objects on DION / GAEA / VESTA         | **Partly**                                 | Coordinates exist; Gaea's two-workspace ambiguity is unresolved                 |
 | Interior objects anywhere but the two Eris keys | **No**                                     | 193 residents have selectors and no parent                                       |
-| Pickup-triggered responses beyond slot 183     | **No**                                     | None of the other five trigger objects is reachable                              |
+| Pickup-triggered responses beyond slot 183     | **No**                                     | None of the other five trigger objects is reachable; their responses are recovered (#317) |
 | Any other body                                 | **No**                                     | No surface workspace, no arrival pose                                            |
 
 ### Bounded tasks this ledger identifies
