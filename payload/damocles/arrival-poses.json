@@ -1,0 +1,143 @@
+{
+ "schemaVersion": 1,
+ "title": "Damocles",
+ "source": {
+  "authority": "Damocles Atari ST Working Authority",
+  "evidence": "docs/research/damocles-gamma-system-location-ledger.md",
+  "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef"
+ },
+ "coverage": {
+  "complete": false,
+  "notes": [
+   "One validated on-foot pose per body, taken from a live capture of the player standing on that body. It is a reachable standing position, not an authored landing site and not a claim about the rest of the body.",
+   "Bodies absent from this document have no capture of the player standing on them. Absence is an unresolved gap, not evidence that the body is unlandable.",
+   "Positions are raw signed engine longwords in the body-local surface grid at 65,536 units per cell. The yaw word wraps every 1024 units with north at $0200 modulo $0400, rising clockwise.",
+   "The yaw word is published raw and carries bits above $03FF; only its low ten bits are the bearing, as the existing Eris presentation document already assumes.",
+   "The cell is derived from the position and the recovered 16x16 workspace origin, and agrees with the cell each workspace note records independently.",
+   "Source memstates are Restricted Material and are not published; their SHA-256 values identify them."
+  ]
+ },
+ "orientation": {
+  "north": "+z",
+  "east": "+x",
+  "yawUnitsPerTurn": 1024,
+  "yawNorth": 512,
+  "yawPositive": "clockwise"
+ },
+ "coordinateSystem": {
+  "kind": "body-local-surface-grid",
+  "units": "native-engine-units",
+  "cellUnits": 65536,
+  "cellsPerAxis": 16
+ },
+ "poses": [
+  {
+   "id": "dion-2-3",
+   "body": "body-4",
+   "name": "DION",
+   "bodySelector": 16,
+   "onFoot": true,
+   "position": {
+    "x": 213288851,
+    "y": 63,
+    "z": 86343888
+   },
+   "yaw": 63008,
+   "cell": 50,
+   "localCell": {
+    "x": 2,
+    "z": 3
+   },
+   "workspaceOrigin": {
+    "x": 3252,
+    "z": 1314
+   },
+   "evidence": {
+    "memstateSha256": "38bb08355024fc75cf6678b4b495a0485bbd71f6d2a0f8665ea811616b142872",
+    "ramSha256": "cefccd95454cf07d834578133012cdffb6469445ac79b1bbe02a746eabcf3734",
+    "cell": "Derived from the camera longwords and the workspace origin 3252,1314 (docs/research/damocles-dion-workspace.md)."
+   }
+  },
+  {
+   "id": "gaea-ur-city-4-2",
+   "body": "body-8",
+   "name": "GAEA",
+   "bodySelector": 32,
+   "onFoot": true,
+   "position": {
+    "x": 33847828,
+    "y": 63,
+    "z": 117602545
+   },
+   "yaw": 559,
+   "cell": 36,
+   "localCell": {
+    "x": 4,
+    "z": 2
+   },
+   "workspaceOrigin": {
+    "x": 512,
+    "z": 1792
+   },
+   "evidence": {
+    "memstateSha256": "de82797dbddb39bf4e6586298274b936208f9038882aec555930df5fb8b8f3b3",
+    "ramSha256": "12798fcb860c563b53d5ef0d6947f8f409cc9b7501d586ae535538c2a925fab7",
+    "cell": "Derived from the camera longwords and the workspace origin 512,1792 (docs/research/damocles-gaea-ur-city-workspace.md)."
+   }
+  },
+  {
+   "id": "eris-spaceport-onfoot",
+   "body": "body-11",
+   "name": "ERIS",
+   "bodySelector": 44,
+   "onFoot": true,
+   "position": {
+    "x": 4681905,
+    "y": 63,
+    "z": 8940589
+   },
+   "yaw": 1536,
+   "cell": 135,
+   "localCell": {
+    "x": 7,
+    "z": 8
+   },
+   "workspaceOrigin": {
+    "x": 64,
+    "z": 128
+   },
+   "evidence": {
+    "memstateSha256": "6cee57c4d4a168792fc3974e786d706fe9f42cf577d6e8b7c63814c93d6398c6",
+    "ramSha256": "1366881c62ab9e80a5fe8b1dcbb5dfa2ccc0142e4a921cd029f9dfc8f6b16465",
+    "cell": "Derived from the camera longwords and the workspace origin 64,128 (docs/research/damocles-catalogue.md)."
+   }
+  },
+  {
+   "id": "vesta-parliament-4-6",
+   "body": "body-14",
+   "name": "VESTA",
+   "bodySelector": 56,
+   "onFoot": true,
+   "position": {
+    "x": 71270097,
+    "y": 63,
+    "z": 20544365
+   },
+   "yaw": 1556,
+   "cell": 100,
+   "localCell": {
+    "x": 4,
+    "z": 6
+   },
+   "workspaceOrigin": {
+    "x": 1083,
+    "z": 307
+   },
+   "evidence": {
+    "memstateSha256": "47d817a931e54eeb1999cc5ca62c7ee3891e44464191741e3bcfffca94f362c1",
+    "ramSha256": "7dca6fcbb9f4194c9c8f4bc23c95e2344bd40b686761efccf0ab2299e539721e",
+    "cell": "Derived from the camera longwords and the workspace origin 1083,307 (docs/research/damocles-vesta-workspace.md)."
+   }
+  }
+ ]
+}

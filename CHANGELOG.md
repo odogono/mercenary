@@ -8,6 +8,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- The Gamma System location coverage ledger is established. Across 241 resident
+  object instances, **210 are takeable**, **34** have a recovered surface
+  location and **195** are interior-associated — of which only **two**, both
+  Eris keys, have a recovered parent and local placement. Twenty-two of the
+  thirty physical bodies carry residents; eight carry none, and no body is
+  called unlandable for it. Four bodies now have a **validated on-foot arrival
+  pose** — Eris, Dion, Gaea and Vesta — each read from a live capture and each
+  independently reproducing the cell its workspace note already records, and all
+  four are published in the new `payload/damocles/arrival-poses.json`. All six
+  pickup-trigger objects, BRIEFCASE and both ANTIGRAV instances are accounted
+  for; five of the six triggers and all three special items are unreachable
+  because they have selectors and no parent. One new blocker is named: Gaea
+  carries two recovered 16×16 workspaces under the same origin qualifier and
+  cell `$17` names a different place in each, so a cell selector is not a place
+  identity and 99 CHEVY's island assignment is Unresolved. See
+  `docs/research/damocles-gamma-system-location-ledger.md`.
+
 - The Damocles message reveal model is recovered. The routine behind the message
   gate is `$052402`, called once per display frame from the frame interrupt. The
   panel message row is **48 six-pixel character cells** — 288 pixels, six

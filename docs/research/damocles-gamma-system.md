@@ -493,6 +493,14 @@ Closed-form mapping and what quantity the pair measures (bearing, intercept,
 Reproduce: `panel-readout-probe.py poke --address 0x7a1c --bytes …` and
 `navigation --vbls 800`.
 
+## Location coverage for #313
+
+Which of these bodies carries reachable objects, and which has a validated
+on-foot arrival pose, is counted in
+[the Gamma System location coverage ledger](damocles-gamma-system-location-ledger.md)
+([#314](https://github.com/odogono/mercenary/issues/314)). A roster entry in
+this note is not evidence that a body is landable or walkable.
+
 ## Boundary handoff to #81
 
 | #80 (this note)                                                           | #81 ([damocles-script-motion-time.md](damocles-script-motion-time.md))                     |
