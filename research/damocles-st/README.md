@@ -112,6 +112,40 @@ samples are `savebin` windows taken while the emulator is stopped. Results,
 captures and screenshots stay in the ignored `work/` run directory. See
 [the pickup research](../../docs/research/damocles-limo-key-pickup.md).
 
+## Pickup-response probe (#317)
+
+```sh
+python3 research/damocles-st/scripts/pickup-response-probe.py --roms /path/to/roms
+python3 research/damocles-st/scripts/pickup-response-probe.py --mode timeline --roms /path/to/roms
+python3 research/damocles-st/scripts/pickup-response-probe.py --mode timeline --case run-pending
+```
+
+Exercises the five pickup-trigger mappings #298 left as source facts — resident
+slots 181, 151, 95, 101 and 94 — with slot 183 replayed as the control. None of
+the five objects has a recovered placement, so **no ordinary route reaches any
+of them** and the probe drives the program's own dispatch instead of inventing
+one.
+
+`--mode checkpoint` (the default) runs the object-to-script table walk at
+`$0543D2` with interrupts masked and only `A0` supplied, so each walk is one
+atomic pickup: the trigger it selects, the arming byte it clears, the busy flag
+it sets and the script it commits. Consecutive walks in a case reproduce busy
+arbitration — queue, discard, re-queue, refusal of an already-fired trigger —
+and one case shows a second queued index replacing the first. The probe asserts
+its expectations and fails the run rather than reporting a mismatch.
+
+`--mode timeline` writes the pending-script word `$7A88` and lets the program
+launch and run the response under ordinary interrupts, sampling the interpreter
+PC, the message gate, the display duration and the wait counter through to the
+return to the idle jump. `run-pending` makes a second trigger pending during a
+running script; `run-save-resume` saves whole-machine state mid-response and
+resumes it in a second process.
+
+Neither mode performs a pickup or presses the take input, and neither is an
+ordinary-route observation. Samples are `savebin` windows taken while the
+emulator is stopped, and everything stays in the ignored `work/` run directory.
+See [the pickup-response research](../../docs/research/damocles-pickup-responses.md).
+
 ## Location ledger (#314)
 
 ```sh
