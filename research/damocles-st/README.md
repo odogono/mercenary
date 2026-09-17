@@ -171,6 +171,35 @@ the tracked `payload/damocles/arrival-poses.json`. A body with no recovered
 origin is reported with no cell rather than a guessed one. See
 [the location coverage ledger](../../docs/research/damocles-gamma-system-location-ledger.md).
 
+## Carry capacity probe (#316)
+
+```sh
+python3 research/damocles-st/scripts/carry-capacity-probe.py --roms /path/to/roms
+python3 research/damocles-st/scripts/carry-capacity-probe.py --roms /path/to/roms \
+  --case briefcase-drop-overflow --case antigrav-a-craft
+```
+
+Runs the original take handler `$0541F0`, the scripted gift entry `$0541E0` and the
+drop handler `$054520` at controlled checkpoints, one case per emulator. Each case
+boots the on-foot Spaceport snapshot, holds interrupts at IPL 7, writes the Carried
+Stack, capacity, selection and refusal words that one gate needs, enters the handler
+at its own entry and stops at whichever of its exits it reaches -- silent return,
+the system-string helper, the support-rank branch or the accepted tail. The exit and
+the refusal index in `d1` come from the register dump; everything else is decoded
+from whole-machine captures taken before and after.
+
+Breakpoints do not survive Hatari's `--memstate` restore, so the case script is sent
+through the command FIFO after the machine is up, and the debugger's own `quit` does
+not return from a breakpoint script, so a case is finished when its last capture is
+complete. Cases cover default and expanded capacity, the equality that enforces it,
+every handling class, both ANTIGRAV overrides, the BRIEFCASE's expansion, overflow
+store and exact round trip, the shared refusal words and the drop's rank comparison.
+
+**These are instruction checkpoints, not ordinary routes.** The probe writes state the
+walk and the scene pass would otherwise produce, and none of the three special items
+has a recovered placement, so no case is a claim that ordinary play reaches it. See
+[the carry capacity research](../../docs/research/damocles-carry-capacity.md).
+
 ## Object selection probe (#303)
 
 ```sh

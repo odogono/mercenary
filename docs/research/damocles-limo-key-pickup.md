@@ -34,7 +34,7 @@ Keyboard dispatch at `$0555B8` reads the scancode word at `$7B5E` and routes ST 
 | `$7AA8` ≠ `$78` | `$054204` | A mode word; `$78` blocks the take. Its meaning is unresolved, and it held `$2C` throughout these runs. |
 | `$4DDD0` = 0 | `$05420C` | A word in the panel workspace that both the take and the drop handler test. It was zero throughout these runs; no writer was identified, so its meaning is unresolved. |
 | bit 4 of `$6FAA`+slot×4 clear | `$05421E` | Per-object association bit; set means not takeable. |
-| `$61CC` ≠ `$7A04` | `$054240` | Carried count must be below capacity. Capacity is **10** in the observed captures, raised to 20 on the one special slot `$6C` path at `$05426C`. |
+| `$61CC` ≠ `$7A04` | `$054240` | Carried count must not **equal** capacity. Capacity is **10** in the observed captures, raised to 20 on the one special slot `$6C` path at `$05426C`. [#316](damocles-carry-capacity.md) recovers that path whole — slot `$6C` is BRIEFCASE, and the equality means a count already above capacity is accepted. |
 
 Bit 5 of the same association byte diverts to `$0542DA`, and a failed `$04E158` check at `$054258` diverts to `$0542D4`; both reach the system-string helper at `$054808` with indices `$02` and `$0C`. That helper resolves index × 2 in the word table at `$070000` and raises the message gate `$7BA0` — the same table that holds the `VEHICLE KEY REQUIRED` string in slot 3. The limo key's own association byte is `$04`, so neither refusal applies to it.
 
