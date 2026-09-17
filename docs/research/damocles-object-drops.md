@@ -90,6 +90,10 @@ The four takeable residents that require rank 0 are `NEUTRON FUEL` slot 8 and th
 three `BENCH` instances, slots 115, 215 and 216. They can never be placed on a
 support, because the support branch refuses a requirement of zero outright; see
 the next section for why that is not the same as "always dropped directly".
+Slot 8 is a special case with no drop consequence at all: it is an entry in the
+moving-object pool, out of the player's reach for the whole of its flight and
+cleared when that flight ends
+([moving objects](damocles-moving-objects.md)).
 
 ## The drop rank comparison, resolved
 

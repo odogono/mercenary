@@ -400,9 +400,9 @@ value the pinned first-world and interior runs give.
 
 | Slot | Object       | Takeable | Association B | Reading                                     |
 | ---: | ------------ | -------- | ------------- | ------------------------------------------- |
-|    8 | NEUTRON FUEL | yes      | `$00000000`   | body byte `$00`                             |
-|   11 | ATTACK SHIP  | no       | `$00000000`   | body byte `$00`                             |
-|   15 | NEUTRON FUEL | yes      | `$00000000`   | body byte `$00`                             |
+|    8 | NEUTRON FUEL | yes      | `$00000000`   | moving-object pool at rest — **resolved, #327** |
+|   11 | ATTACK SHIP  | no       | `$00000000`   | moving-object pool at rest — **resolved, #327** |
+|   15 | NEUTRON FUEL | yes      | `$00000000`   | moving-object pool at rest — **resolved, #327** |
 |   74 | Object 74    | no       | `$FF000000`   | the special `$FF` slot                      |
 |  248 | Object 248   | no       | `$00000067`   | body byte `$00`; world-bound model slot     |
 |  249 | Object 248   | no       | `$00000067`   | body byte `$00`; world-bound model slot     |
@@ -415,8 +415,27 @@ value the pinned first-world and interior runs give.
 
 Slots 248–255 are the block the world's resident-object stream rewrites at
 `$05503C`; the catalogue already records them as a world binding rather than a
-resident fact. Slots 8 and 15 are takeable objects with no residence at all, and
-are the only takeable records in the census with nothing spatial to say.
+resident fact.
+
+Slots 8, 11 and 15 are **not** location gaps.
+[#327](https://github.com/odogono/mercenary/issues/327) established that they are
+the three driven entries of an eight-entry moving-object pool covering slots
+8–15: slot 8 is the shot the player fires, slot 11 is the `ATTACK SHIP`, and
+slot 15 is the shot that ship fires back. Each is placed at launch — the current
+body byte `$7AC9` written into Association B byte 0 with byte 1 cleared, the
+ordinary surface-resident form — and cleared again when its lifetime counter
+expires or the encounter resolves. `$00000000` is their resting value, not an
+absent placement.
+
+Slot 8 is reachable in ordinary play: boarded (`$7AB0` non-negative) with the
+fire button held, it was observed placed on ERIS as `$2C000000` and stepping
+through a 32-step flight. Slot 15 and slot 11 additionally require the
+persistent encounter gate `$070104`, which exactly one site in the program arms
+— the TOLOSA body-briefing script at `$072B16`. Both were observed placed once
+that word was set. The full path, its gates and the four probe cases are in
+[the moving-object research](damocles-moving-objects.md); neither slot is
+takeable in practice, because a moving object is out of reach for the whole of
+its life and is cleared the moment that life ends.
 
 A further fourteen slots — 9, 16–25, 29, 62 and 189 — bind the NULL model and
 emit no instance. Twelve of them carry body byte `$00`; slots **62 and 189** are
@@ -463,8 +482,13 @@ Not owned by either ticket, and needing children of #313 before #318 can start:
    selectors and no parent.
 3. **Arrival poses for the remaining bodies.** One on-foot capture per body;
    the tool and payload document already exist.
-4. **Residence of slots 8 and 15.** The only takeable residents with no body
-   byte.
+Resolved since this ledger was first written:
+
+4. **Residence of slots 8 and 15.** Closed by
+   [#327](https://github.com/odogono/mercenary/issues/327): both are entries in
+   the moving-object pool, placed on the current body at launch and cleared at
+   expiry. See [Residents with no location
+   evidence](#residents-with-no-location-evidence).
 
 ## Coverage and remaining gaps
 

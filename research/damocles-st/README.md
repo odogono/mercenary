@@ -224,6 +224,35 @@ breakpoint cases are run separately from the sampled ones.
 Nothing is written into the guest. See
 [the object drop research](../../docs/research/damocles-object-drops.md).
 
+## Moving-object probe (#327)
+
+```sh
+python3 research/damocles-st/scripts/moving-object-probe.py --roms /path/to/roms
+python3 research/damocles-st/scripts/moving-object-probe.py --case fire-boarded
+python3 research/damocles-st/scripts/moving-object-probe.py --case attack-armed \
+    --samples 220 --period 1.0
+```
+
+Checks the reading that resident slots 8..15 are a moving-object pool and that
+three of its entries are driven by the scene loop: slot 8 is the shot the player
+fires, slot 11 is the `ATTACK SHIP`, and slot 15 is the shot that ship fires
+back. Each case boots a tracked memstate, holds the joystick fire bit and
+samples Association B, the pool lifetime counters, the launch gates and the
+positions from `savebin` windows taken while the machine is stopped.
+
+`fire-boarded`, `fire-onfoot` and `attack-disarmed` inject nothing but the
+joystick softcopy byte the laboratory already uses for locomotion, so they are
+ordinary routes; `fire-onfoot` is the control that shows the boarded gate
+`$7AB0`. `attack-armed` additionally writes `$070104` = `$0001`, the word the
+TOLOSA arrival script writes at `$072B16`, and is therefore **an
+instruction-level checkpoint, not an ordinary route** — ordinary play only
+reaches that word by travelling to TOLOSA. The encounter resolves after about
+170 s of sampling against a stationary player, so that case wants a long
+`--samples` run.
+
+Results, captures and screenshots stay in the ignored `work/` run directory. See
+[the moving-object research](../../docs/research/damocles-moving-objects.md).
+
 ## Object selection probe (#303)
 
 ```sh
