@@ -6,11 +6,17 @@ recovered by [#298](https://github.com/odogono/mercenary/issues/298). Implementa
 [#301](https://github.com/odogono/mercenary/issues/301). This document adds no application
 implementation.
 
-**Status after the design interview.** #300 remains a separate limo-key delivery. It is blocked
-by [#312](https://github.com/odogono/mercenary/issues/312), which must recover key drops across
-currently playable Eris locations and finalize the residence contract before implementation.
-The [Gamma System programme](https://github.com/odogono/mercenary/issues/313) owns other objects,
-additional playable locations and cross-body play; none of those broaden #300.
+**Status after the #300 implementation interview.** #300 remains a separate Eris /
+`object-slot-183` delivery. [#319](https://github.com/odogono/mercenary/issues/319) extends this
+Host Callout; it does not absorb the ticket. The include-list below is the implementation
+boundary: ordinary Eris traces only. Remaining drop classes stay named out to the
+[Gamma System programme](https://github.com/odogono/mercenary/issues/313) rather than reopening
+[#312](https://github.com/odogono/mercenary/issues/312) or inventing a Spaceport-only drop rule.
+
+Application code is blocked on [#344](https://github.com/odogono/mercenary/issues/344) landing in
+the **same schema-4 stack**. #344 owns the 3→4 bump (`Pose.body`, `presentationSha256`). #300
+joins that version with no further bump and must not reach the default branch as a second
+schema-4 shape. Incomplete in-branch snapshots are allowed only under that stack.
 
 It follows [ADR 0045](../adr/0045-author-scripts-as-named-typescript-steps.md): named TypeScript
 steps, explicit serializable state, a Damocles-only Host Callout. Nothing here migrates Targ,
@@ -32,13 +38,25 @@ recovered values, or **authored** by this project (ADR 0043).
 **Included.** The ordinary take of resident instance `object-slot-183` (`KEY- V.I.P. LIMO`) inside
 Capital Spaceport region 1; its Object Residence, Carried Stack and panel effects; the one-shot
 trigger that launches Damocles Script slot 2; that script's three inline messages, 200-frame wait,
-clearing message and return to the idle jump; key drop and re-pick across currently playable Eris
-locations, including leaving and revisiting the drop location; and Damocles Save Snapshot and
-Session Resume across every one of those states. Capital Spaceport region-1 drops have been
-observed during and after the initial response, and an exterior surface drop has been replayed;
-expanded ordinary routes remain incomplete: [#312](https://github.com/odogono/mercenary/issues/312) gates the expanded key-drop
-coverage. Other objects remain visible as before but gain no pickup interaction in this slice;
-this is an explicit delivery boundary, not a recovered claim that they cannot be taken.
+clearing message and return to the idle jump; the drop and re-pick classes listed here; stored
+`scrollCounter`; missing-group refusal presenting `system-string-9` after the response has parked;
+and Damocles Save Snapshot and Session Resume across every one of those states.
+
+Ordinary Eris traces in this delivery:
+
+- Capital Spaceport region 1 take, drop and re-pick, during the response and after it parks
+- Bound Spaceport exterior surface drop and re-pick (insertion group 0, `drawClass` 4→0)
+- Surface leave-cell / return / re-pick with residence unchanged
+- Interior drop, then the player exits the room: residence retained. A Save whose parent is
+  **unbound** is valid. Interior return and re-pick is a **port** continuation of that persisted
+  residence, not a claimed native return trace (the native interior-return route drifted)
+- Spaceport native region 2 missing-group drop refusal after the response has parked
+- Inventory-label `scrollCounter` in −16..16 gating take and drop (stored). Reachability is from
+  [#315](https://github.com/odogono/mercenary/issues/315); limo-key spaced samples never caught
+  the window
+
+Other objects remain visible as before but gain no pickup interaction in this slice; that is an
+explicit delivery boundary, not a recovered claim that they cannot be taken.
 
 **Excluded, with the reason.**
 
@@ -46,9 +64,14 @@ this is an explicit delivery boundary, not a recovered claim that they cannot be
 | --- | --- |
 | The object-selection rule behind `$7B46`/`$7B42` | **Recovered** by [#303](https://github.com/odogono/mercenary/issues/303) and no longer excluded: `Selection` is the nearest drawn instance, in range below 1/128 of a surface-grid unit. See [the selection note](../research/damocles-object-selection.md). |
 | The busy-path trigger arbitration (queue on bit 5, discard otherwise) and the sticky bit 6 variant | Derived from instructions, never reproduced, and unreachable here: trigger 2 disarms on its first fire, so no second dispatch can find the host busy. |
-| The refusal messages at system-string indices `$02` and `$0C`, and the `$04E158` check behind the second | `$02` remains excluded by the key's handling bits. **Correction from #312:** `$04E158` is a purchase/balance check selected by the offered object, independent of those bits. Dropping the key in structure slot 82 region 9 can enter sale/buyback; that interior region and source insertion group exist on Eris. A port movement probe reaches it through proximity doors; native sale/buyback remains unobserved. Its state, messages and persistence are an explicit prerequisite; handling bits cannot justify excluding it. |
+| The refusal message at system-string index `$02`, and Trading Post `$04E158` sale/buyback | `$02` remains excluded by the key's handling bits. `$04E158` is a purchase/balance check selected by the offered object. Dropping the key in structure slot 82 native region 9 can enter sale/buyback; native sale remains unobserved. That path, its messages and persistence belong to #313/#319, not this slice. |
+| System strings 11 and 12, and interruption of a live slot-2 response by a drop refusal | Unobserved on the include-list routes. The doorway refusal presenting `system-string-9` was after the response had parked; this slice does not define interruption of slot 2. |
 | The full-Carried-Stack path at capacity 10 | The capacity is recovered and enforced; what the original does when it is reached is not, and this slice has one takeable object, so it cannot be reached. |
-| `$7AA8` = `$78` and `$04DDD0` ≠ 0 | **Recovered by #312:** `$78` selects VOID, outside Eris-only play. `$04DDD0` is the inventory-label scroll counter; take/drop must refuse while it is nonzero. It is reachable immediately after the key's own take/drop and must become explicit frame-counted state before implementation. |
+| `$7AA8` = `$78` | VOID (body-table index 30), outside Eris-only play. |
+| No-structure cells and intentional-empty unbound structures as drop destinations | Native path recovered; no ordinary Eris drop trace in this slice. |
+| Other interiors, levels, unmatched regions, and passages | Source census only, or unobserved on ordinary Eris routes. |
+| Support placement and unsupported/falling refusal | Recovered later on Vesta / general objects (#315/#331), not as Eris limo-key traces. Owned by #313/#319. |
+| Full Eris association-group extraction | #300 extracts **Capital Spaceport** groups only, including implicit `(group,0)` and duplicate pairs. |
 | The other five entries of the `$0543EC` trigger table (slots 181, 151, 95, 101, 94) | Source facts only; their scripts are untested and their objects unreachable in this slice. The table carries one bound entry and the rest take the no-match path. |
 | The reveal model — how a message's text arrives on the row, and how `$0523B8` divides between arrival and reading hold | **Recovered** by [#307](https://github.com/odogono/mercenary/issues/307) and no longer excluded: `$052402` scrolls a 48-cell row left by eight pixels a frame for 36 frames, then holds it for the remaining 164. See [the reveal note](../research/damocles-message-reveal.md). |
 | Early completion of a presenting message by a key | **Answered** by [#307](https://github.com/odogono/mercenary/issues/307): there is none. Nothing outside the display routine's own completion ever lowers `$7BA0`, so no input shortens, skips or cancels a message. Targ's `SKIP_MESSAGE_CODE` has no Damocles equivalent. |
@@ -69,16 +92,15 @@ and is stated as a convention, never as a recovered fact.
 
 ## Prerequisites
 
-The original pickup, selection, string, timing and reveal prerequisites are resolved. The new
-key-drop prerequisite [#312](https://github.com/odogono/mercenary/issues/312) blocks #300 until it
-records evidence and completes this contract's residence, drawing, selection and save rules.
-Missing evidence must not be replaced with a temporary Spaceport-only drop restriction or an
-invented surface-drop rule.
+The original pickup, selection, string, timing, reveal and #312 drop-research prerequisites that
+this include-list consumes are resolved. #312 stays closed; uncovered ledger rows are exclusions
+owned by #313/#319, not permission to invent placement or to pretend every Eris cell is in
+scope.
 
 Carried here: Object Residence for resident instances; the Damocles Carried Stack and its panel
-label; frame-counted message presentation and the panel message line; the Damocles Script Host with
-named steps, a return stack, a one-shot trigger table and a frame wait; and the Save Snapshot bump
-those additions require.
+label; `scrollCounter`; frame-counted message presentation and the panel message line; the
+Damocles Script Host with named steps, a return stack, a one-shot trigger table and a frame wait;
+and the schema-4 fields those additions require, joined onto #344's identity and Pose.
 
 Separately bounded, because each needed evidence this contract must not invent:
 
@@ -106,8 +128,9 @@ Separately bounded, because each needed evidence this contract must not invent:
 - **The message text** ([#304](https://github.com/odogono/mercenary/issues/304)). *Settled.* Script slot 2's three inline strings and
   system-string slot 50 are extracted into `payload/damocles/strings.json` along with the whole
   64-slot system string table and all 206 inline messages, under ADR 0029 and the
-  [publication policy](../publication-policy.md). The four `MessageId` values below are the ids
-  that payload names, records are stored with their padding intact, and
+  [publication policy](../publication-policy.md). The `MessageId` values below are the ids
+  that payload names — slot 2's three inlines, system-string 50, and system-string 9.
+  Records are stored with their padding intact, and
   [the strings note](../research/damocles-script-strings.md) records the encoding. A paraphrase
   authored into the app is still not a substitute and must never become claimed faithful content.
 
@@ -123,11 +146,9 @@ document gains a `time` block carrying `vblHertz` at 50 with provenance **`deriv
 ## Values and interface
 
 The following TypeScript shapes specify the script and display contract. `Residence` records
-the surface/structure distinction and insertion-group semantics recovered by #312. The contract
-is still **not implementation-ready**: expanded routes and the newly reachable gates below
-remain prerequisites. Execution is a persistent value
-(ADR 0023): every transition returns a new state and leaves its input unchanged. No generator,
-promise, timer or closure carries execution state.
+the surface/structure distinction and insertion-group semantics recovered by #312. Execution is
+a persistent value (ADR 0023): every transition returns a new state and leaves its input
+unchanged. No generator, promise, timer or closure carries execution state.
 
 ```ts
 type InstanceId = string; // a Damocles Catalogue Instance id, e.g. 'object-slot-183'
@@ -164,7 +185,8 @@ type MessageId =
   | 'script2-inline-1' // $07042A
   | 'script2-inline-2' // $07045A
   | 'script2-inline-3' // $070488
-  | 'system-string-50'; // $0704BE, operand $0032
+  | 'system-string-50' // $0704BE, operand $0032
+  | 'system-string-9'; // missing-group drop refusal, payload id already extracted
 
 /// The message row as the recovered display routine keeps it (#307): a 288-pixel window, 48
 /// six-pixel cells wide, that a record's characters enter from the right at eight pixels a frame
@@ -173,7 +195,7 @@ type Reveal = {
   /// Pixels of this block's character stream already inside the row. Advances by 8 a frame and
   /// becomes a held row on reaching 288. Stored scrolling values are multiples of 8 below 288.
   readonly pixels: number;
-  /// Offset into the effective message stream: 0 for all four messages in this slice.
+  /// Offset into the effective message stream: 0 for every message in this slice.
   /// Inline streams start at record byte 0; system-string-50 starts at record byte 1.
   /// Multi-block messages belong to the follow-on contract, not this slice.
   readonly offset: number;
@@ -250,11 +272,12 @@ Targ's key consumption, message scheduling and Benson Display semantics are not 
 
 `DamoclesSnapshot` gains `carried: readonly InstanceId[]` (replacing today's always-empty string
 list), `message: Presenting`, `display: DamoclesDisplay`, `residence` for every tracked resident
-instance, and `selection`. The full `ScriptState` is not exposed: the snapshot projects only
-presentation-facing values from it. The panel reads the carried
-tail's **model** source label — `KEY- V.I.P. LIMO`, not the instance name — and its message line
+instance, `scrollCounter`, and `selection`. The full `ScriptState` is not exposed: the snapshot
+projects only presentation-facing values from it. The panel reads the Carried Stack **head's**
+**model** source label — `KEY- V.I.P. LIMO`, not the instance name — and its message line
 reads `display` through the extracted payload strings, never inferring a blank row from a null
-message gate. `message` reports the active gate; it does not own the visible row.
+message gate. `message` reports the active gate; it does not own the visible row. With one
+object, head and sole entry coincide; later rotation in #319 is head-significant.
 
 The initial display is 48 held spaces. Starting a message captures the held cells as
 `reveal.beneath`, sets `pixels` and effective-stream `offset` to zero, and starts a scrolling display.
@@ -263,14 +286,14 @@ the message's effective 48-cell row, padding shorter records on the right with s
 continues counting down independently. Lowering it leaves the held row untouched. Thus message 3
 remains visible throughout the wait; the clearing message scrolls over it and leaves 48 spaces.
 There is no duplicate full row stored beside the scroll representation. Slot 2 alone does not
-interrupt a scroll. Native drop/buyback refusals discovered by #312 can use the same message
-workspace; their interruption rules now require recovery within this prerequisite.
+interrupt a scroll. A parked missing-group refusal presents `system-string-9` through the same
+workspace. Interruption of a live slot-2 response is out of this slice.
 
 Drawing and selection follow residence rather than ownership by the current Structure Workspace.
 A `carried` key is absent from world candidates. The placement `drawClass` survives pickup: the
 observed surface drop changes it from 4 to 0, and re-pick retains 0. Direct placement copies the
-current placement class; support placement copies the support's class. Do not reset it from the
-authored Catalogue record or derive it solely from the Residence discriminant.
+current placement class. Support placement is out of this slice. Do not reset `drawClass` from
+the authored Catalogue record or derive it solely from the Residence discriminant.
 
 A `surface` key enters the recovered surface resident list for its Body; its recorded cell is derived from position and is not an extra
 visibility filter. A `structure` key is considered only when its parent and level match the
@@ -282,9 +305,10 @@ at their recovered queue keys. Zero is the plan-queue terminator insertion point
 expose the key in multiple regions and can contain multiple insertions for one region; preserve
 that order for drawing and selection without creating duplicate residence or inventory entries.
 
-The Catalogue currently carries associations for existing residents; #300 also needs the complete
-association groups for supported parents, including groups that no initial resident uses. Do not
-infer a missing group's contents from region geometry. The [drop research](../research/damocles-limo-key-drops.md)
+The Catalogue currently carries associations for existing residents; #300 needs the complete
+association groups for **Capital Spaceport**, including group 1 (no initial resident uses it) and
+the implicit own-region pair. Do not infer a missing group's contents from region geometry, and
+do not extract every Eris parent's groups in this slice. The [drop research](../research/damocles-limo-key-drops.md)
 records why the initial Spaceport group 12 and dropped group 1 both expose the key in region 1
 but at different queue positions.
 
@@ -334,7 +358,7 @@ On success, one atomic commit performs, in the recovered order:
 
 | # | Effect | Provenance |
 | --- | --- | --- |
-| 1 | Push the instance onto the Carried Stack tail; the count becomes its length | carried list `$61CE`, count `$61CC` |
+| 1 | Push the instance onto the Carried Stack as its new head; the count becomes its length | carried list `$61CE`, count `$61CC` |
 | 2 | Start the inventory-label scroll toward the model's source label | panel writer `$04DCE4` |
 | 3 | Residence becomes `carried` | association byte `$6FAA` + slot x 4 bit 7 set, association long `$73A8` + slot x 4 rewritten |
 | 4 | Trigger dispatch for the instance's entry in the table, if it has one | `$0543BE` → `$0543D2` → `$054770` |
@@ -356,42 +380,43 @@ re-pick, not ever within a Gameplay Session.
 ### The drop
 
 The [drop research](../research/damocles-limo-key-drops.md) supersedes the earlier claim that a
-drop has no sound effect. Both accepted native placement branches call the same guarded sound
-helper as take. When its guard permits, emit a `sound-request` for `drop`; this is a request,
-not a claim about audible output. It does not dispatch the object's pickup trigger.
+drop has no sound effect. Direct placement calls the same guarded sound helper as take. When its
+guard permits, emit a `sound-request` for `drop`; this is a request, not a claim about audible
+output. It does not dispatch the object's pickup trigger.
 
 Direct placement uses player X/Z and player Y minus 63 source units. An ordinary interior
-chooses the insertion group numbered by the current source region (`regionIndex + 1`), refusing if that group is absent
-from the parent's source association table. An exterior placement uses group zero and surface
-residence. The source census finds missing groups in ordinary interiors, interior attachment regions and
-some passages. An ordinary Spaceport doorway-region-2 trace now observes this refusal:
-carried count stays one and native system string 9 presents. Exterior flag bit 14 bypasses this lookup even for an attachment region; an
-attachment gate alone does not decide drop refusal.
-The observed Spaceport region-1 drop has group 1 and Y=0; the observed exterior drop
-has surface association on Eris and Y=0. Coordinates must be converted into the Residence
-variant's declared frame exactly once.
+chooses the insertion group numbered by the current source region (`regionIndex + 1`), refusing if
+that group is absent from the parent's source association table. An exterior placement uses group
+zero and surface residence. An ordinary Spaceport doorway-region-2 trace observes this refusal
+**after** the response has parked: carried count stays one and `system-string-9` presents.
+Execution stays null; `busy` stays false. Exterior flag bit 14 bypasses this lookup even for an
+attachment region; an attachment gate alone does not decide drop refusal. Other missing-group
+locations, passages, and unmatched interiors are out of this slice.
 
-A nearby selected object changes the path: within the recovered drop-support range (under 128
-source units), its support rank and model height can allow or refuse placement. A successful
-support drop uses that object's X/Z, top Y and association, which can differ from the player's
-current region. Other objects need not be takeable in this delivery to act as supports. Support
-eligibility, height and refusals must be evidenced before this branch is implemented.
+The observed Spaceport region-1 drop has group 1 and Y=0; the observed exterior drop has surface
+association on Eris and Y=0. Coordinates must be converted into the Residence variant's declared
+frame exactly once.
 
-All relevant refusal tests precede the ordinary placement commit, but **not all side effects**:
-Trading Post sale bookkeeping precedes later placement checks. Do not implement every refused
-drop as an unchanged state. System strings 9, 11 and 12 and their interaction with a pending
-response require recovery; the current four-message script/display model cannot silently absorb
-them. The inventory-label scroll also silently blocks immediate take/drop for 16 display frames.
-The direct-ground path also requires ground/support contact. On the observed level walking
-routes it is present; unsupported/falling placement remains unobserved. Contact and support-model
-gates must be accounted for on every covered route; the evidence ledger distinguishes their static rules from replayed outcomes.
+A nearby selected object would enter support placement. That branch, its rank/height refusals,
+and unsupported/falling contact refusal are out of this slice. On the observed level walking
+routes, ground contact is present; do not invent a falling-drop outcome.
 
-For the observed ordinary successful cases, decrement the Carried Stack, start the panel-label
+Take and drop both refuse silently while `scrollCounter` is nonzero. Take writes −16; a
+sole-object drop writes +16; the VBL steps the counter toward zero by one character per display
+frame. Store the counter; a restore that lands at zero would permit a drop the live session
+refuses.
+
+Trading Post sale bookkeeping and system strings 11 and 12 are out of this slice. A refused
+missing-group drop on the include-list does **not** mutate balance. Do not implement every
+refused drop as an unchanged display: region 2 presents `system-string-9` through the ordinary
+reveal. Do not present that refusal while slot 2 is still executing; that interruption is
+unobserved.
+
+For the observed ordinary successful cases, pop the Carried Stack **head**, start the panel-label
 update, clear carried status, run the recovered carry-state updates, request the guarded sound,
 write residence, then rebuild applicable drawing/candidate queues. Preserve this ordering as one
 port commit; native intermediate writes are not separate port commits. The pending pickup
-response continues and trigger 2 stays disarmed. Sale/buyback ordering and its additional state
-remain prerequisites, not an authored approximation.
+response continues and trigger 2 stays disarmed.
 
 ### The script
 
@@ -418,10 +443,11 @@ and the step is not an instantaneous clear: it is 48 blank cells scrolling the p
 over 36 frames, then 164 frames of a blank row. Four messages at 200 frames and one 200-frame wait make the whole response **1000
 display frames**, consistent within sampling granularity with the ~20 s the probe measured.
 
-Because both `runFrame` and `fireTrigger` run to the next block, execution is only ever observed at
-a commit boundary in one of six states: parked, or blocked at `announce-2`, `announce-3`,
-`call-delay`, `poll-wait` or `clear-busy`. That invariant is what makes the save table below
-closed.
+Because both `runFrame` and `fireTrigger` run to the next block, slot-2 execution is only ever
+observed at a commit boundary in one of six states: parked, or blocked at `announce-2`,
+`announce-3`, `call-delay`, `poll-wait` or `clear-busy`. A seventh commit-boundary is parked
+execution with `system-string-9` presenting after a missing-group refusal. That invariant is
+what makes the save table below closed.
 
 ## Commit boundaries and atomicity
 
@@ -442,21 +468,28 @@ closed.
 
 ### Schema 4
 
-The Damocles Save Snapshot goes 3 → 4. ADR 0044 requires a deliberate schema bump when new
-Session State is admitted; this contract chooses schema 4 for the Carried Stack, display and
-Damocles Script state rather than silently widening schema 3. There is no migration: a
-schema-3 record, a Targ envelope, or a Catalogue or Eris identity mismatch is refused and the live
-session is untouched. The Eris schema move 5 → 6 independently refuses older records through
-`erisSchemaVersion`.
+[#344](https://github.com/odogono/mercenary/issues/344) takes the Damocles Save Snapshot 3 → 4
+bump: the Pose names its Body, and identity pins every presentation document as
+`presentationSha256`. ADR 0044 requires a deliberate bump when new Session State is admitted;
+#300 **joins schema 4 without a further bump** by adding the fields below. There is no
+migration: a schema-3 record, a Targ envelope, a Catalogue or presentation identity mismatch, or
+a schema-4 record that lacks these fields, is refused and the live session is untouched.
+
+#344 must not reach the default branch until this restore-complete shape exists in the same
+version. Incomplete in-branch snapshots are allowed only in that stack. [#319](https://github.com/odogono/mercenary/issues/319)
+adds briefcase store, pending, extra trigger bits and `displayDuration` as **schema 5** once this
+slice has shipped; those fields are not optional on schema 4.
 
 ```ts
 interface DamoclesSaveSnapshot {
   readonly carried: readonly InstanceId[];
   readonly elapsed: number;
   readonly frameAccumulator: number; // [0, 1)
-  readonly pose: ErisPose;
+  readonly pose: Pose; // #344: names its Body
   /// Only instances whose residence differs from the Catalogue's placement.
   readonly residence: readonly { readonly instance: InstanceId; readonly residence: Residence }[];
+  /// $04DDD0. Gates take and drop while nonzero. Integer in -16..16.
+  readonly scrollCounter: number;
   readonly script: {
     readonly counter: number;
     readonly execution: Execution | null;
@@ -468,50 +501,51 @@ interface DamoclesSaveSnapshot {
 }
 ```
 
-**Incomplete additions discovered by #312.** The shape above does not yet encode inventory-label
-scroll state, trade balance/offer state or native refusal-message continuation. Finalize and
-validate those newly reachable prerequisites before schema 4 is implemented. Residence alone
-is not a restore-complete Save Snapshot.
-
 The save omits `busy`: in this bounded script it is reconstructed as `execution !== null`.
 The validation table describes the reconstructed runtime flag, not an additional serialized field.
-The codec used by explicit Saves is also the Session Resume codec; neither stores transient effects.
+Parked `system-string-9` is `execution === null` and `busy` false. The codec used by explicit
+Saves is also the Session Resume codec; neither stores transient effects. Identity remains
+#344's `DamoclesSaveIdentity`; this slice does not restore `erisSchemaVersion`.
 
-### Location-transition trace requirements (#312)
+### Location-transition trace requirements
 
 These are **authored port persistence requirements**, not observations of an original-game
 Save facility. The existing emulator state-save observation establishes continuation of the
 pickup response only; a Hatari whole-machine restore does not validate either browser codec.
-The native location/drop coverage and its remaining prerequisites are recorded separately in
-[the drop research](../research/damocles-limo-key-drops.md).
+Native coverage beyond this include-list remains in
+[the drop research](../research/damocles-limo-key-drops.md); that note is not the implementation
+boundary.
 
-For every evidenced allowed placement class, run the following trace twice: once while the
+For every **included** allowed placement class, run the following trace twice: once while the
 initial response is pending (including a scrolling message and the wait), and once after it has
 parked. Capture **immediately before and after every row's transition**, round-trip each capture
 through an explicit Save and independently through Session Resume, then feed the restored and
 uninterrupted sessions the same remaining actions and elapsed-time increments.
 
+Do not run this table against Trading Post, support placement, passages, no-structure cells, or
+other interiors.
+
 | Transition | Required comparison after restore and continued play |
 | --- | --- |
-| Drop the carried key | Identical allowed/refused decision, complete residence, Carried Stack and panel; identical ordered effects; trigger remains disarmed. Compare refusal-specific mutations too: the trade path can update balance before a later placement refusal. Elapsed frames advance only when supplied. |
+| Drop the carried key | Identical allowed/refused decision, complete residence, Carried Stack and panel; identical ordered effects; trigger remains disarmed. A region-2 missing-group refusal after park presents `system-string-9` and leaves the stack unchanged. Elapsed frames advance only when supplied. |
 | Cross a visibility/region boundary | Residence remains at the drop location; the recovered insertion/visibility rule determines drawing and selection from the new viewer location. Crossing a boundary never reparents the key. |
 | Leave the structure and then its cell | The residence departure remains saved even when its parent is no longer bound. Binding another structure must not reset or delete it. |
-| Return to the cell and structure | Binding reconstructs the view from the persisted residence plus Catalogue facts. The original Catalogue placement must not appear as a duplicate. |
+| Return to the cell and structure | Binding reconstructs the view from the persisted residence plus Catalogue facts. The original Catalogue placement must not appear as a duplicate. Interior return/re-pick is this port continuation, not a native-trace claim. |
 | Approach the dropped key | Compare candidate membership, selected instance and the strict range gate, including an out-of-range refusal and a nearer competing candidate. Being near the coordinates alone does not establish visibility. |
 | Re-pick | The same selection and recovered take gates give the same result. On success the key is carried once, one take sound request is emitted when its guard permits, and the one-shot response is not restarted. |
 
 At each comparison include pose, bound Structure Workspace and attachments, all tracked
-residences, Carried Stack order, panel label, drawn candidate identities/order, selection,
-trigger state, execution and return stack, counter, message gate, display and fractional frame
-accumulator. Compare each subsequent ordered effect array; restoring itself emits none.
-Pending execution continues independently of leaving, returning, dropping and re-picking.
+residences, Carried Stack order, `scrollCounter`, panel label, drawn candidate identities/order,
+selection, trigger state, execution and return stack, counter, message gate, display and
+fractional frame accumulator. Compare each subsequent ordered effect array; restoring itself
+emits none. Pending execution continues independently of leaving, returning, dropping and
+re-picking.
 
 The unbound-parent case must use a Save whose player is in a **different cell** from the dropped
 key. Validate the saved parent against the immutable Catalogue, not the current
 `BoundStructureSnapshot`; only the player's workspace is required to match the player's cell.
-Repeat with a surface residence and with an empty/unresolved structure cell once native drop
-rules for those classes are established. These requirements do not authorize inventing their
-placement rules or narrowing delivery to the Spaceport.
+Repeat with a surface residence from the include-list. Do not invent drop rules for empty or
+unresolved structure cells in this slice.
 
 ### Script identity and revision
 
@@ -540,11 +574,12 @@ restore, no best-effort migration. The rules:
   existing structure instance on that Body and a level and nonzero insertion group admitted by
   that parent's recovered association data. Validate against the Catalogue independently of the
   current workspace; an unbound parent is valid. No rule equates insertion group to the viewer's
-  region, and no validation requires the dropped key to be currently drawn. Complete source
-  placement bounds and support-placement validation remain an evidence prerequisite; finite
-  coordinates alone are not a completed faithful placement validator.
+  region, and no validation requires the dropped key to be currently drawn. Association-group
+  admission in this slice is Capital Spaceport's recovered groups only. Support-placement
+  validators belong to #319.
 - `carried` has no duplicates, has at most 10 entries, and contains exactly the instances whose
   residence is `carried`.
+- `scrollCounter` is an integer in −16..16.
 - `counter` is an integer in 0–65535. `frameAccumulator` is a number in [0, 1).
 - `message`, when present, names a known `MessageId` with an integer `remainingFrames` in
   1–`messageFrames`. `display` is validated independently and against the gate and execution.
@@ -553,7 +588,7 @@ restore, no best-effort migration. The rules:
 - `triggers` lists each modelled entry once. An armed entry requires its object to be at its
   Catalogue placement and absent from the Carried Stack. A non-null `execution` requires the
   launching entry to be disarmed.
-- `execution`, when present, is one of the five reachable commit-boundary states:
+- `execution`, when present, is one of the five reachable slot-2 commit-boundary states:
 
 | `step` | `busy` | `message` | `returnStack` | `counter` |
 | --- | --- | --- | --- | --- |
@@ -568,8 +603,11 @@ restore, no best-effort migration. The rules:
   and `beneath` is the expected predecessor's 48 printable-ASCII cells: spaces before message 1,
   message 1 before message 2, message 2 before message 3, and message 3 before the clear.
   A held display always contains exactly 48 printable-ASCII cells. `poll-wait` requires the held
-  message-3 row even though `message` is null. A null `execution` requires `busy` false,
-  `message` null and a held blank row, both before pickup and after completion. Any other step —
+  message-3 row even though `message` is null. A null `execution` with `message` null requires
+  `busy` false and a held blank row, both before pickup and after a completed slot-2 response.
+  A null `execution` with `message` `system-string-9` requires `busy` false, a held or scrolling
+  display consistent with that gate, and trigger 2 disarmed (the refusal is only in this slice
+  after the response has parked). `beneath` for string 9 is the parked blank row. Any other step —
   `announce-1`,
   `reset-wait`, `return-from-delay`, `clear-line`, `return` — cannot survive a commit boundary and
   is refused.
@@ -630,9 +668,16 @@ carried, display held at 48 spaces. The restored session parks, takes nothing fu
 starts no new message. The same record restores under a later script revision, because it names
 no execution.
 
-**Refused restores.** A schema-3 record, a Targ record, a Catalogue or Eris identity mismatch, an
-armed trigger 2 alongside a carried key, a `carried` entry with surface/structure residence, a
-`remainingFrames` of 0 or 201, an unknown script id, and a stale revision beside a live execution
+**Missing-group refusal after park.** Standing in Spaceport native region 2 with the key carried
+and slot 2 parked, `drop()` leaves the Carried Stack at one entry, emits no drop sound (the
+placement did not commit), presents `system-string-9` for `messageFrames`, and leaves execution
+null. Save during that presentation round-trips the gate and display independently of slot 2.
+A drop that would refuse while slot 2 is still presenting is out of this slice.
+
+**Refused restores.** A schema-3 record, a Targ record, a Catalogue or presentation identity
+mismatch, a schema-4 record missing `scrollCounter` or `script`, an armed trigger 2 alongside a
+carried key, a `carried` entry with surface/structure residence, a `remainingFrames` of 0 or 201,
+an unknown script id, and a stale revision beside a live execution
 are each refused whole, with the live session untouched.
 
 ## Test plan
@@ -652,17 +697,22 @@ Deterministic unit tests are the authority; #301's browser pass is confirmation,
 - **Repeat, drop and re-pick.** Repeat take without a drop emits nothing. Every successful re-pick
   emits one take sound request when the sound guard permits; successful drops also request sound. No second
   response or duplicated message runs, and the trigger stays disarmed. Test both pending and
-  completed responses; dropping must not cancel or restart execution.
-- **Location continuity.** Cover the key-drop prerequisite's surface/interior cases, refusals and
-  region boundaries. Leave the drop cell/structure, save/restore, return and re-pick. Assert the
-  same residence, selection, visibility and effects, including when the saved parent is unbound.
+  completed responses; dropping must not cancel or restart execution. Include the region-2
+  missing-group refusal after park (`system-string-9`) and silent refusal while `scrollCounter`
+  is nonzero.
+- **Location continuity.** Cover the include-list surface/interior cases only. Leave the drop
+  cell/structure, save/restore, return and re-pick. Assert the same residence, selection,
+  visibility and effects, including when the saved parent is unbound. Interior return is the
+  port continuation.
 - **Persistent display.** Check scroll frames 0, 1, 35 and 36, all message handovers, the whole wait,
-  the clearing scroll and the parked blank row. Round-trip each representation through both Save
-  and Session Resume. Refuse a blank mid-wait row, wrong predecessor, nonzero effective offset or
-  a scrolling/held representation inconsistent with the active gate.
-- **Save round-trip.** Round-trip each of the five reachable commit-boundary states plus parked and
-  pre-pickup through JSON, taking the three message states both at a scrolling row — inside
-  the 36 arrival frames — and a held row after it has arrived. Include the clearing message too. Apply the same remaining frame and action sequence to the restored and
+  the clearing scroll, the parked blank row, and parked `system-string-9`. Round-trip each
+  representation through both Save and Session Resume. Refuse a blank mid-wait row, wrong
+  predecessor, nonzero effective offset or a scrolling/held representation inconsistent with the
+  active gate.
+- **Save round-trip.** Round-trip each of the five reachable slot-2 commit-boundary states plus
+  parked, pre-pickup, and parked-plus-string-9 through JSON, taking presenting messages both at a
+  scrolling row — inside the 36 arrival frames — and a held row after it has arrived. Include the
+  clearing message too. Apply the same remaining frame and action sequence to the restored and
   uninterrupted runs, and compare every state and every ordered effect array.
 - **Refusal.** Each row of the refused-restore list, asserting both the reason and that the live
   session is byte-identical afterwards.
@@ -676,14 +726,10 @@ Deterministic unit tests are the authority; #301's browser pass is confirmation,
 
 ## Implementation prerequisites for #300
 
-Before any implementation, resolve [#312](https://github.com/odogono/mercenary/issues/312) and
-incorporate its findings into this contract. The new research has established ordinary interior
-and exterior drops, insertion-group semantics and additional reachable gates. Remaining blockers
-are explicit in [the coverage ledger](../research/damocles-limo-key-drops.md): expanded routes,
-support placement, complete parent association groups, inventory-label state and sale/buyback
-including refusal-message interruption (the doorway refusal is observed after completion,
-not while slot 2 is presenting). Do not mark #300 unblocked based on the Residence shape
-alone. The remaining dependency order is:
+Do not begin application code until [#344](https://github.com/odogono/mercenary/issues/344) is
+stacked so schema 4 is born restore-complete. `take` / `drop` in
+[`web/src/damocles/boot.ts`](../../web/src/damocles/boot.ts) stay no-ops until that
+implementation. #312 stays closed.
 
 1. ~~Object selection and takeability recovered~~ — [#303](https://github.com/odogono/mercenary/issues/303), delivered as
    [the selection note](../research/damocles-object-selection.md) and the `handling` record in
@@ -692,15 +738,19 @@ alone. The remaining dependency order is:
    delivered: the row is 48 cells, the reveal is 8 pixels a frame for 36 frames, the remaining 164
    frames are reading hold, and no input ends a message early. `Reveal` above is the recovered shape.
 3. ~~The message strings extracted into `payload/damocles/`~~ — [#304](https://github.com/odogono/mercenary/issues/304), delivered as
-   `payload/damocles/strings.json`.
+   `payload/damocles/strings.json` (including `system-string-9`).
 4. `web/damocles/eris.json` schema 6 with its `time` block.
-5. Resident instances placed in the world: `erisSurfaceFrom` currently skips every instance whose
+5. Capital Spaceport association groups in the payload, including group 1, implicit `(group,0)`
+   and duplicate pairs. Do not extract every Eris parent in this slice.
+6. Resident instances placed in the world: `erisSurfaceFrom` currently skips every instance whose
    `location` is null, which is every structure-anchored resident including slot 183. Placement
    comes from `placement.parent`, `placement.position` and the recovered world-to-local transform;
    residence becomes mutable session state.
-6. The Damocles Script Host: `ScriptState`, `runFrame`, `fireTrigger`, the trigger table and the
+7. The Damocles Script Host: `ScriptState`, `runFrame`, `fireTrigger`, the trigger table and the
    named steps of slot 2, as new modules beside — not inside — `firstOffer.ts`.
-7. Carried Stack, persistent Damocles Display, message gate and the panel's inventory/message lines.
-8. `take()` and `drop()` on `DamoclesSession`, wired from `boot.ts`'s currently no-op `reach` and
-   `drop` Control Profile actions.
-9. Save schema 4 in `web/src/damocles/save.ts` with the validation table above.
+8. Carried Stack (head-significant), `scrollCounter`, persistent Damocles Display, message gate
+   and the panel's inventory/message lines.
+9. `take()` and `drop()` on `DamoclesSession`, wired from `boot.ts`'s currently no-op `reach` and
+   `drop` Control Profile actions, limited to the include-list.
+10. Schema-4 fields in `web/src/damocles/save.ts` with the validation table above, on top of
+    #344's identity and Pose, with no second bump.

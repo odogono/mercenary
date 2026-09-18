@@ -12,7 +12,8 @@ It extends [the limo-key interaction contract](damocles-limo-key-interaction.md)
 replacing it. That contract's Host Callout, script identity and revision policy, commit
 boundaries and validation discipline are carried forward unchanged; what changes here is that
 Object Residence becomes body-aware, one Gameplay Session spans Bodies, and the Damocles Display
-and Damocles Script state grow to hold the five further pickup responses.
+and Damocles Script state grow to hold the five further pickup responses. Persistence for those
+additions is **schema 5**; schema 4 is the #344 + #300 stack specified in the limo-key contract.
 
 It follows [ADR 0046](../adr/0046-switch-damocles-bodies-within-one-gameplay-session.md) for the
 authored body switch, [ADR 0028](../adr/0028-admit-one-development-console-that-writes-play.md)
@@ -398,22 +399,29 @@ flights observed reading `VESTA`.
 
 ## Persistence
 
-### Schema 4
+### Schema 4 and schema 5
 
-The Damocles Save Snapshot goes 3 → 4 **once**. Schema 4 is the union of the limo-key contract's
-additions and this contract's. Two bumps were rejected: neither contract had shipped, so a schema
-4 that existed only between two pull requests would be a version no save was ever written against.
-ADR 0044 asks for a deliberate bump, not a bump per contributing ticket.
+[#344](https://github.com/odogono/mercenary/issues/344) takes the Damocles Save Snapshot 3 → 4
+bump: the Pose names its Body, and identity pins every presentation document as
+`presentationSha256`. [#300](https://github.com/odogono/mercenary/issues/300) **joins schema 4
+without a further bump**, adding Carried Stack, residence, `scrollCounter`, Damocles Display and
+slot-2 script state. Those two tickets ship as **one restore-complete schema-4 shape**; #344
+must not reach the default branch first.
 
-**#344 takes the bump, not #300.** This originally read that #300 delivers its subset first. That
-follows from the delivery order, and the order changed: #344 precedes #300 so that schema 4 is not
-first written with one Body's name in its identity. Since #344 changes the record's shape — the
-Pose names its Body, and `erisSchemaVersion` becomes `presentationSha256` — leaving the number at
-3 would have given two different shapes one version. #300 joins schema 4 without a further bump.
+An earlier draft treated schema 4 as the union of this contract with the limo-key contract, and
+rejected two bumps because neither had shipped. Independent #300 delivery supersedes that:
+once schema 4 exists as a played record, ADR 0044 requires a new version for this contract's
+further Session State. **Schema 5** carries `briefcaseStore`, `pending`, extra trigger bits
+(`queueable`, `sticky`) and `displayDuration`. There is no migration from 4 to 5: a schema-4
+record is refused whole by a schema-5 codec, and the live session is untouched.
 
 The Body is **not** a peer field of the Pose in the snapshot. The Pose names its own Body, so a
 separate `body` would be a second copy that validation would have to keep in agreement for no
 gain.
+
+Schema 4's snapshot is specified by [the limo-key contract](damocles-limo-key-interaction.md).
+Schema 5 is that record plus the fields this contract adds (`briefcaseStore`, `displayDuration`,
+`pending`, `queueable`, `sticky`). Body-aware residence may name any Catalogue Body.
 
 ```ts
 interface DamoclesSaveSnapshot {
@@ -564,10 +572,10 @@ by acceptance point would cut across files so that every delivery touched `save.
 
 | # | Delivery | Prerequisites | Tests |
 | ---: | --- | --- | --- |
-| 1 | **Body-agnostic Pose and identity.** `ErisPose` → `Pose` with `body`; `erisSchemaVersion` → `presentationSha256`; the schema 3 → 4 bump. Touches `world.ts`, `mover.ts`, `selection.ts`, `frame.ts`, `session.ts`, `save.ts`, `title.ts`, `boot.ts` and the shared `TitleRuntime` loader, which now yields each document's text so identity can pin the bytes served. | none | Existing save and resume suites pass unchanged; a schema-3 record and a Pose naming no Body are each refused with their reason; an edit to a presentation document that bumps no declared version still changes `presentationSha256`. |
-| 2 | **Body-aware residence, take and drop.** Residence on every Body, lazy materialisation, departures-only storage, the refusal taxonomy, capacity, the special items, the acceptance matrix generator. | 1 | The generated matrix; the storey-pitch invariant; each refusal in the taxonomy, tagged observed or derived per the coverage table. |
+| 1 | **Body-agnostic Pose and identity.** `ErisPose` → `Pose` with `body`; `erisSchemaVersion` → `presentationSha256`; the schema 3 → 4 bump. Must stack under #300 so schema 4 is never saved incomplete. Touches `world.ts`, `mover.ts`, `selection.ts`, `frame.ts`, `session.ts`, `save.ts`, `title.ts`, `boot.ts` and the shared `TitleRuntime` loader, which now yields each document's text so identity can pin the bytes served. | none | Existing save and resume suites pass unchanged; a schema-3 record and a Pose naming no Body are each refused with their reason; an edit to a presentation document that bumps no declared version still changes `presentationSha256`. |
+| 2 | **Body-aware residence, take and drop.** Residence on every Body, lazy materialisation, departures-only storage, the refusal taxonomy, capacity, the special items, the acceptance matrix generator. | 1, and #300 | The generated matrix; the storey-pitch invariant; each refusal in the taxonomy, tagged observed or derived per the coverage table. |
 | 3 | **Display and the five further responses.** `pending`, the two trigger bits, `(script, step)` frames, `displayDuration`, the held row that outlives its script, and the five scripts' steps and messages. | 2 | Busy arbitration's four outcomes as consecutive atomic actions; the nesting trace; the duration excursion; a response parking without clearing the row. |
-| 4 | **Persistence and the body switch.** Schema 4 complete, the rejection rules, the console action and its atomicity. | 3 | The trace table below; every rejection rule refusing atomically; a declined switch leaving the session byte-identical. |
+| 4 | **Persistence and the body switch.** Schema **5** complete, the rejection rules, the console action and its atomicity. | 3 | The trace table below; every rejection rule refusing atomically; a declined switch leaving the session byte-identical. |
 
 [#320](https://github.com/odogono/mercenary/issues/320) remains the single browser-verification
 ticket and asserts only the **observed** rows of the coverage table.

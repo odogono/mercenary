@@ -3,7 +3,12 @@
 Working-Authority Evidence for [#312](https://github.com/odogono/mercenary/issues/312),
 recovered 2026-09-17. This note extends the [pickup research](damocles-limo-key-pickup.md).
 Static recovery is not an ordinary-route observation. Expanded location coverage remains a
-separate requirement; the facts below alone do not unblock #300.
+separate requirement.
+
+[#300](https://github.com/odogono/mercenary/issues/300)'s **implementation boundary** is
+[the limo-key interaction contract](../design/damocles-limo-key-interaction.md), not this
+ledger. Uncovered rows below stay named exclusions; they do not reopen this ticket and they
+do not authorise a silent Spaceport-only drop rule.
 
 [ADR 0002](../adr/0002-separate-rom-research-from-implementation.md) permits factual recovery,
 not translation of machine code into application code. Raw RAM, native listings, screenshots and
