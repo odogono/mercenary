@@ -405,8 +405,10 @@ flights observed reading `VESTA`.
 bump: the Pose names its Body, and identity pins every presentation document as
 `presentationSha256`. [#300](https://github.com/odogono/mercenary/issues/300) **joins schema 4
 without a further bump**, adding Carried Stack, residence, `scrollCounter`, Damocles Display and
-slot-2 script state. Those two tickets ship as **one restore-complete schema-4 shape**; #344
-must not reach the default branch first.
+slot-2 script state. #344 has already shipped that bump on `main` (0.20.0). Schema 4 on that
+release is identity and Pose only; #300 makes the version restore-complete by requiring the
+fields below and **refusing** 0.20.0 records that lack them. There is no stacked merge gate left
+and no migration.
 
 An earlier draft treated schema 4 as the union of this contract with the limo-key contract, and
 rejected two bumps because neither had shipped. Independent #300 delivery supersedes that:
@@ -572,7 +574,7 @@ by acceptance point would cut across files so that every delivery touched `save.
 
 | # | Delivery | Prerequisites | Tests |
 | ---: | --- | --- | --- |
-| 1 | **Body-agnostic Pose and identity.** `ErisPose` → `Pose` with `body`; `erisSchemaVersion` → `presentationSha256`; the schema 3 → 4 bump. Must stack under #300 so schema 4 is never saved incomplete. Touches `world.ts`, `mover.ts`, `selection.ts`, `frame.ts`, `session.ts`, `save.ts`, `title.ts`, `boot.ts` and the shared `TitleRuntime` loader, which now yields each document's text so identity can pin the bytes served. | none | Existing save and resume suites pass unchanged; a schema-3 record and a Pose naming no Body are each refused with their reason; an edit to a presentation document that bumps no declared version still changes `presentationSha256`. |
+| 1 | **Body-agnostic Pose and identity.** `ErisPose` → `Pose` with `body`; `erisSchemaVersion` → `presentationSha256`; the schema 3 → 4 bump. **Shipped** as #344 / 0.20.0. Touches `world.ts`, `mover.ts`, `selection.ts`, `frame.ts`, `session.ts`, `save.ts`, `title.ts`, `boot.ts` and the shared `TitleRuntime` loader, which now yields each document's text so identity can pin the bytes served. | none | Existing save and resume suites pass unchanged; a schema-3 record and a Pose naming no Body are each refused with their reason; an edit to a presentation document that bumps no declared version still changes `presentationSha256`. |
 | 2 | **Body-aware residence, take and drop.** Residence on every Body, lazy materialisation, departures-only storage, the refusal taxonomy, capacity, the special items, the acceptance matrix generator. | 1, and #300 | The generated matrix; the storey-pitch invariant; each refusal in the taxonomy, tagged observed or derived per the coverage table. |
 | 3 | **Display and the five further responses.** `pending`, the two trigger bits, `(script, step)` frames, `displayDuration`, the held row that outlives its script, and the five scripts' steps and messages. | 2 | Busy arbitration's four outcomes as consecutive atomic actions; the nesting trace; the duration excursion; a response parking without clearing the row. |
 | 4 | **Persistence and the body switch.** Schema **5** complete, the rejection rules, the console action and its atomicity. | 3 | The trace table below; every rejection rule refusing atomically; a declined switch leaving the session byte-identical. |

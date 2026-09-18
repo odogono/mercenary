@@ -13,10 +13,12 @@ boundary: ordinary Eris traces only. Remaining drop classes stay named out to th
 [Gamma System programme](https://github.com/odogono/mercenary/issues/313) rather than reopening
 [#312](https://github.com/odogono/mercenary/issues/312) or inventing a Spaceport-only drop rule.
 
-Application code is blocked on [#344](https://github.com/odogono/mercenary/issues/344) landing in
-the **same schema-4 stack**. #344 owns the 3→4 bump (`Pose.body`, `presentationSha256`). #300
-joins that version with no further bump and must not reach the default branch as a second
-schema-4 shape. Incomplete in-branch snapshots are allowed only under that stack.
+Application code is no longer blocked on [#344](https://github.com/odogono/mercenary/issues/344):
+that ticket shipped on `main` as 0.20.0 ([PR 348](https://github.com/odogono/mercenary/pull/348)).
+#344 already owns the 3→4 bump (`Pose.body`, `presentationSha256`). #300 **joins schema 4 with
+no further bump**. The 0.20.0 schema-4 snapshot (`elapsed`, `pose`, `structure` only) is not
+restore-complete for this slice: a record that lacks the fields below is refused whole. There is
+no migration and no defaulting.
 
 It follows [ADR 0045](../adr/0045-author-scripts-as-named-typescript-steps.md): named TypeScript
 steps, explicit serializable state, a Damocles-only Host Callout. Nothing here migrates Targ,
@@ -473,10 +475,13 @@ bump: the Pose names its Body, and identity pins every presentation document as
 `presentationSha256`. ADR 0044 requires a deliberate bump when new Session State is admitted;
 #300 **joins schema 4 without a further bump** by adding the fields below. There is no
 migration: a schema-3 record, a Targ envelope, a Catalogue or presentation identity mismatch, or
-a schema-4 record that lacks these fields, is refused and the live session is untouched.
+a schema-4 record that lacks these fields — including a 0.20.0 / #344 record of only `elapsed`,
+`pose` and `structure` — is refused and the live session is untouched. Session Resume that
+cannot restore is removed and reported; player Saves are left as unreadable records.
 
-#344 must not reach the default branch until this restore-complete shape exists in the same
-version. Incomplete in-branch snapshots are allowed only in that stack. [#319](https://github.com/odogono/mercenary/issues/319)
+[#344](https://github.com/odogono/mercenary/issues/344) already reached the default branch. The
+interview's "ship as one stacked shape" gate is therefore closed as Q4-A: those in-the-wild
+schema-4 records are disposable. [#319](https://github.com/odogono/mercenary/issues/319)
 adds briefcase store, pending, extra trigger bits and `displayDuration` as **schema 5** once this
 slice has shipped; those fields are not optional on schema 4.
 
@@ -726,10 +731,9 @@ Deterministic unit tests are the authority; #301's browser pass is confirmation,
 
 ## Implementation prerequisites for #300
 
-Do not begin application code until [#344](https://github.com/odogono/mercenary/issues/344) is
-stacked so schema 4 is born restore-complete. `take` / `drop` in
-[`web/src/damocles/boot.ts`](../../web/src/damocles/boot.ts) stay no-ops until that
-implementation. #312 stays closed.
+Do not reopen [#312](https://github.com/odogono/mercenary/issues/312). `take` / `drop` in
+[`web/src/damocles/boot.ts`](../../web/src/damocles/boot.ts) stay no-ops until this
+implementation. #344 has shipped; start from its identity and Pose.
 
 1. ~~Object selection and takeability recovered~~ — [#303](https://github.com/odogono/mercenary/issues/303), delivered as
    [the selection note](../research/damocles-object-selection.md) and the `handling` record in
