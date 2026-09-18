@@ -135,6 +135,15 @@ export interface Instance {
     readonly levelSelector: number;
     readonly structureGroupSelector: number;
   } | null;
+  readonly associationGroups:
+    | readonly {
+        readonly group: number;
+        readonly pairs: readonly {
+          readonly insertionKey: number;
+          readonly regionSelector: number;
+        }[];
+      }[]
+    | null;
   readonly handling: {
     readonly byte: number;
     readonly carried: boolean;
@@ -215,7 +224,7 @@ export interface Catalogue {
   readonly instances: readonly Instance[];
   readonly models: readonly Model[];
   readonly places: readonly Place[];
-  readonly schemaVersion: 13;
+  readonly schemaVersion: 14;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -636,7 +645,7 @@ const structureSelection = (value: unknown): StructureSelection => {
 
 export const parseCatalogue = (value: unknown): Catalogue => {
   const r = object(value);
-  if (r['schemaVersion'] !== 13) {
+  if (r['schemaVersion'] !== 14) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -816,6 +825,35 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     const i = object(item);
     const model = string(i['model']);
     reference(modelIds, model, 'model');
+    let associationGroups: Instance['associationGroups'] = null;
+    if (
+      i['associationGroups'] !== null &&
+      i['associationGroups'] !== undefined
+    ) {
+      const selectors = new Set<number>();
+      associationGroups = list(i['associationGroups']).map(value => {
+        const group = object(value);
+        const selector = byte(group['group']);
+        if (selector === 0 || selectors.has(selector)) {
+          fail('invalid or duplicate association group selector');
+        }
+        selectors.add(selector);
+        const regions = new Set<number>();
+        const pairs = list(group['pairs']).map(value => {
+          const pair = object(value);
+          const regionSelector = byte(pair['regionSelector']);
+          if (regionSelector === 0 || regions.has(regionSelector)) {
+            fail('invalid or duplicate association group region selector');
+          }
+          regions.add(regionSelector);
+          return {
+            insertionKey: byte(pair['insertionKey']),
+            regionSelector
+          };
+        });
+        return { group: selector, pairs };
+      });
+    }
     let location: Instance['location'] = null;
     if (i['location'] !== null) {
       const l = object(i['location']);
@@ -888,6 +926,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     }
     return {
       association,
+      associationGroups,
       handling,
       id: string(i['id']),
       location,
@@ -1056,7 +1095,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     instances,
     models,
     places,
-    schemaVersion: 13,
+    schemaVersion: 14,
     source,
     tables
   };

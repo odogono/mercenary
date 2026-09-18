@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 5,
+  "schemaVersion": 6,
   "titleSlug": "damocles",
   "body": {
     "id": "body-11",
@@ -112,6 +112,13 @@
     "cullBackFaces": true,
     "unresolvedModels": "nothing",
     "provenance": "authored"
+  },
+  "time": {
+    "messageFrames": 200,
+    "provenance": "recovered",
+    "vblHertz": 50,
+    "vblProvenance": "derived",
+    "waitFrames": 200
   },
   "structureFallback": {
     "view": "combined",

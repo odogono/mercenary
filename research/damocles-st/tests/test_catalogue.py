@@ -111,12 +111,33 @@ class SourceTests(unittest.TestCase):
             '0c 01 18 02 10 03 10 04 10 05 10 09 02 0a 05 0b 05 00 00'
         )
         self.assertEqual(decode_structure_associations(data, 0), {
-            1: {2: 16, 3: 16, 4: 16, 5: 16, 9: 2, 10: 5, 11: 5, 12: 8},
-            12: {1: 24, 2: 16, 3: 16, 4: 16, 5: 16, 9: 2, 10: 5, 11: 5},
+            1: [
+                {'regionSelector': 2, 'insertionKey': 16},
+                {'regionSelector': 3, 'insertionKey': 16},
+                {'regionSelector': 4, 'insertionKey': 16},
+                {'regionSelector': 5, 'insertionKey': 16},
+                {'regionSelector': 9, 'insertionKey': 2},
+                {'regionSelector': 10, 'insertionKey': 5},
+                {'regionSelector': 11, 'insertionKey': 5},
+                {'regionSelector': 12, 'insertionKey': 8},
+            ],
+            12: [
+                {'regionSelector': 1, 'insertionKey': 24},
+                {'regionSelector': 2, 'insertionKey': 16},
+                {'regionSelector': 3, 'insertionKey': 16},
+                {'regionSelector': 4, 'insertionKey': 16},
+                {'regionSelector': 5, 'insertionKey': 16},
+                {'regionSelector': 9, 'insertionKey': 2},
+                {'regionSelector': 10, 'insertionKey': 5},
+                {'regionSelector': 11, 'insertionKey': 5},
+            ],
         })
         self.assertEqual(
             decode_structure_associations(bytes.fromhex('03 04 00 05 07 00 00'), 0),
-            {3: {4: 0, 5: 7}},
+            {3: [
+                {'regionSelector': 4, 'insertionKey': 0},
+                {'regionSelector': 5, 'insertionKey': 7},
+            ]},
         )
 
     def test_decodes_surface_placement_streams_until_ff(self):
@@ -165,6 +186,25 @@ class SourceTests(unittest.TestCase):
             decode_structure_associations(bytes.fromhex('01 02 10 00 01 03 10 00 00'), 0)
         with self.assertRaisesRegex(ValueError, 'terminator'):
             decode_structure_associations(bytes.fromhex('01 02 10 00'), 0)
+
+    def test_preserves_structure_association_pair_order(self):
+        from damocleslab.catalogue import decode_structure_associations
+        self.assertEqual(
+            decode_structure_associations(
+                bytes.fromhex('01 02 10 03 20 00 0c 01 18 0c 08 00 00'),
+                0,
+            ),
+            {
+                1: [
+                    {'regionSelector': 2, 'insertionKey': 0x10},
+                    {'regionSelector': 3, 'insertionKey': 0x20},
+                ],
+                12: [
+                    {'regionSelector': 1, 'insertionKey': 0x18},
+                    {'regionSelector': 12, 'insertionKey': 0x08},
+                ],
+            },
+        )
 
     def test_decodes_interior_selectors_without_naming_them_as_rooms(self):
         from damocleslab.catalogue import interior_resident_association

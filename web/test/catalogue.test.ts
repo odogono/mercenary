@@ -56,7 +56,7 @@ const fixture = () => ({
     }
   ],
   places: [],
-  schemaVersion: 13,
+  schemaVersion: 14,
   source: {
     authority: 'Synthetic test',
     evidence: 'test',
@@ -890,6 +890,42 @@ it('places slot 180 through its decoded structure association', async () => {
     structureGroupSelector: 18
   });
   expect(spaceportKey.placement?.parent).toBe('eris-surface-87');
+  const spaceport = data.instances.find(
+    instance => instance.id === 'eris-surface-87'
+  )!;
+  expect(spaceport.associationGroups).toEqual([
+    {
+      group: 1,
+      pairs: [
+        { insertionKey: 16, regionSelector: 2 },
+        { insertionKey: 16, regionSelector: 3 },
+        { insertionKey: 16, regionSelector: 4 },
+        { insertionKey: 16, regionSelector: 5 },
+        { insertionKey: 2, regionSelector: 9 },
+        { insertionKey: 5, regionSelector: 10 },
+        { insertionKey: 5, regionSelector: 11 },
+        { insertionKey: 8, regionSelector: 12 }
+      ]
+    },
+    {
+      group: 12,
+      pairs: [
+        { insertionKey: 24, regionSelector: 1 },
+        { insertionKey: 16, regionSelector: 2 },
+        { insertionKey: 16, regionSelector: 3 },
+        { insertionKey: 16, regionSelector: 4 },
+        { insertionKey: 16, regionSelector: 5 },
+        { insertionKey: 2, regionSelector: 9 },
+        { insertionKey: 5, regionSelector: 10 },
+        { insertionKey: 5, regionSelector: 11 }
+      ]
+    }
+  ]);
+  expect(
+    data.instances
+      .filter(instance => instance.id !== 'eris-surface-87')
+      .every(instance => instance.associationGroups === null)
+  ).toBeTrue();
 });
 
 it('places only residents selected by the native surface-body association', async () => {

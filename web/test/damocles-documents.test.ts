@@ -42,7 +42,14 @@ describe('the authored Eris presentation document', () => {
     });
     expect(document.rendering.unresolvedModels).toBe('nothing');
     expect(document.camera.nearPlane).toBeLessThan(11);
-    expect(document.schemaVersion).toBe(5);
+    expect(document.schemaVersion).toBe(6);
+    expect(document.time).toEqual({
+      messageFrames: 200,
+      provenance: 'recovered',
+      vblHertz: 50,
+      vblProvenance: 'derived',
+      waitFrames: 200
+    });
     expect(document.structureFallback.view).toBe('combined');
     expect(document.structureFallback.doorState).toBe('closed');
     expect(document.structureFallback.provenance).toBe('authored');
@@ -100,7 +107,7 @@ describe('the authored Eris presentation document', () => {
       'titleSlug should be damocles'
     );
     expect(() => readErisPresentation({ ...base, schemaVersion: 2 })).toThrow(
-      'schemaVersion should be 5'
+      'schemaVersion should be 6'
     );
     const lighting = base['lighting'] as Record<string, unknown>;
     const { ambientSky: _ambientSky, ...withoutAmbientSky } = lighting;

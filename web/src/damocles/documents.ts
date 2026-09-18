@@ -81,7 +81,7 @@ export interface ErisPresentationDocument {
     readonly provenance: Provenance;
     readonly unresolvedModels: 'nothing';
   };
-  readonly schemaVersion: 5;
+  readonly schemaVersion: 6;
   readonly sky: {
     readonly colour: string;
     readonly note: string;
@@ -102,6 +102,13 @@ export interface ErisPresentationDocument {
     readonly evidence: string;
     readonly provenance: Provenance;
     readonly view: StructureView;
+  };
+  readonly time: {
+    readonly messageFrames: number;
+    readonly provenance: 'recovered';
+    readonly vblHertz: number;
+    readonly vblProvenance: 'derived';
+    readonly waitFrames: number;
   };
   readonly titleSlug: 'damocles';
   readonly walk: {
@@ -236,7 +243,8 @@ export const readErisPresentation = (
     'sky',
     'lighting',
     'rendering',
-    'structureFallback'
+    'structureFallback',
+    'time'
   ]);
   const body = object(root['body'], 'body', ['id', 'name', 'provenance']);
   const grid = object(root['grid'], 'grid', [
@@ -247,6 +255,13 @@ export const readErisPresentation = (
     'note'
   ]);
   const origin = object(grid['origin'], 'grid.origin', ['x', 'z']);
+  const time = object(root['time'], 'time', [
+    'messageFrames',
+    'provenance',
+    'vblHertz',
+    'vblProvenance',
+    'waitFrames'
+  ]);
   const start = object(root['start'], 'start', [
     'position',
     'positionProvenance',
@@ -460,7 +475,7 @@ export const readErisPresentation = (
         'rendering.unresolvedModels'
       )
     },
-    schemaVersion: literal(root['schemaVersion'], 5, 'schemaVersion'),
+    schemaVersion: literal(root['schemaVersion'], 6, 'schemaVersion'),
     sky: {
       colour: skyColour,
       note: text(sky['note'], 'sky.note'),
@@ -496,6 +511,17 @@ export const readErisPresentation = (
         STRUCTURE_VIEWS,
         'structureFallback.view'
       )
+    },
+    time: {
+      messageFrames: positive(time['messageFrames'], 'time.messageFrames'),
+      provenance: literal(time['provenance'], 'recovered', 'time.provenance'),
+      vblHertz: positive(time['vblHertz'], 'time.vblHertz'),
+      vblProvenance: literal(
+        time['vblProvenance'],
+        'derived',
+        'time.vblProvenance'
+      ),
+      waitFrames: positive(time['waitFrames'], 'time.waitFrames')
     },
     titleSlug: literal(root['titleSlug'], 'damocles', 'titleSlug'),
     walk: {
