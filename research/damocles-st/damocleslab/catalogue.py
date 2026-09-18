@@ -1744,6 +1744,11 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
         'regions': regions,
         'scale': list(scale),
         'liveSelector': any(item['controlWord'] & 0xFF == 0xF0 for item in attachments),
+        # The region loop stops on the same zero selector the native walk stops
+        # on at $05A26A, and $05A2FA publishes the address just past it as the
+        # structure's association-list root in $7B0E. So this offset is that
+        # root, derived rather than supplied.
+        'associationRoot': reader.p,
     }
 
 
@@ -1960,6 +1965,70 @@ def resident_local_position(data: bytes, slot: int, structure_origin: tuple[int,
     """Transform authored resident coordinates into a structure-local frame."""
     return [s32(data, base + slot * 4) - structure_origin[axis]
             for axis, base in enumerate(coordinate_arrays)]
+
+
+def decode_group_overrides(data: bytes, group: int) -> dict[int, dict]:
+    """Authored cell instances in one structure-group map, as $04EB60 builds them.
+
+    The record is a run-length cell-extent stream, two workspace bytes, six
+    source-reference selectors, then the cell-override list the consumer at
+    $054CB0 reads. An override's word has the structure slot in its low nine
+    bits -- bit 8 is bit 0 of the high byte, which is why $054D44 masks nine --
+    and bits 1-7 of the high byte are a scene selector. Offsets are signed and
+    scale by the word at $04BD14.
+    """
+    root = 0x1e000 + struct.unpack_from('>H', data, 0x1e64c)[0]
+    if root + group * 2 + 2 > len(data):
+        raise ValueError('structure-group table is outside this capture')
+    cursor = root + struct.unpack_from('>H', data, root + group * 2)[0] + 2
+    limit = min(len(data), cursor + (1 << 16))
+    for _ in range(256):
+        if cursor >= limit:
+            raise ValueError('structure-group extent stream is unterminated')
+        if not data[cursor]:
+            break
+        cursor += 3
+    else:
+        raise ValueError('structure-group extent stream terminator missing')
+    cursor += 1 + 2 + 6
+    overrides: dict[int, dict] = {}
+    while True:
+        if cursor + 3 > limit:
+            raise ValueError('structure-group override list is unterminated')
+        if data[cursor] == 0xff:
+            break
+        source_ref, cell, low = data[cursor], data[cursor + 1], data[cursor + 2]
+        record = cursor
+        cursor += 3
+        if len(overrides) > 256:
+            raise ValueError('structure-group override list limit exceeded')
+        if low == 0:
+            overrides[cell] = {'cell': cell, 'sourceRef': source_ref, 'slot': None,
+                               'address': record}
+            continue
+        if cursor + 3 > limit:
+            raise ValueError('structure-group override record truncated')
+        high = data[cursor]
+        dx, dz = struct.unpack_from('>bb', data, cursor + 1)
+        cursor += 3
+        overrides[cell] = {
+            'cell': cell, 'sourceRef': source_ref, 'address': record,
+            'word': (high << 8) | low, 'slot': ((high << 8) | low) & 0x1ff,
+            'sceneSelector': high & 0xfe, 'dx': dx, 'dz': dz,
+        }
+    return overrides
+
+
+def structure_storey_height(data: bytes, slot: int) -> int | None:
+    """An alias instance's first word, which $054D86 publishes in $7B00.
+
+    Every Dion and Vesta resident satisfies
+    ``0 <= Y - level * storeyHeight < storeyHeight``, so the level selector is a
+    floor index and this word is the structure's floor pitch.
+    """
+    base = u32(data, 0x4bd0c)
+    lead = struct.unpack_from('>H', data, base + u32(data, base + slot * 4))[0]
+    return (lead & 0x7fff) if lead & 0x8000 else None
 
 
 def structure_origin(resident_position: tuple[int, int, int], dx: int, dz: int) -> tuple[int, int, int]:
@@ -2647,6 +2716,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     workspaces = workspace if isinstance(workspace, list) else ([] if workspace is None else [workspace])
     models, tables, instances = [], [], []
     hardware = list(struct.unpack_from('>16H', data, 0x6fd00))
+    structure_association_roots: dict[str, int] = {}
     # Table extents established by their next independently decoded data records.
     specs = [('object', 0x35700, 378), ('structure', 0xe900, 280), ('interior', 0x26000, 130)]
     by_address = {}
@@ -2705,6 +2775,10 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                     model['sceneColours'] = mesh.pop('sceneColours')
                     try:
                         selection = decode_structure_selection(data, mesh, scale, palette_at(data, palette_index), hardware)
+                        # The association-list root is a stream offset the
+                        # structure-group probe derives from; it is not a
+                        # published catalogue fact, so it stays out of the payload.
+                        structure_association_roots[identity] = selection.pop('associationRoot')
                         model['structureSelection'] = selection
                         gaps = [
                             gap for gap in gaps
@@ -3148,6 +3222,107 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'confidence': 'verified',
             'source': 'docs/research/damocles-resident-objects.md',
         })
+    # Interior residents whose workspace is determined (#325). #324 settled the
+    # selector: the scene key is (body, structure-group, cell, level,
+    # insertion-group), the group record and the rebuilt $ABDC are the runtime
+    # workspace, and the $7A6C place label is corroboration rather than a body
+    # binding -- the Dion capture reads $794E=$02 with a stale BIRMINGHAM ISLAND
+    # label. So a resident's own body byte gives the body and its group byte
+    # gives the workspace, for every group a capture binds.
+    #
+    # Vesta group $05 and Dion group $02 are both bound by a capture whose live
+    # $ABDC is byte-identical to the static decode. Dion groups $1B and $1C are
+    # not bound by any capture, so they keep #324's disposition for Gaea group
+    # $0F: bound to a static group record, named workspace identity unresolved,
+    # and no placement emitted.
+    # The live workspaces attach after instance_by_id is built, so index again.
+    instance_by_id = {instance['id']: instance for instance in instances}
+    for body_id, bound_group, slug, body_name in (('body-14', 0x05, 'vesta', 'Vesta'),
+                                                  ('body-4', 0x02, 'dion', 'Dion')):
+      candidates = [
+          item for item in instances
+          if item['id'].startswith('object-slot-') and item['placement'] is None
+          and (item.get('association') or {}).get('body') == body_id
+          and (item.get('association') or {}).get('structureGroupSelector') == bound_group
+          and (item.get('association') or {}).get('insertionGroupSelector')
+      ]
+      try:
+          overrides = decode_group_overrides(data, bound_group) if candidates else {}
+      except (ValueError, struct.error) as error:
+          overrides = {}
+          for item in candidates:
+              item['reason'] = (f'{body_name} structure group ${bound_group:02X} map did not '
+                                f'decode in this capture: {error}.')
+      for resident in candidates:
+          association = resident['association']
+          cell = association['cell']
+          parent = instance_by_id.get(f'{slug}-surface-{cell:02x}')
+          override = overrides.get(cell)
+          if parent is None or override is None or override['slot'] is None:
+              continue
+          if parent['model'] != tables[1]['entries'][override['slot']]:
+              raise ValueError(f'{body_name} cell ${cell:02X} parent model disagrees with its override')
+          slot = int(resident['id'].rsplit('-', 1)[1])
+          raw = tuple(s32(data, base + slot * 4) for base in (0x63a8, 0x67a8, 0x6ba8))
+          origin = structure_origin(raw, override['dx'], override['dz'])
+          local = resident_local_position(data, slot, origin)
+          storey = structure_storey_height(data, override['slot'])
+          level = association['levelSelector']
+          if storey is None or not 0 <= local[1] - storey * level < storey:
+              raise ValueError(f'{body_name} resident slot {slot} is not on floor {level}')
+          model = by_address.get(parent['model'])
+          extent = None
+          if model and model.get('variants'):
+              vertices = model['variants'][0]['mesh']['vertices']
+              extent = [[min(v[axis] for v in vertices), max(v[axis] for v in vertices)]
+                        for axis in range(3)]
+          if extent and not all(extent[axis][0] <= local[axis] <= extent[axis][1]
+                                for axis in (0, 2)):
+              resident['reason'] = (
+                  f'Authored {body_name} group ${bound_group:02X} cell ${cell:02X} parent '
+                  f'decoded, but the '
+                  f'derived local placement {tuple(local)} lies outside the parent extent, '
+                  'so it is not published.'
+              )
+              continue
+          root = structure_association_roots.get(parent['model'])
+          insertions = None
+          if root is not None:
+              insertions = decode_structure_associations(data, root).get(
+                  association['insertionGroupSelector'])
+          if insertions is not None:
+              association['insertions'] = [
+                  {'regionSelector': region, 'insertionKey': key}
+                  for region, key in insertions.items()
+              ]
+          resident['placement'] = {
+              'parent': parent['id'],
+              'position': local,
+              'heading': None,
+              'coordinateSystem': f'{body_name} group ${bound_group:02X} cell ${cell:02X} local model units',
+          }
+          floor_note = (f'Level {level} is floor {level} at the structure\'s {storey}-unit storey '
+                        f'pitch, so the record sits {local[1] - storey * level} units above it.')
+          resident['reason'] = (
+              f'Recovered resident placement in the authored {body_name} structure-group '
+              f'${bound_group:02X} cell ${cell:02X} instance. {floor_note}'
+              + ('' if insertions is not None else
+                 ' Its insertion group is absent from the parent structure\'s association list, '
+                 'which belongs to the structure bound at level 0; the interior list is '
+                 'unreached (#331).')
+              + ' Raw yaw is not published; the absolute angular convention remains unresolved.'
+          )
+          model = by_address.get(parent['model'])
+          if model is not None and resident['id'] not in model['linkedInstances']:
+              model['linkedInstances'].append(resident['id'])
+              model['evidence'].append({
+                  'claim': (f'Authored {body_name} group ${bound_group:02X} cell ${cell:02X} record places this '
+                            f'instance and binds resident slot {slot} at local '
+                            f'{tuple(local)} on floor {level}.'),
+                  'confidence': 'verified',
+                  'source': 'docs/research/damocles-dion-vesta-structure-groups.md',
+              })
+
     for vehicle_slot, key_slot in ((2, 180), (3, 181), (4, 182), (5, 183),
                                    (6, 184), (10, 188), (12, 190), (13, 191)):
         vehicle = instance_by_id[f'object-slot-{vehicle_slot}']
@@ -3717,6 +3892,18 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     coverage_notes = [
         'Resident first-world census after examining title-screen, first-world and interior-window RAM; not a claim that every packed disk file has been walked.',
         'Scene palette binding for unplaced objects 333-338, and named places outside the captured Eris workspace, authored Gaea Birmingham Island map, live Gaea UR City overlay, and live Dion overlay remain incomplete.',
+        'Interior residents carry a parent and a parent-local placement where their structure '
+        'group is one a pinned capture binds and the live $ABDC matches the static decode: '
+        'Vesta group $05 cells $64 (VESTA PARLIAMENT) and $73 (GUM STORE), and Dion group $02. '
+        'Three Dion records decode a parent but are not placed, because the derived local '
+        'position falls outside the parent extent: slots 102, 66 and 34. Seven Vesta residents '
+        'above level 0 are placed without insertions, because the insertion group they name is '
+        'absent from the parent structure\'s association list, which is the list bound at '
+        'level 0; the interior list is unreached '
+        '(https://github.com/odogono/mercenary/issues/331). The ten Dion residents in groups '
+        '$1B and $1C are not placed: no pinned capture binds either group, so they keep the '
+        'disposition #324 records for Gaea group $0F -- bound to a static group record, named '
+        'workspace identity unresolved.',
         'View-conditioned face groups, $8003/$8006/$8009 header states and object $6000 vector text are decoded as separate forms; the in-game selector for each form is named in the model conditions, not simulated.',
         'Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; surface slot zero supplies palette zero for structureless cells, empty records are intentional and add no geometry at $056634, and $F0/$F4 joins remain view-conditioned.',
         'The sky and the ground band below the horizon are excluded as rendering-only state, not omitted geometry: $059CE2 fills the whole viewport in colour index 8 and the MFP Timer B handler at $052280 rewrites $FF8250 at scanline $7BFC, taking the sky from $7C86 and the band from the body workspace word at $7A1A. The scene slots below $F0 that $05499E allocates are excluded on the same footing: they are a per-frame slot numbering over the $1E000 corner longwords already decoded here, drawn as two-point edges at $054AD2, and research/damocles-st/scripts/ground-extent-check.py reconstructs the live list, lowest slot and $5E40 bytes from captured RAM alone.',

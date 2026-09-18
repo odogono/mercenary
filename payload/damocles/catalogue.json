@@ -205,6 +205,7 @@
     "notes": [
       "Resident first-world census after examining title-screen, first-world and interior-window RAM; not a claim that every packed disk file has been walked.",
       "Scene palette binding for unplaced objects 333-338, and named places outside the captured Eris workspace, authored Gaea Birmingham Island map, live Gaea UR City overlay, and live Dion overlay remain incomplete.",
+      "Interior residents carry a parent and a parent-local placement where their structure group is one a pinned capture binds and the live $ABDC matches the static decode: Vesta group $05 cells $64 (VESTA PARLIAMENT) and $73 (GUM STORE), and Dion group $02. Three Dion records decode a parent but are not placed, because the derived local position falls outside the parent extent: slots 102, 66 and 34. Seven Vesta residents above level 0 are placed without insertions, because the insertion group they name is absent from the parent structure's association list, which is the list bound at level 0; the interior list is unreached (https://github.com/odogono/mercenary/issues/331). The ten Dion residents in groups $1B and $1C are not placed: no pinned capture binds either group, so they keep the disposition #324 records for Gaea group $0F -- bound to a static group record, named workspace identity unresolved.",
       "View-conditioned face groups, $8003/$8006/$8009 header states and object $6000 vector text are decoded as separate forms; the in-game selector for each form is named in the model conditions, not simulated.",
       "Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; surface slot zero supplies palette zero for structureless cells, empty records are intentional and add no geometry at $056634, and $F0/$F4 joins remain view-conditioned.",
       "The sky and the ground band below the horizon are excluded as rendering-only state, not omitted geometry: $059CE2 fills the whole viewport in colour index 8 and the MFP Timer B handler at $052280 rewrites $FF8250 at scanline $7BFC, taking the sky from $7C86 and the band from the body workspace word at $7A1A. The scene slots below $F0 that $05499E allocates are excluded on the same footing: they are a per-frame slot numbering over the $1E000 corner longwords already decoded here, drawn as two-point edges at $054AD2, and research/damocles-st/scripts/ground-extent-check.py reconstructs the live list, lowest slot and $5E40 bytes from captured RAM alone.",
@@ -601,7 +602,36 @@
         "body": "body-4",
         "cell": 222,
         "insertionGroupSelector": 32,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 98,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 98,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 26
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 27
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 28
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 33
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 34
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 2
       },
@@ -617,8 +647,17 @@
       "location": null,
       "model": "object-0369d2",
       "name": "AUTHOR'S CHAIR \u00b7 slot 14",
-      "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $20, level selector $00, cell $DE. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Dion group $02 cell $DE local model units",
+        "heading": null,
+        "parent": "dion-surface-de",
+        "position": [
+          -1659,
+          0,
+          -211
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Dion structure-group $02 cell $DE instance. Level 0 is floor 0 at the structure's 160-unit storey pitch, so the record sits 0 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 25568
     },
     {
@@ -836,7 +875,7 @@
       "model": "object-036d64",
       "name": "DOOR KEY A \u00b7 slot 34",
       "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $03, level selector $09, cell $E3. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "reason": "Authored Dion group $02 cell $E3 parent decoded, but the derived local placement (-49, 1350, 765) lies outside the parent extent, so it is not published.",
       "sourceAddress": 25648
     },
     {
@@ -919,7 +958,28 @@
         "body": "body-4",
         "cell": 51,
         "insertionGroupSelector": 3,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 19,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 3,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 2,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 7,
+            "regionSelector": 6
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 2
       },
@@ -935,8 +995,17 @@
       "location": null,
       "model": "object-036d64",
       "name": "DOOR KEY A \u00b7 slot 38",
-      "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $03, level selector $00, cell $33. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Dion group $02 cell $33 local model units",
+        "heading": null,
+        "parent": "dion-surface-33",
+        "position": [
+          -73,
+          0,
+          41
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Dion structure-group $02 cell $33 instance. Level 0 is floor 0 at the structure's 240-unit storey pitch, so the record sits 0 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 25664
     },
     {
@@ -1222,7 +1291,68 @@
         "body": "body-4",
         "cell": 9,
         "insertionGroupSelector": 5,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 39,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 38,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 38,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 14
+          },
+          {
+            "insertionKey": 6,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 20
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 2
       },
@@ -1238,8 +1368,17 @@
       "location": null,
       "model": "object-0379bc",
       "name": "BATH \u00b7 slot 50",
-      "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $05, level selector $00, cell $09. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Dion group $02 cell $09 local model units",
+        "heading": null,
+        "parent": "dion-surface-09",
+        "position": [
+          939,
+          0,
+          -439
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Dion structure-group $02 cell $09 instance. Level 0 is floor 0 at the structure's 160-unit storey pitch, so the record sits 0 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 25712
     },
     {
@@ -1247,7 +1386,68 @@
         "body": "body-4",
         "cell": 9,
         "insertionGroupSelector": 6,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 39,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 38,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 38,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 14
+          },
+          {
+            "insertionKey": 6,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 20
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 2
       },
@@ -1263,8 +1463,17 @@
       "location": null,
       "model": "object-037b70",
       "name": "TOWEL RAIL \u00b7 slot 51",
-      "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $06, level selector $00, cell $09. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Dion group $02 cell $09 local model units",
+        "heading": null,
+        "parent": "dion-surface-09",
+        "position": [
+          923,
+          0,
+          -637
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Dion structure-group $02 cell $09 instance. Level 0 is floor 0 at the structure's 160-unit storey pitch, so the record sits 0 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 25716
     },
     {
@@ -1525,7 +1734,68 @@
         "body": "body-4",
         "cell": 194,
         "insertionGroupSelector": 5,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 39,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 38,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 38,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 14
+          },
+          {
+            "insertionKey": 6,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 20
+          }
+        ],
         "levelSelector": 1,
         "structureGroupSelector": 2
       },
@@ -1541,8 +1811,17 @@
       "location": null,
       "model": "object-03878a",
       "name": "RUG \u00b7 slot 63",
-      "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $05, level selector $01, cell $C2. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Dion group $02 cell $C2 local model units",
+        "heading": null,
+        "parent": "dion-surface-c2",
+        "position": [
+          -255,
+          160,
+          410
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Dion structure-group $02 cell $C2 instance. Level 1 is floor 1 at the structure's 160-unit storey pitch, so the record sits 0 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 25764
     },
     {
@@ -1617,7 +1896,7 @@
       "model": "object-038820",
       "name": "TRANSPORTER a \u00b7 slot 66",
       "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $04, level selector $01, cell $E3. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "reason": "Authored Dion group $02 cell $E3 parent decoded, but the derived local placement (-587, 150, 1074) lies outside the parent extent, so it is not published.",
       "sourceAddress": 25776
     },
     {
@@ -1666,8 +1945,17 @@
       "location": null,
       "model": "object-038820",
       "name": "TRANSPORTER a \u00b7 slot 68",
-      "placement": null,
-      "reason": "Interior-associated resident on VESTA: structure-group selector $05, insertion-group selector $08, level selector $0A, cell $64. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Vesta group $05 cell $64 local model units",
+        "heading": null,
+        "parent": "vesta-surface-64",
+        "position": [
+          -1376,
+          3170,
+          -281
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Vesta structure-group $05 cell $64 instance. Level 10 is floor 10 at the structure's 317-unit storey pitch, so the record sits 0 units above it. Its insertion group is absent from the parent structure's association list, which belongs to the structure bound at level 0; the interior list is unreached (#331). Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 25784
     },
     {
@@ -2305,7 +2593,68 @@
         "body": "body-14",
         "cell": 115,
         "insertionGroupSelector": 6,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 39,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 38,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 38,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 14
+          },
+          {
+            "insertionKey": 6,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 20
+          }
+        ],
         "levelSelector": 1,
         "structureGroupSelector": 5
       },
@@ -2321,8 +2670,17 @@
       "location": null,
       "model": "object-039a14",
       "name": "CASH REGISTER \u00b7 slot 94",
-      "placement": null,
-      "reason": "Interior-associated resident on VESTA: structure-group selector $05, insertion-group selector $06, level selector $01, cell $73. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Vesta group $05 cell $73 local model units",
+        "heading": null,
+        "parent": "vesta-surface-73",
+        "position": [
+          453,
+          208,
+          256
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Vesta structure-group $05 cell $73 instance. Level 1 is floor 1 at the structure's 160-unit storey pitch, so the record sits 48 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 25888
     },
     {
@@ -2480,7 +2838,36 @@
         "body": "body-4",
         "cell": 222,
         "insertionGroupSelector": 32,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 98,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 98,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 26
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 27
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 28
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 33
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 34
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 2
       },
@@ -2496,8 +2883,17 @@
       "location": null,
       "model": "object-039d6a",
       "name": "AUTHORS COMPUTER \u00b7 slot 101",
-      "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $20, level selector $00, cell $DE. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Dion group $02 cell $DE local model units",
+        "heading": null,
+        "parent": "dion-surface-de",
+        "position": [
+          -1630,
+          38,
+          -81
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Dion structure-group $02 cell $DE instance. Level 0 is floor 0 at the structure's 160-unit storey pitch, so the record sits 38 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 25916
     },
     {
@@ -2522,7 +2918,7 @@
       "model": "object-039ea8",
       "name": "NOVAGEN SAFE \u00b7 slot 102",
       "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $11, level selector $01, cell $B2. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "reason": "Authored Dion group $02 cell $B2 parent decoded, but the derived local placement (746, 150, 861) lies outside the parent extent, so it is not published.",
       "sourceAddress": 25920
     },
     {
@@ -2671,8 +3067,17 @@
       "location": null,
       "model": "object-03a67e",
       "name": "BRIEFCASE \u00b7 slot 108",
-      "placement": null,
-      "reason": "Interior-associated resident on VESTA: structure-group selector $05, insertion-group selector $08, level selector $03, cell $64. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Vesta group $05 cell $64 local model units",
+        "heading": null,
+        "parent": "vesta-surface-64",
+        "position": [
+          337,
+          951,
+          -210
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Vesta structure-group $05 cell $64 instance. Level 3 is floor 3 at the structure's 317-unit storey pitch, so the record sits 0 units above it. Its insertion group is absent from the parent structure's association list, which belongs to the structure bound at level 0; the interior list is unreached (#331). Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 25944
     },
     {
@@ -2680,7 +3085,32 @@
         "body": "body-4",
         "cell": 178,
         "insertionGroupSelector": 6,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 11,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 7
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 2
       },
@@ -2696,8 +3126,17 @@
       "location": null,
       "model": "object-03a7da",
       "name": "RUBBISH BIN \u00b7 slot 109",
-      "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $06, level selector $00, cell $B2. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Dion group $02 cell $B2 local model units",
+        "heading": null,
+        "parent": "dion-surface-b2",
+        "position": [
+          -746,
+          0,
+          -131
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Dion structure-group $02 cell $B2 instance. Level 0 is floor 0 at the structure's 150-unit storey pitch, so the record sits 0 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 25948
     },
     {
@@ -2730,7 +3169,24 @@
         "body": "body-4",
         "cell": 178,
         "insertionGroupSelector": 7,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 11,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 6
+          }
+        ],
         "levelSelector": 1,
         "structureGroupSelector": 2
       },
@@ -2746,8 +3202,17 @@
       "location": null,
       "model": "object-03a9b8",
       "name": "NOVAGEN CABINET \u00b7 slot 111",
-      "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $07, level selector $01, cell $B2. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Dion group $02 cell $B2 local model units",
+        "heading": null,
+        "parent": "dion-surface-b2",
+        "position": [
+          -1033,
+          150,
+          -320
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Dion structure-group $02 cell $B2 instance. Level 1 is floor 1 at the structure's 150-unit storey pitch, so the record sits 0 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 25956
     },
     {
@@ -3158,7 +3623,68 @@
         "body": "body-4",
         "cell": 34,
         "insertionGroupSelector": 6,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 39,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 38,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 38,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 14
+          },
+          {
+            "insertionKey": 6,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 20
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 2
       },
@@ -3174,8 +3700,17 @@
       "location": null,
       "model": "object-03bdec",
       "name": "WASHING MACHINE \u00b7 slot 128",
-      "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $06, level selector $00, cell $22. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Dion group $02 cell $22 local model units",
+        "heading": null,
+        "parent": "dion-surface-22",
+        "position": [
+          356,
+          0,
+          -645
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Dion structure-group $02 cell $22 instance. Level 0 is floor 0 at the structure's 160-unit storey pitch, so the record sits 0 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 26024
     },
     {
@@ -3333,7 +3868,64 @@
         "body": "body-4",
         "cell": 233,
         "insertionGroupSelector": 9,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 25,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 24,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 24,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 44,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 44,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 44,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 43,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 43,
+            "regionSelector": 17
+          },
+          {
+            "insertionKey": 43,
+            "regionSelector": 18
+          },
+          {
+            "insertionKey": 44,
+            "regionSelector": 19
+          },
+          {
+            "insertionKey": 44,
+            "regionSelector": 20
+          },
+          {
+            "insertionKey": 44,
+            "regionSelector": 23
+          },
+          {
+            "insertionKey": 44,
+            "regionSelector": 24
+          },
+          {
+            "insertionKey": 24,
+            "regionSelector": 34
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 2
       },
@@ -3349,8 +3941,17 @@
       "location": null,
       "model": "object-03c838",
       "name": "ACME UNIVERSAL \u00b7 slot 135",
-      "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $09, level selector $00, cell $E9. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Dion group $02 cell $E9 local model units",
+        "heading": null,
+        "parent": "dion-surface-e9",
+        "position": [
+          2704,
+          0,
+          1047
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Dion structure-group $02 cell $E9 instance. Level 0 is floor 0 at the structure's 180-unit storey pitch, so the record sits 0 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 26052
     },
     {
@@ -3658,7 +4259,24 @@
         "body": "body-4",
         "cell": 178,
         "insertionGroupSelector": 7,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 11,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 6
+          }
+        ],
         "levelSelector": 1,
         "structureGroupSelector": 2
       },
@@ -3674,8 +4292,17 @@
       "location": null,
       "model": "object-03d9bc",
       "name": "ANSAFONE \u00b7 slot 148",
-      "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $07, level selector $01, cell $B2. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Dion group $02 cell $B2 local model units",
+        "heading": null,
+        "parent": "dion-surface-b2",
+        "position": [
+          -940,
+          180,
+          -845
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Dion structure-group $02 cell $B2 instance. Level 1 is floor 1 at the structure's 150-unit storey pitch, so the record sits 30 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 26104
     },
     {
@@ -3799,8 +4426,17 @@
       "location": null,
       "model": "object-03df0e",
       "name": "SCROLL \u00b7 slot 153",
-      "placement": null,
-      "reason": "Interior-associated resident on VESTA: structure-group selector $05, insertion-group selector $0C, level selector $02, cell $64. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Vesta group $05 cell $64 local model units",
+        "heading": null,
+        "parent": "vesta-surface-64",
+        "position": [
+          632,
+          682,
+          878
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Vesta structure-group $05 cell $64 instance. Level 2 is floor 2 at the structure's 317-unit storey pitch, so the record sits 48 units above it. Its insertion group is absent from the parent structure's association list, which belongs to the structure bound at level 0; the interior list is unreached (#331). Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 26124
     },
     {
@@ -3808,7 +4444,36 @@
         "body": "body-4",
         "cell": 160,
         "insertionGroupSelector": 4,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 8,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 8,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 23,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 23,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 24,
+            "regionSelector": 8
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 2
       },
@@ -3824,8 +4489,17 @@
       "location": null,
       "model": "object-03dff2",
       "name": "NOTE PAD \u00b7 slot 154",
-      "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $04, level selector $00, cell $A0. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Dion group $02 cell $A0 local model units",
+        "heading": null,
+        "parent": "dion-surface-a0",
+        "position": [
+          28,
+          48,
+          -969
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Dion structure-group $02 cell $A0 instance. Level 0 is floor 0 at the structure's 200-unit storey pitch, so the record sits 48 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 26128
     },
     {
@@ -4697,8 +5371,17 @@
       "location": null,
       "model": "object-03e4ae",
       "name": "KEY- TARG TOURER \u00b7 slot 184",
-      "placement": null,
-      "reason": "Interior-associated resident on VESTA: structure-group selector $05, insertion-group selector $0A, level selector $01, cell $64. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Vesta group $05 cell $64 local model units",
+        "heading": null,
+        "parent": "vesta-surface-64",
+        "position": [
+          1177,
+          317,
+          1075
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Vesta structure-group $05 cell $64 instance. Level 1 is floor 1 at the structure's 317-unit storey pitch, so the record sits 0 units above it. Its insertion group is absent from the parent structure's association list, which belongs to the structure bound at level 0; the interior list is unreached (#331). Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 26248
     },
     {
@@ -4931,7 +5614,28 @@
         "body": "body-4",
         "cell": 160,
         "insertionGroupSelector": 3,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 0,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 7,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 7,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 7,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 23,
+            "regionSelector": 8
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 2
       },
@@ -4947,8 +5651,17 @@
       "location": null,
       "model": "object-04101c",
       "name": "BED \u00b7 slot 195",
-      "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $03, level selector $00, cell $A0. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Dion group $02 cell $A0 local model units",
+        "heading": null,
+        "parent": "dion-surface-a0",
+        "position": [
+          -306,
+          0,
+          -1889
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Dion structure-group $02 cell $A0 instance. Level 0 is floor 0 at the structure's 200-unit storey pitch, so the record sits 0 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 26292
     },
     {
@@ -5122,8 +5835,17 @@
       "location": null,
       "model": "object-040884",
       "name": "TABLE \u00b7 slot 202",
-      "placement": null,
-      "reason": "Interior-associated resident on VESTA: structure-group selector $05, insertion-group selector $0C, level selector $02, cell $64. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Vesta group $05 cell $64 local model units",
+        "heading": null,
+        "parent": "vesta-surface-64",
+        "position": [
+          632,
+          634,
+          878
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Vesta structure-group $05 cell $64 instance. Level 2 is floor 2 at the structure's 317-unit storey pitch, so the record sits 0 units above it. Its insertion group is absent from the parent structure's association list, which belongs to the structure bound at level 0; the interior list is unreached (#331). Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 26320
     },
     {
@@ -5131,7 +5853,68 @@
         "body": "body-14",
         "cell": 115,
         "insertionGroupSelector": 6,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 39,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 38,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 38,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 8
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 9
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 10
+          },
+          {
+            "insertionKey": 25,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 13
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 14
+          },
+          {
+            "insertionKey": 6,
+            "regionSelector": 15
+          },
+          {
+            "insertionKey": 39,
+            "regionSelector": 20
+          }
+        ],
         "levelSelector": 1,
         "structureGroupSelector": 5
       },
@@ -5147,8 +5930,17 @@
       "location": null,
       "model": "object-04084c",
       "name": "TABLE \u00b7 slot 203",
-      "placement": null,
-      "reason": "Interior-associated resident on VESTA: structure-group selector $05, insertion-group selector $06, level selector $01, cell $73. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Vesta group $05 cell $73 local model units",
+        "heading": null,
+        "parent": "vesta-surface-73",
+        "position": [
+          453,
+          160,
+          256
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Vesta structure-group $05 cell $73 instance. Level 1 is floor 1 at the structure's 160-unit storey pitch, so the record sits 0 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 26324
     },
     {
@@ -5156,7 +5948,36 @@
         "body": "body-4",
         "cell": 160,
         "insertionGroupSelector": 4,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 8,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 8,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 23,
+            "regionSelector": 6
+          },
+          {
+            "insertionKey": 23,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 24,
+            "regionSelector": 8
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 2
       },
@@ -5172,8 +5993,17 @@
       "location": null,
       "model": "object-0408a0",
       "name": "TABLE \u00b7 slot 204",
-      "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $04, level selector $00, cell $A0. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Dion group $02 cell $A0 local model units",
+        "heading": null,
+        "parent": "dion-surface-a0",
+        "position": [
+          28,
+          0,
+          -969
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Dion structure-group $02 cell $A0 instance. Level 0 is floor 0 at the structure's 200-unit storey pitch, so the record sits 0 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 26328
     },
     {
@@ -5431,7 +6261,40 @@
         "body": "body-14",
         "cell": 100,
         "insertionGroupSelector": 20,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 8,
+            "regionSelector": 1
+          },
+          {
+            "insertionKey": 8,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 15,
+            "regionSelector": 7
+          },
+          {
+            "insertionKey": 20,
+            "regionSelector": 18
+          },
+          {
+            "insertionKey": 20,
+            "regionSelector": 19
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 5
       },
@@ -5447,8 +6310,17 @@
       "location": null,
       "model": "object-03ac80",
       "name": "BENCH \u00b7 slot 215",
-      "placement": null,
-      "reason": "Interior-associated resident on VESTA: structure-group selector $05, insertion-group selector $14, level selector $00, cell $64. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Vesta group $05 cell $64 local model units",
+        "heading": null,
+        "parent": "vesta-surface-64",
+        "position": [
+          -142,
+          0,
+          535
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Vesta structure-group $05 cell $64 instance. Level 0 is floor 0 at the structure's 317-unit storey pitch, so the record sits 0 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 26372
     },
     {
@@ -5556,7 +6428,24 @@
         "body": "body-4",
         "cell": 178,
         "insertionGroupSelector": 7,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 11,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 11,
+            "regionSelector": 4
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 5
+          },
+          {
+            "insertionKey": 0,
+            "regionSelector": 6
+          }
+        ],
         "levelSelector": 1,
         "structureGroupSelector": 2
       },
@@ -5572,8 +6461,17 @@
       "location": null,
       "model": "object-03b204",
       "name": "COFFEE TABLE \u00b7 slot 220",
-      "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $07, level selector $01, cell $B2. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Dion group $02 cell $B2 local model units",
+        "heading": null,
+        "parent": "dion-surface-b2",
+        "position": [
+          -940,
+          150,
+          -845
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Dion structure-group $02 cell $B2 instance. Level 1 is floor 1 at the structure's 150-unit storey pitch, so the record sits 0 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 26392
     },
     {
@@ -5697,8 +6595,17 @@
       "location": null,
       "model": "object-0370c8",
       "name": "PROCESSORS CHAIR \u00b7 slot 225",
-      "placement": null,
-      "reason": "Interior-associated resident on VESTA: structure-group selector $05, insertion-group selector $0A, level selector $01, cell $64. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Vesta group $05 cell $64 local model units",
+        "heading": null,
+        "parent": "vesta-surface-64",
+        "position": [
+          1684,
+          317,
+          499
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Vesta structure-group $05 cell $64 instance. Level 1 is floor 1 at the structure's 317-unit storey pitch, so the record sits 0 units above it. Its insertion group is absent from the parent structure's association list, which belongs to the structure bound at level 0; the interior list is unreached (#331). Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 26412
     },
     {
@@ -5822,8 +6729,17 @@
       "location": null,
       "model": "object-036f2a",
       "name": "PROCESSORS DESK \u00b7 slot 230",
-      "placement": null,
-      "reason": "Interior-associated resident on VESTA: structure-group selector $05, insertion-group selector $0A, level selector $01, cell $64. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Vesta group $05 cell $64 local model units",
+        "heading": null,
+        "parent": "vesta-surface-64",
+        "position": [
+          1666,
+          317,
+          601
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Vesta structure-group $05 cell $64 instance. Level 1 is floor 1 at the structure's 317-unit storey pitch, so the record sits 0 units above it. Its insertion group is absent from the parent structure's association list, which belongs to the structure bound at level 0; the interior list is unreached (#331). Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 26432
     },
     {
@@ -5906,7 +6822,36 @@
         "body": "body-4",
         "cell": 222,
         "insertionGroupSelector": 32,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 98,
+            "regionSelector": 11
+          },
+          {
+            "insertionKey": 98,
+            "regionSelector": 12
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 26
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 27
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 28
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 33
+          },
+          {
+            "insertionKey": 5,
+            "regionSelector": 34
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 2
       },
@@ -5922,8 +6867,17 @@
       "location": null,
       "model": "object-036f62",
       "name": "AUTHORS DESK \u00b7 slot 234",
-      "placement": null,
-      "reason": "Interior-associated resident on DION: structure-group selector $02, insertion-group selector $20, level selector $00, cell $DE. The source structure for this body/cell workspace has not been recovered, so no parent or local placement is claimed.",
+      "placement": {
+        "coordinateSystem": "Dion group $02 cell $DE local model units",
+        "heading": null,
+        "parent": "dion-surface-de",
+        "position": [
+          -1630,
+          0,
+          -81
+        ]
+      },
+      "reason": "Recovered resident placement in the authored Dion structure-group $02 cell $DE instance. Level 0 is floor 0 at the structure's 160-unit storey pitch, so the record sits 0 units above it. Raw yaw is not published; the absolute angular convention remains unresolved.",
       "sourceAddress": 26448
     },
     {
@@ -269754,6 +270708,26 @@
     {
       "evidence": [
         {
+          "claim": "Authored Dion group $02 cell $B2 record places this instance and binds resident slot 109 at local (-746, 0, -131) on floor 0.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
+          "claim": "Authored Dion group $02 cell $B2 record places this instance and binds resident slot 111 at local (-1033, 150, -320) on floor 1.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
+          "claim": "Authored Dion group $02 cell $B2 record places this instance and binds resident slot 148 at local (-940, 180, -845) on floor 1.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
+          "claim": "Authored Dion group $02 cell $B2 record places this instance and binds resident slot 220 at local (-940, 150, -845) on floor 1.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
           "claim": "DION cell 178 installs $7AFB base $21, so the $F0 entrance in slot $3FC carries key letter D at $CD37.",
           "confidence": "observed",
           "source": "docs/research/damocles-generic-entrance-attachments.md"
@@ -269761,7 +270735,12 @@
       ],
       "id": "structure-010ea8",
       "kind": "structure",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-109",
+        "object-slot-111",
+        "object-slot-148",
+        "object-slot-220"
+      ],
       "name": "Structure 37",
       "nameStatus": "unknown",
       "omissions": [],
@@ -378418,6 +379397,46 @@
     {
       "evidence": [
         {
+          "claim": "Authored Vesta group $05 cell $64 record places this instance and binds resident slot 68 at local (-1376, 3170, -281) on floor 10.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
+          "claim": "Authored Vesta group $05 cell $64 record places this instance and binds resident slot 108 at local (337, 951, -210) on floor 3.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
+          "claim": "Authored Vesta group $05 cell $64 record places this instance and binds resident slot 153 at local (632, 682, 878) on floor 2.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
+          "claim": "Authored Vesta group $05 cell $64 record places this instance and binds resident slot 184 at local (1177, 317, 1075) on floor 1.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
+          "claim": "Authored Vesta group $05 cell $64 record places this instance and binds resident slot 202 at local (632, 634, 878) on floor 2.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
+          "claim": "Authored Vesta group $05 cell $64 record places this instance and binds resident slot 215 at local (-142, 0, 535) on floor 0.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
+          "claim": "Authored Vesta group $05 cell $64 record places this instance and binds resident slot 225 at local (1684, 317, 499) on floor 1.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
+          "claim": "Authored Vesta group $05 cell $64 record places this instance and binds resident slot 230 at local (1666, 317, 601) on floor 1.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
           "claim": "VESTA cell 100 installs $7AFB base $22, so the $F0 entrance in slot $3EC carries key letter E at $CD3F.",
           "confidence": "verified",
           "source": "docs/research/damocles-generic-entrance-attachments.md"
@@ -378425,7 +379444,16 @@
       ],
       "id": "structure-01454e",
       "kind": "structure",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-68",
+        "object-slot-108",
+        "object-slot-153",
+        "object-slot-184",
+        "object-slot-202",
+        "object-slot-215",
+        "object-slot-225",
+        "object-slot-230"
+      ],
       "name": "Structure 70",
       "nameStatus": "unknown",
       "omissions": [],
@@ -612232,10 +613260,18 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "Authored Dion group $02 cell $33 record places this instance and binds resident slot 38 at local (-73, 0, 41) on floor 0.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        }
+      ],
       "id": "structure-01a690",
       "kind": "structure",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-38"
+      ],
       "name": "Structure 107",
       "nameStatus": "unknown",
       "omissions": [],
@@ -860203,10 +861239,18 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "Authored Dion group $02 cell $E9 record places this instance and binds resident slot 135 at local (2704, 0, 1047) on floor 0.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        }
+      ],
       "id": "structure-01d550",
       "kind": "structure",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-135"
+      ],
       "name": "Structure 182",
       "nameStatus": "unknown",
       "omissions": [],
@@ -904337,10 +905381,30 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "Authored Dion group $02 cell $A0 record places this instance and binds resident slot 154 at local (28, 48, -969) on floor 0.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
+          "claim": "Authored Dion group $02 cell $A0 record places this instance and binds resident slot 195 at local (-306, 0, -1889) on floor 0.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
+          "claim": "Authored Dion group $02 cell $A0 record places this instance and binds resident slot 204 at local (28, 0, -969) on floor 0.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        }
+      ],
       "id": "structure-01d758",
       "kind": "structure",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-154",
+        "object-slot-195",
+        "object-slot-204"
+      ],
       "name": "Structure 195",
       "nameStatus": "unknown",
       "omissions": [],
@@ -909668,10 +910732,18 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "Authored Dion group $02 cell $C2 record places this instance and binds resident slot 63 at local (-255, 160, 410) on floor 1.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        }
+      ],
       "id": "structure-01d77c",
       "kind": "structure",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-63"
+      ],
       "name": "Structure 197",
       "nameStatus": "unknown",
       "omissions": [],
@@ -915520,10 +916592,18 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "Authored Dion group $02 cell $22 record places this instance and binds resident slot 128 at local (356, 0, -645) on floor 0.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        }
+      ],
       "id": "structure-01d78e",
       "kind": "structure",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-128"
+      ],
       "name": "Structure 198",
       "nameStatus": "unknown",
       "omissions": [],
@@ -938632,10 +939712,24 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "Authored Dion group $02 cell $09 record places this instance and binds resident slot 50 at local (939, 0, -439) on floor 0.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
+          "claim": "Authored Dion group $02 cell $09 record places this instance and binds resident slot 51 at local (923, 0, -637) on floor 0.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        }
+      ],
       "id": "structure-01d806",
       "kind": "structure",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-50",
+        "object-slot-51"
+      ],
       "name": "Structure 204",
       "nameStatus": "unknown",
       "omissions": [],
@@ -987976,6 +989070,21 @@
     {
       "evidence": [
         {
+          "claim": "Authored Dion group $02 cell $DE record places this instance and binds resident slot 14 at local (-1659, 0, -211) on floor 0.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
+          "claim": "Authored Dion group $02 cell $DE record places this instance and binds resident slot 101 at local (-1630, 38, -81) on floor 0.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
+          "claim": "Authored Dion group $02 cell $DE record places this instance and binds resident slot 234 at local (-1630, 0, -81) on floor 0.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
           "claim": "DION cell 222 installs $7AFB base $1E, so the $F0 entrance in slot $3FC carries key letter A at $CD37.",
           "confidence": "observed",
           "source": "docs/research/damocles-generic-entrance-attachments.md"
@@ -987983,7 +989092,11 @@
       ],
       "id": "structure-01daa0",
       "kind": "structure",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-14",
+        "object-slot-101",
+        "object-slot-234"
+      ],
       "name": "Structure 216",
       "nameStatus": "unknown",
       "omissions": [],
@@ -1191769,10 +1192882,24 @@
       ]
     },
     {
-      "evidence": [],
+      "evidence": [
+        {
+          "claim": "Authored Vesta group $05 cell $73 record places this instance and binds resident slot 94 at local (453, 208, 256) on floor 1.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        },
+        {
+          "claim": "Authored Vesta group $05 cell $73 record places this instance and binds resident slot 203 at local (453, 160, 256) on floor 1.",
+          "confidence": "verified",
+          "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+        }
+      ],
       "id": "structure-01dd58",
       "kind": "structure",
-      "linkedInstances": [],
+      "linkedInstances": [
+        "object-slot-94",
+        "object-slot-203"
+      ],
       "name": "Structure 252",
       "nameStatus": "unknown",
       "omissions": [],
