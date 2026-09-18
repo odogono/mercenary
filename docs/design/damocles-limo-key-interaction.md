@@ -6,10 +6,12 @@ recovered by [#298](https://github.com/odogono/mercenary/issues/298). Implementa
 [#301](https://github.com/odogono/mercenary/issues/301). This document adds no application
 implementation.
 
-**Status after the #300 implementation interview.** #300 remains a separate Eris /
-`object-slot-183` delivery. [#319](https://github.com/odogono/mercenary/issues/319) extends this
-Host Callout; it does not absorb the ticket. The include-list below is the implementation
-boundary: ordinary Eris traces only. Remaining drop classes stay named out to the
+**Status after the #300 implementation interview.** Behaviour is closed by this contract.
+Seams for shipping it are in [Implementation interview](#implementation-interview-300) below.
+#300 remains a separate Eris / `object-slot-183` delivery.
+[#319](https://github.com/odogono/mercenary/issues/319) extends this Host Callout; it does not
+absorb the ticket. The include-list below is the implementation boundary: ordinary Eris traces
+only. Remaining drop classes stay named out to the
 [Gamma System programme](https://github.com/odogono/mercenary/issues/313) rather than reopening
 [#312](https://github.com/odogono/mercenary/issues/312) or inventing a Spaceport-only drop rule.
 
@@ -18,7 +20,9 @@ that ticket shipped on `main` as 0.20.0 ([PR 348](https://github.com/odogono/mer
 #344 already owns the 3→4 bump (`Pose.body`, `presentationSha256`). #300 **joins schema 4 with
 no further bump**. The 0.20.0 schema-4 snapshot (`elapsed`, `pose`, `structure` only) is not
 restore-complete for this slice: a record that lacks the fields below is refused whole. There is
-no migration and no defaulting.
+no migration and no defaulting. Payload (catalogue schema 14 + Eris presentation schema 6) and
+gameplay+persistence are two stacked PRs; the payload layer does not merge to `main` until the
+second layer is ready to follow, so schema 4 is never saved incomplete under the new identity.
 
 It follows [ADR 0045](../adr/0045-author-scripts-as-named-typescript-steps.md): named TypeScript
 steps, explicit serializable state, a Damocles-only Host Callout. Nothing here migrates Targ,
@@ -743,18 +747,66 @@ implementation. #344 has shipped; start from its identity and Pose.
    frames are reading hold, and no input ends a message early. `Reveal` above is the recovered shape.
 3. ~~The message strings extracted into `payload/damocles/`~~ — [#304](https://github.com/odogono/mercenary/issues/304), delivered as
    `payload/damocles/strings.json` (including `system-string-9`).
-4. `web/damocles/eris.json` schema 6 with its `time` block.
-5. Capital Spaceport association groups in the payload, including group 1, implicit `(group,0)`
-   and duplicate pairs. Do not extract every Eris parent in this slice.
-6. Resident instances placed in the world: `erisSurfaceFrom` currently skips every instance whose
-   `location` is null, which is every structure-anchored resident including slot 183. Placement
-   comes from `placement.parent`, `placement.position` and the recovered world-to-local transform;
-   residence becomes mutable session state.
-7. The Damocles Script Host: `ScriptState`, `runFrame`, `fireTrigger`, the trigger table and the
-   named steps of slot 2, as new modules beside — not inside — `firstOffer.ts`.
+4. `web/damocles/eris.json` schema 6 with its `time` block (payload PR).
+5. Capital Spaceport `associationGroups` on `eris-surface-87` in catalogue schema 14, including
+   group 1. Store explicit pairs only; synthesize implicit `(group, 0)` at read time. Extract
+   with the lab decoder as ordered pairs; keep rejecting duplicate *regions* until a parent
+   needs them. Do not extract every Eris parent in this slice.
+6. Only `object-slot-183` becomes a played resident. World position is parent `location` ×
+   `cellUnits` plus `placement.position`. `erisSurfaceFrom` stays a static Catalogue read;
+   the session holds a map of residence *departures* and passes visible world placements into
+   `planErisFrame`.
+7. The Damocles Script Host: `script.ts` (`ScriptState`, `initialScriptState`, `runFrame`,
+   `fireTrigger`, `Effect`), `slot2.ts` (step graph, `revision` 1), `display.ts` (row arithmetic),
+   beside — not inside — `firstOffer.ts`.
 8. Carried Stack (head-significant), `scrollCounter`, persistent Damocles Display, message gate
    and the panel's inventory/message lines.
 9. `take()` and `drop()` on `DamoclesSession`, wired from `boot.ts`'s currently no-op `reach` and
    `drop` Control Profile actions, limited to the include-list.
 10. Schema-4 fields in `web/src/damocles/save.ts` with the validation table above, on top of
-    #344's identity and Pose, with no second bump.
+    #344's identity and Pose, with no second bump. `save.ts` is the atomic codec; commit-boundary
+    and Reveal predicates live beside `script.ts` / `display.ts`.
+
+## Implementation interview (#300)
+
+Closed 2026-09-18. Behaviour above is unchanged. This section records the shipping seams.
+Glossary terms stay in [`CONTEXT.md`](../../CONTEXT.md). [ADR 0044](../adr/0044-admit-damocles-saves-as-a-title-scoped-snapshot.md)
+and [ADR 0045](../adr/0045-author-scripts-as-named-typescript-steps.md) are not extended: joining
+schema 4 and naming `damocles.script.slot-2` are applications of those ADRs, not new ones.
+
+### Delivery
+
+Two stacked PRs, merged as a pair. Layer 1 is payload only: catalogue schema 14 with
+`associationGroups` on `eris-surface-87` (null on every other instance), Eris presentation
+schema 6 with the `time` block, and the lab decoder emitting ordered explicit pairs from
+`$014AAC`. Layer 2 is gameplay plus persistence. Layer 1 does not merge to `main` alone:
+its identity hashes would match layer 2 while the snapshot still lacked `carried` /
+`residence` / `script` / `scrollCounter` / `frameAccumulator`.
+
+### Session and host
+
+- Carried Stack: last element is head (`at(-1)`), matching the existing panel.
+- Sound guard: constructor-injected predicate, default permitting, not Session State, not saved.
+- After each walk substep, spend `step * vblHertz` on whole frames: step `scrollCounter` toward
+  zero, then `runFrame`. That order is authored.
+- Selection is a session-side function over the recovered candidate set (surface residents of
+  the body ∪ structure insertions for the current region), not the renderer. Slot 74's native
+  exclusion is not ported.
+- `take()` / `drop()` / `advance()` append transient `Effect`s; callers `drainEffects()`.
+  Damocles boot has no sound presenter in this slice.
+- Inventory label actually scrolls one character per frame for 16 frames (instruction-derived).
+  Message-row reveal stays pixel-based.
+
+### Panel and console
+
+Optional `PanelViewModel.damoclesDisplay` `{ cells: 48-char string, scrollPixels: number }`.
+Damocles play leaves `message` as `''`. `panelView` draws a canvas into `#damocles-message`
+when the field is present. `inventory` lists model source labels; `drop` calls `session.drop()`;
+`get` calls `session.take()` with no slot argument.
+
+### Tests
+
+`damocles-script.test.ts`, `damocles-display.test.ts`, `damocles-take-drop.test.ts`; extend
+`damocles-save.test.ts`, `damocles-session.test.ts`, `damocles-panel.test.ts`,
+`damocles-console.test.ts`. Fixtures are the worked traces in this document, not Restricted
+Material.

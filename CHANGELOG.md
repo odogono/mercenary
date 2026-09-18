@@ -10,6 +10,11 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ## [Unreleased]
 
+### Added
+
+- Damocles catalogue schema 14 publishes Capital Spaceport association groups,
+  and Eris presentation schema 6 publishes its recovered 50 Hz script timing.
+
 ## [0.20.0] - 2026-09-18
 
 ### Added

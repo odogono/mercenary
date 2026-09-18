@@ -1929,10 +1929,10 @@ def find_area_placements(data: bytes, header_address: int) -> dict[int, dict]:
     return best
 
 
-def decode_structure_associations(data: bytes, start: int) -> dict[int, dict[int, int]]:
+def decode_structure_associations(data: bytes, start: int) -> dict[int, list[dict]]:
     """Decode a zero-terminated list of insertion-group records."""
     reader = Reader(data, start)
-    groups: dict[int, dict[int, int]] = {}
+    groups: dict[int, list[dict]] = {}
     for _ in range(256):
         if reader.p >= len(data):
             raise ValueError('structure association list terminator missing')
@@ -1941,7 +1941,8 @@ def decode_structure_associations(data: bytes, start: int) -> dict[int, dict[int
             return groups
         if selector in groups:
             raise ValueError(f'duplicate insertion group ${selector:02X}')
-        insertions = {}
+        insertions = []
+        regions = set()
         for _ in range(256):
             if reader.p >= len(data):
                 raise ValueError('structure association group terminator missing')
@@ -1951,9 +1952,13 @@ def decode_structure_associations(data: bytes, start: int) -> dict[int, dict[int
             if reader.p >= len(data):
                 raise ValueError(f'structure association group ${selector:02X} insertion key missing')
             insertion = reader.take(1)[0]
-            if region in insertions:
+            if region in regions:
                 raise ValueError(f'duplicate region ${region:02X} in insertion group ${selector:02X}')
-            insertions[region] = insertion
+            regions.add(region)
+            insertions.append({
+                'regionSelector': region,
+                'insertionKey': insertion,
+            })
         else:
             raise ValueError('structure association group terminator missing')
         groups[selector] = insertions
@@ -3195,10 +3200,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         insertions = decode_structure_associations(data, 0x13218).get(0x03)
         if insertions is None:
             raise ValueError('99 Chevy key insertion group is missing')
-        chevy_key['association']['insertions'] = [
-            {'regionSelector': region, 'insertionKey': insertion}
-            for region, insertion in insertions.items()
-        ]
+        chevy_key['association']['insertions'] = insertions
         chevy_key['placement'] = {
             'parent': parent_id,
             'position': resident_local_position(data, 180, tuple(parent_raw)),
@@ -3291,10 +3293,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
               insertions = decode_structure_associations(data, root).get(
                   association['insertionGroupSelector'])
           if insertions is not None:
-              association['insertions'] = [
-                  {'regionSelector': region, 'insertionKey': key}
-                  for region, key in insertions.items()
-              ]
+              association['insertions'] = insertions
           resident['placement'] = {
               'parent': parent['id'],
               'position': local,
@@ -3379,9 +3378,10 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         insertions = groups.get(association['insertionGroupSelector'])
         if insertions is None:
             raise ValueError('spaceport resident insertion group is missing')
-        association['insertions'] = [
-            {'regionSelector': region, 'insertionKey': insertion}
-            for region, insertion in insertions.items()
+        association['insertions'] = insertions
+        spaceport['associationGroups'] = [
+            {'group': group, 'pairs': pairs}
+            for group, pairs in groups.items()
         ]
         spaceport_raw = [round(spaceport['location']['position'][axis] * 65536) for axis in (0, 1, 2)]
         key_position = resident_local_position(data, 183, tuple(spaceport_raw))
@@ -3922,7 +3922,9 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'path': f'{label.title()} live workspace',
             'finding': note,
         })
-    return {'schemaVersion': 13, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
+    for instance in instances:
+        instance.setdefault('associationGroups', None)
+    return {'schemaVersion': 14, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'places': places, 'tables': tables,
             'coverage': coverage_ledger(models, tables, coverage_notes, disk_load)}
 
