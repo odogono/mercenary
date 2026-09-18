@@ -450,7 +450,10 @@ export class DamoclesSession implements TitleSession<
     const model = this.content.catalogue.models.find(
       item => item.id === instance.model
     )!;
-    const mesh = model.variants[0]?.mesh;
+    const form =
+      model.variants.find(variant => variant.id === model.id) ??
+      model.variants[0];
+    const mesh = form?.mesh;
     const placement: ErisPlacement = {
       faceCount: mesh?.faces.length ?? 0,
       heading: 0,
