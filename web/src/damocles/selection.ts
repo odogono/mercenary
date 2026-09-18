@@ -5,7 +5,7 @@ import type {
   Primitive
 } from '../catalogue/data.ts';
 import type { Vector3 } from '../orientation/index.ts';
-import type { ErisPlacement, ErisPose } from './world.ts';
+import type { ErisPlacement, Pose } from './world.ts';
 
 const EYE_CLEARANCE = 11;
 const LEAF_ENDPOINT_INSET = 8;
@@ -99,7 +99,7 @@ const workspaceBounds = (
 
 export const structureRegionAt = (
   placement: ErisPlacement,
-  pose: ErisPose,
+  pose: Pose,
   negateZ: boolean,
   openUnits: AttachmentUnits = closedAttachment
 ): number | null => {
@@ -141,15 +141,15 @@ const clearanceFor = (flags: number): number =>
   (flags & 0x00_ff) < 0x80 ? EYE_CLEARANCE : 0;
 
 export interface ClampedStructureStep {
-  readonly pose: ErisPose;
+  readonly pose: Pose;
   readonly regionIndex: number | null;
 }
 
 /** Apply the Working Authority's selected-region XZ eye pushback after one Mover step. */
 export const clampStructureStep = (
   placement: ErisPlacement,
-  from: ErisPose,
-  to: ErisPose,
+  from: Pose,
+  to: Pose,
   negateZ: boolean,
   openUnits: AttachmentUnits,
   selectedRegionIndex: number | null
@@ -204,6 +204,7 @@ export const clampStructureStep = (
   }
 
   const pose = {
+    body: to.body,
     heading: to.heading,
     position: worldPosition(
       placement,
@@ -265,7 +266,7 @@ const movingAttachment = (
 /** Ordered draw components for today's on-foot session. Empty selections are intentional. */
 export const structureMeshes = (
   placement: ErisPlacement,
-  pose: ErisPose,
+  pose: Pose,
   negateZ: boolean,
   openUnits: AttachmentUnits = closedAttachment,
   selectedRegionIndex?: number | null

@@ -19,6 +19,7 @@ const sessionOf = async (): Promise<DamoclesSession> => {
   return new DamoclesSession({
     catalogue,
     doc,
+    presentationSha256: 'test-presentation',
     surface: erisSurfaceFrom(catalogue, doc)
   });
 };

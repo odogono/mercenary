@@ -25,9 +25,14 @@ export interface ErisCell {
   readonly z: number;
 }
 
-/// Where the player stands and faces, in Eris's own terms: raw engine units with north at +z
-/// and east at +x, and a bearing in radians clockwise from north (#204).
-export interface ErisPose {
+/// Where the player stands and faces on one Body: raw engine units with north at +z and east
+/// at +x, and a bearing in radians clockwise from north (#204).
+///
+/// The Body is part of the Pose rather than a peer of it, so a standing position can never be
+/// applied to the wrong Body by losing track of which one it came from. It was `ErisPose`
+/// until #344; the rename carries no behaviour change.
+export interface Pose {
+  readonly body: string; // Catalogue Body id
   readonly heading: number;
   readonly position: Vector3;
 }
@@ -135,7 +140,8 @@ export const headingFromByte = (
         orientation
       );
 
-export const startPose = (doc: ErisPresentationDocument): ErisPose => ({
+export const startPose = (doc: ErisPresentationDocument): Pose => ({
+  body: doc.body.id,
   heading: bearingFromYaw(doc.start.yaw, doc.orientation),
   position: doc.start.position
 });

@@ -12,23 +12,36 @@ import {
 } from '../src/damocles/save.ts';
 import { createDamoclesSavePersistence } from '../src/damocles/saves.ts';
 import { DamoclesSession } from '../src/damocles/session.ts';
+import { presentationIdentity } from '../src/damocles/title.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { createNewGameAction } from '../src/shell/menu.ts';
 import { titleStorageKeys } from '../src/shell/title.ts';
 
 const load = async () => {
-  const [rawCatalogue, presentation] = await Promise.all([
+  const [rawCatalogue, presentationText] = await Promise.all([
     Bun.file('../payload/damocles/catalogue.json').json(),
-    Bun.file(new URL('../damocles/eris.json', import.meta.url)).json()
+    Bun.file(new URL('../damocles/eris.json', import.meta.url)).text()
   ]);
   const catalogue = parseCatalogue(rawCatalogue);
-  const doc = readErisPresentation(presentation);
+  const doc = readErisPresentation(JSON.parse(presentationText));
+  const presentationSha256 = await sha256(presentationText);
   return {
     catalogue,
     doc,
-    identity: damoclesSaveIdentity(catalogue, doc),
+    identity: damoclesSaveIdentity(catalogue, presentationSha256),
+    presentationSha256,
     surface: erisSurfaceFrom(catalogue, doc)
   };
+};
+
+const sha256 = async (text: string): Promise<string> => {
+  const digest = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(text)
+  );
+  return Array.from(new Uint8Array(digest), byte =>
+    byte.toString(16).padStart(2, '0')
+  ).join('');
 };
 
 describe('Damocles Saves', () => {
@@ -72,24 +85,55 @@ describe('Damocles Saves', () => {
     ).toThrow(/payload identity/);
     expect(() =>
       decodeDamoclesSave(
-        JSON.stringify({ ...JSON.parse(encoded), schemaVersion: 2 }),
+        JSON.stringify({ ...JSON.parse(encoded), schemaVersion: 3 }),
         loaded.identity
       )
-    ).toThrow(/schema 2/);
+    ).toThrow(/schema 3/);
     const invalidEntrance = JSON.parse(encoded);
     invalidEntrance.snapshot.structure.attachments[0].openUnits = -1;
     expect(() =>
       decodeDamoclesSave(JSON.stringify(invalidEntrance), loaded.identity)
     ).toThrow(/attachment state/);
-    const schema2Identity = encodeDamoclesSave({
-      identity: { ...loaded.identity, erisSchemaVersion: 2 },
+    const editedPresentation = encodeDamoclesSave({
+      identity: { ...loaded.identity, presentationSha256: 'other' },
       savedAt: '2026-09-12T08:00:00.000Z',
       schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
       snapshot: session.captureResume(),
       where: damoclesWhere(session.snapshot.cell)
     });
-    expect(() => decodeDamoclesSave(schema2Identity, loaded.identity)).toThrow(
-      /payload identity/
+    expect(() =>
+      decodeDamoclesSave(editedPresentation, loaded.identity)
+    ).toThrow(/payload identity/);
+    const bodilessPose = JSON.parse(encoded);
+    delete bodilessPose.snapshot.pose.body;
+    expect(() =>
+      decodeDamoclesSave(JSON.stringify(bodilessPose), loaded.identity)
+    ).toThrow(/names no Body/);
+  });
+
+  test('identity pins the presentation by content, not by a declared version', async () => {
+    const text = await Bun.file(
+      new URL('../damocles/eris.json', import.meta.url)
+    ).text();
+    const loaded = await load();
+
+    // The loader hashes the bytes it served, so the suite and the Title agree.
+    expect(await presentationIdentity([text])).toBe(loaded.presentationSha256);
+
+    // An edit that leaves every declared schema version alone still changes identity. That is
+    // the whole reason this replaced erisSchemaVersion, which such an edit would not move.
+    const edited = text.replace('"ERIS"', '"ERIS "');
+    expect(edited).not.toBe(text);
+    expect(await presentationIdentity([edited])).not.toBe(
+      loaded.presentationSha256
+    );
+
+    // Documents join in a fixed order, and the separator keeps concatenation from colliding.
+    expect(await presentationIdentity(['a', 'b'])).not.toBe(
+      await presentationIdentity(['b', 'a'])
+    );
+    expect(await presentationIdentity(['ab', ''])).not.toBe(
+      await presentationIdentity(['a', 'b'])
     );
   });
 

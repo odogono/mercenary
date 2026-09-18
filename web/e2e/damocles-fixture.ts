@@ -1,17 +1,19 @@
 import { damoclesPanelViewModel } from '../src/damocles/panel.ts';
 import { damoclesTitle } from '../src/damocles/title.ts';
 import { intent } from '../src/gameCore/index.ts';
+import type { PayloadDocument } from '../src/shell/title.ts';
 
 /// Walk the Damocles Gameplay Session for a long stretch synchronously, so the end-to-end
 /// suite can see a cell change without waiting the minute and a half the derived walking
 /// speed needs in real time.
 const result = document.getElementById('result')!;
-const requiredJson = async (pathname: string): Promise<unknown> => {
+const requiredJson = async (pathname: string): Promise<PayloadDocument> => {
   const response = await fetch(pathname);
   if (!response.ok) {
     throw new Error(`${pathname} answered HTTP ${response.status}`);
   }
-  return await response.json();
+  const text = await response.text();
+  return { text, value: JSON.parse(text) };
 };
 
 try {

@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { walk, type WalkRules } from '../src/damocles/mover.ts';
 import { cellOf } from '../src/damocles/world.ts';
 import { IDLE, intent } from '../src/gameCore/index.ts';
+import { ERIS_BODY } from './damocles-pose.ts';
 
 const rules: WalkRules = {
   eyeHeight: 63,
@@ -12,6 +13,7 @@ const rules: WalkRules = {
   unitsPerSecond: 327.68
 };
 const start = {
+  body: ERIS_BODY,
   heading: 0,
   position: { x: 0x00_47_70_b1, y: 63, z: 0x00_88_6c_2d }
 };

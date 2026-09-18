@@ -4,9 +4,50 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+Each released version is tagged `v<version>` and carries a compare link at the
+foot of this file. Link references start at 0.20.0; earlier versions were never
+tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
+
 ## [Unreleased]
 
+## [0.20.0] - 2026-09-18
+
 ### Added
+
+- **The body-aware Damocles pickup, display and persistence contract is
+  decision-complete** (`docs/design/damocles-body-aware-interaction.md`). It
+  admits a Body for play iff `arrival-poses.json` gives one of its Poses a
+  **recovered workspace origin** — not merely a cell, which every Pose has
+  because the cell is read from `$7B5C`; without the anchor a Pose's cell cannot
+  be related to any resident placement, which is exactly what a take needs. Four
+  Bodies qualify from seven Poses; eleven more carry an implied origin, which is
+  a navigation lead and not an anchor. Object Residence stays keyed on parent,
+  level and insertion group, because a scene is identified by structure group and
+  cell and the parent instance identity already carries both — and it gains the
+  storey-pitch inequality as a restore-time check. Every recovered rule is
+  implemented and tagged **observed** or **derived**: omitting the unobserved
+  model-form and height gates would not leave a hole, it would silently admit
+  drops the original refuses. The console body switch names a **Pose id**, is one
+  commit, validates before it commits, and materialises residence lazily so the
+  Catalogue stays the authority for every object nobody has moved. Capacity,
+  carried staging, the draw queue and every special-item consequence are
+  recomputed; the Carried Stack order, briefcase overflow store, scroll counter
+  and handling bit 7 are stored. The per-Body/object acceptance matrix is
+  generated from the payload rather than enumerated, so research deliveries grow
+  it without editing the contract.
+
+- **The Damocles Pose names its Body, and save identity pins bytes rather than a
+  declared version.** `ErisPose` becomes `Pose` carrying its Catalogue Body id,
+  so a standing position cannot be applied to the wrong Body by losing track of
+  which one it came from. `erisSchemaVersion` — one Body's presentation schema
+  number — becomes `presentationSha256` over every Damocles presentation document
+  together; a per-Body set was rejected because identity would then vary by which
+  Bodies the player had visited, so two saves of the same game would refuse each
+  other. Making that identity mean what it says required the loader to yield each
+  document's text alongside its parsed value, so `TitleRuntime` gains a
+  `PayloadDocument`. The payoff is that an edit to `eris.json` bumping no declared
+  version still refuses a save written before it, which `erisSchemaVersion` could
+  not detect.
 
 - **Damocles object placement is observed above ground level, and `$7AC5`/`$7AA5`
   are one quantity.** The drop research recovered two placement paths from
@@ -56,6 +97,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Pan `$0C`. `structure-group-probe.py` enforces the rule as a gate rather than
   reporting it. Not recovered: the static rule mapping a level to its structure,
   which is read live from `$7B0E` today.
+
+### Changed
+
+- **Damocles Save Snapshot schema 3 → 4, and existing Damocles Saves and Session
+  Resumes are refused.** The record's shape changed — the Pose names its Body and
+  `erisSchemaVersion` became `presentationSha256` — so leaving the number at 3
+  would have given two different shapes one version. There is no migration, by
+  ADR 0026: a schema-3 record, a Pose naming no Body, or a presentation identity
+  mismatch is refused whole with its reason, and the live session is untouched.
+  Targ's Saves are unaffected. The Carried Stack, display and Damocles Script
+  state still to come join schema 4 without a further bump.
 
 ### Fixed
 
@@ -2158,3 +2210,6 @@ validate`; add Execution Environment to the shared language and record ADR
 
 - Ignore supplied ROM inputs and generated research artifacts so no PRG, RAM
   dump, snapshot, screenshot, or reconstructed payload is published.
+
+[Unreleased]: https://github.com/odogono/mercenary/compare/v0.20.0...main
+[0.20.0]: https://github.com/odogono/mercenary/compare/c2c6afd...v0.20.0

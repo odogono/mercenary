@@ -9,6 +9,7 @@ import {
   structureRegionAt
 } from '../src/damocles/selection.ts';
 import { erisSurfaceFrom, startPose } from '../src/damocles/world.ts';
+import { ERIS_BODY } from './damocles-pose.ts';
 
 interface RawModel {
   detailSelection: { default: number[] }[];
@@ -39,6 +40,7 @@ const units =
   (_slot: number): number =>
     value;
 const at = (x: number, z: number, y = 63) => ({
+  body: ERIS_BODY,
   heading: 0,
   position: { x: placement.position.x + x, y, z: placement.position.z + z }
 });
@@ -64,6 +66,7 @@ test('STATE OFFICE moves its recovered two-leaf attachment on Z', () => {
   expect(attachment.slot).toBe(0x03_fc);
   expect(attachment.constructor).toEqual({ leafCount: 2, motionAxis: 'z' });
   const pose = {
+    body: ERIS_BODY,
     heading: 0,
     position: {
       x: office.position.x + 330,

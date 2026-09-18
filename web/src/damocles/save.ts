@@ -1,15 +1,26 @@
 import type { Catalogue } from '../catalogue/data.ts';
-import type { ErisPresentationDocument } from './documents.ts';
-import type { ErisPose } from './world.ts';
+import type { Pose } from './world.ts';
 
-/// Version 3 replaces Capital Spaceport fields with the bound structure workspace.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 3 as const;
+/// Version 3 replaced Capital Spaceport fields with the bound structure workspace.
+///
+/// Version 4 makes the record body-aware: the Pose names its Body, and identity pins every
+/// presentation document by content rather than naming one Body's schema number. The
+/// body-aware contract bumps once and once only (ADR 0044) -- #300's Carried Stack, display
+/// and script state join schema 4 without a further bump.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 4 as const;
 export const DAMOCLES_DESTINATION = 'damocles' as const;
 
+/// What a restore must match exactly before it may continue this game (ADR 0026).
+///
+/// `presentationSha256` covers every Damocles presentation document together, as one value.
+/// A set of per-Body versions was rejected in the body-aware contract: it would make identity
+/// vary by which Bodies the player had visited, so two saves of the same game would refuse
+/// each other. It replaces `erisSchemaVersion`, which named one Body and pinned a schema
+/// number rather than the bytes served (#344).
 export interface DamoclesSaveIdentity {
   readonly catalogueProgramSha256: string;
   readonly destination: typeof DAMOCLES_DESTINATION;
-  readonly erisSchemaVersion: number;
+  readonly presentationSha256: string;
   readonly title: typeof DAMOCLES_DESTINATION;
 }
 
@@ -24,7 +35,7 @@ export interface BoundStructureSnapshot {
 
 export interface DamoclesSaveSnapshot {
   readonly elapsed: number;
-  readonly pose: ErisPose;
+  readonly pose: Pose;
   readonly structure: BoundStructureSnapshot | null;
 }
 
@@ -38,11 +49,11 @@ export interface DamoclesSaveRecord {
 
 export const damoclesSaveIdentity = (
   catalogue: Catalogue,
-  doc: ErisPresentationDocument
+  presentationSha256: string
 ): DamoclesSaveIdentity => ({
   catalogueProgramSha256: catalogue.source.programSha256,
   destination: DAMOCLES_DESTINATION,
-  erisSchemaVersion: doc.schemaVersion,
+  presentationSha256,
   title: DAMOCLES_DESTINATION
 });
 
@@ -60,9 +71,12 @@ const object = (value: unknown, path: string): Record<string, unknown> => {
   return value as Record<string, unknown>;
 };
 
-const poseOf = (value: unknown): ErisPose => {
+const poseOf = (value: unknown): Pose => {
   const pose = object(value, 'pose');
   const position = object(pose['position'], 'pose.position');
+  if (typeof pose['body'] !== 'string' || pose['body'] === '') {
+    return fail('pose names no Body');
+  }
   if (
     !finite(pose['heading']) ||
     !finite(position['x']) ||
@@ -72,6 +86,7 @@ const poseOf = (value: unknown): ErisPose => {
     return fail('pose is not a finite heading and position');
   }
   return {
+    body: pose['body'],
     heading: pose['heading'],
     position: { x: position['x'], y: position['y'], z: position['z'] }
   };
@@ -84,14 +99,15 @@ const identityOf = (value: unknown): DamoclesSaveIdentity => {
     identity['title'] !== DAMOCLES_DESTINATION ||
     typeof identity['catalogueProgramSha256'] !== 'string' ||
     identity['catalogueProgramSha256'] === '' ||
-    !finite(identity['erisSchemaVersion'])
+    typeof identity['presentationSha256'] !== 'string' ||
+    identity['presentationSha256'] === ''
   ) {
     return fail('identity is not a Damocles Destination');
   }
   return {
     catalogueProgramSha256: identity['catalogueProgramSha256'],
     destination: DAMOCLES_DESTINATION,
-    erisSchemaVersion: identity['erisSchemaVersion'],
+    presentationSha256: identity['presentationSha256'],
     title: DAMOCLES_DESTINATION
   };
 };
@@ -101,8 +117,8 @@ export const encodeDamoclesSave = (record: DamoclesSaveRecord): string =>
 
 /// Decode a Damocles Save or Session Resume, or throw the exact refusal.
 ///
-/// Identity is exact: a Targ envelope, a schema-1 record, or a Catalogue/Eris mismatch cannot
-/// become play without a migration this version does not have.
+/// Identity is exact: a Targ envelope, an older schema, or a Catalogue or presentation
+/// mismatch cannot become play without a migration this version does not have.
 export const decodeDamoclesSave = (
   encoded: string,
   expected: DamoclesSaveIdentity
@@ -128,7 +144,7 @@ export const decodeDamoclesSave = (
   const identity = identityOf(record['identity']);
   if (
     identity.catalogueProgramSha256 !== expected.catalogueProgramSha256 ||
-    identity.erisSchemaVersion !== expected.erisSchemaVersion
+    identity.presentationSha256 !== expected.presentationSha256
   ) {
     return fail('payload identity does not match');
   }

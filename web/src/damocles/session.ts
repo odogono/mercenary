@@ -18,8 +18,8 @@ import {
   structureInCell,
   type ErisCell,
   type ErisPlacement,
-  type ErisPose,
-  type ErisSurface
+  type ErisSurface,
+  type Pose
 } from './world.ts';
 
 /// What the Damocles Gameplay Session can say about itself in this slice.
@@ -32,13 +32,15 @@ export interface DamoclesSnapshot {
   readonly cell: ErisCell;
   readonly elapsed: number;
   readonly occupancy: { readonly kind: 'onFoot' };
-  readonly pose: ErisPose;
+  readonly pose: Pose;
   readonly structure: BoundStructureSnapshot | null;
 }
 
 export interface DamoclesContent {
   readonly catalogue: Catalogue;
   readonly doc: ErisPresentationDocument;
+  /// One identity over every Damocles presentation document, hashed from the bytes served.
+  readonly presentationSha256: string;
   readonly surface: ErisSurface;
 }
 
@@ -69,7 +71,7 @@ export class DamoclesSession implements TitleSession<
   private attachmentUnits = new Map<number, number>();
   private boundPlacement: ErisPlacement | null = null;
   private elapsed: number;
-  private pose: ErisPose;
+  private pose: Pose;
   private regionIndex: number | null = null;
 
   constructor(content: DamoclesContent, restore?: DamoclesSaveSnapshot) {
@@ -78,6 +80,7 @@ export class DamoclesSession implements TitleSession<
     this.negateModelZ = content.doc.orientation.modelZ === 'negate';
     const opening = restore?.pose ?? startPose(content.doc);
     this.pose = {
+      body: opening.body,
       heading: opening.heading,
       position: { ...opening.position, y: this.rules.eyeHeight }
     };
@@ -88,10 +91,7 @@ export class DamoclesSession implements TitleSession<
   private readonly unitsFor = (slot: number): number =>
     this.attachmentUnits.get(slot) ?? 0;
 
-  private bindAt(
-    pose: ErisPose,
-    restore?: BoundStructureSnapshot | null
-  ): void {
+  private bindAt(pose: Pose, restore?: BoundStructureSnapshot | null): void {
     const placement = structureInCell(this.content.surface, pose.position);
     if (restore !== undefined) {
       if (placement?.id !== restore?.instanceId) {
@@ -244,6 +244,7 @@ export class DamoclesSession implements TitleSession<
       );
     }
     this.pose = {
+      body: this.pose.body,
       heading: this.pose.heading,
       position: {
         x: (x + grid.origin.x + 0.5) * grid.cellUnits,

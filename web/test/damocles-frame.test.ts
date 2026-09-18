@@ -22,6 +22,7 @@ import {
   type ErisPlacement,
   type ErisSurface
 } from '../src/damocles/world.ts';
+import { ERIS_BODY } from './damocles-pose.ts';
 
 const load = async () => {
   const [catalogue, presentation] = await Promise.all([
@@ -73,7 +74,11 @@ const surfaceOf = (placements: readonly ErisPlacement[]): ErisSurface => ({
   unresolvedCount: placements.filter(p => p.mesh === undefined).length
 });
 
-const origin = { heading: 0, position: { x: 0, y: 63, z: 0 } };
+const origin = {
+  body: ERIS_BODY,
+  heading: 0,
+  position: { x: 0, y: 63, z: 0 }
+};
 
 /// The authored ground fill leads every plan; its triangle count depends on the eye's place
 /// in the workspace, so read it back from the plan.
