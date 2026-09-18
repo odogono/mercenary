@@ -81,6 +81,7 @@ describe('ordinary Eris limo-key take and drop', () => {
     expect(session.snapshot.residents.map(resident => resident.id)).toEqual([
       'object-slot-183'
     ]);
+    expect(session.snapshot.residents[0]?.mesh?.displayCode).toBe('VL');
 
     expect(session.take()).toEqual({ kind: 'took' });
     expect(session.snapshot).toMatchObject({

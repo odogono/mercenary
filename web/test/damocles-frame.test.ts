@@ -99,6 +99,33 @@ describe('an Eris frame in Filled Presentation', () => {
     expect(withResident.triangleCount).toBe(without.triangleCount + 2);
   });
 
+  test('draws a resident key display code from its recovered line segments', async () => {
+    const { doc, surface } = await load();
+    const pose = startPose(doc);
+    const labelled: Mesh = {
+      ...square(),
+      displayCode: 'VL',
+      labelAnchor: [0, 0, 0],
+      lines: [
+        {
+          colour: '#000000',
+          sourceColour: 0x80_00,
+          vertices: [0, 1]
+        }
+      ]
+    };
+    const resident = placement(labelled, {
+      x: pose.position.x,
+      y: 0,
+      z: pose.position.z + 100
+    });
+    const unlabelled = planErisFrame(surface, pose, doc, null, [
+      { ...resident, mesh: { ...labelled, lines: [] } }
+    ]);
+    const withLabel = planErisFrame(surface, pose, doc, null, [resident]);
+    expect(withLabel.triangleCount).toBe(unlabelled.triangleCount + 4);
+  });
+
   test('emits the ground and every decoded face, and nothing for the unrecovered', async () => {
     const { doc, surface } = await load();
     const plan = planErisFrame(surface, startPose(doc), doc);

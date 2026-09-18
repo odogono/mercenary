@@ -18,6 +18,7 @@ import {
   type BrowserLockManager
 } from '../shell/ownership.ts';
 import { installPanel, installPanelScale } from '../shell/panelView.ts';
+import { canvasPointer } from '../shell/pointer.ts';
 import { createPreferences } from '../shell/preferences.ts';
 import type { SessionResumePersistence } from '../shell/resume.ts';
 import { createSessionResumeNotices } from '../shell/resumeNotices.ts';
@@ -41,6 +42,7 @@ import {
 import { planErisFrame } from './frame.ts';
 import { erisLighting } from './lighting.ts';
 import { damoclesPanelViewModel } from './panel.ts';
+import { damoclesTakeTargetAt } from './pointer.ts';
 import { ErisRenderer } from './renderer.ts';
 import {
   createDamoclesResumePersistence,
@@ -426,6 +428,50 @@ try {
     console: shellConsole.isOpen() ? 'open' : 'closed',
     layer: menu.layer(),
     opening: 'none'
+  });
+
+  const pointerTakeTarget = (event: MouseEvent): string | undefined => {
+    const state = routerState();
+    const pointer = canvasPointer(canvas, {
+      x: event.clientX,
+      y: event.clientY
+    });
+    if (
+      state.chromeFocus ||
+      state.console !== 'closed' ||
+      state.layer !== 'none' ||
+      pointer === undefined ||
+      !ownership.mayAdvance()
+    ) {
+      return undefined;
+    }
+    return damoclesTakeTargetAt(
+      snapshot,
+      content.doc.camera,
+      { height: canvas.height, width: canvas.width },
+      pointer.point,
+      pointer.hitSlop,
+      content.doc.orientation.modelZ === 'negate'
+    );
+  };
+  canvas.addEventListener('pointermove', event => {
+    const target = pointerTakeTarget(event);
+    if (target === undefined) {
+      delete canvas.dataset['takeTarget'];
+    } else {
+      canvas.dataset['takeTarget'] = target;
+    }
+  });
+  canvas.addEventListener('pointerleave', () => {
+    delete canvas.dataset['takeTarget'];
+  });
+  canvas.addEventListener('click', event => {
+    if (event.button !== 0 || pointerTakeTarget(event) === undefined) {
+      return;
+    }
+    commitAction(() => session.take());
+    delete canvas.dataset['takeTarget'];
+    event.preventDefault();
   });
 
   window.addEventListener('keydown', event => {

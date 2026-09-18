@@ -152,6 +152,36 @@ const placed = (
   };
 };
 
+const DISPLAY_STROKE_HALF_WIDTH = 0.75;
+const DISPLAY_STROKE_SURFACE_OFFSET = 0.01;
+
+const displayStrokeQuad = (
+  start: readonly [number, number, number],
+  end: readonly [number, number, number]
+):
+  | readonly [
+      readonly [number, number, number],
+      readonly [number, number, number],
+      readonly [number, number, number],
+      readonly [number, number, number]
+    ]
+  | null => {
+  const dx = end[0] - start[0];
+  const dy = end[1] - start[1];
+  const length = Math.hypot(dx, dy);
+  if (length === 0) {
+    return null;
+  }
+  const x = (-dy / length) * DISPLAY_STROKE_HALF_WIDTH;
+  const y = (dx / length) * DISPLAY_STROKE_HALF_WIDTH;
+  return [
+    [start[0] + x, start[1] + y, start[2] - DISPLAY_STROKE_SURFACE_OFFSET],
+    [end[0] + x, end[1] + y, end[2] - DISPLAY_STROKE_SURFACE_OFFSET],
+    [end[0] - x, end[1] - y, end[2] - DISPLAY_STROKE_SURFACE_OFFSET],
+    [start[0] - x, start[1] - y, start[2] - DISPLAY_STROKE_SURFACE_OFFSET]
+  ];
+};
+
 type WorldTriangle = readonly [Vector3, Vector3, Vector3];
 
 const doubleSidedQuad = (
@@ -327,6 +357,31 @@ export const planErisFrame = (
           );
         }
         triangleCount += 1;
+      }
+      if (mesh.displayCode !== undefined) {
+        for (const line of mesh.lines) {
+          for (let index = 0; index < line.vertices.length - 1; index += 1) {
+            const quad = displayStrokeQuad(
+              mesh.vertices[line.vertices[index]!]!,
+              mesh.vertices[line.vertices[index + 1]!]!
+            );
+            if (quad === null) {
+              continue;
+            }
+            const colour = channels(line.colour);
+            for (const triangle of doubleSidedQuad(
+              placed(quad[0], placement, negateZ),
+              placed(quad[1], placement, negateZ),
+              placed(quad[2], placement, negateZ),
+              placed(quad[3], placement, negateZ)
+            )) {
+              for (const vertex of triangle) {
+                emit(vertex, colour, 0);
+              }
+              triangleCount += 1;
+            }
+          }
+        }
       }
     }
   };
