@@ -260,7 +260,8 @@ export const planErisFrame = (
   surface: ErisSurface,
   pose: Pose,
   doc: ErisPresentationDocument,
-  structure: BoundStructureSnapshot | null = null
+  structure: BoundStructureSnapshot | null = null,
+  residents: readonly ErisPlacement[] = []
 ): ErisFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
@@ -339,6 +340,9 @@ export const planErisFrame = (
     if (placement.kind !== 'ground') {
       emitPlacement(placement);
     }
+  }
+  for (const resident of residents) {
+    emitPlacement(resident);
   }
 
   return {

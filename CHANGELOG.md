@@ -14,6 +14,9 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 - Damocles catalogue schema 14 publishes Capital Spaceport association groups,
   and Eris presentation schema 6 publishes its recovered 50 Hz script timing.
+- Damocles play now supports the Capital Spaceport V.I.P. limo key's recovered
+  take, drop, one-shot response, persistent display, Carried Stack, Object
+  Residence, and schema-4 Save and Session Resume state.
 
 ## [0.20.0] - 2026-09-18
 

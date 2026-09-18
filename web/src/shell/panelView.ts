@@ -8,6 +8,7 @@ import type { PanelViewModel } from './panel.ts';
 export interface PanelCanvases {
   readonly damoclesCompass: HTMLCanvasElement;
   readonly damoclesElevation: HTMLCanvasElement;
+  readonly damoclesMessage?: HTMLCanvasElement;
   readonly targCompass?: HTMLCanvasElement;
   readonly targElevation?: HTMLCanvasElement;
 }
@@ -66,6 +67,28 @@ const surfaceOf = (canvas: HTMLCanvasElement): Surface | undefined => {
 
 const tokenOf = (root: HTMLElement, name: string): string =>
   getComputedStyle(root).getPropertyValue(name).trim() || '#000';
+
+const drawDamoclesMessage = (
+  canvas: HTMLCanvasElement,
+  root: HTMLElement,
+  display: NonNullable<PanelViewModel['damoclesDisplay']>
+): void => {
+  const context = canvas.getContext('2d');
+  if (context === null) {
+    return;
+  }
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = tokenOf(root, '--msg-ink');
+  context.font = DAMOCLES_GLYPH_FONT;
+  context.textBaseline = 'bottom';
+  for (let index = 0; index < display.cells.length; index += 1) {
+    context.fillText(
+      display.cells[index]!,
+      index * 6 - (display.scrollPixels % 6),
+      6
+    );
+  }
+};
 
 /// The artificial horizon: a tape that scrolls, like the compass laid on its side.
 ///
@@ -348,8 +371,22 @@ export const installPanel = (
   let lastRendition: string | undefined;
   return {
     draw: model => {
+      const messageCanvas = elements.damoclesMessage;
       for (const element of elements.fields) {
         const name = element.dataset['field'] as keyof PanelViewModel;
+        if (name === 'message' && messageCanvas !== undefined) {
+          const hasDamoclesDisplay = model.damoclesDisplay !== undefined;
+          element.hidden = hasDamoclesDisplay;
+          messageCanvas.hidden = !hasDamoclesDisplay;
+          if (hasDamoclesDisplay) {
+            drawDamoclesMessage(
+              messageCanvas,
+              elements.root,
+              model.damoclesDisplay!
+            );
+            continue;
+          }
+        }
         const value = String(model[name] ?? '');
         writeField(element, name, value);
         if (name === 'message') {

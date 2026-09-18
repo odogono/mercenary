@@ -4,15 +4,17 @@ import { parseCatalogue } from '../src/catalogue/data.ts';
 import { executeDamoclesConsoleCommand } from '../src/damocles/console.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import { DamoclesSession } from '../src/damocles/session.ts';
+import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { parseConsoleCommand } from '../src/shell/console.ts';
 import type { PreferencesStore } from '../src/shell/preferences.ts';
 import type { SavePersistence } from '../src/shell/saves.ts';
 
 const sessionOf = async (): Promise<DamoclesSession> => {
-  const [raw, presentation] = await Promise.all([
+  const [raw, presentation, strings] = await Promise.all([
     Bun.file('../payload/damocles/catalogue.json').json(),
-    Bun.file(new URL('../damocles/eris.json', import.meta.url)).json()
+    Bun.file(new URL('../damocles/eris.json', import.meta.url)).json(),
+    Bun.file('../payload/damocles/strings.json').json()
   ]);
   const catalogue = parseCatalogue(raw);
   const doc = readErisPresentation(presentation);
@@ -20,6 +22,7 @@ const sessionOf = async (): Promise<DamoclesSession> => {
     catalogue,
     doc,
     presentationSha256: 'test-presentation',
+    strings: parseDamoclesStrings(strings),
     surface: erisSurfaceFrom(catalogue, doc)
   });
 };
@@ -75,11 +78,14 @@ describe('the Damocles Shell Console', () => {
     const session = await sessionOf();
     const run = (line: string) =>
       executeDamoclesConsoleCommand(
-        parseConsoleCommand(line, 16)!,
+        parseConsoleCommand(line, 16, 64, 'selected')!,
         host(session)
       )[0];
     expect(run('goto room 3')).toBe('Damocles has no Rooms');
-    expect(run('get 1')).toBe('Damocles has no Carried Stack in this slice');
+    expect(run('get 1')).toBe('object 1 is outside this Damocles slice');
+    expect(run('get')).toBe('take refused');
+    expect(run('drop')).toBe('inventory is empty');
+    expect(run('inventory')).toBe('inventory is empty');
     expect(run('time')).toBe("time belongs to Targ's orrery");
     expect(run('goto 7 8 10')).toBe('goto takes two cells on Eris');
     expect(

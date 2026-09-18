@@ -8,21 +8,26 @@ import {
   writeDamoclesResume,
   type ResumeStorage
 } from '../src/damocles/resume.ts';
-import { damoclesSaveIdentity } from '../src/damocles/save.ts';
+import {
+  damoclesSaveIdentity,
+  initialDamoclesSaveScript
+} from '../src/damocles/save.ts';
 import { attachmentOpenLimit } from '../src/damocles/selection.ts';
 import {
   DamoclesSession,
   type DamoclesContent
 } from '../src/damocles/session.ts';
+import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { intent } from '../src/gameCore/index.ts';
 import { titleStorageKeys } from '../src/shell/title.ts';
 import { ERIS_BODY } from './damocles-pose.ts';
 
 const content = async (): Promise<DamoclesContent> => {
-  const [catalogue, presentation] = await Promise.all([
+  const [catalogue, presentation, strings] = await Promise.all([
     Bun.file('../payload/damocles/catalogue.json').json(),
-    Bun.file(new URL('../damocles/eris.json', import.meta.url)).json()
+    Bun.file(new URL('../damocles/eris.json', import.meta.url)).json(),
+    Bun.file('../payload/damocles/strings.json').json()
   ]);
   const parsed = parseCatalogue(catalogue);
   const doc = readErisPresentation(presentation);
@@ -30,6 +35,7 @@ const content = async (): Promise<DamoclesContent> => {
     catalogue: parsed,
     doc,
     presentationSha256: 'test-presentation',
+    strings: parseDamoclesStrings(strings),
     surface: erisSurfaceFrom(parsed, doc)
   };
 };
@@ -45,7 +51,9 @@ const atSpaceport = (
     placement => placement.id === 'eris-surface-87'
   )!;
   return new DamoclesSession(loaded, {
+    carried: [],
     elapsed: 0,
+    frameAccumulator: 0,
     pose: {
       body: ERIS_BODY,
       heading,
@@ -55,6 +63,9 @@ const atSpaceport = (
         z: entrance.position.z + z
       }
     },
+    residence: [],
+    script: initialDamoclesSaveScript(),
+    scrollCounter: 0,
     structure: {
       attachments: entrance.selection!.structure.attachments.map(
         (attachment, index) => ({
@@ -81,7 +92,9 @@ const atStructure = (
 ): DamoclesSession => {
   const placement = loaded.surface.placements.find(p => p.id === instanceId)!;
   return new DamoclesSession(loaded, {
+    carried: [],
     elapsed: 0,
+    frameAccumulator: 0,
     pose: {
       body: ERIS_BODY,
       heading,
@@ -91,6 +104,9 @@ const atStructure = (
         z: placement.position.z + z
       }
     },
+    residence: [],
+    script: initialDamoclesSaveScript(),
+    scrollCounter: 0,
     structure: {
       attachments: placement.selection!.structure.attachments.map(
         (attachment, index) => ({

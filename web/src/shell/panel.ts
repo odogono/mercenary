@@ -24,6 +24,10 @@ export interface PanelViewModel {
   readonly cash: string;
   readonly clock: string;
   readonly compassDegrees: number;
+  readonly damoclesDisplay?: {
+    readonly cells: string;
+    readonly scrollPixels: number;
+  };
   readonly elevationDegrees: number;
   readonly groundLamp: boolean;
   readonly heading: string;

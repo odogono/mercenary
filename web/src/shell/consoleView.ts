@@ -100,7 +100,8 @@ export const installConsole = <Deps extends ConsoleParseContext>(
       const command = parseConsoleCommand(
         line,
         deps.cellsPerAxis(),
-        deps.objectSlots()
+        deps.objectSlots(),
+        deps.objectActions?.() ?? 'named'
       );
       if (command !== undefined) {
         print(execute(command, deps));

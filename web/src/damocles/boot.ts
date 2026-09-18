@@ -78,6 +78,9 @@ const panelElements = {
   damoclesElevation: document.getElementById(
     'damocles-elevation-canvas'
   ) as HTMLCanvasElement,
+  damoclesMessage: document.getElementById(
+    'damocles-message-canvas'
+  ) as HTMLCanvasElement,
   fields: panelRoot.querySelectorAll<HTMLElement>('[data-field]'),
   lamps: panelRoot.querySelectorAll<HTMLElement>('[data-lamp]'),
   root: panelRoot
@@ -150,7 +153,7 @@ try {
   const ownershipOutcome = await ownership.claim();
   const resumeRead =
     ownershipOutcome.kind === 'owned'
-      ? readDamoclesResume(storage, identity)
+      ? readDamoclesResume(storage, identity, content.catalogue)
       : ({ kind: 'empty' } as const);
 
   const preferences = createPreferences({
@@ -180,15 +183,20 @@ try {
     new ResizeObserver(onResize).observe(target);
   });
   const panel = installPanel(panelElements);
+  let commitAction = (_action: () => unknown): void => {};
 
   const controls = new BrowserControlProfile({
-    drop: () => undefined,
+    drop: () => commitAction(() => session.drop()),
     fire: () => undefined,
     leaveCraft: () => undefined,
     occupancy: () => ({ kind: 'onFoot' }),
     page: () => undefined,
     press: () => undefined,
-    reach: () => undefined,
+    reach: action => {
+      if (action === 'take') {
+        commitAction(() => session.take());
+      }
+    },
     rideLift: () => undefined,
     shutThrottle: () => undefined,
     skipMessage: () => undefined,
@@ -213,6 +221,14 @@ try {
       storage: ownership.mayPersist() ? storage : undefined
     });
   let resumePersistence = makeResumePersistence();
+  commitAction = (action: () => unknown): void => {
+    action();
+    session.drainEffects();
+    snapshot = session.snapshot;
+    resumePersistence.dirty();
+    resumePersistence.checkpoint(true);
+    publish();
+  };
   const checkpointChangedResume = (force = true): void => {
     if (!ownership.mayPersist()) {
       return;
@@ -252,6 +268,7 @@ try {
       snapshot: session.captureResume(),
       where: damoclesWhere(session.snapshot.cell)
     }),
+    catalogue: content.catalogue,
     identity,
     release,
     restore: saved => {
@@ -270,6 +287,7 @@ try {
   type DamoclesConsoleDeps = ConsoleParseContext & DamoclesConsoleHost;
   const consoleHost: DamoclesConsoleDeps = {
     cellsPerAxis: () => content.doc.grid.cellsPerAxis,
+    objectActions: () => 'selected',
     objectSlots: () => 64,
     persistence,
     preferences,
@@ -282,8 +300,11 @@ try {
     banner: DAMOCLES_CONSOLE_BANNER,
     execute: (command, deps) => {
       const lines = executeDamoclesConsoleCommand(command, deps);
+      session.drainEffects();
       snapshot = session.snapshot;
       if (
+        command.kind === 'dropObject' ||
+        command.kind === 'getObject' ||
         command.kind === 'gotoCell' ||
         command.kind === 'load' ||
         command.kind === 'save'
@@ -375,7 +396,11 @@ try {
     }
     if (outcome.kind === 'owned') {
       resumePersistence = makeResumePersistence();
-      const recovered = readDamoclesResume(storage, identity);
+      const recovered = readDamoclesResume(
+        storage,
+        identity,
+        content.catalogue
+      );
       notices.dismiss();
       if (recovered.kind === 'restored') {
         replaceSession(recovered.snapshot);
@@ -487,7 +512,8 @@ try {
       content.surface,
       snapshot.pose,
       content.doc,
-      snapshot.structure
+      snapshot.structure,
+      snapshot.residents
     );
     const preset = preferences.current().presentationPreset;
     const shadows =
@@ -521,6 +547,7 @@ try {
         if (menu.layer() === 'none' && ownership.mayAdvance()) {
           session.intent = controls.intent;
           snapshot = session.advance(seconds);
+          session.drainEffects();
           resumePersistence.dirty();
         }
       });

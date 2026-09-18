@@ -86,6 +86,19 @@ const fillFloats = (plan: ErisFramePlan): number =>
   plan.fillTriangleCount * 3 * FLOATS_PER_VERTEX;
 
 describe('an Eris frame in Filled Presentation', () => {
+  test('draws the visible resident placements supplied by Session State', async () => {
+    const { doc, surface } = await load();
+    const pose = startPose(doc);
+    const without = planErisFrame(surface, pose, doc);
+    const resident = placement(square(), {
+      x: pose.position.x,
+      y: 0,
+      z: pose.position.z + 100
+    });
+    const withResident = planErisFrame(surface, pose, doc, null, [resident]);
+    expect(withResident.triangleCount).toBe(without.triangleCount + 2);
+  });
+
   test('emits the ground and every decoded face, and nothing for the unrecovered', async () => {
     const { doc, surface } = await load();
     const plan = planErisFrame(surface, startPose(doc), doc);

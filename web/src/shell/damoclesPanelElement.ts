@@ -16,6 +16,7 @@ export class DamoclesPanelElement extends HTMLElement {
       <div class="tp-gauge" style="--tube-fill: var(--temperature-fill)"><div class="tube"><div class="fill" style="--fill-rows: 23"></div></div><div class="tp-label">T</div></div>
       <div id="damocles-message-bar">
         <div id="damocles-message" data-field="message"></div>
+        <canvas id="damocles-message-canvas" width="288" height="5" hidden></canvas>
       </div>
       <div id="damocles-body">
         <div id="damocles-nav">

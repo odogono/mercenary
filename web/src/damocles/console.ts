@@ -11,8 +11,9 @@ import type { DamoclesSession } from './session.ts';
 const SETTING_NAMES = Object.keys(SETTING_VALUES);
 
 const HELP = [
-  'help · where',
+  'help · where · inventory',
   'goto <x> <z>',
+  'get · drop',
   'panel <targ|damocles> · set <name> <value>',
   `set names: ${SETTING_NAMES.join(', ')}`,
   'save <slot> [confirm] · load <slot>'
@@ -97,10 +98,37 @@ export const executeDamoclesConsoleCommand = (
     case 'time':
     case 'setTime':
       return ["time belongs to Targ's orrery"];
-    case 'inventory':
-    case 'getObject':
-    case 'dropObject':
-      return ['Damocles has no Carried Stack in this slice'];
+    case 'inventory': {
+      const snapshot = host.session().snapshot;
+      return snapshot.carried.length === 0
+        ? ['inventory is empty']
+        : [snapshot.inventoryLabel];
+    }
+    case 'getObject': {
+      if (command.slot !== undefined && command.slot !== 183) {
+        return [`object ${command.slot} is outside this Damocles slice`];
+      }
+      return host.session().take().kind === 'took'
+        ? ['took KEY- V.I.P. LIMO']
+        : ['take refused'];
+    }
+    case 'dropObject': {
+      const snapshot = host.session().snapshot;
+      if (snapshot.carried.length === 0) {
+        return ['inventory is empty'];
+      }
+      const selector = command.selector?.toUpperCase();
+      if (
+        selector !== undefined &&
+        selector !== '183' &&
+        !snapshot.inventoryLabel.toUpperCase().includes(selector)
+      ) {
+        return [`carried head does not match '${command.selector}'`];
+      }
+      return host.session().drop().kind === 'dropped'
+        ? [`dropped ${snapshot.inventoryLabel}`]
+        : ['drop refused'];
+    }
     case 'gotoRoom':
       return ['Damocles has no Rooms'];
     case 'gotoObject':
