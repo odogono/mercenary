@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+Each released version is tagged `v<version>` and carries a compare link at the
+foot of this file. Link references start at 0.20.0; earlier versions were never
+tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
+
 ## [Unreleased]
 
 ## [0.20.0] - 2026-09-18
@@ -2206,3 +2210,6 @@ validate`; add Execution Environment to the shared language and record ADR
 
 - Ignore supplied ROM inputs and generated research artifacts so no PRG, RAM
   dump, snapshot, screenshot, or reconstructed payload is published.
+
+[Unreleased]: https://github.com/odogono/mercenary/compare/v0.20.0...main
+[0.20.0]: https://github.com/odogono/mercenary/compare/c2c6afd...v0.20.0
