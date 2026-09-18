@@ -804,6 +804,14 @@ Damocles play leaves `message` as `''`. `panelView` draws a canvas into `#damocl
 when the field is present. `inventory` lists model source labels; `drop` calls `session.drop()`;
 `get` calls `session.take()` with no slot argument.
 
+### Pointer and recovered key label
+
+Follow-up agreed after the two-layer stack merged. Damocles pointer take matches Targ's
+interaction seam: hit-test the projected, visible in-range resident, show the pointer cursor,
+then delegate a primary click or tap to `session.take()` so keyboard and pointer pickup share
+one semantic action. The Filled renderer also draws a key mesh's recovered `lines` when its
+`displayCode` is present; those source lines form `VL` on `object-slot-183`.
+
 ### Tests
 
 `damocles-script.test.ts`, `damocles-display.test.ts`, `damocles-take-drop.test.ts`; extend
