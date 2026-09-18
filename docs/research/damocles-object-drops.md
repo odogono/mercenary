@@ -143,6 +143,57 @@ maps slots 30–39 to letters A–J. Why carrying that particular key should rel
 support rules is **unresolved**; the instruction is recorded, its purpose is not
 claimed. Do not implement it as a feature on this evidence alone.
 
+## Both placement paths, observed above level 0
+
+The write sets below were recovered from instructions and, until #326, could only
+be exercised outdoors at level 0. Both are now observed on an ordinary route
+inside a structure at a non-zero level, and both reproduce field for field.
+
+**Direct placement, `vesta-transporter`, level 10.** Nothing selectable was inside
+the support distance, so the drop took the direct path:
+
+| Field | Written | Source | Live value |
+| --- | --- | --- | --- |
+| X, Z | `71269092`, `20547167` | player `$7AB2`/`$7ABA` | identical |
+| Y | `3170` | player `$7AB6` − 63 | `3233 − 63` |
+| B body byte | `$38` | `$7AC9` | VESTA |
+| B level byte | `$0A` | `$7AC5` | **10** |
+| B cell byte | `$64` | `$7B5D` | `$64` |
+| B insertion group | `$08` | region byte `$7AFD` | `8` |
+| A structure-group byte | `$05` | `$794F` | `$05` |
+| A class byte | `$04` | `$7A39` | `$04` |
+
+Insertion group `$08` is in the association list of the structure bound at level
+10, which is a different structure from the one bound at level 0 in the same
+cell — see [workspace selection](damocles-workspace-selection.md).
+
+**Support placement, `metis-transporter`, level 9.** `FILOFAX` slot 133 sits 27
+source units from the player and supplies rank 1; the carried `KEY - 22 CV`
+requires 1, so the rank check passes and both remaining gates run:
+
+```text
+support  slot 133  A=0x00030504  B=0x3c050960  x=165642643 y=1350 z=70288862
+player                                          x=165642616 y=1413 z=70288873
+placed   slot 191  A=0x00030404  B=0x3c050960  x=165642643 y=1380 z=70288862
+```
+
+The placed object takes the support's X and Z rather than the player's, all four
+bytes of the support's Association B, and Association A bytes 1 and 3 — keeping
+its own class byte `$04`, where the support's is `$05`. Its Y is `1380`, which is
+the support's `1350` plus a model maximum of `30`, not the `1350` direct
+placement would have written. That is the documented `$0546A4`–`$0546CA` write
+set exactly.
+
+**Both gates are therefore reached, and both accept**: the model-form gate,
+because the support path completed at all, which requires `FILOFAX`'s model to
+open with header type 6, 9 or `$0A`; and the height gate, because the computed
+top `1380` is below the player's Y `1413`.
+
+**Neither gate has been observed refusing.** A refusal needs a support whose
+model maximum puts its top above the player's eye, or a model whose opening word
+is none of the three admitted types. Both remain unobserved, and the refusal
+branches stay recovered-from-instructions only.
+
 ## Support geometry: the height gate
 
 When the rank check passes (or is skipped), `$0545D4`–`$05461A` reads the support's
@@ -189,10 +240,23 @@ Interior direct placement first searches the association-list root `$7B0E` for a
 group whose selector equals the current region (`$05454A`–`$054560`); absence refuses
 through system-string index 9.
 
-**Level selector caution.** Drop writes the level byte from `$7AC5`, while the
-association builder at `$052D06` matches residents on `$7AA5`. Both were zero in
-every state sampled here, so the note cannot say whether they are the same quantity.
-Treat a non-zero-level drop as unverified.
+**Level selector: `$7AC5` and `$7AA5` are the same quantity.** Drop writes the
+level byte from `$7AC5`, while the association builder at `$052D06` matches
+residents on `$7AA5`. Both were zero in every state this note could originally
+sample, because every replayable pose was outdoors at level 0. The on-foot
+captures published by [#326](https://github.com/odogono/mercenary/issues/326)
+include seven poses *inside* structures above level 0, and two of them carry a
+Carried Stack, so the drop is now observable where the bytes are non-zero:
+
+| Capture | Level | `$7AC5` | `$7AA5` | Dropped object's recorded level byte |
+| --- | ---: | ---: | ---: | ---: |
+| `vesta-transporter` | 10 | 10 | 10 | `$0A` |
+| `metis-transporter` | 9 | 9 | 9 | `$09` |
+
+The two bytes hold the same non-zero value before and after a live drop, and the
+value the drop writes into the object's Association B is that same value. The
+placed object then sits in the scene the builder matches, so the caution is
+lifted: **treat them as one quantity.**
 
 ## Residence is body-scoped, and carrying parks an object in VOID
 
@@ -727,13 +791,15 @@ stands on; slot 115 is on ERIS and slot 216 on CLOTHO. Nothing requiring rank 0 
 carried at any replayable pose, so the refusal has no route rather than an untried
 one.
 
-### `$7AC5` against `$7AA5` is still undecided
+### `$7AC5` against `$7AA5` is decided: one quantity
 
 Both read 0 in every sample of every run here, as they did in the #315 captures,
-because this pose is outdoors at level 0. Deciding whether they are the same
-quantity needs a drop at a non-zero level, and the nearest non-zero levels — 1 and
-2 inside Vesta Parliament — are behind the same wall. This stays **unverified** and
-stays a blocker on [#318](https://github.com/odogono/mercenary/issues/318).
+because this pose is outdoors at level 0. The #326 captures put the player inside
+a structure at levels 1, 4, 9 and 10 carrying four objects, and live drops from
+two of them settle it: `$7AC5` and `$7AA5` hold the same non-zero value, and the
+object's recorded level byte is that value. See
+[both placement paths, observed above level 0](#both-placement-paths-observed-above-level-0).
+This is **no longer a blocker** on [#318](https://github.com/odogono/mercenary/issues/318).
 
 ### The two bypasses are still unexplained
 
@@ -888,9 +954,10 @@ Still open:
   unidentified restore path at `$055190`. `$7046` read `$05` in every #331 run, so the
   bypass never fired; reaching it needs `DOOR KEY` slot 39 carried, which needs an
   interior.
-- Whether the drop's level byte `$7AC5` and the association builder's `$7AA5` are the
-  same quantity is unverified at non-zero levels. Both read 0 at every pose that can
-  be replayed.
+- The drop's level byte `$7AC5` and the association builder's `$7AA5` are the same
+  quantity, observed through live drops at levels 9 and 10 (#326 captures). What is
+  still unobserved is either gate **refusing**: every support reached so far passes
+  the model-form and height gates.
 
 The rules above are delivered and
 [#315](https://github.com/odogono/mercenary/issues/315) is closed. The observations
@@ -900,7 +967,19 @@ made; what is left no longer sits behind the location work in
 [#324](https://github.com/odogono/mercenary/issues/324)–[#327](https://github.com/odogono/mercenary/issues/327).
 
 The three remaining uncertainties that affect admitted behaviour — the model-form
-gate, the height gate and the `$7AC5`/`$7AA5` identity — share one prerequisite: an
-ordinary route into a structure interior at a non-zero level. That is the blocker to
-carry into [#318](https://github.com/odogono/mercenary/issues/318), and it is a
-smaller and sharper one than the location blockers #315 recorded.
+gate, the height gate and the `$7AC5`/`$7AA5` identity — shared one prerequisite:
+an ordinary route into a structure interior at a non-zero level.
+
+**That prerequisite is met.** [#326](https://github.com/odogono/mercenary/issues/326)
+published seven on-foot captures standing inside structures at levels 1, 4, 9 and
+10, each carrying four objects. Live drops from two of them exercise both
+placement paths above level 0 and settle the `$7AC5`/`$7AA5` identity.
+
+What is left is narrower than a blocker on admitted behaviour: **no reached
+support refuses**. The model-form and height gates are observed accepting, and
+their refusal branches remain recovered from instructions only. A refusal needs a
+support whose model top rises above the player's eye, or one whose model opens
+with an unadmitted header type; neither has been found in reach at any captured
+pose. That is worth recording against
+[#318](https://github.com/odogono/mercenary/issues/318) as a bounded observation
+gap rather than as unrecovered behaviour.

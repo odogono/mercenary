@@ -8,6 +8,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Damocles object placement is observed above ground level, and `$7AC5`/`$7AA5`
+  are one quantity.** The drop research recovered two placement paths from
+  instructions and could exercise neither above level 0, because every replayable
+  pose was outdoors with both level bytes zero — which left the model-form gate,
+  the height gate and the `$7AC5`/`$7AA5` identity unsettled and blocking #318.
+  The #326 captures put the player *inside* structures at levels 1, 4, 9 and 10
+  carrying four objects, and live drops from two of them close it. At level 10
+  (`vesta-transporter`) the **direct** path writes every documented field: X and Z
+  from the player, Y as eye minus 63, and an Association B of `$38080A64` whose
+  level byte is `$0A` — the same value both `$7AC5` and `$7AA5` hold. At level 9
+  (`metis-transporter`) `FILOFAX` supplies the rank the carried `KEY - 22 CV`
+  requires, so the rank check passes and the **support** path runs: the placed
+  object takes the support's X and Z rather than the player's, all four bytes of
+  its Association B, and Association A bytes 1 and 3 while keeping its own class
+  byte, and its Y is the support's `1350` plus a model maximum of `30` — below the
+  player's `1413`, so the height gate accepts. Both gates are therefore reached
+  and both accept. **Neither has been observed refusing**: no support in reach at
+  any captured pose has a model top above the player's eye or an unadmitted header
+  type, so the refusal branches stay recovered-from-instructions only, recorded as
+  a bounded observation gap rather than as unrecovered behaviour.
+
 - **Gaea structure group `$0F` is bound to a live workspace: CHALDEA
   METROPOLIS.** The `gaea-transporter` capture restores with `$794E=$0F`,
   `$7A6C=$024AB4` and an `$ABDC` table identical to the static decode — the same
