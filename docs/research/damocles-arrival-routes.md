@@ -2,10 +2,17 @@
 
 Working-Authority Evidence for
 [#326](https://github.com/odogono/mercenary/issues/326). #326 needs one on-foot
-capture per celestial body and twenty-six bodies have none. This note answers
-the question that comes before any of those captures: **from a pose the
-laboratory can restore, what can the player board, and what does the game say
-when it refuses?**
+capture per celestial body, and when this note was opened twenty-six bodies had
+none. It answers the question that comes before any of those captures: **from a
+pose the laboratory can restore, what can the player board, and what does the
+game say when it refuses?**
+
+Coverage now stands at **fifteen of the thirty physical bodies**, from nineteen
+captures. Three routes got there: the departure chain, recovered and driven live
+here; the transporter network, recovered here and confirmed against eight
+captures; and play by the project owner, which supplied every memstate. Fifteen
+bodies remain, and all fifteen need the one part of the route still unsolved — a
+flight arrival steered onto a chosen body.
 
 Authoritative Evidence remains bound to the C64 Reference Build. Observations
 here are Working-Authority Evidence only. This note does not mint Damocles world
@@ -167,7 +174,7 @@ refusal, and it is recorded here so the next attempt does not re-derive it.
 **The three progressed poses can.** DION, GAEA and VESTA each restore with
 `EAGLE NINE S E` parked within a hundredth of a cell of the player and its key
 byte set, and the laboratory boards it from the restored memstate. Those poses,
-not the pinned start, are where the remaining twenty-six captures have to begin.
+not the pinned start, are where a captured flight has to begin.
 
 **Departure is recovered, and a craft has flown from one body to another.**
 The section below records the chain. The first
@@ -292,11 +299,13 @@ rather than guessed:
 The probe implements a standoff approach — fly past the target to a point on the
 far side of its nearest neighbour, then turn in — and it reaches the right
 neighbourhood: one run closed to **12,534 units of METIS**. It has not yet
-converged on a landing. **No twenty-seventh arrival pose exists yet**, and the
-twenty-six gaps stand.
+converged on a landing.
 
-What remains is a control problem in this probe, not an unknown in the machine:
-every gate, word and rule the route depends on is recovered above.
+This is still the open problem, and it is now the *only* one. Eleven of the
+fifteen bodies added since were reached in play and four by the transporter ring;
+the fifteen bodies still without a pose are reachable no other way. What remains
+is a control problem in this probe, not an unknown in the machine: every gate,
+word and rule the route depends on is recovered above.
 
 ## The transporter network
 
@@ -327,8 +336,36 @@ transporter along the ring.
 | 9 | 72 | **BACCHUS** | surface-placed |
 | 10 | 73 | **MENTOR** | surface-placed |
 
-Four of them — METIS, LOGOS, BACCHUS and MENTOR — are bodies with no arrival
+Four of them — METIS, LOGOS, BACCHUS and MENTOR — were bodies with no arrival
 pose, and the last two are otherwise the two longest flights in the system.
+
+**All four have since been captured, and the ring is confirmed from the
+memstates.** Eight of the ten slots now have a capture standing at them, and in
+every case the pose falls on exactly one transporter: between 143 and 603 source
+units of that slot's entry in the live resident arrays, with the next-nearest
+transporter between 22 and 73 *million* units away. There is no ambiguity about
+which slot a pose is standing at.
+
+| Slot | Body | Catalogue cell | Pose | `$7B5C` | Distance to slot |
+| ---- | ---- | -------------- | ---- | ------- | ---------------- |
+| 66 | DION | 227 = `$E3` | `dion-transporter` | `$E3` | 302 |
+| 67 | METIS | 96 = `$60` | `metis-transporter` | `$60` | 283 |
+| 68 | VESTA | 100 = `$64` | `vesta-transporter` | `$64` | 200 |
+| 69 | ERIS | 139 = `$8B` | `eris-transporter-11-8` | `$8B` | 603 |
+| 70 | GAEA | 136 = `$88` | `gaea-transporter` | `$88` | 216 |
+| 71 | LOGOS | 36 = `$24` | `logos-transporter` | `$24` | 180 |
+| 72 | BACCHUS | surface-placed | `bacchus-transporter` | `$82` | 143 |
+| 73 | MENTOR | surface-placed | `mentor-transporter` | `$79` | 142 |
+
+Six of those eight compare a catalogue association cell, decoded statically from
+the program image, against the engine's own cell word in a live capture, and all
+six agree. That is the strongest cross-check the transporter work has: two
+independent derivations of the same eight places.
+
+Slots **64** (Gaea cell `$17`) and **65** (Eris cell `$26`) are the two with no
+capture. Both sit on bodies that already have two poses each, so they cost the
+pose coverage nothing; what they would settle is whether the ring wraps as
+`$059130` reads.
 
 ### Direction is decided by which side you walk in
 
@@ -377,18 +414,85 @@ workspace origin for every pose it published, and raised `KeyError` on a body
 without one. Only four bodies have an origin, so the first capture on any of the
 other twenty-six could not have been published at all.
 
-The tool now publishes such a pose with `cell`, `localCell` and
-`workspaceOrigin` null, and the `evidence.cell` field carries the reason — the
-capture is evidence that the player stood there, and the cell it does not yield
-is reported rather than guessed. That is [#326](https://github.com/odogono/mercenary/issues/326)'s
-own requirement, and it is now the tested behaviour rather than an intention.
+The first fix was to publish such a pose with a null cell and the reason stated.
+Fifteen captures then showed that was more conservative than the evidence
+required, and in one case actively wrong: the tool derived the cell from the
+camera longwords and the workspace origin, and `gaea-transporter` stands in a
+Gaea window the recovered origin does not cover, so the derivation threw rather
+than reporting anything.
+
+The cell is now **read** from `$7B5C`, the engine's own current-surface-cell
+word, which is the same word the resident-object and object-drop matchers
+already compare against. Every pose therefore publishes a cell. What can be
+missing is the anchor, and that is now said separately:
+
+- `workspaceOrigin` is the recovered origin, or null where the body has none or
+  where the pose stands outside the one window that is recovered.
+- `impliedWorkspaceOrigin` is what the pose's own longwords and cell imply, and
+  is present on every pose.
+- `evidence.cell` says which of the three cases applies, in words.
+
+The derivation survives as a cross-check rather than as the method. Seven of the
+nineteen poses stand on a body with a recovered origin, and all seven reproduce
+`$7B5C` exactly from the longwords — including two captured far from the capture
+the workspace note was written against, which shows the origin belongs to the
+window rather than to whoever found it first.
+
+**A 16×16 workspace is a window, not a body.** Implied origins across the
+nineteen poses run from `0` to `3896` on an axis, so a body surface spans
+thousands of cells and one body carries many windows. `gaea-transporter` implies
+a Gaea window at `256,768` where the Gaea note records `512,1792`; its cell `$88`
+is corroborated by the catalogue association for slot 70, by the live resident
+array, and by the player reading "8-8" off the display, so the cell is settled
+and the origin is the open item.
+
+## What nineteen captures do to the bank comparison
+
+The catalogue's bank-identity tests compare every `snapshots/*.sav` against the
+pinned first-world capture, so the fifteen new memstates widened them by
+themselves. Both results are worth recording.
+
+**The shared banks stay byte-identical.** The surface-assembly table and bank,
+the building-detail table and bank, the ground record bank `$01E790`–`$023FFF`
+and the `$031700` glyph table agree across all nineteen captures and both
+first-world loads. That claim was previously carried by eight memstates on four
+bodies; it now rests on nineteen across fifteen.
+
+**All 212 object records still decode to the same mesh in every captured world,
+and no world introduces a record address the first-world table does not already
+name.** `test_no_captured_world_introduces_an_object_record` was checking three
+memstates and now checks every one; widening it changed no decoded mesh.
+
+**The object bank's allowlist of differing bytes was incomplete.** It named
+three byte pairs. There are six, and the three new ones are the same kind of
+site as the one already understood: `$03E415`, `$03E41B`, `$03E422` and
+`$03E429` are four beacon patch slots of a single record at a seven-byte stride.
+Each holds either the `$8000` unconditional patch sentinel or a live value, and
+which of the four holds the live value varies by world — the pinned capture has
+`$0411` in the first and the sentinel in the other three, while ACHERON and
+MENTOR have the sentinel in the first and `$0777` in the other three. The mesh
+census is what establishes that none of them reaches geometry, and it now runs
+over every capture.
+
+`payload/damocles/catalogue.json` still carries the older wording under
+`coverage.diskLoad`, as a `ten-capture bank comparison` naming three byte pairs.
+That text is generated by the catalogue extraction pipeline, which needs the
+pinned first-world manifest and is not rerun here, so it is **understated rather
+than wrong** and should be regenerated the next time that pipeline runs. The
+test and this note carry the corrected count in the meantime.
 
 ## Per-body readiness
 
-What a capture would publish today, for the twenty-six bodies with no pose.
-`Residents` and `surface` are from the tracked catalogue payload;
-`origin` is whether [#172](https://github.com/odogono/mercenary/issues/172) has
-recovered that body's 16×16 workspace origin.
+Superseded by the captures. Eleven of the twenty-six bodies listed below now
+have a pose — MIDAS, ACHERON, CLOTHO, THEON, METIS, LUCAN, LOGOS, PAN, BACCHUS,
+MENTOR and DAMOCLES — and each publishes an engine-read cell rather than the
+null this table predicted. The table is kept for the fifteen that remain, and as
+the record of what the publication path was assumed to be able to do before any
+capture existed.
+
+`Residents` and `surface` are from the tracked catalogue payload; `origin` is
+whether [#172](https://github.com/odogono/mercenary/issues/172) has recovered
+that body's 16×16 workspace origin.
 
 | Body      | Residents | Surface | Workspace origin | A capture today would publish |
 | --------- | --------- | ------- | ---------------- | ----------------------------- |
@@ -412,12 +516,17 @@ recovered that body's 16×16 workspace origin.
 | MENTOR    | 8         | 2       | no               | pose, null cell               |
 | DIALIS, LACHESIS, AURORA, TRITON, JUNO, JASON, SAPPHIRE, DAMOCLES | 0 | 0 | no | pose, null cell |
 
-No body in this table has a recovered workspace origin, so **every one of the
-twenty-six would publish with a null cell and a stated reason**. That is a
-publishable pose, not a blocked one, and it is why the publication path was
-fixed before any capture was attempted. MIDAS and CLOTHO remain the two the
-coverage ledger ranks first, on what is waiting there rather than on how
-reachable they are.
+No body in this table has a recovered workspace origin, so the prediction was
+that **every one of the twenty-six would publish with a null cell and a stated
+reason**. That was right about publishability and wrong about the cell: reading
+`$7B5C` yields one for all of them. MIDAS and CLOTHO were the two the coverage
+ledger ranked first on what is waiting there, and both are now captured — MIDAS
+at cell `$B5`, CLOTHO at `$01`.
+
+The fifteen still without a pose are DIALIS, ICARUS, ATROPOS, LACHESIS, CRONUS,
+CYCLOPES, SOLON, AURORA, TRITON, THALIA, JUNO, JASON, TOLOSA, PERSEUS and
+SAPPHIRE. None is on the transporter ring, so each needs a steered flight
+arrival, which remains the one unsolved part of the route.
 
 ## Secondary-hypothesis ledger
 
@@ -427,7 +536,10 @@ reachable they are.
 | Boarding is gated by a per-craft key byte                          | **Confirmed**           | `$054332` tests bit 7 of `$7272 + slot × 4`; the limo bit sets when #86 takes the airport key |
 | The progressed poses keep a spaceworthy craft on hand              | **Confirmed**           | Slot 3 is within 0.01 cells of all three poses with its key byte set; boarding succeeds live |
 | A boarded craft departs on the ground-craft digit-and-stick pair   | **Disproved**           | Speed key registers at `$7B60`; position and `$7A96` unchanged over 20 s with the stick at rest and held forward |
-| Some other input departs a boarded craft                           | **Unresolved**          | Not searched: vehicle travel is out of scope for #313                                        |
+| Some other input departs a boarded craft                           | **Confirmed**           | `Esc` reaches the launch handler at `$055822` once the scancode is zero-padded; the craft enters space |
+| The transporter ring order follows the slot order 64–73            | **Confirmed for eight of ten** | Eight captures each fall within 603 units of exactly one slot, next-nearest 22–73 million units away; six of them match the catalogue's statically decoded association cell |
+| One celestial body has one 16×16 workspace                        | **Disproved**           | `gaea-transporter` reports cell `$88` at implied origin `256,768`, while the recovered Gaea window is `512,1792`; implied origins across nineteen poses span 0–3896 per axis |
+| The arrival cell must be derived from position and origin          | **Superseded**          | `$7B5C` reports it directly and the derivation reproduces it on all seven poses whose body has a recovered origin |
 
 ## Provenance summary
 
@@ -442,3 +554,7 @@ reachable they are.
 | Arrival at another body and the round trip     | Vesta → ERIS (`$002C`) and Vesta → Vesta, both with the player left on foot |
 | Craft census per pose                          | `arrival-route-survey-20260918T095931Z-7da4fac7`                          |
 | Per-body residents and surface counts          | `payload/damocles/catalogue.json`; `location-ledger.py ledger`            |
+| Live transporter hop, Eris `$8B` → Gaea `$88`  | `eris-transporter-11-8.sav`; `arrival-route-probe.py --walk`             |
+| Transporter ring slots and their bodies        | `$059130`; catalogue resident slots 64–73; eight transporter memstates    |
+| Nineteen arrival poses on fifteen bodies       | Nineteen Hatari memstates, all rehosted by `memstate-rehost.py`; `location-ledger.py poses --payload` |
+| A body can carry more than one 16×16 window    | `gaea-transporter` against `docs/research/damocles-gaea-ur-city-workspace.md` |

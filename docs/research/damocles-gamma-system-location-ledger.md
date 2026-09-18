@@ -91,34 +91,34 @@ have reached that state.
 | ---: | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
 | 0 | DIALIS | 0 | 0 | 0 | 0 | 0 | none recovered | none |
 | 1 | ICARUS | 2 | 2 | 1 | 1 | 0 | none recovered | none |
-| 2 | MIDAS | 5 | 5 | 0 | 5 | 0 | none recovered | none |
-| 3 | ACHERON | 2 | 2 | 1 | 1 | 0 | none recovered | none |
-| 4 | DION | 30 | 28 | 1 | 29 | 16 | Dion live `$ABDC` | `dion-2-3` |
+| 2 | MIDAS | 5 | 5 | 0 | 5 | 0 | none recovered | `midas` |
+| 3 | ACHERON | 2 | 2 | 1 | 1 | 0 | none recovered | `acheron` |
+| 4 | DION | 30 | 28 | 1 | 29 | 16 | Dion live `$ABDC` | `dion-2-3`, `dion-transporter` |
 | 5 | ATROPOS | 2 | 2 | 1 | 1 | 0 | none recovered | none |
-| 6 | CLOTHO | 17 | 17 | 0 | 17 | 0 | none recovered | none |
+| 6 | CLOTHO | 17 | 17 | 0 | 17 | 0 | none recovered | `clotho` |
 | 7 | LACHESIS | 0 | 0 | 0 | 0 | 0 | none recovered | none |
-| 8 | GAEA | 33 | 28 | 5 | 28 | 0 | Birmingham Island authored; UR City live `$ABDC` | `gaea-ur-city-4-2` |
+| 8 | GAEA | 33 | 28 | 5 | 28 | 0 | Birmingham Island authored; UR City live `$ABDC` | `gaea-ur-city-4-2`, `gaea-transporter` |
 | 9 | CRONUS | 2 | 2 | 2 | 0 | 0 | none recovered | none |
 | 10 | CYCLOPES | 1 | 1 | 0 | 1 | 0 | none recovered | none |
-| 11 | ERIS | 71 | 64 | 7 | 64 | 2 | first-world live `$ABDC` | `eris-spaceport-onfoot` |
+| 11 | ERIS | 71 | 64 | 7 | 64 | 2 | first-world live `$ABDC` | `eris-spaceport-onfoot`, `eris-transporter-11-8` |
 | 12 | SOLON | 5 | 5 | 1 | 4 | 0 | none recovered | none |
-| 13 | THEON | 4 | 4 | 1 | 3 | 0 | none recovered | none |
-| 14 | VESTA | 11 | 10 | 1 | 10 | 10 | Politburo City live `$ABDC` | `vesta-parliament-4-6` |
-| 15 | METIS | 9 | 8 | 1 | 8 | 0 | none recovered | none |
-| 16 | LUCAN | 2 | 2 | 2 | 0 | 0 | none recovered | none |
-| 17 | LOGOS | 4 | 3 | 1 | 3 | 0 | none recovered | none |
+| 13 | THEON | 4 | 4 | 1 | 3 | 0 | none recovered | `theon` |
+| 14 | VESTA | 11 | 10 | 1 | 10 | 10 | Politburo City live `$ABDC` | `vesta-parliament-4-6`, `vesta-transporter` |
+| 15 | METIS | 9 | 8 | 1 | 8 | 0 | none recovered | `metis-transporter` |
+| 16 | LUCAN | 2 | 2 | 2 | 0 | 0 | none recovered | `lucan` |
+| 17 | LOGOS | 4 | 3 | 1 | 3 | 0 | none recovered | `logos-transporter` |
 | 18 | AURORA | 0 | 0 | 0 | 0 | 0 | none recovered | none |
 | 19 | TRITON | 0 | 0 | 0 | 0 | 0 | none recovered | none |
-| 20 | PAN | 2 | 2 | 1 | 1 | 0 | none recovered | none |
+| 20 | PAN | 2 | 2 | 1 | 1 | 0 | none recovered | `pan` |
 | 21 | THALIA | 2 | 1 | 2 | 0 | 0 | none recovered | none |
 | 22 | JUNO | 0 | 0 | 0 | 0 | 0 | none recovered | none |
-| 23 | BACCHUS | 6 | 4 | 3 | 3 | 0 | none recovered | none |
+| 23 | BACCHUS | 6 | 4 | 3 | 3 | 0 | none recovered | `bacchus-transporter` |
 | 24 | JASON | 0 | 0 | 0 | 0 | 0 | none recovered | none |
 | 25 | TOLOSA | 5 | 5 | 1 | 4 | 0 | none recovered | none |
 | 26 | PERSEUS | 6 | 6 | 0 | 6 | 0 | none recovered | none |
-| 27 | MENTOR | 8 | 7 | 2 | 6 | 0 | none recovered | none |
+| 27 | MENTOR | 8 | 7 | 2 | 6 | 0 | none recovered | `mentor-transporter` |
 | 28 | SAPPHIRE | 0 | 0 | 0 | 0 | 0 | none recovered | none |
-| 29 | DAMOCLES | 0 | 0 | 0 | 0 | 0 | none recovered | none |
+| 29 | DAMOCLES | 0 | 0 | 0 | 0 | 0 | none recovered | `damocles` |
 | 30 | VOID | 0 | 0 | 0 | 0 | 0 | none recovered | none |
 
 Totals: **241** resident instances, **210** takeable, **34** surface-located,
@@ -135,18 +135,24 @@ binds. See
 
 ### Bodies classified
 
-- **Evidenced walkable, with a validated arrival pose (4):** DION, GAEA, ERIS,
-  VESTA. Each has a live on-foot capture and a recovered 16×16 surface
-  workspace.
-- **Residents but no recovered surface workspace and no arrival pose (18):**
-  ICARUS, MIDAS, ACHERON, ATROPOS, CLOTHO, CRONUS, CYCLOPES, SOLON, THEON,
-  METIS, LUCAN, LOGOS, PAN, THALIA, BACCHUS, TOLOSA, PERSEUS, MENTOR. Fourteen
-  of them carry surface residents with recovered body-local coordinates, so
-  those objects have positions on a surface nobody has yet captured; MIDAS,
-  CLOTHO, CYCLOPES and PERSEUS carry only interior-associated residents.
+- **Evidenced walkable, with a validated arrival pose (15):** MIDAS, ACHERON,
+  DION, CLOTHO, GAEA, ERIS, THEON, VESTA, METIS, LUCAN, LOGOS, PAN, BACCHUS,
+  MENTOR, DAMOCLES. Each has at least one live on-foot capture. Four of them —
+  DION, GAEA, ERIS, VESTA — also have a recovered named 16×16 surface workspace;
+  the other eleven have a pose and a cell but no named workspace yet.
+- **Residents but no recovered surface workspace and no arrival pose (8):**
+  ICARUS, ATROPOS, CRONUS, CYCLOPES, SOLON, THALIA, TOLOSA, PERSEUS. Each
+  carries residents whose positions sit on a surface nobody has yet captured;
+  CYCLOPES and PERSEUS carry only interior-associated residents.
 - **No resident records at all (8):** DIALIS, LACHESIS, AURORA, TRITON, JUNO,
   JASON, SAPPHIRE, DAMOCLES. No object is associated with these bodies in the
-  first-world resident arrays.
+  first-world resident arrays. DAMOCLES nonetheless has a validated arrival
+  pose, which is the clearest illustration that resident count says nothing
+  about whether a body can be stood on.
+
+These classes no longer partition the thirty physical bodies: DAMOCLES is in
+both the first and the third. Having a pose and having residents are independent
+facts, and now that poses outnumber workspaces the two have come apart.
 - **Not a physical body (1):** VOID, source slot 30, the space-as-place
   sentinel.
 
@@ -157,23 +163,63 @@ body.
 
 ## Validated on-foot arrival poses
 
-Four live captures put the player on foot on four different bodies. Each pose is
-published in `payload/damocles/arrival-poses.json` with its memstate hash.
+Nineteen live captures put the player on foot on fifteen different bodies. Each
+pose is published in `payload/damocles/arrival-poses.json` with its memstate
+hash. Four bodies carry two poses each, standing in different places.
 
-| Body  | Capture                 | Body selector | Camera X, Y, Z            | Yaw     | Bearing  | Cell  |
-| ----- | ----------------------- | ------------- | ------------------------- | ------- | -------- | ----- |
-| DION  | `dion-2-3`              | `$0010`       | `213288851, 63, 86343888` | `$F620` | 11.25°   | `$32` |
-| GAEA  | `gaea-ur-city-4-2`      | `$0020`       | `33847828, 63, 117602545` | `$022F` | 16.52°   | `$24` |
-| ERIS  | `eris-spaceport-onfoot` | `$002C`       | `4681905, 63, 8940589`    | `$0600` | 0.00°    | `$87` |
-| VESTA | `vesta-parliament-4-6`  | `$0038`       | `71270097, 63, 20544365`  | `$0614` | 7.03°    | `$64` |
+| Body | Capture | Body selector | Camera X, Y, Z | Yaw | Bearing | Cell | Workspace origin |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| MIDAS | `midas` | `$0008` | `23494601, 63, 228950707` | `$030C` | 94.22° | `$B5` | `353,3482` implied |
+| ACHERON | `acheron` | `$000C` | `224298727, 63, 19757658` | `$FD77` | 311.84° | `$33` | `3419,298` implied |
+| DION | `dion-2-3` | `$0010` | `213288851, 63, 86343888` | `$F620` | 11.25° | `$32` | `3252,1314` confirmed |
+| DION | `dion-transporter` | `$0010` | `213351262, 213, 87064898` | `$EA17` | 8.09° | `$E3` | `3252,1314` confirmed |
+| CLOTHO | `clotho` | `$0018` | `158761083, 63, 19690965` | `$F43F` | 202.15° | `$01` | `2421,300` implied |
+| GAEA | `gaea-ur-city-4-2` | `$0020` | `33847828, 63, 117602545` | `$022F` | 16.52° | `$24` | `512,1792` confirmed |
+| GAEA | `gaea-transporter` | `$0020` | `17334574, 213, 50890231` | `$E3AE` | 151.17° | `$88` | `256,768` implied |
+| ERIS | `eris-spaceport-onfoot` | `$002C` | `4681905, 63, 8940589` | `$0600` | 0.00° | `$87` | `64,128` confirmed |
+| ERIS | `eris-transporter-11-8` | `$002C` | `4946298, 1163, 8945118` | `$E4C8` | 250.31° | `$8B` | `64,128` confirmed |
+| THEON | `theon` | `$0034` | `166952347, 63, 218595213` | `$0316` | 97.73° | `$11` | `2546,3334` implied |
+| VESTA | `vesta-parliament-4-6` | `$0038` | `71270097, 63, 20544365` | `$0614` | 7.03° | `$64` | `1083,307` confirmed |
+| VESTA | `vesta-transporter` | `$0038` | `71269092, 3233, 20547167` | `$E5B2` | 332.58° | `$64` | `1083,307` confirmed |
+| METIS | `metis-transporter` | `$003C` | `165642616, 1413, 70288873` | `$EA26` | 13.36° | `$60` | `2527,1066` implied |
+| LUCAN | `lucan` | `$0040` | `255428843, 63, 229920` | `$01B7` | 334.34° | `$31` | `3896,0` implied |
+| LOGOS | `logos-transporter` | `$0044` | `85098916, 703, 173702108` | `$DEC2` | 68.20° | `$24` | `1294,2648` implied |
+| PAN | `pan` | `$0050` | `27885887, 213, 117998423` | `$07E7` | 171.21° | `$14` | `421,1799` implied |
+| BACCHUS | `bacchus-transporter` | `$005C` | `109020344, 63, 104496724` | `$DC25` | 193.01° | `$82` | `1661,1586` implied |
+| MENTOR | `mentor-transporter` | `$006C` | `185238283, 63, 18055367` | `$DFCA` | 161.02° | `$79` | `2817,268` implied |
+| DAMOCLES | `damocles` | `$0074` | `16451637, 63, 214692179` | `$085C` | 212.34° | `$00` | `251,3275` implied |
 
 Each pose is read from `$7A8E` (on foot), `$7AA8` (body selector), `$7A92` /
-`$7A96` / `$7A9A` (camera longwords) and `$7AA2` with its `$7AC2` twin. The cell
-is **derived** from the camera longwords and the body-local workspace origin,
-and in all four cases it independently reproduces the cell each workspace note
-already records: `$32` for Dion local 2,3, `$24` for UR City local 4,2, `$87`
-for the Eris spaceport and `$64` for Vesta local 4,6. That agreement is the
-check that the pose and the recovered workspace describe the same place.
+`$7A96` / `$7A9A` (camera longwords) and `$7AA2` with its `$7AC2` twin.
+
+The cell is **read** from `$7B5C`, the engine's own current-surface-cell word —
+the same word the resident-object matcher and the object-drop matcher already
+compare against. It is not derived. Deriving it was the earlier method, and it
+does not survive contact with fifteen bodies: a 16×16 workspace is a window onto
+a body surface that spans thousands of cells, only four window origins are
+recovered, and a pose can stand in a second window of a body whose first window
+is known.
+
+Where an origin is recovered the derivation is kept as a cross-check, and it
+still passes: seven of the nineteen poses stand on a body with a recovered
+origin, and in all seven the camera longwords reproduce `$7B5C` exactly. Two of
+those seven — `dion-transporter` and `eris-transporter-11-8` — were captured far
+from the workspace note's own capture, so the origin is a property of the window,
+not of the capture that first found it.
+
+`impliedWorkspaceOrigin` carries what each pose's longwords and cell imply, for
+every pose. For the seven anchored poses it equals the recovered origin. For the
+other twelve it is the only thing anchoring the cell, and the payload says so
+rather than presenting an unanchored cell as a located one.
+
+**`gaea-transporter` implies a Gaea window at `256,768`,** which is neither of
+the two Gaea workspaces this note records at `512,1792`. The cell it reports,
+`$88`, is corroborated three ways: the catalogue's own association for
+transporter slot 70 is Gaea cell 136 = `$88`; the live resident array puts slot
+70 within 216 units of the pose; and the player who captured it read "8-8" off
+the location display. So the cell is not in doubt — what is unreconciled is the
+origin, and a third Gaea window is the reading the evidence supports. That is
+recorded here as an open item, not folded into the existing Gaea note.
 
 The Eris pose is the one `web/damocles/eris.json` already carries as `start`;
 the payload document republishes it beside the three that were not previously
@@ -181,10 +227,12 @@ expressed as poses. The yaw word is published raw and carries bits above
 `$03FF`; only its low ten bits are the bearing, on the convention recovered in
 [walk, board, flight](damocles-walk-board-flight.md).
 
-**Twenty-six bodies have no arrival pose.** That is an unresolved gap for each
-of them, not a finding that they cannot be stood on. Recovering one is a bounded
-task per body: reach the body in the Working Authority, capture an on-foot
-memstate, and run the `poses` command.
+**Fifteen bodies have no arrival pose:** DIALIS, ICARUS, ATROPOS, LACHESIS,
+CRONUS, CYCLOPES, SOLON, AURORA, TRITON, THALIA, JUNO, JASON, TOLOSA, PERSEUS,
+SAPPHIRE. That is an unresolved gap for each of them, not a finding that they
+cannot be stood on. Recovering one remains a bounded task per body: reach the
+body in the Working Authority, capture an on-foot memstate, and run the `poses`
+command.
 
 Reaching the body is the part that was not bounded, and
 [#326](https://github.com/odogono/mercenary/issues/326) has now attempted it on
@@ -200,10 +248,11 @@ its key byte set, the laboratory boards it, and the departure chain that follows
 (climb, `Esc`, space, arrival, landing) is recovered and driven live. Those
 three poses, not the pinned start, are where the remaining captures begin.
 
-A pose no longer needs a recovered workspace origin to be published. Every one
-of the twenty-six would publish today with a null cell and the reason stated,
-which is what `location-ledger.py poses --payload` now does instead of refusing;
-the per-body readiness table is in the same note.
+In the event, flight supplied only part of the answer. **The transporter network
+reaches eight bodies on foot,** and the fifteen poses now published were captured
+in play by the project owner across both routes. A pose no longer needs a
+recovered workspace origin to publish: `location-ledger.py poses --payload`
+reads the cell from the engine and states what anchors it, instead of refusing.
 
 ## A workspace is selected before the cell is interpreted
 
@@ -503,7 +552,8 @@ and 14 do not.
 | Surface objects on DION / GAEA / VESTA         | **Partly**                                 | Coordinates exist; 99 CHEVY's authored/live Gaea map identity remains Unresolved |
 | Interior objects anywhere but the two Eris keys | **No**                                     | 193 residents have selectors and no parent                                       |
 | Pickup-triggered responses beyond slot 183     | **No**                                     | None of the other five trigger objects is reachable; their responses are recovered (#317) |
-| Any other body                                 | **No**                                     | No surface workspace, no arrival pose                                            |
+| Body switch to any of the other eleven posed bodies | **Yes**, for the pose itself           | `payload/damocles/arrival-poses.json`; the cell is engine-read but unanchored to a named workspace |
+| Any of the fifteen unposed bodies              | **No**                                     | No surface workspace, no arrival pose                                            |
 
 ### Bounded tasks this ledger identifies
 
@@ -513,8 +563,10 @@ Already owned, and this ledger supplies the target list rather than new scope:
   FILE), `$77` and `$29` (both ANTIGRAV) are the ledger's highest-value Eris
   cells; all four objects are unreachable until those selectors decode.
 - **#172** — non-Eris surface structures and places. The eighteen bodies with
-  residents and no workspace are its remaining target list, and MIDAS is the
-  only one holding a trigger object (MAGIC CRYSTAL, slot 95).
+  residents and no named workspace are its remaining target list, and MIDAS is
+  the only one holding a trigger object (MAGIC CRYSTAL, slot 95). Ten of them now
+  have an arrival pose and an implied window origin, which gives the work a live
+  standing position to start from rather than coordinates alone.
 
 Not owned by either ticket, and needing children of #313 before #318 can start:
 
@@ -531,10 +583,13 @@ Not owned by either ticket, and needing children of #313 before #318 can start:
    BRIEFCASE. The seven Dion residents in groups `$1B` and `$1C` are bound to a
    static group record whose named workspace identity is unresolved, the same
    disposition #324 records for Gaea group `$0F`.
-3. **Arrival poses for the remaining bodies.** One on-foot capture per body;
-   the tool and the payload document already exist, and the payload now accepts a
-   pose whose body has no recovered workspace origin. What #326 is waiting on is
-   departure: boarding is recovered and observed, flight is not. See [departure
+3. **Arrival poses for the remaining fifteen bodies.** Substantially advanced by
+   [#326](https://github.com/odogono/mercenary/issues/326): coverage went from
+   four bodies to fifteen. Departure is recovered and driven live, the
+   transporter network is recovered and its ring resolved, and the payload
+   publishes an engine-read cell for a body with no recovered workspace origin.
+   What remains is fifteen bodies reachable only by a steered flight arrival,
+   which is the one part of the route still unsolved. See [departure
    routes](damocles-arrival-routes.md).
 Resolved since this ledger was first written:
 
@@ -546,9 +601,10 @@ Resolved since this ledger was first written:
 
 ## Coverage and remaining gaps
 
-- `complete: false`. Twenty-six of the thirty physical bodies have no arrival
-  pose; eighteen of those twenty-six carry residents and have no recovered
-  surface workspace either.
+- `complete: false`. Fifteen of the thirty physical bodies have no arrival pose;
+  eight of those fifteen carry residents and have no recovered surface workspace
+  either. Of the fifteen bodies that do have a pose, eleven have an engine-read
+  cell with no named workspace to anchor it.
 - 193 of 195 interior-associated residents have no parent and no local
   placement.
 - Workspace selection within a body is undecoded, so cell selectors are not
@@ -564,9 +620,11 @@ Resolved since this ledger was first written:
 | --------------------------------------------------- | ------------------------------------------------------------------------ |
 | Per-body resident counts and residence forms        | `payload/damocles/catalogue.json`; `location-ledger.py ledger`           |
 | Residence-form decoding                             | [resident object associations](damocles-resident-objects.md)             |
-| Four on-foot arrival poses                          | Four Hatari memstates; `location-ledger.py poses`                        |
+| Nineteen on-foot arrival poses on fifteen bodies    | Nineteen Hatari memstates; `location-ledger.py poses`                    |
+| Arrival cells                                       | The engine cell word `$7B5C`, cross-checked against the camera longwords on the seven poses whose body has a recovered origin |
+| The transporter ring and its eight bodies           | [departure routes](damocles-arrival-routes.md); catalogue slots 64–73    |
 | Board gate, its refusals and the per-craft key byte | [departure routes](damocles-arrival-routes.md); `arrival-route-probe.py` |
-| Derived arrival cells agree with the workspace notes | [Dion](damocles-dion-workspace.md), [Gaea UR City](damocles-gaea-ur-city-workspace.md), [Vesta](damocles-vesta-workspace.md), [catalogue](damocles-catalogue.md) |
+| Engine-read arrival cells agree with the workspace notes | [Dion](damocles-dion-workspace.md), [Gaea UR City](damocles-gaea-ur-city-workspace.md), [Vesta](damocles-vesta-workspace.md), [catalogue](damocles-catalogue.md) |
 | Gaea's two workspaces share an origin qualifier     | [Gaea UR City workspace](damocles-gaea-ur-city-workspace.md)             |
 | Six pickup-trigger slots                            | [limo-key pickup](damocles-limo-key-pickup.md#the-object-to-script-trigger-table) |
 | Slots 248–255 are a world binding                   | [catalogue](damocles-catalogue.md)                                       |

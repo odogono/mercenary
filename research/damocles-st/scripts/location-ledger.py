@@ -56,6 +56,11 @@ CAMERA_YAW = 0x7AA2
 CAMERA_YAW_TWIN = 0x7AC2
 BODY_SELECTOR = 0x7AA8
 PLACE_LIST = 0x7A6C
+# The engine's own current-surface-cell word, established in
+# docs/research/damocles-resident-objects.md and used by the object-drop matcher
+# in docs/research/damocles-object-drops.md. Low nibble is the body-local cell x,
+# high nibble is z.
+CELL_WORD = 0x7B5C
 
 CELL_UNITS = 65536
 CELLS_PER_AXIS = 16
@@ -206,24 +211,42 @@ def read_pose(label: str, path: Path) -> dict:
         'memstateSha256': hashlib.sha256(blob).hexdigest(),
         'ramSha256': hashlib.sha256(ram).hexdigest(),
     }
+    # The cell is read from the engine rather than derived, because a body can
+    # carry more than one 16x16 workspace and only a handful of origins are
+    # recovered. Where an origin is recovered the derivation is kept as a
+    # cross-check; where it disagrees, the pose stands in a second workspace.
+    cell = u16(ram, CELL_WORD)
+    if cell > 0xFF:
+        raise ValueError(f'{label}: cell word ${cell:04X} is outside a 16x16 workspace')
+    local_x, local_z = cell & 0x0F, cell >> 4
+    implied_x = (position[0] // CELL_UNITS) - local_x
+    implied_z = (position[2] // CELL_UNITS) - local_z
+    pose['cell'] = cell
+    pose['localCell'] = {'x': local_x, 'z': local_z}
+    pose['impliedWorkspaceOrigin'] = {'x': implied_x, 'z': implied_z}
     origin = WORKSPACE_ORIGINS.get(index)
     if origin is None:
-        pose['cell'] = None
+        pose['workspaceOrigin'] = None
         pose['cellEvidence'] = (
-            'No recovered body-local workspace origin, so the arrival cell is not derived.'
+            'Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace '
+            'origin, so the cell is not yet anchored to the body surface; the camera longwords '
+            f'imply an origin of {implied_x},{implied_z} for the workspace this pose stands in.'
         )
         return pose
     (origin_x, origin_z), evidence = origin
-    local_x = (position[0] // CELL_UNITS) - origin_x
-    local_z = (position[2] // CELL_UNITS) - origin_z
-    if not (0 <= local_x < CELLS_PER_AXIS and 0 <= local_z < CELLS_PER_AXIS):
-        raise ValueError(
-            f'{label}: camera is outside the recovered 16x16 workspace at local {local_x},{local_z}'
+    if (implied_x, implied_z) == (origin_x, origin_z):
+        pose['workspaceOrigin'] = {'x': origin_x, 'z': origin_z}
+        pose['cellEvidence'] = (
+            'Read from the engine cell word $7B5C and independently confirmed by the camera '
+            f'longwords against the workspace origin {origin_x},{origin_z} ({evidence}).'
         )
-    pose['cell'] = (local_z << 4) | local_x
-    pose['localCell'] = {'x': local_x, 'z': local_z}
+        return pose
+    pose['workspaceOrigin'] = None
     pose['cellEvidence'] = (
-        f'Derived from the camera longwords and the workspace origin {origin_x},{origin_z} ({evidence}).'
+        'Read from the engine cell word $7B5C. The camera longwords put this pose outside the '
+        f'one recovered workspace on the body (origin {origin_x},{origin_z}, {evidence}); they '
+        f'imply a second workspace with origin {implied_x},{implied_z}, which no workspace note '
+        'has recovered, so the cell is not anchored to that note.'
     )
     return pose
 
@@ -278,13 +301,11 @@ def render_poses(poses: list[dict]) -> str:
 def published_pose(pose: dict, names: dict[str, str]) -> dict:
     """One pose as the payload document carries it.
 
-    A body whose 16x16 workspace origin is unrecovered still publishes: the
-    capture is evidence that the player stood there, and the cell it did not
-    yield is reported as null with the reason rather than guessed. #326 requires
-    exactly that, and it is why the origin is looked up defensively here.
+    The cell always publishes, because the engine reports it directly. What can
+    be missing is the anchor: a body whose 16x16 workspace origin is unrecovered
+    publishes a null ``workspaceOrigin`` alongside the origin its own longwords
+    imply, so the cell is usable now and anchorable later without a guess.
     """
-    index = int(pose['body'].split('-')[1])
-    origin = WORKSPACE_ORIGINS.get(index)
     return {
         'id': pose['id'],
         'body': pose['body'],
@@ -295,7 +316,8 @@ def published_pose(pose: dict, names: dict[str, str]) -> dict:
         'yaw': pose['yaw'],
         'cell': pose['cell'],
         'localCell': pose.get('localCell'),
-        'workspaceOrigin': None if origin is None else {'x': origin[0][0], 'z': origin[0][1]},
+        'workspaceOrigin': pose.get('workspaceOrigin'),
+        'impliedWorkspaceOrigin': pose.get('impliedWorkspaceOrigin'),
         'evidence': {
             'memstateSha256': pose['memstateSha256'],
             'ramSha256': pose['ramSha256'],
@@ -317,9 +339,11 @@ def payload_document(poses: list[dict], catalogue: dict) -> dict:
         'coverage': {
             'complete': False,
             'notes': [
-                'One validated on-foot pose per body, taken from a live capture of the player '
-                'standing on that body. It is a reachable standing position, not an authored '
-                'landing site and not a claim about the rest of the body.',
+                'One or more validated on-foot poses per body, each taken from a live capture of '
+                'the player standing on that body. Each is a reachable standing position, not an '
+                'authored landing site and not a claim about the rest of the body. Where a body '
+                'carries two poses they stand in different places, and often in different '
+                'workspaces; the ids say which.',
                 'Bodies absent from this document have no capture of the player standing on them. '
                 'Absence is an unresolved gap, not evidence that the body is unlandable.',
                 'Positions are raw signed engine longwords in the body-local surface grid at '
@@ -327,18 +351,23 @@ def payload_document(poses: list[dict], catalogue: dict) -> dict:
                 'modulo $0400, rising clockwise.',
                 'The yaw word is published raw and carries bits above $03FF; only its low ten '
                 'bits are the bearing, as the existing Eris presentation document already assumes.',
-                'Where the body has a recovered 16x16 workspace origin, the cell is derived from '
-                'the position and that origin, and agrees with the cell the workspace note records '
-                'independently. Where no origin has been recovered, the cell is null and the '
-                'evidence field says so: the pose still stands, the cell is simply not yet '
-                'derivable.',
+                'The cell is read from the engine cell word $7B5C, the same word the resident '
+                'object and object-drop matchers compare against. Where the body has a recovered '
+                '16x16 workspace origin, the camera longwords reproduce that cell independently '
+                'and workspaceOrigin carries the origin.',
+                'A 16x16 workspace is a window onto a body surface that spans thousands of '
+                'cells, so one body can carry several. Where the longwords put a pose outside the '
+                'one recovered workspace on its body, workspaceOrigin is null and the evidence '
+                'field says so; impliedWorkspaceOrigin always carries the origin that pose\'s own '
+                'longwords and cell imply, so an unanchored cell can be anchored later without '
+                'guessing. Two poses that agree on an implied origin stand in the same window.',
                 'Source memstates are Restricted Material and are not published; their SHA-256 '
                 'values identify them.',
-                'The DION, GAEA and VESTA memstates were captured by an IPF-capable Hatari 2.6.1 '
-                'build and were rehosted onto the pinned build by '
+                'Every memstate behind this document was captured by an IPF-capable Hatari 2.6.1 '
+                'build and rehosted onto the pinned build by '
                 'research/damocles-st/scripts/memstate-rehost.py (#331). Only the snapshot '
                 'container changed: each pose decodes to the same words and the same ramSha256 '
-                'as before, and all three now restore and run in the pinned laboratory.',
+                'as before, and all of them restore and run in the pinned laboratory.',
             ],
         },
         'orientation': {

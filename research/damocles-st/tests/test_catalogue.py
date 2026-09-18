@@ -2174,10 +2174,12 @@ class WorldConditionedSlotTests(unittest.TestCase):
             return records
 
         resident = census(data)
-        for name in ('vesta-parliament-4-6', 'gaea-ur-city-4-2', 'dion-2-3'):
-            live = census(self.ram(name))
-            self.assertEqual(set(live), set(resident), name)
-            self.assertEqual(live, resident, name)
+        snapshots = sorted((Path(__file__).resolve().parents[1] / 'snapshots').glob('*.sav'))
+        self.assertGreaterEqual(len(snapshots), 19)
+        for path in snapshots:
+            live = census(self.ram(path.stem))
+            self.assertEqual(set(live), set(resident), path.stem)
+            self.assertEqual(live, resident, path.stem)
 
 
 class ResidentBankIdentityTests(unittest.TestCase):
@@ -2220,12 +2222,23 @@ class ResidentBankIdentityTests(unittest.TestCase):
             for offset in range(0x035CE8, 0x042BBE)
             if image[offset] != base[offset]
         }
-        # $03E415 is the $8003 unconditional patch site the three beacons share;
-        # the decoder writes its own patch there, so the live value never reaches
-        # a mesh. The other two lie outside every decoded record stream.
+        # $03E415, $03E41B, $03E422 and $03E429 are the four beacon patch slots of
+        # one record, at a seven-byte stride. Each holds either the $8000
+        # unconditional patch sentinel or a live value, and which one holds the
+        # live value varies by world: the pinned first-world capture has $0411 in
+        # the first and the sentinel in the other three, while ACHERON and MENTOR
+        # have the sentinel in the first and $0777 in the other three. The decoder
+        # writes its own patch at each, so no live value reaches a mesh --
+        # test_no_captured_world_introduces_an_object_record checks exactly that
+        # across every capture. $03AEED and $03B302 lie outside every decoded
+        # record stream.
         self.assertEqual(
             sorted(differing),
-            [0x03AEED, 0x03AEEE, 0x03B302, 0x03B303, 0x03E415, 0x03E416],
+            [
+                0x03AEED, 0x03AEEE, 0x03B302, 0x03B303,
+                0x03E415, 0x03E416, 0x03E41B, 0x03E41C,
+                0x03E422, 0x03E423, 0x03E429, 0x03E42A,
+            ],
         )
 
 

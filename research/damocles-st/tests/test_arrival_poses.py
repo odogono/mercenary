@@ -1,13 +1,17 @@
 """Publication rules for arrival poses (#326).
 
-A pose on a body whose 16x16 workspace origin is unrecovered has to publish with
-a null cell and a stated reason, because twenty-six of the thirty physical
-bodies are in exactly that position and a capture on any of them would otherwise
-be unpublishable.
+The arrival cell is read from the engine's own cell word rather than derived,
+because a 16x16 workspace is a window onto a body surface that spans thousands
+of cells and only a handful of window origins are recovered. Deriving the cell
+would have left twenty-six of the thirty physical bodies unpublishable and would
+have thrown outright on a pose standing in a second window of a body whose first
+window is known -- which is exactly what the Gaea transporter destination does.
 """
 
 import importlib.util
+import struct
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -19,52 +23,65 @@ _spec = importlib.util.spec_from_file_location(
 location_ledger = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(location_ledger)
 
+CELL_UNITS = location_ledger.CELL_UNITS
 
-def pose(body: str, *, cell=None, local=None) -> dict:
-    return {
-        'id': f'{body}-probe',
-        'body': body,
-        'bodySelector': int(body.split('-')[1]) * 4,
-        'onFoot': True,
-        'position': {'x': 1, 'y': 63, 'z': 2},
-        'yaw': 0x0600,
-        'cell': cell,
-        'localCell': local,
-        'cellEvidence': 'reason',
-        'memstateSha256': 'a' * 64,
-        'ramSha256': 'b' * 64,
-    }
+
+def workspace(body_index: int, cell: int, origin: tuple[int, int]) -> bytes:
+    """An ST RAM window holding one on-foot pose at ``cell`` within ``origin``."""
+    ram = bytearray(0x100000)
+    struct.pack_into('>H', ram, location_ledger.BODY_SELECTOR, body_index * 4)
+    struct.pack_into('>H', ram, location_ledger.ON_FOOT, 1)
+    struct.pack_into('>H', ram, location_ledger.CELL_WORD, cell)
+    struct.pack_into('>i', ram, location_ledger.CAMERA_X,
+                     (origin[0] + (cell & 0x0F)) * CELL_UNITS + 17)
+    struct.pack_into('>i', ram, location_ledger.CAMERA_Y, 63)
+    struct.pack_into('>i', ram, location_ledger.CAMERA_Z,
+                     (origin[1] + (cell >> 4)) * CELL_UNITS + 17)
+    return bytes(ram)
 
 
 class ArrivalPosePublicationTests(unittest.TestCase):
-    def test_body_without_a_recovered_origin_still_publishes(self):
+    def read(self, label: str, ram: bytes) -> dict:
+        path = Path(self.enterContext(tempfile.TemporaryDirectory())) / 'probe.ram'
+        path.write_bytes(ram)
+        return location_ledger.read_pose(label, path)
+
+    def test_body_without_a_recovered_origin_still_publishes_its_cell(self):
         # MIDAS is body 2: residents, no recovered workspace origin.
         self.assertNotIn(2, location_ledger.WORKSPACE_ORIGINS)
-        published = location_ledger.published_pose(pose('body-2'), {'body-2': 'MIDAS'})
+        pose = self.read('midas', workspace(2, 0xB5, (353, 3482)))
+        published = location_ledger.published_pose(pose, {'body-2': 'MIDAS'})
         self.assertEqual(published['name'], 'MIDAS')
-        self.assertIsNone(published['cell'])
-        self.assertIsNone(published['localCell'])
+        self.assertEqual(published['cell'], 0xB5)
+        self.assertEqual(published['localCell'], {'x': 5, 'z': 11})
         self.assertIsNone(published['workspaceOrigin'])
-        self.assertEqual(published['evidence']['cell'], 'reason')
+        self.assertEqual(published['impliedWorkspaceOrigin'], {'x': 353, 'z': 3482})
+        self.assertIn('no recovered 16x16 workspace origin', published['evidence']['cell'])
 
-    def test_body_with_a_recovered_origin_publishes_the_origin(self):
+    def test_a_recovered_origin_confirms_the_engine_cell(self):
         # Eris is body 11, origin 64,128 from the catalogue note.
-        published = location_ledger.published_pose(
-            pose('body-11', cell=0x87, local={'x': 7, 'z': 8}), {'body-11': 'ERIS'})
+        pose = self.read('eris', workspace(11, 0x87, (64, 128)))
+        published = location_ledger.published_pose(pose, {'body-11': 'ERIS'})
         self.assertEqual(published['cell'], 0x87)
         self.assertEqual(published['workspaceOrigin'], {'x': 64, 'z': 128})
+        self.assertEqual(published['impliedWorkspaceOrigin'], {'x': 64, 'z': 128})
+        self.assertIn('independently confirmed', published['evidence']['cell'])
 
-    def test_a_pose_read_without_an_origin_reports_the_reason(self):
-        ram = bytearray(0x100000)
-        ram[location_ledger.BODY_SELECTOR:location_ledger.BODY_SELECTOR + 2] = (8).to_bytes(2, 'big')
-        ram[location_ledger.ON_FOOT:location_ledger.ON_FOOT + 2] = (1).to_bytes(2, 'big')
-        path = Path(self.enterContext(__import__('tempfile').TemporaryDirectory())) / 'probe.ram'
-        path.write_bytes(bytes(ram))
-        decoded = location_ledger.read_pose('probe', path)
-        self.assertEqual(decoded['body'], 'body-2')
-        self.assertIsNone(decoded['cell'])
-        self.assertIn('no recovered body-local workspace origin',
-                      decoded['cellEvidence'].lower())
+    def test_a_pose_in_a_second_workspace_publishes_unanchored(self):
+        # The Gaea transporter destination: cell 8,8 of a window at 256,768,
+        # while the only recovered Gaea window is Ur city at 512,1792.
+        self.assertEqual(location_ledger.WORKSPACE_ORIGINS[8][0], (512, 1792))
+        pose = self.read('gaea-transporter', workspace(8, 0x88, (256, 768)))
+        published = location_ledger.published_pose(pose, {'body-8': 'GAEA'})
+        self.assertEqual(published['cell'], 0x88)
+        self.assertEqual(published['localCell'], {'x': 8, 'z': 8})
+        self.assertIsNone(published['workspaceOrigin'])
+        self.assertEqual(published['impliedWorkspaceOrigin'], {'x': 256, 'z': 768})
+        self.assertIn('outside the one recovered workspace', published['evidence']['cell'])
+
+    def test_a_cell_word_outside_a_workspace_is_refused(self):
+        with self.assertRaisesRegex(ValueError, 'outside a 16x16 workspace'):
+            self.read('bogus', workspace(2, 0x1B5, (0, 0)))
 
 
 if __name__ == '__main__':
