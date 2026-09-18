@@ -878,7 +878,9 @@ export const parseCatalogue = (value: unknown): Catalogue => {
         byte: byte(h['byte']),
         carried: boolean(h['carried']),
         refusal:
-          h['refusal'] === null ? null : choice(h['refusal'], ['message', 'silent'] as const),
+          h['refusal'] === null
+            ? null
+            : choice(h['refusal'], ['message', 'silent'] as const),
         requiredSupportRank: byte(h['requiredSupportRank']),
         suppliedSupportRank: byte(h['suppliedSupportRank']),
         takeable: boolean(h['takeable'])

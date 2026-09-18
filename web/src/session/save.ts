@@ -46,11 +46,7 @@ export interface BensonDisplaySaveSnapshot {
   readonly activeSourceText: string | null;
   readonly cells: readonly string[];
   readonly completionPhase:
-    | 'source'
-    | 'blankFeed'
-    | 'readingHold'
-    | 'clearing'
-    | 'idle';
+    'source' | 'blankFeed' | 'readingHold' | 'clearing' | 'idle';
   readonly cyclePosition: number;
   readonly fractionalFrameRemainder: number;
   readonly messageInterval: number;
@@ -587,7 +583,9 @@ const display = (value: unknown, at: string): BensonDisplaySaveSnapshot => {
   }
   const rawPhase = string(out['completionPhase'], `${at}.completionPhase`);
   if (
-    !['source', 'blankFeed', 'readingHold', 'clearing', 'idle'].includes(rawPhase)
+    !['source', 'blankFeed', 'readingHold', 'clearing', 'idle'].includes(
+      rawPhase
+    )
   ) {
     fail(`${at}.completionPhase is not recognized`);
   }
@@ -1286,7 +1284,10 @@ const decodeEnvelope = (text: string): SaveEnvelope => {
     savedAt,
     schemaVersion: SAVE_SCHEMA_VERSION,
     snapshot: migrateHeadingConvention(
-      snapshot(migrateDisplayRest(out['snapshot'], schemaVersion), '$.snapshot'),
+      snapshot(
+        migrateDisplayRest(out['snapshot'], schemaVersion),
+        '$.snapshot'
+      ),
       schemaVersion
     )
   };

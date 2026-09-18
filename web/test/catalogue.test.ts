@@ -157,7 +157,7 @@ describe('Damocles catalogue contract', () => {
     };
     expect(() => parseCatalogue(badByte)).toThrow('byte');
   });
-  it('carries the take handler\'s interaction byte for a resident slot', () => {
+  it("carries the take handler's interaction byte for a resident slot", () => {
     // $6FAA + 4*slot is the only per-object input to takeability; the catalogue
     // reports it rather than deciding anything with it.
     const taken = fixture();
