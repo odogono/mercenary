@@ -13,7 +13,7 @@
    "Bodies absent from this document have no capture of the player standing on them. Absence is an unresolved gap, not evidence that the body is unlandable.",
    "Positions are raw signed engine longwords in the body-local surface grid at 65,536 units per cell. The yaw word wraps every 1024 units with north at $0200 modulo $0400, rising clockwise.",
    "The yaw word is published raw and carries bits above $03FF; only its low ten bits are the bearing, as the existing Eris presentation document already assumes.",
-   "The cell is derived from the position and the recovered 16x16 workspace origin, and agrees with the cell each workspace note records independently.",
+   "Where the body has a recovered 16x16 workspace origin, the cell is derived from the position and that origin, and agrees with the cell the workspace note records independently. Where no origin has been recovered, the cell is null and the evidence field says so: the pose still stands, the cell is simply not yet derivable.",
    "Source memstates are Restricted Material and are not published; their SHA-256 values identify them.",
    "The DION, GAEA and VESTA memstates were captured by an IPF-capable Hatari 2.6.1 build and were rehosted onto the pinned build by research/damocles-st/scripts/memstate-rehost.py (#331). Only the snapshot container changed: each pose decodes to the same words and the same ramSha256 as before, and all three now restore and run in the pinned laboratory."
   ]

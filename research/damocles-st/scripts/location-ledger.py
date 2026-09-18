@@ -275,6 +275,35 @@ def render_poses(poses: list[dict]) -> str:
     return '\n'.join(lines)
 
 
+def published_pose(pose: dict, names: dict[str, str]) -> dict:
+    """One pose as the payload document carries it.
+
+    A body whose 16x16 workspace origin is unrecovered still publishes: the
+    capture is evidence that the player stood there, and the cell it did not
+    yield is reported as null with the reason rather than guessed. #326 requires
+    exactly that, and it is why the origin is looked up defensively here.
+    """
+    index = int(pose['body'].split('-')[1])
+    origin = WORKSPACE_ORIGINS.get(index)
+    return {
+        'id': pose['id'],
+        'body': pose['body'],
+        'name': names.get(pose['body'], pose['body']),
+        'bodySelector': pose['bodySelector'],
+        'onFoot': pose['onFoot'],
+        'position': pose['position'],
+        'yaw': pose['yaw'],
+        'cell': pose['cell'],
+        'localCell': pose.get('localCell'),
+        'workspaceOrigin': None if origin is None else {'x': origin[0][0], 'z': origin[0][1]},
+        'evidence': {
+            'memstateSha256': pose['memstateSha256'],
+            'ramSha256': pose['ramSha256'],
+            'cell': pose['cellEvidence'],
+        },
+    }
+
+
 def payload_document(poses: list[dict], catalogue: dict) -> dict:
     names = {body['id']: body['name'] for body in catalogue['bodies']}
     return {
@@ -298,8 +327,11 @@ def payload_document(poses: list[dict], catalogue: dict) -> dict:
                 'modulo $0400, rising clockwise.',
                 'The yaw word is published raw and carries bits above $03FF; only its low ten '
                 'bits are the bearing, as the existing Eris presentation document already assumes.',
-                'The cell is derived from the position and the recovered 16x16 workspace origin, '
-                'and agrees with the cell each workspace note records independently.',
+                'Where the body has a recovered 16x16 workspace origin, the cell is derived from '
+                'the position and that origin, and agrees with the cell the workspace note records '
+                'independently. Where no origin has been recovered, the cell is null and the '
+                'evidence field says so: the pose still stands, the cell is simply not yet '
+                'derivable.',
                 'Source memstates are Restricted Material and are not published; their SHA-256 '
                 'values identify them.',
                 'The DION, GAEA and VESTA memstates were captured by an IPF-capable Hatari 2.6.1 '
@@ -322,29 +354,7 @@ def payload_document(poses: list[dict], catalogue: dict) -> dict:
             'cellUnits': CELL_UNITS,
             'cellsPerAxis': CELLS_PER_AXIS,
         },
-        'poses': [
-            {
-                'id': pose['id'],
-                'body': pose['body'],
-                'name': names.get(pose['body'], pose['body']),
-                'bodySelector': pose['bodySelector'],
-                'onFoot': pose['onFoot'],
-                'position': pose['position'],
-                'yaw': pose['yaw'],
-                'cell': pose['cell'],
-                'localCell': pose.get('localCell'),
-                'workspaceOrigin': {
-                    'x': WORKSPACE_ORIGINS[int(pose['body'].split('-')[1])][0][0],
-                    'z': WORKSPACE_ORIGINS[int(pose['body'].split('-')[1])][0][1],
-                },
-                'evidence': {
-                    'memstateSha256': pose['memstateSha256'],
-                    'ramSha256': pose['ramSha256'],
-                    'cell': pose['cellEvidence'],
-                },
-            }
-            for pose in poses
-        ],
+        'poses': [published_pose(pose, names) for pose in poses],
     }
 
 

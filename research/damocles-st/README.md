@@ -83,6 +83,29 @@ boundary, which separates support placement from direct placement on position al
 See [the object-drop research](../../docs/research/damocles-object-drops.md) for the
 pinned runs and what they do and do not close.
 
+## Arrival route probe (#326)
+
+```sh
+python3 research/damocles-st/scripts/arrival-route-probe.py --survey
+python3 research/damocles-st/scripts/arrival-route-probe.py --target 7 --board
+python3 research/damocles-st/scripts/arrival-route-probe.py --target 3 --board --ordinary-rate
+python3 research/damocles-st/scripts/arrival-route-probe.py \
+  --snapshot research/damocles-st/snapshots/vesta-parliament-4-6.sav --target 3 --board
+```
+
+Boots a restorable arrival pose and asks what the player can reach and board from
+it. `--survey` lists every craft in the live resident arrays with its distance and
+whether its Association B body byte matches the live body selector. `--target`
+walks to one closed loop — each tick reads the camera longwords and the target's
+own array entry and steers, learning the sign of the yaw response from the machine
+and detouring when the distance stops falling — and `--board` then presses B and
+resolves whatever message the game raises back to its system-string slot.
+
+Nothing is injected: walking is the `$79C2` soft-copy the laboratory already uses
+and boarding is a real key event. See [departure
+routes](../../docs/research/damocles-arrival-routes.md) for the board gate, the
+per-craft key byte at `$7272`, and the route attempts these runs record.
+
 ## First-offer checkpoint probe (#287)
 
 ```sh

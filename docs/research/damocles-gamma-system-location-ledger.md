@@ -42,6 +42,7 @@ there and take something.
 | Resident evidence | `payload/damocles/catalogue.json` (tracked)                        |
 | Pose evidence     | four on-foot Hatari memstates under `research/damocles-st/snapshots/` |
 | Tool              | `research/damocles-st/scripts/location-ledger.py`                  |
+| Route evidence    | `research/damocles-st/scripts/arrival-route-probe.py`              |
 
 Every count in this note is derived from the tracked catalogue payload, so the
 body ledger reproduces without Restricted Material:
@@ -184,6 +185,23 @@ expressed as poses. The yaw word is published raw and carries bits above
 of them, not a finding that they cannot be stood on. Recovering one is a bounded
 task per body: reach the body in the Working Authority, capture an on-foot
 memstate, and run the `poses` command.
+
+Reaching the body is the part that is not yet bounded, and
+[#326](https://github.com/odogono/mercenary/issues/326) has now attempted it on
+an ordinary route. [Departure routes from a validated arrival
+pose](damocles-arrival-routes.md) records what happened: the pinned Eris start
+cannot leave Eris, because the one craft it can reach without a key is the
+arrival ship and the board gate refuses that slot unconditionally
+(`SHIP NOT REFITTED FOR FURTHER FLIGHT`, observed live). The three progressed
+poses can — each restores with `EAGLE NINE S E` parked at the player's feet and
+its key byte set, and the laboratory boards it — but what makes a boarded craft
+depart is not recovered, so **no twenty-seventh pose exists yet**. Those three
+poses, not the pinned start, are where the remaining captures begin.
+
+A pose no longer needs a recovered workspace origin to be published. Every one
+of the twenty-six would publish today with a null cell and the reason stated,
+which is what `location-ledger.py poses --payload` now does instead of refusing;
+the per-body readiness table is in the same note.
 
 ## A workspace is selected before the cell is interpreted
 
@@ -512,7 +530,10 @@ Not owned by either ticket, and needing children of #313 before #318 can start:
    static group record whose named workspace identity is unresolved, the same
    disposition #324 records for Gaea group `$0F`.
 3. **Arrival poses for the remaining bodies.** One on-foot capture per body;
-   the tool and payload document already exist.
+   the tool and the payload document already exist, and the payload now accepts a
+   pose whose body has no recovered workspace origin. What #326 is waiting on is
+   departure: boarding is recovered and observed, flight is not. See [departure
+   routes](damocles-arrival-routes.md).
 Resolved since this ledger was first written:
 
 4. **Residence of slots 8 and 15.** Closed by
@@ -542,6 +563,7 @@ Resolved since this ledger was first written:
 | Per-body resident counts and residence forms        | `payload/damocles/catalogue.json`; `location-ledger.py ledger`           |
 | Residence-form decoding                             | [resident object associations](damocles-resident-objects.md)             |
 | Four on-foot arrival poses                          | Four Hatari memstates; `location-ledger.py poses`                        |
+| Board gate, its refusals and the per-craft key byte | [departure routes](damocles-arrival-routes.md); `arrival-route-probe.py` |
 | Derived arrival cells agree with the workspace notes | [Dion](damocles-dion-workspace.md), [Gaea UR City](damocles-gaea-ur-city-workspace.md), [Vesta](damocles-vesta-workspace.md), [catalogue](damocles-catalogue.md) |
 | Gaea's two workspaces share an origin qualifier     | [Gaea UR City workspace](damocles-gaea-ur-city-workspace.md)             |
 | Six pickup-trigger slots                            | [limo-key pickup](damocles-limo-key-pickup.md#the-object-to-script-trigger-table) |
