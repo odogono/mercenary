@@ -267,10 +267,14 @@ workspace.
 
 For Gaea, the 15 interior residents with group `$07` are bound to the live UR
 City record: the first-world static group and the live Gaea capture agree on
-`$794E=$07`, `$7A6C=$024402` and the rebuilt `$ABDC`. The other 13 residents
-are bound to the static group `$0F`; its requested cell instances decode, but no
-live capture ties that group to a named Gaea workspace. That is an explicit
-named-workspace gap, not cell-byte ambiguity. The complete slot inventory and
+`$794E=$07`, `$7A6C=$024402` and the rebuilt `$ABDC`. The other 13 are bound to
+group `$0F`, and that group is **now bound to a live workspace too**:
+`gaea-transporter` (#326) restores with `$794E=$0F`, `$7A6C=$024AB4` and an
+`$ABDC` identical to the static decode, and its place list reads
+`CHALDEA METROPOLIS`. The named-workspace gap this note recorded for group `$0F`
+is closed. It persisted because group `$0F` is a different 16×16 window of Gaea —
+the capture implies origin `256,768` against UR City's `512,1792` — so no capture
+taken in UR City could ever have bound it. The complete slot inventory and
 the probe hashes are in [Damocles workspace selection](damocles-workspace-selection.md).
 
 Gaea's two recovered surface workspaces still share the body-local origin
@@ -607,8 +611,13 @@ Resolved since this ledger was first written:
   cell with no named workspace to anchor it.
 - 193 of 195 interior-associated residents have no parent and no local
   placement.
-- Workspace selection within a body is undecoded, so cell selectors are not
-  place identities on any body with more than one recovered map.
+- Workspace selection within a body is decoded, and both Gaea groups are now
+  bound to a live workspace. What remains undecoded is which structure a **level**
+  selects: the association list is bound per level, read live from `$7B0E`, and
+  not yet predicted statically.
+- The static decode of Eris group `$12` does not reproduce `$ABDC` byte 1 for
+  cells `$3C`–`$3F`. Every Eris capture agrees on the live bytes, so it is a
+  decoder gap rather than gameplay state.
 - Capacity, refusal behaviour, reversible special-item effects and the five
   unobserved pickup responses are outside this note and remain Fog for #313.
 - No named place is asserted for any structure in this note. Where a parent
@@ -626,5 +635,7 @@ Resolved since this ledger was first written:
 | Board gate, its refusals and the per-craft key byte | [departure routes](damocles-arrival-routes.md); `arrival-route-probe.py` |
 | Engine-read arrival cells agree with the workspace notes | [Dion](damocles-dion-workspace.md), [Gaea UR City](damocles-gaea-ur-city-workspace.md), [Vesta](damocles-vesta-workspace.md), [catalogue](damocles-catalogue.md) |
 | Gaea's two workspaces share an origin qualifier     | [Gaea UR City workspace](damocles-gaea-ur-city-workspace.md)             |
+| Gaea group `$0F` is CHALDEA METROPOLIS              | `gaea-transporter`; `$7A6C=$024AB4` and an `$ABDC` identical to the static decode ([workspace selection](damocles-workspace-selection.md)) |
+| The association list is bound per level             | Vesta cell `$64` at levels 0 and 10 bind different structures; ten residents across six bodies resolve in the list bound at their own level |
 | Six pickup-trigger slots                            | [limo-key pickup](damocles-limo-key-pickup.md#the-object-to-script-trigger-table) |
 | Slots 248–255 are a world binding                   | [catalogue](damocles-catalogue.md)                                       |

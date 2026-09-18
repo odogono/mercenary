@@ -8,6 +8,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Gaea structure group `$0F` is bound to a live workspace: CHALDEA
+  METROPOLIS.** The `gaea-transporter` capture restores with `$794E=$0F`,
+  `$7A6C=$024AB4` and an `$ABDC` table identical to the static decode — the same
+  test that bound group `$07` to UR City. This closes the named-workspace gap
+  #324 recorded, and with it the rule that workspace disambiguation precedes
+  every Gaea placement claim. Thirteen Gaea residents hang off the record,
+  including `KEY - 22 CV` in the very cell the capture stands in and `GOLD` at
+  level 10. The gap persisted because group `$0F` is a different 16×16 window of
+  Gaea — implied origin `256,768` against UR City's `512,1792` — so no capture
+  taken in UR City could ever have bound it.
+
+- **The interior association list is bound per level, not per cell.** `$7B0E`
+  identifies whichever structure the game walked: at level 0 the cell's authored
+  instance, above level 0 the interior. Vesta cell `$64` is the controlled case —
+  `vesta-parliament-4-6` at level 0 binds slot 70 (base 90) with insertion groups
+  `01 03 04 05 06 07 12 14`, while `vesta-transporter` at level 10 binds slot 91
+  with `05 06 07 08`. Group `$08` is absent below and present above, and it is
+  what `TRANSPORTER a · slot 68` names. This is the prerequisite the drop
+  research recorded as unreached, and it gates the model-form gate, the height
+  gate and the `$7AC5`/`$7AA5` identity. A resident's insertion group resolves in
+  the structure bound at the resident's **own** level: across seven captures on
+  six bodies, ten residents resolve and none misses, including `KEY - 22 CV`,
+  `KEY - BULLET`, `FILOFAX` and Metis's `PROCESSORS CHAIR`/`DESK`. Four structure
+  groups are bound for the first time — Gaea `$0F`, Metis `$03`, Logos `$08` and
+  Pan `$0C`. `structure-group-probe.py` enforces the rule as a gate rather than
+  reporting it. Not recovered: the static rule mapping a level to its structure,
+  which is read live from `$7B0E` today.
+
+### Fixed
+
+- `structure-group-probe.py` treated a capture inside a building above level 0 as
+  a failed derivation, because its self-check required the cell instance's
+  association root at every level. It now requires that at level 0 only, and
+  above it resolves the live `$7B0E` back to its structure slot and reports it.
+
+### Known
+
+- The static decode of Eris structure group `$12` does not reproduce `$ABDC`
+  byte 1 for cells `$3C`–`$3F`. All four Eris captures produce identical live
+  bytes, so it is a decoder gap rather than gameplay state, and the `$6364`
+  replacement scan is not the cause. The gate is left in place and Eris
+  memstates are excluded from the probe's standard invocation.
+
 - Damocles on-foot arrival poses now cover **fifteen of the thirty physical
   bodies**, from nineteen captures, up from four bodies. MIDAS, ACHERON, CLOTHO,
   THEON, METIS, LUCAN, LOGOS, PAN, BACCHUS, MENTOR and DAMOCLES are new, and

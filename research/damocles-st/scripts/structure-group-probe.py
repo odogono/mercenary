@@ -87,6 +87,8 @@ INTERIOR_PTR_BASE = 0x4BD22     # long: base of the Building detail pointer tabl
 CELL_OFFSET_SCALE = 0x4BD14     # word: 30
 BOUND_GROUP = 0x794E
 PLAYER_CELL = 0x7B5C
+PLAYER_LEVEL = 0x7AA4           # the floor index $052CDC compares a resident against
+BODY_SELECTOR = 0x7AA8          # four times the body index
 SCENE_SELECTOR = 0x7AF8
 SCENE_INDEX = 0x7AFA
 INSTANCE_SLOT = 0x7AF0          # the *base* slot, after alias resolution
@@ -255,6 +257,23 @@ def structure_geometry(ram: bytes, slot: int) -> dict:
     }
 
 
+def bound_structure(ram: bytes, root: int, limit: int = 512) -> dict | None:
+    """Resolve a live ``$7B0E`` root back to the structure slot that derives it.
+
+    The root is not tabulated, so the only way back is to derive every slot's
+    root and match. Aliases share a base structure and therefore a root; the
+    lowest matching slot is returned, with the base slot alongside it.
+    """
+    for slot in range(limit):
+        try:
+            geometry = structure_geometry(ram, slot)
+        except (ValueError, struct.error, IndexError, KeyError):
+            continue
+        if geometry['associationRoot'] == root:
+            return {'slot': slot, **geometry}
+    return None
+
+
 def interior_address(ram: bytes, detail: int) -> int:
     base = u32(ram, INTERIOR_PTR_BASE)
     return base + u32(ram, base + detail * 4)
@@ -331,7 +350,26 @@ def check_eris_reference(ram: bytes) -> list[str]:
     return checks
 
 
-def check_memstate(ram: bytes, live: bytes, label: str) -> dict:
+def residents_in_scene(catalogue: dict, body: str, group: int, cell: int, level: int) -> list[dict]:
+    """Catalogue residents whose association names exactly this live scene."""
+    found = []
+    for item in catalogue.get('instances', []):
+        if not item['id'].startswith('object-slot-'):
+            continue
+        association = item.get('association') or {}
+        if association.get('body') != body:
+            continue
+        if (association.get('structureGroupSelector'), association.get('cell'),
+                association.get('levelSelector')) != (group, cell, level):
+            continue
+        if not association.get('insertionGroupSelector'):
+            continue
+        found.append({'slot': int(item['id'].rsplit('-', 1)[1]), 'name': item.get('name'),
+                      'insertionGroup': association['insertionGroupSelector']})
+    return sorted(found, key=lambda r: r['slot'])
+
+
+def check_memstate(ram: bytes, live: bytes, label: str, catalogue: dict | None = None) -> dict:
     """Gate: the static decode must reproduce what the running game built."""
     group = u16(live, BOUND_GROUP)
     rebuilt = rebuild_override_table(ram, group)
@@ -366,14 +404,35 @@ def check_memstate(ram: bytes, live: bytes, label: str) -> dict:
         seen = u16(live, address)
         if seen != wanted:
             raise LabError(f'{label}: ${address:04X} is ${seen:04X}, decode predicts ${wanted:04X}')
-    # The derived association-list root must be the one the running game bound
-    # for this cell. This is what separates "the derivation is wrong" from "the
-    # resident's insertion group lives in another structure's list".
+    # The association-list root the running game bound is per *level*, not per
+    # cell. At level 0 it is the cell instance's own structure, and requiring
+    # that is the gate below. Above level 0 the game has bound a different
+    # record -- the interior -- which the static decode does not yet predict, so
+    # the live root is resolved to its structure and reported rather than
+    # treated as a failed derivation. Vesta cell $64 binds slot 70 (base 90) at
+    # level 0 and slot 91 at level 10, which is the case that showed this.
     geometry = structure_geometry(ram, instance['slot'])
     live_root = u32(live, ASSOCIATION_ROOT)
-    if live_root != geometry['associationRoot']:
-        raise LabError(f'{label}: $7B0E is ${live_root:06X}, the decode of the cell '
-                       f'${cell:02X} instance gives ${geometry["associationRoot"]:06X}')
+    level = u16(live, PLAYER_LEVEL)
+    result['playerLevel'] = level
+    if level == 0:
+        if live_root != geometry['associationRoot']:
+            raise LabError(f'{label}: $7B0E is ${live_root:06X}, the decode of the cell '
+                           f'${cell:02X} instance gives ${geometry["associationRoot"]:06X}')
+        bound = geometry
+    else:
+        bound = bound_structure(ram, live_root)
+        if bound is None:
+            raise LabError(f'{label}: $7B0E is ${live_root:06X} at level {level}, which is '
+                           'not the association root of any structure slot')
+        result['interiorStructure'] = {
+            'slot': bound['slot'],
+            'baseSlot': bound['baseSlot'],
+            'associationRoot': f'0x{live_root:06x}',
+            'insertionGroups': [f'0x{g:02x}' for g in sorted(bound['insertionGroups'])],
+            'note': ('bound above level 0; the static decode does not yet predict which '
+                     'structure a level selects'),
+        }
     result['playerCellInstance'] = {
         'slot': instance['slot'], 'scene': scene,
         'baseSlot': geometry['baseSlot'],
@@ -381,6 +440,25 @@ def check_memstate(ram: bytes, live: bytes, label: str) -> dict:
         'insertionGroups': [f'0x{g:02x}' for g in sorted(geometry['insertionGroups'])],
         'predicted': {f'0x{a:04x}': f'0x{v:04x}' for a, v in expect.items()},
     }
+    result['boundInsertionGroups'] = [f'0x{g:02x}' for g in sorted(bound['insertionGroups'])]
+    # Gate: a resident that names this exact scene must name an insertion group
+    # the bound structure actually offers. This is what makes the level rule
+    # falsifiable rather than a reading -- if a level bound the wrong structure,
+    # the resident's group would be absent from its list.
+    if catalogue is not None:
+        body = f'body-{u16(live, BODY_SELECTOR) // 4}'
+        offered = set(bound['insertionGroups'])
+        resolved = []
+        for resident in residents_in_scene(catalogue, body, group, cell, level):
+            if resident['insertionGroup'] not in offered:
+                raise LabError(
+                    f'{label}: resident slot {resident["slot"]} ({resident["name"]}) names '
+                    f'insertion group ${resident["insertionGroup"]:02X} in {body} group '
+                    f'${group:02X} cell ${cell:02X} level {level}, which the bound structure '
+                    f'does not offer: {sorted(offered)}')
+            resolved.append({'slot': resident['slot'], 'name': resident['name'],
+                             'insertionGroup': f'0x{resident["insertionGroup"]:02x}'})
+        result['residentsResolved'] = resolved
     return result
 
 
@@ -426,7 +504,8 @@ def build_report(ram: bytes, memstates: list[tuple[str, bytes]], groups: list[in
         'scenes': [],
     }
     for label, live in memstates:
-        report['selfChecks']['memstates'].append(check_memstate(ram, live, label))
+        report['selfChecks']['memstates'].append(
+            check_memstate(ram, live, label, catalogue))
 
     for group in (groups if groups else needed):
         parsed = parse_group(ram, group)
