@@ -55,7 +55,7 @@ Where one object currently is: on a surface, in an interior, carried by the play
 _Avoid_: Object position, inventory flag, room membership
 
 **Carried Stack**:
-The ordered objects the player carries, from earliest to most recently acquired; its tail is the next object a Drop removes.
+The ordered objects the player carries, most recently acquired first; its head is the object the panel names and the one a Drop removes. The player chooses that object by rotating the stack, so the next Drop is not a function of acquisition order.
 _Avoid_: Ordered inventory, carry order, inventory list
 
 **Session Snapshot**:
