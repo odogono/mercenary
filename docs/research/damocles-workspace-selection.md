@@ -104,14 +104,36 @@ cell level once its group byte is included.
 | Structure group | Gaea residents | Cell/level scenes | Evidence and disposition |
 | ---: | ---: | --- | --- |
 | `$07` | 15 | `$17/00`, `$21/00`, `$21/0A`, `$25/00`, `$25/0A`, `$29/0A`, `$31/00`, `$39/00` | The static record at `$024315` has place-list pointer `$024402` (`UR CITY`). The live Gaea capture has `$794E=$07`, `$7A6C=$024402`, and an `$ABDC` table identical to the static decode. **Bound to the live UR City workspace.** |
-| `$0F` | 13 | `$14/00`, `$14/01`, `$65/00`, `$66/01`, `$66/0A`, `$88/01`, `$D4/02` | The static record at `$02479F` authors all requested cells and has place-list pointer `$024AB4`, whose bytes begin `CHALDEA METROPOLIS`. No live capture with `$794E=$0F` ties that record to a named Gaea surface workspace. **Bound to static group `$0F`; named workspace/body identity unresolved.** |
+| `$0F` | 13 | `$14/00`, `$14/01`, `$65/00`, `$66/01`, `$66/0A`, `$88/01`, `$D4/02` | The static record at `$02479F` authors all requested cells and has place-list pointer `$024AB4`, whose bytes begin `CHALDEA METROPOLIS`. **Bound to the live CHALDEA METROPOLIS workspace** — see below. |
 
-The second row is an explicit identity gap, not a claim that the cell byte is
-ambiguous between Birmingham and UR City. The runtime has selected group `$0F`
-before it reads the cell; what is not recovered is which named surface map or
-body history that static group label represents. The place-list text cannot
-close that gap because the Dion example demonstrates that labels can be stale
-or shared.
+### Group `$0F` is bound: CHALDEA METROPOLIS
+
+The second row was an explicit identity gap until #326 produced a live capture
+standing in it. `gaea-transporter` restores with:
+
+| Word | Live value | Static decode of group `$0F` |
+| --- | --- | --- |
+| `$794E` structure group | `$000F` | `$0F` |
+| `$7A6C` place list | `$024AB4` | `$024AB4` |
+| `$7B5C` cell | `$88` | authored (`$88/01` is a requested scene) |
+| `$7AA4` level | `1` | authored |
+| `$ABDC` | 256 entries | **identical** |
+
+That is exactly the test that bound group `$07` to UR City in this note: the
+place-list pointer the running game published, and an `$ABDC` table the static
+decode reproduces entry for entry. The place list reads `CHALDEA   METROPOLIS`,
+and the group is now attested by a capture rather than by its label alone — the
+Dion staleness caveat does not apply, because the binding rests on `$ABDC` and
+`$7A6C`, not on the text.
+
+The capture also explains why the gap persisted. `gaea-transporter` stands in a
+16×16 window whose origin its own longwords imply as `256,768`, while the Gaea
+origin recorded below is `512,1792`. Group `$0F` was never going to appear in a
+capture taken in UR City, because it is a different window of Gaea.
+
+Thirteen Gaea residents hang off this record, including `KEY - 22 CV` (slot
+191), which shares cell `$88` level 1 with the transporter the capture is
+standing at, and `GOLD` (slot 155) at `$66/0A`.
 
 The ledger's individual Gaea rows are the complete resident inventory:
 
@@ -122,11 +144,83 @@ group $0F: 28, 90, 103 | 98 | 86 | 27, 125, 229, 239 | 155 |
            70, 191 | 30
 ```
 
-Thus all 28 interior residents are bound to one exact static group record:
-15 to the live UR City record and 13 to group `$0F` with the named-workspace
-identity unresolved for the reason above. This does not yet emit catalogue
-placements; the selected structure's local association traversal and the
-remaining body-map work are separate delivery work.
+Thus all 28 interior residents are bound to one exact static group record, and
+both records are now bound to a live workspace: 15 to UR City and 13 to
+CHALDEA METROPOLIS. This does not yet emit catalogue placements; the remaining
+body-map work is separate delivery work.
+
+## The association list is bound per level, not per cell
+
+`$7B0E` is not a property of the cell. The native walk at `$05A266` consumes one
+structure's region descriptors and `$05A2FA` publishes the address it stopped at,
+so the root identifies **whichever structure the game has bound**. At level 0
+that is the cell's own authored instance. Above level 0 it is a different
+record — the interior — and the static decode does not yet predict which.
+
+Vesta cell `$64` is the controlled case, because two captures stand in it at
+different levels with everything else equal:
+
+| Capture | Cell | Level | `$7B0E` | Structure | Regions | Insertion groups |
+| --- | --- | ---: | --- | --- | ---: | --- |
+| `vesta-parliament-4-6` | `$64` | 0 | `$017834` | slot 70, base **90** | 22 | `01 03 04 05 06 07 12 14` |
+| `vesta-transporter` | `$64` | 10 | `$017B4A` | slot **91** | 8 | `05 06 07 08` |
+
+Same body, same group `$05`, same cell, different level, different structure.
+This is the prerequisite the drop research recorded as unreached: the seven
+Vesta residents above level 0 are placed without insertions because their
+insertion group is absent from the list bound at level 0. Group `$08` is the
+clearest instance — absent at level 0, present at level 10, and named by
+`TRANSPORTER a · slot 68`, which the level-10 capture is standing at.
+
+### The rule, and how it is gated
+
+A resident's insertion group resolves in the structure bound at the **resident's
+own level**. Across seven captures on six bodies, every catalogue resident whose
+association names the captured scene names an insertion group the bound
+structure offers:
+
+| Capture | Group | Cell | Level | Bound structure | Residents resolved |
+| --- | --- | --- | ---: | --- | --- |
+| `vesta-parliament-4-6` | `$05` | `$64` | 0 | slot 70 (base 90) | BENCH |
+| `vesta-transporter` | `$05` | `$64` | 10 | slot 91 | TRANSPORTER a |
+| `gaea-transporter` | `$0F` | `$88` | 1 | slot 58 | TRANSPORTER a, KEY - 22 CV |
+| `dion-transporter` | `$02` | `$E3` | 1 | slot 58 | TRANSPORTER a |
+| `metis-transporter` | `$03` | `$60` | 9 | slot 58 | TRANSPORTER a, FILOFAX, PROCESSORS CHAIR, PROCESSORS DESK |
+| `logos-transporter` | `$08` | `$24` | 4 | slot 67 | TRANSPORTER a |
+| `pan` | `$0C` | `$14` | 1 | slot 55 | KEY - BULLET |
+
+Ten residents, no misses. `structure-group-probe.py` enforces this as a gate: a
+resident naming a captured scene whose insertion group the bound structure does
+not offer raises, so the rule is falsifiable rather than a reading. Four
+structure groups are bound here for the first time — Gaea `$0F`, Metis `$03`,
+Logos `$08` and Pan `$0C`.
+
+**What is not recovered** is the static rule mapping a level to its structure.
+Slot 58 recurs across Gaea, Dion and Metis, and slot 91 is one above Vesta's
+base 90, but alias records collapse several slots onto one root, so neither
+observation is a rule. Today the interior structure is read from the live
+`$7B0E` and reported; predicting it statically is open work.
+
+### Eris group `$12` does not yet reproduce
+
+The `$ABDC` gate fails for every Eris capture, at four adjacent cells and
+nowhere else:
+
+```text
+cell $3C: live 3c 52 ec 00   static 3c 00 ec 00
+cell $3D: live 3c 52 00 00   static 3c 00 00 00
+cell $3E: live 3c 52 00 00   static 3c 00 00 00
+cell $3F: live 3c 52 83 00   static 3c 00 83 00
+```
+
+`eris-spaceport-onfoot`, `eris-transporter-11-8`, `interior-window` and
+`boarded-limo` all produce the identical live bytes, so this is stable state and
+not a gameplay difference between captures: the static decode of group `$12` is
+missing a step that writes byte 1 for cells `$3C`–`$3F`. The `$6364` replacement
+scan is not the cause — its one non-zero record begins `$46`, which never matches
+`$794E=$12`. This is recorded as an open decoder gap; the gate is left in place
+rather than relaxed, so Eris memstates are excluded from the probe's standard
+invocation until it is closed.
 
 ## 99 CHEVY and the shared origin
 

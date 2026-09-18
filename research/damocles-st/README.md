@@ -325,8 +325,19 @@ Nothing is written into the guest. See
 python3 research/damocles-st/scripts/structure-group-probe.py \
     --run research/damocles-st/work/observe-first-world-<id> \
     --memstate research/damocles-st/snapshots/dion-2-3.sav \
-    --memstate research/damocles-st/snapshots/vesta-parliament-4-6.sav
+    --memstate research/damocles-st/snapshots/vesta-parliament-4-6.sav \
+    --memstate research/damocles-st/snapshots/vesta-transporter.sav \
+    --memstate research/damocles-st/snapshots/gaea-transporter.sav \
+    --memstate research/damocles-st/snapshots/dion-transporter.sav \
+    --memstate research/damocles-st/snapshots/metis-transporter.sav \
+    --memstate research/damocles-st/snapshots/logos-transporter.sav \
+    --memstate research/damocles-st/snapshots/pan.sav
 ```
+
+**Eris memstates are excluded.** The static decode of group `$12` does not
+reproduce `$ABDC` byte 1 for cells `$3C`-`$3F`, and the gate correctly fails.
+Every Eris capture produces the same live bytes, so it is an open decoder gap,
+not gameplay state; it is recorded in the workspace-selection research.
 
 Walks the static structure-group table at `$1E64C` to the group-offset root, then
 parses an authored group record exactly as the map decoder at
@@ -346,10 +357,18 @@ reproduce #172's hand-recovered Eris parent field for field -- group `$14` cell
 58 resolving to `$02CE86`. For each memstate supplied, the static decode must
 reproduce the `$ABDC` override table the running game built, the place-list
 pointer at `$7A6C`, and the words `$7AF0`/`$7AF8`/`$7AFA`/`$7AF2`/`$7AF4` for the
-cell the player is standing in. The DION and VESTA memstates need
-`memstate-rehost.py` first.
+cell the player is standing in. Every memstate needs `memstate-rehost.py` first.
 
-See [the Dion and Vesta structure-group research](../../docs/research/damocles-dion-vesta-structure-groups.md).
+**The association list is bound per level.** `$7B0E` identifies whichever
+structure the game walked, which at level 0 is the cell's authored instance and
+above level 0 is the interior. The probe requires the cell instance's root at
+level 0 and, above it, resolves the live root back to its structure slot and
+reports it, because the static decode does not yet predict which structure a
+level selects. A further gate then requires every catalogue resident naming the
+captured scene to name an insertion group the bound structure actually offers.
+
+See [the Dion and Vesta structure-group research](../../docs/research/damocles-dion-vesta-structure-groups.md)
+and [workspace selection](../../docs/research/damocles-workspace-selection.md).
 
 ## Moving-object probe (#327)
 
