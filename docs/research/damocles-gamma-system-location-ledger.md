@@ -92,7 +92,7 @@ have reached that state.
 | 1 | ICARUS | 2 | 2 | 1 | 1 | 0 | none recovered | none |
 | 2 | MIDAS | 5 | 5 | 0 | 5 | 0 | none recovered | none |
 | 3 | ACHERON | 2 | 2 | 1 | 1 | 0 | none recovered | none |
-| 4 | DION | 30 | 28 | 1 | 29 | 0 | Dion live `$ABDC` | `dion-2-3` |
+| 4 | DION | 30 | 28 | 1 | 29 | 16 | Dion live `$ABDC` | `dion-2-3` |
 | 5 | ATROPOS | 2 | 2 | 1 | 1 | 0 | none recovered | none |
 | 6 | CLOTHO | 17 | 17 | 0 | 17 | 0 | none recovered | none |
 | 7 | LACHESIS | 0 | 0 | 0 | 0 | 0 | none recovered | none |
@@ -102,7 +102,7 @@ have reached that state.
 | 11 | ERIS | 71 | 64 | 7 | 64 | 2 | first-world live `$ABDC` | `eris-spaceport-onfoot` |
 | 12 | SOLON | 5 | 5 | 1 | 4 | 0 | none recovered | none |
 | 13 | THEON | 4 | 4 | 1 | 3 | 0 | none recovered | none |
-| 14 | VESTA | 11 | 10 | 1 | 10 | 0 | Politburo City live `$ABDC` | `vesta-parliament-4-6` |
+| 14 | VESTA | 11 | 10 | 1 | 10 | 10 | Politburo City live `$ABDC` | `vesta-parliament-4-6` |
 | 15 | METIS | 9 | 8 | 1 | 8 | 0 | none recovered | none |
 | 16 | LUCAN | 2 | 2 | 2 | 0 | 0 | none recovered | none |
 | 17 | LOGOS | 4 | 3 | 1 | 3 | 0 | none recovered | none |
@@ -121,8 +121,16 @@ have reached that state.
 | 30 | VOID | 0 | 0 | 0 | 0 | 0 | none recovered | none |
 
 Totals: **241** resident instances, **210** takeable, **34** surface-located,
-**195** interior-associated, **2** with a recovered placement, across **116**
+**195** interior-associated, **28** with a recovered placement, across **116**
 distinct interior scene selectors.
+
+The placement count rose from 2 to 28 with
+[#325](https://github.com/odogono/mercenary/issues/325): Vesta's ten interior
+residents in cells `$64` and `$73`, and sixteen of Dion's nineteen in group `$02`.
+Three Dion records decode a parent but place outside its extent, and the ten Dion
+residents in groups `$1B` and `$1C` are bound to a static group record no capture
+binds. See
+[the Dion and Vesta structure-group research](damocles-dion-vesta-structure-groups.md).
 
 ### Bodies classified
 
@@ -370,25 +378,38 @@ nothing about the placements this table records.
 |  181 | KEY - EAGLE 9SE  |   `$05` | ERIS  | `$12` / `$89` / `$0A` | none               | Eris structure selectors (#252) at cell `$89`    |
 |  151 | DAMOCLES FILE    |   `$06` | ERIS  | `$12` / `$89` / `$00` | none               | Eris structure selectors (#252) at cell `$89`    |
 |   95 | MAGIC CRYSTAL    |   `$14` | MIDAS | `$38` / `$EB` / `$00` | none               | no Midas surface workspace (#172)                |
-|  101 | AUTHORS COMPUTER |   `$0B` | DION  | `$02` / `$DE` / `$00` | none               | Dion structure-group map for cell `$DE`          |
-|   94 | CASH REGISTER    |   `$3E` | VESTA | `$05` / `$73` / `$01` | none               | Vesta structure-group map for cell `$73`         |
+|  101 | AUTHORS COMPUTER |   `$0B` | DION  | `$02` / `$DE` / `$00` | recovered          | nothing; delivered under #325             |
+|   94 | CASH REGISTER    |   `$3E` | VESTA | `$05` / `$73` / `$01` | recovered          | nothing; delivered under #325             |
 
 Cell `$89` is STATE OFFICE, and #252 owns every Eris structure selector, so two
 of the five unreached trigger objects fall inside that ticket's existing scope.
 
-The programme's three named special items are likewise accounted for, and all
-three are interior-associated with no placement:
+`CASH REGISTER` is placed in GUM STORE and `AUTHORS COMPUTER` in AUTHORS HOUSE by
+[#325](https://github.com/odogono/mercenary/issues/325), the latter at
+parent-local `(-1630, 38, -81)` on structure-group `$02` cell `$DE` instance slot
+216. Reaching either on foot is a separate question: no ordinary route has entered
+a structure interior
+([#331](https://github.com/odogono/mercenary/issues/331)).
+
+The programme's three named special items are likewise accounted for. BRIEFCASE
+is now placed; both ANTIGRAV instances remain interior-associated with no
+placement:
 
 | Slot | Object    | Body  | Group / cell / level | Blocked on                              |
 | ---: | --------- | ----- | -------------------- | --------------------------------------- |
-|  108 | BRIEFCASE | VESTA | `$05` / `$64` / `$03` | Vesta structure-group map for cell `$64` |
+|  108 | BRIEFCASE | VESTA | `$05` / `$64` / `$03` | nothing; placed in VESTA PARLIAMENT under #325 |
 |  157 | ANTIGRAV  | ERIS  | `$15` / `$77` / `$0A` | Eris structure selectors (#252)          |
 |  158 | ANTIGRAV  | ERIS  | `$12` / `$29` / `$0A` | Eris structure selectors (#252)          |
 
 Both ANTIGRAV instances select the same source model `object-03f384` and are
 distinct residents at distinct Eris cells; neither is a duplicate of the other.
 BRIEFCASE sits in Vesta cell `$64` — the same cell as the validated Vesta
-arrival pose — so it is the special item closest to being reachable.
+arrival pose — which is why it was the special item closest to being reachable.
+[#325](https://github.com/odogono/mercenary/issues/325) places it at
+parent-local `(337, 951, -210)` inside VESTA PARLIAMENT, on floor 3 of the
+structure's 317-unit storey pitch. Reaching it on foot is a separate question and
+is still blocked: no route has entered that interior
+([#331](https://github.com/odogono/mercenary/issues/331)).
 
 Nothing about capacity, refusal or reversible special-item effects is claimed
 here. All three carry the ordinary takeable handling byte `$04`; their special
@@ -482,10 +503,14 @@ Not owned by either ticket, and needing children of #313 before #318 can start:
    no proven named Gaea workspace. Surface 99 CHEVY remains Unresolved because
    its coordinate phase does not choose Birmingham versus UR City. Further
    islands and authored disambiguation remain #172 / out of scope.
-2. **Structure-group maps for DION and VESTA.** Both bodies have live
-   workspaces and arrival poses but no group-offset root traversal, so their
-   residents — including AUTHORS COMPUTER, CASH REGISTER and BRIEFCASE — have
-   selectors and no parent.
+2. **Structure-group maps for DION and VESTA.** Delivered by
+   [#325](https://github.com/odogono/mercenary/issues/325): the group-offset root
+   traversal is done, all 24 scenes have a decoded parent, and Vesta's ten
+   residents and Dion's group-`$02` residents are published with parents and
+   parent-local placements, including AUTHORS COMPUTER, CASH REGISTER and
+   BRIEFCASE. The seven Dion residents in groups `$1B` and `$1C` are bound to a
+   static group record whose named workspace identity is unresolved, the same
+   disposition #324 records for Gaea group `$0F`.
 3. **Arrival poses for the remaining bodies.** One on-foot capture per body;
    the tool and payload document already exist.
 Resolved since this ledger was first written:

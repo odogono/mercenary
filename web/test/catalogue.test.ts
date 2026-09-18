@@ -819,7 +819,9 @@ it('links each recovered vehicle to its matching key', async () => {
       source: 'docs/research/damocles-vip-limo.md'
     });
     expect(keyInstance.location).toBeNull();
-    if (keySlot !== 180 && keySlot !== 183) {
+    // 180 and 183 are placed by the Eris structure-group recovery; 184 is placed
+    // in Vesta Parliament by the group $05 recovery (#325).
+    if (keySlot !== 180 && keySlot !== 183 && keySlot !== 184) {
       expect(keyInstance.placement).toBeNull();
     }
   }

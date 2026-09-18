@@ -277,6 +277,38 @@ breakpoint cases are run separately from the sampled ones.
 Nothing is written into the guest. See
 [the object drop research](../../docs/research/damocles-object-drops.md).
 
+## Structure-group probe (#325)
+
+```sh
+python3 research/damocles-st/scripts/structure-group-probe.py \
+    --run research/damocles-st/work/observe-first-world-<id> \
+    --memstate research/damocles-st/snapshots/dion-2-3.sav \
+    --memstate research/damocles-st/snapshots/vesta-parliament-4-6.sav
+```
+
+Walks the static structure-group table at `$1E64C` to the group-offset root, then
+parses an authored group record exactly as the map decoder at
+`$4EB60`-`$4ED14` does: the run-length cell-extent stream, the two workspace
+bytes, the six source-reference selectors, the cell-override list and the place
+list. Each override names the authored structure instance in one cell, which is
+the parent an interior-associated resident needs.
+
+The override word's low nine bits are the structure slot and its high byte's
+bits 1-7 are a scene selector; the instance's scale, palette, Building detail and
+base structure come from the alias record, per the consumer at
+`$54CB0`-`$54E28`. Scale is a **signed** pair, so it carries reflection.
+
+Three self-checks gate every run and raise rather than print. The decode must
+reproduce #172's hand-recovered Eris parent field for field -- group `$14` cell
+`$26`, slot 145, offsets -33/-125, alias scale 3/2, palette 44, Building detail
+58 resolving to `$02CE86`. For each memstate supplied, the static decode must
+reproduce the `$ABDC` override table the running game built, the place-list
+pointer at `$7A6C`, and the words `$7AF0`/`$7AF8`/`$7AFA`/`$7AF2`/`$7AF4` for the
+cell the player is standing in. The DION and VESTA memstates need
+`memstate-rehost.py` first.
+
+See [the Dion and Vesta structure-group research](../../docs/research/damocles-dion-vesta-structure-groups.md).
+
 ## Moving-object probe (#327)
 
 ```sh
