@@ -2024,6 +2024,33 @@ def decode_group_overrides(data: bytes, group: int) -> dict[int, dict]:
     return overrides
 
 
+def decode_support_top(data: bytes, start: int) -> int | None:
+    """The drop handler's $0545DE-$054610 form gate and raw-Y maximum.
+
+    This is not the renderer's decoded mesh: labels, articulated vertices and
+    conditional forms must not change the support height the native handler sees.
+    None denotes its model-form refusal, not a missing mesh.
+    """
+    reader = Reader(data, start)
+    opening = reader.signed()
+    if opening <= -32753:  # signed comparison with $800F
+        command = opening & 0xff
+        if command not in (6, 9, 10):
+            return None
+        if command == 10:
+            reader.p += 4
+            offset = reader.signed()
+            reader.p += offset - 4
+        reader.p += 4
+    maximum = 0
+    for _ in range(65_536):
+        maximum = max(maximum, reader.signed())
+        reader.p += 2  # Z
+        if reader.word() == 0x8000:  # next X, or vertex terminator
+            return maximum
+    raise ValueError('drop support vertex terminator missing')
+
+
 def structure_storey_height(data: bytes, slot: int) -> int | None:
     """An alias instance's first word, which $054D86 publishes in $7B00.
 
@@ -2747,6 +2774,12 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                      'variants': [], 'relatedModels': [], 'linkedInstances': [], 'evidence': []}
             by_address[identity] = model
             models.append(model)
+            if kind == 'object':
+                model['supportTop'] = decode_support_top(data, address)
+            elif kind == 'structure':
+                storey_height = structure_storey_height(data, slot)
+                if storey_height is not None:
+                    model['storeyHeight'] = storey_height
             try:
                 if kind == 'structure':
                     pointer = address

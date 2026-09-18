@@ -43,9 +43,11 @@ const besideKey = (soundPermitted = true): DamoclesSession => {
   return new DamoclesSession(
     loaded,
     {
+      briefcaseStore: [],
       carried: [],
       elapsed: 0,
       frameAccumulator: 0,
+      pendingBriefcaseDrop: null,
       pose: {
         body: 'body-11',
         heading: 0,
@@ -70,7 +72,285 @@ const besideKey = (soundPermitted = true): DamoclesSession => {
   );
 };
 
+const carriedResidence = (instance: string) => ({
+  instance,
+  residence: {
+    drawClass:
+      loaded.catalogue.instances.find(item => item.id === instance)!.handling!
+        .byte & 0x0f,
+    kind: 'carried' as const
+  }
+});
+
+const dynamicAtOrigin = (
+  instance: string,
+  carried: readonly string[] = [],
+  content = loaded
+): DamoclesSession =>
+  new DamoclesSession(content, {
+    briefcaseStore: [],
+    carried: [...carried],
+    elapsed: 0,
+    frameAccumulator: 0,
+    pendingBriefcaseDrop: null,
+    pose: {
+      body: 'body-11',
+      heading: 0,
+      position: { x: 0, y: content.doc.eye.heightUnits, z: 0 }
+    },
+    residence: [
+      ...carried.map(instance => ({
+        instance,
+        residence: {
+          drawClass:
+            content.catalogue.instances.find(item => item.id === instance)!
+              .handling!.byte & 0x0f,
+          kind: 'carried' as const
+        }
+      })),
+      {
+        instance,
+        residence: {
+          body: 'body-11',
+          drawClass:
+            content.catalogue.instances.find(item => item.id === instance)!
+              .handling!.byte & 0x0f,
+          kind: 'surface' as const,
+          position: { x: 0, y: 0, z: 0 }
+        }
+      }
+    ],
+    script: {
+      ...initialDamoclesSaveScript(),
+      triggers: initialDamoclesSaveScript().triggers.map(trigger =>
+        trigger.index === 2 && carried.includes('object-slot-183')
+          ? { ...trigger, armed: false }
+          : trigger
+      )
+    },
+    scrollCounter: 0,
+    structure: null
+  });
+
 describe('ordinary Eris limo-key take and drop', () => {
+  test('observed: restoring an elevated Pose preserves the height used by direct placement', () => {
+    const saved = dynamicAtOrigin('object-slot-151', [
+      'object-slot-92'
+    ]).captureResume();
+    const session = new DamoclesSession(loaded, {
+      ...saved,
+      pose: { ...saved.pose, position: { x: 0, y: 380, z: 0 } }
+    });
+    expect(session.snapshot.pose.position.y).toBe(380);
+    expect(session.drop()).toEqual({ kind: 'dropped' });
+    expect(session.snapshot.residence).toContainEqual({
+      instance: 'object-slot-92',
+      residence: {
+        body: 'body-11',
+        drawClass: 4,
+        kind: 'surface',
+        position: { x: 0, y: 317, z: 0 }
+      }
+    });
+  });
+  test('derived: support height compares world Y before returning parent-local residence', () => {
+    const saved = besideKey().captureResume();
+    const key = loaded.catalogue.instances.find(
+      instance => instance.id === 'object-slot-183'
+    )!;
+    const parentModel = loaded.catalogue.instances.find(
+      instance => instance.id === 'eris-surface-87'
+    )!.model;
+    for (const top of [2, 12]) {
+      const content = {
+        ...loaded,
+        catalogue: {
+          ...loaded.catalogue,
+          models: loaded.catalogue.models.map(model =>
+            model.id === key.model
+              ? { ...model, supportTop: top }
+              : model.id === parentModel
+                ? { ...model, storeyHeight: 200 }
+                : model
+          )
+        },
+        surface: {
+          ...loaded.surface,
+          placements: loaded.surface.placements.map(placement =>
+            placement.id === 'eris-surface-87'
+              ? { ...placement, position: { ...placement.position, y: 60 } }
+              : placement
+          )
+        }
+      };
+      const session = new DamoclesSession(content, {
+        ...saved,
+        carried: ['object-slot-92', 'object-slot-39'],
+        residence: ['object-slot-92', 'object-slot-39'].map(carriedResidence)
+      });
+      expect(session.drop()).toEqual({
+        kind: top === 2 ? 'dropped' : 'refused'
+      });
+      if (top === 2) {
+        expect(session.snapshot.residence).toContainEqual({
+          instance: 'object-slot-92',
+          residence: {
+            body: 'body-11',
+            drawClass: 4,
+            insertionGroup: 12,
+            kind: 'structure',
+            level: 0,
+            parent: 'eris-surface-87',
+            position: { x: 1038, y: 2, z: 789 }
+          }
+        });
+      }
+    }
+  });
+  test('derived: slot 74 is drawn but never selected', () => {
+    const session = dynamicAtOrigin('object-slot-74');
+    expect(session.snapshot.residents.map(resident => resident.id)).toContain(
+      'object-slot-74'
+    );
+    expect(session.snapshot.selection).toEqual({ kind: 'none' });
+    expect(session.take()).toEqual({ kind: 'refused' });
+  });
+  test('derived: support uses the native top and refuses unknown or rejected model forms', () => {
+    const supportModel = loaded.catalogue.instances.find(
+      instance => instance.id === 'object-slot-151'
+    )!.model;
+    for (const top of [12, null, undefined] as const) {
+      const content = {
+        ...loaded,
+        catalogue: {
+          ...loaded.catalogue,
+          models: loaded.catalogue.models.map(model => {
+            if (model.id !== supportModel) {
+              return model;
+            }
+            const { supportTop: _supportTop, ...withoutTop } = model;
+            return top === undefined
+              ? withoutTop
+              : { ...withoutTop, supportTop: top };
+          })
+        }
+      };
+      const session = dynamicAtOrigin(
+        'object-slot-151',
+        ['object-slot-92'],
+        content
+      );
+      expect(session.drop()).toEqual({
+        kind: top === 12 ? 'dropped' : 'refused'
+      });
+      if (top === 12) {
+        expect(session.snapshot.residence).toContainEqual({
+          instance: 'object-slot-92',
+          residence: {
+            body: 'body-11',
+            drawClass: 4,
+            kind: 'surface',
+            position: { x: 0, y: 12, z: 0 }
+          }
+        });
+      }
+    }
+  });
+  test('observed: overflow contents stay hidden at their Catalogue placement', () => {
+    const carried = [
+      'object-slot-108',
+      'object-slot-92',
+      'object-slot-178',
+      'object-slot-151',
+      'object-slot-157',
+      'object-slot-158',
+      'object-slot-180',
+      'object-slot-202',
+      'object-slot-203',
+      'object-slot-204',
+      'object-slot-183'
+    ];
+    const session = new DamoclesSession(loaded, {
+      ...besideKey().captureResume(),
+      carried,
+      residence: carried.map(carriedResidence),
+      script: {
+        ...initialDamoclesSaveScript(),
+        triggers: [{ armed: false, index: 2 }]
+      }
+    });
+    session.drop();
+    session.advance(200 / 50);
+    expect(session.drop()).toEqual({ kind: 'dropped' });
+    expect(session.snapshot.briefcaseStore).toEqual(['object-slot-183']);
+    expect(
+      session.snapshot.residents.map(resident => resident.id)
+    ).not.toContain('object-slot-183');
+    expect(session.snapshot.selection).not.toMatchObject({
+      instance: 'object-slot-183'
+    });
+  });
+  test('observed: the live slot-0 flag bypasses both take refusal bits', () => {
+    const content = {
+      ...loaded,
+      catalogue: {
+        ...loaded.catalogue,
+        instances: [
+          ...loaded.catalogue.instances,
+          {
+            ...loaded.catalogue.instances.find(
+              instance => instance.id === 'object-slot-156'
+            )!,
+            handling: {
+              ...loaded.catalogue.instances.find(
+                instance => instance.id === 'object-slot-156'
+              )!.handling!,
+              carried: true
+            },
+            id: 'object-slot-0',
+            location: null
+          }
+        ]
+      }
+    };
+    expect(dynamicAtOrigin('object-slot-156', [], content).take()).toEqual({
+      kind: 'took'
+    });
+    expect(dynamicAtOrigin('object-slot-3', [], content).take()).toEqual({
+      kind: 'took'
+    });
+  });
+  test('derived: slot 39 bypasses zero supply and zero requirement as well as rank comparison', () => {
+    const content = {
+      ...loaded,
+      catalogue: {
+        ...loaded.catalogue,
+        instances: loaded.catalogue.instances.map(instance =>
+          instance.id === 'object-slot-151'
+            ? {
+                ...instance,
+                handling: {
+                  ...instance.handling!,
+                  byte: 4,
+                  suppliedSupportRank: 0
+                }
+              }
+            : instance
+        )
+      }
+    };
+    const zeroSupply = dynamicAtOrigin(
+      'object-slot-151',
+      ['object-slot-92', 'object-slot-39'],
+      content
+    );
+    expect(zeroSupply.drop()).toEqual({ kind: 'dropped' });
+    const zeroRequirement = dynamicAtOrigin('object-slot-151', [
+      'object-slot-215',
+      'object-slot-39'
+    ]);
+    expect(zeroRequirement.drop()).toEqual({ kind: 'dropped' });
+  });
   test('takes the selected key atomically and launches slot 2 once', () => {
     const session = besideKey();
     expect(session.snapshot.selection).toEqual({
@@ -151,5 +431,237 @@ describe('ordinary Eris limo-key take and drop', () => {
     expect(session.take()).toEqual({ kind: 'took' });
     expect(session.snapshot.carried).toEqual(['object-slot-183']);
     expect(session.drainEffects()).toEqual([]);
+  });
+
+  test('takes a non-key surface resident and keeps it at the Carried Stack head', () => {
+    const sunshade = loaded.catalogue.instances.find(
+      instance => instance.id === 'object-slot-92'
+    )!;
+    const [x, _y, z] = sunshade.location!.position;
+    const session = new DamoclesSession(loaded, {
+      briefcaseStore: [],
+      carried: [],
+      elapsed: 0,
+      frameAccumulator: 0,
+      pendingBriefcaseDrop: null,
+      pose: {
+        body: 'body-11',
+        heading: 0,
+        position: {
+          x: x * 65_536,
+          y: loaded.doc.eye.heightUnits,
+          z: z * 65_536
+        }
+      },
+      residence: [],
+      script: initialDamoclesSaveScript(),
+      scrollCounter: 0,
+      structure: null
+    });
+    expect(session.snapshot.selection).toEqual({
+      inRange: true,
+      instance: 'object-slot-92',
+      kind: 'object'
+    });
+    expect(session.take()).toEqual({ kind: 'took' });
+    expect(session.snapshot.carried).toEqual(['object-slot-92']);
+    expect(session.snapshot.residence).toEqual([
+      {
+        instance: 'object-slot-92',
+        residence: { drawClass: 4, kind: 'carried' }
+      }
+    ]);
+  });
+
+  test('rotates the head and drops the newly selected object', () => {
+    const session = new DamoclesSession(loaded, {
+      briefcaseStore: [],
+      carried: ['object-slot-183', 'object-slot-92'],
+      elapsed: 0,
+      frameAccumulator: 0,
+      pendingBriefcaseDrop: null,
+      pose: {
+        body: 'body-11',
+        heading: 0,
+        position: { x: 0, y: loaded.doc.eye.heightUnits, z: 0 }
+      },
+      residence: [
+        {
+          instance: 'object-slot-183',
+          residence: { drawClass: 4, kind: 'carried' }
+        },
+        {
+          instance: 'object-slot-92',
+          residence: { drawClass: 4, kind: 'carried' }
+        }
+      ],
+      script: {
+        ...initialDamoclesSaveScript(),
+        triggers: initialDamoclesSaveScript().triggers.map(trigger =>
+          trigger.index === 2 ? { ...trigger, armed: false } : trigger
+        )
+      },
+      scrollCounter: 0,
+      structure: null
+    });
+    expect(session.snapshot.inventoryLabel).toContain('KEY-');
+    expect(session.rotateForward()).toEqual({ kind: 'rotated' });
+    expect(session.snapshot.carried).toEqual([
+      'object-slot-92',
+      'object-slot-183'
+    ]);
+    session.advance(16 / 50);
+    expect(session.drop()).toEqual({ kind: 'dropped' });
+    expect(session.snapshot.carried).toEqual(['object-slot-183']);
+    expect(
+      session.snapshot.residence.find(
+        item => item.instance === 'object-slot-92'
+      )?.residence.kind
+    ).toBe('surface');
+  });
+
+  test('derives capacity and round-trips the BRIEFCASE overflow store', () => {
+    const session = dynamicAtOrigin('object-slot-108', [
+      'object-slot-92',
+      'object-slot-178'
+    ]);
+    expect(session.take()).toEqual({ kind: 'took' });
+    expect(session.snapshot.carried).toEqual([
+      'object-slot-108',
+      'object-slot-92',
+      'object-slot-178'
+    ]);
+    expect(session.snapshot.capacity).toBe(20);
+    expect(session.snapshot.briefcaseStore).toEqual([]);
+
+    const carried = [
+      'object-slot-108',
+      'object-slot-92',
+      'object-slot-178',
+      'object-slot-151',
+      'object-slot-157',
+      'object-slot-158',
+      'object-slot-180',
+      'object-slot-183',
+      'object-slot-202',
+      'object-slot-203',
+      'object-slot-204',
+      'object-slot-215',
+      'object-slot-225',
+      'object-slot-230',
+      'object-slot-234'
+    ];
+    const overflow = new DamoclesSession(loaded, {
+      briefcaseStore: [],
+      carried,
+      elapsed: 0,
+      frameAccumulator: 0,
+      pendingBriefcaseDrop: null,
+      pose: {
+        body: 'body-11',
+        heading: 0,
+        position: { x: 0, y: loaded.doc.eye.heightUnits, z: 0 }
+      },
+      residence: carried.map(carriedResidence),
+      script: {
+        ...initialDamoclesSaveScript(),
+        triggers: initialDamoclesSaveScript().triggers.map(trigger =>
+          trigger.index === 2 ? { ...trigger, armed: false } : trigger
+        )
+      },
+      scrollCounter: 0,
+      structure: null
+    });
+    expect(overflow.drop()).toEqual({ kind: 'refused' });
+    expect(overflow.snapshot.message?.id).toBe('system-string-1');
+    const pendingRestored = new DamoclesSession(
+      loaded,
+      overflow.captureResume()
+    );
+    expect(pendingRestored.captureResume().pendingBriefcaseDrop).toEqual({
+      head: 'object-slot-108',
+      residence: {
+        body: 'body-11',
+        drawClass: 4,
+        kind: 'surface',
+        position: { x: 0, y: 0, z: 0 }
+      }
+    });
+    pendingRestored.intent = { ...pendingRestored.intent, walk: 1 };
+    pendingRestored.advance(200 / 50);
+    pendingRestored.intent = { ...pendingRestored.intent, walk: 0 };
+    const movedPose = pendingRestored.snapshot.pose.position;
+    expect(movedPose.z).toBeGreaterThan(0);
+    expect(pendingRestored.drop()).toEqual({ kind: 'dropped' });
+    expect(pendingRestored.snapshot.residence).toContainEqual({
+      instance: 'object-slot-108',
+      residence: {
+        body: 'body-11',
+        drawClass: 4,
+        kind: 'surface',
+        position: { x: movedPose.x, y: 0, z: movedPose.z }
+      }
+    });
+    overflow.advance(200 / 50);
+    expect(overflow.drop()).toEqual({ kind: 'dropped' });
+    expect(overflow.snapshot.carried).toEqual(carried.slice(1, 10));
+    expect(overflow.snapshot.briefcaseStore).toEqual(carried.slice(10));
+    expect(
+      new DamoclesSession(loaded, overflow.captureResume()).snapshot
+        .briefcaseStore
+    ).toEqual(carried.slice(10));
+    overflow.advance(16 / 50);
+    expect(overflow.take()).toEqual({ kind: 'took' });
+    expect(overflow.snapshot.carried).toEqual(carried);
+    expect(overflow.snapshot.briefcaseStore).toEqual([]);
+  });
+
+  test('uses the live ANTIGRAV residence only for the bit-five bypass', () => {
+    const refused = dynamicAtOrigin('object-slot-3');
+    expect(refused.take()).toEqual({ kind: 'refused' });
+    expect(refused.snapshot.message?.id).toBe('system-string-2');
+
+    const accepted = dynamicAtOrigin('object-slot-3', ['object-slot-157']);
+    expect(accepted.take()).toEqual({ kind: 'took' });
+    expect(accepted.snapshot.carried).toEqual([
+      'object-slot-3',
+      'object-slot-157'
+    ]);
+
+    const liveHandling = {
+      ...loaded,
+      catalogue: {
+        ...loaded.catalogue,
+        instances: loaded.catalogue.instances.map(instance =>
+          instance.id === 'object-slot-157'
+            ? {
+                ...instance,
+                handling: { ...instance.handling!, carried: true }
+              }
+            : instance
+        )
+      }
+    };
+    const listedNotStacked = dynamicAtOrigin('object-slot-3', [], liveHandling);
+    expect(listedNotStacked.take()).toEqual({ kind: 'took' });
+  });
+
+  test('forces a nearby support placement and refuses a failed rank without ground fallback', () => {
+    const supported = dynamicAtOrigin('object-slot-151', ['object-slot-92']);
+    expect(supported.drop()).toEqual({ kind: 'dropped' });
+    expect(supported.snapshot.residence).toContainEqual({
+      instance: 'object-slot-92',
+      residence: {
+        body: 'body-11',
+        drawClass: 4,
+        kind: 'surface',
+        position: { x: 0, y: 2, z: 0 }
+      }
+    });
+
+    const refused = dynamicAtOrigin('object-slot-151', ['object-slot-202']);
+    expect(refused.drop()).toEqual({ kind: 'refused' });
+    expect(refused.snapshot.carried).toEqual(['object-slot-202']);
+    expect(refused.snapshot.message?.id).toBe('system-string-9');
   });
 });

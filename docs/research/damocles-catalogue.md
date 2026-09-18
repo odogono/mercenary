@@ -27,6 +27,16 @@ game menu. `?model=object-035d12` opens DART II;
 `?instance=dion-surface-32` opens the live Dion cell 2,3 overlay;
 `?instance=object-slot-5` opens the V.I.P. LIMO outside the Spaceport.
 
+For body-aware interaction (#345), two model fields retain recovered native facts.
+`storeyHeight` is the alias record's first word masked by `$7FFF`, as written to
+`$7B00` at `$054D86`; non-alias models do not claim a pitch. `supportTop` is the
+drop handler's raw-Y maximum at `$0545DE`–`$054610`, or `null` when its model-form
+gate refuses. It is not the renderer's mesh maximum: text and articulated forms
+must not change it. The signed opening-word comparison admits ordinary vertex
+streams; header commands are restricted to low bytes 6, 9 and `$0A`. The maximum
+starts at zero. Both fields are extracted from the same attested RAM as the model,
+not inferred from resident placement or presentation geometry.
+
 The extractor first verifies the run's artifact hashes, program/TOS pins, and
 first-world scenario hash. It uses the standard library only. A missing capture
 can be regenerated with the existing `lab observe --scenario

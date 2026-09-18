@@ -48,6 +48,83 @@ const sha256 = async (text: string): Promise<string> => {
 };
 
 describe('Damocles Saves', () => {
+  test('restores a pending briefcase Drop and its stored contents exactly', async () => {
+    const loaded = await load();
+    const initial = new DamoclesSession(loaded).captureResume();
+    const carried = [
+      'object-slot-108',
+      'object-slot-92',
+      'object-slot-178',
+      'object-slot-151',
+      'object-slot-157',
+      'object-slot-158',
+      'object-slot-180',
+      'object-slot-202',
+      'object-slot-203',
+      'object-slot-204',
+      'object-slot-215'
+    ];
+    const original = new DamoclesSession(loaded, {
+      ...initial,
+      carried,
+      pendingBriefcaseDrop: {
+        head: 'object-slot-108',
+        residence: {
+          body: 'body-11',
+          drawClass: 4,
+          kind: 'surface',
+          position: { x: 0, y: 0, z: 0 }
+        }
+      },
+      pose: {
+        body: 'body-11',
+        heading: 0,
+        position: { x: 0, y: loaded.doc.eye.heightUnits, z: 0 }
+      },
+      residence: carried.map(instance => ({
+        instance,
+        residence: {
+          drawClass:
+            loaded.catalogue.instances.find(item => item.id === instance)!
+              .handling!.byte & 15,
+          kind: 'carried'
+        }
+      })),
+      structure: null
+    });
+    const roundTrip = (session: DamoclesSession) =>
+      new DamoclesSession(
+        loaded,
+        decodeDamoclesSave(
+          encodeDamoclesSave({
+            identity: loaded.identity,
+            savedAt: '2026-09-18T17:00:00.000Z',
+            schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
+            snapshot: session.captureResume(),
+            where: 'ERIS'
+          }),
+          loaded.identity,
+          loaded.catalogue
+        ).snapshot
+      );
+    const restored = roundTrip(original);
+    expect(restored.captureResume()).toEqual(original.captureResume());
+    expect(original.drop()).toEqual({ kind: 'dropped' });
+    expect(restored.drop()).toEqual({ kind: 'dropped' });
+    expect(restored.captureResume()).toEqual(original.captureResume());
+    expect(restored.captureResume().briefcaseStore).toEqual([
+      'object-slot-215'
+    ]);
+    const stored = roundTrip(restored);
+    expect(stored.captureResume()).toEqual(restored.captureResume());
+    original.advance(16 / 50);
+    stored.advance(16 / 50);
+    expect(original.take()).toEqual({ kind: 'took' });
+    expect(stored.take()).toEqual({ kind: 'took' });
+    expect(stored.captureResume()).toEqual(original.captureResume());
+    expect(stored.snapshot.carried).toEqual(carried);
+  });
+
   test('round-trip the same envelope Session Resume uses', async () => {
     const loaded = await load();
     const session = new DamoclesSession(loaded);

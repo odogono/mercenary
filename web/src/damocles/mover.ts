@@ -7,7 +7,7 @@ import type { Pose } from './world.ts';
 /// Damocles's appears to be: the one observation is a constant advance under a held stick. The
 /// rates come from the authored document, not from Targ's decoded numbers, because they are
 /// Damocles's to recover (#205). There is no vertical term, no damping and, in this slice, no
-/// collision: the eye stays at its recovered height over a flat authored ground.
+/// collision: the eye stays at its current elevation, including recovered upper floors.
 export interface WalkRules {
   readonly eyeHeight: number;
   readonly runMultiplier: number;
@@ -54,7 +54,7 @@ export const walk = (
     heading,
     position: {
       x: pose.position.x + Math.sin(heading) * step,
-      y: rules.eyeHeight,
+      y: pose.position.y,
       z: pose.position.z + Math.cos(heading) * step
     }
   };

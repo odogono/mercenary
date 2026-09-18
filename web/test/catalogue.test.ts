@@ -3,6 +3,26 @@ import { describe, expect, it } from 'bun:test';
 import { parseCatalogue, selectModels } from '../src/catalogue/data.ts';
 import { triangulate } from '../src/catalogue/geometry.ts';
 
+it('retains recovered Drop metadata and rejects values outside the native word range', () => {
+  const value = fixture();
+  for (const supportTop of [null, 0, 48, 32_767]) {
+    const model = { ...value.models[0]!, supportTop };
+    expect(
+      parseCatalogue({ ...value, models: [model] }).models[0]?.supportTop
+    ).toBe(supportTop);
+  }
+  for (const field of ['supportTop', 'storeyHeight']) {
+    for (const invalid of [-1, 1.5, 32_768, Number.NaN]) {
+      expect(() =>
+        parseCatalogue({
+          ...value,
+          models: [{ ...value.models[0], [field]: invalid }]
+        })
+      ).toThrow();
+    }
+  }
+});
+
 const fixture = () => ({
   bodies: [{ id: 'body-1', name: 'Test body' }],
   coverage: { complete: false, notes: ['Synthetic fixture'] },

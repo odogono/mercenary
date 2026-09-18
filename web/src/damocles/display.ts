@@ -8,6 +8,8 @@ export type DamoclesMessageId =
   | 'script2-inline-1'
   | 'script2-inline-2'
   | 'script2-inline-3'
+  | 'system-string-1'
+  | 'system-string-2'
   | 'system-string-50'
   | 'system-string-9';
 

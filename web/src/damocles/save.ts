@@ -6,11 +6,16 @@ import {
   type DamoclesMessageId
 } from './display.ts';
 import {
+  validStructureResidence,
+  type PlacedResidence,
+  type Residence,
+  type ResidenceDeparture
+} from './residence.ts';
+import {
   initialScriptState,
   type Execution,
   type Presenting
 } from './script.ts';
-import type { Residence, ResidenceDeparture } from './session.ts';
 import { SLOT_2_REVISION, SLOT_2_SCRIPT, type Step } from './slot2.ts';
 import type { Pose } from './world.ts';
 
@@ -47,9 +52,15 @@ export interface BoundStructureSnapshot {
 }
 
 export interface DamoclesSaveSnapshot {
+  // Legacy schema-4 envelopes omit both continuation fields; partial omission is invalid.
+  readonly briefcaseStore: readonly string[];
   readonly carried: readonly string[];
   readonly elapsed: number;
   readonly frameAccumulator: number;
+  readonly pendingBriefcaseDrop: {
+    readonly head: string;
+    readonly residence: PlacedResidence;
+  } | null;
   readonly pose: Pose;
   readonly residence: readonly ResidenceDeparture[];
   readonly script: DamoclesSaveScript;
@@ -137,6 +148,8 @@ const messageIds = new Set<DamoclesMessageId>([
   'script2-inline-1',
   'script2-inline-2',
   'script2-inline-3',
+  'system-string-1',
+  'system-string-2',
   'system-string-50',
   'system-string-9'
 ]);
@@ -361,7 +374,10 @@ const scriptOf = (value: unknown): DamoclesSaveScript => {
   if (
     message !== null &&
     display.kind === 'scrolling' &&
-    (display.id === 'script2-inline-1' || display.id === 'system-string-9') &&
+    (display.id === 'script2-inline-1' ||
+      display.id === 'system-string-1' ||
+      display.id === 'system-string-2' ||
+      display.id === 'system-string-9') &&
     display.reveal.beneath !== BLANK_DAMOCLES_ROW
   ) {
     return fail('display Reveal has the wrong predecessor');
@@ -390,69 +406,48 @@ const scriptOf = (value: unknown): DamoclesSaveScript => {
     ) {
       return fail('script execution is not at a reachable commit boundary');
     }
-  } else if (message !== null && message.id !== 'system-string-9') {
-    return fail('parked script can only present system-string-9');
-  }
-  if (
-    execution === null &&
-    message === null &&
-    triggers.find(trigger => trigger.index === 2)!.armed &&
-    (display.kind !== 'held' || display.cells !== BLANK_DAMOCLES_ROW)
+  } else if (
+    message !== null &&
+    !['system-string-1', 'system-string-2', 'system-string-9'].includes(
+      message.id
+    )
   ) {
-    return fail('parked script display is not blank');
+    return fail('parked script can only present a system message');
+  }
+  if (message === null && display.kind !== 'held') {
+    return fail('scrolling display has no message');
   }
   return { counter, display, execution, message, triggers };
 };
 
 const validateResidence = (
   catalogue: Catalogue,
-  carried: readonly string[],
   departures: readonly ResidenceDeparture[]
 ): void => {
-  const key = catalogue.instances.find(
-    instance => instance.id === 'object-slot-183'
-  );
-  if (key === undefined) {
-    return fail('Catalogue has no playable limo key');
-  }
-  const handling = key.handling;
-  if (handling === null) {
-    return fail('Catalogue has no playable limo key handling');
-  }
-  if (
-    carried.some(instance => instance !== key.id) ||
-    departures.some(departure => departure.instance !== key.id)
-  ) {
-    fail('Carried Stack or Object Residence names an unplayed instance');
-  }
   for (const departure of departures) {
+    const instance = catalogue.instances.find(
+      item => item.id === departure.instance
+    );
+    const handling = instance?.handling;
+    if (handling === undefined || handling === null) {
+      return fail('Object Residence names no handled Catalogue instance');
+    }
     const residence = departure.residence;
-    if (
-      residence.kind === 'carried' &&
-      residence.drawClass !== 0 &&
-      residence.drawClass !== (handling.byte & 0x0f)
-    ) {
-      fail('carried residence contradicts the Catalogue');
+    const legacyKeyClass =
+      departure.instance === 'object-slot-183' &&
+      residence.kind !== 'structure' &&
+      residence.drawClass === 0;
+    if (!legacyKeyClass && residence.drawClass !== (handling.byte & 0x0f)) {
+      fail('residence draw class contradicts the Catalogue');
     }
     if (
       residence.kind === 'surface' &&
-      (residence.body !== key.association?.body || residence.drawClass !== 0)
+      !catalogue.bodies.some(body => body.id === residence.body)
     ) {
       fail('surface residence contradicts the Catalogue');
     }
     if (residence.kind === 'structure') {
-      const parent = catalogue.instances.find(
-        instance => instance.id === residence.parent
-      );
-      if (
-        parent?.location?.body !== residence.body ||
-        residence.body !== key.association?.body ||
-        residence.level !== 0 ||
-        residence.drawClass !== (handling.byte & 0x0f) ||
-        !parent.associationGroups?.some(
-          group => group.group === residence.insertionGroup
-        )
-      ) {
+      if (!validStructureResidence(catalogue, residence)) {
         fail('structure residence contradicts the Catalogue');
       }
     }
@@ -505,7 +500,8 @@ export const decodeDamoclesSave = (
       ? value
       : fail('Carried Stack member is invalid')
   );
-  if (carried.length > 10 || new Set(carried).size !== carried.length) {
+  const capacity = carried.includes('object-slot-108') ? 20 : 10;
+  if (carried.length > capacity || new Set(carried).size !== carried.length) {
     return fail('Carried Stack is over capacity or duplicated');
   }
   const frameAccumulator = snapshot['frameAccumulator'];
@@ -546,8 +542,85 @@ export const decodeDamoclesSave = (
   ) {
     return fail('Carried Stack and Object Residence disagree');
   }
+  if (
+    (snapshot['briefcaseStore'] === undefined) !==
+    (snapshot['pendingBriefcaseDrop'] === undefined)
+  ) {
+    return fail('snapshot continuation fields are only partially present');
+  }
+  const briefcaseStore = array(
+    snapshot['briefcaseStore'] === undefined ? [] : snapshot['briefcaseStore'],
+    'snapshot.briefcaseStore'
+  ).map(value =>
+    typeof value === 'string' && value !== ''
+      ? value
+      : fail('briefcaseStore member is invalid')
+  );
+  if (
+    briefcaseStore.length > 10 ||
+    new Set(briefcaseStore).size !== briefcaseStore.length ||
+    briefcaseStore.some(
+      instance =>
+        instance === 'object-slot-108' ||
+        carried.includes(instance) ||
+        residence.some(item => item.instance === instance)
+    ) ||
+    (briefcaseStore.length > 0 &&
+      (carried.includes('object-slot-108') ||
+        !residence.some(
+          item =>
+            item.instance === 'object-slot-108' &&
+            item.residence.kind !== 'carried'
+        )))
+  ) {
+    return fail(
+      'briefcaseStore contradicts Object Residence or the Carried Stack'
+    );
+  }
+  let pendingBriefcaseDrop: DamoclesSaveSnapshot['pendingBriefcaseDrop'] = null;
+  if (
+    snapshot['pendingBriefcaseDrop'] !== undefined &&
+    snapshot['pendingBriefcaseDrop'] !== null
+  ) {
+    const pending = object(
+      snapshot['pendingBriefcaseDrop'],
+      'snapshot.pendingBriefcaseDrop'
+    );
+    const placement = residenceOf(pending['residence']);
+    if (
+      pending['head'] !== 'object-slot-108' ||
+      carried[0] !== pending['head'] ||
+      carried.length <= 10 ||
+      placement.kind === 'carried' ||
+      briefcaseStore.length !== 0
+    ) {
+      return fail('pendingBriefcaseDrop contradicts the Carried Stack');
+    }
+    pendingBriefcaseDrop = { head: pending['head'], residence: placement };
+  }
+  const pose = poseOf(snapshot['pose']);
   if (catalogue !== undefined) {
-    validateResidence(catalogue, carried, residence);
+    if (!catalogue.bodies.some(body => body.id === pose.body)) {
+      return fail('pose names an unknown Body');
+    }
+    validateResidence(catalogue, residence);
+    if (
+      briefcaseStore.some(
+        id =>
+          catalogue.instances.find(instance => instance.id === id)?.handling ==
+          null
+      )
+    ) {
+      return fail('briefcaseStore names no handled Catalogue instance');
+    }
+    if (pendingBriefcaseDrop !== null) {
+      validateResidence(catalogue, [
+        {
+          instance: pendingBriefcaseDrop.head,
+          residence: pendingBriefcaseDrop.residence
+        }
+      ]);
+    }
   }
   const scrollCounter = integer(
     snapshot['scrollCounter'],
@@ -560,9 +633,9 @@ export const decodeDamoclesSave = (
   if (
     (trigger2.armed &&
       (carried.includes('object-slot-183') ||
+        briefcaseStore.includes('object-slot-183') ||
         residence.some(item => item.instance === 'object-slot-183'))) ||
-    (script.execution !== null && trigger2.armed) ||
-    (script.message?.id === 'system-string-9' && trigger2.armed)
+    (script.execution !== null && trigger2.armed)
   ) {
     return fail('trigger 2 contradicts the limo-key Session State');
   }
@@ -615,10 +688,12 @@ export const decodeDamoclesSave = (
     savedAt: record['savedAt'],
     schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
     snapshot: {
+      briefcaseStore,
       carried,
       elapsed: snapshot['elapsed'],
       frameAccumulator,
-      pose: poseOf(snapshot['pose']),
+      pendingBriefcaseDrop,
+      pose,
       residence,
       script,
       scrollCounter,

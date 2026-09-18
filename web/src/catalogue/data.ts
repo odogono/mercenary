@@ -60,7 +60,11 @@ export interface Model {
   readonly slots: readonly number[];
   readonly sourceAddress: number;
   readonly status: Recovery;
+  /** Recovered alias-record floor pitch; absent for non-alias records. */
+  readonly storeyHeight?: number;
   readonly structureSelection?: StructureSelection;
+  /** Native Drop scanner maximum; null means its model-form gate refuses. */
+  readonly supportTop?: number | null;
   readonly variants: readonly {
     readonly doorState?: DoorState;
     readonly id: string;
@@ -269,6 +273,10 @@ const integer = (value: unknown): number => {
 const byte = (value: unknown): number => {
   const n = integer(value);
   return n <= 0xff ? n : fail('expected a byte');
+};
+const nonnegativeSignedWord = (value: unknown): number => {
+  const n = integer(value);
+  return n <= 0x7f_ff ? n : fail('expected a nonnegative signed word');
 };
 const boolean = (value: unknown): boolean =>
   typeof value === 'boolean' ? value : fail('expected a flag');
@@ -754,6 +762,17 @@ export const parseCatalogue = (value: unknown): Catalogue => {
             worldConditionedSlots: list(m['worldConditionedSlots']).map(integer)
           }),
       status,
+      ...(m['storeyHeight'] === undefined
+        ? {}
+        : { storeyHeight: nonnegativeSignedWord(m['storeyHeight']) }),
+      ...(m['supportTop'] === undefined
+        ? {}
+        : {
+            supportTop:
+              m['supportTop'] === null
+                ? null
+                : nonnegativeSignedWord(m['supportTop'])
+          }),
       variants,
       ...(m['structureSelection'] === undefined
         ? {}

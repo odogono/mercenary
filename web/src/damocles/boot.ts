@@ -559,7 +559,12 @@ try {
       snapshot.pose,
       content.doc,
       snapshot.structure,
-      snapshot.residents
+      snapshot.residents,
+      [
+        ...snapshot.carried,
+        ...snapshot.briefcaseStore,
+        ...snapshot.residence.map(item => item.instance)
+      ]
     );
     const preset = preferences.current().presentationPreset;
     const shadows =
