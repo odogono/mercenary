@@ -60,27 +60,52 @@ from damocleslab.runtime import build_hatari_command, headless_env  # noqa: E402
 from damocleslab.toolchain import discover_toolchain  # noqa: E402
 
 REPO = LAB_ROOT.parents[1]
+SYSTEM_PAYLOAD = REPO / "payload" / "damocles" / "system.json"
 WORK_ROOT = LAB_ROOT / "work"
 SNAPSHOTS = LAB_ROOT / "snapshots"
 DEFAULT_SNAPSHOT = SNAPSHOTS / "eris-spaceport-onfoot.sav"
 
 SCAN_BOARD, SCAN_LEAVE = 0x30, 0x26  # ST scancodes for B and L
+SCAN_LAUNCH = 0x01  # Esc: the space-launch handler at $055822
+SCAN_SLOWER, SCAN_FASTER = 0x0C, 0x0D  # the two throttle-scaling keys at $05575E
+
+# Measured space speed per digit key, in source units per second: the throttle
+# word doubles the speed per step, from $7BAC = 4 at key 1.
+SPACE_UNITS_PER_SECOND = {key: 12000 * 2 ** (key - 1) for key in range(1, 10)}
 SCAN_DIGIT = {1: 0x02, 2: 0x03, 3: 0x04, 4: 0x05, 5: 0x06,
               6: 0x07, 7: 0x08, 8: 0x09, 9: 0x0A}  # craft speed keys
 
 STICK_STOP, STICK_FORWARD = 0x00, 0x01
 STICK_LEFT, STICK_RIGHT = 0x04, 0x08
+STICK_BACK = 0x02  # nose up in a craft; the surface walk never uses it
 
 # Camera, occupancy and message words, as established in
 # docs/research/damocles-walk-board-flight.md and
 # docs/research/damocles-message-reveal.md.
 CAMERA_X, CAMERA_Y, CAMERA_Z = 0x7A92, 0x7A96, 0x7A9A
+# While boarded the craft's own position is the twin set the board routine
+# fills at $054374 from the resident arrays.
+CRAFT_X, CRAFT_Y, CRAFT_Z = 0x7AB2, 0x7AB6, 0x7ABA
 CAMERA_YAW = 0x7AA2
 ON_FOOT = 0x7A8E
 BOARDED_SLOT = 0x7AB0
 BODY_SELECTOR = 0x7AA8
 MESSAGE_GATE = 0x7BA0
 MESSAGE_POINTER = 0x7B98
+
+# Craft control words. $7BAC is the throttle longword the key dispatcher writes
+# at $0556F8 from a scancode-indexed table at $0557D6; boarding presets it to
+# $FF001000 at $054744.
+THROTTLE = 0x7BAC
+THROTTLE_TOGGLE = 0x7A1C
+GROUND_CONTACT = 0x7ACA
+REGION_FLAGS = 0x7B34
+KEY_WORD = 0x7B60    # the dispatcher's own copy of the last scancode ($0555D8)
+NAV_TARGET = 0x7922  # the body the panel names under NAVIGATION ($04DC0C)
+ARRIVAL_FLAG = 0x7A28  # non-zero runs the landing routine at $059268
+PITCH = 0x7AC0       # second view angle, masked to ten bits at $057FD2
+OCCUPANCY = 0x7AAE   # 1 on foot, 0 boarded, 2 in space ($05586C)
+ALTITUDE = 0x7A30    # the word $05976A tests against $1F0 before entering space
 
 # Resident object arrays, as established in docs/research/damocles-resident-objects.md.
 RESIDENT_X, RESIDENT_Y, RESIDENT_Z = 0x63A8, 0x67A8, 0x6BA8
@@ -91,6 +116,8 @@ RESIDENT_HEADING = 0x77A8
 STRING_TABLE = 0x070000
 STRING_SLOTS = 64
 STRING_POOL, STRING_POOL_END = 0x072D2E, 0x07336F
+
+STANDOFF = 12000  # source units beyond the target, away from its nearest neighbour
 
 CELL_UNITS = 65536
 YAW_MASK = 0x03FF
@@ -190,6 +217,19 @@ def decode(blobs: dict[str, bytes], watch: tuple[int, ...]) -> dict:
         "boardedSlot": f"0x{_u16(low, base, BOARDED_SLOT):04x}",
         "bodySelector": f"0x{_u16(low, base, BODY_SELECTOR):04x}",
         "messageGate": f"0x{_u16(low, base, MESSAGE_GATE):04x}",
+        "craftX": _s32(low, base, CRAFT_X),
+        "craftY": _s32(low, base, CRAFT_Y),
+        "craftZ": _s32(low, base, CRAFT_Z),
+        "throttle": f"0x{_u32(low, base, THROTTLE):08x}",
+        "throttleToggle": f"0x{_u16(low, base, THROTTLE_TOGGLE):04x}",
+        "groundContact": _u16(low, base, GROUND_CONTACT),
+        "occupancy": _u16(low, base, OCCUPANCY),
+        "pitch": _u16(low, base, PITCH),
+        "navTarget": f"0x{_u16(low, base, NAV_TARGET):04x}",
+        "arrivalFlag": _u16(low, base, ARRIVAL_FLAG),
+        "keyWord": f"0x{_u16(low, base, KEY_WORD):04x}",
+        "altitude": _u16(low, base, ALTITUDE),
+        "regionFlags": f"0x{_u16(low, base, REGION_FLAGS):04x}",
         "message": decode_message(blobs),
         "residents": {str(slot): resident(low, slot) for slot in watch},
     }
@@ -222,14 +262,19 @@ class Machine:
         self.run_directory = run_directory
         self.watch = watch
         self.samples = 0
+        self.strings: dict[str, bytes] | None = None
 
-    def sample(self, *, shot: bool = False, keep: bool = False) -> dict:
+    def sample(self, *, shot: bool = False, keep: bool = False,
+               full: bool = False) -> dict:
         index = self.samples
         self.samples += 1
         prefix = f"sample{index:03d}" if keep else "tick"
         paths = {}
         commands = ["hatari-stop", "hatari-debug setopt hex"]
-        for label, base, length in WINDOWS:
+        # A control loop only needs the state window; the string table and pool
+        # never change, so re-reading them every tick is pure latency.
+        windows = WINDOWS if (full or keep or self.strings is None) else WINDOWS[:1]
+        for label, base, length in windows:
             path = self.run_directory / f"{prefix}-{label}.bin"
             paths[label] = path
             commands.append(f"hatari-debug savebin {path} ${base:x} ${length:x}")
@@ -238,16 +283,59 @@ class Machine:
         commands.append("hatari-cont")
         _fifo_send(self.handle, commands)
         time.sleep(0.22)
-        blobs = {}
+        blobs = dict(self.strings or {})
         for label, path in paths.items():
-            data = path.read_bytes()
+            # savebin writes while the machine is stopped; a fast sampling loop
+            # can look before the file lands, so wait for it rather than failing.
+            data = b""
+            for _ in range(8):
+                if path.is_file():
+                    data = path.read_bytes()
+                if data:
+                    break
+                time.sleep(0.05)
             if not data:
+                # A wedged emulator never lands the file. Fail loudly rather
+                # than spinning: every caller is a timed control loop.
                 raise LabError(f"sample {index} read nothing for window {label}")
             blobs[label] = data
+        if self.strings is None:
+            self.strings = {label: blobs[label] for label in ("strings", "pool")}
         state = decode(blobs, self.watch)
         if keep:
             state["sha256"] = {label: _sha256(path) for label, path in paths.items()}
         return state
+
+    def watch_program_counters(self, addresses: tuple[int, ...]) -> tuple[int, ...]:
+        """Arm a tracing breakpoint per address.
+
+        ``:trace`` prints the hit and continues, so the machine keeps running —
+        which is what tells a key that never reached a handler from a handler
+        that ran and was overruled. Hits are counted afterwards from the
+        emulator's own log.
+        """
+        for address in addresses:
+            _fifo_send(self.handle, [
+                "hatari-stop",
+                f"hatari-debug b pc = ${address:x} :trace",
+                "hatari-cont",
+            ])
+        return addresses
+
+    def fast_forward(self, enabled: bool) -> None:
+        """Switch the emulator's fast-forward at runtime.
+
+        Aiming needs the ordinary frame rate — the craft turns about ten
+        thousand yaw units a second under fast-forward, far past any bearing a
+        control loop can hold — while climbing to the launch altitude needs the
+        fast rate to finish in reasonable host time.
+        """
+        _fifo_send(self.handle, [
+            "hatari-stop",
+            f"hatari-debug setopt --fast-forward {'on' if enabled else 'off'}",
+            "hatari-cont",
+        ])
+        time.sleep(0.2)
 
     def stick(self, byte: int) -> None:
         _fifo_send(self.handle, [
@@ -258,9 +346,13 @@ class Machine:
         ])
 
     def press(self, scan: int, hold: float = 0.15) -> None:
-        _fifo_send(self.handle, [f"hatari-event keydown {scan}"])
+        # Hatari reads a one-character argument as ASCII and anything longer as
+        # an ST scancode, so a single-digit scancode has to be zero-padded or
+        # Esc ($01) arrives as the "1" key ($02).
+        code = f"{scan:02d}"
+        _fifo_send(self.handle, [f"hatari-event keydown {code}"])
         time.sleep(hold)
-        _fifo_send(self.handle, [f"hatari-event keyup {scan}"])
+        _fifo_send(self.handle, [f"hatari-event keyup {code}"])
 
 
 def approach(machine: Machine, slot: int, *, tolerance: int, ticks: int,
@@ -361,19 +453,29 @@ def approach(machine: Machine, slot: int, *, tolerance: int, ticks: int,
             "turnRate": None if turn_rate is None else round(turn_rate, 1)}
 
 
-def fly(machine: Machine, *, speed: int, seconds: float, stick: int) -> dict:
+def fly(machine: Machine, *, speed: int, seconds: float, stick: int,
+        keys: tuple[int, ...] = (), watch_pcs: tuple[int, ...] = (),
+        hold_throttle: bool = False) -> dict:
     """Hold a speed key and a stick byte after boarding, and log the telemetry.
 
     Purely observational: it reports where the craft went, not how to fly one.
     Flight itself belongs to vehicle travel, which #313 keeps out of scope; this
     exists so a route attempt can say whether the craft left the ground.
     """
-    machine.press(SCAN_DIGIT[speed])
-    time.sleep(0.4)
-    machine.stick(stick)
+    machine.watch_program_counters(watch_pcs)
     log = []
     started = time.monotonic()
+    for scan in (keys if keys else () if speed == 0 else (SCAN_DIGIT[speed],)):
+        machine.press(scan)
+        time.sleep(0.2)
+    machine.stick(stick)
+    interval = 0.15 if seconds <= 5 else 1.0
     while time.monotonic() - started < seconds:
+        if hold_throttle and speed:
+            # The collision response at $059750 forces the throttle to $FFF0
+            # every time a move is refused, so a single press does not survive
+            # contact. Re-apply it each tick to tell "refused" from "unset".
+            machine.press(SCAN_DIGIT[speed])
         state = machine.sample()
         log.append({
             "t": round(time.monotonic() - started, 2),
@@ -381,10 +483,338 @@ def fly(machine: Machine, *, speed: int, seconds: float, stick: int) -> dict:
             "yaw": state["yaw"], "onFoot": state["onFoot"],
             "boardedSlot": state["boardedSlot"],
             "bodySelector": state["bodySelector"],
+            "craftX": state["craftX"], "craftY": state["craftY"],
+            "craftZ": state["craftZ"],
+            "throttle": state["throttle"],
+            "throttleToggle": state["throttleToggle"],
+            "groundContact": state["groundContact"],
         })
-        time.sleep(1.0)
+        time.sleep(interval)
     machine.stick(STICK_STOP)
-    return {"speedKey": speed, "stick": f"0x{stick:02x}", "seconds": seconds, "telemetry": log}
+    return {"watched": [f"0x{address:06x}" for address in watch_pcs], "speedKey": speed, "keys": [f"0x{k:02x}" for k in keys],
+            "stick": f"0x{stick:02x}", "seconds": seconds, "telemetry": log}
+
+
+def system_heading(origin: dict, target: dict) -> tuple[int, int]:
+    """Yaw and pitch, in raw words, from one body centre toward another.
+
+    While the craft is still in the atmosphere its position longwords are
+    body-local surface coordinates, not system coordinates, so a heading cannot
+    be taken from them. The launch body's own centre is the origin instead, and
+    the surface axes are the system axes.
+    """
+    delta = [target["position"][axis] - origin["position"][axis] for axis in "xyz"]
+    flat = math.hypot(delta[0], delta[2])
+    yaw = int(round(YAW_NORTH + math.atan2(delta[0], delta[2])
+                    / (2 * math.pi) * YAW_UNITS_PER_TURN)) % YAW_UNITS_PER_TURN
+    pitch = int(round(YAW_NORTH - math.atan2(delta[1], flat)
+                      / (2 * math.pi) * YAW_UNITS_PER_TURN)) % YAW_UNITS_PER_TURN
+    return yaw, pitch
+
+
+def aim(machine: Machine, want_yaw: int, want_pitch: int, *, seconds: float,
+        tolerance: int = 12, speed: int = 0) -> dict:
+    """Turn the craft onto a heading before launching.
+
+    The navigation target is whatever body the renderer finds nearest
+    ($052E90 keeps the minimum, $052FCA publishes it after the fifty-frame hold
+    $05586C sets), so the destination follows from where the craft is pointed.
+    """
+    log = []
+    started = time.monotonic()
+    aligned = False
+    while time.monotonic() - started < seconds:
+        if speed:
+            # Turning costs height, and the launch handler refuses a craft that
+            # has settled back onto the ground, so keep the climb alive.
+            machine.press(SCAN_DIGIT[speed], hold=0.05)
+        state = machine.sample()
+        yaw_error = ((want_yaw - (state["yaw"] & YAW_MASK)) % YAW_UNITS_PER_TURN)
+        yaw_error -= YAW_UNITS_PER_TURN if yaw_error > YAW_UNITS_PER_TURN // 2 else 0
+        pitch_error = ((want_pitch - (state["pitch"] & YAW_MASK)) % YAW_UNITS_PER_TURN)
+        pitch_error -= YAW_UNITS_PER_TURN if pitch_error > YAW_UNITS_PER_TURN // 2 else 0
+        log.append({"t": round(time.monotonic() - started, 2),
+                    "yaw": state["yaw"], "pitch": state["pitch"],
+                    "yawError": yaw_error, "pitchError": pitch_error})
+        if abs(yaw_error) <= tolerance and abs(pitch_error) <= tolerance:
+            aligned = True
+            break
+        if abs(yaw_error) > tolerance:
+            machine.stick(STICK_RIGHT if yaw_error > 0 else STICK_LEFT)
+            time.sleep(min(0.35, max(0.02, abs(yaw_error) / 700)))
+        else:
+            machine.stick(STICK_FORWARD if pitch_error > 0 else STICK_BACK)
+            time.sleep(min(0.35, max(0.02, abs(pitch_error) / 700)))
+        machine.stick(STICK_STOP)
+    machine.stick(STICK_STOP)
+    return {"aligned": aligned, "wantYaw": want_yaw, "wantPitch": want_pitch, "ticks": log}
+
+
+def depart(machine: Machine, *, speed: int, climb_seconds: float,
+           space_seconds: float, run_directory: Path,
+           watch_pcs: tuple[int, ...] = (),
+           plan: tuple[tuple[int, float], ...] = (), space_speed: int = 0,
+           aim_heading: tuple[int, int] | None = None, aim_seconds: float = 25.0) -> dict:
+    """Lift a boarded craft off the ground, then ask it to launch.
+
+    The launch handler at $055822 refuses while $7ACA still reads ground
+    contact, so the climb has to come first. The throttle is re-pressed each
+    tick because the collision response at $059750 forces it back the moment a
+    move is refused.
+    """
+    machine.watch_program_counters(watch_pcs)
+    climb = []
+    started = time.monotonic()
+    airborne = False
+    clear = 0
+    while time.monotonic() - started < climb_seconds:
+        machine.press(SCAN_DIGIT[speed])
+        state = machine.sample()
+        climb.append({
+            "t": round(time.monotonic() - started, 2),
+            "groundContact": state["groundContact"],
+            "occupancy": state["occupancy"], "altitude": state["altitude"],
+            "throttle": state["throttle"], "craftY": state["craftY"],
+            "craftX": state["craftX"], "craftZ": state["craftZ"],
+        })
+        # One sample of zero ground contact is a bounce, not a climb: the
+        # launch handler re-reads $7ACA and refuses if the craft has settled.
+        # Require height as well, and hold it.
+        if state["groundContact"] == 0 and state["craftY"] > 2000:
+            clear += 1
+            if clear >= 3:
+                airborne = True
+                break
+        else:
+            clear = 0
+        time.sleep(0.2)
+    launched = None
+    aimed = None
+    reached_space = False
+    if airborne and aim_heading is not None:
+        aimed = aim(machine, aim_heading[0], aim_heading[1], seconds=aim_seconds,
+                    speed=speed)
+        # Re-establish the climb before asking to launch.
+        settled = time.monotonic()
+        while time.monotonic() - settled < 20:
+            machine.press(SCAN_DIGIT[speed], hold=0.05)
+            state = machine.sample()
+            if state["groundContact"] == 0 and state["craftY"] > 4000:
+                break
+            time.sleep(0.2)
+    if airborne:
+        machine.press(SCAN_LAUNCH)
+        if space_speed:
+            # The launch handler commands $7BAC = $000E, faster than any digit,
+            # so the throttle has to come down at once or the craft crosses the
+            # system before the first sample.
+            machine.press(SCAN_DIGIT[space_speed], hold=0.05)
+        # The launch is accepted at $055844, but occupancy only becomes 2 at
+        # $05586C, once the climb has carried $7A30 past $01F0. Hold the throttle
+        # and wait for that rather than assuming the craft is already in space.
+        reached_space = False
+        waited = time.monotonic()
+        while time.monotonic() - waited < space_seconds:
+            # Keep the climb throttle: the transition needs $7A30 past $01F0,
+            # which is tens of seconds of guest time. Sampling stops the
+            # machine, so sample rarely here and let it fly.
+            machine.press(SCAN_DIGIT[speed], hold=0.05)
+            time.sleep(5.0)
+            state = machine.sample()
+            if state["occupancy"] == 2:
+                reached_space = True
+                if space_speed:
+                    machine.press(SCAN_DIGIT[space_speed], hold=0.05)
+                break
+        launched = []
+        legs = plan or ((STICK_STOP, 2.0),)
+        for stick, leg_seconds in legs:
+            machine.stick(stick)
+            started = time.monotonic()
+            while time.monotonic() - started < leg_seconds:
+                state = machine.sample()
+                launched.append({
+                    "t": round(time.monotonic() - started, 2),
+                    "stick": f"0x{stick:02x}",
+                    "occupancy": state["occupancy"], "altitude": state["altitude"],
+                    "navTarget": state["navTarget"], "arrivalFlag": state["arrivalFlag"],
+                    "keyWord": state["keyWord"], "yaw": state["yaw"],
+                    "pitch": state["pitch"],
+                    "bodySelector": state["bodySelector"], "throttle": state["throttle"],
+                    "craftX": state["craftX"], "craftY": state["craftY"],
+                    "craftZ": state["craftZ"],
+                    "message": (state["message"] or {}).get("text"),
+                })
+                time.sleep(0.8)
+    machine.stick(STICK_STOP)
+    return {"speedKey": speed, "airborne": airborne, "climb": climb, "space": launched,
+            "aim": aimed, "reachedSpace": bool(airborne and reached_space),
+            "watched": [f"0x{address:06x}" for address in watch_pcs]}
+
+
+def system_bodies() -> dict[int, dict]:
+    """Body centres from the tracked system payload, keyed by source index."""
+    document = json.loads(SYSTEM_PAYLOAD.read_text())
+    return {body["sourceIndex"]: body for body in document["bodies"]}
+
+
+def throttle_word(state: dict) -> int:
+    return int(state["throttle"], 16) >> 16
+
+
+def set_speed(machine: Machine, state: dict, wanted: int) -> dict:
+    """Bring $7BAC toward a wanted magnitude with the digit and scaling keys.
+
+    Digits set the word outright; `-` and `=` scale what is there, which is the
+    only way below key 1. Each press is followed by a read, so the loop never
+    assumes a step size.
+    """
+    for _ in range(6):
+        current = throttle_word(state)
+        if current == wanted:
+            break
+        if 4 <= wanted <= 12 and abs(current - wanted) > 1:
+            machine.press(SCAN_DIGIT[max(1, min(9, wanted - 3))], hold=0.05)
+        else:
+            machine.press(SCAN_SLOWER if current > wanted else SCAN_FASTER, hold=0.05)
+        state = machine.sample()
+    return state
+
+
+def navigate(machine: Machine, target: dict, bodies: dict[int, dict], *,
+             seconds: float, arrive: int, yaw_tolerance: int,
+             pitch_tolerance: int, burst: float) -> dict:
+    """Fly a launched craft to a body, closed loop, until it is the nearest one.
+
+    Arrival is not a distance to the target: $052FDA tests the nearest body of
+    the frame against its own extent, so the craft has to be closer to the
+    target than to any of its neighbours before the landing routine can fire on
+    the right one. The Eris cluster puts six bodies within seven thousand units
+    of each other, which is why this steers on the margin rather than on range.
+    """
+    centre = tuple(target["position"][axis] for axis in "xyz")
+    others = [body for index, body in bodies.items() if index != target["sourceIndex"]]
+    # Arrival fires on the nearest body, and the target's neighbours are only a
+    # few thousand units away, so the craft first flies to a standoff point on
+    # the far side of the target from its nearest neighbour. Coming in from
+    # there, the target is the nearest body for the whole approach.
+    neighbour = min(others, key=lambda body: math.dist(
+        centre, tuple(body["position"][axis] for axis in "xyz")))
+    away = [centre[i] - neighbour["position"]["xyz"[i]] for i in range(3)]
+    span = math.sqrt(sum(value * value for value in away)) or 1.0
+    standoff = tuple(centre[i] + away[i] / span * STANDOFF for i in range(3))
+    waypoint = standoff
+    log: list[dict] = []
+    started = time.monotonic()
+    outcome = "timeout"
+    last_change = time.monotonic()
+    previous = None
+    state = machine.sample()
+    while time.monotonic() - started < seconds:
+        position = (state["craftX"], state["craftY"], state["craftZ"])
+        if position != previous:
+            previous, last_change = position, time.monotonic()
+        elif time.monotonic() - last_change > 25:
+            outcome = "stalled"
+            break
+        if waypoint is not None and math.dist(position, waypoint) <= STANDOFF / 2:
+            waypoint = None
+        goal = centre if waypoint is None else waypoint
+        delta = [goal[i] - position[i] for i in range(3)]
+        flat = math.hypot(delta[0], delta[2])
+        distance = math.sqrt(sum(value * value for value in delta))
+        to_target = math.dist(position, centre)
+        nearest = min(
+            (math.dist(position, tuple(body["position"][axis] for axis in "xyz")), body["name"])
+            for body in others
+        )
+        want_yaw = int(round(YAW_NORTH + math.atan2(delta[0], delta[2])
+                             / (2 * math.pi) * YAW_UNITS_PER_TURN)) % YAW_UNITS_PER_TURN
+        want_pitch = int(round(YAW_NORTH - math.atan2(delta[1], flat)
+                               / (2 * math.pi) * YAW_UNITS_PER_TURN)) % YAW_UNITS_PER_TURN
+        yaw_error = ((want_yaw - (state["yaw"] & YAW_MASK)) % YAW_UNITS_PER_TURN)
+        yaw_error -= YAW_UNITS_PER_TURN if yaw_error > YAW_UNITS_PER_TURN // 2 else 0
+        pitch_error = ((want_pitch - (state["pitch"] & YAW_MASK)) % YAW_UNITS_PER_TURN)
+        pitch_error -= YAW_UNITS_PER_TURN if pitch_error > YAW_UNITS_PER_TURN // 2 else 0
+        log.append({
+            "t": round(time.monotonic() - started, 2),
+            "distance": int(distance), "toTarget": int(to_target),
+            "leg": "standoff" if waypoint is not None else "target",
+            "nearestOther": nearest[1],
+            "nearestOtherDistance": int(nearest[0]),
+            "yawError": yaw_error, "pitchError": pitch_error,
+            "throttle": state["throttle"], "navTarget": state["navTarget"],
+            "craftX": position[0], "craftY": position[1], "craftZ": position[2],
+            "bodySelector": state["bodySelector"], "occupancy": state["occupancy"],
+        })
+        if state["occupancy"] != 2 or state["bodySelector"] != "0xffff":
+            outcome = "landed"
+            break
+        if waypoint is None and to_target <= arrive and to_target < nearest[0]:
+            outcome = "closest"
+        # One control tick should not cover more than a fraction of what is
+        # left, or the craft flies straight past a body only a few thousand
+        # units across.
+        wanted = 4 + max(-4, min(8, int(round(math.log2(max(1.0, distance / 8) / 12000)))))
+        state = set_speed(machine, state, wanted)
+        if abs(yaw_error) > yaw_tolerance:
+            machine.stick(STICK_RIGHT if yaw_error > 0 else STICK_LEFT)
+            time.sleep(min(0.3, max(0.02, abs(yaw_error) / 700)))
+        elif abs(pitch_error) > pitch_tolerance:
+            machine.stick(STICK_FORWARD if pitch_error > 0 else STICK_BACK)
+            time.sleep(min(0.3, max(0.02, abs(pitch_error) / 700)))
+        else:
+            time.sleep(burst)
+        machine.stick(STICK_STOP)
+        state = machine.sample()
+    machine.stick(STICK_STOP)
+    return {"target": target["name"], "targetIndex": target["sourceIndex"],
+            "centre": centre, "standoff": standoff, "outcome": outcome, "ticks": log}
+
+
+def land_and_capture(machine: Machine, snapshot_out: Path, *, seconds: float) -> dict:
+    """Wait out the descent, step out of the craft, and save the pose.
+
+    The landing routine at $059268 drops the craft in at $7AB6 = $1800000, so
+    the craft has to fall before anyone can leave it. Leaving is the ordinary
+    `L` the laboratory already uses, and the capture is Hatari's own statesave:
+    a memstate of the machine standing on the new body, which is exactly what
+    location-ledger.py reads.
+    """
+    log = []
+    started = time.monotonic()
+    landed = False
+    while time.monotonic() - started < seconds:
+        state = machine.sample()
+        log.append({"t": round(time.monotonic() - started, 2),
+                    "craftY": state["craftY"], "groundContact": state["groundContact"],
+                    "bodySelector": state["bodySelector"], "onFoot": state["onFoot"],
+                    "occupancy": state["occupancy"]})
+        if state["groundContact"] and state["craftY"] < 100000:
+            landed = True
+            break
+        time.sleep(0.5)
+    left = None
+    if landed:
+        machine.press(SCAN_LEAVE)
+        time.sleep(1.5)
+        left = machine.sample(keep=True, shot=True)
+    saved = None
+    if left is not None and left["onFoot"] == 1:
+        snapshot_out.parent.mkdir(parents=True, exist_ok=True)
+        _fifo_send(machine.handle, [
+            "hatari-stop",
+            f"hatari-debug statesave {snapshot_out.resolve()}",
+            "hatari-cont",
+        ])
+        deadline = time.time() + 20
+        while time.time() < deadline:
+            if snapshot_out.is_file() and snapshot_out.stat().st_size > 0:
+                saved = {"path": str(snapshot_out), "sha256": _sha256(snapshot_out)}
+                break
+            time.sleep(0.2)
+    return {"landed": landed, "descent": log,
+            "afterLeave": left, "snapshot": saved}
 
 
 def survey(machine: Machine) -> dict:
@@ -414,7 +844,13 @@ def survey(machine: Machine) -> dict:
 def run(snapshot: Path, roms_root: Path | None, *, target: int | None, board: bool,
         survey_only: bool, settle: float, ticks: int, burst: float,
         tolerance: int, yaw_tolerance: int, fast_forward: bool,
-        fly_seconds: float = 0.0, speed: int = 9, fly_stick: int = STICK_STOP) -> dict:
+        fly_seconds: float = 0.0, speed: int = 9, fly_stick: int = STICK_STOP,
+        keys: tuple[int, ...] = (), watch_pcs: tuple[int, ...] = (),
+        hold_throttle: bool = False, depart_seconds: float = 0.0,
+        space_plan: tuple[tuple[int, float], ...] = (), space_speed: int = 0,
+        navigate_to: int | None = None, navigate_seconds: float = 120.0,
+        arrive: int = 4000, aim_before_launch: bool = False,
+        capture_name: str | None = None) -> dict:
     authority, config = load_configuration()
     root = resolve_roms_root(roms_root)
     program_path, tos_path = resolve_images(authority, root)
@@ -446,7 +882,9 @@ def run(snapshot: Path, roms_root: Path | None, *, target: int | None, board: bo
         fast_forward=fast_forward,
         statusbar=False,
         cmd_fifo=fifo,
-        extra_args=["--memstate", str(snapshot.resolve())],
+        extra_args=["--memstate", str(snapshot.resolve()),
+                    "--trace", "keymap",
+                    "--trace-file", str((run_directory / "keymap.trace").resolve())],
     )
     env = os.environ.copy()
     env.update(headless_env())
@@ -493,9 +931,44 @@ def run(snapshot: Path, roms_root: Path | None, *, target: int | None, board: bo
                     machine.press(SCAN_BOARD)
                     time.sleep(1.5)
                     result["afterBoard"] = machine.sample(keep=True, shot=True)
-                    if fly_seconds and result["afterBoard"]["onFoot"] == 0:
+                    aim_heading = None
+                    if navigate_to is not None and aim_before_launch:
+                        bodies = system_bodies()
+                        if navigate_to not in bodies:
+                            raise LabError(f"no body with source index {navigate_to}")
+                        origin_index = int(result["afterBoard"]["bodySelector"], 16) // 4
+                        if origin_index not in bodies:
+                            raise LabError(f"pose body {origin_index} is not in the system payload")
+                        aim_heading = system_heading(bodies[origin_index], bodies[navigate_to])
+                        result["aimHeading"] = {
+                            "from": bodies[origin_index]["name"],
+                            "to": bodies[navigate_to]["name"],
+                            "yaw": aim_heading[0], "pitch": aim_heading[1],
+                        }
+                    if depart_seconds and result["afterBoard"]["onFoot"] == 0:
+                        result["departure"] = depart(
+                            machine, speed=speed, climb_seconds=depart_seconds,
+                            space_seconds=depart_seconds, run_directory=run_directory,
+                            watch_pcs=watch_pcs, plan=space_plan,
+                            space_speed=space_speed,
+                            aim_heading=aim_heading)
+                        if navigate_to is not None and result["departure"].get("reachedSpace"):
+                            bodies = system_bodies()
+                            if navigate_to not in bodies:
+                                raise LabError(f"no body with source index {navigate_to}")
+                            result["navigation"] = navigate(
+                                machine, bodies[navigate_to], bodies,
+                                seconds=navigate_seconds, arrive=arrive,
+                                yaw_tolerance=16, pitch_tolerance=16, burst=0.3)
+                        if capture_name and (result.get("navigation") or {}).get("outcome") == "landed":
+                            result["capture"] = land_and_capture(
+                                machine, SNAPSHOTS / f"{capture_name}.sav", seconds=120)
+                        result["afterDeparture"] = machine.sample(keep=True, shot=True)
+                    elif fly_seconds and result["afterBoard"]["onFoot"] == 0:
                         result["flight"] = fly(machine, speed=speed,
-                                               seconds=fly_seconds, stick=fly_stick)
+                                               seconds=fly_seconds, stick=fly_stick,
+                                               keys=keys, watch_pcs=watch_pcs,
+                                               hold_throttle=hold_throttle)
                         result["afterFlight"] = machine.sample(keep=True, shot=True)
             _fifo_send(handle, ["hatari-stop"])
             time.sleep(0.4)
@@ -516,10 +989,64 @@ def summarise_flight(result: dict) -> None:
     flight = result.get("flight")
     if not flight:
         return
-    print(f"flight: speed key {flight['speedKey']}, stick {flight['stick']}")
+    print(f"flight: speed key {flight['speedKey']}, keys {flight.get('keys')}, "
+          f"stick {flight['stick']}")
+    if flight.get("watched"):
+        print(f"  watched: {flight['watched']}")
     for row in flight["telemetry"]:
-        print(f"  t+{row['t']:5.1f}s body {row['bodySelector']} craft {row['boardedSlot']} "
-              f"onFoot={row['onFoot']} y={row['y']:>12} x={row['x']:>12} z={row['z']:>12}")
+        print(f"  t+{row['t']:5.1f}s craft {row['boardedSlot']} onFoot {row['onFoot']} "
+              f"throttle {row['throttle']} yaw 0x{row['yaw']:04x} "
+              f"craft=({row['craftX']}, {row['craftY']}, {row['craftZ']})")
+
+
+def summarise_departure(result: dict) -> None:
+    departure = result.get("departure")
+    if not departure:
+        return
+    climb = departure["climb"]
+    print(f"departure: speed key {departure['speedKey']}, airborne={departure['airborne']} "
+          f"after {len(climb)} ticks, reachedSpace={departure.get('reachedSpace')}")
+    if departure.get("aim"):
+        aimed = departure["aim"]
+        last = aimed["ticks"][-1] if aimed["ticks"] else {}
+        print(f"  aim: want yaw {aimed['wantYaw']} pitch {aimed['wantPitch']}, "
+              f"aligned={aimed['aligned']}, final yaw 0x{last.get('yaw', 0):04x} "
+              f"errors {last.get('yawError')}/{last.get('pitchError')}")
+    for row in climb[-3:]:
+        print(f"  climb t+{row['t']:5.1f}s ground={row['groundContact']} "
+              f"alt=0x{row['altitude']:04x} y={row['craftY']}")
+    for row in departure.get("space") or []:
+        print(f"  space t+{row['t']:5.1f}s stick {row.get('stick')} "
+              f"yaw 0x{row.get('yaw', 0):04x} nav {row.get('navTarget')} "
+              f"arr {row.get('arrivalFlag')} body {row['bodySelector']} "
+              f"craft=({row['craftX']}, {row['craftY']}, {row['craftZ']})")
+
+
+def summarise_navigation(result: dict) -> None:
+    navigation = result.get("navigation")
+    if not navigation:
+        return
+    print(f"navigation to {navigation['target']} ({navigation['outcome']}):")
+    for row in navigation["ticks"][::max(1, len(navigation["ticks"]) // 12)]:
+        print(f"  t+{row['t']:6.1f}s {row.get('leg','target'):<8} to target {row['toTarget']:>9} "
+              f"nearest {row['nearestOther']}@{row['nearestOtherDistance']:<10} "
+              f"yawErr {row['yawError']:>5} thr {row['throttle']} "
+              f"body {row['bodySelector']}")
+    last = navigation["ticks"][-1]
+    print(f"  final distance {last['distance']} at "
+          f"({last['craftX']}, {last['craftY']}, {last['craftZ']})")
+
+
+def summarise_capture(result: dict) -> None:
+    capture = result.get("capture")
+    if not capture:
+        return
+    left = capture.get("afterLeave") or {}
+    print(f"capture: landed={capture['landed']} onFoot={left.get('onFoot')} "
+          f"body {left.get('bodySelector')}")
+    if capture.get("snapshot"):
+        print(f"  saved {capture['snapshot']['path']}")
+        print(f"  sha256 {capture['snapshot']['sha256']}")
 
 
 def summarise(result: dict) -> None:
@@ -551,6 +1078,9 @@ def summarise(result: dict) -> None:
         print(f"       record {message.get('recordAddress')}, "
               f"{message.get('revealedCharacters')} characters revealed")
     summarise_flight(result)
+    summarise_departure(result)
+    summarise_navigation(result)
+    summarise_capture(result)
 
 
 def main() -> None:
@@ -575,10 +1105,31 @@ def main() -> None:
                         help="facing tolerance in raw yaw units")
     parser.add_argument("--fly", type=float, default=0.0, metavar="SECONDS",
                         help="after boarding, hold a speed key and log telemetry")
-    parser.add_argument("--speed", type=int, default=9, choices=sorted(SCAN_DIGIT),
+    parser.add_argument("--speed", type=int, default=9, choices=[0, *sorted(SCAN_DIGIT)],
                         help="craft speed key pressed for --fly")
     parser.add_argument("--fly-stick", type=lambda v: int(v, 0), default=STICK_STOP,
                         help="stick byte held during --fly (0x01 up, 0x02 down)")
+    parser.add_argument("--press", default="",
+                        help="comma-separated ST scancodes pressed instead of the speed key")
+    parser.add_argument("--depart", type=float, default=0.0, metavar="SECONDS",
+                        help="after boarding, climb until airborne then press Esc")
+    parser.add_argument("--navigate", type=int, default=None, metavar="INDEX",
+                        help="after launch, fly toward this body source index")
+    parser.add_argument("--navigate-seconds", type=float, default=120.0)
+    parser.add_argument("--capture", default=None, metavar="NAME",
+                        help="after landing, leave the craft and statesave snapshots/NAME.sav")
+    parser.add_argument("--aim-before-launch", action="store_true",
+                        help="turn onto the target heading before pressing Esc")
+    parser.add_argument("--arrive", type=int, default=4000,
+                        help="distance in source units counted as arrival")
+    parser.add_argument("--space-speed", type=int, default=0, choices=[0, *sorted(SCAN_DIGIT)],
+                        help="speed key pressed once in space")
+    parser.add_argument("--space-plan", default="",
+                        help="stick legs once in space, as byte:seconds,byte:seconds")
+    parser.add_argument("--hold-throttle", action="store_true",
+                        help="re-press the speed key every tick during --fly")
+    parser.add_argument("--watch", default="",
+                        help="comma-separated PCs to arm a marker breakpoint on")
     parser.add_argument("--ordinary-rate", action="store_true",
                         help="run without fast-forward, at the PAL frame rate")
     parser.add_argument("--json", action="store_true")
@@ -593,6 +1144,16 @@ def main() -> None:
         burst=args.burst, tolerance=args.tolerance, yaw_tolerance=args.yaw_tolerance,
         fast_forward=not args.ordinary_rate,
         fly_seconds=args.fly, speed=args.speed, fly_stick=args.fly_stick,
+        keys=tuple(int(v, 0) for v in args.press.split(",") if v.strip()),
+        watch_pcs=tuple(int(v, 0) for v in args.watch.split(",") if v.strip()),
+        hold_throttle=args.hold_throttle, depart_seconds=args.depart,
+        space_speed=args.space_speed, navigate_to=args.navigate,
+        navigate_seconds=args.navigate_seconds, arrive=args.arrive,
+        aim_before_launch=args.aim_before_launch, capture_name=args.capture,
+        space_plan=tuple(
+            (int(leg.split(":")[0], 0), float(leg.split(":")[1]))
+            for leg in args.space_plan.split(",") if leg.strip()
+        ),
     )
     if args.json:
         print(json.dumps(result, indent=1, sort_keys=True, default=str))

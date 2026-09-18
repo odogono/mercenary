@@ -21,11 +21,18 @@ gate's own conditions and its refusals, read from the pinned image and observed
 live; which poses hold which vehicle keys; and what an arrival pose publishes on
 a body whose 16×16 workspace origin is unrecovered.
 
-**Out of scope:** how a craft is flown, how a body is chosen or approached, and
-how a key is obtained in play — [#313](https://github.com/odogono/mercenary/issues/313)
-excludes vehicle travel, and nothing here is a flight model. Surface workspace
-recovery stays with [#172](https://github.com/odogono/mercenary/issues/172) and
-interior placement with [#325](https://github.com/odogono/mercenary/issues/325).
+**Also in scope, by decision:** departure and space flight. #313 originally
+excluded vehicle travel, and #326's twenty-six captures turned out to be blocked
+on exactly that, so the exclusion was lifted on 2026-09-18 rather than worked
+around. What follows is the departure chain as the machine performs it, recorded
+so a capture can be reached; it is not a flight model for the browser
+recreation, and ADR 0002 still forbids translating any of it into application
+code.
+
+**Out of scope:** how a key is obtained in play, combat, and anything about the
+craft beyond reaching another body. Surface workspace recovery stays with
+[#172](https://github.com/odogono/mercenary/issues/172) and interior placement
+with [#325](https://github.com/odogono/mercenary/issues/325).
 
 ## Working Authority and reproduce path
 
@@ -155,14 +162,102 @@ refusal, and it is recorded here so the next attempt does not re-derive it.
 byte set, and the laboratory boards it from the restored memstate. Those poses,
 not the pinned start, are where the remaining twenty-six captures have to begin.
 
-**Flight is not recovered, so no new body was reached.** Boarded on Vesta, a
-speed key press registers in the key word at `$7B60` and the craft does not
-move: twenty seconds of telemetry hold `$7A96` at 63 and the position longwords
-unchanged, with the stick at rest (`…073037Z-e2238c67`) and held forward
-(`…074114Z-3275eaac`). Whatever makes a boarded
-craft depart is not the digit-and-stick pair that drives the ground limo, and
-finding it is vehicle travel, which #313 excludes from this programme. **No new
-arrival pose exists as a result of this note**, and the twenty-six gaps stand.
+**Departure is recovered**, and the section below records it. The first
+attempts looked like a dead end — a speed key registered at `$7B60` and the
+craft did not move — and the reason turned out to be two separate things, both
+worth stating because either one alone reads as "flight does not work": the
+collision response at `$059750` forces the throttle back the instant a move is
+refused, so a single press never survives contact; and a one-character argument
+to Hatari's `hatari-event keydown` is taken as ASCII, so Esc (`$01`) was
+arriving as the "1" key (`$02`). With a held throttle and a zero-padded
+scancode the craft lifts, launches and reaches space.
+
+## The departure chain
+
+Four steps, each with its own gate, recovered from the pinned image and driven
+live by the probe.
+
+| Step | Input | Gate | Evidence |
+| ---- | ----- | ---- | -------- |
+| Board | `B` | the board gate above | `$054310` |
+| Lift | a speed key, held | none, but the collision response undoes it | `$0556F8`, `$059750` |
+| Launch | `Esc` | `$7ACA` must read no ground contact, and the craft's own parameter block must allow space | `$055822` |
+| Reach space | none | `$7A30` must pass `$01F0` | `$05976A` → `$05586C` |
+
+### The throttle is `$7BAC`, from a scancode-indexed table
+
+`$0556AA`–`$0556F8` indexes a byte table at **`$0557D6`** by scancode and writes
+`$7BAC`. Digits `1`–`0` carry entries 8, 10, … 26; the function keys interleave
+the odd values; `-` and `=` (`$0C`, `$0D`) scale the current value through the
+log tables at `$05575E` and `$055798` instead of setting it. The written long is
+`entry << 15` with its low word forced to `$1000`, so `$7BAC` is the magnitude
+and `$7BAE` its sign-ish companion, which the collision response negates.
+
+Speed doubles per step of `$7BAC`. Measured in space against the craft
+longwords, key 1 (`$7BAC = 4`) is about **12,000 source units per second** and
+key 9 (`$7BAC = 12`) about **3,000,000** — the panel reads the latter as
+`- 299 792 224`, the speed of light in metres per second.
+
+**Boarding presets `$7BAC` to `$FF001000`** at `$054744`, and the collision
+response at `$059750` forces it to `$FFF0` every time a move is refused. A
+craft parked against something therefore looks inert: the throttle is being
+overwritten each frame, not ignored. Re-pressing the speed key each tick is what
+distinguishes "refused" from "unset", and it is how the craft gets off the
+ground.
+
+### Launch is gated on ground contact and on the craft's own parameters
+
+`$055822` refuses silently while `$7AAE` is not boarded or `$7ACA` still reads
+ground contact (`$3F`). It then indexes a 32-byte-per-slot craft parameter table
+at **`$055C80`** and requires the word at `+$1A` to be at least 100; below that
+it raises system string **21**, `VEHICLE NOT EQUIPPED FOR SPACE TRAVEL`.
+
+| Craft | Slot | `+$1A` | Space-capable |
+| ----- | ---- | ------ | ------------- |
+| DART II | 1 | 900 | yes |
+| EAGLE NINE S E | 3 | 900 | yes |
+| BESTCUPAND CRAFT | 4 | 900 | yes |
+| V.I.P. LIMO | 5 | 90 | no |
+| TARG TOURER | 6 | 90 | no |
+| INTERSTELLARSHIP | 7 | 900 | yes, but the board gate refuses it |
+| BULLET | 12 | 900 | yes |
+| 99 CHEVY, 22 CV | 2, 13 | 90 | no |
+
+On acceptance it commands `$7BAC = $000E` — faster than any digit key — so the
+craft crosses the system in about a second unless the throttle is cut at once.
+
+### Space is a third occupancy, and the destination is the nearest body
+
+`$05586C` sets **`$7AAE = 2`**, a third occupancy beside 1 on foot and 0
+boarded, and starts a fifty-frame hold in `$7B0A`. The renderer at `$052E90`
+keeps the nearest body of the frame in `$7924`, `$052FCA` publishes it to
+`$7920`/`$7922` once the hold expires, and `$04DC0C` is what the panel's
+**NAVIGATION** field names. **Nothing selects a destination**: the destination is
+whichever body the craft is nearest, which is why aiming before launch is how a
+route is chosen.
+
+Arrival is one test, at `$052FDA`: the minimum distance minus the body's own
+extent word at `$6040(selector)` below `-7` sets `$7A28`, and `$059920` then
+runs the landing routine at `$059268`, which clears the occupancy, writes the
+body selector from `$7920` and drops the craft in at `$7AB6 = $1800000`.
+
+### Attitude
+
+`$7AA2` is yaw and `$7AC0` is pitch, both ten-bit and both on the surface
+convention: `$0200` is +z for yaw and level for pitch, rising values turn
+clockwise and pitch the nose **down**. Measured against the velocity between
+samples, a heading of `$190` gives `dx/dz = -0.82` against a predicted `-0.82`.
+Turn rate is about 250 yaw units per second at the ordinary frame rate and forty
+times that under fast-forward, which is why the probe aims with fast-forward off.
+
+### One laboratory trap worth recording
+
+`hatari-event keydown 1` does **not** press Esc. A one-character argument is
+read as ASCII, so it arrives as the `1` key, ST scancode `$02` — confirmed in
+Hatari's own keymap trace (`sym=0x31 to ST-scan=0x02`) and by the throttle
+landing on the table entry for `$02`. Two-character arguments are read as ST
+scancodes, which is why every other key in this laboratory has always worked.
+The probe zero-pads.
 
 ## What an arrival pose publishes without a workspace origin
 
