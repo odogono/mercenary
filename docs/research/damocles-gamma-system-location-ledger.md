@@ -40,7 +40,7 @@ there and take something.
 | Program           | `roms/atarist/damocles_-_mercenary_ii_novagen_software_(uk).stx`   |
 | SHA-256           | `8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef` |
 | Resident evidence | `payload/damocles/catalogue.json` (tracked)                        |
-| Pose evidence     | four on-foot Hatari memstates under `research/damocles-st/snapshots/` |
+| Pose evidence     | nineteen on-foot Hatari memstates covering fifteen bodies, published in `payload/damocles/arrival-poses.json` |
 | Tool              | `research/damocles-st/scripts/location-ledger.py`                  |
 | Route evidence    | `research/damocles-st/scripts/arrival-route-probe.py`              |
 
@@ -548,6 +548,20 @@ and 14 do not.
 
 ## Delivery slices
 
+Arrival coverage gates each delivery's admitted bodies, not the whole design
+in [#318](https://github.com/odogono/mercenary/issues/318). Each admitted body
+needs a validated arrival pose and the geometry, workspace, object placement and
+behaviour evidence required by that delivery. A pose alone does not establish
+playable content. Evidence-complete deliveries may proceed while
+[#326](https://github.com/odogono/mercenary/issues/326) remains open for other
+bodies; the full programme's coverage gaps remain explicit.
+
+The [guide-backed location checklist](damocles-guide-location-checklist.md)
+prioritises the eight unposed bodies with residents. Its settlement names and
+coordinates are secondary-source leads for verification, not recovered payload
+data or permission to invent a standing position. The other seven unposed
+bodies remain lower-priority coverage work.
+
 | Slice                                          | Evidence sufficient?                       | What it rests on                                                                |
 | ---------------------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------- |
 | Ordinary take and drop on the Eris surface     | **Yes**                                    | First-world Eris workspace, the validated Eris pose, 34-record surface census    |
@@ -572,7 +586,7 @@ Already owned, and this ledger supplies the target list rather than new scope:
   have an arrival pose and an implied window origin, which gives the work a live
   standing position to start from rather than coordinates alone.
 
-Not owned by either ticket, and needing children of #313 before #318 can start:
+Additional research under #313, required by the deliveries that use it:
 
 1. **Remaining Gaea map identity and placement.** Runtime selection is decoded:
    group `$07` is tied to UR City, while group `$0F` is statically bound but has
