@@ -109,6 +109,15 @@ describe('the authored Eris presentation document', () => {
     expect(() => readErisPresentation({ ...base, schemaVersion: 2 })).toThrow(
       'schemaVersion should be 6'
     );
+    expect(() =>
+      readErisPresentation({
+        ...base,
+        time: {
+          ...(base['time'] as Record<string, unknown>),
+          vblHertz: 60
+        }
+      })
+    ).toThrow('time.vblHertz should be 50');
     const lighting = base['lighting'] as Record<string, unknown>;
     const { ambientSky: _ambientSky, ...withoutAmbientSky } = lighting;
     expect(() =>

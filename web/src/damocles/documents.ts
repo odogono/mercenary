@@ -513,15 +513,15 @@ export const readErisPresentation = (
       )
     },
     time: {
-      messageFrames: positive(time['messageFrames'], 'time.messageFrames'),
+      messageFrames: literal(time['messageFrames'], 200, 'time.messageFrames'),
       provenance: literal(time['provenance'], 'recovered', 'time.provenance'),
-      vblHertz: positive(time['vblHertz'], 'time.vblHertz'),
+      vblHertz: literal(time['vblHertz'], 50, 'time.vblHertz'),
       vblProvenance: literal(
         time['vblProvenance'],
         'derived',
         'time.vblProvenance'
       ),
-      waitFrames: positive(time['waitFrames'], 'time.waitFrames')
+      waitFrames: literal(time['waitFrames'], 200, 'time.waitFrames')
     },
     titleSlug: literal(root['titleSlug'], 'damocles', 'titleSlug'),
     walk: {

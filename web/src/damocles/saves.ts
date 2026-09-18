@@ -1,3 +1,4 @@
+import type { Catalogue } from '../catalogue/data.ts';
 import {
   createSlotPersistence,
   type SavePersistence,
@@ -17,6 +18,7 @@ export interface DamoclesSavePersistenceOptions {
     readonly snapshot: DamoclesSaveSnapshot;
     readonly where: string;
   };
+  readonly catalogue: Catalogue;
   readonly identity: DamoclesSaveIdentity;
   readonly now?: () => Date;
   readonly release: () => void;
@@ -33,7 +35,11 @@ export const createDamoclesSavePersistence = (
   createSlotPersistence({
     capture: options.capture,
     decode: encoded => {
-      const saved = decodeDamoclesSave(encoded, options.identity);
+      const saved = decodeDamoclesSave(
+        encoded,
+        options.identity,
+        options.catalogue
+      );
       return {
         savedAt: saved.savedAt,
         snapshot: saved.snapshot,

@@ -147,6 +147,13 @@ damocles-panel #damocles-message {
   text-align: center;
 }
 
+damocles-panel #damocles-message-canvas {
+  display: block;
+  width: calc(288 * var(--u));
+  height: calc(5 * var(--u));
+  image-rendering: pixelated;
+}
+
 damocles-panel #damocles-message.benson-cells {
   display: grid;
   grid-template-columns: repeat(23, calc(6 * var(--u)));

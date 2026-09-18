@@ -12,15 +12,17 @@ import {
 } from '../src/damocles/save.ts';
 import { createDamoclesSavePersistence } from '../src/damocles/saves.ts';
 import { DamoclesSession } from '../src/damocles/session.ts';
+import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { presentationIdentity } from '../src/damocles/title.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { createNewGameAction } from '../src/shell/menu.ts';
 import { titleStorageKeys } from '../src/shell/title.ts';
 
 const load = async () => {
-  const [rawCatalogue, presentationText] = await Promise.all([
+  const [rawCatalogue, presentationText, rawStrings] = await Promise.all([
     Bun.file('../payload/damocles/catalogue.json').json(),
-    Bun.file(new URL('../damocles/eris.json', import.meta.url)).text()
+    Bun.file(new URL('../damocles/eris.json', import.meta.url)).text(),
+    Bun.file('../payload/damocles/strings.json').json()
   ]);
   const catalogue = parseCatalogue(rawCatalogue);
   const doc = readErisPresentation(JSON.parse(presentationText));
@@ -30,6 +32,7 @@ const load = async () => {
     doc,
     identity: damoclesSaveIdentity(catalogue, presentationSha256),
     presentationSha256,
+    strings: parseDamoclesStrings(rawStrings),
     surface: erisSurfaceFrom(catalogue, doc)
   };
 };
@@ -109,6 +112,95 @@ describe('Damocles Saves', () => {
     expect(() =>
       decodeDamoclesSave(JSON.stringify(bodilessPose), loaded.identity)
     ).toThrow(/names no Body/);
+    const incompleteSchema4 = JSON.parse(encoded);
+    delete incompleteSchema4.snapshot.script;
+    expect(() =>
+      decodeDamoclesSave(JSON.stringify(incompleteSchema4), loaded.identity)
+    ).toThrow(/snapshot.script/);
+  });
+
+  test('round-trips a suspended response without replaying effects', async () => {
+    const loaded = await load();
+    const session = new DamoclesSession(loaded);
+    const initial = session.captureResume();
+    const suspended = {
+      ...initial,
+      carried: ['object-slot-183'],
+      residence: [
+        {
+          instance: 'object-slot-183',
+          residence: { drawClass: 4, kind: 'carried' as const }
+        }
+      ],
+      script: {
+        ...initial.script,
+        display: {
+          id: 'script2-inline-1' as const,
+          kind: 'scrolling' as const,
+          reveal: { beneath: ' '.repeat(48), offset: 0, pixels: 80 }
+        },
+        execution: {
+          returnStack: ['idle' as const],
+          revision: 1,
+          script: 'damocles.script.slot-2' as const,
+          step: 'announce-2' as const
+        },
+        message: {
+          id: 'script2-inline-1' as const,
+          remainingFrames: 190
+        },
+        triggers: initial.script.triggers.map(trigger =>
+          trigger.index === 2 ? { ...trigger, armed: false } : trigger
+        )
+      }
+    };
+    const record = {
+      identity: loaded.identity,
+      savedAt: '2026-09-18T17:00:00.000Z',
+      schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
+      snapshot: suspended,
+      where: 'ERIS 07-08'
+    };
+    expect(
+      decodeDamoclesSave(encodeDamoclesSave(record), loaded.identity)
+    ).toEqual(record);
+    const stale = structuredClone(record);
+    stale.snapshot.script.execution!.revision = 2;
+    expect(() =>
+      decodeDamoclesSave(encodeDamoclesSave(stale), loaded.identity)
+    ).toThrow(/revision/);
+    const foreignResidence = {
+      ...record,
+      snapshot: {
+        ...record.snapshot,
+        carried: [],
+        residence: [
+          {
+            instance: 'object-slot-183',
+            residence: {
+              body: 'body-11',
+              drawClass: 4,
+              insertionGroup: 1,
+              kind: 'structure' as const,
+              level: 0,
+              parent: 'eris-surface-89',
+              position: { x: 0, y: 0, z: 0 }
+            }
+          }
+        ]
+      }
+    };
+    expect(() =>
+      decodeDamoclesSave(
+        encodeDamoclesSave(foreignResidence),
+        loaded.identity,
+        loaded.catalogue
+      )
+    ).toThrow(/Catalogue/);
+    const restored = new DamoclesSession(loaded, suspended);
+    expect(restored.drainEffects()).toEqual([]);
+    restored.advance(190 / 50);
+    expect(restored.snapshot.message?.id).toBe('script2-inline-2');
   });
 
   test('identity pins the presentation by content, not by a declared version', async () => {
@@ -157,6 +249,7 @@ describe('Damocles Saves', () => {
         snapshot: session.captureResume(),
         where: damoclesWhere(session.snapshot.cell)
       }),
+      catalogue: loaded.catalogue,
       identity: loaded.identity,
       release: () => undefined,
       restore: snapshot => {

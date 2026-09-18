@@ -22,8 +22,8 @@ export type ConsoleCommand =
   | { readonly kind: 'inventory' }
   | { readonly kind: 'time' }
   | { readonly kind: 'setTime'; readonly secondsOfDay: number }
-  | { readonly kind: 'dropObject'; readonly selector: string }
-  | { readonly kind: 'getObject'; readonly slot: number }
+  | { readonly kind: 'dropObject'; readonly selector?: string }
+  | { readonly kind: 'getObject'; readonly slot?: number }
   | {
       readonly height?: number;
       readonly kind: 'gotoCell';
@@ -218,7 +218,8 @@ const slotOf = (word: string): SaveSlot => {
 export const parseConsoleCommand = (
   line: string,
   cellsPerAxis: number,
-  objectSlots = 64
+  objectSlots = 64,
+  objectActions: 'named' | 'selected' = 'named'
 ): ConsoleCommand | undefined => {
   const words = line.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const verb = words[0];
@@ -250,10 +251,16 @@ export const parseConsoleCommand = (
       return { kind: 'inventory' };
     case 'drop':
       if (rest.length === 0) {
+        if (objectActions === 'selected') {
+          return { kind: 'dropObject' };
+        }
         throw new Error('drop takes an object id or name');
       }
       return { kind: 'dropObject', selector: rest.join(' ') };
     case 'get':
+      if (rest.length === 0 && objectActions === 'selected') {
+        return { kind: 'getObject' };
+      }
       if (rest.length !== 1) {
         throw new Error('get takes one object slot');
       }
@@ -336,6 +343,7 @@ export const parseConsoleCommand = (
 
 export interface ConsoleParseContext {
   readonly cellsPerAxis: () => number;
+  readonly objectActions?: () => 'named' | 'selected';
   readonly objectSlots: () => number;
 }
 
@@ -456,6 +464,9 @@ export const executeConsoleCommand = (
         : carried.map(slot => inventoryLabel(slot, deps.objectName));
     }
     case 'dropObject': {
+      if (command.selector === undefined) {
+        return ['drop takes an object id or name'];
+      }
       const session = deps.session();
       const carried = session.snapshot.carriedStack;
       if (carried.length === 0) {
@@ -491,6 +502,9 @@ export const executeConsoleCommand = (
       throw new Error('unknown object drop outcome');
     }
     case 'getObject': {
+      if (command.slot === undefined) {
+        return ['get takes one object slot'];
+      }
       const result = deps.session().takeObject(command.slot);
       deps.present?.(result.events);
       const outcome = result.outcome;

@@ -1,3 +1,4 @@
+import type { Catalogue } from '../catalogue/data.ts';
 import {
   createSessionResumePersistence,
   type SessionResumeStorage
@@ -29,7 +30,8 @@ export type DamoclesResumeRead =
 
 export const readDamoclesResume = (
   storage: SessionResumeStorage | undefined,
-  identity: DamoclesSaveIdentity
+  identity: DamoclesSaveIdentity,
+  catalogue?: Catalogue
 ): DamoclesResumeRead => {
   if (storage === undefined) {
     return { kind: 'unavailable', reason: 'browser storage is unavailable' };
@@ -46,7 +48,7 @@ export const readDamoclesResume = (
   try {
     return {
       kind: 'restored',
-      snapshot: decodeDamoclesSave(encoded, identity).snapshot
+      snapshot: decodeDamoclesSave(encoded, identity, catalogue).snapshot
     };
   } catch (error) {
     const reason = reasonOf(error);

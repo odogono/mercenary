@@ -7,14 +7,16 @@ import {
   erisGridReference
 } from '../src/damocles/panel.ts';
 import { DamoclesSession } from '../src/damocles/session.ts';
+import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { damoclesTitle } from '../src/damocles/title.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { intent } from '../src/gameCore/index.ts';
 
 const content = async () => {
-  const [catalogue, presentation] = await Promise.all([
+  const [catalogue, presentation, strings] = await Promise.all([
     Bun.file('../payload/damocles/catalogue.json').json(),
-    Bun.file(new URL('../damocles/eris.json', import.meta.url)).json()
+    Bun.file(new URL('../damocles/eris.json', import.meta.url)).json(),
+    Bun.file('../payload/damocles/strings.json').json()
   ]);
   const parsed = parseCatalogue(catalogue);
   const doc = readErisPresentation(presentation);
@@ -22,6 +24,7 @@ const content = async () => {
     catalogue: parsed,
     doc,
     presentationSha256: 'test-presentation',
+    strings: parseDamoclesStrings(strings),
     surface: erisSurfaceFrom(parsed, doc)
   };
 };
@@ -35,6 +38,10 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
     expect(model.locationLabel).toBe('07-08');
     expect(model.inventory).toBe('EMPTY');
     expect(model.inventoryFill).toBe(0);
+    expect(model.damoclesDisplay).toEqual({
+      cells: ' '.repeat(48),
+      scrollPixels: 0
+    });
     expect(model.speedLabel).toBe('+ 000 000 000');
     expect(model.clock).toBe('');
     expect(model.runLamp).toBe(false);
