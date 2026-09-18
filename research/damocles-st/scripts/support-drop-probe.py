@@ -82,7 +82,10 @@ WINDOWS = (("low", 0x006000, 0x2000), ("panel", 0x04DD80, 0x0080))
 # 215   BENCH             $00  supplies 0, requires 0
 # 225   PROCESSORS CHAIR  $04  supplies 0, requires 1
 # 230   PROCESSORS DESK   $0E  supplies 2, requires 3
-WATCH = (3, 68, 108, 151, 153, 181, 183, 184, 202, 215, 225, 230)
+# Carried at the non-zero-level transporter poses #326 published:
+# 190   KEY - BULLET      $84  supplies 0, requires 1, carried on the Pan pose
+# 191   KEY - 22 CV       $84  supplies 0, requires 1, carried at the transporters
+WATCH = (3, 68, 108, 151, 153, 181, 183, 184, 190, 191, 202, 215, 225, 230)
 
 # The drop handler's silent refusal and its message refusal target.
 DROP_SILENT_REFUSAL = 0x54512

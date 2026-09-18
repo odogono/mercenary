@@ -73,6 +73,12 @@ python3 research/damocles-st/scripts/support-drop-probe.py --case inventory
 python3 research/damocles-st/scripts/support-drop-probe.py --case multi-drop
 python3 research/damocles-st/scripts/support-drop-probe.py --case pair-drop --gap 12 --nudge 0.3
 python3 research/damocles-st/scripts/support-drop-probe.py --case pair-drop --gap 12 --rotate 1
+
+# Above ground level, from the #326 interior captures.
+python3 research/damocles-st/scripts/support-drop-probe.py --case multi-drop \
+  --snapshot research/damocles-st/snapshots/vesta-transporter.sav    # level 10, direct
+python3 research/damocles-st/scripts/support-drop-probe.py --case multi-drop \
+  --snapshot research/damocles-st/snapshots/metis-transporter.sav    # level 9, support
 ```
 
 Boots the rehosted `vesta-parliament-4-6` pose, which restores with three objects
@@ -83,6 +89,13 @@ between the two so the same sequence crosses the support branch's exponent-6
 boundary, which separates support placement from direct placement on position alone.
 See [the object-drop research](../../docs/research/damocles-object-drops.md) for the
 pinned runs and what they do and do not close.
+
+`--snapshot` points the same cases at any rehosted memstate. The #326 captures
+put the player inside a structure at levels 1, 4, 9 and 10 carrying four objects,
+which is what the drop research needed and could not reach: `vesta-transporter`
+takes the direct path at level 10, and `metis-transporter` lands on `FILOFAX` at
+level 9, where the support supplies the rank the carried key requires, so the
+model-form and height gates run.
 
 ## Arrival route probe (#326)
 
