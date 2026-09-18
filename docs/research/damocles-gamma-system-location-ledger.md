@@ -177,30 +177,34 @@ of them, not a finding that they cannot be stood on. Recovering one is a bounded
 task per body: reach the body in the Working Authority, capture an on-foot
 memstate, and run the `poses` command.
 
-## The cell byte does not identify a place
+## A workspace is selected before the cell is interpreted
 
-Gaea carries two recovered 16×16 surface workspaces — the authored Birmingham
-Island map and the live UR City workspace — under the same body-local origin
-qualifier, and the catalogue deliberately does not merge them. Cell `$17` is
-empty in the Birmingham stream and holds HANTZENS NEW HOUSE in UR City, so the
-same cell byte names two different places on one body.
+The native load path selects a structure-group record in `$794E` before it
+rebuilds `$ABDC` and the 16×16 data at `$1E000`. An interior resident then
+matches Association A byte 1 against that group, Association B byte 3 against
+the current cell `$7B5C`, and uses Association B bytes 2 and 1 for level and
+insertion-group traversal. The effective key is therefore
+`(body, structure-group, cell, level, insertion-group)`, not the cell byte alone.
+The body selector `$7AA8` classifies the resident but does not select the
+workspace.
 
-Consequently:
+For Gaea, the 15 interior residents with group `$07` are bound to the live UR
+City record: the first-world static group and the live Gaea capture agree on
+`$794E=$07`, `$7A6C=$024402` and the rebuilt `$ABDC`. The other 13 residents
+are bound to the static group `$0F`; its requested cell instances decode, but no
+live capture ties that group to a named Gaea workspace. That is an explicit
+named-workspace gap, not cell-byte ambiguity. The complete slot inventory and
+the probe hashes are in [Damocles workspace selection](damocles-workspace-selection.md).
 
-- A **surface** resident carries absolute body-local coordinates, so it can be
-  plotted without choosing a workspace, but which recovered map it belongs to is
-  a separate question. The catalogue draws 99 CHEVY among the Birmingham Island
-  assemblies because that authored map was bound to Chevy's own resident phase;
-  UR City was later recovered under the same origin qualifier, and Chevy's cell
-  `$17` is the very cell the two maps disagree about. The island assignment is
-  therefore **Unresolved** on the coordinate phase alone, and the existing map
-  pin should be read as the map's binding rather than as independent evidence.
-- An **interior-associated** resident carries only the cell selector, so on any
-  body with more than one workspace its cell byte is ambiguous by construction.
-
-How a body selects among its workspaces is not decoded. This blocks any claim
-that an interior-associated resident on a multi-workspace body has been located,
-and it is the first thing #318 would need for Gaea.
+Gaea's two recovered surface workspaces still share the body-local origin
+qualifier `(512, 1792)`. That value is a coordinate phase, not a map identity.
+The authored Birmingham stream is empty at cell `$17`, while live UR City has
+HANTZENS NEW HOUSE there. Surface residents use body-local coordinates and do
+not consume the interior group selector, so 99 CHEVY's Birmingham-versus-UR-City
+assignment remains **Unresolved** on the available evidence. The catalogue's
+existing Birmingham map pin is a documented binding choice, not independent
+runtime proof. See the dedicated research note for the load writes, resident
+reads and the full Gaea consequence.
 
 ## Interior scene selectors still required
 
@@ -455,7 +459,7 @@ and 14 do not.
 | Ordinary take and drop on the Eris surface     | **Yes**                                    | First-world Eris workspace, the validated Eris pose, 34-record surface census    |
 | Ordinary take and drop inside Capital Spaceport | **Yes**                                    | Slot 183 placement, region grammar, drop research (#312)                        |
 | Body switch to DION / GAEA / VESTA at a pose   | **Yes**, for the pose itself               | `payload/damocles/arrival-poses.json`; each pose is one standing position only   |
-| Surface objects on DION / GAEA / VESTA         | **Partly**                                 | Coordinates exist; Gaea's two-workspace ambiguity is unresolved                 |
+| Surface objects on DION / GAEA / VESTA         | **Partly**                                 | Coordinates exist; 99 CHEVY's authored/live Gaea map identity remains Unresolved |
 | Interior objects anywhere but the two Eris keys | **No**                                     | 193 residents have selectors and no parent                                       |
 | Pickup-triggered responses beyond slot 183     | **No**                                     | None of the other five trigger objects is reachable; their responses are recovered (#317) |
 | Any other body                                 | **No**                                     | No surface workspace, no arrival pose                                            |
@@ -473,9 +477,11 @@ Already owned, and this ledger supplies the target list rather than new scope:
 
 Not owned by either ticket, and needing children of #313 before #318 can start:
 
-1. **Workspace disambiguation on a multi-workspace body.** How the game selects
-   among a body's 16×16 workspaces. Blocks every Gaea placement, including 99
-   CHEVY's island assignment.
+1. **Remaining Gaea map identity and placement.** Runtime selection is decoded:
+   group `$07` is tied to UR City, while group `$0F` is statically bound but has
+   no proven named Gaea workspace. Surface 99 CHEVY remains Unresolved because
+   its coordinate phase does not choose Birmingham versus UR City. Further
+   islands and authored disambiguation remain #172 / out of scope.
 2. **Structure-group maps for DION and VESTA.** Both bodies have live
    workspaces and arrival poses but no group-offset root traversal, so their
    residents — including AUTHORS COMPUTER, CASH REGISTER and BRIEFCASE — have

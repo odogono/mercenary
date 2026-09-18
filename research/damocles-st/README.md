@@ -20,6 +20,7 @@ research/damocles-st/lab reproduce
 research/damocles-st/lab capture --checkpoint title-screen
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/title-smoke.json
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/first-world.json
+research/damocles-st/lab observe --scenario research/damocles-st/scenarios/workspace-selection.json
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/deadline-clock.json
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/script-dispatch.json
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/horizon-slot-writer.json
@@ -209,6 +210,19 @@ workspace note already records. The memstates stay ignored; `--payload` writes
 the tracked `payload/damocles/arrival-poses.json`. A body with no recovered
 origin is reported with no cell rather than a guessed one. See
 [the location coverage ledger](../../docs/research/damocles-gamma-system-location-ledger.md).
+
+## Workspace selection probe (#324)
+
+```sh
+research/damocles-st/lab observe \
+  --scenario research/damocles-st/scenarios/workspace-selection.json
+```
+
+Captures the first-world RAM and disassembles the bounded workspace loader and
+structure-group decoder around `$04E800..$04EC00`. It records how `$794E`,
+`$1E64C`, `$ABDC` and `$7A6C` are populated before interior residents consume
+their group/cell/level/insertion selectors. See the
+[workspace-selection research](../../docs/research/damocles-workspace-selection.md).
 
 ## Carry capacity probe (#316)
 
