@@ -298,6 +298,78 @@ twenty-six gaps stand.
 What remains is a control problem in this probe, not an unknown in the machine:
 every gate, word and rule the route depends on is recovered above.
 
+## The transporter network
+
+There is a second way between bodies that needs no craft at all, and it was in
+the evidence from the start: system strings 18 and 20 are
+`INTERMEDIATE TRANSPORTERS NOT AVAILABLE` and `TRANSPORTER NOT AVAILABLE`, and
+resident slots **64–73** are all named `TRANSPORTER a`. This note originally
+missed the connection; the route was pointed out in play and then confirmed
+against the image and driven live.
+
+### A ring of ten, stepped one place at a time
+
+`$059130` takes the current transporter and steps the selector by **plus or
+minus four** between `$100` and `$124` — slots 64 to 73 inclusive, wrapping at
+both ends. There is no destination to choose and no menu: you get the next
+transporter along the ring.
+
+| Order | Slot | Body | Where |
+| ----- | ---- | ---- | ----- |
+| 1 | 64 | GAEA | cell `$17`, group `$07` |
+| 2 | 65 | ERIS | cell `$26`, group `$14` — not in the workspace the pinned pose loads |
+| 3 | 66 | DION | cell `$E3`, group `$02` |
+| 4 | 67 | **METIS** | cell `$60`, group `$03` |
+| 5 | 68 | VESTA | cell `$64`, group `$05` — placed by #325 inside Parliament |
+| 6 | 69 | ERIS | cell `$8B`, group `$12` — the starting workspace |
+| 7 | 70 | GAEA | cell `$88` |
+| 8 | 71 | **LOGOS** | cell `$24`, group `$08` |
+| 9 | 72 | **BACCHUS** | surface-placed |
+| 10 | 73 | **MENTOR** | surface-placed |
+
+Four of them — METIS, LOGOS, BACCHUS and MENTOR — are bodies with no arrival
+pose, and the last two are otherwise the two longest flights in the system.
+
+### Direction is decided by which side you walk in
+
+`$059152` tests the stick's forward bit and `$05915C` tests bit 9 of the camera
+yaw plus `$100`. Walking in forwards, the selector gains four when that bit is
+clear and loses four when it is set; walking in backwards inverts it. The two
+combine to one rule: **the step depends on the bearing from the player to the
+cube**, so the two faces of the cube are the two directions round the ring.
+That is what a player sees as two different markers on the front and back.
+
+`$0591C0` raises string 17 `NO OTHER TRANSPORTERS AVAILABLE` when the step lands
+on the transporter already occupied, and `$0591F4` raises string 18 when the
+walk over unavailable slots runs out — in the first-world state all ten are
+available, so neither fires. Transit stages through body selector `$78`, VOID,
+which is the same value the board gate refuses at `$05432A`.
+
+### Driven live
+
+From a memstate standing in the Eris basement at cell `$8B`, the probe walks
+forward and the player is on **GAEA at cell `$88`** — local (8, 8) — inside one
+and a half seconds, on foot the whole way:
+
+```
+walk: legs [['0x01', 2.0]]
+  t+  0.2s body 0x002c cell 0x008b  pos=(4946298, 1163, 8945118)
+  t+  1.5s body 0x0020 cell 0x0088  pos=(17334325, 213, 50890372)
+```
+
+The arrival lands within ninety units of slot 70's own entry in the resident
+arrays, which is the check that the catalogue's association cell and the live
+hop describe the same square.
+
+**Chaining further is not yet automated.** Arriving leaves the player standing
+at the destination cube, and the handler only fires on entry, so the next hop
+means leaving and walking back in — from the *other* side, or the ring simply
+steps back the way it came. Reversing out is what the probe does today, which
+oscillates between Eris and Gaea. Walking round the cube to its far face stalls:
+these transporters are inside buildings, and the closed-loop walk does not find
+its way round the interior. The mechanism is recovered and one hop is
+reproducible; the indoor manoeuvre is the gap.
+
 ## What an arrival pose publishes without a workspace origin
 
 `location-ledger.py poses --payload` previously required a recovered 16×16

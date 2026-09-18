@@ -61,6 +61,7 @@ from damocleslab.toolchain import discover_toolchain  # noqa: E402
 
 REPO = LAB_ROOT.parents[1]
 SYSTEM_PAYLOAD = REPO / "payload" / "damocles" / "system.json"
+POSES_PAYLOAD = REPO / "payload" / "damocles" / "arrival-poses.json"
 WORK_ROOT = LAB_ROOT / "work"
 SNAPSHOTS = LAB_ROOT / "snapshots"
 DEFAULT_SNAPSHOT = SNAPSHOTS / "eris-spaceport-onfoot.sav"
@@ -101,6 +102,8 @@ THROTTLE_TOGGLE = 0x7A1C
 GROUND_CONTACT = 0x7ACA
 REGION_FLAGS = 0x7B34
 KEY_WORD = 0x7B60    # the dispatcher's own copy of the last scancode ($0555D8)
+CELL = 0x7B5C        # current workspace cell
+TRANSPORTER_MODE = 0x7882  # the transporter the player is standing in ($053950)
 NAV_TARGET = 0x7922  # the body the panel names under NAVIGATION ($04DC0C)
 ARRIVAL_FLAG = 0x7A28  # non-zero runs the landing routine at $059268
 PITCH = 0x7AC0       # second view angle, masked to ten bits at $057FD2
@@ -118,6 +121,7 @@ STRING_SLOTS = 64
 STRING_POOL, STRING_POOL_END = 0x072D2E, 0x07336F
 
 CLIMB_PITCH = 0x01B0  # nose up about twenty-two degrees while leaving a surface
+ROUND_TRIP = 1200  # source units to swing round a cube to reach its far face
 STANDOFF = 12000  # source units beyond the target, away from its nearest neighbour
 
 CELL_UNITS = 65536
@@ -134,6 +138,9 @@ WINDOWS = (
 # Craft slots and the board gate's own constants, read from the pinned image at
 # $054310-$0542FC. d1 is the resident array offset, so four times the slot.
 CRAFT_SLOTS = (1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13)
+# The transporter ring: $059130 steps the selector by four between $100 and
+# $124, so slots 64 to 73 inclusive, wrapping at both ends.
+TRANSPORTER_SLOTS = tuple(range(64, 74))
 BOARD_GATE = 0x054310
 
 
@@ -227,6 +234,8 @@ def decode(blobs: dict[str, bytes], watch: tuple[int, ...]) -> dict:
         "occupancy": _u16(low, base, OCCUPANCY),
         "pitch": _u16(low, base, PITCH),
         "navTarget": f"0x{_u16(low, base, NAV_TARGET):04x}",
+        "cell": f"0x{_u16(low, base, CELL):04x}",
+        "transporterMode": f"0x{_u16(low, base, TRANSPORTER_MODE):04x}",
         "arrivalFlag": _u16(low, base, ARRIVAL_FLAG),
         "keyWord": f"0x{_u16(low, base, KEY_WORD):04x}",
         "altitude": _u16(low, base, ALTITUDE),
@@ -785,6 +794,27 @@ def navigate(machine: Machine, target: dict, bodies: dict[int, dict], *,
             "centre": centre, "standoff": standoff, "outcome": outcome, "ticks": log}
 
 
+def save_pose(machine: Machine, snapshot_out: Path) -> dict | None:
+    """Statesave wherever the player is standing, if they are on foot."""
+    state = machine.sample(keep=True, shot=True)
+    if state["onFoot"] != 1:
+        return {"saved": False, "reason": "not on foot", "state": state}
+    snapshot_out.parent.mkdir(parents=True, exist_ok=True)
+    _fifo_send(machine.handle, [
+        "hatari-stop",
+        f"hatari-debug statesave {snapshot_out.resolve()}",
+        "hatari-cont",
+    ])
+    deadline = time.time() + 20
+    while time.time() < deadline:
+        if snapshot_out.is_file() and snapshot_out.stat().st_size > 0:
+            return {"saved": True, "path": str(snapshot_out),
+                    "sha256": _sha256(snapshot_out),
+                    "bodySelector": state["bodySelector"], "cell": state["cell"]}
+        time.sleep(0.2)
+    return {"saved": False, "reason": "statesave did not land"}
+
+
 def land_and_capture(machine: Machine, snapshot_out: Path, *, seconds: float) -> dict:
     """Wait out the descent, step out of the craft, and save the pose.
 
@@ -830,6 +860,151 @@ def land_and_capture(machine: Machine, snapshot_out: Path, *, seconds: float) ->
             "afterLeave": left, "snapshot": saved}
 
 
+def walk(machine: Machine, *, seconds: float, stick: int = STICK_FORWARD,
+         watch_slots: tuple[int, ...] = (),
+         plan: tuple[tuple[int, float], ...] = ()) -> dict:
+    """Hold a walking direction and log where the player ends up.
+
+    Used to walk into a transporter: the network is entered by stepping into
+    the cube, and which face is entered decides the direction of travel
+    ($059130 tests bit 9 of the camera yaw and steps the slot selector by
+    plus or minus four).
+    """
+    log = []
+    legs = plan or ((stick, seconds),)
+    for leg_stick, leg_seconds in legs:
+        machine.stick(leg_stick)
+        started = time.monotonic()
+        while time.monotonic() - started < leg_seconds:
+            state = machine.sample()
+            row = {
+                "t": round(time.monotonic() - started, 2),
+                "stick": f"0x{leg_stick:02x}",
+                "onFoot": state["onFoot"], "occupancy": state["occupancy"],
+                "bodySelector": state["bodySelector"], "cell": state["cell"],
+                "transporterMode": state["transporterMode"],
+                "x": state["x"], "y": state["y"], "z": state["z"],
+                "yaw": state["yaw"],
+                "message": (state["message"] or {}).get("text"),
+            }
+            for slot in watch_slots:
+                target = state["residents"][str(slot)]
+                row[f"distance{slot}"] = max(abs(target["x"] - state["x"]),
+                                             abs(target["z"] - state["z"]))
+            log.append(row)
+            time.sleep(0.4)
+    machine.stick(STICK_STOP)
+    return {"seconds": seconds, "legs": [[f"0x{a:02x}", b] for a, b in legs], "ticks": log}
+
+
+def walk_to(machine: Machine, point: tuple[int, int], *, tolerance: int,
+            ticks: int, burst: float = 0.25, yaw_tolerance: int = 24) -> dict:
+    """Closed-loop walk to an arbitrary point on the surface, in x and z."""
+    log = []
+    state = machine.sample()
+    best = None
+    stalled = 0
+    outcome = "exhausted"
+    for _ in range(ticks):
+        state = machine.sample()
+        position = (state["x"], state["z"])
+        gap = max(abs(point[0] - position[0]), abs(point[1] - position[1]))
+        want = int(round(YAW_NORTH + math.atan2(point[0] - position[0],
+                                                point[1] - position[1])
+                         / (2 * math.pi) * YAW_UNITS_PER_TURN)) % YAW_UNITS_PER_TURN
+        error = ((want - (state["yaw"] & YAW_MASK)) % YAW_UNITS_PER_TURN)
+        error -= YAW_UNITS_PER_TURN if error > YAW_UNITS_PER_TURN // 2 else 0
+        log.append({"gap": gap, "yawError": error, "x": position[0], "z": position[1]})
+        if gap <= tolerance:
+            outcome = "arrived"
+            break
+        if best is None or gap < best - 200:
+            best, stalled = gap, 0
+        else:
+            stalled += 1
+            if stalled >= 10:
+                outcome = "stalled"
+                break
+        if abs(error) > yaw_tolerance:
+            machine.stick(STICK_RIGHT if error > 0 else STICK_LEFT)
+            time.sleep(min(0.35, max(0.03, abs(error) / 500)))
+        else:
+            machine.stick(STICK_FORWARD)
+            time.sleep(burst)
+        machine.stick(STICK_STOP)
+    machine.stick(STICK_STOP)
+    return {"outcome": outcome, "ticks": log}
+
+
+def nearest_transporter(state: dict) -> tuple[int, int]:
+    """The ring slot the player is standing at, and its distance."""
+    best = None
+    for slot in TRANSPORTER_SLOTS:
+        target = state["residents"][str(slot)]
+        distance = max(abs(target["x"] - state["x"]), abs(target["z"] - state["z"]))
+        if best is None or distance < best[1]:
+            best = (slot, distance)
+    return best
+
+
+def steps_forward(yaw: int) -> bool:
+    """Whether walking into a cube at this yaw steps the ring forward.
+
+    $059130 adds $100 to the camera yaw and tests bit 9, having first inverted
+    the word unless the stick's forward bit is set. Walking in forwards, the
+    selector therefore gains four -- the next transporter -- when that bit is
+    clear, and loses four when it is set.
+    """
+    return ((yaw + 0x100) & 0x200) == 0
+
+
+def direction_unit(yaw: int) -> tuple[float, float]:
+    angle = (yaw - YAW_NORTH) / YAW_UNITS_PER_TURN * 2 * math.pi
+    return (math.sin(angle), math.cos(angle))
+
+
+def hop(machine: Machine, *, walk_seconds: float, forward: bool = True,
+        standoff: int = 1300) -> dict:
+    """One transporter hop in a chosen direction round the ring.
+
+    The direction is the entry yaw, not the face as such, so this puts the
+    player on the side of the cube from which facing it gives a yaw in the
+    right half, and only then walks in.
+    """
+    state = machine.sample()
+    slot, distance = nearest_transporter(state)
+    cube = state["residents"][str(slot)]
+    want_yaw = 0x040 if forward else 0x1C0
+    assert steps_forward(want_yaw) == forward
+    unit = direction_unit(want_yaw)
+    standpoint = (int(cube["x"] - unit[0] * standoff), int(cube["z"] - unit[1] * standoff))
+    approached = walk_to(machine, standpoint, tolerance=450, ticks=60)
+    aimed = approach(machine, slot, tolerance=350, ticks=40, burst=0.2, yaw_tolerance=14)
+    before = machine.sample()
+    entry_yaw = before["yaw"] & YAW_MASK
+    machine.stick(STICK_FORWARD)
+    started = time.monotonic()
+    arrived = None
+    while time.monotonic() - started < walk_seconds:
+        sample = machine.sample()
+        if (sample["bodySelector"] != before["bodySelector"]
+                or sample["cell"] != before["cell"]):
+            arrived = sample
+            break
+        time.sleep(0.3)
+    machine.stick(STICK_STOP)
+    after = arrived or machine.sample()
+    return {
+        "fromSlot": slot, "fromDistance": distance,
+        "fromBody": before["bodySelector"], "fromCell": before["cell"],
+        "toBody": after["bodySelector"], "toCell": after["cell"],
+        "moved": after["bodySelector"] != before["bodySelector"],
+        "wantForward": forward, "entryYaw": entry_yaw,
+        "entryStepsForward": steps_forward(entry_yaw),
+        "standWalk": approached["outcome"], "aim": aimed["outcome"],
+    }
+
+
 def survey(machine: Machine) -> dict:
     state = machine.sample(keep=True, shot=True)
     rows = []
@@ -863,7 +1038,10 @@ def run(snapshot: Path, roms_root: Path | None, *, target: int | None, board: bo
         space_plan: tuple[tuple[int, float], ...] = (), space_speed: int = 0,
         navigate_to: int | None = None, navigate_seconds: float = 120.0,
         arrive: int = 4000, aim_before_launch: bool = False,
-        capture_name: str | None = None) -> dict:
+        capture_name: str | None = None, walk_seconds: float = 0.0,
+        walk_plan: tuple[tuple[int, float], ...] = (), chain: int = 0,
+        turn_first: float = 0.0, back_step: float = 0.0,
+        reverse: bool = False) -> dict:
     authority, config = load_configuration()
     root = resolve_roms_root(roms_root)
     program_path, tos_path = resolve_images(authority, root)
@@ -902,7 +1080,8 @@ def run(snapshot: Path, roms_root: Path | None, *, target: int | None, board: bo
     env = os.environ.copy()
     env.update(headless_env())
 
-    watch = tuple(sorted(set(CRAFT_SLOTS) | ({target} if target is not None else set())))
+    watch = tuple(sorted(set(CRAFT_SLOTS) | set(TRANSPORTER_SLOTS)
+                         | ({target} if target is not None else set())))
     result: dict = {
         "generatedAt": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "runDirectory": str(run_directory),
@@ -934,7 +1113,34 @@ def run(snapshot: Path, roms_root: Path | None, *, target: int | None, board: bo
             time.sleep(settle)
             machine = Machine(handle, run_directory, watch)
             result["survey"] = survey(machine)
-            if not survey_only:
+            if chain:
+                bodies = system_bodies()
+                covered = {int(p["body"].split("-")[1])
+                           for p in json.loads(POSES_PAYLOAD.read_text())["poses"]}
+                hops = []
+                for index in range(chain):
+                    step = hop(machine, walk_seconds=12.0, forward=not reverse)
+                    selector = int(step["toBody"], 16)
+                    body_index = selector // 4 if selector % 4 == 0 else None
+                    step["toName"] = (bodies.get(body_index) or {}).get("name")
+                    step["newBody"] = body_index is not None and body_index not in covered
+                    if step["moved"] and step["newBody"] and capture_name:
+                        name = f"{(step['toName'] or f'body-{body_index}').lower()}-transporter"
+                        step["capture"] = save_pose(machine, SNAPSHOTS / f"{name}.sav")
+                        covered.add(body_index)
+                    hops.append(step)
+                    if not step["moved"]:
+                        break
+                result["chain"] = hops
+            if walk_seconds or walk_plan:
+                result["walk"] = walk(machine, seconds=walk_seconds,
+                                      watch_slots=TRANSPORTER_SLOTS,
+                                      plan=walk_plan)
+                result["afterWalk"] = machine.sample(keep=True, shot=True)
+                if capture_name:
+                    result["capture"] = save_pose(
+                        machine, SNAPSHOTS / f"{capture_name}.sav")
+            if not survey_only and target is not None:
                 result["approach"] = approach(
                     machine, target, tolerance=tolerance, ticks=ticks,
                     burst=burst, yaw_tolerance=yaw_tolerance,
@@ -1054,12 +1260,55 @@ def summarise_capture(result: dict) -> None:
     capture = result.get("capture")
     if not capture:
         return
+    if "saved" in capture:
+        if capture["saved"]:
+            print(f"capture: saved {capture['path']}")
+            print(f"  body {capture['bodySelector']} cell {capture['cell']}")
+            print(f"  sha256 {capture['sha256']}")
+        else:
+            print(f"capture: not saved ({capture.get('reason')})")
+        return
     left = capture.get("afterLeave") or {}
     print(f"capture: landed={capture['landed']} onFoot={left.get('onFoot')} "
           f"body {left.get('bodySelector')}")
+    if capture.get("saved"):
+        print(f"capture: saved {capture['path']}")
+        print(f"  body {capture['bodySelector']} cell {capture['cell']}")
+        print(f"  sha256 {capture['sha256']}")
+        return
     if capture.get("snapshot"):
         print(f"  saved {capture['snapshot']['path']}")
         print(f"  sha256 {capture['snapshot']['sha256']}")
+
+
+def summarise_walk(result: dict) -> None:
+    walked = result.get("walk")
+    if not walked:
+        return
+    print(f"walk: legs {walked['legs']}")
+    for row in walked["ticks"]:
+        extra = " ".join(f"d{k[8:]}={v}" for k, v in row.items() if k.startswith("distance"))
+        print(f"  t+{row['t']:5.1f}s {row.get('stick')} body {row['bodySelector']} "
+              f"cell {row['cell']} mode {row['transporterMode']} "
+              f"yaw 0x{row['yaw'] & YAW_MASK:03x} pos=({row['x']}, {row['y']}, {row['z']})")
+
+
+def summarise_chain(result: dict) -> None:
+    hops = result.get("chain")
+    if not hops:
+        return
+    print("transporter chain:")
+    for step in hops:
+        mark = "NEW" if step.get("newBody") else "   "
+        print(f"  {mark} slot {step['fromSlot']} ({step['fromBody']} cell {step['fromCell']}) "
+              f"-> {step['toBody']} cell {step['toCell']} "
+              f"{step.get('toName') or ''} moved={step['moved']} "
+              f"entry yaw 0x{step['entryYaw']:03x} "
+              f"forward={step['entryStepsForward']} "
+              f"(walk {step['standWalk']}, aim {step['aim']})")
+        capture = step.get("capture") or {}
+        if capture.get("saved"):
+            print(f"        saved {capture['path']}  sha256 {capture['sha256'][:16]}…")
 
 
 def summarise(result: dict) -> None:
@@ -1094,6 +1343,8 @@ def summarise(result: dict) -> None:
     summarise_departure(result)
     summarise_navigation(result)
     summarise_capture(result)
+    summarise_walk(result)
+    summarise_chain(result)
 
 
 def main() -> None:
@@ -1129,6 +1380,18 @@ def main() -> None:
     parser.add_argument("--navigate", type=int, default=None, metavar="INDEX",
                         help="after launch, fly toward this body source index")
     parser.add_argument("--navigate-seconds", type=float, default=120.0)
+    parser.add_argument("--chain", type=int, default=0, metavar="HOPS",
+                        help="walk the transporter ring this many hops, capturing new bodies")
+    parser.add_argument("--reverse", action="store_true",
+                        help="walk the ring backwards instead of forwards")
+    parser.add_argument("--back-step", type=float, default=2.0, metavar="SECONDS",
+                        help="step backwards out of the cube before each later hop")
+    parser.add_argument("--turn-first", type=float, default=0.0, metavar="SECONDS",
+                        help="turn right this long before each hop after the first")
+    parser.add_argument("--walk-plan", default="",
+                        help="walking legs as stickbyte:seconds,stickbyte:seconds")
+    parser.add_argument("--walk", type=float, default=0.0, metavar="SECONDS",
+                        help="hold the stick forward and log where the player ends up")
     parser.add_argument("--capture", default=None, metavar="NAME",
                         help="after landing, leave the craft and statesave snapshots/NAME.sav")
     parser.add_argument("--aim-before-launch", action="store_true",
@@ -1148,8 +1411,9 @@ def main() -> None:
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
 
-    if not args.survey and args.target is None:
-        parser.error("give --target SLOT, or --survey")
+    if (not args.survey and args.target is None and not args.walk
+            and not args.walk_plan and not args.chain):
+        parser.error("give --target SLOT, --walk SECONDS, or --survey")
 
     result = run(
         args.snapshot, args.roms, target=args.target, board=args.board,
@@ -1163,6 +1427,12 @@ def main() -> None:
         space_speed=args.space_speed, navigate_to=args.navigate,
         navigate_seconds=args.navigate_seconds, arrive=args.arrive,
         aim_before_launch=args.aim_before_launch, capture_name=args.capture,
+        walk_seconds=args.walk, chain=args.chain, turn_first=args.turn_first,
+        back_step=args.back_step, reverse=args.reverse,
+        walk_plan=tuple(
+            (int(leg.split(":")[0], 0), float(leg.split(":")[1]))
+            for leg in args.walk_plan.split(",") if leg.strip()
+        ),
         space_plan=tuple(
             (int(leg.split(":")[0], 0), float(leg.split(":")[1]))
             for leg in args.space_plan.split(",") if leg.strip()
