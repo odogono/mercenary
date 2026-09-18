@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "name": "workspace-selection",
+  "checkpoint": "title-screen",
+  "description": "Load the first Damocles world, capture its RAM, then disassemble the bounded surface-workspace loader and structure-group decoder around $04E800-$04EC00. Working-Authority Evidence for issue #324: which world/group selector is installed before $04EC94 rebuilds $ABDC and how the authored group record is traversed.",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "artifacts": ["registers", "ram"]
+    },
+    {
+      "type": "disassemble",
+      "name": "workspace-selection",
+      "start": "0x04e800",
+      "end": "0x04ec00"
+    }
+  ]
+}
