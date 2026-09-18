@@ -8,6 +8,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Damocles on-foot arrival poses now cover **fifteen of the thirty physical
+  bodies**, from nineteen captures, up from four bodies. MIDAS, ACHERON, CLOTHO,
+  THEON, METIS, LUCAN, LOGOS, PAN, BACCHUS, MENTOR and DAMOCLES are new, and
+  DION, GAEA, ERIS and VESTA each gain a second pose at their transporter. The
+  arrival cell is now **read** from the engine's own cell word `$7B5C` rather
+  than derived from the camera longwords and a workspace origin, so every pose
+  publishes a cell: only four bodies have a recovered origin, and derivation
+  threw outright on a pose standing in a window the origin does not cover. The
+  derivation survives as a cross-check and passes on all seven poses whose body
+  has a recovered origin — including two captured far from the capture the
+  workspace note was written against, so the origin belongs to the window rather
+  than to whoever found it first. `workspaceOrigin` is null where the cell is
+  unanchored and `impliedWorkspaceOrigin` always carries what the pose's own
+  longwords imply, so an unanchored cell is usable now and anchorable later
+  without a guess. **A 16×16 workspace is a window, not a body:** implied origins
+  span 0 to 3896 per axis, and `gaea-transporter` implies a Gaea window at
+  `256,768` where the Gaea note records `512,1792`. The **transporter ring is
+  confirmed from the captures** — eight of the ten slots have a pose standing
+  within 603 units of exactly one transporter, next-nearest 22 to 73 million
+  units away, and six of those match the catalogue association cell decoded
+  statically from the program image. Fifteen bodies remain, none on the ring, and
+  all fifteen need the one unsolved part of the route: a flight arrival steered
+  onto a chosen body. See `docs/research/damocles-arrival-routes.md` and
+  `docs/research/damocles-gamma-system-location-ledger.md`.
+
 - The remaining five Damocles pickup responses are recovered, and with them the
   script system's **busy arbitration**. Slots 181, 151, 95, 101 and 94 launch
   triggers `$05`, `$06`, `$14`, `$0B` and `$3E`, each exercised through the

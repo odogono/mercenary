@@ -61,7 +61,8 @@ python3 research/damocles-st/scripts/memstate-rehost.py --input ... --inspect
 Only the snapshot's IPF section changes. The tool re-decodes the 1 MiB ST RAM window
 before and after and refuses to write if it differs, so the captured machine is
 preserved exactly; the rehosted file is a different container, not a new capture.
-The three rehosted memstates are Restricted Material and stay uncommitted; the
+Every memstate behind `payload/damocles/arrival-poses.json` was captured this
+way and rehosted. All of them are Restricted Material and stay uncommitted; the
 repository's `*.sav` rule already ignores them.
 
 ## Support placement and multi-object drops on Vesta (#331)
@@ -82,6 +83,29 @@ between the two so the same sequence crosses the support branch's exponent-6
 boundary, which separates support placement from direct placement on position alone.
 See [the object-drop research](../../docs/research/damocles-object-drops.md) for the
 pinned runs and what they do and do not close.
+
+## Arrival route probe (#326)
+
+```sh
+python3 research/damocles-st/scripts/arrival-route-probe.py --survey
+python3 research/damocles-st/scripts/arrival-route-probe.py --target 7 --board
+python3 research/damocles-st/scripts/arrival-route-probe.py --target 3 --board --ordinary-rate
+python3 research/damocles-st/scripts/arrival-route-probe.py \
+  --snapshot research/damocles-st/snapshots/vesta-parliament-4-6.sav --target 3 --board
+```
+
+Boots a restorable arrival pose and asks what the player can reach and board from
+it. `--survey` lists every craft in the live resident arrays with its distance and
+whether its Association B body byte matches the live body selector. `--target`
+walks to one closed loop — each tick reads the camera longwords and the target's
+own array entry and steers, learning the sign of the yaw response from the machine
+and detouring when the distance stops falling — and `--board` then presses B and
+resolves whatever message the game raises back to its system-string slot.
+
+Nothing is injected: walking is the `$79C2` soft-copy the laboratory already uses
+and boarding is a real key event. See [departure
+routes](../../docs/research/damocles-arrival-routes.md) for the board gate, the
+per-craft key byte at `$7272`, and the route attempts these runs record.
 
 ## First-offer checkpoint probe (#287)
 
@@ -191,10 +215,25 @@ See [the pickup-response research](../../docs/research/damocles-pickup-responses
 ```sh
 python3 research/damocles-st/scripts/location-ledger.py ledger
 python3 research/damocles-st/scripts/location-ledger.py poses \
-  --memstate eris-spaceport-onfoot=research/damocles-st/snapshots/eris-spaceport-onfoot.sav \
+  --memstate midas=research/damocles-st/snapshots/midas.sav \
+  --memstate acheron=research/damocles-st/snapshots/acheron.sav \
   --memstate dion-2-3=research/damocles-st/snapshots/dion-2-3.sav \
+  --memstate dion-transporter=research/damocles-st/snapshots/dion-transporter.sav \
+  --memstate clotho=research/damocles-st/snapshots/clotho.sav \
   --memstate gaea-ur-city-4-2=research/damocles-st/snapshots/gaea-ur-city-4-2.sav \
+  --memstate gaea-transporter=research/damocles-st/snapshots/gaea-transporter.sav \
+  --memstate eris-spaceport-onfoot=research/damocles-st/snapshots/eris-spaceport-onfoot.sav \
+  --memstate eris-transporter-11-8=research/damocles-st/snapshots/eris-transporter-11-8.sav \
+  --memstate theon=research/damocles-st/snapshots/theon.sav \
   --memstate vesta-parliament-4-6=research/damocles-st/snapshots/vesta-parliament-4-6.sav \
+  --memstate vesta-transporter=research/damocles-st/snapshots/vesta-transporter.sav \
+  --memstate metis-transporter=research/damocles-st/snapshots/metis-transporter.sav \
+  --memstate lucan=research/damocles-st/snapshots/lucan.sav \
+  --memstate logos-transporter=research/damocles-st/snapshots/logos-transporter.sav \
+  --memstate pan=research/damocles-st/snapshots/pan.sav \
+  --memstate bacchus-transporter=research/damocles-st/snapshots/bacchus-transporter.sav \
+  --memstate mentor-transporter=research/damocles-st/snapshots/mentor-transporter.sav \
+  --memstate damocles=research/damocles-st/snapshots/damocles.sav \
   --payload
 ```
 
@@ -204,12 +243,15 @@ recovered placements and the distinct interior scene selectors each unplaced
 resident still needs. It reads no Restricted Material.
 
 `poses` decodes one on-foot arrival pose per Hatari memstate — the occupancy
-word, body selector, camera longwords and yaw — and derives the workspace cell
-from the recovered body-local origin, which must agree with the cell that body's
-workspace note already records. The memstates stay ignored; `--payload` writes
-the tracked `payload/damocles/arrival-poses.json`. A body with no recovered
-origin is reported with no cell rather than a guessed one. See
-[the location coverage ledger](../../docs/research/damocles-gamma-system-location-ledger.md).
+word, body selector, camera longwords and yaw — and reads the workspace cell
+from `$7B5C`, the engine's own current-cell word. Where the body has a recovered
+body-local origin the camera longwords must reproduce that cell independently,
+and `workspaceOrigin` publishes the origin; where they do not, or where the body
+has no recovered origin, `workspaceOrigin` is null and `impliedWorkspaceOrigin`
+carries the origin the pose's own longwords imply. A 16×16 workspace is a window
+onto a much larger surface, so one body can carry several. The memstates stay
+ignored; `--payload` writes the tracked `payload/damocles/arrival-poses.json`.
+See [the location coverage ledger](../../docs/research/damocles-gamma-system-location-ledger.md).
 
 ## Workspace selection probe (#324)
 
