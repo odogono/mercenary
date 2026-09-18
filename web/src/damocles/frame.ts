@@ -9,8 +9,8 @@ import {
   insideCentralCellHalf,
   type ErisGrid,
   type ErisPlacement,
-  type ErisPose,
-  type ErisSurface
+  type ErisSurface,
+  type Pose
 } from './world.ts';
 
 /// One frame of Eris in Filled Presentation, planned without a graphics context.
@@ -258,7 +258,7 @@ const groundFillTriangles = (
 
 export const planErisFrame = (
   surface: ErisSurface,
-  pose: ErisPose,
+  pose: Pose,
   doc: ErisPresentationDocument,
   structure: BoundStructureSnapshot | null = null
 ): ErisFramePlan => {

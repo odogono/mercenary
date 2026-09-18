@@ -18,7 +18,12 @@ const content = async () => {
   ]);
   const parsed = parseCatalogue(catalogue);
   const doc = readErisPresentation(presentation);
-  return { catalogue: parsed, doc, surface: erisSurfaceFrom(parsed, doc) };
+  return {
+    catalogue: parsed,
+    doc,
+    presentationSha256: 'test-presentation',
+    surface: erisSurfaceFrom(parsed, doc)
+  };
 };
 
 describe('the Damocles Panel Rendition on Damocles Session State', () => {

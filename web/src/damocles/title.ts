@@ -14,6 +14,23 @@ import { erisSurfaceFrom } from './world.ts';
 export const DAMOCLES_CATALOGUE_PATH = '/payload/damocles/catalogue.json';
 export const ERIS_PRESENTATION_PATH = '/damocles/eris.json';
 
+/// One identity over every Damocles presentation document, in a fixed document order.
+///
+/// It hashes the bytes that were served rather than a declared schema version, so a document
+/// edited without a version bump still refuses a save written before the edit. Today there is
+/// one such document; the array is the seam along which the others join (#344).
+export const presentationIdentity = async (
+  texts: readonly string[]
+): Promise<string> => {
+  const digest = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(texts.join('\u0000'))
+  );
+  return Array.from(new Uint8Array(digest), byte =>
+    byte.toString(16).padStart(2, '0')
+  ).join('');
+};
+
 const labelled = <T>(pathname: string, read: () => T): T => {
   try {
     return read();
@@ -34,18 +51,23 @@ export const damoclesTitle: TitleRuntime<
   DamoclesSaveSnapshot
 > = {
   create: (content, restore) => new DamoclesSession(content, restore),
-  load: async fetchJson => {
+  load: async fetch => {
     const [rawCatalogue, rawPresentation] = await Promise.all([
-      fetchJson(DAMOCLES_CATALOGUE_PATH),
-      fetchJson(ERIS_PRESENTATION_PATH)
+      fetch(DAMOCLES_CATALOGUE_PATH),
+      fetch(ERIS_PRESENTATION_PATH)
     ]);
     const doc = labelled(ERIS_PRESENTATION_PATH, () =>
-      readErisPresentation(rawPresentation)
+      readErisPresentation(rawPresentation.value)
     );
     const catalogue = labelled(DAMOCLES_CATALOGUE_PATH, () =>
-      parseCatalogue(rawCatalogue)
+      parseCatalogue(rawCatalogue.value)
     );
-    return { catalogue, doc, surface: erisSurfaceFrom(catalogue, doc) };
+    return {
+      catalogue,
+      doc,
+      presentationSha256: await presentationIdentity([rawPresentation.text]),
+      surface: erisSurfaceFrom(catalogue, doc)
+    };
   },
   panelViewModel: (snapshot, content): PanelViewModel =>
     damoclesPanelViewModel(snapshot, content.doc),

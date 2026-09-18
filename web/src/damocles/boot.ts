@@ -27,6 +27,7 @@ import { ALL_SLOTS } from '../shell/saves.ts';
 import { installSettingsView } from '../shell/settingsView.ts';
 import { installStorageWatch } from '../shell/storage.ts';
 import { installSuspensionHandlers } from '../shell/suspension.ts';
+import type { PayloadDocument } from '../shell/title.ts';
 import {
   applyTypeface,
   loadTypography,
@@ -82,13 +83,14 @@ const panelElements = {
   root: panelRoot
 };
 
-const requiredJson = async (pathname: string): Promise<unknown> => {
+const requiredJson = async (pathname: string): Promise<PayloadDocument> => {
   const response = await fetch(pathname);
   if (!response.ok) {
     throw new Error(`${pathname} answered HTTP ${response.status}`);
   }
+  const text = await response.text();
   try {
-    return await response.json();
+    return { text, value: JSON.parse(text) };
   } catch (error) {
     throw new Error(
       `${pathname} is not JSON: ${error instanceof Error ? error.message : String(error)}`
@@ -129,7 +131,10 @@ try {
   ]);
   applyTypeface(document.documentElement, readTypefacePreference(storage));
   panelRoot.dataset['rendition'] = 'damocles';
-  const identity = damoclesSaveIdentity(content.catalogue, content.doc);
+  const identity = damoclesSaveIdentity(
+    content.catalogue,
+    content.presentationSha256
+  );
   const keys = damoclesTitle.storage;
   const notices = createSessionResumeNotices();
   let handleOwnershipLost = (): void => {};

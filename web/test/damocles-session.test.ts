@@ -17,6 +17,7 @@ import {
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { intent } from '../src/gameCore/index.ts';
 import { titleStorageKeys } from '../src/shell/title.ts';
+import { ERIS_BODY } from './damocles-pose.ts';
 
 const content = async (): Promise<DamoclesContent> => {
   const [catalogue, presentation] = await Promise.all([
@@ -25,7 +26,12 @@ const content = async (): Promise<DamoclesContent> => {
   ]);
   const parsed = parseCatalogue(catalogue);
   const doc = readErisPresentation(presentation);
-  return { catalogue: parsed, doc, surface: erisSurfaceFrom(parsed, doc) };
+  return {
+    catalogue: parsed,
+    doc,
+    presentationSha256: 'test-presentation',
+    surface: erisSurfaceFrom(parsed, doc)
+  };
 };
 
 const atSpaceport = (
@@ -41,6 +47,7 @@ const atSpaceport = (
   return new DamoclesSession(loaded, {
     elapsed: 0,
     pose: {
+      body: ERIS_BODY,
       heading,
       position: {
         x: entrance.position.x + x,
@@ -76,6 +83,7 @@ const atStructure = (
   return new DamoclesSession(loaded, {
     elapsed: 0,
     pose: {
+      body: ERIS_BODY,
       heading,
       position: {
         x: placement.position.x + x,
@@ -243,7 +251,10 @@ describe('the Damocles Gameplay Session', () => {
   test('resumes exactly where it left off, from its own key', async () => {
     const storage = memoryStorage();
     const loaded = await content();
-    const identity = damoclesSaveIdentity(loaded.catalogue, loaded.doc);
+    const identity = damoclesSaveIdentity(
+      loaded.catalogue,
+      loaded.presentationSha256
+    );
     const session = new DamoclesSession(loaded);
     session.intent = intent({ turn: -1, walk: 1 });
     session.advance(3);
@@ -270,7 +281,10 @@ describe('the Damocles Gameplay Session', () => {
   test('discards a record it cannot read and starts afresh', async () => {
     const storage = memoryStorage();
     const loaded = await content();
-    const identity = damoclesSaveIdentity(loaded.catalogue, loaded.doc);
+    const identity = damoclesSaveIdentity(
+      loaded.catalogue,
+      loaded.presentationSha256
+    );
     storage.setItem(DAMOCLES_RESUME_STORAGE_KEY, '{"schemaVersion":1}');
     expect(readDamoclesResume(storage, identity).kind).toBe('invalid');
     expect(storage.map.size).toBe(0);

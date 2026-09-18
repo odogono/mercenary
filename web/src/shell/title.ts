@@ -28,11 +28,20 @@ export interface TitleSession<Snapshot, Resume = unknown> {
   readonly snapshot: Snapshot;
 }
 
+/// One fetched document: the parsed value, and the exact text it was parsed from.
+///
+/// The text is kept so a Title can pin its authored documents by content rather than by a
+/// declared version, which an edit can leave behind (#344).
+export interface PayloadDocument {
+  readonly text: string;
+  readonly value: unknown;
+}
+
 export interface TitleRuntime<Snapshot, Content, Resume = unknown> {
   create(content: Content, restore?: Resume): TitleSession<Snapshot, Resume>;
   /// Fetch and validate the Title's Data Payload and authored documents. Called when the
   /// Title's Destination is committed, never at boot of another Title (ADR 0041).
-  load(fetchJson: (pathname: string) => Promise<unknown>): Promise<Content>;
+  load(fetch: (pathname: string) => Promise<PayloadDocument>): Promise<Content>;
   panelViewModel(snapshot: Snapshot, content: Content): PanelViewModel;
   readonly slug: TitleSlug;
   readonly storage: TitleStorageKeys;

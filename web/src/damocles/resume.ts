@@ -103,7 +103,5 @@ export const createDamoclesResumePersistence = (options: {
       encodeDamoclesResumeRecord(options.identity, options.session()),
     storage: options.storage,
     storageKey: DAMOCLES_RESUME_STORAGE_KEY,
-    ...(options.onFailure === undefined
-      ? {}
-      : { onFailure: options.onFailure })
+    ...(options.onFailure === undefined ? {} : { onFailure: options.onFailure })
   });

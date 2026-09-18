@@ -1,5 +1,5 @@
 import type { Intent } from '../gameCore/index.ts';
-import type { ErisPose } from './world.ts';
+import type { Pose } from './world.ts';
 
 /// The on-foot Mover for Eris.
 ///
@@ -34,11 +34,11 @@ const wrap = (heading: number): number => {
 /// seconds-based rates remain derived averages because the Working Authority applies those
 /// quantized updates on its render/game loop rather than on every VBL.
 export const walk = (
-  pose: ErisPose,
+  pose: Pose,
   intent: Intent,
   seconds: number,
   rules: WalkRules
-): ErisPose => {
+): Pose => {
   const turnMultiplier = intent.running ? rules.runTurnMultiplier : 1;
   const heading = wrap(
     pose.heading +
@@ -50,6 +50,7 @@ export const walk = (
     (intent.running ? rules.runMultiplier : 1) *
     seconds;
   return {
+    body: pose.body,
     heading,
     position: {
       x: pose.position.x + Math.sin(heading) * step,

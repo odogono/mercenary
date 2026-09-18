@@ -401,14 +401,22 @@ flights observed reading `VESTA`.
 ### Schema 4
 
 The Damocles Save Snapshot goes 3 → 4 **once**. Schema 4 is the union of the limo-key contract's
-additions and this contract's; #300 delivers its subset first and #319 completes it. Two bumps
-were rejected: neither contract has shipped, so a schema 4 that existed only between two pull
-requests would be a version no save was ever written against. ADR 0044 asks for a deliberate bump,
-not a bump per contributing ticket.
+additions and this contract's. Two bumps were rejected: neither contract had shipped, so a schema
+4 that existed only between two pull requests would be a version no save was ever written against.
+ADR 0044 asks for a deliberate bump, not a bump per contributing ticket.
+
+**#344 takes the bump, not #300.** This originally read that #300 delivers its subset first. That
+follows from the delivery order, and the order changed: #344 precedes #300 so that schema 4 is not
+first written with one Body's name in its identity. Since #344 changes the record's shape — the
+Pose names its Body, and `erisSchemaVersion` becomes `presentationSha256` — leaving the number at
+3 would have given two different shapes one version. #300 joins schema 4 without a further bump.
+
+The Body is **not** a peer field of the Pose in the snapshot. The Pose names its own Body, so a
+separate `body` would be a second copy that validation would have to keep in agreement for no
+gain.
 
 ```ts
 interface DamoclesSaveSnapshot {
-  readonly body: BodyId;
   readonly carried: readonly InstanceId[];
   /// $61CA and the entries at stack indices 10 upward. A peer of the stack, not a function of it.
   readonly briefcaseStore: readonly InstanceId[];
@@ -556,7 +564,7 @@ by acceptance point would cut across files so that every delivery touched `save.
 
 | # | Delivery | Prerequisites | Tests |
 | ---: | --- | --- | --- |
-| 1 | **Body-agnostic Pose and identity.** `ErisPose` → `Pose` with `body`; `erisSchemaVersion` → `presentationSha256`. Mechanical, touching `world.ts`, `save.ts`, `resume.ts`, `session.ts`. | none | Existing save and resume suites pass unchanged against schema 4 identity; a schema-3 record is refused with its reason. |
+| 1 | **Body-agnostic Pose and identity.** `ErisPose` → `Pose` with `body`; `erisSchemaVersion` → `presentationSha256`; the schema 3 → 4 bump. Touches `world.ts`, `mover.ts`, `selection.ts`, `frame.ts`, `session.ts`, `save.ts`, `title.ts`, `boot.ts` and the shared `TitleRuntime` loader, which now yields each document's text so identity can pin the bytes served. | none | Existing save and resume suites pass unchanged; a schema-3 record and a Pose naming no Body are each refused with their reason; an edit to a presentation document that bumps no declared version still changes `presentationSha256`. |
 | 2 | **Body-aware residence, take and drop.** Residence on every Body, lazy materialisation, departures-only storage, the refusal taxonomy, capacity, the special items, the acceptance matrix generator. | 1 | The generated matrix; the storey-pitch invariant; each refusal in the taxonomy, tagged observed or derived per the coverage table. |
 | 3 | **Display and the five further responses.** `pending`, the two trigger bits, `(script, step)` frames, `displayDuration`, the held row that outlives its script, and the five scripts' steps and messages. | 2 | Busy arbitration's four outcomes as consecutive atomic actions; the nesting trace; the duration excursion; a response parking without clearing the row. |
 | 4 | **Persistence and the body switch.** Schema 4 complete, the rejection rules, the console action and its atomicity. | 3 | The trace table below; every rejection rule refusing atomically; a declined switch leaving the session byte-identical. |
