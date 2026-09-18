@@ -117,6 +117,7 @@ STRING_TABLE = 0x070000
 STRING_SLOTS = 64
 STRING_POOL, STRING_POOL_END = 0x072D2E, 0x07336F
 
+CLIMB_PITCH = 0x01B0  # nose up about twenty-two degrees while leaving a surface
 STANDOFF = 12000  # source units beyond the target, away from its nearest neighbour
 
 CELL_UNITS = 65536
@@ -570,6 +571,13 @@ def depart(machine: Machine, *, speed: int, climb_seconds: float,
     while time.monotonic() - started < climb_seconds:
         machine.press(SCAN_DIGIT[speed])
         state = machine.sample()
+        # Hold the nose up. Level and under power the craft flies into whatever
+        # is in front of it — the Vesta pose is parked among structures — and a
+        # destroyed craft puts the player back on foot with no launch.
+        if (state["pitch"] & YAW_MASK) > CLIMB_PITCH:
+            machine.stick(STICK_BACK)
+            time.sleep(0.15)
+            machine.stick(STICK_STOP)
         climb.append({
             "t": round(time.monotonic() - started, 2),
             "groundContact": state["groundContact"],
@@ -619,6 +627,11 @@ def depart(machine: Machine, *, speed: int, climb_seconds: float,
             # which is tens of seconds of guest time. Sampling stops the
             # machine, so sample rarely here and let it fly.
             machine.press(SCAN_DIGIT[speed], hold=0.05)
+            state = machine.sample()
+            if (state["pitch"] & YAW_MASK) > CLIMB_PITCH:
+                machine.stick(STICK_BACK)
+                time.sleep(0.15)
+                machine.stick(STICK_STOP)
             time.sleep(5.0)
             state = machine.sample()
             if state["occupancy"] == 2:

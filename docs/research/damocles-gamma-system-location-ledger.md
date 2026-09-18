@@ -186,17 +186,19 @@ of them, not a finding that they cannot be stood on. Recovering one is a bounded
 task per body: reach the body in the Working Authority, capture an on-foot
 memstate, and run the `poses` command.
 
-Reaching the body is the part that is not yet bounded, and
+Reaching the body is the part that was not bounded, and
 [#326](https://github.com/odogono/mercenary/issues/326) has now attempted it on
-an ordinary route. [Departure routes from a validated arrival
+an ordinary route. **Vehicle travel, which this programme originally excluded,
+was brought into scope on 2026-09-18** once it became clear that every one of
+the twenty-six captures depends on it. [Departure routes from a validated arrival
 pose](damocles-arrival-routes.md) records what happened: the pinned Eris start
 cannot leave Eris, because the one craft it can reach without a key is the
 arrival ship and the board gate refuses that slot unconditionally
 (`SHIP NOT REFITTED FOR FURTHER FLIGHT`, observed live). The three progressed
 poses can — each restores with `EAGLE NINE S E` parked at the player's feet and
-its key byte set, and the laboratory boards it — but what makes a boarded craft
-depart is not recovered, so **no twenty-seventh pose exists yet**. Those three
-poses, not the pinned start, are where the remaining captures begin.
+its key byte set, the laboratory boards it, and the departure chain that follows
+(climb, `Esc`, space, arrival, landing) is recovered and driven live. Those
+three poses, not the pinned start, are where the remaining captures begin.
 
 A pose no longer needs a recovered workspace origin to be published. Every one
 of the twenty-six would publish today with a null cell and the reason stated,

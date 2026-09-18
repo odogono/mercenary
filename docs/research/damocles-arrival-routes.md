@@ -42,7 +42,7 @@ with [#325](https://github.com/odogono/mercenary/issues/325).
 | SHA-256          | `8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef` |
 | TOS pin          | EmuTOS 2.06                                                        |
 | Hatari           | 2.6.1 (`05723606…9201e11a`)                                        |
-| Probe            | `research/damocles-st/scripts/arrival-route-probe.py` (`751e8f29…ced961b2`) |
+| Probe            | `research/damocles-st/scripts/arrival-route-probe.py` (`90655b7b…bb3b9fac`) |
 | Static reference | `work/observe-first-world-20260818T101013Z-c5a32b7d/observed.ram`  |
 
 Memstates are Restricted Material and are not committed; their SHA-256 values
@@ -65,6 +65,12 @@ python3 research/damocles-st/scripts/arrival-route-probe.py \
     --snapshot research/damocles-st/snapshots/vesta-parliament-4-6.sav \
     --target 3 --board
 ```
+
+The walk row in the route table below was taken with the probe revision
+`751e8f29…ced961b2`, before the departure work extended the tool; the two differ
+in the departure functions and in zero-padding the scancode argument, which
+leaves every two-digit code — including `B` and `L` — unchanged. Every other run
+cited here is the revision in the table above.
 
 Nothing is injected. Walking is the joystick-1 soft-copy byte at `$79C2`,
 boarding is a real key event, and every sample is a `savebin` taken while the
@@ -129,10 +135,11 @@ Each row is a live run from the pose named, not a reading of the image.
 
 | Run                                        | Pose                    | Route attempted                       | Result                                                                      |
 | ------------------------------------------ | ----------------------- | ------------------------------------- | --------------------------------------------------------------------------- |
-| `arrival-route-survey-20260918T072942Z-25ad3192` | `eris-spaceport-onfoot` | census of craft on this body           | four craft on ERIS: slots 7 (0.00 cells), 5 (0.07), 3 (2.08), 4 (6.09); DART II slot 1 is 3455 cells away |
-| `arrival-route-slot7-20260918T073008Z-d59a0892`  | `eris-spaceport-onfoot` | board the arrival ship, slot 7         | **refused**, system string 22 `SHIP NOT REFITTED FOR FURTHER FLIGHT`; `$7A8E` stays 1 |
+| `arrival-route-survey-20260918T095931Z-7da4fac7` | `eris-spaceport-onfoot` | census of craft on this body           | four craft on ERIS: slots 7 (0.00 cells), 5 (0.07), 3 (2.08), 4 (6.09); DART II slot 1 is 3455 cells away |
+| `arrival-route-slot7-20260918T095958Z-b80a595d`  | `eris-spaceport-onfoot` | board the arrival ship, slot 7         | **refused**, system string 22 `SHIP NOT REFITTED FOR FURTHER FLIGHT`; `$7A8E` stays 1 |
 | `arrival-route-slot3-20260918T073634Z-1f3871b3`  | `eris-spaceport-onfoot` | walk to `EAGLE NINE S E`, slot 3       | **incomplete**: 136,052 → 79,587 units in 45 ticks, then the tick budget ran out 1.2 cells short; B there raised nothing |
-| `arrival-route-slot3-20260918T073037Z-e2238c67`  | `vesta-parliament-4-6`  | board `EAGLE NINE S E`, slot 3         | **boarded**: `$7A8E` 1 → 0, `$7AB0` `$FFFF` → `$0003`                       |
+| `arrival-route-slot3-20260918T100026Z-9c8d751c`  | `vesta-parliament-4-6`  | board `EAGLE NINE S E`, slot 3         | **boarded**: `$7A8E` 1 → 0, `$7AB0` `$FFFF` → `$0003`                       |
+| `arrival-route-slot3-20260918T095824Z-9789a6d7`  | `vesta-parliament-4-6`  | board, climb and launch                | **reached space**: airborne after 5 ticks, `$7AAE` → 2, body selector `$FFFF` |
 
 That walk measured the on-foot rate at **300 source units per second**, so one
 16×16 cell of ground is about three and a half minutes of walking. It is the
@@ -162,7 +169,8 @@ refusal, and it is recorded here so the next attempt does not re-derive it.
 byte set, and the laboratory boards it from the restored memstate. Those poses,
 not the pinned start, are where the remaining twenty-six captures have to begin.
 
-**Departure is recovered**, and the section below records it. The first
+**Departure is recovered, and a craft has flown from one body to another.**
+The section below records the chain. The first
 attempts looked like a dead end — a speed key registered at `$7B60` and the
 craft did not move — and the reason turned out to be two separate things, both
 worth stating because either one alone reads as "flight does not work": the
@@ -259,6 +267,37 @@ landing on the table entry for `$02`. Two-character arguments are read as ST
 scancodes, which is why every other key in this laboratory has always worked.
 The probe zero-pads.
 
+## What the departure chain has and has not delivered
+
+**Flown, observed, repeatable.** From the Vesta pose the laboratory boards
+`EAGLE NINE S E`, climbs it nose-up off the surface, launches with `Esc`, enters
+space as occupancy 2, and is landed by the game on a body — with the player then
+stepping out on foot, which is exactly the state an arrival pose is read from.
+The panel confirms it independently: after one round trip the NAVIGATION field
+reads `VESTA` with the player on foot outdoors, and an earlier flight arrived at
+`$002C`, ERIS, having launched from Vesta.
+
+**Not yet delivered: choosing which body.** Arrival fires on whichever body is
+nearest, and the closed-loop approach does not yet reliably win that comparison
+against the target's neighbours. Two things make it hard, and both are measured
+rather than guessed:
+
+- The launch commands `$7BAC = $000E`, so the craft covers roughly twelve
+  million source units a second until the throttle is cut, while the Eris
+  cluster is six bodies inside seven thousand units.
+- The approach has to arrive slowly enough to stop inside a few thousand units
+  of one body, which needs the `-` key's scaling below the digit keys' floor of
+  about twelve thousand units a second.
+
+The probe implements a standoff approach — fly past the target to a point on the
+far side of its nearest neighbour, then turn in — and it reaches the right
+neighbourhood: one run closed to **12,534 units of METIS**. It has not yet
+converged on a landing. **No twenty-seventh arrival pose exists yet**, and the
+twenty-six gaps stand.
+
+What remains is a control problem in this probe, not an unknown in the machine:
+every gate, word and rule the route depends on is recovered above.
+
 ## What an arrival pose publishes without a workspace origin
 
 `location-ledger.py poses --payload` previously required a recovered 16×16
@@ -324,8 +363,10 @@ reachable they are.
 | ---------------------------------------------- | ------------------------------------------------------------------------- |
 | Board gate conditions and refusal chooser      | `$054302`–`$054338` and `$0542E0`–`$0542FC` in the pinned image           |
 | Refusal text for slots 7 and other craft       | System string slots 22 and 3, `payload/damocles/strings.json`             |
-| Live refusal at the arrival ship               | `arrival-route-slot7-20260918T073008Z-d59a0892`                           |
+| Live refusal at the arrival ship               | `arrival-route-slot7-20260918T095958Z-b80a595d`                           |
 | Key byte array and its movement                | `$7272 + slot × 4` across six tracked memstates; #86's limo-key recordings |
-| Live board on Vesta                            | `arrival-route-slot3-20260918T073037Z-e2238c67`                           |
-| Craft census per pose                          | `arrival-route-survey-20260918T072942Z-25ad3192`                          |
+| Live board on Vesta                            | `arrival-route-slot3-20260918T100026Z-9c8d751c`                           |
+| Departure into space from Vesta                | `arrival-route-slot3-20260918T095824Z-9789a6d7`                           |
+| Arrival at another body and the round trip     | Vesta → ERIS (`$002C`) and Vesta → Vesta, both with the player left on foot |
+| Craft census per pose                          | `arrival-route-survey-20260918T095931Z-7da4fac7`                          |
 | Per-body residents and surface counts          | `payload/damocles/catalogue.json`; `location-ledger.py ledger`            |
