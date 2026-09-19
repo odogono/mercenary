@@ -6,6 +6,7 @@ import { parseDamoclesArrivalPoses } from '../src/damocles/poses.ts';
 import {
   catalogueResidence,
   generateAcceptanceMatrix,
+  insertionsInRegion,
   structureStoreyHeight,
   validStructureResidence
 } from '../src/damocles/residence.ts';
@@ -282,4 +283,88 @@ describe('body-aware Object Residence', () => {
       }
     }
   }, 15_000);
+});
+
+describe('a resident is exposed by its own insertion pairs', () => {
+  /// Before this rule, the port asked the **parent** for its association-group table. The
+  /// extractor publishes that table for Capital Spaceport alone, so every other structure fell
+  /// back to the implicit `(group, group)` pair and its residents were placed and never drawn.
+  /// The pairs were in the payload the whole time, on each resident.
+  test('the payload publishes the pairs per resident, not per parent', () => {
+    const withTable = catalogue.instances.filter(
+      item => item.associationGroups !== null
+    );
+    expect(withTable.map(item => item.id)).toEqual(['eris-surface-87']);
+    // 21 of the 28 placed structure residents carry their own group's pairs. The other seven
+    // have a group the parent's association list does not hold, which the extractor records in
+    // their reason; they keep the implicit pair alone, which is the honest answer rather than a
+    // default.
+    const placed = catalogue.instances.filter(
+      item => item.placement !== null && item.association !== null
+    );
+    expect(placed.length).toBe(28);
+    expect(
+      placed.filter(item => item.association!.insertions.length > 0).length
+    ).toBe(21);
+  });
+
+  test('counts the implicit own-region pair and the explicit ones', () => {
+    const computer = catalogueResidence(catalogue, 'object-slot-101')!;
+    // Group 32 exposes AUTHORS COMPUTER in seven regions, none of them region 32 itself.
+    expect(insertionsInRegion(catalogue, 'object-slot-101', computer, 11)).toBe(
+      1
+    );
+    expect(insertionsInRegion(catalogue, 'object-slot-101', computer, 28)).toBe(
+      1
+    );
+    expect(insertionsInRegion(catalogue, 'object-slot-101', computer, 18)).toBe(
+      0
+    );
+    // The implicit pair still fires where the group numbers the region.
+    expect(insertionsInRegion(catalogue, 'object-slot-101', computer, 32)).toBe(
+      1
+    );
+  });
+
+  test('the Capital Spaceport answer is unchanged by the switch of source', () => {
+    const key = catalogueResidence(catalogue, 'object-slot-183')!;
+    const parent = catalogue.instances.find(
+      item => item.id === 'eris-surface-87'
+    )!;
+    const table = parent.associationGroups!.find(group => group.group === 12)!;
+    // The resident's own pairs and the parent's table agree, which is what lets one replace
+    // the other without changing the one structure that publishes both.
+    expect(
+      catalogue.instances
+        .find(item => item.id === 'object-slot-183')!
+        .association!.insertions.map(pair => pair.regionSelector)
+    ).toEqual(table.pairs.map(pair => pair.regionSelector));
+    expect(insertionsInRegion(catalogue, 'object-slot-183', key, 11)).toBe(1);
+    expect(insertionsInRegion(catalogue, 'object-slot-183', key, 18)).toBe(0);
+  });
+
+  test('four Dion residents are drawn that no route reached before', async () => {
+    /// Every cell of Dion, collecting whatever the Session Snapshot draws. Before the rule
+    /// changed this found nothing at all; slot 101 is still absent because its group's regions
+    /// are elsewhere in that building.
+    const drawn = new Map<string, string>();
+    for (let x = 0; x < 16; x += 1) {
+      for (let z = 0; z < 16; z += 1) {
+        const session = new DamoclesSession(content);
+        expect(session.switchToPose('dion-2-3').kind).toBe('switched');
+        session.teleportToCell(x, z);
+        for (const item of session.snapshot.residents) {
+          if (!drawn.has(item.id)) {
+            drawn.set(item.id, `${x}-${z}`);
+          }
+        }
+      }
+    }
+    expect(Object.fromEntries(drawn)).toEqual({
+      'object-slot-128': '2-2',
+      'object-slot-135': '9-14',
+      'object-slot-50': '9-0',
+      'object-slot-51': '9-0'
+    });
+  }, 30_000);
 });

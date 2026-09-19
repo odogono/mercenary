@@ -44,6 +44,50 @@ const positionOf = (position: readonly [number, number, number]): Vector3 => ({
   z: position[2]
 });
 
+/// How many times a structure resident is inserted in one region of its parent.
+///
+/// A resident is exposed where its insertion group **numbers** the region — the implicit
+/// `(group, group)` pair — plus once for each explicit pair in the parent's association list that
+/// names that region. A group can expose one resident in several regions and can hold more than
+/// one insertion for a region, so this counts rather than answering yes or no.
+///
+/// The explicit pairs come from the **resident's own** `association.insertions`, which the
+/// extractor resolves from the parent's association-list root for every resident it places
+/// (docs/research/damocles-dion-vesta-structure-groups.md, "the association-list root is derived,
+/// not tabulated"). The parent's whole `associationGroups` table is published for Capital
+/// Spaceport alone, so consulting that instead left every other structure with the implicit pair
+/// only, and its residents placed and never drawn.
+///
+/// A Drop writes its own insertion group. Where that differs from the resident's authored group
+/// the resident's pairs do not describe it, so only the parent's table can answer, and a parent
+/// without one falls back to the implicit pair. That is a real limit, not a default: nothing in
+/// the payload says which regions another group reaches.
+export const insertionsInRegion = (
+  catalogue: Catalogue,
+  instanceId: string,
+  residence: Residence,
+  regionSelector: number
+): number => {
+  if (residence.kind !== 'structure') {
+    return 0;
+  }
+  const instance = catalogue.instances.find(item => item.id === instanceId);
+  const own = instance?.association;
+  const explicit =
+    own?.insertionGroupSelector === residence.insertionGroup
+      ? own.insertions
+      : catalogue.instances
+          .find(item => item.id === residence.parent)
+          ?.associationGroups?.find(
+            group => group.group === residence.insertionGroup
+          )?.pairs;
+  return (
+    (residence.insertionGroup === regionSelector ? 1 : 0) +
+    (explicit?.filter(pair => pair.regionSelector === regionSelector).length ??
+      0)
+  );
+};
+
 /// The canonical recovered Object Residence.  An instance with only an Association is not
 /// returned: it names an eligible object, but not a recovered place from which the renderer or
 /// selection loop may draw it.

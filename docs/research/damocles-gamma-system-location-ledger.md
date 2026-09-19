@@ -451,7 +451,7 @@ nothing about the placements this table records.
 |  181 | KEY - EAGLE 9SE  |   `$05` | ERIS  | `$12` / `$89` / `$0A` | none      | no        | Eris structure selectors (#252) at cell `$89` |
 |  151 | DAMOCLES FILE    |   `$06` | ERIS  | `$12` / `$89` / `$00` | none      | no        | Eris structure selectors (#252) at cell `$89` |
 |   95 | MAGIC CRYSTAL    |   `$14` | MIDAS | `$38` / `$EB` / `$00` | none      | no        | no Midas surface workspace (#172)             |
-|  101 | AUTHORS COMPUTER |   `$0B` | DION  | `$02` / `$DE` / `$00` | recovered | no        | association-list root (#362)                  |
+|  101 | AUTHORS COMPUTER |   `$0B` | DION  | `$02` / `$DE` / `$00` | recovered | no        | its regions are unwalkable (#362)             |
 |   94 | CASH REGISTER    |   `$3E` | VESTA | `$05` / `$73` / `$01` | recovered | no        | level-to-structure binding (#355)             |
 
 Cell `$89` is STATE OFFICE, and #252 owns every Eris structure selector, so two
@@ -500,11 +500,11 @@ can be stood beside anywhere in the game today. The other five fail for three
 distinct reasons, and separating them matters because they are owned by three
 different tickets.
 
-| Reason                                                                    | Slots        | Owner                      |
-| ------------------------------------------------------------------------- | ------------ | -------------------------- |
-| No recovered residence at all                                             | 95, 151, 181 | #252 (151, 181), #172 (95) |
-| Placed above ground level; only level 0 is drawn                          | 94           | [#355](https://github.com/odogono/mercenary/issues/355) |
-| Placed at level 0, and never exposed in any region the player can bind to | 101          | [#362](https://github.com/odogono/mercenary/issues/362) |
+| Reason                                                                     | Slots        | Owner                      |
+| -------------------------------------------------------------------------- | ------------ | -------------------------- |
+| No recovered residence at all                                              | 95, 151, 181 | #252 (151, 181), #172 (95) |
+| Placed above ground level; only level 0 is drawn                           | 94           | [#355](https://github.com/odogono/mercenary/issues/355) |
+| Exposed only in regions of its parent the player cannot walk into          | 101          | [#362](https://github.com/odogono/mercenary/issues/362) |
 
 The method: for each admitted arrival Pose, switch to it and visit all 256
 cells of that Body, collecting every resident the Session Snapshot draws.
@@ -522,9 +522,7 @@ same prerequisite #313 already records against the model-form gate, the height
 gate and the `$7AC5`/`$7AA5` identity: an ordinary route into a structure
 interior at a non-zero level.
 
-### Slot 101 needs an association-list root decoded for one structure only
-
-[#362](https://github.com/odogono/mercenary/issues/362) owns this.
+### Slot 101 is exposed in regions the player cannot bind to
 
 AUTHORS COMPUTER is the informative case, because nothing about it is missing in
 the obvious sense. It is level 0. Its parent `dion-surface-de` is recovered, and
@@ -532,22 +530,45 @@ the player binds to exactly that parent at Dion cell `$DE`. It has a local
 placement. And it is still never drawn.
 
 A resident is exposed in a region if its insertion group **numbers** that region
-— the implicit `(group, group)` pair — or if the parent's association-group
-table names the region explicitly. AUTHORS COMPUTER carries insertion group
-`$20`, and Dion cell `$DE` yields region selector 18 at every position in the
-cell. So the implicit pair never matches, and there is no explicit table to
-consult: `decode_structure_associations` is called **once** in
-`research/damocles-st/damocleslab/catalogue.py`, at the hard-coded Capital
-Spaceport association-list root `$14AAC`. `eris-surface-87` is the only instance
-in the payload with a non-null `associationGroups`.
+— the implicit `(group, group)` pair — or if the parent's association list names
+the region explicitly. Those explicit pairs **are** recovered and published, per
+resident, as `association.insertions`: the association-list root is derived from
+the region-descriptor walk, not tabulated ([Dion and Vesta structure
+groups](damocles-dion-vesta-structure-groups.md#the-association-list-root-is-derived-not-tabulated)),
+and the extractor resolves each placed resident's own group through it. Twenty-one
+of the 28 placed residents carry pairs; the other seven have a group their
+parent's list does not hold, which their `reason` records.
 
-The decoder already exists and is proven; what is missing is the per-structure
-root address for every structure but one. Until those roots are recovered, any
-interior resident whose insertion group does not happen to equal the region its
-cell binds to is placed and invisible — which is most of them.
+AUTHORS COMPUTER's group `$20` exposes it in region selectors 11, 12, 26, 27, 28,
+33 and 34. Dion cell `$DE` binds region selector **18** at the arrival Pose, and
+walking from there reaches only selectors 17 and 18 — the room the Pose stands
+in. The exposing regions are elsewhere in a 35-region building, behind the
+structure's own clamp.
 
-This is the reachability counterpart to #325's placement work, and it is tracked
-separately because the placements are correct: the gap is in what exposes them.
+So this is not a missing table. It is the same question as
+[#252](https://github.com/odogono/mercenary/issues/252) asks on Eris — doors,
+openings and the eye clamp deciding which regions of a structure a player can
+walk into — asked of a Dion structure.
+[#362](https://github.com/odogono/mercenary/issues/362) carries it.
+
+### What the exposure rule was reading, and what changed
+
+Until #362 the port asked the **parent** for its `associationGroups` table. The
+extractor publishes that table for `eris-surface-87` alone, so every other
+structure fell back to the implicit pair and its residents were placed and never
+drawn. Reading each resident's own published pairs instead took Dion from nothing
+drawn anywhere to four takeable residents reachable on an ordinary route:
+
+| Slot | Object          | Parent             | Cell   |
+| ---: | --------------- | ------------------ | ------ |
+|   50 | BATH            | `dion-surface-09`  | `09-0` |
+|   51 | TOWEL RAIL      | `dion-surface-09`  | `09-0` |
+|  128 | WASHING MACHINE | `dion-surface-22`  | `2-2`  |
+|  135 | ACME UNIVERSAL  | `dion-surface-e9`  | `9-14` |
+
+These are the first interior objects outside Eris the port can reach. Capital
+Spaceport is unchanged: the resident's pairs and the parent's table agree there,
+which is what licenses one replacing the other.
 
 ## Residents with no location evidence
 
@@ -650,14 +671,12 @@ Already owned, and this ledger supplies the target list rather than new scope:
 
 Additional research under #313, required by the deliveries that use it:
 
-0. **Association-list roots for every structure but Capital Spaceport.**
-   [#362](https://github.com/odogono/mercenary/issues/362).
-   `decode_structure_associations` is proven and is called once, at the
-   hard-coded root `$14AAC`. Every other structure's `associationGroups` is
-   null, so an interior resident is exposed only where its insertion group
-   numbers the region its cell binds to. This is what stands between #325's
-   28 recovered placements and any of them being reachable. See [a recovered
-   placement is not
+0. **Which regions of a non-Eris structure a player can walk into.**
+   [#362](https://github.com/odogono/mercenary/issues/362). Reading each
+   resident's own published insertion pairs took Dion from nothing drawn to
+   four reachable residents, but AUTHORS COMPUTER's regions are still behind
+   the structure's clamp. This is #252's question — doors, openings and the eye
+   clamp — asked of a Dion structure. See [a recovered placement is not
    reachability](#a-recovered-placement-is-not-reachability).
 
 1. **Remaining Gaea map identity and placement.** Runtime selection is decoded:
@@ -697,9 +716,10 @@ Resolved since this ledger was first written:
   cell with no named workspace to anchor it.
 - 193 of 195 interior-associated residents have no parent and no local
   placement.
-- Of the 28 residents that **do** have a recovered placement, **one** — slot
-  183 — can be reached on foot. The rest are placed and never drawn, because
-  their region exposure or their level is not recovered.
+- Of the 28 residents that **do** have a recovered placement, **five** can be
+  reached on foot: slot 183 on Eris and slots 50, 51, 128 and 135 on Dion. The
+  rest are placed and never drawn — most because they are above level 0, the
+  remainder because their exposing regions are not walkable.
 - Workspace selection within a body is decoded, and both Gaea groups are now
   bound to a live workspace. What remains undecoded is which structure a **level**
   selects: the association list is bound per level, read live from `$7B0E`, and
@@ -728,5 +748,6 @@ Resolved since this ledger was first written:
 | The association list is bound per level             | Vesta cell `$64` at levels 0 and 10 bind different structures; ten residents across six bodies resolve in the list bound at their own level |
 | Six pickup-trigger slots                            | [limo-key pickup](damocles-limo-key-pickup.md#the-object-to-script-trigger-table) |
 | Slot 183 is the only reachable pickup-trigger object | All-cell sweep of every admitted Body against the tracked payload; `web/test/damocles-console.test.ts` |
-| `eris-surface-87` is the only instance with an association-group table | `payload/damocles/catalogue.json`; the single `decode_structure_associations` call in `research/damocles-st/damocleslab/catalogue.py` |
+| Five placed residents are reachable, four of them on Dion | All-cell sweep per admitted Body; `web/test/damocles-body-aware.test.ts` |
+| A resident's exposing regions are published per resident | `association.insertions` in `payload/damocles/catalogue.json`, resolved through the derived association-list root ([Dion and Vesta structure groups](damocles-dion-vesta-structure-groups.md#the-association-list-root-is-derived-not-tabulated)) |
 | Slots 248–255 are a world binding                   | [catalogue](damocles-catalogue.md)                                       |
