@@ -582,6 +582,12 @@ parents' region graphs connect to the exposing regions **only** through a region
 whose gate is `attachmentLatch`, so they need a door open. Both of Capital
 Spaceport's counterparts are already reachable with the door shut, which is why
 the question never arose on Eris.
+
+A secondary source corroborates this from an independent direction: the
+[guide item list](damocles-guide-resident-list.md) annotates all three of their
+cells "needs key", and none of the nine reachable residents' cells. It is a lead,
+not evidence, and it also orders the work — two of the three keys it names are
+above level 0, so four of the five residents are behind #355 before #362.
 [#362](https://github.com/odogono/mercenary/issues/362) carries it, and it is the
 same mechanism [#252](https://github.com/odogono/mercenary/issues/252) owns on
 Eris: what opens a structure's attachments, and from where.
@@ -661,7 +667,9 @@ playable content. Evidence-complete deliveries may proceed while
 bodies; the full programme's coverage gaps remain explicit.
 
 The [guide-backed location checklist](damocles-guide-location-checklist.md)
-prioritises the eight unposed bodies with residents. Its settlement names and
+prioritises the eight unposed bodies with residents, and the
+[guide item list](damocles-guide-resident-list.md) covers every body with a floor
+marker per item. Its settlement names and
 coordinates are secondary-source leads for verification, not recovered payload
 data or permission to invent a standing position. The other seven unposed
 bodies remain lower-priority coverage work.
@@ -772,4 +780,5 @@ Resolved since this ledger was first written:
 | Slot 183 is the only reachable pickup-trigger object | All-cell sweep of every admitted Body against the tracked payload; `web/test/damocles-console.test.ts` |
 | Nine placed residents are reachable, eight of them on Dion | Region-connectivity graph over the published region bounds, corroborated by walked sessions; `web/test/damocles-body-aware.test.ts` |
 | A resident's exposing regions are published per resident | `association.insertions` in `payload/damocles/catalogue.json`, resolved through the derived association-list root ([Dion and Vesta structure groups](damocles-dion-vesta-structure-groups.md#the-association-list-root-is-derived-not-tabulated)) |
+| Keyed access matches the five unreachable residents' cells, 3 cells for 3 | Secondary source only: [guide item list](damocles-guide-resident-list.md); `guide-resident-list-check.py` |
 | Slots 248–255 are a world binding                   | [catalogue](damocles-catalogue.md)                                       |
