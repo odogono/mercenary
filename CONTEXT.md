@@ -350,6 +350,14 @@ _Avoid_: HUD, status bar, dashboard, cockpit
 Which visual treatment the Benson Panel wears — Targ or Damocles — changing chrome and typography only, never the gameplay data beneath; the Damocles treatment stays inside ADR 0021's presentation-only exception.
 _Avoid_: Skin, theme, variant, panel mode
 
+**Body Coordinate Readout**:
+The wide navigation window of the Benson Panel's lower row, which the Reference Build prints as three digits an axis. It names a Body-scale position rather than the player's Surface Cell, and its source is bound only in part, so both Panel Renditions stand it at nought until the quantity it measures is known.
+_Avoid_: Planet coordinates, moon coordinates, world coordinates, nav digits
+
+**Cell Readout**:
+The navigation window beside the Body Coordinate Readout, naming the player's Surface Cell two digits an axis. It is the readout that moves as the player walks, and it is distinct from the Body Coordinate Readout beside it whatever the original's own documentation calls either window.
+_Avoid_: Grid reference, city coordinates, location coordinates, tile readout
+
 **System Menu**:
 The Browser Shell overlay opened with Escape that pauses stepping and owns the settings page and the Save chooser; shell chrome, never part of the Game Surface.
 _Avoid_: Pause menu, options screen, main menu

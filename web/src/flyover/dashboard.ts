@@ -29,18 +29,20 @@ export const flyoverPanelViewModel = (values: {
   const position = values.camera.pose.position;
   const centre = values.nearestBody.position;
   return {
-    altitude: `Y${scientific(position.y - centre.y, true)}`,
+    // The three navigation readouts carry the camera's offset from the nearest body, one axis
+    // each, in the order the panel prints them: body coordinates, location, altitude.
+    altitude: `Z${scientific(position.z - centre.z, true)}`,
     altitudeLamp: false,
     attackLamp: false,
+    bodyCoordinates: `X${scientific(position.x - centre.x, true)}`,
     cash: '',
     clock: '',
     compassDegrees: wrappedDegrees(values.camera.pose.heading),
     elevationDegrees: degrees(values.camera.pose.pitch),
     groundLamp: false,
-    heading: `Z${scientific(position.z - centre.z, true)}`,
     inventory: '',
     inventoryFill: 0,
-    locationLabel: `X${scientific(position.x - centre.x, true)}`,
+    locationLabel: `Y${scientific(position.y - centre.y, true)}`,
     locationName: `${values.systemId.toUpperCase()} · ${values.nearestBody.id.toUpperCase()}`,
     message: `${values.range.toUpperCase()} FLYOVER`,
     messageColour: undefined,

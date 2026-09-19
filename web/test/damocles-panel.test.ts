@@ -38,6 +38,8 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
     const model = damoclesPanelViewModel(session.snapshot, loaded.doc);
     expect(model.locationName).toBe('ERIS');
     expect(model.locationLabel).toBe('07-08');
+    // The wide readout above the cell is the original's undecoded body pair (#208).
+    expect(model.bodyCoordinates).toBe('000-000');
     expect(model.inventory).toBe('EMPTY');
     expect(model.inventoryFill).toBe(0);
     expect(model.damoclesDisplay).toEqual({
@@ -52,7 +54,7 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
     );
   });
 
-  test('follows the cell and heading as the player walks', async () => {
+  test('follows the cell as the player walks', async () => {
     const loaded = await content();
     const session = new DamoclesSession(loaded);
     session.intent = intent({ walk: 1 });
@@ -67,7 +69,6 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
     ).toBe(true);
     expect(model.compassDegrees).toBeGreaterThanOrEqual(0);
     expect(model.compassDegrees).toBeLessThan(360);
-    expect(model.heading).toMatch(/^\d{3}°$/);
   });
 
   test('prints cells two digits an axis and stars beyond the readout', () => {

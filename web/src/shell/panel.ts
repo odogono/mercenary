@@ -21,6 +21,8 @@ export interface PanelViewModel {
   readonly altitude: string;
   readonly altitudeLamp: boolean;
   readonly attackLamp: boolean;
+  /// The wide navigation readout: the body coordinates the original prints as `999-999`.
+  readonly bodyCoordinates: string;
   readonly cash: string;
   readonly clock: string;
   readonly compassDegrees: number;
@@ -30,7 +32,6 @@ export interface PanelViewModel {
   };
   readonly elevationDegrees: number;
   readonly groundLamp: boolean;
-  readonly heading: string;
   readonly inventory: string;
   readonly inventoryFill: number;
   readonly locationLabel: string;
@@ -107,6 +108,9 @@ export const panelViewModel = (
     altitudeLamp: aboard,
     // Targ has no attack warning to report, so the Damocles lamp stays dressing (ADR 0027).
     attackLamp: false,
+    // Targ's panel has no body-coordinate readout to report, so the Damocles rendition's
+    // stands at nought as dressing (ADR 0027); the cell it does have is the location readout.
+    bodyCoordinates: '000-000',
     cash: cashReadout(snapshot.credits),
     clock: context.clock,
     compassDegrees: compassDegrees(player.heading),
@@ -114,7 +118,6 @@ export const panelViewModel = (
     // The Reference Build's ground proximity warning has no equivalent here, so this reports the
     // one thing that is equivalent: a craft close enough to the ground to be landing on it.
     groundLamp: aboard && snapshot.mode === 'flying' && player.position.y < 40,
-    heading: `${digits(compassDegrees(player.heading), 3)}°`,
     inventory: carried.at(-1) ?? 'EMPTY',
     inventoryFill: carried.length,
     locationLabel:

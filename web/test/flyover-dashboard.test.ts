@@ -40,11 +40,11 @@ describe('the trimmed Flyover navigation dashboard', () => {
         systemId: 'gamma'
       })
     ).toMatchObject({
-      altitude: 'Y-2.000E+0',
+      altitude: 'Z+5.000E+0',
+      bodyCoordinates: 'X+1.000E+0',
       compassDegrees: 0,
       elevationDegrees: 0,
-      heading: 'Z+5.000E+0',
-      locationLabel: 'X+1.000E+0',
+      locationLabel: 'Y-2.000E+0',
       locationName: 'GAMMA · DIALIS',
       message: 'ORBITAL FLYOVER',
       speedLabel: 'N04 8.000E+0 U/S'

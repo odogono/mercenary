@@ -13,12 +13,12 @@ const base: PanelViewModel = {
   altitude: '00128',
   altitudeLamp: false,
   attackLamp: false,
+  bodyCoordinates: '000-000',
   cash: '000009000',
   clock: '00-00-00',
   compassDegrees: 91,
   elevationDegrees: 12,
   groundLamp: false,
-  heading: '091°',
   inventory: 'EMPTY',
   inventoryFill: 0,
   locationLabel: '08-08',
@@ -42,6 +42,7 @@ describe('the panel during the Arrival', () => {
       CELL_SIZE
     );
 
+    expect(shown.bodyCoordinates).toBe('***-***');
     expect(shown.locationLabel).toBe('**-**');
     expect(shown.altitude).toBe('*****');
     expect(shown.speed).toBe('*****');
