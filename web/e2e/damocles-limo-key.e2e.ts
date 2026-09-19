@@ -205,11 +205,13 @@ test('the supported pickup runs the response once and parks', async ({
     contentType: 'image/png'
   });
 
-  // The second record arrives over the first, so until it has travelled the whole 288 pixels
-  // the row is partly one and partly the other. Row and pixel count are read together, because
-  // they only describe the same frame if they came from it.
+  // Each later record arrives over the one before it, so until it has travelled the whole 288
+  // pixels the row is partly one and partly the other. Row and pixel count are read together,
+  // because they only describe the same frame if they came from it. Which handover is caught
+  // depends on how fast the browser answers, so the row is compared against every one that is
+  // still to come: each is 36 frames of the 800 that remain.
   let partial: { pixels: number; row: string } | undefined;
-  const deadline = Date.now() + 10_000;
+  const deadline = Date.now() + 25_000;
   while (partial === undefined && Date.now() < deadline) {
     const seen = await frame(page).evaluate(node => ({
       pixels: Number(node.dataset['damoclesScroll']),
@@ -222,7 +224,18 @@ test('the supported pickup runs the response once and parks', async ({
   expect(partial).toBeDefined();
   expect(partial!.pixels % 8).toBe(0);
   expect(partial!.pixels).toBeLessThan(288);
-  expect(partial!.row).toBe(revealedRow(first, second, partial!.pixels));
+  const handovers = [
+    [first, second],
+    [second, third],
+    // The response's own clearing line is a record of spaces.
+    [third, ' '.repeat(48)]
+  ];
+  expect(
+    handovers.map(([beneath, text]) =>
+      revealedRow(beneath!, text!, partial!.pixels)
+    ),
+    `row ${JSON.stringify(partial!.row)} at ${partial!.pixels} pixels`
+  ).toContain(partial!.row);
 
   await expect
     .poll(async () => displayRow(page), { timeout: 10_000 })
@@ -314,11 +327,17 @@ test('a Save round-trips the response at each of its phases', async ({
       record.snapshot.script.message === null &&
       record.snapshot.script.execution !== null
   );
+  // The row the record carries is the third record, held, even though the message gate is null:
+  // the display outlives the message that put it there. Asserting it on the stored record rather
+  // than on the live row is what makes this a claim about the Save rather than about how long
+  // the restore took.
   expect(waiting.snapshot.script.display.kind).toBe('held');
+  expect(waiting.snapshot.script.display.cells?.trim()).toBe(held(third));
   expect(await run(page, 'load 2')).toContain('restored slot 2');
   await closeConsole(page);
-  expect(await displayRow(page)).toBe(held(third));
   await expect.poll(async () => displayRow(page), { timeout: 20_000 }).toBe('');
+  await page.waitForTimeout(3000);
+  expect(await displayRow(page)).toBe('');
 
   // And one after the response has parked: the row stays blank and nothing runs again.
   expect(await run(page, 'save 3 confirm')).toContain('saved slot 3');
