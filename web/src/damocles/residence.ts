@@ -1,4 +1,9 @@
-import type { Catalogue, Instance } from '../catalogue/data.ts';
+import {
+  instanceById,
+  modelById,
+  type Catalogue,
+  type Instance
+} from '../catalogue/data.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { SCRIPT_FOR_TRIGGER, TRIGGER_FOR_RESIDENT } from './scripts.ts';
 
@@ -71,7 +76,7 @@ export const insertionsInRegion = (
   if (residence.kind !== 'structure') {
     return 0;
   }
-  const instance = catalogue.instances.find(item => item.id === instanceId);
+  const instance = instanceById(catalogue, instanceId);
   const own = instance?.association;
   const explicit =
     own?.insertionGroupSelector === residence.insertionGroup
@@ -95,7 +100,7 @@ export const catalogueResidence = (
   catalogue: Catalogue,
   instanceId: string
 ): Residence | undefined => {
-  const instance = catalogue.instances.find(item => item.id === instanceId);
+  const instance = instanceById(catalogue, instanceId);
   if (instance === undefined) {
     return undefined;
   }
@@ -134,8 +139,8 @@ export const structureStoreyHeight = (
   catalogue: Catalogue,
   parentId: string
 ): number | undefined => {
-  const parent = catalogue.instances.find(instance => instance.id === parentId);
-  const model = catalogue.models.find(model => model.id === parent?.model);
+  const parent = instanceById(catalogue, parentId);
+  const model = modelById(catalogue, parent?.model);
   const height = model?.storeyHeight;
   return height !== undefined && Number.isSafeInteger(height) && height > 0
     ? height
@@ -146,12 +151,8 @@ export const validStructureResidence = (
   catalogue: Catalogue,
   residence: Extract<Residence, { readonly kind: 'structure' }>
 ): boolean => {
-  const parent = catalogue.instances.find(
-    instance => instance.id === residence.parent
-  );
-  const parentModel = catalogue.models.find(
-    model => model.id === parent?.model
-  );
+  const parent = instanceById(catalogue, residence.parent);
+  const parentModel = modelById(catalogue, parent?.model);
   if (
     parent?.location?.body !== residence.body ||
     parentModel?.kind !== 'structure'
@@ -335,9 +336,7 @@ export const generateAcceptanceMatrix = (
       for (const support of supports) {
         const demand = instance.handling?.requiredSupportRank ?? 0;
         const supply = support.instance.handling?.suppliedSupportRank ?? 0;
-        const top = catalogue.models.find(
-          model => model.id === support.instance.model
-        )?.supportTop;
+        const top = modelById(catalogue, support.instance.model)?.supportTop;
         const rankPasses = demand !== 0 && supply !== 0 && supply >= demand;
         const formPasses = top !== null && top !== undefined;
         const heightPasses = formPasses && top <= 63;

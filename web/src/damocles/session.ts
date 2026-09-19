@@ -1,4 +1,4 @@
-import type { Catalogue } from '../catalogue/data.ts';
+import { instanceById, modelById, type Catalogue } from '../catalogue/data.ts';
 import { IDLE, MAXIMUM_STEP, type Intent } from '../gameCore/index.ts';
 import type { TitleSession } from '../shell/title.ts';
 import {
@@ -123,8 +123,9 @@ const inventorySourceLabel = (
   catalogue: Catalogue,
   instanceId: string
 ): string => {
-  const instance = catalogue.instances.find(item => item.id === instanceId);
-  const model = catalogue.models.find(item => item.id === instance?.model);
+  const instance = instanceById(catalogue, instanceId);
+  const model =
+    instance === undefined ? undefined : modelById(catalogue, instance.model);
   return (model?.name ?? instanceId).slice(0, 16).padEnd(16);
 };
 
@@ -283,9 +284,7 @@ export class DamoclesSession implements TitleSession<
       ...restore.carried,
       ...restore.residence.map(item => item.instance)
     ]) {
-      const instance = this.content.catalogue.instances.find(
-        item => item.id === instanceId
-      );
+      const instance = instanceById(this.content.catalogue, instanceId);
       if (!known.has(instanceId) || instance?.handling === null) {
         throw new Error(
           'saved Carried Stack or Object Residence is not tracked'
@@ -294,8 +293,9 @@ export class DamoclesSession implements TitleSession<
     }
     for (const departure of restore.residence) {
       const residence = departure.residence;
-      const instance = this.content.catalogue.instances.find(
-        item => item.id === departure.instance
+      const instance = instanceById(
+        this.content.catalogue,
+        departure.instance
       )!;
       if (residence.placementClass !== (instance.placementClass ?? 0)) {
         throw new Error('saved Object Residence contradicts the Catalogue');
@@ -425,9 +425,7 @@ export class DamoclesSession implements TitleSession<
   }
 
   private instanceFor(instanceId: string) {
-    return this.content.catalogue.instances.find(
-      instance => instance.id === instanceId
-    );
+    return instanceById(this.content.catalogue, instanceId);
   }
 
   private worldPosition(
@@ -576,9 +574,7 @@ export class DamoclesSession implements TitleSession<
         continue;
       }
       const position = this.worldPosition(instance.id, residence);
-      const model = this.content.catalogue.models.find(
-        item => item.id === instance.model
-      );
+      const model = modelById(this.content.catalogue, instance.model);
       if (position === null || model === undefined) {
         continue;
       }
@@ -620,12 +616,8 @@ export class DamoclesSession implements TitleSession<
     if (this.scrollCounter < 0) {
       return label.slice(0, 16 + this.scrollCounter);
     }
-    const instance = this.content.catalogue.instances.find(
-      item => item.id === head
-    );
-    const model = this.content.catalogue.models.find(
-      item => item.id === instance?.model
-    );
+    const instance = instanceById(this.content.catalogue, head);
+    const model = modelById(this.content.catalogue, instance?.model);
     return model?.name ?? head;
   }
 
@@ -787,15 +779,12 @@ export class DamoclesSession implements TitleSession<
   /// carrying. `inventoryLabel` cannot serve: a take sets the scroll counter to -16, so the label
   /// is empty on the very frame a caller wants to report what it took.
   objectName(instanceId: string): string | undefined {
-    const instance = this.content.catalogue.instances.find(
-      item => item.id === instanceId
-    );
+    const instance = instanceById(this.content.catalogue, instanceId);
     if (instance === undefined) {
       return undefined;
     }
     return (
-      this.content.catalogue.models.find(item => item.id === instance.model)
-        ?.name ?? instanceId
+      modelById(this.content.catalogue, instance.model)?.name ?? instanceId
     );
   }
 
@@ -910,8 +899,9 @@ export class DamoclesSession implements TitleSession<
     if (residence === undefined || residence.kind === 'carried') {
       return undefined;
     }
-    const model = this.content.catalogue.models.find(
-      item => item.id === this.instanceFor(support.id)?.model
+    const model = modelById(
+      this.content.catalogue,
+      this.instanceFor(support.id)?.model
     );
     const top = model?.supportTop;
     if (top === undefined || top === null) {
@@ -1004,9 +994,7 @@ export class DamoclesSession implements TitleSession<
       };
     }
     const insertionGroup = this.regionIndex + 1;
-    const parent = this.content.catalogue.instances.find(
-      instance => instance.id === structure.id
-    );
+    const parent = instanceById(this.content.catalogue, structure.id);
     if (
       !parent?.associationGroups?.some(group => group.group === insertionGroup)
     ) {
