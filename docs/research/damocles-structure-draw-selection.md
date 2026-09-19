@@ -54,6 +54,44 @@ update), and **objects** follow no distance test at all — `$052C9C` keeps ever
 resident of the current body (`docs/research/damocles-object-selection.md`).
 Three families, three different bounds.
 
+## Implementation update — #373
+
+The port adopts the bound above. `planErisFrame` filters `surface.placements`
+through `withinDrawBound` (`web/src/damocles/world.ts`) before planning: ground
+records and Surface Structures from the occupied Surface Cell alone, objects
+from anywhere on the Body. At the Eris arrival Pose that draws 9 of the
+workspace's 207 placements — the cell's 4 plus the Body's 7 objects, which
+overlap by 2.
+
+Measured on the arrival Pose through a `DamoclesSession` snapshot, the same way
+before and after:
+
+| draw | triangles | of which ground records | planner |
+| --- | ---: | ---: | ---: |
+| every placement | 18,008 | 7,791 | 2.2 ms |
+| recovered bound | 681 | 56 | 0.09 ms |
+
+What stops being drawn is every neighbouring cell's ground record and Surface
+Structure — the spaceport apron and buildings visible across the workspace from
+the arrival Pose. What keeps being drawn is the authored ground fill, which is
+eye-relative rather than placement-based and stands in for the native horizon
+slots, and every object on the Body however far off it stands.
+
+Three adoption decisions, none of which reopen the evidence:
+
+- **Damocles does not reuse Targ's `StructureReach` setting.** That type is a
+  Targ Session presentation preference (`web/src/settings/index.ts`); the
+  Damocles bound is recovered behaviour with no preference behind it, and
+  Damocles owns its Session State under ADR 0043. The vocabulary is shared, the
+  type is not.
+- **No Presentation Preset carries an every-cell draw.** ADR 0034 admits one as
+  Enhanced presentation, so this stays open, but nothing asks for it today and
+  an unused preset would be a second draw path to keep honest.
+- **`camera.farPlane` stays `authored`.** The Working Authority has no far
+  plane in the projection sense; the browser's is a parameter of its own
+  log-depth buffer (`web/src/damocles/renderer.ts`), so there is no recovered
+  value to replace it with.
+
 ## Implementation update — #225
 
 The walk now consumes Catalogue schema 6 selectors. At arrival it selects region 11's

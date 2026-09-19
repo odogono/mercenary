@@ -17,8 +17,10 @@ import {
   shadowCasterVertices
 } from '../src/damocles/renderer.ts';
 import {
+  cellOf,
   erisSurfaceFrom,
   startPose,
+  withinDrawBound,
   type ErisPlacement,
   type ErisSurface
 } from '../src/damocles/world.ts';
@@ -126,13 +128,14 @@ describe('an Eris frame in Filled Presentation', () => {
     expect(withLabel.triangleCount).toBe(unlabelled.triangleCount + 4);
   });
 
-  test('emits the ground and every decoded face, and nothing for the unrecovered', async () => {
+  test('emits the ground and every decoded face it draws, and nothing for the unrecovered', async () => {
     const { doc, surface } = await load();
-    const plan = planErisFrame(surface, startPose(doc), doc);
-    const decodedFaces = surface.placements.reduce(
-      (sum, p) => sum + (p.mesh?.faces.length ?? 0),
-      0
-    );
+    const pose = startPose(doc);
+    const plan = planErisFrame(surface, pose, doc);
+    // Only the placements within the recovered draw bound contribute faces (#373).
+    const decodedFaces = surface.placements
+      .filter(item => withinDrawBound(item, pose.position, surface.grid))
+      .reduce((sum, p) => sum + (p.mesh?.faces.length ?? 0), 0);
     // Every face is at least one triangle, on top of the fill.
     expect(plan.triangleCount).toBeGreaterThanOrEqual(
       decodedFaces + plan.fillTriangleCount
@@ -147,6 +150,48 @@ describe('an Eris frame in Filled Presentation', () => {
     );
     const empty = planErisFrame(withoutMeshes, startPose(doc), doc);
     expect(empty.triangleCount).toBe(empty.fillTriangleCount);
+  });
+
+  test('draws ground and structures from the occupied cell alone, and objects from anywhere', async () => {
+    const { doc, surface } = await load();
+    const pose = startPose(doc);
+    const cell = cellOf(pose.position, surface.grid);
+    const here = surface.placements.filter(item => {
+      const at = cellOf(item.position, surface.grid);
+      return at.x === cell.x && at.z === cell.z;
+    });
+    const objects = surface.placements.filter(item => item.kind === 'object');
+    // The Eris arrival Pose stands in cell 07-08: 4 of the workspace's 207 placements are in
+    // it, and the 7 objects on the Body are drawn wherever they stand (#370, #373).
+    expect(surface.placements).toHaveLength(207);
+    expect(here).toHaveLength(4);
+    expect(objects).toHaveLength(7);
+    const plan = planErisFrame(surface, pose, doc);
+    const drawnOnly = planErisFrame(
+      surfaceOf([...new Set([...here, ...objects])]),
+      pose,
+      doc
+    );
+    expect(plan.triangleCount).toBe(drawnOnly.triangleCount);
+    expect(plan.groundTriangleCount).toBe(drawnOnly.groundTriangleCount);
+    // A neighbouring cell's ground record and structure stop being drawn, so the plan is a
+    // fraction of the every-placement draw it replaced.
+    expect(plan.triangleCount).toBeLessThan(1000);
+
+    // An object in a distant cell stays in the draw; a ground record there does not.
+    const far = { x: pose.position.x + 6 * 65_536, y: 0, z: pose.position.z };
+    const withObject = planErisFrame(
+      surfaceOf([placement(square(), far)]),
+      pose,
+      doc
+    );
+    const withGround = planErisFrame(
+      surfaceOf([{ ...placement(square(), far), kind: 'ground' }]),
+      pose,
+      doc
+    );
+    expect(withObject.triangleCount).toBe(withObject.fillTriangleCount + 2);
+    expect(withGround.triangleCount).toBe(withGround.fillTriangleCount);
   });
 
   test('puts a face straight ahead at positive view depth in its own colour', async () => {

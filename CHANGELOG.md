@@ -12,6 +12,18 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Fixed
 
+- **Damocles draws what the Working Authority draws: the occupied Surface Cell,
+  not the whole workspace.** `planErisFrame` re-emitted all 207 placements of
+  the Eris workspace every frame, so buildings and aprons stood where the
+  original shows bare ground. It now honours the bound recovered in #370 —
+  ground records and Surface Structures from the occupied cell alone, objects
+  from anywhere on the Body, because `$052C9C` applies no distance test to
+  residents. At the arrival Pose that is 9 placements of 207, and 681 triangles
+  where 18,008 were planned before, with the planner at 0.09 ms against 2.2 ms.
+  The authored ground fill is unchanged: it is eye-relative and stands in for
+  the native horizon slots. `camera.farPlane` stays `authored` — the Working
+  Authority has no far plane in the projection sense, so there is nothing
+  recovered to replace it with (#373).
 - **The Body Coordinate Readout is decoded, and the Damocles Panel Rendition
   prints it.** Each field is the top ten bits of the player's body position —
   `(position >> 18)`, the z axis biased by a quarter turn — rescaled from 1024

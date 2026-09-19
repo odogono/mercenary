@@ -77,6 +77,28 @@ export const cellOf = (position: Vector3, grid: ErisGrid): ErisCell => ({
   z: Math.floor(position.z / grid.cellUnits) - grid.origin.z
 });
 
+/// Whether the Working Authority draws this placement from where the player stands (#373).
+///
+/// Three families, three bounds. A Surface Structure is drawn only from its own Surface Cell:
+/// the plan and detail renderers have five call sites between them and all five sit in the
+/// bound-workspace dispatch at `$0533D4..$053418`, which is the Reference Build's Structure
+/// Reach (ADR 0034). A ground record follows an altitude-indexed cell window whose entry for
+/// the on-foot altitude is zero, so on foot it is the occupied cell as well — a Session that
+/// ever flies needs the window itself, not this. An object has no distance test at all:
+/// `$052C9C` keeps every resident of the Body however far away it stands.
+export const withinDrawBound = (
+  placement: ErisPlacement,
+  position: Vector3,
+  grid: ErisGrid
+): boolean => {
+  if (placement.kind === 'object') {
+    return true;
+  }
+  const here = cellOf(position, grid);
+  const there = cellOf(placement.position, grid);
+  return here.x === there.x && here.z === there.z;
+};
+
 /** `$7AF6 >= 0`: both unsigned cell fractions are in `[0.25, 0.75)`. */
 export const insideCentralCellHalf = (
   position: Vector3,

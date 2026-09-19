@@ -323,9 +323,12 @@ test('/damocles boots the Damocles Gameplay Session on foot at Eris Capital Spac
   await expect(panel.locator('.aux-title')).toHaveText('DAMOCLES');
   const frame = page.locator('#frame');
   expect(await frame.getAttribute('data-cell')).toBe('7-8');
-  expect(Number(await frame.getAttribute('data-triangles'))).toBeGreaterThan(
-    1000
-  );
+  // The recovered draw bound: cell 07-08's own ground records and structure, plus the Body's
+  // objects — 681 triangles here, where drawing every placement on the workspace emitted
+  // 18,008 (#373). Bounded rather than pinned, so a catalogue change does not fail here.
+  const triangles = Number(await frame.getAttribute('data-triangles'));
+  expect(triangles).toBeGreaterThan(100);
+  expect(triangles).toBeLessThan(1000);
   expect(await frame.getAttribute('data-unresolved')).toBe('19');
 
   await testInfo.attach('damocles-start', {
@@ -359,7 +362,8 @@ test('the arrow keys walk the player and the Session Resume is Damocles-only', a
     .poll(async () => Number(await frame.getAttribute('data-heading')))
     .not.toBeCloseTo(startHeading, 3);
   await page.keyboard.up('ArrowRight');
-  // Every placement is drawn from wherever the player stands.
+  // The recovered bound is the occupied Surface Cell, not a distance: walking within one
+  // cell changes nothing about what is drawn (#373).
   expect(await frame.getAttribute('data-triangles')).toBe(triangles);
 
   // Blur suspends and writes the resume; a reload lands where the player stood.
@@ -432,10 +436,18 @@ test('a long walk crosses into the neighbouring cell', async ({ page }) => {
     after: string;
     before: string;
     elapsed: number;
+    trianglesAfter: number;
+    trianglesBefore: number;
   };
   expect(result.before).toBe('07-08');
   expect(result.after).toBe('06-08');
   expect(result.elapsed).toBeGreaterThan(90);
+  // Crossing a cell boundary changes what is drawn, because the recovered bound draws a
+  // cell's ground records and structures from that cell alone (#373). Both draws stay far
+  // below the 18,008 triangles the every-placement plan emitted here.
+  expect(result.trianglesBefore).not.toBe(result.trianglesAfter);
+  expect(result.trianglesBefore).toBeLessThan(3000);
+  expect(result.trianglesAfter).toBeLessThan(3000);
 });
 
 test('the System Menu, Saves, New Game and Shell Console are on /damocles', async ({
