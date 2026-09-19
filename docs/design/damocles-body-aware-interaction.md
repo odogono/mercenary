@@ -520,6 +520,15 @@ every reachable state and wrong in the one the original can express: the probe's
 `antigrav-listed-not-carried` case shows the handlers following the flag while the array disagrees.
 Validation still requires the two to agree, so the stored pair is checked rather than trusted.
 
+> **Departed from in #347, with the reason recorded.** The divergence the probe showed is between
+> the original's *two* representations, `$61CE` and the bit. This port has one: `carried` is the
+> stack, and the live bit is `carried` together with the briefcase overflow store. The other
+> possible source, an authored bit 7 in the Catalogue, is zero for all 241 residents in the pinned
+> capture, so no content can produce a disagreement either. A stored bit would therefore be a
+> field validation re-derives on the next line, and the contract's own rule — that the two must
+> agree — is what makes it redundant. It is recomputed, and `liveCarriedInstance` is the one
+> place that reads it. If a capture ever shows an authored bit 7, this reverts to stored.
+
 ### Content identity
 
 `DamoclesSaveIdentity` replaces `erisSchemaVersion` with one payload-wide Damocles presentation

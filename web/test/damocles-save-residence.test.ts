@@ -13,6 +13,7 @@ import {
   decodeDamoclesSave,
   initialDamoclesSaveScript
 } from '../src/damocles/save.ts';
+import { TRIGGER_FOR_RESIDENT } from '../src/damocles/scripts.ts';
 
 let catalogue: Catalogue;
 beforeAll(async () => {
@@ -60,6 +61,16 @@ const carry = (value: ReturnType<typeof record>, ids: string[]) => {
         .placementClass!
     }
   }));
+  // Taking an object fires its pickup trigger and the launch path clears bit 7, so a carried
+  // trigger object cannot leave its trigger armed. Nothing re-arms one.
+  value.snapshot.script = {
+    ...value.snapshot.script,
+    triggers: value.snapshot.script.triggers.map(trigger =>
+      ids.some(id => TRIGGER_FOR_RESIDENT[id] === trigger.index)
+        ? { ...trigger, armed: false }
+        : trigger
+    )
+  };
 };
 
 describe('body-aware Save Snapshot admission', () => {

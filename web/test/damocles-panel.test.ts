@@ -11,6 +11,7 @@ import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { damoclesTitle } from '../src/damocles/title.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { intent } from '../src/gameCore/index.ts';
+import { arrivalPoses } from './damocles-pose.ts';
 
 const content = async () => {
   const [catalogue, presentation, strings] = await Promise.all([
@@ -23,6 +24,7 @@ const content = async () => {
   return {
     catalogue: parsed,
     doc,
+    poses: await arrivalPoses(),
     presentationSha256: 'test-presentation',
     strings: parseDamoclesStrings(strings),
     surface: erisSurfaceFrom(parsed, doc)

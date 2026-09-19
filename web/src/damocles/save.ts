@@ -4,6 +4,7 @@ import {
   type DamoclesDisplay,
   type DamoclesMessageId
 } from './display.ts';
+import { admittedPoses, type ArrivalPoses } from './poses.ts';
 import {
   validStructureResidence,
   type PlacedResidence,
@@ -19,6 +20,8 @@ import {
 import {
   ORDINARY_DISPLAY_FRAMES,
   SCRIPTS,
+  SCRIPT_FOR_TRIGGER,
+  TRIGGER_FOR_RESIDENT,
   WAIT_FROM_DOCUMENT,
   isScriptId,
   type ScriptId,
@@ -538,7 +541,8 @@ export const encodeDamoclesSave = (record: DamoclesSaveRecord): string =>
 export const decodeDamoclesSave = (
   encoded: string,
   expected: DamoclesSaveIdentity,
-  catalogue?: Catalogue
+  catalogue?: Catalogue,
+  poses?: ArrivalPoses
 ): DamoclesSaveRecord => {
   let parsed: unknown;
   try {
@@ -677,6 +681,14 @@ export const decodeDamoclesSave = (
     if (!catalogue.bodies.some(body => body.id === pose.body)) {
       return fail('pose names an unknown Body');
     }
+    // A Body is only switchable, and only standable, where an admitted Pose anchors it: without
+    // a recovered workspace origin the Pose's cell cannot be related to any resident placement.
+    if (
+      poses !== undefined &&
+      !admittedPoses(poses).some(item => item.body === pose.body)
+    ) {
+      return fail('pose names a Body with no admitted arrival Pose');
+    }
     validateResidence(catalogue, residence);
     if (
       briefcaseStore.some(
@@ -703,15 +715,29 @@ export const decodeDamoclesSave = (
     16
   );
   const script = scriptOf(snapshot['script']);
-  const trigger2 = script.triggers.find(trigger => trigger.index === 2)!;
-  if (
-    (trigger2.armed &&
-      (carried.includes('object-slot-183') ||
-        briefcaseStore.includes('object-slot-183') ||
-        residence.some(item => item.instance === 'object-slot-183'))) ||
-    (script.execution !== null && trigger2.armed)
-  ) {
-    return fail('trigger 2 contradicts the limo-key Session State');
+  // An armed trigger requires its object to be at its Catalogue placement and absent from the
+  // Carried Stack: the launch path clears bit 7, and nothing re-arms a trigger, so an armed
+  // trigger whose object has been taken or moved is a state no sequence of actions reaches.
+  for (const [instance, index] of Object.entries(TRIGGER_FOR_RESIDENT)) {
+    const trigger = script.triggers.find(item => item.index === index);
+    if (trigger === undefined || !trigger.armed) {
+      continue;
+    }
+    if (
+      carried.includes(instance) ||
+      briefcaseStore.includes(instance) ||
+      residence.some(item => item.instance === instance)
+    ) {
+      return fail(
+        `trigger ${index} contradicts ${instance}'s Object Residence`
+      );
+    }
+    // A response that is running cannot also be waiting to be launched.
+    if (script.execution?.script === SCRIPT_FOR_TRIGGER[index]) {
+      return fail(
+        `trigger ${index} is armed while its own response is running`
+      );
+    }
   }
   let structure: BoundStructureSnapshot | null = null;
   if (snapshot['structure'] !== null) {

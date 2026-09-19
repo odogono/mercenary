@@ -173,19 +173,30 @@ const structureMesh = (
   return chosen.walkMesh ?? chosen.mesh;
 };
 
+/// The one surface the session walks, for a named Body anchored at a named workspace origin.
+///
+/// The Body and the origin are the only two things that vary between Bodies: the cell size,
+/// the orientation convention and the structure fallback are payload-wide. A body switch
+/// therefore rebuilds this rather than storing a second world (#347).
+export interface SurfaceAnchor {
+  readonly bodyId: string;
+  readonly origin: { readonly x: number; readonly z: number };
+}
+
 export const erisSurfaceFrom = (
   catalogue: Catalogue,
-  doc: ErisPresentationDocument
+  doc: ErisPresentationDocument,
+  anchor: SurfaceAnchor = { bodyId: doc.body.id, origin: doc.grid.origin }
 ): ErisSurface => {
   const grid: ErisGrid = {
     cellsPerAxis: doc.grid.cellsPerAxis,
     cellUnits: doc.grid.cellUnits,
-    origin: doc.grid.origin
+    origin: anchor.origin
   };
-  const body = catalogue.bodies.find(entry => entry.id === doc.body.id);
+  const body = catalogue.bodies.find(entry => entry.id === anchor.bodyId);
   if (body === undefined) {
     throw new Error(
-      `The Damocles Catalogue has no body ${doc.body.id} for ${doc.body.name}`
+      `The Damocles Catalogue has no body ${anchor.bodyId} for ${doc.body.name}`
     );
   }
   const models = new Map(catalogue.models.map(model => [model.id, model]));

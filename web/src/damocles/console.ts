@@ -16,7 +16,8 @@ const HELP = [
   'get · drop',
   'panel <targ|damocles> · set <name> <value>',
   `set names: ${SETTING_NAMES.join(', ')}`,
-  'save <slot> [confirm] · load <slot>'
+  'save <slot> [confirm] · load <slot>',
+  'switch <pose-id|body>'
 ];
 
 const threeDecimals = (value: number): string => {
@@ -128,6 +129,19 @@ export const executeDamoclesConsoleCommand = (
       return host.session().drop().kind === 'dropped'
         ? [`dropped ${snapshot.inventoryLabel}`]
         : ['drop refused'];
+    }
+    case 'switchBody': {
+      const outcome = host.session().switchToPose(command.name);
+      if (outcome.kind === 'declined') {
+        return [`switch declined: ${outcome.reason}`];
+      }
+      // A one-shot Semantic Action. The boot wrapper's existing rule checkpoints Session Resume
+      // for it, so there is no new checkpoint rule here.
+      const snapshot = host.session().snapshot;
+      return [
+        `switched to ${outcome.pose}`,
+        `${damoclesWhere(snapshot.cell)} · cell ${snapshot.cell.x}-${snapshot.cell.z}`
+      ];
     }
     case 'gotoRoom':
       return ['Damocles has no Rooms'];

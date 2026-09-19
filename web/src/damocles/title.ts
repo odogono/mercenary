@@ -3,6 +3,7 @@ import type { PanelViewModel } from '../shell/panel.ts';
 import { titleStorageKeys, type TitleRuntime } from '../shell/title.ts';
 import { readErisPresentation } from './documents.ts';
 import { damoclesPanelViewModel } from './panel.ts';
+import { parseDamoclesArrivalPoses } from './poses.ts';
 import type { DamoclesSaveSnapshot } from './save.ts';
 import {
   DamoclesSession,
@@ -14,6 +15,8 @@ import { erisSurfaceFrom } from './world.ts';
 
 export const DAMOCLES_CATALOGUE_PATH = '/payload/damocles/catalogue.json';
 export const DAMOCLES_STRINGS_PATH = '/payload/damocles/strings.json';
+export const DAMOCLES_ARRIVAL_POSES_PATH =
+  '/payload/damocles/arrival-poses.json';
 export const ERIS_PRESENTATION_PATH = '/damocles/eris.json';
 
 /// One identity over every Damocles presentation document, in a fixed document order.
@@ -54,11 +57,13 @@ export const damoclesTitle: TitleRuntime<
 > = {
   create: (content, restore) => new DamoclesSession(content, restore),
   load: async fetch => {
-    const [rawCatalogue, rawPresentation, rawStrings] = await Promise.all([
-      fetch(DAMOCLES_CATALOGUE_PATH),
-      fetch(ERIS_PRESENTATION_PATH),
-      fetch(DAMOCLES_STRINGS_PATH)
-    ]);
+    const [rawCatalogue, rawPresentation, rawStrings, rawPoses] =
+      await Promise.all([
+        fetch(DAMOCLES_CATALOGUE_PATH),
+        fetch(ERIS_PRESENTATION_PATH),
+        fetch(DAMOCLES_STRINGS_PATH),
+        fetch(DAMOCLES_ARRIVAL_POSES_PATH)
+      ]);
     const doc = labelled(ERIS_PRESENTATION_PATH, () =>
       readErisPresentation(rawPresentation.value)
     );
@@ -68,14 +73,25 @@ export const damoclesTitle: TitleRuntime<
     const strings = labelled(DAMOCLES_STRINGS_PATH, () =>
       parseDamoclesStrings(rawStrings.value)
     );
+    const poses = labelled(DAMOCLES_ARRIVAL_POSES_PATH, () =>
+      parseDamoclesArrivalPoses(rawPoses.value)
+    );
     if (strings.source.programSha256 !== catalogue.source.programSha256) {
       throw new Error(
         `${DAMOCLES_STRINGS_PATH}: program identity does not match the Catalogue`
       );
     }
+    // The arrival Poses decide which Bodies are switchable and which a Save may name, so a
+    // payload whose poses came from another program is refused rather than half-admitted.
+    if (poses.programSha256 !== catalogue.source.programSha256) {
+      throw new Error(
+        `${DAMOCLES_ARRIVAL_POSES_PATH}: program identity does not match the Catalogue`
+      );
+    }
     return {
       catalogue,
       doc,
+      poses,
       presentationSha256: await presentationIdentity([rawPresentation.text]),
       strings,
       surface: erisSurfaceFrom(catalogue, doc)

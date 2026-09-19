@@ -155,7 +155,7 @@ try {
   const ownershipOutcome = await ownership.claim();
   const resumeRead =
     ownershipOutcome.kind === 'owned'
-      ? readDamoclesResume(storage, identity, content.catalogue)
+      ? readDamoclesResume(storage, identity, content.catalogue, content.poses)
       : ({ kind: 'empty' } as const);
 
   const preferences = createPreferences({
@@ -272,6 +272,7 @@ try {
     }),
     catalogue: content.catalogue,
     identity,
+    poses: content.poses,
     release,
     restore: saved => {
       replaceSession(saved);
@@ -309,7 +310,8 @@ try {
         command.kind === 'getObject' ||
         command.kind === 'gotoCell' ||
         command.kind === 'load' ||
-        command.kind === 'save'
+        command.kind === 'save' ||
+        command.kind === 'switchBody'
       ) {
         checkpointChangedResume();
       }
@@ -401,7 +403,8 @@ try {
       const recovered = readDamoclesResume(
         storage,
         identity,
-        content.catalogue
+        content.catalogue,
+        content.poses
       );
       notices.dismiss();
       if (recovered.kind === 'restored') {

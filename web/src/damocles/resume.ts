@@ -4,6 +4,7 @@ import {
   type SessionResumeStorage
 } from '../shell/resume.ts';
 import { titleStorageKeys } from '../shell/title.ts';
+import type { ArrivalPoses } from './poses.ts';
 import {
   DAMOCLES_SAVE_SCHEMA_VERSION,
   damoclesWhere,
@@ -31,7 +32,8 @@ export type DamoclesResumeRead =
 export const readDamoclesResume = (
   storage: SessionResumeStorage | undefined,
   identity: DamoclesSaveIdentity,
-  catalogue?: Catalogue
+  catalogue?: Catalogue,
+  poses?: ArrivalPoses
 ): DamoclesResumeRead => {
   if (storage === undefined) {
     return { kind: 'unavailable', reason: 'browser storage is unavailable' };
@@ -48,7 +50,7 @@ export const readDamoclesResume = (
   try {
     return {
       kind: 'restored',
-      snapshot: decodeDamoclesSave(encoded, identity, catalogue).snapshot
+      snapshot: decodeDamoclesSave(encoded, identity, catalogue, poses).snapshot
     };
   } catch (error) {
     const reason = reasonOf(error);

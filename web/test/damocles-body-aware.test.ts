@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 
 import { parseCatalogue, type Catalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
+import { parseDamoclesArrivalPoses } from '../src/damocles/poses.ts';
 import {
   catalogueResidence,
   generateAcceptanceMatrix,
@@ -17,6 +18,7 @@ import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 
 let catalogue: Catalogue;
+/// The raw payload, for the acceptance-matrix generator, which reads it as published.
 let arrivalPoses: unknown;
 let content: DamoclesContent;
 
@@ -31,6 +33,7 @@ beforeAll(async () => {
   content = {
     catalogue,
     doc,
+    poses: parseDamoclesArrivalPoses(arrivalPoses),
     presentationSha256: 'test',
     strings: parseDamoclesStrings(
       await Bun.file('../payload/damocles/strings.json').json()

@@ -9,6 +9,12 @@ import {
 import type { ErisPresentationDocument } from './documents.ts';
 import { walk, type WalkRules } from './mover.ts';
 import {
+  poseOfArrival,
+  resolvePose,
+  type ArrivalPoses,
+  type PoseResolution
+} from './poses.ts';
+import {
   catalogueResidence,
   validStructureResidence,
   type PlacedResidence,
@@ -45,6 +51,7 @@ import {
 import { findMessage, type DamoclesStrings } from './strings.ts';
 import {
   cellOf,
+  erisSurfaceFrom,
   insideCentralCellHalf,
   startPose,
   structureInCell,
@@ -92,6 +99,8 @@ export type Selection =
 export interface DamoclesContent {
   readonly catalogue: Catalogue;
   readonly doc: ErisPresentationDocument;
+  /// The arrival Poses, which decide which Bodies are switchable.
+  readonly poses: ArrivalPoses;
   /// One identity over every Damocles presentation document, hashed from the bytes served.
   readonly presentationSha256: string;
   readonly strings: DamoclesStrings;
@@ -173,6 +182,8 @@ export class DamoclesSession implements TitleSession<
   private pose: Pose;
   private regionIndex: number | null = null;
   private residence = new Map<string, Residence>();
+  /// The Body the session is standing on. A switch rebuilds it; walking never does.
+  private surface: ErisSurface;
   private script: ScriptState;
   private scrollCounter: number;
 
@@ -182,6 +193,7 @@ export class DamoclesSession implements TitleSession<
     options: { readonly soundPermitted?: () => boolean } = {}
   ) {
     this.content = content;
+    this.surface = content.surface;
     if (restore !== undefined) {
       this.validateRestore(restore);
     }
@@ -218,7 +230,31 @@ export class DamoclesSession implements TitleSession<
     this.residence = new Map(
       restore?.residence?.map(item => [item.instance, item.residence]) ?? []
     );
+    // A restore may name a Body other than the document's, so the surface is anchored from the
+    // Pose before anything binds against it.
+    this.surface = this.surfaceFor(this.pose.body);
     this.bindAt(this.pose, restore?.structure);
+  }
+
+  /// The surface for a Body, anchored at the workspace origin its admitted Pose publishes.
+  ///
+  /// The document's own surface is reused where it already names that Body, so the common case
+  /// rebuilds nothing. `validateRestore` has already refused a Body with no admitted Pose, so a
+  /// missing origin here is a programming error rather than a refusal.
+  private surfaceFor(bodyId: string): ErisSurface {
+    if (bodyId === this.content.surface.body.id) {
+      return this.content.surface;
+    }
+    const origin = this.content.poses.poses.find(
+      pose => pose.body === bodyId && pose.workspaceOrigin !== null
+    )?.workspaceOrigin;
+    if (origin === undefined || origin === null) {
+      throw new Error(`Damocles Body ${bodyId} has no admitted arrival Pose`);
+    }
+    return erisSurfaceFrom(this.content.catalogue, this.content.doc, {
+      bodyId,
+      origin
+    });
   }
 
   private validateRestore(restore: DamoclesSaveSnapshot): void {
@@ -300,8 +336,8 @@ export class DamoclesSession implements TitleSession<
 
   private bindAt(pose: Pose, restore?: BoundStructureSnapshot | null): void {
     const placement =
-      pose.body === this.content.surface.body.id
-        ? structureInCell(this.content.surface, pose.position)
+      pose.body === this.surface.body.id
+        ? structureInCell(this.surface, pose.position)
         : undefined;
     if (restore !== undefined) {
       if (placement?.id !== restore?.instanceId) {
@@ -347,7 +383,7 @@ export class DamoclesSession implements TitleSession<
     }
     this.regionIndex =
       placement !== undefined &&
-      insideCentralCellHalf(pose.position, this.content.surface.grid)
+      insideCentralCellHalf(pose.position, this.surface.grid)
         ? structureRegionAt(placement, pose, this.negateModelZ, this.unitsFor)
         : null;
   }
@@ -443,7 +479,7 @@ export class DamoclesSession implements TitleSession<
       position: { readonly x: number; readonly y: number; readonly z: number };
     }[] = [];
     const seen = new Set<string>();
-    for (const placement of this.content.surface.placements) {
+    for (const placement of this.surface.placements) {
       if (placement.kind !== 'object' || seen.has(placement.id)) {
         continue;
       }
@@ -540,7 +576,7 @@ export class DamoclesSession implements TitleSession<
       const form =
         model.variants.find(variant => variant.id === model.id) ??
         model.variants[0];
-      const base = this.content.surface.placements.find(
+      const base = this.surface.placements.find(
         placement => placement.id === instance.id
       );
       const placement: ErisPlacement = {
@@ -625,7 +661,7 @@ export class DamoclesSession implements TitleSession<
       briefcaseStore: [...this.briefcaseStore],
       capacity: this.capacity(),
       carried: [...this.carried],
-      cell: cellOf(this.pose.position, this.content.surface.grid),
+      cell: cellOf(this.pose.position, this.surface.grid),
       display: this.script.display,
       displayCells: displayCells(
         this.script.display,
@@ -681,7 +717,7 @@ export class DamoclesSession implements TitleSession<
       }
       if (
         placement !== null &&
-        insideCentralCellHalf(moved.position, this.content.surface.grid)
+        insideCentralCellHalf(moved.position, this.surface.grid)
       ) {
         const clamped = clampStructureStep(
           placement,
@@ -1035,9 +1071,75 @@ export class DamoclesSession implements TitleSession<
     return { kind: 'dropped' };
   }
 
+  /// Switch to another Body, naming a Pose id or a Body with exactly one admitted Pose.
+  ///
+  /// One commit. Before it nothing happened; after it the current Body, the Pose and the bound
+  /// Structure Workspace have all moved together. There is no transit, no duration and no
+  /// animation, because none is recovered and none is play.
+  ///
+  /// Validate, then commit: the resolution and the surface are both computed before any field
+  /// is replaced, so a decline leaves the live session exactly as it was. A half-switched
+  /// session is not a state this contract admits.
+  ///
+  /// What it does not touch: the Carried Stack, which is body-independent by the original's own
+  /// rule because carried objects hold body byte $78 (VOID); Object Residence, which is
+  /// body-scoped and materialises lazily, so a Body never visited has no state to correct; and
+  /// the Damocles Script, which is neither cancelled, restarted nor advanced. It stores no
+  /// workspace binding -- binding is recomputed from the Pose exactly as walking does.
+  switchToPose(
+    name: string
+  ):
+    | { readonly kind: 'declined'; readonly reason: string }
+    | { readonly kind: 'switched'; readonly pose: string } {
+    const resolution: PoseResolution = resolvePose(
+      this.content.poses,
+      this.content.catalogue,
+      name
+    );
+    if (resolution.kind === 'unknown') {
+      return { kind: 'declined', reason: `no Body or Pose named '${name}'` };
+    }
+    if (resolution.kind === 'ambiguous') {
+      return {
+        kind: 'declined',
+        reason: `that Body has ${resolution.poses.length} admitted Poses: ${resolution.poses.join(', ')}`
+      };
+    }
+    if (resolution.kind === 'unanchored') {
+      return {
+        kind: 'declined',
+        reason: `${resolution.pose.id} has no recovered workspace origin`
+      };
+    }
+    const arrival = resolution.pose;
+    if (!arrival.onFoot) {
+      return {
+        kind: 'declined',
+        reason: `${arrival.id} is not an on-foot Pose`
+      };
+    }
+    let surface: ErisSurface;
+    try {
+      surface = this.surfaceFor(arrival.body);
+    } catch (error) {
+      return {
+        kind: 'declined',
+        reason: error instanceof Error ? error.message : String(error)
+      };
+    }
+    // Everything that could refuse has refused. From here the commit cannot fail.
+    this.surface = surface;
+    this.pose = poseOfArrival(arrival, this.content.doc);
+    this.boundPlacement = null;
+    this.regionIndex = null;
+    this.attachmentUnits = new Map();
+    this.bindAt(this.pose);
+    return { kind: 'switched', pose: arrival.id };
+  }
+
   /// Land at an Eris cell's centre, keeping heading and the walk eye height.
   teleportToCell(x: number, z: number): void {
-    const { grid } = this.content.surface;
+    const { grid } = this.surface;
     if (
       !Number.isInteger(x) ||
       !Number.isInteger(z) ||
