@@ -28,7 +28,7 @@ export interface FlyoverBody {
   readonly id: string;
   readonly position: Vector3;
   readonly provenance: {
-    readonly colour: 'authored';
+    readonly colour: 'authored' | 'recovered';
     readonly identity: 'authored' | 'recovered';
     readonly position: FlyoverValueProvenance;
     readonly radius: 'authored' | 'mechanically-derived';
@@ -204,6 +204,7 @@ export const composeGammaSystem = (
       position: { ...source.position },
       provenance: {
         ...authoredPresentation,
+        colour: 'recovered',
         identity: 'recovered',
         position: 'recovered',
         radius: 'mechanically-derived'

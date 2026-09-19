@@ -89,7 +89,7 @@ manual transcription, Mercenary Site). Search hypotheses only.
 | Hypothesis | Status | Working-Authority Evidence |
 |---|---|---|
 | Damocles draws filled polygons (not C64-style wireframe) | **Confirmed** | Outdoor PNGs show large flat-shaded ground/road/building faces; top-half viewport uses ~14 unique RGB colours (no line-list silhouette). Dual ST low-res playfields at `$068000` / `$078000`. |
-| 16-bit rasteriser with palette management | **Partially confirmed** | Soft ST `0RGB` colour longwords at `$0060C0+` after load (absent/different at title); hardware-style 12-bit colours match observed face colours (grey road, green ground, brown/cyan building). Full draw routine not disassembled. |
+| 16-bit rasteriser with palette management | **Partially confirmed** (see correction below: `$0060C0` is the per-body colour table, not a face palette) | Soft ST `0RGB` colour longwords at `$0060C0+` after load (absent/different at title); hardware-style 12-bit colours match observed face colours (grey road, green ground, brown/cyan building). Full draw routine not disassembled. |
 | Day / night shading | **Partially confirmed (mode, not solar)** | Scene-mode palette swap is real: the interior pose rewrites the entire 16-entry hardware palette (`$FF8240+`) versus outdoors, while the `$0060C0` soft table stays byte-identical. Sun-angle / long-duration outdoor shading still not observed (idle probe negative). |
 | Interiors with outward windows | **Confirmed** | `interior-window.sav` resumes inside a spaceport building looking out: interior cyan floor in the foreground, and through the window opening the exterior grey pad, green terrain, and starfield are genuinely rendered in the same frame (not a painted backdrop). Captured by human walk + `statesave`; see interior runs below. |
 
@@ -105,6 +105,22 @@ manual transcription, Mercenary Site). Search hypotheses only.
 ### Soft colour / shade tables — Confirmed (pointer + shape)
 
 **Pointer:** `$0060C0`, present after world load, different at title-screen.
+
+_(Corrected 2026-09-19, issue #379: `$0060C0` is **not** a world face-colour
+palette. It is the per-body colour table — one longword an `index * 4` body
+slot, low word an ST `0RGB` value, 31 slots over 124 bytes — decoded in full in
+`damocles-gamma-system.md`. The eight entries listed below are body slots 0–7
+(DIALIS, ICARUS, MIDAS, ACHERON, DION, ATROPOS, CLOTHO, LACHESIS), and the
+"shade / alternate bank" at `$0060E0+` is simply slots 8 onward. The table's
+being byte-identical indoors and outdoors, read below as a palette that survives
+a scene-mode swap, is instead the ordinary behaviour of a static body table. The
+index column below is also misaligned: there is no `$000` entry — `$0060C0`
+begins at `$777`, and each listed index is one too high. The role labels are
+coincidence, since a body colour and a face colour drawn from the same ST
+palette naturally collide. The rest of this note — filled polygons, the
+`$FF8240` hardware-palette swap, the playfields — is unaffected; only the
+identity of this table is corrected. The original text is kept below as the
+reading that was superseded.)_
 
 Shape: packed as big-endian longwords `00000xxx` where `xxx` is an ST `0RGB`
 colour. First eight after load (from
@@ -125,7 +141,9 @@ Immediately below (`$0060E0+`) further `0RGB` longwords include `$030`
 (green) and repeated greys/browns — a **shade / alternate face-colour bank**,
 not proven as animated day/night in this pass.
 
-SHA-256 of the 32-byte primary table (`$0060C0`–`$0060DF`):
+SHA-256 of the first 32 bytes (`$0060C0`–`$0060DF`, i.e. body slots 0–7 —
+see the correction above; this is a prefix of the 124-byte table, not a whole
+table):
 `d56683f6e9507fa29f482a5b9b70898a0ada80738bd08da0ac041d9050cc4029`
 (stable across the cited `first-world` outdoor captures used for this note).
 

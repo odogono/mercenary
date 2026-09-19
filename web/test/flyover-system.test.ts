@@ -167,7 +167,7 @@ describe('the composed Gamma System', () => {
       );
       expect(body.ranges).toEqual(['orbital']);
       expect(body.provenance).toEqual({
-        colour: 'authored',
+        colour: 'recovered',
         identity: 'recovered',
         position: 'recovered',
         radius: 'mechanically-derived',

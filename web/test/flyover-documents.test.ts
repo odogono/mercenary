@@ -365,6 +365,10 @@ describe('the canonical Flyover presentation documents', () => {
     );
     expect(targDocument.bodies).toHaveLength(4);
     expect(gammaDocument.bodies).toHaveLength(29);
+    // Recovered, not chosen: the low word of each `index * 4` longword at
+    // `$0060C0` is an ST `0RGB` value, expanded by `n * 36` with `$7` as 255
+    // (#379, docs/research/damocles-gamma-system.md). Colours repeat in the
+    // original, so the duplicates below are faithful rather than placeholders.
     expect(
       Object.fromEntries(
         gammaDocument.bodies.map(body => [body.id, body.colour])
