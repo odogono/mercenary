@@ -554,10 +554,20 @@ it('offers a ground template one form per evidenced scene palette', async () => 
   expect([0, 2, 3].map(sceneColour)).toEqual(['#eeee22', '#eeee22', '#eeee22']);
   expect(sceneColour(1)).toBe('#eeeeee');
 
-  // The one template no captured cell table places keeps the named gap.
-  const unplaced = data.models.find(model => model.id === 'object-041b8a')!;
-  expect(unplaced.omissions).toContain('paletteBinding');
-  expect(unplaced.variants).toHaveLength(1);
+  // The one template no captured cell table placed is now placed. Eighteen further
+  // live workspaces (#172) bind it through six evidenced palettes, which is the
+  // follow-up the catalogue note named: the gap closed by capturing more bodies,
+  // not by authoring a default.
+  const wasUnplaced = data.models.find(model => model.id === 'object-041b8a')!;
+  expect(wasUnplaced.omissions).not.toContain('paletteBinding');
+  expect(wasUnplaced.variants.map(variant => variant.id)).toEqual([
+    'palette-76',
+    'palette-107',
+    'palette-113',
+    'palette-130',
+    'palette-131',
+    'palette-132'
+  ]);
 });
 
 it('recovers the spaceport wall below the window without closing the opening', async () => {
@@ -1022,9 +1032,12 @@ it('places only residents selected by the native surface-body association', asyn
     instance.id.startsWith('gaea-surface-')
   );
   expect(gaeaAssemblies).toHaveLength(82);
+  // Gaea carries two recovered windows: UR CITY at origin 512,1792 and CHALDEA
+  // METROPOLIS at 256,768 (#172). Both place into one Body surface at their own
+  // world coordinates, which is why this count covers more than one map.
   expect(
     data.instances.filter(instance => instance.location?.body === 'body-8')
-  ).toHaveLength(147);
+  ).toHaveLength(372);
   expect(
     data.instances.some(instance => instance.id === 'gaea-ur-city-surface-24')
   ).toBe(true);
@@ -1043,18 +1056,26 @@ it('places only residents selected by the native surface-body association', asyn
   expect(
     gaeaAssemblies.some(instance => instance.id === 'gaea-surface-17')
   ).toBe(false);
+  // The last five are CHALDEA METROPOLIS, Gaea's second recovered window (#172).
+  // They are recovered place records from that window's own area list, not names
+  // extended from Birmingham Island or UR CITY.
   const gaeaPlaces = data.places.filter(place => place.body === 'body-8');
   expect(gaeaPlaces.map(place => place.name).sort()).toEqual([
     'AUTHORS HOUSE',
+    'BANK OF GAEA HQ',
     'ELMDON SPACEPORT',
     'ERIS PO TEMP HQ',
+    'ESTATE AGENTS',
     'GAEA BANK',
     'GUM STORE',
     'HANTZENS NEW HOUSE',
     'INDUSTRIAL CO-OP HSE1',
     'INDUSTRIAL CO-OP HSE2',
     'LAWSON BANK',
+    'MARILLION APARTMENTS',
+    'MEGA TRADING',
     'NOVAGEN OFFICE',
+    'TRADE COMMISSION',
     'VERDANT PARTY HQ'
   ]);
   expect(
@@ -1098,12 +1119,22 @@ it('paints the runway designations a ground record carries as vector text', asyn
   // One apron polygon, then the stroke glyphs of the painted number.
   expect(mesh.faces).toHaveLength(1);
   expect(mesh.lines.length).toBeGreaterThan(30);
-  // Every ground record now decodes, so none of them names this gap.
+  // Every Eris ground record decodes. Five records on three of the bodies added
+  // by #172 do not, and all five name one recovered reason: ground $6000 vector
+  // text is copied into the frame stream untransformed, and these cells carry a
+  // nonzero orientation. Eris never placed painted text at a nonzero orientation,
+  // so the gap only appears once other bodies are captured.
   expect(
-    data.models.filter(
-      model => model.kind === 'ground' && model.status !== 'decoded'
-    )
-  ).toHaveLength(0);
+    data.models
+      .filter(model => model.kind === 'ground' && model.status !== 'decoded')
+      .map(model => model.id)
+  ).toEqual([
+    'cronus-ground-01fe26-06-55',
+    'cyclopes-ground-01ead2-03-14',
+    'cyclopes-ground-01ead2-03-24',
+    'cyclopes-ground-01ead2-03-34',
+    'metis-ground-01edf2-03-65'
+  ]);
 });
 
 it('gives each door key and transporter slot its own label form', async () => {

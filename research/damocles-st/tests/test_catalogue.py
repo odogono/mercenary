@@ -1129,6 +1129,12 @@ class AttachmentKeyTests(unittest.TestCase):
             # The authored Birmingham stream repeats the two Dion cells (#324).
             'gaea-surface-de': 30,
             'gaea-surface-b2': 33,
+            # Recovered by #172's live TOLOSA workspace: the currency repository
+            # at cell $12 is keyed to slot 37, which resides on MIDAS. The guide
+            # said Tolosa's repository needs a key found on Midas; this is that
+            # claim met by recovered data, and it names the slot rather than the
+            # guide's letter.
+            'tolosa-surface-12': 37,
         })
         for slot in set(keyed.values()):
             name = next(item['name'] for item in payload['instances']
@@ -2139,21 +2145,22 @@ class SceneColourTemplateTests(unittest.TestCase):
                 for face in variant['mesh']['faces'] + variant['mesh']['lines']:
                     self.assertRegex(face['colour'], r'^#[0-9a-f]{6}$')
 
-    def test_the_unplaced_template_keeps_the_gap_and_names_the_next_probe(self):
+    def test_the_last_unplaced_template_is_placed_by_the_new_workspaces(self):
+        # The gap this test used to pin named its own next probe -- "a surface
+        # workspace capture on a further body". #172 ran it, and the template is
+        # placed through six evidenced palettes. No template now names the gap.
         document = self.payload()
         model = next(m for m in document['models'] if m['id'] == 'object-041b8a')
-        self.assertEqual(model['status'], 'partial')
-        self.assertEqual(model['omissions'], ['paletteBinding'])
-        self.assertIn('No captured surface workspace places this template', model['reason'])
-        self.assertIn('$1E400 cell table', model['reason'])
+        self.assertEqual(model['status'], 'decoded')
+        self.assertEqual(model['omissions'], [])
         self.assertEqual(
-            document['coverage']['classifications']['paletteBinding'], 1
+            [variant['id'] for variant in model['variants']],
+            ['palette-76', 'palette-107', 'palette-113',
+             'palette-130', 'palette-131', 'palette-132'],
         )
-        note = next(
-            entry for entry in document['coverage']['unexplored']
-            if 'issues/277' in entry
+        self.assertEqual(
+            document['coverage']['classifications'].get('paletteBinding', 0), 0
         )
-        self.assertIn('object slot 338', note)
 
     def test_a_template_palette_is_recorded_per_placing_cell(self):
         from damocleslab.catalogue import record_template_palettes

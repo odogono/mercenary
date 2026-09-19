@@ -75,27 +75,48 @@ const standingAt = (
 };
 
 describe('admitted Poses', () => {
-  test('are the seven anchored Poses on four Bodies', () => {
+  test('are the twenty-five anchored Poses on twenty-one Bodies', () => {
+    // #172 extracted eighteen further live workspaces, so the origins these Poses were waiting
+    // on now exist and the Poses are admitted. The gate itself is unchanged: a Pose is admitted
+    // exactly when a recovered workspace origin anchors its cell.
     const admitted = admittedPoses(poses);
     expect(admitted.map(pose => pose.id).sort()).toEqual([
+      'acheron',
+      'atropos',
+      'bacchus-transporter',
+      'clotho',
+      'cronus',
+      'cyclopes',
       'dion-2-3',
       'dion-transporter',
       'eris-spaceport-onfoot',
       'eris-transporter-11-8',
+      'gaea-transporter',
       'gaea-ur-city-4-2',
+      'icarus',
+      'logos-transporter',
+      'lucan',
+      'mentor-transporter',
+      'metis-transporter',
+      'pan',
+      'perseus',
+      'solon',
+      'thalia',
+      'theon',
+      'tolosa',
       'vesta-parliament-4-6',
       'vesta-transporter'
     ]);
-    expect([...new Set(admitted.map(pose => pose.body))].sort()).toEqual([
-      'body-11',
-      'body-14',
-      'body-4',
-      'body-8'
+    expect(new Set(admitted.map(pose => pose.body)).size).toBe(21);
+    // MIDAS and DAMOCLES are the two that stay out, and for a stated reason: neither capture
+    // stands in a built workspace, so the extractor refuses to place either (#172).
+    const unanchored = poses.poses.filter(
+      pose => pose.workspaceOrigin === null
+    );
+    expect(unanchored.map(pose => pose.id).sort()).toEqual([
+      'damocles',
+      'midas'
     ]);
-    // Twenty unanchored Poses carry an implied origin. It is a navigation lead, not an anchor,
-    // and admitting it would place objects against a guess. The eight Bodies captured on
-    // 2026-09-19 all land here: reaching a Body does not recover its workspace.
-    expect(poses.poses.length - admitted.length).toBe(20);
   });
 });
 
@@ -108,23 +129,26 @@ describe('addressing a Pose', () => {
   });
 
   test('a Body name resolves only where it has exactly one admitted Pose', () => {
-    // GAEA is the case that settles the rule: one admitted Pose, so the shorthand is unambiguous.
-    expect(resolvePose(poses, catalogue, 'gaea')).toMatchObject({
+    // CLOTHO is the case that settles the rule: one admitted Pose, so the shorthand is
+    // unambiguous. GAEA used to be that case and no longer is — its second window, CHALDEA
+    // METROPOLIS, was recovered by #172, so the Body name now names two admitted Poses.
+    expect(resolvePose(poses, catalogue, 'clotho')).toMatchObject({
       kind: 'resolved',
-      pose: { id: 'gaea-ur-city-4-2' }
+      pose: { id: 'clotho' }
     });
     expect(resolvePose(poses, catalogue, 'vesta')).toEqual({
       kind: 'ambiguous',
       poses: ['vesta-parliament-4-6', 'vesta-transporter']
     });
+    expect(resolvePose(poses, catalogue, 'gaea').kind).toBe('ambiguous');
     expect(resolvePose(poses, catalogue, 'eris').kind).toBe('ambiguous');
     expect(resolvePose(poses, catalogue, 'dion').kind).toBe('ambiguous');
   });
 
   test('an unanchored Pose is declined by name, which is why Poses are addressable', () => {
-    expect(resolvePose(poses, catalogue, 'gaea-transporter')).toMatchObject({
+    expect(resolvePose(poses, catalogue, 'midas')).toMatchObject({
       kind: 'unanchored',
-      pose: { id: 'gaea-transporter' }
+      pose: { id: 'midas' }
     });
   });
 
@@ -151,12 +175,7 @@ describe('the authored body switch', () => {
   });
 
   test('a declined switch leaves the session untouched', () => {
-    for (const name of [
-      'tharsis',
-      'vesta',
-      'gaea-transporter',
-      'object-slot-183'
-    ]) {
+    for (const name of ['tharsis', 'vesta', 'midas', 'object-slot-183']) {
       const session = new DamoclesSession(content);
       const before = JSON.stringify(session.captureResume());
       const outcome = session.switchToPose(name);
@@ -171,9 +190,9 @@ describe('the authored body switch', () => {
       kind: 'declined',
       reason: "no Body or Pose named 'tharsis'"
     });
-    expect(session.switchToPose('gaea-transporter')).toEqual({
+    expect(session.switchToPose('midas')).toEqual({
       kind: 'declined',
-      reason: 'gaea-transporter has no recovered workspace origin'
+      reason: 'midas has no recovered workspace origin'
     });
     const ambiguous = session.switchToPose('eris');
     expect(ambiguous.kind).toBe('declined');
@@ -213,7 +232,9 @@ describe('the authored body switch', () => {
     expect(session.switchToPose('vesta-parliament-4-6').kind).toBe('switched');
     expect(session.snapshot.bodyName).toBe('VESTA');
     expect(damoclesWhere(session.snapshot)).toBe('VESTA 04-06');
-    expect(session.switchToPose('gaea').kind).toBe('switched');
+    // GAEA now names two admitted Poses, so the Body shorthand no longer resolves; the Pose id
+    // does, and that is the point of addressing Poses rather than Bodies (#172).
+    expect(session.switchToPose('gaea-ur-city-4-2').kind).toBe('switched');
     expect(damoclesWhere(session.snapshot)).toBe('GAEA 04-02');
   });
 
@@ -312,9 +333,10 @@ describe('a Save names a Body with an admitted Pose', () => {
       identity,
       savedAt: '2026-09-19T12:00:00.000Z',
       schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
-      // ICARUS is a Catalogue Body with no arrival Pose at all.
-      snapshot: { ...snapshot, pose: { ...snapshot.pose, body: 'body-1' } },
-      where: 'ICARUS'
+      // MIDAS has an arrival Pose and no recovered workspace origin, so no admitted Pose
+      // anchors it; ICARUS used to stand here and is admitted since #172.
+      snapshot: { ...snapshot, pose: { ...snapshot.pose, body: 'body-2' } },
+      where: 'MIDAS'
     };
     expect(() =>
       decodeDamoclesSave(encodeDamoclesSave(record), identity, catalogue, poses)
@@ -372,7 +394,9 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
     {
       body: 'body-8',
       cell: { x: 4, z: 2 },
-      placements: 147,
+      // Gaea's two recovered windows, UR CITY and CHALDEA METROPOLIS, both place
+      // into one Body surface; the frame draws only the occupied cell's (#172).
+      placements: 372,
       pose: 'gaea-ur-city-4-2',
       triangles: 451
     },

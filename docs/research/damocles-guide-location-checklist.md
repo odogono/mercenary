@@ -130,13 +130,22 @@ on each of them; DAMOCLES also has no residents and was posed anyway. Keep #326
 open for that remaining coverage. The guide describes abandoned mines on
 LACHESIS, which is the strongest lead among the seven.
 
-What a capture did **not** deliver is now the whole of the remaining work on the
-eight. None of them has a recovered 16×16 workspace origin, so every one of the
-eight publishes a null `workspaceOrigin` beside the origin its own longwords
-imply. None has a recovered parent or interior placement for any resident. For
-each: recover the workspace and any structures/regions the intended delivery
-needs, and record mismatches rather than replacing observed values with the
-guide's values.
+**Seven of the eight now have a recovered 16×16 workspace too**, extracted from
+those same captures by [#172](https://github.com/odogono/mercenary/issues/172),
+so their poses are anchored and their `workspaceOrigin` is no longer null. The
+recovered area lists verify six of this note's leads outright — `PENN COLLEGE`
+on Solon, `IDI PALACE OF FUN` on Cyclopes, `RESEARCH LABORATORY` and two
+`EMERGENCY FACILITY` records on Perseus, `PAN HADES ADMIN DEPT`, and
+`LLOYDS GP4 INVESTMENT` on Clotho — as recovered runtime data rather than guide
+names. Tolosa's repository cell `$12` also turns out to carry a keyed entrance
+naming object slot 37, which resides on **MIDAS**: the guide said the repository
+needs a key found on Midas, and the recovered data says the same thing while
+naming the slot instead of the guide's letter H.
+
+What no capture delivered is interior placement. None of the eight has a
+recovered parent or local placement for any resident, so for each: recover the
+structures and regions the intended delivery needs, and record mismatches rather
+than replacing observed values with the guide's values.
 
 Gate each implementation delivery on its admitted bodies' validated poses and
 its required geometry, associations, placement and behavior evidence. Unrelated

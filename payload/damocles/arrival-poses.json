@@ -51,15 +51,25 @@
     "x": 2,
     "z": 1
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 624,
+    "z": 688
+   },
    "impliedWorkspaceOrigin": {
     "x": 624,
     "z": 688
    },
+   "captureEnvironment": {
+    "messageGate": 65535,
+    "presenting": true,
+    "systemStringSlot": 6,
+    "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": true
+   },
    "evidence": {
     "memstateSha256": "561839d62398a2d8d304e9392b37a38c6a5c2f78cc84a92e87b259a5a0085f81",
     "ramSha256": "d40a9bb5bb46fbc6478189aecfa27893e4855bfdea858cfb5126fa94651e5338",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 624,688 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 624,688 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -84,6 +94,13 @@
     "x": 353,
     "z": 3482
    },
+   "captureEnvironment": {
+    "messageGate": 65535,
+    "presenting": true,
+    "systemStringSlot": 6,
+    "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": true
+   },
    "evidence": {
     "memstateSha256": "d11c8506f42caeb8e65f15dfb124a187cf47c728796b975d296841a214f4174f",
     "ramSha256": "52a2720f64dd37d3ca0ff77ce366cfcfc8325ab3c08562d9ba05eb6d07fb6ae1",
@@ -107,15 +124,25 @@
     "x": 3,
     "z": 3
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 3419,
+    "z": 298
+   },
    "impliedWorkspaceOrigin": {
     "x": 3419,
     "z": 298
    },
+   "captureEnvironment": {
+    "messageGate": 65535,
+    "presenting": true,
+    "systemStringSlot": 6,
+    "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": true
+   },
    "evidence": {
     "memstateSha256": "5269cef112d40f27de38d615d93bc5f5bc93b69d6ffc010fb5138ea17d42fd75",
     "ramSha256": "3d84c0fe1baf04a1f6c3341ab257be04fa72244a9c5f1b1563def3a61805dae0",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 3419,298 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 3419,298 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -142,6 +169,13 @@
    "impliedWorkspaceOrigin": {
     "x": 3252,
     "z": 1314
+   },
+   "captureEnvironment": {
+    "messageGate": 0,
+    "presenting": false,
+    "systemStringSlot": 50,
+    "text": "",
+    "hazardWarning": false
    },
    "evidence": {
     "memstateSha256": "361f5ca00cf2a0220489de25c81a7085e812cff019a1b2f44127f55db3ea2f80",
@@ -174,6 +208,13 @@
     "x": 3252,
     "z": 1314
    },
+   "captureEnvironment": {
+    "messageGate": 0,
+    "presenting": false,
+    "systemStringSlot": 4,
+    "text": "TOO COLD! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": false
+   },
    "evidence": {
     "memstateSha256": "a1ec597af92d71cfe39f296713cddceb555f546c7e0b4acfc73bafe566a34726",
     "ramSha256": "e7670105854823383820a2d9b15ffa9553b42cec80b78b7d57c4864bb433b948",
@@ -197,15 +238,25 @@
     "x": 1,
     "z": 1
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 42,
+    "z": 225
+   },
    "impliedWorkspaceOrigin": {
     "x": 42,
     "z": 225
    },
+   "captureEnvironment": {
+    "messageGate": 65535,
+    "presenting": true,
+    "systemStringSlot": 6,
+    "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": true
+   },
    "evidence": {
     "memstateSha256": "6202ac5259c5faa01931b5d4e55e95839938b233cad1ca017baadf52d5eccc6d",
     "ramSha256": "97628ab09a9c768e1dd3ca52c6b8185f3abf077f9b110197e5a5453043c80b37",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 42,225 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 42,225 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -225,15 +276,25 @@
     "x": 1,
     "z": 0
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 2421,
+    "z": 300
+   },
    "impliedWorkspaceOrigin": {
     "x": 2421,
     "z": 300
    },
+   "captureEnvironment": {
+    "messageGate": 65535,
+    "presenting": true,
+    "systemStringSlot": 6,
+    "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": true
+   },
    "evidence": {
     "memstateSha256": "f5aa40f70fc08fdebecbf702a7591858ffbf42e0f35851373622b76fec46fee2",
     "ramSha256": "a47bcef562a5f2299eda998ccf4ad27a57da3f2ee51a1cc319c17aeca471299f",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 2421,300 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 2421,300 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -261,6 +322,13 @@
     "x": 512,
     "z": 1792
    },
+   "captureEnvironment": {
+    "messageGate": 0,
+    "presenting": false,
+    "systemStringSlot": 50,
+    "text": "",
+    "hazardWarning": false
+   },
    "evidence": {
     "memstateSha256": "051b6cae1fc4902af565ebda599dc3e854bd991b1a5f9e335f1e5d9b9a52b982",
     "ramSha256": "12798fcb860c563b53d5ef0d6947f8f409cc9b7501d586ae535538c2a925fab7",
@@ -284,15 +352,25 @@
     "x": 8,
     "z": 8
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 256,
+    "z": 768
+   },
    "impliedWorkspaceOrigin": {
     "x": 256,
     "z": 768
    },
+   "captureEnvironment": {
+    "messageGate": 0,
+    "presenting": false,
+    "systemStringSlot": 4,
+    "text": "TOO COLD! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": false
+   },
    "evidence": {
     "memstateSha256": "4892d7c2f28326a7a5e459a7ae631fe5de4f8ce1468a69c604b2c3949dfe9ac7",
     "ramSha256": "70f4b67aa8ffd5b5064ba5f2975c947f0e4b7dc1ab6cef267cd5ee180ee62ba4",
-    "cell": "Read from the engine cell word $7B5C. The camera longwords put this pose outside the one recovered workspace on the body (origin 512,1792, docs/research/damocles-gaea-ur-city-workspace.md); they imply a second workspace with origin 256,768, which no workspace note has recovered, so the cell is not anchored to that note."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 256,768 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -312,15 +390,25 @@
     "x": 5,
     "z": 5
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 2564,
+    "z": 873
+   },
    "impliedWorkspaceOrigin": {
     "x": 2564,
     "z": 873
    },
+   "captureEnvironment": {
+    "messageGate": 65535,
+    "presenting": true,
+    "systemStringSlot": 6,
+    "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": true
+   },
    "evidence": {
     "memstateSha256": "8db306a92167113f98288cf6987d496e16fd1e17db1b3de046b8146aee375004",
     "ramSha256": "e788db7e4061093195953b474b9327bdca49ec3507e3b9c8eee4f633d889be56",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 2564,873 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 2564,873 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -340,15 +428,25 @@
     "x": 2,
     "z": 2
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 3487,
+    "z": 1445
+   },
    "impliedWorkspaceOrigin": {
     "x": 3487,
     "z": 1445
    },
+   "captureEnvironment": {
+    "messageGate": 65535,
+    "presenting": true,
+    "systemStringSlot": 6,
+    "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": true
+   },
    "evidence": {
     "memstateSha256": "bf89edb134653399e3e982e09508139e59ca694fa643eb42b315d64c7dedc820",
     "ramSha256": "59726c13b1ca12ec66317e7624dee8b2e63c28d61b0e9ff0860327d96df3fcc7",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 3487,1445 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 3487,1445 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -375,6 +473,13 @@
    "impliedWorkspaceOrigin": {
     "x": 64,
     "z": 128
+   },
+   "captureEnvironment": {
+    "messageGate": 0,
+    "presenting": false,
+    "systemStringSlot": 50,
+    "text": "",
+    "hazardWarning": false
    },
    "evidence": {
     "memstateSha256": "6cee57c4d4a168792fc3974e786d706fe9f42cf577d6e8b7c63814c93d6398c6",
@@ -407,6 +512,13 @@
     "x": 64,
     "z": 128
    },
+   "captureEnvironment": {
+    "messageGate": 0,
+    "presenting": false,
+    "systemStringSlot": 4,
+    "text": "TOO COLD! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": false
+   },
    "evidence": {
     "memstateSha256": "33a9dc24aca3c66a8023bd3fe01c1ba97fad61f5f81531f139dbbefa027fa2e1",
     "ramSha256": "a41b92e22495e8efe4f0f8821cb61f5070bbc39381bd90d56cabc9fee3de8259",
@@ -430,15 +542,25 @@
     "x": 1,
     "z": 1
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 3974,
+    "z": 1396
+   },
    "impliedWorkspaceOrigin": {
     "x": 3974,
     "z": 1396
    },
+   "captureEnvironment": {
+    "messageGate": 65535,
+    "presenting": true,
+    "systemStringSlot": 6,
+    "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": true
+   },
    "evidence": {
     "memstateSha256": "b88aefe0690fda31ef9bfd64d79115a98a4506837484b78f6e7db9b683119c7e",
     "ramSha256": "a01be40114265d34b6ab5f3dd48e67bca31558665fb4b834cf57c677502a6d96",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 3974,1396 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 3974,1396 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -458,15 +580,25 @@
     "x": 1,
     "z": 1
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 2546,
+    "z": 3334
+   },
    "impliedWorkspaceOrigin": {
     "x": 2546,
     "z": 3334
    },
+   "captureEnvironment": {
+    "messageGate": 65535,
+    "presenting": true,
+    "systemStringSlot": 6,
+    "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": true
+   },
    "evidence": {
     "memstateSha256": "7e7743f14745181a1142f2ef511a6de1b3607d767e0fa63ff00864c19913270a",
     "ramSha256": "f95caa2c5c36b86ecafa5171a411ea20f945feee4d98cbc8ea481512d20e6f10",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 2546,3334 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 2546,3334 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -493,6 +625,13 @@
    "impliedWorkspaceOrigin": {
     "x": 1083,
     "z": 307
+   },
+   "captureEnvironment": {
+    "messageGate": 0,
+    "presenting": false,
+    "systemStringSlot": 0,
+    "text": "LOCKED",
+    "hazardWarning": false
    },
    "evidence": {
     "memstateSha256": "35a8a020599dfac92fa0f5d7bd46a4e18550342477c00bd88168deac99c0ce47",
@@ -525,6 +664,13 @@
     "x": 1083,
     "z": 307
    },
+   "captureEnvironment": {
+    "messageGate": 0,
+    "presenting": false,
+    "systemStringSlot": 4,
+    "text": "TOO COLD! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": false
+   },
    "evidence": {
     "memstateSha256": "1590a28cf3d063e9bd5575ede79fc153d78c0f77a45d6a84cea9c2bb5fc1a280",
     "ramSha256": "fe94a6f027dc210e301f16fbe699801043c5d1216f4e81c4ea3e3c5917bfd7e0",
@@ -548,15 +694,25 @@
     "x": 0,
     "z": 6
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 2527,
+    "z": 1066
+   },
    "impliedWorkspaceOrigin": {
     "x": 2527,
     "z": 1066
    },
+   "captureEnvironment": {
+    "messageGate": 0,
+    "presenting": false,
+    "systemStringSlot": 4,
+    "text": "TOO COLD! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": false
+   },
    "evidence": {
     "memstateSha256": "a68299886575caeee5301cbf0ae63b46ac7f82af68cbe006529c42bfab6fcc6a",
     "ramSha256": "75518269684058680db751a6595afc46976d92a649d6b41baea13db1ff2f290f",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 2527,1066 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 2527,1066 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -576,15 +732,25 @@
     "x": 1,
     "z": 3
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 3896,
+    "z": 0
+   },
    "impliedWorkspaceOrigin": {
     "x": 3896,
     "z": 0
    },
+   "captureEnvironment": {
+    "messageGate": 65535,
+    "presenting": true,
+    "systemStringSlot": 6,
+    "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": true
+   },
    "evidence": {
     "memstateSha256": "608aaa8a452deda2bfed9c3251667e4d6c048af6c4190fbf8c3b3de30d0ec8f8",
     "ramSha256": "1a8d49d838dd1954afa5eef73617c45fadc4f932f4a8a5b3e3e24fdb2fe1c0b4",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 3896,0 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 3896,0 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -604,15 +770,25 @@
     "x": 4,
     "z": 2
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 1294,
+    "z": 2648
+   },
    "impliedWorkspaceOrigin": {
     "x": 1294,
     "z": 2648
    },
+   "captureEnvironment": {
+    "messageGate": 0,
+    "presenting": false,
+    "systemStringSlot": 4,
+    "text": "TOO COLD! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": false
+   },
    "evidence": {
     "memstateSha256": "a9b6a7ed0f634c5726525c2c4dbacb497e7c3237f91055a2d7bc59bcb4af08b6",
     "ramSha256": "513400c8b895a7e42d8d3fc383ee7becfb125ef61f91111af65b3b00d378fb94",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 1294,2648 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 1294,2648 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -632,15 +808,25 @@
     "x": 4,
     "z": 1
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 421,
+    "z": 1799
+   },
    "impliedWorkspaceOrigin": {
     "x": 421,
     "z": 1799
    },
+   "captureEnvironment": {
+    "messageGate": 0,
+    "presenting": false,
+    "systemStringSlot": 6,
+    "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": false
+   },
    "evidence": {
     "memstateSha256": "ee0fdbccc936bfed018ecc55d160cd0890b9c760ffe833b215a8a246196066eb",
     "ramSha256": "f1c1d991f58045579834ddf33fac63be815f976d564ca85294824a143947aaf8",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 421,1799 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 421,1799 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -660,15 +846,25 @@
     "x": 6,
     "z": 3
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 1999,
+    "z": 3256
+   },
    "impliedWorkspaceOrigin": {
     "x": 1999,
     "z": 3256
    },
+   "captureEnvironment": {
+    "messageGate": 65535,
+    "presenting": true,
+    "systemStringSlot": 6,
+    "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": true
+   },
    "evidence": {
     "memstateSha256": "2f36225fe6a7c63f5dae857c34e351bf1be3ebdbbb7cae297d4b632ec269815a",
     "ramSha256": "f9178a7f2a0a871235bb26c3cd7a73f08c3fbee3653162e9275e92764aabbde6",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 1999,3256 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 1999,3256 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -688,15 +884,25 @@
     "x": 2,
     "z": 8
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 1661,
+    "z": 1586
+   },
    "impliedWorkspaceOrigin": {
     "x": 1661,
     "z": 1586
    },
+   "captureEnvironment": {
+    "messageGate": 0,
+    "presenting": false,
+    "systemStringSlot": 4,
+    "text": "TOO COLD! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": false
+   },
    "evidence": {
     "memstateSha256": "144f456e9586ab7de2edf1452ada498e8e898d8f2be25a45b616596121b952fe",
     "ramSha256": "9786000f08dc4e9468ec72709492eaa121f1d5201b375da08ef0805775ae32a9",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 1661,1586 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 1661,1586 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -716,15 +922,25 @@
     "x": 2,
     "z": 1
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 2737,
+    "z": 1571
+   },
    "impliedWorkspaceOrigin": {
     "x": 2737,
     "z": 1571
    },
+   "captureEnvironment": {
+    "messageGate": 65535,
+    "presenting": true,
+    "systemStringSlot": 6,
+    "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": true
+   },
    "evidence": {
     "memstateSha256": "6a42be08eb050cf6713ba1a37d9cac643cc772e56e4ebc7e8fdd8cbe3cd2db9f",
     "ramSha256": "da4af86bf8cf3a01474e6030f94c5a48d2a05c1cd1afe62e74ea6ce541e4e270",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 2737,1571 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 2737,1571 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -744,15 +960,25 @@
     "x": 5,
     "z": 2
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 3834,
+    "z": 821
+   },
    "impliedWorkspaceOrigin": {
     "x": 3834,
     "z": 821
    },
+   "captureEnvironment": {
+    "messageGate": 65535,
+    "presenting": true,
+    "systemStringSlot": 6,
+    "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": true
+   },
    "evidence": {
     "memstateSha256": "82434fed88df3164526efed77ddb3f7eece78cddfbe0599abbedb660ec211d86",
     "ramSha256": "659d0a36865a3aacada121ab01da8d45a21d5c39739c4fd4546935198315e851",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 3834,821 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 3834,821 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -772,15 +998,25 @@
     "x": 9,
     "z": 7
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 2817,
+    "z": 268
+   },
    "impliedWorkspaceOrigin": {
     "x": 2817,
     "z": 268
    },
+   "captureEnvironment": {
+    "messageGate": 65535,
+    "presenting": true,
+    "systemStringSlot": 6,
+    "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": true
+   },
    "evidence": {
     "memstateSha256": "628a89561a8415501e8872ce3ab9e974bf311dc3304e6b2c6bc15b297b90daee",
     "ramSha256": "ba628747f4f0bef57d6a56e966b4ec7569b3399eb995622958dfda258b64226d",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 2817,268 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 2817,268 (docs/research/damocles-non-eris-workspaces.md)."
    }
   },
   {
@@ -804,6 +1040,13 @@
    "impliedWorkspaceOrigin": {
     "x": 251,
     "z": 3275
+   },
+   "captureEnvironment": {
+    "messageGate": 0,
+    "presenting": false,
+    "systemStringSlot": 6,
+    "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+    "hazardWarning": false
    },
    "evidence": {
     "memstateSha256": "d709a4838fc8664f6addba7c149035cc0da5beaab4d7c03c635a5246ca933563",
