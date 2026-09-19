@@ -192,6 +192,7 @@ export const installShellChrome = (
     settingRow('COMPOSITION', 'composition'),
     settingRow('TYPEFACE', 'typeface'),
     settingRow('SKY PRESET', 'sky'),
+    settingRow('SHADOWS', 'shadows'),
     settingRow('STRUCTURES', 'structures'),
     settingRow(
       'STRUCTURE / OBJECT WEIGHT',

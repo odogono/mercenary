@@ -299,7 +299,7 @@ describe('reading a console command line', () => {
       }
     }
     expect(() => parse('set volume 4')).toThrow(
-      "unknown setting 'volume': try composition, glow, rendition, road-glow, road-weight, sky, structures, typeface, weight"
+      "unknown setting 'volume': try composition, glow, rendition, road-glow, road-weight, shadows, sky, structures, typeface, weight"
     );
     expect(() => parse('set sky purple')).toThrow(
       "sky takes document, authentic, enhanced, and not 'purple'"
@@ -663,6 +663,20 @@ describe('doing what a console command says', () => {
 
     expect(run('set sky document', deps)).toEqual(['sky as tuned']);
     expect(changes).toEqual([{ presentationPreset: undefined }]);
+  });
+
+  test('sets the Cast Shadow edge, which has no document to hand back to', () => {
+    const { changes, deps } = harness();
+
+    expect(run('set shadows hard', deps)).toEqual(['shadows hard']);
+    expect(run('set shadows off', deps)).toEqual(['shadows off']);
+    expect(run('set shadows soft', deps)).toEqual(['shadows soft']);
+    expect(changes).toEqual([
+      { castShadows: 'hard' },
+      { castShadows: 'off' },
+      { castShadows: 'soft' }
+    ]);
+    expect(() => parse('set shadows document')).toThrow();
   });
 
   test('sets Structure Reach and hands it back to the tuning document', () => {

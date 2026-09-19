@@ -1,3 +1,7 @@
+import {
+  DEFAULT_CAST_SHADOWS,
+  isCastShadowEdge
+} from '../settings/index.ts';
 import type { PreferencesStore } from './preferences.ts';
 import { applyTypeface, readTypefacePreference } from './typography.ts';
 
@@ -93,6 +97,22 @@ export const installSettingsView = (
         { label: 'AS TUNED', value: PRESET_DEFAULT },
         { label: 'AUTHENTIC', value: 'authentic' },
         { label: 'ENHANCED', value: 'enhanced' }
+      ]
+    },
+    {
+      // A Cast Shadow's edge is the player's taste, not the document's: there is no "as tuned"
+      // here, only the shell's default. Authentic presentation draws no shadow whatever this says.
+      apply: value => {
+        preferences.update({
+          castShadows: isCastShadowEdge(value) ? value : DEFAULT_CAST_SHADOWS
+        });
+      },
+      current: () => preferences.current().castShadows ?? DEFAULT_CAST_SHADOWS,
+      name: 'shadows',
+      options: [
+        { label: 'OFF', value: 'off' },
+        { label: 'SOFT', value: 'soft' },
+        { label: 'HARD', value: 'hard' }
       ]
     },
     {
@@ -243,7 +263,7 @@ export const installSettingsView = (
       button.addEventListener('click', () => {
         row.apply(choice.value);
         refresh();
-        if (row.name === 'sky') {
+        if (row.name === 'sky' || row.name === 'shadows') {
           options.onPresentationChange?.();
         }
       });

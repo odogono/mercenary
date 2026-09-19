@@ -10,6 +10,19 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ## [Unreleased]
 
+### Added
+
+- **A `SHADOWS` row on the settings page chooses the Cast Shadow edge: `OFF`,
+  `SOFT` or `HARD`.** Eris's Enhanced shadows were only ever softened by a 3 × 3
+  PCF average over a LINEAR compare sampler, and could only be switched off by
+  choosing the Authentic sky. The edge is now the player's own preference,
+  mirrored by the console's `set shadows` line, defaulting to `SOFT` so nothing
+  shipped changes. `HARD` reads the same two shadow maps through a NEAREST
+  compare sampler with a single tap, for a crisp edge that suits the Filled
+  Presentation's flat faces; whether it becomes the Enhanced default is decided
+  by the captures in `docs/research/damocles-cast-shadow-edge.md`. Authentic
+  presentation draws no Cast Shadow whatever the row says (#376).
+
 ### Fixed
 
 - **The Body Coordinate Readout is decoded, and the Damocles Panel Rendition

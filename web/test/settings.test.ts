@@ -4,6 +4,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { controlLimits } from '../src/gameCore/index.ts';
 import {
+  DEFAULT_CAST_SHADOWS,
   DEFAULT_DEPARTURE_JOURNEY_SECONDS,
   DEFAULT_DEPARTURE_REDUCED_MOTION_JOURNEY_SECONDS,
   DEFAULT_DEPARTURE_SNAP_SECONDS,
@@ -25,6 +26,7 @@ import {
   defaultSettings,
   flightLimits,
   flightModel,
+  isCastShadowEdge,
   loadSettings,
   type FlightSettings
 } from '../src/settings/index.ts';
@@ -127,6 +129,21 @@ describe('a document that names only what it changes', () => {
     expect(settings.presentation.preset).toBe('authentic');
     expect(settings.presentation.sky.starCount).toBe(12);
     expect(settings.presentation.sky.starSeed).toBe(DEFAULT_SKY_STAR_SEED);
+  });
+});
+
+describe('the Cast Shadow edge vocabulary', () => {
+  test('defaults to the softened edge the shipped shadows already have', () => {
+    expect(DEFAULT_CAST_SHADOWS).toBe('soft');
+  });
+
+  test('accepts each named edge and refuses anything else', () => {
+    for (const edge of ['off', 'soft', 'hard']) {
+      expect(isCastShadowEdge(edge)).toBe(true);
+    }
+    expect(isCastShadowEdge('blurry')).toBe(false);
+    expect(isCastShadowEdge(true)).toBe(false);
+    expect(isCastShadowEdge(undefined)).toBe(false);
   });
 });
 

@@ -1,5 +1,9 @@
 import type { GameplaySession, PresentationEvent } from '../session/index.ts';
-import type { PresentationPreset, StructureReach } from '../settings/index.ts';
+import type {
+  CastShadowEdge,
+  PresentationPreset,
+  StructureReach
+} from '../settings/index.ts';
 import { formatTargTime, parseTargTime } from '../sky/time.ts';
 import { SURFACE, locationText, room } from '../world/index.ts';
 import type {
@@ -47,6 +51,7 @@ export type SettingName =
   | 'road-glow'
   | 'road-weight'
   | 'rendition'
+  | 'shadows'
   | 'sky'
   | 'structures'
   | 'typeface'
@@ -64,6 +69,7 @@ export type SettingChoice =
     }
   | { readonly name: 'glow'; readonly value: 'document' | WireframeGlow }
   | { readonly name: 'rendition'; readonly value: PanelRendition }
+  | { readonly name: 'shadows'; readonly value: CastShadowEdge }
   | { readonly name: 'sky'; readonly value: 'document' | PresentationPreset }
   | { readonly name: 'structures'; readonly value: 'document' | StructureReach }
   | { readonly name: 'typeface'; readonly value: TypefaceId }
@@ -77,6 +83,7 @@ const GLOWS: readonly ('document' | WireframeGlow)[] = [
   'bright'
 ];
 const RENDITIONS: readonly PanelRendition[] = ['targ', 'damocles'];
+const SHADOWS: readonly CastShadowEdge[] = ['off', 'soft', 'hard'];
 const SKIES: readonly ('document' | PresentationPreset)[] = [
   'document',
   'authentic',
@@ -106,6 +113,7 @@ export const SETTING_VALUES: Readonly<Record<SettingName, readonly string[]>> =
     rendition: RENDITIONS,
     'road-glow': GLOWS,
     'road-weight': WEIGHTS,
+    shadows: SHADOWS,
     sky: SKIES,
     structures: STRUCTURES,
     typeface: TYPEFACES,
@@ -158,6 +166,10 @@ const SETTING_PARSERS: Readonly<
   'road-weight': word => ({
     name: 'road-weight',
     value: oneOf(WEIGHTS, word, 'road-weight')
+  }),
+  shadows: word => ({
+    name: 'shadows',
+    value: oneOf(SHADOWS, word, 'shadows')
   }),
   sky: word => ({ name: 'sky', value: oneOf(SKIES, word, 'sky') }),
   structures: word => ({
@@ -663,6 +675,10 @@ export const applySetting = (
       }
       deps.preferences.update({ wireframeWeight: setting.value });
       return `weight ${setting.value}`;
+    case 'shadows':
+      // The edge is the player's alone, so there is no 'document' to hand it back to.
+      deps.preferences.update({ castShadows: setting.value });
+      return `shadows ${setting.value}`;
     case 'sky':
       // The tuning document owns the sky; handing the choice back to it is itself a choice.
       deps.preferences.update(

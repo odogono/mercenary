@@ -347,6 +347,10 @@ const fakeContext = () => {
     bindBuffer: () => undefined,
     bindFramebuffer: (_target: number, value: { id: number } | null) =>
       calls.push(`framebuffer:${value === null ? 'default' : value.id}`),
+    bindSampler: (unit: number, sampler: { filter: number }) =>
+      calls.push(
+        `bindSampler:${unit}:${sampler.filter === 34 ? 'nearest' : 'linear'}`
+      ),
     bindTexture: () => undefined,
     bufferData: (_target: number, data: Float32Array) =>
       calls.push(`buffer:${data.length}`),
@@ -364,6 +368,7 @@ const fakeContext = () => {
     createBuffer: () => ({}),
     createFramebuffer: () => ({ id: ++framebuffer }),
     createProgram: () => ({}),
+    createSampler: () => ({ filter: 0 }),
     createShader: () => ({}),
     createTexture: () => ({}),
     CULL_FACE: 6,
@@ -401,11 +406,21 @@ const fakeContext = () => {
     LINEAR: 22,
     LINK_STATUS: 14,
     linkProgram: () => undefined,
+    NEAREST: 34,
     NONE: 23,
     POLYGON_OFFSET_FILL: 24,
     polygonOffset: (factor: number, units: number) =>
       calls.push(`polygonOffset:${factor}:${units}`),
     readBuffer: () => undefined,
+    samplerParameteri: (
+      sampler: { filter: number },
+      parameter: number,
+      value: number
+    ) => {
+      if (parameter === 31) {
+        sampler.filter = value;
+      }
+    },
     shaderSource: () => undefined,
     texParameteri: () => undefined,
     texStorage2D: (
@@ -564,7 +579,8 @@ describe('the Eris renderer', () => {
     renderer.render(plan, {
       eyeWorld: origin.position,
       heading: origin.heading,
-      lighting: erisLighting(doc, origin.heading)
+      lighting: erisLighting(doc, origin.heading),
+      shadowEdge: 'soft'
     });
     expect(fake.compiled).toBe(6);
     expect(
@@ -573,7 +589,8 @@ describe('the Eris renderer', () => {
     renderer.render(plan, {
       eyeWorld: origin.position,
       heading: origin.heading,
-      lighting: erisLighting(doc, origin.heading)
+      lighting: erisLighting(doc, origin.heading),
+      shadowEdge: 'soft'
     });
 
     const casterDraw = `draw:15:0:${casters.length / FLOATS_PER_VERTEX}`;
@@ -597,6 +614,16 @@ describe('the Eris renderer', () => {
     expect(fake.uniforms['farLightMatrix']).toHaveLength(16);
     expect(fake.uniforms['nearShadowMap']).toEqual([0]);
     expect(fake.uniforms['farShadowMap']).toEqual([1]);
+    // A soft Cast Shadow reads both maps through the LINEAR compare sampler and averages.
+    expect(fake.uniforms['hardEdge']).toEqual([0]);
+    expect(
+      fake.calls.filter(call => call.startsWith('bindSampler:'))
+    ).toEqual([
+      'bindSampler:0:linear',
+      'bindSampler:1:linear',
+      'bindSampler:0:linear',
+      'bindSampler:1:linear'
+    ]);
     expect(fake.uniforms['ambientSky']).toEqual([
       0x66 / 255,
       0x80 / 255,
@@ -613,5 +640,45 @@ describe('the Eris renderer', () => {
     expect(ERIS_SHADOW_WINDOWS).toHaveLength(2);
     expect(ERIS_SHADOW_WINDOWS[0].depthHalfRange).toBeGreaterThan(16_384);
     expect(ERIS_SHADOW_WINDOWS[1].halfExtent).toBeGreaterThan(startDistance);
+  });
+
+  test('draws a hard Cast Shadow through the NEAREST sampler with the same maps', async () => {
+    (globalThis as { window?: unknown }).window ??= { devicePixelRatio: 1 };
+    const { doc } = await load();
+    const plan = planErisFrame(
+      surfaceOf([placement(square(true))]),
+      origin,
+      doc
+    );
+    const fake = fakeContext();
+    const renderer = new ErisRenderer(
+      fake.canvas,
+      { cullBackFaces: true, lighting: true },
+      () => undefined
+    );
+    const frame = {
+      eyeWorld: origin.position,
+      heading: origin.heading,
+      lighting: erisLighting(doc, origin.heading)
+    };
+
+    renderer.render(plan, { ...frame, shadowEdge: 'hard' });
+    // Same programs, same 2048² maps: only the sampler and the lookup change.
+    expect(fake.compiled).toBe(6);
+    expect(
+      fake.calls.filter(call => call === 'texStorage:2048:2048')
+    ).toHaveLength(2);
+    expect(fake.uniforms['hardEdge']).toEqual([1]);
+    expect(
+      fake.calls.filter(call => call.startsWith('bindSampler:'))
+    ).toEqual(['bindSampler:0:nearest', 'bindSampler:1:nearest']);
+
+    // Switching edge between frames rebinds without reallocating.
+    renderer.render(plan, { ...frame, shadowEdge: 'soft' });
+    expect(fake.compiled).toBe(6);
+    expect(fake.uniforms['hardEdge']).toEqual([0]);
+    expect(
+      fake.calls.filter(call => call.startsWith('bindSampler:')).slice(2)
+    ).toEqual(['bindSampler:0:linear', 'bindSampler:1:linear']);
   });
 });

@@ -20,6 +20,7 @@ import {
 import { installPanel, installPanelScale } from '../shell/panelView.ts';
 import { canvasPointer } from '../shell/pointer.ts';
 import { createPreferences } from '../shell/preferences.ts';
+import { DEFAULT_CAST_SHADOWS } from '../settings/index.ts';
 import type { SessionResumePersistence } from '../shell/resume.ts';
 import { createSessionResumeNotices } from '../shell/resumeNotices.ts';
 import { routeKey, type RouterState } from '../shell/router.ts';
@@ -574,17 +575,21 @@ try {
         ...snapshot.residence.map(item => item.instance)
       ]
     );
-    const preset = preferences.current().presentationPreset;
+    const { castShadows, presentationPreset } = preferences.current();
+    const shadowEdge = castShadows ?? DEFAULT_CAST_SHADOWS;
+    // A Cast Shadow is Enhanced presentation only, and the player may turn its edge off.
     const shadows =
       content.doc.lighting.shadows &&
-      (preset === undefined || preset === 'enhanced');
+      (presentationPreset === undefined || presentationPreset === 'enhanced') &&
+      shadowEdge !== 'off';
     renderer.render(
       plan,
       shadows
         ? {
             eyeWorld: snapshot.pose.position,
             heading: snapshot.pose.heading,
-            lighting: erisLighting(content.doc, snapshot.pose.heading)
+            lighting: erisLighting(content.doc, snapshot.pose.heading),
+            shadowEdge
           }
         : undefined
     );

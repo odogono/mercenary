@@ -106,6 +106,17 @@ describe('browser shell preferences', () => {
     ).not.toHaveProperty('presentationPreset');
   });
 
+  test('keep a Cast Shadow edge and reject an unrecognised one', () => {
+    expect(validatePreferences({ castShadows: 'hard' }).castShadows).toBe(
+      'hard'
+    );
+    expect(validatePreferences({ castShadows: 'off' }).castShadows).toBe('off');
+    expect(validatePreferences({ castShadows: 'blurry' })).not.toHaveProperty(
+      'castShadows'
+    );
+    expect(validatePreferences({})).not.toHaveProperty('castShadows');
+  });
+
   test('reject an unrecognised Structure Reach instead of passing it through', () => {
     expect(validatePreferences({ structureReach: 'ring' })).not.toHaveProperty(
       'structureReach'
