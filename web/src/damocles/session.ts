@@ -67,6 +67,9 @@ import {
 /// Stack, live inventory capacity and the bounded Damocles Script are session-owned state; the
 /// renderer receives only their immutable projection.
 export interface DamoclesSnapshot {
+  /// The Catalogue name of the Body the player is standing on. Published because the panel and
+  /// the console both name the location, and both said ERIS whatever Body a switch had reached.
+  readonly bodyName: string;
   readonly briefcaseStore: readonly string[];
   readonly capacity: number;
   readonly carried: readonly string[];
@@ -629,6 +632,15 @@ export class DamoclesSession implements TitleSession<
     return model?.name ?? head;
   }
 
+  /// The Catalogue's name for the Body underfoot, falling back to its id so a Body the
+  /// Catalogue does not name still reads as something a player can act on.
+  private bodyName(): string {
+    const body = this.content.catalogue.bodies.find(
+      item => item.id === this.pose.body
+    );
+    return (body?.name ?? this.pose.body).toUpperCase();
+  }
+
   private capacity(): number {
     return this.carried.includes('object-slot-108') ? 20 : 10;
   }
@@ -658,6 +670,7 @@ export class DamoclesSession implements TitleSession<
 
   get snapshot(): DamoclesSnapshot {
     return {
+      bodyName: this.bodyName(),
       briefcaseStore: [...this.briefcaseStore],
       capacity: this.capacity(),
       carried: [...this.carried],
@@ -771,6 +784,22 @@ export class DamoclesSession implements TitleSession<
     const effects = this.effects;
     this.effects = [];
     return effects;
+  }
+
+  /// The Catalogue name of an instance, for a caller that needs to name an object it is not
+  /// carrying. `inventoryLabel` cannot serve: a take sets the scroll counter to -16, so the label
+  /// is empty on the very frame a caller wants to report what it took.
+  objectName(instanceId: string): string | undefined {
+    const instance = this.content.catalogue.instances.find(
+      item => item.id === instanceId
+    );
+    if (instance === undefined) {
+      return undefined;
+    }
+    return (
+      this.content.catalogue.models.find(item => item.id === instance.model)
+        ?.name ?? instanceId
+    );
   }
 
   take(): { readonly kind: 'refused' | 'took' } {
