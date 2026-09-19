@@ -10,6 +10,7 @@ import {
 import {
   DAMOCLES_SAVE_SCHEMA_VERSION,
   damoclesSaveIdentity,
+  damoclesWhere,
   decodeDamoclesSave,
   encodeDamoclesSave
 } from '../src/damocles/save.ts';
@@ -199,6 +200,19 @@ describe('the authored body switch', () => {
         .kind
     ).toBe('carried');
     expect(JSON.stringify(session.captureResume().script)).toBe(script);
+  });
+
+  test('names the Body it reached, everywhere a location is put into words', () => {
+    // The console `where`, the Session Resume and the Save slot line all go through
+    // `damoclesWhere`, which used to spell ERIS whatever Body the player stood on.
+    const session = new DamoclesSession(content);
+    expect(session.snapshot.bodyName).toBe('ERIS');
+    expect(damoclesWhere(session.snapshot)).toBe('ERIS 07-08');
+    expect(session.switchToPose('vesta-parliament-4-6').kind).toBe('switched');
+    expect(session.snapshot.bodyName).toBe('VESTA');
+    expect(damoclesWhere(session.snapshot)).toBe('VESTA 04-06');
+    expect(session.switchToPose('gaea').kind).toBe('switched');
+    expect(damoclesWhere(session.snapshot)).toBe('GAEA 04-02');
   });
 
   test('a Body never visited has no session state', () => {

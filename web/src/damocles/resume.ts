@@ -74,7 +74,7 @@ export const encodeDamoclesResumeRecord = (
     savedAt: now().toISOString(),
     schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
     snapshot,
-    where: damoclesWhere(session.snapshot.cell)
+    where: damoclesWhere(session.snapshot)
   });
 };
 

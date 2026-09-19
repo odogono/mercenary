@@ -803,8 +803,11 @@ export const decodeDamoclesSave = (
   };
 };
 
-export const damoclesWhere = (cell: {
-  readonly x: number;
-  readonly z: number;
+/// The one place a Damocles location is put into words, for the console, the Session Resume and
+/// the Save record's slot line. It takes the Body name rather than assuming Eris: a switch makes
+/// every one of those three reachable on four Bodies.
+export const damoclesWhere = (where: {
+  readonly bodyName: string;
+  readonly cell: { readonly x: number; readonly z: number };
 }): string =>
-  `ERIS ${String(cell.x).padStart(2, '0')}-${String(cell.z).padStart(2, '0')}`;
+  `${where.bodyName} ${String(where.cell.x).padStart(2, '0')}-${String(where.cell.z).padStart(2, '0')}`;

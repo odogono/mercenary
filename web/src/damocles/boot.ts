@@ -268,7 +268,7 @@ try {
   const persistence = createDamoclesSavePersistence({
     capture: () => ({
       snapshot: session.captureResume(),
-      where: damoclesWhere(session.snapshot.cell)
+      where: damoclesWhere(session.snapshot)
     }),
     catalogue: content.catalogue,
     identity,
@@ -555,6 +555,9 @@ try {
       snapshot.structure?.attachments[0]?.openUnits ?? 0
     );
     root['structureInstance'] = snapshot.structure?.instanceId ?? '';
+    // The Damocles Display is painted on the aux canvas, so its row has no text a test or a
+    // screen reader could read. Publishing the cells is how the row becomes observable.
+    root['damoclesRow'] = snapshot.displayCells.cells.trim();
     root['triangles'] = String(triangles);
     root['unresolved'] = String(content.surface.unresolvedCount);
   };

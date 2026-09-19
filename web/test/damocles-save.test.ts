@@ -146,7 +146,7 @@ describe('Damocles Saves', () => {
       savedAt: '2026-09-12T08:00:00.000Z',
       schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
       snapshot: session.captureResume(),
-      where: damoclesWhere(session.snapshot.cell)
+      where: damoclesWhere(session.snapshot)
     };
     const decoded = decodeDamoclesSave(
       encodeDamoclesSave(record),
@@ -167,7 +167,7 @@ describe('Damocles Saves', () => {
       savedAt: '2026-09-12T08:00:00.000Z',
       schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
       snapshot: session.captureResume(),
-      where: damoclesWhere(session.snapshot.cell)
+      where: damoclesWhere(session.snapshot)
     });
     expect(() =>
       decodeDamoclesSave(encoded, {
@@ -191,7 +191,7 @@ describe('Damocles Saves', () => {
       savedAt: '2026-09-12T08:00:00.000Z',
       schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
       snapshot: session.captureResume(),
-      where: damoclesWhere(session.snapshot.cell)
+      where: damoclesWhere(session.snapshot)
     });
     expect(() =>
       decodeDamoclesSave(editedPresentation, loaded.identity)
@@ -337,7 +337,7 @@ describe('Damocles Saves', () => {
     const persistence = createDamoclesSavePersistence({
       capture: () => ({
         snapshot: session.captureResume(),
-        where: damoclesWhere(session.snapshot.cell)
+        where: damoclesWhere(session.snapshot)
       }),
       catalogue: loaded.catalogue,
       identity: loaded.identity,

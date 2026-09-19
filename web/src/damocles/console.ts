@@ -52,7 +52,7 @@ export const executeDamoclesConsoleCommand = (
       const snapshot = host.session().snapshot;
       const { heading, position } = snapshot.pose;
       return [
-        `${damoclesWhere(snapshot.cell)} · cell ${snapshot.cell.x}-${snapshot.cell.z}`,
+        `${damoclesWhere(snapshot)} · cell ${snapshot.cell.x}-${snapshot.cell.z}`,
         `position x ${threeDecimals(position.x)} y ${threeDecimals(position.y)} z ${threeDecimals(position.z)}`,
         `orientation heading ${threeDecimals(heading)} radians`,
         'on foot'
@@ -160,7 +160,7 @@ export const executeDamoclesConsoleCommand = (
       const snapshot = host.session().snapshot;
       return [
         `switched to ${outcome.pose}`,
-        `${damoclesWhere(snapshot.cell)} · cell ${snapshot.cell.x}-${snapshot.cell.z}`
+        `${damoclesWhere(snapshot)} · cell ${snapshot.cell.x}-${snapshot.cell.z}`
       ];
     }
     case 'gotoRoom':

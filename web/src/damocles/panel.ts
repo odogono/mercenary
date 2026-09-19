@@ -42,7 +42,7 @@ export const damoclesPanelViewModel = (
   inventory: snapshot.inventoryLabel,
   inventoryFill: snapshot.carried.length,
   locationLabel: erisGridReference(snapshot.cell),
-  locationName: doc.body.name,
+  locationName: snapshot.bodyName,
   message: '',
   messageColour: undefined,
   runLamp: running,
