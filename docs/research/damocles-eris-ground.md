@@ -11,6 +11,193 @@ Authoritative Evidence remains bound to the C64 Reference Build. Observations
 here are Working-Authority Evidence only. This note does not mint Damocles world
 terms in `CONTEXT.md`.
 
+## Research update — #370
+
+[#370](https://github.com/odogono/mercenary/issues/370) asked what bounds the
+Damocles draw. For the ground family the answer was already most of the way
+into this note, but its reading of the latch was wrong in a way that inverts the
+conclusion.
+
+**On foot the ground window is the occupied cell alone.** The table at `$00915A`
+is now read rather than inferred, and the routine that consumes it disassembled
+in full:
+
+```
+054B6A  cmp.w   $79c6.w, d0     ; camera cell x against the last cell drawn
+054B70  cmp.w   $79ca.w, d1     ; and cell z
+054B74  beq.b   $54bb6          ; unchanged: skip the rebind
+054B84  move.b  #$ff, $7b62.w   ; changed: invalidate the cached radius
+054BA2  move.w  d3, $7b5c.w     ; publish the new current cell
+054BB6  move.l  $7a30.w, d4     ; camera Y, longword
+054BBA  lsr.l   #$8, d4
+054BBC  lsr.l   #$3, d4         ; index = Y >> 11
+054BBE  cmpi.l  #$ff, d4
+054BC6  move.w  #$ff, d4        ; clamped to the table's last entry
+054BCA  movea.l #$915a, a0
+054BD0  adda.w  d4, a0
+054BD4  move.b  (a0), d7        ; r = table[index]
+054BD6  cmp.b   $7b62.w, d7
+054BDA  beq.b   $54be4
+054BDC  move.b  d7, $7b62.w
+054BE0  bsr.w   $54888          ; rebuild the window
+```
+
+The correction is at `$054B84`. **A cell change stores `$FF` into `$7B62`**,
+and `$FF` appears nowhere in the table, so the compare at `$054BD6` can never
+match and `$054888` always rebuilds. This note previously reasoned that because
+the altitude byte does not change on foot, `$054BD6` never calls `$054888` and
+the arrival window simply stands. That holds only while the player stays inside
+one cell. Crossing a cell boundary forces the rebuild, and on foot the fresh
+byte is `table[0]`, which is `0`.
+
+The `$5F28` watch did not fail to fire because nothing was rebuilt. It did not
+fire because at radius zero `$05497E` skips the route list entirely, so slot
+`$E8` is never allocated and nothing writes that byte.
+
+### The recovered curve
+
+`$00915A` holds, read identically from 621 of 622 game-loaded captures in the
+work tree (sha256 `2920b857a78057ea34075578ab19acf78a8691ca8865dd4aff1cdabf0cf6ec43`):
+
+| altitude index | radius | window |
+| --- | --- | --- |
+| 0 | 0 | the occupied cell |
+| 1 | 1 | 3 × 3 |
+| 2 | 2 | 5 × 5 |
+| 3–4 | 3 | 7 × 7 |
+| 5–9 | 4 | 9 × 9 |
+| 10–15 | 5 | 11 × 11 |
+| 16–23 | 6 | 13 × 13 |
+| 24–31 | 7 | 15 × 15 |
+| 32–255 | 8 … 63 | one step every four indices |
+
+The index is the camera Y longword at `$7A30` shifted right 11 and clamped to
+255. On foot `$7A30` is 63, so the index is 0 and the radius is 0.
+
+### Which Y the index reads
+
+The lab tree used two different addresses for "camera Y": `location-ledger.py`
+reads `$7A96`, while `arrival-route-probe.py` and `object-selection-probe.py`
+read `$7A30`. Both are right, because they are **two different triples**, not
+two readings of one.
+
+- `$7A2C` / `$7A30` / `$7A34` is the scene camera. `$054BE4`–`$054BF0` copy each
+  one's high word to `$79C6` / `$79C8` / `$79CA`, which at 65,536 units per cell
+  is the cell index — the value `$054B6A` compares to detect a cell change.
+- `$7A92` / `$7A96` / `$7A9A` is the player's body position, the triple the Body
+  Coordinate Readout is decoded from
+  ([#371](https://github.com/odogono/mercenary/issues/371)).
+
+The radius index is `$7A30`, read as a longword at `$054BB6` and shifted right
+11. Nothing here depends on `$7A96`.
+
+### The evidence that the rebuild happens in ordinary play
+
+Three capture pairs taken within a single run, with nothing written into the
+guest:
+
+| run | before | after |
+| --- | --- | --- |
+| `observe-walk-toward-building-20260818T143508Z-c60e2391` | cell `$87` (7,8), `$7B62` = 3 | cell `$B7` (7,11), `$7B62` = **0** |
+| `enter-building-probe-20260818T145843Z-47bd7745` | cell `$87`, `$7B62` = 3 | cell `$77` (7,7), `$7B62` = **0** |
+| `observe-walk-toward-building-20260818T113001Z`, `…T141006Z` | cell `$87`, `$7B62` = 3 | cell `$87` unchanged, `$7B62` = 3 |
+
+The two runs whose walk never left cell (7,8) keep the latched radius; the two
+that crossed a boundary drop to zero. That is the `$054B84` path, observed.
+
+### The pinned arrival capture is the outlier
+
+Across all 23 memstates, `$7B62` equals `table[$7A30 >> 11]` in 21:
+
+| route | memstates | `$7B62` |
+| --- | ---: | --- |
+| flight landing | 7 | 0 |
+| transporter hop | 8 | 0, except `damocles.vesta.transporter` at camera Y 3233 → index 1 → 1 |
+| GUI walk capture | 3 | 0 |
+| vehicle / interior derived | 3 of 5 | 0 |
+
+The two that disagree are `eris-spaceport-onfoot` (`$7B62` = 3 at index 0) and
+`interior-window`, which was walked indoors from it without an intervening cell
+change. The pinned capture this note's original reading rested on is the one
+anomalous pose in the tree.
+
+`scripts/draw-reach-check.py` reports this per capture and gates it. Its
+`radius-table` check refuses a capture whose `$00915A` is not the canonical
+curve; `radius-reachable` refuses a `$7B62` the table cannot produce; and where
+a route list is built it delegates the window to `ground-extent-check.py`. It
+passes on all 23 memstates and on 621 of 706 work-tree RAM images, the 85
+refusals all being title-screen or TOS-only captures taken before the game
+loaded.
+
+### Evidence identities
+
+| Input | Hash |
+| --- | --- |
+| Working Authority STX | `8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef` |
+| Pinned TOS (EmuTOS 2.06) | `154803e3ff4851f3dc358b91b16d6b6110d187a81d8132ecb665af49878939d5` |
+| `scripts/draw-reach-check.py` | tracked in this repository |
+| `tests/test_draw_reach.py` | tracked in this repository |
+
+| Range | Hash |
+| --- | --- |
+| Altitude radius table `$00915A`–`$009259` | `2920b857a78057ea34075578ab19acf78a8691ca8865dd4aff1cdabf0cf6ec43` |
+| Cell change and radius recompute `$054B60`–`$054BF7` | `c9872b183b45fc8ed1e1cf482ce2c5e58df3333f6e47fbad82e862575067abd4` |
+| Object stream walk and structure dispatch `$0533B8`–`$05341B` | `fb0aa3546084474a4326dffd0f8b1334795d08110692b48c898aed3322482ea5` |
+| Place-name binder `$054BF8`–`$054C8F` — read and excluded | `73476b17e5c4a74854f59e20e0a5ecc22b9037550995e20943cb5bf9dcdadce5` |
+
+| Capture | RAM sha256 |
+| --- | --- |
+| `adhoc-enter-20260818T100805Z-797d27bb/observed.ram` | `7dc5fe25d5c66a9a23a8d0ec50a8a9c71e87c8889be30f65282469eb51150d1c` |
+| `observe-walk-toward-building-20260818T143508Z-c60e2391/observed-t0.ram` | `91272db70dea8abfeeffc46039767574ae97eede05792b213c62fb9f9b4ef4e9` |
+| `observe-walk-toward-building-20260818T143508Z-c60e2391/observed-t1.ram` | `2c1c7baee04eed60c1ebec8daeed6700bf6ea678a0cbe443d88d3be6cc223cd8` |
+| `enter-building-probe-20260818T145843Z-47bd7745/frame-00-spawn.ram` | `6bc0040c013d634b2d0f10d56374b2bbfe26d10e88a46274577052ea39c4ed73` |
+| `enter-building-probe-20260818T145843Z-47bd7745/frame-02-up-12000.ram` | `260a6b8d347e7169c70256716a9430592bd8c8ebc5b5bf3624e6c2a7b1ff8a36` |
+| `eris-spaceport-onfoot.sav`, carved | `1366881c62ab9e80a5fe8b1dcbb5dfa2ccc0142e4a921cd029f9dfc8f6b16465` |
+| `left-limo.sav`, carved | `029129ef1efc183d49c15ad160d063b4efcf86f5d00cd7358c4b9d1f722d2d4c` |
+| `damocles.vesta.transporter.sav`, carved | `fe94a6f027dc210e301f16fbe699801043c5d1216f4e81c4ea3e3c5917bfd7e0` |
+
+**Kept and not used.** `stick-replay-20260818T164031Z-3b262579/observed.ram`
+(sha256 `762a855b176e15f4b35a27ea2c274e28b9f24ae6727771ce2cdd5e71399af127`) is the
+one game-loaded capture in the work tree whose `$00915A` is not the canonical
+curve: its first three entries read `03 03 03` where every other capture reads
+`00 01 02`. Nothing here rests on it, and `draw-reach-check.py`'s `radius-table`
+gate refuses it. Whether a run can genuinely write those bytes is not resolved,
+and is not needed for this finding; a single unreproduced capture is not
+evidence either way.
+
+The 85 further RAM images the gate refuses are title-screen or TOS-only captures
+taken before the game loaded. They are not failures of the reading.
+
+### Claim boundary
+
+Every reading above is taken from pinned RAM with the emulator stopped, or from
+a memstate carved off disk. **Nothing was written into the guest**, so no result
+here is an instruction checkpoint and none needed to be labelled as one.
+
+What is established: the contents of `$00915A`, the arithmetic at
+`$054BB6`–`$054BE0` that consumes it, the `$FF` invalidation at `$054B84`, and
+that in captures taken after a cell change on foot the cached radius is zero.
+
+What is not established: that no other code path writes `$7B62`. The gate checks
+that the cached value is one the table can produce, which a second writer could
+satisfy. The rebuild was observed across cell boundaries in four runs, not
+proved exhaustive. This is a reading of the Damocles Working Authority and is
+**Working-Authority Evidence, never Authoritative Evidence** — it says nothing
+about the C64 Reference Build.
+
+### Consequence for /damocles
+
+`planErisFrame` draws all 123 Eris ground-record placements from every cell. The
+recovered bound for ordinary on-foot play is the occupied cell alone, so the
+ground family is over-drawn by 122 placements. Adopting it is
+[#373](https://github.com/odogono/mercenary/issues/373); this note establishes
+only what the bound is.
+
+`camera.farPlane` in `web/damocles/eris.json` is unchanged and stays `authored`.
+The Working Authority has no far plane in the projection sense — it has this
+cell window and the separate horizon slots — so there is no recovered value to
+replace it with. It remains a parameter of the browser's own log-depth buffer.
+
 ## Scope and non-goals
 
 **In scope:** locating the RAM records that produce the outdoor pad, road and
@@ -197,6 +384,11 @@ when that byte differs from the cached `$7B62`. In the pinned on-foot capture
 the on-foot altitude index 0 is `0`, and the cache is what keeps the wider
 window standing.
 
+> Corrected by the #370 update above: the latch survives only until the player
+> crosses a cell boundary, because `$054B84` stores `$FF` into `$7B62` on a cell
+> change and forces the rebuild. The on-foot window in ordinary play is the
+> occupied cell alone.
+
 `$05499E` then walks that window row by row, reading each cell's authored
 longword from `$1E000` and passing both of its words to `$054A52`, which appends
 a word to a list based at `$84DC` only if it is nonzero and not already there.
@@ -244,10 +436,12 @@ catalogue already reports, at the fixed height `$79BA`, so these are
 axis-aligned world-space segments lying in the ground plane.
 
 `$7B62` also explains a pair of negative probes. Watching the allocator's own
-output byte (`$5F28`, slot `$E8`) across 40,000 VBLs of walking never breaks:
-on foot the altitude byte never changes, `$054BD6` never calls `$054888`, and
-the list built on arrival simply stands while `$054A64` re-projects it every
-frame. Captures taken at radius zero show the other end of the same rule —
+output byte (`$5F28`, slot `$E8`) across 40,000 VBLs of walking never breaks.
+The reading here was that on foot the altitude byte never changes, `$054BD6`
+never calls `$054888`, and the list built on arrival simply stands while
+`$054A64` re-projects it every frame. The #370 update above corrects it: the
+walk does rebuild, at every cell boundary, and the watch is silent because a
+radius-zero rebuild allocates no slot `$E8` to write. Captures taken at radius zero show the other end of the same rule —
 `$7B56` is `$F0`, `$7B58` is `$84E0`, and `$84DC` still holds raw corner bytes
 because `$05497E` skipped the list entirely.
 
@@ -276,6 +470,9 @@ built, radius-zero and off-grid states.
 
 | Hypothesis                                                                                | Status                                    | Evidence                                                                                                                                                                                                  |
 | ----------------------------------------------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The 7 × 7 window seen on foot is the rule (#370)                                          | **Refuted**                               | `$00915A` entry 0 is `0`. `$054B84` stores `$FF` into `$7B62` on every cell change, forcing the rebuild at `$054BE0`; four capture pairs show `$7B62` drop from 3 to 0 on the first boundary crossed.        |
+| On foot the ground window is the occupied cell alone (#370)                              | **Confirmed**                             | `$054BB6`–`$054BE0` with the recovered table; 21 of 23 memstates hold `$7B62` = `table[$7A30 >> 11]`, the two exceptions both descending from one un-crossed arrival capture.                              |
+| Structure geometry obeys the same window as the ground records (#370)                    | **Refuted — it is narrower and unrelated** | `$05A744` and `$053CC2` have five call sites, all inside `$0533D4..$053418`, reached by a zero-word sentinel in the object stream. One bound workspace, no window arithmetic at all.                        |
 | Pad/road are already structure form-4/6 polygons at `y = 0`, hidden by the authored plane | **Refuted as the store**                  | Structure 74's recovered faces are walls and building planes. The white/grey strips decode from `$020F8E` / `$021AFE`, not from `$01484E`.                                                                |
 | The two skipped structure-header colour words are the cell fill                           | **Refuted for the pad**                   | Structure 74's words are `$809A` / `$808E` (scene-palette greys/blues), not `$777` / `$444`. The pad colours are in the ground stream.                                                                    |
 | Unused bits of `$00ABDC` select pad vs grass vs road                                      | **Refuted for ground**                    | `$054CBE` masks the first byte with `$FE` into `$7AF8` for a different selector (objects / `$1E000` side table when `$20..$9F`). Ground uses `$1E400` + `$83DC`. Low nine bits remain the structure slot. |

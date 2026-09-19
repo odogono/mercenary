@@ -434,6 +434,46 @@ boarded-limo snapshot.
 Nothing is written into the guest. See
 [the selection research](../../docs/research/damocles-object-selection.md).
 
+## Draw reach check (#370)
+
+What bounds each family of Damocles geometry at one pose. Unlike the probes
+above it launches nothing: it reads a capture that already exists — a run's
+`.ram` or a memstate carved off disk — so every reading is an ordinary-route
+observation with nothing written into the guest.
+
+```sh
+python3 research/damocles-st/scripts/draw-reach-check.py \
+  --memstate research/damocles-st/snapshots/eris-spaceport-onfoot.sav
+python3 research/damocles-st/scripts/draw-reach-check.py \
+  --run research/damocles-st/work/<run-id> --prefix observed
+```
+
+It reports three bounds, because there are three and they differ:
+
+- **ground records** — a `(2r + 1)` cell square, with `r` read at `$054BD4`
+  from the table at `$00915A` indexed by the camera altitude `$7A30 >> 11`.
+  Entry 0 is `0`, so **on foot the window is the occupied cell alone**. A
+  capture may still hold a wider one: a radius latched at altitude stands until
+  something recomputes it, and `$054B84` forces that by storing `$FF` on every
+  cell change. The report says `settled` or `latched from a higher altitude`.
+- **structures** — the occupied cell alone, structurally. `$05A744` and
+  `$053CC2` are reachable only from `$0533D4..$053418`, which the object stream
+  walk falls into on a zero word, drawing the one bound workspace.
+- **objects** — the whole body, no distance test. Recovered at `$052C9C` in
+  `docs/research/damocles-object-selection.md` and reported here for contrast,
+  not re-derived.
+
+Three checks raise rather than report: `radius-table` refuses a capture whose
+`$00915A` is not the canonical curve, which is how a pre-game-load capture is
+caught; `radius-reachable` refuses a `$7B62` the table cannot produce; and where
+a route list is built the window is delegated to `ground-extent-check.py`. It
+passes on all 23 memstates and on 621 of 706 work-tree RAM images, the 85
+refusals being title-screen or TOS-only captures.
+
+Findings and evidence identities are in
+`docs/research/damocles-eris-ground.md` and
+`docs/research/damocles-structure-draw-selection.md`.
+
 ## Failures and acceptance
 
 Hard failure on a wrong STX, wrong TOS, missing Hatari, missed title-screen

@@ -23,6 +23,18 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
   at the Eris start pose, as the original does, and
   `location-ledger.py poses` now reports the readout and refuses a pose whose
   engine words disagree with its camera longwords (#371).
+- **The Damocles ground window is the occupied cell on foot, not the 7 × 7 the
+  pinned arrival capture holds.** `docs/research/damocles-eris-ground.md` read
+  the wide window as latched from a higher altitude and standing because
+  walking never changes the altitude byte. It does stand — until the player
+  crosses a cell boundary, where `$054B84` stores `$FF` into the cached radius
+  `$7B62` and forces the rebuild at `$054BE0`, which on foot reads `0` from the
+  recovered table at `$00915A`. Four capture pairs show the radius drop from 3
+  to 0 on the first boundary crossed, and 21 of 23 memstates already hold the
+  table's own value for their altitude; the capture the original reading rested
+  on is the one anomalous pose in the tree. The silent `$5F28` watch is
+  explained too: a radius-zero rebuild allocates no slot to write (#370).
+
 - The Damocles Panel Rendition's lower navigation row now stands in the
   original's order: the wide readout carries the body coordinates the ST prints
   as `016-283`, with the location cell beside it and the altitude last. The
@@ -44,6 +56,14 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- `research/damocles-st/scripts/draw-reach-check.py` reports what bounds each
+  family of Damocles geometry at one pose, from a capture that already exists —
+  no emulator run, nothing written into the guest. Structures draw from the
+  occupied cell alone (`$05A744` and `$053CC2` are reachable only from the
+  `$0533D4` dispatch, which the object stream falls into on a zero word);
+  ground records follow the altitude-indexed cell window; objects follow no
+  distance test at all. Three gates raise rather than report, and it passes on
+  all 23 memstates and 621 of 706 work-tree RAM images (#370).
 - Damocles catalogue schema 14 publishes Capital Spaceport association groups,
   and Eris presentation schema 6 publishes its recovered 50 Hz script timing.
 - Damocles play now supports the Capital Spaceport V.I.P. limo key's recovered
