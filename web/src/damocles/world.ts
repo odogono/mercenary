@@ -41,6 +41,8 @@ export interface ErisPlacement {
   readonly faceCount: number;
   readonly heading: number;
   readonly id: string;
+  /// The cell's `$7AFB` door-key base, or null where the entry byte installs none.
+  readonly keyBase: number | null;
   readonly kind: Kind;
   /// Static geometry for ordinary placements; authored fallback for recovered selectors.
   readonly mesh: Mesh | undefined;
@@ -262,6 +264,7 @@ export const erisSurfaceFrom = (
       faceCount: mesh?.faces.length ?? 0,
       heading: placementHeading(model, location.heading),
       id: instance.id,
+      keyBase: instance.keyBase,
       kind: model.kind,
       mesh,
       modelId: model.id,

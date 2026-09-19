@@ -110,11 +110,19 @@ Two independent methods agree: the region-connectivity graph is derived from
 recovered region bounds in the payload, and the list is a player's notes. Neither
 knew about the other.
 
-**The hypothesis this licenses**, and which #362 must verify against the Working
-Authority rather than assume: a region gated `attachmentLatch` opens while the
-matching door key is in the Carried Stack. Nothing here shows the mechanism — not
-what reads the key, not whether it is carrying or using, and not how an instance
-is known to be key A rather than key I.
+**The hypothesis this licensed** was that a region gated `attachmentLatch` opens
+while the matching door key is in the Carried Stack.
+[#362](https://github.com/odogono/mercenary/issues/362) has since confirmed it
+against the Working Authority, and the list's letters survive the check exactly:
+the handler tests bit 7 of `$6FAA + 4 * slot`, which the Take sets and the Drop
+clears, and the slot is the cell's `$7AFB` base plus the entrance's key nybble —
+30 for Authors House, 33 for Novagen Office and 34 for Vesta Parliament, which is
+A, D and E. See [the entrance-attachment
+note](damocles-generic-entrance-attachments.md#the-live-condition-predicate-is-the-carried-stack--confirmed).
+
+A player's notes and a disassembly agreed on three letters neither could read
+from the other. That is a stronger result for this list than for the mechanism,
+and it is the reason to keep reading it.
 
 It also orders the work. Key A is on GAEA at level 2 and key E on DION at level
 9, so four of the five residents are behind #355 before they are behind #362.
@@ -140,8 +148,10 @@ is a lead for it, not an answer.
 
 - No placement, parent or workspace is established. The list gives no
   coordinates, only a building and a floor.
-- No access rule is established. "Needs key D" is a player's observation of a
-  base-game route, not a recovered gate.
-- No key letter reaches the payload or the port from here.
+- No access rule is established **from this list**. "Needs key D" is a player's
+  observation of a base-game route; the gate it agrees with was recovered
+  separately, from the bank.
+- No key letter reaches the payload or the port from here. The payload's
+  `keyBase` is read from each cell's `$ABDC` entry byte, not from this list.
 - Building names remain unrecovered. Where this note writes "Authors House" it is
   quoting the list, and the ledger continues to name a parent by its selectors.

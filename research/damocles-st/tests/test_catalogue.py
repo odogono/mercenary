@@ -1098,6 +1098,57 @@ class AttachmentKeyTests(unittest.TestCase):
             [ram[a] for a in (0xCD37, 0xCD39, 0xCD3B, 0xCD3D)], [0x20] * 4
         )
 
+    def test_the_payload_publishes_the_key_base_of_every_keyed_cell(self):
+        """A keyed entrance names an object slot, and the cell chooses which.
+
+        The key slot is the cell's base plus the entrance's low nybble, and the
+        letter is that slot's distance from slot 30. Three of these four cells
+        are the ones the guide list independently annotates "needs key", and
+        they agree letter for letter.
+        """
+        root = Path(__file__).resolve().parents[3]
+        payload = json.loads(
+            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
+        )
+        models = {model['id']: model for model in payload['models']}
+        keyed = {}
+        for instance in payload['instances']:
+            base = instance.get('keyBase')
+            selection = models[instance['model']].get('structureSelection')
+            if not base or selection is None:
+                continue
+            for attachment in selection['attachments']:
+                if 'keyIndex' in attachment:
+                    keyed[instance['id']] = base + attachment['keyIndex']
+
+        self.assertEqual(keyed, {
+            'dion-surface-de': 30,
+            'dion-surface-b2': 33,
+            'vesta-surface-64': 34,
+            'gaea-ur-city-surface-17': 31,
+            # The authored Birmingham stream repeats the two Dion cells (#324).
+            'gaea-surface-de': 30,
+            'gaea-surface-b2': 33,
+        })
+        for slot in set(keyed.values()):
+            name = next(item['name'] for item in payload['instances']
+                        if item['id'] == f'object-slot-{slot}')
+            self.assertTrue(name.startswith('DOOR KEY'), name)
+
+    def test_the_eris_keyed_entrances_install_no_base(self):
+        """Which is why a shut door never blocked anything on Eris."""
+        root = Path(__file__).resolve().parents[3]
+        payload = json.loads(
+            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
+        )
+        models = {model['id']: model for model in payload['models']}
+        for instance in payload['instances']:
+            selection = models.get(instance['model'], {}).get('structureSelection')
+            if selection is None or not instance['id'].startswith('eris-surface-'):
+                continue
+            if any('keyIndex' in item for item in selection['attachments']):
+                self.assertIsNone(instance['keyBase'], instance['id'])
+
     def _every_capture(self):
         """Every independent capture in this checkout, first-world runs first."""
         from damocleslab.catalogue import hatari_memstate_ram

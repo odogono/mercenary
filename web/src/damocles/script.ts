@@ -282,6 +282,10 @@ export const fireTrigger = (
 
 export const presentSystemMessage = (
   input: ScriptState,
-  id: 'system-string-1' | 'system-string-2' | 'system-string-9',
+  id:
+    | 'system-string-0'
+    | 'system-string-1'
+    | 'system-string-2'
+    | 'system-string-9',
   rules: ScriptRules
 ): ScriptState => present(input, id, rules.messageFrames);

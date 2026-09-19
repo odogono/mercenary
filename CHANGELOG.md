@@ -12,6 +12,19 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **A keyed door stays shut until you are carrying its key, and says `LOCKED`
+  when you are not.** The generic Entrance Attachment handler's live-condition
+  path is recovered: an `$F0` entrance tests bit 7 of the key object's own state
+  byte, which the Take sets and the Drop clears, so the predicate is carrying.
+  The key it wants is named by the **cell**, not by the structure record — the
+  cell's `$7AFB` base plus the entrance's low nybble is the key's object slot,
+  and the letter the door prints is the same number. The Catalogue now publishes
+  that base as each surface placement's `keyBase`. Four buildings are keyed:
+  Authors House to key A, Novagen Office to D, Vesta Parliament to E and
+  Hantzens New House to B — the first three agreeing letter for letter with a
+  player's item list recovered independently. Eris's own keyed-entrance cells
+  install no base, so nothing there changes (#362).
+
 - **A `SHADOWS` row on the settings page chooses the Cast Shadow edge: `OFF`,
   `SOFT` or `HARD`.** Eris's Enhanced shadows were only ever softened by a 3 × 3
   PCF average over a LINEAR compare sampler, and could only be switched off by

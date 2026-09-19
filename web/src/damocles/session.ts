@@ -1,4 +1,9 @@
-import { instanceById, modelById, type Catalogue } from '../catalogue/data.ts';
+import {
+  instanceById,
+  modelById,
+  type Catalogue,
+  type EntranceAttachment
+} from '../catalogue/data.ts';
 import { IDLE, MAXIMUM_STEP, type Intent } from '../gameCore/index.ts';
 import type { TitleSession } from '../shell/title.ts';
 import {
@@ -592,6 +597,7 @@ export class DamoclesSession implements TitleSession<
         faceCount: form?.mesh.faces.length ?? 0,
         heading: base?.heading ?? 0,
         id: instance.id,
+        keyBase: instance.keyBase,
         kind: model.kind,
         mesh: form?.mesh,
         modelId: model.id,
@@ -653,8 +659,32 @@ export class DamoclesSession implements TitleSession<
     return this.liveCarriedInstance(`object-slot-${slot}`);
   }
 
+  /// `$05AA82..$05AA98`: an `$F0` Entrance Attachment inside its Proximity Box opens only
+  /// while the matching door key is in the Carried Stack.
+  ///
+  /// The live condition word's low byte at `$5A43 + slot` is the key, written by `$059FA6` as
+  /// the control's low nybble plus the cell's `$7AFB` base — which is the key object's own
+  /// slot, and its printed letter less `$23`. A zero low byte, which is every non-`$F0`
+  /// attachment and every `$F0` attachment in a cell that installs no base, opens on
+  /// proximity alone. Otherwise `$05AA90` tests `$6FAA + 4 * slot`, whose bit 7 the Take at
+  /// `$0542A4` sets and the Drop at `$04CAF0` clears. Bit clear raises `$5A9DA`, which
+  /// `$0595A4` shows as system string 0, LOCKED.
+  private attachmentKeyHeld(
+    placement: ErisPlacement,
+    attachment: EntranceAttachment
+  ): boolean {
+    if (attachment.keyIndex === undefined || placement.keyBase === null) {
+      return true;
+    }
+    return this.liveCarriedSlot(placement.keyBase + attachment.keyIndex);
+  }
+
   private presentSystem(
-    id: 'system-string-1' | 'system-string-2' | 'system-string-9'
+    id:
+      | 'system-string-0'
+      | 'system-string-1'
+      | 'system-string-2'
+      | 'system-string-9'
   ): void {
     if (this.script.execution === null && this.script.message === null) {
       this.script = presentSystemMessage(this.script, id, this.scriptRules);
@@ -707,7 +737,12 @@ export class DamoclesSession implements TitleSession<
           this.negateModelZ
         );
         for (const attachment of placement.selection!.structure.attachments) {
-          const opening = insideLocalBox(local, attachment.proximityBox);
+          const approached = insideLocalBox(local, attachment.proximityBox);
+          const opening =
+            approached && this.attachmentKeyHeld(placement, attachment);
+          if (approached && !opening) {
+            this.presentSystem('system-string-0');
+          }
           const current = this.unitsFor(attachment.slot);
           this.attachmentUnits.set(
             attachment.slot,
