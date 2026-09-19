@@ -26,6 +26,7 @@ const key: ErisPlacement = {
   faceCount: 1,
   heading: 0,
   id: 'object-slot-183',
+  keyBase: null,
   kind: 'object',
   mesh: keyMesh,
   modelId: 'object-03e494',

@@ -60,6 +60,7 @@ const placement = (
   faceCount: mesh?.faces.length ?? 0,
   heading: 0,
   id: 'test',
+  keyBase: null,
   kind: 'object',
   mesh,
   modelId: 'model',
@@ -661,9 +662,7 @@ describe('the Eris renderer', () => {
     expect(fake.uniforms['farShadowMap']).toEqual([1]);
     // A soft Cast Shadow reads both maps through the LINEAR compare sampler and averages.
     expect(fake.uniforms['hardEdge']).toEqual([0]);
-    expect(
-      fake.calls.filter(call => call.startsWith('bindSampler:'))
-    ).toEqual([
+    expect(fake.calls.filter(call => call.startsWith('bindSampler:'))).toEqual([
       'bindSampler:0:linear',
       'bindSampler:1:linear',
       'bindSampler:0:linear',
@@ -714,9 +713,10 @@ describe('the Eris renderer', () => {
       fake.calls.filter(call => call === 'texStorage:2048:2048')
     ).toHaveLength(2);
     expect(fake.uniforms['hardEdge']).toEqual([1]);
-    expect(
-      fake.calls.filter(call => call.startsWith('bindSampler:'))
-    ).toEqual(['bindSampler:0:nearest', 'bindSampler:1:nearest']);
+    expect(fake.calls.filter(call => call.startsWith('bindSampler:'))).toEqual([
+      'bindSampler:0:nearest',
+      'bindSampler:1:nearest'
+    ]);
 
     // Switching edge between frames rebinds without reallocating.
     renderer.render(plan, { ...frame, shadowEdge: 'soft' });

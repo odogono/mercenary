@@ -207,10 +207,104 @@ and finally clears to `$00`. Thus the live latch, endpoint and re-close rule
 recovered for Structure 74 are properties of all six base constructor modes,
 not a Capital Spaceport special case.
 
-Low-byte selector variants and the handler's additional live-condition path
-are not named here. Their geometry follows the constructors above, but the
-game-state predicate selecting open versus close remains unresolved. No
-implementation should infer that predicate from `$F0`.
+### The live-condition predicate is the Carried Stack — Confirmed
+
+[#362](https://github.com/odogono/mercenary/issues/362) asks it of a Dion
+structure. It is answered generically, in the handler's first twenty
+instructions, and it is a key the player is holding.
+
+Each attachment slot carries a second live word at `$5A42 + slot` beside the
+control word. `$5AA52` loads it into `d6` and branches three ways before any
+geometry moves:
+
+| `d6`                       | Branch   | Outcome                                        |
+| -------------------------- | -------- | ---------------------------------------------- |
+| negative, bit 14 set       | `$5ABF6` | opens, Proximity Box not consulted              |
+| negative, bit 14 clear     | `$5AAA0` | re-closes, Proximity Box not consulted          |
+| non-negative               | fall     | the Proximity Box test at `$5AA62` decides      |
+
+The negative forms are a separate override channel: `$055B04` writes `$80` into
+the high byte when a level change takes an attachment, which pins it shut. The
+ordinary case is the third.
+
+Inside the Proximity Box, `$5AA82` tests the **low** byte, `$5A43 + slot`:
+
+- Zero — open. This is every non-`$F0` attachment, whose control low byte is
+  zero, and every `$F0` attachment in a cell that installs no `$7AFB` base,
+  because `$059F5A` then skips the write at `$059FA6` entirely.
+- Non-zero — `$5AA8C` quadruples it and `$5AA90` tests the byte at
+  `$6FAA + 4 * value`. Negative, meaning bit 7 set, opens. Otherwise `$5AA98`
+  raises `$5A9DA` and the leaves re-close.
+
+`$6FAA + 4 * slot` is the resident object's own state byte and its bit 7 is the
+Carried Stack: the Take at `$0542A4` sets it while appending the slot to the
+`$61CE` stack under the `$61CC` count, and the Drop at `$04CAF0` clears it while
+removing the slot from that same stack. Nothing else in the bank writes bit 7.
+So the predicate is **carrying**, not using, and not ever having held.
+
+**The low byte is the key object's own slot.** `$059FA6` writes `d4`, which
+`$059F5C`–`$059F60` formed as the control's low nybble plus the cell's `$7AFB`
+base — the same `d4` that `$059FA0` turns into the printed letter by adding
+`$23`. Base `$1E` is `A` and slot 30 is the first `DOOR KEY A` record, so the
+letter and the slot are two readings of one number:
+
+```text
+key slot = (control & $0F) + $7AFB      letter = key slot + $23
+```
+
+This closes the letter question the payload could not answer on its own. All ten
+door-key instances share one model record and are therefore all named
+`DOOR KEY A`; the cell they open, not the record, is what distinguishes them.
+
+`$5A9DA` is latched to `$5A9DB` at `$5A9EE` and `$0595A4` presents it as system
+string 0, **LOCKED**. Its neighbours corroborate the index: the Take's carry
+refusal passes 2 to the same `$54808`, and system string 2 is `TOO HEAVY`.
+
+The cold capture agrees with all of it. `$61CC` is 0, and the state bytes for
+slots 30 and 33 are `$05` with bit 7 clear, so at world start every keyed
+entrance is shut and says LOCKED.
+
+| Range            | Decoded role                          | SHA-256                                                            |
+| ---------------- | ------------------------------------- | ------------------------------------------------------------------ |
+| `$059F50..$059FAF` | key byte and letter written per cell | `24ae4f24588c5b266bd853bc8bbc669d3da6b06df44395a3f24a675619d65905` |
+| `$05AA52..$05AA9F` | condition word gate                  | `c15d583d4d0d2b13e62bb4f29f66ba55778ea5545ce66138c4cb2eb0f8d43dee` |
+| `$054294..$0542AD` | Take appends and sets bit 7          | `64205ab891007ba2120e94ee5f5660141ab99959d15ee84324bd254755c11484` |
+| `$04CAF0..$04CB4B` | Drop removes and clears bit 7        | `c65a7d18e9e2a4d1ac03421729805f18b63b7bf86d827f3db5044d8c20a4e694` |
+| `$0595A4..$0595B1` | LOCKED dispatch                      | `4cfe404faa26f3147ddf4dec1d0cad647ca6b94d3faf68f748a9e0703a1768dd` |
+
+### Which cells this keys, and why Eris never showed it
+
+`$7AFB` is a property of the cell, so the same structure record is keyed on one
+body and free on another. Across the pinned extract and the three workspace
+captures, eight placements install a base. Four distinct cells both install one
+and carry an `$F0` entrance, and those four are the keyed doors:
+
+| Cell                      | Building            | Base  | Key slot | Letter |
+| ------------------------- | ------------------- | ----- | -------: | ------ |
+| DION `14-13`              | AUTHORS HOUSE       | `$1E` |       30 | A      |
+| DION `02-11`              | NOVAGEN OFFICE      | `$21` |       33 | D      |
+| VESTA `04-06`             | VESTA PARLIAMENT    | `$22` |       34 | E      |
+| GAEA UR CITY `07-01`      | HANTZENS NEW HOUSE  | `$1F` |       31 | B      |
+
+The authored Birmingham Island stream repeats the two Dion cells with the same
+base and the same structure, which is the labelling question
+[#324](https://github.com/odogono/mercenary/issues/324) already holds open, not a
+second building. Two further cells install a base their structure never reads:
+ERIS `09-08` STATE OFFICE at `$26` and ERIS `15-12` LAWSON BANK HQ at `$20`
+carry no `$F0` entrance, so the base stays a letter nothing asks for.
+
+Conversely, the five Eris cells that carry an `$F0` entrance — `$24`, `$36`,
+`$45`, `$46` and `$5C` — install **no** base. Their low byte stays zero, so they open on proximity
+alone. That is the mechanism behind the ledger's observation that Capital
+Spaceport's counterparts are reachable with every door shut: on Eris there is no
+key to hold.
+
+The first three rows agree, letter for letter, with the three cells the
+[guide item list](damocles-guide-resident-list.md) independently annotates
+"needs key". The fourth is a prediction that list does not cover.
+
+No implementation should infer the predicate from `$F0` alone: `$F0` says a key
+letter exists, and the cell says which key.
 
 ## Structure 75 at Eris STATE OFFICE
 

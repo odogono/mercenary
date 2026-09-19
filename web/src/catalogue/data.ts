@@ -174,6 +174,12 @@ export interface Instance {
     readonly takeable: boolean;
   } | null;
   readonly id: string;
+  /**
+   * The `$7AFB` door-key base this cell's `$ABDC` entry byte installs ($054CBE), or null
+   * where the entry installs none. An `$F0` entrance in this cell's structure is keyed to
+   * object slot `keyBase + keyIndex` ($059FA0), which is also its printed letter less `$23`.
+   */
+  readonly keyBase: number | null;
   readonly location: {
     readonly body: string;
     readonly coordinateSystem: string;
@@ -1005,6 +1011,10 @@ export const parseCatalogue = (value: unknown): Catalogue => {
       associationGroups,
       handling,
       id: string(i['id']),
+      keyBase:
+        i['keyBase'] === null || i['keyBase'] === undefined
+          ? null
+          : byte(i['keyBase']),
       location,
       model,
       name: string(i['name']),

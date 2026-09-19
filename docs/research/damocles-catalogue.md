@@ -29,6 +29,8 @@ game menu. `?model=object-035d12` opens DART II;
 
 For body-aware interaction (#345), each resident instance carries `placementClass`, Association A byte 3 (`$6FAB + 4*slot`). It is mutable placement state rather than identity — a Drop rewrites it — so this is the authored value a session departs from. It is not the handling byte's low nibble; the two disagree for 176 of the 241 residents. See [placement class](damocles-placement-class.md).
 
+Each surface-cell placement carries `keyBase`, the `$7AFB` door-key base its `$ABDC` entry byte installs (`$054CBE`), or null where it installs none. An `$F0` Entrance Attachment in that cell's structure is keyed to object slot `keyBase + keyIndex` and opens only while that slot is in the Carried Stack (#362). The base belongs to the cell, so one structure record is keyed where it stands on Dion and free where it stands on Eris. See [generic entrance attachments](damocles-generic-entrance-attachments.md#the-live-condition-predicate-is-the-carried-stack--confirmed).
+
 Three model fields retain recovered native facts.
 `storeyHeight` is the alias record's first word masked by `$7FFF`, as written to
 `$7B00` at `$054D86`; non-alias models do not claim a pitch. `supportTop` is the

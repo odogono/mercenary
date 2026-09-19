@@ -2619,6 +2619,7 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
         model_id = tables[1]['entries'][slot]
         identity = f'{prefix}-surface-{cell:02x}'
         place = names.get(cell)
+        key_base = cell_key_base(record >> 8)
         instances.append({
             'id': identity,
             'name': place[1] if place else f"{label} surface cell {cell & 15},{cell >> 4}",
@@ -2626,6 +2627,7 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
             'sourceAddress': address,
             'association': None,
             'handling': None,
+            'keyBase': key_base or None,
             'placementClass': None,
             'placement': None,
             'location': {
@@ -3143,6 +3145,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                           'model': model_id, 'sourceAddress': address,
                           'association': None,
                           'handling': None,
+                          'keyBase': cell_key_base(record >> 8) or None,
                           'placementClass': None,
                           'placement': None,
                           'location': {'body': 'body-11', 'place': place[0] if place else None,
@@ -3179,6 +3182,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 'sourceAddress': placement['address'],
                 'association': None,
                 'handling': None,
+                'keyBase': cell_key_base(placement['word'] >> 8) or None,
                 'placementClass': None,
                 'placement': None,
                 'location': {

@@ -549,10 +549,15 @@ to any of those seven crosses a region whose gate is `attachmentLatch`. With the
 door shut the walk reaches selectors 17 and 18 only; with it open the whole
 35-region building connects and all seven become available.
 
-So this is not a missing table and not a placement error. It is the question
+So this is not a missing table and not a placement error. It was the question
 [#252](https://github.com/odogono/mercenary/issues/252) owns on Eris — what opens
-a structure's attachments, and from where — asked of a Dion structure.
-[#362](https://github.com/odogono/mercenary/issues/362) carries it.
+a structure's attachments, and from where — asked of a Dion structure, and
+[#362](https://github.com/odogono/mercenary/issues/362) has now recovered the
+answer: a keyed entrance opens while the matching door key is in the Carried
+Stack, and the key is named by the **cell**, not the structure record. See
+[the entrance-attachment note](damocles-generic-entrance-attachments.md#the-live-condition-predicate-is-the-carried-stack--confirmed).
+Authors House stands on DION `14-13`, whose `$7AFB` base is `$1E`, so its one
+keyed entrance wants object slot 30 — door key **A**.
 
 ### What the exposure rule was reading, and what changed
 
@@ -575,7 +580,7 @@ their parent's cell lands in.
 | Outcome                                | Count | Slots                                        |
 | -------------------------------------- | ----: | -------------------------------------------- |
 | Reachable on foot with every door shut |     9 | 38, 50, 51, 128, 135, 154, 183, 195, 204      |
-| Reachable only once a door opens       |     5 | 14, 101, 234 (`dion-surface-de`), 109, 215    |
+| Behind a keyed entrance                |     5 | 14, 101, 234 (`dion-surface-de`), 109, 215    |
 
 All nine are takeable. Eight of them — `DOOR KEY A`, `BATH`, `TOWEL RAIL`,
 `WASHING MACHINE`, `ACME UNIVERSAL`, `NOTE PAD`, `BED` and `TABLE`, all on Dion —
@@ -583,18 +588,36 @@ are the first interior objects outside Eris the port can reach.
 
 The five that remain are not a placement gap and not an exposure gap. Their
 parents' region graphs connect to the exposing regions **only** through a region
-whose gate is `attachmentLatch`, so they need a door open. Both of Capital
-Spaceport's counterparts are already reachable with the door shut, which is why
-the question never arose on Eris.
+whose gate is `attachmentLatch`, so they need a door open, and that door is
+keyed. Each of their three cells installs a `$7AFB` base, so its entrance opens
+only while one named object slot is in the Carried Stack:
 
-A secondary source corroborates this from an independent direction: the
-[guide item list](damocles-guide-resident-list.md) annotates all three of their
-cells "needs key", and none of the nine reachable residents' cells. It is a lead,
-not evidence, and it also orders the work — two of the three keys it names are
-above level 0, so four of the five residents are behind #355 before #362.
-[#362](https://github.com/odogono/mercenary/issues/362) carries it, and it is the
-same mechanism [#252](https://github.com/odogono/mercenary/issues/252) owns on
-Eris: what opens a structure's attachments, and from where.
+| Cell          | Building         | Key slot | Letter | Recovered placement |
+| ------------- | ---------------- | -------: | ------ | ------------------- |
+| DION `14-13`  | AUTHORS HOUSE    |       30 | A      | none                |
+| DION `02-11`  | NOVAGEN OFFICE   |       33 | D      | none                |
+| VESTA `04-06` | VESTA PARLIAMENT |       34 | E      | none                |
+
+**That is why they are still unreachable, and it is now a different gap.** The
+gate is implemented and the port honours it, but none of the three keys has a
+recovered placement: all ten `DOOR KEY A` instances share one model record, and
+slot 38 is the only one the extractor places. A key with no placement cannot be
+stood next to, so it cannot be taken, so the door cannot open. The residents are
+behind [#355](https://github.com/odogono/mercenary/issues/355) — the
+level-to-structure binding — by way of their keys rather than by way of
+themselves.
+
+The [guide item list](damocles-guide-resident-list.md) put all three of these
+cells, and none of the nine reachable residents' cells, under "needs key" before
+any of this was recovered. It agrees letter for letter with the table above, from
+a player's notes rather than from the bank. Its levels — key A at 2 and key E at
+9 — are the lead for where the missing placements will be found, and remain a
+lead rather than evidence.
+
+Both of Capital Spaceport's counterparts stay reachable with the door shut for a
+recovered reason rather than an observed one: the five Eris cells carrying a
+keyed-entrance control install no base at all, so those doors have no key to
+want. The question never arose on Eris because on Eris there is nothing to hold.
 
 A warning for anyone extending this: **the cell centre is one position.** Sweeping
 `goto` over every cell finds only four of the nine, because the other five are
@@ -706,11 +729,13 @@ Already owned, and this ledger supplies the target list rather than new scope:
 Additional research under #313, required by the deliveries that use it:
 
 0. **Which regions of a non-Eris structure a player can walk into.**
-   [#362](https://github.com/odogono/mercenary/issues/362). Reading each
-   resident's own published insertion pairs took Dion from nothing drawn to
-   four reachable residents, but AUTHORS COMPUTER's regions are still behind
-   the structure's clamp. This is #252's question — doors, openings and the eye
-   clamp — asked of a Dion structure. See [a recovered placement is not
+   [#362](https://github.com/odogono/mercenary/issues/362), answered. Reading
+   each resident's own published insertion pairs took Dion from nothing drawn to
+   nine reachable residents, and the rule gating the rest is recovered: a keyed
+   entrance opens while the matching door key is in the Carried Stack, and the
+   cell names the key. The port honours it. What remains is not a gating
+   question — the three keys involved have no recovered placement, which is
+   #355's work. See [a recovered placement is not
    reachability](#a-recovered-placement-is-not-reachability).
 
 1. **Remaining Gaea map identity and placement.** Runtime selection is decoded:
