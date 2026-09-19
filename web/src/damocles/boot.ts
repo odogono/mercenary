@@ -291,7 +291,9 @@ try {
   const consoleHost: DamoclesConsoleDeps = {
     cellsPerAxis: () => content.doc.grid.cellsPerAxis,
     objectActions: () => 'selected',
-    objectSlots: () => 64,
+    // Damocles object slots run 1 through 255, sparsely. Targ's contiguous `objects.length`
+    // has no counterpart here, so the bound is the slot byte's range.
+    objectSlots: () => 256,
     persistence,
     preferences,
     session: () => session,

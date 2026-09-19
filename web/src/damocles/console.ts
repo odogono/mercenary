@@ -13,7 +13,7 @@ const SETTING_NAMES = Object.keys(SETTING_VALUES);
 const HELP = [
   'help · where · inventory',
   'goto <x> <z>',
-  'get · drop',
+  'get [<object-slot>] · drop [<object-slot|name>]',
   'panel <targ|damocles> · set <name> <value>',
   `set names: ${SETTING_NAMES.join(', ')}`,
   'save <slot> [confirm] · load <slot>',
@@ -106,11 +106,25 @@ export const executeDamoclesConsoleCommand = (
         : [snapshot.inventoryLabel];
     }
     case 'getObject': {
-      if (command.slot !== undefined && command.slot !== 183) {
-        return [`object ${command.slot} is outside this Damocles slice`];
+      const session = host.session();
+      const selection = session.snapshot.selection;
+      if (selection.kind === 'none' || !selection.inRange) {
+        return ['nothing is in reach'];
       }
-      return host.session().take().kind === 'took'
-        ? ['took KEY- V.I.P. LIMO']
+      // `take` has no argument: the original picks up whatever the selection routine chose, so a
+      // slot here names what the player expects to be in reach rather than choosing a target.
+      if (
+        command.slot !== undefined &&
+        selection.instance !== `object-slot-${command.slot}`
+      ) {
+        const reachable = session.objectName(selection.instance);
+        return [
+          `object ${command.slot} is not in reach; ${reachable ?? selection.instance} is`
+        ];
+      }
+      const name = session.objectName(selection.instance);
+      return session.take().kind === 'took'
+        ? [`took ${name ?? selection.instance}`]
         : ['take refused'];
     }
     case 'dropObject': {
@@ -119,10 +133,16 @@ export const executeDamoclesConsoleCommand = (
         return ['inventory is empty'];
       }
       const selector = command.selector?.toUpperCase();
+      // Only the head can be dropped, so a selector confirms the head rather than choosing one.
+      // It matches the head's own slot digits or any part of its Catalogue name.
+      const head = snapshot.carried[0]!;
+      const headSlot = /^object-slot-(\d+)$/.exec(head)?.[1];
       if (
         selector !== undefined &&
-        selector !== '183' &&
-        !snapshot.inventoryLabel.toUpperCase().includes(selector)
+        selector !== headSlot &&
+        !(host.session().objectName(head) ?? '')
+          .toUpperCase()
+          .includes(selector)
       ) {
         return [`carried head does not match '${command.selector}'`];
       }

@@ -1,0 +1,24 @@
+import { parseCatalogue } from './src/catalogue/data.ts';
+import { readErisPresentation } from './src/damocles/documents.ts';
+import { DamoclesSession } from './src/damocles/session.ts';
+import { parseDamoclesStrings } from './src/damocles/strings.ts';
+import { erisSurfaceFrom } from './src/damocles/world.ts';
+import { arrivalPoses } from './test/damocles-pose.ts';
+
+const catalogue = parseCatalogue(await Bun.file('../payload/damocles/catalogue.json').json());
+const doc = readErisPresentation(await Bun.file('./damocles/eris.json').json());
+const poses = await arrivalPoses();
+const base = { catalogue, doc, poses, presentationSha256: 't',
+  strings: parseDamoclesStrings(await Bun.file('../payload/damocles/strings.json').json()),
+  surface: erisSurfaceFrom(catalogue, doc) };
+for (const [pose, x, z, want] of [['dion-2-3',14,13,'object-slot-101'],['vesta-parliament-4-6',3,7,'object-slot-94'],['eris-spaceport-onfoot',7,8,'object-slot-183']] as const) {
+  const s = new DamoclesSession(base);
+  s.switchToPose(pose);
+  s.teleportToCell(x, z);
+  const snap = s.snapshot;
+  console.log(pose, 'selection', JSON.stringify(snap.selection), 'residents', snap.residents.length);
+  const anchor = poses.poses.find(p=>p.id===pose)!;
+  const surf = erisSurfaceFrom(catalogue, doc, { bodyId: anchor.body, origin: anchor.workspaceOrigin! });
+  const hit = surf.placements.filter(p=>p.id===want);
+  console.log('  surface placements for', want, hit.length, JSON.stringify(hit[0])?.slice(0,200));
+}

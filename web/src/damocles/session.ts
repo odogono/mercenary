@@ -773,6 +773,22 @@ export class DamoclesSession implements TitleSession<
     return effects;
   }
 
+  /// The Catalogue name of an instance, for a caller that needs to name an object it is not
+  /// carrying. `inventoryLabel` cannot serve: a take sets the scroll counter to -16, so the label
+  /// is empty on the very frame a caller wants to report what it took.
+  objectName(instanceId: string): string | undefined {
+    const instance = this.content.catalogue.instances.find(
+      item => item.id === instanceId
+    );
+    if (instance === undefined) {
+      return undefined;
+    }
+    return (
+      this.content.catalogue.models.find(item => item.id === instance.model)
+        ?.name ?? instanceId
+    );
+  }
+
   take(): { readonly kind: 'refused' | 'took' } {
     const selection = this.selection();
     if (selection.kind === 'none' || !selection.inRange) {
