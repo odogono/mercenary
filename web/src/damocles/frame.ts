@@ -7,6 +7,7 @@ import type { BoundStructureSnapshot } from './save.ts';
 import { structureMeshes } from './selection.ts';
 import {
   insideCentralCellHalf,
+  withinDrawBound,
   type ErisGrid,
   type ErisPlacement,
   type ErisSurface,
@@ -386,7 +387,13 @@ export const planErisFrame = (
       }
     }
   };
-  for (const placement of surface.placements) {
+  // The recovered draw bound (#370, #373): the Working Authority draws a cell's ground
+  // records and its Surface Structure from that cell alone, and its objects from anywhere on
+  // the Body. At the Eris arrival Pose that is 4 of the workspace's 207 placements.
+  const drawn = surface.placements.filter(placement =>
+    withinDrawBound(placement, pose.position, surface.grid)
+  );
+  for (const placement of drawn) {
     if (placement.kind === 'ground') {
       emitPlacement(placement);
     }
@@ -396,7 +403,7 @@ export const planErisFrame = (
     ...hiddenResidents,
     ...residents.map(resident => resident.id)
   ]);
-  for (const placement of surface.placements) {
+  for (const placement of drawn) {
     if (hidden.has(placement.id)) {
       continue;
     }

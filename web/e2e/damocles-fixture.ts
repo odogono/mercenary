@@ -1,3 +1,4 @@
+import { planErisFrame } from '../src/damocles/frame.ts';
 import { damoclesPanelViewModel } from '../src/damocles/panel.ts';
 import { damoclesTitle } from '../src/damocles/title.ts';
 import { intent } from '../src/gameCore/index.ts';
@@ -19,7 +20,16 @@ const requiredJson = async (pathname: string): Promise<PayloadDocument> => {
 try {
   const content = await damoclesTitle.load(requiredJson);
   const session = damoclesTitle.create(content);
+  const triangles = (): number =>
+    planErisFrame(
+      content.surface,
+      session.snapshot.pose,
+      content.doc,
+      session.snapshot.structure,
+      session.snapshot.residents
+    ).triangleCount;
   const before = damoclesPanelViewModel(session.snapshot, content.doc);
+  const trianglesBefore = triangles();
   // Face west (a quarter turn left of north) so the walk crosses into the western neighbour.
   const turn = session.snapshot.pose.heading + Math.PI / 2;
   session.intent = intent({ turn: -1 });
@@ -33,7 +43,9 @@ try {
     after: after.locationLabel,
     before: before.locationLabel,
     elapsed: session.snapshot.elapsed,
-    heading: session.snapshot.pose.heading
+    heading: session.snapshot.pose.heading,
+    trianglesAfter: triangles(),
+    trianglesBefore
   });
 } catch (error) {
   result.textContent = `error: ${error instanceof Error ? error.message : String(error)}`;
