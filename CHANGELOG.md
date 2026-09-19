@@ -12,6 +12,24 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **A Damocles level now names its own structure, statically.** The rule was
+  the last thing `$7B0E` was read live for: which structure a floor binds, and
+  therefore which association list a resident above ground level resolves in.
+  It is a **floor table** in the cell instance's alias record, twelve bytes at
+  `+6`, one structure slot per level, zero where the level has no floor.
+  `$054DBC` publishes it in `$7C1E`, `$054DC2` takes its first entry as the
+  ground bind — which is why a capture inside a building still reports the
+  ground structure in `$7AF0` — and the lift at `$055B24`-`$055BD8` indexes it
+  by the destination level and assembles that structure. Vesta Parliament reads
+  `90, 92, 92, 93, 0, 0, 0, 0, 0, 0, 91`, so its level 10 names slot 91 by
+  lookup and not because 91 is one above 90. The structure-group probe now
+  derives the bound structure at every level and **raises** when it does not
+  reproduce the running game's `$7B0E`; all seven interior captures pass, and
+  resolving each resident against its own level's structure closes the last
+  three unresolved Dion residents, taking the probe from 36 of 39 to 39 of 39.
+  The Catalogue publishes the table as each alias structure model's
+  `levelBinding` (#355).
+
 - **A keyed door stays shut until you are carrying its key, and says `LOCKED`
   when you are not.** The generic Entrance Attachment handler's live-condition
   path is recovered: an `$F0` entrance tests bit 7 of the key object's own state

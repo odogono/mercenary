@@ -117,7 +117,12 @@ plain structure — so #172's Eris slot 145 was not a special case. The alias pa
 | `+2`, `+3` signed bytes | scale numerator and denominator | `$054D8E`, `$054D9E` → `$79B6`/`$79B8` |
 | `+4` | palette | `$054DB4` → the table at `$04BD16` = `$D200` |
 | `+5` | Building detail | `$054DB6` → patched into `$053A85`, dereferenced through `$026000` |
-| `+6` | base structure slot | `$054DC2` → `$7AF0`, overwriting the instance's own slot |
+| `+6`..`+17` | **floor table**: one structure slot per level, 0 to 11 | `$054DBC` → `$7C1E`; `$054DC2` takes level 0 as `$7AF0`, the lift takes the rest |
+| `+18`..`+29` | per-level palette, present only when `+4` is zero | `$054DC8`, `$055B36` |
+
+`+6` was read as the base structure slot alone. It is the first entry of a
+twelve-byte table, and the level indexes it — see
+[the level-to-structure binding](damocles-level-structure-binding.md).
 
 Decoding Eris slot 145 with this layout reproduces #172's published values exactly —
 scale 3/2, palette 44, Building detail 58 — and Building detail 58 resolves through
@@ -189,6 +194,13 @@ association-list walk could not resolve, which is two independent methods agreei
 
 All three have a correct floor Y under the storey rule, so only their plan position
 and their draw membership are in question.
+
+**All three are since resolved.** They were resolved against the cell instance's own
+structure, which is the level-0 one. Resolving each against the structure its own
+level binds — slot 58 for the two on DION `$E3`, slot 39 for `NOVAGEN SAFE` — closes
+all three without touching the association decoder, and the probe now reports 39 of
+39 residents with decoded insertions. See
+[the level-to-structure binding](damocles-level-structure-binding.md).
 
 Two placements corroborate #331 from an independent path: `SCROLL` lands at local
 `(632, 682, 878)` and `TABLE` at `(632, 634, 878)` — the same X and Z, 48 units

@@ -47,6 +47,23 @@ export interface InstanceOrientation {
   readonly modeByte: number;
   readonly rotation: 'yaw' | 'none' | 'articulated' | 'camera';
 }
+export interface LevelBinding {
+  /**
+   * One entry per level the record authors a floor for, ascending. A level the table
+   * leaves zero has no floor and the lift refuses it ($055B28).
+   */
+  readonly floors: readonly {
+    readonly level: number;
+    readonly structureId: string;
+    readonly structureSlot: number;
+  }[];
+  /**
+   * How many of the twelve level bytes lie inside the record's own extent. Two authored
+   * records are shorter than the format; entries past this are not claimed.
+   */
+  readonly levelsAuthored: number;
+  readonly tableAddress: number;
+}
 export interface Model {
   readonly conditions: readonly string[];
   readonly detailSelection?: readonly DetailGroup[];
@@ -62,6 +79,13 @@ export interface Model {
    */
   readonly instanceOrientation?: InstanceOrientation;
   readonly kind: Kind;
+  /**
+   * The alias record's floor table at the record plus six, which `$054DBC` publishes in
+   * `$7C1E` and the lift indexes by the destination level before assembling that
+   * structure (`$055B24`-`$055BD8`). Absent for non-alias records, which offer level 0
+   * alone. This is what binds a level to the structure a resident resolves against.
+   */
+  readonly levelBinding?: LevelBinding;
   readonly linkedInstances: readonly string[];
   readonly name: string;
   readonly nameStatus: 'verified' | 'candidate' | 'unknown';
@@ -403,6 +427,31 @@ const instanceOrientation = (value: unknown): InstanceOrientation => {
     angleBiasByte: byte(record['angleBiasByte']),
     modeByte,
     rotation
+  };
+};
+
+const levelBinding = (value: unknown): LevelBinding => {
+  const record = object(value);
+  const levelsAuthored = integer(record['levelsAuthored']);
+  if (levelsAuthored > 12) {
+    return fail('a floor table holds at most twelve levels');
+  }
+  const floors = list(record['floors']).map(entry => {
+    const floor = object(entry);
+    const level = integer(floor['level']);
+    if (level >= levelsAuthored) {
+      return fail(`floor level ${level} lies past the record's own extent`);
+    }
+    return {
+      level,
+      structureId: string(floor['structureId']),
+      structureSlot: byte(floor['structureSlot'])
+    };
+  });
+  return {
+    floors,
+    levelsAuthored,
+    tableAddress: integer(record['tableAddress'])
   };
 };
 
@@ -825,6 +874,9 @@ export const parseCatalogue = (value: unknown): Catalogue => {
         : {
             instanceOrientation: instanceOrientation(m['instanceOrientation'])
           }),
+      ...(m['levelBinding'] === undefined
+        ? {}
+        : { levelBinding: levelBinding(m['levelBinding']) }),
       ...(m['storeyHeight'] === undefined
         ? {}
         : { storeyHeight: nonnegativeSignedWord(m['storeyHeight']) }),

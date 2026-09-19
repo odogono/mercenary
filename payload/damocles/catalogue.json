@@ -182293,6 +182293,17 @@
       "evidence": [],
       "id": "structure-00ef7a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00ed8e",
+            "structureSlot": 1
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 61312
+      },
       "linkedInstances": [],
       "name": "Structure 2",
       "nameStatus": "unknown",
@@ -185008,6 +185019,17 @@
       "evidence": [],
       "id": "structure-00ef8c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00ed8e",
+            "structureSlot": 1
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 61330
+      },
       "linkedInstances": [],
       "name": "Structure 3",
       "nameStatus": "unknown",
@@ -200478,6 +200500,17 @@
       "evidence": [],
       "id": "structure-00f850",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00f88e",
+            "structureSlot": 12
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 63574
+      },
       "linkedInstances": [],
       "name": "Structure 9",
       "nameStatus": "unknown",
@@ -203477,6 +203510,17 @@
       "evidence": [],
       "id": "structure-00f862",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00f88e",
+            "structureSlot": 12
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 63592
+      },
       "linkedInstances": [],
       "name": "Structure 10",
       "nameStatus": "unknown",
@@ -206476,6 +206520,17 @@
       "evidence": [],
       "id": "structure-00f874",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00f88e",
+            "structureSlot": 12
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 63610
+      },
       "linkedInstances": [],
       "name": "Structure 11",
       "nameStatus": "unknown",
@@ -215094,6 +215149,67 @@
       "evidence": [],
       "id": "structure-00fc52",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01280a",
+            "structureSlot": 54
+          },
+          {
+            "level": 1,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 2,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 3,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 4,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 5,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 6,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 7,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 8,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 9,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 10,
+            "structureId": "structure-00fad6",
+            "structureSlot": 13
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 64600
+      },
       "linkedInstances": [],
       "name": "Structure 14",
       "nameStatus": "unknown",
@@ -217716,6 +217832,22 @@
       "evidence": [],
       "id": "structure-00fc64",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-011af4",
+            "structureSlot": 41
+          },
+          {
+            "level": 10,
+            "structureId": "structure-00fc7e",
+            "structureSlot": 16
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 64618
+      },
       "linkedInstances": [],
       "name": "Structure 15",
       "nameStatus": "unknown",
@@ -221924,6 +222056,22 @@
       "evidence": [],
       "id": "structure-00feb4",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-011af4",
+            "structureSlot": 41
+          },
+          {
+            "level": 10,
+            "structureId": "structure-00fc7e",
+            "structureSlot": 16
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 65210
+      },
       "linkedInstances": [],
       "name": "Structure 17",
       "nameStatus": "unknown",
@@ -223596,6 +223744,17 @@
       "evidence": [],
       "id": "structure-00fec6",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-010014",
+            "structureSlot": 22
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 65228
+      },
       "linkedInstances": [],
       "name": "Structure 18",
       "nameStatus": "unknown",
@@ -225061,6 +225220,17 @@
       "evidence": [],
       "id": "structure-00fed8",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-010014",
+            "structureSlot": 22
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 65246
+      },
       "linkedInstances": [],
       "name": "Structure 19",
       "nameStatus": "unknown",
@@ -226526,6 +226696,17 @@
       "evidence": [],
       "id": "structure-00feea",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-010014",
+            "structureSlot": 22
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 65264
+      },
       "linkedInstances": [],
       "name": "Structure 20",
       "nameStatus": "unknown",
@@ -231237,6 +231418,17 @@
       "evidence": [],
       "id": "structure-010140",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-010014",
+            "structureSlot": 22
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 65862
+      },
       "linkedInstances": [],
       "name": "Structure 23",
       "nameStatus": "unknown",
@@ -232804,6 +232996,17 @@
       "evidence": [],
       "id": "structure-010152",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00ff04",
+            "structureSlot": 21
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 65880
+      },
       "linkedInstances": [],
       "name": "Structure 24",
       "nameStatus": "unknown",
@@ -234277,6 +234480,17 @@
       "evidence": [],
       "id": "structure-010164",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00ff04",
+            "structureSlot": 21
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 65898
+      },
       "linkedInstances": [],
       "name": "Structure 25",
       "nameStatus": "unknown",
@@ -235610,6 +235824,17 @@
       "evidence": [],
       "id": "structure-010176",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00ff04",
+            "structureSlot": 21
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 65916
+      },
       "linkedInstances": [],
       "name": "Structure 26",
       "nameStatus": "unknown",
@@ -237166,6 +237391,32 @@
       "evidence": [],
       "id": "structure-010188",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0101ae",
+            "structureSlot": 28
+          },
+          {
+            "level": 1,
+            "structureId": "structure-0107a6",
+            "structureSlot": 29
+          },
+          {
+            "level": 2,
+            "structureId": "structure-0107a6",
+            "structureSlot": 29
+          },
+          {
+            "level": 10,
+            "structureId": "structure-010908",
+            "structureSlot": 30
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 65934
+      },
       "linkedInstances": [],
       "name": "Structure 27",
       "nameStatus": "unknown",
@@ -256651,6 +256902,32 @@
       "evidence": [],
       "id": "structure-010b7c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0101ae",
+            "structureSlot": 28
+          },
+          {
+            "level": 1,
+            "structureId": "structure-0107a6",
+            "structureSlot": 29
+          },
+          {
+            "level": 2,
+            "structureId": "structure-0107a6",
+            "structureSlot": 29
+          },
+          {
+            "level": 10,
+            "structureId": "structure-010908",
+            "structureSlot": 30
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 68482
+      },
       "linkedInstances": [],
       "name": "Structure 31",
       "nameStatus": "unknown",
@@ -263934,6 +264211,17 @@
       "evidence": [],
       "id": "structure-010b9a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01832e",
+            "structureSlot": 94
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 68512
+      },
       "linkedInstances": [],
       "name": "Structure 32",
       "nameStatus": "unknown",
@@ -271737,6 +272025,62 @@
       "evidence": [],
       "id": "structure-010d0c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-010bb4",
+            "structureSlot": 33
+          },
+          {
+            "level": 1,
+            "structureId": "structure-010bb4",
+            "structureSlot": 33
+          },
+          {
+            "level": 2,
+            "structureId": "structure-010bb4",
+            "structureSlot": 33
+          },
+          {
+            "level": 3,
+            "structureId": "structure-010bb4",
+            "structureSlot": 33
+          },
+          {
+            "level": 4,
+            "structureId": "structure-010bb4",
+            "structureSlot": 33
+          },
+          {
+            "level": 5,
+            "structureId": "structure-010bb4",
+            "structureSlot": 33
+          },
+          {
+            "level": 6,
+            "structureId": "structure-010bb4",
+            "structureSlot": 33
+          },
+          {
+            "level": 7,
+            "structureId": "structure-010bb4",
+            "structureSlot": 33
+          },
+          {
+            "level": 8,
+            "structureId": "structure-010bb4",
+            "structureSlot": 33
+          },
+          {
+            "level": 9,
+            "structureId": "structure-010bb4",
+            "structureSlot": 33
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 68882
+      },
       "linkedInstances": [],
       "name": "Structure 34",
       "nameStatus": "unknown",
@@ -272906,6 +273250,62 @@
       "evidence": [],
       "id": "structure-010e8a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-010d32",
+            "structureSlot": 35
+          },
+          {
+            "level": 1,
+            "structureId": "structure-010d32",
+            "structureSlot": 35
+          },
+          {
+            "level": 2,
+            "structureId": "structure-010d32",
+            "structureSlot": 35
+          },
+          {
+            "level": 3,
+            "structureId": "structure-010d32",
+            "structureSlot": 35
+          },
+          {
+            "level": 4,
+            "structureId": "structure-010d32",
+            "structureSlot": 35
+          },
+          {
+            "level": 5,
+            "structureId": "structure-010d32",
+            "structureSlot": 35
+          },
+          {
+            "level": 6,
+            "structureId": "structure-010d32",
+            "structureSlot": 35
+          },
+          {
+            "level": 7,
+            "structureId": "structure-010d32",
+            "structureSlot": 35
+          },
+          {
+            "level": 8,
+            "structureId": "structure-010d32",
+            "structureSlot": 35
+          },
+          {
+            "level": 9,
+            "structureId": "structure-010d32",
+            "structureSlot": 35
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 69264
+      },
       "linkedInstances": [],
       "name": "Structure 36",
       "nameStatus": "unknown",
@@ -273517,6 +273917,22 @@
       ],
       "id": "structure-010ea8",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-010ec2",
+            "structureSlot": 38
+          },
+          {
+            "level": 1,
+            "structureId": "structure-01137c",
+            "structureSlot": 39
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 69294
+      },
       "linkedInstances": [
         "object-slot-109",
         "object-slot-111",
@@ -295513,6 +295929,22 @@
       "evidence": [],
       "id": "structure-011ada",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-011af4",
+            "structureSlot": 41
+          },
+          {
+            "level": 10,
+            "structureId": "structure-00fc7e",
+            "structureSlot": 16
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 72416
+      },
       "linkedInstances": [],
       "name": "Structure 40",
       "nameStatus": "unknown",
@@ -298863,6 +299295,22 @@
       "evidence": [],
       "id": "structure-011c38",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-011c52",
+            "structureSlot": 43
+          },
+          {
+            "level": 10,
+            "structureId": "structure-011f96",
+            "structureSlot": 44
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 72766
+      },
       "linkedInstances": [],
       "name": "Structure 42",
       "nameStatus": "unknown",
@@ -312781,6 +313229,17 @@
       "evidence": [],
       "id": "structure-0122fa",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01a5f2",
+            "structureSlot": 99
+          }
+        ],
+        "levelsAuthored": 2,
+        "tableAddress": 74496
+      },
       "linkedInstances": [],
       "name": "Structure 46",
       "nameStatus": "unknown",
@@ -312813,6 +313272,57 @@
       "evidence": [],
       "id": "structure-012302",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01231c",
+            "structureSlot": 51
+          },
+          {
+            "level": 1,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 2,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 3,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 4,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 5,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 6,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 7,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 8,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 74504
+      },
       "linkedInstances": [],
       "name": "Structure 50",
       "nameStatus": "unknown",
@@ -323828,6 +324338,42 @@
       "evidence": [],
       "id": "structure-0127f0",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01280a",
+            "structureSlot": 54
+          },
+          {
+            "level": 1,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 2,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 3,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 4,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 10,
+            "structureId": "structure-00fad6",
+            "structureSlot": 13
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 75766
+      },
       "linkedInstances": [],
       "name": "Structure 53",
       "nameStatus": "unknown",
@@ -331827,6 +332373,62 @@
       "evidence": [],
       "id": "structure-012b60",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-012b7a",
+            "structureSlot": 57
+          },
+          {
+            "level": 1,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 2,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 3,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 4,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 5,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 6,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 7,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 8,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 9,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 76646
+      },
       "linkedInstances": [],
       "name": "Structure 56",
       "nameStatus": "unknown",
@@ -341040,6 +341642,47 @@
       "evidence": [],
       "id": "structure-012f5e",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-012f84",
+            "structureSlot": 60
+          },
+          {
+            "level": 1,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 2,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 3,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 4,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 5,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 10,
+            "structureId": "structure-01341e",
+            "structureSlot": 63
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 77668
+      },
       "linkedInstances": [],
       "name": "Structure 59",
       "nameStatus": "unknown",
@@ -353415,6 +354058,37 @@
       "evidence": [],
       "id": "structure-0135bc",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0135d6",
+            "structureSlot": 65
+          },
+          {
+            "level": 1,
+            "structureId": "structure-013ae0",
+            "structureSlot": 66
+          },
+          {
+            "level": 2,
+            "structureId": "structure-013ae0",
+            "structureSlot": 66
+          },
+          {
+            "level": 3,
+            "structureId": "structure-013ae0",
+            "structureSlot": 66
+          },
+          {
+            "level": 4,
+            "structureId": "structure-013e2e",
+            "structureSlot": 67
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 79298
+      },
       "linkedInstances": [],
       "name": "Structure 64",
       "nameStatus": "unknown",
@@ -382235,6 +382909,37 @@
       ],
       "id": "structure-01454e",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01730e",
+            "structureSlot": 90
+          },
+          {
+            "level": 1,
+            "structureId": "structure-017b8c",
+            "structureSlot": 92
+          },
+          {
+            "level": 2,
+            "structureId": "structure-017b8c",
+            "structureSlot": 92
+          },
+          {
+            "level": 3,
+            "structureId": "structure-0180a2",
+            "structureSlot": 93
+          },
+          {
+            "level": 10,
+            "structureId": "structure-0178ce",
+            "structureSlot": 91
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 83284
+      },
       "linkedInstances": [
         "object-slot-68",
         "object-slot-108",
@@ -393693,6 +394398,52 @@
       "evidence": [],
       "id": "structure-014828",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-012f84",
+            "structureSlot": 60
+          },
+          {
+            "level": 1,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 2,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 3,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 4,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 5,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 6,
+            "structureId": "structure-00ed68",
+            "structureSlot": 62
+          },
+          {
+            "level": 10,
+            "structureId": "structure-01341e",
+            "structureSlot": 63
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 84014
+      },
       "linkedInstances": [],
       "name": "Structure 73",
       "nameStatus": "unknown",
@@ -409348,6 +410099,32 @@
       ],
       "id": "structure-014ad2",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-014aec",
+            "structureSlot": 76
+          },
+          {
+            "level": 1,
+            "structureId": "structure-014f52",
+            "structureSlot": 78
+          },
+          {
+            "level": 2,
+            "structureId": "structure-014f52",
+            "structureSlot": 78
+          },
+          {
+            "level": 10,
+            "structureId": "structure-01532a",
+            "structureSlot": 79
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 84696
+      },
       "linkedInstances": [],
       "name": "Structure 75",
       "nameStatus": "unknown",
@@ -475497,6 +476274,47 @@
       "evidence": [],
       "id": "structure-016684",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01669e",
+            "structureSlot": 84
+          },
+          {
+            "level": 1,
+            "structureId": "structure-016990",
+            "structureSlot": 85
+          },
+          {
+            "level": 2,
+            "structureId": "structure-016990",
+            "structureSlot": 85
+          },
+          {
+            "level": 3,
+            "structureId": "structure-016990",
+            "structureSlot": 85
+          },
+          {
+            "level": 4,
+            "structureId": "structure-016990",
+            "structureSlot": 85
+          },
+          {
+            "level": 5,
+            "structureId": "structure-016990",
+            "structureSlot": 85
+          },
+          {
+            "level": 6,
+            "structureId": "structure-016990",
+            "structureSlot": 85
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 91786
+      },
       "linkedInstances": [],
       "name": "Structure 83",
       "nameStatus": "unknown",
@@ -489833,6 +490651,37 @@
       "evidence": [],
       "id": "structure-016c6c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-016c86",
+            "structureSlot": 87
+          },
+          {
+            "level": 1,
+            "structureId": "structure-0170ac",
+            "structureSlot": 88
+          },
+          {
+            "level": 2,
+            "structureId": "structure-0170ac",
+            "structureSlot": 88
+          },
+          {
+            "level": 3,
+            "structureId": "structure-0170ac",
+            "structureSlot": 88
+          },
+          {
+            "level": 4,
+            "structureId": "structure-0170ac",
+            "structureSlot": 88
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 93298
+      },
       "linkedInstances": [],
       "name": "Structure 86",
       "nameStatus": "unknown",
@@ -504478,6 +505327,27 @@
       "evidence": [],
       "id": "structure-0172f4",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01929a",
+            "structureSlot": 96
+          },
+          {
+            "level": 1,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          },
+          {
+            "level": 2,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 94970
+      },
       "linkedInstances": [],
       "name": "Structure 89",
       "nameStatus": "unknown",
@@ -585613,6 +586483,17 @@
       "evidence": [],
       "id": "structure-01a5d8",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0188d2",
+            "structureSlot": 95
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 107998
+      },
       "linkedInstances": [],
       "name": "Structure 98",
       "nameStatus": "unknown",
@@ -597174,6 +598055,17 @@
       "evidence": [],
       "id": "structure-01a636",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00feea",
+            "structureSlot": 20
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108092
+      },
       "linkedInstances": [],
       "name": "Structure 101",
       "nameStatus": "unknown",
@@ -597365,6 +598257,22 @@
       "evidence": [],
       "id": "structure-01a648",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-011af4",
+            "structureSlot": 41
+          },
+          {
+            "level": 10,
+            "structureId": "structure-00fc7e",
+            "structureSlot": 16
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108110
+      },
       "linkedInstances": [],
       "name": "Structure 103",
       "nameStatus": "unknown",
@@ -599037,6 +599945,17 @@
       "evidence": [],
       "id": "structure-01a65a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0188d2",
+            "structureSlot": 95
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108128
+      },
       "linkedInstances": [],
       "name": "Structure 104",
       "nameStatus": "unknown",
@@ -610531,6 +611450,42 @@
       "evidence": [],
       "id": "structure-01a66c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01280a",
+            "structureSlot": 54
+          },
+          {
+            "level": 1,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 2,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 3,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 4,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 10,
+            "structureId": "structure-00fad6",
+            "structureSlot": 13
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108146
+      },
       "linkedInstances": [],
       "name": "Structure 105",
       "nameStatus": "unknown",
@@ -613067,6 +614022,17 @@
       "evidence": [],
       "id": "structure-01a67e",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00f88e",
+            "structureSlot": 12
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108164
+      },
       "linkedInstances": [],
       "name": "Structure 106",
       "nameStatus": "unknown",
@@ -616072,6 +617038,17 @@
       ],
       "id": "structure-01a690",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00f88e",
+            "structureSlot": 12
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108182
+      },
       "linkedInstances": [
         "object-slot-38"
       ],
@@ -619073,6 +620050,22 @@
       "evidence": [],
       "id": "structure-01a6a2",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-011af4",
+            "structureSlot": 41
+          },
+          {
+            "level": 10,
+            "structureId": "structure-00fc7e",
+            "structureSlot": 16
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108200
+      },
       "linkedInstances": [],
       "name": "Structure 108",
       "nameStatus": "unknown",
@@ -620745,6 +621738,67 @@
       "evidence": [],
       "id": "structure-01a6c0",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01280a",
+            "structureSlot": 54
+          },
+          {
+            "level": 1,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 2,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 3,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 4,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 5,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 6,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 7,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 8,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 9,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 10,
+            "structureId": "structure-00fad6",
+            "structureSlot": 13
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108230
+      },
       "linkedInstances": [],
       "name": "Structure 109",
       "nameStatus": "unknown",
@@ -623367,6 +624421,17 @@
       "evidence": [],
       "id": "structure-01a6d2",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00ed8e",
+            "structureSlot": 1
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108248
+      },
       "linkedInstances": [],
       "name": "Structure 110",
       "nameStatus": "unknown",
@@ -626082,6 +627147,17 @@
       "evidence": [],
       "id": "structure-01a6e4",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00ed8e",
+            "structureSlot": 1
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108266
+      },
       "linkedInstances": [],
       "name": "Structure 111",
       "nameStatus": "unknown",
@@ -628797,6 +629873,17 @@
       "evidence": [],
       "id": "structure-01a6f6",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00f88e",
+            "structureSlot": 12
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108284
+      },
       "linkedInstances": [],
       "name": "Structure 112",
       "nameStatus": "unknown",
@@ -631796,6 +632883,17 @@
       "evidence": [],
       "id": "structure-01a708",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00f88e",
+            "structureSlot": 12
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108302
+      },
       "linkedInstances": [],
       "name": "Structure 113",
       "nameStatus": "unknown",
@@ -634795,6 +635893,17 @@
       "evidence": [],
       "id": "structure-01a71a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00f88e",
+            "structureSlot": 12
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108320
+      },
       "linkedInstances": [],
       "name": "Structure 114",
       "nameStatus": "unknown",
@@ -637794,6 +638903,17 @@
       "evidence": [],
       "id": "structure-01a72c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00ed8e",
+            "structureSlot": 1
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108338
+      },
       "linkedInstances": [],
       "name": "Structure 115",
       "nameStatus": "unknown",
@@ -640509,6 +641629,42 @@
       "evidence": [],
       "id": "structure-01a73e",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01280a",
+            "structureSlot": 54
+          },
+          {
+            "level": 1,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 2,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 3,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 4,
+            "structureId": "structure-0129be",
+            "structureSlot": 55
+          },
+          {
+            "level": 10,
+            "structureId": "structure-00fad6",
+            "structureSlot": 13
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108356
+      },
       "linkedInstances": [],
       "name": "Structure 116",
       "nameStatus": "unknown",
@@ -643045,6 +644201,62 @@
       "evidence": [],
       "id": "structure-01a750",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-012b7a",
+            "structureSlot": 57
+          },
+          {
+            "level": 1,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 2,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 3,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 4,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 5,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 6,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 7,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 8,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 9,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108374
+      },
       "linkedInstances": [],
       "name": "Structure 117",
       "nameStatus": "unknown",
@@ -645672,6 +646884,22 @@
       "evidence": [],
       "id": "structure-01a762",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-011af4",
+            "structureSlot": 41
+          },
+          {
+            "level": 10,
+            "structureId": "structure-00fc7e",
+            "structureSlot": 16
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108392
+      },
       "linkedInstances": [],
       "name": "Structure 118",
       "nameStatus": "unknown",
@@ -647344,6 +648572,17 @@
       "evidence": [],
       "id": "structure-01a774",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01a7a0",
+            "structureSlot": 121
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108410
+      },
       "linkedInstances": [],
       "name": "Structure 119",
       "nameStatus": "unknown",
@@ -651439,6 +652678,17 @@
       "evidence": [],
       "id": "structure-01a786",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01a7a0",
+            "structureSlot": 121
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 108428
+      },
       "linkedInstances": [],
       "name": "Structure 120",
       "nameStatus": "unknown",
@@ -675075,6 +676325,22 @@
       "evidence": [],
       "id": "structure-01b83a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01b728",
+            "structureSlot": 127
+          },
+          {
+            "level": 10,
+            "structureId": "structure-00ed68",
+            "structureSlot": 126
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 112704
+      },
       "linkedInstances": [],
       "name": "Structure 128",
       "nameStatus": "unknown",
@@ -678928,6 +680194,22 @@
       "evidence": [],
       "id": "structure-01b95a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01b854",
+            "structureSlot": 129
+          },
+          {
+            "level": 10,
+            "structureId": "structure-00ed68",
+            "structureSlot": 124
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 112992
+      },
       "linkedInstances": [],
       "name": "Structure 130",
       "nameStatus": "unknown",
@@ -683095,6 +684377,22 @@
       "evidence": [],
       "id": "structure-01ba8c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01b974",
+            "structureSlot": 131
+          },
+          {
+            "level": 10,
+            "structureId": "structure-01aab2",
+            "structureSlot": 123
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 113298
+      },
       "linkedInstances": [],
       "name": "Structure 132",
       "nameStatus": "unknown",
@@ -700121,6 +701419,22 @@
       "evidence": [],
       "id": "structure-01c508",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01caa4",
+            "structureSlot": 141
+          },
+          {
+            "level": 1,
+            "structureId": "structure-01cf68",
+            "structureSlot": 142
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 115982
+      },
       "linkedInstances": [],
       "name": "Structure 138",
       "nameStatus": "unknown",
@@ -721916,6 +723230,22 @@
       "evidence": [],
       "id": "structure-01d164",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01caa4",
+            "structureSlot": 141
+          },
+          {
+            "level": 1,
+            "structureId": "structure-01cf68",
+            "structureSlot": 142
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119146
+      },
       "linkedInstances": [],
       "name": "Structure 143",
       "nameStatus": "unknown",
@@ -727769,6 +729099,17 @@
       "evidence": [],
       "id": "structure-01d176",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00ed8e",
+            "structureSlot": 1
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119164
+      },
       "linkedInstances": [],
       "name": "Structure 144",
       "nameStatus": "unknown",
@@ -730490,6 +731831,47 @@
       ],
       "id": "structure-01d188",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-012f84",
+            "structureSlot": 60
+          },
+          {
+            "level": 1,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 2,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 3,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 4,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 5,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 10,
+            "structureId": "structure-01341e",
+            "structureSlot": 63
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119182
+      },
       "linkedInstances": [
         "object-slot-180"
       ],
@@ -734288,6 +735670,17 @@
       "evidence": [],
       "id": "structure-01d1c0",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-010014",
+            "structureSlot": 22
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119238
+      },
       "linkedInstances": [],
       "name": "Structure 147",
       "nameStatus": "unknown",
@@ -735855,6 +737248,17 @@
       "evidence": [],
       "id": "structure-01d1d2",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0188d2",
+            "structureSlot": 95
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119256
+      },
       "linkedInstances": [],
       "name": "Structure 148",
       "nameStatus": "unknown",
@@ -747349,6 +748753,37 @@
       "evidence": [],
       "id": "structure-01d1e4",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0135d6",
+            "structureSlot": 65
+          },
+          {
+            "level": 1,
+            "structureId": "structure-013ae0",
+            "structureSlot": 66
+          },
+          {
+            "level": 2,
+            "structureId": "structure-013ae0",
+            "structureSlot": 66
+          },
+          {
+            "level": 3,
+            "structureId": "structure-013ae0",
+            "structureSlot": 66
+          },
+          {
+            "level": 4,
+            "structureId": "structure-013e2e",
+            "structureSlot": 67
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119274
+      },
       "linkedInstances": [],
       "name": "Structure 149",
       "nameStatus": "unknown",
@@ -756169,6 +757604,17 @@
       "evidence": [],
       "id": "structure-01d316",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01d1fe",
+            "structureSlot": 150
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119580
+      },
       "linkedInstances": [],
       "name": "Structure 151",
       "nameStatus": "unknown",
@@ -757916,6 +759362,17 @@
       "evidence": [],
       "id": "structure-01d328",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01d1fe",
+            "structureSlot": 150
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119598
+      },
       "linkedInstances": [],
       "name": "Structure 152",
       "nameStatus": "unknown",
@@ -759663,6 +761120,17 @@
       "evidence": [],
       "id": "structure-01d33a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01d1fe",
+            "structureSlot": 150
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119616
+      },
       "linkedInstances": [],
       "name": "Structure 153",
       "nameStatus": "unknown",
@@ -761410,6 +762878,62 @@
       "evidence": [],
       "id": "structure-01d34c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-012b7a",
+            "structureSlot": 57
+          },
+          {
+            "level": 1,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 2,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 3,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 4,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 5,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 6,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 7,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 8,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 9,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119634
+      },
       "linkedInstances": [],
       "name": "Structure 154",
       "nameStatus": "unknown",
@@ -764037,6 +765561,62 @@
       "evidence": [],
       "id": "structure-01d35e",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-012b7a",
+            "structureSlot": 57
+          },
+          {
+            "level": 1,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 2,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 3,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 4,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 5,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 6,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 7,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 8,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 9,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119652
+      },
       "linkedInstances": [],
       "name": "Structure 155",
       "nameStatus": "unknown",
@@ -766664,6 +768244,22 @@
       "evidence": [],
       "id": "structure-01d370",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-011af4",
+            "structureSlot": 41
+          },
+          {
+            "level": 10,
+            "structureId": "structure-00fc7e",
+            "structureSlot": 16
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119670
+      },
       "linkedInstances": [],
       "name": "Structure 156",
       "nameStatus": "unknown",
@@ -768179,6 +769775,22 @@
       "evidence": [],
       "id": "structure-01d382",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-011af4",
+            "structureSlot": 41
+          },
+          {
+            "level": 10,
+            "structureId": "structure-00fc7e",
+            "structureSlot": 16
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119688
+      },
       "linkedInstances": [],
       "name": "Structure 157",
       "nameStatus": "unknown",
@@ -769694,6 +771306,22 @@
       "evidence": [],
       "id": "structure-01d394",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01c522",
+            "structureSlot": 139
+          },
+          {
+            "level": 10,
+            "structureId": "structure-01c66e",
+            "structureSlot": 140
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119706
+      },
       "linkedInstances": [],
       "name": "Structure 158",
       "nameStatus": "unknown",
@@ -772059,6 +773687,17 @@
       "evidence": [],
       "id": "structure-01d3b2",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00ff04",
+            "structureSlot": 21
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119736
+      },
       "linkedInstances": [],
       "name": "Structure 159",
       "nameStatus": "unknown",
@@ -773601,6 +775240,17 @@
       "evidence": [],
       "id": "structure-01d3c4",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00ff04",
+            "structureSlot": 21
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119754
+      },
       "linkedInstances": [],
       "name": "Structure 160",
       "nameStatus": "unknown",
@@ -775143,6 +776793,17 @@
       "evidence": [],
       "id": "structure-01d3d6",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00efa6",
+            "structureSlot": 4
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119772
+      },
       "linkedInstances": [],
       "name": "Structure 161",
       "nameStatus": "unknown",
@@ -776987,6 +778648,17 @@
       "evidence": [],
       "id": "structure-01d3e8",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00efa6",
+            "structureSlot": 4
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119790
+      },
       "linkedInstances": [],
       "name": "Structure 162",
       "nameStatus": "unknown",
@@ -778831,6 +780503,47 @@
       "evidence": [],
       "id": "structure-01d3fa",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01669e",
+            "structureSlot": 84
+          },
+          {
+            "level": 1,
+            "structureId": "structure-016990",
+            "structureSlot": 85
+          },
+          {
+            "level": 2,
+            "structureId": "structure-016990",
+            "structureSlot": 85
+          },
+          {
+            "level": 3,
+            "structureId": "structure-016990",
+            "structureSlot": 85
+          },
+          {
+            "level": 4,
+            "structureId": "structure-016990",
+            "structureSlot": 85
+          },
+          {
+            "level": 5,
+            "structureId": "structure-016990",
+            "structureSlot": 85
+          },
+          {
+            "level": 6,
+            "structureId": "structure-016990",
+            "structureSlot": 85
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119808
+      },
       "linkedInstances": [],
       "name": "Structure 163",
       "nameStatus": "unknown",
@@ -783511,6 +785224,37 @@
       "evidence": [],
       "id": "structure-01d40c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-016c86",
+            "structureSlot": 87
+          },
+          {
+            "level": 1,
+            "structureId": "structure-0170ac",
+            "structureSlot": 88
+          },
+          {
+            "level": 2,
+            "structureId": "structure-0170ac",
+            "structureSlot": 88
+          },
+          {
+            "level": 3,
+            "structureId": "structure-0170ac",
+            "structureSlot": 88
+          },
+          {
+            "level": 4,
+            "structureId": "structure-0170ac",
+            "structureSlot": 88
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119826
+      },
       "linkedInstances": [],
       "name": "Structure 164",
       "nameStatus": "unknown",
@@ -789288,6 +791032,17 @@
       "evidence": [],
       "id": "structure-01d41e",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-014440",
+            "structureSlot": 69
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119844
+      },
       "linkedInstances": [],
       "name": "Structure 165",
       "nameStatus": "unknown",
@@ -790600,6 +792355,17 @@
       "evidence": [],
       "id": "structure-01d430",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-014574",
+            "structureSlot": 71
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119862
+      },
       "linkedInstances": [],
       "name": "Structure 166",
       "nameStatus": "unknown",
@@ -791974,6 +793740,17 @@
       "evidence": [],
       "id": "structure-01d442",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-014690",
+            "structureSlot": 72
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119880
+      },
       "linkedInstances": [],
       "name": "Structure 167",
       "nameStatus": "unknown",
@@ -794198,6 +795975,17 @@
       "evidence": [],
       "id": "structure-01d454",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-014690",
+            "structureSlot": 72
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119898
+      },
       "linkedInstances": [],
       "name": "Structure 168",
       "nameStatus": "unknown",
@@ -796422,6 +798210,17 @@
       "evidence": [],
       "id": "structure-01d466",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-014690",
+            "structureSlot": 72
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119916
+      },
       "linkedInstances": [],
       "name": "Structure 169",
       "nameStatus": "unknown",
@@ -798646,6 +800445,17 @@
       "evidence": [],
       "id": "structure-01d478",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-014690",
+            "structureSlot": 72
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119934
+      },
       "linkedInstances": [],
       "name": "Structure 170",
       "nameStatus": "unknown",
@@ -800870,6 +802680,17 @@
       "evidence": [],
       "id": "structure-01d48a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-014440",
+            "structureSlot": 69
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119952
+      },
       "linkedInstances": [],
       "name": "Structure 171",
       "nameStatus": "unknown",
@@ -802182,6 +804003,17 @@
       "evidence": [],
       "id": "structure-01d49c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-014440",
+            "structureSlot": 69
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119970
+      },
       "linkedInstances": [],
       "name": "Structure 172",
       "nameStatus": "unknown",
@@ -803494,6 +805326,17 @@
       "evidence": [],
       "id": "structure-01d4ae",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01430c",
+            "structureSlot": 68
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 119988
+      },
       "linkedInstances": [],
       "name": "Structure 173",
       "nameStatus": "unknown",
@@ -805013,6 +806856,17 @@
       "evidence": [],
       "id": "structure-01d4c0",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01430c",
+            "structureSlot": 68
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120006
+      },
       "linkedInstances": [],
       "name": "Structure 174",
       "nameStatus": "unknown",
@@ -806532,6 +808386,47 @@
       "evidence": [],
       "id": "structure-01d4d2",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-012f84",
+            "structureSlot": 60
+          },
+          {
+            "level": 1,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 2,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 3,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 4,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 5,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 10,
+            "structureId": "structure-01341e",
+            "structureSlot": 63
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120024
+      },
       "linkedInstances": [],
       "name": "Structure 175",
       "nameStatus": "unknown",
@@ -810298,6 +812193,27 @@
       "evidence": [],
       "id": "structure-01d4e4",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01929a",
+            "structureSlot": 96
+          },
+          {
+            "level": 1,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          },
+          {
+            "level": 2,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120042
+      },
       "linkedInstances": [],
       "name": "Structure 176",
       "nameStatus": "unknown",
@@ -823310,6 +825226,27 @@
       "evidence": [],
       "id": "structure-01d4f6",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01929a",
+            "structureSlot": 96
+          },
+          {
+            "level": 1,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          },
+          {
+            "level": 2,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120060
+      },
       "linkedInstances": [],
       "name": "Structure 177",
       "nameStatus": "unknown",
@@ -836322,6 +838259,27 @@
       "evidence": [],
       "id": "structure-01d508",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01929a",
+            "structureSlot": 96
+          },
+          {
+            "level": 1,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          },
+          {
+            "level": 2,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120078
+      },
       "linkedInstances": [],
       "name": "Structure 178",
       "nameStatus": "unknown",
@@ -849334,6 +851292,17 @@
       "evidence": [],
       "id": "structure-01d51a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01d1fe",
+            "structureSlot": 150
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120096
+      },
       "linkedInstances": [],
       "name": "Structure 179",
       "nameStatus": "unknown",
@@ -851087,6 +853056,17 @@
       ],
       "id": "structure-01d52c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0188d2",
+            "structureSlot": 95
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120114
+      },
       "linkedInstances": [],
       "name": "Structure 180",
       "nameStatus": "unknown",
@@ -862581,6 +864561,17 @@
       "evidence": [],
       "id": "structure-01d53e",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01430c",
+            "structureSlot": 68
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120132
+      },
       "linkedInstances": [],
       "name": "Structure 181",
       "nameStatus": "unknown",
@@ -864106,6 +866097,17 @@
       ],
       "id": "structure-01d550",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-015eea",
+            "structureSlot": 82
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120150
+      },
       "linkedInstances": [
         "object-slot-135"
       ],
@@ -874348,6 +876350,17 @@
       "evidence": [],
       "id": "structure-01d67a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01d1fe",
+            "structureSlot": 150
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120448
+      },
       "linkedInstances": [],
       "name": "Structure 184",
       "nameStatus": "unknown",
@@ -876095,6 +878108,17 @@
       "evidence": [],
       "id": "structure-01d68c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01d1fe",
+            "structureSlot": 150
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120466
+      },
       "linkedInstances": [],
       "name": "Structure 185",
       "nameStatus": "unknown",
@@ -877842,6 +879866,27 @@
       "evidence": [],
       "id": "structure-01d69e",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0101ae",
+            "structureSlot": 28
+          },
+          {
+            "level": 1,
+            "structureId": "structure-0107a6",
+            "structureSlot": 29
+          },
+          {
+            "level": 2,
+            "structureId": "structure-0107a6",
+            "structureSlot": 29
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120484
+      },
       "linkedInstances": [],
       "name": "Structure 186",
       "nameStatus": "unknown",
@@ -885125,6 +887170,22 @@
       "evidence": [],
       "id": "structure-01d6bc",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01caa4",
+            "structureSlot": 141
+          },
+          {
+            "level": 1,
+            "structureId": "structure-01cf68",
+            "structureSlot": 142
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120514
+      },
       "linkedInstances": [],
       "name": "Structure 187",
       "nameStatus": "unknown",
@@ -890978,6 +893039,17 @@
       "evidence": [],
       "id": "structure-01d6ce",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00efa6",
+            "structureSlot": 4
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120532
+      },
       "linkedInstances": [],
       "name": "Structure 188",
       "nameStatus": "unknown",
@@ -892822,6 +894894,17 @@
       "evidence": [],
       "id": "structure-01d6e0",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00efa6",
+            "structureSlot": 4
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120550
+      },
       "linkedInstances": [],
       "name": "Structure 189",
       "nameStatus": "unknown",
@@ -894666,6 +896749,17 @@
       "evidence": [],
       "id": "structure-01d6f2",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00efa6",
+            "structureSlot": 4
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120568
+      },
       "linkedInstances": [],
       "name": "Structure 190",
       "nameStatus": "unknown",
@@ -896510,6 +898604,17 @@
       "evidence": [],
       "id": "structure-01d704",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00efa6",
+            "structureSlot": 4
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120586
+      },
       "linkedInstances": [],
       "name": "Structure 191",
       "nameStatus": "unknown",
@@ -898354,6 +900459,17 @@
       "evidence": [],
       "id": "structure-01d716",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01430c",
+            "structureSlot": 68
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120604
+      },
       "linkedInstances": [],
       "name": "Structure 192",
       "nameStatus": "unknown",
@@ -899873,6 +901989,17 @@
       "evidence": [],
       "id": "structure-01d728",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01430c",
+            "structureSlot": 68
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120622
+      },
       "linkedInstances": [],
       "name": "Structure 193",
       "nameStatus": "unknown",
@@ -901392,6 +903519,22 @@
       "evidence": [],
       "id": "structure-01d73a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0101ae",
+            "structureSlot": 28
+          },
+          {
+            "level": 1,
+            "structureId": "structure-0107a6",
+            "structureSlot": 29
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120640
+      },
       "linkedInstances": [],
       "name": "Structure 194",
       "nameStatus": "unknown",
@@ -908270,6 +910413,47 @@
       ],
       "id": "structure-01d758",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-012f84",
+            "structureSlot": 60
+          },
+          {
+            "level": 1,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 2,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 3,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 4,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 5,
+            "structureId": "structure-01324e",
+            "structureSlot": 61
+          },
+          {
+            "level": 10,
+            "structureId": "structure-01341e",
+            "structureSlot": 63
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120670
+      },
       "linkedInstances": [
         "object-slot-154",
         "object-slot-195",
@@ -912040,6 +914224,17 @@
       "evidence": [],
       "id": "structure-01d76a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-010014",
+            "structureSlot": 22
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120688
+      },
       "linkedInstances": [],
       "name": "Structure 196",
       "nameStatus": "unknown",
@@ -913613,6 +915808,22 @@
       ],
       "id": "structure-01d77c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01caa4",
+            "structureSlot": 141
+          },
+          {
+            "level": 1,
+            "structureId": "structure-01cf68",
+            "structureSlot": 142
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120706
+      },
       "linkedInstances": [
         "object-slot-63"
       ],
@@ -919474,6 +921685,22 @@
       ],
       "id": "structure-01d78e",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01caa4",
+            "structureSlot": 141
+          },
+          {
+            "level": 1,
+            "structureId": "structure-01cf68",
+            "structureSlot": 142
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120724
+      },
       "linkedInstances": [
         "object-slot-128"
       ],
@@ -925329,6 +927556,17 @@
       "evidence": [],
       "id": "structure-01d7a0",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01a7a0",
+            "structureSlot": 121
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120742
+      },
       "linkedInstances": [],
       "name": "Structure 199",
       "nameStatus": "unknown",
@@ -929424,6 +931662,27 @@
       "evidence": [],
       "id": "structure-01d7b2",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0101ae",
+            "structureSlot": 28
+          },
+          {
+            "level": 1,
+            "structureId": "structure-0107a6",
+            "structureSlot": 29
+          },
+          {
+            "level": 2,
+            "structureId": "structure-0107a6",
+            "structureSlot": 29
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120760
+      },
       "linkedInstances": [],
       "name": "Structure 200",
       "nameStatus": "unknown",
@@ -936707,6 +938966,17 @@
       "evidence": [],
       "id": "structure-01d7d0",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01430c",
+            "structureSlot": 68
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120790
+      },
       "linkedInstances": [],
       "name": "Structure 201",
       "nameStatus": "unknown",
@@ -938226,6 +940496,17 @@
       "evidence": [],
       "id": "structure-01d7e2",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-010014",
+            "structureSlot": 22
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120808
+      },
       "linkedInstances": [],
       "name": "Structure 202",
       "nameStatus": "unknown",
@@ -939967,6 +942248,62 @@
       "evidence": [],
       "id": "structure-01d7f4",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-012b7a",
+            "structureSlot": 57
+          },
+          {
+            "level": 1,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 2,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 3,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 4,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 5,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 6,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 7,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 8,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 9,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120826
+      },
       "linkedInstances": [],
       "name": "Structure 203",
       "nameStatus": "unknown",
@@ -942605,6 +944942,22 @@
       ],
       "id": "structure-01d806",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01caa4",
+            "structureSlot": 141
+          },
+          {
+            "level": 1,
+            "structureId": "structure-01cf68",
+            "structureSlot": 142
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 120844
+      },
       "linkedInstances": [
         "object-slot-50",
         "object-slot-51"
@@ -966962,6 +969315,17 @@
       "evidence": [],
       "id": "structure-01da22",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-012136",
+            "structureSlot": 45
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121384
+      },
       "linkedInstances": [],
       "name": "Structure 209",
       "nameStatus": "unknown",
@@ -969834,6 +972198,17 @@
       "evidence": [],
       "id": "structure-01da34",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-012136",
+            "structureSlot": 45
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121402
+      },
       "linkedInstances": [],
       "name": "Structure 210",
       "nameStatus": "unknown",
@@ -972706,6 +975081,17 @@
       "evidence": [],
       "id": "structure-01da46",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-012136",
+            "structureSlot": 45
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121420
+      },
       "linkedInstances": [],
       "name": "Structure 211",
       "nameStatus": "unknown",
@@ -975578,6 +977964,17 @@
       "evidence": [],
       "id": "structure-01da58",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01a7a0",
+            "structureSlot": 121
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121438
+      },
       "linkedInstances": [],
       "name": "Structure 212",
       "nameStatus": "unknown",
@@ -979673,6 +982070,17 @@
       "evidence": [],
       "id": "structure-01da6a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01a7a0",
+            "structureSlot": 121
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121456
+      },
       "linkedInstances": [],
       "name": "Structure 213",
       "nameStatus": "unknown",
@@ -983768,6 +986176,17 @@
       "evidence": [],
       "id": "structure-01da7c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01a7a0",
+            "structureSlot": 121
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121474
+      },
       "linkedInstances": [],
       "name": "Structure 214",
       "nameStatus": "unknown",
@@ -987863,6 +990282,17 @@
       "evidence": [],
       "id": "structure-01da8e",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01a7a0",
+            "structureSlot": 121
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121492
+      },
       "linkedInstances": [],
       "name": "Structure 215",
       "nameStatus": "unknown",
@@ -991979,6 +994409,17 @@
       ],
       "id": "structure-01daa0",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0188d2",
+            "structureSlot": 95
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121510
+      },
       "linkedInstances": [
         "object-slot-14",
         "object-slot-101",
@@ -1003477,6 +1005918,17 @@
       "evidence": [],
       "id": "structure-01dab2",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01832e",
+            "structureSlot": 94
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121528
+      },
       "linkedInstances": [],
       "name": "Structure 217",
       "nameStatus": "unknown",
@@ -1010696,6 +1013148,17 @@
       "evidence": [],
       "id": "structure-01dac4",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01bb46",
+            "structureSlot": 134
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121546
+      },
       "linkedInstances": [],
       "name": "Structure 218",
       "nameStatus": "unknown",
@@ -1013031,6 +1015494,17 @@
       "evidence": [],
       "id": "structure-01dad6",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01832e",
+            "structureSlot": 94
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121564
+      },
       "linkedInstances": [],
       "name": "Structure 219",
       "nameStatus": "unknown",
@@ -1020250,6 +1022724,22 @@
       "evidence": [],
       "id": "structure-01dae8",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01c522",
+            "structureSlot": 139
+          },
+          {
+            "level": 10,
+            "structureId": "structure-01c66e",
+            "structureSlot": 140
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121582
+      },
       "linkedInstances": [],
       "name": "Structure 220",
       "nameStatus": "unknown",
@@ -1022615,6 +1025105,22 @@
       "evidence": [],
       "id": "structure-01db06",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01c522",
+            "structureSlot": 139
+          },
+          {
+            "level": 10,
+            "structureId": "structure-01c66e",
+            "structureSlot": 140
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121612
+      },
       "linkedInstances": [],
       "name": "Structure 221",
       "nameStatus": "unknown",
@@ -1024980,6 +1027486,17 @@
       "evidence": [],
       "id": "structure-01db24",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01430c",
+            "structureSlot": 68
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121642
+      },
       "linkedInstances": [],
       "name": "Structure 222",
       "nameStatus": "unknown",
@@ -1026499,6 +1029016,17 @@
       "evidence": [],
       "id": "structure-01db36",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01430c",
+            "structureSlot": 68
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121660
+      },
       "linkedInstances": [],
       "name": "Structure 223",
       "nameStatus": "unknown",
@@ -1028018,6 +1030546,17 @@
       "evidence": [],
       "id": "structure-01db48",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01484e",
+            "structureSlot": 74
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121678
+      },
       "linkedInstances": [],
       "name": "Structure 224",
       "nameStatus": "unknown",
@@ -1031744,6 +1034283,17 @@
       "evidence": [],
       "id": "structure-01db5a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01484e",
+            "structureSlot": 74
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121696
+      },
       "linkedInstances": [],
       "name": "Structure 225",
       "nameStatus": "unknown",
@@ -1035473,6 +1038023,17 @@
       "evidence": [],
       "id": "structure-01db6c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01d8b4",
+            "structureSlot": 207
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121714
+      },
       "linkedInstances": [],
       "name": "Structure 226",
       "nameStatus": "unknown",
@@ -1045832,6 +1048393,17 @@
       "evidence": [],
       "id": "structure-01db7e",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-015eea",
+            "structureSlot": 82
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121732
+      },
       "linkedInstances": [],
       "name": "Structure 227",
       "nameStatus": "unknown",
@@ -1053967,6 +1056539,17 @@
       "evidence": [],
       "id": "structure-01db90",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-015eea",
+            "structureSlot": 82
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121750
+      },
       "linkedInstances": [],
       "name": "Structure 228",
       "nameStatus": "unknown",
@@ -1062102,6 +1064685,17 @@
       "evidence": [],
       "id": "structure-01dba2",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-015eea",
+            "structureSlot": 82
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121768
+      },
       "linkedInstances": [],
       "name": "Structure 229",
       "nameStatus": "unknown",
@@ -1070237,6 +1072831,17 @@
       "evidence": [],
       "id": "structure-01dbb4",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-015eea",
+            "structureSlot": 82
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121786
+      },
       "linkedInstances": [],
       "name": "Structure 230",
       "nameStatus": "unknown",
@@ -1078375,6 +1080980,17 @@
       "evidence": [],
       "id": "structure-01dbc6",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01d8b4",
+            "structureSlot": 207
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121804
+      },
       "linkedInstances": [],
       "name": "Structure 231",
       "nameStatus": "unknown",
@@ -1088737,6 +1091353,17 @@
       "evidence": [],
       "id": "structure-01dbd8",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01d8b4",
+            "structureSlot": 207
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121822
+      },
       "linkedInstances": [],
       "name": "Structure 232",
       "nameStatus": "unknown",
@@ -1099096,6 +1101723,17 @@
       "evidence": [],
       "id": "structure-01dbea",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01c3dc",
+            "structureSlot": 137
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121840
+      },
       "linkedInstances": [],
       "name": "Structure 233",
       "nameStatus": "unknown",
@@ -1101500,6 +1104138,17 @@
       "evidence": [],
       "id": "structure-01dbfc",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00efa6",
+            "structureSlot": 4
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121858
+      },
       "linkedInstances": [],
       "name": "Structure 234",
       "nameStatus": "unknown",
@@ -1103344,6 +1105993,17 @@
       "evidence": [],
       "id": "structure-01dc0e",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00efa6",
+            "structureSlot": 4
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121876
+      },
       "linkedInstances": [],
       "name": "Structure 235",
       "nameStatus": "unknown",
@@ -1105188,6 +1107848,17 @@
       "evidence": [],
       "id": "structure-01dc20",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00efa6",
+            "structureSlot": 4
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121894
+      },
       "linkedInstances": [],
       "name": "Structure 236",
       "nameStatus": "unknown",
@@ -1107032,6 +1109703,17 @@
       "evidence": [],
       "id": "structure-01dc32",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00efa6",
+            "structureSlot": 4
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121912
+      },
       "linkedInstances": [],
       "name": "Structure 237",
       "nameStatus": "unknown",
@@ -1108876,6 +1111558,17 @@
       "evidence": [],
       "id": "structure-01dc44",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01d1fe",
+            "structureSlot": 150
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121930
+      },
       "linkedInstances": [],
       "name": "Structure 238",
       "nameStatus": "unknown",
@@ -1110623,6 +1113316,17 @@
       "evidence": [],
       "id": "structure-01dc56",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01484e",
+            "structureSlot": 74
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121948
+      },
       "linkedInstances": [],
       "name": "Structure 239",
       "nameStatus": "unknown",
@@ -1114349,6 +1117053,17 @@
       "evidence": [],
       "id": "structure-01dc68",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01430c",
+            "structureSlot": 68
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121966
+      },
       "linkedInstances": [],
       "name": "Structure 240",
       "nameStatus": "unknown",
@@ -1115868,6 +1118583,17 @@
       "evidence": [],
       "id": "structure-01dc7a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01430c",
+            "structureSlot": 68
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 121984
+      },
       "linkedInstances": [],
       "name": "Structure 241",
       "nameStatus": "unknown",
@@ -1117387,6 +1120113,17 @@
       "evidence": [],
       "id": "structure-01dc8c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01560c",
+            "structureSlot": 77
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122002
+      },
       "linkedInstances": [],
       "name": "Structure 242",
       "nameStatus": "unknown",
@@ -1122579,6 +1125316,17 @@
       "evidence": [],
       "id": "structure-01dc9e",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01430c",
+            "structureSlot": 68
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122020
+      },
       "linkedInstances": [],
       "name": "Structure 243",
       "nameStatus": "unknown",
@@ -1124098,6 +1126846,57 @@
       "evidence": [],
       "id": "structure-01dcb0",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01231c",
+            "structureSlot": 51
+          },
+          {
+            "level": 1,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 2,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 3,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 4,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 5,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 6,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 7,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 8,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122038
+      },
       "linkedInstances": [],
       "name": "Structure 244",
       "nameStatus": "unknown",
@@ -1128071,6 +1130870,17 @@
       "evidence": [],
       "id": "structure-01dcc2",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00f0b8",
+            "structureSlot": 5
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122056
+      },
       "linkedInstances": [],
       "name": "Structure 245",
       "nameStatus": "unknown",
@@ -1130036,6 +1132846,27 @@
       "evidence": [],
       "id": "structure-01dcd4",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0101ae",
+            "structureSlot": 28
+          },
+          {
+            "level": 1,
+            "structureId": "structure-0107a6",
+            "structureSlot": 29
+          },
+          {
+            "level": 2,
+            "structureId": "structure-0107a6",
+            "structureSlot": 29
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122074
+      },
       "linkedInstances": [],
       "name": "Structure 246",
       "nameStatus": "unknown",
@@ -1136898,6 +1139729,27 @@
       "evidence": [],
       "id": "structure-01dcf2",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01929a",
+            "structureSlot": 96
+          },
+          {
+            "level": 1,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          },
+          {
+            "level": 2,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122104
+      },
       "linkedInstances": [],
       "name": "Structure 247",
       "nameStatus": "unknown",
@@ -1149910,6 +1152762,27 @@
       "evidence": [],
       "id": "structure-01dd04",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01929a",
+            "structureSlot": 96
+          },
+          {
+            "level": 1,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          },
+          {
+            "level": 2,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122122
+      },
       "linkedInstances": [],
       "name": "Structure 248",
       "nameStatus": "unknown",
@@ -1162922,6 +1165795,27 @@
       "evidence": [],
       "id": "structure-01dd16",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01929a",
+            "structureSlot": 96
+          },
+          {
+            "level": 1,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          },
+          {
+            "level": 2,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122140
+      },
       "linkedInstances": [],
       "name": "Structure 249",
       "nameStatus": "unknown",
@@ -1175934,6 +1178828,27 @@
       "evidence": [],
       "id": "structure-01dd28",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01929a",
+            "structureSlot": 96
+          },
+          {
+            "level": 1,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          },
+          {
+            "level": 2,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122158
+      },
       "linkedInstances": [],
       "name": "Structure 250",
       "nameStatus": "unknown",
@@ -1188946,6 +1191861,27 @@
       "evidence": [],
       "id": "structure-01dd3a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0101ae",
+            "structureSlot": 28
+          },
+          {
+            "level": 1,
+            "structureId": "structure-0107a6",
+            "structureSlot": 29
+          },
+          {
+            "level": 2,
+            "structureId": "structure-0107a6",
+            "structureSlot": 29
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122176
+      },
       "linkedInstances": [],
       "name": "Structure 251",
       "nameStatus": "unknown",
@@ -1195819,6 +1198755,22 @@
       ],
       "id": "structure-01dd58",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01caa4",
+            "structureSlot": 141
+          },
+          {
+            "level": 1,
+            "structureId": "structure-01cf68",
+            "structureSlot": 142
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122206
+      },
       "linkedInstances": [
         "object-slot-94",
         "object-slot-203"
@@ -1201678,6 +1204630,17 @@
       "evidence": [],
       "id": "structure-01dd6a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01d8b4",
+            "structureSlot": 207
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122224
+      },
       "linkedInstances": [],
       "name": "Structure 253",
       "nameStatus": "unknown",
@@ -1212037,6 +1215000,57 @@
       "evidence": [],
       "id": "structure-01dd7c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01231c",
+            "structureSlot": 51
+          },
+          {
+            "level": 1,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 2,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 3,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 4,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 5,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 6,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 7,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          },
+          {
+            "level": 8,
+            "structureId": "structure-012626",
+            "structureSlot": 52
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122242
+      },
       "linkedInstances": [],
       "name": "Structure 255",
       "nameStatus": "unknown",
@@ -1216010,6 +1219024,27 @@
       "evidence": [],
       "id": "structure-01dd8e",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0101ae",
+            "structureSlot": 28
+          },
+          {
+            "level": 1,
+            "structureId": "structure-0107a6",
+            "structureSlot": 29
+          },
+          {
+            "level": 2,
+            "structureId": "structure-0107a6",
+            "structureSlot": 29
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122260
+      },
       "linkedInstances": [],
       "name": "Structure 257",
       "nameStatus": "unknown",
@@ -1223296,6 +1226331,17 @@
       "evidence": [],
       "id": "structure-01ddac",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-015b9e",
+            "structureSlot": 81
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122290
+      },
       "linkedInstances": [],
       "name": "Structure 258",
       "nameStatus": "unknown",
@@ -1242388,6 +1245434,22 @@
       "evidence": [],
       "id": "structure-01ddbe",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-011c52",
+            "structureSlot": 43
+          },
+          {
+            "level": 10,
+            "structureId": "structure-011f96",
+            "structureSlot": 44
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122308
+      },
       "linkedInstances": [],
       "name": "Structure 259",
       "nameStatus": "unknown",
@@ -1246472,6 +1249534,17 @@
       "evidence": [],
       "id": "structure-01ddd0",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0159d0",
+            "structureSlot": 80
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122326
+      },
       "linkedInstances": [],
       "name": "Structure 260",
       "nameStatus": "unknown",
@@ -1257016,6 +1260089,17 @@
       "evidence": [],
       "id": "structure-01dde2",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-012136",
+            "structureSlot": 45
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122344
+      },
       "linkedInstances": [],
       "name": "Structure 261",
       "nameStatus": "unknown",
@@ -1259888,6 +1262972,27 @@
       "evidence": [],
       "id": "structure-01ddf4",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01929a",
+            "structureSlot": 96
+          },
+          {
+            "level": 1,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          },
+          {
+            "level": 2,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122362
+      },
       "linkedInstances": [],
       "name": "Structure 262",
       "nameStatus": "unknown",
@@ -1272900,6 +1276005,27 @@
       "evidence": [],
       "id": "structure-01de06",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01929a",
+            "structureSlot": 96
+          },
+          {
+            "level": 1,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          },
+          {
+            "level": 2,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122380
+      },
       "linkedInstances": [],
       "name": "Structure 263",
       "nameStatus": "unknown",
@@ -1285912,6 +1289038,27 @@
       "evidence": [],
       "id": "structure-01de18",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01929a",
+            "structureSlot": 96
+          },
+          {
+            "level": 1,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          },
+          {
+            "level": 2,
+            "structureId": "structure-019cda",
+            "structureSlot": 97
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122398
+      },
       "linkedInstances": [],
       "name": "Structure 264",
       "nameStatus": "unknown",
@@ -1298924,6 +1302071,62 @@
       "evidence": [],
       "id": "structure-01de2a",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-012b7a",
+            "structureSlot": 57
+          },
+          {
+            "level": 1,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 2,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 3,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 4,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 5,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 6,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 7,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 8,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 9,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122416
+      },
       "linkedInstances": [],
       "name": "Structure 265",
       "nameStatus": "unknown",
@@ -1301551,6 +1304754,62 @@
       "evidence": [],
       "id": "structure-01de3c",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-012b7a",
+            "structureSlot": 57
+          },
+          {
+            "level": 1,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 2,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 3,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 4,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 5,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 6,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 7,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 8,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          },
+          {
+            "level": 9,
+            "structureId": "structure-012d2e",
+            "structureSlot": 58
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122434
+      },
       "linkedInstances": [],
       "name": "Structure 266",
       "nameStatus": "unknown",
@@ -1304178,6 +1307437,37 @@
       "evidence": [],
       "id": "structure-01de4e",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0135d6",
+            "structureSlot": 65
+          },
+          {
+            "level": 1,
+            "structureId": "structure-013ae0",
+            "structureSlot": 66
+          },
+          {
+            "level": 2,
+            "structureId": "structure-013ae0",
+            "structureSlot": 66
+          },
+          {
+            "level": 3,
+            "structureId": "structure-013ae0",
+            "structureSlot": 66
+          },
+          {
+            "level": 4,
+            "structureId": "structure-013e2e",
+            "structureSlot": 67
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122452
+      },
       "linkedInstances": [],
       "name": "Structure 267",
       "nameStatus": "unknown",
@@ -1311244,6 +1314534,17 @@
       "evidence": [],
       "id": "structure-01de60",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-00efa6",
+            "structureSlot": 4
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122470
+      },
       "linkedInstances": [],
       "name": "Structure 268",
       "nameStatus": "unknown",
@@ -1313088,6 +1316389,17 @@
       "evidence": [],
       "id": "structure-01de72",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01d1fe",
+            "structureSlot": 150
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122488
+      },
       "linkedInstances": [],
       "name": "Structure 269",
       "nameStatus": "unknown",
@@ -1314835,6 +1318147,17 @@
       "evidence": [],
       "id": "structure-01de84",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-01d1fe",
+            "structureSlot": 150
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122506
+      },
       "linkedInstances": [],
       "name": "Structure 270",
       "nameStatus": "unknown",
@@ -1316582,6 +1319905,17 @@
       "evidence": [],
       "id": "structure-01de96",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-015eea",
+            "structureSlot": 82
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122524
+      },
       "linkedInstances": [],
       "name": "Structure 271",
       "nameStatus": "unknown",
@@ -1324717,6 +1328051,17 @@
       "evidence": [],
       "id": "structure-01dea8",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-015eea",
+            "structureSlot": 82
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122542
+      },
       "linkedInstances": [],
       "name": "Structure 272",
       "nameStatus": "unknown",
@@ -1332852,6 +1336197,17 @@
       "evidence": [],
       "id": "structure-01deba",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-015eea",
+            "structureSlot": 82
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122560
+      },
       "linkedInstances": [],
       "name": "Structure 273",
       "nameStatus": "unknown",
@@ -1340987,6 +1344343,17 @@
       "evidence": [],
       "id": "structure-01decc",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-015eea",
+            "structureSlot": 82
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122578
+      },
       "linkedInstances": [],
       "name": "Structure 274",
       "nameStatus": "unknown",
@@ -1349122,6 +1352489,37 @@
       "evidence": [],
       "id": "structure-01dede",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0135d6",
+            "structureSlot": 65
+          },
+          {
+            "level": 1,
+            "structureId": "structure-013ae0",
+            "structureSlot": 66
+          },
+          {
+            "level": 2,
+            "structureId": "structure-013ae0",
+            "structureSlot": 66
+          },
+          {
+            "level": 3,
+            "structureId": "structure-013ae0",
+            "structureSlot": 66
+          },
+          {
+            "level": 4,
+            "structureId": "structure-013e2e",
+            "structureSlot": 67
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122596
+      },
       "linkedInstances": [],
       "name": "Structure 275",
       "nameStatus": "unknown",
@@ -1356188,6 +1359586,37 @@
       "evidence": [],
       "id": "structure-01def0",
       "kind": "structure",
+      "levelBinding": {
+        "floors": [
+          {
+            "level": 0,
+            "structureId": "structure-0135d6",
+            "structureSlot": 65
+          },
+          {
+            "level": 1,
+            "structureId": "structure-013ae0",
+            "structureSlot": 66
+          },
+          {
+            "level": 2,
+            "structureId": "structure-013ae0",
+            "structureSlot": 66
+          },
+          {
+            "level": 3,
+            "structureId": "structure-013ae0",
+            "structureSlot": 66
+          },
+          {
+            "level": 4,
+            "structureId": "structure-013e2e",
+            "structureSlot": 67
+          }
+        ],
+        "levelsAuthored": 12,
+        "tableAddress": 122614
+      },
       "linkedInstances": [],
       "name": "Structure 276",
       "nameStatus": "unknown",

@@ -195,28 +195,26 @@ This is the single blocker on a port writing the placement class on a Drop, trac
 [#356](https://github.com/odogono/mercenary/issues/356). It does not affect the authored class,
 which is published.
 
-## The other two #345 gaps: neither is recoverable here
+## The other two #345 gaps
 
-### Floor-aware binding
+### Floor-aware binding — since recovered
 
-[Workspace selection](damocles-workspace-selection.md) states the position directly:
-*"What is not recovered is the static rule mapping a level to its structure … Today the
-interior structure is read from the live `$7B0E` and reported; predicting it statically
-is open work."* The Vesta cell `$64` pair is the controlled case — same body, same
-group, same cell, level 0 binds slot 70 and level 10 binds slot 91.
+This was recorded here as a boundary, on the reading that *"what is not recovered is
+the static rule mapping a level to its structure"*. [#355](https://github.com/odogono/mercenary/issues/355)
+recovered it: the level indexes the cell instance's alias record at `+6`, a
+twelve-byte floor table that `$054DBC` publishes in `$7C1E` and the lift reads before
+assembling that structure. All seven #326 captures have their live `$7B0E` reproduced
+by the static decode, and the Catalogue publishes the table as each alias structure
+model's `levelBinding`. See
+[the level-to-structure binding](damocles-level-structure-binding.md).
 
 `$7AC5` and `$7AA5` hold the player's level and a drop copies it, so the value a port
-would need to write is well defined. What a port cannot do is *bind* a non-zero level:
-without the level-to-structure rule there is no geometry to draw a resident against or
-to select it from, and deriving a floor number from pose height needs a storey pitch
-that belongs to the structure the rule would have chosen. Every arrival pose in
-`payload/damocles/arrival-poses.json` records position, cell and workspace origin, and
-none records a level or a bound structure, so the payload cannot stand in for the rule
-either.
-
-**Disposition: a boundary, not a defect** — tracked as
-[#355](https://github.com/odogono/mercenary/issues/355). A Drop may only write the level the
-port can bind, and the port binds level 0.
+would need to write was already well defined; what a port could not do was *bind* a
+non-zero level. It now can, and the storey pitch the height derivation needs belongs
+to the same alias record as the table. Admitting a non-zero level into
+`worldPosition()` and into an interior Drop is separate delivery work and is not done
+here; `payload/damocles/arrival-poses.json` still records no level and no bound
+structure.
 
 ### Direct-drop ground contact
 

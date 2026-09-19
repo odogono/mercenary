@@ -29,10 +29,15 @@ The instance's own scale, palette, Building detail and base structure come from
 the alias record the slot selects, not from this word, and the scale pair is
 signed, so it carries reflection.
 
+The structure a level binds is the alias record's floor table, at the record
+plus six, which ``$054DBC`` publishes in ``$7C1E`` and the lift at
+``$055B24``-``$055BD8`` indexes by the destination level before assembling it.
+
 Nothing here is injected or inferred: every field is read at an address the
 listing names. The self-checks are gates, not prints. They reproduce #172's
 published Eris values and, for each memstate supplied, require the static decode
-to reproduce the ``$ABDC`` table and place-list pointer the running game built.
+to reproduce the ``$ABDC`` table, the place-list pointer and the ``$7B0E``
+association root the running game built, at whatever level the capture stands.
 
 Usage (from the repository root):
 
@@ -66,6 +71,7 @@ from damocleslab.catalogue import (  # noqa: E402
     decode_structure_selection,
     hatari_memstate_ram,
     palette_at,
+    structure_level_binding,
     third_wall_height,
     validate_source,
 )
@@ -249,28 +255,31 @@ def structure_geometry(ram: bytes, slot: int) -> dict:
                                    third_wall_height(ram))
     selection = decode_structure_selection(ram, mesh, scale, colours, hardware)
     root = selection['associationRoot']
+    groups = decode_structure_associations(ram, root)
     return {
         'baseSlot': base_slot,
         'regions': len(selection['regions']),
         'associationRoot': root,
-        'insertionGroups': decode_structure_associations(ram, root),
+        'insertionGroups': {selector: {i['regionSelector']: i['insertionKey'] for i in items}
+                            for selector, items in groups.items()},
     }
 
 
-def bound_structure(ram: bytes, root: int, limit: int = 512) -> dict | None:
-    """Resolve a live ``$7B0E`` root back to the structure slot that derives it.
+def level_structure(ram: bytes, instance_slot: int, level: int) -> int | None:
+    """The structure slot a level binds, from the alias record's floor table.
 
-    The root is not tabulated, so the only way back is to derive every slot's
-    root and match. Aliases share a base structure and therefore a root; the
-    lowest matching slot is returned, with the base slot alongside it.
+    ``$054DBC`` publishes the table -- the alias record plus six -- in
+    ``$7C1E``; ``$055B24``-``$055B28`` indexes it by the destination level and
+    refuses a zero byte; the entry survives in d0 to ``$055BD8``, which
+    assembles that structure. A plain structure record has no table and offers
+    level 0 alone, which is the record itself.
     """
-    for slot in range(limit):
-        try:
-            geometry = structure_geometry(ram, slot)
-        except (ValueError, struct.error, IndexError, KeyError):
-            continue
-        if geometry['associationRoot'] == root:
-            return {'slot': slot, **geometry}
+    binding = structure_level_binding(ram, instance_slot)
+    if binding is None:
+        return instance_slot if level == 0 else None
+    for floor in binding['floors']:
+        if floor['level'] == level:
+            return floor['structureSlot']
     return None
 
 
@@ -405,34 +414,31 @@ def check_memstate(ram: bytes, live: bytes, label: str, catalogue: dict | None =
         if seen != wanted:
             raise LabError(f'{label}: ${address:04X} is ${seen:04X}, decode predicts ${wanted:04X}')
     # The association-list root the running game bound is per *level*, not per
-    # cell. At level 0 it is the cell instance's own structure, and requiring
-    # that is the gate below. Above level 0 the game has bound a different
-    # record -- the interior -- which the static decode does not yet predict, so
-    # the live root is resolved to its structure and reported rather than
-    # treated as a failed derivation. Vesta cell $64 binds slot 70 (base 90) at
-    # level 0 and slot 91 at level 10, which is the case that showed this.
+    # cell, and the alias record's floor table is what chooses it. Vesta cell
+    # $64 binds slot 90 at level 0 and slot 91 at level 10 because that is what
+    # its table at $01454E+6 reads. The same derivation runs at every level --
+    # there is no level-0 special case -- and a capture whose live $7B0E it
+    # does not reproduce raises.
     geometry = structure_geometry(ram, instance['slot'])
     live_root = u32(live, ASSOCIATION_ROOT)
     level = u16(live, PLAYER_LEVEL)
     result['playerLevel'] = level
-    if level == 0:
-        if live_root != geometry['associationRoot']:
-            raise LabError(f'{label}: $7B0E is ${live_root:06X}, the decode of the cell '
-                           f'${cell:02X} instance gives ${geometry["associationRoot"]:06X}')
-        bound = geometry
-    else:
-        bound = bound_structure(ram, live_root)
-        if bound is None:
-            raise LabError(f'{label}: $7B0E is ${live_root:06X} at level {level}, which is '
-                           'not the association root of any structure slot')
-        result['interiorStructure'] = {
-            'slot': bound['slot'],
-            'baseSlot': bound['baseSlot'],
-            'associationRoot': f'0x{live_root:06x}',
-            'insertionGroups': [f'0x{g:02x}' for g in sorted(bound['insertionGroups'])],
-            'note': ('bound above level 0; the static decode does not yet predict which '
-                     'structure a level selects'),
-        }
+    bound_slot = level_structure(ram, instance['slot'], level)
+    if bound_slot is None:
+        raise LabError(f'{label}: the cell ${cell:02X} instance authors no structure at '
+                       f'level {level}, but the capture stands there with $7B0E '
+                       f'${live_root:06X}')
+    bound = structure_geometry(ram, bound_slot)
+    if live_root != bound['associationRoot']:
+        raise LabError(f'{label}: $7B0E is ${live_root:06X}, the floor table of the cell '
+                       f'${cell:02X} instance binds slot {bound_slot} at level {level}, '
+                       f'whose association root is ${bound["associationRoot"]:06X}')
+    result['boundStructure'] = {
+        'slot': bound_slot,
+        'baseSlot': bound['baseSlot'],
+        'associationRoot': f'0x{live_root:06x}',
+        'insertionGroups': [f'0x{g:02x}' for g in sorted(bound['insertionGroups'])],
+    }
     result['playerCellInstance'] = {
         'slot': instance['slot'], 'scene': scene,
         'baseSlot': geometry['baseSlot'],
@@ -541,8 +547,16 @@ def build_report(ram: bytes, memstates: list[tuple[str, bytes]], groups: list[in
             }
             if record['alias']:
                 row['parent']['interior'] = f'0x{interior_address(ram, record["detail"]):06x}'
+            # A resident resolves in the structure its own level binds, which
+            # the parent's floor table names; only level 0 is the parent's own
+            # base structure.
+            bound_slot = level_structure(ram, instance['slot'], scene['level'])
+            row['parent']['levelSlot'] = bound_slot
             try:
-                geometry = structure_geometry(ram, instance['slot'])
+                if bound_slot is None:
+                    raise ValueError(f"the floor table authors no structure at level "
+                                     f"{scene['level']}")
+                geometry = structure_geometry(ram, bound_slot)
             except Exception as error:                     # noqa: BLE001 - reported, not raised
                 row['outcome'] = f'parent decoded; association list unavailable: {error}'
                 row['parent']['associationList'] = None
@@ -584,8 +598,10 @@ def summarise(report: dict) -> None:
         print(f"  {item['memstate']}: bound group 0x{item['boundGroup']:02x}, "
               f"$ABDC {item['overrideTable']}, place list {item['placeList']}, "
               f"player cell 0x{item['playerCell']:02x} predicted words agree"
-              + (f", $7B0E {item['playerCellInstance']['associationRoot']} agrees"
-                 if item.get('playerCellInstance') else ''))
+              + (f", level {item['playerLevel']} binds slot "
+                 f"{item['boundStructure']['slot']} and its root "
+                 f"{item['boundStructure']['associationRoot']} is $7B0E"
+                 if item.get('boundStructure') else ''))
     print('\ngroup records:')
     for g in report['groups']:
         print(f"  group {g['group']} record {g['record']} runs {g['extentRuns']:3d} "
@@ -599,8 +615,9 @@ def summarise(report: dict) -> None:
             print(head + ' ** ' + s['outcome'])
             continue
         p = s['parent']
-        print(head + f" parent slot {p['instanceSlot']:3d} base {p.get('baseSlot', '?')} "
-              f"scene {p['scene']['kind']:11s} root {p.get('associationRoot', '-')}")
+        print(head + f" parent slot {p['instanceSlot']:3d} level slot {p.get('levelSlot', '?')} "
+              f"base {p.get('baseSlot', '?')} scene {p['scene']['kind']:11s} "
+              f"root {p.get('associationRoot', '-')}")
         for resident in s['residents']:
             mapping = ('' if resident.get('insertions') is None
                        else ' '.join(f'{r}->{v}' for r, v in resident['insertions'].items()))

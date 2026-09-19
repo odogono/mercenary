@@ -422,6 +422,10 @@ _Avoid_: Trigger radius, doorway bounds, collision box
 What a recovered structure region requires before it can be selected: nothing, a named attachment slot's fully-open latch, or the reserved `$0200` unconditional passage. The gate is read from the region's own flags; a passage carries no attachment and no open endpoint.
 _Avoid_: Door flag, region mask, collision layer
 
+**Floor Table**:
+The twelve bytes in a scaled Surface Structure's alias record naming which structure each of its levels binds, zero where a level has no floor. The level indexes it; the storey pitch in the same record gives that floor its height. Level 0's entry is the ground bind.
+_Avoid_: Storey list, floor map, level index
+
 **Structure Workspace**:
 The single bound current-cell Damocles Instance whose plan, attachments and regions the Working Authority holds live. Region selection, the selected-region ±11 eye clamp and plan drawing apply only while the Pose is in the central half of that cell on both axes; attachment motion is deliberately broader and may finish re-closing that instance's leaves outside it.
 _Avoid_: Active structure, current building, bound model

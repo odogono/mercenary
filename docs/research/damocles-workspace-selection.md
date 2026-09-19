@@ -155,7 +155,8 @@ body-map work is separate delivery work.
 structure's region descriptors and `$05A2FA` publishes the address it stopped at,
 so the root identifies **whichever structure the game has bound**. At level 0
 that is the cell's own authored instance. Above level 0 it is a different
-record — the interior — and the static decode does not yet predict which.
+record — the interior — which the cell instance's alias record names in its
+floor table at `+6` ([#355](https://github.com/odogono/mercenary/issues/355)).
 
 Vesta cell `$64` is the controlled case, because two captures stand in it at
 different levels with everything else equal:
@@ -164,6 +165,9 @@ different levels with everything else equal:
 | --- | --- | ---: | --- | --- | ---: | --- |
 | `vesta-parliament-4-6` | `$64` | 0 | `$017834` | slot 70, base **90** | 22 | `01 03 04 05 06 07 12 14` |
 | `vesta-transporter` | `$64` | 10 | `$017B4A` | slot **91** | 8 | `05 06 07 08` |
+
+Vesta's floor table reads `90, 92, 92, 93, 0, 0, 0, 0, 0, 0, 91`, so level 10
+names slot 91 by lookup.
 
 Same body, same group `$05`, same cell, different level, different structure.
 This is the prerequisite the drop research recorded as unreached: the seven
@@ -195,11 +199,16 @@ not offer raises, so the rule is falsifiable rather than a reading. Four
 structure groups are bound here for the first time — Gaea `$0F`, Metis `$03`,
 Logos `$08` and Pan `$0C`.
 
-**What is not recovered** is the static rule mapping a level to its structure.
-Slot 58 recurs across Gaea, Dion and Metis, and slot 91 is one above Vesta's
-base 90, but alias records collapse several slots onto one root, so neither
-observation is a rule. Today the interior structure is read from the live
-`$7B0E` and reported; predicting it statically is open work.
+**The static rule is now recovered**, by
+[#355](https://github.com/odogono/mercenary/issues/355): the alias record's
+floor table at the record plus six, which `$054DBC` publishes in `$7C1E` and
+the lift indexes by the destination level before assembling that structure. The
+probe derives the bound structure at every level and raises when the derived
+association root is not the live `$7B0E`; all seven captures pass. Neither
+observation offered here was the rule — slot 58 recurs because Gaea, Dion and
+Metis place the same authored instance, and Logos's level 4 names 67, two above
+its base. See
+[the level-to-structure binding](damocles-level-structure-binding.md).
 
 ### Eris group `$12` does not yet reproduce
 
