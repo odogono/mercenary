@@ -2589,6 +2589,21 @@ def hatari_memstate_ram(data: bytes) -> bytes:
     return ram
 
 
+# The per-body note a live workspace's evidence cites. A body absent from this
+# table is covered by the sweep note rather than by a note of its own; the
+# decoder itself carries no body identity, so adding a workspace needs no code.
+WORKSPACE_EVIDENCE = {
+    'vesta': 'docs/research/damocles-vesta-workspace.md',
+    'gaea': 'docs/research/damocles-gaea-ur-city-workspace.md',
+    'dion': 'docs/research/damocles-dion-workspace.md',
+}
+WORKSPACE_SWEEP_EVIDENCE = 'docs/research/damocles-non-eris-workspaces.md'
+
+
+def workspace_evidence(slug: str) -> str:
+    return WORKSPACE_EVIDENCE.get(slug, WORKSPACE_SWEEP_EVIDENCE)
+
+
 def live_overlay_prefix(slug: str, area_name: str | None, instances: list) -> str:
     """Keep body-local IDs unless that body already has an authored surface map."""
     if not any(item['id'].startswith(f'{slug}-surface-') for item in instances):
@@ -2632,6 +2647,20 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
     slug = label.lower()
     origin_x = (u32(workspace, 0x7a92) - u32(workspace, 0x7a2c)) / 65536
     origin_z = (u32(workspace, 0x7a9a) - u32(workspace, 0x7a34)) / 65536
+    # The world/local camera pair is only an origin while the workspace is
+    # actually built for the cell the player stands in. The engine's own cell
+    # word implies the same origin independently, so disagreement means the
+    # capture is not standing in a built workspace and its placements would be
+    # published against a fabricated origin. Refuse rather than place them.
+    cell_word = struct.unpack_from('>H', workspace, 0x7b5c)[0]
+    implied_x = u32(workspace, 0x7a92) // 65536 - (cell_word & 0x0F)
+    implied_z = u32(workspace, 0x7a9a) // 65536 - (cell_word >> 4)
+    if (int(origin_x), int(origin_z)) != (implied_x, implied_z):
+        raise ValueError(
+            f'live {label} workspace origin {origin_x:.0f},{origin_z:.0f} disagrees with the '
+            f'origin {implied_x},{implied_z} implied by cell ${cell_word:02X}; this capture is '
+            'not standing in a built workspace'
+        )
     names: dict[int, tuple[str, str]] = {}
     area_name = None
     place_pointer = u32(workspace, 0x7a6c)
@@ -2758,15 +2787,7 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
                         'this workspace overwrites the Eris first-world index.'
                     ),
                     'confidence': 'verified',
-                    'source': (
-                        'docs/research/damocles-vesta-workspace.md'
-                        if slug == 'vesta'
-                        else 'docs/research/damocles-gaea-ur-city-workspace.md'
-                        if slug == 'gaea'
-                        else 'docs/research/damocles-dion-workspace.md'
-                        if slug == 'dion'
-                        else 'docs/research/damocles-catalogue.md'
-                    ),
+                    'source': workspace_evidence(slug),
                 }],
             }
             if mesh['faces'] or mesh['lines']:

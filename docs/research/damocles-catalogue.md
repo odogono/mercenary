@@ -14,10 +14,37 @@ PYTHONPATH=research/damocles-st python3 -m damocleslab.catalogue \
   --workspace research/damocles-st/snapshots/vesta-parliament-4-6.sav \
   --workspace research/damocles-st/snapshots/gaea-ur-city-4-2.sav \
   --workspace research/damocles-st/snapshots/dion-2-3.sav \
+  --workspace research/damocles-st/snapshots/damocles.icarus.sav \
+  --workspace research/damocles-st/snapshots/damocles.acheron.sav \
+  --workspace research/damocles-st/snapshots/damocles.atropos.sav \
+  --workspace research/damocles-st/snapshots/damocles.clotho.sav \
+  --workspace research/damocles-st/snapshots/damocles.gaea.transporter.sav \
+  --workspace research/damocles-st/snapshots/damocles.cronus.sav \
+  --workspace research/damocles-st/snapshots/damocles.cyclopes.sav \
+  --workspace research/damocles-st/snapshots/damocles.solon.sav \
+  --workspace research/damocles-st/snapshots/damocles.theon.sav \
+  --workspace research/damocles-st/snapshots/damocles.metis.transporter.sav \
+  --workspace research/damocles-st/snapshots/damocles.lucan.sav \
+  --workspace research/damocles-st/snapshots/damocles.logos.transporter.sav \
+  --workspace research/damocles-st/snapshots/damocles.pan.sav \
+  --workspace research/damocles-st/snapshots/damocles.thalia.sav \
+  --workspace research/damocles-st/snapshots/damocles.bacchus.transporter.sav \
+  --workspace research/damocles-st/snapshots/damocles.tolosa.sav \
+  --workspace research/damocles-st/snapshots/damocles.perseus.sav \
+  --workspace research/damocles-st/snapshots/damocles.mentor.transporter.sav \
   --output payload/damocles/catalogue.json
 cd web
 bun run dev
 ```
+
+The twenty-one `--workspace` inputs are the arrival-pose memstates
+(#326). Each contributes one live `$00ABDC` window; twenty bodies are covered,
+Gaea by two. The decoder carries no body identity, so adding a body is an input
+rather than a code change. Two further poses, `midas` and `damocles`, are
+deliberately **not** passed: their camera pair disagrees with the origin their
+own cell word implies, so the extractor refuses them rather than placing cells
+against a fabricated origin. See
+[live surface workspaces beyond Eris](damocles-non-eris-workspaces.md).
 
 Open `http://127.0.0.1:5173/catalogue`, or follow **Damocles catalogue** from the
 game menu. `?model=object-035d12` opens DART II;
@@ -201,8 +228,8 @@ displays each table's qualification. Every slot maps to one model identity;
 repeated pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
 
-Current extraction accounts for **832 unique records**: **510 decoded**,
-**322 partial**, and **0 unresolved**. “Decoded” means the supported record was
+Current extraction accounts for **1241 unique records**: **915 decoded**,
+**326 partial**, and **0 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.
 Unresolved records remain searchable and retain their source identity and reason.

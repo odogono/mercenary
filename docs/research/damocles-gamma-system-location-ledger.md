@@ -190,9 +190,9 @@ binds. See
   DION, CLOTHO, GAEA, ERIS, THEON, VESTA, METIS, LUCAN, LOGOS, PAN, BACCHUS,
   MENTOR, DAMOCLES, and since 2026-09-19 ICARUS, ATROPOS, CRONUS, CYCLOPES,
   SOLON, THALIA, TOLOSA and PERSEUS. Each has at least one live on-foot capture.
-  Four of them — DION, GAEA, ERIS, VESTA — also have a recovered named 16×16
-  surface workspace; the other nineteen have a pose and a cell but no named
-  workspace yet.
+  **Twenty-one of them also have a recovered named 16×16 surface workspace**,
+  extracted from the pose captures themselves by #172; MIDAS and DAMOCLES are
+  the exceptions, and their captures do not stand in a built workspace.
 - **Residents but no recovered surface workspace and no arrival pose (0):**
   this class is now empty. The eight bodies that filled it — ICARUS, ATROPOS,
   CRONUS, CYCLOPES, SOLON, THALIA, TOLOSA and PERSEUS — were captured on
@@ -273,18 +273,25 @@ recovered, and a pose can stand in a second window of a body whose first window
 is known.
 
 Where an origin is recovered the derivation is kept as a cross-check, and it
-still passes: seven of the twenty-seven poses stand on a body with a recovered
-origin, and in all seven the camera longwords reproduce `$7B5C` exactly. Two of
-those seven — `dion-transporter` and `eris-transporter-11-8` — were captured far
-from the workspace note's own capture, so the origin is a property of the window,
-not of the capture that first found it.
+still passes: twenty-five of the twenty-seven poses stand in a recovered window,
+and in all twenty-five the camera longwords reproduce `$7B5C` exactly. Two of
+them — `dion-transporter` and `eris-transporter-11-8` — were captured far from
+the workspace note's own capture, so the origin is a property of the window, not
+of the capture that first found it.
+
+**Every pose but two is now anchored.** The captures themselves supplied the
+origins: [#172](https://github.com/odogono/mercenary/issues/172) extracted the
+live `$ABDC` workspace out of each pose's own memstate, taking recovered windows
+from four to twenty-one across twenty bodies. See
+[live surface workspaces beyond Eris](damocles-non-eris-workspaces.md).
 
 `impliedWorkspaceOrigin` carries what each pose's longwords and cell imply, for
-every pose. For the seven anchored poses it equals the recovered origin. For the
-other twenty it is the only thing anchoring the cell, and the payload says so
-rather than presenting an unanchored cell as a located one. The eight captures
-of 2026-09-19 are all in that second group: reaching a body does not recover its
-workspace, and none of the eight is anchored to a named window.
+every pose. For the twenty-five anchored poses it equals the recovered origin.
+For `midas` and `damocles` it is the only thing anchoring the cell, and the
+payload says so rather than presenting an unanchored cell as a located one.
+Those two are unanchored for a stated reason rather than for want of a capture:
+their camera pair disagrees with the origin their own cell word implies, so
+neither stands in a built workspace and the extractor refuses to place either.
 
 **The eight new cells agree with the catalogue, independently.** On each of
 ICARUS, ATROPOS, CRONUS, CYCLOPES, SOLON, THALIA, TOLOSA and PERSEUS the cell
@@ -297,14 +304,16 @@ placement, and the residents on all eight remain unplaced. The same eight cells
 are the ones the [guide checklist](damocles-guide-location-checklist.md) had
 listed as secondary-source leads.
 
-**`gaea-transporter` implies a Gaea window at `256,768`,** which is neither of
+**`gaea-transporter` implied a Gaea window at `256,768`,** which was neither of
 the two Gaea workspaces this note records at `512,1792`. The cell it reports,
-`$88`, is corroborated three ways: the catalogue's own association for
+`$88`, was corroborated three ways: the catalogue's own association for
 transporter slot 70 is Gaea cell 136 = `$88`; the live resident array puts slot
 70 within 216 units of the pose; and the player who captured it read "8-8" off
-the location display. So the cell is not in doubt — what is unreconciled is the
-origin, and a third Gaea window is the reading the evidence supports. That is
-recorded here as an open item, not folded into the existing Gaea note.
+the location display. **That open item is closed.** The window is recovered, it
+is `CHALDEA METROPOLIS`, and it carries its own area list — `BANK OF GAEA HQ`,
+`MARILLION APARTMENTS`, `TRADE COMMISSION`, `MEGA TRADING` and `ESTATE AGENTS`.
+It is a second window on one body, published at its own origin rather than
+folded into UR CITY's.
 
 The Eris pose is the one `web/damocles/eris.json` already carries as `start`;
 the payload document republishes it beside the others. The yaw word is published raw and carries bits above
@@ -799,8 +808,9 @@ bodies remain lower-priority coverage work.
 | Interior objects anywhere but the two Eris keys | **No**                                     | 193 residents have selectors and no parent                                       |
 | Pickup-triggered responses beyond slot 183     | **No**                                     | Responses recovered (#317) and implemented (#346); none of the other five objects is reachable |
 | Interior objects with a recovered placement on DION / VESTA | **No**                        | Placements recovered (#325); nothing exposes them — the association-list root is decoded for Capital Spaceport only |
-| Body switch to any of the other nineteen posed bodies | **Yes**, for the pose itself         | `payload/damocles/arrival-poses.json`; the cell is engine-read but unanchored to a named workspace |
-| Surface or interior objects on the eight bodies posed on 2026-09-19 | **No**              | A pose each, and nothing else: no recovered workspace origin, no parent, no placement |
+| Body switch to any of the other seventeen anchored bodies | **Yes**, for the pose itself     | `payload/damocles/arrival-poses.json`; each cell is engine-read and anchored to a recovered window (#172) |
+| Body switch to MIDAS or DAMOCLES               | **No**                                     | A pose each, unanchored: neither capture stands in a built workspace |
+| Surface assemblies on the bodies #172 recovered | **Partly**                                | Twenty-one live workspaces and their place names; no interior placement on any of them |
 | Any of the seven unposed bodies                | **No**                                     | No surface workspace, no arrival pose                                            |
 
 ### Bounded tasks this ledger identifies
@@ -810,13 +820,13 @@ Already owned, and this ledger supplies the target list rather than new scope:
 - **#252** — Eris structure selectors. Cells `$89` (KEY - EAGLE 9SE, DAMOCLES
   FILE), `$77` and `$29` (both ANTIGRAV) are the ledger's highest-value Eris
   cells; all four objects are unreachable until those selectors decode.
-- **#172** — non-Eris surface structures and places. The eighteen bodies with
-  residents and no named workspace are its remaining target list, and MIDAS is
-  the only one holding a trigger object (MAGIC CRYSTAL, slot 95). **All eighteen
-  now have an arrival pose and an implied window origin**, which gives the work a
-  live standing position to start from on every one of them rather than
-  coordinates alone. This is now the largest gap in the ledger: pose coverage has
-  overtaken workspace coverage by nineteen bodies.
+- **#172** — non-Eris surface structures and places. **Substantially delivered.**
+  Seventeen of the eighteen bodies that had residents and no named workspace now
+  have one, recovered from their own arrival-pose captures, together with
+  thirty-seven recovered place names. MIDAS is the one that does not, and it is
+  the one holding a trigger object (MAGIC CRYSTAL, slot 95): its capture does not
+  stand in a built workspace, so recovering it needs a fresh capture. See
+  [live surface workspaces beyond Eris](damocles-non-eris-workspaces.md).
 
 Additional research under #313, required by the deliveries that use it:
 
@@ -865,8 +875,9 @@ Resolved since this ledger was first written:
 
 - `complete: false`. Seven of the thirty physical bodies have no arrival pose,
   and none of the seven carries a resident record. Of the twenty-three bodies
-  that do have a pose, nineteen have an engine-read cell with no named workspace
-  to anchor it — the workspace gap is now much larger than the pose gap.
+  that do have a pose, **twenty-one now have a recovered 16×16 workspace** and
+  their poses are anchored (#172). MIDAS and DAMOCLES are the two that are not,
+  because neither capture stands in a built workspace.
 - 193 of 195 interior-associated residents have no parent and no local
   placement.
 - Of the 28 residents that **do** have a recovered placement, **nine** can be

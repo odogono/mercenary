@@ -12,6 +12,34 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **Twenty-one live Damocles surface workspaces, up from three.** The arrival-pose
+  memstates already held each body's loaded `$00ABDC` window, so #172's remaining
+  target list was recoverable without a single new capture: eighteen further
+  workspaces across seventeen bodies, plus Gaea's second window. The Catalogue
+  gains 731 instances, 409 models and **37 recovered place names** — `PENN COLLEGE`,
+  `IDI PALACE OF FUN`, `RESEARCH LABORATORY`, `PAN HADES ADMIN DEPT`,
+  `THE TOMB OF SETH` and the rest — with nothing removed. Six of them verify a
+  guide lead the location checklist had filed as secondary-source only, and
+  Tolosa's currency repository turns out to carry a keyed entrance naming object
+  slot 37, which resides on MIDAS, exactly as the guide claimed and without
+  taking the guide's word for it. Gaea's third window is `CHALDEA METROPOLIS`,
+  which closes the open item the coverage ledger recorded against
+  `gaea-transporter`. Twenty-five of the twenty-seven arrival poses are now
+  anchored to a recovered origin and admitted by the browser, up from seven
+  (#172).
+
+- **`arrival-poses.json` says what environment each pose was captured in.**
+  Restoring a pose does not always leave a player standing: fourteen were
+  captured while the machine was presenting a ten-second `NO AIR!` countdown, and
+  every one of them runs the countdown out on restore — body selector `$0078`,
+  VOID, `YOU'RE A BIT DEAD`. Each pose now publishes `captureEnvironment`: the
+  message gate `$7BA0`, whether a message was being presented at all, the system
+  string the pointer was inside, and whether that amounts to a live hazard
+  warning. A lowered gate is not evidence of a safe environment — it falls long
+  before the ten seconds are up — so the flag states what the capture shows and
+  not a per-body atmosphere rule. **A validated arrival pose is not a survivable
+  one**, and the payload no longer leaves that to be assumed (#172, #326).
+
 - **Every Damocles body that carries a resident object now has a validated
   on-foot arrival pose.** Eight captures — ICARUS, ATROPOS, CRONUS, CYCLOPES,
   SOLON, THALIA, TOLOSA and PERSEUS — were flown in play by steered craft
@@ -80,6 +108,16 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
   presentation draws no Cast Shadow whatever the row says (#376).
 
 ### Fixed
+
+- **The catalogue extractor no longer places a workspace against a fabricated
+  origin.** A workspace's origin comes from the world/local camera pair, which is
+  only an origin while the workspace is built for the occupied cell; the engine's
+  cell word implies the same origin independently. Twenty-five of twenty-seven
+  poses agree exactly and two do not, and the extractor now refuses those two
+  rather than publishing them. It matters: read without the check, the MIDAS
+  capture claims all 256 cells hold one repeated structure at origin
+  `−63807,−60502`. MIDAS and DAMOCLES therefore keep an arrival pose and no
+  recovered workspace, and MIDAS still holds MAGIC CRYSTAL (#172).
 
 - **Damocles draws what the Working Authority draws: the occupied Surface Cell,
   not the whole workspace.** `planErisFrame` re-emitted all 207 placements of

@@ -119,9 +119,12 @@ describe('body-aware Object Residence', () => {
       residentCount: 28
     });
     expect(matrix.rows).toHaveLength(expectedPairs);
-    expect(new Set(matrix.rows.map(row => row.body))).toEqual(
-      new Set(['body-4', 'body-8', 'body-11', 'body-14'])
-    );
+    // Twenty-one Bodies carry an admitted Pose since #172 recovered their workspace origins,
+    // so the matrix now sweeps every placed resident against all of them rather than four.
+    expect(new Set(matrix.rows.map(row => row.body)).size).toBe(21);
+    for (const body of ['body-4', 'body-8', 'body-11', 'body-14']) {
+      expect(matrix.rows.some(row => row.body === body)).toBe(true);
+    }
     expect(new Set(matrix.rows.map(row => row.instance))).toHaveLength(28);
     expect(matrix.rows.every(row => row.take.tag === 'observed')).toBe(true);
     expect(matrix.rows.every(row => row.drops.length > 0)).toBe(true);
@@ -180,7 +183,9 @@ describe('body-aware Object Residence', () => {
     };
     newBodyPose.poses.push({
       ...newBodyPose.poses.find(pose => pose.workspaceOrigin !== null)!,
-      body: 'body-1',
+      // MIDAS: a Body with an arrival Pose and no recovered workspace origin, so anchoring it
+      // is what would widen the matrix. ICARUS stood here until #172 anchored it.
+      body: 'body-2',
       id: 'newly-anchored',
       onFoot: false
     });

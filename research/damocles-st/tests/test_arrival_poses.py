@@ -54,6 +54,8 @@ class ArrivalPosePublicationTests(unittest.TestCase):
 
     def test_body_without_a_recovered_origin_still_publishes_its_cell(self):
         # MIDAS is body 2: residents, no recovered workspace origin.
+        # MIDAS keeps no recovered origin: its capture does not stand in a
+        # built workspace, so #172 refuses to extract one (see the sweep note).
         self.assertNotIn(2, location_ledger.WORKSPACE_ORIGINS)
         pose = self.read('midas', workspace(2, 0xB5, (353, 3482)))
         published = location_ledger.published_pose(pose, {'body-2': 'MIDAS'})
@@ -73,17 +75,29 @@ class ArrivalPosePublicationTests(unittest.TestCase):
         self.assertEqual(published['impliedWorkspaceOrigin'], {'x': 64, 'z': 128})
         self.assertIn('independently confirmed', published['evidence']['cell'])
 
-    def test_a_pose_in_a_second_workspace_publishes_unanchored(self):
-        # The Gaea transporter destination: cell 8,8 of a window at 256,768,
-        # while the only recovered Gaea window is Ur city at 512,1792.
-        self.assertEqual(location_ledger.WORKSPACE_ORIGINS[8][0], (512, 1792))
-        pose = self.read('gaea-transporter', workspace(8, 0x88, (256, 768)))
-        published = location_ledger.published_pose(pose, {'body-8': 'GAEA'})
+    def test_a_pose_in_an_unrecovered_window_publishes_unanchored(self):
+        # Dion has one recovered window, Birmingham Island at 3252,1314. A pose
+        # standing in any other window of that body is not anchored by it.
+        self.assertEqual([origin for origin, _ in location_ledger.WORKSPACE_ORIGINS[4]],
+                         [(3252, 1314)])
+        pose = self.read('dion-elsewhere', workspace(4, 0x88, (256, 768)))
+        published = location_ledger.published_pose(pose, {'body-4': 'DION'})
         self.assertEqual(published['cell'], 0x88)
         self.assertEqual(published['localCell'], {'x': 8, 'z': 8})
         self.assertIsNone(published['workspaceOrigin'])
         self.assertEqual(published['impliedWorkspaceOrigin'], {'x': 256, 'z': 768})
-        self.assertIn('outside the one recovered workspace', published['evidence']['cell'])
+        self.assertIn('outside every recovered workspace', published['evidence']['cell'])
+
+    def test_a_body_can_carry_more_than_one_recovered_window(self):
+        # Gaea carries two: UR CITY at 512,1792 and CHALDEA METROPOLIS at
+        # 256,768 (#172). A pose in either is anchored, against its own origin.
+        origins = [origin for origin, _ in location_ledger.WORKSPACE_ORIGINS[8]]
+        self.assertEqual(sorted(origins), [(256, 768), (512, 1792)])
+        for origin, cell in (((512, 1792), 0x24), ((256, 768), 0x88)):
+            pose = self.read('gaea', workspace(8, cell, origin))
+            published = location_ledger.published_pose(pose, {'body-8': 'GAEA'})
+            self.assertEqual(published['workspaceOrigin'], {'x': origin[0], 'z': origin[1]})
+            self.assertIn('independently confirmed', published['evidence']['cell'])
 
     def test_the_body_coordinate_readout_comes_from_the_camera_longwords(self):
         # The Eris start pose: the original's panel prints 016-283 here (#371).

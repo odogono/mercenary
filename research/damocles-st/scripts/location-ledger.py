@@ -45,6 +45,7 @@ from damocleslab.catalogue import hatari_memstate_ram  # noqa: E402
 REPO = Path(__file__).resolve().parents[3]
 CATALOGUE = REPO / 'payload' / 'damocles' / 'catalogue.json'
 ARRIVAL_POSES = REPO / 'payload' / 'damocles' / 'arrival-poses.json'
+STRINGS = REPO / 'payload' / 'damocles' / 'strings.json'
 
 # Camera and occupancy words, established in docs/research/damocles-walk-board-flight.md
 # and docs/research/damocles-gamma-system.md.
@@ -56,6 +57,19 @@ CAMERA_YAW = 0x7AA2
 CAMERA_YAW_TWIN = 0x7AC2
 BODY_SELECTOR = 0x7AA8
 PLACE_LIST = 0x7A6C
+# The live message pointer and its gate, established in
+# docs/research/damocles-message-reveal.md. $7B98 is an absolute address that
+# advances through a system-string record as the message reveals, so the record
+# is the table entry with the greatest address at or below it.
+MESSAGE_POINTER = 0x7B98
+MESSAGE_GATE = 0x7BA0
+
+# The two ten-second environmental warnings, system string slots 4 and 6. A pose
+# presenting one is standing somewhere the player is already dying; see
+# docs/research/damocles-non-eris-workspaces.md. The converse does not hold --
+# the gate falls long before the ten seconds are up.
+HAZARD_SLOTS = {4, 6}
+
 # The engine's own current-surface-cell word, established in
 # docs/research/damocles-resident-objects.md and used by the object-drop matcher
 # in docs/research/damocles-object-drops.md. Low nibble is the body-local cell x,
@@ -80,11 +94,36 @@ YAW_NORTH = 512
 # Body-local 16x16 workspace origins, in whole cells, as recovered by the
 # per-body workspace notes. A body absent from this table has no recovered
 # workspace origin and therefore no derivable arrival cell.
+SWEEP = 'docs/research/damocles-non-eris-workspaces.md'
+
+# A body carries several 16x16 windows, so each entry is a list. An origin is
+# here only where a live workspace has been extracted at it and published in the
+# catalogue payload; #172 recovered eighteen bodies' worth in one pass, and MIDAS
+# and DAMOCLES are deliberately absent because their captures do not stand in a
+# built workspace.
 WORKSPACE_ORIGINS = {
-    4: ((3252, 1314), 'docs/research/damocles-dion-workspace.md'),
-    8: ((512, 1792), 'docs/research/damocles-gaea-ur-city-workspace.md'),
-    11: ((64, 128), 'docs/research/damocles-catalogue.md'),
-    14: ((1083, 307), 'docs/research/damocles-vesta-workspace.md'),
+    1: [((624, 688), SWEEP)],
+    3: [((3419, 298), SWEEP)],
+    4: [((3252, 1314), 'docs/research/damocles-dion-workspace.md')],
+    5: [((42, 225), SWEEP)],
+    6: [((2421, 300), SWEEP)],
+    8: [((512, 1792), 'docs/research/damocles-gaea-ur-city-workspace.md'),
+        ((256, 768), SWEEP)],
+    9: [((2564, 873), SWEEP)],
+    10: [((3487, 1445), SWEEP)],
+    11: [((64, 128), 'docs/research/damocles-catalogue.md')],
+    12: [((3974, 1396), SWEEP)],
+    13: [((2546, 3334), SWEEP)],
+    14: [((1083, 307), 'docs/research/damocles-vesta-workspace.md')],
+    15: [((2527, 1066), SWEEP)],
+    16: [((3896, 0), SWEEP)],
+    17: [((1294, 2648), SWEEP)],
+    20: [((421, 1799), SWEEP)],
+    21: [((1999, 3256), SWEEP)],
+    23: [((1661, 1586), SWEEP)],
+    25: [((2737, 1571), SWEEP)],
+    26: [((3834, 821), SWEEP)],
+    27: [((2817, 268), SWEEP)],
 }
 
 
@@ -196,6 +235,38 @@ def build_ledger(catalogue: dict) -> dict:
     }
 
 
+def capture_message(ram: bytes) -> dict | None:
+    """The system-string record the live message pointer is inside at capture.
+
+    The pointer advances through the record as the message reveals, so the
+    record is the tracked system string with the greatest address at or below
+    it -- the rule ``arrival-route-probe.py`` already uses against the running
+    machine, applied here to a memstate and the tracked strings payload, so the
+    pose tool needs no extra input.
+    """
+    pointer = u32(ram, MESSAGE_POINTER)
+    if not pointer:
+        return None
+    strings = json.loads(STRINGS.read_text())['systemStrings']['entries']
+    records = [item for item in strings if int(item['address'], 16) <= pointer]
+    if not records:
+        return None
+    record = max(records, key=lambda item: int(item['address'], 16))
+    slot = record['slot']
+    # The gate's three values are 0 lowered, $0001 just raised and $FFFF
+    # presenting, so a message is on screen exactly when the gate is non-zero.
+    # With the gate down the pointer is a residue of the last message, which is
+    # why the record alone cannot be read as the capture's environment.
+    gate = u16(ram, MESSAGE_GATE)
+    return {
+        'messageGate': gate,
+        'presenting': bool(gate),
+        'systemStringSlot': slot,
+        'text': record['text'].strip(),
+        'hazardWarning': bool(gate) and slot in HAZARD_SLOTS,
+    }
+
+
 def read_pose(label: str, path: Path) -> dict:
     """Decode one on-foot arrival pose from a Hatari memstate."""
     blob = path.read_bytes()
@@ -220,6 +291,7 @@ def read_pose(label: str, path: Path) -> dict:
         'placeListPointer': u32(ram, PLACE_LIST),
         'memstateSha256': hashlib.sha256(blob).hexdigest(),
         'ramSha256': hashlib.sha256(ram).hexdigest(),
+        'captureEnvironment': capture_message(ram),
     }
     # The cell is read from the engine rather than derived, because a body can
     # carry more than one 16x16 workspace and only a handful of origins are
@@ -243,17 +315,10 @@ def read_pose(label: str, path: Path) -> dict:
     pose['cell'] = cell
     pose['localCell'] = {'x': local_x, 'z': local_z}
     pose['impliedWorkspaceOrigin'] = {'x': implied_x, 'z': implied_z}
-    origin = WORKSPACE_ORIGINS.get(index)
-    if origin is None:
-        pose['workspaceOrigin'] = None
-        pose['cellEvidence'] = (
-            'Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace '
-            'origin, so the cell is not yet anchored to the body surface; the camera longwords '
-            f'imply an origin of {implied_x},{implied_z} for the workspace this pose stands in.'
-        )
-        return pose
-    (origin_x, origin_z), evidence = origin
-    if (implied_x, implied_z) == (origin_x, origin_z):
+    windows = WORKSPACE_ORIGINS.get(index, [])
+    match = next((item for item in windows if item[0] == (implied_x, implied_z)), None)
+    if match is not None:
+        (origin_x, origin_z), evidence = match
         pose['workspaceOrigin'] = {'x': origin_x, 'z': origin_z}
         pose['cellEvidence'] = (
             'Read from the engine cell word $7B5C and independently confirmed by the camera '
@@ -261,11 +326,19 @@ def read_pose(label: str, path: Path) -> dict:
         )
         return pose
     pose['workspaceOrigin'] = None
+    if not windows:
+        pose['cellEvidence'] = (
+            'Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace '
+            'origin, so the cell is not yet anchored to the body surface; the camera longwords '
+            f'imply an origin of {implied_x},{implied_z} for the workspace this pose stands in.'
+        )
+        return pose
+    recovered = '; '.join(f'{x},{z}' for (x, z), _ in windows)
     pose['cellEvidence'] = (
-        'Read from the engine cell word $7B5C. The camera longwords put this pose outside the '
-        f'one recovered workspace on the body (origin {origin_x},{origin_z}, {evidence}); they '
-        f'imply a second workspace with origin {implied_x},{implied_z}, which no workspace note '
-        'has recovered, so the cell is not anchored to that note.'
+        'Read from the engine cell word $7B5C. The camera longwords put this pose outside every '
+        f'recovered workspace on the body ({recovered}); they imply a further workspace with '
+        f'origin {implied_x},{implied_z}, which no workspace note has recovered, so the cell is '
+        'not anchored to one.'
     )
     return pose
 
@@ -342,6 +415,12 @@ def published_pose(pose: dict, names: dict[str, str]) -> dict:
     be missing is the anchor: a body whose 16x16 workspace origin is unrecovered
     publishes a null ``workspaceOrigin`` alongside the origin its own longwords
     imply, so the cell is usable now and anchorable later without a guess.
+
+    ``captureEnvironment`` says what the machine was presenting when the capture
+    was taken, because restoring a pose does not always leave a player standing:
+    fourteen of them run out a ten-second environmental countdown and die. A
+    validated arrival pose is not a survivable one, and the payload says so
+    rather than leaving a reader to assume it.
     """
     return {
         'id': pose['id'],
@@ -355,6 +434,7 @@ def published_pose(pose: dict, names: dict[str, str]) -> dict:
         'localCell': pose.get('localCell'),
         'workspaceOrigin': pose.get('workspaceOrigin'),
         'impliedWorkspaceOrigin': pose.get('impliedWorkspaceOrigin'),
+        'captureEnvironment': pose.get('captureEnvironment'),
         'evidence': {
             'memstateSha256': pose['memstateSha256'],
             'ramSha256': pose['ramSha256'],
