@@ -8,6 +8,7 @@ import {
   erisSurfaceFrom,
   headingFromByte,
   insideCentralCellHalf,
+  placementHeading,
   startPose,
   structureInCell
 } from '../src/damocles/world.ts';
@@ -213,13 +214,40 @@ describe('the Eris surface from the Damocles Catalogue', () => {
     expect(spaceport.name).toContain('CAPITAL');
   });
 
-  test('reads the V.I.P. limo heading byte as north', async () => {
+  test('turns the V.I.P. limo by its drawn instance angle', async () => {
     const { catalogue, doc } = await load();
     const surface = erisSurfaceFrom(catalogue, doc);
     const limo = surface.placements.find(
       placement => placement.id === 'object-slot-5'
     )!;
-    expect(limo.heading).toBeCloseTo(0, 12);
+    // $77BC is $7F and the model's $8001 bias is zero, so the parked limo is turned
+    // 127/256 of a turn: a whisker short of half, not left as modelled (#361).
+    expect(limo.heading).toBeCloseTo((0x7f / 256) * 2 * Math.PI, 12);
+  });
+
+  test('leaves a model the source never turns as modelled', async () => {
+    const { catalogue, doc } = await load();
+    // Slot 72's angle byte is $FF, but TRANSPORTER a opens with $8002, not $8001,
+    // so $5342A stays clear and the record draws unturned (#361).
+    const transporter = catalogue.models.find(
+      model => model.id === 'object-038820'
+    )!;
+    const instance = catalogue.instances.find(
+      item => item.id === 'object-slot-72'
+    )!;
+    expect(instance.location?.heading).toBe(0xff);
+    expect(transporter.instanceOrientation).toBeUndefined();
+    expect(placementHeading(transporter, 0xff)).toBe(0);
+  });
+
+  test('adds the model record bias to the Instance angle', async () => {
+    const { catalogue, doc } = await load();
+    // INTERSTELLARSHIP is modelled the other way round: its $8001 bias is $80 and the
+    // arrival ship's byte is $80, so the two cancel and the ship draws as modelled (#361).
+    const ship = catalogue.models.find(model => model.id === 'object-036324')!;
+    expect(ship.instanceOrientation?.angleBiasByte).toBe(0x80);
+    expect(placementHeading(ship, 0x80)).toBeCloseTo(0, 12);
+    expect(placementHeading(ship, 0x40)).toBeCloseTo((3 * Math.PI) / 2, 12);
   });
 
   test('reads the camera yaw as a bearing clockwise from north', async () => {
@@ -240,15 +268,12 @@ describe('the Eris surface from the Damocles Catalogue', () => {
       bearingFromYaw(0x02_18, orientation),
       12
     );
-    // The instance byte shares the yaw word's scale and sign, with zero at north.
-    expect(headingFromByte(null, orientation)).toBe(0);
-    expect(headingFromByte(0x00, orientation)).toBeCloseTo(0, 12);
-    expect(headingFromByte(0x40, orientation)).toBeCloseTo(Math.PI / 2, 12);
-    expect(headingFromByte(0x80, orientation)).toBeCloseTo(Math.PI, 12);
-    expect(headingFromByte(0xc0, orientation)).toBeCloseTo(
-      (3 * Math.PI) / 2,
-      12
-    );
+    // The instance byte shares the yaw word's scale and sign; zero leaves the mesh alone.
+    expect(headingFromByte(null)).toBe(0);
+    expect(headingFromByte(0x00)).toBeCloseTo(0, 12);
+    expect(headingFromByte(0x40)).toBeCloseTo(Math.PI / 2, 12);
+    expect(headingFromByte(0x80)).toBeCloseTo(Math.PI, 12);
+    expect(headingFromByte(0xc0)).toBeCloseTo((3 * Math.PI) / 2, 12);
     expect(
       cellOf(
         { x: 64 * 65_536 - 1, y: 0, z: 128 * 65_536 },

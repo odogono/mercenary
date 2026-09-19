@@ -2068,6 +2068,29 @@ def decode_support_top(data: bytes, start: int) -> int | None:
     raise ValueError('drop support vertex terminator missing')
 
 
+def decode_instance_orientation(data: bytes, start: int) -> dict | None:
+    """The `$8001` orientation command the draw path applies to every instance.
+
+    `$053528` stores the command's first byte in `$53422` and its second in
+    `$5342A`; `$0535A2` clears `$5342A` before each record, so a model without
+    `$8001` never turns. The vertex loop at `$0536F6` reads the second byte:
+    zero draws the record unturned, bit 7 takes the articulation path at
+    `$0537B0`, bit 6 takes the single Y turn at `$05388E`, and any other value
+    turns by the live camera angles at `$7ABE`/`$7AC0`/`$7AC2`.
+
+    Under the Y turn the angle is a byte, 256 steps per turn, summed at
+    `$053548` from the instance's own byte and this record's first byte. The
+    first byte is therefore a per-model bias, and it is what distinguishes two
+    records of the same shape modelled facing opposite ways.
+    """
+    if int.from_bytes(data[start:start + 2], 'big') != 0x8001:
+        return None
+    bias, mode = data[start + 2], data[start + 3]
+    rotation = ('none' if mode == 0 else 'articulated' if mode & 0x80
+                else 'yaw' if mode & 0x40 else 'camera')
+    return {'angleBiasByte': bias, 'modeByte': mode, 'rotation': rotation}
+
+
 def structure_storey_height(data: bytes, slot: int) -> int | None:
     """An alias instance's first word, which $054D86 publishes in $7B00.
 
@@ -2795,6 +2818,9 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             models.append(model)
             if kind == 'object':
                 model['supportTop'] = decode_support_top(data, address)
+                orientation = decode_instance_orientation(data, address)
+                if orientation is not None:
+                    model['instanceOrientation'] = orientation
             elif kind == 'structure':
                 storey_height = structure_storey_height(data, slot)
                 if storey_height is not None:
@@ -3073,12 +3099,13 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'position': [s32(data, base + slot * 4) / 65536
                          for base in (0x63a8, 0x67a8, 0x6ba8)],
             'coordinateSystem': 'ST surface grid units (body-local origin unresolved)',
-            'heading': data[0x79cd + slot],
+            'heading': data[0x77a8 + slot * 4],
         }
         instance['reason'] = (
             f'Association B matches the native surface-resident selector for '
-            f"{bodies[body]['name']}; coordinates and raw heading are recovered "
-            f"from the resident arrays at source cell ${association[3]:02X}. "
+            f"{bodies[body]['name']}; coordinates and the drawn instance angle "
+            f'($77A8 + 4*slot, the byte $053548 sums with the model’s $8001 bias) '
+            f"are recovered from the resident arrays at source cell ${association[3]:02X}. "
             'The named place is unresolved.'
         )
     # Current first-world surface workspace: low nibble X, high nibble Z.
@@ -3408,10 +3435,11 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'place': capital_spaceport['id'],
             'position': [s32(data, base + 5 * 4) / 65536 for base in (0x63a8, 0x67a8, 0x6ba8)],
             'coordinateSystem': 'ST surface grid units (body-local origin unresolved)',
-            'heading': data[0x79cd + 5],
+            'heading': data[0x77a8 + 5 * 4],
         }
         limo['reason'] = ('Resident slot 5 is associated with Eris surface cell $87. '
-                          'Its world coordinates and zero yaw are recovered from the on-foot capture.')
+                          'Its world coordinates and drawn instance angle are recovered from the '
+                          'on-foot capture.')
         capital_spaceport['instances'].append(limo['id'])
         limo_model = by_address[limo['model']]
         key_model = by_address[key['model']]
@@ -3982,7 +4010,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         })
     for instance in instances:
         instance.setdefault('associationGroups', None)
-    return {'schemaVersion': 14, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
+    return {'schemaVersion': 15, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'places': places, 'tables': tables,
             'coverage': coverage_ledger(models, tables, coverage_notes, disk_load)}
 

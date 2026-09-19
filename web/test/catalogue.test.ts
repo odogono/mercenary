@@ -76,7 +76,7 @@ const fixture = () => ({
     }
   ],
   places: [],
-  schemaVersion: 14,
+  schemaVersion: 15,
   source: {
     authority: 'Synthetic test',
     evidence: 'test',
@@ -778,11 +778,17 @@ it('places the V.I.P. limo at the Capital Spaceport and links its verified key',
   expect(limoInstance.location).toEqual({
     body: 'body-11',
     coordinateSystem: 'ST surface grid units (body-local origin unresolved)',
-    heading: 0,
+    heading: 0x7f,
     place: 'place-025042',
     position: [71.513_793_945_312_5, 0, 136.474_349_975_585_94]
   });
   expect(limoInstance.placement).toBeNull();
+  // $77BC, the byte the draw path turns the mesh by, not $79D2 (#361).
+  expect(limo.instanceOrientation).toEqual({
+    angleBiasByte: 0,
+    modeByte: 0x40,
+    rotation: 'yaw'
+  });
   expect(limo.linkedInstances).toContain('object-slot-183');
   expect(limo.evidence).toContainEqual({
     claim:
