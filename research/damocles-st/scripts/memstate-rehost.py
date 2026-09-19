@@ -84,6 +84,18 @@ def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def pack_snapshot(stream: bytes) -> bytes:
+    """Compress a snapshot stream the way Hatari writes one, reproducibly.
+
+    ``mtime=0`` is the whole point: gzip otherwise stamps the wall clock into
+    its header, so two rehosts of one captured memstate produce two different
+    file hashes for the same machine. The published ``memstateSha256`` would
+    then be unreproducible, and the RAM window would be the only thing tying a
+    pose to its capture.
+    """
+    return gzip.compress(stream, 9, mtime=0)
+
+
 def read_snapshot(path: Path) -> bytes:
     data = path.read_bytes()
     if data[:2] == b'\x1f\x8b':
@@ -205,7 +217,13 @@ def main() -> None:
     report['ramUnchanged'] = True
 
     if not args.inspect:
-        packed = gzip.compress(rehosted, 9)
+        if report['action'] == 'none':
+            # Already in the pinned form: copy the container through byte for
+            # byte rather than recompressing it, so a memstate other notes cite
+            # by SHA-256 keeps the hash they cite.
+            packed = args.input.read_bytes()
+        else:
+            packed = pack_snapshot(rehosted)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_bytes(packed)
         report['output'] = {

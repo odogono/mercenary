@@ -11,7 +11,7 @@ import { bearingFromYaw, type Pose } from './world.ts';
 /// varies is whether that cell is anchored to the Body surface. Without the anchor the Pose's
 /// cell cannot be related to any resident placement, which is what a take requires.
 ///
-/// `impliedWorkspaceOrigin` does not qualify a Pose. Eleven Bodies carry one, derived from the
+/// `impliedWorkspaceOrigin` does not qualify a Pose. Nineteen Bodies carry one, derived from the
 /// camera longwords of a single standing position; it is a navigation lead, not a recovered
 /// anchor, and admitting it would place objects against a guess (#172 converts them per Body).
 

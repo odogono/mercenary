@@ -92,9 +92,10 @@ describe('admitted Poses', () => {
       'body-4',
       'body-8'
     ]);
-    // Twelve unanchored Poses carry an implied origin. It is a navigation lead, not an anchor,
-    // and admitting it would place objects against a guess.
-    expect(poses.poses.length - admitted.length).toBe(12);
+    // Twenty unanchored Poses carry an implied origin. It is a navigation lead, not an anchor,
+    // and admitting it would place objects against a guess. The eight Bodies captured on
+    // 2026-09-19 all land here: reaching a Body does not recover its workspace.
+    expect(poses.poses.length - admitted.length).toBe(20);
   });
 });
 

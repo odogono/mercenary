@@ -7,12 +7,14 @@ none. It answers the question that comes before any of those captures: **from a
 pose the laboratory can restore, what can the player board, and what does the
 game say when it refuses?**
 
-Coverage now stands at **fifteen of the thirty physical bodies**, from nineteen
-captures. Three routes got there: the departure chain, recovered and driven live
-here; the transporter network, recovered here and confirmed against eight
-captures; and play by the project owner, which supplied every memstate. Fifteen
-bodies remain, and all fifteen need the one part of the route still unsolved — a
-flight arrival steered onto a chosen body.
+Coverage now stands at **twenty-three of the thirty physical bodies**, from
+twenty-seven captures. Three routes got there: the departure chain, recovered
+and driven live here; the transporter network, recovered here and confirmed
+against eight captures; and play by the project owner, which supplied every
+memstate — including, on 2026-09-19, eight steered craft flights that took the
+last eight resident-carrying bodies. **Every body that carries a resident object
+now has a validated arrival pose.** Seven bodies remain unposed, and all seven
+are bodies with no resident record at all.
 
 Authoritative Evidence remains bound to the C64 Reference Build. Observations
 here are Working-Authority Evidence only. This note does not mint Damocles world
@@ -61,6 +63,13 @@ identify them.
 | `dion-2-3`              | `4286686917efae04027a9ef4b4fa7cb96f3e2a98865e40e67eb9866fba95d1e6` |
 | `gaea-ur-city-4-2`      | `eddc5f1c50cefde3e52c043240506cd17507e8bbbc9f8a1cfdb730d5160e673e` |
 | `vesta-parliament-4-6`  | `d6aac9e01c44dad24b92665d1ba51cdcd7b42746aab616c09d68b5a55275a1ac` |
+
+These are the containers the runs in this note booted. Three of the four are no
+longer the hashes `payload/damocles/arrival-poses.json` publishes, because
+rehosting has since been made byte-reproducible; the same rehosted stream at the
+original run's gzip timestamp reproduces each value above, and the RAM SHA-256 is
+unchanged either way. See [the rehosting
+section](damocles-object-drops.md#rehosting).
 
 ```sh
 # what the pose can reach, and how far
@@ -301,11 +310,21 @@ far side of its nearest neighbour, then turn in — and it reaches the right
 neighbourhood: one run closed to **12,534 units of METIS**. It has not yet
 converged on a landing.
 
-This is still the open problem, and it is now the *only* one. Eleven of the
-fifteen bodies added since were reached in play and four by the transporter ring;
-the fifteen bodies still without a pose are reachable no other way. What remains
-is a control problem in this probe, not an unknown in the machine: every gate,
-word and rule the route depends on is recovered above.
+**The probe still has not converged, and a human pilot has.** The eight captures
+of 2026-09-19 — ICARUS, ATROPOS, CRONUS, CYCLOPES, SOLON, THALIA, TOLOSA and
+PERSEUS — were flown by the project owner using the machine recovered above,
+steering the arrival onto a chosen body by hand. That settles the question this
+section left open: a steered arrival is reachable with the gates, words and rules
+recorded here, and nothing further about the machine was needed. What is not
+settled is the *automated* approach — the standoff controller in
+`arrival-route-probe.py` is unchanged and still stops at 12,534 units — and the
+eight flights were not instrumented, so this note records the route by which the
+captures were reached and does not add a per-body flight log. Reproducing one
+under the probe remains open work.
+
+Eleven of the bodies added earlier were reached in play and four by the
+transporter ring; none of the seven still without a pose is on the ring, so each
+needs a steered flight arrival of the same kind.
 
 ## The transporter network
 
@@ -433,30 +452,31 @@ missing is the anchor, and that is now said separately:
 - `evidence.cell` says which of the three cases applies, in words.
 
 The derivation survives as a cross-check rather than as the method. Seven of the
-nineteen poses stand on a body with a recovered origin, and all seven reproduce
+twenty-seven poses stand on a body with a recovered origin, and all seven reproduce
 `$7B5C` exactly from the longwords — including two captured far from the capture
 the workspace note was written against, which shows the origin belongs to the
 window rather than to whoever found it first.
 
 **A 16×16 workspace is a window, not a body.** Implied origins across the
-nineteen poses run from `0` to `3896` on an axis, so a body surface spans
+twenty-seven poses run from `0` to `3974` on an axis, so a body surface spans
 thousands of cells and one body carries many windows. `gaea-transporter` implies
 a Gaea window at `256,768` where the Gaea note records `512,1792`; its cell `$88`
 is corroborated by the catalogue association for slot 70, by the live resident
 array, and by the player reading "8-8" off the display, so the cell is settled
 and the origin is the open item.
 
-## What nineteen captures do to the bank comparison
+## What twenty-seven captures do to the bank comparison
 
 The catalogue's bank-identity tests compare every `snapshots/*.sav` against the
-pinned first-world capture, so the fifteen new memstates widened them by
-themselves. Both results are worth recording.
+pinned first-world capture, so each batch of new memstates widens them by
+itself. Both results are worth recording.
 
 **The shared banks stay byte-identical.** The surface-assembly table and bank,
 the building-detail table and bank, the ground record bank `$01E790`–`$023FFF`
-and the `$031700` glyph table agree across all nineteen captures and both
+and the `$031700` glyph table agree across all twenty-seven captures and both
 first-world loads. That claim was previously carried by eight memstates on four
-bodies; it now rests on nineteen across fifteen.
+bodies, then by nineteen across fifteen; it now rests on twenty-seven across
+twenty-three.
 
 **All 212 object records still decode to the same mesh in every captured world,
 and no world introduces a record address the first-world table does not already
@@ -483,12 +503,13 @@ test and this note carry the corrected count in the meantime.
 
 ## Per-body readiness
 
-Superseded by the captures. Eleven of the twenty-six bodies listed below now
+Superseded by the captures. Nineteen of the twenty-six bodies listed below now
 have a pose — MIDAS, ACHERON, CLOTHO, THEON, METIS, LUCAN, LOGOS, PAN, BACCHUS,
-MENTOR and DAMOCLES — and each publishes an engine-read cell rather than the
-null this table predicted. The table is kept for the fifteen that remain, and as
-the record of what the publication path was assumed to be able to do before any
-capture existed.
+MENTOR and DAMOCLES, joined on 2026-09-19 by ICARUS, ATROPOS, CRONUS, CYCLOPES,
+SOLON, THALIA, TOLOSA and PERSEUS — and each publishes an engine-read cell
+rather than the null this table predicted. Every row carrying a resident is now
+captured. The table is kept for the seven that remain, and as the record of what
+the publication path was assumed to be able to do before any capture existed.
 
 `Residents` and `surface` are from the tracked catalogue payload; `origin` is
 whether [#172](https://github.com/odogono/mercenary/issues/172) has recovered
@@ -521,12 +542,16 @@ that **every one of the twenty-six would publish with a null cell and a stated
 reason**. That was right about publishability and wrong about the cell: reading
 `$7B5C` yields one for all of them. MIDAS and CLOTHO were the two the coverage
 ledger ranked first on what is waiting there, and both are now captured — MIDAS
-at cell `$B5`, CLOTHO at `$01`.
+at cell `$B5`, CLOTHO at `$01`. The prediction held for the eight of 2026-09-19
+as well: none of them has a recovered workspace origin, and all eight publish an
+engine-read cell with a null `workspaceOrigin` beside the origin their own
+longwords imply.
 
-The fifteen still without a pose are DIALIS, ICARUS, ATROPOS, LACHESIS, CRONUS,
-CYCLOPES, SOLON, AURORA, TRITON, THALIA, JUNO, JASON, TOLOSA, PERSEUS and
-SAPPHIRE. None is on the transporter ring, so each needs a steered flight
-arrival, which remains the one unsolved part of the route.
+The seven still without a pose are DIALIS, LACHESIS, AURORA, TRITON, JUNO, JASON
+and SAPPHIRE — exactly the seven with no resident record. None is on the
+transporter ring, so each needs a steered flight arrival of the kind the eight
+2026-09-19 captures were flown by hand. **Having no residents is not evidence
+that a body cannot be stood on**, and each of the seven is an open gap.
 
 ## Secondary-hypothesis ledger
 
@@ -538,8 +563,9 @@ arrival, which remains the one unsolved part of the route.
 | A boarded craft departs on the ground-craft digit-and-stick pair   | **Disproved**           | Speed key registers at `$7B60`; position and `$7A96` unchanged over 20 s with the stick at rest and held forward |
 | Some other input departs a boarded craft                           | **Confirmed**           | `Esc` reaches the launch handler at `$055822` once the scancode is zero-padded; the craft enters space |
 | The transporter ring order follows the slot order 64–73            | **Confirmed for eight of ten** | Eight captures each fall within 603 units of exactly one slot, next-nearest 22–73 million units away; six of them match the catalogue's statically decoded association cell |
-| One celestial body has one 16×16 workspace                        | **Disproved**           | `gaea-transporter` reports cell `$88` at implied origin `256,768`, while the recovered Gaea window is `512,1792`; implied origins across nineteen poses span 0–3896 per axis |
+| One celestial body has one 16×16 workspace                        | **Disproved**           | `gaea-transporter` reports cell `$88` at implied origin `256,768`, while the recovered Gaea window is `512,1792`; implied origins across twenty-seven poses span 0–3974 per axis |
 | The arrival cell must be derived from position and origin          | **Superseded**          | `$7B5C` reports it directly and the derivation reproduces it on all seven poses whose body has a recovered origin |
+| A steered flight arrival onto a chosen body is not yet demonstrated | **Superseded for play, open for the probe** | Eight bodies captured by hand-steered flight on 2026-09-19; `arrival-route-probe.py`'s standoff controller is unchanged and still stops 12,534 units short |
 
 ## Provenance summary
 
@@ -556,5 +582,6 @@ arrival, which remains the one unsolved part of the route.
 | Per-body residents and surface counts          | `payload/damocles/catalogue.json`; `location-ledger.py ledger`            |
 | Live transporter hop, Eris `$8B` → Gaea `$88`  | `eris-transporter-11-8.sav`; `arrival-route-probe.py --walk`             |
 | Transporter ring slots and their bodies        | `$059130`; catalogue resident slots 64–73; eight transporter memstates    |
-| Nineteen arrival poses on fifteen bodies       | Nineteen Hatari memstates, all rehosted by `memstate-rehost.py`; `location-ledger.py poses --payload` |
+| Twenty-seven arrival poses on twenty-three bodies | Twenty-seven Hatari memstates, all rehosted by `memstate-rehost.py`; `location-ledger.py poses --payload` |
+| Eight bodies reached by steered craft flight   | Captured in play by the project owner, 2026-09-19; not instrumented, so no per-body flight log exists |
 | A body can carry more than one 16×16 window    | `gaea-transporter` against `docs/research/damocles-gaea-ur-city-workspace.md` |

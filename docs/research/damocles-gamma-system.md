@@ -644,12 +644,12 @@ against it was wrong on that point even though its conclusion — that #208's
 readout binding survives — is right. Restoring that probe field is left to a
 throttle ticket.
 
-**Evidence.** Twenty-three pinned Hatari memstates spanning fifteen Bodies,
+**Evidence.** Thirty-one pinned Hatari memstates spanning twenty-three Bodies,
 decoded without an emulator: in every one, `$7A1E` and `$7A22` equal the closed
 form applied to `$7A92` / `$7A9A`, and the high halves at `$7A1C` / `$7A20` are
 zero. Reproduce with `scripts/location-ledger.py poses --memstate NAME=PATH`,
 or sweep them directly through
-`damocleslab.catalogue.hatari_memstate_ram`. The nineteen attested arrival
+`damocleslab.catalogue.hatari_memstate_ram`. The twenty-seven attested arrival
 Poses are published with their memstate SHA-256 in
 `payload/damocles/arrival-poses.json`, and `web/test/damocles-panel.test.ts`
 asserts the printed pair for each one, so the browser's readout is checked

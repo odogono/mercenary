@@ -531,6 +531,17 @@ Restricted Material and uncommitted, under the repository's existing `*.sav` rul
 | `gaea-ur-city-4-2` | `$423201`, 600 → 8 | `de82797d…b8b8f3b3` | `eddc5f1c…5160e673e` | `12798fcb…2a925fab7` |
 | `vesta-parliament-4-6` | `$423201`, 600 → 8 | `47d817a9…94f362c1` | `d6aac9e0…55275a1ac` | `7dca6fcb…e539721e` |
 
+**The `Rehosted SHA-256` column above is the container that run booted, and it is
+no longer what the payload publishes.** Rehosting was not byte-reproducible:
+gzip stamped the wall clock into the container header, so the same captured
+memstate rehosted twice gave two hashes. `memstate-rehost.py` now packs with
+`mtime=0` (#326), and the payload republishes these three as
+`361f5ca0…`, `051b6cae…` and `35a8a020…`. Those are the same
+containers: re-gzipping each rehosted stream at the timestamp the original run
+wrote reproduces the older hash exactly. The RAM SHA-256, which identifies the
+machine rather than the container, is unchanged throughout and is what ties
+either form to this note's runs.
+
 The RAM SHA-256 of each is unchanged, and
 `payload/damocles/arrival-poses.json` regenerates with only the memstate hashes
 different: every decoded position, yaw, body selector and derived cell is
