@@ -22,7 +22,7 @@ try {
   const session = damoclesTitle.create(content);
   const triangles = (): number =>
     planErisFrame(
-      content.surface,
+      session.snapshot.surface,
       session.snapshot.pose,
       content.doc,
       session.snapshot.structure,
