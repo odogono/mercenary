@@ -258,15 +258,17 @@ damocles-panel .nav-lcd.nav-speed {
   width: calc(51 * var(--u));
 }
 
-damocles-panel .nav-lcd.nav-location {
+/* The original's lower navigation row, left to right: the body coordinates the panel prints as
+   seven characters, the location cell as five, and the altitude. */
+damocles-panel .nav-lcd.nav-body {
   width: calc(35 * var(--u));
 }
 
-damocles-panel .nav-lcd.nav-altitude {
+damocles-panel .nav-lcd.nav-location {
   width: calc(22 * var(--u));
 }
 
-damocles-panel .nav-lcd.nav-heading {
+damocles-panel .nav-lcd.nav-altitude {
   width: calc(27 * var(--u));
 }
 

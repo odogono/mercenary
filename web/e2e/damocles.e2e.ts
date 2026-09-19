@@ -298,6 +298,10 @@ test('/damocles boots the Damocles Gameplay Session on foot at Eris Capital Spac
 
   const panel = page.locator('#panel-damocles');
   await expect(panel.locator('[data-field=locationName]')).toHaveText('ERIS');
+  // The original's lower navigation row reads body coordinates, then the cell, then altitude.
+  await expect(panel.locator('[data-field=bodyCoordinates]')).toHaveText(
+    '000-000'
+  );
   await expect(panel.locator('[data-field=locationLabel]')).toHaveText('07-08');
   await expect(panel.locator('[data-field=inventory]')).toHaveText('EMPTY');
   await expect(panel.locator('[data-field=speedLabel]')).toHaveText(

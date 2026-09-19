@@ -24,7 +24,7 @@ export class DamoclesPanelElement extends HTMLElement {
           <div class="nav-lower">
             <div id="damocles-elevation" class="readout"><canvas id="damocles-elevation-canvas" class="instrument-canvas" width="11" height="20"></canvas></div>
             <div class="nav-stack">
-              <div class="nav-row"><div class="nav-lcd readout nav-location"><span class="compact" data-field="locationLabel"></span></div><div class="nav-lcd readout nav-altitude"><span class="compact" data-field="altitude"></span></div><div class="nav-lcd readout nav-heading"><span class="compact" data-field="heading"></span></div></div>
+              <div class="nav-row"><div class="nav-lcd readout nav-body"><span class="compact" data-field="bodyCoordinates"></span></div><div class="nav-lcd readout nav-location"><span class="compact" data-field="locationLabel"></span></div><div class="nav-lcd readout nav-altitude"><span class="compact" data-field="altitude"></span></div></div>
               <div class="nav-foot"><div class="panel-label compact">NAVIGATION</div><div id="damocles-compass" class="readout"><canvas id="damocles-compass-canvas" class="instrument-canvas" width="32" height="9"></canvas></div></div>
             </div>
           </div>

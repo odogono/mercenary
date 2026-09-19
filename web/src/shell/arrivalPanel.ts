@@ -28,6 +28,9 @@ const unmeasured = (width: number): string => '*'.repeat(width);
 /// The location readout's own shape, asterisked either side of its separator.
 const UNMEASURED_LOCATION = `${unmeasured(2)}-${unmeasured(2)}`;
 
+/// The body-coordinate readout's own shape, three characters either side of its separator.
+const UNMEASURED_BODY = `${unmeasured(3)}-${unmeasured(3)}`;
+
 const digits = (value: number, width: number): string =>
   String(Math.abs(Math.trunc(value))).padStart(width, '0');
 
@@ -45,6 +48,7 @@ export const arrivalPanelViewModel = (
   ...(state.unmeasured
     ? {
         altitude: unmeasured(5),
+        bodyCoordinates: UNMEASURED_BODY,
         locationLabel: UNMEASURED_LOCATION,
         speed: unmeasured(5)
       }

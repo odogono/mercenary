@@ -67,11 +67,15 @@ test('the Flyover reuses the Damocles panel component for sessionless navigation
   await expect(component.locator('[data-field="message"]')).toHaveText(
     'ORBITAL FLYOVER'
   );
-  await expect(component.locator('[data-field="locationLabel"]')).toHaveText(
+  await expect(component.locator('[data-field="bodyCoordinates"]')).toHaveText(
     'X+0.000E+0'
   );
-  await expect(component.locator('[data-field="altitude"]')).toHaveText(
+  await expect(component.locator('[data-field="locationLabel"]')).toHaveText(
     'Y+0.000E+0'
+  );
+  // The orbital camera stands off along Z, so only its sign and shape are fixed here.
+  await expect(component.locator('[data-field="altitude"]')).toHaveText(
+    /^Z\+\d\.\d{3}E\+\d$/
   );
   await expect(component.locator('#damocles-right')).toBeHidden();
   await expect(component.locator('.tp-gauge').nth(0)).toBeHidden();
