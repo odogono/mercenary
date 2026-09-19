@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 
 import { parseCatalogue, type Catalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
+import { planErisFrame } from '../src/damocles/frame.ts';
 import {
   admittedPoses,
   resolvePose,
@@ -328,5 +329,125 @@ describe('a Save names a Body with an admitted Pose', () => {
         catalogue
       )
     ).toThrow(/unknown Body/);
+  });
+});
+
+describe('the Session Snapshot publishes the workspace it stands on', () => {
+  /// What each admitted arrival Pose draws from its own Body's workspace (#379).
+  ///
+  /// Absolute counts, not comparisons: the browser drew empty sky on every Body but Eris while
+  /// every relative assertion in this suite still passed, because it planned the presentation
+  /// document's Eris surface whatever Body the Pose named. Only the geometry of the Body stood
+  /// on can catch that, so these are pinned.
+  const arrivals = [
+    {
+      body: 'body-11',
+      cell: { x: 7, z: 8 },
+      placements: 207,
+      pose: 'eris-spaceport-onfoot',
+      triangles: 681
+    },
+    {
+      body: 'body-11',
+      cell: { x: 11, z: 8 },
+      placements: 207,
+      pose: 'eris-transporter-11-8',
+      triangles: 566
+    },
+    {
+      body: 'body-4',
+      cell: { x: 2, z: 3 },
+      placements: 390,
+      pose: 'dion-2-3',
+      triangles: 358
+    },
+    {
+      body: 'body-4',
+      cell: { x: 3, z: 14 },
+      placements: 390,
+      pose: 'dion-transporter',
+      triangles: 336
+    },
+    {
+      body: 'body-8',
+      cell: { x: 4, z: 2 },
+      placements: 147,
+      pose: 'gaea-ur-city-4-2',
+      triangles: 451
+    },
+    {
+      body: 'body-14',
+      cell: { x: 4, z: 6 },
+      placements: 44,
+      pose: 'vesta-parliament-4-6',
+      triangles: 352
+    },
+    {
+      body: 'body-14',
+      cell: { x: 4, z: 6 },
+      placements: 44,
+      pose: 'vesta-transporter',
+      triangles: 322
+    }
+  ] as const;
+
+  for (const arrival of arrivals) {
+    test(`${arrival.pose} draws its own Body's workspace`, () => {
+      const session = new DamoclesSession(content);
+      if (arrival.pose !== 'eris-spaceport-onfoot') {
+        expect(session.switchToPose(arrival.pose).kind).toBe('switched');
+      }
+      const snapshot = session.snapshot;
+      expect(snapshot.surface.body.id).toBe(arrival.body);
+      expect(snapshot.surface.placements.length).toBe(arrival.placements);
+      expect(snapshot.cell).toEqual(arrival.cell);
+
+      const plan = planErisFrame(
+        snapshot.surface,
+        snapshot.pose,
+        content.doc,
+        snapshot.structure,
+        snapshot.residents
+      );
+      expect(plan.triangleCount).toBe(arrival.triangles);
+      // The authored ground fill is clipped to the workspace it is handed, so a surface left on
+      // Eris would clip it away entirely at any other Body's origin.
+      expect(plan.fillTriangleCount).toBeGreaterThan(0);
+      expect(plan.groundTriangleCount).toBeGreaterThan(0);
+    });
+  }
+
+  test('a Save restored onto another Body publishes that Body’s workspace', () => {
+    const identity = damoclesSaveIdentity(catalogue, 'test');
+    const away = new DamoclesSession(content);
+    expect(away.switchToPose('dion-2-3').kind).toBe('switched');
+    const decoded = decodeDamoclesSave(
+      encodeDamoclesSave({
+        identity,
+        savedAt: '2026-09-19T12:00:00.000Z',
+        schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
+        snapshot: away.captureResume(),
+        where: damoclesWhere(away.snapshot)
+      }),
+      identity,
+      catalogue,
+      poses
+    );
+    // The restore path builds its surface in the constructor rather than through a switch, so
+    // it is asserted separately: this is the boot the browser performs on a resumed session.
+    const restored = new DamoclesSession(content, decoded.snapshot).snapshot;
+    expect(restored.surface.body.id).toBe('body-4');
+    expect(restored.surface.grid.origin).toEqual(
+      away.snapshot.surface.grid.origin
+    );
+    expect(
+      planErisFrame(
+        restored.surface,
+        restored.pose,
+        content.doc,
+        restored.structure,
+        restored.residents
+      ).triangleCount
+    ).toBe(358);
   });
 });

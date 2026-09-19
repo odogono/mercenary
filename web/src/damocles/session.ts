@@ -88,6 +88,10 @@ export interface DamoclesSnapshot {
   readonly scrollCounter: number;
   readonly selection: Selection;
   readonly structure: BoundStructureSnapshot | null;
+  /// The workspace the player is standing on, anchored at the Body the Pose names. A switch
+  /// rebuilds it, so a renderer that plans from the presentation document's own surface instead
+  /// would go on drawing Eris after the session had left it (#379).
+  readonly surface: ErisSurface;
 }
 
 export type { Residence, ResidenceDeparture } from './residence.ts';
@@ -684,7 +688,8 @@ export class DamoclesSession implements TitleSession<
       residents: this.visibleResidents(),
       scrollCounter: this.scrollCounter,
       selection: this.selection(),
-      structure: this.structureSnapshot()
+      structure: this.structureSnapshot(),
+      surface: this.surface
     };
   }
 

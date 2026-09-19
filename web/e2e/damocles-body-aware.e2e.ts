@@ -228,6 +228,37 @@ test('the console body switch moves Body, Pose and cell together', async ({
   expect(errors).toEqual([]);
 });
 
+/// The absolute counterpart to the relative assertions above (#379).
+///
+/// Everything else here compares a triangle count either side of a take, a drop or a switch,
+/// and all of it passed while the browser drew empty sky on every Body but Eris: the planner
+/// was handed the presentation document's Eris surface whatever Body the Session stood on. Only
+/// the geometry of the Body stood on catches that, so this reads it absolutely. The counts are
+/// the ones `damocles-body-switch.test.ts` pins at each admitted arrival Pose.
+test('a switched Body draws its own workspace', async ({ page }) => {
+  const errors = watchErrors(page);
+  await bootAt(page, APPROACH_LOCAL);
+  const frame = page.locator('#frame');
+  // Eris's own workspace, with the unresolved models its Catalogue records carry.
+  await expect(frame).toHaveAttribute('data-unresolved', '19');
+
+  expect(await run(page, 'switch dion-2-3')).toContain('switched');
+  await closeConsole(page);
+  await expect(frame).toHaveAttribute('data-cell', '2-3');
+  // Dion's workspace: its own draw, and its own unresolved count. Eris's surface at this Pose
+  // draws neither ground nor fill, because every Eris placement is millions of units away and
+  // the fill is clipped to the workspace it is handed.
+  await expect(frame).toHaveAttribute('data-triangles', '358');
+  await expect(frame).toHaveAttribute('data-unresolved', '46');
+
+  expect(await run(page, 'switch gaea')).toContain('switched');
+  await closeConsole(page);
+  await expect(frame).toHaveAttribute('data-triangles', '451');
+  await expect(frame).toHaveAttribute('data-unresolved', '0');
+
+  expect(errors).toEqual([]);
+});
+
 test('a declined switch leaves live play exactly as it was', async ({
   page
 }) => {
@@ -314,6 +345,9 @@ test('a Save taken on one Body restores onto it from another', async ({
   expect(await run(page, 'load 1')).toContain('restored slot 1');
   await closeConsole(page);
   await expect(frame).toHaveAttribute('data-cell', '7-8');
+  // The restore rebuilds the surface in the constructor rather than through a switch, so the
+  // Body it lands on is read absolutely here as well (#379).
+  await expect(frame).toHaveAttribute('data-unresolved', '19');
   await expect(inventory(page)).toHaveText('KEY- V.I.P. LIMO');
   expect(await run(page, 'where')).toContain('ERIS 07-08');
   expect(errors).toEqual([]);

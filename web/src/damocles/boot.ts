@@ -560,11 +560,13 @@ try {
     // screen reader could read. Publishing the cells is how the row becomes observable.
     root['damoclesRow'] = snapshot.displayCells.cells.trim();
     root['triangles'] = String(triangles);
-    root['unresolved'] = String(content.surface.unresolvedCount);
+    root['unresolved'] = String(snapshot.surface.unresolvedCount);
   };
   const draw = (): void => {
+    // The surface comes from the Session Snapshot rather than the presentation document, so a
+    // Body switch or a Save restored onto another Body draws that Body's workspace (#379).
     const plan = planErisFrame(
-      content.surface,
+      snapshot.surface,
       snapshot.pose,
       content.doc,
       snapshot.structure,
