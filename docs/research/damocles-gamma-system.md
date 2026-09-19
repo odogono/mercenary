@@ -493,6 +493,23 @@ Closed-form mapping and what quantity the pair measures (bearing, intercept,
 Reproduce: `panel-readout-probe.py poke --address 0x7a1c --bytes …` and
 `navigation --vbls 800`.
 
+**Two cautions on this binding.** The original's manual names the wide window
+"Planet/Moon co-ordinates" and the window beside it "Near City, or land base,
+co-ordinates" — but the second is bound here to `$7A92`/`$7A9A`, the camera's
+own 16.16 pair, which is the player's Surface Cell and not a position relative
+to any city. Either the manual's label for that window is loose, or one of the
+two bindings sits in the wrong window. The project names the windows for what
+is proved — Body Coordinate Readout and Cell Readout — rather than for the
+manual's labels.
+
+Nor is the 800-VBL walk evidence that the wide pair ignores the player: it
+moved `$7A9A` by 10758, which is **0.16 of a cell**, far below anything a
+three-digit body-scale reading would resolve. A walk crossing several cells
+would settle it; this one cannot. Separately, `arrival-route-probe.py` binds
+`$7A1C` as a craft throttle toggle written by the key dispatcher, which
+contradicts the source binding above; that reconciliation comes before any
+further work on the display map (#367).
+
 ## Location coverage for #313
 
 Which of these bodies carries reachable objects, and which has a validated

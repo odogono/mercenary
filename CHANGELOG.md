@@ -17,7 +17,10 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
   as `016-283` — undecoded, so it stands at nought (#208) — with the location
   cell beside it and the altitude last. The cell used to occupy the wide
   body-coordinate window, and the bearing in degrees stood where the altitude
-  belongs; the compass tape already reports the bearing.
+  belongs; the compass tape already reports the bearing. `CONTEXT.md` now names
+  both windows — Body Coordinate Readout and Cell Readout — and
+  `docs/research/damocles-gamma-system.md` records why the original manual's
+  own labels for them are not adopted.
 
 ### Added
 
