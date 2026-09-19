@@ -351,7 +351,7 @@ Which visual treatment the Benson Panel wears — Targ or Damocles — changing 
 _Avoid_: Skin, theme, variant, panel mode
 
 **Body Coordinate Readout**:
-The wide navigation window of the Benson Panel's lower row, which the Reference Build prints as three digits an axis. It names a Body-scale position rather than the player's Surface Cell, and its source is bound only in part, so both Panel Renditions stand it at nought until the quantity it measures is known.
+The wide navigation window of the Benson Panel's lower row, which the Reference Build prints as three digits an axis. It tracks the player's position on the Body at a scale coarser than the Surface Cell; the closed form is not recovered, so both Panel Renditions stand it at nought.
 _Avoid_: Planet coordinates, moon coordinates, world coordinates, nav digits
 
 **Cell Readout**:

@@ -7,8 +7,8 @@ import type { ErisCell } from './world.ts';
 ///
 /// Under ADR 0027 the same chrome dressed Targ data; here every readout that has a recovered
 /// meaning shows it, and every readout that does not is a static placeholder named as one.
-/// The Body Coordinate Readout's quantity is undecoded (#367), the credit readout has no
-/// economy behind it yet, and on foot the craft velocity is nought. The impact clock is a
+/// The Body Coordinate Readout tracks the player but its digits are undecoded (#371), the
+/// credit readout has no economy behind it yet, and on foot the craft velocity is nought. The impact clock is a
 /// different case: #208 bound its encoding, and what this Session lacks is an impact deadline
 /// to count down rather than a reading it cannot decode (#368).
 
@@ -35,7 +35,8 @@ export const damoclesPanelViewModel = (
   altitudeLamp: false,
   attackLamp: false,
   // The Body Coordinate Readout: the original prints `016-283` here on Eris. Its RAM source is
-  // bound only in part and its three-digit mapping is Fog (#367), so it stands at nought.
+  // bound, and the pair tracks the player at a scale coarser than a Surface Cell (#367), but the
+  // three-digit mapping is Fog (#371), so it stands at nought.
   bodyCoordinates: '000-000',
   cash: '000,000,000.00',
   clock: '',

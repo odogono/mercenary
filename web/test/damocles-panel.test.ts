@@ -38,7 +38,8 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
     const model = damoclesPanelViewModel(session.snapshot, loaded.doc);
     expect(model.locationName).toBe('ERIS');
     expect(model.locationLabel).toBe('07-08');
-    // The wide readout above the cell is the original's undecoded body pair (#208).
+    // The wide readout beside the cell is the original's body pair: bound in RAM and known to
+    // track the player (#208, #367), but its three-digit mapping is undecoded (#371).
     expect(model.bodyCoordinates).toBe('000-000');
     expect(model.inventory).toBe('EMPTY');
     expect(model.inventoryFill).toBe(0);

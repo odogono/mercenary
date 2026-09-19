@@ -119,8 +119,9 @@ building, pick up key, walk to car) was built inside #81.
 
 Narrative copy confirms atmosphere entry, spaceflight, and “not equipped for
 space travel” vehicle lines. Body slot `VOID` is a place class (#80). This pass did not reach VOID. Navigation panel `07-08` is the Eris cell from
-`$7A92`/`$7A9A` (16.16); `016-283` is a separate pair at `$7A1C`/`$7A20` (#208)
-and did not move with an on-foot walk that raised `$7A9A`. Orbital mechanics and
+`$7A92`/`$7A9A` (16.16); `016-283` is a separate pair at `$7A1C`/`$7A20` (#208).
+It did not move with an on-foot walk that raised `$7A9A`, but that walk covered
+0.16 of a cell; the pair does track the player over longer moves (#367). Orbital mechanics and
 time-dilation-in-flight remain **Unresolved**.
 
 ### Time / comet deadline — Confirmed (panel advances); RAM encoding Confirmed (#208)
