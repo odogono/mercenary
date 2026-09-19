@@ -23,7 +23,11 @@ See the [coverage ledger](damocles-gamma-system-location-ledger.md) and
 Guide planetary coordinates beginning `~` are approximate navigation readings.
 Local `x/z` building cells are a separate coordinate system; the native packed
 cell is `(z << 4) | x`. Floors are a third identifier: `B` means the guide's
-basement, and “unspecified” does not mean ground floor. Native level selectors
+basement, and “unspecified” does not mean ground floor. A second secondary
+source, the [guide item list](damocles-guide-resident-list.md), marks a floor on
+most items and reads `G → 0`, `B → 10`, `n → n` against the catalogue's level
+selectors with no contradiction across 37 cells. That is a lead for
+[#355](https://github.com/odogono/mercenary/issues/355), not a decoded rule. Native level selectors
 below remain raw selectors, not assumed floor numbers. No conversion from
 planetary coordinates to camera longwords or workspace origins is established.
 
