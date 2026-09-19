@@ -1181,6 +1181,49 @@ export const parseCatalogue = (value: unknown): Catalogue => {
   };
 };
 
+/// Id lookup for a Catalogue, memoised per Catalogue object.
+///
+/// The Damocles draw and selection passes resolve ids per resident per frame, and a linear scan
+/// over a thousand instances made one frame quadratic: a 90-second walk took 46 seconds to
+/// simulate, past the end-to-end fixture's navigation timeout.
+///
+/// The memo is a `WeakMap` keyed by the Catalogue rather than a field on it, because tests and
+/// callers derive a Catalogue by spreading one and replacing `instances` or `models`. A stored
+/// index would go stale against the replacement and answer from the original; a spread makes a
+/// new object, so this builds it a fresh index instead.
+const instanceIndex = new WeakMap<Catalogue, ReadonlyMap<string, Instance>>();
+const modelIndex = new WeakMap<Catalogue, ReadonlyMap<string, Model>>();
+
+export const instanceById = (
+  catalogue: Catalogue,
+  id: string | undefined
+): Instance | undefined => {
+  if (id === undefined) {
+    return undefined;
+  }
+  let index = instanceIndex.get(catalogue);
+  if (index === undefined) {
+    index = new Map(catalogue.instances.map(item => [item.id, item]));
+    instanceIndex.set(catalogue, index);
+  }
+  return index.get(id);
+};
+
+export const modelById = (
+  catalogue: Catalogue,
+  id: string | undefined
+): Model | undefined => {
+  if (id === undefined) {
+    return undefined;
+  }
+  let index = modelIndex.get(catalogue);
+  if (index === undefined) {
+    index = new Map(catalogue.models.map(item => [item.id, item]));
+    modelIndex.set(catalogue, index);
+  }
+  return index.get(id);
+};
+
 export const selectModels = (
   data: Catalogue,
   query: string,
