@@ -35,8 +35,14 @@ def workspace(body_index: int, cell: int, origin: tuple[int, int]) -> bytes:
     struct.pack_into('>i', ram, location_ledger.CAMERA_X,
                      (origin[0] + (cell & 0x0F)) * CELL_UNITS + 17)
     struct.pack_into('>i', ram, location_ledger.CAMERA_Y, 63)
-    struct.pack_into('>i', ram, location_ledger.CAMERA_Z,
-                     (origin[1] + (cell >> 4)) * CELL_UNITS + 17)
+    position_x = (origin[0] + (cell & 0x0F)) * CELL_UNITS + 17
+    position_z = (origin[1] + (cell >> 4)) * CELL_UNITS + 17
+    struct.pack_into('>i', ram, location_ledger.CAMERA_Z, position_z)
+    # The engine's own Body Coordinate Readout words, which read_pose checks the camera
+    # longwords against (#371).
+    derived = location_ledger.body_coordinate(position_x, position_z)
+    struct.pack_into('>H', ram, location_ledger.BODY_COORDINATE_X, derived['stepX'])
+    struct.pack_into('>H', ram, location_ledger.BODY_COORDINATE_Z, derived['stepZ'])
     return bytes(ram)
 
 
@@ -78,6 +84,23 @@ class ArrivalPosePublicationTests(unittest.TestCase):
         self.assertIsNone(published['workspaceOrigin'])
         self.assertEqual(published['impliedWorkspaceOrigin'], {'x': 256, 'z': 768})
         self.assertIn('outside the one recovered workspace', published['evidence']['cell'])
+
+    def test_the_body_coordinate_readout_comes_from_the_camera_longwords(self):
+        # The Eris start pose: the original's panel prints 016-283 here (#371).
+        pose = self.read('eris', workspace(11, 0x87, (64, 128)))
+        self.assertEqual(pose['bodyCoordinate']['readout'], '016-283')
+        self.assertEqual(pose['bodyCoordinate']['stepX'], 17)
+        self.assertEqual(pose['bodyCoordinate']['stepZ'], 290)
+        # One step is four cells, so four cells east reads one higher.
+        east = workspace(11, 0x8B, (64, 128))
+        self.assertEqual(self.read('eris-east', east)['bodyCoordinate']['readout'],
+                         '017-283')
+
+    def test_a_readout_the_camera_longwords_disagree_with_is_refused(self):
+        ram = bytearray(workspace(11, 0x87, (64, 128)))
+        struct.pack_into('>H', ram, location_ledger.BODY_COORDINATE_X, 99)
+        with self.assertRaisesRegex(ValueError, 'disagrees with the camera longwords'):
+            self.read('bogus', bytes(ram))
 
     def test_a_cell_word_outside_a_workspace_is_refused(self):
         with self.assertRaisesRegex(ValueError, 'outside a 16x16 workspace'):

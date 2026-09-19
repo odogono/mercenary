@@ -1,3 +1,4 @@
+import type { Vector3 } from '../orientation/index.ts';
 import type { PanelViewModel } from '../shell/panel.ts';
 import type { ErisPresentationDocument } from './documents.ts';
 import type { DamoclesSnapshot } from './session.ts';
@@ -7,8 +8,7 @@ import type { ErisCell } from './world.ts';
 ///
 /// Under ADR 0027 the same chrome dressed Targ data; here every readout that has a recovered
 /// meaning shows it, and every readout that does not is a static placeholder named as one.
-/// The Body Coordinate Readout tracks the player but its digits are undecoded (#371), the
-/// credit readout has no economy behind it yet, and on foot the craft velocity is nought. The impact clock is a
+/// The credit readout has no economy behind it yet, and on foot the craft velocity is nought. The impact clock is a
 /// different case: #208 bound its encoding, and what this Session lacks is an impact deadline
 /// to count down rather than a reading it cannot decode (#368).
 
@@ -26,6 +26,28 @@ const bearingDegrees = (bearing: number): number => {
 export const erisGridReference = (cell: ErisCell): string =>
   `${digits(cell.x)}-${digits(cell.z)}`;
 
+/// One Body Coordinate step: `$40000` engine units, which is four Surface Cells. A Body's
+/// surface spans 1024 steps an axis, so a 16-cell workspace covers four of them.
+const BODY_STEP_UNITS = 0x4_00_00;
+const BODY_STEPS = 0x4_00;
+/// The quarter-turn the engine adds to the z step before masking (`addi.w #$100`).
+const BODY_Z_BIAS = 0x1_00;
+
+/// A body world coordinate as its ten-bit step, the quantity the engine keeps at `$7A1E` and
+/// `$7A22`: an arithmetic shift right by 18 masked to ten bits (#371).
+const bodyStep = (value: number, bias = 0): number =>
+  (((Math.floor(value / BODY_STEP_UNITS) + bias) % BODY_STEPS) + BODY_STEPS) %
+  BODY_STEPS;
+
+/// One printed field: the ten-bit step rescaled from 1024 to 1000, which is the original's
+/// `mulu.w #$FA00` followed by `swap`, then split into three decimal digits.
+const bodyDigits = (step: number): string =>
+  String(Math.floor((step * 1000) / 1024)).padStart(3, '0');
+
+/// The Body Coordinate Readout, from the player's position on the Body (#371).
+export const bodyCoordinateReadout = (position: Vector3): string =>
+  `${bodyDigits(bodyStep(position.x))}-${bodyDigits(bodyStep(position.z, BODY_Z_BIAS))}`;
+
 export const damoclesPanelViewModel = (
   snapshot: DamoclesSnapshot,
   doc: ErisPresentationDocument,
@@ -34,10 +56,9 @@ export const damoclesPanelViewModel = (
   altitude: '00000',
   altitudeLamp: false,
   attackLamp: false,
-  // The Body Coordinate Readout: the original prints `016-283` here on Eris. Its RAM source is
-  // bound, and the pair tracks the player at a scale coarser than a Surface Cell (#367), but the
-  // three-digit mapping is Fog (#371), so it stands at nought.
-  bodyCoordinates: '000-000',
+  // The Body Coordinate Readout: the original prints `016-283` here at the Eris start pose,
+  // which is what this reproduces (#371).
+  bodyCoordinates: bodyCoordinateReadout(snapshot.pose.position),
   cash: '000,000,000.00',
   clock: '',
   compassDegrees: bearingDegrees(snapshot.pose.heading),

@@ -62,6 +62,16 @@ PLACE_LIST = 0x7A6C
 # high nibble is z.
 CELL_WORD = 0x7B5C
 
+# The Body Coordinate Readout words the panel prints as `016-283`, and the closed form
+# behind them, established in docs/research/damocles-gamma-system.md (#371). Each is the
+# top ten bits of a body position longword, the z axis biased by a quarter turn, and each
+# field prints rescaled from 1024 to 1000.
+BODY_COORDINATE_X = 0x7A1E
+BODY_COORDINATE_Z = 0x7A22
+BODY_STEP_SHIFT = 18
+BODY_STEPS = 0x400
+BODY_Z_BIAS = 0x100
+
 CELL_UNITS = 65536
 CELLS_PER_AXIS = 16
 YAW_UNITS_PER_TURN = 1024
@@ -215,6 +225,15 @@ def read_pose(label: str, path: Path) -> dict:
     # carry more than one 16x16 workspace and only a handful of origins are
     # recovered. Where an origin is recovered the derivation is kept as a
     # cross-check; where it disagrees, the pose stands in a second workspace.
+    derived = body_coordinate(position[0], position[2])
+    engine = (u16(ram, BODY_COORDINATE_X), u16(ram, BODY_COORDINATE_Z))
+    if engine != (derived['stepX'], derived['stepZ']):
+        raise ValueError(
+            f'{label}: engine body coordinate {engine} disagrees with the camera longwords '
+            f"({derived['stepX']}, {derived['stepZ']})"
+        )
+    pose['bodyCoordinate'] = derived
+
     cell = u16(ram, CELL_WORD)
     if cell > 0xFF:
         raise ValueError(f'{label}: cell word ${cell:04X} is outside a 16x16 workspace')
@@ -251,6 +270,21 @@ def read_pose(label: str, path: Path) -> dict:
     return pose
 
 
+def body_coordinate(position_x: int, position_z: int) -> dict:
+    """The Body Coordinate Readout pair derived from a body position.
+
+    The engine keeps the same two words at $7A1E and $7A22, so ``read_pose``
+    checks the derivation against them rather than trusting it.
+    """
+    step_x = (position_x >> BODY_STEP_SHIFT) % BODY_STEPS
+    step_z = ((position_z >> BODY_STEP_SHIFT) + BODY_Z_BIAS) % BODY_STEPS
+    return {
+        'stepX': step_x,
+        'stepZ': step_z,
+        'readout': f'{step_x * 1000 // 1024:03d}-{step_z * 1000 // 1024:03d}',
+    }
+
+
 def bearing_degrees(yaw: int) -> float:
     return ((yaw - YAW_NORTH) % YAW_UNITS_PER_TURN) / YAW_UNITS_PER_TURN * 360
 
@@ -285,14 +319,17 @@ def render_ledger(ledger: dict) -> str:
 
 
 def render_poses(poses: list[dict]) -> str:
-    lines = [f"{'id':<24}{'body':<9}{'cell':>6}{'yaw':>7}{'bearing':>10}  position"]
+    lines = [
+        f"{'id':<24}{'body':<9}{'cell':>6}{'yaw':>7}{'bearing':>10}{'nav':>9}  position"
+    ]
     for pose in poses:
         cell = '—' if pose['cell'] is None else f"${pose['cell']:02X}"
         yaw = f"${pose['yaw']:04X}"
         position = pose['position']
         lines.append(
             f"{pose['id']:<24}{pose['body']:<9}{cell:>6}{yaw:>7}"
-            f"{bearing_degrees(pose['yaw']):>9.2f}°  "
+            f"{bearing_degrees(pose['yaw']):>9.2f}°"
+            f"{pose['bodyCoordinate']['readout']:>9}  "
             f"{position['x']}, {position['y']}, {position['z']}"
         )
     return '\n'.join(lines)

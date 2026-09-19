@@ -110,7 +110,7 @@ export const panelViewModel = (
     attackLamp: false,
     // Targ's panel has no body-coordinate readout to report, so the Damocles rendition's
     // stands at nought as dressing (ADR 0027); the cell it does have is the location readout.
-    // Damocles' own readout stands at nought for a different reason — its mapping is Fog (#371).
+    // Damocles' own readout is computed from the Body the player stands on (#371).
     bodyCoordinates: '000-000',
     cash: cashReadout(snapshot.credits),
     clock: context.clock,

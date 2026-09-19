@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { parseCatalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
+  bodyCoordinateReadout,
   damoclesPanelViewModel,
   erisGridReference
 } from '../src/damocles/panel.ts';
@@ -38,9 +39,9 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
     const model = damoclesPanelViewModel(session.snapshot, loaded.doc);
     expect(model.locationName).toBe('ERIS');
     expect(model.locationLabel).toBe('07-08');
-    // The wide readout beside the cell is the original's body pair: bound in RAM and known to
-    // track the player (#208, #367), but its three-digit mapping is undecoded (#371).
-    expect(model.bodyCoordinates).toBe('000-000');
+    // The wide readout beside the cell is the original's body pair, and the original prints
+    // `016-283` at this pose (#371).
+    expect(model.bodyCoordinates).toBe('016-283');
     expect(model.inventory).toBe('EMPTY');
     expect(model.inventoryFill).toBe(0);
     expect(model.damoclesDisplay).toEqual({
@@ -70,6 +71,52 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
     ).toBe(true);
     expect(model.compassDegrees).toBeGreaterThanOrEqual(0);
     expect(model.compassDegrees).toBeLessThan(360);
+  });
+
+  test('follows the Body Coordinate Readout as the player crosses four cells', async () => {
+    const loaded = await content();
+    const session = new DamoclesSession(loaded);
+    const start = session.snapshot.pose.position;
+    // One Body Coordinate step is four Surface Cells, so a position four cells east reads one
+    // higher on the first field and leaves the second alone.
+    expect(bodyCoordinateReadout({ ...start, x: start.x + 4 * 65_536 })).toBe(
+      '017-283'
+    );
+    expect(bodyCoordinateReadout({ ...start, z: start.z + 4 * 65_536 })).toBe(
+      '016-284'
+    );
+  });
+
+  test('reproduces the readout of every attested arrival Pose', async () => {
+    // Each expectation is the pair the Working Authority holds at $7A1E/$7A22 in that Pose's
+    // own memstate, scaled to three digits as the original's panel prints it (#371).
+    const expected: Record<string, string> = {
+      acheron: '834-323',
+      'bacchus-transporter': '405-638',
+      clotho: '590-323',
+      damocles: '060-048',
+      'dion-2-3': '793-571',
+      'dion-transporter': '793-574',
+      'eris-spaceport-onfoot': '016-283',
+      'eris-transporter-11-8': '017-283',
+      'gaea-transporter': '064-439',
+      'gaea-ur-city-4-2': '125-687',
+      'logos-transporter': '316-896',
+      lucan: '951-250',
+      'mentor-transporter': '689-316',
+      'metis-transporter': '616-511',
+      midas: '086-102',
+      pan: '103-689',
+      theon: '621-063',
+      'vesta-parliament-4-6': '264-326',
+      'vesta-transporter': '264-326'
+    };
+    const poses = await arrivalPoses();
+    for (const pose of poses.poses) {
+      expect(`${pose.id} ${bodyCoordinateReadout(pose.position)}`).toBe(
+        `${pose.id} ${expected[pose.id]!}`
+      );
+    }
   });
 
   test('prints cells two digits an axis and stars beyond the readout', () => {

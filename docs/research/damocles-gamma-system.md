@@ -75,7 +75,7 @@ manual transcription, Mercenary Site). They are search hypotheses only.
 | Seamless spaceflight between bodies      | **Unresolved (place side)**  | Narrative copy and a `VOID` body slot support space as a place class; flight dynamics belong to #81.                                                                                        |
 | Interiors with outward windows           | **Partially confirmed**      | Enterable buildings/places and door-key objects are present; the string `WINDOW` appears in in-game copy. Outward-window rendering is #79.                                                  |
 | Larger city / object set than Targ       | **Confirmed (shape)**        | Dense place-label and takeable-object label pools after load; not a 16×16 / 192-Room / 64-slot Targ layout. Exact censuses left Unresolved.                                                 |
-| 28-bit world coordinates                 | **Not this panel field**     | `016-283` is `$7A1C`/`$7A20`, independent of the Eris 16.16 camera at `$7A92`/`$7A9A` (#208). Cell `07-08` is the 16.16 pair. The pair does track the player at a scale coarser than a Surface Cell (#367), but its encoding is not this 28-bit claim. |
+| 28-bit world coordinates                 | **Confirmed (surface axis)** | The engine masks the high word of each body position longword to `$FFF` at `$058F64`/`$058F6A`, so a Body's surface wraps every `$10000000` units an axis. `016-283` is the top ten bits of that pair, four Surface Cells a step (#371); cell `07-08` is the same pair read 16.16. |
 | Starting place is Eris Capital spaceport | **Confirmed (panel + copy)** | Post-load panel shows `ERIS`; briefing strings name Capital City Spaceport. Fiction name “Eris” matches the body-table slot, not a Targ Location enum.                                      |
 
 ## Bucket findings
@@ -472,97 +472,136 @@ a flight mode word. How occupancy and motion behave there is covered in
 [#81](https://github.com/odogono/mercenary/issues/81) /
 `docs/research/damocles-script-motion-time.md`.
 
-### Navigation digits `016-283` — Confirmed (RAM pair); quantity Partial; display map Fog (#367)
+### Navigation digits `016-283` — Confirmed (source, quantity and closed form) (#371)
 
-The left NAV triple is **not** the Eris 16.16 camera and **not** a 28-bit
-encoding of `$7A92`/`$7A9A`. Those longs are the cell `07-08` pair already
-bound in `damocles-walk-board-flight.md`.
+The Body Coordinate Readout is the top ten bits of the player's body world
+position, one field an axis, printed rescaled from 1024 to 1000. It is a pure
+function of the camera longwords, so a Damocles Session computes it from the
+Pose it already holds.
 
-**Source.** Unsigned 32-bit words **`$7A1C`** and **`$7A20`**. On the pinned
-on-foot snapshot they read `17` and `290` while the panel shows `016-283`.
-Writing `$00000099` / `$00000123` (`153` / `291`) redraws `149-284`. Writing
-`16` / `283` redraws `015-276`. Walking 800 VBLs north raised `$7A9A` by 10758
-and left `$7A1C`/`$7A20` and the `016-283` digits unchanged.
+**Closed form.** With `x` and `z` the body-local surface position in engine
+units (`$7A92` / `$7A9A`, 65,536 units a Surface Cell, wrapped to 28 bits by
+`$058F64`):
 
-All five committed memstates read the same `17` / `290`, decoded without an
-emulator: on foot, boarded in the limo, boarded in the car, after leaving the
-limo, and inside a structure at a window. That is invariance across Occupancy
-and across sub-cell motion, not evidence of a constant — all five stand in the
-same Eris Capital Spaceport locale. Reproduce with
-`scripts/location-ledger.py poses --memstate NAME=PATH`, which decodes the
-1 MiB ST RAM window through `damocleslab.catalogue.hatari_memstate_ram` and
-spawns no emulator.
+```text
+stepX = (x >> 18) & $3FF
+stepZ = ((z >> 18) + $100) & $3FF
+field = (step * 1000) >> 10          # three decimal digits, zero-padded
+```
 
-The panel is a 3-digit decimal derivation, not `printf` of the integers. Across
-those samples the second field displays as `value - 7`; the first field is
-usually `value - 1` (`17→016`, `16→015`) but `153→149` is not that rule.
-Closed-form mapping and what quantity the pair measures (bearing, intercept,
-…) stay Fog.
+Both shifts are arithmetic. One step is `$40000` units — **four Surface
+Cells** — so a Body spans 1024 steps an axis and a 16-cell workspace spans
+four. On the pinned Eris start pose `x = 4,681,905` and `z = 8,940,589` give
+steps `17` and `290`, which print `016-283`.
 
-Reproduce: `panel-readout-probe.py poke --address 0x7a1c --bytes …` and
-`navigation --vbls 800`.
+**Where the engine does it.** At `$05935A`, once per surface pass:
 
-**Two cautions on this binding.** The original's manual names the wide window
+```text
+$05935A  move.w  $7aba.w, d1      ; high word of the body z longword
+$05935E  asr.w   #$2, d1
+$059360  addi.w  #$100, d1
+$059364  andi.w  #$3ff, d1
+$059368  move.w  d1, $7a22.w
+$059372  move.w  $7ab2.w, d0      ; high word of the body x longword
+$059376  asr.w   #$2, d0
+$059378  andi.w  #$3ff, d0
+$05937C  move.w  d0, $7a1e.w
+```
+
+`$059780` is the same block in the second pass. Reading the high word and
+shifting by two is the `>> 18` above. `$7AB2` / `$7ABA` equal `$7A92` / `$7A9A`
+in all 23 pinned memstates, and the block writes `$42C6C` / `$42C70` beside the
+readout words, the x field first having the current body's phase accumulator at
+`$62EA(a1)` added — so the same ten-bit quantity drives the sky transform.
+
+The digits come from `$04E390`, which redraws only when the pair changes:
+
+```text
+$04E394  move.w  $7a1e.w, d0
+$04E398  move.w  $7a22.w, d1
+$04E3BC  mulu.w  #$fa00, d0       ; 64000/65536 = 1000/1024
+$04E3C0  swap    d0
+$04E3C4  divu.w  #$64, d0         ; hundreds, then tens, then units
+```
+
+`mulu.w #$FA00` followed by `swap` **is** the 1024-to-1000 rescale, which is
+why the samples in #208 looked like an offset that would not hold: `17→016`,
+`16→015` and `153→149` are all `(step * 1000) >> 10`, and so are `290→283`,
+`291→284` and `283→276`. All six poke samples reproduce.
+
+**The inverse confirms the encoding.** The landing path at `$04E968` takes a
+ten-bit value, stores it to `$7A1E`, and expands it back into `$7AB2` with
+`asl.w #$6` / `asr.w #$4` / `swap` / `clr.w` — a multiply by four then a shift
+into the high word, which is `step << 18`. The body coordinate is therefore the
+1024-step angular coordinate the landing code works in, a whole turn an axis,
+the same 1024-step turn the yaw word counts; the z axis carries a fixed
+quarter-turn (`$100`) bias. No body radius or extent is involved.
+
+**Source, corrected.** The readout words are **16-bit**, at **`$7A1E`** and
+**`$7A22`**. #208 read them as longwords at `$7A1C` / `$7A20`, which agrees
+numerically — `$7A20` is never written and stays zero, and `$7A1C` is zero
+whenever the readout is drawn — but `$7A1C` is not a coordinate high half. It
+is an independent boolean the key dispatcher toggles with
+`eori.w #$ffff, $7a1c.w` at `$055714` and clears at `$0556D8`, `$0556FC` and
+five other sites, and it selects the sign of the `±3` nudge the throttle path
+applies to `$7BAC`. `arrival-route-probe.py`'s deleted `THROTTLE_TOGGLE =
+0x7A1C` was therefore reading the right address, and #367's desk reasoning
+against it was wrong on that point even though its conclusion — that #208's
+readout binding survives — is right. Restoring that probe field is left to a
+throttle ticket.
+
+**Evidence.** Twenty-three pinned Hatari memstates spanning fifteen Bodies,
+decoded without an emulator: in every one, `$7A1E` and `$7A22` equal the closed
+form applied to `$7A92` / `$7A9A`, and the high halves at `$7A1C` / `$7A20` are
+zero. Reproduce with `scripts/location-ledger.py poses --memstate NAME=PATH`,
+or sweep them directly through
+`damocleslab.catalogue.hatari_memstate_ram`. The nineteen attested arrival
+Poses are published with their memstate SHA-256 in
+`payload/damocles/arrival-poses.json`, and `web/test/damocles-panel.test.ts`
+asserts the printed pair for each one, so the browser's readout is checked
+against the Working Authority Pose by Pose.
+
+| Pose                    | Body     | Body Coordinate Readout | Cell Readout |
+| ----------------------- | -------- | ----------------------- | ------------ |
+| `eris-spaceport-onfoot` | ERIS     | `016-283`               | `07-08`      |
+| `eris-transporter-11-8` | ERIS     | `017-283`               | `11-08`      |
+| `dion-2-3`              | DION     | `793-571`               | `02-03`      |
+| `dion-transporter`      | DION     | `793-574`               | `03-14`      |
+| `lucan`                 | LUCAN    | `951-250`               | `01-03`      |
+| `damocles`              | DAMOCLES | `060-048`               | `00-00`      |
+
+**Both of #367's residuals are closed.** The two Eris Poses stand in **one
+workspace** — both carry workspace origin `64,128` — four cells apart, and read
+different first fields, so the pair is not the workspace origin and moves
+within a workspace. And because the readout is computed from the camera
+longwords in code, with nothing else in the expression, the nearest-Site
+reading is excluded outright: no Site, city or land base enters it. The
+upgrade from Partial to Confirmed does not rest on the three supplied frames,
+which stay uncommitted Restricted Material; the two frames that could be
+checked (`016-283` at the start pose, `017-283` about two cells away) are
+reproduced by the pinned Poses above.
+
+**The manual's window labels stay loose.** The original names the wide window
 "Planet/Moon co-ordinates" and the window beside it "Near City, or land base,
-co-ordinates" — but the second is bound here to `$7A92`/`$7A9A`, the camera's
-own 16.16 pair, which is the player's Surface Cell and not a position relative
-to any city. Either the manual's label for that window is loose, or one of the
-two bindings sits in the wrong window. The project names the windows for what
-is proved — Body Coordinate Readout and Cell Readout — rather than for the
-manual's labels.
+co-ordinates", but the second is bound to `$7A92`/`$7A9A`, the camera's own
+16.16 pair, which is the player's Surface Cell and not a position relative to
+any city. The wide window is now proved to be the player's own body position,
+so the first label is apt and the second is not. The project keeps naming the
+windows for what is proved — Body Coordinate Readout and Cell Readout.
 
-Nor was the 800-VBL walk ever evidence that the wide pair ignores the player:
-it moved `$7A9A` by 10758, which is **0.16 of a cell**, far below anything a
-three-digit body-scale reading would resolve. It is a null result, not a
-negative one.
+The 800-VBL walk of #208 was never evidence either way: it moved `$7A9A` by
+10,758, which is 0.16 of a Surface Cell and 1/25 of a Body Coordinate Step.
 
-**The quantity — Partial (#367).** The pair **tracks the player's position on
-the Body**. It is not a per-Body constant. It is invariant across Occupancy
-changes and sub-cell motion — the five pinned memstates above all read
-`17` / `290` — but changes over a move of about two Surface Cells, and changes
-greatly between distant regions of one Body. Its unit is therefore coarser than
-a Surface Cell. The closed form, the unit and the origin stay Unresolved
-([#371](https://github.com/odogono/mercenary/issues/371)).
+**Computability — the gate passes.** The form needs the player's body-local
+position and two constants, and no body extent, body centre or Site data. A
+Damocles Session holds the position already: `Pose.position` is in whole
+surface-grid units anchored at the Body's workspace origin, the same units
+`payload/damocles/arrival-poses.json` publishes. `web/src/damocles/panel.ts`
+computes the readout from it, and the Damocles Panel Rendition no longer
+stands it at nought.
 
-The evidence is three supplied original-game frames, all on Eris. The first
-stands at the pinned start pose and reproduces it exactly; the second is about
-two cells away; the third is a distant region of the same Body, reached by
-flight.
-
-| Frame                | Body Coordinate Readout | Cell Readout |
-| -------------------- | ----------------------- | ------------ |
-| Structure interior   | `016-283`               | `07-08`      |
-| Night runway         | `017-283`               | `09-09`      |
-| Distant region       | `375-437`               | `04-01`      |
-
-These are supplied visual review evidence, not attested laboratory captures:
-they carry no run directory, no hash and no recorded pose, so the classification
-they support stands at Partial rather than Confirmed. Screenshots are Restricted
-Material and are not committed (`research/damocles-st/SPEC.md`); the attested
-run that upgrades this sits at the head of #371.
-
-**Residual: the nearest-Site reading is not excluded.** If the manual's two
-window labels are simply swapped, the wide pair could name the coordinate of
-the nearest Site rather than the player's own position, and all three frames
-would still fit. The first two frames argue against it — the value moved while
-the player stayed around one spaceport — but that pair is confounded: nineteen
-minutes of impact clock passed, an object was taken, and a frame cannot show
-`$7B5C`, so it cannot be told whether a workspace boundary was crossed. For the
-same reason this section does not yet claim the pair is independent of the
-workspace origin, though the second frame suggests it. Both are settled by the
-paired same-workspace capture at the head of #371.
-
-**The throttle-toggle contradiction was not one.** `arrival-route-probe.py`
-declared `THROTTLE_TOGGLE = 0x7A1C` with no citation, in a block where every
-neighbouring constant carries one; the `$0556F8` dispatcher evidence in the
-comment above it belongs to `THROTTLE = 0x7BAC` on the line it precedes, and
-`damocles-arrival-routes.md` binds that dispatcher write to `$7BAC` alone and
-never mentions `$7A1C`. The name entered the repository whole with the file and
-was never derived from a probe run. The probe also read it as a **16-bit** word
-at `$7A1C..$7A1D` — the high half of the longword above, whose magnitude (`17` =
-`$11`) sits at `$7A1E` — so the field printed `$0000` on every pinned state and
-could not have falsified the source binding in either direction. The constant
-and its output field are removed; the binding above stands unopposed.
+Reproduce the original: `panel-readout-probe.py poke --address 0x7a1c
+--bytes …` and `navigation --vbls 800`.
 
 ## Location coverage for #313
 
@@ -612,10 +651,9 @@ name table). Not completed here:
 - Direct metadata confirmation of the structurally inferred 9+19 partition
 - Place-record control-byte semantics and body-index binding
 - Interior doorway graph
-- Object residence and coordinate encoding. The `016-283` panel pair is
-  bound (#208), is not the Eris camera, and tracks the player at a scale
-  coarser than a Surface Cell (#367); its closed form, unit and origin are
-  Unresolved (#371), as is a 28-bit world encoding as a general claim.
+- Object residence and coordinate encoding. The `016-283` panel pair is no
+  longer among them: it is the top ten bits of the player's body position,
+  four Surface Cells a step, decoded in full (#371).
 
 ## Provenance summary
 
@@ -630,6 +668,6 @@ name table). Not completed here:
 | 32×4 phase-rate source at `$0082DC`                    | Same runs; equal bounded SHA-256; `$04D648..$04D660` source-to-derived loop                                |
 | Phase-rate slot binding                                | `$051E4E..$051E6A` accumulator loop and current-body indexed reads at `$05935A..$059392`                   |
 | Place labels ~`$023E56+`                               | Same runs; ERIS panel on PNG                                                                               |
-| `016-283` at `$7A1C`/`$7A20`, not `$7A92`/`$7A9A`      | #208 poke and 800-VBL walk; five pinned memstates and three supplied frames for the quantity (#367)                                                                      |
+| `016-283` is `(position >> 18)` an axis, rescaled 1024→1000 | Engine blocks `$05935A`, `$059780`, `$04E390` and the landing inverse `$04E968`; 23 pinned memstates across 15 Bodies; #208's six poke samples (#371) |
 | Object / key labels ~`$03C000+`                        | Same runs                                                                                                  |
 | Scenario pin                                           | `scenarios/first-world.json`                                                                               |
