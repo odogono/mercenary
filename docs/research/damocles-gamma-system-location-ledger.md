@@ -52,7 +52,11 @@ python3 research/damocles-st/scripts/location-ledger.py ledger
 ```
 
 The arrival poses read Restricted Material memstates. Only the decoded pose
-words leave the tool, and the payload document it writes is tracked:
+words leave the tool, and the payload document it writes is tracked. The report
+also prints each pose's Body Coordinate Readout, derived from the camera
+longwords and refused where it disagrees with the engine's own `$7A1E`/`$7A22`
+([the navigation digits](damocles-gamma-system.md), #371); the readout is
+derived rather than published, so it is not in the payload document:
 
 ```sh
 python3 research/damocles-st/scripts/location-ledger.py poses \

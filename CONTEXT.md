@@ -351,8 +351,12 @@ Which visual treatment the Benson Panel wears — Targ or Damocles — changing 
 _Avoid_: Skin, theme, variant, panel mode
 
 **Body Coordinate Readout**:
-The wide navigation window of the Benson Panel's lower row, which the Reference Build prints as three digits an axis. It tracks the player's position on the Body at a scale coarser than the Surface Cell; the closed form is not recovered, so both Panel Renditions stand it at nought.
+The wide navigation window of the Benson Panel's lower row, which the Reference Build prints as three digits an axis. It names the player's position on the Body as a Body Coordinate Step an axis: one step is four Surface Cells, a Body spans 1024 steps an axis, and each step prints rescaled from 1024 to 1000. The Damocles Panel Rendition computes it; Targ's stands at nought, having no Body behind it.
 _Avoid_: Planet coordinates, moon coordinates, world coordinates, nav digits
+
+**Body Coordinate Step**:
+The unit of the Body Coordinate Readout: `$40000` surface-grid units, which is four Surface Cells, so a 16-cell workspace spans four steps. A Body's surface is 1024 steps an axis, the same 1024-step turn the yaw word counts, and the z axis carries a fixed quarter-turn bias.
+_Avoid_: Body cell, coarse cell, planet unit
 
 **Cell Readout**:
 The navigation window beside the Body Coordinate Readout, naming the player's Surface Cell two digits an axis. It is the readout that moves as the player walks, and it is distinct from the Body Coordinate Readout beside it whatever the original's own documentation calls either window.

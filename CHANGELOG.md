@@ -12,26 +12,35 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Fixed
 
+- **The Body Coordinate Readout is decoded, and the Damocles Panel Rendition
+  prints it.** Each field is the top ten bits of the player's body position —
+  `(position >> 18)`, the z axis biased by a quarter turn — rescaled from 1024
+  to 1000 for three digits, so one step is four Surface Cells and a Body spans
+  1024 steps an axis. The engine's blocks at `$05935A` and `$04E390` establish
+  the form, its landing-path inverse at `$04E968` confirms the encoding, and it
+  reproduces the pair the Working Authority holds in all twenty-three pinned
+  memstates and all six of #208's poke samples. `/damocles` opens on `016-283`
+  at the Eris start pose, as the original does, and
+  `location-ledger.py poses` now reports the readout and refuses a pose whose
+  engine words disagree with its camera longwords (#371).
 - The Damocles Panel Rendition's lower navigation row now stands in the
   original's order: the wide readout carries the body coordinates the ST prints
-  as `016-283` — undecoded, so it stands at nought (#208) — with the location
-  cell beside it and the altitude last. The cell used to occupy the wide
-  body-coordinate window, and the bearing in degrees stood where the altitude
+  as `016-283`, with the location cell beside it and the altitude last. The
+  cell used to occupy the wide body-coordinate window, and the bearing in degrees stood where the altitude
   belongs; the compass tape already reports the bearing. `CONTEXT.md` now names
   both windows — Body Coordinate Readout and Cell Readout — and
   `docs/research/damocles-gamma-system.md` records why the original manual's
   own labels for them are not adopted.
-- **The Damocles laboratory's `$7A1C` throttle-toggle binding was never
-  evidence, and is removed.** `arrival-route-probe.py` named the address a
-  craft throttle toggle with no citation, in a block where every neighbouring
-  constant carries one; the key-dispatcher evidence in the comment above it
-  belongs to `$7BAC` on the line it precedes, and the arrival-routes note binds
-  that write to `$7BAC` alone. The probe also
-  read the address as a 16-bit word — the high half of the longword the
-  navigation readout uses, whose magnitude sits in the low half — so the field
-  printed `$0000` on every pinned memstate and could not have contradicted
-  anything. The Body Coordinate Readout's source binding (#208) stands
-  unopposed (#367).
+- **The Damocles laboratory's uncited `$7A1C` throttle-toggle constant was
+  removed** as unevidenced (#367) — and #371 then found the address genuinely
+  is a toggle: the key dispatcher flips it with `eori.w #$ffff, $7a1c.w` at
+  `$055714` to pick the sign of the `±3` nudge it applies to the throttle at
+  `$7BAC`, and clears it at seven other sites. What was wrong in #367 was the
+  reason, not the removal's effect on the readout: `$7A1C` is not the high half
+  of a navigation longword, because the readout's words are the 16-bit `$7A1E`
+  and `$7A22`. The Body Coordinate Readout's source binding (#208) stands, now
+  stated as those two words. Restoring the probe field is left to a throttle
+  ticket.
 
 ### Added
 

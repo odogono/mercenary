@@ -300,7 +300,7 @@ test('/damocles boots the Damocles Gameplay Session on foot at Eris Capital Spac
   await expect(panel.locator('[data-field=locationName]')).toHaveText('ERIS');
   // The original's lower navigation row reads body coordinates, then the cell, then altitude.
   await expect(panel.locator('[data-field=bodyCoordinates]')).toHaveText(
-    '000-000'
+    '016-283'
   );
   await expect(panel.locator('[data-field=locationLabel]')).toHaveText('07-08');
   // Pinned in document order: the readouts once sat in the wrong windows, which asserting
