@@ -217,11 +217,11 @@ Each attachment slot carries a second live word at `$5A42 + slot` beside the
 control word. `$5AA52` loads it into `d6` and branches three ways before any
 geometry moves:
 
-| `d6`                       | Branch   | Outcome                                        |
-| -------------------------- | -------- | ---------------------------------------------- |
-| negative, bit 14 set       | `$5ABF6` | opens, Proximity Box not consulted              |
-| negative, bit 14 clear     | `$5AAA0` | re-closes, Proximity Box not consulted          |
-| non-negative               | fall     | the Proximity Box test at `$5AA62` decides      |
+| `d6`                   | Branch   | Outcome                                    |
+| ---------------------- | -------- | ------------------------------------------ |
+| negative, bit 14 set   | `$5ABF6` | opens, Proximity Box not consulted         |
+| negative, bit 14 clear | `$5AAA0` | re-closes, Proximity Box not consulted     |
+| non-negative           | fall     | the Proximity Box test at `$5AA62` decides |
 
 The negative forms are a separate override channel: `$055B04` writes `$80` into
 the high byte when a level change takes an attachment, which pins it shut. The
@@ -264,8 +264,8 @@ The cold capture agrees with all of it. `$61CC` is 0, and the state bytes for
 slots 30 and 33 are `$05` with bit 7 clear, so at world start every keyed
 entrance is shut and says LOCKED.
 
-| Range            | Decoded role                          | SHA-256                                                            |
-| ---------------- | ------------------------------------- | ------------------------------------------------------------------ |
+| Range              | Decoded role                         | SHA-256                                                            |
+| ------------------ | ------------------------------------ | ------------------------------------------------------------------ |
 | `$059F50..$059FAF` | key byte and letter written per cell | `24ae4f24588c5b266bd853bc8bbc669d3da6b06df44395a3f24a675619d65905` |
 | `$05AA52..$05AA9F` | condition word gate                  | `c15d583d4d0d2b13e62bb4f29f66ba55778ea5545ce66138c4cb2eb0f8d43dee` |
 | `$054294..$0542AD` | Take appends and sets bit 7          | `64205ab891007ba2120e94ee5f5660141ab99959d15ee84324bd254755c11484` |
@@ -279,12 +279,12 @@ body and free on another. Across the pinned extract and the three workspace
 captures, eight placements install a base. Four distinct cells both install one
 and carry an `$F0` entrance, and those four are the keyed doors:
 
-| Cell                      | Building            | Base  | Key slot | Letter |
-| ------------------------- | ------------------- | ----- | -------: | ------ |
-| DION `14-13`              | AUTHORS HOUSE       | `$1E` |       30 | A      |
-| DION `02-11`              | NOVAGEN OFFICE      | `$21` |       33 | D      |
-| VESTA `04-06`             | VESTA PARLIAMENT    | `$22` |       34 | E      |
-| GAEA UR CITY `07-01`      | HANTZENS NEW HOUSE  | `$1F` |       31 | B      |
+| Cell                 | Building           | Base  | Key slot | Letter |
+| -------------------- | ------------------ | ----- | -------: | ------ |
+| DION `14-13`         | AUTHORS HOUSE      | `$1E` |       30 | A      |
+| DION `02-11`         | NOVAGEN OFFICE     | `$21` |       33 | D      |
+| VESTA `04-06`        | VESTA PARLIAMENT   | `$22` |       34 | E      |
+| GAEA UR CITY `07-01` | HANTZENS NEW HOUSE | `$1F` |       31 | B      |
 
 The authored Birmingham Island stream repeats the two Dion cells with the same
 base and the same structure, which is the labelling question
@@ -357,13 +357,13 @@ The plan says what the height must be. Every authored opening carries a soffit
 spanning its closed rectangle, and nothing in the plan spans an opening between
 that soffit and the wall top:
 
-| Attachment                 | Closed rectangle       | Soffit over it | Header band |
-| -------------------------- | ---------------------- | -------------: | ----------: |
-| Structure 74 `$03FC`       | X 1300–1500, Z −790–−770 |            150 |         150 |
-| Structure 75 `$03FC`       | X 293–297, Z −160–−40    |            110 |         110 |
-| Structure 75 `$03F8`       | X −607–−603, Z −240–−160 |            110 |         110 |
-| Structure 75 `$03F4`       | X −607–−603, Z −40–40    |            110 |         110 |
-| Structure 75 `$03F0`       | X −100–100, Z 185–200    |            150 |         110 |
+| Attachment           | Closed rectangle         | Soffit over it | Header band |
+| -------------------- | ------------------------ | -------------: | ----------: |
+| Structure 74 `$03FC` | X 1300–1500, Z −790–−770 |            150 |         150 |
+| Structure 75 `$03FC` | X 293–297, Z −160–−40    |            110 |         110 |
+| Structure 75 `$03F8` | X −607–−603, Z −240–−160 |            110 |         110 |
+| Structure 75 `$03F4` | X −607–−603, Z −40–40    |            110 |         110 |
+| Structure 75 `$03F0` | X −100–100, Z 185–200    |            150 |         110 |
 
 Structure 74's opening is closed above its 150 soffit by a 150–250 transom, and
 Structure 75's three 110-high doorways by 110–150 transoms. The `$03F0` north
@@ -429,6 +429,88 @@ cell `$87`. The X-inset values above are the result for the captured zero word,
 not a claimed natural-walk observation. A targeted entry capture must record
 `$5C40`, `$B23C` region workspace and `$7AF0/$7B5C` immediately after bind.
 
+## Eris selector census outcome
+
+[#252](https://github.com/odogono/mercenary/issues/252) asks which Eris
+structure selectors decode once the extractor's nine-identity census gate is
+removed. The extractor now carries no identity allowlist:
+`decode_structure_selection` runs for every structure record, and a record
+whose probe fails keeps a named per-structure omission
+(`Structure selection unavailable: <probe>.`) instead of failing the payload.
+
+Catalogue-wide, 256 of the 266 structure records carry a `structureSelection`
+and none of them records a failed probe. The ten without one are named
+omissions rather than discarded selectors: nine are records whose linked
+building detail is itself intentionally empty and which carry no visibility
+groups to read regions from, and `structure-01a636` is an alias that must be
+resolved before geometry. The post-plan control words across all 256 are
+`$4000`×51, `$40F0`×2, `$4100`×59, `$4200`×199, `$42F0`×3, `$8000`×54,
+`$8100`×4, `$8200`×97 and `$82F0`×9; `unknown structure attachment form` is
+raised by no record in the bank. The `$F0` family is 14 of the 478 attachments,
+so it never dominated the census — and its low nybble is now decoded as a door
+key letter rather than an unknown form.
+
+Eris places 37 distinct structure records over 76 surface cells. Thirty-six
+decode; the omitted one is `structure-01a618`, the empty record already
+described in [its own note](damocles-eris-structure-01a618.md), which has no
+plan geometry and therefore nothing for a region to select.
+
+| NAV cells                                   | Place                 | Model              | Control words                 | Att. | Regions | Gate kinds                        | Selector |
+| ------------------------------------------- | --------------------- | ------------------ | ----------------------------- | ---- | ------- | --------------------------------- | -------- |
+| `00-02`, `11-06`                            | —                     | `structure-00f862` | `$8200`                       | 1    | 13      | attachmentLatch, none×12          | decoded  |
+| `00-03`                                     | —                     | `structure-00f874` | `$8200`                       | 1    | 13      | attachmentLatch, none×12          | decoded  |
+| `00-04`, `01-05`                            | —                     | `structure-01a6f6` | `$8200`                       | 1    | 13      | attachmentLatch, none×12          | decoded  |
+| `01-01`                                     | EXCHEQUER DISTRICT A  | `structure-0127f0` | `$4200`                       | 1    | 14      | attachmentLatch, none×13          | decoded  |
+| `01-03`                                     | —                     | `structure-01a66c` | `$4200`                       | 1    | 14      | attachmentLatch, none×13          | decoded  |
+| `01-04`                                     | —                     | `structure-01a6a2` | `$4200`                       | 1    | 11      | attachmentLatch, none×10          | decoded  |
+| `01-14`                                     | PLAYTESTER STORES     | `structure-011ada` | `$4200`                       | 1    | 11      | attachmentLatch, none×10          | decoded  |
+| `02-01`                                     | —                     | `structure-01832e` | `$4000`, `$4100`, `$8200`     | 3    | 19      | attachmentLatch×3, none×16        | decoded  |
+| `02-02`                                     | —                     | `structure-01a690` | `$8200`                       | 1    | 13      | attachmentLatch, none×12          | decoded  |
+| `02-04`                                     | —                     | `structure-01a67e` | `$8200`                       | 1    | 13      | attachmentLatch, none×12          | decoded  |
+| `02-05`                                     | —                     | `structure-010152` | —                             | 0    | 8       | none×7, passage                   | decoded  |
+| `03-02`, `03-04`, `04-01`, `05-03`          | —                     | `structure-01a774` | `$4200`                       | 1    | 15      | attachmentLatch, none×13, passage | decoded  |
+| `03-03` and 18 further cells                | —                     | `structure-01a618` | —                             | 0    | 0       | —                                 | omitted  |
+| `03-05`                                     | —                     | `structure-00f88e` | `$8200`                       | 1    | 13      | attachmentLatch, none×12          | decoded  |
+| `03-06`, `07-03`                            | —                     | `structure-01a786` | `$4200`                       | 1    | 15      | attachmentLatch, none×13, passage | decoded  |
+| `03-11`                                     | —                     | `structure-01a6d2` | `$4000`                       | 1    | 10      | attachmentLatch, none×9           | decoded  |
+| `04-02`, `06-04`, `12-05`                   | —                     | `structure-01a5d8` | `$4100`×2, `$8000`×2, `$82F0` | 5    | 35      | attachmentLatch×5, none×30        | decoded  |
+| `04-04`                                     | —                     | `structure-01baa6` | `$8200`                       | 1    | 9       | attachmentLatch, none×8           | decoded  |
+| `04-10`                                     | —                     | `structure-01dea8` | `$4000`, `$4100`              | 2    | 35      | attachmentLatch×2, none×33        | decoded  |
+| `04-11`                                     | GUM STORE             | `structure-01c508` | `$4200`, `$8000`, `$8200`     | 3    | 20      | attachmentLatch×3, none×17        | decoded  |
+| `05-04`                                     | —                     | `structure-01a65a` | `$4100`×2, `$8000`×2, `$82F0` | 5    | 35      | attachmentLatch×5, none×30        | decoded  |
+| `05-11`                                     | —                     | `structure-01a6e4` | `$4000`                       | 1    | 10      | attachmentLatch, none×9           | decoded  |
+| `06-03`                                     | —                     | `structure-0188d2` | `$4100`×2, `$8000`×2, `$82F0` | 5    | 35      | attachmentLatch×5, none×30        | decoded  |
+| `07-08`                                     | CAPITAL SPACEPORT     | `structure-01484e` | `$4200`                       | 1    | 12      | attachmentLatch, none×11          | decoded  |
+| `08-13`, `10-09`                            | —                     | `structure-010176` | —                             | 0    | 8       | none×7, passage                   | decoded  |
+| `08-14`, `12-03`, `13-03`, `14-03`, `15-03` | TRADING POST          | `structure-015eea` | `$4000`, `$4100`              | 2    | 35      | attachmentLatch×2, none×33        | decoded  |
+| `09-02`                                     | PLAYTESTER STORES     | `structure-01a648` | `$4200`                       | 1    | 11      | attachmentLatch, none×10          | decoded  |
+| `09-08`                                     | STATE OFFICE          | `structure-014ad2` | `$4200`, `$8200`×3            | 4    | 22      | attachmentLatch×4, none×18        | decoded  |
+| `09-09`, `13-06`                            | MOORBY SCH OF FLYING  | `structure-00ed8e` | `$4000`                       | 1    | 10      | attachmentLatch, none×9           | decoded  |
+| `11-04`, `13-04`                            | —                     | `structure-010140` | `$4000`                       | 1    | 9       | attachmentLatch, none×8           | decoded  |
+| `11-07`, `14-11`                            | —                     | `structure-00ef8c` | `$4000`                       | 1    | 10      | attachmentLatch, none×9           | decoded  |
+| `11-08`                                     | —                     | `structure-00feb4` | `$4200`                       | 1    | 11      | attachmentLatch, none×10          | decoded  |
+| `12-14`, `13-14`, `14-14`                   | ERIS POST OFFICE HQ   | `structure-01a6c0` | `$4200`                       | 1    | 14      | attachmentLatch, none×13          | decoded  |
+| `13-15`, `14-15`, `15-15`                   | —                     | `structure-01decc` | `$4000`, `$4100`              | 2    | 35      | attachmentLatch×2, none×33        | decoded  |
+| `14-05`                                     | ERIS POWER GENERATION | `structure-01560c` | `$4200`                       | 1    | 22      | attachmentLatch, none×21          | decoded  |
+| `15-12`                                     | LAWSON BANK HQ        | `structure-010188` | `$4200`×2                     | 2    | 26      | attachmentLatch×2, none×24        | decoded  |
+| `15-13`, `15-14`                            | —                     | `structure-00fc52` | `$4200`                       | 1    | 14      | attachmentLatch, none×13          | decoded  |
+
+Counts are from `payload/damocles/catalogue.json`; NAV labels read the cell
+byte as low-nibble X, high-nibble Z, as elsewhere in this note. The `Selector`
+column is the selector outcome alone — most of these records remain `partial`
+in the catalogue for unrelated reasons such as unresolved leaf-height vertex
+inheritance ([#249](https://github.com/odogono/mercenary/issues/249)).
+
+The play consequence is observable at `09-09`, MOORBY SCH OF FLYING
+(`structure-00ed8e`), the STATE OFFICE neighbour named in #252: a single
+`$4000` one-leaf X-motion door on the local Z 579-591 wall, one
+`attachmentLatch` region behind it and nine ungated regions. Walking its blank
+facade holds the eye 11 units short of the wall; walking its door opens the
+leaf to its 112-unit endpoint, which frees the latched region and lets the eye
+through; retreating re-closes it. The browser check is
+`an ordinary Eris structure opens its door and clamps the eye at NAV 09-09` in
+`web/e2e/damocles.e2e.ts`.
+
 ## Catalogue schema consequence
 
 Catalogue schema 6's current `structureSelection` is insufficient for generic
@@ -477,20 +559,22 @@ runtime scenario. No ST code was copied, translated or tracked.
 
 ## Status
 
-| Claim                                                                                                             | Status     | Evidence                                                                      |
-| ----------------------------------------------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------- |
-| `$7AF6 >= 0` exactly in the central half-open 50% of both current-cell axes                                       | Confirmed  | `$5A650..$5A666`; first-world state words                                     |
-| `$7B02` is the copied level selector; negative means no active structure workspace                                | Confirmed  | `$59468..$59482`, `$55B8E..$55C00`, `$52CDC..$52D41`                          |
-| Region scan and clamp operate only on the bound current-cell instance and active square                           | Confirmed  | `$54CBC..$54E3F`, `$5A30E..$5A72D`                                            |
-| `$5AA3C` updates only bound-instance attachments but can re-close outside the active square                       | Confirmed  | `$59562..$59586`, `$5AA3C..$5AD51`                                            |
-| Control sign selects X/Z for constructor motion and region inset; bits 9/8 select leaf count/side                 | Confirmed  | `$59FE2..$5A202`, `$5A2C0..$5A2DD`, `$5AA3C..$5AD51`                          |
-| Generic latch is `$00` closed, `$01` moving, `$FF` open; endpoint is outer ±8 and retreat re-closes               | Confirmed  | `$5AAA0..$5AD4E`                                                              |
-| `$0200` regions are unconditional and have no attachment mesh                                                     | Confirmed  | shared `$FF04` record, `$5A366..$5A386`                                       |
-| `$5C40` is global scratch and is not rewritten by the no-attachment structure bind                                | Confirmed  | `$570CC..$572B5`, `$59E94..$5A24E`; both RAMs                                 |
-| Structure 75's STATE OFFICE entrance is `$8200`, two-leaf Z, slot `$03FC`, with an `attachmentLatch` Z-inset gate | Confirmed  | `$14C46..$14C5F`; both RAMs                                                   |
-| Attachment constructors never write the `$1840` Y vertex array, so leaf height is not record-owned                | Confirmed  | `$59E94..$5A24D`                                                              |
-| Leaves rise to the soffit spanning their closed rectangle, 150 for Structure 75's `$03F0`                        | Confirmed  | plan faces of `$1484E` and `$14AEC`; ST screen shows no band                  |
-| Which vertex indices the constructors inherit leaf Y words from at bind time                                     | Unresolved | no runtime capture reads `$1840` with STATE OFFICE bound                      |
-| Natural Eris `$0200` bind always uses X inset                                                                     | Unresolved | no `$52/$9A/$D8` runtime capture; captured `$5C40` is zero only at cell `$87` |
-| Meaning of `$40F0/$82F0` live selector predicates                                                                 | Decoded    | low nybble plus the cell's `$7AFB` base is a door key letter; geometry is unchanged     |
-| Schema 6 closed mesh plus flags is sufficient                                                                     | Disproved  | constructor, Proximity Box, gate and scratch-dependent inset facts are absent |
+| Claim                                                                                                             | Status     | Evidence                                                                            |
+| ----------------------------------------------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------- |
+| `$7AF6 >= 0` exactly in the central half-open 50% of both current-cell axes                                       | Confirmed  | `$5A650..$5A666`; first-world state words                                           |
+| `$7B02` is the copied level selector; negative means no active structure workspace                                | Confirmed  | `$59468..$59482`, `$55B8E..$55C00`, `$52CDC..$52D41`                                |
+| Region scan and clamp operate only on the bound current-cell instance and active square                           | Confirmed  | `$54CBC..$54E3F`, `$5A30E..$5A72D`                                                  |
+| `$5AA3C` updates only bound-instance attachments but can re-close outside the active square                       | Confirmed  | `$59562..$59586`, `$5AA3C..$5AD51`                                                  |
+| Control sign selects X/Z for constructor motion and region inset; bits 9/8 select leaf count/side                 | Confirmed  | `$59FE2..$5A202`, `$5A2C0..$5A2DD`, `$5AA3C..$5AD51`                                |
+| Generic latch is `$00` closed, `$01` moving, `$FF` open; endpoint is outer ±8 and retreat re-closes               | Confirmed  | `$5AAA0..$5AD4E`                                                                    |
+| `$0200` regions are unconditional and have no attachment mesh                                                     | Confirmed  | shared `$FF04` record, `$5A366..$5A386`                                             |
+| `$5C40` is global scratch and is not rewritten by the no-attachment structure bind                                | Confirmed  | `$570CC..$572B5`, `$59E94..$5A24E`; both RAMs                                       |
+| Structure 75's STATE OFFICE entrance is `$8200`, two-leaf Z, slot `$03FC`, with an `attachmentLatch` Z-inset gate | Confirmed  | `$14C46..$14C5F`; both RAMs                                                         |
+| Attachment constructors never write the `$1840` Y vertex array, so leaf height is not record-owned                | Confirmed  | `$59E94..$5A24D`                                                                    |
+| Leaves rise to the soffit spanning their closed rectangle, 150 for Structure 75's `$03F0`                         | Confirmed  | plan faces of `$1484E` and `$14AEC`; ST screen shows no band                        |
+| Which vertex indices the constructors inherit leaf Y words from at bind time                                      | Unresolved | no runtime capture reads `$1840` with STATE OFFICE bound                            |
+| Natural Eris `$0200` bind always uses X inset                                                                     | Unresolved | no `$52/$9A/$D8` runtime capture; captured `$5C40` is zero only at cell `$87`       |
+| Meaning of `$40F0/$82F0` live selector predicates                                                                 | Decoded    | low nybble plus the cell's `$7AFB` base is a door key letter; geometry is unchanged |
+| Every Eris structure selector decodes bar the empty `structure-01a618`                                            | Confirmed  | 36 of 37 Eris records in `payload/damocles/catalogue.json`                          |
+| `unknown structure attachment form` is reached by no record in the bank                                           | Confirmed  | 256 decoded selectors, 478 attachments, no failed probe                             |
+| Schema 6 closed mesh plus flags is sufficient                                                                     | Disproved  | constructor, Proximity Box, gate and scratch-dependent inset facts are absent       |

@@ -168,6 +168,80 @@ test('the spaceport and current-cell structures use recovered selector behavior'
   await page.unroute('**/damocles/eris.json');
 });
 
+// The census of complete selectors once stopped at nine identities, so every Eris structure
+// other than the spaceport and STATE OFFICE drew its door as a slab and let the eye walk
+// through its walls. MOORBY SCH OF FLYING at NAV 09-09 is an ordinary one-leaf record, and it
+// is the cell the STATE OFFICE neighbour walk reaches first (#252).
+test('an ordinary Eris structure opens its door and clamps the eye at NAV 09-09', async ({
+  page
+}) => {
+  await page.addInitScript(
+    key => localStorage.removeItem(key),
+    DAMOCLES_RESUME_KEY
+  );
+  const catalogue = (await (
+    await page.request.get('/payload/damocles/catalogue.json')
+  ).json()) as {
+    instances: { id: string; location: { position: number[] } | null }[];
+  };
+  const origin = catalogue.instances.find(
+    instance => instance.id === 'eris-surface-99'
+  )!.location!.position;
+  const frame = page.locator('#frame');
+  // The door leaf spans local X 150-270 on the Z 579-591 wall; local Z is the raw offset, so
+  // an approach from local Z 700 walks the whole proximity box in.
+  const startAt = async (x: number, z: number) => {
+    await page.route('**/damocles/eris.json', async route => {
+      const response = await route.fetch();
+      const doc = await response.json();
+      doc.start.yaw = 0;
+      doc.start.position = {
+        x: origin[0]! * 65_536 + x,
+        y: 63,
+        z: origin[2]! * 65_536 + z
+      };
+      await route.fulfill({ json: doc });
+    });
+    await page.goto('/damocles');
+    await expect(frame).toHaveAttribute('data-state', 'ready');
+    await expect(frame).toHaveAttribute('data-cell', '9-9');
+    await expect(frame).toHaveAttribute(
+      'data-structure-instance',
+      'eris-surface-99'
+    );
+  };
+  const localZ = async () =>
+    Number(await frame.getAttribute('data-z')) - origin[2]! * 65_536;
+  const openUnits = async () =>
+    Number(await frame.getAttribute('data-attachment-open-units'));
+
+  // Blank facade: no attachment answers, and the wall holds the eye an EYE_CLEARANCE short.
+  await startAt(600, 700);
+  await page.keyboard.down('ArrowUp');
+  await expect.poll(localZ).toBeLessThan(620);
+  await page.waitForTimeout(600);
+  expect(await localZ()).toBe(611);
+  expect(await openUnits()).toBe(0);
+  await page.keyboard.up('ArrowUp');
+  await page.unroute('**/damocles/eris.json');
+
+  // The doorway: the leaf answers the approach, and only a fully open leaf frees the latched
+  // region, so the eye crosses the wall line rather than stopping at it.
+  await startAt(210, 700);
+  expect(await openUnits()).toBeGreaterThan(0);
+  await page.keyboard.down('ArrowUp');
+  await expect.poll(openUnits).toBe(112);
+  await expect.poll(localZ).toBeLessThan(570);
+  await page.keyboard.up('ArrowUp');
+
+  // Retreat re-closes it.
+  await page.keyboard.down('ArrowDown');
+  await expect.poll(localZ).toBeGreaterThan(900);
+  await page.keyboard.up('ArrowDown');
+  await expect.poll(openUnits).toBe(0);
+  await page.unroute('**/damocles/eris.json');
+});
+
 test('Enhanced sunlight reaches the floor through the spaceport window', async ({
   page
 }, testInfo) => {
