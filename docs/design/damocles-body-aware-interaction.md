@@ -258,13 +258,22 @@ are additive fields; the sixth changes the shape of `Execution`, and this contra
 change now rather than shipping a save format that provably cannot represent an observed state.
 
 ```ts
+/// Named for the **trigger index**, which is what the strings payload names each script's
+/// inline records after: trigger 5 runs `script5-inline-1..3`. An earlier draft named the five
+/// new ones after the resident that launches them (`slot-181`), which broke that
+/// correspondence and disagreed with the shipped `slot-2` -- resident slot 183 launches
+/// trigger 2. The resident is a separate identity and the object-to-trigger table maps it.
 type ScriptId =
-  | 'damocles.script.slot-2'   // KEY- V.I.P. LIMO, trigger 2
-  | 'damocles.script.slot-181'
-  | 'damocles.script.slot-151'
-  | 'damocles.script.slot-95'
-  | 'damocles.script.slot-101'
-  | 'damocles.script.slot-94';
+  | 'damocles.script.slot-2'    // resident 183, KEY- V.I.P. LIMO
+  | 'damocles.script.slot-5'    // resident 181, KEY - EAGLE 9SE
+  | 'damocles.script.slot-6'    // resident 151, DAMOCLES FILE
+  | 'damocles.script.slot-11'   // resident 101, AUTHORS COMPUTER
+  | 'damocles.script.slot-20'   // resident 95,  MAGIC CRYSTAL
+  | 'damocles.script.slot-62';  // resident 94,  CASH REGISTER
+
+/// A step is an index into the script's recovered operation list, so a suspended execution
+/// names a script and a position in it rather than a step name from one script's vocabulary.
+type Step = number;
 
 /// The observed nesting needs (script, step) pairs: a queued response resumes an outer script
 /// that had not returned. A stack of one script's own steps cannot represent it.
@@ -315,6 +324,10 @@ Entered at `$054770`, past the busy test and the `$7A88` clear:
 - While busy, a trigger with bit 5 clear is **discarded** and **stays armed** for a later pickup.
 - A queued response is taken up **as soon as the busy flag clears**, which is before the running
   script returns. It nests one frame inside the interrupted script, whose own return then runs.
+  The interpreter therefore stops between clearing the flag and returning whenever something is
+  pending: script 6 cleared `$0040` at `$07064A` and the dispatch launched script 5 with
+  `$07064E` not yet executed. That gap is the whole mechanism, so a port that returns in the same
+  pass cannot produce the nesting.
 
 Among the six pickup triggers only slot 181's is queueable, so two pickups can never contend
 through the table alone; one queueable pickup and any other queueable trigger can.

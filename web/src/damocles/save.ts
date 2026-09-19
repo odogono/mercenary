@@ -1,6 +1,5 @@
 import type { Catalogue } from '../catalogue/data.ts';
 import {
-  BLANK_DAMOCLES_ROW,
   DAMOCLES_ROW_CELLS,
   type DamoclesDisplay,
   type DamoclesMessageId
@@ -14,9 +13,17 @@ import {
 import {
   initialScriptState,
   type Execution,
+  type Frame,
   type Presenting
 } from './script.ts';
-import { SLOT_2_REVISION, SLOT_2_SCRIPT, type Step } from './slot2.ts';
+import {
+  ORDINARY_DISPLAY_FRAMES,
+  SCRIPTS,
+  WAIT_FROM_DOCUMENT,
+  isScriptId,
+  type ScriptId,
+  type Step
+} from './scripts.ts';
 import type { Pose } from './world.ts';
 
 /// Version 3 replaced Capital Spaceport fields with the bound structure workspace.
@@ -78,8 +85,12 @@ export interface DamoclesSaveSnapshot {
 export interface DamoclesSaveScript {
   readonly counter: number;
   readonly display: DamoclesDisplay;
+  /// Bank word `$070102`, which the shared epilogue moves and restores.
+  readonly displayDuration: number;
   readonly execution: Execution | null;
   readonly message: Presenting | null;
+  /// `$7A88`, the one queued trigger index.
+  readonly pending: number | null;
   readonly triggers: readonly {
     readonly armed: boolean;
     readonly index: number;
@@ -91,8 +102,10 @@ export const initialDamoclesSaveScript = (): DamoclesSaveScript => {
   return {
     counter: script.counter,
     display: script.display,
+    displayDuration: script.displayDuration,
     execution: script.execution,
     message: script.message,
+    pending: script.pending,
     triggers: script.triggers.map(({ armed, index }) => ({ armed, index }))
   };
 };
@@ -151,10 +164,23 @@ const printableRow = (value: unknown, path: string): string =>
     ? value
     : fail(`${path} is not a 48-cell printable row`);
 
+/// Every id a Damocles Script or a system refusal can present. The eleven inline records the
+/// five further responses use are already extracted into `payload/damocles/strings.json`.
 const messageIds = new Set<DamoclesMessageId>([
+  'script11-inline-1',
+  'script11-inline-2',
   'script2-inline-1',
   'script2-inline-2',
   'script2-inline-3',
+  'script20-inline-1',
+  'script5-inline-1',
+  'script5-inline-2',
+  'script5-inline-3',
+  'script6-inline-1',
+  'script6-inline-2',
+  'script62-inline-1',
+  'script62-inline-2',
+  'script62-inline-3',
   'system-string-1',
   'system-string-2',
   'system-string-50',
@@ -278,7 +304,12 @@ const displayOf = (value: unknown): DamoclesDisplay => {
   };
 };
 
-const presentingOf = (value: unknown): Presenting | null => {
+/// A presenting message counts down from the duration it started with, which is the bank word
+/// the save records: the shared epilogue's clearing line starts at 50, not 200.
+const presentingOf = (
+  value: unknown,
+  displayDuration: number
+): Presenting | null => {
   if (value === null) {
     return null;
   }
@@ -289,46 +320,77 @@ const presentingOf = (value: unknown): Presenting | null => {
       message['remainingFrames'],
       'snapshot.script.message.remainingFrames',
       1,
-      200
+      displayDuration
     )
   };
 };
 
-const steps = new Set<Step>([
-  'announce-2',
-  'announce-3',
-  'call-delay',
-  'poll-wait',
-  'clear-busy'
-]);
+/// The six pickup trigger indices the object-to-trigger table at `$0543EC` names.
+const PICKUP_TRIGGERS: readonly number[] = [2, 5, 6, 11, 20, 62];
+
+/// A step is an index into a script's recovered operation list, and a suspended execution may
+/// only name a step the interpreter can actually stop on. `runToBlock` returns in exactly two
+/// places: immediately after a `message` op, while that message presents, and *on* a `poll-wait`
+/// op, while its counter is below the threshold.
+const blockingStep = (script: ScriptId, step: Step): boolean => {
+  const ops = SCRIPTS[script].ops;
+  if (!Number.isInteger(step) || step < 0 || step > ops.length) {
+    return false;
+  }
+  // A third boundary exists only as an outer frame: a script that has cleared the busy flag and
+  // not yet returned, which is where a queued response interrupts it.
+  return (
+    ops[step - 1]?.kind === 'message' ||
+    ops[step]?.kind === 'poll-wait' ||
+    ops[step - 1]?.kind === 'clear-busy'
+  );
+};
+
+const frameOf = (value: unknown, path: string): Frame => {
+  const frame = object(value, path);
+  const script = frame['script'];
+  if (!isScriptId(script)) {
+    return fail(`${path} names an unknown Damocles Script`);
+  }
+  const step = frame['step'];
+  if (!blockingStep(script, step as Step)) {
+    return fail(`${path} is not a reachable continuation`);
+  }
+  return { script, step: step as Step };
+};
 
 const executionOf = (value: unknown): Execution | null => {
   if (value === null) {
     return null;
   }
   const execution = object(value, 'snapshot.script.execution');
-  if (
-    execution['script'] !== SLOT_2_SCRIPT ||
-    execution['revision'] !== SLOT_2_REVISION ||
-    typeof execution['step'] !== 'string' ||
-    !steps.has(execution['step'] as Step)
-  ) {
+  const script = execution['script'];
+  if (!isScriptId(script)) {
+    return fail('script execution names an unknown Damocles Script');
+  }
+  if (execution['revision'] !== SCRIPTS[script].revision) {
+    return fail('script execution identity, revision or step is incompatible');
+  }
+  const step = execution['step'];
+  if (!blockingStep(script, step as Step)) {
     return fail('script execution identity, revision or step is incompatible');
   }
   const returnStack = array(
     execution['returnStack'],
     'snapshot.script.execution.returnStack'
+  ).map((frame, index) =>
+    frameOf(frame, `snapshot.script.execution.returnStack[${index}]`)
   );
-  if (
-    returnStack.some(step => step !== 'idle' && step !== 'return-from-delay')
-  ) {
+  // A queued response nests one frame inside the script it interrupted, and nothing observed
+  // nests deeper: one outer frame is the whole recovered depth.
+  if (returnStack.length > 1) {
     return fail('script return stack is unreachable');
   }
   return {
-    returnStack: returnStack as Step[],
-    revision: SLOT_2_REVISION,
-    script: SLOT_2_SCRIPT,
-    step: execution['step'] as Step
+    returnStack,
+    revision: SCRIPTS[script].revision,
+    script,
+    step: step as Step
   };
 };
 
@@ -341,8 +403,18 @@ const scriptOf = (value: unknown): DamoclesSaveScript => {
     65_535
   );
   const display = displayOf(script['display']);
+  const displayDuration = integer(
+    script['displayDuration'] ?? ORDINARY_DISPLAY_FRAMES,
+    'snapshot.script.displayDuration',
+    1,
+    ORDINARY_DISPLAY_FRAMES
+  );
+  const pending =
+    script['pending'] === null || script['pending'] === undefined
+      ? null
+      : integer(script['pending'], 'snapshot.script.pending', 0, 255);
   const execution = executionOf(script['execution']);
-  const message = presentingOf(script['message']);
+  const message = presentingOf(script['message'], displayDuration);
   const triggers: DamoclesSaveScript['triggers'] = array(
     script['triggers'],
     'snapshot.script.triggers'
@@ -360,14 +432,17 @@ const scriptOf = (value: unknown): DamoclesSaveScript => {
   if (
     new Set(triggers.map(trigger => trigger.index)).size !== triggers.length ||
     triggers.length !== 6 ||
-    [2, 5, 6, 11, 20, 62].some(
+    PICKUP_TRIGGERS.some(
       index => !triggers.some(trigger => trigger.index === index)
     )
   ) {
     return fail('script trigger table is incomplete or duplicated');
   }
+  if (pending !== null && !PICKUP_TRIGGERS.includes(pending)) {
+    return fail('script pending trigger is not a pickup trigger');
+  }
   if (message !== null) {
-    const elapsedFrames = 200 - message.remainingFrames;
+    const elapsedFrames = displayDuration - message.remainingFrames;
     if (
       (elapsedFrames < 36 &&
         (display.kind !== 'scrolling' ||
@@ -378,39 +453,24 @@ const scriptOf = (value: unknown): DamoclesSaveScript => {
       return fail('message gate and display reveal disagree');
     }
   }
-  if (
-    message !== null &&
-    display.kind === 'scrolling' &&
-    (display.id === 'script2-inline-1' ||
-      display.id === 'system-string-1' ||
-      display.id === 'system-string-2' ||
-      display.id === 'system-string-9') &&
-    display.reveal.beneath !== BLANK_DAMOCLES_ROW
-  ) {
-    return fail('display Reveal has the wrong predecessor');
-  }
+  // A message that opens a response used to be required to reveal over the blank row. That is
+  // no longer an invariant: trigger 6 parks without a clearing line, so the next response's
+  // first message reveals over the row trigger 6 left held.
   if (execution !== null) {
-    const expected = {
-      'announce-2': 'script2-inline-1',
-      'announce-3': 'script2-inline-2',
-      'call-delay': 'script2-inline-3',
-      'clear-busy': 'system-string-50',
-      'poll-wait': null
-    } as const;
-    const expectedMessage = expected[execution.step as keyof typeof expected];
-    const stack = execution.returnStack;
-    if (
-      expectedMessage === null
-        ? message !== null ||
-          counter >= 200 ||
-          display.kind !== 'held' ||
-          stack.length !== 2 ||
-          stack[0] !== 'idle' ||
-          stack[1] !== 'return-from-delay'
-        : message?.id !== expectedMessage ||
-          stack.length !== 1 ||
-          stack[0] !== 'idle'
-    ) {
+    const ops = SCRIPTS[execution.script].ops;
+    const previous = ops[execution.step - 1];
+    const current = ops[execution.step];
+    if (previous?.kind === 'message') {
+      if (message?.id !== previous.id) {
+        return fail('script execution is not at a reachable commit boundary');
+      }
+    } else if (current?.kind === 'poll-wait') {
+      const threshold =
+        current.frames === WAIT_FROM_DOCUMENT ? 200 : current.frames;
+      if (message !== null || counter >= threshold || display.kind !== 'held') {
+        return fail('script execution is not at a reachable commit boundary');
+      }
+    } else {
       return fail('script execution is not at a reachable commit boundary');
     }
   } else if (
@@ -424,7 +484,15 @@ const scriptOf = (value: unknown): DamoclesSaveScript => {
   if (message === null && display.kind !== 'held') {
     return fail('scrolling display has no message');
   }
-  return { counter, display, execution, message, triggers };
+  return {
+    counter,
+    display,
+    displayDuration,
+    execution,
+    message,
+    pending,
+    triggers
+  };
 };
 
 const validateResidence = (

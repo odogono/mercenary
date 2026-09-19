@@ -1,5 +1,6 @@
 import type { Catalogue, Instance } from '../catalogue/data.ts';
 import type { Vector3 } from '../orientation/index.ts';
+import { SCRIPT_FOR_TRIGGER, TRIGGER_FOR_RESIDENT } from './scripts.ts';
 
 /// The raw-coordinate unit used by the Damocles surface grid.  A catalogue location is in
 /// grid units while an Object Residence is in the same world units the renderer and Pose use.
@@ -255,14 +256,14 @@ export const generateAcceptanceMatrix = (
       } => value !== undefined
     )
     .sort((left, right) => compareText(left.instance.id, right.instance.id));
-  const responses: Readonly<Record<string, string>> = {
-    'object-slot-101': 'damocles.script.slot-101',
-    'object-slot-151': 'damocles.script.slot-151',
-    'object-slot-181': 'damocles.script.slot-181',
-    'object-slot-183': 'damocles.script.slot-2',
-    'object-slot-94': 'damocles.script.slot-94',
-    'object-slot-95': 'damocles.script.slot-95'
-  };
+  // A Damocles Script is named for its trigger index, which is also what the strings payload
+  // names its inline records after. The resident that launches it is a separate identity.
+  const responses: Readonly<Record<string, string>> = Object.fromEntries(
+    Object.entries(TRIGGER_FOR_RESIDENT).map(([instance, trigger]) => [
+      instance,
+      SCRIPT_FOR_TRIGGER[trigger]!
+    ])
+  );
   const rows = admitted.flatMap(({ body, poses }) =>
     residents.map(({ instance, residence }): AcceptanceRow => {
       const residentBody = residence.kind === 'carried' ? body : residence.body;
