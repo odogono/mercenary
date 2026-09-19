@@ -504,7 +504,7 @@ different tickets.
 | -------------------------------------------------------------------------- | ------------ | -------------------------- |
 | No recovered residence at all                                              | 95, 151, 181 | #252 (151, 181), #172 (95) |
 | Placed above ground level; only level 0 is drawn                           | 94           | [#355](https://github.com/odogono/mercenary/issues/355) |
-| Exposed only in regions of its parent the player cannot walk into          | 101          | [#362](https://github.com/odogono/mercenary/issues/362) |
+| Exposed only in regions reached through a shut door                        | 101          | [#362](https://github.com/odogono/mercenary/issues/362) |
 
 The method: for each admitted arrival Pose, switch to it and visit all 256
 cells of that Body, collecting every resident the Session Snapshot draws.
@@ -522,7 +522,7 @@ same prerequisite #313 already records against the model-form gate, the height
 gate and the `$7AC5`/`$7AA5` identity: an ordinary route into a structure
 interior at a non-zero level.
 
-### Slot 101 is exposed in regions the player cannot bind to
+### Slot 101 is behind a shut door
 
 AUTHORS COMPUTER is the informative case, because nothing about it is missing in
 the obvious sense. It is level 0. Its parent `dion-surface-de` is recovered, and
@@ -540,15 +540,14 @@ of the 28 placed residents carry pairs; the other seven have a group their
 parent's list does not hold, which their `reason` records.
 
 AUTHORS COMPUTER's group `$20` exposes it in region selectors 11, 12, 26, 27, 28,
-33 and 34. Dion cell `$DE` binds region selector **18** at the arrival Pose, and
-walking from there reaches only selectors 17 and 18 — the room the Pose stands
-in. The exposing regions are elsewhere in a 35-region building, behind the
-structure's own clamp.
+33 and 34. A `goto` to Dion cell `$DE` binds selector 18, and every path from 18
+to any of those seven crosses a region whose gate is `attachmentLatch`. With the
+door shut the walk reaches selectors 17 and 18 only; with it open the whole
+35-region building connects and all seven become available.
 
-So this is not a missing table. It is the same question as
-[#252](https://github.com/odogono/mercenary/issues/252) asks on Eris — doors,
-openings and the eye clamp deciding which regions of a structure a player can
-walk into — asked of a Dion structure.
+So this is not a missing table and not a placement error. It is the question
+[#252](https://github.com/odogono/mercenary/issues/252) owns on Eris — what opens
+a structure's attachments, and from where — asked of a Dion structure.
 [#362](https://github.com/odogono/mercenary/issues/362) carries it.
 
 ### What the exposure rule was reading, and what changed
@@ -557,18 +556,41 @@ Until #362 the port asked the **parent** for its `associationGroups` table. The
 extractor publishes that table for `eris-surface-87` alone, so every other
 structure fell back to the implicit pair and its residents were placed and never
 drawn. Reading each resident's own published pairs instead took Dion from nothing
-drawn anywhere to four takeable residents reachable on an ordinary route:
+drawn anywhere to nine placed residents reachable on an ordinary walked route.
 
-| Slot | Object          | Parent             | Cell   |
-| ---: | --------------- | ------------------ | ------ |
-|   50 | BATH            | `dion-surface-09`  | `09-0` |
-|   51 | TOWEL RAIL      | `dion-surface-09`  | `09-0` |
-|  128 | WASHING MACHINE | `dion-surface-22`  | `2-2`  |
-|  135 | ACME UNIVERSAL  | `dion-surface-e9`  | `9-14` |
+Capital Spaceport is unchanged: the resident's pairs and the parent's table agree
+there, which is what licenses one replacing the other.
 
-These are the first interior objects outside Eris the port can reach. Capital
-Spaceport is unchanged: the resident's pairs and the parent's table agree there,
-which is what licenses one replacing the other.
+### Reachability of the fourteen level-0 placed residents
+
+Fourteen of the 28 recovered placements are at level 0, the only level the draw
+pass admits. Their reachability is decided by whether any region that exposes them
+is connected, through region edges the clamp admits, to the region a `goto` to
+their parent's cell lands in.
+
+| Outcome                                | Count | Slots                                        |
+| -------------------------------------- | ----: | -------------------------------------------- |
+| Reachable on foot with every door shut |     9 | 38, 50, 51, 128, 135, 154, 183, 195, 204      |
+| Reachable only once a door opens       |     5 | 14, 101, 234 (`dion-surface-de`), 109, 215    |
+
+All nine are takeable. Eight of them — `DOOR KEY A`, `BATH`, `TOWEL RAIL`,
+`WASHING MACHINE`, `ACME UNIVERSAL`, `NOTE PAD`, `BED` and `TABLE`, all on Dion —
+are the first interior objects outside Eris the port can reach.
+
+The five that remain are not a placement gap and not an exposure gap. Their
+parents' region graphs connect to the exposing regions **only** through a region
+whose gate is `attachmentLatch`, so they need a door open. Both of Capital
+Spaceport's counterparts are already reachable with the door shut, which is why
+the question never arose on Eris.
+[#362](https://github.com/odogono/mercenary/issues/362) carries it, and it is the
+same mechanism [#252](https://github.com/odogono/mercenary/issues/252) owns on
+Eris: what opens a structure's attachments, and from where.
+
+A warning for anyone extending this: **the cell centre is one position.** Sweeping
+`goto` over every cell finds only four of the nine, because the other five are
+exposed in regions the player must walk into. Reachability claims here are made
+against the region-connectivity graph and corroborated by walked sessions, not
+against cell centres.
 
 ## Residents with no location evidence
 
@@ -716,10 +738,10 @@ Resolved since this ledger was first written:
   cell with no named workspace to anchor it.
 - 193 of 195 interior-associated residents have no parent and no local
   placement.
-- Of the 28 residents that **do** have a recovered placement, **five** can be
-  reached on foot: slot 183 on Eris and slots 50, 51, 128 and 135 on Dion. The
-  rest are placed and never drawn — most because they are above level 0, the
-  remainder because their exposing regions are not walkable.
+- Of the 28 residents that **do** have a recovered placement, **nine** can be
+  reached on foot — one on Eris and eight on Dion. Fourteen are above level 0 and
+  are not drawn at all (#355); the remaining five are at level 0 but sit behind a
+  door (#362).
 - Workspace selection within a body is decoded, and both Gaea groups are now
   bound to a live workspace. What remains undecoded is which structure a **level**
   selects: the association list is bound per level, read live from `$7B0E`, and
@@ -748,6 +770,6 @@ Resolved since this ledger was first written:
 | The association list is bound per level             | Vesta cell `$64` at levels 0 and 10 bind different structures; ten residents across six bodies resolve in the list bound at their own level |
 | Six pickup-trigger slots                            | [limo-key pickup](damocles-limo-key-pickup.md#the-object-to-script-trigger-table) |
 | Slot 183 is the only reachable pickup-trigger object | All-cell sweep of every admitted Body against the tracked payload; `web/test/damocles-console.test.ts` |
-| Five placed residents are reachable, four of them on Dion | All-cell sweep per admitted Body; `web/test/damocles-body-aware.test.ts` |
+| Nine placed residents are reachable, eight of them on Dion | Region-connectivity graph over the published region bounds, corroborated by walked sessions; `web/test/damocles-body-aware.test.ts` |
 | A resident's exposing regions are published per resident | `association.insertions` in `payload/damocles/catalogue.json`, resolved through the derived association-list root ([Dion and Vesta structure groups](damocles-dion-vesta-structure-groups.md#the-association-list-root-is-derived-not-tabulated)) |
 | Slots 248–255 are a world binding                   | [catalogue](damocles-catalogue.md)                                       |

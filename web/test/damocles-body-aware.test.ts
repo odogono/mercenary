@@ -343,10 +343,12 @@ describe('a resident is exposed by its own insertion pairs', () => {
     expect(insertionsInRegion(catalogue, 'object-slot-183', key, 18)).toBe(0);
   });
 
-  test('four Dion residents are drawn that no route reached before', async () => {
-    /// Every cell of Dion, collecting whatever the Session Snapshot draws. Before the rule
-    /// changed this found nothing at all; slot 101 is still absent because its group's regions
-    /// are elsewhere in that building.
+  test('four Dion residents are drawn from the cell centre alone', async () => {
+    /// A `goto` to every Dion cell, collecting whatever the Session Snapshot draws there. Before
+    /// the rule changed this found nothing at all on Dion.
+    ///
+    /// The cell centre is one position, so this understates reachability: a resident exposed in a
+    /// region the player must walk to is invisible here. The walked test below is the wider claim.
     const drawn = new Map<string, string>();
     for (let x = 0; x < 16; x += 1) {
       for (let z = 0; z < 16; z += 1) {
@@ -366,5 +368,33 @@ describe('a resident is exposed by its own insertion pairs', () => {
       'object-slot-50': '9-0',
       'object-slot-51': '9-0'
     });
+  }, 30_000);
+
+  test('walking into the next room reaches one the cell centre does not', async () => {
+    /// Dion cell `0-10` binds region 11 at its centre, and `NOTE PAD` (slot 154) is
+    /// exposed in regions 1, 3, 4, 5, 7 and 8. Walking south-west crosses into region 6's box and
+    /// the resident appears — which is the difference between "placed" and "reachable", and the
+    /// reason the sweep above is a floor rather than a count.
+    const session = new DamoclesSession(content);
+    expect(session.switchToPose('dion-2-3').kind).toBe('switched');
+    session.teleportToCell(0, 10);
+    expect(
+      session.snapshot.residents.some(item => item.id === 'object-slot-154')
+    ).toBe(false);
+
+    session.intent = { ...session.intent, turn: 1, walk: 0 };
+    while (session.snapshot.pose.heading < 3.9) {
+      session.advance(0.02);
+    }
+    session.intent = { ...session.intent, turn: 0, walk: 1 };
+    let drawn = false;
+    for (let step = 0; step < 400 && !drawn; step += 1) {
+      session.advance(0.02);
+      drawn = session.snapshot.residents.some(
+        item => item.id === 'object-slot-154'
+      );
+    }
+    expect(drawn).toBe(true);
+    expect(session.snapshot.structure?.instanceId).toBe('dion-surface-a0');
   }, 30_000);
 });
