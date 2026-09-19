@@ -12,6 +12,7 @@ import {
 } from '../src/damocles/session.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
+import { arrivalPoses } from './damocles-pose.ts';
 
 let loaded: DamoclesContent;
 
@@ -26,6 +27,7 @@ beforeAll(async () => {
   loaded = {
     catalogue,
     doc,
+    poses: await arrivalPoses(),
     presentationSha256: 'test',
     strings: parseDamoclesStrings(stringsValue),
     surface: erisSurfaceFrom(catalogue, doc)

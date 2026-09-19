@@ -11,12 +11,14 @@ import {
   encodeDamoclesSave
 } from '../src/damocles/save.ts';
 import { createDamoclesSavePersistence } from '../src/damocles/saves.ts';
+import { TRIGGER_FOR_RESIDENT } from '../src/damocles/scripts.ts';
 import { DamoclesSession } from '../src/damocles/session.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { presentationIdentity } from '../src/damocles/title.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { createNewGameAction } from '../src/shell/menu.ts';
 import { titleStorageKeys } from '../src/shell/title.ts';
+import { arrivalPoses } from './damocles-pose.ts';
 
 const load = async () => {
   const [rawCatalogue, presentationText, rawStrings] = await Promise.all([
@@ -31,6 +33,7 @@ const load = async () => {
     catalogue,
     doc,
     identity: damoclesSaveIdentity(catalogue, presentationSha256),
+    poses: await arrivalPoses(),
     presentationSha256,
     strings: parseDamoclesStrings(rawStrings),
     surface: erisSurfaceFrom(catalogue, doc)
@@ -90,6 +93,15 @@ describe('Damocles Saves', () => {
           )!.placementClass!
         }
       })),
+      // Slot 151 is a pickup trigger object, so carrying it means its trigger has fired.
+      script: {
+        ...initial.script,
+        triggers: initial.script.triggers.map(trigger =>
+          carried.some(id => TRIGGER_FOR_RESIDENT[id] === trigger.index)
+            ? { ...trigger, armed: false }
+            : trigger
+        )
+      },
       structure: null
     });
     const roundTrip = (session: DamoclesSession) =>

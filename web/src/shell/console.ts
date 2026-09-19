@@ -38,7 +38,8 @@ export type ConsoleCommand =
       readonly kind: 'save';
       readonly slot: SaveSlot;
     }
-  | { readonly kind: 'load'; readonly slot: SaveSlot };
+  | { readonly kind: 'load'; readonly slot: SaveSlot }
+  | { readonly kind: 'switchBody'; readonly name: string };
 
 export type SettingName =
   | 'composition'
@@ -231,6 +232,11 @@ export const parseConsoleCommand = (
   switch (verb) {
     case 'help':
       return { kind: 'help' };
+    case 'switch':
+      if (rest.length !== 1) {
+        throw new Error('switch takes one Pose id, or a Body name');
+      }
+      return { kind: 'switchBody', name: rest[0]! };
     case 'where':
       if (rest.length !== 0) {
         throw new Error('where takes no arguments');
@@ -437,6 +443,8 @@ export const executeConsoleCommand = (
   switch (command.kind) {
     case 'help':
       return HELP;
+    case 'switchBody':
+      return ['Targ has one Body'];
     case 'where': {
       const snapshot = deps.session().snapshot;
       const { heading, pitch, position, roll } = snapshot.player;

@@ -9,6 +9,7 @@ import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { parseConsoleCommand } from '../src/shell/console.ts';
 import type { PreferencesStore } from '../src/shell/preferences.ts';
 import type { SavePersistence } from '../src/shell/saves.ts';
+import { arrivalPoses } from './damocles-pose.ts';
 
 const sessionOf = async (): Promise<DamoclesSession> => {
   const [raw, presentation, strings] = await Promise.all([
@@ -21,6 +22,7 @@ const sessionOf = async (): Promise<DamoclesSession> => {
   return new DamoclesSession({
     catalogue,
     doc,
+    poses: await arrivalPoses(),
     presentationSha256: 'test-presentation',
     strings: parseDamoclesStrings(strings),
     surface: erisSurfaceFrom(catalogue, doc)

@@ -5,6 +5,7 @@ import {
   type SaveSlot,
   type SlotStorage
 } from '../shell/saves.ts';
+import type { ArrivalPoses } from './poses.ts';
 import {
   DAMOCLES_SAVE_SCHEMA_VERSION,
   decodeDamoclesSave,
@@ -21,6 +22,7 @@ export interface DamoclesSavePersistenceOptions {
   readonly catalogue: Catalogue;
   readonly identity: DamoclesSaveIdentity;
   readonly now?: () => Date;
+  readonly poses?: ArrivalPoses;
   readonly release: () => void;
   readonly restore: (snapshot: DamoclesSaveSnapshot, slot: SaveSlot) => void;
   readonly slotKey: (slot: SaveSlot) => string;
@@ -38,7 +40,8 @@ export const createDamoclesSavePersistence = (
       const saved = decodeDamoclesSave(
         encoded,
         options.identity,
-        options.catalogue
+        options.catalogue,
+        options.poses
       );
       return {
         savedAt: saved.savedAt,
