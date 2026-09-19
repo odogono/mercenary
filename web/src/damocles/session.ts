@@ -16,6 +16,7 @@ import {
 } from './poses.ts';
 import {
   catalogueResidence,
+  insertionsInRegion,
   validStructureResidence,
   type PlacedResidence,
   type Residence,
@@ -429,7 +430,10 @@ export class DamoclesSession implements TitleSession<
     );
   }
 
-  private worldPosition(residence: Residence): {
+  private worldPosition(
+    instanceId: string,
+    residence: Residence
+  ): {
     readonly x: number;
     readonly y: number;
     readonly z: number;
@@ -448,18 +452,7 @@ export class DamoclesSession implements TitleSession<
     ) {
       return null;
     }
-    const parent = this.content.catalogue.instances.find(
-      instance => instance.id === residence.parent
-    );
-    const group = parent?.associationGroups?.find(
-      item => item.group === residence.insertionGroup
-    );
-    const regionSelector = this.regionIndex + 1;
-    const admitted =
-      residence.insertionGroup === regionSelector ||
-      (group?.pairs.some(pair => pair.regionSelector === regionSelector) ??
-        false);
-    if (!admitted && parent?.associationGroups !== null) {
+    if (this.insertions(instanceId, residence) === 0) {
       return null;
     }
     return {
@@ -467,6 +460,19 @@ export class DamoclesSession implements TitleSession<
       y: this.boundPlacement.position.y + residence.position.y,
       z: this.boundPlacement.position.z + residence.position.z
     };
+  }
+
+  /// How many times the bound structure inserts this resident in the region the player is in.
+  /// Zero means it is placed but not exposed here, which is not the same as unplaced.
+  private insertions(instanceId: string, residence: Residence): number {
+    return this.regionIndex === null
+      ? 0
+      : insertionsInRegion(
+          this.content.catalogue,
+          instanceId,
+          residence,
+          this.regionIndex + 1
+        );
   }
 
   private candidates(): readonly {
@@ -490,7 +496,7 @@ export class DamoclesSession implements TitleSession<
       if (residence === undefined || residence.kind === 'carried') {
         continue;
       }
-      const position = this.worldPosition(residence);
+      const position = this.worldPosition(placement.id, residence);
       if (position !== null) {
         candidates.push({ id: placement.id, position });
         seen.add(placement.id);
@@ -569,7 +575,7 @@ export class DamoclesSession implements TitleSession<
       ) {
         continue;
       }
-      const position = this.worldPosition(residence);
+      const position = this.worldPosition(instance.id, residence);
       const model = this.content.catalogue.models.find(
         item => item.id === instance.model
       );
@@ -593,20 +599,11 @@ export class DamoclesSession implements TitleSession<
         position,
         status: model.status
       };
-      let copies = 1;
-      if (residence.kind === 'structure' && this.regionIndex !== null) {
-        const parent = this.content.catalogue.instances.find(
-          item => item.id === residence.parent
-        );
-        const group = parent?.associationGroups?.find(
-          item => item.group === residence.insertionGroup
-        );
-        const region = this.regionIndex + 1;
-        copies =
-          (residence.insertionGroup === region ? 1 : 0) +
-          (group?.pairs.filter(pair => pair.regionSelector === region).length ??
-            0);
-      }
+      // One insertion is one drawn copy, and `worldPosition` has already refused zero.
+      const copies =
+        residence.kind === 'structure'
+          ? this.insertions(instance.id, residence)
+          : 1;
       residents.push(...Array.from({ length: copies }, () => placement));
     }
     return residents;
