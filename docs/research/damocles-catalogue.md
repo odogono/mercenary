@@ -31,9 +31,16 @@ For body-aware interaction (#345), each resident instance carries `placementClas
 
 Each surface-cell placement carries `keyBase`, the `$7AFB` door-key base its `$ABDC` entry byte installs (`$054CBE`), or null where it installs none. An `$F0` Entrance Attachment in that cell's structure is keyed to object slot `keyBase + keyIndex` and opens only while that slot is in the Carried Stack (#362). The base belongs to the cell, so one structure record is keyed where it stands on Dion and free where it stands on Eris. See [generic entrance attachments](damocles-generic-entrance-attachments.md#the-live-condition-predicate-is-the-carried-stack--confirmed).
 
-Three model fields retain recovered native facts.
+Four model fields retain recovered native facts.
 `storeyHeight` is the alias record's first word masked by `$7FFF`, as written to
-`$7B00` at `$054D86`; non-alias models do not claim a pitch. `supportTop` is the
+`$7B00` at `$054D86`; non-alias models do not claim a pitch. `levelBinding` is the
+floor table that follows it at `+6`, which `$054DBC` publishes in `$7C1E` and the lift
+indexes by the destination level before assembling that structure: one structure slot
+per level, 0 to 11, where zero means the level has no floor. A record has a floor
+table exactly when it has a pitch, both coming from bit 15 of the same word, and
+`levelsAuthored` records how many of the twelve bytes lie inside the record's own
+extent so the two short authored records claim nothing past themselves. See
+[the level-to-structure binding](damocles-level-structure-binding.md). `supportTop` is the
 drop handler's raw-Y maximum at `$0545DE`–`$054610`, or `null` when its model-form
 gate refuses. It is not the renderer's mesh maximum: text and articulated forms
 must not change it. The signed opening-word comparison admits ordinary vertex
@@ -44,7 +51,7 @@ starts at zero. `instanceOrientation` is the record's `$8001` command: the angle
 articulation path and the camera-relative path. A record without `$8001` has no
 field and is drawn as modelled. See
 [the V.I.P. limo findings](damocles-vip-limo.md#the-drawn-instance-angle).
-All three fields are extracted from the same attested RAM as the model,
+All four fields are extracted from the same attested RAM as the model,
 not inferred from resident placement or presentation geometry.
 
 The extractor first verifies the run's artifact hashes, program/TOS pins, and

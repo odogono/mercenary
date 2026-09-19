@@ -372,15 +372,20 @@ reproduce the `$ABDC` override table the running game built, the place-list
 pointer at `$7A6C`, and the words `$7AF0`/`$7AF8`/`$7AFA`/`$7AF2`/`$7AF4` for the
 cell the player is standing in. Every memstate needs `memstate-rehost.py` first.
 
-**The association list is bound per level.** `$7B0E` identifies whichever
-structure the game walked, which at level 0 is the cell's authored instance and
-above level 0 is the interior. The probe requires the cell instance's root at
-level 0 and, above it, resolves the live root back to its structure slot and
-reports it, because the static decode does not yet predict which structure a
-level selects. A further gate then requires every catalogue resident naming the
-captured scene to name an insertion group the bound structure actually offers.
+**The association list is bound per level, and the level's structure is
+derived.** `$7B0E` identifies whichever structure the game walked, which at
+level 0 is the cell's authored instance and above level 0 is the interior. The
+alias record's floor table at `+6` names one structure slot per level: `$054DBC`
+publishes it in `$7C1E`, `$054DC2` takes level 0 as `$7AF0`, and the lift at
+`$055B24`-`$055BD8` indexes it by the destination level before assembling that
+structure. The probe runs that lookup at whatever level a capture stands and
+raises when the derived association root is not the live `$7B0E`; there is no
+level-0 special case. A further gate then requires every catalogue resident
+naming the captured scene to name an insertion group the bound structure
+actually offers.
 
-See [the Dion and Vesta structure-group research](../../docs/research/damocles-dion-vesta-structure-groups.md)
+See [the level-to-structure binding](../../docs/research/damocles-level-structure-binding.md),
+[the Dion and Vesta structure-group research](../../docs/research/damocles-dion-vesta-structure-groups.md)
 and [workspace selection](../../docs/research/damocles-workspace-selection.md).
 
 ## Moving-object probe (#327)

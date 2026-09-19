@@ -1350,3 +1350,48 @@ it('every record now carries a verdict and none is unresolved', async () => {
     }
   }
 });
+
+it('binds a level to the structure its floor table names', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const bySlot = new Map(
+    data.models
+      .filter(model => model.kind === 'structure')
+      .flatMap(model => model.slots.map(slot => [slot, model] as const))
+  );
+  // Vesta Parliament's cell instance. Its table skips levels 4..9 and then
+  // names slot 91 at level 10, which is the capture standing at the
+  // transporter (docs/research/damocles-level-structure-binding.md).
+  const parliament = bySlot.get(70)!;
+  expect(parliament.recordClass).toBe('alias');
+  expect(parliament.storeyHeight).toBe(317);
+  expect(
+    parliament.levelBinding!.floors.map(floor => [
+      floor.level,
+      floor.structureSlot
+    ])
+  ).toEqual([
+    [0, 90],
+    [1, 92],
+    [2, 92],
+    [3, 93],
+    [10, 91]
+  ]);
+  // Level 0 is the base structure the alias record already names, so the table
+  // is not a second, disagreeing account of the ground bind.
+  for (const model of data.models) {
+    const floors = model.levelBinding?.floors ?? [];
+    for (const floor of floors) {
+      expect(floor.level).toBeLessThan(model.levelBinding!.levelsAuthored);
+      expect(bySlot.get(floor.structureSlot)!.id).toBe(floor.structureId);
+    }
+  }
+  // Both fields come from the same header bit, so a record has a floor table
+  // exactly when it has a pitch; a plain structure offers level 0 alone.
+  for (const model of data.models) {
+    expect(model.levelBinding === undefined).toBe(
+      model.storeyHeight === undefined
+    );
+  }
+});

@@ -63,10 +63,15 @@ level:
 `B` → 10 is the useful part. The checklist note deliberately left it open —
 *"`B` means the guide's basement … native level selectors below remain raw
 selectors, not assumed floor numbers"* — and two independent buildings now put a
-`(B)` item at selector 10 and nothing else there. This is a lead for
-[#355](https://github.com/odogono/mercenary/issues/355), which owns the
-level-to-structure binding rule; it does not settle it, because a correspondence
-between a player's floor label and a selector is not the static rule #355 needs.
+`(B)` item at selector 10 and nothing else there.
+
+**The program has since said the same thing.** The lift indicator at
+`$055AB8`–`$055AD8` writes one character into the `$CD04` panel block: `G` at
+level 0, `B` at level 10, and the ASCII digit otherwise. Seven captures agree at
+the byte. So `(B)` is not a correspondence this note inferred — it is the game's
+own label for selector 10, and the level domain is 0 to 10. See
+[the level-to-structure binding](damocles-level-structure-binding.md), which
+recovered the rule [#355](https://github.com/odogono/mercenary/issues/355) owned.
 
 ## It names door keys the payload cannot tell apart
 

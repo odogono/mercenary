@@ -2436,3 +2436,67 @@ class PastiInventoryTests(unittest.TestCase):
         report = module.report(image, [('observed.ram', (run / 'observed.ram').read_bytes())])
         for item in report['reconciliation'][0]['ranges']:
             self.assertEqual(item['verbatimTracks'], [], item['range'])
+
+
+class StructureLevelBindingTests(unittest.TestCase):
+    """The floor table an alias record publishes in $7C1E (#355)."""
+
+    _structures = None
+
+    def structures(self):
+        if StructureLevelBindingTests._structures is None:
+            root = Path(__file__).resolve().parents[3]
+            document = json.loads(
+                (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
+            )
+            by_slot = {}
+            for model in document['models']:
+                if model['kind'] != 'structure':
+                    continue
+                for slot in model['slots']:
+                    by_slot[slot] = model
+            StructureLevelBindingTests._structures = by_slot
+        return StructureLevelBindingTests._structures
+
+    def test_vesta_parliament_names_slot_91_at_level_ten(self):
+        # The controlled case: same body, group and cell, two levels, two
+        # structures. The live captures read $017834 and $017B4A for $7B0E.
+        binding = self.structures()[70]['levelBinding']
+        self.assertEqual(
+            [(f['level'], f['structureSlot']) for f in binding['floors']],
+            [(0, 90), (1, 92), (2, 92), (3, 93), (10, 91)],
+        )
+        self.assertEqual(binding['levelsAuthored'], 12)
+
+    def test_the_level_zero_entry_is_the_base_structure_the_alias_already_names(self):
+        # $054DC2 reads the table's first entry into $7AF0 and $054DC2's own
+        # target is what the alias record's +6 byte names, so the table and the
+        # alias link cannot be two disagreeing accounts of the ground bind.
+        checked = 0
+        for model in self.structures().values():
+            binding = model.get('levelBinding')
+            if binding is None or not binding['floors']:
+                continue
+            ground = binding['floors'][0]
+            if ground['level'] != 0:
+                continue
+            self.assertIn(ground['structureId'], model['relatedModels'])
+            checked += 1
+        self.assertEqual(checked, 184)
+
+    def test_no_entry_is_claimed_past_the_record_that_authored_it(self):
+        for model in self.structures().values():
+            binding = model.get('levelBinding')
+            if binding is None:
+                continue
+            self.assertLessEqual(binding['levelsAuthored'], 12)
+            for floor in binding['floors']:
+                self.assertLess(floor['level'], binding['levelsAuthored'])
+                self.assertNotEqual(floor['structureSlot'], 0)
+                self.assertEqual(self.structures()[floor['structureSlot']]['id'],
+                                 floor['structureId'])
+
+    def test_a_record_has_a_floor_table_exactly_when_it_has_a_pitch(self):
+        # Both come from bit 15 of the record's first word.
+        for model in self.structures().values():
+            self.assertEqual('levelBinding' in model, 'storeyHeight' in model)

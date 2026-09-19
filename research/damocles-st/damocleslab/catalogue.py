@@ -2103,6 +2103,57 @@ def structure_storey_height(data: bytes, slot: int) -> int | None:
     return (lead & 0x7fff) if lead & 0x8000 else None
 
 
+# $054DC8 reads the level-0 palette at +$C past the floor table and $055B36
+# reads the destination level's at $C(a0,d1), so the two tables are parallel
+# with a stride of twelve: levels 0..11.
+STRUCTURE_LEVELS = 12
+
+
+def structure_level_binding(data: bytes, slot: int, count: int = 280) -> dict | None:
+    """The floor table an alias record publishes in ``$7C1E`` at ``$054DBC``.
+
+    ``$054DAE``--``$054DBC`` steps a2 past the pitch word, the scale pair, the
+    palette byte and the Building detail byte, then publishes a2 -- the record
+    plus six -- as the floor table. ``$054DC2`` reads its first entry into
+    ``$7AF0``, which is why a live capture inside a building still reports the
+    ground-level structure there. The lift at ``$055B24``--``$055B28`` indexes
+    the same table by the destination level and refuses the move on a zero
+    byte; the entry it read stays in d0 through ``$055B84`` into ``$055BD8``,
+    which masks it to a byte and assembles that structure at ``$059D70``. The
+    region walk's stopping address is then published as ``$7B0E``.
+
+    So a level selects a structure slot by lookup, not by arithmetic: Vesta
+    Parliament's table reads 90, 92, 92, 93 and then 91 at level 10.
+
+    A plain structure record has no alias header and therefore no table, so it
+    offers level 0 alone and this returns ``None``. The table is twelve bytes,
+    but two authored records are shorter than the format and run into the
+    record that follows; entries past a record's own extent are not published.
+    """
+    base = u32(data, 0x4bd0c)
+    address = base + u32(data, base + slot * 4)
+    if not struct.unpack_from('>H', data, address)[0] & 0x8000:
+        return None
+    table = address + 6
+    # An alias record carries no eight-byte prologue; a plain structure's scale
+    # and palette bytes at -8..-1 belong to it, so they end the record before.
+    following = sorted(
+        a if struct.unpack_from('>H', data, a)[0] & 0x8000 else a - 8
+        for a in {base + u32(data, base + s * 4) for s in range(count)}
+        if a > address
+    )
+    extent = STRUCTURE_LEVELS if not following else max(0, min(STRUCTURE_LEVELS, following[0] - table))
+    floors = []
+    for level in range(extent):
+        target = data[table + level]
+        if not target:
+            continue
+        target_address = base + u32(data, base + target * 4)
+        floors.append({'level': level, 'structureId': f'structure-{target_address:06x}',
+                       'structureSlot': target})
+    return {'floors': floors, 'levelsAuthored': extent, 'tableAddress': table}
+
+
 def structure_origin(resident_position: tuple[int, int, int], dx: int, dz: int) -> tuple[int, int, int]:
     """Resolve a cell structure's raw origin using the native offset transform."""
     return (
@@ -2827,6 +2878,9 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 storey_height = structure_storey_height(data, slot)
                 if storey_height is not None:
                     model['storeyHeight'] = storey_height
+                level_binding = structure_level_binding(data, slot, count)
+                if level_binding is not None:
+                    model['levelBinding'] = level_binding
             try:
                 if kind == 'structure':
                     pointer = address

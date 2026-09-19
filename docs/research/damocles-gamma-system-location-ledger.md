@@ -456,7 +456,7 @@ nothing about the placements this table records.
 |  151 | DAMOCLES FILE    |   `$06` | ERIS  | `$12` / `$89` / `$00` | none      | no        | Eris structure selectors (#252) at cell `$89` |
 |   95 | MAGIC CRYSTAL    |   `$14` | MIDAS | `$38` / `$EB` / `$00` | none      | no        | no Midas surface workspace (#172)             |
 |  101 | AUTHORS COMPUTER |   `$0B` | DION  | `$02` / `$DE` / `$00` | recovered | no        | its regions are unwalkable (#362)             |
-|   94 | CASH REGISTER    |   `$3E` | VESTA | `$05` / `$73` / `$01` | recovered | no        | level-to-structure binding (#355)             |
+|   94 | CASH REGISTER    |   `$3E` | VESTA | `$05` / `$73` / `$01` | recovered | no        | the port draws level 0 only (#355 recovered)  |
 
 Cell `$89` is STATE OFFICE, and #252 owns every Eris structure selector, so two
 of the five unreached trigger objects fall inside that ticket's existing scope.
@@ -516,15 +516,17 @@ cells of that Body, collecting every resident the Session Snapshot draws.
 at 2048-unit resolution **within** each relevant cell confirms the region
 result below.
 
-### Slot 94 is a level, and the level rule is not recovered
+### Slot 94 is a level, and the port still draws only level 0
 
 CASH REGISTER sits at level 1 of `vesta-surface-73`, 48 units above floor 1 on
-the structure's 160-unit storey pitch. `worldPosition` draws only level 0, which
-is not a shortcut but the absence of the static level-to-structure binding rule
-that [#355](https://github.com/odogono/mercenary/issues/355) owns. This is the
-same prerequisite #313 already records against the model-form gate, the height
-gate and the `$7AC5`/`$7AA5` identity: an ordinary route into a structure
-interior at a non-zero level.
+the structure's 160-unit storey pitch. `worldPosition` draws only level 0. That
+was the absence of the static level-to-structure binding rule; the rule is
+[now recovered](damocles-level-structure-binding.md) — the cell instance's alias
+record names one structure slot per level — and the Catalogue publishes it as
+`levelBinding`. What remains is admitting a non-zero level into `worldPosition`
+and into an interior Drop, which #355 deliberately left to separate delivery
+work, alongside the ordinary route into a structure interior that #313 records
+against the model-form gate, the height gate and the `$7AC5`/`$7AA5` identity.
 
 ### Slot 101 is behind a shut door
 
@@ -602,10 +604,11 @@ only while one named object slot is in the Carried Stack:
 gate is implemented and the port honours it, but none of the three keys has a
 recovered placement: all ten `DOOR KEY A` instances share one model record, and
 slot 38 is the only one the extractor places. A key with no placement cannot be
-stood next to, so it cannot be taken, so the door cannot open. The residents are
-behind [#355](https://github.com/odogono/mercenary/issues/355) — the
-level-to-structure binding — by way of their keys rather than by way of
-themselves.
+stood next to, so it cannot be taken, so the door cannot open. The keys the list
+puts at levels 2 and 9 need a port that admits a non-zero level; the
+[level-to-structure binding](damocles-level-structure-binding.md) that blocked
+that is recovered, so what these residents wait on is the delivery work, by way
+of their keys rather than by way of themselves.
 
 The [guide item list](damocles-guide-resident-list.md) put all three of these
 cells, and none of the nine reachable residents' cells, under "needs key" before
