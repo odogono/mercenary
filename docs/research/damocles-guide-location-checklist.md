@@ -1,7 +1,9 @@
 # Damocles guide: targeted location research
 
 Research checklist for [#326](https://github.com/odogono/mercenary/issues/326),
-checked 2026-09-18. The [Damocles guide](http://mercenarysite.free.fr/damocles.htm)
+checked 2026-09-19. **All eight priority captures are now taken**, by steered
+craft flight; what each capture did and did not establish is recorded below.
+The [Damocles guide](http://mercenarysite.free.fr/damocles.htm)
 is a **secondary source of navigation leads**, not recovered runtime data or
 Working-Authority Evidence. Use its base-game planet descriptions and key list
 to choose where to investigate in the Atari ST Working Authority. No capture,
@@ -10,15 +12,21 @@ workspace, parent, placement or access rule is established by this note.
 ## Evidence and current coverage
 
 Directly recounting [arrival-poses.json](../../payload/damocles/arrival-poses.json)
-gives **19 on-foot poses across 15 physical bodies**. Fifteen of the thirty
+gives **27 on-foot poses across 23 physical bodies**. Seven of the thirty
 physical bodies remain unposed; VOID is excluded. Running
 `python3 research/damocles-st/scripts/location-ledger.py ledger` against
 [catalogue.json](../../payload/damocles/catalogue.json) confirms the resident
-counts below. All eight priority bodies have **zero recovered interior
-placements**, no recovered surface workspace and no arrival pose. Their 25
-resident records include 24 takeable objects; THALIA's BULLET is not takeable.
-See the [coverage ledger](damocles-gamma-system-location-ledger.md) and
+counts below. All eight priority bodies now have a validated arrival pose, and
+each still has **zero recovered interior placements** and no recovered surface
+workspace. Their 25 resident records include 24 takeable objects; THALIA's
+BULLET is not takeable. See the
+[coverage ledger](damocles-gamma-system-location-ledger.md) and
 [resident association decoding](damocles-resident-objects.md).
+
+**A pose is not a placement.** Each capture below establishes one reachable
+standing position and the engine's own cell word there. It establishes no
+workspace origin, no parent, no interior placement and no access rule, and it
+does not convert a guide lead into recovered runtime data.
 
 Guide planetary coordinates beginning `~` are approximate navigation readings.
 Local `x/z` building cells are a separate coordinate system; the native packed
@@ -35,23 +43,33 @@ planetary coordinates to camera longwords or workspace origins is established.
 
 Every destination, building name, floor and access instruction in this table is
 from the guide's **base-game body section**. Resident slots and selectors in the
-following section are independently extracted payload facts. All tasks remain
-open; arriving on foot and resolving interior placement are separate tasks.
+following section are independently extracted payload facts. Arriving on foot
+is done for all eight; resolving interior placement remains a separate task on
+every one of them.
 The guide labels all eight destinations airless; its ACME Universal Suit lead
 is the trading post at `09/14` on Dion Birmingham Island. Treat environmental
 protection and keyed access as route-planning leads to verify, not newly
 recovered prerequisites.
 
-| Capture task | Approximate planetary destination | Local cells, floors, contents and access leads |
-| --- | --- | --- |
-| [ ] ICARUS | Mining complex `~152/417` | HQ `02/01`: Red Herring; floor and entry restriction unspecified. |
-| [ ] ATROPOS | City `~009/304` | Spaceport `02/02`; bank `01/02`; GUM store `01/01`, floor 1: Shopping Bag; radar `02/01`; open area `00/01`: Black Beacon. |
-| [ ] CRONUS | Mercenary I museum `~626/463` | `05/05`: Museum Guide and Black Beacon. Exhibits: Sprintcar `05/03`, Dart `03/01`, Mechanoid `01/01`, Eagle 8 SE (“Cheese”) `01/03`, Hexapod `03/05`. Floors/access unspecified. |
-| [ ] CYCLOPES | IDI camp `~851/602` | Palace of Fun `02/02`: Amplifier; floor unspecified. Lottery ticket lead: Clotho New Town, Lloyds building `01/00`, floor 2. A lottery condition is not evidence of an arrival restriction. |
-| [ ] SOLON | Penn School of Literature `~969/590` | Penn College `01/01`: Blue Beacon and underground maze. Nesbitt Library: Table, Stool, Bookcase, Gold; library floor and route through maze unspecified. |
-| [ ] THALIA | Military base `~487/042` | Spaceport `06/03`: Red Beacon and Bullet. Bullet key lead: Pan Hades administration `04/01`, floor 1; this is a craft-access lead, not a requirement to stand at the spaceport. |
-| [ ] TOLOSA | Currency repository `~667/633` | Outside `01/00`: Blue Beacon. Repository `02/01`: four Gold objects; floor unspecified, Door Key H required according to guide. Guide warns of a defending drone. Key H lead: Midas, guide coordinates `220:345` (also printed `70-03-77-31`); conversion between those notations is unresolved here. |
-| [ ] PERSEUS | Alkane base `~940/456` | Emergency facilities `04/01` and `04/06`, basement: one Bed and Life Support in each. Research lab `05/02`: Battery and Davy Jones' Locker; floor unspecified. |
+The `Captured` column records the pose taken for that body, the engine cell word
+`$7B5C` read where the player stood, and the Body Coordinate Readout derived
+from the camera longwords. On all eight bodies the cell the engine reports
+equals the catalogue's statically decoded cell for a resident of that body —
+the payload cross-check in the next section, reached from the opposite
+direction. The readouts also land within a few units of the guide's approximate
+planetary coordinates, which is a navigation lead corroborated, not the guide's
+building names, floors or access rules promoted to recovered facts.
+
+| Capture task | Captured | Approximate planetary destination | Local cells, floors, contents and access leads |
+| --- | --- | --- | --- |
+| [x] ICARUS | `icarus`, cell `$12`, readout `152-417` | Mining complex `~152/417` | HQ `02/01`: Red Herring; floor and entry restriction unspecified. |
+| [x] ATROPOS | `atropos`, cell `$11`, readout `009-304` | City `~009/304` | Spaceport `02/02`; bank `01/02`; GUM store `01/01`, floor 1: Shopping Bag; radar `02/01`; open area `00/01`: Black Beacon. |
+| [x] CRONUS | `cronus`, cell `$55`, readout `626-463` | Mercenary I museum `~626/463` | `05/05`: Museum Guide and Black Beacon. Exhibits: Sprintcar `05/03`, Dart `03/01`, Mechanoid `01/01`, Eagle 8 SE (“Cheese”) `01/03`, Hexapod `03/05`. Floors/access unspecified. |
+| [x] CYCLOPES | `cyclopes`, cell `$22`, readout `851-602` | IDI camp `~851/602` | Palace of Fun `02/02`: Amplifier; floor unspecified. Lottery ticket lead: Clotho New Town, Lloyds building `01/00`, floor 2. A lottery condition is not evidence of an arrival restriction. |
+| [x] SOLON | `solon`, cell `$11`, readout `969-590` | Penn School of Literature `~969/590` | Penn College `01/01`: Blue Beacon and underground maze. Nesbitt Library: Table, Stool, Bookcase, Gold; library floor and route through maze unspecified. |
+| [x] THALIA | `thalia`, cell `$36`, readout `489-044` | Military base `~487/042` | Spaceport `06/03`: Red Beacon and Bullet. Bullet key lead: Pan Hades administration `04/01`, floor 1; this is a craft-access lead, not a requirement to stand at the spaceport. |
+| [x] TOLOSA | `tolosa`, cell `$12`, readout `667-633` | Currency repository `~667/633` | Outside `01/00`: Blue Beacon. Repository `02/01`: four Gold objects; floor unspecified, Door Key H required according to guide. Guide warns of a defending drone. Key H lead: Midas, guide coordinates `220:345` (also printed `70-03-77-31`); conversion between those notations is unresolved here. |
+| [x] PERSEUS | `perseus`, cell `$25`, readout `936-450` | Alkane base `~940/456` | Emergency facilities `04/01` and `04/06`, basement: one Bed and Life Support in each. Research lab `05/02`: Battery and Davy Jones' Locker; floor unspecified. |
 
 ## Payload cross-check and unresolved differences
 
@@ -72,6 +90,13 @@ coordinates with unresolved named places; interior associations are selectors,
 not coordinates. Do not populate runtime data from the guide table.
 
 ## Existing captures and settlement names
+
+The eight new captures are covered by the table above; the entries below cover
+the bodies that already had a pose when this note was opened. Note that none of
+the eight new captures names a settlement: agreeing with a guide cell does not
+recover the named area the workspace belongs to, and no name below is extended
+to them.
+
 
 - **GAEA / Ur City:** supported match. The
   [live workspace note](damocles-gaea-ur-city-workspace.md) records `UR CITY`
@@ -97,15 +122,21 @@ not coordinates. Do not populate runtime data from the guide table.
 
 ## Next evidence and delivery gates
 
-For each unchecked body: navigate using the leads, capture a reachable on-foot
-pose, decode and validate it with the existing pose tooling, then recover the
-workspace and any structures/regions needed by the intended delivery. Record
-mismatches rather than replacing observed values with the guide's values.
+**Every body that carries a resident object now has a validated arrival pose.**
+The seven bodies still unposed — **DIALIS, LACHESIS, AURORA, TRITON, JUNO,
+JASON and SAPPHIRE** — are exactly the seven with no resident in the first-world
+census. That says nothing about landability, and it is still an unresolved gap
+on each of them; DAMOCLES also has no residents and was posed anyway. Keep #326
+open for that remaining coverage. The guide describes abandoned mines on
+LACHESIS, which is the strongest lead among the seven.
 
-Lower-priority unposed bodies are **DIALIS, LACHESIS, AURORA, TRITON, JUNO,
-JASON and SAPPHIRE**: none has a resident in the first-world census. This says
-nothing about landability. DAMOCLES also has no residents but already has a
-pose. Keep #326 open for remaining coverage.
+What a capture did **not** deliver is now the whole of the remaining work on the
+eight. None of them has a recovered 16×16 workspace origin, so every one of the
+eight publishes a null `workspaceOrigin` beside the origin its own longwords
+imply. None has a recovered parent or interior placement for any resident. For
+each: recover the workspace and any structures/regions the intended delivery
+needs, and record mismatches rather than replacing observed values with the
+guide's values.
 
 Gate each implementation delivery on its admitted bodies' validated poses and
 its required geometry, associations, placement and behavior evidence. Unrelated

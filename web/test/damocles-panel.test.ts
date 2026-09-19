@@ -92,8 +92,11 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
     // own memstate, scaled to three digits as the original's panel prints it (#371).
     const expected: Record<string, string> = {
       acheron: '834-323',
+      atropos: '009-304',
       'bacchus-transporter': '405-638',
       clotho: '590-323',
+      cronus: '626-463',
+      cyclopes: '851-602',
       damocles: '060-048',
       'dion-2-3': '793-571',
       'dion-transporter': '793-574',
@@ -101,13 +104,18 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
       'eris-transporter-11-8': '017-283',
       'gaea-transporter': '064-439',
       'gaea-ur-city-4-2': '125-687',
+      icarus: '152-417',
       'logos-transporter': '316-896',
       lucan: '951-250',
       'mentor-transporter': '689-316',
       'metis-transporter': '616-511',
       midas: '086-102',
       pan: '103-689',
+      perseus: '936-450',
+      solon: '969-590',
+      thalia: '489-044',
       theon: '621-063',
+      tolosa: '667-633',
       'vesta-parliament-4-6': '264-326',
       'vesta-transporter': '264-326'
     };

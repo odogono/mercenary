@@ -400,11 +400,20 @@ def payload_document(poses: list[dict], catalogue: dict) -> dict:
                 'guessing. Two poses that agree on an implied origin stand in the same window.',
                 'Source memstates are Restricted Material and are not published; their SHA-256 '
                 'values identify them.',
-                'Every memstate behind this document was captured by an IPF-capable Hatari 2.6.1 '
-                'build and rehosted onto the pinned build by '
-                'research/damocles-st/scripts/memstate-rehost.py (#331). Only the snapshot '
-                'container changed: each pose decodes to the same words and the same ramSha256 '
-                'as before, and all of them restore and run in the pinned laboratory.',
+                'Almost every memstate behind this document was captured by an IPF-capable '
+                'Hatari 2.6.1 build and rehosted onto the pinned build by '
+                'research/damocles-st/scripts/memstate-rehost.py (#331); '
+                'eris-spaceport-onfoot was captured on the pinned build already and its '
+                'container is passed through byte for byte. Only the snapshot container '
+                'changes: each pose decodes to the same words and the same ramSha256 as before, '
+                'and all of them restore and run in the pinned laboratory.',
+                'memstateSha256 identifies the rehosted container and ramSha256 the machine '
+                'inside it. ramSha256 is the stable identity: it is unchanged for every pose '
+                'this document has ever carried. memstateSha256 moved once, when rehosting was '
+                'made byte-reproducible - gzip had been stamping the wall clock into the '
+                'container header, so one captured memstate produced a different hash on every '
+                'rehost. The containers the earlier hashes named hold the same bytes apart from '
+                'that timestamp.',
             ],
         },
         'orientation': {

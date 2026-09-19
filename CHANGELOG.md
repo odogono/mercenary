@@ -12,6 +12,31 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **Every Damocles body that carries a resident object now has a validated
+  on-foot arrival pose.** Eight captures — ICARUS, ATROPOS, CRONUS, CYCLOPES,
+  SOLON, THALIA, TOLOSA and PERSEUS — were flown in play by steered craft
+  flight, using the departure machinery recovered earlier under #326, and take
+  `payload/damocles/arrival-poses.json` from nineteen poses on fifteen bodies to
+  twenty-seven on twenty-three. On all eight the engine's cell word `$7B5C`
+  equals the cell the catalogue's statically decoded resident association
+  already gave for that body — a live reading meeting a static decode on eight
+  bodies, with no shared derivation. None of the eight recovered a workspace
+  origin, so all eight publish a null `workspaceOrigin` and are not admitted by
+  the browser; the pose gap has simply moved ahead of the workspace gap, which
+  is #172's work. The seven bodies still unposed are exactly the seven with no
+  resident record, and that remains an open gap rather than a finding about
+  them (#326).
+
+- **Rehosted memstate containers are byte-reproducible.** `memstate-rehost.py`
+  packed with gzip's default header timestamp, so rehosting one captured
+  memstate twice produced two file hashes for the same machine and no
+  `memstateSha256` in the pose payload could be re-derived. It now packs with
+  `mtime=0`, and a container already in the pinned form is copied through byte
+  for byte rather than recompressed, so `eris-spaceport-onfoot` keeps the hash a
+  dozen research notes cite. Eighteen published hashes moved once as a result;
+  each older value is reproduced exactly by re-gzipping the same stream at the
+  original run's timestamp, and every `ramSha256` is unchanged (#326).
+
 - **A Damocles level now names its own structure, statically.** The rule was
   the last thing `$7B0E` was read live for: which structure a floor binds, and
   therefore which association list a resident above ground level resolves in.

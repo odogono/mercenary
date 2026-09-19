@@ -658,10 +658,12 @@ elapsed-time increments.
 
 Named so that they are not mistaken for decisions this contract made.
 
-- **Fifteen Bodies have no arrival Pose at all, and eleven more have Poses that are not anchored**
-  to a recovered workspace origin (#326 for the captures, #172 for the origins). Departure and
-  flight are recovered and a craft has flown Vesta → Eris and back; the remaining capture work is
-  an approach controller that converges on a chosen Body.
+- **Seven Bodies have no arrival Pose at all, and nineteen more have Poses that are not anchored**
+  to a recovered workspace origin (#326 for the captures, #172 for the origins). The eight
+  resident-carrying Bodies that were unposed were captured on 2026-09-19 by steered craft flight,
+  so the gap is now overwhelmingly the origins rather than the captures: none of the seven
+  remaining unposed Bodies carries a resident record. The laboratory's own approach controller
+  still has not converged, which is what the remaining capture work needs.
 - **No reached support has ever refused.** The model-form and height gates are implemented as
   recovered and asserted by unit tests only.
 - **Thirteen Dion and Vesta residents have no published placement**, and ten of them have no named

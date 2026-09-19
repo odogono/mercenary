@@ -53,17 +53,28 @@ restore is abandoned. Convert it once, then use it like any other snapshot:
 
 ```sh
 python3 research/damocles-st/scripts/memstate-rehost.py \
-    --input /path/to/captured/dion-2-3.sav \
-    --output research/damocles-st/snapshots/dion-2-3.sav
+    --input research/damocles-st/snapshots/damocles.icarus.sav \
+    --output research/damocles-st/snapshots/rehosted/icarus.sav
 python3 research/damocles-st/scripts/memstate-rehost.py --input ... --inspect
 ```
 
 Only the snapshot's IPF section changes. The tool re-decodes the 1 MiB ST RAM window
 before and after and refuses to write if it differs, so the captured machine is
 preserved exactly; the rehosted file is a different container, not a new capture.
-Every memstate behind `payload/damocles/arrival-poses.json` was captured this
-way and rehosted. All of them are Restricted Material and stay uncommitted; the
-repository's `*.sav` rule already ignores them.
+Nearly every memstate behind `payload/damocles/arrival-poses.json` was captured
+this way and rehosted; one, `eris-spaceport-onfoot`, was captured on the pinned
+build and its container is copied through byte for byte. All of them are
+Restricted Material and stay uncommitted; the repository's `*.sav` rule already
+ignores them.
+
+Write rehosted containers under `snapshots/rehosted/`, named for the pose id.
+The catalogue's bank-identity tests glob `snapshots/*.sav` and would compare
+each capture twice if both forms sat in the same directory.
+
+The output is byte-reproducible: the tool packs with `mtime=0`, because gzip
+otherwise stamps the wall clock into the container header and the same captured
+memstate would hash differently on every rehost. `tests/test_memstate_rehost.py`
+pins that. `ramSha256` identifies the machine and is unaffected either way.
 
 ## Support placement and multi-object drops on Vesta (#331)
 

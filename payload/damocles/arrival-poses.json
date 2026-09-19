@@ -16,7 +16,8 @@
    "The cell is read from the engine cell word $7B5C, the same word the resident object and object-drop matchers compare against. Where the body has a recovered 16x16 workspace origin, the camera longwords reproduce that cell independently and workspaceOrigin carries the origin.",
    "A 16x16 workspace is a window onto a body surface that spans thousands of cells, so one body can carry several. Where the longwords put a pose outside the one recovered workspace on its body, workspaceOrigin is null and the evidence field says so; impliedWorkspaceOrigin always carries the origin that pose's own longwords and cell imply, so an unanchored cell can be anchored later without guessing. Two poses that agree on an implied origin stand in the same window.",
    "Source memstates are Restricted Material and are not published; their SHA-256 values identify them.",
-   "Every memstate behind this document was captured by an IPF-capable Hatari 2.6.1 build and rehosted onto the pinned build by research/damocles-st/scripts/memstate-rehost.py (#331). Only the snapshot container changed: each pose decodes to the same words and the same ramSha256 as before, and all of them restore and run in the pinned laboratory."
+   "Almost every memstate behind this document was captured by an IPF-capable Hatari 2.6.1 build and rehosted onto the pinned build by research/damocles-st/scripts/memstate-rehost.py (#331); eris-spaceport-onfoot was captured on the pinned build already and its container is passed through byte for byte. Only the snapshot container changes: each pose decodes to the same words and the same ramSha256 as before, and all of them restore and run in the pinned laboratory.",
+   "memstateSha256 identifies the rehosted container and ramSha256 the machine inside it. ramSha256 is the stable identity: it is unchanged for every pose this document has ever carried. memstateSha256 moved once, when rehosting was made byte-reproducible - gzip had been stamping the wall clock into the container header, so one captured memstate produced a different hash on every rehost. The containers the earlier hashes named hold the same bytes apart from that timestamp."
   ]
  },
  "orientation": {
@@ -33,6 +34,34 @@
   "cellsPerAxis": 16
  },
  "poses": [
+  {
+   "id": "icarus",
+   "body": "body-1",
+   "name": "ICARUS",
+   "bodySelector": 4,
+   "onFoot": true,
+   "position": {
+    "x": 41058080,
+    "y": 63,
+    "z": 45187500
+   },
+   "yaw": 63984,
+   "cell": 18,
+   "localCell": {
+    "x": 2,
+    "z": 1
+   },
+   "workspaceOrigin": null,
+   "impliedWorkspaceOrigin": {
+    "x": 624,
+    "z": 688
+   },
+   "evidence": {
+    "memstateSha256": "561839d62398a2d8d304e9392b37a38c6a5c2f78cc84a92e87b259a5a0085f81",
+    "ramSha256": "d40a9bb5bb46fbc6478189aecfa27893e4855bfdea858cfb5126fa94651e5338",
+    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 624,688 for the workspace this pose stands in."
+   }
+  },
   {
    "id": "midas",
    "body": "body-2",
@@ -56,7 +85,7 @@
     "z": 3482
    },
    "evidence": {
-    "memstateSha256": "f8f319ac698b2cbd38770fb9a8e0cd2df8e63f07f6b356e3ae6c75994200acb5",
+    "memstateSha256": "d11c8506f42caeb8e65f15dfb124a187cf47c728796b975d296841a214f4174f",
     "ramSha256": "52a2720f64dd37d3ca0ff77ce366cfcfc8325ab3c08562d9ba05eb6d07fb6ae1",
     "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 353,3482 for the workspace this pose stands in."
    }
@@ -84,7 +113,7 @@
     "z": 298
    },
    "evidence": {
-    "memstateSha256": "9c642c50c2239d96b17eb51b0c7c472afaee682ed6cecb10b837bd54a64d8350",
+    "memstateSha256": "5269cef112d40f27de38d615d93bc5f5bc93b69d6ffc010fb5138ea17d42fd75",
     "ramSha256": "3d84c0fe1baf04a1f6c3341ab257be04fa72244a9c5f1b1563def3a61805dae0",
     "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 3419,298 for the workspace this pose stands in."
    }
@@ -115,7 +144,7 @@
     "z": 1314
    },
    "evidence": {
-    "memstateSha256": "4286686917efae04027a9ef4b4fa7cb96f3e2a98865e40e67eb9866fba95d1e6",
+    "memstateSha256": "361f5ca00cf2a0220489de25c81a7085e812cff019a1b2f44127f55db3ea2f80",
     "ramSha256": "cefccd95454cf07d834578133012cdffb6469445ac79b1bbe02a746eabcf3734",
     "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 3252,1314 (docs/research/damocles-dion-workspace.md)."
    }
@@ -146,9 +175,37 @@
     "z": 1314
    },
    "evidence": {
-    "memstateSha256": "4fe4fa6d1bd581d14efbd8c4296db99aba92a45c54be3cecad9c1aa29d741a4b",
+    "memstateSha256": "a1ec597af92d71cfe39f296713cddceb555f546c7e0b4acfc73bafe566a34726",
     "ramSha256": "e7670105854823383820a2d9b15ffa9553b42cec80b78b7d57c4864bb433b948",
     "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 3252,1314 (docs/research/damocles-dion-workspace.md)."
+   }
+  },
+  {
+   "id": "atropos",
+   "body": "body-5",
+   "name": "ATROPOS",
+   "bodySelector": 20,
+   "onFoot": true,
+   "position": {
+    "x": 2850183,
+    "y": 63,
+    "z": 14844268
+   },
+   "yaw": 988,
+   "cell": 17,
+   "localCell": {
+    "x": 1,
+    "z": 1
+   },
+   "workspaceOrigin": null,
+   "impliedWorkspaceOrigin": {
+    "x": 42,
+    "z": 225
+   },
+   "evidence": {
+    "memstateSha256": "6202ac5259c5faa01931b5d4e55e95839938b233cad1ca017baadf52d5eccc6d",
+    "ramSha256": "97628ab09a9c768e1dd3ca52c6b8185f3abf077f9b110197e5a5453043c80b37",
+    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 42,225 for the workspace this pose stands in."
    }
   },
   {
@@ -174,7 +231,7 @@
     "z": 300
    },
    "evidence": {
-    "memstateSha256": "82847dcf8ab39713f2e2dfd0f8a936d44eafab021a765d5fc4d14bdcdb3f9877",
+    "memstateSha256": "f5aa40f70fc08fdebecbf702a7591858ffbf42e0f35851373622b76fec46fee2",
     "ramSha256": "a47bcef562a5f2299eda998ccf4ad27a57da3f2ee51a1cc319c17aeca471299f",
     "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 2421,300 for the workspace this pose stands in."
    }
@@ -205,7 +262,7 @@
     "z": 1792
    },
    "evidence": {
-    "memstateSha256": "eddc5f1c50cefde3e52c043240506cd17507e8bbbc9f8a1cfdb730d5160e673e",
+    "memstateSha256": "051b6cae1fc4902af565ebda599dc3e854bd991b1a5f9e335f1e5d9b9a52b982",
     "ramSha256": "12798fcb860c563b53d5ef0d6947f8f409cc9b7501d586ae535538c2a925fab7",
     "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 512,1792 (docs/research/damocles-gaea-ur-city-workspace.md)."
    }
@@ -233,9 +290,65 @@
     "z": 768
    },
    "evidence": {
-    "memstateSha256": "34daac3fddcb0729a5145c62681b5a0d11710047db6e7731517164950a11d3f1",
+    "memstateSha256": "4892d7c2f28326a7a5e459a7ae631fe5de4f8ce1468a69c604b2c3949dfe9ac7",
     "ramSha256": "70f4b67aa8ffd5b5064ba5f2975c947f0e4b7dc1ab6cef267cd5ee180ee62ba4",
     "cell": "Read from the engine cell word $7B5C. The camera longwords put this pose outside the one recovered workspace on the body (origin 512,1792, docs/research/damocles-gaea-ur-city-workspace.md); they imply a second workspace with origin 256,768, which no workspace note has recovered, so the cell is not anchored to that note."
+   }
+  },
+  {
+   "id": "cronus",
+   "body": "body-9",
+   "name": "CRONUS",
+   "bodySelector": 36,
+   "onFoot": true,
+   "position": {
+    "x": 168393898,
+    "y": 63,
+    "z": 57572209
+   },
+   "yaw": 64810,
+   "cell": 85,
+   "localCell": {
+    "x": 5,
+    "z": 5
+   },
+   "workspaceOrigin": null,
+   "impliedWorkspaceOrigin": {
+    "x": 2564,
+    "z": 873
+   },
+   "evidence": {
+    "memstateSha256": "8db306a92167113f98288cf6987d496e16fd1e17db1b3de046b8146aee375004",
+    "ramSha256": "e788db7e4061093195953b474b9327bdca49ec3507e3b9c8eee4f633d889be56",
+    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 2564,873 for the workspace this pose stands in."
+   }
+  },
+  {
+   "id": "cyclopes",
+   "body": "body-10",
+   "name": "CYCLOPES",
+   "bodySelector": 40,
+   "onFoot": true,
+   "position": {
+    "x": 228687896,
+    "y": 63,
+    "z": 94859970
+   },
+   "yaw": 65045,
+   "cell": 34,
+   "localCell": {
+    "x": 2,
+    "z": 2
+   },
+   "workspaceOrigin": null,
+   "impliedWorkspaceOrigin": {
+    "x": 3487,
+    "z": 1445
+   },
+   "evidence": {
+    "memstateSha256": "bf89edb134653399e3e982e09508139e59ca694fa643eb42b315d64c7dedc820",
+    "ramSha256": "59726c13b1ca12ec66317e7624dee8b2e63c28d61b0e9ff0860327d96df3fcc7",
+    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 3487,1445 for the workspace this pose stands in."
    }
   },
   {
@@ -295,9 +408,37 @@
     "z": 128
    },
    "evidence": {
-    "memstateSha256": "6f17274f2a3e7a31545219cc25937803ebc9d6dd67733d1fc383c9a7e9235c95",
+    "memstateSha256": "33a9dc24aca3c66a8023bd3fe01c1ba97fad61f5f81531f139dbbefa027fa2e1",
     "ramSha256": "a41b92e22495e8efe4f0f8821cb61f5070bbc39381bd90d56cabc9fee3de8259",
     "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 64,128 (docs/research/damocles-catalogue.md)."
+   }
+  },
+  {
+   "id": "solon",
+   "body": "body-12",
+   "name": "SOLON",
+   "bodySelector": 48,
+   "onFoot": true,
+   "position": {
+    "x": 260537593,
+    "y": 63,
+    "z": 91587189
+   },
+   "yaw": 65422,
+   "cell": 17,
+   "localCell": {
+    "x": 1,
+    "z": 1
+   },
+   "workspaceOrigin": null,
+   "impliedWorkspaceOrigin": {
+    "x": 3974,
+    "z": 1396
+   },
+   "evidence": {
+    "memstateSha256": "b88aefe0690fda31ef9bfd64d79115a98a4506837484b78f6e7db9b683119c7e",
+    "ramSha256": "a01be40114265d34b6ab5f3dd48e67bca31558665fb4b834cf57c677502a6d96",
+    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 3974,1396 for the workspace this pose stands in."
    }
   },
   {
@@ -323,7 +464,7 @@
     "z": 3334
    },
    "evidence": {
-    "memstateSha256": "de0025225aa086baf6d5e837f040fb2ca8a3e7af6b9fbd6b7ceeb5abf7f753f2",
+    "memstateSha256": "7e7743f14745181a1142f2ef511a6de1b3607d767e0fa63ff00864c19913270a",
     "ramSha256": "f95caa2c5c36b86ecafa5171a411ea20f945feee4d98cbc8ea481512d20e6f10",
     "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 2546,3334 for the workspace this pose stands in."
    }
@@ -354,7 +495,7 @@
     "z": 307
    },
    "evidence": {
-    "memstateSha256": "d6aac9e01c44dad24b92665d1ba51cdcd7b42746aab616c09d68b5a55275a1ac",
+    "memstateSha256": "35a8a020599dfac92fa0f5d7bd46a4e18550342477c00bd88168deac99c0ce47",
     "ramSha256": "7dca6fcbb9f4194c9c8f4bc23c95e2344bd40b686761efccf0ab2299e539721e",
     "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 1083,307 (docs/research/damocles-vesta-workspace.md)."
    }
@@ -385,7 +526,7 @@
     "z": 307
    },
    "evidence": {
-    "memstateSha256": "bae7a628a15669ae366ef324bd30671fc50eb18b828438b4ddacb58a41158d75",
+    "memstateSha256": "1590a28cf3d063e9bd5575ede79fc153d78c0f77a45d6a84cea9c2bb5fc1a280",
     "ramSha256": "fe94a6f027dc210e301f16fbe699801043c5d1216f4e81c4ea3e3c5917bfd7e0",
     "cell": "Read from the engine cell word $7B5C and independently confirmed by the camera longwords against the workspace origin 1083,307 (docs/research/damocles-vesta-workspace.md)."
    }
@@ -413,7 +554,7 @@
     "z": 1066
    },
    "evidence": {
-    "memstateSha256": "d5d962ed53e9bb9a54ebb0c1e48f8e980badec23b095f33a66b03ed431f9d34d",
+    "memstateSha256": "a68299886575caeee5301cbf0ae63b46ac7f82af68cbe006529c42bfab6fcc6a",
     "ramSha256": "75518269684058680db751a6595afc46976d92a649d6b41baea13db1ff2f290f",
     "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 2527,1066 for the workspace this pose stands in."
    }
@@ -441,7 +582,7 @@
     "z": 0
    },
    "evidence": {
-    "memstateSha256": "123b76ea2ffcb5f63da8914b61400d7e34e797fce20c8d8d566b799a1b8c2ae0",
+    "memstateSha256": "608aaa8a452deda2bfed9c3251667e4d6c048af6c4190fbf8c3b3de30d0ec8f8",
     "ramSha256": "1a8d49d838dd1954afa5eef73617c45fadc4f932f4a8a5b3e3e24fdb2fe1c0b4",
     "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 3896,0 for the workspace this pose stands in."
    }
@@ -469,7 +610,7 @@
     "z": 2648
    },
    "evidence": {
-    "memstateSha256": "96fd127158da6d69f2045f6d0b911ef8b3fbc2d9c0a3a24de60bb55d3db7e37a",
+    "memstateSha256": "a9b6a7ed0f634c5726525c2c4dbacb497e7c3237f91055a2d7bc59bcb4af08b6",
     "ramSha256": "513400c8b895a7e42d8d3fc383ee7becfb125ef61f91111af65b3b00d378fb94",
     "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 1294,2648 for the workspace this pose stands in."
    }
@@ -497,9 +638,37 @@
     "z": 1799
    },
    "evidence": {
-    "memstateSha256": "c766b88e2dc6233a6477f87385dd98363d5e149afe3068d98978be49bf416a88",
+    "memstateSha256": "ee0fdbccc936bfed018ecc55d160cd0890b9c760ffe833b215a8a246196066eb",
     "ramSha256": "f1c1d991f58045579834ddf33fac63be815f976d564ca85294824a143947aaf8",
     "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 421,1799 for the workspace this pose stands in."
+   }
+  },
+  {
+   "id": "thalia",
+   "body": "body-21",
+   "name": "THALIA",
+   "bodySelector": 84,
+   "onFoot": true,
+   "position": {
+    "x": 131432751,
+    "y": 63,
+    "z": 213614542
+   },
+   "yaw": 65489,
+   "cell": 54,
+   "localCell": {
+    "x": 6,
+    "z": 3
+   },
+   "workspaceOrigin": null,
+   "impliedWorkspaceOrigin": {
+    "x": 1999,
+    "z": 3256
+   },
+   "evidence": {
+    "memstateSha256": "2f36225fe6a7c63f5dae857c34e351bf1be3ebdbbb7cae297d4b632ec269815a",
+    "ramSha256": "f9178a7f2a0a871235bb26c3cd7a73f08c3fbee3653162e9275e92764aabbde6",
+    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 1999,3256 for the workspace this pose stands in."
    }
   },
   {
@@ -525,9 +694,65 @@
     "z": 1586
    },
    "evidence": {
-    "memstateSha256": "3a58a846e0e6feaf987a949e02f398354fb00ed194490b52c2deef13c3cb688b",
+    "memstateSha256": "144f456e9586ab7de2edf1452ada498e8e898d8f2be25a45b616596121b952fe",
     "ramSha256": "9786000f08dc4e9468ec72709492eaa121f1d5201b375da08ef0805775ae32a9",
     "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 1661,1586 for the workspace this pose stands in."
+   }
+  },
+  {
+   "id": "tolosa",
+   "body": "body-25",
+   "name": "TOLOSA",
+   "bodySelector": 100,
+   "onFoot": true,
+   "position": {
+    "x": 179542265,
+    "y": 63,
+    "z": 103058305
+   },
+   "yaw": 2329,
+   "cell": 18,
+   "localCell": {
+    "x": 2,
+    "z": 1
+   },
+   "workspaceOrigin": null,
+   "impliedWorkspaceOrigin": {
+    "x": 2737,
+    "z": 1571
+   },
+   "evidence": {
+    "memstateSha256": "6a42be08eb050cf6713ba1a37d9cac643cc772e56e4ebc7e8fdd8cbe3cd2db9f",
+    "ramSha256": "da4af86bf8cf3a01474e6030f94c5a48d2a05c1cd1afe62e74ea6ce541e4e270",
+    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 2737,1571 for the workspace this pose stands in."
+   }
+  },
+  {
+   "id": "perseus",
+   "body": "body-26",
+   "name": "PERSEUS",
+   "bodySelector": 104,
+   "onFoot": true,
+   "position": {
+    "x": 251624793,
+    "y": 63,
+    "z": 53968702
+   },
+   "yaw": 64468,
+   "cell": 37,
+   "localCell": {
+    "x": 5,
+    "z": 2
+   },
+   "workspaceOrigin": null,
+   "impliedWorkspaceOrigin": {
+    "x": 3834,
+    "z": 821
+   },
+   "evidence": {
+    "memstateSha256": "82434fed88df3164526efed77ddb3f7eece78cddfbe0599abbedb660ec211d86",
+    "ramSha256": "659d0a36865a3aacada121ab01da8d45a21d5c39739c4fd4546935198315e851",
+    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 3834,821 for the workspace this pose stands in."
    }
   },
   {
@@ -553,7 +778,7 @@
     "z": 268
    },
    "evidence": {
-    "memstateSha256": "42c6677515905dd68185ed7e6802fe99f99ac1dcbb14a19de3351ddeadd1779d",
+    "memstateSha256": "628a89561a8415501e8872ce3ab9e974bf311dc3304e6b2c6bc15b297b90daee",
     "ramSha256": "ba628747f4f0bef57d6a56e966b4ec7569b3399eb995622958dfda258b64226d",
     "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 2817,268 for the workspace this pose stands in."
    }
@@ -581,7 +806,7 @@
     "z": 3275
    },
    "evidence": {
-    "memstateSha256": "01032042b8880f90f6bc2202a405c821ef342272efdbd865311b133a122c3966",
+    "memstateSha256": "d709a4838fc8664f6addba7c149035cc0da5beaab4d7c03c635a5246ca933563",
     "ramSha256": "9b0d4b1b99e70c9a59806dbc4efe75723280e0819889fec0600e29122f36f32e",
     "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 251,3275 for the workspace this pose stands in."
    }
