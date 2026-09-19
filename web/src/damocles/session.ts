@@ -243,7 +243,7 @@ export class DamoclesSession implements TitleSession<
       const instance = this.content.catalogue.instances.find(
         item => item.id === departure.instance
       )!;
-      if (residence.drawClass !== (instance.handling!.byte & 0x0f)) {
+      if (residence.placementClass !== (instance.placementClass ?? 0)) {
         throw new Error('saved Object Residence contradicts the Catalogue');
       }
       if (residence.kind === 'carried') {
@@ -363,8 +363,8 @@ export class DamoclesSession implements TitleSession<
     const instance = this.instanceFor(instanceId);
     if (instance?.handling?.carried === true) {
       return {
-        drawClass: instance.handling.byte & 0x0f,
-        kind: 'carried'
+        kind: 'carried',
+        placementClass: instance.placementClass ?? 0
       };
     }
     return catalogueResidence(this.content.catalogue, instanceId);
@@ -761,8 +761,8 @@ export class DamoclesSession implements TitleSession<
     }
     const previous = this.residenceFor(selection.instance);
     const carriedResidence: Residence = {
-      drawClass: previous?.drawClass ?? handling.byte & 0x0f,
-      kind: 'carried'
+      kind: 'carried',
+      placementClass: previous?.placementClass ?? instance?.placementClass ?? 0
     };
     this.carried = [selection.instance, ...this.carried];
     if (
@@ -777,8 +777,8 @@ export class DamoclesSession implements TitleSession<
       for (const stored of this.briefcaseStore) {
         const storedInstance = this.instanceFor(stored);
         this.residence.set(stored, {
-          drawClass: (storedInstance?.handling?.byte ?? 0) & 0x0f,
-          kind: 'carried'
+          kind: 'carried',
+          placementClass: storedInstance?.placementClass ?? 0
         });
       }
       this.briefcaseStore = [];
@@ -887,9 +887,10 @@ export class DamoclesSession implements TitleSession<
       }
       const placed: Residence = {
         ...residence,
-        drawClass:
-          this.residenceFor(head)?.drawClass ??
-          (droppedHandling?.byte ?? 0) & 0x0f
+        placementClass:
+          this.residenceFor(head)?.placementClass ??
+          dropped?.placementClass ??
+          0
       };
       if (
         placed.kind === 'structure' &&
@@ -907,13 +908,16 @@ export class DamoclesSession implements TitleSession<
         ? undefined
         : structure?.selection?.structure.regions[this.regionIndex];
     const exterior = region !== undefined && (region.flags & 0x40_00) !== 0;
-    const drawClass =
-      this.residenceFor(head)?.drawClass ?? (droppedHandling?.byte ?? 0) & 0x0f;
+    // The native direct path copies $7A39, the player's 3x3 zone against the bound
+    // structure's extent rectangle. That rectangle has no static decode yet (#356), so the
+    // Residence keeps the class it already carries rather than inventing a zone.
+    const placementClass =
+      this.residenceFor(head)?.placementClass ?? dropped?.placementClass ?? 0;
     if (structure === null || exterior || this.regionIndex === null) {
       return {
         body: this.pose.body,
-        drawClass,
         kind: 'surface',
+        placementClass,
         position: {
           x: this.pose.position.x,
           y: this.pose.position.y - this.rules.eyeHeight,
@@ -933,11 +937,14 @@ export class DamoclesSession implements TitleSession<
     }
     const placed: Residence = {
       body: this.pose.body,
-      drawClass,
       insertionGroup,
       kind: 'structure',
+      // Floor-aware binding is unrecovered: the static rule mapping a level to its bound
+      // structure is open (#355), so an interior Drop may only write the level the port
+      // can bind.
       level: 0,
       parent: structure.id,
+      placementClass,
       position: {
         x: this.pose.position.x - structure.position.x,
         y: this.pose.position.y - this.rules.eyeHeight - structure.position.y,

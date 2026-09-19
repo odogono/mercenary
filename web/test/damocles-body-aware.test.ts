@@ -40,15 +40,42 @@ beforeAll(async () => {
 });
 
 describe('body-aware Object Residence', () => {
+  test('takes the placement class from Association A byte 3, not the handling byte', () => {
+    // $6FAB is mutable placement state the Drop rewrites; $6FAA is the interaction byte the
+    // Take handler tests. They are different bytes of the same longword and they disagree for
+    // most residents, so a Residence derived from the handling nibble is a fabrication
+    // (docs/research/damocles-placement-class.md).
+    const residents = catalogue.instances.filter(
+      instance => instance.handling !== null
+    );
+    expect(residents.length).toBe(241);
+    expect(residents.every(instance => instance.placementClass !== null)).toBe(
+      true
+    );
+    const disagreeing = residents.filter(
+      instance => instance.placementClass !== (instance.handling!.byte & 0x0f)
+    );
+    expect(disagreeing.length).toBe(176);
+    // TABLE slot 202 supplies rank 3 and requires rank 3, so its handling nibble is $F while
+    // its recovered class is 4; KEY - 22 CV slot 178 has handling 4 and class 6.
+    expect(
+      catalogueResidence(catalogue, 'object-slot-202')?.placementClass
+    ).toBe(4);
+    expect(
+      catalogue.instances.find(item => item.id === 'object-slot-178')
+        ?.placementClass
+    ).toBe(6);
+  });
+
   test('derives every recovered placement without denormalising its parent', () => {
     const residence = catalogueResidence(catalogue, 'object-slot-202');
     expect(residence).toEqual({
       body: 'body-14',
-      drawClass: 15,
       insertionGroup: 12,
       kind: 'structure',
       level: 2,
       parent: 'vesta-surface-64',
+      placementClass: 4,
       position: { x: 632, y: 634, z: 878 }
     });
     expect(structureStoreyHeight(catalogue, 'vesta-surface-64')).toBe(317);
@@ -184,8 +211,8 @@ describe('body-aware Object Residence', () => {
             instance: row.instance,
             residence: {
               body: row.residentBody,
-              drawClass: row.residence.drawClass,
               kind: 'surface',
+              placementClass: row.residence.placementClass,
               position: { x: 0, y: 0, z: 0 }
             }
           }
@@ -210,7 +237,10 @@ describe('body-aware Object Residence', () => {
           residence: [
             {
               instance: row.instance,
-              residence: { drawClass: row.residence.drawClass, kind: 'carried' }
+              residence: {
+                kind: 'carried',
+                placementClass: row.residence.placementClass
+              }
             },
             ...(drop.support === null
               ? []
@@ -219,8 +249,8 @@ describe('body-aware Object Residence', () => {
                     instance: drop.support,
                     residence: {
                       body: row.body,
-                      drawClass: drop.supportClass!,
                       kind: 'surface' as const,
+                      placementClass: drop.supportClass!,
                       position: { x: 20, y: 0, z: 0 }
                     }
                   }

@@ -267,8 +267,15 @@ Additional SHA-256 source ranges, **inclusive**:
 Association A byte 3 also belongs to mutable placement state: the direct path copies `$7A39`,
 while support placement copies the support's byte. The surface trace observes 4→0, and the
 [selection note](damocles-object-selection.md) establishes that class 4 affects drawing priority.
-A complete derivation of this class from residence is not recovered. Retain its value across
-save/restore rather than silently restoring the authored value or assuming every interior is 4.
+Retain its value across save/restore rather than silently restoring the authored value or
+assuming every interior is 4.
+
+**Superseded in part.** This note recorded that a complete derivation of the class from
+residence is not recovered. [The placement class note](damocles-placement-class.md) derives
+it: `$7A39` is the 3×3 zone of the intra-cell position against the bound structure's extent
+rectangle, computed at `$059076`, and the 4→0 this trace observes is the player leaving
+Capital Spaceport's rectangle. What remains unrecovered is the static source of that
+rectangle, not the rule that reads it.
 
 Contact-state source ranges, inclusive, in the same pinned RAM:
 

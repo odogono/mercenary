@@ -75,10 +75,10 @@ const besideKey = (soundPermitted = true): DamoclesSession => {
 const carriedResidence = (instance: string) => ({
   instance,
   residence: {
-    drawClass:
-      loaded.catalogue.instances.find(item => item.id === instance)!.handling!
-        .byte & 0x0f,
-    kind: 'carried' as const
+    kind: 'carried' as const,
+    placementClass: loaded.catalogue.instances.find(
+      item => item.id === instance
+    )!.placementClass!
   }
 });
 
@@ -102,20 +102,20 @@ const dynamicAtOrigin = (
       ...carried.map(instance => ({
         instance,
         residence: {
-          drawClass:
-            content.catalogue.instances.find(item => item.id === instance)!
-              .handling!.byte & 0x0f,
-          kind: 'carried' as const
+          kind: 'carried' as const,
+          placementClass: content.catalogue.instances.find(
+            item => item.id === instance
+          )!.placementClass!
         }
       })),
       {
         instance,
         residence: {
           body: 'body-11',
-          drawClass:
-            content.catalogue.instances.find(item => item.id === instance)!
-              .handling!.byte & 0x0f,
           kind: 'surface' as const,
+          placementClass: content.catalogue.instances.find(
+            item => item.id === instance
+          )!.placementClass!,
           position: { x: 0, y: 0, z: 0 }
         }
       }
@@ -147,8 +147,8 @@ describe('ordinary Eris limo-key take and drop', () => {
       instance: 'object-slot-92',
       residence: {
         body: 'body-11',
-        drawClass: 4,
         kind: 'surface',
+        placementClass: 0,
         position: { x: 0, y: 317, z: 0 }
       }
     });
@@ -196,11 +196,11 @@ describe('ordinary Eris limo-key take and drop', () => {
           instance: 'object-slot-92',
           residence: {
             body: 'body-11',
-            drawClass: 4,
             insertionGroup: 12,
             kind: 'structure',
             level: 0,
             parent: 'eris-surface-87',
+            placementClass: 0,
             position: { x: 1038, y: 2, z: 789 }
           }
         });
@@ -248,8 +248,8 @@ describe('ordinary Eris limo-key take and drop', () => {
           instance: 'object-slot-92',
           residence: {
             body: 'body-11',
-            drawClass: 4,
             kind: 'surface',
+            placementClass: 0,
             position: { x: 0, y: 12, z: 0 }
           }
         });
@@ -373,7 +373,7 @@ describe('ordinary Eris limo-key take and drop', () => {
     expect(session.snapshot.residence).toEqual([
       {
         instance: 'object-slot-183',
-        residence: { drawClass: 4, kind: 'carried' }
+        residence: { kind: 'carried', placementClass: 4 }
       }
     ]);
     expect(session.snapshot.residents).toEqual([]);
@@ -468,7 +468,7 @@ describe('ordinary Eris limo-key take and drop', () => {
     expect(session.snapshot.residence).toEqual([
       {
         instance: 'object-slot-92',
-        residence: { drawClass: 4, kind: 'carried' }
+        residence: { kind: 'carried', placementClass: 0 }
       }
     ]);
   });
@@ -488,11 +488,11 @@ describe('ordinary Eris limo-key take and drop', () => {
       residence: [
         {
           instance: 'object-slot-183',
-          residence: { drawClass: 4, kind: 'carried' }
+          residence: { kind: 'carried', placementClass: 4 }
         },
         {
           instance: 'object-slot-92',
-          residence: { drawClass: 4, kind: 'carried' }
+          residence: { kind: 'carried', placementClass: 0 }
         }
       ],
       script: {
@@ -582,8 +582,8 @@ describe('ordinary Eris limo-key take and drop', () => {
       head: 'object-slot-108',
       residence: {
         body: 'body-11',
-        drawClass: 4,
         kind: 'surface',
+        placementClass: 4,
         position: { x: 0, y: 0, z: 0 }
       }
     });
@@ -597,8 +597,8 @@ describe('ordinary Eris limo-key take and drop', () => {
       instance: 'object-slot-108',
       residence: {
         body: 'body-11',
-        drawClass: 4,
         kind: 'surface',
+        placementClass: 4,
         position: { x: movedPose.x, y: 0, z: movedPose.z }
       }
     });
@@ -653,8 +653,8 @@ describe('ordinary Eris limo-key take and drop', () => {
       instance: 'object-slot-92',
       residence: {
         body: 'body-11',
-        drawClass: 4,
         kind: 'surface',
+        placementClass: 0,
         position: { x: 0, y: 2, z: 0 }
       }
     });

@@ -71,8 +71,8 @@ describe('Damocles Saves', () => {
         head: 'object-slot-108',
         residence: {
           body: 'body-11',
-          drawClass: 4,
           kind: 'surface',
+          placementClass: 4,
           position: { x: 0, y: 0, z: 0 }
         }
       },
@@ -84,10 +84,10 @@ describe('Damocles Saves', () => {
       residence: carried.map(instance => ({
         instance,
         residence: {
-          drawClass:
-            loaded.catalogue.instances.find(item => item.id === instance)!
-              .handling!.byte & 15,
-          kind: 'carried'
+          kind: 'carried',
+          placementClass: loaded.catalogue.instances.find(
+            item => item.id === instance
+          )!.placementClass!
         }
       })),
       structure: null
@@ -206,7 +206,7 @@ describe('Damocles Saves', () => {
       residence: [
         {
           instance: 'object-slot-183',
-          residence: { drawClass: 4, kind: 'carried' as const }
+          residence: { kind: 'carried' as const, placementClass: 4 }
         }
       ],
       script: {
@@ -256,11 +256,11 @@ describe('Damocles Saves', () => {
             instance: 'object-slot-183',
             residence: {
               body: 'body-11',
-              drawClass: 4,
               insertionGroup: 1,
               kind: 'structure' as const,
               level: 0,
               parent: 'eris-surface-89',
+              placementClass: 4,
               position: { x: 0, y: 0, z: 0 }
             }
           }

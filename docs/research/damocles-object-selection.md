@@ -135,7 +135,9 @@ The pickup note left the values written into a held object's X, Z and Associatio
 
 **Derived from instructions, not reproduced at runtime**: the exclusion of slot 74; the ANTIGRAV bypass; the drop handler's rank comparison; the bit-5 refusal message index; that a resident outside both candidate lists can never be selected, which no observed geometry put to the test.
 
-**Unresolved**: what slot 74 is, and why it alone is excluded; the meaning of the draw-order priority table at `$05333C` and of the `$7A3A` index into it; the bump at `$053310` and the `$6FAB` class value 4 that reaches it; the constant triple at `$799A`/`$799E`/`$79A2` that the surface queue pass at `$052EF6` subtracts instead of the eye, which held `(−630000, 64, 390000)` in every sample and produces keys around exponent 23 that can never win; whether a take completes while aboard; and bit 6 of the association byte, which nothing in the census sets.
+**Resolved since**: the `$7A3A` index and the `$6FAB` class value 4. `$7A3A` is nine times the 3×3 zone the routine at `$059076` computes for a position against the bound structure's extent rectangle, so `$05333C` is nine entries per zone and class 4 is the centre zone — inside the rectangle on both axes. See [placement class](damocles-placement-class.md).
+
+**Unresolved**: what slot 74 is, and why it alone is excluded; what the nine priority entries within a zone order; the constant triple at `$799A`/`$799E`/`$79A2` that the surface queue pass at `$052EF6` subtracts instead of the eye, which held `(−630000, 64, 390000)` in every sample and produces keys around exponent 23 that can never win; whether a take completes while aboard; and bit 6 of the association byte, which nothing in the census sets.
 
 ## Recommendation for the Gameplay Session
 

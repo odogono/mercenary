@@ -22,10 +22,15 @@ import type { Pose } from './world.ts';
 /// Version 3 replaced Capital Spaceport fields with the bound structure workspace.
 ///
 /// Version 4 makes the record body-aware: the Pose names its Body, and identity pins every
-/// presentation document by content rather than naming one Body's schema number. The
-/// body-aware contract bumps once and once only (ADR 0044) -- #300's Carried Stack, display
-/// and script state join schema 4 without a further bump.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 4 as const;
+/// presentation document by content rather than naming one Body's schema number. #300's
+/// Carried Stack, display and script state join schema 4 without a further bump.
+///
+/// Version 5 carries the body-aware contract's own Session State -- `briefcaseStore`, the
+/// pending Drop, and an Object Residence's `placementClass`, which is the recovered
+/// Association A byte 3 rather than the handling byte's low nibble that version 4 stored.
+/// There is no migration: a schema-4 record's classes are not schema-5 classes, so it is
+/// refused whole (ADR 0044).
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 5 as const;
 export const DAMOCLES_DESTINATION = 'damocles' as const;
 
 /// What a restore must match exactly before it may continue this game (ADR 0026).
@@ -52,7 +57,9 @@ export interface BoundStructureSnapshot {
 }
 
 export interface DamoclesSaveSnapshot {
-  // Legacy schema-4 envelopes omit both continuation fields; partial omission is invalid.
+  // Both continuation fields may be omitted together and are then normalized to empty;
+  // partial omission is invalid. Since the schema-5 bump no shipped build writes a record
+  // that omits them, so this leniency is now unreachable rather than load-bearing.
   readonly briefcaseStore: readonly string[];
   readonly carried: readonly string[];
   readonly elapsed: number;
@@ -203,14 +210,14 @@ const identityOf = (value: unknown): DamoclesSaveIdentity => {
 const residenceOf = (value: unknown): Residence => {
   const residence = object(value, 'snapshot.residence[].residence');
   const kind = residence['kind'];
-  const drawClass = integer(
-    residence['drawClass'],
-    'residence.drawClass',
+  const placementClass = integer(
+    residence['placementClass'],
+    'residence.placementClass',
     0,
     255
   );
   if (kind === 'carried') {
-    return { drawClass, kind };
+    return { kind, placementClass };
   }
   const body = residence['body'];
   const position = poseOf({
@@ -219,7 +226,7 @@ const residenceOf = (value: unknown): Residence => {
     position: residence['position']
   }).position;
   if (kind === 'surface') {
-    return { body: body as string, drawClass, kind, position };
+    return { body: body as string, kind, placementClass, position };
   }
   if (
     kind !== 'structure' ||
@@ -230,7 +237,6 @@ const residenceOf = (value: unknown): Residence => {
   }
   return {
     body: body as string,
-    drawClass,
     insertionGroup: integer(
       residence['insertionGroup'],
       'residence.insertionGroup',
@@ -240,6 +246,7 @@ const residenceOf = (value: unknown): Residence => {
     kind,
     level: integer(residence['level'], 'residence.level', 0, 255),
     parent: residence['parent'],
+    placementClass,
     position
   };
 };
@@ -433,12 +440,11 @@ const validateResidence = (
       return fail('Object Residence names no handled Catalogue instance');
     }
     const residence = departure.residence;
-    const legacyKeyClass =
-      departure.instance === 'object-slot-183' &&
-      residence.kind !== 'structure' &&
-      residence.drawClass === 0;
-    if (!legacyKeyClass && residence.drawClass !== (handling.byte & 0x0f)) {
-      fail('residence draw class contradicts the Catalogue');
+    // The recovered placement class is Association A byte 3, not the handling byte's low
+    // nibble, and the Drop does not yet rewrite it: a saved Residence may only carry the
+    // class the Catalogue authored (docs/research/damocles-placement-class.md).
+    if (residence.placementClass !== (instance?.placementClass ?? 0)) {
+      fail('residence placement class contradicts the Catalogue');
     }
     if (
       residence.kind === 'surface' &&

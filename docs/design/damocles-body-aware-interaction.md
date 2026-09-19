@@ -175,17 +175,17 @@ type BodyId = string;     // a Damocles Catalogue Body id, e.g. 'body-11'
 type Position = { readonly x: number; readonly y: number; readonly z: number };
 
 type Residence =
-  | { readonly kind: 'carried'; readonly drawClass: number }
+  | { readonly kind: 'carried'; readonly placementClass: number }
   | {
       readonly kind: 'surface';
       readonly body: BodyId;
-      readonly drawClass: number;
+      readonly placementClass: number;
       readonly position: Position; // body/world frame
     }
   | {
       readonly kind: 'structure';
       readonly body: BodyId;
-      readonly drawClass: number;
+      readonly placementClass: number;
       readonly parent: InstanceId;    // stable structure instance, even while unbound
       readonly level: number;         // floor index; written from $7AC5 by a drop
       readonly insertionGroup: number;
@@ -214,6 +214,24 @@ any research delivery, and the residence has no way to win that disagreement.
 
 `level` stays inline because it is not derivable from the parent: a drop writes it from `$7AC5`,
 which #326's captures settled as the same quantity the association builder matches on at `$7AA5`.
+
+### The placement class is a recovered byte, not the handling nibble
+
+`placementClass` is Association A byte 3 (`$6FAB + 4*slot`), published per resident instance as
+`placementClass`. It was called `drawClass` and derived as `handling.byte & 0x0f` until #345's
+second pass; that derivation is a fabrication, disagreeing with the recovered byte for 176 of the
+241 residents.
+
+`$7A39`, which the direct path copies over it at `$0546FC`, is the 3×3 zone of the intra-cell
+position against the bound structure's extent rectangle, recomputed at `$059076`; `$7A3A` is nine
+times it and indexes the draw-order priority table. See
+[placement class](../research/damocles-placement-class.md).
+
+A Drop **keeps the class the object already carries** rather than writing a zone, because the
+extent rectangle has no static decode yet: it is reached through a structure-slot numbering that
+is not related to the Catalogue's. That is a recorded departure from `$0546FC`, not a claim about
+the original. A support placement inherits the support's class, as recovered, and needs no
+rectangle.
 
 ### The storey-pitch invariant
 
@@ -425,6 +443,13 @@ Schema 4's snapshot is specified by [the limo-key contract](damocles-limo-key-in
 Schema 5 is that record plus the fields this contract adds (`briefcaseStore`, `displayDuration`,
 `pending`, `queueable`, `sticky`). Body-aware residence may name any Catalogue Body.
 
+#345's first pass shipped the schema-5 fields while leaving the version at 4. The second pass
+takes the bump, because it also renames `drawClass` to `placementClass` and changes its value to
+the recovered Association A byte 3: a schema-4 record's classes are not schema-5 classes, and the
+version refusal is the right way to say so rather than a validation failure deep in the residence
+list. One consequence to retire: the decoder still normalizes a record that omits both
+continuation fields, which no shipped build now writes.
+
 ```ts
 interface DamoclesSaveSnapshot {
   readonly carried: readonly InstanceId[];
@@ -593,7 +618,7 @@ identical code paths at level 0 and are covered by the generated matrix rather t
 One trace the limo-key table does not have, and the reason this contract exists:
 
 > Drop an object on Vesta; switch to Eris; take an object there; explicit Save; restore; switch
-> back to Vesta. The Vesta object is where it was left, with its full residence, `drawClass` and
+> back to Vesta. The Vesta object is where it was left, with its full residence, `placementClass` and
 > level; the Eris object is still carried; the Carried Stack order and head are unchanged; and no
 > Damocles Script was restarted or cancelled by either switch.
 
@@ -627,6 +652,18 @@ Named so that they are not mistaken for decisions this contract made.
 - **Trading Post sale and buy-back** state, messages and persistence.
 - **Bit 6 of the handling byte**, which nothing in the census sets and nothing in the handlers
   reads, and **the sticky trigger at index `$38`**, whose purpose is unrecovered.
+- **Floor-aware binding** (#355). The static rule mapping a level to its bound structure is not
+  recovered: Vesta cell `$64` binds slot 70 at level 0 and slot 91 at level 10, and only the live
+  `$7B0E` distinguishes them (#324). A Drop therefore writes `level: 0`, and a residence above
+  level 0 has no geometry to be drawn against or selected from. Deriving the floor from pose
+  height is not a substitute — the pitch belongs to the structure the missing rule would choose.
+- **Direct-drop ground contact `$7ACA`** (#357), and the slot-0 bypass at `$054622`. Contact reads 63 in
+  all 23 tracked memstates, so the refusal is unobserved, and the port's on-foot Mover has no
+  vertical term to produce any other value (ADR 0016). This is blocked on vertical movement, not
+  on drop work.
+- **The bound structure's extent rectangle** (#356), which the placement class a direct Drop writes is
+  computed against. The transform and the zone rule are recovered; the mapping from a Catalogue
+  structure instance to the slot that reaches the source record is not.
 
 None of these is resolved by an implementation default. Each blocks the behaviour that would need
 it, and no authored placeholder is proposed for any of them.

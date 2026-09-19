@@ -6,20 +6,20 @@ import type { Vector3 } from '../orientation/index.ts';
 export const DAMOCLES_CELL_UNITS = 65_536;
 
 export type Residence =
-  | { readonly drawClass: number; readonly kind: 'carried' }
+  | { readonly kind: 'carried'; readonly placementClass: number }
   | {
       readonly body: string;
-      readonly drawClass: number;
       readonly kind: 'surface';
+      readonly placementClass: number;
       readonly position: Vector3;
     }
   | {
       readonly body: string;
-      readonly drawClass: number;
       readonly insertionGroup: number;
       readonly kind: 'structure';
       readonly level: number;
       readonly parent: string;
+      readonly placementClass: number;
       readonly position: Vector3;
     };
 
@@ -30,8 +30,12 @@ export interface ResidenceDeparture {
   readonly residence: Residence;
 }
 
-const drawClassOf = (instance: Instance): number =>
-  (instance.handling?.byte ?? 0) & 0x0f;
+/// Association A byte 3, the recovered placement class. It is not the handling byte's low
+/// nibble: the two disagree for 176 of the 241 resident slots
+/// (docs/research/damocles-placement-class.md). A slot with no resident state has none, and
+/// nothing derives one for it.
+const placementClassOf = (instance: Instance): number =>
+  instance.placementClass ?? 0;
 
 const positionOf = (position: readonly [number, number, number]): Vector3 => ({
   x: position[0],
@@ -53,19 +57,19 @@ export const catalogueResidence = (
   if (instance.association !== null && instance.placement !== null) {
     return {
       body: instance.association.body,
-      drawClass: drawClassOf(instance),
       insertionGroup: instance.association.insertionGroupSelector,
       kind: 'structure',
       level: instance.association.levelSelector,
       parent: instance.placement.parent,
+      placementClass: placementClassOf(instance),
       position: positionOf(instance.placement.position)
     };
   }
   if (instance.location !== null) {
     return {
       body: instance.location.body,
-      drawClass: drawClassOf(instance),
       kind: 'surface',
+      placementClass: placementClassOf(instance),
       position: {
         x: instance.location.position[0] * DAMOCLES_CELL_UNITS,
         y: instance.location.position[1] * DAMOCLES_CELL_UNITS,
@@ -295,7 +299,7 @@ export const generateAcceptanceMatrix = (
         drops.push({
           outcome: rankPasses && heightPasses ? 'dropped' : 'refused',
           support: support.instance.id,
-          supportClass: support.residence.drawClass,
+          supportClass: support.residence.placementClass,
           tag:
             demand === 0 || (rankPasses && !heightPasses)
               ? 'derived'

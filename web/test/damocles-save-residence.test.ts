@@ -21,10 +21,10 @@ beforeAll(async () => {
   );
 });
 
-const surface = (drawClass = 4) => ({
+const surface = (placementClass = 4) => ({
   body: 'body-14',
-  drawClass,
   kind: 'surface' as const,
+  placementClass,
   position: { x: 12, y: 0, z: 34 }
 });
 const record = () => ({
@@ -55,10 +55,9 @@ const carry = (value: ReturnType<typeof record>, ids: string[]) => {
   value.snapshot.residence = ids.map(instance => ({
     instance,
     residence: {
-      drawClass:
-        catalogue.instances.find(item => item.id === instance)!.handling!.byte &
-        15,
-      kind: 'carried'
+      kind: 'carried',
+      placementClass: catalogue.instances.find(item => item.id === instance)!
+        .placementClass!
     }
   }));
 };
@@ -68,7 +67,7 @@ describe('body-aware Save Snapshot admission', () => {
     const value = record();
     carry(value, ['object-slot-108', 'object-slot-178']);
     value.snapshot.residence.push(
-      { instance: 'object-slot-92', residence: surface() },
+      { instance: 'object-slot-92', residence: surface(0) },
       {
         instance: 'object-slot-202',
         residence: catalogueResidence(catalogue, 'object-slot-202')!
@@ -77,11 +76,19 @@ describe('body-aware Save Snapshot admission', () => {
     expect(decode(value)).toEqual(value);
   });
 
-  test('preserves legacy key surface drawClass zero', () => {
+  test('carries the recovered placement class, not the handling nibble', () => {
+    // Association A byte 3 for slot 183 is 4 while its handling byte is also 4, but slot 202
+    // has handling $0F and class 4 and slot 178 has handling 4 and class 6. Only the recovered
+    // byte admits all three (docs/research/damocles-placement-class.md).
+    expect(
+      ['object-slot-183', 'object-slot-202', 'object-slot-178'].map(
+        id => catalogue.instances.find(item => item.id === id)!.placementClass
+      )
+    ).toEqual([4, 4, 6]);
     const value = record();
     value.snapshot.residence.push({
       instance: 'object-slot-183',
-      residence: { ...surface(0), body: 'body-11' }
+      residence: { ...surface(4), body: 'body-11' }
     });
     value.snapshot.script = {
       ...value.snapshot.script,
@@ -144,7 +151,7 @@ describe('body-aware Save Snapshot admission', () => {
     for (const departure of [
       {
         instance: 'object-slot-92',
-        residence: { ...surface(), body: 'unknown' }
+        residence: { ...surface(0), body: 'unknown' }
       },
       { instance: 'unknown', residence: surface() },
       { instance: 'object-slot-92', residence: surface(7) }
@@ -227,7 +234,10 @@ describe('body-aware Save Snapshot admission', () => {
   test('rejects carried classes and capacities that contradict the Catalogue', () => {
     const value = record();
     carry(value, ['object-slot-92']);
-    value.snapshot.residence[0]!.residence = { drawClass: 0, kind: 'carried' };
+    value.snapshot.residence[0]!.residence = {
+      kind: 'carried',
+      placementClass: 7
+    };
     expect(() => decode(value)).toThrow(/class/);
     carry(value, [
       'object-slot-92',

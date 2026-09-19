@@ -27,7 +27,9 @@ game menu. `?model=object-035d12` opens DART II;
 `?instance=dion-surface-32` opens the live Dion cell 2,3 overlay;
 `?instance=object-slot-5` opens the V.I.P. LIMO outside the Spaceport.
 
-For body-aware interaction (#345), two model fields retain recovered native facts.
+For body-aware interaction (#345), each resident instance carries `placementClass`, Association A byte 3 (`$6FAB + 4*slot`). It is mutable placement state rather than identity — a Drop rewrites it — so this is the authored value a session departs from. It is not the handling byte's low nibble; the two disagree for 176 of the 241 residents. See [placement class](damocles-placement-class.md).
+
+Two model fields retain recovered native facts.
 `storeyHeight` is the alias record's first word masked by `$7FFF`, as written to
 `$7B00` at `$054D86`; non-alias models do not claim a pitch. `supportTop` is the
 drop handler's raw-Y maximum at `$0545DE`–`$054610`, or `null` when its model-form
