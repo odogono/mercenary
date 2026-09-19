@@ -291,7 +291,8 @@ export const planErisFrame = (
   pose: Pose,
   doc: ErisPresentationDocument,
   structure: BoundStructureSnapshot | null = null,
-  residents: readonly ErisPlacement[] = []
+  residents: readonly ErisPlacement[] = [],
+  hiddenResidents: readonly string[] = []
 ): ErisFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
@@ -391,7 +392,14 @@ export const planErisFrame = (
     }
   }
   const groundTriangleCount = triangleCount - fillTriangleCount;
+  const hidden = new Set([
+    ...hiddenResidents,
+    ...residents.map(resident => resident.id)
+  ]);
   for (const placement of surface.placements) {
+    if (hidden.has(placement.id)) {
+      continue;
+    }
     if (placement.kind !== 'ground') {
       emitPlacement(placement);
     }

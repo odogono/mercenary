@@ -8,6 +8,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from damocleslab.catalogue import decode_mesh, st_rgb
 
 class CatalogueTests(unittest.TestCase):
+    def test_drop_support_scanner_uses_native_form_gate_and_raw_y(self):
+        from damocleslab.catalogue import decode_support_top
+        vertices = struct.pack('>7h', 10, 2, 30, -10, 48, 20, -32768)
+        self.assertEqual(decode_support_top(vertices, 0), 48)
+        self.assertEqual(decode_support_top(bytes.fromhex('8006 0000') + vertices, 0), 48)
+        self.assertEqual(decode_support_top(bytes.fromhex('8009 0000') + vertices, 0), 48)
+        self.assertEqual(decode_support_top(bytes.fromhex('800a 0777 0000 0002') + vertices, 0), 48)
+        self.assertIsNone(decode_support_top(bytes.fromhex('8008 564c') + vertices, 0))
+        self.assertEqual(decode_support_top(struct.pack('>4h', 0, -20, 0, -32768), 0), 0)
+
     def test_key_header_selects_shared_geometry_and_preserves_display_code(self):
         # $8008 stores a two-character key code, then jumps from the offset
         # word to a shared key geometry stream.

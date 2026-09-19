@@ -33,7 +33,8 @@ describe('the Eris on-foot Mover', () => {
       1,
       rules
     );
-    expect(lifted.position.y).toBe(63);
+    expect(lifted.position.y).toBe(500);
+    expect(walk(lifted, intent({ walk: 1 }), 1, rules).position.y).toBe(500);
   });
 
   test('changes nothing while idle', () => {

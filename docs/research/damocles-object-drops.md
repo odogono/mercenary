@@ -233,7 +233,7 @@ already established, and it is the same for every object:
 | Association B level byte | `$7AC5` |
 | Association B cell byte | `$7B5D` |
 | Association A structure-group byte | `$794F` |
-| Association A class byte | `$7A39` |
+| Association A class byte | `$7A39`, the 3×3 zone of the intra-cell position against the bound structure's extent rectangle ([placement class](damocles-placement-class.md)) |
 | Insertion group | current region byte `$7AFD` when `$7AAE = 1` and bit 6 of `$7B34` is clear, otherwise zero |
 
 Interior direct placement first searches the association-list root `$7B0E` for a

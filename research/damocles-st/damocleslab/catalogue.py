@@ -1830,6 +1830,23 @@ def resident_handling(association_a: bytes) -> dict | None:
     }
 
 
+def resident_placement_class(association_a: bytes) -> int | None:
+    """Decode the placement class the drop handler writes and the draw pass reads.
+
+    Association A byte 3 ($6FAB + 4*slot) is mutable placement state, not an
+    identity: direct placement copies $7A39 over it at $0546FC, support
+    placement inherits the support's, and the bulk reclassifier at $059040
+    recomputes it for a run of slots. $7A39 is itself derived -- see
+    docs/research/damocles-placement-class.md -- so this is the authored value
+    the pinned capture holds, which a session departs from as objects move. It
+    is *not* the handling byte's low nibble: the two disagree for 176 of the
+    241 resident slots.
+    """
+    if len(association_a) != 4:
+        return None
+    return association_a[3]
+
+
 def decode_surface_placements(data: bytes, start: int) -> tuple[dict[int, dict], int]:
     """Decode a $FF-terminated authored surface-cell placement stream.
 
@@ -2022,6 +2039,33 @@ def decode_group_overrides(data: bytes, group: int) -> dict[int, dict]:
             'sceneSelector': high & 0xfe, 'dx': dx, 'dz': dz,
         }
     return overrides
+
+
+def decode_support_top(data: bytes, start: int) -> int | None:
+    """The drop handler's $0545DE-$054610 form gate and raw-Y maximum.
+
+    This is not the renderer's decoded mesh: labels, articulated vertices and
+    conditional forms must not change the support height the native handler sees.
+    None denotes its model-form refusal, not a missing mesh.
+    """
+    reader = Reader(data, start)
+    opening = reader.signed()
+    if opening <= -32753:  # signed comparison with $800F
+        command = opening & 0xff
+        if command not in (6, 9, 10):
+            return None
+        if command == 10:
+            reader.p += 4
+            offset = reader.signed()
+            reader.p += offset - 4
+        reader.p += 4
+    maximum = 0
+    for _ in range(65_536):
+        maximum = max(maximum, reader.signed())
+        reader.p += 2  # Z
+        if reader.word() == 0x8000:  # next X, or vertex terminator
+            return maximum
+    raise ValueError('drop support vertex terminator missing')
 
 
 def structure_storey_height(data: bytes, slot: int) -> int | None:
@@ -2559,6 +2603,7 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
             'sourceAddress': address,
             'association': None,
             'handling': None,
+            'placementClass': None,
             'placement': None,
             'location': {
                 'body': f'body-{body}',
@@ -2676,6 +2721,7 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
             'sourceAddress': 0x1E400 + cell * 2,
             'association': None,
             'handling': None,
+            'placementClass': None,
             'placement': None,
             'location': {
                 'body': f'body-{body}',
@@ -2747,6 +2793,12 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                      'variants': [], 'relatedModels': [], 'linkedInstances': [], 'evidence': []}
             by_address[identity] = model
             models.append(model)
+            if kind == 'object':
+                model['supportTop'] = decode_support_top(data, address)
+            elif kind == 'structure':
+                storey_height = structure_storey_height(data, slot)
+                if storey_height is not None:
+                    model['storeyHeight'] = storey_height
             try:
                 if kind == 'structure':
                     pointer = address
@@ -2977,6 +3029,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         instances.append({'id': f'object-slot-{slot}', 'model': model_id, 'name': f"{by_address[model_id]['name']} · slot {slot}",
                           'association': None,
                           'handling': resident_handling(data[0x6fa8 + slot * 4:0x6fac + slot * 4]),
+                          'placementClass': resident_placement_class(data[0x6fa8 + slot * 4:0x6fac + slot * 4]),
                           'location': None, 'placement': None, 'reason': reason,
                           'sourceAddress': 0x63a8 + slot * 4})
     instance_by_id = {instance['id']: instance for instance in instances}
@@ -3063,6 +3116,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                           'model': model_id, 'sourceAddress': address,
                           'association': None,
                           'handling': None,
+                          'placementClass': None,
                           'placement': None,
                           'location': {'body': 'body-11', 'place': place[0] if place else None,
                             'position': [origin_x + (cell & 15) + 0.5 + dx * 30 / 65536, 0, origin_z + (cell >> 4) + 0.5 + dz * 30 / 65536],
@@ -3098,6 +3152,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 'sourceAddress': placement['address'],
                 'association': None,
                 'handling': None,
+                'placementClass': None,
                 'placement': None,
                 'location': {
                     'body': 'body-8',
@@ -3140,6 +3195,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'sourceAddress': 0x1E400 + cell * 2,
             'association': None,
             'handling': None,
+            'placementClass': None,
             'placement': None,
             'location': {
                 'body': 'body-11',
@@ -3187,6 +3243,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'sourceAddress': 0x251d7,
             'association': None,
             'handling': None,
+            'placementClass': None,
             'placement': None,
             'location': {
                 'body': 'body-11', 'place': None,
@@ -3910,6 +3967,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         'The documented zero-latch and $F0 post-plan constructors are retained, including the cell-derived door-key label; no discovered record carries an attachment omission. The $DF visual-change branch is accounted for: $059F64 reads the nine-entry $6364 table and substitutes character $DF for the entrance label glyph, while $04ED4A replays the same table over the $ABDC cell workspace to replace or clear an already-resident surface assembly. Neither introduces a record, and the table is all zero in every pinned capture, so neither branch is exercised by an observed state.',
         'Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.',
         'Every $6000 vector-text record in the census was inventoried: all 41 set the inline flag and none selects font 4, so the indirect-pointer and font-4 paths are unreached rather than unresolved. $CCA0 tokens divide into slot-derived labels, frame animations whose script is model data, structure-workspace face markers, and one live countdown.',
+        'Every resident slot also carries Association A byte 3, decoded as placementClass. It is mutable placement state rather than identity: direct placement copies $7A39 over it at $0546FC and support placement inherits the support\'s, so a session departs from the authored value as objects move. $7A39 is the 3x3 zone of the intra-cell position against the bound structure\'s extent rectangle (docs/research/damocles-placement-class.md). The class is not the handling byte\'s low nibble; they disagree for 176 of the 241 resident slots.',
         'Every resident slot carries the interaction byte the take handler tests, decoded as handling. Bit 4 refuses silently, bit 5 diverts to the refusal message, and the low nibble is the drop handler\'s rank pair: bits 0-1 are the support rank the slot supplies and bits 2-3 the support rank it requires; bits 6 and 7 are live state and are zero in the pinned capture. Nothing here selects a candidate: which object is selected is the per-frame nearest-drawn rule in docs/research/damocles-object-selection.md, not a catalogue field.',
     ]
     if gaea_coverage:
