@@ -49,6 +49,8 @@ const messageText = async (page: Page, id: string): Promise<string> => {
 
 const held = (text: string): string => text.trim();
 
+const BLANK_ROW = ' '.repeat(48);
+
 /// The row a record occupies: 48 six-pixel cells, character `k` in cell `k`.
 const effectiveRow = (text: string): string => text.slice(0, 48).padEnd(48);
 
@@ -205,38 +207,6 @@ test('the supported pickup runs the response once and parks', async ({
     contentType: 'image/png'
   });
 
-  // Each later record arrives over the one before it, so until it has travelled the whole 288
-  // pixels the row is partly one and partly the other. Row and pixel count are read together,
-  // because they only describe the same frame if they came from it. Which handover is caught
-  // depends on how fast the browser answers, so the row is compared against every one that is
-  // still to come: each is 36 frames of the 800 that remain.
-  let partial: { pixels: number; row: string } | undefined;
-  const deadline = Date.now() + 25_000;
-  while (partial === undefined && Date.now() < deadline) {
-    const seen = await frame(page).evaluate(node => ({
-      pixels: Number(node.dataset['damoclesScroll']),
-      row: node.dataset['damoclesRow'] ?? ''
-    }));
-    if (seen.pixels > 0) {
-      partial = seen;
-    }
-  }
-  expect(partial).toBeDefined();
-  expect(partial!.pixels % 8).toBe(0);
-  expect(partial!.pixels).toBeLessThan(288);
-  const handovers = [
-    [first, second],
-    [second, third],
-    // The response's own clearing line is a record of spaces.
-    [third, ' '.repeat(48)]
-  ];
-  expect(
-    handovers.map(([beneath, text]) =>
-      revealedRow(beneath!, text!, partial!.pixels)
-    ),
-    `row ${JSON.stringify(partial!.row)} at ${partial!.pixels} pixels`
-  ).toContain(partial!.row);
-
   await expect
     .poll(async () => displayRow(page), { timeout: 10_000 })
     .toBe(held(second));
@@ -258,6 +228,55 @@ test('the supported pickup runs the response once and parks', async ({
   await page.keyboard.press('t');
   await expect(inventory(page)).toHaveText(KEY_LABEL);
   expect(await soundCues(page)).toBe('take:1');
+  expect(errors).toEqual([]);
+});
+
+test('a record arrives over its predecessor at eight pixels a frame', async ({
+  page
+}) => {
+  test.setTimeout(120_000);
+  const errors = watchErrors(page);
+  await bootAt(page, APPROACH_LOCAL);
+  const [first, second, third] = await Promise.all([
+    messageText(page, 'script2-inline-1'),
+    messageText(page, 'script2-inline-2'),
+    messageText(page, 'script2-inline-3')
+  ]);
+
+  await page.keyboard.press('t');
+  await expect(inventory(page)).toHaveText(KEY_LABEL);
+
+  // Catch one frame of one record arriving. Row and pixel count are read together, because they
+  // only describe the same frame if they came from it. Which of the four arrivals is caught
+  // depends on how fast the browser answers -- each is 36 frames of the response's 1000 -- so
+  // the row is compared against every one of them.
+  let partial: { pixels: number; row: string } | undefined;
+  const deadline = Date.now() + 25_000;
+  while (partial === undefined && Date.now() < deadline) {
+    const seen = await frame(page).evaluate(node => ({
+      pixels: Number(node.dataset['damoclesScroll']),
+      row: node.dataset['damoclesRow'] ?? ''
+    }));
+    if (seen.pixels > 0) {
+      partial = seen;
+    }
+  }
+  expect(partial).toBeDefined();
+  expect(partial!.pixels % 8).toBe(0);
+  expect(partial!.pixels).toBeLessThan(288);
+  const arrivals = [
+    [BLANK_ROW, first],
+    [first, second],
+    [second, third],
+    // The response's own clearing line is a record of spaces.
+    [third, BLANK_ROW]
+  ];
+  expect(
+    arrivals.map(([beneath, text]) =>
+      revealedRow(beneath!, text!, partial!.pixels)
+    ),
+    `row ${JSON.stringify(partial!.row)} at ${partial!.pixels} pixels`
+  ).toContain(partial!.row);
   expect(errors).toEqual([]);
 });
 
