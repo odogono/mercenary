@@ -134,6 +134,7 @@ uniform vec2 nearShadowBias;
 uniform vec2 farShadowBias;
 uniform sampler2DShadow nearShadowMap;
 uniform sampler2DShadow farShadowMap;
+uniform bool hardEdge;
 out vec4 pixel;
 
 bool insideShadow(vec3 uvz) {
@@ -155,18 +156,24 @@ float pcf(sampler2DShadow map, vec3 uvz) {
   return lit / 9.0;
 }
 
+// A hard Cast Shadow is one compare against a NEAREST-filtered map; a soft one averages the
+// 3x3 neighbourhood of LINEAR compares. The uniform branch is coherent across the frame.
+float lookup(sampler2DShadow map, vec3 uvz) {
+  return hardEdge ? texture(map, uvz) : pcf(map, uvz);
+}
+
 float shadowAt(vec3 p, vec3 n, float ndl) {
   vec3 nearOffset = p + n * nearShadowBias.x * (1.0 - ndl);
   vec3 nearUv = (nearLightMatrix * vec4(nearOffset, 1.0)).xyz * 0.5 + 0.5;
   if (insideShadow(nearUv)) {
     nearUv.z -= nearShadowBias.y;
-    return pcf(nearShadowMap, nearUv);
+    return lookup(nearShadowMap, nearUv);
   }
   vec3 farOffset = p + n * farShadowBias.x * (1.0 - ndl);
   vec3 farUv = (farLightMatrix * vec4(farOffset, 1.0)).xyz * 0.5 + 0.5;
   if (insideShadow(farUv)) {
     farUv.z -= farShadowBias.y;
-    return pcf(farShadowMap, farUv);
+    return lookup(farShadowMap, farUv);
   }
   return 1.0;
 }
@@ -259,11 +266,17 @@ interface ShadowMap {
   readonly texture: WebGLTexture;
 }
 
+/// Which edge a Cast Shadow is drawn with; `off` never reaches the renderer.
+export type ShadowEdge = 'soft' | 'hard';
+
 interface EnhancedResources {
   readonly casterBuffer: WebGLBuffer;
   readonly colourProgram: WebGLProgram;
   readonly depthProgram: WebGLProgram;
   readonly maps: readonly [ShadowMap, ShadowMap];
+  /// The compare samplers the maps are read through, one per edge. The texture keeps LINEAR
+  /// parameters of its own; whichever sampler is bound overrides them.
+  readonly samplers: Readonly<Record<ShadowEdge, WebGLSampler>>;
 }
 
 /// The frame keeps reversed copies for double-sided colour faces. A shadow caster only needs
@@ -349,6 +362,7 @@ export interface ErisLightingRender {
   readonly eyeWorld: Vector3;
   readonly heading: number;
   readonly lighting: ErisLighting;
+  readonly shadowEdge: ShadowEdge;
 }
 
 export class ErisRenderer {
@@ -512,11 +526,32 @@ export class ErisRenderer {
     const maps = [createMap(), createMap()] as const;
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
+    const createSampler = (filter: number): WebGLSampler => {
+      const sampler = gl.createSampler();
+      if (sampler === null) {
+        throw new Error('Could not allocate a Damocles shadow sampler.');
+      }
+      gl.samplerParameteri(sampler, gl.TEXTURE_MIN_FILTER, filter);
+      gl.samplerParameteri(sampler, gl.TEXTURE_MAG_FILTER, filter);
+      gl.samplerParameteri(sampler, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.samplerParameteri(sampler, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.samplerParameteri(
+        sampler,
+        gl.TEXTURE_COMPARE_MODE,
+        gl.COMPARE_REF_TO_TEXTURE
+      );
+      gl.samplerParameteri(sampler, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
+      return sampler;
+    };
     return {
       casterBuffer,
       colourProgram: program(gl, LIT_VERTEX, LIT_FRAGMENT),
       depthProgram: program(gl, DEPTH_VERTEX, DEPTH_FRAGMENT),
-      maps
+      maps,
+      samplers: {
+        hard: createSampler(gl.NEAREST),
+        soft: createSampler(gl.LINEAR)
+      }
     };
   }
 
@@ -646,6 +681,10 @@ export class ErisRenderer {
       'ambientGround',
       frame.lighting.ambientGround
     );
+    gl.uniform1i(
+      requiredUniform(gl, resources.colourProgram, 'hardEdge'),
+      frame.shadowEdge === 'hard' ? 1 : 0
+    );
 
     for (let index = 0; index < resources.maps.length; index += 1) {
       const prefix = index === 0 ? 'near' : 'far';
@@ -663,6 +702,7 @@ export class ErisRenderer {
       );
       gl.activeTexture(index === 0 ? gl.TEXTURE0 : gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, resources.maps[index]!.texture);
+      gl.bindSampler(index, resources.samplers[frame.shadowEdge]);
       gl.uniform1i(
         requiredUniform(gl, resources.colourProgram, `${prefix}ShadowMap`),
         index

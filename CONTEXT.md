@@ -438,6 +438,10 @@ _Avoid_: Benson Script (for Damocles), game script, ST bytecode dump
 Damocles's filled-polygon, palette-driven world view Confirmed in Working-Authority Evidence; the Game Surface mode of the Damocles Gameplay Session, distinct from Targ's wireframe line-list Game Surface (ADR 0019, ADR 0043).
 _Avoid_: Wireframe view, remastered graphics, Departure Record
 
+**Cast Shadow**:
+The Enhanced-presentation darkening of a Filled Presentation face standing between the authored sun and another face, drawn with either a soft or a hard edge at the player's choice; Authentic presentation never draws one.
+_Avoid_: Shading, ambient occlusion, lighting toggle
+
 **Working Authority**:
 The Damocles Atari ST program image, together with its pinned laboratory machine and TOS configuration, used as the authority for Damocles research; distinct from the C64 Reference Build.
 _Avoid_: Reference Build (for Damocles), canonical ST ROM

@@ -1,8 +1,10 @@
 import {
   DEFAULT_WIREFRAME_GLOW,
   DEFAULT_WIREFRAME_THICKNESS,
+  isCastShadowEdge,
   isPresentationPreset,
   isStructureReach,
+  type CastShadowEdge,
   type PresentationSettings
 } from '../settings/index.ts';
 import type { ReadStorage, WriteStorage } from './storage.ts';
@@ -29,6 +31,8 @@ export const PREFERENCES_STORAGE_KEY = 'mercenary.browser-shell.preferences.v1';
 export interface Preferences {
   readonly audioMuted: boolean;
   readonly audioVolume: number;
+  /// Absent means the shell's own default edge; Authentic presentation ignores it.
+  readonly castShadows?: CastShadowEdge;
   readonly composition: Composition;
   readonly panelRendition: PanelRendition;
   /// Absent means "whatever the tuning document says".
@@ -99,6 +103,9 @@ export const validatePreferences = (value: unknown): Preferences => {
       ? source['panelRendition']
       : DEFAULT_PREFERENCES.panelRendition,
     // Spread rather than assign: an absent choice must stay absent, not become `undefined`.
+    ...(isCastShadowEdge(source['castShadows'])
+      ? { castShadows: source['castShadows'] }
+      : {}),
     ...(isPresentationPreset(preset) ? { presentationPreset: preset } : {}),
     ...(isStructureReach(source['structureReach'])
       ? { structureReach: source['structureReach'] }
@@ -224,6 +231,7 @@ export const effectivePresentation = (
 export interface PreferencesChange {
   readonly audioMuted?: boolean;
   readonly audioVolume?: number;
+  readonly castShadows?: CastShadowEdge | undefined;
   readonly composition?: Composition;
   readonly panelRendition?: PanelRendition;
   readonly presentationPreset?: PresentationSettings['preset'] | undefined;
@@ -256,6 +264,7 @@ export const createPreferences = (options: {
       if (
         next.audioMuted === preferences.audioMuted &&
         next.audioVolume === preferences.audioVolume &&
+        next.castShadows === preferences.castShadows &&
         next.composition === preferences.composition &&
         next.panelRendition === preferences.panelRendition &&
         next.presentationPreset === preferences.presentationPreset &&

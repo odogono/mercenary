@@ -248,21 +248,37 @@ test('Enhanced sunlight reaches the floor through the spaceport window', async (
     luminance.roofShadowedFloor + 15
   );
 
-  await page.keyboard.press('Escape');
-  await page.locator('button[data-goto="settings"]').click();
-  await page.locator('[data-setting="sky"] button[value="authentic"]').click();
-  await page.keyboard.press('Escape');
-  await page.keyboard.press('Escape');
-  await expect(page.locator('#game-surface')).toHaveAttribute(
-    'data-layer',
-    'none'
-  );
-  await expect
-    .poll(async () => {
-      const authentic = await luminanceOf(await frame.screenshot());
-      return Math.abs(authentic.windowLitFloor - authentic.roofShadowedFloor);
-    })
-    .toBeLessThan(1);
+  const contrast = async (): Promise<number> => {
+    const measured = await luminanceOf(await frame.screenshot());
+    return Math.abs(measured.windowLitFloor - measured.roofShadowedFloor);
+  };
+  const choose = async (setting: string, value: string): Promise<void> => {
+    await page.keyboard.press('Escape');
+    await page.locator('button[data-goto="settings"]').click();
+    await page
+      .locator(`[data-setting="${setting}"] button[value="${value}"]`)
+      .click();
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#game-surface')).toHaveAttribute(
+      'data-layer',
+      'none'
+    );
+  };
+
+  // Turning the Cast Shadow edge off leaves the sun and ambient light but no shadow, so the
+  // roof no longer darkens the far floor; hard brings the beam back with no reload.
+  await choose('shadows', 'off');
+  await expect.poll(contrast).toBeLessThan(1);
+  await choose('shadows', 'hard');
+  await expect.poll(contrast).toBeGreaterThan(15);
+  await testInfo.attach('damocles-enhanced-window-light-hard', {
+    body: await frame.screenshot(),
+    contentType: 'image/png'
+  });
+
+  await choose('sky', 'authentic');
+  await expect.poll(contrast).toBeLessThan(1);
 });
 
 test.beforeEach(async ({ page }) => {
