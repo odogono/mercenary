@@ -386,6 +386,100 @@ capture-time sample, and excludes the VOID sentinel. Its `source` block pins
 the first cold run and its `coverage` block carries these limitations for
 downstream readers.
 
+### Issue #379 body colour at `$0060C0` — Confirmed (decoded)
+
+The `$0060C0` field the body-centre section above calls "packed appearance" is
+a per-body colour table. Each slot is one longword at `index * 4` whose **low
+word is an Atari ST `0RGB` palette value** and whose high word is zero; the
+table runs the full 31 slots (124 bytes), not the 32 bytes a partial reading
+suggests.
+
+Expanding each `0RGB` nibble by `n * 36`, with `$7` taken to 255, over
+`observe-first-world-20260818T101013Z-c5a32b7d`:
+
+| Slot | Name     | Raw        | `0RGB` | Expanded  |
+| ---- | -------- | ---------- | ------ | --------- |
+| 0    | DIALIS   | `00000777` | `$777` | `#ffffff` |
+| 1    | ICARUS   | `00000222` | `$222` | `#484848` |
+| 2    | MIDAS    | `00000540` | `$540` | `#b49000` |
+| 3    | ACHERON  | `00000444` | `$444` | `#909090` |
+| 4    | DION     | `00000055` | `$055` | `#00b4b4` |
+| 8    | GAEA     | `00000030` | `$030` | `#006c00` |
+| 11   | ERIS     | `00000003` | `$003` | `#00006c` |
+| 14   | VESTA    | `00000246` | `$246` | `#4890d8` |
+| 19   | TRITON   | `00000740` | `$740` | `#ff9000` |
+| 29   | DAMOCLES | `0030E000` | —      | —         |
+| 30   | VOID     | `00000777` | `$777` | `#ffffff` |
+
+Colours are deliberately not unique: `$444` covers six bodies and `$246` four.
+
+Two slots stand apart. **VOID (30) is `$777`, white** — independent
+confirmation of a secondary-source claim that VOID has a white ground and a
+white sky, from a body that is barely reachable. **DAMOCLES (29) is
+`$0030E000`**, the only slot with a nonzero high word and not a plain `0RGB`
+value; its low nibbles are zero, so a naive expansion yields black by accident.
+Damocles is the comet and is special-cased throughout — it is also the one body
+whose centre is a capture-time sample — so the two oddities most likely share
+one cause. Left unresolved and not chased: the Flyover excludes Damocles
+already.
+
+This supersedes the reading in `damocles-filled-polygons.md` that `$0060C0` is
+a 32-byte world face-colour palette; that note says so in place. Those 32 bytes
+are body slots 0–7, which is why the block is byte-identical indoors and out.
+
+### Secondary-source cross-check (mercenarysite.free.fr)
+
+`http://mercenarysite.free.fr/gamma_system.htm` lists all 30 named bodies with
+a colour swatch and a Damocles coordinate triple. It is secondary and partly
+self-declared speculation, so nothing here is imported from it; it is recorded
+because it was gathered by an observer independent of this project and it
+agrees with the Working Authority in two ways worth pinning.
+
+**Colour: 29 of 29 exact.** Its swatches for slots 0–28 equal the `$0060C0`
+expansion above, byte for byte. The page therefore describes recovered data,
+not an artist's impression.
+
+**Position: 29 of 29 agree in sign, and corroborate structure.** Its triples
+are System Coordinate Readout values, not body centres — the page's author flew
+to each body and transcribed the panel, including the panel's own red
+highlighting, which the page preserves as red digits and which the plain text
+loses.
+
+- The **first and third components track X and Z** of the recovered centres,
+  quantised to a cell somewhere near 65 536–66 700 units.
+- **Red marks a negative axis**: red on the first component matches `x < 0` and
+  red on the third matches `z < 0` for all 29 bodies, with no exceptions.
+- **Six bodies read `10-00-05`** (Eris, Solon, Theon, Vesta, Metis, Lucan)
+  because they share one cell; their recovered centres span about 13 000 units.
+- **The middle component is `00` or a red `01`, never a positive `01`.** The
+  five reading `-01` are Midas, Acheron, Atropos, Aurora and Triton.
+
+That last point resolves an apparent contradiction with the all-zero Y array at
+`$00626A`. The readout describes **the observer, not the body**: an approach
+from just below the System's plane floors to `-1`, an approach from just above
+floors to `0`. The recovered planar system stands, and
+`payload/damocles/system.json` needs no change. Damocles carries no triple on
+the page — "(moving)" — matching its `capture-time-sample` position here.
+
+The same observer dependence is why **the System-mode cell size cannot be
+recovered from this source**: every reading carries the author's own offset, so
+the ±1 disagreements at Gaea, Logos, Juno and Pan are parking positions either
+side of a cell boundary, not transcription errors. No single divisor and
+rounding rule fits all 29. Pinning it needs the panel's formatting routine, and
+has no consumer until something renders that panel.
+
+The page also reports a per-body environment string (`No air`, `too hot`, `too
+cold at night`, `Pressure too high`, `militarily protected`), distinguishing
+Damocles from Mercenary III for Pan, Thalia, Tolosa and Perseus. That per-title
+split hints at table flags rather than prose, and is recorded here as a lead for
+whoever needs body environment. No such field has been looked for yet.
+
+One structural claim is **not** confirmed: the page states the code has 32
+planet entries, the 30 named plus VOID plus one unused. This project recovers
+31 name slots at `$0081DC` (0–29 plus VOID at 30). The 32nd is unaccounted for;
+the parallel phase-rate source at `$0082DC` is 32 longwords, which may be where
+the claim comes from.
+
 ### Cities / named places — Confirmed (pointer + shape)
 
 **Pointer:** densest label pool observed around `$023E56`–`$0257xx` after
@@ -664,6 +758,7 @@ name table). Not completed here:
 | Body X/Y/Z and radius/extent arrays                    | Same runs; `$052DB0..$053078` range, apparent-size, and arrival/contact consumers                          |
 | `payload/damocles/system.json`                         | Direct transcription of those recovered physical records; source and coverage are embedded in the document |
 | 31 per-body range-draw lists                           | Same runs; Eris pointer binding and `$0530C8..$0531BC` list readers                                        |
+| 31 per-body `0RGB` colours at `$0060C0`                | Same runs; low word of each `index * 4` longword; 29 of 29 agree with an independent observer              |
 | VOID all-body drawing                                  | Space branch `$0598A6..$059912` calls 30-body scan `$052DB0`                                               |
 | 32×4 phase-rate source at `$0082DC`                    | Same runs; equal bounded SHA-256; `$04D648..$04D660` source-to-derived loop                                |
 | Phase-rate slot binding                                | `$051E4E..$051E6A` accumulator loop and current-body indexed reads at `$05935A..$059392`                   |
