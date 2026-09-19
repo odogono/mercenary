@@ -98,7 +98,6 @@ MESSAGE_POINTER = 0x7B98
 # at $0556F8 from a scancode-indexed table at $0557D6; boarding presets it to
 # $FF001000 at $054744.
 THROTTLE = 0x7BAC
-THROTTLE_TOGGLE = 0x7A1C
 GROUND_CONTACT = 0x7ACA
 REGION_FLAGS = 0x7B34
 KEY_WORD = 0x7B60    # the dispatcher's own copy of the last scancode ($0555D8)
@@ -229,7 +228,6 @@ def decode(blobs: dict[str, bytes], watch: tuple[int, ...]) -> dict:
         "craftY": _s32(low, base, CRAFT_Y),
         "craftZ": _s32(low, base, CRAFT_Z),
         "throttle": f"0x{_u32(low, base, THROTTLE):08x}",
-        "throttleToggle": f"0x{_u16(low, base, THROTTLE_TOGGLE):04x}",
         "groundContact": _u16(low, base, GROUND_CONTACT),
         "occupancy": _u16(low, base, OCCUPANCY),
         "pitch": _u16(low, base, PITCH),
@@ -496,7 +494,6 @@ def fly(machine: Machine, *, speed: int, seconds: float, stick: int,
             "craftX": state["craftX"], "craftY": state["craftY"],
             "craftZ": state["craftZ"],
             "throttle": state["throttle"],
-            "throttleToggle": state["throttleToggle"],
             "groundContact": state["groundContact"],
         })
         time.sleep(interval)

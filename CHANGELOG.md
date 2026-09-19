@@ -21,6 +21,17 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
   both windows — Body Coordinate Readout and Cell Readout — and
   `docs/research/damocles-gamma-system.md` records why the original manual's
   own labels for them are not adopted.
+- **The Damocles laboratory's `$7A1C` throttle-toggle binding was never
+  evidence, and is removed.** `arrival-route-probe.py` named the address a
+  craft throttle toggle with no citation, in a block where every neighbouring
+  constant carries one; the key-dispatcher evidence in the comment above it
+  belongs to `$7BAC` on the line it precedes, and the arrival-routes note binds
+  that write to `$7BAC` alone. The probe also
+  read the address as a 16-bit word — the high half of the longword the
+  navigation readout uses, whose magnitude sits in the low half — so the field
+  printed `$0000` on every pinned memstate and could not have contradicted
+  anything. The Body Coordinate Readout's source binding (#208) stands
+  unopposed (#367).
 
 ### Added
 
@@ -29,6 +40,20 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 - Damocles play now supports the Capital Spaceport V.I.P. limo key's recovered
   label, pointer and keyboard take, drop, one-shot response, persistent display,
   Carried Stack, Object Residence, and schema-4 Save and Session Resume state.
+
+### Known
+
+- **The Body Coordinate Readout tracks the player, at a scale coarser than a
+  Surface Cell.** It is not a per-Body constant, so the panel's `000-000` is a
+  temporary placeholder rather than a permanently correct one. The pair is
+  invariant across Occupancy and sub-cell motion — five pinned memstates
+  spanning on foot, two boarded craft and a structure interior all read the
+  same values — but moves over a walk of about two Surface Cells and changes
+  greatly between distant regions of one Body. The evidence is supplied visual
+  review evidence rather than attested laboratory capture, so the finding is
+  Partial; the closed form, the unit and the origin stay Unresolved, as does a
+  nearest-Site reading of the window. `docs/research/damocles-gamma-system.md`
+  records it, and #371 carries the attested run and the decode (#367).
 
 ## [0.20.0] - 2026-09-18
 
