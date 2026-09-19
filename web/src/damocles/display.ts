@@ -5,9 +5,20 @@ export const DAMOCLES_SCROLL_PIXELS_PER_FRAME = 8;
 export const BLANK_DAMOCLES_ROW = ' '.repeat(DAMOCLES_ROW_CELLS);
 
 export type DamoclesMessageId =
+  | 'script11-inline-1'
+  | 'script11-inline-2'
   | 'script2-inline-1'
   | 'script2-inline-2'
   | 'script2-inline-3'
+  | 'script20-inline-1'
+  | 'script5-inline-1'
+  | 'script5-inline-2'
+  | 'script5-inline-3'
+  | 'script6-inline-1'
+  | 'script6-inline-2'
+  | 'script62-inline-1'
+  | 'script62-inline-2'
+  | 'script62-inline-3'
   | 'system-string-1'
   | 'system-string-2'
   | 'system-string-50'

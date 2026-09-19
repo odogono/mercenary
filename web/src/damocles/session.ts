@@ -31,6 +31,11 @@ import {
   type ScriptState
 } from './script.ts';
 import {
+  SCRIPT_FOR_TRIGGER,
+  TRIGGER_ARMING,
+  TRIGGER_FOR_RESIDENT
+} from './scripts.ts';
+import {
   attachmentOpenLimit,
   clampStructureStep,
   insideLocalBox,
@@ -113,20 +118,29 @@ const inventorySourceLabel = (
 // The pinned Structure 74 trace moved 92 one-unit ticks in 2.64 seconds.
 const ATTACHMENT_UNITS_PER_SECOND = 92 / 2.64;
 
+/// `busy`, and each trigger's script, queue bit and sticky bit, are recomputed rather than
+/// stored: they are content, and the recovered program has no writer that could move them.
 const scriptFromSave = (saved: DamoclesSaveScript): ScriptState => ({
   ...saved,
   busy: saved.execution !== null,
-  triggers: saved.triggers.map(trigger => ({
-    ...trigger,
-    script: trigger.index === 2 ? 'damocles.script.slot-2' : null
-  }))
+  triggers: saved.triggers.map(trigger => {
+    const arming = TRIGGER_ARMING.find(item => item.index === trigger.index);
+    return {
+      ...trigger,
+      queueable: ((arming?.byte ?? 0) & 0x20) !== 0,
+      script: SCRIPT_FOR_TRIGGER[trigger.index] ?? null,
+      sticky: ((arming?.byte ?? 0) & 0x40) !== 0
+    };
+  })
 });
 
 const scriptForSave = (script: ScriptState): DamoclesSaveScript => ({
   counter: script.counter,
   display: script.display,
+  displayDuration: script.displayDuration,
   execution: script.execution,
   message: script.message,
+  pending: script.pending,
   triggers: script.triggers.map(({ armed, index }) => ({ armed, index }))
 });
 
@@ -785,8 +799,10 @@ export class DamoclesSession implements TitleSession<
     }
     this.residence.set(selection.instance, carriedResidence);
     this.scrollCounter = -16;
-    if (selection.instance === 'object-slot-183') {
-      this.script = fireTrigger(this.script, 2, this.scriptRules).state;
+    // $0543D2 walks the object-to-trigger table for every committed pickup, not just the key.
+    const trigger = TRIGGER_FOR_RESIDENT[selection.instance];
+    if (trigger !== undefined) {
+      this.script = fireTrigger(this.script, trigger, this.scriptRules).state;
     }
     if (this.soundPermitted()) {
       this.effects.push({ cue: 'take', type: 'sound-request' });

@@ -217,10 +217,11 @@ describe('Damocles Saves', () => {
           reveal: { beneath: ' '.repeat(48), offset: 0, pixels: 80 }
         },
         execution: {
-          returnStack: ['idle' as const],
-          revision: 1,
+          returnStack: [],
+          revision: 2,
           script: 'damocles.script.slot-2' as const,
-          step: 'announce-2' as const
+          // Step 1: suspended immediately after the first message, which is presenting.
+          step: 1
         },
         message: {
           id: 'script2-inline-1' as const,
@@ -242,7 +243,7 @@ describe('Damocles Saves', () => {
       decodeDamoclesSave(encodeDamoclesSave(record), loaded.identity)
     ).toEqual(record);
     const stale = structuredClone(record);
-    stale.snapshot.script.execution!.revision = 2;
+    stale.snapshot.script.execution!.revision = 3;
     expect(() =>
       decodeDamoclesSave(encodeDamoclesSave(stale), loaded.identity)
     ).toThrow(/revision/);
