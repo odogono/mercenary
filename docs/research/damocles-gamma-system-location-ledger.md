@@ -445,14 +445,14 @@ been recovered by [#317](https://github.com/odogono/mercenary/issues/317) —
 see [the pickup-response note](damocles-pickup-responses.md) — which changes
 nothing about the placements this table records.
 
-| Slot | Object           | Trigger | Body  | Group / cell / level | Placement          | Blocked on                                       |
-| ---: | ---------------- | ------: | ----- | -------------------- | ------------------ | ------------------------------------------------ |
-|  183 | KEY- V.I.P. LIMO |   `$02` | ERIS  | `$12` / `$87` / `$00` | recovered          | nothing; delivered under #297 / #300             |
-|  181 | KEY - EAGLE 9SE  |   `$05` | ERIS  | `$12` / `$89` / `$0A` | none               | Eris structure selectors (#252) at cell `$89`    |
-|  151 | DAMOCLES FILE    |   `$06` | ERIS  | `$12` / `$89` / `$00` | none               | Eris structure selectors (#252) at cell `$89`    |
-|   95 | MAGIC CRYSTAL    |   `$14` | MIDAS | `$38` / `$EB` / `$00` | none               | no Midas surface workspace (#172)                |
-|  101 | AUTHORS COMPUTER |   `$0B` | DION  | `$02` / `$DE` / `$00` | recovered          | nothing; delivered under #325             |
-|   94 | CASH REGISTER    |   `$3E` | VESTA | `$05` / `$73` / `$01` | recovered          | nothing; delivered under #325             |
+| Slot | Object           | Trigger | Body  | Group / cell / level  | Placement | Reachable | Blocked on                                    |
+| ---: | ---------------- | ------: | ----- | --------------------- | --------- | --------- | --------------------------------------------- |
+|  183 | KEY- V.I.P. LIMO |   `$02` | ERIS  | `$12` / `$87` / `$00` | recovered | **yes**   | nothing; delivered under #297 / #300          |
+|  181 | KEY - EAGLE 9SE  |   `$05` | ERIS  | `$12` / `$89` / `$0A` | none      | no        | Eris structure selectors (#252) at cell `$89` |
+|  151 | DAMOCLES FILE    |   `$06` | ERIS  | `$12` / `$89` / `$00` | none      | no        | Eris structure selectors (#252) at cell `$89` |
+|   95 | MAGIC CRYSTAL    |   `$14` | MIDAS | `$38` / `$EB` / `$00` | none      | no        | no Midas surface workspace (#172)             |
+|  101 | AUTHORS COMPUTER |   `$0B` | DION  | `$02` / `$DE` / `$00` | recovered | no        | association-list root (#362)                  |
+|   94 | CASH REGISTER    |   `$3E` | VESTA | `$05` / `$73` / `$01` | recovered | no        | level-to-structure binding (#355)             |
 
 Cell `$89` is STATE OFFICE, and #252 owns every Eris structure selector, so two
 of the five unreached trigger objects fall inside that ticket's existing scope.
@@ -460,9 +460,8 @@ of the five unreached trigger objects fall inside that ticket's existing scope.
 `CASH REGISTER` is placed in GUM STORE and `AUTHORS COMPUTER` in AUTHORS HOUSE by
 [#325](https://github.com/odogono/mercenary/issues/325), the latter at
 parent-local `(-1630, 38, -81)` on structure-group `$02` cell `$DE` instance slot
-216. Reaching either on foot is a separate question: no ordinary route has entered
-a structure interior
-([#331](https://github.com/odogono/mercenary/issues/331)).
+216. Reaching either on foot is a separate question, and the section below
+settles it: neither is reachable, for two different reasons.
 
 The programme's three named special items are likewise accounted for. BRIEFCASE
 is now placed; both ANTIGRAV instances remain interior-associated with no
@@ -487,6 +486,68 @@ is still blocked: no route has entered that interior
 Nothing about capacity, refusal or reversible special-item effects is claimed
 here. All three carry the ordinary takeable handling byte `$04`; their special
 behaviour is a separate question and belongs to the programme's later slices.
+
+## A recovered placement is not reachability
+
+This ledger already insists a roster entry is not a location. The browser
+verification for [#320](https://github.com/odogono/mercenary/issues/320) forces
+the next distinction: **a recovered parent and local placement are not
+reachability either.** An object is reachable only if the port, standing
+somewhere a player can stand, draws it and admits it to the selection.
+
+Of the six pickup-trigger slots, exactly **one** — slot 183, KEY- V.I.P. LIMO —
+can be stood beside anywhere in the game today. The other five fail for three
+distinct reasons, and separating them matters because they are owned by three
+different tickets.
+
+| Reason                                                                    | Slots        | Owner                      |
+| ------------------------------------------------------------------------- | ------------ | -------------------------- |
+| No recovered residence at all                                             | 95, 151, 181 | #252 (151, 181), #172 (95) |
+| Placed above ground level; only level 0 is drawn                          | 94           | [#355](https://github.com/odogono/mercenary/issues/355) |
+| Placed at level 0, and never exposed in any region the player can bind to | 101          | [#362](https://github.com/odogono/mercenary/issues/362) |
+
+The method: for each admitted arrival Pose, switch to it and visit all 256
+cells of that Body, collecting every resident the Session Snapshot draws.
+`web/test/damocles-console.test.ts` runs it and is the reproduce path. A sweep
+at 2048-unit resolution **within** each relevant cell confirms the region
+result below.
+
+### Slot 94 is a level, and the level rule is not recovered
+
+CASH REGISTER sits at level 1 of `vesta-surface-73`, 48 units above floor 1 on
+the structure's 160-unit storey pitch. `worldPosition` draws only level 0, which
+is not a shortcut but the absence of the static level-to-structure binding rule
+that [#355](https://github.com/odogono/mercenary/issues/355) owns. This is the
+same prerequisite #313 already records against the model-form gate, the height
+gate and the `$7AC5`/`$7AA5` identity: an ordinary route into a structure
+interior at a non-zero level.
+
+### Slot 101 needs an association-list root decoded for one structure only
+
+[#362](https://github.com/odogono/mercenary/issues/362) owns this.
+
+AUTHORS COMPUTER is the informative case, because nothing about it is missing in
+the obvious sense. It is level 0. Its parent `dion-surface-de` is recovered, and
+the player binds to exactly that parent at Dion cell `$DE`. It has a local
+placement. And it is still never drawn.
+
+A resident is exposed in a region if its insertion group **numbers** that region
+— the implicit `(group, group)` pair — or if the parent's association-group
+table names the region explicitly. AUTHORS COMPUTER carries insertion group
+`$20`, and Dion cell `$DE` yields region selector 18 at every position in the
+cell. So the implicit pair never matches, and there is no explicit table to
+consult: `decode_structure_associations` is called **once** in
+`research/damocles-st/damocleslab/catalogue.py`, at the hard-coded Capital
+Spaceport association-list root `$14AAC`. `eris-surface-87` is the only instance
+in the payload with a non-null `associationGroups`.
+
+The decoder already exists and is proven; what is missing is the per-structure
+root address for every structure but one. Until those roots are recovered, any
+interior resident whose insertion group does not happen to equal the region its
+cell binds to is placed and invisible — which is most of them.
+
+This is the reachability counterpart to #325's placement work, and it is tracked
+separately because the placements are correct: the gap is in what exposes them.
 
 ## Residents with no location evidence
 
@@ -569,7 +630,8 @@ bodies remain lower-priority coverage work.
 | Body switch to DION / GAEA / VESTA at a pose   | **Yes**, for the pose itself               | `payload/damocles/arrival-poses.json`; each pose is one standing position only   |
 | Surface objects on DION / GAEA / VESTA         | **Partly**                                 | Coordinates exist; 99 CHEVY's authored/live Gaea map identity remains Unresolved |
 | Interior objects anywhere but the two Eris keys | **No**                                     | 193 residents have selectors and no parent                                       |
-| Pickup-triggered responses beyond slot 183     | **No**                                     | None of the other five trigger objects is reachable; their responses are recovered (#317) |
+| Pickup-triggered responses beyond slot 183     | **No**                                     | Responses recovered (#317) and implemented (#346); none of the other five objects is reachable |
+| Interior objects with a recovered placement on DION / VESTA | **No**                        | Placements recovered (#325); nothing exposes them — the association-list root is decoded for Capital Spaceport only |
 | Body switch to any of the other eleven posed bodies | **Yes**, for the pose itself           | `payload/damocles/arrival-poses.json`; the cell is engine-read but unanchored to a named workspace |
 | Any of the fifteen unposed bodies              | **No**                                     | No surface workspace, no arrival pose                                            |
 
@@ -587,6 +649,16 @@ Already owned, and this ledger supplies the target list rather than new scope:
   standing position to start from rather than coordinates alone.
 
 Additional research under #313, required by the deliveries that use it:
+
+0. **Association-list roots for every structure but Capital Spaceport.**
+   [#362](https://github.com/odogono/mercenary/issues/362).
+   `decode_structure_associations` is proven and is called once, at the
+   hard-coded root `$14AAC`. Every other structure's `associationGroups` is
+   null, so an interior resident is exposed only where its insertion group
+   numbers the region its cell binds to. This is what stands between #325's
+   28 recovered placements and any of them being reachable. See [a recovered
+   placement is not
+   reachability](#a-recovered-placement-is-not-reachability).
 
 1. **Remaining Gaea map identity and placement.** Runtime selection is decoded:
    group `$07` is tied to UR City, while group `$0F` is statically bound but has
@@ -625,6 +697,9 @@ Resolved since this ledger was first written:
   cell with no named workspace to anchor it.
 - 193 of 195 interior-associated residents have no parent and no local
   placement.
+- Of the 28 residents that **do** have a recovered placement, **one** — slot
+  183 — can be reached on foot. The rest are placed and never drawn, because
+  their region exposure or their level is not recovered.
 - Workspace selection within a body is decoded, and both Gaea groups are now
   bound to a live workspace. What remains undecoded is which structure a **level**
   selects: the association list is bound per level, read live from `$7B0E`, and
@@ -652,4 +727,6 @@ Resolved since this ledger was first written:
 | Gaea group `$0F` is CHALDEA METROPOLIS              | `gaea-transporter`; `$7A6C=$024AB4` and an `$ABDC` identical to the static decode ([workspace selection](damocles-workspace-selection.md)) |
 | The association list is bound per level             | Vesta cell `$64` at levels 0 and 10 bind different structures; ten residents across six bodies resolve in the list bound at their own level |
 | Six pickup-trigger slots                            | [limo-key pickup](damocles-limo-key-pickup.md#the-object-to-script-trigger-table) |
+| Slot 183 is the only reachable pickup-trigger object | All-cell sweep of every admitted Body against the tracked payload; `web/test/damocles-console.test.ts` |
+| `eris-surface-87` is the only instance with an association-group table | `payload/damocles/catalogue.json`; the single `decode_structure_associations` call in `research/damocles-st/damocleslab/catalogue.py` |
 | Slots 248–255 are a world binding                   | [catalogue](damocles-catalogue.md)                                       |
