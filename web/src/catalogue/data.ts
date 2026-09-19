@@ -35,6 +35,18 @@ export const RECORD_CLASSES = [
   'procedural'
 ] as const;
 export type RecordClass = (typeof RECORD_CLASSES)[number];
+/**
+ * How the Working Authority turns one model's instances, from its `$8001` command.
+ *
+ * `yaw` turns about +Y by the instance's angle byte plus `angleBiasByte`, 256 steps per
+ * turn; `none` draws the record as modelled; `articulated` and `camera` are the source's
+ * other two paths and carry no instance angle (docs/research/damocles-vip-limo.md).
+ */
+export interface InstanceOrientation {
+  readonly angleBiasByte: number;
+  readonly modeByte: number;
+  readonly rotation: 'yaw' | 'none' | 'articulated' | 'camera';
+}
 export interface Model {
   readonly conditions: readonly string[];
   readonly detailSelection?: readonly DetailGroup[];
@@ -44,6 +56,11 @@ export interface Model {
     readonly source: string;
   }[];
   readonly id: string;
+  /**
+   * The record's `$8001` orientation command: how the draw path turns every instance of
+   * this model, and the per-model angle bias it adds to the instance's own byte.
+   */
+  readonly instanceOrientation?: InstanceOrientation;
   readonly kind: Kind;
   readonly linkedInstances: readonly string[];
   readonly name: string;
@@ -234,7 +251,7 @@ export interface Catalogue {
   readonly instances: readonly Instance[];
   readonly models: readonly Model[];
   readonly places: readonly Place[];
-  readonly schemaVersion: 14;
+  readonly schemaVersion: 15;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -352,6 +369,35 @@ const bankExtent = (value: unknown): BankExtent => {
     fail('bank extent overruns what follows it');
   }
   return extent;
+};
+
+const instanceOrientation = (value: unknown): InstanceOrientation => {
+  const record = object(value);
+  const modeByte = byte(record['modeByte']);
+  const rotation = choice(record['rotation'], [
+    'yaw',
+    'none',
+    'articulated',
+    'camera'
+  ]);
+  // The source reads one byte three ways; a payload that names a different path than the
+  // byte selects would silently draw the wrong pose (docs/research/damocles-vip-limo.md).
+  const selected =
+    modeByte === 0
+      ? 'none'
+      : (modeByte & 0x80) !== 0
+        ? 'articulated'
+        : (modeByte & 0x40) !== 0
+          ? 'yaw'
+          : 'camera';
+  if (selected !== rotation) {
+    fail(`orientation mode $${modeByte.toString(16)} is not ${rotation}`);
+  }
+  return {
+    angleBiasByte: byte(record['angleBiasByte']),
+    modeByte,
+    rotation
+  };
 };
 
 const mesh = (value: unknown, allowEmpty = false): Mesh => {
@@ -659,7 +705,7 @@ const structureSelection = (value: unknown): StructureSelection => {
 
 export const parseCatalogue = (value: unknown): Catalogue => {
   const r = object(value);
-  if (r['schemaVersion'] !== 14) {
+  if (r['schemaVersion'] !== 15) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -768,6 +814,11 @@ export const parseCatalogue = (value: unknown): Catalogue => {
             worldConditionedSlots: list(m['worldConditionedSlots']).map(integer)
           }),
       status,
+      ...(m['instanceOrientation'] === undefined
+        ? {}
+        : {
+            instanceOrientation: instanceOrientation(m['instanceOrientation'])
+          }),
       ...(m['storeyHeight'] === undefined
         ? {}
         : { storeyHeight: nonnegativeSignedWord(m['storeyHeight']) }),
@@ -1124,7 +1175,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     instances,
     models,
     places,
-    schemaVersion: 14,
+    schemaVersion: 15,
     source,
     tables
   };

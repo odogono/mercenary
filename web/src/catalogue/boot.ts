@@ -119,7 +119,7 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
     if (instance.location) {
       paragraph(
         details,
-        `${data.bodies.find(b => b.id === instance.location!.body)?.name} · ${instance.location.position.map(value => value.toFixed(3)).join(', ')} · ${instance.location.coordinateSystem}${instance.location.heading === null ? '' : ` · source heading ${instance.location.heading}`}`
+        `${data.bodies.find(b => b.id === instance.location!.body)?.name} · ${instance.location.position.map(value => value.toFixed(3)).join(', ')} · ${instance.location.coordinateSystem}${instance.location.heading === null ? '' : ` · source instance angle ${instance.location.heading}${model.instanceOrientation?.rotation === 'yaw' ? ` · drawn ${(instance.location.heading + model.instanceOrientation.angleBiasByte) % 256}` : ' · drawn as modelled'}`}`
       );
     } else if (instance.placement) {
       const parent = data.instances.find(

@@ -18,6 +18,44 @@ class CatalogueTests(unittest.TestCase):
         self.assertIsNone(decode_support_top(bytes.fromhex('8008 564c') + vertices, 0))
         self.assertEqual(decode_support_top(struct.pack('>4h', 0, -20, 0, -32768), 0), 0)
 
+    def test_instance_orientation_reads_the_8001_bias_and_mode(self):
+        from damocleslab.catalogue import decode_instance_orientation
+        # $0536F6 branches on the mode byte: zero draws unturned, bit 7 articulates,
+        # bit 6 turns once about +Y, anything else turns with the camera (#361).
+        self.assertEqual(
+            decode_instance_orientation(bytes.fromhex('8001 0040'), 0),
+            {'angleBiasByte': 0x00, 'modeByte': 0x40, 'rotation': 'yaw'},
+        )
+        self.assertEqual(
+            decode_instance_orientation(bytes.fromhex('8001 8040'), 0)['angleBiasByte'], 0x80
+        )
+        for mode, rotation in ((0x00, 'none'), (0xFF, 'articulated'), (0x32, 'camera')):
+            self.assertEqual(
+                decode_instance_orientation(bytes.fromhex('8001 00') + bytes([mode]), 0)['rotation'],
+                rotation,
+            )
+        self.assertIsNone(decode_instance_orientation(bytes.fromhex('8003 8000'), 0))
+        self.assertIsNone(decode_instance_orientation(struct.pack('>4h', 0, 0, 0, -32768), 0))
+
+    def test_the_parked_limo_publishes_its_drawn_instance_angle(self):
+        from damocleslab.catalogue import extract
+        root = Path(__file__).resolve().parents[1]
+        first = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram'
+        if not first.exists():
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        data = first.read_bytes()
+        # $053548 reads $77A8 + 4*slot; $79CD + slot is inside that array, not a table.
+        self.assertEqual(data[0x77A8 + 5 * 4], 0x7F)
+        self.assertEqual(data[0x79CD + 5], 0x00)
+        result = extract(data, {})
+        limo = next(i for i in result['instances'] if i['id'] == 'object-slot-5')
+        self.assertEqual(limo['location']['heading'], 0x7F)
+        model = next(m for m in result['models'] if m['id'] == 'object-036176')
+        self.assertEqual(model['instanceOrientation']['rotation'], 'yaw')
+        # TRANSPORTER a opens with $8002, so its $FF angle byte never turns the mesh.
+        transporter = next(m for m in result['models'] if m['id'] == 'object-038820')
+        self.assertNotIn('instanceOrientation', transporter)
+
     def test_key_header_selects_shared_geometry_and_preserves_display_code(self):
         # $8008 stores a two-character key code, then jumps from the offset
         # word to a shared key geometry stream.

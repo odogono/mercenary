@@ -29,14 +29,20 @@ game menu. `?model=object-035d12` opens DART II;
 
 For body-aware interaction (#345), each resident instance carries `placementClass`, Association A byte 3 (`$6FAB + 4*slot`). It is mutable placement state rather than identity — a Drop rewrites it — so this is the authored value a session departs from. It is not the handling byte's low nibble; the two disagree for 176 of the 241 residents. See [placement class](damocles-placement-class.md).
 
-Two model fields retain recovered native facts.
+Three model fields retain recovered native facts.
 `storeyHeight` is the alias record's first word masked by `$7FFF`, as written to
 `$7B00` at `$054D86`; non-alias models do not claim a pitch. `supportTop` is the
 drop handler's raw-Y maximum at `$0545DE`–`$054610`, or `null` when its model-form
 gate refuses. It is not the renderer's mesh maximum: text and articulated forms
 must not change it. The signed opening-word comparison admits ordinary vertex
 streams; header commands are restricted to low bytes 6, 9 and `$0A`. The maximum
-starts at zero. Both fields are extracted from the same attested RAM as the model,
+starts at zero. `instanceOrientation` is the record's `$8001` command: the angle bias
+`$053548` adds to a placed instance's own angle byte, and the mode byte
+`$0536F6` branches on to choose between no turn, one turn about +Y, the
+articulation path and the camera-relative path. A record without `$8001` has no
+field and is drawn as modelled. See
+[the V.I.P. limo findings](damocles-vip-limo.md#the-drawn-instance-angle).
+All three fields are extracted from the same attested RAM as the model,
 not inferred from resident placement or presentation geometry.
 
 The extractor first verifies the run's artifact hashes, program/TOS pins, and
@@ -44,7 +50,9 @@ first-world scenario hash. It uses the standard library only. A missing capture
 can be regenerated with the existing `lab observe --scenario
 research/damocles-st/scenarios/first-world.json` command. Raw images, RAM and
 Working Disassembly stay in ignored research paths; the browser receives only
-the separately versioned catalogue JSON. Schema version 11 carries each pointer bank's measured extent as
+the separately versioned catalogue JSON. Schema version 15 reads a resident's
+angle from `$77A8 + 4*slot` rather than `$79CD + slot` and adds each object
+model's `instanceOrientation`. Schema version 11 carries each pointer bank's measured extent as
 `tables[].extent` and names the slots a world binds rather than the resident
 table, as `models[].worldConditionedSlots`. Schema version 10 turns a placed
 articulated building detail in its placing structure's scaled frame and names

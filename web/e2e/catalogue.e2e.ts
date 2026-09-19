@@ -57,7 +57,10 @@ test('the V.I.P. limo opens visibly at its recovered Spaceport placement', async
   await expect(page.locator('#details')).toContainText(
     'ERIS · 71.514, 0.000, 136.474 · ST surface grid units'
   );
-  await expect(page.locator('#details')).toContainText('source heading 0');
+  // $77BC, plus the record's zero $8001 bias (#361).
+  await expect(page.locator('#details')).toContainText(
+    'source instance angle 127 · drawn 127'
+  );
   await expect(page.locator('#details')).toContainText(
     'refuses an empty inventory with VEHICLE KEY REQUIRED'
   );
@@ -105,7 +108,10 @@ test('99 Chevy is mapped on Gaea and links to its key', async ({ page }) => {
   await expect(page.locator('#details')).toContainText(
     'GAEA · 519.487, 0.000, 1793.487 · ST surface grid units'
   );
-  await expect(page.locator('#details')).toContainText('source heading 0');
+  // The Chevy is modelled the other way round: a zero angle with an $8001 bias of $40.
+  await expect(page.locator('#details')).toContainText(
+    'source instance angle 0 · drawn 64'
+  );
   await expect(page.locator('#map a')).toHaveCount(147);
   await expect(
     page.locator('#map').getByRole('link', { name: /99 CHEVY/ })

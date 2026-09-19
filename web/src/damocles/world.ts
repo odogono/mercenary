@@ -124,21 +124,30 @@ export const bearingFromYaw = (
     ((yaw - orientation.yawNorth) / orientation.yawUnitsPerTurn) * TURN
   );
 
-/// A Damocles Instance heading byte as a bearing clockwise from north.
+/// A Damocles Instance angle byte as the mesh's turn about +Y, clockwise seen from above.
 ///
-/// The byte is a quarter of the camera yaw word (256 steps per turn) but its
-/// zero is north, not the yaw word's raw south: camera ≡ byte × (yawUnitsPerTurn / 256) +
-/// yawNorth. Structures with no byte face north (#204).
-export const headingFromByte = (
-  byte: number | null,
-  orientation: ErisPresentationDocument['orientation']
-): number =>
-  byte === null
-    ? 0
-    : bearingFromYaw(
-        (byte * orientation.yawUnitsPerTurn) / 256 + orientation.yawNorth,
-        orientation
-      );
+/// The byte is 256 steps per turn — a quarter of the camera yaw word, which is why the
+/// document's `yawUnitsPerTurn` cancels out of this — and it turns the model as modelled:
+/// byte 0 leaves the mesh alone. Boarding publishes it as camera yaw byte × 4 with no
+/// offset ($054390), so a craft modelled nose-toward local −Z reads as facing south at
+/// byte 0. That is a fact about the meshes, not about this turn. An Instance with no byte
+/// is drawn as modelled (#204, #361).
+export const headingFromByte = (byte: number | null): number =>
+  byte === null ? 0 : wrapBearing((byte / 256) * TURN);
+
+/// The turn the Working Authority draws one placed Instance with.
+///
+/// `$053548` sums the Instance's own angle byte with the model record's `$8001` bias byte,
+/// and `$0536F6` only turns the record at all when that record asked for the single-Y path.
+/// A model without `$8001` is drawn as modelled however the Instance's byte reads, so the
+/// bias belongs to the model and the byte to the Instance (#361).
+export const placementHeading = (model: Model, byte: number | null): number => {
+  const instance = model.instanceOrientation;
+  if (instance === undefined || instance.rotation !== 'yaw') {
+    return 0;
+  }
+  return headingFromByte(((byte ?? 0) + instance.angleBiasByte) & 0xff);
+};
 
 export const startPose = (doc: ErisPresentationDocument): Pose => ({
   body: doc.body.id,
@@ -229,7 +238,7 @@ export const erisSurfaceFrom = (
             }
           }),
       faceCount: mesh?.faces.length ?? 0,
-      heading: headingFromByte(location.heading, doc.orientation),
+      heading: placementHeading(model, location.heading),
       id: instance.id,
       kind: model.kind,
       mesh,

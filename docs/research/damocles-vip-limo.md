@@ -24,6 +24,8 @@ not establish playable Damocles behaviour in the browser.
 | No-key route            | `research/damocles-st/scenarios/limo-no-key-route.json`                                                                                              |
 | No-key replay A         | `research/damocles-st/work/stick-replay-20260908T091435Z-ac090b95/observed.ram` (`a0fae448509dd7ba852fb6bb4ea286149e5ee23ad7f23aeb7958ed87f2307e90`) |
 | No-key replay B         | `research/damocles-st/work/stick-replay-20260908T091435Z-add59acd/observed.ram` (`494b8d7198ffc5d2e42e249b3bca970768bec889aee5b573d512e3aa47042cd9`) |
+| Angle sweep, facing N   | `research/damocles-st/work/yaw-instance-heading-20260919T103846Z-561de4cc` (`parked.png` `63317df442f9aeb430f5eac9ceed0c04ad49e42df6101ce70fa31e1e8b93e8b9`)  |
+| Angle sweep, facing E   | `research/damocles-st/work/yaw-instance-heading-20260919T105143Z-3980c53a` (`parked.png` `bdc3aa46df72a5e8c05ce03777a81e06f26ab0b52610be5af6e376053107829d`)  |
 
 The board/leave controls and four occupancy captures were first established in
 [`damocles-walk-board-flight.md`](damocles-walk-board-flight.md). The Spaceport
@@ -48,9 +50,11 @@ model record decodes as:
 
 The exact record range `$036176..$03630E` has SHA-256
 `19bec768e2b96ec4c9fc89c9c13f07170ffda6ef83d8f58ddeb25a3c72fa9d19`.
-The header parameter `$0040` is preserved as source evidence, but its full
-orientation semantics are not yet decoded and must not be baked into the
-reusable model.
+The header parameter `$0040` is the record's orientation command: byte `$00` is
+this model's angle bias and byte `$40` selects the single-Y turn. It is decoded
+in [the drawn instance angle](#the-drawn-instance-angle) below. The catalogue
+publishes it as the model's `instanceOrientation`, since the bias and the mode
+belong to the record while the angle itself belongs to each placed instance.
 
 ### Colours and observed shape
 
@@ -90,7 +94,7 @@ The resident arrays place slot 5 at:
 | Z             | `$006BBC` (`$6BA8 + 5*4`) |       `$0088796F` |
 | Association A |                 `$006FBC` |       `$FF122002` |
 | Association B |                 `$0073BC` |       `$2C000087` |
-| Raw yaw byte  |   `$0079D2` (`$79CD + 5`) |             `$00` |
+| Instance angle |  `$0077BC` (`$77A8 + 5*4`) |             `$7F` |
 
 Association B's low byte places the object in Eris surface cell `$87`, the same
 cell as the Capital Spaceport. The captured Eris grid origin is X `$00400000`,
@@ -105,13 +109,95 @@ the limo at **(1714, 0, -3241)** in the same raw local frame used for the
 Spaceport assembly. This establishes proximity and a shared surface cell; it
 does not make the limo part of Structure 74 or its Room.
 
-The raw heading byte at `$79D2` is `$00` in the first-world, fresh on-foot, boarded,
-driving and left-limo captures. Byte `$00` is north (256 steps per turn, clockwise,
-the camera yaw at `$200` mod `$400`); see
-[`damocles-walk-board-flight.md`](damocles-walk-board-flight.md).
-The model's long local axis is +Z. Whether that +Z runs with world +z remains
-authored (`modelZ`). Leave does not copy the live camera yaw back into this
-byte, so a driven-then-left pose still stores the parked `$00`.
+The instance angle at `$77BC` is `$7F` in the first-world, fresh on-foot, boarded,
+driving and left-limo captures. It is the angle the draw path turns the mesh by,
+not a compass facing; the rule is decoded below.
+
+## The drawn instance angle
+
+The parked limo faced the other way in the browser than in the Working
+Authority, and sat a car length off along that axis (#361). One knob flip would
+have fixed this object, so the rule was decoded from the draw path instead.
+
+### What the draw path reads
+
+`$0535A2` is the per-instance entry: it clears `$5342A`, walks the model
+record's header commands, and falls into the placement at `$05363A`, which
+subtracts the camera from the three resident coordinates at `$63A8`, `$67A8`
+and `$6BA8` with `a0` = `4 × slot`. The vertex loop at `$0536E6` then reads each
+record vertex as three signed words into `d3`/`d4`/`d5` and branches on
+`$5342A`:
+
+| `$5342A`             | Path      | What it does                                           |
+| -------------------- | --------- | ------------------------------------------------------ |
+| `$00`                | `$0538BE` | none: the vertex is placed as modelled                 |
+| bit 7                | `$0537B0` | articulation: negative-Y vertices about a record pivot |
+| bit 6                | `$05388E` | one turn about +Y by the instance angle                |
+| any other nonzero    | `$053708` | three turns by the live `$7ABE`/`$7AC0`/`$7AC2`        |
+
+Only `$8001` writes `$5342A` (`$053528`), so a record without that command is
+drawn as modelled whatever its instance holds. `$8001`'s two bytes are the
+angle bias into `$53422` and the mode into `$5342A`; when the mode is positive
+and the model index is not `$74`, `$053548` forms the drawn angle as
+
+```text
+$53420 = byte at $77A8 + 4*slot  +  the record's $8001 bias byte
+```
+
+`$05388E` reads that byte, doubles it to index the Q15 sine table at `$925A`
+(`table[0] = 0`, `table[64] = $7FFF`, so 256 steps per turn) and computes
+
+```text
+x' = (x·table[a+64] + z·table[a]) / 32768
+z' = (z·table[a+64] − x·table[a]) / 32768
+```
+
+about the model origin. `$0538BE` then adds the camera-relative instance
+position with **no z mirror**. That is exactly `placed()` in
+`web/src/damocles/frame.ts` with `modelZ: keep`, which makes `modelZ`
+recovered rather than authored: the source has no payload-wide z flip, and a
+model drawn facing the other way carries its own `$8001` bias instead. Five of
+the ten recovered vehicles do: `99 CHEVY` at `$40`, and `EAGLE NINE S E`,
+`INTERSTELLARSHIP`, `BULLET` and `22 CV` at `$80`.
+
+Boarding and leaving bind the same byte to the camera. `$054390` publishes it
+as `$7AC2 = byte × 4` with no offset, and the leave path at `$05449C` levels
+pitch and roll and stores `$7AC2 >> 2` back at `$0544FA`. Slot 5's `$7F`
+therefore explains the boarded `$7AA2 = $01FC` of the occupancy captures
+directly. Because a craft's nose is modelled toward local −Z — the limo's
+record runs Z `0..260` from the nose — byte `$00` reads as facing *south* on
+the compass, not north. The byte is a turn of the mesh; the compass reading is
+a fact about how the meshes are drawn.
+
+### What the Working Authority draws
+
+`instance-heading-probe.py sweep` parks the camera at a fixed pose on the pad
+and pokes candidate bytes. Poking `$77BC` turns the drawn mesh through every
+cardinal; poking `$79D2` — where this research previously read the heading —
+changes nothing, and `$79CD + slot` is not a table at all but bytes inside the
+`$77A8` array's slot-137 record.
+
+Standing 1400 units west of the limo at its own Z and facing east, the Working
+Authority draws the cabin glazing toward the right of the silhouette with the
+tapered nose to the left (run `yaw-instance-heading-20260919T105143Z-3980c53a`,
+`parked.png`). The browser at the same pose drew the cabin to the left and the
+body a car length along the axis while it read the angle as `$00`; reading
+`$77BC` puts the cabin on the same side as the source. Screen size and the
+remaining offset are not comparable between the two: `verticalFieldOfViewDegrees`
+is still authored, and the browser's frame is lit while the source's is flat.
+
+### What the catalogue publishes
+
+`object-slot-5`'s recovered coordinates are unchanged. Its `heading` is now the
+`$77A8` byte, and each object model that opens with `$8001` carries
+
+```json
+"instanceOrientation": { "angleBiasByte": 0, "modeByte": 64, "rotation": "yaw" }
+```
+
+`placementHeading` in `web/src/damocles/world.ts` sums the two and turns the
+mesh only for the `yaw` mode, so `TRANSPORTER a` — whose slots hold `$FF` but
+whose record opens with `$8002` — is drawn as modelled, as the source draws it.
 
 ## Residence while boarding, driving and leaving
 
@@ -187,8 +273,9 @@ geometry or mutable state embedded in the vehicle model.
 - Boarding temporarily removes slot 5 from surface residence and selects craft
   slot 5 as Occupancy. A future playable implementation must not leave a second
   stationary limo at the initial coordinates while it is driven.
-- The model's `$8001 $0040` header semantics remain unresolved. The recovered
-  heading `0` is north under the decoded 256-step convention.
+- The model's `$8001 $0040` header is decoded: bias `$00`, single-Y turn mode.
+  The recovered instance angle is `$7F`, which turns the mesh a whisker short of
+  half a turn and leaves the limo parked facing very nearly north.
 - The source evidence connects key slot 183 to craft slot 5 and shows successful
   keyed boarding. Two untouched-checkpoint replays verify that the same craft
   refuses boarding without the key and emits `VEHICLE KEY REQUIRED`.

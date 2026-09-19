@@ -6,17 +6,24 @@ not assign unknown interiors, settlements, or named places.
 
 ## Evidence set
 
-The coordinate and association arrays occupy one four-byte record per slot; the
-heading array occupies one byte per slot:
+Every resident array occupies one four-byte record per slot, `$400` apart:
 
-| Array         | Address | Current interpretation                           |
-| ------------- | ------: | ------------------------------------------------ |
-| X             | `$63A8` | signed 16.16 surface-grid coordinate             |
-| Y             | `$67A8` | signed 16.16 coordinate                          |
-| Z             | `$6BA8` | signed 16.16 surface-grid coordinate             |
-| Association A | `$6FA8` | draw, structure-group and interaction state      |
-| Association B | `$73A8` | body, surface/interior, level and cell selectors |
-| Heading       | `$79CD` | one-byte heading, 256/turn, `$00` = north        |
+| Array          | Address | Current interpretation                                  |
+| -------------- | ------: | ------------------------------------------------------- |
+| X              | `$63A8` | signed 16.16 surface-grid coordinate                    |
+| Y              | `$67A8` | signed 16.16 coordinate                                 |
+| Z              | `$6BA8` | signed 16.16 surface-grid coordinate                    |
+| Association A  | `$6FA8` | draw, structure-group and interaction state             |
+| Association B  | `$73A8` | body, surface/interior, level and cell selectors        |
+| Instance angle | `$77A8` | high byte: the angle the draw path turns the mesh by    |
+
+The draw path reads the angle as `move.b $77A8(a0),d1` at `$053548` with `a0` =
+`4 × slot`, the same index it reads the three coordinates with. An earlier
+reading of this note placed a one-byte-per-slot heading table at `$79CD`. That
+address is byte 1 of this array's slot-137 record, and no instruction in the
+program uses it as a table base; the bytes it read are other slots' records.
+The angle is decoded in
+[the V.I.P. limo findings](damocles-vip-limo.md#the-drawn-instance-angle).
 
 Association A's byte 2 (`$6FAA + 4*slot`) is the interaction byte: bit 4 makes
 an object silently untakeable, bit 5 diverts a take to a refusal message, bit 7

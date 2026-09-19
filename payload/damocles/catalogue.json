@@ -309,7 +309,7 @@
       "name": "DART II \u00b7 slot 1",
       "placement": null,
       "placementClass": 3,
-      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and raw heading are recovered from the resident arrays at source cell $70. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $70. The named place is unresolved.",
       "sourceAddress": 25516
     },
     {
@@ -339,7 +339,7 @@
       "name": "99 CHEVY \u00b7 slot 2",
       "placement": null,
       "placementClass": 6,
-      "reason": "Association B matches the native surface-resident selector for GAEA; coordinates and raw heading are recovered from the resident arrays at source cell $17. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for GAEA; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $17. The named place is unresolved.",
       "sourceAddress": 25520
     },
     {
@@ -369,7 +369,7 @@
       "name": "EAGLE NINE S E \u00b7 slot 3",
       "placement": null,
       "placementClass": 3,
-      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and raw heading are recovered from the resident arrays at source cell $99. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $99. The named place is unresolved.",
       "sourceAddress": 25524
     },
     {
@@ -399,7 +399,7 @@
       "name": "BESTCUPAND CRAFT \u00b7 slot 4",
       "placement": null,
       "placementClass": 1,
-      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and raw heading are recovered from the resident arrays at source cell $E8. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $E8. The named place is unresolved.",
       "sourceAddress": 25528
     },
     {
@@ -417,7 +417,7 @@
       "location": {
         "body": "body-11",
         "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
-        "heading": 0,
+        "heading": 127,
         "place": "place-025042",
         "position": [
           71.5137939453125,
@@ -429,7 +429,7 @@
       "name": "V.I.P. LIMO \u00b7 slot 5",
       "placement": null,
       "placementClass": 2,
-      "reason": "Resident slot 5 is associated with Eris surface cell $87. Its world coordinates and zero yaw are recovered from the on-foot capture.",
+      "reason": "Resident slot 5 is associated with Eris surface cell $87. Its world coordinates and drawn instance angle are recovered from the on-foot capture.",
       "sourceAddress": 25532
     },
     {
@@ -459,7 +459,7 @@
       "name": "TARG TOURER \u00b7 slot 6",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for DION; coordinates and raw heading are recovered from the resident arrays at source cell $E3. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for DION; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $E3. The named place is unresolved.",
       "sourceAddress": 25536
     },
     {
@@ -477,7 +477,7 @@
       "location": {
         "body": "body-11",
         "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
-        "heading": 255,
+        "heading": 128,
         "place": null,
         "position": [
           71.44020080566406,
@@ -489,7 +489,7 @@
       "name": "INTERSTELLARSHIP \u00b7 slot 7",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and raw heading are recovered from the resident arrays at source cell $87. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $87. The named place is unresolved.",
       "sourceAddress": 25540
     },
     {
@@ -527,7 +527,7 @@
       "location": {
         "body": "body-23",
         "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
-        "heading": 128,
+        "heading": 0,
         "place": null,
         "position": [
           1663.5109252929688,
@@ -539,7 +539,7 @@
       "name": "CONCORD III \u00b7 slot 10",
       "placement": null,
       "placementClass": 6,
-      "reason": "Association B matches the native surface-resident selector for BACCHUS; coordinates and raw heading are recovered from the resident arrays at source cell $82. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for BACCHUS; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $82. The named place is unresolved.",
       "sourceAddress": 25552
     },
     {
@@ -577,7 +577,7 @@
       "location": {
         "body": "body-21",
         "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
-        "heading": 160,
+        "heading": 0,
         "place": null,
         "position": [
           2005.5067443847656,
@@ -589,7 +589,7 @@
       "name": "BULLET \u00b7 slot 12",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for THALIA; coordinates and raw heading are recovered from the resident arrays at source cell $36. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for THALIA; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $36. The named place is unresolved.",
       "sourceAddress": 25560
     },
     {
@@ -619,7 +619,7 @@
       "name": "22 CV \u00b7 slot 13",
       "placement": null,
       "placementClass": 2,
-      "reason": "Association B matches the native surface-resident selector for GAEA; coordinates and raw heading are recovered from the resident arrays at source cell $88. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for GAEA; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $88. The named place is unresolved.",
       "sourceAddress": 25564
     },
     {
@@ -1358,7 +1358,7 @@
       "name": "READING GLASSES \u00b7 slot 49",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for LUCAN; coordinates and raw heading are recovered from the resident arrays at source cell $70. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for LUCAN; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $70. The named place is unresolved.",
       "sourceAddress": 25708
     },
     {
@@ -1636,7 +1636,7 @@
       "name": "RED BEACON LOCTR \u00b7 slot 54",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for VESTA; coordinates and raw heading are recovered from the resident arrays at source cell $44. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for VESTA; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $44. The named place is unresolved.",
       "sourceAddress": 25728
     },
     {
@@ -2165,7 +2165,7 @@
       "location": {
         "body": "body-23",
         "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
-        "heading": 76,
+        "heading": 255,
         "place": null,
         "position": [
           1663.5188598632812,
@@ -2177,7 +2177,7 @@
       "name": "TRANSPORTER a \u00b7 slot 72",
       "placement": null,
       "placementClass": 3,
-      "reason": "Association B matches the native surface-resident selector for BACCHUS; coordinates and raw heading are recovered from the resident arrays at source cell $82. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for BACCHUS; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $82. The named place is unresolved.",
       "sourceAddress": 25800
     },
     {
@@ -2195,7 +2195,7 @@
       "location": {
         "body": "body-27",
         "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
-        "heading": 0,
+        "heading": 255,
         "place": null,
         "position": [
           2826.511199951172,
@@ -2207,7 +2207,7 @@
       "name": "TRANSPORTER a \u00b7 slot 73",
       "placement": null,
       "placementClass": 8,
-      "reason": "Association B matches the native surface-resident selector for MENTOR; coordinates and raw heading are recovered from the resident arrays at source cell $79. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for MENTOR; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $79. The named place is unresolved.",
       "sourceAddress": 25804
     },
     {
@@ -2473,7 +2473,7 @@
       "name": "EXPLOSIVE \u00b7 slot 83",
       "placement": null,
       "placementClass": 3,
-      "reason": "Association B matches the native surface-resident selector for GAEA; coordinates and raw heading are recovered from the resident arrays at source cell $88. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for GAEA; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $88. The named place is unresolved.",
       "sourceAddress": 25844
     },
     {
@@ -2719,7 +2719,7 @@
       "name": "SUNSHADE \u00b7 slot 92",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and raw heading are recovered from the resident arrays at source cell $4C. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $4C. The named place is unresolved.",
       "sourceAddress": 25880
     },
     {
@@ -3427,7 +3427,7 @@
       "location": {
         "body": "body-9",
         "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
-        "heading": 71,
+        "heading": 0,
         "place": null,
         "position": [
           2569.4829864501953,
@@ -3439,7 +3439,7 @@
       "name": "MUSEUM GUIDE \u00b7 slot 112",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for CRONUS; coordinates and raw heading are recovered from the resident arrays at source cell $55. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for CRONUS; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $55. The named place is unresolved.",
       "sourceAddress": 25960
     },
     {
@@ -4827,7 +4827,7 @@
       "location": {
         "body": "body-8",
         "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
-        "heading": 2,
+        "heading": 50,
         "place": null,
         "position": [
           3080.5,
@@ -4839,7 +4839,7 @@
       "name": "Object 156 \u00b7 slot 156",
       "placement": null,
       "placementClass": 4,
-      "reason": "Association B matches the native surface-resident selector for GAEA; coordinates and raw heading are recovered from the resident arrays at source cell $88. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for GAEA; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $88. The named place is unresolved.",
       "sourceAddress": 26136
     },
     {
@@ -5046,7 +5046,7 @@
       "location": {
         "body": "body-1",
         "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
-        "heading": 2,
+        "heading": 0,
         "place": null,
         "position": [
           625.4840850830078,
@@ -5058,7 +5058,7 @@
       "name": "BLACK BEACON \u00b7 slot 164",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for ICARUS; coordinates and raw heading are recovered from the resident arrays at source cell $11. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ICARUS; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $11. The named place is unresolved.",
       "sourceAddress": 26168
     },
     {
@@ -5076,7 +5076,7 @@
       "location": {
         "body": "body-3",
         "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
-        "heading": 80,
+        "heading": 0,
         "place": null,
         "position": [
           3422.500244140625,
@@ -5088,7 +5088,7 @@
       "name": "BLACK BEACON \u00b7 slot 165",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for ACHERON; coordinates and raw heading are recovered from the resident arrays at source cell $33. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ACHERON; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $33. The named place is unresolved.",
       "sourceAddress": 26172
     },
     {
@@ -5106,7 +5106,7 @@
       "location": {
         "body": "body-5",
         "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
-        "heading": 67,
+        "heading": 0,
         "place": null,
         "position": [
           42.45500183105469,
@@ -5118,7 +5118,7 @@
       "name": "BLACK BEACON \u00b7 slot 166",
       "placement": null,
       "placementClass": 6,
-      "reason": "Association B matches the native surface-resident selector for ATROPOS; coordinates and raw heading are recovered from the resident arrays at source cell $10. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ATROPOS; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $10. The named place is unresolved.",
       "sourceAddress": 26176
     },
     {
@@ -5148,7 +5148,7 @@
       "name": "BLACK BEACON \u00b7 slot 167",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for LOGOS; coordinates and raw heading are recovered from the resident arrays at source cell $06. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for LOGOS; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $06. The named place is unresolved.",
       "sourceAddress": 26180
     },
     {
@@ -5166,7 +5166,7 @@
       "location": {
         "body": "body-9",
         "coordinateSystem": "ST surface grid units (body-local origin unresolved)",
-        "heading": 0,
+        "heading": 243,
         "place": null,
         "position": [
           2569.5179138183594,
@@ -5178,7 +5178,7 @@
       "name": "BLACK BEACON \u00b7 slot 168",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for CRONUS; coordinates and raw heading are recovered from the resident arrays at source cell $55. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for CRONUS; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $55. The named place is unresolved.",
       "sourceAddress": 26184
     },
     {
@@ -5208,7 +5208,7 @@
       "name": "BLACK BEACON \u00b7 slot 169",
       "placement": null,
       "placementClass": 8,
-      "reason": "Association B matches the native surface-resident selector for BACCHUS; coordinates and raw heading are recovered from the resident arrays at source cell $81. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for BACCHUS; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $81. The named place is unresolved.",
       "sourceAddress": 26188
     },
     {
@@ -5238,7 +5238,7 @@
       "name": "BLACK BEACON \u00b7 slot 170",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for MENTOR; coordinates and raw heading are recovered from the resident arrays at source cell $11. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for MENTOR; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $11. The named place is unresolved.",
       "sourceAddress": 26192
     },
     {
@@ -5268,7 +5268,7 @@
       "name": "BLACK BEACON \u00b7 slot 171",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for METIS; coordinates and raw heading are recovered from the resident arrays at source cell $02. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for METIS; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $02. The named place is unresolved.",
       "sourceAddress": 26196
     },
     {
@@ -5298,7 +5298,7 @@
       "name": "BLUE BEACON \u00b7 slot 172",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for TOLOSA; coordinates and raw heading are recovered from the resident arrays at source cell $01. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for TOLOSA; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $01. The named place is unresolved.",
       "sourceAddress": 26200
     },
     {
@@ -5328,7 +5328,7 @@
       "name": "BLUE BEACON \u00b7 slot 173",
       "placement": null,
       "placementClass": 6,
-      "reason": "Association B matches the native surface-resident selector for SOLON; coordinates and raw heading are recovered from the resident arrays at source cell $11. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for SOLON; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $11. The named place is unresolved.",
       "sourceAddress": 26204
     },
     {
@@ -5358,7 +5358,7 @@
       "name": "BLUE BEACON \u00b7 slot 174",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for THEON; coordinates and raw heading are recovered from the resident arrays at source cell $21. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for THEON; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $21. The named place is unresolved.",
       "sourceAddress": 26208
     },
     {
@@ -5388,7 +5388,7 @@
       "name": "BLUE BEACON \u00b7 slot 175",
       "placement": null,
       "placementClass": 3,
-      "reason": "Association B matches the native surface-resident selector for GAEA; coordinates and raw heading are recovered from the resident arrays at source cell $88. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for GAEA; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $88. The named place is unresolved.",
       "sourceAddress": 26212
     },
     {
@@ -5418,7 +5418,7 @@
       "name": "RED BEACON \u00b7 slot 176",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for THALIA; coordinates and raw heading are recovered from the resident arrays at source cell $36. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for THALIA; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $36. The named place is unresolved.",
       "sourceAddress": 26216
     },
     {
@@ -5448,7 +5448,7 @@
       "name": "RED BEACON \u00b7 slot 177",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for PAN; coordinates and raw heading are recovered from the resident arrays at source cell $04. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for PAN; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $04. The named place is unresolved.",
       "sourceAddress": 26220
     },
     {
@@ -5478,7 +5478,7 @@
       "name": "RED BEACON \u00b7 slot 178",
       "placement": null,
       "placementClass": 6,
-      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and raw heading are recovered from the resident arrays at source cell $29. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for ERIS; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $29. The named place is unresolved.",
       "sourceAddress": 26224
     },
     {
@@ -5508,7 +5508,7 @@
       "name": "RED BEACON \u00b7 slot 179",
       "placement": null,
       "placementClass": 0,
-      "reason": "Association B matches the native surface-resident selector for LUCAN; coordinates and raw heading are recovered from the resident arrays at source cell $70. The named place is unresolved.",
+      "reason": "Association B matches the native surface-resident selector for LUCAN; coordinates and the drawn instance angle ($77A8 + 4*slot, the byte $053548 sums with the model\u2019s $8001 bias) are recovered from the resident arrays at source cell $70. The named place is unresolved.",
       "sourceAddress": 26228
     },
     {
@@ -25769,6 +25769,11 @@
       "conditions": [],
       "evidence": [],
       "id": "object-035d12",
+      "instanceOrientation": {
+        "angleBiasByte": 0,
+        "modeByte": 64,
+        "rotation": "yaw"
+      },
       "kind": "object",
       "linkedInstances": [],
       "name": "DART II",
@@ -25932,6 +25937,11 @@
         }
       ],
       "id": "object-035d98",
+      "instanceOrientation": {
+        "angleBiasByte": 64,
+        "modeByte": 64,
+        "rotation": "yaw"
+      },
       "kind": "object",
       "linkedInstances": [
         "object-slot-180"
@@ -26279,6 +26289,11 @@
         }
       ],
       "id": "object-035ec8",
+      "instanceOrientation": {
+        "angleBiasByte": 128,
+        "modeByte": 64,
+        "rotation": "yaw"
+      },
       "kind": "object",
       "linkedInstances": [
         "object-slot-181"
@@ -26518,6 +26533,11 @@
         }
       ],
       "id": "object-035f92",
+      "instanceOrientation": {
+        "angleBiasByte": 0,
+        "modeByte": 64,
+        "rotation": "yaw"
+      },
       "kind": "object",
       "linkedInstances": [
         "object-slot-182"
@@ -27086,6 +27106,11 @@
         }
       ],
       "id": "object-036176",
+      "instanceOrientation": {
+        "angleBiasByte": 0,
+        "modeByte": 64,
+        "rotation": "yaw"
+      },
       "kind": "object",
       "linkedInstances": [
         "object-slot-183"
@@ -27593,6 +27618,11 @@
         }
       ],
       "id": "object-03e702",
+      "instanceOrientation": {
+        "angleBiasByte": 0,
+        "modeByte": 64,
+        "rotation": "yaw"
+      },
       "kind": "object",
       "linkedInstances": [
         "object-slot-184"
@@ -27921,6 +27951,11 @@
       ],
       "evidence": [],
       "id": "object-036324",
+      "instanceOrientation": {
+        "angleBiasByte": 128,
+        "modeByte": 64,
+        "rotation": "yaw"
+      },
       "kind": "object",
       "linkedInstances": [],
       "name": "INTERSTELLARSHIP",
@@ -28485,6 +28520,11 @@
         }
       ],
       "id": "object-03e81c",
+      "instanceOrientation": {
+        "angleBiasByte": 0,
+        "modeByte": 64,
+        "rotation": "yaw"
+      },
       "kind": "object",
       "linkedInstances": [
         "object-slot-188"
@@ -29984,6 +30024,11 @@
         }
       ],
       "id": "object-03672c",
+      "instanceOrientation": {
+        "angleBiasByte": 128,
+        "modeByte": 64,
+        "rotation": "yaw"
+      },
       "kind": "object",
       "linkedInstances": [
         "object-slot-190"
@@ -30310,6 +30355,11 @@
         }
       ],
       "id": "object-036838",
+      "instanceOrientation": {
+        "angleBiasByte": 128,
+        "modeByte": 64,
+        "rotation": "yaw"
+      },
       "kind": "object",
       "linkedInstances": [
         "object-slot-191"
@@ -30758,6 +30808,11 @@
       "conditions": [],
       "evidence": [],
       "id": "object-0369d2",
+      "instanceOrientation": {
+        "angleBiasByte": 128,
+        "modeByte": 64,
+        "rotation": "yaw"
+      },
       "kind": "object",
       "linkedInstances": [],
       "name": "AUTHOR'S CHAIR",
@@ -42302,6 +42357,11 @@
       ],
       "evidence": [],
       "id": "object-037e24",
+      "instanceOrientation": {
+        "angleBiasByte": 0,
+        "modeByte": 255,
+        "rotation": "articulated"
+      },
       "kind": "object",
       "linkedInstances": [],
       "name": "BLUE BEACON LOCR",
@@ -43677,6 +43737,11 @@
       ],
       "evidence": [],
       "id": "object-037ec6",
+      "instanceOrientation": {
+        "angleBiasByte": 0,
+        "modeByte": 255,
+        "rotation": "articulated"
+      },
       "kind": "object",
       "linkedInstances": [],
       "name": "RED BEACON LOCTR",
@@ -60282,6 +60347,11 @@
       ],
       "evidence": [],
       "id": "object-039b7a",
+      "instanceOrientation": {
+        "angleBiasByte": 0,
+        "modeByte": 255,
+        "rotation": "articulated"
+      },
       "kind": "object",
       "linkedInstances": [],
       "name": "MAGIC CRYSTAL",
@@ -91145,6 +91215,11 @@
       ],
       "evidence": [],
       "id": "object-03bdec",
+      "instanceOrientation": {
+        "angleBiasByte": 1,
+        "modeByte": 255,
+        "rotation": "articulated"
+      },
       "kind": "object",
       "linkedInstances": [],
       "name": "WASHING MACHINE",
@@ -106494,6 +106569,11 @@
       ],
       "evidence": [],
       "id": "object-03f384",
+      "instanceOrientation": {
+        "angleBiasByte": 0,
+        "modeByte": 255,
+        "rotation": "articulated"
+      },
       "kind": "object",
       "linkedInstances": [],
       "name": "ANTIGRAV",
@@ -108055,6 +108135,11 @@
       ],
       "evidence": [],
       "id": "object-036b46",
+      "instanceOrientation": {
+        "angleBiasByte": 0,
+        "modeByte": 255,
+        "rotation": "articulated"
+      },
       "kind": "object",
       "linkedInstances": [],
       "name": "NOVABOMB",
@@ -155539,6 +155624,11 @@
       "conditions": [],
       "evidence": [],
       "id": "object-03e694",
+      "instanceOrientation": {
+        "angleBiasByte": 0,
+        "modeByte": 64,
+        "rotation": "yaw"
+      },
       "kind": "object",
       "linkedInstances": [],
       "name": "DART",
@@ -155670,6 +155760,11 @@
       "conditions": [],
       "evidence": [],
       "id": "object-03e930",
+      "instanceOrientation": {
+        "angleBiasByte": 0,
+        "modeByte": 64,
+        "rotation": "yaw"
+      },
       "kind": "object",
       "linkedInstances": [],
       "name": "CUPAND SAUCER",
@@ -155855,6 +155950,11 @@
       "conditions": [],
       "evidence": [],
       "id": "object-03e9c6",
+      "instanceOrientation": {
+        "angleBiasByte": 192,
+        "modeByte": 64,
+        "rotation": "yaw"
+      },
       "kind": "object",
       "linkedInstances": [],
       "name": "SPRINTCAR",
@@ -156103,6 +156203,11 @@
       "conditions": [],
       "evidence": [],
       "id": "object-03ea9e",
+      "instanceOrientation": {
+        "angleBiasByte": 0,
+        "modeByte": 64,
+        "rotation": "yaw"
+      },
       "kind": "object",
       "linkedInstances": [],
       "name": "C-H EAGLE 8 S E",
@@ -1682726,7 +1682831,7 @@
       "name": "GUM STORE"
     }
   ],
-  "schemaVersion": 14,
+  "schemaVersion": 15,
   "source": {
     "authority": "Damocles Atari ST Working Authority",
     "evidence": "docs/research/damocles-catalogue.md",

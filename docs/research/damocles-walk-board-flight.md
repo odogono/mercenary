@@ -275,39 +275,26 @@ run multiplier as `recovered`. It applies the initial `3/2` turn ratio across
 the existing constant-rate approximation and marks that multiplier `derived`;
 the heading-dependent quantized turn sequence itself is not modelled.
 
-**Instance heading byte.** Resident objects store one byte at **`$79CD+slot`**
-(V.I.P. limo slot 5 = `$79D2`). The byte is **256 steps per turn**, a quarter
-of the camera yaw word: one heading step is four yaw units. It does **not**
-share the yaw word's raw zero. Byte `$00` is **north**, not south.
+**Instance heading byte — superseded by #361.** This section read the parked
+limo's heading from `$79D2` and paired its `$00` with the boarded camera yaw
+`$01FC`. Both halves were wrong. The byte the draw path turns a resident's mesh
+by is the high byte of the long at `$77A8 + 4*slot` — `$77BC` for slot 5, which
+holds `$7F` — and boarding publishes it as `$7AC2 = byte × 4` with no offset
+(`$054390`), which is where that `$01FC` came from. `$79CD + slot` is not a
+table; it lies inside the `$77A8` array. Poking `$79D2` does not rotate the
+drawn mesh because nothing reads it; poking `$77BC` does, through every
+cardinal (`instance-heading-probe.py sweep`, run
+`yaw-instance-heading-20260919T103846Z-561de4cc`). The recovered rule, the
+model record's share of it and the `modelZ` consequence are in
+[the V.I.P. limo findings](damocles-vip-limo.md#the-drawn-instance-angle).
 
-Boarding the parked limo (`heading = $00`) copies occupancy onto slot 5 and
-sets `$7AA2 = $01FC` (four units shy of `$0200`, still N on the compass). The
-on-foot start at `$0600` is the same cardinal. So:
-
-| Heading byte | Camera yaw mod `$400` | Cardinal |
-| ------------ | --------------------- | -------- |
-| `$00`        | `$200`                | N        |
-| `$40`        | `$300`                | E        |
-| `$80`        | `$000`                | S        |
-| `$C0`        | `$100`                | W        |
-
-`camera ≡ (byte × 4 + $200) mod $400`. A larger byte is a larger yaw word, so
-the byte rises **clockwise** with the camera. Leave does not write the live
-camera yaw back into `$79D2` (left-limo capture still reads `$00` after a
-drive). Poking `$79D2` / `$79D4` sticks in RAM but does not rotate the drawn
-mesh (`yaw-probe.py heading`; runs
-`yaw-heading-20260911T155245Z-12d92efd`,
-`yaw-heading-20260911T155437Z-3fb9e0fc`,
-`yaw-heading-20260911T160048Z-7d9a910d`): the byte is the authored parked
-pose, consumed when the instance is built or boarded, not every frame.
-
-Eris's recovered surface vehicles are `$00` or `$FF` (the arrival ship); no
-second parked cardinal was available on this body. Structures carry
-`heading: null` and stay at bearing 0 (north).
-
-**Still open.** Whether a model's local z runs with world z is authored from
-the spaceport view (modelZ `keep` puts the wing east of the tower as the
-capture does).
+One claim here is reversed and one survives. Leaving does write the live camera
+yaw back to the instance: the leave path at `$05449C` levels the craft's pitch
+and roll and then stores `$7AC2 >> 2` into `$77A8(a1)` at `$0544FA`. The
+left-limo capture cannot show that, because it leaves at `$7AC2 = $01FC`, which
+stores the `$7F` the slot already held; the `$00` this note read at `$79D2` was
+never the heading. What survives is the unit: the byte is 256 steps per turn, a
+quarter of the camera yaw word, rising clockwise with it.
 
 ### Flight / VOID / time under flight — Unresolved
 
@@ -390,5 +377,5 @@ Disassembly was required or produced.
 | Plain / `R` forward increment `$30` / `$50`; multiplier `5/3`                                 | paired 128-VBL per-VBL traces, identical 11-update count                                         |
 | `R` is a toggle                                                                               | explicit released tap persists; held agrees; double released tap returns plain, two repeats each |
 | Initial north-facing right turn `$10` plain / `$18` under `R`; later heading-dependent values | repeated 512-VBL plain and 256-VBL `R` traces                                                    |
-| Instance heading `$79CD+slot`, 256 per turn, `$00` = N, clockwise                             | occ-boarded `$7AA2=$01FC` at limo `$00`; yaw-probe heading pokes                                 |
+| Instance angle `$77A8+4*slot` high byte, 256 per turn, clockwise; craft yaw = byte × 4        | `$053548`/`$054390`/`$0544FA`; limo `$7F` with occ-boarded `$7AA2=$01FC`; `$77BC` cardinal pokes |
 | Snapshots                                                                                     | `eris-spaceport-onfoot`, `boarded-car`, `boarded-limo`, `left-limo`                              |
