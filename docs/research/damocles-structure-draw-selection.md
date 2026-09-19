@@ -1,5 +1,59 @@
 # Which structure components Damocles draws from outside
 
+## Research update — #370
+
+[#370](https://github.com/odogono/mercenary/issues/370) asked how many
+structures the Working Authority draws, not which components of one. This note
+answered the second question — "on foot the original draws both a structure's
+plan walls and its building detail, for every structure" means every *component*
+of the **bound** structure — so the first was still open. It is now settled.
+
+**Structure geometry never leaves the occupied cell.** The plan renderer
+`$05A744` and the detail renderer `$053CC2` have exactly five call sites between
+them, and all five lie inside the dispatch this note already documents:
+
+| target | call sites |
+| --- | --- |
+| `$05A744` plan renderer | `$0533F4`, `$053406` |
+| `$053CC2` detail renderer | `$0533FA`, `$053402`, `$053410` |
+
+`$0533D4..$053418` is the whole of it. There is no second path by which a
+neighbouring cell's structure could be drawn.
+
+The dispatch is not called; it is **fallen into**. `$0533C0` walks the object
+draw stream, reading a longword and a word per entry and calling `$0535A2` for
+each:
+
+```
+0533C0  move.l      (a2)+, d1
+0533C2  beq.b       $533d2      ; end of stream
+0533C4  move.w      (a2)+, d0
+0533C6  beq.b       $533d4      ; zero word: draw the bound structure here
+0533C8  move.l      a2, -(a7)
+0533CA  bsr.w       $535a2
+0533D0  bra.b       $533c0
+```
+
+A zero word is a sentinel meaning *draw the bound Structure Workspace at this
+point in the queue*, after which `$053400`/`$05340E`/`$053416` resume the
+stream. The structure is therefore drawn once per scene pass, for the one
+workspace `$7B5C` names, in paint order among the objects.
+
+That is the same shape as Targ's `Structure Reach` at `'cell'`
+([ADR 0034](../adr/0034-select-surface-geometry-by-the-reference-builds-own-rules.md)):
+one occupied cell contributes structure geometry, and no ring or distance term
+appears anywhere in the selection. Whether the browser should express it with
+the same type, and whether Damocles grows a Presentation Preset to carry an
+Enhanced departure, are adoption questions for
+[#373](https://github.com/odogono/mercenary/issues/373), not evidence.
+
+Recorded for contrast, both already recovered elsewhere and not re-derived here:
+the **ground records** follow an altitude-indexed cell window that is the
+occupied cell alone on foot (`docs/research/damocles-eris-ground.md`, #370
+update), and **objects** follow no distance test at all — `$052C9C` keeps every
+resident of the current body (`docs/research/damocles-object-selection.md`).
+Three families, three different bounds.
+
 ## Implementation update — #225
 
 The walk now consumes Catalogue schema 6 selectors. At arrival it selects region 11's
@@ -68,6 +122,10 @@ cyan patch 1/2 are 2/3 here, its doorway facade and grey patch 31/32 are
 are 40–43.
 
 ## Both components are always dispatched on foot — Confirmed
+
+> Read with the #370 update above: "both components, for every structure" is
+> about the components of the one **bound** structure. The dispatch is reached
+> once per scene pass and draws only the occupied cell's workspace.
 
 The dispatch at `$533D4..$53418` is generic; it is not specific to the
 spaceport.
