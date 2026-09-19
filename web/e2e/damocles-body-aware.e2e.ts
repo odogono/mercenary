@@ -1,130 +1,27 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+
+import {
+  APPROACH_LOCAL,
+  FACING_EAST,
+  WALK_FROM_LOCAL,
+  bootAt,
+  closeConsole,
+  damoclesSaveSlot,
+  displayRow,
+  inventory,
+  rowReaches,
+  run,
+  watchErrors
+} from './damocles-play.ts';
 
 /// Browser verification for the body-aware Damocles contract (#320).
 ///
 /// The unit suites assert the rules; this asserts that a real browser session obeys them through
 /// the ordinary controls and the development console, in one continuous session, with no page
 /// errors. Everything here is driven by keys and console lines, never by reaching into the
-/// session.
+/// session. The shared route and helpers live in `damocles-play.ts`.
 
-const DAMOCLES_RESUME_KEY =
-  'mercenary.browser-shell.damocles.session-resume.v1';
-
-const SAVE_SLOT_1 = 'mercenary.browser-shell.damocles.save.v1.slot-1';
-
-/// `KEY- V.I.P. LIMO`'s own recovered placement, local to the Capital Spaceport structure.
-const KEY_LOCAL = { x: 1038, z: 789 };
-
-/// Where the session must stand for the key to be takeable: 250 units short of it, inside the
-/// spaceport. The distance matters (the take radius is 512) and so does the structure region --
-/// the key is exposed only in the regions its insertion group names, and 250 units west is one.
-const APPROACH_LOCAL = { x: KEY_LOCAL.x - 250, z: KEY_LOCAL.z };
-
-/// Further back along the same line, so the last stretch can be walked. Facing east (yaw 768 on
-/// the recovered 1024-unit clockwise-from-north scale) points straight at the key; the default
-/// north start faces a wall, and the interior clamp holds the player still.
-const WALK_FROM_LOCAL = { x: KEY_LOCAL.x - 700, z: KEY_LOCAL.z };
-const FACING_EAST = 768;
-
-interface Catalogue {
-  readonly instances: readonly {
-    readonly id: string;
-    readonly location: { readonly position: readonly number[] } | null;
-  }[];
-}
-
-const spaceportOrigin = async (page: Page): Promise<readonly number[]> => {
-  const catalogue = (await (
-    await page.request.get('/payload/damocles/catalogue.json')
-  ).json()) as Catalogue;
-  return catalogue.instances.find(item => item.id === 'eris-surface-87')!
-    .location!.position;
-};
-
-/// Boot /damocles with the on-foot start moved to a local offset inside the spaceport, which is
-/// the idiom the existing Damocles suite uses to reach a place without walking there.
-const bootAt = async (
-  page: Page,
-  local: { readonly x: number; readonly z: number },
-  yaw = 512
-): Promise<void> => {
-  const origin = await spaceportOrigin(page);
-  await page.addInitScript(
-    key => localStorage.removeItem(key),
-    DAMOCLES_RESUME_KEY
-  );
-  await page.route('**/damocles/eris.json', async route => {
-    const document_ = await (await route.fetch()).json();
-    document_.start.yaw = yaw;
-    document_.start.position = {
-      x: origin[0]! * 65_536 + local.x,
-      y: 63,
-      z: origin[2]! * 65_536 + local.z
-    };
-    await route.fulfill({ json: document_ });
-  });
-  await page.goto('/damocles');
-  await expect(page.locator('#frame')).toHaveAttribute('data-state', 'ready');
-};
-
-/// Run one console line and return everything the console printed for it.
-const run = async (page: Page, line: string): Promise<string> => {
-  const log = page.locator('#console-log');
-  const before = await log.locator('> *').count();
-  const input = page.locator('#console-input');
-  if (!(await input.evaluate(node => node === document.activeElement))) {
-    await page.keyboard.press('`');
-    await expect(input).toBeFocused();
-  }
-  await input.fill(line);
-  await input.press('Enter');
-  await expect(log.locator('> *')).not.toHaveCount(before);
-  const lines = await log.locator('> *').allTextContents();
-  return lines.slice(before).join(' | ');
-};
-
-const closeConsole = async (page: Page): Promise<void> => {
-  if (
-    (await page.locator('#game-surface').getAttribute('data-console')) !==
-    'closed'
-  ) {
-    await page.keyboard.press('Escape');
-  }
-  await expect(page.locator('#game-surface')).toHaveAttribute(
-    'data-console',
-    'closed'
-  );
-};
-
-const inventory = (page: Page) =>
-  page.locator('#panel-damocles [data-field=inventory]');
-
-/// The Damocles Display's 48-cell row, published by the boot because the row is painted on a
-/// canvas and has no readable text of its own.
-const displayRow = async (page: Page): Promise<string> =>
-  (await page.locator('#frame').getAttribute('data-damocles-row')) ?? '';
-
-/// Poll the row until one of the expected phrases has passed through it. Messages present for a
-/// fixed number of frames and scroll in, so a single read would miss them.
-const rowReaches = async (page: Page, text: string): Promise<void> => {
-  await expect
-    .poll(async () => (await displayRow(page)).includes(text), {
-      timeout: 20_000
-    })
-    .toBe(true);
-};
-
-/// Page errors are a verification result in their own right, so every test collects them.
-const watchErrors = (page: Page): string[] => {
-  const errors: string[] = [];
-  page.on('pageerror', error => errors.push(error.message));
-  page.on('console', message => {
-    if (message.type() === 'error') {
-      errors.push(message.text());
-    }
-  });
-  return errors;
-};
+const SAVE_SLOT_1 = damoclesSaveSlot(1);
 
 test('the limo key is taken by walking up to it and pressing take', async ({
   page

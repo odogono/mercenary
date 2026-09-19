@@ -818,3 +818,65 @@ one semantic action. The Filled renderer also draws a key mesh's recovered `line
 `damocles-save.test.ts`, `damocles-session.test.ts`, `damocles-panel.test.ts`,
 `damocles-console.test.ts`. Fixtures are the worked traces in this document, not Restricted
 Material.
+
+## Browser verification (#301)
+
+Run on 2026-09-19 against `b354aea` (`web` 0.20.0, Damocles Save schema 4,
+`damocles.script.slot-2` revision 2), in Playwright's Chromium at 1280 × 900 and at 420 × 720,
+with `bun test` (1471 passing), `typecheck`, `lint` and `knip` green on the same tree.
+
+The pass lives in [`web/e2e/damocles-limo-key.e2e.ts`](../../web/e2e/damocles-limo-key.e2e.ts),
+beside the body-aware pass it shares [`web/e2e/damocles-play.ts`](../../web/e2e/damocles-play.ts)
+with. Every test drives the session through the Control Profile's own keys (`ArrowUp`/`ArrowDown`,
+`T`, `D`) and development-console lines, never by reaching into the session, and every test
+asserts the page raised no errors. Run it with `bun run test:e2e damocles-limo-key`.
+
+### What the browser was asked, and what it answered
+
+| Acceptance | Browser route | Result |
+| --- | --- | --- |
+| Pickup through the supported path, initial response, stopping point | Walk the last stretch into Capital Spaceport region 1 and press `T`; watch all three inline records, the wait and the clearing line | The label reads `KEY- V.I.P. LIMO`, the key leaves the drawn set, the three records arrive in order and the row is blank and stays blank |
+| Partial scrolling, held third record, clearing | Read `data-damocles-row` and `data-damocles-scroll` from one frame while record 2 arrives over record 1 | The row is exactly what the recovered arithmetic gives for that pixel count; the count is a multiple of 8 below 288; record 3 still reads 4.4 s after it arrives, which is longer than a record's own 200 frames, so it is held across the null gate |
+| One sound request per successful take, and no second response | `data-damocles-cues` across take, drop, re-pick, and a repeat take with no drop | `take:1` after the first take, unchanged by a repeat take; one further `take` per successful re-pick and one `drop` per successful drop; the row never runs a second response |
+| Drops during a pending response as well as after completion | Drop and re-pick while record 1 is held; drop and re-pick after the response parks | Neither cancels, restarts nor duplicates the response |
+| Surface/interior key-drop routes: leave, save/restore, return, re-pick | Drop inside the spaceport, walk out through the doorway into native region 3, Save and restore there, walk back and take it again | Residence survives the region crossing and the round trip; the key is drawn once, not duplicated at its Catalogue placement; the console reports `nothing is in reach` from outside and takes it from beside it |
+| Unbound-parent Save | After a drop inside the structure, `goto 6 8` until no structure binds, then Save and restore | Accepted, and the key keeps its structure residence |
+| Missing-group refusal after park | Walk into the doorway region (native region 2) carrying the key, after the response has parked, and press `D` | Refused: the key stays carried, `NO ROOM` scrolls onto the row, and no Sound Cue is requested |
+| Save/restore before pickup, mid-record, during the wait, after completion | Console `save`/`load` at each phase, choosing the phase by re-saving until the stored record is in it | Every restore continues the same response with no duplicated record, effect or pickup; a pre-pickup restore puts the key back in the world and a second take runs the response again from record 1 |
+| Session Resume | Reload the page mid-response | The session continues carrying the key and finishes the response once; the restore itself requests no Sound Cue |
+| Invalid/incompatible restore | Rewrite a stored record's `execution.step` to a step the interpreter never stops on, and another's `scrollCounter` to 99 | Both are refused whole with a reason, and live play carries on — still carrying the key, still running its response, still advancing frames |
+| Keyboard controls and layouts | Walk, take and drop at 1280 × 900 and at 420 × 720 | Unchanged behaviour; the Damocles panel stays visible on the narrow viewport |
+| Targ isolation | Seed Targ's Save slot and Session Resume keys, then take, drop, Save and restore in Damocles | Both Targ records are byte-identical afterwards |
+
+### What the browser could not answer, and what was added so it could
+
+Three readouts were published from the Damocles boot, for the same reason `data-damocles-row`
+already was — the Damocles Display and the session's region are painted, not written:
+`data-damocles-scroll` (how far a record has travelled into the row), `data-region` (which
+region of the bound structure the player stands in, which decides what is exposed) and
+`data-damocles-cues` (a running tally of drained Sound Cue requests). The tally is a request
+count, not audio: Damocles has no sound presenter in this slice, so a browser pass has no other
+way to see that a take asked for exactly one sound. None of them changes behaviour.
+
+### Remaining limitations
+
+- **No audio was verified, because there is none.** Every sound claim here is about the
+  request the session drains, matching the recovered guard, not about an audible cue.
+- **The excluded drop classes stay excluded.** No-structure and intentional-empty cells, other
+  interiors and levels, passages, support placement, Trading Post sale/buyback and interruption
+  of a live slot-2 response were not exercised: they are not in this delivery, and they belong
+  to [#313](https://github.com/odogono/mercenary/issues/313) /
+  [#319](https://github.com/odogono/mercenary/issues/319).
+- **The interior return is still a port continuation.** Walking back to a key left inside the
+  spaceport verifies this implementation's persisted residence; it is not a claimed native
+  return trace, and the native route remains drifted.
+- **This is confirmation, not proof.** The deterministic suites remain the authority, and
+  nothing here supports a claim of broader Damocles equivalence — one object, on one Body, with
+  one response.
+- **A stored mid-wait row is not checked against the record it should be holding.** The
+  [validation](#validation) rule that a `poll-wait` record carries the held message-3 row is not
+  enforced: the codec admits any 48 printable cells there, so a hand-edited record can restore
+  with a blank or unrelated row for the rest of the wait. It is unreachable through play and
+  display-only, and the neighbouring "held blank row when parked" rule was deliberately relaxed
+  when trigger 6 gained a park without a clearing line, so this is filed as
+  [#387](https://github.com/odogono/mercenary/issues/387) rather than changed here.

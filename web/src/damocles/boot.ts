@@ -1,6 +1,7 @@
 import '../shell/damoclesPanelElement.ts';
 
 import { IDLE } from '../gameCore/index.ts';
+import { DEFAULT_CAST_SHADOWS } from '../settings/index.ts';
 import { installShellChrome } from '../shell/chrome.ts';
 import { FixedStepClock } from '../shell/clock.ts';
 import type { ConsoleParseContext } from '../shell/console.ts';
@@ -20,7 +21,6 @@ import {
 import { installPanel, installPanelScale } from '../shell/panelView.ts';
 import { canvasPointer } from '../shell/pointer.ts';
 import { createPreferences } from '../shell/preferences.ts';
-import { DEFAULT_CAST_SHADOWS } from '../settings/index.ts';
 import type { SessionResumePersistence } from '../shell/resume.ts';
 import { createSessionResumeNotices } from '../shell/resumeNotices.ts';
 import { routeKey, type RouterState } from '../shell/router.ts';
@@ -188,6 +188,18 @@ try {
   const panel = installPanel(panelElements);
   let commitAction = (_action: () => unknown): void => {};
 
+  /// Damocles has no sound presenter in this slice, so a drained Sound Cue request leaves no
+  /// trace a browser pass could read. Tallying the cues as they are drained is how #301 can
+  /// verify from outside the session that one successful take asks for exactly one sound.
+  const cueTally = new Map<string, number>();
+  const drainEffects = (): void => {
+    for (const effect of session.drainEffects()) {
+      if (effect.type === 'sound-request') {
+        cueTally.set(effect.cue, (cueTally.get(effect.cue) ?? 0) + 1);
+      }
+    }
+  };
+
   const controls = new BrowserControlProfile({
     drop: () => commitAction(() => session.drop()),
     fire: () => undefined,
@@ -226,7 +238,7 @@ try {
   let resumePersistence = makeResumePersistence();
   commitAction = (action: () => unknown): void => {
     action();
-    session.drainEffects();
+    drainEffects();
     snapshot = session.snapshot;
     resumePersistence.dirty();
     resumePersistence.checkpoint(true);
@@ -306,7 +318,7 @@ try {
     banner: DAMOCLES_CONSOLE_BANNER,
     execute: (command, deps) => {
       const lines = executeDamoclesConsoleCommand(command, deps);
-      session.drainEffects();
+      drainEffects();
       snapshot = session.snapshot;
       if (
         command.kind === 'dropObject' ||
@@ -556,9 +568,19 @@ try {
       snapshot.structure?.attachments[0]?.openUnits ?? 0
     );
     root['structureInstance'] = snapshot.structure?.instanceId ?? '';
+    // Which region of the bound structure the player stands in. It decides which residents are
+    // exposed, so a browser pass cannot judge visibility or a region-bound refusal without it.
+    root['region'] = String(snapshot.structure?.regionIndex ?? '');
     // The Damocles Display is painted on the aux canvas, so its row has no text a test or a
     // screen reader could read. Publishing the cells is how the row becomes observable.
     root['damoclesRow'] = snapshot.displayCells.cells.trim();
+    // How far a scrolling record has travelled into the row, so a partially revealed message is
+    // observable as something other than a shorter string.
+    root['damoclesScroll'] = String(snapshot.displayCells.scrollPixels);
+    root['damoclesCues'] = [...cueTally]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([cue, count]) => `${cue}:${count}`)
+      .join(' ');
     root['triangles'] = String(triangles);
     root['unresolved'] = String(snapshot.surface.unresolvedCount);
   };
@@ -613,7 +635,7 @@ try {
         if (menu.layer() === 'none' && ownership.mayAdvance()) {
           session.intent = controls.intent;
           snapshot = session.advance(seconds);
-          session.drainEffects();
+          drainEffects();
           resumePersistence.dirty();
         }
       });
