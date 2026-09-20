@@ -166,6 +166,41 @@ yet the bitmap; the renderer needs more than one displayed-second of running
 time. `$7942` is a finer companion word, not the `HH-MM-SS` source. Script
 `$7482` records did not change while the clock ticked.
 
+**Start value (#368) — Confirmed: `-15560`, `04-19-20`.** What #208 left open
+was the deadline a fresh game begins with. It is installed on the **title
+screen**, before the player presses anything: every one of the 78 title-screen
+RAM dumps in the laboratory holds the same uninitialised `$025E8120` at
+`$793C`, and a cold boot writes `$FFFFC338` = **`-15560`** = **`04-19-20`**
+some 2,200 VBLs after the first title-loop hit, then holds it static for
+several hundred more VBLs before the title's own slow tick begins.
+
+`deadline-start-probe.py` catches the write by cold-booting to the pinned
+title-screen checkpoint and then sampling `$7900`–`$7B00` on a self-chaining
+run of exact-VBL debugger breakpoints, so the cadence is emulator time rather
+than host sleeps. Bracketed to 0.2 displayed seconds:
+
+| VBLs after the title checkpoint | `$793C` | Readout |
+| ---: | --- | --- |
+| 1400 (the checkpoint itself) | `$025E8120` | — uninitialised |
+| 1400 + 775 | `$025E8120` | — uninitialised |
+| 1400 + 780 | `$FFFFC338` | `04-19-20` |
+
+**The player never sees `04-19-20` on foot.** Pressing Space starts a scripted
+arrival that spends the deadline in one decelerating sweep — `-15543` to
+`-10244` inside 200 VBLs — after which the word resumes its ordinary rate
+while the ship flies in and lands itself. The walk flag `$7A8E` turns to `1`
+between 3,500 and 3,600 VBLs after the checkpoint, with the clock reading
+about `02-47-25`: that is where the original hands over control, on foot at
+Eris Capital Spaceport, and it is why every on-foot capture in the laboratory
+reads somewhere in the twos. How much is left at hand-over therefore depends
+on how long the title screen sat; `15560` is the only figure that is a
+property of the game rather than of one playthrough.
+
+The same landed frame independently pins two panel widths the port had
+guessed at: the altitude window prints **six** digits (`000000` on foot), and
+the cell beside it reads `07-08` with body coordinates `016-283` — the port's
+own start pose.
+
 Reproduce:
 
 ```sh
@@ -174,9 +209,15 @@ python3 research/damocles-st/scripts/panel-readout-probe.py \
 python3 research/damocles-st/scripts/panel-readout-probe.py \
   --roms /path/to/roms --snapshots /path/to/snapshots poke \
   --address 0x793c --bytes fffff1f0 --vbls 400
+python3 research/damocles-st/scripts/deadline-start-probe.py \
+  --roms /path/to/roms --start-vbls 0 --interval 5 --count 200 --no-space
+python3 research/damocles-st/scripts/deadline-start-probe.py \
+  --roms /path/to/roms --start-vbls 0 --interval 100 --count 1200
 ```
 
-Residual Fog: whether flight / near-c time changes this word's rate (still #86).
+Residual Fog: whether flight / near-c time changes this word's rate (still
+#86); what governs the arrival sweep's shape, and so the exact cost of the
+scripted arrival.
 
 ## Host Callout census (category rows)
 
@@ -215,6 +256,7 @@ Damocles seam *would* need to census — not types to add to `MercenaryKit`.
 - Walk-versus-boarded RAM word and board/leave observe — **answered** in [#86](https://github.com/odogono/mercenary/issues/86) / `damocles-walk-board-flight.md` (walk flag `$7A8E`; VOID / velocity binary / clock-under-flight still Fog there)
 - VOID / deep-space flight and near-c time dilation — still open under #86 residual Fog
 - Impact-clock RAM cell — **answered** in #208 (`$793C` signed remaining seconds)
+- Impact deadline a fresh game starts from — **answered** in #368 (`-15560`, `04-19-20`, installed on the title screen)
 - Craft control-rate / orbital-parameter blocks — partial (number-key panel speed in #86 / #208); integer velocity cell still Fog; tables Unresolved
 
 ## Provenance summary
@@ -227,4 +269,6 @@ Damocles seam *would* need to census — not types to add to `MercenaryKit`.
 | Start on foot | Panel `EMPTY` on `first-world` and `deadline-clock` PNGs |
 | Impact clock advances while idle | `deadline-clock` `observed-t0` → `observed-t1` panel `02-29-13` → `02-24-26` |
 | Impact clock is signed seconds at `$793C` | #208 exact-VBL idle pairs; poke `$FFFFF1F0` → panel `00-59-39` |
+| Fresh-game deadline is `-15560` (`04-19-20`) | #368 cold-boot exact-VBL chain; uninitialised at 1400+775 VBLs, written by 1400+780 |
+| Altitude window prints six digits | #368 landed arrival frame reads `000000` on foot |
 | Scenario pins | `first-world.json`, `deadline-clock.json` |

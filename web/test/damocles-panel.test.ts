@@ -5,7 +5,8 @@ import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
   bodyCoordinateReadout,
   damoclesPanelViewModel,
-  erisGridReference
+  erisGridReference,
+  impactClock
 } from '../src/damocles/panel.ts';
 import { DamoclesSession } from '../src/damocles/session.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
@@ -49,7 +50,11 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
       scrollPixels: 0
     });
     expect(model.speedLabel).toBe('+ 000 000 000');
-    expect(model.clock).toBe('');
+    // The impact clock starts at the deadline the title screen installs at `$793C` (#368).
+    expect(model.clock).toBe('04-19-20');
+    // Six digits, which is what the original's altitude window prints and one more than the
+    // Targ instrument the view model is shared with (#368).
+    expect(model.altitude).toBe('000000');
     expect(model.runLamp).toBe(false);
     expect(damoclesTitle.panelViewModel(session.snapshot, loaded)).toEqual(
       model
@@ -125,6 +130,33 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
         `${pose.id} ${expected[pose.id]!}`
       );
     }
+  });
+
+  test('counts the impact clock down at two and a half seconds a Session second', async () => {
+    const loaded = await content();
+    const session = new DamoclesSession(loaded);
+    // 20 VBLs a displayed second at 50 Hz (#208): ten Session seconds spend twenty-five of the
+    // deadline's own seconds, and standing still spends them just as walking does.
+    session.advance(10);
+    expect(damoclesPanelViewModel(session.snapshot, loaded.doc).clock).toBe(
+      '04-18-55'
+    );
+    session.advance(3590);
+    expect(damoclesPanelViewModel(session.snapshot, loaded.doc).clock).toBe(
+      '01-49-20'
+    );
+  });
+
+  test('stops the impact clock at nought rather than running past it', async () => {
+    const loaded = await content();
+    const { time } = loaded.doc;
+    const exhausted =
+      (time.impactDeadlineSeconds * time.impactVblsPerSecond) / time.vblHertz;
+    expect(impactClock(exhausted - 1, time)).toBe('00-00-03');
+    expect(impactClock(exhausted, time)).toBe('00-00-00');
+    // A Session that models no impact has nothing to do when the deadline passes, so the
+    // readout holds at nought and play goes on.
+    expect(impactClock(exhausted * 2, time)).toBe('00-00-00');
   });
 
   test('prints cells two digits an axis and stars beyond the readout', () => {

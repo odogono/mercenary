@@ -8,9 +8,7 @@ import type { ErisCell } from './world.ts';
 ///
 /// Under ADR 0027 the same chrome dressed Targ data; here every readout that has a recovered
 /// meaning shows it, and every readout that does not is a static placeholder named as one.
-/// The credit readout has no economy behind it yet, and on foot the craft velocity is nought. The impact clock is a
-/// different case: #208 bound its encoding, and what this Session lacks is an impact deadline
-/// to count down rather than a reading it cannot decode (#368).
+/// The credit readout has no economy behind it yet, and on foot the craft velocity is nought.
 
 /// The NAV readout's cell, two digits an axis. Damocles's grid is not Targ's wrapping surface,
 /// so Targ's `gridReference` is not used; a cell outside the workspace prints as `**`.
@@ -48,19 +46,48 @@ const bodyDigits = (step: number): string =>
 export const bodyCoordinateReadout = (position: Vector3): string =>
   `${bodyDigits(bodyStep(position.x))}-${bodyDigits(bodyStep(position.z, BODY_Z_BIAS))}`;
 
+/// The impact clock, as `HH-MM-SS` counting down toward the comet's arrival (#368).
+///
+/// `$793C` holds minus the remaining seconds and counts up toward zero at 20 VBLs a displayed
+/// second (#208), so a Session second is `vblHertz / impactVblsPerSecond` displayed seconds:
+/// two and a half of them at PAL 50 Hz. A Session that models no impact still has to answer
+/// for the moment the deadline runs out, and what it answers is `00-00-00`: the clock stops
+/// there and play goes on, because there is no impact here to arrive.
+export const impactClock = (
+  elapsed: number,
+  time: ErisPresentationDocument['time']
+): string => {
+  // The epsilon is the one the Session uses on its own frame accumulator: elapsed is a sum of
+  // fixed steps, so an exact hour of them lands a hair under the hour.
+  const spent = Math.floor(
+    (elapsed * time.vblHertz) / time.impactVblsPerSecond + 1e-9
+  );
+  const remaining = Math.max(0, time.impactDeadlineSeconds - spent);
+  return [
+    Math.floor(remaining / 3600),
+    Math.floor(remaining / 60) % 60,
+    remaining % 60
+  ]
+    .map(field => String(field).padStart(2, '0'))
+    .join('-');
+};
+
 export const damoclesPanelViewModel = (
   snapshot: DamoclesSnapshot,
   doc: ErisPresentationDocument,
   running = false
 ): PanelViewModel => ({
-  altitude: '00000',
+  // The altitude window is six digits wide here, which is the width the original prints and
+  // one wider than the Targ instrument the Benson Panel shares its view model with (#368).
+  // The value behind it is still a placeholder: on foot there is no altitude to report.
+  altitude: '000000',
   altitudeLamp: false,
   attackLamp: false,
   // The Body Coordinate Readout: the original prints `016-283` here at the Eris start pose,
   // which is what this reproduces (#371).
   bodyCoordinates: bodyCoordinateReadout(snapshot.pose.position),
   cash: '000,000,000.00',
-  clock: '',
+  clock: impactClock(snapshot.elapsed, doc.time),
   compassDegrees: bearingDegrees(snapshot.pose.heading),
   damoclesDisplay: snapshot.displayCells,
   elevationDegrees: 0,

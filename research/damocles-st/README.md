@@ -32,6 +32,8 @@ python3 research/damocles-st/scripts/panel-readout-probe.py --roms /path/to/roms
   --snapshots /path/to/snapshots navigation --vbls 800
 python3 research/damocles-st/scripts/panel-readout-probe.py --roms /path/to/roms \
   --snapshots /path/to/snapshots velocity --key 4
+python3 research/damocles-st/scripts/deadline-start-probe.py --roms /path/to/roms \
+  --start-vbls 0 --interval 5 --count 200 --no-space
 research/damocles-st/lab verify --run research/damocles-st/work/<run-id>
 research/damocles-st/lab export --run research/damocles-st/work/<run-id> --window script-bank
 research/damocles-st/lab xref --run research/damocles-st/work/<run-id> --address 0x781E
