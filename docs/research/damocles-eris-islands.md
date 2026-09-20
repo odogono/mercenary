@@ -348,7 +348,10 @@ records or the altitude radius curve at `$00915A`.
 
 Decoding every body's list gives 62 island records across 30 bodies. 41 carry a
 coastline polygon; 29 bind a group whose place list has a readable area name.
-The two properties are independent.
+The two properties are independent. The complete inventory — every record's
+origin, coastline, colour and area — is
+[the island census](damocles-island-census.md); the summary here is enough to
+settle the domain question.
 
 | Body | Records | With coastline | With named area | Body colour |
 | --- | ---: | ---: | ---: | --- |
@@ -391,7 +394,10 @@ Four dispositions appear, and all four are attested:
   Mentor — carry one record with a named area, a bound workspace and **no
   coastline at all**. `TAKOUSHI BASE` sits on Icarus at 624,688 with no
   landmass under it, and the whole surface is Icarus's own `$222`. A settlement
-  must not require an island.
+  must not require an island. All twenty-one coastline-less records share one
+  stub whose extent and core boxes are the whole coordinate plane, so the
+  classifier answers `0` everywhere on such a body — land, no sea, no coast.
+  See [the census](damocles-island-census.md).
 - **An island with no settlement.** Lucan's twelve records all carry coastlines
   and none binds a named workspace; nine of Lachesis's ten and four of
   Cyclopes's five are the same. An island must not require a settlement.
