@@ -612,3 +612,43 @@ test('a malformed presentation document blocks the Damocles boot', async ({
   await expect(page.getByRole('alert')).toContainText('missing field');
   await expect(page.locator('#frame')).toBeHidden();
 });
+
+test('the Cell Readout prints a negative axis in red off the workspace', async ({
+  page
+}, testInfo) => {
+  await page.addInitScript(
+    key => localStorage.removeItem(key),
+    DAMOCLES_RESUME_KEY
+  );
+  // The Working Authority's Capital City reading: body cell (38,136), west of that island
+  // record's origin (64,128) and eight cells south of it, where the original prints `26-08`
+  // with the 26 red. The port printed `**-**` here until #397.
+  await page.route('**/damocles/eris.json', async route => {
+    const doc = await (await route.fetch()).json();
+    doc.start.position = { x: 38.5 * 65_536, y: 63, z: 136.5 * 65_536 };
+    await route.fulfill({ json: doc });
+  });
+  await page.goto('/damocles');
+  await expect(page.locator('#frame')).toHaveAttribute('data-state', 'ready');
+  // The same capture's Body Coordinate Readout, which brackets the position independently.
+  await expect(
+    page.locator('#panel-damocles [data-field=bodyCoordinates]')
+  ).toHaveText('008-283');
+  const readout = page.locator('#panel-damocles [data-field=locationLabel]');
+  await expect(readout).toHaveText('26-08');
+  const axes = readout.locator('.location-axis');
+  await expect(axes).toHaveCount(2);
+  expect(
+    await axes.evaluateAll(nodes =>
+      nodes.map(node => [
+        node.textContent,
+        node.dataset['negative'],
+        getComputedStyle(node).color
+      ])
+    )
+  ).toEqual([
+    ['26', 'true', 'rgb(238, 0, 0)'],
+    ['08', 'false', 'rgb(0, 0, 0)']
+  ]);
+  await page.screenshot({ path: testInfo.outputPath('cell-readout.png') });
+});

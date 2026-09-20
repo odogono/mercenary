@@ -18,6 +18,7 @@ damocles-panel {
   --nav-face: #446644;
   --nav-lcd: #aaccaa;
   --nav-ink: var(--st-black);
+  --nav-ink-negative: #ee0000;
   --nav-label: #aaccaa;
   --gauge-sky: #aaccee;
   --gauge-ground: #aaccaa;
@@ -266,6 +267,12 @@ damocles-panel .nav-lcd.nav-body {
 
 damocles-panel .nav-lcd.nav-location {
   width: calc(22 * var(--u));
+}
+
+/* The Cell Readout is signed: it counts from the selected Damocles Island's origin, and the
+   original prints a negative axis red (#397). */
+damocles-panel .location-axis[data-negative='true'] {
+  color: var(--nav-ink-negative);
 }
 
 damocles-panel .nav-lcd.nav-altitude {

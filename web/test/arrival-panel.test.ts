@@ -21,6 +21,7 @@ const base: PanelViewModel = {
   groundLamp: false,
   inventory: 'EMPTY',
   inventoryFill: 0,
+  locationAxes: undefined,
   locationLabel: '08-08',
   locationName: 'TARG',
   message: 'CRASH LANDED ON TARG',

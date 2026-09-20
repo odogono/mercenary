@@ -25,6 +25,22 @@ export interface ErisCell {
   readonly z: number;
 }
 
+/// A Body's surface is this many Surface Cells an axis and wraps on both: `$058F64` masks the
+/// body position's high word to twelve bits before anything is measured from it, so no Body
+/// Coordinate is off the surface and two far apart in number may be neighbours (#397).
+export const SURFACE_CELLS = 0x10_00;
+
+/// One record of the Body's island list at `$7A16`, as the Session reads it: where a Damocles
+/// Island sits on the surface, which is what an Island-Local Cell is counted from.
+///
+/// A record carries no name of its own; `areaName` is the name of the area the workspace it
+/// binds publishes, and is null where it binds none (docs/research/damocles-eris-islands.md).
+export interface ErisIsland {
+  readonly areaName: string | null;
+  readonly id: string;
+  readonly origin: ErisCell;
+}
+
 /// Where the player stands and faces on one Body: raw engine units with north at +z and east
 /// at +x, and a bearing in radians clockwise from north (#204).
 ///
@@ -66,6 +82,8 @@ export interface ErisPlace {
 export interface ErisSurface {
   readonly body: { readonly id: string; readonly name: string };
   readonly grid: ErisGrid;
+  /// This Body's island records, in list order. Empty where the Body carries none.
+  readonly islands: readonly ErisIsland[];
   readonly placements: readonly ErisPlacement[];
   readonly places: readonly ErisPlace[];
   /// Placements whose model has no recovered faces: drawn as nothing, counted as a gap
@@ -73,11 +91,77 @@ export interface ErisSurface {
   readonly unresolvedCount: number;
 }
 
-/// The local cell a raw-unit position falls in, as the panel's NAV readout counts them.
+/// The local cell a raw-unit position falls in, counted from the bound workspace's origin.
 export const cellOf = (position: Vector3, grid: ErisGrid): ErisCell => ({
   x: Math.floor(position.x / grid.cellUnits) - grid.origin.x,
   z: Math.floor(position.z / grid.cellUnits) - grid.origin.z
 });
+
+const wrapSurface = (cell: number): number =>
+  ((cell % SURFACE_CELLS) + SURFACE_CELLS) % SURFACE_CELLS;
+
+/// The shorter of the two ways round the surface between two cells on one axis.
+const surfaceSpan = (from: number, to: number): number => {
+  const gap = wrapSurface(from - to);
+  return Math.min(gap, SURFACE_CELLS - gap);
+};
+
+/// The same gap taken signed, which is what sign-extending to 28 bits leaves.
+const surfaceOffset = (from: number, origin: number): number => {
+  const gap = wrapSurface(from - origin);
+  return gap >= SURFACE_CELLS / 2 ? gap - SURFACE_CELLS : gap;
+};
+
+/// The Body Coordinate a raw-unit position falls in: a Surface Cell from the Body's own origin,
+/// wrapped onto the surface torus, which is the quantity `$7A92`/`$7A9A` keep.
+export const bodyCellOf = (position: Vector3, grid: ErisGrid): ErisCell => ({
+  x: wrapSurface(Math.floor(position.x / grid.cellUnits)),
+  z: wrapSurface(Math.floor(position.z / grid.cellUnits))
+});
+
+/// The island record the Working Authority measures from: the one nearest the player's Body
+/// Coordinate, which `$056490` keeps in `$7894` and `$056464` publishes the origin of.
+///
+/// The metric itself is unrecovered — `$056490` reads tables at `$60000`, `$64000` and `$4BD34`
+/// that the islands note did not decode. Every observed selection matched a plain nearest-origin
+/// reading, so that is what this measures, on the wrapping surface rather than on a plane. It
+/// will matter where two records sit close together, as Lachesis's ten do
+/// (docs/research/damocles-eris-islands.md, "Named gaps").
+export const nearestIsland = (
+  surface: ErisSurface,
+  position: Vector3
+): ErisIsland | undefined => {
+  const here = bodyCellOf(position, surface.grid);
+  let nearest: ErisIsland | undefined;
+  let best = Number.POSITIVE_INFINITY;
+  for (const island of surface.islands) {
+    const distance =
+      surfaceSpan(here.x, island.origin.x) ** 2 +
+      surfaceSpan(here.z, island.origin.z) ** 2;
+    if (distance < best) {
+      best = distance;
+      nearest = island;
+    }
+  }
+  return nearest;
+};
+
+/// The Island-Local Cell of a position: its Body Coordinate less the island's origin, taken
+/// signed across the wrap, which is the high word `$058F88`..`$058F96` publishes to `$7A2C`.
+///
+/// It is signed and unbounded, and it agrees with the bound workspace's own 0-15 cell only
+/// while the position is inside that 16-cell window.
+export const islandLocalCell = (
+  position: Vector3,
+  grid: ErisGrid,
+  island: ErisIsland
+): ErisCell => {
+  const here = bodyCellOf(position, grid);
+  return {
+    x: surfaceOffset(here.x, island.origin.x),
+    z: surfaceOffset(here.z, island.origin.z)
+  };
+};
 
 /// Whether the Working Authority draws this placement from where the player stands (#373).
 ///
@@ -297,6 +381,13 @@ export const erisSurfaceFrom = (
   return {
     body: { id: body.id, name: body.name },
     grid,
+    islands: catalogue.islands
+      .filter(island => island.body === body.id)
+      .map(island => ({
+        areaName: island.areaName,
+        id: island.id,
+        origin: { x: island.origin[0], z: island.origin[1] }
+      })),
     placements,
     places,
     unresolvedCount: placements.filter(

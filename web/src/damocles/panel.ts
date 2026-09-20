@@ -10,10 +10,13 @@ import type { ErisCell } from './world.ts';
 /// meaning shows it, and every readout that does not is a static placeholder named as one.
 /// The credit readout has no economy behind it yet, and on foot the craft velocity is nought.
 
-/// The NAV readout's cell, two digits an axis. Damocles's grid is not Targ's wrapping surface,
-/// so Targ's `gridReference` is not used; a cell outside the workspace prints as `**`.
-const digits = (value: number): string =>
-  value < 0 || value > 99 ? '**' : String(value).padStart(2, '0');
+/// One axis of the Cell Readout: the magnitude of an Island-Local Cell in two digits, or `**`
+/// once that magnitude passes 99. The sign is not printed here — a negative axis is printed in
+/// red instead, which is why the view model carries the signs beside the label (#397).
+const digits = (value: number): string => {
+  const magnitude = Math.abs(value);
+  return magnitude > 99 ? '**' : String(magnitude).padStart(2, '0');
+};
 
 /// A bearing clockwise from north in degrees, which is what the recovered compass tape counts.
 const bearingDegrees = (bearing: number): number => {
@@ -21,8 +24,21 @@ const bearingDegrees = (bearing: number): number => {
   return wrapped < 0 ? wrapped + 360 : wrapped;
 };
 
-export const erisGridReference = (cell: ErisCell): string =>
+/// The Cell Readout, which prints the Island-Local Cell two digits an axis.
+///
+/// Damocles's surface is not Targ's bounded grid, so Targ's `gridReference` is not used: this
+/// cell is signed and unbounded, and coincides with the bound workspace's own 0-15 cell only
+/// while the player stands inside that 16-cell window.
+export const cellReadout = (cell: ErisCell): string =>
   `${digits(cell.x)}-${digits(cell.z)}`;
+
+/// The Cell Readout's two axes as the panel draws them, so a negative axis can be red.
+export const cellReadoutAxes = (
+  cell: ErisCell
+): NonNullable<PanelViewModel['locationAxes']> => [
+  { negative: cell.x < 0, text: digits(cell.x) },
+  { negative: cell.z < 0, text: digits(cell.z) }
+];
 
 /// One Body Coordinate step: `$40000` engine units, which is four Surface Cells. A Body's
 /// surface spans 1024 steps an axis, so a 16-cell workspace covers four of them.
@@ -94,7 +110,8 @@ export const damoclesPanelViewModel = (
   groundLamp: true,
   inventory: snapshot.inventoryLabel,
   inventoryFill: snapshot.carried.length,
-  locationLabel: erisGridReference(snapshot.cell),
+  locationAxes: cellReadoutAxes(snapshot.islandCell),
+  locationLabel: cellReadout(snapshot.islandCell),
   locationName: snapshot.bodyName,
   message: '',
   messageColour: undefined,

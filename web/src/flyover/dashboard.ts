@@ -42,6 +42,7 @@ export const flyoverPanelViewModel = (values: {
     groundLamp: false,
     inventory: '',
     inventoryFill: 0,
+    locationAxes: undefined,
     locationLabel: `Y${scientific(position.y - centre.y, true)}`,
     locationName: `${values.systemId.toUpperCase()} · ${values.nearestBody.id.toUpperCase()}`,
     message: `${values.range.toUpperCase()} FLYOVER`,

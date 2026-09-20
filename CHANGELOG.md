@@ -133,6 +133,20 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Fixed
 
+- **The Damocles Cell Readout is island-local, and a negative axis is red.** The
+  readout prints the player's Island-Local Cell — the Body Coordinate less the
+  *selected* island record's origin, the record nearest the player, taken signed
+  across the surface wrap — two digits an axis, with a negative axis in red and a
+  magnitude past 99 as `**`. It printed `**` for every negative cell before, so it
+  blanked the moment the player left the bound 16-cell workspace, which now that
+  islands are recovered is most of a Body. Booted at the Working Authority's own
+  Capital City reading, body cell (38,136), the panel reads `26-08` with the 26 red
+  beside a `008-283` Body Coordinate Readout, as the original does. The Damocles
+  Session publishes the selected island beside the cell, because an Island-Local Cell
+  names a location only together with the island it is local to; the Structure
+  Workspace binding is unchanged. Targ's grid reference and the Flyover dashboard
+  share the location readout and carry no sign, so neither changes (#397).
+
 - **The catalogue extractor no longer places a workspace against a fabricated
   origin.** A workspace's origin comes from the world/local camera pair, which is
   only an origin while the workspace is built for the occupied cell; the engine's

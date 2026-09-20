@@ -59,9 +59,12 @@ import {
   cellOf,
   erisSurfaceFrom,
   insideCentralCellHalf,
+  islandLocalCell,
+  nearestIsland,
   startPose,
   structureInCell,
   type ErisCell,
+  type ErisIsland,
   type ErisPlacement,
   type ErisSurface,
   type Pose
@@ -85,6 +88,14 @@ export interface DamoclesSnapshot {
   readonly elapsed: number;
   readonly frameAccumulator: number;
   readonly inventoryLabel: string;
+  /// The Damocles Island the Cell Readout is counted from, or null on a Body that carries no
+  /// island record. An Island-Local Cell names a location only together with this record: the
+  /// same label on two islands is two different places.
+  readonly island: ErisIsland | null;
+  /// Where the player stands as an Island-Local Cell: signed, unbounded, and the same as `cell`
+  /// only while the player is inside the bound workspace's own 16-cell window. It falls back to
+  /// `cell` on a Body with no island record.
+  readonly islandCell: ErisCell;
   readonly message: Presenting | null;
   readonly occupancy: { readonly kind: 'onFoot' };
   readonly pose: Pose;
@@ -692,6 +703,7 @@ export class DamoclesSession implements TitleSession<
   }
 
   get snapshot(): DamoclesSnapshot {
+    const island = nearestIsland(this.surface, this.pose.position);
     return {
       bodyName: this.bodyName(),
       briefcaseStore: [...this.briefcaseStore],
@@ -708,6 +720,11 @@ export class DamoclesSession implements TitleSession<
       elapsed: this.elapsed,
       frameAccumulator: this.frameAccumulator,
       inventoryLabel: this.inventoryLabel(),
+      island: island ?? null,
+      islandCell:
+        island === undefined
+          ? cellOf(this.pose.position, this.surface.grid)
+          : islandLocalCell(this.pose.position, this.surface.grid, island),
       message: this.script.message,
       occupancy: { kind: 'onFoot' },
       pose: this.pose,

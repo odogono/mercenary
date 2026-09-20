@@ -4,8 +4,8 @@ import { parseCatalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
   bodyCoordinateReadout,
+  cellReadout,
   damoclesPanelViewModel,
-  erisGridReference,
   impactClock
 } from '../src/damocles/panel.ts';
 import { DamoclesSession } from '../src/damocles/session.ts';
@@ -159,9 +159,54 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
     expect(impactClock(exhausted * 2, time)).toBe('00-00-00');
   });
 
-  test('prints cells two digits an axis and stars beyond the readout', () => {
-    expect(erisGridReference({ x: 6, z: 8 })).toBe('06-08');
-    expect(erisGridReference({ x: 15, z: 0 })).toBe('15-00');
-    expect(erisGridReference({ x: -1, z: 100 })).toBe('**-**');
+  test('prints the Island-Local Cell two digits an axis, signed and unbounded', () => {
+    expect(cellReadout({ x: 6, z: 8 })).toBe('06-08');
+    expect(cellReadout({ x: 15, z: 0 })).toBe('15-00');
+    // A negative axis prints its magnitude and is marked by colour instead of a sign, and the
+    // readout runs on past the 16-cell workspace: only a magnitude past 99 stars out. The
+    // Working Authority's own Key West overhead reads `08-**` at local z = -103 (#397).
+    expect(cellReadout({ x: -1, z: 99 })).toBe('01-99');
+    expect(cellReadout({ x: 8, z: -103 })).toBe('08-**');
+    expect(cellReadout({ x: -100, z: 100 })).toBe('**-**');
+  });
+
+  test('keeps printing the cell once the player walks off the workspace', async () => {
+    const loaded = await content();
+    const session = new DamoclesSession(loaded);
+    // Backwards from the start pose is south, and the workspace's own window runs out eight
+    // cells that way: the readout does not blank there, it runs on signed (#397).
+    session.intent = intent({ walk: -1 });
+    session.advance(1800);
+    expect(session.snapshot.island!.areaName).toBe('CAPITAL CITY');
+    expect(session.snapshot.islandCell).toEqual({ x: 7, z: -1 });
+    const model = damoclesPanelViewModel(session.snapshot, loaded.doc);
+    expect(model.locationLabel).toBe('07-01');
+    expect(model.locationAxes).toEqual([
+      { negative: false, text: '07' },
+      { negative: true, text: '01' }
+    ]);
+  });
+
+  test('marks a negative axis of the Cell Readout and leaves a positive one plain', async () => {
+    const loaded = await content();
+    const session = new DamoclesSession(loaded);
+    // The Working Authority's Capital City reading: body cell (38,136) against that record's
+    // origin (64,128) is local (-26,8), printed `26-08` with the 26 red (#397).
+    const model = damoclesPanelViewModel(
+      { ...session.snapshot, islandCell: { x: -26, z: 8 } },
+      loaded.doc
+    );
+    expect(model.locationLabel).toBe('26-08');
+    expect(model.locationAxes).toEqual([
+      { negative: true, text: '26' },
+      { negative: false, text: '08' }
+    ]);
+    // At the start pose nothing is negative, so nothing is red.
+    expect(
+      damoclesPanelViewModel(session.snapshot, loaded.doc).locationAxes
+    ).toEqual([
+      { negative: false, text: '07' },
+      { negative: false, text: '08' }
+    ]);
   });
 });

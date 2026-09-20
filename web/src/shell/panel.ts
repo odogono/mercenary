@@ -37,6 +37,13 @@ export interface PanelViewModel {
   readonly groundLamp: boolean;
   readonly inventory: string;
   readonly inventoryFill: number;
+  /// The location readout's axes, where the rendition prints a signed one: one entry an axis in
+  /// printed order, each saying whether it is negative and so drawn red. `undefined` says the
+  /// readout carries no sign, which is Targ's bounded grid reference and the Flyover's offset;
+  /// only the Damocles Cell Readout is signed (#397).
+  readonly locationAxes:
+    | readonly { readonly negative: boolean; readonly text: string }[]
+    | undefined;
   readonly locationLabel: string;
   readonly locationName: string;
   readonly message: string;
@@ -124,6 +131,7 @@ export const panelViewModel = (
     groundLamp: aboard && snapshot.mode === 'flying' && player.position.y < 40,
     inventory: carried.at(-1) ?? 'EMPTY',
     inventoryFill: carried.length,
+    locationAxes: undefined,
     locationLabel:
       snapshot.location.kind === 'room'
         ? `RM ${digits(snapshot.location.id, 2)}`
