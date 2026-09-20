@@ -176,5 +176,7 @@ export const poseOfArrival = (
 ): Pose => ({
   body: arrival.body,
   heading: bearingFromYaw(arrival.yaw, doc.orientation),
+  // Every arrival capture is on foot and none records a pitch word, so an arrival is level.
+  pitch: 0,
   position: { ...arrival.position }
 });

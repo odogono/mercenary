@@ -594,6 +594,41 @@ minted here, because no alternative has been chosen. The implementing issue
 should decide it, and a disagreement sweep dense enough to answer it is cheap —
 it is the same probe.
 
+### Settled by [#394](https://github.com/odogono/mercenary/issues/394): the port replays the scan, and the two agree
+
+The dense sweep is run, and it is not a live probe: the scan and the fill are
+both decided by data already in the Catalogue, so both can be evaluated
+statically over every record without the emulator. Each of the **41 records that
+carry a coastline**, on all 30 bodies, was sampled at an eighth of a cell across
+its extent box plus a four-cell margin, offset off the authored lattice so that
+no sample lies exactly on an edge line:
+
+| Scope | Points | Disagreements |
+| --- | ---: | ---: |
+| Eris's five islands | 1,656,832 | 0 |
+| All 41 coastline records | 9,151,488 | 0 |
+
+The staged scan — extent box, core box, exclusion boxes, first edge whose own box
+holds the point, land by exhaustion — and an even-odd fill of the same polygon
+answer alike at every one, including both of Eris's concave islands, Bare
+Island's central V and both of Key West's bays. The only points at which they
+can differ are those lying *exactly* on a coastline edge, where the answer is
+whichever side the tie is broken toward; that set has measure zero and the
+on-lattice sampling that first exposed it is an artefact of sampling, not a
+disagreement about shape.
+
+So the question dissolves rather than being traded off, and **no ADR is minted,
+because nothing diverges**. The port replays the scan in `classifyPosition`
+(`web/src/damocles/islands.ts`) and fills the polygon in the renderer, and the
+sweep above is why those two may be different code without being two different
+answers. Replaying is not merely defensible but necessary: the core box is
+authored and smaller than the 16-cell workspace on three of Eris's five islands,
+so no fill derives it, and `core` is the answer the ground-plane substitution
+turns on.
+
+The test that pins this is `web/test/damocles-islands.test.ts`, which reproduces
+the 115-point table above island by island.
+
 ## Per-island readiness ledger
 
 Readiness is against the renderer integration plan above: what a consumer could

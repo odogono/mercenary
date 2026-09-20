@@ -60,6 +60,7 @@ const atSpaceport = (
     pose: {
       body: ERIS_BODY,
       heading,
+      pitch: 0,
       position: {
         x: entrance.position.x + x,
         y: loaded.doc.eye.heightUnits,
@@ -103,6 +104,7 @@ const atStructure = (
     pose: {
       body: ERIS_BODY,
       heading,
+      pitch: 0,
       position: {
         x: placement.position.x + x,
         y: loaded.doc.eye.heightUnits,
@@ -333,5 +335,19 @@ describe('the Damocles Gameplay Session', () => {
     expect(session.snapshot.pose.heading).toBe(heading);
     expect(session.snapshot.pose.position.y).toBe(63);
     expect(() => session.teleportToCell(99, 0)).toThrow(/not on Eris/);
+  });
+
+  test('publishes where the player stands against land and sea', async () => {
+    const session = new DamoclesSession(await content());
+    // The arrival stands in CAPITAL SPACEPORT, inside CAPITAL CITY's authored core box.
+    expect(session.snapshot.landSea).toBe('core');
+    expect(session.snapshot.island?.areaName).toBe('CAPITAL CITY');
+    // Every cell the session can walk to is inside that box: the workspace origin is the
+    // island origin, so a 0-15 workspace cell is a 0-15 Island-Local Cell, and CAPITAL CITY's
+    // core box reaches 21. The coast is well outside the window, which is why `land` and `sea`
+    // are pinned against the probe sweep in damocles-islands.test.ts rather than by walking.
+    session.teleportToCell(15, 15);
+    expect(session.snapshot.landSea).toBe('core');
+    expect(session.snapshot.islandCell).toEqual({ x: 15, z: 15 });
   });
 });

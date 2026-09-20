@@ -52,6 +52,8 @@ export const walk = (
   return {
     body: pose.body,
     heading,
+    // Walking never tilts the view: on foot the Working Authority leaves `$7AC0` alone.
+    pitch: pose.pitch,
     position: {
       x: pose.position.x + Math.sin(heading) * step,
       y: pose.position.y,

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 6,
+  "schemaVersion": 7,
   "titleSlug": "damocles",
   "body": {
     "id": "body-11",
@@ -23,9 +23,10 @@
       "z": 8940589
     },
     "positionProvenance": "recovered",
+    "pitch": 512,
     "yaw": 1536,
     "yawProvenance": "recovered",
-    "evidence": "research/damocles-st/snapshots/eris-spaceport-onfoot.sav: $7A92 = $004770B1, $7A96 = 63, $7A9A = $00886C2D, on foot ($7A8E = 1), cell $87; camera yaw word $7AA2 = $0600, the panel compass centred on N (docs/research/damocles-walk-board-flight.md, yaw-probe runs 2026-09-11)."
+    "evidence": "research/damocles-st/snapshots/eris-spaceport-onfoot.sav: $7A92 = $004770B1, $7A96 = 63, $7A9A = $00886C2D, on foot ($7A8E = 1), cell $87; camera yaw word $7AA2 = $0600, the panel compass centred on N (docs/research/damocles-walk-board-flight.md, yaw-probe runs 2026-09-11). Camera pitch word $7AC0 = $0200, level: nothing on foot pitches the view."
   },
   "eye": {
     "heightUnits": 63,
@@ -46,12 +47,13 @@
     "north": "+z",
     "east": "+x",
     "yawUnitsPerTurn": 1024,
+    "pitchLevel": 512,
     "yawNorth": 512,
     "yawPositive": "clockwise",
     "provenance": "recovered",
     "modelZ": "keep",
     "modelZProvenance": "recovered",
-    "note": "Camera yaw $7AA2 (twin $7AC2) wraps every 1024 units; N is centred at $0200 mod $0400, E at $0300, S at $0000, W at $0100, and a right stick raises it. Walking at N raises $7A9A (z) and at E raises $7A92 (x), so Eris is left-handed seen from above with +y up; the frame mirrors z for the shared right-handed Camera. A placed Instance's angle byte is the high byte of the long at $77A8+4*slot, 256 steps per turn on the same clockwise sense; boarding publishes it as camera yaw byte\u00d74 with no offset ($054390) and leaving stores yaw>>2 back ($0544FA). The byte turns the mesh as modelled rather than naming a compass facing: $053548 sums it with the model record's $8001 bias byte and $0536F6 only turns the record when that command asked for the single-Y path, so a craft modelled nose-toward local \u2212Z reads as facing south at byte zero. $05388E turns x and z about the model origin by that angle and $0538BE adds the Instance position with no z mirror, which recovers modelZ as keep (docs/research/damocles-vip-limo.md)."
+    "note": "Camera yaw $7AA2 (twin $7AC2) wraps every 1024 units; N is centred at $0200 mod $0400, E at $0300, S at $0000, W at $0100, and a right stick raises it. Walking at N raises $7A9A (z) and at E raises $7A92 (x), so Eris is left-handed seen from above with +y up; the frame mirrors z for the shared right-handed Camera. A placed Instance's angle byte is the high byte of the long at $77A8+4*slot, 256 steps per turn on the same clockwise sense; boarding publishes it as camera yaw byte\u00d74 with no offset ($054390) and leaving stores yaw>>2 back ($0544FA). The byte turns the mesh as modelled rather than naming a compass facing: $053548 sums it with the model record's $8001 bias byte and $0536F6 only turns the record when that command asked for the single-Y path, so a craft modelled nose-toward local \u2212Z reads as facing south at byte zero. $05388E turns x and z about the model origin by that angle and $0538BE adds the Instance position with no z mirror, which recovers modelZ as keep (docs/research/damocles-vip-limo.md). Camera pitch $7AC0 counts the same 1024 units a turn, reads $0200 level and rises putting the nose down, so pitchLevel is $0200 and the Camera takes the negated turn; the Working Authority's own overhead validation views are a pitch poke and nothing else (docs/research/damocles-arrival-routes.md, docs/research/damocles-eris-islands.md)."
   },
   "camera": {
     "verticalFieldOfViewDegrees": 45,
@@ -82,12 +84,9 @@
     "note": "Live hardware palette at $06FD00 while outdoors on foot (docs/research/damocles-filled-polygons.md)."
   },
   "ground": {
-    "colour": "#006d00",
-    "paletteIndex": 8,
-    "colourProvenance": "recovered",
     "geometryProvenance": "authored",
     "fillDropUnits": 1,
-    "note": "Authored fill in the recovered green over the whole first-world workspace, drawn as rings around the eye and clipped to the workspace, standing in for the separate native surface/background path rather than geometry in the per-cell ground records (#221). Empty records contain no default quad and return immediately in the native ground renderer; $7000 placements are recovered while camera-dependent $F0/$F4 horizon slots stay outside static model geometry. fillDropUnits is how far below y = 0 this stand-in sits so recovered faces draw over it without z-fighting. Eris is an island, so the fill also stands in for the sea: where land gives way to water is not yet recovered, and the same green runs to the workspace edge until it is. Recovered pad and road polygons come from the Damocles Catalogue ground family (docs/research/damocles-eris-ground.md)."
+    "note": "The Body's own surface under everything else, drawn as rings around the eye out to the camera's far plane, standing in for the separate native surface/background path rather than geometry in the per-cell ground records (#221). Its colour is not authored here: the base plane takes the Body's recovered base colour $7C88 and each Damocles Island is filled over it in its own recovered land colour, both from the Damocles Catalogue, and while the player stands on an island's core the base plane takes that land colour instead (#394). Empty records contain no default quad and return immediately in the native ground renderer; $7000 placements are recovered while camera-dependent $F0/$F4 horizon slots stay outside static model geometry. fillDropUnits is how far below y = 0 this stand-in sits so recovered faces draw over it without z-fighting. Recovered pad and road polygons come from the Damocles Catalogue ground family (docs/research/damocles-eris-ground.md, docs/research/damocles-eris-islands.md)."
   },
   "sky": {
     "colour": "#4992db",

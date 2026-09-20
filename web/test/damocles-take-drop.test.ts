@@ -53,6 +53,7 @@ const besideKey = (soundPermitted = true): DamoclesSession => {
       pose: {
         body: 'body-11',
         heading: 0,
+        pitch: 0,
         position: {
           x: parent.position.x + x,
           y: loaded.doc.eye.heightUnits,
@@ -98,6 +99,7 @@ const dynamicAtOrigin = (
     pose: {
       body: 'body-11',
       heading: 0,
+      pitch: 0,
       position: { x: 0, y: content.doc.eye.heightUnits, z: 0 }
     },
     residence: [
@@ -449,6 +451,7 @@ describe('ordinary Eris limo-key take and drop', () => {
       pose: {
         body: 'body-11',
         heading: 0,
+        pitch: 0,
         position: {
           x: x * 65_536,
           y: loaded.doc.eye.heightUnits,
@@ -485,6 +488,7 @@ describe('ordinary Eris limo-key take and drop', () => {
       pose: {
         body: 'body-11',
         heading: 0,
+        pitch: 0,
         position: { x: 0, y: loaded.doc.eye.heightUnits, z: 0 }
       },
       residence: [
@@ -562,6 +566,7 @@ describe('ordinary Eris limo-key take and drop', () => {
       pose: {
         body: 'body-11',
         heading: 0,
+        pitch: 0,
         position: { x: 0, y: loaded.doc.eye.heightUnits, z: 0 }
       },
       residence: carried.map(carriedResidence),

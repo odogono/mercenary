@@ -212,6 +212,9 @@ const poseOf = (value: unknown): Pose => {
   return {
     body: pose['body'],
     heading: pose['heading'],
+    // A Save carries no pitch: nothing in play moves the view off level, so a restored Pose is
+    // level and a Save written before #394 restores identically to one written after it.
+    pitch: 0,
     position: { x: position['x'], y: position['y'], z: position['z'] }
   };
 };
@@ -252,6 +255,7 @@ const residenceOf = (value: unknown): Residence => {
   const position = poseOf({
     body: typeof body === 'string' ? body : '',
     heading: 0,
+    pitch: 0,
     position: residence['position']
   }).position;
   if (kind === 'surface') {

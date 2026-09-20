@@ -142,15 +142,15 @@ test('a switched Body draws its own workspace', async ({ page }) => {
   expect(await run(page, 'switch dion-2-3')).toContain('switched');
   await closeConsole(page);
   await expect(frame).toHaveAttribute('data-cell', '2-3');
-  // Dion's workspace: its own draw, and its own unresolved count. Eris's surface at this Pose
-  // draws neither ground nor fill, because every Eris placement is millions of units away and
-  // the fill is clipped to the workspace it is handed.
-  await expect(frame).toHaveAttribute('data-triangles', '358');
+  // Dion's workspace: its own draw, its own unresolved count, its own sea and its own three
+  // islands. Eris's surface at this Pose would draw no ground at all, every Eris placement
+  // being millions of units away, and would paint Eris's coasts on Dion's water (#394).
+  await expect(frame).toHaveAttribute('data-triangles', '422');
   await expect(frame).toHaveAttribute('data-unresolved', '46');
 
   expect(await run(page, 'switch gaea')).toContain('switched');
   await closeConsole(page);
-  await expect(frame).toHaveAttribute('data-triangles', '451');
+  await expect(frame).toHaveAttribute('data-triangles', '521');
   await expect(frame).toHaveAttribute('data-unresolved', '0');
 
   expect(errors).toEqual([]);

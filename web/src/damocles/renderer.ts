@@ -50,8 +50,12 @@ const ORDER_DEPTH_STEP = 1.2e-7;
 /// Depth added per layer, in the [0, 1] window range. Coplanar faces of different layers
 /// differ in interpolated log depth by well under a 24-bit step, and a ground record's face
 /// order spans at most a few dozen steps, so this keeps every record behind every structure
-/// and ahead of the fill. In distance it is six parts in a hundred thousand.
+/// and ahead of the Body's surface. In distance it is six parts in a hundred thousand.
 const LAYER_DEPTH_BIAS = 4e-6;
+
+/// The layer the Body's whole surface sits on: its base plane and the Damocles Island fills
+/// painted over it, which are one surface in two colours and share a depth (#394).
+const SURFACE_DEPTH_BIAS = 2 * LAYER_DEPTH_BIAS;
 
 const STRIDE = FLOATS_PER_VERTEX * 4;
 /// Attribute name, byte offset and float count in a plan vertex.
@@ -458,20 +462,35 @@ export class ErisRenderer {
     this.drawLayers(this.shaderProgram, plan);
   }
 
-  /// Structures first at zero bias, then the recovered ground records, then the fill, each
-  /// pushed back a step so coplanar faces resolve the same way every frame.
+  /// The Body's surface first, then the recovered ground records, then everything else, each
+  /// layer a step nearer than the last so coplanar faces resolve the same way every frame.
+  ///
+  /// The surface is drawn as a painter's stream rather than through the depth buffer: its base
+  /// plane and the island fills over it are the *same* plane in two colours — that is what land
+  /// and sea are here — and no depth bias can order a tie. The attempt is instructive. An
+  /// island fill is one polygon spanning the whole view, and interpolating its depth across a
+  /// triangle millions of units on a side loses far more than a layer step, so the margin that
+  /// settles it standing on the coast is larger than the one that settles it from altitude, and
+  /// neither is a constant. Painting the islands over the base plane with the comparison off
+  /// costs nothing, needs no constant, and is what the original's own surface stream does.
+  /// Depth writes stay on, so the ground records and the structures that follow order against
+  /// the surface normally.
   private drawLayers(shaderProgram: WebGLProgram, plan: ErisFramePlan): void {
     const gl = this.gl;
     const bias = requiredUniform(gl, shaderProgram, 'depthBias');
     const fill = plan.fillTriangleCount * 3;
+    const islands = plan.islandTriangleCount * 3;
     const ground = plan.groundTriangleCount * 3;
-    const rest = plan.triangleCount * 3 - fill - ground;
-    gl.uniform1f(bias, 0);
-    gl.drawArrays(gl.TRIANGLES, fill + ground, rest);
-    gl.uniform1f(bias, LAYER_DEPTH_BIAS);
-    gl.drawArrays(gl.TRIANGLES, fill, ground);
-    gl.uniform1f(bias, 2 * LAYER_DEPTH_BIAS);
+    const rest = plan.triangleCount * 3 - fill - islands - ground;
+    gl.uniform1f(bias, SURFACE_DEPTH_BIAS);
+    gl.depthFunc(gl.ALWAYS);
     gl.drawArrays(gl.TRIANGLES, 0, fill);
+    gl.drawArrays(gl.TRIANGLES, fill, islands);
+    gl.depthFunc(gl.LEQUAL);
+    gl.uniform1f(bias, LAYER_DEPTH_BIAS);
+    gl.drawArrays(gl.TRIANGLES, fill + islands, ground);
+    gl.uniform1f(bias, 0);
+    gl.drawArrays(gl.TRIANGLES, fill + islands + ground, rest);
   }
 
   private createEnhanced(gl: WebGL2RenderingContext): EnhancedResources {

@@ -3,12 +3,13 @@ import { triangulate } from '../catalogue/geometry.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { Camera } from '../projection/index.ts';
 import type { ErisPresentationDocument } from './documents.ts';
+import { classifyPosition, coastlineInBodyUnits } from './islands.ts';
 import type { BoundStructureSnapshot } from './save.ts';
 import { structureMeshes } from './selection.ts';
 import {
   insideCentralCellHalf,
   withinDrawBound,
-  type ErisGrid,
+  type ErisIsland,
   type ErisPlacement,
   type ErisSurface,
   type Pose
@@ -29,14 +30,19 @@ export const FLOATS_PER_VERTEX = 7;
 export interface ErisFramePlan {
   readonly clear: readonly [number, number, number];
   readonly farPlane: number;
-  /// Triangles of the authored ground fill, which lead the vertex list.
+  /// Triangles of the Body's base plane, which lead the vertex list.
   readonly fillTriangleCount: number;
   /// Triangles of the recovered per-cell ground records (pads, aprons, roads), which follow
-  /// the fill and precede every structure and object. Structure base planes share y = 0 with
+  /// the Body's surface and precede every structure and object. Structure base planes share y = 0 with
   /// these, and Damocles's fill order for that tie is unrecovered; the renderer draws the
   /// ground records a hair behind so a building's pad lies over the cell's apron, as a
   /// painter's ground stream drawn before its structures would leave it.
   readonly groundTriangleCount: number;
+  /// Triangles of the Damocles Island fills, which follow the base plane and precede the
+  /// ground records. They are exactly coplanar with the base plane — the same surface painted
+  /// a second colour, which is what land and sea are — so the renderer paints them over it in
+  /// this order rather than asking the depth buffer to break a tie it cannot.
+  readonly islandTriangleCount: number;
   readonly nearPlane: number;
   /// Faces the triangulator refused, drawn as nothing and counted.
   readonly skippedFaces: number;
@@ -197,8 +203,8 @@ const doubleSidedQuad = (
   [northwest, northeast, southwest]
 ];
 
-/// The authored fill: axis-aligned rings of quads around the eye, clipped to the first-world
-/// workspace.
+/// The Body's base plane: axis-aligned rings of quads around the eye, out to the camera's far
+/// plane.
 ///
 /// A recovered ground record covers only its stored cell-local primitives: the spaceport apron
 /// is a strip of cell `$87`, `$7000` placements are composed, and camera-dependent `$F0`/`$F4`
@@ -211,14 +217,16 @@ const doubleSidedQuad = (
 /// which orders depth against recovered faces at y = 0 without claiming Eris's ground sits
 /// lower (#221).
 ///
-/// It is rings rather than one workspace-sized quad because the rasteriser interpolates depth
+/// It is rings rather than one far-plane-sized quad because the rasteriser interpolates depth
 /// across a triangle in screen space with limited precision, and a triangle a million units
 /// across that is also clipped at the near plane lands its depth a few units off. That is
 /// enough to lift the fill through the recovered pads and stripe them, so each ring is at most
 /// twice the distance of the last, and the triangles under a structure are structure-sized.
 ///
-/// The fill stands in for land and sea alike: Eris is an island, and where the ground gives
-/// way to water is not yet recovered, so the same green runs to the workspace edge.
+/// It is no longer clipped to the workspace, and it is no longer green. The plane is the Body's
+/// own surface in its recovered base colour — Eris's `$0003` sea — and it runs to the far plane
+/// because the surface does: a Body is a 4096-cell torus, not a 16-cell window with sky beyond
+/// it. Where land begins is the island fills' business, not this one's (#394).
 const FILL_INNER_HALF_UNITS = 256;
 
 const degenerate = (triangle: WorldTriangle): boolean => {
@@ -227,32 +235,15 @@ const degenerate = (triangle: WorldTriangle): boolean => {
   return area === 0;
 };
 
-interface FillBounds {
-  readonly maxX: number;
-  readonly maxZ: number;
-  readonly minX: number;
-  readonly minZ: number;
-}
-
-const workspaceBounds = (grid: ErisGrid): FillBounds => ({
-  maxX: (grid.origin.x + grid.cellsPerAxis) * grid.cellUnits,
-  maxZ: (grid.origin.z + grid.cellsPerAxis) * grid.cellUnits,
-  minX: grid.origin.x * grid.cellUnits,
-  minZ: grid.origin.z * grid.cellUnits
-});
-
-const groundFillTriangles = (
-  grid: ErisGrid,
+const basePlaneTriangles = (
+  reach: number,
   dropUnits: number,
   eye: Vector3
 ): readonly WorldTriangle[] => {
-  const bounds = workspaceBounds(grid);
-  const clamp = (value: number, min: number, max: number): number =>
-    Math.min(max, Math.max(min, value));
   const corner = (x: number, z: number): Vector3 => ({
-    x: clamp(eye.x + x, bounds.minX, bounds.maxX),
+    x: eye.x + x,
     y: -dropUnits,
-    z: clamp(eye.z + z, bounds.minZ, bounds.maxZ)
+    z: eye.z + z
   });
   const triangles: WorldTriangle[] = [];
   const rectangle = (x0: number, z0: number, x1: number, z1: number) => {
@@ -268,12 +259,6 @@ const groundFillTriangles = (
       }
     }
   };
-  const reach = Math.max(
-    Math.abs(bounds.minX - eye.x),
-    Math.abs(bounds.maxX - eye.x),
-    Math.abs(bounds.minZ - eye.z),
-    Math.abs(bounds.maxZ - eye.z)
-  );
   let inner = FILL_INNER_HALF_UNITS;
   rectangle(-inner, -inner, inner, inner);
   while (inner < reach) {
@@ -283,6 +268,49 @@ const groundFillTriangles = (
     rectangle(-outer, -inner, -inner, inner);
     rectangle(inner, -inner, outer, inner);
     inner = outer;
+  }
+  return triangles;
+};
+
+/// One Damocles Island filled over the base plane, in raw Body units at the base plane's own
+/// height.
+///
+/// The coastline is triangulated island-local, where the numbers are whole cells and small,
+/// and the corners are then read back in Body units: ear clipping a polygon whose coordinates
+/// run to nine million would work, but there is no reason to ask it to. Three of Eris's five
+/// islands are concave, so this must be a triangulation and not a fan.
+const islandFillTriangles = (
+  island: ErisIsland,
+  surface: ErisSurface,
+  dropUnits: number,
+  eye: Vector3
+): readonly WorldTriangle[] => {
+  const local = island.coastline.vertices;
+  if (local.length < 3) {
+    return [];
+  }
+  const corners = triangulate(
+    local.map(([x, z]) => [x, 0, z] as const),
+    local.map((_, index) => index)
+  );
+  const body = coastlineInBodyUnits(island, surface.grid, eye);
+  const at = (index: number): Vector3 => ({
+    x: body[index]![0],
+    y: -dropUnits,
+    z: body[index]![1]
+  });
+  const triangles: WorldTriangle[] = [];
+  for (let i = 0; i < corners.length; i += 3) {
+    const triangle: WorldTriangle = [
+      at(corners[i]!),
+      at(corners[i + 1]!),
+      at(corners[i + 2]!)
+    ];
+    if (!degenerate(triangle)) {
+      // Both faces, as the base plane under it has: an island is drawn from above on foot and
+      // from below by nothing, but the pair costs two triangles and removes a facing question.
+      triangles.push(triangle, [triangle[2], triangle[1], triangle[0]]);
+    }
   }
   return triangles;
 };
@@ -299,7 +327,7 @@ export const planErisFrame = (
     farPlane: doc.camera.farPlane,
     heading: -pose.heading,
     nearPlane: doc.camera.nearPlane,
-    pitch: 0,
+    pitch: pose.pitch,
     position: toCameraSpace(pose.position)
   });
   const negateZ = doc.orientation.modelZ === 'negate';
@@ -315,18 +343,49 @@ export const planErisFrame = (
     values.push(view.x, view.y, view.z, colour[0], colour[1], colour[2], order);
   };
 
-  const ground = channels(doc.ground.colour);
-  for (const triangle of groundFillTriangles(
-    surface.grid,
-    doc.ground.fillDropUnits,
-    pose.position
-  )) {
-    for (const vertex of triangle) {
-      emit(vertex, ground, 0);
+  // Land and sea, in the order the Working Authority paints them ($0597EC..$05983C). The base
+  // plane is the Body's own colour and every island is filled over it — except while the
+  // player stands on an island's core, where the engine draws the ground plane in that
+  // island's colour instead and the fill would only draw the ground underfoot a second time
+  // at one depth (#394).
+  const here = classifyPosition(surface, pose.position);
+  const underfoot = here.kind === 'core' ? here.island : undefined;
+  const base = underfoot?.landColour ?? surface.baseColour;
+  // A Body with no recovered surface colour draws no plane at all rather than an invented one
+  // (ADR 0043). No Body a Session stands on is in that state; the VOID slot is not a surface.
+  if (base !== null) {
+    const colour = channels(base);
+    for (const triangle of basePlaneTriangles(
+      doc.camera.farPlane,
+      doc.ground.fillDropUnits,
+      pose.position
+    )) {
+      for (const vertex of triangle) {
+        emit(vertex, colour, 0);
+      }
+      triangleCount += 1;
     }
-    triangleCount += 1;
   }
   const fillTriangleCount = triangleCount;
+
+  for (const island of surface.islands) {
+    if (island.id === underfoot?.id) {
+      continue;
+    }
+    const colour = channels(island.landColour);
+    for (const triangle of islandFillTriangles(
+      island,
+      surface,
+      doc.ground.fillDropUnits,
+      pose.position
+    )) {
+      for (const vertex of triangle) {
+        emit(vertex, colour, 0);
+      }
+      triangleCount += 1;
+    }
+  }
+  const islandTriangleCount = triangleCount - fillTriangleCount;
 
   const active =
     structure !== null && insideCentralCellHalf(pose.position, surface.grid);
@@ -398,7 +457,8 @@ export const planErisFrame = (
       emitPlacement(placement);
     }
   }
-  const groundTriangleCount = triangleCount - fillTriangleCount;
+  const groundTriangleCount =
+    triangleCount - fillTriangleCount - islandTriangleCount;
   const hidden = new Set([
     ...hiddenResidents,
     ...residents.map(resident => resident.id)
@@ -420,6 +480,7 @@ export const planErisFrame = (
     farPlane: doc.camera.farPlane,
     fillTriangleCount,
     groundTriangleCount,
+    islandTriangleCount,
     nearPlane: doc.camera.nearPlane,
     skippedFaces,
     triangleCount,

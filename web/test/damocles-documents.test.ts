@@ -32,7 +32,15 @@ describe('the authored Eris presentation document', () => {
     expect(document.walk.runTurnMultiplier).toBe(3 / 2);
     expect(document.walk.runProvenance).toBe('recovered');
     expect(document.walk.runTurnProvenance).toBe('derived');
-    expect(document.ground.colour).toBe('#006d00');
+    // The base plane's colour is the Body's, from the Damocles Catalogue: the document says
+    // only how far below the recovered faces the plane sits (#394).
+    expect(document.ground).toEqual({
+      fillDropUnits: 1,
+      geometryProvenance: 'authored',
+      note: expect.stringContaining('$7C88') as unknown as string
+    });
+    expect(document.orientation.pitchLevel).toBe(0x2_00);
+    expect(document.start.pitch).toBe(0x2_00);
     expect(document.lighting).toMatchObject({
       ambientGround: '#263322',
       ambientSky: '#66809c',
@@ -42,7 +50,7 @@ describe('the authored Eris presentation document', () => {
     });
     expect(document.rendering.unresolvedModels).toBe('nothing');
     expect(document.camera.nearPlane).toBeLessThan(11);
-    expect(document.schemaVersion).toBe(6);
+    expect(document.schemaVersion).toBe(7);
     expect(document.time).toEqual({
       // The impact deadline a fresh game starts from, and the VBLs it spends on one of its
       // own seconds (#368, #208).
@@ -113,7 +121,7 @@ describe('the authored Eris presentation document', () => {
       'titleSlug should be damocles'
     );
     expect(() => readErisPresentation({ ...base, schemaVersion: 2 })).toThrow(
-      'schemaVersion should be 6'
+      'schemaVersion should be 7'
     );
     expect(() =>
       readErisPresentation({
@@ -139,19 +147,13 @@ describe('the authored Eris presentation document', () => {
 
   test('holds a colour to the palette entry it claims', async () => {
     const base = await tracked();
-    const ground = base['ground'] as Record<string, unknown>;
+    const sky = base['sky'] as Record<string, unknown>;
     expect(() =>
-      readErisPresentation({
-        ...base,
-        ground: { ...ground, colour: '#00ff00' }
-      })
-    ).toThrow('ground.colour should match its palette entry');
+      readErisPresentation({ ...base, sky: { ...sky, colour: '#00ff00' } })
+    ).toThrow('sky.colour should match its palette entry');
     expect(() =>
-      readErisPresentation({
-        ...base,
-        ground: { ...ground, paletteIndex: 16 }
-      })
-    ).toThrow('ground.paletteIndex should index the sixteen-entry palette');
+      readErisPresentation({ ...base, sky: { ...sky, paletteIndex: 16 } })
+    ).toThrow('sky.paletteIndex should index the sixteen-entry palette');
     const camera = base['camera'] as Record<string, unknown>;
     expect(() =>
       readErisPresentation({
