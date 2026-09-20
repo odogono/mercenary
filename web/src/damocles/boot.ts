@@ -65,6 +65,7 @@ import { damoclesTitle } from './title.ts';
 
 const surface = document.getElementById('game-surface')!;
 const chrome = installShellChrome(surface, {
+  atlasLabel: 'Gamma Atlas',
   catalogueLabel: 'Damocles catalogue',
   menuTitle: 'DAMOCLES'
 });
