@@ -66,22 +66,22 @@ explicit delivery boundary, not a recovered claim that they cannot be taken.
 
 **Excluded, with the reason.**
 
-| Excluded | Why |
-| --- | --- |
-| The object-selection rule behind `$7B46`/`$7B42` | **Recovered** by [#303](https://github.com/odogono/mercenary/issues/303) and no longer excluded: `Selection` is the nearest drawn instance, in range below 1/128 of a surface-grid unit. See [the selection note](../research/damocles-object-selection.md). |
-| The busy-path trigger arbitration (queue on bit 5, discard otherwise) and the sticky bit 6 variant | Derived from instructions, never reproduced, and unreachable here: trigger 2 disarms on its first fire, so no second dispatch can find the host busy. |
-| The refusal message at system-string index `$02`, and Trading Post `$04E158` sale/buyback | `$02` remains excluded by the key's handling bits. `$04E158` is a purchase/balance check selected by the offered object. Dropping the key in structure slot 82 native region 9 can enter sale/buyback; native sale remains unobserved. That path, its messages and persistence belong to #313/#319, not this slice. |
-| System strings 11 and 12, and interruption of a live slot-2 response by a drop refusal | Unobserved on the include-list routes. The doorway refusal presenting `system-string-9` was after the response had parked; this slice does not define interruption of slot 2. |
-| The full-Carried-Stack path at capacity 10 | The capacity is recovered and enforced; what the original does when it is reached is not, and this slice has one takeable object, so it cannot be reached. |
-| `$7AA8` = `$78` | VOID (body-table index 30), outside Eris-only play. |
-| No-structure cells and intentional-empty unbound structures as drop destinations | Native path recovered; no ordinary Eris drop trace in this slice. |
-| Other interiors, levels, unmatched regions, and passages | Source census only, or unobserved on ordinary Eris routes. |
-| Support placement and unsupported/falling refusal | Recovered later on Vesta / general objects (#315/#331), not as Eris limo-key traces. Owned by #313/#319. |
-| Full Eris association-group extraction | #300 extracts **Capital Spaceport** groups only, including implicit `(group,0)` and duplicate pairs. |
-| The other five entries of the `$0543EC` trigger table (slots 181, 151, 95, 101, 94) | Source facts only; their scripts are untested and their objects unreachable in this slice. The table carries one bound entry and the rest take the no-match path. |
-| The reveal model — how a message's text arrives on the row, and how `$0523B8` divides between arrival and reading hold | **Recovered** by [#307](https://github.com/odogono/mercenary/issues/307) and no longer excluded: `$052402` scrolls a 48-cell row left by eight pixels a frame for 36 frames, then holds it for the remaining 164. See [the reveal note](../research/damocles-message-reveal.md). |
-| Early completion of a presenting message by a key | **Answered** by [#307](https://github.com/odogono/mercenary/issues/307): there is none. Nothing outside the display routine's own completion ever lowers `$7BA0`, so no input shortens, skips or cancels a message. Targ's `SKIP_MESSAGE_CODE` has no Damocles equivalent. |
-| The mission the messages describe, boarding, driving, the other objects' responses | Past the stopping boundary. |
+| Excluded                                                                                                               | Why                                                                                                                                                                                                                                                                                                                 |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The object-selection rule behind `$7B46`/`$7B42`                                                                       | **Recovered** by [#303](https://github.com/odogono/mercenary/issues/303) and no longer excluded: `Selection` is the nearest drawn instance, in range below 1/128 of a surface-grid unit. See [the selection note](../research/damocles-object-selection.md).                                                        |
+| The busy-path trigger arbitration (queue on bit 5, discard otherwise) and the sticky bit 6 variant                     | Derived from instructions, never reproduced, and unreachable here: trigger 2 disarms on its first fire, so no second dispatch can find the host busy.                                                                                                                                                               |
+| The refusal message at system-string index `$02`, and Trading Post `$04E158` sale/buyback                              | `$02` remains excluded by the key's handling bits. `$04E158` is a purchase/balance check selected by the offered object. Dropping the key in structure slot 82 native region 9 can enter sale/buyback; native sale remains unobserved. That path, its messages and persistence belong to #313/#319, not this slice. |
+| System strings 11 and 12, and interruption of a live slot-2 response by a drop refusal                                 | Unobserved on the include-list routes. The doorway refusal presenting `system-string-9` was after the response had parked; this slice does not define interruption of slot 2.                                                                                                                                       |
+| The full-Carried-Stack path at capacity 10                                                                             | The capacity is recovered and enforced; what the original does when it is reached is not, and this slice has one takeable object, so it cannot be reached.                                                                                                                                                          |
+| `$7AA8` = `$78`                                                                                                        | VOID (body-table index 30), outside Eris-only play.                                                                                                                                                                                                                                                                 |
+| No-structure cells and intentional-empty unbound structures as drop destinations                                       | Native path recovered; no ordinary Eris drop trace in this slice.                                                                                                                                                                                                                                                   |
+| Other interiors, levels, unmatched regions, and passages                                                               | Source census only, or unobserved on ordinary Eris routes.                                                                                                                                                                                                                                                          |
+| Support placement and unsupported/falling refusal                                                                      | Recovered later on Vesta / general objects (#315/#331), not as Eris limo-key traces. Owned by #313/#319.                                                                                                                                                                                                            |
+| Full Eris association-group extraction                                                                                 | #300 extracts **Capital Spaceport** groups only, including implicit `(group,0)` and duplicate pairs.                                                                                                                                                                                                                |
+| The other five entries of the `$0543EC` trigger table (slots 181, 151, 95, 101, 94)                                    | Source facts only; their scripts are untested and their objects unreachable in this slice. The table carries one bound entry and the rest take the no-match path.                                                                                                                                                   |
+| The reveal model — how a message's text arrives on the row, and how `$0523B8` divides between arrival and reading hold | **Recovered** by [#307](https://github.com/odogono/mercenary/issues/307) and no longer excluded: `$052402` scrolls a 48-cell row left by eight pixels a frame for 36 frames, then holds it for the remaining 164. See [the reveal note](../research/damocles-message-reveal.md).                                    |
+| Early completion of a presenting message by a key                                                                      | **Answered** by [#307](https://github.com/odogono/mercenary/issues/307): there is none. Nothing outside the display routine's own completion ever lowers `$7BA0`, so no input shortens, skips or cancels a message. Targ's `SKIP_MESSAGE_CODE` has no Damocles equivalent.                                          |
+| The mission the messages describe, boarding, driving, the other objects' responses                                     | Past the stopping boundary.                                                                                                                                                                                                                                                                                         |
 
 **Stopping boundary.** The interaction ends when the script's final step pops the idle jump
 `$0703FC` back off the return stack and execution parks. That is the recovered stable completion
@@ -110,7 +110,7 @@ and the schema-4 fields those additions require, joined onto #344's identity and
 
 Separately bounded, because each needed evidence this contract must not invent:
 
-- **Object selection and the take range gate** ([#303](https://github.com/odogono/mercenary/issues/303)). *Settled.* Both words are written by the
+- **Object selection and the take range gate** ([#303](https://github.com/odogono/mercenary/issues/303)). _Settled._ Both words are written by the
   scene pass that draws objects, as a running minimum over the objects it draws: `$7B46` is the
   nearest one's slot and `$7B42` is the binary exponent of its distance from the eye, so `≤ 8`
   admits a distance under 512 source units — 1/128 of the surface-grid unit the payload's
@@ -118,20 +118,20 @@ Separately bounded, because each needed evidence this contract must not invent:
   `payload/damocles/catalogue.json` schema 12 now carries per resident instance as `handling`.
   [The selection note](../research/damocles-object-selection.md) records the evidence and the
   session-side rule; the `Selection` seam below is unchanged in shape and is now filled.
-- **The message reveal model** ([#307](https://github.com/odogono/mercenary/issues/307)). *Settled.* The routine is `$052402`, called once per display frame
+- **The message reveal model** ([#307](https://github.com/odogono/mercenary/issues/307)). _Settled._ The routine is `$052402`, called once per display frame
   from the frame interrupt. The panel row is **48 six-pixel character cells wide**, and a record
   enters it **from the right at eight pixels per frame for 36 frames** — 4/3 characters a frame —
   after which the finished row is copied into the other screen buffer and held, untouched, until
   the duration expires. So the 200 frames are **36 of arrival and 164 of reading hold**, with no
   departure: the row keeps its last message until the next one scrolls over it, which is why the
-  response ends by presenting a line of spaces. Character *k* of a record lands in cell *k*; there
+  response ends by presenting a line of spaces. Character _k_ of a record lands in cell _k_; there
   is no centring, and a record's leading spaces are the original's own hand-centring. The
   expectation recorded here — that `Reveal` would be a revealed-character count — is **corrected**:
   eight pixels a frame through a six-pixel pitch means the row's left edge falls inside a character
   for two frames in every three, so the reveal is measured in pixels.
   [The reveal note](../research/damocles-message-reveal.md) records the evidence and the
   recommended shape, which the `Reveal` seam below now takes.
-- **The message text** ([#304](https://github.com/odogono/mercenary/issues/304)). *Settled.* Script slot 2's three inline strings and
+- **The message text** ([#304](https://github.com/odogono/mercenary/issues/304)). _Settled._ Script slot 2's three inline strings and
   system-string slot 50 are extracted into `payload/damocles/strings.json` along with the whole
   64-slot system string table and all 206 inline messages, under ADR 0029 and the
   [publication policy](../publication-policy.md). The `MessageId` values below are the ids
@@ -140,7 +140,7 @@ Separately bounded, because each needed evidence this contract must not invent:
   [the strings note](../research/damocles-script-strings.md) records the encoding. A paraphrase
   authored into the app is still not a substitute and must never become claimed faithful content.
 
-The display frame rate ([#305](https://github.com/odogono/mercenary/issues/305)). *Settled, and no longer authored.* The wait and message
+The display frame rate ([#305](https://github.com/odogono/mercenary/issues/305)). _Settled, and no longer authored._ The wait and message
 durations remain recovered as **frames**; the conversion to seconds is now sourced.
 [The display-rate note](../research/damocles-display-rate.md) recovers that the program runs in ST
 low resolution and never programs the Shifter's sync mode, so the field rate is the machine's and
@@ -162,15 +162,15 @@ type InstanceId = string; // a Damocles Catalogue Instance id, e.g. 'object-slot
 /// Positions use the session's source-coordinate units, not Catalogue surface-grid fractions.
 type Position = { readonly x: number; readonly y: number; readonly z: number };
 type Residence =
-  | { readonly kind: 'carried'; readonly drawClass: number }
+  | { readonly kind: "carried"; readonly drawClass: number }
   | {
-      readonly kind: 'surface';
+      readonly kind: "surface";
       readonly body: string; // Catalogue Body id; body-11 in this delivery
       readonly drawClass: number; // recovered placement class, not inferred from kind
       readonly position: Position; // body/world frame
     }
   | {
-      readonly kind: 'structure';
+      readonly kind: "structure";
       readonly body: string;
       readonly drawClass: number;
       readonly parent: InstanceId; // stable structure instance, even while unbound
@@ -183,16 +183,20 @@ type Residence =
 /// distance from the eye, with `inRange` below 1/128 of a surface-grid unit. This contract
 /// consumes it and does not define it.
 type Selection =
-  | { readonly kind: 'none' }
-  | { readonly kind: 'object'; readonly instance: InstanceId; readonly inRange: boolean };
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "object";
+      readonly instance: InstanceId;
+      readonly inRange: boolean;
+    };
 
 /// The ids `payload/damocles/strings.json` names these records with (#304).
 type MessageId =
-  | 'script2-inline-1' // $07042A
-  | 'script2-inline-2' // $07045A
-  | 'script2-inline-3' // $070488
-  | 'system-string-50' // $0704BE, operand $0032
-  | 'system-string-9'; // missing-group drop refusal, payload id already extracted
+  | "script2-inline-1" // $07042A
+  | "script2-inline-2" // $07045A
+  | "script2-inline-3" // $070488
+  | "system-string-50" // $0704BE, operand $0032
+  | "system-string-9"; // missing-group drop refusal, payload id already extracted
 
 /// The message row as the recovered display routine keeps it (#307): a 288-pixel window, 48
 /// six-pixel cells wide, that a record's characters enter from the right at eight pixels a frame
@@ -218,16 +222,27 @@ type Presenting = {
 
 /// The persistent Damocles Display, independent of whether a message blocks execution.
 type DamoclesDisplay =
-  | { readonly kind: 'held'; readonly cells: string } // exactly 48 printable-ASCII cells
-  | { readonly kind: 'scrolling'; readonly id: MessageId; readonly reveal: Reveal };
+  | { readonly kind: "held"; readonly cells: string } // exactly 48 printable-ASCII cells
+  | {
+      readonly kind: "scrolling";
+      readonly id: MessageId;
+      readonly reveal: Reveal;
+    };
 
-type ScriptId = 'damocles.script.slot-2';
+type ScriptId = "damocles.script.slot-2";
 
 type Step =
-  | 'idle' // $0703FC, the parked jump-to-self
-  | 'announce-1' | 'announce-2' | 'announce-3'
-  | 'call-delay' | 'reset-wait' | 'poll-wait' | 'return-from-delay'
-  | 'clear-line' | 'clear-busy' | 'return';
+  | "idle" // $0703FC, the parked jump-to-self
+  | "announce-1"
+  | "announce-2"
+  | "announce-3"
+  | "call-delay"
+  | "reset-wait"
+  | "poll-wait"
+  | "return-from-delay"
+  | "clear-line"
+  | "clear-busy"
+  | "return";
 
 type Execution = {
   readonly script: ScriptId;
@@ -251,14 +266,20 @@ type ScriptState = {
   readonly triggers: readonly Trigger[];
 };
 
-type Effect = { readonly type: 'sound-request'; readonly cue: 'take' | 'drop' };
-type ScriptTransition = { readonly state: ScriptState; readonly effects: readonly Effect[] };
+type Effect = { readonly type: "sound-request"; readonly cue: "take" | "drop" };
+type ScriptTransition = {
+  readonly state: ScriptState;
+  readonly effects: readonly Effect[];
+};
 
 declare function initialScriptState(): ScriptState;
 /// One display frame: advance the counter, age a presenting message, then run to the next block.
 declare function runFrame(state: ScriptState): ScriptTransition;
 /// The object-to-script dispatch at $054770, entered from the take path.
-declare function fireTrigger(state: ScriptState, index: number): ScriptTransition;
+declare function fireTrigger(
+  state: ScriptState,
+  index: number,
+): ScriptTransition;
 ```
 
 `Selection` chooses the nearest drawn candidate under the recovered rule, including candidates
@@ -362,13 +383,13 @@ ordinary walk routes that stopped slightly short. The capacity path is unreachab
 
 On success, one atomic commit performs, in the recovered order:
 
-| # | Effect | Provenance |
-| --- | --- | --- |
-| 1 | Push the instance onto the Carried Stack as its new head; the count becomes its length | carried list `$61CE`, count `$61CC` |
-| 2 | Start the inventory-label scroll toward the model's source label | panel writer `$04DCE4` |
-| 3 | Residence becomes `carried` | association byte `$6FAA` + slot x 4 bit 7 set, association long `$73A8` + slot x 4 rewritten |
-| 4 | Trigger dispatch for the instance's entry in the table, if it has one | `$0543BE` → `$0543D2` → `$054770` |
-| 5 | One `sound-request` effect when its guard permits | guarded request at `$054848` |
+| #   | Effect                                                                                 | Provenance                                                                                   |
+| --- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| 1   | Push the instance onto the Carried Stack as its new head; the count becomes its length | carried list `$61CE`, count `$61CC`                                                          |
+| 2   | Start the inventory-label scroll toward the model's source label                       | panel writer `$04DCE4`                                                                       |
+| 3   | Residence becomes `carried`                                                            | association byte `$6FAA` + slot x 4 bit 7 set, association long `$73A8` + slot x 4 rewritten |
+| 4   | Trigger dispatch for the instance's entry in the table, if it has one                  | `$0543BE` → `$0543D2` → `$054770`                                                            |
+| 5   | One `sound-request` effect when its guard permits                                      | guarded request at `$054848`                                                                 |
 
 All five lie in the recovered success path `$054264`–`$0542D0` and are listed in its order. The
 drawn set follows from step 3 — the render-queue rebuild at `$05A30E` — and is not a separate
@@ -428,18 +449,18 @@ response continues and trigger 2 stays disarmed.
 
 Damocles Script slot 2, reached through entry-table word `$070084` = `$042A`.
 
-| Step | Behaviour and next step | Provenance |
-| --- | --- | --- |
-| `announce-1` | Present `script2-inline-1` for `messageFrames`; raise the gate; next `announce-2` | `$07042A` |
-| `announce-2` | Present `script2-inline-2`; next `announce-3` | `$07045A` |
-| `announce-3` | Present `script2-inline-3`; next `call-delay` | `$070488` |
-| `call-delay` | Push `return-from-delay`; next `reset-wait` | `$0704BA` call to `$072CF4` |
-| `reset-wait` | `counter = 0`; next `poll-wait` | `$072CF4` |
-| `poll-wait` | Block while `counter < waitFrames`; at or above it, next `return-from-delay` | `$072CF6` |
-| `return-from-delay` | Pop; next `clear-line` | `$072CFC` |
-| `clear-line` | Present `system-string-50`; next `clear-busy` | `$0704BE` |
-| `clear-busy` | `busy = false`; next `return` | `$0704C2` |
-| `return` | Pop `idle`; execution becomes null | `$0704C6` |
+| Step                | Behaviour and next step                                                           | Provenance                  |
+| ------------------- | --------------------------------------------------------------------------------- | --------------------------- |
+| `announce-1`        | Present `script2-inline-1` for `messageFrames`; raise the gate; next `announce-2` | `$07042A`                   |
+| `announce-2`        | Present `script2-inline-2`; next `announce-3`                                     | `$07045A`                   |
+| `announce-3`        | Present `script2-inline-3`; next `call-delay`                                     | `$070488`                   |
+| `call-delay`        | Push `return-from-delay`; next `reset-wait`                                       | `$0704BA` call to `$072CF4` |
+| `reset-wait`        | `counter = 0`; next `poll-wait`                                                   | `$072CF4`                   |
+| `poll-wait`         | Block while `counter < waitFrames`; at or above it, next `return-from-delay`      | `$072CF6`                   |
+| `return-from-delay` | Pop; next `clear-line`                                                            | `$072CFC`                   |
+| `clear-line`        | Present `system-string-50`; next `clear-busy`                                     | `$0704BE`                   |
+| `clear-busy`        | `busy = false`; next `return`                                                     | `$0704C2`                   |
+| `return`            | Pop `idle`; execution becomes null                                                | `$0704C6`                   |
 
 `clear-line` gates like the inline messages and uses the ordinary duration. Its record is not
 merely blank-padded: all 49 characters of system string slot 50 are spaces, so it is a full-width
@@ -496,7 +517,10 @@ interface DamoclesSaveSnapshot {
   readonly frameAccumulator: number; // [0, 1)
   readonly pose: Pose; // #344: names its Body
   /// Only instances whose residence differs from the Catalogue's placement.
-  readonly residence: readonly { readonly instance: InstanceId; readonly residence: Residence }[];
+  readonly residence: readonly {
+    readonly instance: InstanceId;
+    readonly residence: Residence;
+  }[];
   /// $04DDD0. Gates take and drop while nonzero. Integer in -16..16.
   readonly scrollCounter: number;
   readonly script: {
@@ -504,7 +528,10 @@ interface DamoclesSaveSnapshot {
     readonly execution: Execution | null;
     readonly message: Presenting;
     readonly display: DamoclesDisplay;
-    readonly triggers: readonly { readonly index: number; readonly armed: boolean }[];
+    readonly triggers: readonly {
+      readonly index: number;
+      readonly armed: boolean;
+    }[];
   };
   readonly structure: BoundStructureSnapshot | null;
 }
@@ -534,14 +561,14 @@ uninterrupted sessions the same remaining actions and elapsed-time increments.
 Do not run this table against Trading Post, support placement, passages, no-structure cells, or
 other interiors.
 
-| Transition | Required comparison after restore and continued play |
-| --- | --- |
-| Drop the carried key | Identical allowed/refused decision, complete residence, Carried Stack and panel; identical ordered effects; trigger remains disarmed. A region-2 missing-group refusal after park presents `system-string-9` and leaves the stack unchanged. Elapsed frames advance only when supplied. |
-| Cross a visibility/region boundary | Residence remains at the drop location; the recovered insertion/visibility rule determines drawing and selection from the new viewer location. Crossing a boundary never reparents the key. |
-| Leave the structure and then its cell | The residence departure remains saved even when its parent is no longer bound. Binding another structure must not reset or delete it. |
-| Return to the cell and structure | Binding reconstructs the view from the persisted residence plus Catalogue facts. The original Catalogue placement must not appear as a duplicate. Interior return/re-pick is this port continuation, not a native-trace claim. |
-| Approach the dropped key | Compare candidate membership, selected instance and the strict range gate, including an out-of-range refusal and a nearer competing candidate. Being near the coordinates alone does not establish visibility. |
-| Re-pick | The same selection and recovered take gates give the same result. On success the key is carried once, one take sound request is emitted when its guard permits, and the one-shot response is not restarted. |
+| Transition                            | Required comparison after restore and continued play                                                                                                                                                                                                                                    |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Drop the carried key                  | Identical allowed/refused decision, complete residence, Carried Stack and panel; identical ordered effects; trigger remains disarmed. A region-2 missing-group refusal after park presents `system-string-9` and leaves the stack unchanged. Elapsed frames advance only when supplied. |
+| Cross a visibility/region boundary    | Residence remains at the drop location; the recovered insertion/visibility rule determines drawing and selection from the new viewer location. Crossing a boundary never reparents the key.                                                                                             |
+| Leave the structure and then its cell | The residence departure remains saved even when its parent is no longer bound. Binding another structure must not reset or delete it.                                                                                                                                                   |
+| Return to the cell and structure      | Binding reconstructs the view from the persisted residence plus Catalogue facts. The original Catalogue placement must not appear as a duplicate. Interior return/re-pick is this port continuation, not a native-trace claim.                                                          |
+| Approach the dropped key              | Compare candidate membership, selected instance and the strict range gate, including an out-of-range refusal and a nearer competing candidate. Being near the coordinates alone does not establish visibility.                                                                          |
+| Re-pick                               | The same selection and recovered take gates give the same result. On success the key is carried once, one take sound request is emitted when its guard permits, and the one-shot response is not restarted.                                                                             |
 
 At each comparison include pose, bound Structure Workspace and attachments, all tracked
 residences, Carried Stack order, `scrollCounter`, panel label, drawn candidate identities/order,
@@ -573,7 +600,12 @@ whether the key has already been taken is Session State rather than an execution
 
 Validation is atomic. The whole record is checked before anything is replaced; a refusal returns a
 readable reason and leaves the current Gameplay Session exactly as it was. No coercion, no partial
-restore, no best-effort migration. The rules:
+restore, no best-effort migration.
+
+Rules that compare a Damocles Display row against message text need the text, so the codec takes
+the Data Payload it reads — the Catalogue, the arrival Poses and the strings — as one optional
+argument. Shipping callers supply all three; a caller holding only the record still gets every
+rule the record alone decides, which is what the schema and envelope tests exercise. The rules:
 
 - Every `instance` names a Catalogue instance the session tracks, with no duplicate residence
   departures. `drawClass` is an integer byte whose supported values and ordering come from
@@ -593,33 +625,49 @@ restore, no best-effort migration. The rules:
 - `message`, when present, names a known `MessageId` with an integer `remainingFrames` in
   1–`messageFrames`. `display` is validated independently and against the gate and execution.
   Before frame 36 it must be `scrolling` with the same message id and the matching pixel count;
-  from frame 36 onward it must be `held` with that message's effective 48-cell row.
+  from frame 36 onward it must be `held` with that message's effective 48-cell row. Slot 50 is
+  stored 49 bytes wide and presents with its leading pad byte dropped, so its effective row is
+  the blank one; every other record's row is its text padded to 48 cells.
 - `triggers` lists each modelled entry once. An armed entry requires its object to be at its
   Catalogue placement and absent from the Carried Stack. A non-null `execution` requires the
   launching entry to be disarmed.
+- A suspended `execution` parked on a `poll-wait` holds **the row its own script last wrote**:
+  the effective 48-cell row of the nearest preceding `message` operation in that same script.
+  Nothing can present over a suspended execution — a system refusal is raised only while the
+  script state is parked and idle — so the row a waiting script sits on is the one it left, and a
+  blank or unrelated mid-wait row is a record no play produces. For slot 2 that row is message
+  3's; for slot 5, its own message 3's.
+
+  The one wait with no preceding message in its own script is slot 62's, which waits before it
+  announces anything. That row is inherited from whatever presented before the pickup — a
+  finished response's blank clearing line, a system refusal, or the row the session opened on —
+  so the script does not decide it and **any** 48-cell printable row is admitted there, blank
+  included. This is the same relaxation trigger 6's park forced on the parked-record rule: the
+  contract constrains a row only where a script is known to have written it (#387).
+
 - `execution`, when present, is one of the five reachable slot-2 commit-boundary states:
 
-| `step` | `busy` | `message` | `returnStack` | `counter` |
-| --- | --- | --- | --- | --- |
-| `announce-2` | true | `script2-inline-1` | `['idle']` | any |
-| `announce-3` | true | `script2-inline-2` | `['idle']` | any |
-| `call-delay` | true | `script2-inline-3` | `['idle']` | any |
-| `poll-wait` | true | null | `['idle', 'return-from-delay']` | < `waitFrames` |
-| `clear-busy` | true | `system-string-50` | `['idle']` | any |
+| `step`       | `busy` | `message`          | `returnStack`                   | `counter`      |
+| ------------ | ------ | ------------------ | ------------------------------- | -------------- |
+| `announce-2` | true   | `script2-inline-1` | `['idle']`                      | any            |
+| `announce-3` | true   | `script2-inline-2` | `['idle']`                      | any            |
+| `call-delay` | true   | `script2-inline-3` | `['idle']`                      | any            |
+| `poll-wait`  | true   | null               | `['idle', 'return-from-delay']` | < `waitFrames` |
+| `clear-busy` | true   | `system-string-50` | `['idle']`                      | any            |
 
-  A `Reveal` is refused unless `pixels` is a multiple of 8 in `0..280` and equal to
-  `8 * (messageFrames - remainingFrames)` while scrolling (strictly below 288), `offset` is zero,
-  and `beneath` is the expected predecessor's 48 printable-ASCII cells: spaces before message 1,
-  message 1 before message 2, message 2 before message 3, and message 3 before the clear.
-  A held display always contains exactly 48 printable-ASCII cells. `poll-wait` requires the held
-  message-3 row even though `message` is null. A null `execution` with `message` null requires
-  `busy` false and a held blank row, both before pickup and after a completed slot-2 response.
-  A null `execution` with `message` `system-string-9` requires `busy` false, a held or scrolling
-  display consistent with that gate, and trigger 2 disarmed (the refusal is only in this slice
-  after the response has parked). `beneath` for string 9 is the parked blank row. Any other step —
-  `announce-1`,
-  `reset-wait`, `return-from-delay`, `clear-line`, `return` — cannot survive a commit boundary and
-  is refused.
+A `Reveal` is refused unless `pixels` is a multiple of 8 in `0..280` and equal to
+`8 * (messageFrames - remainingFrames)` while scrolling (strictly below 288), `offset` is zero,
+and `beneath` is the expected predecessor's 48 printable-ASCII cells: spaces before message 1,
+message 1 before message 2, message 2 before message 3, and message 3 before the clear.
+A held display always contains exactly 48 printable-ASCII cells. A null `execution` with
+`message` null requires `busy` false, and admits any held row: trigger 6 parks with no clearing
+line, so a parked session can hold the row its last response left rather than a blank one.
+A null `execution` with `message` `system-string-9` requires `busy` false, a held or scrolling
+display consistent with that gate, and trigger 2 disarmed (the refusal is only in this slice
+after the response has parked). `beneath` for string 9 is the parked blank row. Any other step —
+`announce-1`,
+`reset-wait`, `return-from-delay`, `clear-line`, `return` — cannot survive a commit boundary and
+is refused.
 
 ## Worked traces
 
@@ -750,11 +798,11 @@ implementation. #344 has shipped; start from its identity and Pose.
 4. `web/damocles/eris.json` schema 6 with its `time` block (payload PR).
 5. Capital Spaceport `associationGroups` on `eris-surface-87` in catalogue schema 14, including
    group 1. Store explicit pairs only; synthesize implicit `(group, 0)` at read time. Extract
-   with the lab decoder as ordered pairs; keep rejecting duplicate *regions* until a parent
+   with the lab decoder as ordered pairs; keep rejecting duplicate _regions_ until a parent
    needs them. Do not extract every Eris parent in this slice.
 6. Only `object-slot-183` becomes a played resident. World position is parent `location` ×
    `cellUnits` plus `placement.position`. `erisSurfaceFrom` stays a static Catalogue read;
-   the session holds a map of residence *departures* and passes visible world placements into
+   the session holds a map of residence _departures_ and passes visible world placements into
    `planErisFrame`.
 7. The Damocles Script Host: `script.ts` (`ScriptState`, `initialScriptState`, `runFrame`,
    `fireTrigger`, `Effect`), `slot2.ts` (step graph, `revision` 1), `display.ts` (row arithmetic),
@@ -833,20 +881,20 @@ asserts the page raised no errors. Run it with `bun run test:e2e damocles-limo-k
 
 ### What the browser was asked, and what it answered
 
-| Acceptance | Browser route | Result |
-| --- | --- | --- |
-| Pickup through the supported path, initial response, stopping point | Walk the last stretch into Capital Spaceport region 1 and press `T`; watch all three inline records, the wait and the clearing line | The label reads `KEY- V.I.P. LIMO`, the key leaves the drawn set, the three records arrive in order and the row is blank and stays blank |
-| Partial scrolling, held third record, clearing | Read `data-damocles-row` and `data-damocles-scroll` from one frame while record 2 arrives over record 1 | The row is exactly what the recovered arithmetic gives for that pixel count; the count is a multiple of 8 below 288; record 3 still reads 4.4 s after it arrives, which is longer than a record's own 200 frames, so it is held across the null gate |
-| One sound request per successful take, and no second response | `data-damocles-cues` across take, drop, re-pick, and a repeat take with no drop | `take:1` after the first take, unchanged by a repeat take; one further `take` per successful re-pick and one `drop` per successful drop; the row never runs a second response |
-| Drops during a pending response as well as after completion | Drop and re-pick while record 1 is held; drop and re-pick after the response parks | Neither cancels, restarts nor duplicates the response |
-| Surface/interior key-drop routes: leave, save/restore, return, re-pick | Drop inside the spaceport, walk out through the doorway into native region 3, Save and restore there, walk back and take it again | Residence survives the region crossing and the round trip; the key is drawn once, not duplicated at its Catalogue placement; the console reports `nothing is in reach` from outside and takes it from beside it |
-| Unbound-parent Save | After a drop inside the structure, `goto 6 8` until no structure binds, then Save and restore | Accepted, and the key keeps its structure residence |
-| Missing-group refusal after park | Walk into the doorway region (native region 2) carrying the key, after the response has parked, and press `D` | Refused: the key stays carried, `NO ROOM` scrolls onto the row, and no Sound Cue is requested |
-| Save/restore before pickup, mid-record, during the wait, after completion | Console `save`/`load` at each phase, choosing the phase by re-saving until the stored record is in it | Every restore continues the same response with no duplicated record, effect or pickup; a pre-pickup restore puts the key back in the world and a second take runs the response again from record 1 |
-| Session Resume | Reload the page mid-response | The session continues carrying the key and finishes the response once; the restore itself requests no Sound Cue |
-| Invalid/incompatible restore | Rewrite a stored record's `execution.step` to a step the interpreter never stops on, and another's `scrollCounter` to 99 | Both are refused whole with a reason, and live play carries on — still carrying the key, still running its response, still advancing frames |
-| Keyboard controls and layouts | Walk, take and drop at 1280 × 900 and at 420 × 720 | Unchanged behaviour; the Damocles panel stays visible on the narrow viewport |
-| Targ isolation | Seed Targ's Save slot and Session Resume keys, then take, drop, Save and restore in Damocles | Both Targ records are byte-identical afterwards |
+| Acceptance                                                                | Browser route                                                                                                                       | Result                                                                                                                                                                                                                                               |
+| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pickup through the supported path, initial response, stopping point       | Walk the last stretch into Capital Spaceport region 1 and press `T`; watch all three inline records, the wait and the clearing line | The label reads `KEY- V.I.P. LIMO`, the key leaves the drawn set, the three records arrive in order and the row is blank and stays blank                                                                                                             |
+| Partial scrolling, held third record, clearing                            | Read `data-damocles-row` and `data-damocles-scroll` from one frame while record 2 arrives over record 1                             | The row is exactly what the recovered arithmetic gives for that pixel count; the count is a multiple of 8 below 288; record 3 still reads 4.4 s after it arrives, which is longer than a record's own 200 frames, so it is held across the null gate |
+| One sound request per successful take, and no second response             | `data-damocles-cues` across take, drop, re-pick, and a repeat take with no drop                                                     | `take:1` after the first take, unchanged by a repeat take; one further `take` per successful re-pick and one `drop` per successful drop; the row never runs a second response                                                                        |
+| Drops during a pending response as well as after completion               | Drop and re-pick while record 1 is held; drop and re-pick after the response parks                                                  | Neither cancels, restarts nor duplicates the response                                                                                                                                                                                                |
+| Surface/interior key-drop routes: leave, save/restore, return, re-pick    | Drop inside the spaceport, walk out through the doorway into native region 3, Save and restore there, walk back and take it again   | Residence survives the region crossing and the round trip; the key is drawn once, not duplicated at its Catalogue placement; the console reports `nothing is in reach` from outside and takes it from beside it                                      |
+| Unbound-parent Save                                                       | After a drop inside the structure, `goto 6 8` until no structure binds, then Save and restore                                       | Accepted, and the key keeps its structure residence                                                                                                                                                                                                  |
+| Missing-group refusal after park                                          | Walk into the doorway region (native region 2) carrying the key, after the response has parked, and press `D`                       | Refused: the key stays carried, `NO ROOM` scrolls onto the row, and no Sound Cue is requested                                                                                                                                                        |
+| Save/restore before pickup, mid-record, during the wait, after completion | Console `save`/`load` at each phase, choosing the phase by re-saving until the stored record is in it                               | Every restore continues the same response with no duplicated record, effect or pickup; a pre-pickup restore puts the key back in the world and a second take runs the response again from record 1                                                   |
+| Session Resume                                                            | Reload the page mid-response                                                                                                        | The session continues carrying the key and finishes the response once; the restore itself requests no Sound Cue                                                                                                                                      |
+| Invalid/incompatible restore                                              | Rewrite a stored record's `execution.step` to a step the interpreter never stops on, and another's `scrollCounter` to 99            | Both are refused whole with a reason, and live play carries on — still carrying the key, still running its response, still advancing frames                                                                                                          |
+| Keyboard controls and layouts                                             | Walk, take and drop at 1280 × 900 and at 420 × 720                                                                                  | Unchanged behaviour; the Damocles panel stays visible on the narrow viewport                                                                                                                                                                         |
+| Targ isolation                                                            | Seed Targ's Save slot and Session Resume keys, then take, drop, Save and restore in Damocles                                        | Both Targ records are byte-identical afterwards                                                                                                                                                                                                      |
 
 ### What the browser could not answer, and what was added so it could
 

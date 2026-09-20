@@ -279,3 +279,20 @@ export const findMessage = (
 ): InlineMessage | SystemString | undefined =>
   strings.systemStrings.entries.find(entry => entry.id === id) ??
   strings.inlineMessages.find(message => message.id === id);
+
+/// The text one record actually presents, as against the bytes the bank stores.
+///
+/// Slot 50 -- the clearing line every shared epilogue ends on -- is the one record stored 49
+/// bytes wide, one longer than the Damocles Display's row. The presenter drops its leading pad
+/// byte so the line lands on the row's own cells. Undefined where the payload has no such
+/// record, so a caller decides whether that is a programming error or a gap.
+export const presentedText = (
+  strings: DamoclesStrings,
+  id: MessageId
+): string | undefined => {
+  const record = findMessage(strings, id);
+  if (record === undefined) {
+    return undefined;
+  }
+  return id === 'system-string-50' ? record.text.slice(1) : record.text;
+};
