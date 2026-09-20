@@ -2378,13 +2378,29 @@ class ResidentBankIdentityTests(unittest.TestCase):
         # test_no_captured_world_introduces_an_object_record checks exactly that
         # across every capture. $03AEED and $03B302 lie outside every decoded
         # record stream.
-        self.assertEqual(
-            sorted(differing),
-            [
+        #
+        # $03865D and $040A4B are two more live colour slots of the same family,
+        # visible only once a capture taken in flight is in the set: the pinned
+        # first-world image holds $0654 -- the horizon colour the frame builder
+        # writes at $05960C -- and the Key West flight capture holds $0411, which
+        # is the same live value the first beacon slot carries. The sibling
+        # census test passes on that capture, which is the gate that says no live
+        # value reaches a mesh.
+        #
+        # The assertion is a subset rather than an equality because which
+        # captures are present is a property of the checkout -- the memstates are
+        # Restricted Material and only five are tracked. What matters is that no
+        # capture differs anywhere else; requiring every slot to vary would fail
+        # on a checkout that simply lacks the capture which varies it.
+        self.assertLessEqual(
+            set(differing),
+            {
+                0x03865D, 0x03865E,
                 0x03AEED, 0x03AEEE, 0x03B302, 0x03B303,
                 0x03E415, 0x03E416, 0x03E41B, 0x03E41C,
                 0x03E422, 0x03E423, 0x03E429, 0x03E42A,
-            ],
+                0x040A4B, 0x040A4C,
+            },
         )
 
 

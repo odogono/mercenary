@@ -215,8 +215,8 @@ The optional Body that another Body is established to revolve around; absence me
 _Avoid_: Parent, centre, star, inferred Primary
 
 **Island**:
-One authored landmass on a Body in the Flyover, optionally carrying one canonical surface patch; a Damocles Place whose recovered kind is `ISLAND` is a place and not an Island in this sense.
-_Avoid_: Continent, surface map, Damocles place, level
+One authored landmass on a Body in the Flyover, optionally carrying one canonical surface patch; neither a Damocles Place whose recovered kind is `ISLAND` nor a recovered Damocles Island is an Island in this sense.
+_Avoid_: Continent, surface map, Damocles place, Damocles Island, level
 
 **Range**:
 Which of the Flyover's three scale bands a Camera occupies relative to its nearest Body — Orbital, Coastal or Surface — determining how that Body is presented without changing the Camera's continuous Pose.
@@ -367,8 +367,8 @@ The unit of the Body Coordinate Readout, and unrelated to the System Coordinate 
 _Avoid_: Body cell, coarse cell, planet unit
 
 **Cell Readout**:
-The navigation window beside the Navigation Readout, naming the player's Surface Cell two digits an axis. It is the readout that moves as the player walks, and it is distinct from the Body Coordinate Readout beside it whatever the original's own documentation calls either window.
-_Avoid_: Grid reference, city coordinates, location coordinates, tile readout
+The navigation window beside the Navigation Readout, naming the player's Island-Local Cell two digits an axis, a negative axis marked in red and a magnitude past 99 printed as `**`. It is the readout that moves as the player walks, and it is distinct from the Body Coordinate Readout beside it whatever the original's own documentation calls either window. Because it is island-local it names a location only with the island it was read on.
+_Avoid_: Grid reference, city coordinates, location coordinates, tile readout, Body Coordinate
 
 **System Menu**:
 The Browser Shell overlay opened with Escape that pauses stepping and owns the settings page and the Save chooser; shell chrome, never part of the Game Surface.
@@ -405,6 +405,22 @@ _Avoid_: Model, mesh
 **Damocles Place**:
 One named location in Damocles that may contain multiple instances and interiors; a place name alone establishes neither its position nor its contents.
 _Avoid_: Model, building shape
+
+**Damocles Island**:
+One landmass on a Body in Damocles, recovered as a closed coastline outline placed at its own origin in Body Coordinates and painted in its own land colour. It is not the authored Flyover Island, and it is not the Structure Workspace it selects: an island carries no name of its own, may bind no workspace at all, and a Body may carry many. A Body's surface outside every island is sea in that Body's own base colour.
+_Avoid_: Island (for the Flyover sense), continent, landmass patch, workspace, Settlement
+
+**Settlement**:
+One named inhabited grouping on a Body, recovered as the named area a Structure Workspace publishes together with the Damocles Places in it. A Settlement may lie on a Damocles Island and does not require one — most Bodies carry a Settlement with no island under it — and an island may carry no Settlement. Whether a given recovered area name names a Settlement or the island it sits on is not established by the name alone.
+_Avoid_: City, base, town, Damocles Island, Structure Workspace, area
+
+**Body Coordinate**:
+A position on a Body's surface, measured in Surface Cells from that Body's own origin. The surface is 4096 cells an axis and wraps on both, so two Body Coordinates far apart in number may be neighbours, and no Body Coordinate is outside the surface. It is the only address that identifies a location on a Body on its own.
+_Avoid_: World coordinate, absolute position, Island-Local Cell, Body Coordinate Step
+
+**Island-Local Cell**:
+A Surface Cell counted from a Damocles Island's origin rather than from the Body's, which is what the Cell Readout prints and what a Damocles Place's cell names. It is signed and unbounded, coinciding with the bound Structure Workspace's own cell only while the position is inside that 16-cell window. An Island-Local Cell names a location only together with the island it is local to: the same label on two islands is two different places.
+_Avoid_: Surface Cell, cell reference, grid reference, Body Coordinate
 
 **Entrance Attachment**:
 One recovered post-plan component of a Damocles Model, allocated its own attachment slot counting down from `$03FC`, whose control word is its Attachment Constructor. While the Pose is inside that attachment's Proximity Box, each moving leaf advances one model unit per tick until it stands eight units inside its outer edge; outside the box the leaves return and re-close. The leaves stay in the region queue for the whole motion, and a region naming the slot is selectable only at the fully-open endpoint. Capital Spaceport's `$4200` two-leaf X entrance and STATE OFFICE's `$8200` two-leaf Z entrance are two members of one family, not two mechanisms.

@@ -144,10 +144,17 @@ This is the same failure of a cell selector to identify a place that
 [#324](https://github.com/odogono/mercenary/issues/324) recorded for Gaea, where
 one origin qualifier covers two workspaces and cell `$17` names a different place
 in each. The ledger states the rule already — *a cell selector is not a place
-identity* — and this is a second body exhibiting it. Whether Eris's islands are
-separate workspaces under one qualifier is
-[#172](https://github.com/odogono/mercenary/issues/172)'s question, and the list
-is a lead for it, not an answer.
+identity* — and this is a second body exhibiting it.
+
+**Resolved by [#391](https://github.com/odogono/mercenary/issues/391).** Eris's
+islands are five island records at five origins, each binding its own structure
+group, and a cell label is local to the island rather than to the body. Capital
+City 09-08 is body (73,136) and Key West 09-08 is body (2569,3592); both groups
+author their own instance at cell `$89`, at different structure slots. The list's
+separation was right and the catalogue's merge was the artefact. See
+[the island note](damocles-eris-islands.md). The guide's `Lawson Bank` label for
+Key West 09-08 is not verified: the only recovered `LAWSON BANK HQ` place record
+is on Capital City at 15-12.
 
 ## What this note does not license
 

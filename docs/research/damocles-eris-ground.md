@@ -11,6 +11,14 @@ Authoritative Evidence remains bound to the C64 Reference Build. Observations
 here are Working-Authority Evidence only. This note does not mint Damocles world
 terms in `CONTEXT.md`.
 
+## Land and sea are elsewhere
+
+[#391](https://github.com/odogono/mercenary/issues/391) recovered what paints
+the surface outside the occupied cell: a per-body base colour and, over it, a
+coastline polygon and land colour for each island on the body. The extent runs
+this note decodes are the **road** network, not a landmass. See
+[the island note](damocles-eris-islands.md); nothing here changes.
+
 ## Research update — #370
 
 [#370](https://github.com/odogono/mercenary/issues/370) asked what bounds the

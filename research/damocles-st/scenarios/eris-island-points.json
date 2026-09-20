@@ -1,0 +1,580 @@
+{
+  "description": "Eris island land/sea classification points for #391. Each point is a body-local surface position in whole Surface Cells; the probe writes it into $7AB2/$7ABA and reads back the engine's own $7894, $789A/$789E and $78A6.",
+  "points": [
+    {
+      "id": "capital-city-core",
+      "x": 72.0,
+      "z": 136.0
+    },
+    {
+      "id": "capital-city-offshore-w",
+      "x": 32.5,
+      "z": 136.5
+    },
+    {
+      "id": "capital-city-offshore-e",
+      "x": 110.5,
+      "z": 136.5
+    },
+    {
+      "id": "capital-city-offshore-n",
+      "x": 71.5,
+      "z": 106.5
+    },
+    {
+      "id": "capital-city-offshore-s",
+      "x": 71.5,
+      "z": 166.5
+    },
+    {
+      "id": "capital-city-edge00-in",
+      "x": 42.4744,
+      "z": 132.891
+    },
+    {
+      "id": "capital-city-edge00-out",
+      "x": 36.5256,
+      "z": 132.109
+    },
+    {
+      "id": "capital-city-edge01-in",
+      "x": 50.3256,
+      "z": 143.4921
+    },
+    {
+      "id": "capital-city-edge01-out",
+      "x": 44.6744,
+      "z": 145.5079
+    },
+    {
+      "id": "capital-city-edge02-in",
+      "x": 75.5635,
+      "z": 153.6499
+    },
+    {
+      "id": "capital-city-edge02-out",
+      "x": 77.4365,
+      "z": 159.3501
+    },
+    {
+      "id": "capital-city-edge03-in",
+      "x": 97.842,
+      "z": 151.1089
+    },
+    {
+      "id": "capital-city-edge03-out",
+      "x": 103.158,
+      "z": 153.8911
+    },
+    {
+      "id": "capital-city-edge04-in",
+      "x": 97.5254,
+      "z": 132.8892
+    },
+    {
+      "id": "capital-city-edge04-out",
+      "x": 103.4746,
+      "z": 132.1108
+    },
+    {
+      "id": "capital-city-edge05-in",
+      "x": 75.5635,
+      "z": 119.3501
+    },
+    {
+      "id": "capital-city-edge05-out",
+      "x": 77.4365,
+      "z": 113.6499
+    },
+    {
+      "id": "capital-city-edge06-in",
+      "x": 50.9038,
+      "z": 122.2949
+    },
+    {
+      "id": "capital-city-edge06-out",
+      "x": 46.0962,
+      "z": 118.7051
+    },
+    {
+      "id": "snow-island-core",
+      "x": 36.0,
+      "z": 1060.0
+    },
+    {
+      "id": "snow-island-offshore-w",
+      "x": -13.5,
+      "z": 1058.5
+    },
+    {
+      "id": "snow-island-offshore-e",
+      "x": 62.5,
+      "z": 1058.5
+    },
+    {
+      "id": "snow-island-offshore-n",
+      "x": 24.5,
+      "z": 1034.5
+    },
+    {
+      "id": "snow-island-offshore-s",
+      "x": 24.5,
+      "z": 1082.5
+    },
+    {
+      "id": "snow-island-edge00-in",
+      "x": -0.5494,
+      "z": 1067.958
+    },
+    {
+      "id": "snow-island-edge00-out",
+      "x": -6.4506,
+      "z": 1069.042
+    },
+    {
+      "id": "snow-island-edge01-in",
+      "x": 18.6779,
+      "z": 1072.4368
+    },
+    {
+      "id": "snow-island-edge01-out",
+      "x": 14.3221,
+      "z": 1076.5632
+    },
+    {
+      "id": "snow-island-edge02-in",
+      "x": 40.2701,
+      "z": 1072.4931
+    },
+    {
+      "id": "snow-island-edge02-out",
+      "x": 44.7299,
+      "z": 1076.5069
+    },
+    {
+      "id": "snow-island-edge03-in",
+      "x": 51.5093,
+      "z": 1060.7361
+    },
+    {
+      "id": "snow-island-edge03-out",
+      "x": 57.4907,
+      "z": 1060.2639
+    },
+    {
+      "id": "snow-island-edge04-in",
+      "x": 46.3043,
+      "z": 1046.5443
+    },
+    {
+      "id": "snow-island-edge04-out",
+      "x": 50.6957,
+      "z": 1042.4557
+    },
+    {
+      "id": "snow-island-edge05-in",
+      "x": 18.8546,
+      "z": 1054.3589
+    },
+    {
+      "id": "snow-island-edge05-out",
+      "x": 14.1454,
+      "z": 1050.6411
+    },
+    {
+      "id": "velos-city-core",
+      "x": 1540.0,
+      "z": 772.0
+    },
+    {
+      "id": "velos-city-offshore-w",
+      "x": 1514.5,
+      "z": 776.5
+    },
+    {
+      "id": "velos-city-offshore-e",
+      "x": 1582.5,
+      "z": 776.5
+    },
+    {
+      "id": "velos-city-offshore-n",
+      "x": 1548.5,
+      "z": 746.5
+    },
+    {
+      "id": "velos-city-offshore-s",
+      "x": 1548.5,
+      "z": 806.5
+    },
+    {
+      "id": "velos-city-edge00-in",
+      "x": 1548.0604,
+      "z": 793.5324
+    },
+    {
+      "id": "velos-city-edge00-out",
+      "x": 1548.9396,
+      "z": 799.4676
+    },
+    {
+      "id": "velos-city-edge01-in",
+      "x": 1566.2505,
+      "z": 796.5151
+    },
+    {
+      "id": "velos-city-edge01-out",
+      "x": 1570.7495,
+      "z": 800.4849
+    },
+    {
+      "id": "velos-city-edge02-in",
+      "x": 1561.5,
+      "z": 778.5
+    },
+    {
+      "id": "velos-city-edge02-out",
+      "x": 1567.5,
+      "z": 778.5
+    },
+    {
+      "id": "velos-city-edge03-in",
+      "x": 1541.2068,
+      "z": 759.4156
+    },
+    {
+      "id": "velos-city-edge03-out",
+      "x": 1539.7932,
+      "z": 753.5844
+    },
+    {
+      "id": "velos-city-edge04-in",
+      "x": 1526.7929,
+      "z": 762.4346
+    },
+    {
+      "id": "velos-city-edge04-out",
+      "x": 1522.2071,
+      "z": 758.5654
+    },
+    {
+      "id": "velos-city-edge05-in",
+      "x": 1531.4802,
+      "z": 780.1561
+    },
+    {
+      "id": "velos-city-edge05-out",
+      "x": 1525.5198,
+      "z": 780.8439
+    },
+    {
+      "id": "bare-island-core",
+      "x": 3076.0,
+      "z": 516.0
+    },
+    {
+      "id": "bare-island-offshore-w",
+      "x": 3046.5,
+      "z": 518.5
+    },
+    {
+      "id": "bare-island-offshore-e",
+      "x": 3142.5,
+      "z": 518.5
+    },
+    {
+      "id": "bare-island-offshore-n",
+      "x": 3094.5,
+      "z": 490.5
+    },
+    {
+      "id": "bare-island-offshore-s",
+      "x": 3094.5,
+      "z": 546.5
+    },
+    {
+      "id": "bare-island-edge00-in",
+      "x": 3094.0316,
+      "z": 515.0796
+    },
+    {
+      "id": "bare-island-edge00-out",
+      "x": 3090.9684,
+      "z": 509.9204
+    },
+    {
+      "id": "bare-island-edge01-in",
+      "x": 3078.6016,
+      "z": 500.6409
+    },
+    {
+      "id": "bare-island-edge01-out",
+      "x": 3074.3984,
+      "z": 496.3591
+    },
+    {
+      "id": "bare-island-edge02-in",
+      "x": 3063.2952,
+      "z": 505.5894
+    },
+    {
+      "id": "bare-island-edge02-out",
+      "x": 3057.7048,
+      "z": 503.4106
+    },
+    {
+      "id": "bare-island-edge03-in",
+      "x": 3058.5,
+      "z": 518.4865
+    },
+    {
+      "id": "bare-island-edge03-out",
+      "x": 3052.5,
+      "z": 518.5135
+    },
+    {
+      "id": "bare-island-edge04-in",
+      "x": 3076.0871,
+      "z": 529.9812
+    },
+    {
+      "id": "bare-island-edge04-out",
+      "x": 3070.9129,
+      "z": 533.0188
+    },
+    {
+      "id": "bare-island-edge05-in",
+      "x": 3096.4228,
+      "z": 536.501
+    },
+    {
+      "id": "bare-island-edge05-out",
+      "x": 3096.5772,
+      "z": 542.499
+    },
+    {
+      "id": "bare-island-edge06-in",
+      "x": 3114.2534,
+      "z": 534.5118
+    },
+    {
+      "id": "bare-island-edge06-out",
+      "x": 3118.7466,
+      "z": 538.4882
+    },
+    {
+      "id": "bare-island-edge07-in",
+      "x": 3129.542,
+      "z": 523.9996
+    },
+    {
+      "id": "bare-island-edge07-out",
+      "x": 3135.458,
+      "z": 525.0004
+    },
+    {
+      "id": "bare-island-edge08-in",
+      "x": 3125.5468,
+      "z": 513.0279
+    },
+    {
+      "id": "bare-island-edge08-out",
+      "x": 3131.4532,
+      "z": 511.9721
+    },
+    {
+      "id": "bare-island-edge09-in",
+      "x": 3113.8455,
+      "z": 508.8977
+    },
+    {
+      "id": "bare-island-edge09-out",
+      "x": 3119.1545,
+      "z": 506.1023
+    },
+    {
+      "id": "bare-island-edge10-in",
+      "x": 3103.6017,
+      "z": 516.2745
+    },
+    {
+      "id": "bare-island-edge10-out",
+      "x": 3109.3983,
+      "z": 514.7255
+    },
+    {
+      "id": "key-west-core",
+      "x": 2568.0,
+      "z": 3592.0
+    },
+    {
+      "id": "key-west-offshore-w",
+      "x": 2522.5,
+      "z": 3578.5
+    },
+    {
+      "id": "key-west-offshore-e",
+      "x": 2614.5,
+      "z": 3578.5
+    },
+    {
+      "id": "key-west-offshore-n",
+      "x": 2568.5,
+      "z": 3518.5
+    },
+    {
+      "id": "key-west-offshore-s",
+      "x": 2568.5,
+      "z": 3638.5
+    },
+    {
+      "id": "key-west-edge00-in",
+      "x": 2543.0071,
+      "z": 3592.8525
+    },
+    {
+      "id": "key-west-edge00-out",
+      "x": 2537.9929,
+      "z": 3596.1475
+    },
+    {
+      "id": "key-west-edge01-in",
+      "x": 2532.7246,
+      "z": 3606.4873
+    },
+    {
+      "id": "key-west-edge01-out",
+      "x": 2528.2754,
+      "z": 3610.5127
+    },
+    {
+      "id": "key-west-edge02-in",
+      "x": 2534.1879,
+      "z": 3620.0199
+    },
+    {
+      "id": "key-west-edge02-out",
+      "x": 2530.8121,
+      "z": 3624.9801
+    },
+    {
+      "id": "key-west-edge03-in",
+      "x": 2545.4288,
+      "z": 3627.6474
+    },
+    {
+      "id": "key-west-edge03-out",
+      "x": 2543.5712,
+      "z": 3633.3526
+    },
+    {
+      "id": "key-west-edge04-in",
+      "x": 2567.953,
+      "z": 3621.5503
+    },
+    {
+      "id": "key-west-edge04-out",
+      "x": 2569.047,
+      "z": 3627.4497
+    },
+    {
+      "id": "key-west-edge05-in",
+      "x": 2593.8512,
+      "z": 3599.0915
+    },
+    {
+      "id": "key-west-edge05-out",
+      "x": 2599.1488,
+      "z": 3601.9085
+    },
+    {
+      "id": "key-west-edge06-in",
+      "x": 2597.5219,
+      "z": 3576.8616
+    },
+    {
+      "id": "key-west-edge06-out",
+      "x": 2603.4781,
+      "z": 3576.1384
+    },
+    {
+      "id": "key-west-edge07-in",
+      "x": 2577.757,
+      "z": 3573.7148
+    },
+    {
+      "id": "key-west-edge07-out",
+      "x": 2583.243,
+      "z": 3571.2852
+    },
+    {
+      "id": "key-west-edge08-in",
+      "x": 2565.494,
+      "z": 3567.3263
+    },
+    {
+      "id": "key-west-edge08-out",
+      "x": 2567.506,
+      "z": 3561.6737
+    },
+    {
+      "id": "key-west-edge09-in",
+      "x": 2571.5712,
+      "z": 3547.3526
+    },
+    {
+      "id": "key-west-edge09-out",
+      "x": 2573.4288,
+      "z": 3541.6474
+    },
+    {
+      "id": "key-west-edge10-in",
+      "x": 2569.9212,
+      "z": 3533.4436
+    },
+    {
+      "id": "key-west-edge10-out",
+      "x": 2571.0788,
+      "z": 3527.5564
+    },
+    {
+      "id": "key-west-edge11-in",
+      "x": 2549.3089,
+      "z": 3541.3889
+    },
+    {
+      "id": "key-west-edge11-out",
+      "x": 2547.6911,
+      "z": 3535.6111
+    },
+    {
+      "id": "key-west-edge12-in",
+      "x": 2546.1237,
+      "z": 3559.0226
+    },
+    {
+      "id": "key-west-edge12-out",
+      "x": 2542.8763,
+      "z": 3553.9774
+    },
+    {
+      "id": "key-west-edge13-in",
+      "x": 2552.9742,
+      "z": 3576.1966
+    },
+    {
+      "id": "key-west-edge13-out",
+      "x": 2548.0258,
+      "z": 3572.8034
+    },
+    {
+      "id": "capital-city-cell-09-08",
+      "x": 73.5,
+      "z": 136.5
+    },
+    {
+      "id": "key-west-cell-09-08",
+      "x": 2569.5,
+      "z": 3592.5
+    }
+  ]
+}

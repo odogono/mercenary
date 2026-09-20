@@ -239,5 +239,14 @@ nothing here places an interior resident.
 
 **Also open.** None of these twenty bodies has a named place identity for its
 *window* as opposed to its area record; MIDAS and DAMOCLES need a fresh capture;
-Cronus's empty museum window is unexplained; and no body other than the one its
-capture stands in has any other island or window recovered.
+and Cronus's empty museum window is unexplained.
+
+**Closed by [#391](https://github.com/odogono/mercenary/issues/391).** Every
+origin in the table above is authored, not a property of the capture: each body
+carries a list of island records naming an origin, a structure group and a land
+colour, and the workspace built around a pose is the record nearest to it. All
+twenty-one origins here match a record exactly, as do MIDAS's and DAMOCLES's —
+which is further reason to read those two as poses displaced from their built
+workspace rather than as bad origins. Twelve of these bodies carry more than one
+record, so "no other window recovered" was a limit of the capture set, not of
+the data. See [the island note](damocles-eris-islands.md).
