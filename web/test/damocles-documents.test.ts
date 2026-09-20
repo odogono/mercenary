@@ -44,6 +44,12 @@ describe('the authored Eris presentation document', () => {
     expect(document.camera.nearPlane).toBeLessThan(11);
     expect(document.schemaVersion).toBe(6);
     expect(document.time).toEqual({
+      // The impact deadline a fresh game starts from, and the VBLs it spends on one of its
+      // own seconds (#368, #208).
+      impactDeadlineProvenance: 'recovered',
+      impactDeadlineSeconds: 15_560,
+      impactProvenance: 'recovered',
+      impactVblsPerSecond: 20,
       messageFrames: 200,
       provenance: 'recovered',
       vblHertz: 50,

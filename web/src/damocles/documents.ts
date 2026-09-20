@@ -104,6 +104,13 @@ export interface ErisPresentationDocument {
     readonly view: StructureView;
   };
   readonly time: {
+    readonly impactDeadlineProvenance: Provenance;
+    /// The seconds a fresh game's impact clock starts from: the word the title screen
+    /// installs at `$793C` before play begins, recovered as `-15560` (#368).
+    readonly impactDeadlineSeconds: number;
+    readonly impactProvenance: Provenance;
+    /// VBLs the impact clock spends on one displayed second, recovered as 20 (#208).
+    readonly impactVblsPerSecond: number;
     readonly messageFrames: number;
     readonly provenance: 'recovered';
     readonly vblHertz: number;
@@ -256,6 +263,10 @@ export const readErisPresentation = (
   ]);
   const origin = object(grid['origin'], 'grid.origin', ['x', 'z']);
   const time = object(root['time'], 'time', [
+    'impactDeadlineSeconds',
+    'impactDeadlineProvenance',
+    'impactProvenance',
+    'impactVblsPerSecond',
     'messageFrames',
     'provenance',
     'vblHertz',
@@ -513,6 +524,24 @@ export const readErisPresentation = (
       )
     },
     time: {
+      impactDeadlineProvenance: provenance(
+        time['impactDeadlineProvenance'],
+        'time.impactDeadlineProvenance'
+      ),
+      impactDeadlineSeconds: literal(
+        time['impactDeadlineSeconds'],
+        15_560,
+        'time.impactDeadlineSeconds'
+      ),
+      impactProvenance: provenance(
+        time['impactProvenance'],
+        'time.impactProvenance'
+      ),
+      impactVblsPerSecond: literal(
+        time['impactVblsPerSecond'],
+        20,
+        'time.impactVblsPerSecond'
+      ),
       messageFrames: literal(time['messageFrames'], 200, 'time.messageFrames'),
       provenance: literal(time['provenance'], 'recovered', 'time.provenance'),
       vblHertz: literal(time['vblHertz'], 50, 'time.vblHertz'),

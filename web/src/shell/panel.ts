@@ -18,6 +18,9 @@ export interface PanelContext {
 /// The two renditions differ in dressing, not in facts: the Damocles panel shows Targ data in
 /// Damocles clothes (ADR 0027), so one view model serves both.
 export interface PanelViewModel {
+  /// The altitude window, already formatted, because its width belongs to the rendition and
+  /// not to this view model: Targ prints the documented five-digit instrument, Damocles the
+  /// six digits the original prints (#368).
   readonly altitude: string;
   readonly altitudeLamp: boolean;
   readonly attackLamp: boolean;

@@ -370,6 +370,10 @@ _Avoid_: Body cell, coarse cell, planet unit
 The navigation window beside the Navigation Readout, naming the player's Island-Local Cell two digits an axis, a negative axis marked in red and a magnitude past 99 printed as `**`. It is the readout that moves as the player walks, and it is distinct from the Body Coordinate Readout beside it whatever the original's own documentation calls either window. Because it is island-local it names a location only with the island it was read on.
 _Avoid_: Grid reference, city coordinates, location coordinates, tile readout, Body Coordinate
 
+**Impact Clock**:
+The Damocles Panel Rendition's `HH-MM-SS` window counting what is left before the comet arrives, kept as minus the remaining seconds and spending one of them every twenty VBLs, so a real second costs two and a half of its own. A fresh game is given `04-19-20` of it on the title screen, and the original's scripted arrival has spent an hour and a half of that before the player first stands on Eris. It is Damocles's alone: the Targ rendition's clock is the Targ Orrery's local time, which is not a deadline and does not run out.
+_Avoid_: Countdown, comet timer, deadline clock, session clock
+
 **System Menu**:
 The Browser Shell overlay opened with Escape that pauses stepping and owns the settings page and the Save chooser; shell chrome, never part of the Game Surface.
 _Avoid_: Pause menu, options screen, main menu

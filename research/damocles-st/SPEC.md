@@ -30,6 +30,7 @@ The TOS pin is Hatari's bundled EmuTOS 2.06. Real TOS 1.04 is not required for t
 - Approach spaceport pad (#79; near cyan-window building): `research/damocles-st/lab observe --scenario research/damocles-st/scenarios/approach-spaceport-pad.json`.
 - Script dispatch loop (#81, #85; disassembles the script interpreter at the world-load state): `research/damocles-st/lab observe --scenario research/damocles-st/scenarios/script-dispatch.json`.
 - Panel clock / `016-283` / boarded speed (#208): `python3 research/damocles-st/scripts/panel-readout-probe.py --roms <roms> --snapshots <snapshots> clock --vbls 250` (also `navigation`, `velocity --key 4`, and `poke --address 0x793c --bytes fffff1f0`).
+- Impact deadline start value (#368; cold boots and samples `$793C` on a self-chaining run of exact-VBL breakpoints, so no host sleep enters the cadence): `python3 research/damocles-st/scripts/deadline-start-probe.py --roms <roms> --start-vbls 0 --interval 5 --count 200 --no-space`.
 - Verify: `research/damocles-st/lab verify --run research/damocles-st/work/<run-id>`.
 - Reproduce: `research/damocles-st/lab reproduce`.
 - Export addressed RAM windows for a Working Disassembly: `research/damocles-st/lab export --run research/damocles-st/work/<run-id> --window script-bank`.

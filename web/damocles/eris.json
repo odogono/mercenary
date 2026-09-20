@@ -51,7 +51,7 @@
     "provenance": "recovered",
     "modelZ": "keep",
     "modelZProvenance": "recovered",
-    "note": "Camera yaw $7AA2 (twin $7AC2) wraps every 1024 units; N is centred at $0200 mod $0400, E at $0300, S at $0000, W at $0100, and a right stick raises it. Walking at N raises $7A9A (z) and at E raises $7A92 (x), so Eris is left-handed seen from above with +y up; the frame mirrors z for the shared right-handed Camera. A placed Instance's angle byte is the high byte of the long at $77A8+4*slot, 256 steps per turn on the same clockwise sense; boarding publishes it as camera yaw byte×4 with no offset ($054390) and leaving stores yaw>>2 back ($0544FA). The byte turns the mesh as modelled rather than naming a compass facing: $053548 sums it with the model record's $8001 bias byte and $0536F6 only turns the record when that command asked for the single-Y path, so a craft modelled nose-toward local −Z reads as facing south at byte zero. $05388E turns x and z about the model origin by that angle and $0538BE adds the Instance position with no z mirror, which recovers modelZ as keep (docs/research/damocles-vip-limo.md)."
+    "note": "Camera yaw $7AA2 (twin $7AC2) wraps every 1024 units; N is centred at $0200 mod $0400, E at $0300, S at $0000, W at $0100, and a right stick raises it. Walking at N raises $7A9A (z) and at E raises $7A92 (x), so Eris is left-handed seen from above with +y up; the frame mirrors z for the shared right-handed Camera. A placed Instance's angle byte is the high byte of the long at $77A8+4*slot, 256 steps per turn on the same clockwise sense; boarding publishes it as camera yaw byte\u00d74 with no offset ($054390) and leaving stores yaw>>2 back ($0544FA). The byte turns the mesh as modelled rather than naming a compass facing: $053548 sums it with the model record's $8001 bias byte and $0536F6 only turns the record when that command asked for the single-Y path, so a craft modelled nose-toward local \u2212Z reads as facing south at byte zero. $05388E turns x and z about the model origin by that angle and $0538BE adds the Instance position with no z mirror, which recovers modelZ as keep (docs/research/damocles-vip-limo.md)."
   },
   "camera": {
     "verticalFieldOfViewDegrees": 45,
@@ -115,6 +115,10 @@
   },
   "time": {
     "messageFrames": 200,
+    "impactDeadlineSeconds": 15560,
+    "impactDeadlineProvenance": "recovered",
+    "impactVblsPerSecond": 20,
+    "impactProvenance": "recovered",
     "provenance": "recovered",
     "vblHertz": 50,
     "vblProvenance": "derived",
