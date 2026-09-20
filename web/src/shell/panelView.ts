@@ -339,6 +339,55 @@ const writeField = (
   );
 };
 
+const LOCATION_AXES = 'location-axes';
+
+/// The location readout's axes, written one element each so a negative axis can be drawn red.
+///
+/// Only the Damocles Cell Readout carries a sign; a rendition that carries none keeps the one
+/// plain text node it always had, so nothing about Targ's or the Flyover's readout changes. The
+/// split is made once and then only the digits are rewritten, in the churn discipline the rest
+/// of the panel keeps (#397).
+const writeLocationLabel = (
+  element: HTMLElement,
+  value: string,
+  axes: PanelViewModel['locationAxes']
+): void => {
+  if (axes === undefined) {
+    element.classList.remove(LOCATION_AXES);
+    writeField(element, 'locationLabel', value);
+    return;
+  }
+  if (
+    !element.classList.contains(LOCATION_AXES) ||
+    element.children.length !== axes.length
+  ) {
+    element.classList.add(LOCATION_AXES);
+    const children: Node[] = [];
+    for (const [index] of axes.entries()) {
+      if (index > 0) {
+        children.push(document.createTextNode('-'));
+      }
+      const span = document.createElement('span');
+      span.className = 'location-axis';
+      children.push(span);
+    }
+    element.replaceChildren(...children);
+  }
+  axes.forEach((axis, index) => {
+    const span = element.children.item(index) as HTMLElement | null;
+    if (span === null) {
+      return;
+    }
+    if (span.textContent !== axis.text) {
+      span.textContent = axis.text;
+    }
+    const negative = axis.negative ? 'true' : 'false';
+    if (span.dataset['negative'] !== negative) {
+      span.dataset['negative'] = negative;
+    }
+  });
+};
+
 /// Keep the authored panel filling the width it is given.
 ///
 /// The panel is one fixed composition rather than a fluid layout, so it is scaled whole: at any
@@ -388,6 +437,10 @@ export const installPanel = (
           }
         }
         const value = String(model[name] ?? '');
+        if (name === 'locationLabel') {
+          writeLocationLabel(element, value, model.locationAxes);
+          continue;
+        }
         writeField(element, name, value);
         if (name === 'message') {
           element.dataset['bensonColour'] =

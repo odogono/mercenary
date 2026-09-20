@@ -3,11 +3,15 @@ import { describe, expect, test } from 'bun:test';
 import { parseCatalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
+  SURFACE_CELLS,
   bearingFromYaw,
+  bodyCellOf,
   cellOf,
   erisSurfaceFrom,
   headingFromByte,
   insideCentralCellHalf,
+  islandLocalCell,
+  nearestIsland,
   placementHeading,
   startPose,
   structureInCell
@@ -56,6 +60,71 @@ describe('the Eris surface from the Damocles Catalogue', () => {
     )!;
     expect(cellOf(apron.position, surface.grid)).toEqual({ x: 7, z: 8 });
     expect(apron.faceCount).toBeGreaterThan(0);
+  });
+
+  test("reads Eris's five island records and measures cells from the nearest", async () => {
+    const { catalogue, doc } = await load();
+    const surface = erisSurfaceFrom(catalogue, doc);
+    expect(
+      surface.islands.map(island => [island.areaName, island.origin])
+    ).toEqual([
+      ['CAPITAL CITY', { x: 64, z: 128 }],
+      ['SNOW ISLAND', { x: 32, z: 1056 }],
+      ['VELOS CITY', { x: 1536, z: 768 }],
+      ['BARE ISLAND', { x: 3072, z: 512 }],
+      ['KEY WEST', { x: 2560, z: 3584 }]
+    ]);
+    // The three Working-Authority readings the Cell Readout is pinned by, each given as the
+    // body cell the capture decodes to and the pair the original prints there, a negative axis
+    // being the one it prints red (#397, docs/research/damocles-eris-islands.md).
+    const readings = [
+      {
+        area: 'CAPITAL CITY',
+        body: { x: 38, z: 136 },
+        local: { x: -26, z: 8 }
+      },
+      {
+        area: 'SNOW ISLAND',
+        body: { x: 35, z: 1028 },
+        local: { x: 3, z: -28 }
+      },
+      { area: 'KEY WEST', body: { x: 2620, z: 3639 }, local: { x: 60, z: 55 } }
+    ];
+    for (const reading of readings) {
+      // The middle of the cell, so the reading does not depend on where in it the player stood.
+      const position = {
+        x: (reading.body.x + 0.5) * surface.grid.cellUnits,
+        y: 63,
+        z: (reading.body.z + 0.5) * surface.grid.cellUnits
+      };
+      expect(bodyCellOf(position, surface.grid)).toEqual(reading.body);
+      const island = nearestIsland(surface, position)!;
+      expect(island.areaName).toBe(reading.area);
+      expect(islandLocalCell(position, surface.grid, island)).toEqual(
+        reading.local
+      );
+    }
+  });
+
+  test('measures the Island-Local Cell across the surface wrap', async () => {
+    const { catalogue, doc } = await load();
+    const surface = erisSurfaceFrom(catalogue, doc);
+    const capital = surface.islands[0]!;
+    // The surface is a 4096-cell torus on both axes, so a cell four short of wrapping round to
+    // Capital City's origin is four west of it and not 4092 east.
+    const position = {
+      x: (SURFACE_CELLS + capital.origin.x - 4 + 0.5) * surface.grid.cellUnits,
+      y: 63,
+      z: (capital.origin.z + 0.5) * surface.grid.cellUnits
+    };
+    expect(bodyCellOf(position, surface.grid)).toEqual({
+      x: capital.origin.x - 4,
+      z: capital.origin.z
+    });
+    expect(islandLocalCell(position, surface.grid, capital)).toEqual({
+      x: -4,
+      z: 0
+    });
   });
 
   test('binds only the current-cell structure and gates its plan to the central half', async () => {

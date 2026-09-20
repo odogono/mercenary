@@ -72,6 +72,7 @@ const placement = (
 const surfaceOf = (placements: readonly ErisPlacement[]): ErisSurface => ({
   body: { id: 'body-11', name: 'ERIS' },
   grid: { cellsPerAxis: 16, cellUnits: 65_536, origin: { x: 64, z: 128 } },
+  islands: [],
   placements,
   places: [],
   unresolvedCount: placements.filter(p => p.mesh === undefined).length
