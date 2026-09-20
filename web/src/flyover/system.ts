@@ -198,7 +198,7 @@ export const composeGammaSystem = (
         .map(candidate => distance(source.position, candidate.position))
     );
     return {
-      colour: body.colour,
+      colour: source.baseColour,
       displayRadiusUnits: nearest * body.radius.fraction,
       id: body.id,
       position: { ...source.position },

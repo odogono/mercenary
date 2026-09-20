@@ -5,6 +5,7 @@
     "authority": "Damocles Atari ST Working Authority",
     "evidence": "docs/research/damocles-gamma-system.md",
     "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "colourTableSha256": "9fdcf2395ecaab1413317daebc46c90d1e817610061f365d2a257111273f75aa",
     "ramSha256": "b019301ec5ac355301613db8e2bf6cd6d4a0df41311b6efedacfea87f2a9c967",
     "run": "observe-first-world-20260818T101013Z-c5a32b7d"
   },
@@ -15,7 +16,9 @@
       "Coordinates and radiusExtent values are raw engine units. Their physical scale and the radius/extent encoding are unresolved.",
       "No explicit type or Primary field and no complete orbital elements were recovered, so those properties are absent rather than inferred.",
       "DAMOCLES position is a capture-time sample and is not an epoch or a static authored position; its X and Z differ in the second cold run.",
-      "VOID is source slot 30 and a place/sentinel, not one of the 30 physical selectors scanned by the space renderer; it is intentionally absent from bodies."
+      "VOID is source slot 30 and a place/sentinel, not one of the 30 physical selectors scanned by the space renderer; it is intentionally absent from bodies.",
+      "baseColour is recovered, not authored: sourceColour is the low word of the longword at $0060C0 + 4*sourceIndex masked to twelve bits, exactly as $0592AC masks it before publishing it to $7C88, and baseColour expands each nibble by n * 34 as catalogue.json does. DAMOCLES's slot is $0030E000, whose high word the engine never reads, so its masked colour is $000; the VOID sentinel's $777 is excluded along with the rest of that slot.",
+      "baseColour is the colour a Body surface is drawn in wherever no island covers it. An island record carries its own land colour, which overrides it for that island, so a consumer drawing a surface needs both and only the base colour is published here; catalogue.json carries the record colours. Triton is the one Body whose record colour differs from its base colour."
     ]
   },
   "coordinateSystem": {
@@ -28,6 +31,8 @@
       "id": "dialis",
       "sourceIndex": 0,
       "name": "DIALIS",
+      "baseColour": "#eeeeee",
+      "sourceColour": 1911,
       "position": { "x": 0, "y": 0, "z": 0 },
       "radiusExtent": 1446792
     },
@@ -35,6 +40,8 @@
       "id": "icarus",
       "sourceIndex": 1,
       "name": "ICARUS",
+      "baseColour": "#444444",
+      "sourceColour": 546,
       "position": { "x": 46500, "y": 0, "z": 36000 },
       "radiusExtent": 991040
     },
@@ -42,6 +49,8 @@
       "id": "midas",
       "sourceIndex": 2,
       "name": "MIDAS",
+      "baseColour": "#aa8800",
+      "sourceColour": 1344,
       "position": { "x": 90000, "y": 0, "z": -192000 },
       "radiusExtent": 1056576
     },
@@ -49,6 +58,8 @@
       "id": "acheron",
       "sourceIndex": 3,
       "name": "ACHERON",
+      "baseColour": "#888888",
+      "sourceColour": 1092,
       "position": { "x": 82000, "y": 0, "z": -206400 },
       "radiusExtent": 925184
     },
@@ -56,6 +67,8 @@
       "id": "dion",
       "sourceIndex": 4,
       "name": "DION",
+      "baseColour": "#00aaaa",
+      "sourceColour": 85,
       "position": { "x": -300000, "y": 0, "z": -72000 },
       "radiusExtent": 1122112
     },
@@ -63,6 +76,8 @@
       "id": "atropos",
       "sourceIndex": 5,
       "name": "ATROPOS",
+      "baseColour": "#888888",
+      "sourceColour": 1092,
       "position": { "x": -300000, "y": 0, "z": -69440 },
       "radiusExtent": 922624
     },
@@ -70,6 +85,8 @@
       "id": "clotho",
       "sourceIndex": 6,
       "name": "CLOTHO",
+      "baseColour": "#664444",
+      "sourceColour": 802,
       "position": { "x": -293600, "y": 0, "z": -83200 },
       "radiusExtent": 1054336
     },
@@ -77,6 +94,8 @@
       "id": "lachesis",
       "sourceIndex": 7,
       "name": "LACHESIS",
+      "baseColour": "#882222",
+      "sourceColour": 1041,
       "position": { "x": -311200, "y": 0, "z": -68800 },
       "radiusExtent": 1053056
     },
@@ -84,6 +103,8 @@
       "id": "gaea",
       "sourceIndex": 8,
       "name": "GAEA",
+      "baseColour": "#006600",
+      "sourceColour": 48,
       "position": { "x": 180000, "y": 0, "z": 390000 },
       "radiusExtent": 1120512
     },
@@ -91,6 +112,8 @@
       "id": "cronus",
       "sourceIndex": 9,
       "name": "CRONUS",
+      "baseColour": "#664444",
+      "sourceColour": 802,
       "position": { "x": 176800, "y": 0, "z": 388400 },
       "radiusExtent": 988160
     },
@@ -98,6 +121,8 @@
       "id": "cyclopes",
       "sourceIndex": 10,
       "name": "CYCLOPES",
+      "baseColour": "#666666",
+      "sourceColour": 819,
       "position": { "x": 184800, "y": 0, "z": 393200 },
       "radiusExtent": 1053696
     },
@@ -105,6 +130,8 @@
       "id": "eris",
       "sourceIndex": 11,
       "name": "ERIS",
+      "baseColour": "#000066",
+      "sourceColour": 3,
       "position": { "x": -630000, "y": 0, "z": 390000 },
       "radiusExtent": 1184448
     },
@@ -112,6 +139,8 @@
       "id": "solon",
       "sourceIndex": 12,
       "name": "SOLON",
+      "baseColour": "#666666",
+      "sourceColour": 819,
       "position": { "x": -628800, "y": 0, "z": 388000 },
       "radiusExtent": 987520
     },
@@ -119,6 +148,8 @@
       "id": "theon",
       "sourceIndex": 13,
       "name": "THEON",
+      "baseColour": "#888888",
+      "sourceColour": 1092,
       "position": { "x": -624000, "y": 0, "z": 389200 },
       "radiusExtent": 857088
     },
@@ -126,6 +157,8 @@
       "id": "vesta",
       "sourceIndex": 14,
       "name": "VESTA",
+      "baseColour": "#4488cc",
+      "sourceColour": 582,
       "position": { "x": -630000, "y": 0, "z": 392400 },
       "radiusExtent": 1054336
     },
@@ -133,6 +166,8 @@
       "id": "metis",
       "sourceIndex": 15,
       "name": "METIS",
+      "baseColour": "#882222",
+      "sourceColour": 1041,
       "position": { "x": -637200, "y": 0, "z": 390000 },
       "radiusExtent": 923264
     },
@@ -140,6 +175,8 @@
       "id": "lucan",
       "sourceIndex": 16,
       "name": "LUCAN",
+      "baseColour": "#664444",
+      "sourceColour": 802,
       "position": { "x": -635600, "y": 0, "z": 383600 },
       "radiusExtent": 922624
     },
@@ -147,6 +184,8 @@
       "id": "logos",
       "sourceIndex": 17,
       "name": "LOGOS",
+      "baseColour": "#888888",
+      "sourceColour": 1092,
       "position": { "x": -600000, "y": 0, "z": 900000 },
       "radiusExtent": 1184648
     },
@@ -154,6 +193,8 @@
       "id": "aurora",
       "sourceIndex": 18,
       "name": "AURORA",
+      "baseColour": "#882222",
+      "sourceColour": 1041,
       "position": { "x": -596480, "y": 0, "z": 898400 },
       "radiusExtent": 857088
     },
@@ -161,6 +202,8 @@
       "id": "triton",
       "sourceIndex": 19,
       "name": "TRITON",
+      "baseColour": "#ee8800",
+      "sourceColour": 1856,
       "position": { "x": -1350000, "y": 0, "z": -600000 },
       "radiusExtent": 1316720
     },
@@ -168,6 +211,8 @@
       "id": "pan",
       "sourceIndex": 20,
       "name": "PAN",
+      "baseColour": "#444444",
+      "sourceColour": 546,
       "position": { "x": -1329200, "y": 0, "z": -600000 },
       "radiusExtent": 1055616
     },
@@ -175,6 +220,8 @@
       "id": "thalia",
       "sourceIndex": 21,
       "name": "THALIA",
+      "baseColour": "#4488cc",
+      "sourceColour": 582,
       "position": { "x": -1369200, "y": 0, "z": -576000 },
       "radiusExtent": 989440
     },
@@ -182,6 +229,8 @@
       "id": "juno",
       "sourceIndex": 22,
       "name": "JUNO",
+      "baseColour": "#4488cc",
+      "sourceColour": 582,
       "position": { "x": 2100000, "y": 0, "z": -1200000 },
       "radiusExtent": 1318720
     },
@@ -189,6 +238,8 @@
       "id": "bacchus",
       "sourceIndex": 23,
       "name": "BACCHUS",
+      "baseColour": "#666666",
+      "sourceColour": 819,
       "position": { "x": 2100000, "y": 0, "z": -1225600 },
       "radiusExtent": 1053696
     },
@@ -196,6 +247,8 @@
       "id": "jason",
       "sourceIndex": 24,
       "name": "JASON",
+      "baseColour": "#888888",
+      "sourceColour": 1092,
       "position": { "x": 2108000, "y": 0, "z": -1171200 },
       "radiusExtent": 1053696
     },
@@ -203,6 +256,8 @@
       "id": "tolosa",
       "sourceIndex": 25,
       "name": "TOLOSA",
+      "baseColour": "#882222",
+      "sourceColour": 1041,
       "position": { "x": 2084000, "y": 0, "z": -1182400 },
       "radiusExtent": 1054336
     },
@@ -210,6 +265,8 @@
       "id": "perseus",
       "sourceIndex": 26,
       "name": "PERSEUS",
+      "baseColour": "#664444",
+      "sourceColour": 802,
       "position": { "x": 2095200, "y": 0, "z": -1180800 },
       "radiusExtent": 1120192
     },
@@ -217,6 +274,8 @@
       "id": "mentor",
       "sourceIndex": 27,
       "name": "MENTOR",
+      "baseColour": "#888888",
+      "sourceColour": 1092,
       "position": { "x": 2760000, "y": 0, "z": 3480000 },
       "radiusExtent": 991040
     },
@@ -224,6 +283,8 @@
       "id": "sapphire",
       "sourceIndex": 28,
       "name": "SAPPHIRE",
+      "baseColour": "#4488cc",
+      "sourceColour": 582,
       "position": { "x": 2780800, "y": 0, "z": 3512000 },
       "radiusExtent": 857088
     },
@@ -231,6 +292,8 @@
       "id": "damocles",
       "sourceIndex": 29,
       "name": "DAMOCLES",
+      "baseColour": "#000000",
+      "sourceColour": 0,
       "position": { "x": 1879, "y": 0, "z": 306253 },
       "positionKind": "capture-time-sample",
       "radiusExtent": 991040

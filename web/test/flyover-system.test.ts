@@ -128,7 +128,7 @@ describe('the composed Targ System', () => {
 });
 
 describe('the composed Gamma System', () => {
-  test('uses the stable recovered centres with authored colours and derived radii', async () => {
+  test('uses the stable recovered centres and colours with derived radii', async () => {
     const authority = readGammaSystem(
       await json('../payload/damocles/system.json')
     );
@@ -162,9 +162,7 @@ describe('the composed Gamma System', () => {
       );
       expect(body.position).toEqual(recovered.position);
       expect(body.displayRadiusUnits).toBe(nearest * 0.2);
-      expect(body.colour).toBe(
-        presentation.bodies.find(candidate => candidate.id === body.id)!.colour
-      );
+      expect(body.colour).toBe(recovered.baseColour);
       expect(body.ranges).toEqual(['orbital']);
       expect(body.provenance).toEqual({
         colour: 'recovered',
