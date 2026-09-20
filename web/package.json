@@ -19,6 +19,7 @@
   "knip": {
     "entry": [
       "src/shell/boot.ts",
+      "src/atlas/boot.ts",
       "src/catalogue/boot.ts",
       "src/damocles/boot.ts",
       "src/damocles/firstOfferDemo.ts",

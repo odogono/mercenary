@@ -1,11 +1,12 @@
 export type SystemId = 'gamma' | 'targ';
 export type BrowserDocument =
-  'catalogue' | 'damocles' | 'first-offer' | 'flyover' | 'gameplay';
+  'atlas' | 'catalogue' | 'damocles' | 'first-offer' | 'flyover' | 'gameplay';
 
 export type DocumentPath =
   | { readonly document: 'first-offer'; readonly kind: 'document' }
   | { readonly document: 'gameplay'; readonly kind: 'document' }
   | { readonly document: 'catalogue'; readonly kind: 'document' }
+  | { readonly document: 'atlas'; readonly kind: 'document' }
   | { readonly document: 'damocles'; readonly kind: 'document' }
   | {
       readonly document: 'flyover';
@@ -27,6 +28,9 @@ const documents = new Map<string, DocumentPath>([
   ['/damocles', { document: 'damocles', kind: 'document' }],
   ['/damocles/first-offer', { document: 'first-offer', kind: 'document' }],
   ['/catalogue', { document: 'catalogue', kind: 'document' }],
+  // The Atlas is sessionless and Gamma-only, so it hangs off the Damocles Title's path
+  // rather than taking a System of its own (ADR 0041).
+  ['/damocles/atlas', { document: 'atlas', kind: 'document' }],
   ['/targ/debug', { document: 'flyover', kind: 'document', systemId: 'targ' }],
   [
     '/damocles/debug',
@@ -42,6 +46,8 @@ const aliases = new Map<string, string>([
   ['/damocles/', '/damocles'],
   ['/catalogue.html', '/catalogue'],
   ['/catalogue/', '/catalogue'],
+  ['/atlas.html', '/damocles/atlas'],
+  ['/damocles/atlas/', '/damocles/atlas'],
   ['/debug', '/targ/debug'],
   ['/debug/', '/targ/debug'],
   ['/targ/debug/', '/targ/debug'],

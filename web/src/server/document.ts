@@ -16,6 +16,7 @@ export const unsupportedMethodResponse = (
       });
 
 const DOCUMENT_FILES: Record<BrowserDocument, string> = {
+  atlas: 'atlas.html',
   catalogue: 'catalogue.html',
   damocles: 'damocles.html',
   'first-offer': 'first-offer.html',

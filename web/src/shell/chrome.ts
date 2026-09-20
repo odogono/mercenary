@@ -4,6 +4,8 @@ import type { MenuPages } from './menu.ts';
 /// Title-owned labels on otherwise shared System Menu and Shell Console chrome.
 
 export interface ShellChromeCopy {
+  /// Set only by a Title whose System the Atlas presents; omitted, the menu has no Atlas link.
+  readonly atlasLabel?: string;
   readonly catalogueLabel: string;
   readonly menuTitle: string;
 }
@@ -136,6 +138,15 @@ export const installShellChrome = (
       className: 'chrome-button',
       text: copy.catalogueLabel
     }),
+    ...(copy.atlasLabel === undefined
+      ? []
+      : [
+          el('a', {
+            attrs: { href: '/damocles/atlas', id: 'menu-atlas' },
+            className: 'chrome-button',
+            text: copy.atlasLabel
+          })
+        ]),
     el('button', {
       attrs: { 'data-goto': 'settings', type: 'button' },
       className: 'chrome-button',

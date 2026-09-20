@@ -219,12 +219,16 @@ One authored landmass on a Body in the Flyover, optionally carrying one canonica
 _Avoid_: Continent, surface map, Damocles place, Damocles Island, level
 
 **Range**:
-Which of the Flyover's three scale bands a Camera occupies relative to its nearest Body — Orbital, Coastal or Surface — determining how that Body is presented without changing the Camera's continuous Pose.
+Which scale band a view occupies, determining what is presented without changing the view's continuous Pose. The Flyover has three, named relative to a Camera's nearest Body — Orbital, Coastal or Surface. The Atlas has five — System, Body, Coastal, Settlement and Street — of which System is the whole Gamma System and the other four are bands within one Body rather than a hierarchy, because Damocles Islands and Settlements do not nest.
 _Avoid_: Level of detail, zoom level, scene, mode
 
 **Flyover**:
 The shell-owned internal development surface in which a free Camera moves through a System for rendering inspection without a Gameplay Session; it is neither the Game Surface nor a fidelity claim.
 _Avoid_: Free-flight mode, spectator mode, Gameplay Session, game viewer
+
+**Atlas**:
+The shell-owned sessionless map surface presenting the Gamma System and its Bodies top-down, continuously across its Ranges from the whole System down to structure footprints, drawing only recovered content or content explicitly labelled derived or authored, and showing what is not recovered as a gap. It is neither the Game Surface nor a fidelity claim.
+_Avoid_: Map mode, Game Surface, Flyover, Catalogue marker map, world map
 
 **Trace Oracle**:
 The accepted macOS implementation frozen at the annotated `trace-oracle-last-good` tag, together with the deterministic traces it regenerates, held as the tagged equivalence authority that the canonical browser implementation must reproduce rather than as a live implementation (ADR 0019).

@@ -23,6 +23,10 @@ describe('the Browser Shell document path', () => {
       document: 'damocles',
       kind: 'document'
     });
+    expect(resolveDocumentPath('/damocles/atlas')).toEqual({
+      document: 'atlas',
+      kind: 'document'
+    });
     expect(resolveDocumentPath('/targ/debug')).toEqual({
       document: 'flyover',
       kind: 'document',
@@ -42,6 +46,8 @@ describe('the Browser Shell document path', () => {
       ['/damocles/', '/damocles'],
       ['/catalogue.html', '/catalogue'],
       ['/catalogue/', '/catalogue'],
+      ['/atlas.html', '/damocles/atlas'],
+      ['/damocles/atlas/', '/damocles/atlas'],
       ['/debug', '/targ/debug'],
       ['/debug/', '/targ/debug'],
       ['/targ/debug/', '/targ/debug'],
@@ -95,6 +101,9 @@ describe('the Browser Shell document path', () => {
     );
     expect(assertBrowserDocument('/damocles', 'damocles').document).toBe(
       'damocles'
+    );
+    expect(assertBrowserDocument('/damocles/atlas', 'atlas').document).toBe(
+      'atlas'
     );
     expect(assertBrowserDocument('/damocles/debug', 'flyover')).toMatchObject({
       document: 'flyover',
