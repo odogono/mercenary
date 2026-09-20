@@ -126,6 +126,11 @@ key message — the INTERSTELLARSHIP is refused for its own reason, not for a
 missing key. The one thing that could still pass it is bit 7 of its own key byte
 at `$7272 + $1C`, which is `$08` in every tracked pose and is never seen set.
 
+**Answered by [#404](damocles-vehicle-key-gate.md).** The byte is not a private
+array: `$7272 + slot × 4` is the same address as `$6FAA + (slot + 178) × 4`, the
+paired key object's association-A handling byte, and bit 7 is its carried bit.
+Boarding is a carried requirement, not a permanent unlock.
+
 ### The key byte is a per-craft array at `$7272`
 
 `$7272 + slot × 4` carries one byte per resident slot and bit 7 is the gate's
@@ -559,6 +564,7 @@ that a body cannot be stood on**, and each of the seven is an open gap.
 | ----------------------------------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------- |
 | The arrival ship's refusal is conditional on some refit state       | **Disproved for the chooser** | `$0542E0` reads no state: slot 7 is tested against a constant and jumps to message 22. Only its own key byte could pass it earlier, and that byte is `$08` in every tracked pose |
 | Boarding is gated by a per-craft key byte                          | **Confirmed**           | `$054332` tests bit 7 of `$7272 + slot × 4`; the limo bit sets when #86 takes the airport key |
+| That key byte is a permanent unlock rather than a carried requirement | **Disproved**           | [#404](damocles-vehicle-key-gate.md) — `$7272 + slot × 4` *is* `$6FAA + (slot + 178) × 4`, the paired key object's own carried bit; dropping the key clears it and the board is refused with string 3 |
 | The progressed poses keep a spaceworthy craft on hand              | **Confirmed**           | Slot 3 is within 0.01 cells of all three poses with its key byte set; boarding succeeds live |
 | A boarded craft departs on the ground-craft digit-and-stick pair   | **Disproved**           | Speed key registers at `$7B60`; position and `$7A96` unchanged over 20 s with the stick at rest and held forward |
 | Some other input departs a boarded craft                           | **Confirmed**           | `Esc` reaches the launch handler at `$055822` once the scancode is zero-padded; the craft enters space |
@@ -575,6 +581,7 @@ that a body cannot be stood on**, and each of the seven is an open gap.
 | Refusal text for slots 7 and other craft       | System string slots 22 and 3, `payload/damocles/strings.json`             |
 | Live refusal at the arrival ship               | `arrival-route-slot7-20260918T095958Z-b80a595d`                           |
 | Key byte array and its movement                | `$7272 + slot × 4` across six tracked memstates; #86's limo-key recordings |
+| What that byte actually is, and when it clears  | [The Vehicle Key gate note](damocles-vehicle-key-gate.md); `vehicle-key-gate-probe.py` take/drop/board replays |
 | Live board on Vesta                            | `arrival-route-slot3-20260918T100026Z-9c8d751c`                           |
 | Departure into space from Vesta                | `arrival-route-slot3-20260918T095824Z-9789a6d7`                           |
 | Arrival at another body and the round trip     | Vesta → ERIS (`$002C`) and Vesta → Vesta, both with the player left on foot |
