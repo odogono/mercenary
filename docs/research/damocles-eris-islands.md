@@ -254,9 +254,10 @@ shows directly: the original prints `26` in red where the port prints `**`.
 
 Two words decide the surface fill, and both are recovered:
 
-- `$7C88` is the body's own base colour, loaded at arrival from `$60C2 + 4·body`
-  masked to twelve bits (`$0592AC`–`$0592B4`). For Eris it is `$0003`, deep
-  blue — **the sea**.
+- `$7C88` is the body's own base colour: the low word of the longword at
+  `$0060C0 + 4·body` — the Body colour recovered in
+  [the Gamma System note](damocles-gamma-system.md) — masked to twelve bits at
+  `$0592AC`–`$0592B4`. For Eris it is `$0003`, deep blue — **the sea**.
 - `$7A1A` is the selected island's colour, from its record's `+8`. For Capital
   City and Key West `$0030` green, Snow Island `$0777` white, Velos City `$0420`
   orange, Bare Island `$0322` brown.

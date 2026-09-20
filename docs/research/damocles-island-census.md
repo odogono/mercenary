@@ -210,6 +210,31 @@ base colour `$740` — which predicts an orange surface seen from altitude and a
 dark blue-green one underfoot. Triton has no capture, so that is a prediction
 from the decode and not an observation.
 
+### The base colour is #382's Body colour, and the engine masks it
+
+The base colour is not a new table. `$0592AC`–`$0592B4` reads the **low word** of
+the longword at `$0060C0 + 4·body` — the Body colour decoded in
+[the Gamma System note](damocles-gamma-system.md) for
+[#379](https://github.com/odogono/mercenary/issues/379) — and masks it to twelve
+bits before publishing it to `$7C88` and `$7A1A`:
+
+```
+0592AC  move.w    $60c2(a0), d0     ; a0 = 4 x body index
+0592B0  andi.w    #$fff, d0
+0592B4  move.w    d0, $7c88.w       ; the surface base colour
+0592B8  move.w    d0, $7a1a.w       ; ... and the land colour, until an island record overrides it
+```
+
+What this note adds is the **consumer**: that value is the fill for a body's
+surface wherever no island covers it, and an island record's `+8` word overrides
+it for land.
+
+It also answers the open decision in
+[#382](https://github.com/odogono/mercenary/issues/382) about slot 29. `DAMOCLES`
+is the one slot with a nonzero high word, `$0030E000`; the engine never reads the
+high word, takes the low word `$E000`, and masks it to **`$000`**. Slot 29 is
+black by the engine's own arithmetic, not an anomaly needing a policy.
+
 Eris's `$003` is the clearest sea, but it is not alone in reading as water:
 Dion's `$055` and the `$246` shared by Vesta, Thalia, Juno and Sapphire do too.
 The engine draws no distinction — the base colour is simply whatever is not
