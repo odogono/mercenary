@@ -58,6 +58,42 @@ For body-aware interaction (#345), each resident instance carries `placementClas
 
 Each surface-cell placement carries `keyBase`, the `$7AFB` door-key base its `$ABDC` entry byte installs (`$054CBE`), or null where it installs none. An `$F0` Entrance Attachment in that cell's structure is keyed to object slot `keyBase + keyIndex` and opens only while that slot is in the Carried Stack (#362). The base belongs to the cell, so one structure record is keyed where it stands on Dion and free where it stands on Eris. See [generic entrance attachments](damocles-generic-entrance-attachments.md#the-live-condition-predicate-is-the-carried-stack--confirmed).
 
+The `islands` collection is the whole Gamma System's landmasses: all 62 ten-byte
+records of the per-body lists the table at `$04BD1E` roots, one entry a record,
+keyed `island-<body-slug>-<recordAddress>` because a record carries no name of its
+own. Each names an `origin` in Body Coordinates (the record's `+0`/`+2`, with
+`sourceOrigin` keeping the authored words, which Lucan's ring stores negative), a
+`coastline` of signed Island-Local vertex pairs together with the edge words
+`$0561CE` scans — the edge words carry the swap and axis bits vertex order does not
+give — the backwards `boxes` the classifier tests, tagged `extent`, `core` and
+`exclusion` in the order `$0560F2` reads them, a `landColour`, the `structureGroup`
+at `+6`, the `workspace` group record that group selects, and `areaName`, which is
+that group's area name rather than the island's own. `workspace` and `areaName` are
+both null where the record names group `$00`, the shared empty record, and 21
+records share one coastline-less stub whose extent and core boxes are the whole
+coordinate plane: on those bodies the classifier answers `core` everywhere, which is
+recovered behaviour rather than an absence. `extent` restates box 0 in Body
+Coordinates, where an upper bound below its lower bound is a wrapped span and not an
+empty one — Eris's Snow Island and four of Lucan's twelve cross the seam. The VOID
+slot's table entry is excluded: VOID is the space-as-place sentinel, not a Body
+surface. See [the Eris islands note](damocles-eris-islands.md) and
+[the island census](damocles-island-census.md).
+
+Each body carries `bodySurface`: its `baseColour`, the low word of `$0060C0 + 4*body`
+masked to twelve bits at `$0592AC`, which is what the surface is drawn in wherever no
+island is painted over it; and the extent `$058F64` masks positions onto, 4096 × 4096
+Surface Cells wrapping on both axes. It is stated rather than implied so that a
+consumer cannot treat a Body surface as a bounded plane. VOID's is null.
+
+Every surface placement's `coordinateSystem` is `Body Coordinates`, and each names
+the `island` whose origin the Structure Workspace it sits in was built at — the
+origin `$056464` publishes into `$789A`/`$789E` before the workspace loader runs.
+Resident coordinates come from the resident arrays, are already Body Coordinates,
+and name no record, so their `island` is null. `Damocles Place` gains no island
+field: a place is a cell in a workspace and the workspace is bound by a record, so
+deriving one from the other would bake in a one-to-one relation Lucan's twelve and
+Lachesis's ten disprove.
+
 Four model fields retain recovered native facts.
 `storeyHeight` is the alias record's first word masked by `$7FFF`, as written to
 `$7B00` at `$054D86`; non-alias models do not claim a pitch. `levelBinding` is the

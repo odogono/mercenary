@@ -27,8 +27,9 @@ printed in the 0..4095 range the engine's own mask produces. Several records
 store a negative word — Lucan's ring is authored in signed coordinates — so the
 raw word and the printed cell differ there; both are the same position.
 
-**An extent whose upper bound is below its lower bound crosses the seam.** Three
-of Lucan's twelve read `[4082,26)`, and Eris's Snow Island reaches `[4088,56)`:
+**An extent whose upper bound is below its lower bound crosses the seam.** Four
+of Lucan's twelve read `[4082,26)` — `$0632EA` and `$063326` on z, `$063308` and
+`$063344` on x — and Eris's Snow Island reaches `[4088,56)`:
 those are 40-cell and 64-cell spans straddling cell 0, not empty ranges. Any
 consumer that treats an extent as `lo <= v < hi` will drop them.
 

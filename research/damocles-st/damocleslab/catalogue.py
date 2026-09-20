@@ -1989,20 +1989,24 @@ def resident_local_position(data: bytes, slot: int, structure_origin: tuple[int,
             for axis, base in enumerate(coordinate_arrays)]
 
 
-def decode_group_overrides(data: bytes, group: int) -> dict[int, dict]:
-    """Authored cell instances in one structure-group map, as $04EB60 builds them.
+def walk_group_record(data: bytes, group: int) -> tuple[int, dict[int, dict], int]:
+    """Walk one authored structure-group map, as $04EB60 builds it.
 
     The record is a run-length cell-extent stream, two workspace bytes, six
     source-reference selectors, then the cell-override list the consumer at
     $054CB0 reads. An override's word has the structure slot in its low nine
     bits -- bit 8 is bit 0 of the high byte, which is why $054D44 masks nine --
     and bits 1-7 of the high byte are a scene selector. Offsets are signed and
-    scale by the word at $04BD14.
+    scale by the word at $04BD14. The place list the workspace loader publishes
+    at $7A6C follows the override terminator.
+
+    Returns the record address, its cell overrides, and that place-list address.
     """
     root = 0x1e000 + struct.unpack_from('>H', data, 0x1e64c)[0]
     if root + group * 2 + 2 > len(data):
         raise ValueError('structure-group table is outside this capture')
-    cursor = root + struct.unpack_from('>H', data, root + group * 2)[0] + 2
+    group_record = root + struct.unpack_from('>H', data, root + group * 2)[0]
+    cursor = group_record + 2
     limit = min(len(data), cursor + (1 << 16))
     for _ in range(256):
         if cursor >= limit:
@@ -2018,6 +2022,7 @@ def decode_group_overrides(data: bytes, group: int) -> dict[int, dict]:
         if cursor + 3 > limit:
             raise ValueError('structure-group override list is unterminated')
         if data[cursor] == 0xff:
+            cursor += 1
             break
         source_ref, cell, low = data[cursor], data[cursor + 1], data[cursor + 2]
         record = cursor
@@ -2038,7 +2043,213 @@ def decode_group_overrides(data: bytes, group: int) -> dict[int, dict]:
             'word': (high << 8) | low, 'slot': ((high << 8) | low) & 0x1ff,
             'sceneSelector': high & 0xfe, 'dx': dx, 'dz': dz,
         }
-    return overrides
+    return group_record, overrides, cursor
+
+
+def decode_group_overrides(data: bytes, group: int) -> dict[int, dict]:
+    """The authored cell instances of one structure-group map."""
+    return walk_group_record(data, group)[1]
+
+
+# The per-body island-record list. $0592E8 indexes the table the longword at
+# $04BD1E points at by half the body selector and publishes the list in $7A16;
+# $056464 and $04EB46 then read one record's origin, coastline, group and
+# colour. See docs/research/damocles-eris-islands.md.
+ISLAND_TABLE_POINTER = 0x4BD1E
+ISLAND_TERMINATOR = 0x8000
+ISLAND_RECORD_BYTES = 10
+# Body slots $00-$1D. Slot 30 is the VOID sentinel, which is space rather than a
+# surface; its table entry is excluded from the census for that reason.
+SURFACE_BODIES = 30
+# $058F64 masks the body position to twelve bits on both axes, so a body surface
+# is a 4096 x 4096 Surface Cell torus rather than a bounded plane.
+SURFACE_CELLS = 0x1000
+BODY_COLOUR_TABLE = 0x60C0
+# Every surface position the catalogue publishes is a Body Coordinate: Surface
+# Cells from the body's own origin, on a surface that wraps. The island record a
+# Structure Workspace origin came from is named alongside it; the position is a
+# Body Coordinate either way, never an Island-Local Cell.
+BODY_COORDINATES = 'Body Coordinates'
+ISLAND_EVIDENCE = 'docs/research/damocles-eris-islands.md'
+ISLAND_CENSUS_EVIDENCE = 'docs/research/damocles-island-census.md'
+
+
+def body_base_colour(data: bytes, body: int) -> int:
+    """The body's own base colour: the low word of $0060C0 + 4*body.
+
+    $0592AC-$0592B4 masks it to twelve bits into $7C88, which is the colour the
+    surface is drawn in wherever no island is painted over it -- the sea on a
+    body that has coastlines, and the whole surface on a body that has none.
+    """
+    return struct.unpack_from('>H', data, BODY_COLOUR_TABLE + body * 4 + 2)[0] & 0xFFF
+
+
+def decode_island_coastline(data: bytes, start: int) -> dict:
+    """One coastline definition: its vertices, its boxes and its edge words.
+
+    The vertex list runs forward from `start` as signed island-local word pairs
+    to an $8000 terminator. Everything the classifier at $0560F2 tests is stored
+    immediately before it and read backwards, four words to a box, in the order
+    [zmax, zmin, xmax, xmin]: box 0 is the island's extent, box 1 its core, and
+    boxes 2..n are exclusions. $05612A reads box 0 and box 1 unconditionally and
+    only the walk at $05618A tests the $8000 sentinel in the next slot's xmin
+    field, so the shared coastline-less stub -- whose first two boxes are both
+    the whole coordinate plane -- still has both. The edge words $0561CE scans
+    sit below that sentinel, one per coastline edge, read backwards to a zero.
+    """
+    vertices = []
+    cursor = start
+    for _ in range(257):
+        if cursor + 2 > len(data):
+            raise ValueError('island coastline vertex list is unterminated')
+        if struct.unpack_from('>H', data, cursor)[0] == ISLAND_TERMINATOR:
+            break
+        vertices.append(list(struct.unpack_from('>hh', data, cursor)))
+        cursor += 4
+    else:
+        raise ValueError('island coastline vertex list limit exceeded')
+    boxes = []
+    for index in range(66):
+        base = start - 8 * (index + 1)
+        if base < 0:
+            raise ValueError('island box list runs off the capture')
+        zmax, zmin, xmax, xmin = struct.unpack_from('>hhhh', data, base)
+        if index >= 2 and (xmin & 0xFFFF) == ISLAND_TERMINATOR:
+            terminator = base + 6
+            break
+        boxes.append({
+            'kind': ('extent', 'core')[index] if index < 2 else 'exclusion',
+            'sourceAddress': base,
+            'x': [xmin, xmax],
+            'z': [zmin, zmax],
+        })
+    else:
+        raise ValueError('island box list limit exceeded')
+    edges = []
+    cursor = terminator - 2
+    for _ in range(257):
+        if cursor < 0:
+            raise ValueError('island edge list runs off the capture')
+        word = struct.unpack_from('>H', data, cursor)[0]
+        if not word:
+            break
+        edges.append(word)
+        cursor -= 2
+    else:
+        raise ValueError('island edge list limit exceeded')
+    if len(edges) != len(vertices):
+        raise ValueError('island edge list is not the closed cycle of its vertices')
+    return {'sourceAddress': start, 'vertices': vertices, 'edges': edges, 'boxes': boxes}
+
+
+def decode_island_records(data: bytes, body: int) -> list[dict]:
+    """The ten-byte island records of one body, in list order.
+
+    Each is an origin in whole Surface Cells at +0/+2, a signed offset to its
+    coastline definition at +4, the structure group it binds at +6 and its land
+    colour at +8. The list ends at an $8000 origin x.
+    """
+    root = u32(data, ISLAND_TABLE_POINTER)
+    if root + body * 2 + 2 > len(data):
+        raise ValueError('island-record table is outside this capture')
+    cursor = root + struct.unpack_from('>h', data, root + body * 2)[0]
+    records = []
+    for _ in range(65):
+        if cursor < 0 or cursor + ISLAND_RECORD_BYTES > len(data):
+            raise ValueError('island-record list runs off the capture')
+        if struct.unpack_from('>H', data, cursor)[0] == ISLAND_TERMINATOR:
+            return records
+        x, z, offset, group, colour = struct.unpack_from('>hhhHH', data, cursor)
+        records.append({
+            'sourceAddress': cursor,
+            'sourceOrigin': [x, z],
+            'origin': [x % SURFACE_CELLS, z % SURFACE_CELLS],
+            'coastline': decode_island_coastline(data, cursor + offset),
+            'structureGroup': group,
+            'sourceLandColour': colour,
+        })
+        cursor += ISLAND_RECORD_BYTES
+    raise ValueError('island-record list limit exceeded')
+
+
+def island_body_extent(origin: list[int], box: dict) -> dict:
+    """One island's extent in body cells, wrapped onto the 4096-cell torus.
+
+    An upper bound below its lower bound is a wrapped span, not an empty one:
+    Eris's Snow Island and four of Lucan's twelve cross the seam. A box wider
+    than the surface is the coastline-less stub's whole coordinate plane, which
+    covers every cell on that axis and so has no meaningful wrap.
+    """
+    bounds = {}
+    for index, axis in enumerate(('x', 'z')):
+        low, high = box[axis]
+        if high - low >= SURFACE_CELLS:
+            bounds[axis] = ([0, SURFACE_CELLS], False)
+            continue
+        span = [(origin[index] + bound) % SURFACE_CELLS for bound in (low, high)]
+        bounds[axis] = (span, span[1] <= span[0])
+    return {
+        'x': bounds['x'][0],
+        'z': bounds['z'][0],
+        'wrapsX': bounds['x'][1],
+        'wrapsZ': bounds['z'][1],
+        'coversSurface': bounds['x'][0] == bounds['z'][0] == [0, SURFACE_CELLS],
+    }
+
+
+def decode_islands(data: bytes, bodies: list) -> list[dict]:
+    """Every island record on every body surface, one catalogue entry each."""
+    islands = []
+    for body in range(SURFACE_BODIES):
+        slug = re.sub(r'[^a-z0-9]+', '-', bodies[body]['name'].lower()).strip('-')
+        for record in decode_island_records(data, body):
+            group = record['structureGroup']
+            workspace, area_name = None, None
+            if group:
+                try:
+                    workspace, _overrides, place_list = walk_group_record(data, group)
+                    area_name = decode_named_area(data, place_list)['name'] or None
+                except (ValueError, struct.error):
+                    # A group whose place list carries no source text names no
+                    # area; Lucan's twelve are the attested case.
+                    area_name = None
+            coastline = record['coastline']
+            boxes = coastline.pop('boxes')
+            islands.append({
+                'id': f"island-{slug}-{record['sourceAddress']:06x}",
+                'body': f'body-{body}',
+                'sourceAddress': record['sourceAddress'],
+                'origin': record['origin'],
+                'sourceOrigin': record['sourceOrigin'],
+                'coastline': coastline,
+                'boxes': boxes,
+                'extent': island_body_extent(record['origin'], boxes[0]),
+                'landColour': st_rgb(record['sourceLandColour']),
+                'sourceLandColour': record['sourceLandColour'],
+                'structureGroup': group,
+                'workspace': workspace,
+                'areaName': area_name,
+                'reason': (
+                    'Coastline-less record: it shares the stub whose extent and core boxes '
+                    'are the whole coordinate plane, so $0560F2 answers core everywhere on '
+                    'this body -- land, no sea, no coast.'
+                    if not coastline['vertices'] else
+                    'Island record: origin, coastline polygon, structure group and land '
+                    'colour as $04EB46 publishes them. The record carries no name of its '
+                    "own; areaName is the bound group's area name."
+                ),
+            })
+    return islands
+
+
+def island_by_origin(islands: list[dict], body: int, x: int, z: int) -> dict | None:
+    """The island record a body-local workspace origin came from, if one has it."""
+    return next(
+        (island for island in islands
+         if island['body'] == f'body-{body}'
+         and island['origin'] == [x % SURFACE_CELLS, z % SURFACE_CELLS]),
+        None,
+    )
 
 
 def decode_support_top(data: bytes, start: int) -> int | None:
@@ -2629,7 +2840,7 @@ def record_template_palettes(template_palettes: dict, template_models: list[str]
 
 def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: list,
                           instances: list, places: list, by_address: dict, bodies: list,
-                          hardware: list[int], template_palettes: dict) -> str:
+                          islands: list, hardware: list[int], template_palettes: dict) -> str:
     """Place live $ABDC / ground records from a non-Eris loaded world capture."""
     if len(workspace) != 1048576 or u32(workspace, 0x4bd10) != 0x35700 or u32(workspace, 0x4bd22) != 0x26000:
         raise ValueError('live workspace is not a loaded Damocles world capture')
@@ -2661,6 +2872,10 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
             f'origin {implied_x},{implied_z} implied by cell ${cell_word:02X}; this capture is '
             'not standing in a built workspace'
         )
+    # The origin the capture stands on is one of this body's island records:
+    # $056464 publishes the nearest record's own origin into $789A/$789E before
+    # the workspace loader runs, so naming it qualifies every cell placed here.
+    island = island_by_origin(islands, body, int(origin_x), int(origin_z))
     names: dict[int, tuple[str, str]] = {}
     area_name = None
     place_pointer = u32(workspace, 0x7a6c)
@@ -2718,7 +2933,8 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
                     0,
                     origin_z + (cell >> 4) + 0.5 + dz * 30 / 65536,
                 ],
-                'coordinateSystem': 'ST surface grid units (body-local origin unresolved)',
+                'coordinateSystem': BODY_COORDINATES,
+                'island': island['id'] if island else None,
                 'heading': None,
             },
             'reason': (
@@ -2824,7 +3040,8 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
                 'body': f'body-{body}',
                 'place': place[0] if place else None,
                 'position': [origin_x + (cell & 15) + 0.5, 0, origin_z + (cell >> 4) + 0.5],
-                'coordinateSystem': 'ST surface grid units (body-local origin unresolved)',
+                'coordinateSystem': BODY_COORDINATES,
+                'island': island['id'] if island else None,
                 'heading': None,
             },
             'reason': (
@@ -3121,6 +3338,17 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         ),
     })
     bodies = [{'id': f'body-{i}', 'name': data[0x81dc + i * 8:0x81e4 + i * 8].decode('ascii').strip()} for i in range(31)]
+    for index, body in enumerate(bodies):
+        # VOID is the space-as-place sentinel rather than a body surface, so it
+        # carries no surface and none of its table entry is published.
+        body['bodySurface'] = None if index >= SURFACE_BODIES else {
+            'baseColour': st_rgb(body_base_colour(data, index)),
+            'sourceColour': body_base_colour(data, index),
+            'extentCells': [SURFACE_CELLS, SURFACE_CELLS],
+            'wrapsX': True,
+            'wrapsZ': True,
+        }
+    islands = decode_islands(data, bodies)
     # The first 256 object slots have resident state arrays; extra model slots are templates.
     for slot in range(1, 256):
         model_id = tables[0]['entries'][slot]
@@ -3175,7 +3403,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'place': None,
             'position': [s32(data, base + slot * 4) / 65536
                          for base in (0x63a8, 0x67a8, 0x6ba8)],
-            'coordinateSystem': 'ST surface grid units (body-local origin unresolved)',
+            'coordinateSystem': BODY_COORDINATES,
+            'island': None,
             'heading': data[0x77a8 + slot * 4],
         }
         instance['reason'] = (
@@ -3190,6 +3419,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     eris_origin_x = (u32(data, 0x7a92) - u32(data, 0x7a2c)) / 65536
     eris_origin_z = (u32(data, 0x7a9a) - u32(data, 0x7a34)) / 65536
     origin_x, origin_z = eris_origin_x, eris_origin_z
+    eris_island = island_by_origin(islands, 11, int(origin_x), int(origin_z))
     places = []
     names = {}
     place_pointer = u32(data, 0x7a6c)
@@ -3225,7 +3455,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                           'placement': None,
                           'location': {'body': 'body-11', 'place': place[0] if place else None,
                             'position': [origin_x + (cell & 15) + 0.5 + dx * 30 / 65536, 0, origin_z + (cell >> 4) + 0.5 + dz * 30 / 65536],
-                            'coordinateSystem': 'ST surface grid units (body-local origin unresolved)', 'heading': None},
+                            'coordinateSystem': BODY_COORDINATES,
+                            'island': eris_island['id'] if eris_island else None, 'heading': None},
                           'reason': 'Recovered first-world surface workspace placement; not a census of the whole body.'})
         if place:
             next(p for p in places if p['id'] == place[0])['instances'].append(identity)
@@ -3237,6 +3468,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         chevy_raw = [s32(data, base + 2 * 4) for base in (0x63a8, 0x67a8, 0x6ba8)]
         gaea_origin_x = (chevy_raw[0] >> 16) - (0x17 & 15)
         gaea_origin_z = (chevy_raw[2] >> 16) - (0x17 >> 4)
+        gaea_island = island_by_origin(islands, 8, gaea_origin_x, gaea_origin_z)
         gaea_names = {}
         for place in gaea_area['places']:
             identity = f'place-{place["address"]:06x}'
@@ -3268,7 +3500,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                         0,
                         gaea_origin_z + (cell >> 4) + 0.5 + dz * 30 / 65536,
                     ],
-                    'coordinateSystem': 'ST surface grid units (body-local origin unresolved)',
+                    'coordinateSystem': BODY_COORDINATES,
+                    'island': gaea_island['id'] if gaea_island else None,
                     'heading': None,
                 },
                 'reason': (
@@ -3307,7 +3540,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 'body': 'body-11',
                 'place': place[0] if place else None,
                 'position': [origin_x + (cell & 15) + 0.5, 0, origin_z + (cell >> 4) + 0.5],
-                'coordinateSystem': 'ST surface grid units (body-local origin unresolved)',
+                'coordinateSystem': BODY_COORDINATES,
+                'island': eris_island['id'] if eris_island else None,
                 'heading': None,
             },
             'reason': 'Recovered first-world cell ground/pad/road record; intentional empty records have no drawable instance.',
@@ -3321,7 +3555,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         for workspace in workspaces:
             note = attach_live_workspace(
                 workspace, data, models, tables, instances, places, by_address, bodies,
-                hardware, template_palettes,
+                islands, hardware, template_palettes,
             )
             workspace_notes.append(note)
             slot_bindings.append({
@@ -3354,7 +3588,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'location': {
                 'body': 'body-11', 'place': None,
                 'position': [parent_raw[0] / 65536, 0, parent_raw[2] / 65536],
-                'coordinateSystem': 'ST surface grid units (body-local origin unresolved)',
+                'coordinateSystem': BODY_COORDINATES,
+                'island': None,
                 'heading': None,
             },
             'reason': ('Authored structure-group $14 cell $26 instance; source name and named place '
@@ -3513,7 +3748,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'body': 'body-11',
             'place': capital_spaceport['id'],
             'position': [s32(data, base + 5 * 4) / 65536 for base in (0x63a8, 0x67a8, 0x6ba8)],
-            'coordinateSystem': 'ST surface grid units (body-local origin unresolved)',
+            'coordinateSystem': BODY_COORDINATES,
+            'island': None,
             'heading': data[0x77a8 + 5 * 4],
         }
         limo['reason'] = ('Resident slot 5 is associated with Eris surface cell $87. '
@@ -4075,6 +4311,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         'Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.',
         'Every $6000 vector-text record in the census was inventoried: all 41 set the inline flag and none selects font 4, so the indirect-pointer and font-4 paths are unreached rather than unresolved. $CCA0 tokens divide into slot-derived labels, frame animations whose script is model data, structure-workspace face markers, and one live countdown.',
         'Every resident slot also carries Association A byte 3, decoded as placementClass. It is mutable placement state rather than identity: direct placement copies $7A39 over it at $0546FC and support placement inherits the support\'s, so a session departs from the authored value as objects move. $7A39 is the 3x3 zone of the intra-cell position against the bound structure\'s extent rectangle (docs/research/damocles-placement-class.md). The class is not the handling byte\'s low nibble; they disagree for 176 of the 241 resident slots.',
+        'Every body surface carries its base colour and the 4096 x 4096 Surface Cell extent $058F64 masks positions onto; both axes wrap, so an extent whose upper bound is below its lower bound is a wrapped span rather than an empty one. The islands collection holds all 62 records of the per-body lists at $04BD1E, one entry a record: origin, coastline vertices and edge words, the backwards extent/core/exclusion boxes, land colour, structure group, the group record it binds and that group\'s area name. A record has no name of its own. 21 records share the coastline-less stub whose extent and core boxes are the whole coordinate plane, so $0560F2 answers core everywhere on those bodies -- land, no sea, no coast. The VOID slot\'s table entry is excluded because VOID is the space-as-place sentinel rather than a body surface. The classifier itself is not replayed here and the nearest-record metric at $056490 is not decoded. A surface placement names the Damocles Island whose origin equals the Structure Workspace origin it was placed against; resident coordinates come from the resident arrays, are already Body Coordinates, and name no record (docs/research/damocles-eris-islands.md, docs/research/damocles-island-census.md).',
         'Every resident slot carries the interaction byte the take handler tests, decoded as handling. Bit 4 refuses silently, bit 5 diverts to the refusal message, and the low nibble is the drop handler\'s rank pair: bits 0-1 are the support rank the slot supplies and bits 2-3 the support rank it requires; bits 6 and 7 are live state and are zero in the pinned capture. Nothing here selects a candidate: which object is selected is the per-frame nearest-drawn rule in docs/research/damocles-object-selection.md, not a catalogue field.',
     ]
     if gaea_coverage:
@@ -4090,7 +4327,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     for instance in instances:
         instance.setdefault('associationGroups', None)
     return {'schemaVersion': 15, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
-            'bodies': bodies, 'places': places, 'tables': tables,
+            'bodies': bodies, 'islands': islands, 'places': places, 'tables': tables,
             'coverage': coverage_ledger(models, tables, coverage_notes, disk_load)}
 
 

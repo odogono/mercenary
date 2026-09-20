@@ -12,6 +12,30 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **The Gamma System's islands reach the Catalogue.** `payload/damocles/catalogue.json`
+  gains an `islands` collection carrying all 62 island records across 30 Bodies: each
+  record's origin in Body Coordinates, its coastline as signed Island-Local vertex
+  pairs *and* the edge words the classifier scans, the authored `extent`, `core` and
+  `exclusion` boxes in the order `$0560F2` reads them, its land colour, the structure
+  group it binds and that group's area name. A record carries no name of its own, 21 of
+  the 62 share one coastline-less stub that answers `core` everywhere — a Body with no
+  island is land everywhere, in its own colour — and 33 bind no named area, so an island
+  needs no settlement and a settlement needs no island. Every Body also gains
+  `bodySurface`: its base colour, and the 4096 × 4096 Surface Cell extent that **wraps on
+  both axes**, stated outright so no consumer reads a Body surface as a bounded plane.
+  Snow Island and four of Lucan's twelve cross that seam. One coastline definition can
+  serve islands on two Bodies: `$06344A` is both Eris's `CAPITAL CITY` and Dion's
+  `BIRMINGHAM ISLAND` (#393).
+
+- **Every recovered surface placement now says which island it stands on.** The
+  Catalogue's live workspace placements carried `ST surface grid units (body-local
+  origin unresolved)`; the origin is resolved, so they carry `Body Coordinates` and name
+  the island record the Structure Workspace was built at. `CAPITAL CITY` 09-08 and
+  `KEY WEST` 09-08 are body cells (73,136) and (2569,3592) — an Island-Local Cell label
+  never identified a location on its own, and now it does not have to. `Damocles Place`
+  deliberately gains no island field: a place is a cell in a workspace, and Lucan's
+  twelve and Lachesis's ten disprove the one-to-one relation that would imply (#393).
+
 - **Twenty-one live Damocles surface workspaces, up from three.** The arrival-pose
   memstates already held each body's loaded `$00ABDC` window, so #172's remaining
   target list was recoverable without a single new capture: eighteen further

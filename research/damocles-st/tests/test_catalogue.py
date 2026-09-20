@@ -338,6 +338,7 @@ class SourceTests(unittest.TestCase):
         data = bytearray(1048576)
         struct.pack_into('>I', data, 0x4bd10, 0x35700)
         struct.pack_into('>I', data, 0x4bd22, 0x26000)
+        _empty_island_table(data)
         # Synthetic table entries share a deliberately empty model in each bank.
         for base, count in [(0x35700, 378), (0xe900, 280), (0x26000, 130)]:
             for slot in range(count):
@@ -356,6 +357,7 @@ class SourceTests(unittest.TestCase):
         data = bytearray(1048576)
         struct.pack_into('>I', data, 0x4bd10, 0x35700)
         struct.pack_into('>I', data, 0x4bd22, 0x26000)
+        _empty_island_table(data)
         for base, count in [(0x35700, 378), (0xe900, 280), (0x26000, 130)]:
             for slot in range(count):
                 struct.pack_into('>I', data, base + slot * 4, 0x1000)
@@ -540,6 +542,14 @@ class VisibilityListTests(unittest.TestCase):
             decode_visibility_list(bytes([4, 0]), 0, 3)
 
 
+def _empty_island_table(data: bytearray) -> None:
+    """A per-body island list that terminates at once: a world with no islands."""
+    struct.pack_into('>I', data, 0x4bd1e, 0x63000)
+    for body in range(31):
+        struct.pack_into('>h', data, 0x63000 + body * 2, 0x40)
+    struct.pack_into('>H', data, 0x63040, 0x8000)
+
+
 def _empty_world():
     data = bytearray(1048576)
     struct.pack_into('>I', data, 0x4bd10, 0x35700)
@@ -548,6 +558,7 @@ def _empty_world():
         for slot in range(count):
             struct.pack_into('>I', data, base + slot * 4, 0x1000)
         struct.pack_into('>H', data, base + 0x1000, 0x8000)
+    _empty_island_table(data)
     return data
 
 
@@ -2523,3 +2534,180 @@ class StructureLevelBindingTests(unittest.TestCase):
         # Both come from bit 15 of the record's first word.
         for model in self.structures().values():
             self.assertEqual('levelBinding' in model, 'storeyHeight' in model)
+
+
+class IslandTests(unittest.TestCase):
+    """The per-body island records, their coastlines and the surfaces they sit on."""
+
+    @staticmethod
+    def payload():
+        root = Path(__file__).resolve().parents[3]
+        return json.loads(
+            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
+        )
+
+    @staticmethod
+    def _box(x, z):
+        """One classifier box, stored [zmax, zmin, xmax, xmin] as $05612A reads it."""
+        return struct.pack('>4h', z[1], z[0], x[1], x[0])
+
+    def _coastline(self, edges, vertices, boxes):
+        """Author one coastline definition and return the capture and its vertex list."""
+        stream = struct.pack('>H', 0)                       # the edge list's zero end
+        stream += b''.join(struct.pack('>H', word) for word in reversed(edges))
+        stream += struct.pack('>H', 0x8000)                 # the box-list sentinel
+        stream += b''.join(self._box(*box) for box in reversed(boxes))
+        body = stream + b''.join(struct.pack('>2h', *vertex) for vertex in vertices)
+        return bytes(0x100) + body + b'\x80\x00', 0x100 + len(stream)
+
+    def test_a_coastline_definition_decodes_its_boxes_edges_and_vertices(self):
+        from damocleslab.catalogue import decode_island_coastline
+        data, start = self._coastline(
+            edges=[0x0108, 0x0204, 0xC30C],
+            vertices=[(-12, 0), (0, 16), (12, -16)],
+            boxes=[((-12, 12), (-16, 16)), ((-5, 5), (-5, 5)), ((10, 12), (4, 8))],
+        )
+        coastline = decode_island_coastline(data, start)
+        self.assertEqual(coastline['vertices'], [[-12, 0], [0, 16], [12, -16]])
+        self.assertEqual(coastline['edges'], [0x0108, 0x0204, 0xC30C])
+        self.assertEqual(
+            [(box['kind'], box['x'], box['z']) for box in coastline['boxes']],
+            [('extent', [-12, 12], [-16, 16]),
+             ('core', [-5, 5], [-5, 5]),
+             ('exclusion', [10, 12], [4, 8])],
+        )
+
+    def test_a_record_with_no_coastline_still_has_its_extent_and_core(self):
+        """The shared stub's box 0 and box 1 both begin $8000 and are read anyway."""
+        from damocleslab.catalogue import decode_island_coastline
+        plane = ((-32768, 32767), (-32768, 32767))
+        data, start = self._coastline(edges=[], vertices=[], boxes=[plane, plane])
+        coastline = decode_island_coastline(data, start)
+        self.assertEqual(coastline['vertices'], [])
+        self.assertEqual(coastline['edges'], [])
+        self.assertEqual([box['kind'] for box in coastline['boxes']], ['extent', 'core'])
+        self.assertEqual(coastline['boxes'][0]['x'], [-32768, 32767])
+
+    def test_an_edge_list_shorter_than_its_polygon_is_refused(self):
+        from damocleslab.catalogue import decode_island_coastline
+        data, start = self._coastline(
+            edges=[0x0108, 0x0204],
+            vertices=[(-12, 0), (0, 16), (12, -16)],
+            boxes=[((-12, 12), (-16, 16)), ((-5, 5), (-5, 5))],
+        )
+        with self.assertRaisesRegex(ValueError, 'closed cycle'):
+            decode_island_coastline(data, start)
+
+    def test_an_extent_below_its_lower_bound_is_a_wrapped_span(self):
+        from damocleslab.catalogue import island_body_extent
+        snow = island_body_extent([32, 1056], {'x': [-40, 24], 'z': [-16, 20]})
+        self.assertEqual((snow['x'], snow['z']), ([4088, 56], [1040, 1076]))
+        self.assertEqual((snow['wrapsX'], snow['wrapsZ']), (True, False))
+        self.assertFalse(snow['coversSurface'])
+        # The coastline-less stub's boxes are the whole coordinate plane, which
+        # covers every cell rather than naming a span.
+        stub = island_body_extent([1214, 683], {'x': [-32768, 32767], 'z': [-32768, 32767]})
+        self.assertTrue(stub['coversSurface'])
+        self.assertEqual((stub['x'], stub['z']), ([0, 4096], [0, 4096]))
+        self.assertEqual((stub['wrapsX'], stub['wrapsZ']), (False, False))
+
+    def test_the_payload_carries_every_record_of_every_body_surface(self):
+        document = self.payload()
+        islands = document['islands']
+        self.assertEqual(len(islands), 62)
+        self.assertEqual(len({island['id'] for island in islands}), 62)
+        self.assertEqual(len({island['body'] for island in islands}), 30)
+        self.assertEqual(sum(1 for i in islands if i['coastline']['vertices']), 41)
+        self.assertEqual(sum(1 for i in islands if i['areaName']), 29)
+        # The two properties are independent: an island needs no settlement and a
+        # settlement needs no island.
+        self.assertTrue(any(i['coastline']['vertices'] and not i['areaName'] for i in islands))
+        self.assertTrue(any(i['areaName'] and not i['coastline']['vertices'] for i in islands))
+        # Group $00 is the shared empty record, so it binds no workspace.
+        for island in islands:
+            self.assertEqual(island['structureGroup'] == 0, island['workspace'] is None)
+        # Every body surface states its colour and its wrapping extent; VOID is
+        # the space-as-place sentinel and has none.
+        surfaces = [body for body in document['bodies'] if body['bodySurface']]
+        self.assertEqual(len(surfaces), 30)
+        self.assertIsNone(document['bodies'][30]['bodySurface'])
+        eris = next(body for body in surfaces if body['name'] == 'ERIS')
+        self.assertEqual(eris['bodySurface']['sourceColour'], 0x003)
+        self.assertEqual(eris['bodySurface']['extentCells'], [4096, 4096])
+        self.assertTrue(eris['bodySurface']['wrapsX'] and eris['bodySurface']['wrapsZ'])
+
+    def test_the_payload_keeps_the_seam_crossing_extents_whole(self):
+        islands = {island['id']: island for island in self.payload()['islands']}
+        # Snow Island's west coast reaches body x = -8, which is 4088 on the
+        # wrapping surface: a 64-cell span across cell 0, not an empty range.
+        snow = islands['island-eris-06327c']['extent']
+        self.assertEqual((snow['x'], snow['wrapsX']), ([4088, 56], True))
+        self.assertEqual((snow['z'], snow['wrapsZ']), ([1040, 1076], False))
+        # Lucan's ring is authored in signed coordinates, and four of its twelve
+        # straddle the seam on one axis or the other.
+        lucan = islands['island-lucan-0632ea']
+        self.assertEqual(lucan['sourceOrigin'], [200, 0])
+        self.assertEqual((lucan['extent']['z'], lucan['extent']['wrapsZ']), ([4082, 26], True))
+        crossing = [
+            island['id'] for island in self.payload()['islands']
+            if not island['extent']['coversSurface']
+            and (island['extent']['wrapsX'] or island['extent']['wrapsZ'])
+        ]
+        self.assertEqual(crossing, [
+            'island-eris-06327c', 'island-lucan-0632ea', 'island-lucan-063308',
+            'island-lucan-063326', 'island-lucan-063344',
+        ])
+
+    def test_one_coastline_definition_can_serve_islands_on_two_bodies(self):
+        islands = {island['id']: island for island in self.payload()['islands']}
+        capital = islands['island-eris-063272']
+        birmingham = islands['island-dion-063174']
+        self.assertEqual(capital['coastline']['sourceAddress'], 0x06344A)
+        self.assertEqual(birmingham['coastline']['sourceAddress'], 0x06344A)
+        self.assertEqual(capital['coastline'], birmingham['coastline'])
+        self.assertEqual(capital['boxes'], birmingham['boxes'])
+        # Shared shape, different bodies, origins, colours and areas.
+        self.assertNotEqual(capital['body'], birmingham['body'])
+        self.assertEqual((capital['areaName'], birmingham['areaName']),
+                         ('CAPITAL CITY', 'BIRMINGHAM ISLAND'))
+        self.assertNotEqual(capital['origin'], birmingham['origin'])
+
+    def test_a_cell_label_identifies_a_location_only_with_its_island(self):
+        """Capital City 09-08 and Key West 09-08 are different body positions."""
+        islands = {island['id']: island for island in self.payload()['islands']}
+        capital = islands['island-eris-063272']
+        key_west = islands['island-eris-06329a']
+        self.assertEqual(capital['origin'], [64, 128])
+        self.assertEqual(key_west['origin'], [2560, 3584])
+        cell = (9, 8)
+        self.assertEqual([capital['origin'][0] + cell[0], capital['origin'][1] + cell[1]],
+                         [73, 136])
+        self.assertEqual([key_west['origin'][0] + cell[0], key_west['origin'][1] + cell[1]],
+                         [2569, 3592])
+        self.assertEqual(capital['body'], key_west['body'])
+        self.assertNotEqual(capital['structureGroup'], key_west['structureGroup'])
+
+    def test_a_workspace_placement_names_the_island_its_origin_came_from(self):
+        document = self.payload()
+        islands = {island['id']: island for island in document['islands']}
+        placed = [item for item in document['instances']
+                  if (item['location'] or {}).get('island')]
+        self.assertGreater(len(placed), 1000)
+        for instance in placed:
+            island = islands[instance['location']['island']]
+            self.assertEqual(island['body'], instance['location']['body'])
+            # The position stays a Body Coordinate, inside the 16x16 Structure
+            # Workspace the record's origin opens.
+            for axis, origin in ((0, island['origin'][0]), (2, island['origin'][1])):
+                self.assertTrue(0 <= instance['location']['position'][axis] - origin < 16)
+        state_office = next(item for item in document['instances']
+                            if item['id'] == 'eris-surface-89')
+        self.assertEqual(state_office['location']['island'], 'island-eris-063272')
+        self.assertEqual(state_office['location']['coordinateSystem'],
+                         'Body Coordinates')
+        self.assertEqual([int(state_office['location']['position'][axis]) for axis in (0, 2)],
+                         [73, 136])
+        # A resident's coordinates come from the resident arrays rather than a
+        # workspace origin, so they name no record.
+        limo = next(item for item in document['instances'] if item['id'] == 'object-slot-5')
+        self.assertIsNone(limo['location']['island'])

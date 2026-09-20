@@ -208,6 +208,13 @@ export interface Instance {
     readonly body: string;
     readonly coordinateSystem: string;
     readonly heading: number | null;
+    /**
+     * The Damocles Island whose origin the Structure Workspace this was placed in was
+     * built at ($056464). Null where the position came from the resident arrays instead,
+     * which name no record. The position is a Body Coordinate either way, never an
+     * Island-Local Cell.
+     */
+    readonly island: string | null;
     readonly place: string | null;
     readonly position: Point;
   } | null;
@@ -233,6 +240,70 @@ export interface Place {
   readonly id: string;
   readonly instances: readonly string[];
   readonly name: string;
+}
+export const ISLAND_BOXES = ['extent', 'core', 'exclusion'] as const;
+export type IslandBoxKind = (typeof ISLAND_BOXES)[number];
+/**
+ * One ten-byte island record of a body's list at `$7A16`: where a landmass sits on the
+ * body surface, what shape it is, which workspace it binds and what colour it is painted.
+ *
+ * An island is not the workspace it selects and it is not a settlement: 21 of the 62
+ * records carry no coastline at all, and 33 bind no named area
+ * (docs/research/damocles-island-census.md).
+ */
+export interface Island {
+  /** The bound group's area name, not a name the record owns. Null where unnamed. */
+  readonly areaName: string | null;
+  readonly body: string;
+  /**
+   * The backwards box list `$0560F2` tests, in the order it reads them: box 0 is the
+   * island's extent, box 1 the authored core, and the rest are exclusions. Bounds are
+   * island-local and half-open. These are authored, not derivable: on three of Eris's
+   * five islands the core box is smaller than the 16-cell workspace.
+   */
+  readonly boxes: readonly {
+    readonly kind: IslandBoxKind;
+    readonly sourceAddress: number;
+    readonly x: readonly [number, number];
+    readonly z: readonly [number, number];
+  }[];
+  /**
+   * The coastline polygon: signed island-local vertex pairs, and the edge words
+   * `$0561CE` scans. Both are needed — the edge words carry the swap (bit 15) and
+   * axis (bit 14) bits, which vertex order alone does not give. Empty on the 21
+   * records that share the coastline-less stub.
+   */
+  readonly coastline: {
+    readonly edges: readonly number[];
+    readonly sourceAddress: number;
+    readonly vertices: readonly (readonly [number, number])[];
+  };
+  /**
+   * The extent box in body cells, wrapped onto the surface torus. An upper bound below
+   * its lower bound is a wrapped span, not an empty one; `coversSurface` marks the stub
+   * whose extent is the whole coordinate plane.
+   */
+  readonly extent: {
+    readonly coversSurface: boolean;
+    readonly wrapsX: boolean;
+    readonly wrapsZ: boolean;
+    readonly x: readonly [number, number];
+    readonly z: readonly [number, number];
+  };
+  readonly id: string;
+  /** The `+8` word, which `$04EB46` publishes to `$7A1A` as the island's fill. */
+  readonly landColour: string;
+  /** The record's `+0`/`+2`, in whole Surface Cells, masked onto the surface. */
+  readonly origin: readonly [number, number];
+  readonly reason: string;
+  readonly sourceAddress: number;
+  readonly sourceLandColour: number;
+  /** The authored `+0`/`+2` words; Lucan's ring stores negative coordinates. */
+  readonly sourceOrigin: readonly [number, number];
+  /** The `+6` structure group, the 16x16 workspace bound at this origin. */
+  readonly structureGroup: number;
+  /** The group record that workspace is built from; null because group `$00` binds nothing. */
+  readonly workspace: number | null;
 }
 export interface BankExtent {
   readonly bankEnd: number;
@@ -260,7 +331,22 @@ export interface CoverageTable {
   readonly unresolved: number;
 }
 export interface Catalogue {
-  readonly bodies: readonly { readonly id: string; readonly name: string }[];
+  readonly bodies: readonly {
+    /**
+     * The body's own surface: the colour `$7C88` draws it in wherever no island is
+     * painted over it, and the extent `$058F64` masks positions onto. Null for the VOID
+     * slot, which is the space-as-place sentinel rather than a surface.
+     */
+    readonly bodySurface: {
+      readonly baseColour: string;
+      readonly extentCells: readonly [number, number];
+      readonly sourceColour: number;
+      readonly wrapsX: boolean;
+      readonly wrapsZ: boolean;
+    } | null;
+    readonly id: string;
+    readonly name: string;
+  }[];
   readonly coverage: {
     readonly census: {
       readonly decoded: number;
@@ -279,6 +365,7 @@ export interface Catalogue {
     readonly unexplored: readonly string[];
   };
   readonly instances: readonly Instance[];
+  readonly islands: readonly Island[];
   readonly models: readonly Model[];
   readonly places: readonly Place[];
   readonly schemaVersion: 15;
@@ -368,6 +455,26 @@ const reference = (ids: ReadonlySet<string>, id: string, kind: string) => {
   if (!ids.has(id)) {
     fail(`missing ${kind} ${id}`);
   }
+};
+
+/** An unsigned word, as the coastline edge and colour words are stored. */
+const unsignedWord = (value: unknown): number => {
+  const n = integer(value);
+  return n <= 0xff_ff ? n : fail('expected a word');
+};
+/** A signed word bound, as the box and vertex words are stored. */
+const signedWord = (value: unknown): number => {
+  const n = number(value);
+  return Number.isSafeInteger(n) && n >= -0x80_00 && n <= 0x7f_ff
+    ? n
+    : fail('expected a signed word');
+};
+const cellPair = (value: unknown): readonly [number, number] => {
+  const pair = list(value).map(signedWord);
+  if (pair.length !== 2) {
+    return fail('expected an x/z pair');
+  }
+  return [pair[0]!, pair[1]!];
 };
 
 const bankExtent = (value: unknown): BankExtent => {
@@ -938,9 +1045,93 @@ export const parseCatalogue = (value: unknown): Catalogue => {
   }
   const bodies = list(r['bodies']).map(item => {
     const b = object(item);
-    return { id: string(b['id']), name: string(b['name']) };
+    let bodySurface: Catalogue['bodies'][number]['bodySurface'] = null;
+    if (b['bodySurface'] !== null && b['bodySurface'] !== undefined) {
+      const surface = object(b['bodySurface']);
+      const extentCells = cellPair(surface['extentCells']);
+      if (extentCells.some(cells => cells <= 0)) {
+        fail('body surface extent is empty');
+      }
+      bodySurface = {
+        baseColour: string(surface['baseColour']),
+        extentCells,
+        sourceColour: unsignedWord(surface['sourceColour']),
+        wrapsX: boolean(surface['wrapsX']),
+        wrapsZ: boolean(surface['wrapsZ'])
+      };
+    }
+    return { bodySurface, id: string(b['id']), name: string(b['name']) };
   });
   const bodyIds = unique(bodies);
+  const islands = list(r['islands'] ?? []).map((item): Island => {
+    const i = object(item);
+    const body = string(i['body']);
+    reference(bodyIds, body, 'body');
+    const coast = object(i['coastline']);
+    const vertices = list(coast['vertices']).map(cellPair);
+    const edges = list(coast['edges']).map(unsignedWord);
+    // The edge list is the closed cycle of the polygon: one edge a vertex. A payload
+    // that carried fewer would leave the classifier's scan with a gap it reads as land.
+    if (edges.length !== vertices.length) {
+      fail('island edge list is not the closed cycle of its vertices');
+    }
+    const boxes = list(i['boxes']).map(value => {
+      const box = object(value);
+      return {
+        kind: choice(box['kind'], ISLAND_BOXES),
+        sourceAddress: integer(box['sourceAddress']),
+        x: cellPair(box['x']),
+        z: cellPair(box['z'])
+      };
+    });
+    // $05612A reads box 0 and box 1 unconditionally before any sentinel test, so an
+    // island always has an extent and a core; the rest are exclusions.
+    if (
+      boxes[0]?.kind !== 'extent' ||
+      boxes[1]?.kind !== 'core' ||
+      boxes.slice(2).some(box => box.kind !== 'exclusion')
+    ) {
+      fail('island boxes are not extent, core and exclusions in order');
+    }
+    const extent = object(i['extent']);
+    return {
+      areaName: i['areaName'] === null ? null : string(i['areaName']),
+      body,
+      boxes,
+      coastline: {
+        edges,
+        sourceAddress: integer(coast['sourceAddress']),
+        vertices
+      },
+      extent: {
+        coversSurface: boolean(extent['coversSurface']),
+        wrapsX: boolean(extent['wrapsX']),
+        wrapsZ: boolean(extent['wrapsZ']),
+        x: cellPair(extent['x']),
+        z: cellPair(extent['z'])
+      },
+      id: string(i['id']),
+      landColour: string(i['landColour']),
+      origin: cellPair(i['origin']),
+      reason: string(i['reason']),
+      sourceAddress: integer(i['sourceAddress']),
+      sourceLandColour: unsignedWord(i['sourceLandColour']),
+      sourceOrigin: cellPair(i['sourceOrigin']),
+      structureGroup: byte(i['structureGroup']),
+      workspace:
+        i['workspace'] === null || i['workspace'] === undefined
+          ? null
+          : integer(i['workspace'])
+    };
+  });
+  const islandIds = unique(islands);
+  for (const island of islands) {
+    // Group $00 is the shared empty record, so a record that names it binds no
+    // workspace; anything else must name the record its group selects.
+    if ((island.structureGroup === 0) !== (island.workspace === null)) {
+      fail('island workspace disagrees with its structure group');
+    }
+  }
   const places = list(r['places']).map((item): Place => {
     const p = object(item);
     const body = p['body'] === null ? null : string(p['body']);
@@ -997,10 +1188,21 @@ export const parseCatalogue = (value: unknown): Catalogue => {
       if (place !== null) {
         reference(placeIds, place, 'place');
       }
+      const island =
+        l['island'] === null || l['island'] === undefined
+          ? null
+          : string(l['island']);
+      if (island !== null) {
+        reference(islandIds, island, 'island');
+        if (islands.find(item => item.id === island)!.body !== body) {
+          fail('instance names an island on another body');
+        }
+      }
       location = {
         body,
         coordinateSystem: string(l['coordinateSystem']),
         heading: l['heading'] === null ? null : number(l['heading']),
+        island,
         place,
         position: point(l['position'])
       };
@@ -1235,6 +1437,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
           : strings(coverage['unexplored'])
     },
     instances,
+    islands,
     models,
     places,
     schemaVersion: 15,
