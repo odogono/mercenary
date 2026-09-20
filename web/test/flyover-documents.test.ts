@@ -69,6 +69,36 @@ const targ = () => ({
   systemId: 'targ'
 });
 
+const gamma = () => ({
+  backdrop: {
+    colour: '#000008',
+    pointSizeCssPixels: 1,
+    starColour: '#d8e8ff',
+    starCount: 2048,
+    starSeed: 1_179_408_719
+  },
+  bodies: [
+    {
+      id: 'dialis',
+      radius: { fraction: 0.2, kind: 'nearest-neighbour' },
+      ranges: ['orbital']
+    }
+  ],
+  bodyMesh: { latitudeSegments: 32, longitudeSegments: 64 },
+  camera: {
+    framingCoverage: 0.9,
+    overviewAxis: 'positive-z',
+    verticalFieldOfViewDegrees: 60
+  },
+  cameraSpeed: {
+    maximumUnitsPerSecond: 250_000,
+    minimumUnitsPerSecond: 16
+  },
+  lighting: { kind: 'camera-headlight' },
+  schemaVersion: 1,
+  systemId: 'gamma'
+});
+
 describe('Flyover presentation documents', () => {
   test('reads a complete Targ document against its Body authority', () => {
     const document = readFlyoverPresentation(targ(), 'targ', ['targ', 'sun']);
@@ -77,41 +107,17 @@ describe('Flyover presentation documents', () => {
   });
 
   test('reads a complete Gamma document', () => {
-    const document = readFlyoverPresentation(
-      {
-        backdrop: {
-          colour: '#000008',
-          pointSizeCssPixels: 1,
-          starColour: '#d8e8ff',
-          starCount: 2048,
-          starSeed: 1_179_408_719
-        },
-        bodies: [
-          {
-            colour: '#a0a8c0',
-            id: 'dialis',
-            radius: { fraction: 0.2, kind: 'nearest-neighbour' },
-            ranges: ['orbital']
-          }
-        ],
-        bodyMesh: { latitudeSegments: 32, longitudeSegments: 64 },
-        camera: {
-          framingCoverage: 0.9,
-          overviewAxis: 'positive-z',
-          verticalFieldOfViewDegrees: 60
-        },
-        cameraSpeed: {
-          maximumUnitsPerSecond: 250_000,
-          minimumUnitsPerSecond: 16
-        },
-        lighting: { kind: 'camera-headlight' },
-        schemaVersion: 1,
-        systemId: 'gamma'
-      },
-      'gamma',
-      ['dialis']
-    );
+    const document = readFlyoverPresentation(gamma(), 'gamma', ['dialis']);
     expect(document.systemId).toBe('gamma');
+    expect('colour' in document.bodies[0]!).toBeFalse();
+  });
+
+  test('rejects an authored colour on a Gamma Body', () => {
+    const document = gamma();
+    Object.assign(document.bodies[0]!, { colour: '#a0a8c0' });
+    expect(() =>
+      readFlyoverPresentation(document, 'gamma', ['dialis'])
+    ).toThrow('bodies[0] has unexpected field colour');
   });
 
   test('rejects unknown fields at every level', () => {
@@ -314,6 +320,91 @@ describe('the recovered Gamma System document', () => {
     });
   });
 
+  test('pins the recovered Body colour table', async () => {
+    const document = readGammaSystem(
+      await Bun.file('../payload/damocles/system.json').json()
+    );
+    // Recovered, not chosen: sourceColour is the low word of each `index * 4` longword at
+    // `$0060C0` masked to twelve bits the way `$0592AC` masks it, and baseColour expands each
+    // nibble by `n * 34` (#379/#382, docs/research/damocles-gamma-system.md). Colours repeat in
+    // the original, so the duplicates below are faithful rather than placeholders; DAMOCLES's
+    // slot holds `$0030E000`, whose high word the engine never reads.
+    expect(
+      Object.fromEntries(
+        document.bodies.map(body => [
+          body.id,
+          [body.baseColour, body.sourceColour]
+        ])
+      )
+    ).toEqual({
+      acheron: ['#888888', 0x4_44],
+      atropos: ['#888888', 0x4_44],
+      aurora: ['#882222', 0x4_11],
+      bacchus: ['#666666', 0x3_33],
+      clotho: ['#664444', 0x3_22],
+      cronus: ['#664444', 0x3_22],
+      cyclopes: ['#666666', 0x3_33],
+      damocles: ['#000000', 0x0_00],
+      dialis: ['#eeeeee', 0x7_77],
+      dion: ['#00aaaa', 0x0_55],
+      eris: ['#000066', 0x0_03],
+      gaea: ['#006600', 0x0_30],
+      icarus: ['#444444', 0x2_22],
+      jason: ['#888888', 0x4_44],
+      juno: ['#4488cc', 0x2_46],
+      lachesis: ['#882222', 0x4_11],
+      logos: ['#888888', 0x4_44],
+      lucan: ['#664444', 0x3_22],
+      mentor: ['#888888', 0x4_44],
+      metis: ['#882222', 0x4_11],
+      midas: ['#aa8800', 0x5_40],
+      pan: ['#444444', 0x2_22],
+      perseus: ['#664444', 0x3_22],
+      sapphire: ['#4488cc', 0x2_46],
+      solon: ['#666666', 0x3_33],
+      thalia: ['#4488cc', 0x2_46],
+      theon: ['#888888', 0x4_44],
+      tolosa: ['#882222', 0x4_11],
+      triton: ['#ee8800', 0x7_40],
+      vesta: ['#4488cc', 0x2_46]
+    });
+  });
+
+  test('rejects a colour that does not expand its own source word', async () => {
+    const mismatched = await Bun.file('../payload/damocles/system.json').json();
+    mismatched.bodies[0].baseColour = '#ff0000';
+    expect(() => readGammaSystem(mismatched)).toThrow('bodies[0].baseColour');
+
+    const outOfRange = await Bun.file('../payload/damocles/system.json').json();
+    outOfRange.bodies[0].sourceColour = 0x88_88;
+    expect(() => readGammaSystem(outOfRange)).toThrow('bodies[0].sourceColour');
+  });
+
+  test('agrees with the Catalogue about every recovered Body colour', async () => {
+    const document = readGammaSystem(
+      await Bun.file('../payload/damocles/system.json').json()
+    );
+    const catalogue = (await Bun.file(
+      '../payload/damocles/catalogue.json'
+    ).json()) as {
+      bodies: {
+        bodySurface: { baseColour: string; sourceColour: number } | null;
+        name: string;
+      }[];
+    };
+    // Both documents publish the same table at `$0060C0`, so a divergence here is a Payload
+    // fault rather than a presentation choice.
+    for (const body of document.bodies) {
+      const surface = catalogue.bodies.find(
+        entry => entry.name === body.name
+      )?.bodySurface;
+      expect([surface?.baseColour, surface?.sourceColour]).toEqual([
+        body.baseColour,
+        body.sourceColour
+      ]);
+    }
+  });
+
   test('rejects an unknown field and non-finite centre', async () => {
     const unknown = await Bun.file('../payload/damocles/system.json').json();
     unknown.bodies[0].orbit = 'invented';
@@ -365,44 +456,5 @@ describe('the canonical Flyover presentation documents', () => {
     );
     expect(targDocument.bodies).toHaveLength(4);
     expect(gammaDocument.bodies).toHaveLength(29);
-    // Recovered, not chosen: the low word of each `index * 4` longword at
-    // `$0060C0` is an ST `0RGB` value, expanded by `n * 36` with `$7` as 255
-    // (#379, docs/research/damocles-gamma-system.md). Colours repeat in the
-    // original, so the duplicates below are faithful rather than placeholders.
-    expect(
-      Object.fromEntries(
-        gammaDocument.bodies.map(body => [body.id, body.colour])
-      )
-    ).toEqual({
-      acheron: '#909090',
-      atropos: '#909090',
-      aurora: '#902424',
-      bacchus: '#6c6c6c',
-      clotho: '#6c4848',
-      cronus: '#6c4848',
-      cyclopes: '#6c6c6c',
-      dialis: '#ffffff',
-      dion: '#00b4b4',
-      eris: '#00006c',
-      gaea: '#006c00',
-      icarus: '#484848',
-      jason: '#909090',
-      juno: '#4890d8',
-      lachesis: '#902424',
-      logos: '#909090',
-      lucan: '#6c4848',
-      mentor: '#909090',
-      metis: '#902424',
-      midas: '#b49000',
-      pan: '#484848',
-      perseus: '#6c4848',
-      sapphire: '#4890d8',
-      solon: '#6c6c6c',
-      thalia: '#4890d8',
-      theon: '#909090',
-      tolosa: '#902424',
-      triton: '#ff9000',
-      vesta: '#4890d8'
-    });
   });
 });

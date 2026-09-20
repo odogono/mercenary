@@ -380,36 +380,48 @@ first/largest member as Primary is inference. DAMOCLES's Primary is deliberately
 not assigned.
 
 `payload/damocles/system.json` publishes only the 30 physical records with
-their recovered resident positions and radius/extent values. It omits the
-structurally inferred types and Primaries, marks DAMOCLES's position as a
-capture-time sample, and excludes the VOID sentinel. Its `source` block pins
-the first cold run and its `coverage` block carries these limitations for
-downstream readers.
+their recovered resident positions, radius/extent values and body colours. It
+omits the structurally inferred types and Primaries, marks DAMOCLES's position
+as a capture-time sample, and excludes the VOID sentinel. Its `source` block
+pins the first cold run and the colour table's own SHA-256, and its `coverage`
+block carries these limitations for downstream readers.
 
 ### Issue #379 body colour at `$0060C0` — Confirmed (decoded)
 
 The `$0060C0` field the body-centre section above calls "packed appearance" is
 a per-body colour table. Each slot is one longword at `index * 4` whose **low
-word is an Atari ST `0RGB` palette value** and whose high word is zero; the
-table runs the full 31 slots (124 bytes), not the 32 bytes a partial reading
-suggests.
+word is an Atari ST `0RGB` palette value**; the table runs the full 31 slots
+(124 bytes), not the 32 bytes a partial reading suggests. SHA-256 of those 124
+bytes is `9fdcf2395ecaab1413317daebc46c90d1e817610061f365d2a257111273f75aa`.
 
-Expanding each `0RGB` nibble by `n * 36`, with `$7` taken to 255, over
+The consumer was recovered by #391. At arrival, `$0592AC`–`$0592B4` reads the
+low word with `a0` at `4 * body`, masks it to twelve bits, and publishes it to
+`$7C88`, the surface base colour, and to `$7A1A`, the land colour an island
+record's own colour at `+8` then overrides. So the engine itself never reads a
+high word, and the base colour is what the surface is drawn in only where no
+island covers it: a consumer drawing a Body needs both this colour and the
+per-island land colours, and `payload/damocles/catalogue.json` carries the
+latter. Triton is the single Body whose record colour (`$0214`) differs from its
+base colour (`$740`).
+
+Expanding each `0RGB` nibble by `n * 34` — the expansion
+`research/damocles-st/damocleslab/catalogue.py` uses, and therefore the one
+both Payload documents publish — over
 `observe-first-world-20260818T101013Z-c5a32b7d`:
 
-| Slot | Name     | Raw        | `0RGB` | Expanded  |
+| Slot | Name     | Raw        | Masked | Expanded  |
 | ---- | -------- | ---------- | ------ | --------- |
-| 0    | DIALIS   | `00000777` | `$777` | `#ffffff` |
-| 1    | ICARUS   | `00000222` | `$222` | `#484848` |
-| 2    | MIDAS    | `00000540` | `$540` | `#b49000` |
-| 3    | ACHERON  | `00000444` | `$444` | `#909090` |
-| 4    | DION     | `00000055` | `$055` | `#00b4b4` |
-| 8    | GAEA     | `00000030` | `$030` | `#006c00` |
-| 11   | ERIS     | `00000003` | `$003` | `#00006c` |
-| 14   | VESTA    | `00000246` | `$246` | `#4890d8` |
-| 19   | TRITON   | `00000740` | `$740` | `#ff9000` |
-| 29   | DAMOCLES | `0030E000` | —      | —         |
-| 30   | VOID     | `00000777` | `$777` | `#ffffff` |
+| 0    | DIALIS   | `00000777` | `$777` | `#eeeeee` |
+| 1    | ICARUS   | `00000222` | `$222` | `#444444` |
+| 2    | MIDAS    | `00000540` | `$540` | `#aa8800` |
+| 3    | ACHERON  | `00000444` | `$444` | `#888888` |
+| 4    | DION     | `00000055` | `$055` | `#00aaaa` |
+| 8    | GAEA     | `00000030` | `$030` | `#006600` |
+| 11   | ERIS     | `00000003` | `$003` | `#000066` |
+| 14   | VESTA    | `00000246` | `$246` | `#4488cc` |
+| 19   | TRITON   | `00000740` | `$740` | `#ee8800` |
+| 29   | DAMOCLES | `0030E000` | `$000` | `#000000` |
+| 30   | VOID     | `00000777` | `$777` | `#eeeeee` |
 
 Colours are deliberately not unique: `$444` covers six bodies and `$246` four.
 
@@ -417,11 +429,12 @@ Two slots stand apart. **VOID (30) is `$777`, white** — independent
 confirmation of a secondary-source claim that VOID has a white ground and a
 white sky, from a body that is barely reachable. **DAMOCLES (29) is
 `$0030E000`**, the only slot with a nonzero high word and not a plain `0RGB`
-value; its low nibbles are zero, so a naive expansion yields black by accident.
-Damocles is the comet and is special-cased throughout — it is also the one body
-whose centre is a capture-time sample — so the two oddities most likely share
-one cause. Left unresolved and not chased: the Flyover excludes Damocles
-already.
+value. That needs no policy: the mask at `$0592B0` takes `$E000` to `$000`, so
+black is the engine's own answer rather than an accident of expansion, and
+`system.json` carries `$000` for the slot. Why slot 29 alone holds a nonzero
+high word is still unresolved and not chased; Damocles is the comet, is
+special-cased throughout, and is also the one body whose centre is a
+capture-time sample, so the two oddities most likely share one cause.
 
 This supersedes the reading in `damocles-filled-polygons.md` that `$0060C0` is
 a 32-byte world face-colour palette; that note says so in place. Those 32 bytes
@@ -435,9 +448,12 @@ self-declared speculation, so nothing here is imported from it; it is recorded
 because it was gathered by an observer independent of this project and it
 agrees with the Working Authority in two ways worth pinning.
 
-**Colour: 29 of 29 exact.** Its swatches for slots 0–28 equal the `$0060C0`
-expansion above, byte for byte. The page therefore describes recovered data,
-not an artist's impression.
+**Colour: 29 of 29 exact.** Its swatches for slots 0–28 name the same twelve-bit
+words as `$0060C0`, nibble for nibble; they differ from the expansion above only
+in taking each nibble to `n * 36` with `$7` as 255 rather than `n * 34`, which
+is a choice about rendering three bits in eight and not a disagreement about the
+recovered value. The page therefore describes recovered data, not an artist's
+impression.
 
 **Position: 29 of 29 agree in sign, and corroborate structure.** Its triples
 are System Coordinate Readout values, not body centres — the page's author flew
@@ -465,8 +481,106 @@ The same observer dependence is why **the System-mode cell size cannot be
 recovered from this source**: every reading carries the author's own offset, so
 the ±1 disagreements at Gaea, Logos, Juno and Pan are parking positions either
 side of a cell boundary, not transcription errors. No single divisor and
-rounding rule fits all 29. Pinning it needs the panel's formatting routine, and
-has no consumer until something renders that panel.
+rounding rule fits all 29. Pinning it needed the panel's formatting routine,
+which the next section reads.
+
+### Issue #382 the System Coordinate Readout cell — Confirmed (decoded)
+
+**The cell is exactly 65 536 units, and the printed field is the high word of
+the observer's own position longword.** Nothing is divided or rounded: the
+engine reads the top sixteen bits of a signed longword, which is an arithmetic
+floor, not a truncation toward zero.
+
+`$04D912` chooses which readout the wide window shows from the scene mode at
+`$7A8E`, mode `2` being space:
+
+```text
+$04D912  cmpi.w  #$2, $7a8e.w
+$04D918  beq.b   $4d944           ; space: $04E414 then $04DEEE
+$04D922  bsr.w   $4e390           ; surface: the Body Coordinate Readout
+$04D926  bsr.w   $4df42           ; and the altitude window
+```
+
+`$04E414` is the System Coordinate Readout. It reads three words and treats
+each the same way:
+
+```text
+$04E42C  move.w  $799a.w, d1      ; x, and $799E / $79A2 for y and z below
+$04E43E  move.w  d1, d0           ; keep the sign
+$04E440  bpl.b   $4e444
+$04E442  neg.w   d1               ; print the magnitude
+$04E444  cmpi.w  #$64, d1
+$04E448  blt.b   $4e44e
+$04E44A  move.w  #$64, d1         ; 100 or more clamps to the ** entry
+$04E44E  bsr.w   $4e4b4           ; two digits from the pair table at $526C2
+$04E452  bsr.w   $4e506           ; placed, inverted when d0 was negative
+```
+
+**The three words are the high halves of three longwords.** `$799A`, `$799E`
+and `$79A2` are four bytes apart and `$058CEA`–`$058CF6` copies all three into
+the camera triple:
+
+```text
+$058CEA  move.l  $799a.w, $7ab2.w  ; x
+$058CF0  move.l  $799e.w, $7ab6.w  ; y
+$058CF6  move.l  $79a2.w, $7aba.w  ; z
+```
+
+`$7AB2` / `$7AB6` / `$7ABA` are the camera position longwords the surface
+readout and the object drops already use, and
+[the arrival poses](damocles-gamma-system-location-ledger.md) publish in the
+same raw signed 16.16 form. So the System Coordinate Readout prints the
+observer's whole-cell part, one word an axis, in x, y, z order.
+
+The **encoding** is shared with the surface work; the **frame** is not. On a
+Body the same longwords count body-local surface-grid units, where one Surface
+Cell is 65 536 and a Body Coordinate Step is four of them; in space they count
+the System frame the resident centre arrays are in, the frame
+`payload/damocles/system.json` publishes. A System field and a Surface Cell are
+therefore the same arithmetic on two different rulers, and neither number may
+be carried into the other's frame.
+
+The pair table at `$526C2` is 101 two-byte entries of packed decimal digits,
+`00` through `99`, with entry 100 holding the glyph `$0A` twice — the same `**`
+the Cell Readout and the altitude window print past their own range.
+
+**The magnitude is clamped, the sign is not printed.** `$04E4F6` tests the
+retained sign and `$04E4FA`–`$04E502` inverts the assembled glyph rows for a
+negative axis, which the space panel's palette — `$0598D2` loads `$777`, `$411`
+and `$432` where the surface path loads `$654`, `$543` and `$432` — draws red.
+That is the highlighting the secondary source preserved.
+
+**Acceptance against the 29 recovered centres.** Taking the high word of each
+published centre reproduces the cross-check above exactly. Eris, Solon, Theon,
+Vesta, Metis and Lucan all read `10-00-05`, and no seventh body joins them;
+red on the first field is `x < 0` and red on the third is `z < 0` for all 29,
+because the high word's sign is the longword's sign. The `±1` disagreements the
+page shows stay explained by the observer's own offset, which this form makes
+exact rather than approximate: a body centre and an observer parked a few
+thousand units the far side of a multiple of 65 536 differ by one whole field.
+
+The middle field follows for free. The recovered Y array at `$00626A` is all
+zero, so a body sits on `y = 0`; an observer a single unit below it holds
+`$FFFFFFFF`, whose high word is `-1`, and an observer anywhere in `[0, 65 535]`
+holds a high word of `0`. A positive `01` needs the observer 65 536 units above
+the plane, which no approach in the page reaches. `$05110C` sets mode `2` and
+seeds the triple directly, so the space position is the master in space and the
+camera triple follows it, not the other way about.
+
+Reproduce the acceptance from the tracked payload alone, without the
+laboratory:
+
+```sh
+python3 -c "import json;d=json.load(open('payload/damocles/system.json'));\
+print(sorted((b['position']['x']>>16, b['position']['z']>>16, b['name']) for b in d['bodies']))"
+```
+
+**Nothing in `payload/damocles/system.json` changes.** The readout is a
+property of the panel and of the observer, not of a Body; the centres it is
+checked against are already published, and a cell size is a formatting constant
+rather than a recovered per-Body fact. **No consumer exists yet either**: the
+Flyover draws no Navigation Readout and flies in raw Cartesian positions, so
+this section is a pinned fact waiting for the surface that needs it.
 
 The page also reports a per-body environment string (`No air`, `too hot`, `too
 cold at night`, `Pressure too high`, `militarily protected`), distinguishing
@@ -758,11 +872,12 @@ name table). Not completed here:
 | Body X/Y/Z and radius/extent arrays                    | Same runs; `$052DB0..$053078` range, apparent-size, and arrival/contact consumers                          |
 | `payload/damocles/system.json`                         | Direct transcription of those recovered physical records; source and coverage are embedded in the document |
 | 31 per-body range-draw lists                           | Same runs; Eris pointer binding and `$0530C8..$0531BC` list readers                                        |
-| 31 per-body `0RGB` colours at `$0060C0`                | Same runs; low word of each `index * 4` longword; 29 of 29 agree with an independent observer              |
+| 31 per-body `0RGB` colours at `$0060C0`                | Same runs; 124 bytes SHA-256 `9fdcf239…273f75aa`; low word of each `index * 4` longword masked at `$0592B0`; 29 of 29 agree with an independent observer |
 | VOID all-body drawing                                  | Space branch `$0598A6..$059912` calls 30-body scan `$052DB0`                                               |
 | 32×4 phase-rate source at `$0082DC`                    | Same runs; equal bounded SHA-256; `$04D648..$04D660` source-to-derived loop                                |
 | Phase-rate slot binding                                | `$051E4E..$051E6A` accumulator loop and current-body indexed reads at `$05935A..$059392`                   |
 | Place labels ~`$023E56+`                               | Same runs; ERIS panel on PNG                                                                               |
 | `016-283` is `(position >> 18)` an axis, rescaled 1024→1000 | Engine blocks `$05935A`, `$059780`, `$04E390` and the landing inverse `$04E968`; 23 pinned memstates across 15 Bodies; #208's six poke samples (#371) |
+| The System Coordinate Readout's cell is `$10000` units | Mode switch `$04D912`; formatter `$04E414`–`$04E4B4`; the space triple `$799A`/`$799E`/`$79A2` copied to the camera longwords at `$058CEA`; high words of the 29 published centres reproduce the secondary source's shared `10-00-05` and its red axes (#382) |
 | Object / key labels ~`$03C000+`                        | Same runs                                                                                                  |
 | Scenario pin                                           | `scenarios/first-world.json`                                                                               |

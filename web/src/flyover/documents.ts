@@ -32,10 +32,14 @@ export type RadiusRule =
   | { readonly fraction: number; readonly kind: 'nearest-neighbour' };
 
 export interface FlyoverBodyPresentation {
-  readonly colour: string;
   readonly id: string;
   readonly radius: RadiusRule;
   readonly ranges: readonly FlyoverRange[];
+}
+
+/// Targ has no recovered authority behind it, so its Bodies still carry an authored colour.
+export interface TargBodyPresentation extends FlyoverBodyPresentation {
+  readonly colour: string;
 }
 
 export interface SurfacePatch {
@@ -70,6 +74,7 @@ interface PresentationBase {
 }
 
 export interface TargPresentationDocument extends PresentationBase {
+  readonly bodies: readonly TargBodyPresentation[];
   readonly islands: readonly IslandPresentation[];
   readonly lighting: {
     readonly kind: 'body';
@@ -95,6 +100,8 @@ export type FlyoverPresentationDocument =
   GammaPresentationDocument | TargPresentationDocument;
 
 export interface GammaBody {
+  /// The `$0060C0` slot's low word masked to twelve bits, expanded as catalogue.json expands it.
+  readonly baseColour: string;
   readonly id: string;
   readonly name: string;
   readonly position: {
@@ -104,6 +111,7 @@ export interface GammaBody {
   };
   readonly positionKind?: 'capture-time-sample';
   readonly radiusExtent: number;
+  readonly sourceColour: number;
   readonly sourceIndex: number;
 }
 
@@ -121,6 +129,7 @@ export interface GammaSystemDocument {
   readonly schemaVersion: 1;
   readonly source: {
     readonly authority: string;
+    readonly colourTableSha256: string;
     readonly evidence: string;
     readonly programSha256: string;
     readonly ramSha256: string;
@@ -219,6 +228,13 @@ const colour = (value: unknown, path: string): string => {
     : fail(path, 'should be a lowercase six-digit colour');
 };
 
+/// Expand an ST `0RGB` nibble triple the way `research/damocles-st/damocleslab/catalogue.py`
+/// does, so `system.json` and `catalogue.json` cannot disagree about a recovered colour.
+const expandStRgb = (word: number): string =>
+  `#${[8, 4, 0]
+    .map(shift => (((word >> shift) & 7) * 34).toString(16).padStart(2, '0'))
+    .join('')}`;
+
 const point = (value: unknown, path: string) => {
   const source = object(value, path, ['x', 'y', 'z']);
   return {
@@ -249,12 +265,15 @@ export const readGammaSystem = (value: unknown): GammaSystemDocument => {
   ]);
   const source = object(root['source'], 'source', [
     'authority',
+    'colourTableSha256',
     'evidence',
     'programSha256',
     'ramSha256',
     'run'
   ]);
-  const readHash = (field: 'programSha256' | 'ramSha256') => {
+  const readHash = (
+    field: 'colourTableSha256' | 'programSha256' | 'ramSha256'
+  ) => {
     const hash = text(source[field], `source.${field}`);
     return /^[\da-f]{64}$/.test(hash)
       ? hash
@@ -281,6 +300,8 @@ export const readGammaSystem = (value: unknown): GammaSystemDocument => {
         'id',
         'sourceIndex',
         'name',
+        'baseColour',
+        'sourceColour',
         'position',
         'radiusExtent',
         ...(hasPositionKind ? ['positionKind'] : [])
@@ -296,12 +317,25 @@ export const readGammaSystem = (value: unknown): GammaSystemDocument => {
       if ((id === 'damocles') !== (positionKind !== undefined)) {
         fail(path, 'must mark only damocles as a capture-time sample');
       }
+      const sourceColour = integer(
+        body['sourceColour'],
+        `${path}.sourceColour`
+      );
+      if (sourceColour > 0xf_ff || (sourceColour & 0x8_88) !== 0) {
+        fail(`${path}.sourceColour`, 'should be a twelve-bit ST 0RGB value');
+      }
+      const baseColour = colour(body['baseColour'], `${path}.baseColour`);
+      if (baseColour !== expandStRgb(sourceColour)) {
+        fail(`${path}.baseColour`, 'should be the expansion of sourceColour');
+      }
       return {
+        baseColour,
         id,
         name: text(body['name'], `${path}.name`),
         position: point(body['position'], `${path}.position`),
         ...(positionKind === undefined ? {} : { positionKind }),
         radiusExtent: positive(body['radiusExtent'], `${path}.radiusExtent`),
+        sourceColour,
         sourceIndex: integer(body['sourceIndex'], `${path}.sourceIndex`)
       };
     }
@@ -342,6 +376,7 @@ export const readGammaSystem = (value: unknown): GammaSystemDocument => {
     schemaVersion: literal(root['schemaVersion'], 1, 'schemaVersion'),
     source: {
       authority: text(source['authority'], 'source.authority'),
+      colourTableSha256: readHash('colourTableSha256'),
       evidence: text(source['evidence'], 'source.evidence'),
       programSha256: readHash('programSha256'),
       ramSha256: readHash('ramSha256'),
@@ -602,13 +637,20 @@ export function readFlyoverPresentation(
     'starSeed',
     'pointSizeCssPixels'
   ]);
+  // Gamma Body colour is recovered and lives in the Data Payload, so only Targ's authored
+  // Bodies carry one here.
   const bodies = array(root['bodies'], 'bodies').map(
-    (raw, index): FlyoverBodyPresentation => {
+    (raw, index): FlyoverBodyPresentation & { readonly colour?: string } => {
       const path = `bodies[${index}]`;
-      const body = object(raw, path, ['id', 'colour', 'ranges', 'radius']);
+      const body = object(raw, path, [
+        'id',
+        ...(targ ? ['colour'] : []),
+        'ranges',
+        'radius'
+      ]);
       const id = identifier(body['id'], `${path}.id`);
       return {
-        colour: colour(body['colour'], `${path}.colour`),
+        ...(targ ? { colour: colour(body['colour'], `${path}.colour`) } : {}),
         id,
         radius: radiusRule(body['radius'], `${path}.radius`, systemId, id),
         ranges: rangeList(body['ranges'], `${path}.ranges`)
@@ -809,6 +851,7 @@ export function readFlyoverPresentation(
   );
   return {
     ...base,
+    bodies: bodies as readonly TargBodyPresentation[],
     islands,
     lighting: lighting as TargPresentationDocument['lighting'],
     surfaceColours: {
