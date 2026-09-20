@@ -787,8 +787,9 @@ it('places the V.I.P. limo at the Capital Spaceport and links its verified key',
   )!;
   expect(limoInstance.location).toEqual({
     body: 'body-11',
-    coordinateSystem: 'ST surface grid units (body-local origin unresolved)',
+    coordinateSystem: 'Body Coordinates',
     heading: 0x7f,
+    island: null,
     place: 'place-025042',
     position: [71.513_793_945_312_5, 0, 136.474_349_975_585_94]
   });
@@ -896,8 +897,9 @@ it('places slot 180 through its decoded structure association', async () => {
   expect(parent.model).toBe('structure-01d188');
   expect(parent.location).toEqual({
     body: 'body-11',
-    coordinateSystem: 'ST surface grid units (body-local origin unresolved)',
+    coordinateSystem: 'Body Coordinates',
     heading: null,
+    island: null,
     place: null,
     position: [3078.484_893_798_828, 0, 514.442_779_541_015_6]
   });
@@ -1021,8 +1023,9 @@ it('places only residents selected by the native surface-body association', asyn
   )!;
   expect(chevy.location).toEqual({
     body: 'body-8',
-    coordinateSystem: 'ST surface grid units (body-local origin unresolved)',
+    coordinateSystem: 'Body Coordinates',
     heading: 0,
+    island: null,
     place: null,
     position: [519.487_258_911_132_8, 0, 1793.487_030_029_296_9]
   });
@@ -1425,4 +1428,214 @@ it('binds a level to the structure its floor table names', async () => {
       model.storeyHeight === undefined
     );
   }
+});
+
+const islandFixture = () => ({
+  areaName: 'TEST AREA' as string | null,
+  body: 'body-1',
+  boxes: [
+    { kind: 'extent', sourceAddress: 16, x: [-12, 12], z: [-16, 16] },
+    { kind: 'core', sourceAddress: 8, x: [-5, 5], z: [-5, 5] }
+  ],
+  coastline: {
+    edges: [0x01_08, 0x02_04, 0xc3_0c],
+    sourceAddress: 32,
+    vertices: [
+      [-12, 0],
+      [0, 16],
+      [12, -16]
+    ]
+  },
+  extent: {
+    coversSurface: false,
+    wrapsX: true,
+    wrapsZ: false,
+    x: [4088, 56],
+    z: [1040, 1076]
+  },
+  id: 'island-test-063272',
+  landColour: '#006600',
+  origin: [32, 1056],
+  reason: 'Synthetic island',
+  sourceAddress: 0x06_32_72,
+  sourceLandColour: 0x00_30,
+  sourceOrigin: [32, 1056],
+  structureGroup: 0x12,
+  workspace: 0x01_e4_a2
+});
+
+describe('Damocles island records', () => {
+  it('keeps a record whose group binds nothing distinct from one that does', () => {
+    const value = { ...fixture(), islands: [islandFixture()] };
+    expect(parseCatalogue(value).islands[0]!.workspace).toBe(0x01_e4_a2);
+    const empty = {
+      ...fixture(),
+      islands: [{ ...islandFixture(), structureGroup: 0, workspace: null }]
+    };
+    const parsed = parseCatalogue(empty).islands[0]!;
+    expect(parsed.workspace).toBeNull();
+    expect(parsed.structureGroup).toBe(0);
+    for (const broken of [
+      { ...islandFixture(), structureGroup: 0 },
+      { ...islandFixture(), workspace: null }
+    ]) {
+      expect(() => parseCatalogue({ ...fixture(), islands: [broken] })).toThrow(
+        'workspace disagrees'
+      );
+    }
+  });
+  it('refuses a coastline whose edge cycle does not close', () => {
+    const island = islandFixture();
+    island.coastline.edges = island.coastline.edges.slice(0, 2);
+    expect(() => parseCatalogue({ ...fixture(), islands: [island] })).toThrow(
+      'closed cycle'
+    );
+  });
+  it('refuses boxes that are not extent, core and exclusions in order', () => {
+    const swapped = islandFixture();
+    swapped.boxes = [swapped.boxes[1]!, swapped.boxes[0]!];
+    expect(() => parseCatalogue({ ...fixture(), islands: [swapped] })).toThrow(
+      'extent, core and exclusions'
+    );
+    const trailing = islandFixture();
+    trailing.boxes = [
+      ...trailing.boxes,
+      { ...trailing.boxes[1]!, kind: 'core' }
+    ];
+    expect(() => parseCatalogue({ ...fixture(), islands: [trailing] })).toThrow(
+      'extent, core and exclusions'
+    );
+  });
+  it('refuses an instance that names an island on another body', () => {
+    const value = fixture() as Record<string, unknown>;
+    value['bodies'] = [
+      { bodySurface: null, id: 'body-1', name: 'One' },
+      { bodySurface: null, id: 'body-2', name: 'Two' }
+    ];
+    value['islands'] = [islandFixture()];
+    const instance = {
+      ...(value['instances'] as Record<string, unknown>[])[0],
+      location: {
+        body: 'body-2',
+        coordinateSystem: 'Body Coordinates',
+        heading: null,
+        island: 'island-test-063272',
+        place: null,
+        position: [0, 0, 0]
+      }
+    };
+    expect(() => parseCatalogue({ ...value, instances: [instance] })).toThrow(
+      'another body'
+    );
+    expect(() =>
+      parseCatalogue({
+        ...value,
+        instances: [
+          {
+            ...instance,
+            location: { ...instance.location, island: 'island-missing' }
+          }
+        ]
+      })
+    ).toThrow('missing island');
+  });
+});
+
+it('admits every island record of every body surface into the catalogue', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  expect(data.islands).toHaveLength(62);
+  expect(new Set(data.islands.map(island => island.body)).size).toBe(30);
+  // A record is not a settlement and a settlement is not a record: 21 carry no
+  // coastline at all, and 33 bind no named area.
+  expect(
+    data.islands.filter(island => island.coastline.vertices.length === 0)
+  ).toHaveLength(21);
+  expect(data.islands.filter(island => island.areaName !== null)).toHaveLength(
+    29
+  );
+  const surfaces = data.bodies.filter(body => body.bodySurface !== null);
+  expect(surfaces).toHaveLength(30);
+  // VOID is the space-as-place sentinel rather than a body surface.
+  expect(data.bodies.at(-1)!.bodySurface).toBeNull();
+  const eris = surfaces.find(body => body.name === 'ERIS')!;
+  expect(eris.bodySurface).toEqual({
+    baseColour: '#000066',
+    extentCells: [4096, 4096],
+    sourceColour: 0x00_03,
+    wrapsX: true,
+    wrapsZ: true
+  });
+});
+
+it('keeps a seam-crossing extent whole rather than reading it as empty', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const island = (id: string) => data.islands.find(item => item.id === id)!;
+  // Snow Island's west coast reaches body x = -8, which is 4088 on the torus.
+  const snow = island('island-eris-06327c').extent;
+  expect([snow.x, snow.wrapsX]).toEqual([[4088, 56], true]);
+  expect([snow.z, snow.wrapsZ]).toEqual([[1040, 1076], false]);
+  // Lucan's ring is authored in signed coordinates and straddles the seam too.
+  const lucan = island('island-lucan-0632ea');
+  expect(lucan.sourceOrigin).toEqual([200, 0]);
+  expect([lucan.extent.z, lucan.extent.wrapsZ]).toEqual([[4082, 26], true]);
+  expect(
+    data.islands
+      .filter(
+        item =>
+          !item.extent.coversSurface &&
+          (item.extent.wrapsX || item.extent.wrapsZ)
+      )
+      .map(item => item.id)
+  ).toEqual([
+    'island-eris-06327c',
+    'island-lucan-0632ea',
+    'island-lucan-063308',
+    'island-lucan-063326',
+    'island-lucan-063344'
+  ]);
+});
+
+it('shares one coastline definition between two bodies', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const capital = data.islands.find(
+    island => island.id === 'island-eris-063272'
+  )!;
+  const birmingham = data.islands.find(
+    island => island.id === 'island-dion-063174'
+  )!;
+  expect(capital.coastline.sourceAddress).toBe(0x06_34_4a);
+  expect(birmingham.coastline).toEqual(capital.coastline);
+  expect(birmingham.boxes).toEqual(capital.boxes);
+  expect(birmingham.body).not.toBe(capital.body);
+  expect([capital.areaName, birmingham.areaName]).toEqual([
+    'CAPITAL CITY',
+    'BIRMINGHAM ISLAND'
+  ]);
+});
+
+it('separates two cells with the same label by their island record', async () => {
+  const data = parseCatalogue(
+    await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  const cell: readonly [number, number] = [9, 8];
+  const bodyCell = (id: string) => {
+    const island = data.islands.find(item => item.id === id)!;
+    return [island.origin[0] + cell[0], island.origin[1] + cell[1]];
+  };
+  expect(bodyCell('island-eris-063272')).toEqual([73, 136]);
+  expect(bodyCell('island-eris-06329a')).toEqual([2569, 3592]);
+  // Same body, same local cell, different locations: the label alone never
+  // identified one (docs/research/damocles-eris-islands.md).
+  const stateOffice = data.instances.find(
+    instance => instance.id === 'eris-surface-89'
+  )!;
+  expect(stateOffice.location!.island).toBe('island-eris-063272');
+  expect(stateOffice.location!.coordinateSystem).toBe('Body Coordinates');
+  expect(stateOffice.location!.position.map(Math.floor)).toEqual([73, 0, 136]);
 });

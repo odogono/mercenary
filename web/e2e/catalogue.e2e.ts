@@ -55,7 +55,7 @@ test('the V.I.P. limo opens visibly at its recovered Spaceport placement', async
   await page.goto('/catalogue?instance=object-slot-5');
   await expect(page.locator('#model-name')).toHaveText('V.I.P. LIMO');
   await expect(page.locator('#details')).toContainText(
-    'ERIS · 71.514, 0.000, 136.474 · ST surface grid units'
+    'ERIS · 71.514, 0.000, 136.474 · Body Coordinates'
   );
   // $77BC, plus the record's zero $8001 bias (#361).
   await expect(page.locator('#details')).toContainText(
@@ -106,7 +106,7 @@ test('99 Chevy is mapped on Gaea and links to its key', async ({ page }) => {
   await page.goto('/catalogue?instance=object-slot-2');
   await expect(page.locator('#model-name')).toHaveText('99 CHEVY');
   await expect(page.locator('#details')).toContainText(
-    'GAEA · 519.487, 0.000, 1793.487 · ST surface grid units'
+    'GAEA · 519.487, 0.000, 1793.487 · Body Coordinates'
   );
   // The Chevy is modelled the other way round: a zero angle with an $8001 bias of $40.
   await expect(page.locator('#details')).toContainText(
@@ -129,7 +129,7 @@ test('99 Chevy is mapped on Gaea and links to its key', async ({ page }) => {
   await page.goto('/catalogue?instance=gaea-surface-40');
   await expect(page.locator('#details')).toContainText('ELMDON SPACEPORT');
   await expect(page.locator('#details')).toContainText(
-    'GAEA · 512.484, 0.000, 1796.523 · ST surface grid units'
+    'GAEA · 512.484, 0.000, 1796.523 · Body Coordinates'
   );
   await expect(page.locator('#ledger')).toContainText('Gaea Birmingham Island');
   await expect(page.locator('#ledger')).toContainText('title-screen RAM');
