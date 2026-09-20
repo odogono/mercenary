@@ -4,84 +4,32 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Damocles · Gamma Atlas</title>
-    <style>
-      :root {
-        color-scheme: dark;
-        --accent: #61c8ff;
-        --border: #2d7697;
-        --panel: #07151d;
-        --text: #f4f7f8;
-        --muted: #b7cad2;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      html,
-      body {
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        overflow: hidden;
-        background: #000;
-      }
-
-      body {
-        color: var(--text);
-        font-family:
-          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      }
-
-      main {
-        position: relative;
-        width: 100%;
-        height: 100%;
-      }
-
-      h1 {
-        position: absolute;
-        z-index: 1;
-        top: 1rem;
-        left: 1rem;
-        margin: 0;
-        color: var(--accent);
-        font-size: 0.75rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        text-shadow: 0 1px 3px #000;
-      }
-
-      p {
-        position: absolute;
-        z-index: 2;
-        top: 3rem;
-        left: 1rem;
-        max-width: min(32rem, calc(100% - 2rem));
-        margin: 0;
-        padding: 0.75rem 1rem;
-        color: var(--muted);
-        background: color-mix(in srgb, var(--panel) 92%, transparent);
-        border-left: 3px solid var(--border);
-        line-height: 1.6;
-      }
-
-      [hidden] {
-        display: none;
-      }
-
-      [role='alert'] {
-        color: #ffd7d7;
-        border-left: 3px solid #c85e5e;
-        white-space: pre-wrap;
-      }
-    </style>
+    <link rel="stylesheet" href="/src/atlas/atlas.css" />
   </head>
   <body>
     <main id="atlas" aria-label="Gamma Atlas">
-      <h1 id="title">Gamma Atlas</h1>
-      <p id="status" role="status"></p>
-      <p id="failure" role="alert" hidden></p>
+      <section class="stage">
+        <h1 id="title">Gamma Atlas</h1>
+        <nav id="breadcrumb" aria-label="Atlas Ranges"></nav>
+        <div
+          id="range-system"
+          class="range"
+          aria-label="System Range. Every recovered Body of the Gamma System, drawn on the X/Z plane."
+        >
+          <canvas id="system-map"></canvas>
+          <div id="system-labels" aria-hidden="true"></div>
+        </div>
+        <div id="range-body" class="range" hidden></div>
+        <p id="status" role="status"></p>
+        <p id="failure" role="alert" hidden></p>
+      </section>
+      <aside class="sidebar">
+        <section id="panel" aria-label="Selection"></section>
+        <section class="roster-section">
+          <h2>Roster</h2>
+          <nav id="roster" aria-label="Recovered Bodies"></nav>
+        </section>
+      </aside>
     </main>
     <script type="module" src="/src/atlas/boot.ts"></script>
   </body>
