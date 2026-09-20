@@ -156,7 +156,11 @@ try {
   const ownershipOutcome = await ownership.claim();
   const resumeRead =
     ownershipOutcome.kind === 'owned'
-      ? readDamoclesResume(storage, identity, content.catalogue, content.poses)
+      ? readDamoclesResume(storage, identity, {
+          catalogue: content.catalogue,
+          poses: content.poses,
+          strings: content.strings
+        })
       : ({ kind: 'empty' } as const);
 
   const preferences = createPreferences({
@@ -295,7 +299,8 @@ try {
       publish();
     },
     slotKey: keys.save,
-    storage
+    storage,
+    strings: content.strings
   });
   installStorageWatch(window, ALL_SLOTS.map(keys.save), persistence.dismiss);
   installSaveChooser({ page: chrome.pages.saves, persistence });
@@ -415,12 +420,11 @@ try {
     }
     if (outcome.kind === 'owned') {
       resumePersistence = makeResumePersistence();
-      const recovered = readDamoclesResume(
-        storage,
-        identity,
-        content.catalogue,
-        content.poses
-      );
+      const recovered = readDamoclesResume(storage, identity, {
+        catalogue: content.catalogue,
+        poses: content.poses,
+        strings: content.strings
+      });
       notices.dismiss();
       if (recovered.kind === 'restored') {
         replaceSession(recovered.snapshot);

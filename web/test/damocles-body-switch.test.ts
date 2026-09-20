@@ -295,12 +295,10 @@ describe('the cross-body trace', () => {
       snapshot: onEris.captureResume(),
       where: 'ERIS'
     };
-    const decoded = decodeDamoclesSave(
-      encodeDamoclesSave(record),
-      identity,
+    const decoded = decodeDamoclesSave(encodeDamoclesSave(record), identity, {
       catalogue,
       poses
-    );
+    });
     const restored = new DamoclesSession(content, decoded.snapshot);
 
     // The Eris object is still carried; stack order and head unchanged.
@@ -339,7 +337,10 @@ describe('a Save names a Body with an admitted Pose', () => {
       where: 'MIDAS'
     };
     expect(() =>
-      decodeDamoclesSave(encodeDamoclesSave(record), identity, catalogue, poses)
+      decodeDamoclesSave(encodeDamoclesSave(record), identity, {
+        catalogue,
+        poses
+      })
     ).toThrow(/admitted arrival Pose/);
     // Without the poses the older rule still applies, so the Catalogue check is not weakened.
     expect(() =>
@@ -349,7 +350,7 @@ describe('a Save names a Body with an admitted Pose', () => {
           snapshot: { ...snapshot, pose: { ...snapshot.pose, body: 'nowhere' } }
         }),
         identity,
-        catalogue
+        { catalogue }
       )
     ).toThrow(/unknown Body/);
   });
@@ -463,8 +464,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
         where: damoclesWhere(away.snapshot)
       }),
       identity,
-      catalogue,
-      poses
+      { catalogue, poses }
     );
     // The restore path builds its surface in the constructor rather than through a switch, so
     // it is asserted separately: this is the boot the browser performs on a resumed session.

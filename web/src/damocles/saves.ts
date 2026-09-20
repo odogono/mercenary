@@ -13,6 +13,7 @@ import {
   type DamoclesSaveIdentity,
   type DamoclesSaveSnapshot
 } from './save.ts';
+import type { DamoclesStrings } from './strings.ts';
 
 export interface DamoclesSavePersistenceOptions {
   readonly capture: () => {
@@ -27,6 +28,7 @@ export interface DamoclesSavePersistenceOptions {
   readonly restore: (snapshot: DamoclesSaveSnapshot, slot: SaveSlot) => void;
   readonly slotKey: (slot: SaveSlot) => string;
   readonly storage: SlotStorage | undefined;
+  readonly strings?: DamoclesStrings;
   readonly time?: () => number;
 }
 
@@ -37,12 +39,11 @@ export const createDamoclesSavePersistence = (
   createSlotPersistence({
     capture: options.capture,
     decode: encoded => {
-      const saved = decodeDamoclesSave(
-        encoded,
-        options.identity,
-        options.catalogue,
-        options.poses
-      );
+      const saved = decodeDamoclesSave(encoded, options.identity, {
+        catalogue: options.catalogue,
+        ...(options.poses === undefined ? {} : { poses: options.poses }),
+        ...(options.strings === undefined ? {} : { strings: options.strings })
+      });
       return {
         savedAt: saved.savedAt,
         snapshot: saved.snapshot,

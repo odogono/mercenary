@@ -117,7 +117,7 @@ describe('Damocles Saves', () => {
             where: 'ERIS'
           }),
           loaded.identity,
-          loaded.catalogue
+          { catalogue: loaded.catalogue }
         ).snapshot
       );
     const restored = roundTrip(original);
@@ -285,7 +285,7 @@ describe('Damocles Saves', () => {
       decodeDamoclesSave(
         encodeDamoclesSave(foreignResidence),
         loaded.identity,
-        loaded.catalogue
+        { catalogue: loaded.catalogue }
       )
     ).toThrow(/Catalogue/);
     const restored = new DamoclesSession(loaded, suspended);

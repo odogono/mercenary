@@ -55,7 +55,7 @@ import {
   structureLocalPosition,
   structureRegionAt
 } from './selection.ts';
-import { findMessage, type DamoclesStrings } from './strings.ts';
+import { presentedText, type DamoclesStrings } from './strings.ts';
 import {
   cellOf,
   erisSurfaceFrom,
@@ -231,11 +231,11 @@ export class DamoclesSession implements TitleSession<
     this.scriptRules = {
       messageFrames: content.doc.time.messageFrames,
       messageText: id => {
-        const record = findMessage(content.strings, id);
-        if (record === undefined) {
+        const text = presentedText(content.strings, id);
+        if (text === undefined) {
           throw new Error(`Damocles strings have no ${id}`);
         }
-        return id === 'system-string-50' ? record.text.slice(1) : record.text;
+        return text;
       },
       waitFrames: content.doc.time.waitFrames
     };

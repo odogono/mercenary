@@ -1,6 +1,7 @@
 import type { Catalogue } from '../catalogue/data.ts';
 import {
   DAMOCLES_ROW_CELLS,
+  effectiveMessageRow,
   type DamoclesDisplay,
   type DamoclesMessageId
 } from './display.ts';
@@ -27,6 +28,7 @@ import {
   type ScriptId,
   type Step
 } from './scripts.ts';
+import { presentedText, type DamoclesStrings } from './strings.ts';
 import type { Pose } from './world.ts';
 
 /// Version 3 replaced Capital Spaceport fields with the bound structure workspace.
@@ -353,6 +355,40 @@ const blockingStep = (script: ScriptId, step: Step): boolean => {
   );
 };
 
+/// The 48-cell row a message leaves on the Damocles Display once its reveal completes.
+///
+/// Null where the strings payload was not supplied, or does not hold that record: the row then
+/// cannot be checked at all, and only the generic printable-row rule applies.
+const messageRow = (
+  strings: DamoclesStrings | undefined,
+  id: DamoclesMessageId
+): string | null => {
+  const text = strings === undefined ? undefined : presentedText(strings, id);
+  return text === undefined ? null : effectiveMessageRow(text);
+};
+
+/// The row a script has itself written by the time it reaches `step`: the effective row of the
+/// nearest preceding `message` op in the same script.
+///
+/// Null where the script has written nothing yet. Trigger 62's wait is its first operation, so
+/// the row it sits on is whatever presented before the pickup -- a completed response's blank
+/// clearing line, a system refusal, or the row the session opened on -- and the script does not
+/// decide it (docs/design/damocles-limo-key-interaction.md).
+const writtenRow = (
+  strings: DamoclesStrings | undefined,
+  script: ScriptId,
+  step: Step
+): string | null => {
+  const ops = SCRIPTS[script].ops;
+  for (let index = step - 1; index >= 0; index -= 1) {
+    const op = ops[index];
+    if (op?.kind === 'message') {
+      return messageRow(strings, op.id);
+    }
+  }
+  return null;
+};
+
 const frameOf = (value: unknown, path: string): Frame => {
   const frame = object(value, path);
   const script = frame['script'];
@@ -401,7 +437,10 @@ const executionOf = (value: unknown): Execution | null => {
   };
 };
 
-const scriptOf = (value: unknown): DamoclesSaveScript => {
+const scriptOf = (
+  value: unknown,
+  strings: DamoclesStrings | undefined
+): DamoclesSaveScript => {
   const script = object(value, 'snapshot.script');
   const counter = integer(
     script['counter'],
@@ -459,6 +498,13 @@ const scriptOf = (value: unknown): DamoclesSaveScript => {
     ) {
       return fail('message gate and display reveal disagree');
     }
+    // A reveal that has run its 36 frames has replaced the row with the presenting message's
+    // own, so which message is presenting decides the held cells rather than merely allowing
+    // them to be held.
+    const row = messageRow(strings, message.id);
+    if (display.kind === 'held' && row !== null && display.cells !== row) {
+      return fail('held display is not the presenting message row');
+    }
   }
   // A message that opens a response used to be required to reveal over the blank row. That is
   // no longer an invariant: trigger 6 parks without a clearing line, so the next response's
@@ -476,6 +522,13 @@ const scriptOf = (value: unknown): DamoclesSaveScript => {
         current.frames === WAIT_FROM_DOCUMENT ? 200 : current.frames;
       if (message !== null || counter >= threshold || display.kind !== 'held') {
         return fail('script execution is not at a reachable commit boundary');
+      }
+      // Nothing can present over a suspended execution -- a system refusal is only raised while
+      // the script state is parked and idle -- so a waiting script still holds the row its own
+      // last message left, and a blank or unrelated row mid-wait is a record no play produces.
+      const written = writtenRow(strings, execution.script, execution.step);
+      if (written !== null && display.cells !== written) {
+        return fail('waiting script does not hold the row it last wrote');
       }
     } else {
       return fail('script execution is not at a reachable commit boundary');
@@ -538,6 +591,15 @@ const validateResidence = (
 export const encodeDamoclesSave = (record: DamoclesSaveRecord): string =>
   JSON.stringify(record);
 
+/// The Data Payload the deeper rules read. Each part is optional and carries its own rules with
+/// it: a caller holding only the record still gets every rule the record alone decides, which is
+/// what the schema and envelope tests exercise. Shipping callers supply all three.
+export interface DamoclesSaveContent {
+  readonly catalogue?: Catalogue;
+  readonly poses?: ArrivalPoses;
+  readonly strings?: DamoclesStrings;
+}
+
 /// Decode a Damocles Save or Session Resume, or throw the exact refusal.
 ///
 /// Identity is exact: a Targ envelope, an older schema, or a Catalogue or presentation
@@ -545,9 +607,9 @@ export const encodeDamoclesSave = (record: DamoclesSaveRecord): string =>
 export const decodeDamoclesSave = (
   encoded: string,
   expected: DamoclesSaveIdentity,
-  catalogue?: Catalogue,
-  poses?: ArrivalPoses
+  content: DamoclesSaveContent = {}
 ): DamoclesSaveRecord => {
+  const { catalogue, poses, strings } = content;
   let parsed: unknown;
   try {
     parsed = JSON.parse(encoded);
@@ -718,7 +780,7 @@ export const decodeDamoclesSave = (
     -16,
     16
   );
-  const script = scriptOf(snapshot['script']);
+  const script = scriptOf(snapshot['script'], strings);
   // An armed trigger requires its object to be at its Catalogue placement and absent from the
   // Carried Stack: the launch path clears bit 7, and nothing re-arms a trigger, so an armed
   // trigger whose object has been taken or moved is a state no sequence of actions reaches.

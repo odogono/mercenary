@@ -2,6 +2,10 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 
 import { parseCatalogue, type Catalogue } from '../src/catalogue/data.ts';
 import {
+  effectiveMessageRow,
+  type DamoclesMessageId
+} from '../src/damocles/display.ts';
+import {
   catalogueResidence,
   structureStoreyHeight,
   validStructureResidence,
@@ -13,12 +17,31 @@ import {
   decodeDamoclesSave,
   initialDamoclesSaveScript
 } from '../src/damocles/save.ts';
-import { TRIGGER_FOR_RESIDENT } from '../src/damocles/scripts.ts';
+import {
+  fireTrigger,
+  initialScriptState,
+  runFrame,
+  type ScriptState
+} from '../src/damocles/script.ts';
+import {
+  ORDINARY_DISPLAY_FRAMES,
+  SCRIPTS,
+  TRIGGER_FOR_RESIDENT
+} from '../src/damocles/scripts.ts';
+import {
+  parseDamoclesStrings,
+  presentedText,
+  type DamoclesStrings
+} from '../src/damocles/strings.ts';
 
 let catalogue: Catalogue;
+let strings: DamoclesStrings;
 beforeAll(async () => {
   catalogue = parseCatalogue(
     await Bun.file('../payload/damocles/catalogue.json').json()
+  );
+  strings = parseDamoclesStrings(
+    await Bun.file('../payload/damocles/strings.json').json()
   );
 });
 
@@ -55,7 +78,10 @@ const record = () => ({
   where: 'VESTA'
 });
 const decode = (value: ReturnType<typeof record>) =>
-  decodeDamoclesSave(JSON.stringify(value), value.identity, catalogue);
+  decodeDamoclesSave(JSON.stringify(value), value.identity, {
+    catalogue,
+    strings
+  });
 const carry = (value: ReturnType<typeof record>, ids: string[]) => {
   value.snapshot.carried = ids;
   value.snapshot.residence = ids.map(instance => ({
@@ -76,6 +102,57 @@ const carry = (value: ReturnType<typeof record>, ids: string[]) => {
         : trigger
     )
   };
+};
+
+const rules = () => ({
+  messageFrames: ORDINARY_DISPLAY_FRAMES,
+  messageText: (id: DamoclesMessageId) => presentedText(strings, id)!,
+  // The Save codec reads trigger 2's `WAIT_FROM_DOCUMENT` threshold as 200 frames, which is
+  // what the Eris presentation document authors; the model takes it from the rules.
+  waitFrames: 200
+});
+
+/// Run the recovered script model exactly as play runs it, from the pickup to the frame the
+/// execution parks on its `poll-wait`. Whatever row this leaves held is by construction a row
+/// live play produces, so the rule is measured against the model rather than restated.
+const midWait = (trigger: number): ScriptState => {
+  let state = fireTrigger(initialScriptState(), trigger, rules()).state;
+  for (let frame = 0; frame < 4096; frame += 1) {
+    const execution = state.execution;
+    if (
+      execution !== null &&
+      state.message === null &&
+      SCRIPTS[execution.script].ops[execution.step]?.kind === 'poll-wait'
+    ) {
+      return state;
+    }
+    state = runFrame(state, rules()).state;
+  }
+  throw new Error('the script never reached its wait');
+};
+
+const waiting = (trigger: number, resident: string) => {
+  const state = midWait(trigger);
+  const value = record();
+  carry(value, [resident]);
+  value.snapshot.script = {
+    counter: state.counter,
+    display: state.display,
+    displayDuration: state.displayDuration,
+    execution: state.execution,
+    message: state.message,
+    pending: state.pending,
+    triggers: state.triggers.map(({ armed, index }) => ({ armed, index }))
+  };
+  return value;
+};
+
+const held = (value: ReturnType<typeof record>, cells: string) => {
+  value.snapshot.script = {
+    ...value.snapshot.script,
+    display: { cells, kind: 'held' }
+  };
+  return value;
 };
 
 describe('body-aware Save Snapshot admission', () => {
@@ -393,5 +470,64 @@ describe('body-aware Save Snapshot admission', () => {
     expect(validStructureResidence(catalogue, { ...key, level: 1 })).toBe(
       false
     );
+  });
+});
+
+describe('a suspended Damocles Script holds the row it last wrote', () => {
+  test('restores the limo key mid-wait exactly as play left it', () => {
+    const value = waiting(2, 'object-slot-183');
+    expect(value.snapshot.script.display).toEqual({
+      cells: effectiveMessageRow(presentedText(strings, 'script2-inline-3')!),
+      kind: 'held'
+    });
+    expect(decode(value)).toEqual(value);
+  });
+
+  test('refuses a blank or unrelated row inside the limo key wait', () => {
+    expect(() =>
+      decode(held(waiting(2, 'object-slot-183'), ' '.repeat(48)))
+    ).toThrow(/the row it last wrote/);
+    expect(() =>
+      decode(
+        held(
+          waiting(2, 'object-slot-183'),
+          effectiveMessageRow(presentedText(strings, 'script2-inline-1')!)
+        )
+      )
+    ).toThrow(/the row it last wrote/);
+  });
+
+  test('leaves a wait its own script has written nothing before unconstrained', () => {
+    // Trigger 62's wait is its first operation, so the row it sits on came from whatever
+    // presented before the pickup -- a finished response's blank clearing line, or none at all.
+    const value = waiting(62, 'object-slot-94');
+    expect(value.snapshot.script.display).toEqual({
+      cells: ' '.repeat(48),
+      kind: 'held'
+    });
+    expect(decode(value)).toEqual(value);
+    const inherited = held(
+      waiting(62, 'object-slot-94'),
+      effectiveMessageRow(presentedText(strings, 'script6-inline-2')!)
+    );
+    expect(decode(inherited)).toEqual(inherited);
+  });
+
+  test('refuses a held row that is not the message presenting over it', () => {
+    const value = record();
+    value.snapshot.script = {
+      ...value.snapshot.script,
+      display: { cells: 'NOT THE MESSAGE'.padEnd(48), kind: 'held' },
+      message: { id: 'system-string-2', remainingFrames: 100 }
+    };
+    expect(() => decode(value)).toThrow(/presenting message row/);
+    expect(
+      decode(
+        held(
+          value,
+          effectiveMessageRow(presentedText(strings, 'system-string-2')!)
+        )
+      )
+    ).toEqual(value);
   });
 });
