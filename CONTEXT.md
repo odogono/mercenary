@@ -359,11 +359,11 @@ The Navigation Readout's mode within a Body, naming the player's position on tha
 _Avoid_: Planet coordinates, moon coordinates, world coordinates, nav digits, System Coordinate Readout
 
 **System Coordinate Readout**:
-The Navigation Readout's mode in space, naming the player's own position in the System as a signed coarse cell an axis, x then y then z, each printed as an unsigned magnitude with a negative axis marked in red. Its cell is far larger than the spacing of a Body cluster, so neighbouring Bodies read alike and a reading names a neighbourhood rather than a place. It describes the observer and never a Body: a Body read from below the System's plane reports a negative y though the Body itself lies on it.
+The Navigation Readout's mode in space, naming the player's own position in the System as a signed coarse cell an axis, x then y then z, each printed as an unsigned magnitude with a negative axis marked in red and a magnitude past 99 as `**`. The cell is `$10000` engine units — the high word of the position longword, an arithmetic floor — which is far larger than the spacing of a Body cluster, so neighbouring Bodies read alike and a reading names a neighbourhood rather than a place. It describes the observer and never a Body: a Body read from below the System's plane reports a negative y though the Body itself lies on it.
 _Avoid_: Body Coordinate Readout, Body coordinates, planet coordinates, system position
 
 **Body Coordinate Step**:
-The unit of the Body Coordinate Readout, and unrelated to the System Coordinate Readout's much larger cell: `$40000` surface-grid units, which is four Surface Cells, so a 16-cell workspace spans four steps. A Body's surface is 1024 steps an axis, the same 1024-step turn the yaw word counts, and the z axis carries a fixed quarter-turn bias.
+The unit of the Body Coordinate Readout, and unrelated to the System Coordinate Readout's cell, which counts a different frame: `$40000` surface-grid units, which is four Surface Cells, so a 16-cell workspace spans four steps. A Body's surface is 1024 steps an axis, the same 1024-step turn the yaw word counts, and the z axis carries a fixed quarter-turn bias.
 _Avoid_: Body cell, coarse cell, planet unit
 
 **Cell Readout**:
