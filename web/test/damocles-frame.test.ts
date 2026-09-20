@@ -70,6 +70,7 @@ const placement = (
 });
 
 const surfaceOf = (placements: readonly ErisPlacement[]): ErisSurface => ({
+  baseColour: '#000066',
   body: { id: 'body-11', name: 'ERIS' },
   grid: { cellsPerAxis: 16, cellUnits: 65_536, origin: { x: 64, z: 128 } },
   islands: [],
@@ -81,13 +82,19 @@ const surfaceOf = (placements: readonly ErisPlacement[]): ErisSurface => ({
 const origin = {
   body: ERIS_BODY,
   heading: 0,
+  pitch: 0,
   position: { x: 0, y: 63, z: 0 }
 };
 
-/// The authored ground fill leads every plan; its triangle count depends on the eye's place
-/// in the workspace, so read it back from the plan.
+/// The Body's base plane and the Damocles Island fills over it lead every plan; both counts
+/// depend on where the eye stands, so read them back from the plan.
 const fillFloats = (plan: ErisFramePlan): number =>
-  plan.fillTriangleCount * 3 * FLOATS_PER_VERTEX;
+  (plan.fillTriangleCount + plan.islandTriangleCount) * 3 * FLOATS_PER_VERTEX;
+
+/// Everything a plan draws above the base plane and the island fills: the recovered geometry,
+/// which the land-and-sea layers sit beneath rather than move.
+const recoveredVertices = (plan: ErisFramePlan): Float32Array =>
+  plan.vertices.slice(fillFloats(plan));
 
 describe('an Eris frame in Filled Presentation', () => {
   test('draws the visible resident placements supplied by Session State', async () => {
@@ -174,7 +181,10 @@ describe('an Eris frame in Filled Presentation', () => {
       pose,
       doc
     );
-    expect(plan.triangleCount).toBe(drawnOnly.triangleCount);
+    // Less the island fills, which the hand-built surface carries no records for.
+    expect(plan.triangleCount - plan.islandTriangleCount).toBe(
+      drawnOnly.triangleCount
+    );
     expect(plan.groundTriangleCount).toBe(drawnOnly.groundTriangleCount);
     // A neighbouring cell's ground record and structure stop being drawn, so the plan is a
     // fraction of the every-placement draw it replaced.
@@ -319,28 +329,32 @@ describe('an Eris frame in Filled Presentation', () => {
     expect(plan.skippedFaces).toBe(0);
   });
 
-  test('lays the authored fill under the walk, below the recovered faces', async () => {
+  test('lays the base plane under the walk, below the recovered faces', async () => {
     const { doc, surface } = await load();
     const plan = planErisFrame(surface, startPose(doc), doc);
-    const fill = Array.from(plan.vertices.slice(0, fillFloats(plan)));
+    const base = Array.from(
+      plan.vertices.slice(0, plan.fillTriangleCount * 3 * FLOATS_PER_VERTEX)
+    );
     const at = (offset: number) =>
-      fill.filter((_, index) => index % FLOATS_PER_VERTEX === offset);
-    // The fill surrounds the camera rather than sitting a cell away: a ground plane this far
+      base.filter((_, index) => index % FLOATS_PER_VERTEX === offset);
+    // The plane surrounds the camera rather than sitting a cell away: a ground plane this far
     // below the eye projects into a pixel at the horizon by the next cell along (#221).
     expect(Math.min(...at(0))).toBeLessThan(0);
     expect(Math.max(...at(0))).toBeGreaterThan(0);
     expect(Math.min(...at(2))).toBeLessThan(0);
     expect(Math.max(...at(2))).toBeGreaterThan(0);
-    // It reaches the workspace edge and no further: the start is in cell $87, so the west
-    // edge is closer than the east.
-    const cell = surface.grid.cellUnits;
-    const west = surface.grid.origin.x * cell - doc.start.position.x;
-    const east = west + surface.grid.cellsPerAxis * cell;
-    expect(Math.min(...at(0))).toBeCloseTo(west, 3);
-    expect(Math.max(...at(0))).toBeCloseTo(east, 3);
+    // It reaches the far plane, not the workspace edge. A Body is a 4096-cell torus and its
+    // surface runs to the horizon; the 16-cell window it used to stop at was never a coast,
+    // and stopping there left sky where the sea is (#394).
+    const reach = Math.max(...at(0).map(Math.abs));
+    expect(reach).toBeGreaterThanOrEqual(doc.camera.farPlane);
+    expect(Math.max(...at(2).map(Math.abs))).toBe(reach);
+    expect(reach).toBeGreaterThan(
+      surface.grid.cellsPerAxis * surface.grid.cellUnits
+    );
     // Rings, not one quad: the nearest triangles are small enough that the rasteriser's
     // screen-space depth interpolation cannot lift them through the pads (#221).
-    const first = fill
+    const first = base
       .slice(0, 3 * FLOATS_PER_VERTEX)
       .filter((_, index) => index % FLOATS_PER_VERTEX === 0);
     expect(Math.max(...first) - Math.min(...first)).toBe(512);
@@ -353,10 +367,79 @@ describe('an Eris frame in Filled Presentation', () => {
         3
       );
     }
-    expect(fill[3]).toBe(0);
-    expect(fill[4]).toBeCloseTo(0x6d / 255, 6);
-    expect(fill[5]).toBe(0);
-    expect(fill[6]).toBe(0);
+    // The arrival stands on CAPITAL CITY's core, so the plane is that island's own recovered
+    // land colour $0030 rather than Eris's $0003 sea: the engine draws the ground plane in
+    // `$7A1A` and does not fill the island underfoot over it ($0597F8).
+    expect(base[3]).toBe(0);
+    expect(base[4]).toBeCloseTo(0x66 / 255, 6);
+    expect(base[5]).toBe(0);
+    expect(base[6]).toBe(0);
+  });
+
+  test('leaves the Capital Spaceport placements exactly where they were', async () => {
+    const { doc, surface } = await load();
+    const pose = startPose(doc);
+    const plan = planErisFrame(surface, pose, doc);
+    // The island fill is a new layer beneath the recovered geometry, not a change to its
+    // transform: the structures, roads and ground polygons placed in Body Coordinates at
+    // origin 64,128 draw vertex for vertex as they did before land and sea existed (#394).
+    const withoutIslands = planErisFrame(
+      { ...surface, islands: [] },
+      pose,
+      doc
+    );
+    expect(plan.islandTriangleCount).toBeGreaterThan(0);
+    expect(withoutIslands.islandTriangleCount).toBe(0);
+    expect(recoveredVertices(plan)).toEqual(recoveredVertices(withoutIslands));
+    expect(plan.groundTriangleCount).toBe(withoutIslands.groundTriangleCount);
+    // And the placement itself is still at the recovered Body Coordinate.
+    const spaceport = surface.placements.find(
+      item => item.id === 'eris-surface-87'
+    )!;
+    expect(spaceport.position.x / surface.grid.cellUnits).toBeCloseTo(
+      71.4876,
+      3
+    );
+    expect(spaceport.position.z / surface.grid.cellUnits).toBeCloseTo(
+      136.5238,
+      3
+    );
+  });
+
+  test('draws no base plane for a Body with no recovered surface colour', async () => {
+    const { doc } = await load();
+    // ADR 0043: nothing unrecovered is drawn. The VOID slot is the space-as-place sentinel
+    // and carries no surface, so it gets no invented one.
+    const plan = planErisFrame(
+      { ...surfaceOf([placement(square())]), baseColour: null },
+      origin,
+      doc
+    );
+    expect(plan.fillTriangleCount).toBe(0);
+    expect(plan.triangleCount).toBe(2);
+  });
+
+  test('draws the Body base plane as sea once the eye is off every island core', async () => {
+    const { doc, surface } = await load();
+    const pose = startPose(doc);
+    // Forty cells west of CAPITAL CITY's origin is past its extent box: open water.
+    const offshore = {
+      ...pose,
+      position: { ...pose.position, x: (64 - 40) * surface.grid.cellUnits }
+    };
+    const plan = planErisFrame(surface, offshore, doc);
+    expect(plan.vertices[3]).toBe(0);
+    expect(plan.vertices[4]).toBe(0);
+    expect(plan.vertices[5]).toBeCloseTo(0x66 / 255, 6);
+    // Nothing is standing on any island now, so every record is filled over the sea: all five
+    // of Eris's, CAPITAL CITY included.
+    const islands = plan.islandTriangleCount / 2;
+    expect(islands).toBe(
+      surface.islands.reduce(
+        (sum, island) => sum + island.coastline.vertices.length - 2,
+        0
+      )
+    );
   });
 
   test('numbers each ground record face so later faces win a shared plane', async () => {
@@ -388,6 +471,7 @@ const fakeContext = () => {
   const uniforms: Record<string, number[]> = {};
   const gl = {
     activeTexture: (texture: number) => calls.push(`activeTexture:${texture}`),
+    ALWAYS: 25,
     ARRAY_BUFFER: 1,
     attachShader: () => undefined,
     BACK: 2,
@@ -426,7 +510,7 @@ const fakeContext = () => {
     DEPTH_BUFFER_BIT: 8,
     DEPTH_COMPONENT24: 19,
     DEPTH_TEST: 9,
-    depthFunc: () => undefined,
+    depthFunc: (compare: number) => calls.push(`depthFunc:${compare}`),
     depthMask: () => undefined,
     disable: (flag: number) => calls.push(`disable:${flag}`),
     disableVertexAttribArray: (attribute: number) =>
@@ -549,20 +633,31 @@ describe('the Eris renderer', () => {
     expect(fake.calls).toContain('frontFace:7');
     expect(fake.calls).toContain(`buffer:${plan.vertices.length}`);
     const fill = plan.fillTriangleCount * 3;
+    const islands = plan.islandTriangleCount * 3;
     const ground = plan.groundTriangleCount * 3;
-    const rest = plan.triangleCount * 3 - fill - ground;
+    const rest = plan.triangleCount * 3 - fill - islands - ground;
     expect(ground).toBeGreaterThan(0);
-    // Structures, then the recovered ground records, then the fill, each a layer further back.
+    expect(islands).toBeGreaterThan(0);
+    // The Body's surface first — base plane then island fills, painted as a stream — and then
+    // the recovered ground records and everything else, each a layer nearer.
     const layered = [
-      `draw:15:${fill + ground}:${rest}`,
-      `draw:15:${fill}:${ground}`,
-      `draw:15:0:${fill}`
+      `draw:15:0:${fill}`,
+      `draw:15:${fill}:${islands}`,
+      `draw:15:${fill + islands}:${ground}`,
+      `draw:15:${fill + islands + ground}:${rest}`
     ];
     expect(fake.calls.filter(c => c.startsWith('draw:'))).toEqual([
       ...layered,
       ...layered
     ]);
-    expect(fake.uniforms['depthBias']).toEqual([8e-6]);
+    // The base plane's own step, wider than a layer: its outer rings are far-plane-sized
+    // triangles whose interpolated depth strays further than one (#394).
+    // The last layer drawn is the one at zero bias: the structures and objects.
+    expect(fake.uniforms['depthBias']).toEqual([0]);
+    // The surface pair is painted rather than depth-tested, so the comparison is turned off
+    // for it and restored for everything that orders against it (#394).
+    expect(fake.calls).toContain('depthFunc:25');
+    expect(fake.calls).toContain('depthFunc:13');
     expect(fake.uniforms['aspect']).toEqual([2]);
     expect(fake.uniforms['depthRange']).toEqual([
       doc.camera.nearPlane,
@@ -596,7 +691,7 @@ describe('the Eris renderer', () => {
     expect(fake.calls).not.toContain('texStorage:2048:2048');
     renderer.render(plan);
     expect(fake.compiled).toBe(2);
-    expect(fake.calls.filter(call => call.startsWith('draw:'))).toHaveLength(3);
+    expect(fake.calls.filter(call => call.startsWith('draw:'))).toHaveLength(4);
     expect(fake.calls).not.toContain('texStorage:2048:2048');
   });
 
@@ -642,14 +737,15 @@ describe('the Eris renderer', () => {
 
     const casterDraw = `draw:15:0:${casters.length / FLOATS_PER_VERTEX}`;
     const fill = plan.fillTriangleCount * 3;
-    // Two shadow maps of deduplicated casters, then the three colour layers: no ground
-    // records here, so the middle layer is empty.
+    // Two shadow maps of deduplicated casters, then the four colour layers: this surface
+    // carries no island records and no ground records, so those two layers are empty.
     const once = [
       casterDraw,
       casterDraw,
-      `draw:15:${fill}:12`,
+      `draw:15:0:${fill}`,
       `draw:15:${fill}:0`,
-      `draw:15:0:${fill}`
+      `draw:15:${fill}:0`,
+      `draw:15:${fill}:12`
     ];
     expect(fake.calls.filter(call => call.startsWith('draw:'))).toEqual([
       ...once,

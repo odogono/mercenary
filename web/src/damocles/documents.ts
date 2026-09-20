@@ -37,14 +37,11 @@ export interface ErisPresentationDocument {
     readonly provenance: Provenance;
   };
   readonly ground: {
-    readonly colour: string;
-    readonly colourProvenance: Provenance;
-    /// How far below y = 0 the authored fill sits, in raw units, so the recovered ground
-    /// faces at y = 0 draw over it without z-fighting (#221).
+    /// How far below y = 0 the base plane and the island fills sit, in raw units, so the
+    /// recovered ground faces at y = 0 draw over them without z-fighting (#221).
     readonly fillDropUnits: number;
     readonly geometryProvenance: Provenance;
     readonly note: string;
-    readonly paletteIndex: number;
   };
   readonly lighting: {
     readonly ambientGround: string;
@@ -66,6 +63,9 @@ export interface ErisPresentationDocument {
     readonly modelZProvenance: Provenance;
     readonly north: '+z';
     readonly note: string;
+    /// The pitch word `$7AC0` looking at the horizon. It counts `yawUnitsPerTurn` a turn as
+    /// the yaw word does, and rises putting the nose down.
+    readonly pitchLevel: number;
     readonly provenance: Provenance;
     readonly yawNorth: number;
     readonly yawPositive: 'clockwise';
@@ -81,7 +81,7 @@ export interface ErisPresentationDocument {
     readonly provenance: Provenance;
     readonly unresolvedModels: 'nothing';
   };
-  readonly schemaVersion: 6;
+  readonly schemaVersion: 7;
   readonly sky: {
     readonly colour: string;
     readonly note: string;
@@ -90,6 +90,10 @@ export interface ErisPresentationDocument {
   };
   readonly start: {
     readonly evidence: string;
+    /// The camera pitch word as captured. Play never moves it — nothing on foot pitches the
+    /// view — so it is the level word for the arrival, and the island validation views of #394
+    /// are what change it.
+    readonly pitch: number;
     readonly position: Vector3;
     readonly positionProvenance: Provenance;
     /// The camera yaw word as captured, in the orientation's units.
@@ -278,6 +282,7 @@ export const readErisPresentation = (
     'positionProvenance',
     'yaw',
     'yawProvenance',
+    'pitch',
     'evidence'
   ]);
   const eye = object(root['eye'], 'eye', ['heightUnits', 'provenance']);
@@ -297,6 +302,7 @@ export const readErisPresentation = (
     'east',
     'yawUnitsPerTurn',
     'yawNorth',
+    'pitchLevel',
     'yawPositive',
     'provenance',
     'modelZ',
@@ -315,9 +321,6 @@ export const readErisPresentation = (
     'note'
   ]);
   const ground = object(root['ground'], 'ground', [
-    'colour',
-    'paletteIndex',
-    'colourProvenance',
     'geometryProvenance',
     'fillDropUnits',
     'note'
@@ -361,13 +364,6 @@ export const readErisPresentation = (
       ? stColour(outdoor[position]!)
       : fail(path, 'should index the sixteen-entry palette');
   };
-  const groundColour = colour(ground['colour'], 'ground.colour');
-  if (
-    groundColour !==
-    paletteColour(ground['paletteIndex'], 'ground.paletteIndex')
-  ) {
-    fail('ground.colour', 'should match its palette entry');
-  }
   const skyColour = colour(sky['colour'], 'sky.colour');
   if (skyColour !== paletteColour(sky['paletteIndex'], 'sky.paletteIndex')) {
     fail('sky.colour', 'should match its palette entry');
@@ -416,18 +412,12 @@ export const readErisPresentation = (
       provenance: provenance(grid['provenance'], 'grid.provenance')
     },
     ground: {
-      colour: groundColour,
-      colourProvenance: provenance(
-        ground['colourProvenance'],
-        'ground.colourProvenance'
-      ),
       fillDropUnits: positive(ground['fillDropUnits'], 'ground.fillDropUnits'),
       geometryProvenance: provenance(
         ground['geometryProvenance'],
         'ground.geometryProvenance'
       ),
-      note: text(ground['note'], 'ground.note'),
-      paletteIndex: integer(ground['paletteIndex'], 'ground.paletteIndex')
+      note: text(ground['note'], 'ground.note')
     },
     lighting: {
       ambientGround: colour(
@@ -454,6 +444,7 @@ export const readErisPresentation = (
       ),
       north: literal(orientation['north'], '+z', 'orientation.north'),
       note: text(orientation['note'], 'orientation.note'),
+      pitchLevel: integer(orientation['pitchLevel'], 'orientation.pitchLevel'),
       provenance: provenance(
         orientation['provenance'],
         'orientation.provenance'
@@ -486,7 +477,7 @@ export const readErisPresentation = (
         'rendering.unresolvedModels'
       )
     },
-    schemaVersion: literal(root['schemaVersion'], 6, 'schemaVersion'),
+    schemaVersion: literal(root['schemaVersion'], 7, 'schemaVersion'),
     sky: {
       colour: skyColour,
       note: text(sky['note'], 'sky.note'),
@@ -495,6 +486,7 @@ export const readErisPresentation = (
     },
     start: {
       evidence: text(start['evidence'], 'start.evidence'),
+      pitch: integer(start['pitch'], 'start.pitch'),
       position: point(start['position'], 'start.position'),
       positionProvenance: provenance(
         start['positionProvenance'],

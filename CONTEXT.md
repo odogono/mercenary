@@ -414,6 +414,10 @@ _Avoid_: Model, building shape
 One landmass on a Body in Damocles, recovered as a closed coastline outline placed at its own origin in Body Coordinates and painted in its own land colour. It is not the authored Flyover Island, and it is not the Structure Workspace it selects: an island carries no name of its own, may bind no workspace at all, and a Body may carry many. A Body's surface outside every island is sea in that Body's own base colour.
 _Avoid_: Island (for the Flyover sense), continent, landmass patch, workspace, Settlement
 
+**Land/Sea Answer**:
+Where a position on a Body stands against the Damocles Island nearest it, in three values: `core` inside that island's authored inner box, `land` elsewhere on it, and `sea` off it. It is one query, not three rules: the coast a player cannot walk across, the refusal to leave a craft over water, and the colour the ground plane is drawn in are the same answer read by three consumers. It is measured against one island — the nearest — so it never merges two, and a Body carrying only a coastline-less record answers `core` everywhere, having no coast.
+_Avoid_: Land test, water check, coastline collision, Damocles Island
+
 **Settlement**:
 One named inhabited grouping on a Body, recovered as the named area a Structure Workspace publishes together with the Damocles Places in it. A Settlement may lie on a Damocles Island and does not require one — most Bodies carry a Settlement with no island under it — and an island may carry no Settlement. Whether a given recovered area name names a Settlement or the island it sits on is not established by the name alone.
 _Avoid_: City, base, town, Damocles Island, Structure Workspace, area

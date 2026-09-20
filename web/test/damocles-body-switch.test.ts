@@ -366,53 +366,60 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
     {
       body: 'body-11',
       cell: { x: 7, z: 8 },
+      islandTriangles: 58,
       placements: 207,
       pose: 'eris-spaceport-onfoot',
-      triangles: 681
+      triangles: 779
     },
     {
       body: 'body-11',
       cell: { x: 11, z: 8 },
+      islandTriangles: 58,
       placements: 207,
       pose: 'eris-transporter-11-8',
-      triangles: 566
+      triangles: 664
     },
     {
       body: 'body-4',
       cell: { x: 2, z: 3 },
+      islandTriangles: 16,
       placements: 390,
       pose: 'dion-2-3',
-      triangles: 358
+      triangles: 422
     },
     {
       body: 'body-4',
       cell: { x: 3, z: 14 },
+      islandTriangles: 16,
       placements: 390,
       pose: 'dion-transporter',
-      triangles: 336
+      triangles: 404
     },
     {
       body: 'body-8',
       cell: { x: 4, z: 2 },
       // Gaea's two recovered windows, UR CITY and CHALDEA METROPOLIS, both place
       // into one Body surface; the frame draws only the occupied cell's (#172).
+      islandTriangles: 26,
       placements: 372,
       pose: 'gaea-ur-city-4-2',
-      triangles: 451
+      triangles: 521
     },
     {
       body: 'body-14',
       cell: { x: 4, z: 6 },
+      islandTriangles: 0,
       placements: 44,
       pose: 'vesta-parliament-4-6',
-      triangles: 352
+      triangles: 392
     },
     {
       body: 'body-14',
       cell: { x: 4, z: 6 },
+      islandTriangles: 0,
       placements: 44,
       pose: 'vesta-transporter',
-      triangles: 322
+      triangles: 362
     }
   ] as const;
 
@@ -435,10 +442,11 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
         snapshot.residents
       );
       expect(plan.triangleCount).toBe(arrival.triangles);
-      // The authored ground fill is clipped to the workspace it is handed, so a surface left on
-      // Eris would clip it away entirely at any other Body's origin.
+      // The base plane is the Body's own colour, and the island fills over it are that Body's
+      // own records: a surface left on Eris would paint the wrong sea and the wrong coasts.
       expect(plan.fillTriangleCount).toBeGreaterThan(0);
       expect(plan.groundTriangleCount).toBeGreaterThan(0);
+      expect(plan.islandTriangleCount).toBe(arrival.islandTriangles);
     });
   }
 
@@ -473,6 +481,6 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
         restored.structure,
         restored.residents
       ).triangleCount
-    ).toBe(358);
+    ).toBe(422);
   });
 });

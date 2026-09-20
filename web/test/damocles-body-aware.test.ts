@@ -207,7 +207,12 @@ describe('body-aware Object Residence', () => {
         elapsed: 0,
         frameAccumulator: 0,
         pendingBriefcaseDrop: null,
-        pose: { body: row.body, heading: 0, position: { x: 0, y: 63, z: 0 } },
+        pose: {
+          body: row.body,
+          heading: 0,
+          pitch: 0,
+          position: { x: 0, y: 63, z: 0 }
+        },
         script: initialDamoclesSaveScript(),
         scrollCounter: 0,
         structure: null

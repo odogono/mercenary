@@ -15,6 +15,7 @@ const rules: WalkRules = {
 const start = {
   body: ERIS_BODY,
   heading: 0,
+  pitch: 0,
   position: { x: 0x00_47_70_b1, y: 63, z: 0x00_88_6c_2d }
 };
 const grid = { cellsPerAxis: 16, cellUnits: 65_536, origin: { x: 64, z: 128 } };

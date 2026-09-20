@@ -12,6 +12,7 @@ import {
   type DisplayCells
 } from './display.ts';
 import type { ErisPresentationDocument } from './documents.ts';
+import { classifyPosition, type LandSea } from './islands.ts';
 import { walk, type WalkRules } from './mover.ts';
 import {
   poseOfArrival,
@@ -96,6 +97,10 @@ export interface DamoclesSnapshot {
   /// only while the player is inside the bound workspace's own 16-cell window. It falls back to
   /// `cell` on a Body with no island record.
   readonly islandCell: ErisCell;
+  /// Where the player stands against `island`: on its core, elsewhere on it, or at sea. The
+  /// renderer reads it to colour the ground plane; the coast a player cannot walk across and
+  /// the refusal to leave a craft over water are the same answer, and are not wired yet (#394).
+  readonly landSea: LandSea;
   readonly message: Presenting | null;
   readonly occupancy: { readonly kind: 'onFoot' };
   readonly pose: Pose;
@@ -240,6 +245,7 @@ export class DamoclesSession implements TitleSession<
     this.pose = {
       body: opening.body,
       heading: opening.heading,
+      pitch: opening.pitch,
       position: { ...opening.position }
     };
     this.elapsed = restore?.elapsed ?? 0;
@@ -725,6 +731,7 @@ export class DamoclesSession implements TitleSession<
         island === undefined
           ? cellOf(this.pose.position, this.surface.grid)
           : islandLocalCell(this.pose.position, this.surface.grid, island),
+      landSea: classifyPosition(this.surface, this.pose.position).kind,
       message: this.script.message,
       occupancy: { kind: 'onFoot' },
       pose: this.pose,
@@ -1226,6 +1233,7 @@ export class DamoclesSession implements TitleSession<
     this.pose = {
       body: this.pose.body,
       heading: this.pose.heading,
+      pitch: this.pose.pitch,
       position: {
         x: (x + grid.origin.x + 0.5) * grid.cellUnits,
         y: this.rules.eyeHeight,

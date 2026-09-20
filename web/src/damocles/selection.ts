@@ -206,6 +206,7 @@ export const clampStructureStep = (
   const pose = {
     body: to.body,
     heading: to.heading,
+    pitch: to.pitch,
     position: worldPosition(
       placement,
       { x: coordinates[0]!, y: local.y, z: coordinates[1]! },

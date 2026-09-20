@@ -41,7 +41,12 @@ const record = () => ({
       head: string;
       residence: ReturnType<typeof surface>;
     } | null,
-    pose: { body: 'body-14', heading: 0, position: { x: 12, y: 80, z: 34 } },
+    pose: {
+      body: 'body-14',
+      heading: 0,
+      pitch: 0,
+      position: { x: 12, y: 80, z: 34 }
+    },
     residence: [] as { instance: string; residence: Residence }[],
     script: initialDamoclesSaveScript(),
     scrollCounter: 0,

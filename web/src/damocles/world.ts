@@ -1,6 +1,7 @@
 import type {
   Catalogue,
   DetailGroup,
+  IslandBoxKind,
   Kind,
   Mesh,
   Model,
@@ -31,13 +32,34 @@ export interface ErisCell {
 export const SURFACE_CELLS = 0x10_00;
 
 /// One record of the Body's island list at `$7A16`, as the Session reads it: where a Damocles
-/// Island sits on the surface, which is what an Island-Local Cell is counted from.
+/// Island sits on the surface, what shape it is, and what colour it is painted.
+///
+/// The origin is what an Island-Local Cell is counted from. The coastline and the boxes are
+/// island-local and carried verbatim, because `classifyPosition` replays the staged test at
+/// `$0560F2` over them rather than deriving one: the core box is authored and smaller than the
+/// 16-cell workspace on three of Eris's five islands, so nothing recovers it from the polygon.
 ///
 /// A record carries no name of its own; `areaName` is the name of the area the workspace it
 /// binds publishes, and is null where it binds none (docs/research/damocles-eris-islands.md).
 export interface ErisIsland {
   readonly areaName: string | null;
+  /// The backwards box list `$0560F2` reads, in its own order: box 0 the extent, box 1 the
+  /// core, the rest exclusions. Bounds are island-local and half-open.
+  readonly boxes: readonly {
+    readonly kind: IslandBoxKind;
+    readonly x: readonly [number, number];
+    readonly z: readonly [number, number];
+  }[];
+  /// The closed coastline, island-local, and the edge words `$0561CE` scans. Empty on the 21
+  /// records that share the coastline-less stub, which is land everywhere.
+  readonly coastline: {
+    readonly edges: readonly number[];
+    readonly vertices: readonly (readonly [number, number])[];
+  };
   readonly id: string;
+  /// The record's `+8`, which `$04EB46` publishes to `$7A1A`: the colour this island is filled
+  /// in, and the colour the ground plane itself takes while the player stands on its core.
+  readonly landColour: string;
   readonly origin: ErisCell;
 }
 
@@ -50,6 +72,11 @@ export interface ErisIsland {
 export interface Pose {
   readonly body: string; // Catalogue Body id
   readonly heading: number;
+  /// Radians the view is tilted, negative looking down, level at zero. `$7AC0` on the Working
+  /// Authority, where an overhead view is a pitch poke rather than a different capture. On foot
+  /// nothing moves it, so it is level for all of play and the Save Snapshot does not carry it;
+  /// the validation views of #394 are what tilt it.
+  readonly pitch: number;
   readonly position: Vector3;
 }
 
@@ -80,6 +107,9 @@ export interface ErisPlace {
 }
 
 export interface ErisSurface {
+  /// The colour `$7C88` draws this Body's surface in wherever no island is painted over it:
+  /// its sea, on a Body that has one. Null on the VOID slot, which is not a surface.
+  readonly baseColour: string | null;
   readonly body: { readonly id: string; readonly name: string };
   readonly grid: ErisGrid;
   /// This Body's island records, in list order. Empty where the Body carries none.
@@ -107,7 +137,12 @@ const surfaceSpan = (from: number, to: number): number => {
 };
 
 /// The same gap taken signed, which is what sign-extending to 28 bits leaves.
-const surfaceOffset = (from: number, origin: number): number => {
+///
+/// This is the helper a consumer needs before it may treat Body Coordinates as numbers at all.
+/// The surface is a torus, so the arithmetic difference of two Body Coordinates is not the
+/// distance between them: Snow Island reaches body x = −8, which is 4088, and anything that
+/// subtracts a bounded rectangle's worth of cells tears the island in half at the seam.
+export const surfaceOffset = (from: number, origin: number): number => {
   const gap = wrapSurface(from - origin);
   return gap >= SURFACE_CELLS / 2 ? gap - SURFACE_CELLS : gap;
 };
@@ -160,6 +195,31 @@ export const islandLocalCell = (
   return {
     x: surfaceOffset(here.x, island.origin.x),
     z: surfaceOffset(here.z, island.origin.z)
+  };
+};
+
+/// The island's origin in raw units, on whichever of its wrap images lies nearest `position`.
+///
+/// One shift for the whole record, never one a vertex: an island is a rigid shape on the torus,
+/// so choosing its image once keeps it whole and choosing per vertex is exactly how Snow Island
+/// tears. Everything island-local — a coastline vertex, a box bound, a local cell — is then a
+/// plain offset from what this returns.
+export const islandOriginNear = (
+  position: Vector3,
+  grid: ErisGrid,
+  island: ErisIsland
+): { readonly x: number; readonly z: number } => {
+  const here = bodyCellOf(position, grid);
+  // The shift comes off the position's *own* cell, not off its wrapped Body Coordinate: a raw
+  // position is an unbounded number and may sit at a negative cell, so taking the image from
+  // the wrapped coordinate would put the origin a whole surface away from the point it is
+  // supposed to be measured from.
+  const axis = (raw: number, origin: number, wrapped: number): number =>
+    (Math.floor(raw / grid.cellUnits) - surfaceOffset(wrapped, origin)) *
+    grid.cellUnits;
+  return {
+    x: axis(position.x, island.origin.x, here.x),
+    z: axis(position.z, island.origin.z, here.z)
   };
 };
 
@@ -232,6 +292,17 @@ export const bearingFromYaw = (
     ((yaw - orientation.yawNorth) / orientation.yawUnitsPerTurn) * TURN
   );
 
+/// The Damocles pitch word `$7AC0` as the Camera's tilt in radians.
+///
+/// It counts the same units a turn as the yaw word, reads `pitchLevel` looking at the horizon,
+/// and rises putting the nose *down* — so the Camera, which pitches positive looking up, takes
+/// the negated turn (docs/research/damocles-arrival-routes.md).
+export const pitchFromWord = (
+  pitch: number,
+  orientation: ErisPresentationDocument['orientation']
+): number =>
+  ((orientation.pitchLevel - pitch) / orientation.yawUnitsPerTurn) * TURN;
+
 /// A Damocles Instance angle byte as the mesh's turn about +Y, clockwise seen from above.
 ///
 /// The byte is 256 steps per turn — a quarter of the camera yaw word, which is why the
@@ -260,6 +331,7 @@ export const placementHeading = (model: Model, byte: number | null): number => {
 export const startPose = (doc: ErisPresentationDocument): Pose => ({
   body: doc.body.id,
   heading: bearingFromYaw(doc.start.yaw, doc.orientation),
+  pitch: pitchFromWord(doc.start.pitch, doc.orientation),
   position: doc.start.position
 });
 
@@ -379,13 +451,24 @@ export const erisSurfaceFrom = (
     }
   }
   return {
+    baseColour: body.bodySurface?.baseColour ?? null,
     body: { id: body.id, name: body.name },
     grid,
     islands: catalogue.islands
       .filter(island => island.body === body.id)
       .map(island => ({
         areaName: island.areaName,
+        boxes: island.boxes.map(box => ({
+          kind: box.kind,
+          x: box.x,
+          z: box.z
+        })),
+        coastline: {
+          edges: island.coastline.edges,
+          vertices: island.coastline.vertices
+        },
         id: island.id,
+        landColour: island.landColour,
         origin: { x: island.origin[0], z: island.origin[1] }
       })),
     placements,

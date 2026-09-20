@@ -38,6 +38,7 @@ const key: ErisPlacement = {
 const pose: Pose = {
   body: 'body-11',
   heading: 0,
+  pitch: 0,
   position: { x: 0, y: 10, z: 0 }
 };
 

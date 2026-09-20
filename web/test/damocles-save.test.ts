@@ -82,6 +82,7 @@ describe('Damocles Saves', () => {
       pose: {
         body: 'body-11',
         heading: 0,
+        pitch: 0,
         position: { x: 0, y: loaded.doc.eye.heightUnits, z: 0 }
       },
       residence: carried.map(instance => ({
