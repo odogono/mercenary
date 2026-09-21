@@ -42,6 +42,7 @@ import {
   showsSurface,
   surfaceUnits,
   surfaceWindow,
+  systemBounds,
   systemWindow,
   type SystemMarker,
   type SystemProjection
@@ -191,7 +192,9 @@ const drawRange = () => {
   // they were looking; a camera still sitting at the fit is refitted, or the first resize after
   // load would leave the map reading 1.1x without anyone having touched it.
   fit = fitSystem(system.bodies, frame);
-  view = view && !atFit ? clampView(fit, view) : fit;
+  // Re-clamped through `systemBounds`, not the bare fit: a bare fit means the kernel's own
+  // ceiling, which would undo the System Range's deeper one on every single draw.
+  view = view && !atFit ? clampView(systemBounds(fit), view) : fit;
   projection = projectSystem(system.bodies, view, frame);
   // A single Body close enough to draw its own surface on. The scale relating the surface to the
   // disc is authored; the islands on it are recovered (#437, amending #405).
@@ -529,7 +532,7 @@ const handOver = (next: MapView): boolean => {
 };
 
 const controls = mountCamera({
-  camera: () => (fit && view ? { bounds: fit, fit, view } : null),
+  camera: () => (fit && view ? { bounds: systemBounds(fit), fit, view } : null),
   element: systemRange,
   frame: cameraFrame,
   onPick: (x, y) => {

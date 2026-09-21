@@ -49,11 +49,21 @@ export const zoomOf = (fit: MapView, view: MapView): number =>
 // panned out of reach. A world that wraps takes it modulo `period` instead: a
 // Body's surface is a torus 4096 Surface Cells an axis, where clamping to a
 // square would put a hard edge through an island that crosses it.
+// `maxZoom` overrides how far in a camera may go. It exists because a threshold keyed to the
+// size of the thing being looked at needs depth in proportion: the Atlas System Range hands over
+// to a Body when that Body's surface fills the frame, and the smallest recovered Body is 500
+// times smaller than the largest, so a single ceiling that suits DIALIS strands THEON. Omitted
+// everywhere else, which keeps MAX_ZOOM the default.
 export type MapBounds =
-  | { readonly centre: 'clamp'; readonly fit: MapView }
+  | {
+      readonly centre: 'clamp';
+      readonly fit: MapView;
+      readonly maxZoom?: number;
+    }
   | {
       readonly centre: 'wrap';
       readonly fit: MapView;
+      readonly maxZoom?: number;
       readonly period: number;
     };
 
@@ -72,7 +82,10 @@ export const clampView = (
 ): MapView => {
   const resolved = boundsOf(bounds);
   const { fit } = resolved;
-  const span = Math.min(fit.span, Math.max(fit.span / MAX_ZOOM, view.span));
+  const span = Math.min(
+    fit.span,
+    Math.max(fit.span / (resolved.maxZoom ?? MAX_ZOOM), view.span)
+  );
   if (resolved.centre === 'wrap') {
     return {
       cx: wrapped(view.cx, resolved.period),
@@ -118,11 +131,12 @@ export const zoomView = (
   v = 0.5,
   aspect = 1
 ): MapView => {
-  const { fit } = boundsOf(bounds);
+  const resolved = boundsOf(bounds);
+  const { fit } = resolved;
   const anchor = unproject(view, u, v, aspect);
   const span = Math.min(
     fit.span,
-    Math.max(fit.span / MAX_ZOOM, view.span / factor)
+    Math.max(fit.span / (resolved.maxZoom ?? MAX_ZOOM), view.span / factor)
   );
   return clampView(bounds, {
     cx: anchor.x - (u - 0.5) * span,

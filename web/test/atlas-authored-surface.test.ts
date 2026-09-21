@@ -3,16 +3,19 @@ import { describe, expect, test } from 'bun:test';
 import { fitBody } from '../src/atlas/bodyRange.ts';
 import { readBodySurface } from '../src/atlas/surface.ts';
 import {
+  SYSTEM_MAX_ZOOM,
   fitSystem,
   projectSystem,
   showsSurface,
   surfacePoint,
   surfaceUnits,
   surfaceWindow,
+  systemBounds,
   systemWindow,
   unitsPerCell
 } from '../src/atlas/system.ts';
 import { parseCatalogue } from '../src/catalogue/data.ts';
+import { MAX_ZOOM, zoomView } from '../src/catalogue/mapView.ts';
 import { SURFACE_CELLS } from '../src/damocles/world.ts';
 import { bodyRadius, readGammaSystem } from '../src/flyover/documents.ts';
 
@@ -86,6 +89,47 @@ describe('the hand-over between the Ranges', () => {
     expect(handed.cx).toBeCloseTo(fitted.cx, 6);
     expect(handed.cz).toBeCloseTo(fitted.cz, 6);
     expect(handed.span).toBeCloseTo(fitted.span, 6);
+  });
+
+  test('is reachable by zooming for every one of the thirty Bodies', async () => {
+    const system = await gammaSystem();
+    const fit = fitSystem(system.bodies, FRAME);
+    // The regression this pins. The trigger is keyed to a Body's own size and the recovered
+    // sizes span 500-fold, so a single ceiling suited to DIALIS strands the small moons: at the
+    // kernel's MAX_ZOOM only 8 of the 30 could be entered at all, and VESTA simply stopped at
+    // the ceiling. Every Body must be reachable, and by a margin.
+    const deepest = fit.span / SYSTEM_MAX_ZOOM;
+    let strandedAtKernelCeiling = 0;
+    for (const body of system.bodies) {
+      const handOverSpan = (surfaceUnits(body) / FRAME.height) * FRAME.width;
+      expect(handOverSpan).toBeGreaterThan(deepest);
+      if (handOverSpan < fit.span / MAX_ZOOM) {
+        strandedAtKernelCeiling += 1;
+      }
+      // And the islands band opens before the hand-over, so a reader sees them on the disc
+      // rather than crossing straight over.
+      const islandsSpan = (surfaceUnits(body) / 320) * FRAME.width;
+      expect(islandsSpan).toBeGreaterThan(handOverSpan);
+    }
+    expect(strandedAtKernelCeiling).toBe(22);
+  });
+
+  test('carries the deeper ceiling through the kernel, leaving other callers alone', async () => {
+    const system = await gammaSystem();
+    const fit = fitSystem(system.bodies, FRAME);
+    const bounds = systemBounds(fit);
+    // A bare fit still means the kernel's own ceiling, which is what the Catalogue and the Body
+    // Range pass.
+    expect(zoomView(fit, fit, 1e9).span).toBeCloseTo(fit.span / MAX_ZOOM, 6);
+    expect(zoomView(bounds, fit, 1e9).span).toBeCloseTo(
+      fit.span / SYSTEM_MAX_ZOOM,
+      6
+    );
+    // Deep enough for the smallest Body, THEON at a 40-unit derived radius.
+    const theon = system.bodies.find(body => body.id === 'theon')!;
+    expect((surfaceUnits(theon) / FRAME.height) * FRAME.width).toBeGreaterThan(
+      fit.span / SYSTEM_MAX_ZOOM
+    );
   });
 
   test('converts a window both ways without drift', async () => {

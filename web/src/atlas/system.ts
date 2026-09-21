@@ -3,6 +3,7 @@ import {
   clusterAll,
   fitView,
   project,
+  type MapBounds,
   type MapPoint,
   type MapView
 } from '../catalogue/mapView.ts';
@@ -62,6 +63,14 @@ const LABEL_GAP = 5;
 /// clipped or hidden. For ERIS, whose drawn diameter is 2,400 units, that is 0.414 units a cell.
 export const unitsPerCell = (body: GammaBody): number =>
   (2 * bodyRadius(body)) / Math.SQRT2 / SURFACE_CELLS;
+
+/// How far the System Range may zoom in. Deeper than the kernel's default because the hand-over
+/// into a Body is keyed to that Body's own size, and the recovered sizes span 500-fold: the
+/// smallest Bodies — THEON, AURORA and SAPPHIRE, whose derived radius is 40 position units —
+/// need 126,327x before their surface fills the frame, where DIALIS needs 253x. At the kernel's
+/// 8192 only 8 of the 30 Bodies could be entered by zooming at all. 2^18 leaves headroom past
+/// the deepest of them.
+export const SYSTEM_MAX_ZOOM = 262_144;
 
 /// Css pixels the authored surface axis must cover before a Body's islands are drawn on it. At
 /// this size the widest Eris island is about seven pixels, which is the point where a coastline
@@ -145,6 +154,14 @@ const aspectOf = (frame: SystemFrame): number =>
 /// The camera that shows the whole recovered System in this frame. `fitView`'s own padding
 /// leaves the outermost marker a fifth of the span to put a label in, so no pixel margin is
 /// added on top: one measured in pixels would move the marker partition with the frame width.
+/// What bounds the System camera: its fit, clamped, with a ceiling deep enough to reach the
+/// smallest Body's surface.
+export const systemBounds = (fit: MapView): MapBounds => ({
+  centre: 'clamp',
+  fit,
+  maxZoom: SYSTEM_MAX_ZOOM
+});
+
 export const fitSystem = (
   bodies: readonly GammaBody[],
   frame: SystemFrame

@@ -266,6 +266,30 @@ test('zooming into a Body reveals its islands and hands over continuously', asyn
   expect(Math.abs(Number(handed.get('z')) - 2048)).toBeLessThan(5);
 });
 
+test('a small Body hands over too, not just the large ones', async ({
+  page
+}) => {
+  // The regression this covers: the hand-over is keyed to a Body's own size, and the recovered
+  // sizes span 500-fold, so a single zoom ceiling suited to the largest stranded the other 22.
+  // VESTA, whose derived radius is 360 units against ERIS's 1,200, stopped dead at the ceiling.
+  await page.goto('/damocles/atlas?x=-630000&z=392400&span=900');
+  await expect(page.locator('#system-scale')).toContainText(
+    'VESTA surface at an authored scale',
+    { timeout: 20_000 }
+  );
+  const box = (await page.locator('#range-system').boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  for (let step = 0; step < 8; step += 1) {
+    if (/\bbody=/.test(page.url())) {
+      break;
+    }
+    await page.mouse.wheel(0, -300);
+    await page.waitForTimeout(120);
+  }
+  await expect(page).toHaveURL(/\bbody=vesta\b/);
+  await expect(page.locator('#system-scale')).toContainText('Body Range');
+});
+
 test('picking an island fills the panel and survives the link', async ({
   page
 }) => {
