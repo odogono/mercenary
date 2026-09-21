@@ -1,4 +1,9 @@
-import { panView, zoomView, type MapView } from '../catalogue/mapView.ts';
+import {
+  panView,
+  zoomView,
+  type MapBounds,
+  type MapView
+} from '../catalogue/mapView.ts';
 
 /// Slippy-map gestures over any element: drag to pan, wheel to zoom about the pointer, arrow
 /// keys to pan, `+`/`-` to zoom and `0` to fit. The arithmetic is all
@@ -26,6 +31,9 @@ export interface CameraSurface {
   /// The camera a gesture starts from and the fit that bounds it; null while there is nothing
   /// to look at, which disables every gesture.
   readonly camera: () => {
+    /// What the camera is bounded by: a clamped fit on the System Range, a wrapping surface
+    /// inside a Body.
+    readonly bounds: MapBounds | MapView;
     readonly fit: MapView;
     readonly view: MapView;
   } | null;
@@ -35,6 +43,10 @@ export interface CameraSurface {
   readonly onPick: (x: number, y: number) => void;
   /// Every camera the gestures produce.
   readonly onView: (view: MapView) => void;
+  /// A zoom-out asked for more than the widest camera the bounds allow. The Body Range uses it
+  /// to hop back to the System Range, which is the only way out of a surface that wraps and so
+  /// has no edge to reach.
+  readonly onZoomedOut?: () => void;
 }
 
 export interface CameraControls {
@@ -56,11 +68,18 @@ export const mountCamera = (surface: CameraSurface): CameraControls => {
   };
   const zoom = (factor: number, u = 0.5, v = 0.5) => {
     const camera = surface.camera();
-    if (camera) {
-      surface.onView(
-        zoomView(camera.fit, camera.view, factor, u, v, surface.frame().aspect)
-      );
+    if (!camera) {
+      return;
     }
+    // Asked for beyond the widest view rather than merely at it, so holding the floor is not
+    // mistaken for trying to leave.
+    if (factor < 1 && camera.view.span / factor > camera.fit.span) {
+      surface.onZoomedOut?.();
+      return;
+    }
+    surface.onView(
+      zoomView(camera.bounds, camera.view, factor, u, v, surface.frame().aspect)
+    );
   };
   element.addEventListener(
     'wheel',
@@ -123,7 +142,7 @@ export const mountCamera = (surface: CameraSurface): CameraControls => {
     drag.y = event.clientY;
     const { aspect, height, width } = surface.frame();
     surface.onView(
-      panView(camera.fit, camera.view, dx / width, dy / height, aspect)
+      panView(camera.bounds, camera.view, dx / width, dy / height, aspect)
     );
   });
   const release = (event: PointerEvent) => {
@@ -160,7 +179,13 @@ export const mountCamera = (surface: CameraSurface): CameraControls => {
     const pan = pans[event.key];
     if (pan) {
       surface.onView(
-        panView(camera.fit, camera.view, pan[0], pan[1], surface.frame().aspect)
+        panView(
+          camera.bounds,
+          camera.view,
+          pan[0],
+          pan[1],
+          surface.frame().aspect
+        )
       );
     } else if (event.key === '+' || event.key === '=') {
       zoom(BUTTON_ZOOM);

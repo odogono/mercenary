@@ -1,4 +1,5 @@
 import { gridStep, project, type MapView } from '../catalogue/mapView.ts';
+import { SURFACE_CELLS } from '../damocles/world.ts';
 import {
   layOutLabels,
   type SystemFrame,
@@ -20,6 +21,10 @@ const LABEL_FONT = `${LABEL_FONT_SIZE}px ui-monospace, SFMono-Regular, Menlo, Mo
 const OUTLINE_WIDTH = 1;
 /// Css pixels between a marker's edge and the ring that says it stands for several Bodies.
 const GROUP_RING = 3;
+/// The Body Coordinate seam, where the surface wraps. Brighter than the grid because a uniform
+/// lattice looks the same everywhere, and a reader panning across the wrap needs to see that
+/// they have crossed something rather than that nothing happened.
+const SEAM = '#2d769788';
 
 export const frameOf = (element: HTMLElement): SystemFrame => {
   const rect = element.getBoundingClientRect();
@@ -70,6 +75,54 @@ const drawGrid = (
     context.lineTo(x, frame.height);
   }
   for (let y = start(origin.v * frame.height); y < frame.height; y += pixels) {
+    context.moveTo(0, y);
+    context.lineTo(frame.width, y);
+  }
+  context.stroke();
+};
+
+/// A Body's surface: sea in the Body's own recovered base colour, and a Surface Cell grid with
+/// its wrapped copies. Coastlines arrive in #431; until then this is the sea and the seam, and
+/// the grid is what makes a pan across the wrap read as movement rather than as a still canvas.
+export const drawBodySurface = (
+  canvas: HTMLCanvasElement,
+  view: MapView,
+  frame: SystemFrame,
+  seaColour: string
+): void => {
+  const context = surfaceOf(canvas, frame);
+  if (!context) {
+    return;
+  }
+  // The surface has no edge to leave blank: every pixel of the frame is on it, because the
+  // camera wraps. So the sea is the whole frame rather than a rectangle within it.
+  context.fillStyle = seaColour;
+  context.fillRect(0, 0, frame.width, frame.height);
+  drawGrid(context, view, frame);
+  // Every wrap image of x = 0 and z = 0 that falls in the frame. A Body Coordinate far apart in
+  // number from another may be its neighbour, and this is where that happens.
+  const aspect = frame.height / Math.max(frame.width, 1);
+  context.lineWidth = 1;
+  context.strokeStyle = SEAM;
+  context.beginPath();
+  for (
+    let seam =
+      Math.floor((view.cx - view.span / 2) / SURFACE_CELLS) * SURFACE_CELLS;
+    seam <= view.cx + view.span / 2;
+    seam += SURFACE_CELLS
+  ) {
+    const x = project(view, { x: seam, z: 0 }, aspect).u * frame.width;
+    context.moveTo(x, 0);
+    context.lineTo(x, frame.height);
+  }
+  const halfHeight = (view.span * aspect) / 2;
+  for (
+    let seam =
+      Math.floor((view.cz - halfHeight) / SURFACE_CELLS) * SURFACE_CELLS;
+    seam <= view.cz + halfHeight;
+    seam += SURFACE_CELLS
+  ) {
+    const y = project(view, { x: 0, z: seam }, aspect).v * frame.height;
     context.moveTo(0, y);
     context.lineTo(frame.width, y);
   }
