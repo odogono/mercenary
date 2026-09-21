@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  bodySize,
   readFlyoverPresentation,
   readGammaSystem
 } from '../src/flyover/documents.ts';
@@ -318,6 +319,49 @@ describe('the recovered Gamma System document', () => {
       positionKind: 'capture-time-sample',
       sourceIndex: 29
     });
+  });
+
+  test('decodes the packed binary float in radiusExtent', async () => {
+    const document = readGammaSystem(
+      await Bun.file('../payload/damocles/system.json').json()
+    );
+    const of = (id: string) =>
+      bodySize(document.bodies.find(body => body.id === id)!);
+    // The decode's own test: a packed float's mantissa is normalised, an integer's is not.
+    // Eleven distinct mantissas across thirty Bodies, every one of them in range (#424).
+    for (const body of document.bodies) {
+      expect(body.radiusExtent & 0xff_ff).toBeGreaterThanOrEqual(0x10_00);
+      expect(body.radiusExtent & 0xff_ff).toBeLessThan(0x20_00);
+    }
+    expect(
+      new Set(document.bodies.map(body => body.radiusExtent & 0xff_ff)).size
+    ).toBe(11);
+    // DIALIS is the star and becomes the largest object in the System. Read as an integer it
+    // is unremarkable, which is the structural corroboration of the decode.
+    expect(of('dialis')).toBe(5_120_000);
+    expect(Math.max(...document.bodies.map(bodySize))).toBe(of('dialis'));
+    // In every satellite cluster the structurally inferred Primary outranks its satellites.
+    for (const [primary, satellites] of [
+      ['eris', ['solon', 'theon', 'vesta', 'metis', 'lucan']],
+      ['triton', ['pan', 'thalia']],
+      ['juno', ['bacchus', 'jason', 'tolosa', 'perseus']],
+      ['gaea', ['cronus', 'cyclopes']],
+      ['dion', ['atropos', 'clotho', 'lachesis']],
+      ['midas', ['acheron']],
+      ['logos', ['aurora']],
+      ['mentor', ['sapphire']]
+    ] as const) {
+      for (const satellite of satellites) {
+        expect(of(primary)).toBeGreaterThan(of(satellite));
+      }
+    }
+    // Decoded the System spans 500x; read as an integer it spans 1.69x, which is what made
+    // TRITON draw barely larger than PAN.
+    const sizes = document.bodies.map(bodySize);
+    expect(Math.max(...sizes) / Math.min(...sizes)).toBe(500);
+    expect(of('triton') / of('pan')).toBeCloseTo(13.64, 2);
+    // Checked against a captured game frame, where ERIS drew 3.24x VESTA at near-equal range.
+    expect(of('eris') / of('vesta')).toBeCloseTo(3.33, 2);
   });
 
   test('pins the recovered Body colour table', async () => {

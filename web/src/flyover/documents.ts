@@ -110,10 +110,25 @@ export interface GammaBody {
     readonly z: number;
   };
   readonly positionKind?: 'capture-time-sample';
+  /// The raw longword from `$006040 + 4 * sourceIndex`, which is a packed binary float rather
+  /// than the integer it looks like. Read it through `bodySize` (#424); read as an integer it
+  /// flattens the System's 500-fold size range to 1.69-fold.
   readonly radiusExtent: number;
   readonly sourceColour: number;
   readonly sourceIndex: number;
 }
+
+/// A Body's size, decoded from the packed binary float in `radiusExtent`: the low word is a
+/// mantissa normalised into `$1000..$1FFF`, an implicit 1 at bit 12, and the high word is a
+/// binary exponent. Decoded, not derived — `docs/research/damocles-gamma-system.md` records the
+/// four corroborations, the strongest being that the antilog table at `$60000` emits exactly
+/// this form, which is why `$052EBC` indexes it with the mantissa alone.
+///
+/// The unit is the field's own. Nothing recovered ties it to the coordinate scale, so a consumer
+/// drawing a Body against distances needs a divisor of its own and must label it derived
+/// (ADR 0014).
+export const bodySize = (body: GammaBody): number =>
+  ((body.radiusExtent & 0xff_ff) / 0x10_00) * 2 ** (body.radiusExtent >>> 16);
 
 export interface GammaSystemDocument {
   readonly bodies: readonly GammaBody[];

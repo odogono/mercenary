@@ -208,7 +208,7 @@ are not claimed as a stable table.
 | `$0082DC` contains orbital angular velocities                          | **Partially confirmed**                               | Values drive a per-slot angular phase, but rotation/orbit/sky-transform semantics are not separated and `VOID` also has a value.                          |
 | A parallel record supplies type (star/planet/moon/comet)               | **Partially confirmed**                               | No explicit type byte was found. Confirmed symmetric draw clusters plus relative centres support a structurally inferred star/9-planet/19-moon partition. |
 | A parallel record supplies Primary                                     | **Partially confirmed**                               | No explicit parent field was found. Cluster anchors support the Primary assignments below; DAMOCLES's Primary remains Unresolved.                         |
-| A parallel record supplies radius                                      | **Confirmed (encoding unresolved)**                   | `$006040 + selector` controls apparent size in the all-body scan and is subtracted from range for arrival/contact; physical units are unknown.            |
+| A parallel record supplies radius                                      | **Confirmed (encoding decoded, #424)**                | `$006040 + selector` controls apparent size in the all-body scan and is subtracted from range for arrival/contact. The field is a packed binary float; the physical unit is still unknown. |
 | A parallel record supplies orbit radius/elements or Cartesian position | **Partially confirmed**                               | X/Y/Z body-centre arrays are recovered. No orbit centre, plane, eccentricity, or separation of orbital from rotational phase is decoded.                  |
 | The game draws bodies at range from VOID                               | **Confirmed (code path), live appearance Unresolved** | The space branch calls the 30-body range/sort/project loop. No live VOID display capture verifies final appearance.                                       |
 
@@ -299,16 +299,18 @@ reads X/Y/Z, computes and sorts range, derives apparent size from `$006040`,
 then submits the body through the normal geometry call at `$04FBAE`.
 `$052FCA..$052FEA` also subtracts `$006040(selector)` from nearest-body range
 for its arrival/contact test. This confirms `$006040` as the engine's
-radius/extent parameter, although its numeric encoding and physical unit are
-not decoded.
+radius/extent parameter. Its numeric encoding is decoded below (#424): the
+field is a packed binary float, not the integer its raw longword suggests. The
+physical unit is still not decoded.
 
 The space branch at `$0598A6..$059912` calls that full scan at `$0598FA`.
 Consequently the VOID view does not depend only on VOID's one-entry local draw
 list: it range-tests and sorts all 30 physical selectors (`$74` through `$00`),
 excluding the VOID sentinel `$78`, before drawing the survivors.
 
-Raw first-cold-run records follow. X/Y/Z and extent are signed/unsigned engine
-integers, not authored physical units. Every Y value, the complete extent
+Raw first-cold-run records follow. X/Y/Z are signed engine integers, not
+authored physical units; the extent column is a packed binary float whose
+decode is below (#424). Every Y value, the complete extent
 table, and slots 0–28 and 30 of X/Z are identical in the second cold run.
 DAMOCLES alone moves between captures: X `1879 -> 1406`, Z
 `306253 -> 307781`. Normalising only DAMOCLES's X/Z longword to zero yields
@@ -593,6 +595,95 @@ planet entries, the 30 named plus VOID plus one unused. This project recovers
 31 name slots at `$0081DC` (0–29 plus VOID at 30). The 32nd is unaccounted for;
 the parallel phase-rate source at `$0082DC` is 32 longwords, which may be where
 the claim comes from.
+
+### Issue #424 body size at `$006040` — Confirmed (encoding decoded; physical unit Unresolved)
+
+The `$006040` field the body-centre section above calls a "radius/extent
+parameter" is a **packed binary float**, not the integer its raw longword
+suggests. The low word is a mantissa normalised into `$1000..$1FFF`, an
+implicit 1 at bit 12, and the high word is a binary exponent:
+
+```
+size = (raw & $FFFF) / $1000 * 2 ^ (raw >> 16)
+```
+
+Four independent lines agree, and none of them was used to construct the
+decode:
+
+1. **Every one of the thirty recovered mantissas** lies in `$1000..$1FFF`,
+   across only eleven distinct values (`$1180`, `$12C0`, `$1388`, `$1400`,
+   `$1680`, `$1770`, `$17C0`, `$1900`, `$1B80`, `$1E00`, `$1F40`). An integer
+   field is not normalised by accident.
+2. **The antilog table at `$60000` emits exactly that form.** Its entry at
+   index `$800` is 5792, which is `4096 * sqrt 2`, so the table holds
+   `4096 * 2 ^ (i / 4096)` across one octave and its outputs land in
+   `4096..8191` — the same normalised range. This is why the all-body scan at
+   `$052EBC` indexes the paired table with `d1.w`, the **mantissa alone**: a
+   word-sized index into a 21-bit longword only makes sense if the field is
+   packed.
+3. **Structural agreement.** Decoded, DIALIS becomes the largest object in the
+   System, and in every satellite cluster the member this document's
+   structurally inferred table names the Primary outranks its satellites. Read
+   as an integer neither holds: PERSEUS outranks MIDAS and the star is
+   unremarkable. This is a fourth independent corroboration of the
+   type/Primary partition, from a field that partition never consulted.
+4. **Agreement with a live frame.** Decoded, ERIS is 3.33 times VESTA.
+   Measured off a captured game frame of the ERIS cluster, where the two sit at
+   nearly equal range from the viewer, ERIS draws 3.24 times VESTA — 2.8 per
+   cent agreement with a number the decode did not see.
+
+Read as an integer the System spans **1.69 times**, from 857,088 to 1,446,792,
+and every body is nearly the same size. Decoded it spans **500 times**.
+
+| Index | Name | Raw | Hex | Exponent | Mantissa | Decoded size | Type (inferred) |
+| ----: | ---- | --: | --- | -------: | -------- | -----------: | --------------- |
+| 0 | DIALIS | 1446792 | `0x161388` | 22 | `0x1388` | 5,120,000 | Star |
+| 1 | ICARUS | 991040 | `0x0f1f40` | 15 | `0x1f40` | 64,000 | Planet |
+| 2 | MIDAS | 1056576 | `0x101f40` | 16 | `0x1f40` | 128,000 | Planet |
+| 3 | ACHERON | 925184 | `0x0e1e00` | 14 | `0x1e00` | 30,720 | Moon |
+| 4 | DION | 1122112 | `0x111f40` | 17 | `0x1f40` | 256,000 | Planet |
+| 5 | ATROPOS | 922624 | `0x0e1400` | 14 | `0x1400` | 20,480 | Moon |
+| 6 | CLOTHO | 1054336 | `0x101680` | 16 | `0x1680` | 92,160 | Moon |
+| 7 | LACHESIS | 1053056 | `0x101180` | 16 | `0x1180` | 71,680 | Moon |
+| 8 | GAEA | 1120512 | `0x111900` | 17 | `0x1900` | 204,800 | Planet |
+| 9 | CRONUS | 988160 | `0x0f1400` | 15 | `0x1400` | 40,960 | Moon |
+| 10 | CYCLOPES | 1053696 | `0x101400` | 16 | `0x1400` | 81,920 | Moon |
+| 11 | ERIS | 1184448 | `0x1212c0` | 18 | `0x12c0` | 307,200 | Planet |
+| 12 | SOLON | 987520 | `0x0f1180` | 15 | `0x1180` | 35,840 | Moon |
+| 13 | THEON | 857088 | `0x0d1400` | 13 | `0x1400` | 10,240 | Moon |
+| 14 | VESTA | 1054336 | `0x101680` | 16 | `0x1680` | 92,160 | Moon |
+| 15 | METIS | 923264 | `0x0e1680` | 14 | `0x1680` | 23,040 | Moon |
+| 16 | LUCAN | 922624 | `0x0e1400` | 14 | `0x1400` | 20,480 | Moon |
+| 17 | LOGOS | 1184648 | `0x121388` | 18 | `0x1388` | 320,000 | Planet |
+| 18 | AURORA | 857088 | `0x0d1400` | 13 | `0x1400` | 10,240 | Moon |
+| 19 | TRITON | 1316720 | `0x141770` | 20 | `0x1770` | 1,536,000 | Planet |
+| 20 | PAN | 1055616 | `0x101b80` | 16 | `0x1b80` | 112,640 | Moon |
+| 21 | THALIA | 989440 | `0x0f1900` | 15 | `0x1900` | 51,200 | Moon |
+| 22 | JUNO | 1318720 | `0x141f40` | 20 | `0x1f40` | 2,048,000 | Planet |
+| 23 | BACCHUS | 1053696 | `0x101400` | 16 | `0x1400` | 81,920 | Moon |
+| 24 | JASON | 1053696 | `0x101400` | 16 | `0x1400` | 81,920 | Moon |
+| 25 | TOLOSA | 1054336 | `0x101680` | 16 | `0x1680` | 92,160 | Moon |
+| 26 | PERSEUS | 1120192 | `0x1117c0` | 17 | `0x17c0` | 194,560 | Moon |
+| 27 | MENTOR | 991040 | `0x0f1f40` | 15 | `0x1f40` | 64,000 | Planet |
+| 28 | SAPPHIRE | 857088 | `0x0d1400` | 13 | `0x1400` | 10,240 | Moon |
+| 29 | DAMOCLES | 991040 | `0x0f1f40` | 15 | `0x1f40` | 64,000 | Comet |
+
+The **physical unit remains Unresolved**: the decode yields sizes in their own
+unit and nothing recovered ties that unit to the positional one. For a
+consumer drawing a body against the distance scale, non-overlap of all thirty
+bodies bounds the divisor below at **166.4** (tightest pair ERIS and VESTA,
+2,400 units apart). That is a bound, not a decoding, and must be labelled
+derived wherever it is used (ADR 0014).
+
+`payload/damocles/system.json` continues to publish the raw longword as
+`radiusExtent`, unchanged, so no schema or value change follows from this. Its
+`coverage` block now states that the encoding is decoded and the physical unit
+is not.
+
+The provenance is worth recording: the packing was found because an Atlas
+prototype drew every body from the raw integer and TRITON came out barely
+larger than PAN, which cannot be right for a planet beside its satellite. The
+working is in `docs/research/atlas-system-camera-prototype.md`.
 
 ### Cities / named places — Confirmed (pointer + shape)
 
