@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  bodyRadius,
+  bodySize,
   readFlyoverPresentation,
   readGammaSystem
 } from '../src/flyover/documents.ts';
@@ -128,7 +130,7 @@ describe('the composed Targ System', () => {
 });
 
 describe('the composed Gamma System', () => {
-  test('uses the stable recovered centres and colours with derived radii', async () => {
+  test('uses the stable recovered centres, colours and decoded sizes', async () => {
     const authority = readGammaSystem(
       await json('../payload/damocles/system.json')
     );
@@ -149,19 +151,10 @@ describe('the composed Gamma System', () => {
     expect(first.map(body => body.id)).not.toContain('damocles');
     for (const body of first) {
       const recovered = stable.find(candidate => candidate.id === body.id)!;
-      const nearest = Math.min(
-        ...stable
-          .filter(candidate => candidate.id !== body.id)
-          .map(candidate =>
-            Math.hypot(
-              candidate.position.x - recovered.position.x,
-              candidate.position.y - recovered.position.y,
-              candidate.position.z - recovered.position.z
-            )
-          )
-      );
       expect(body.position).toEqual(recovered.position);
-      expect(body.displayRadiusUnits).toBe(nearest * 0.2);
+      // The Body's own decoded extent over the derived divisor, not a fraction of how far away
+      // its neighbours happen to be.
+      expect(body.displayRadiusUnits).toBe(bodyRadius(recovered));
       expect(body.colour).toBe(recovered.baseColour);
       expect(body.ranges).toEqual(['orbital']);
       expect(body.provenance).toEqual({
@@ -172,6 +165,54 @@ describe('the composed Gamma System', () => {
         ranges: 'authored'
       });
       expect('primaryId' in body).toBeFalse();
+    }
+  });
+
+  test('draws the System at its recovered relative sizes', async () => {
+    const authority = readGammaSystem(
+      await json('../payload/damocles/system.json')
+    );
+    const stable = authority.bodies.filter(
+      body => body.positionKind === undefined
+    );
+    const presentation = readFlyoverPresentation(
+      await json('flyover/gamma.json'),
+      'gamma',
+      stable.map(body => body.id)
+    );
+    const bodies = composeGammaSystem(authority, presentation).bodiesAt(0);
+    const radius = new Map(
+      bodies.map(body => [body.id, body.displayRadiusUnits])
+    );
+    const at = (id: string) => radius.get(id)!;
+    // DIALIS is the star and the largest object; the smallest moons are a five-hundredth of it.
+    expect(at('dialis')).toBe(20_000);
+    expect(at('theon')).toBe(40);
+    expect(at('eris')).toBe(1200);
+
+    // The assertion the old rule failed: every pair's drawn order matches its decoded order.
+    // `nearest * 0.2` got 196 of these 406 comparisons backwards, because it measured how
+    // isolated a Body was rather than how large.
+    let pairs = 0;
+    for (const [index, a] of stable.entries()) {
+      for (const b of stable.slice(index + 1)) {
+        pairs += 1;
+        expect(at(a.id) > at(b.id)).toBe(bodySize(a) > bodySize(b));
+      }
+    }
+    expect(pairs).toBe(406);
+
+    // Nothing intersects, which is the bound the divisor behind `bodyRadius` was chosen for.
+    for (const [index, a] of stable.entries()) {
+      for (const b of stable.slice(index + 1)) {
+        expect(at(a.id) + at(b.id)).toBeLessThan(
+          Math.hypot(
+            a.position.x - b.position.x,
+            a.position.y - b.position.y,
+            a.position.z - b.position.z
+          )
+        );
+      }
     }
   });
 });

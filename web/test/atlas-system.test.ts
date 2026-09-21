@@ -3,7 +3,6 @@ import { describe, expect, test } from 'bun:test';
 import { bodyFacts, bodyProvenance } from '../src/atlas/panel.ts';
 import { atlasHref, atlasSearch, readAtlasState } from '../src/atlas/state.ts';
 import {
-  bodyRadius,
   fitSystem,
   labelOf,
   layOutLabels,
@@ -18,7 +17,11 @@ import {
   zoomOf,
   zoomView
 } from '../src/catalogue/mapView.ts';
-import { readGammaSystem, type GammaBody } from '../src/flyover/documents.ts';
+import {
+  bodyRadius,
+  readGammaSystem,
+  type GammaBody
+} from '../src/flyover/documents.ts';
 
 const FRAME = { height: 600, width: 900 };
 const ASPECT = FRAME.height / FRAME.width;

@@ -29,7 +29,8 @@ export type RadiusRule =
       readonly kind: 'angular-diameter';
       readonly orbitalDistanceUnits: number;
     }
-  | { readonly fraction: number; readonly kind: 'nearest-neighbour' };
+  | { readonly fraction: number; readonly kind: 'nearest-neighbour' }
+  | { readonly kind: 'recovered-extent' };
 
 export interface FlyoverBodyPresentation {
   readonly id: string;
@@ -129,6 +130,21 @@ export interface GammaBody {
 /// (ADR 0014).
 export const bodySize = (body: GammaBody): number =>
   ((body.radiusExtent & 0xff_ff) / 0x10_00) * 2 ** (body.radiusExtent >>> 16);
+
+/// Position units per unit of decoded size, turning a Body's size into a radius on the same
+/// scale as its recovered position. **Derived, not decoded** (ADR 0014): #424 decodes the sizes
+/// but not their physical unit, and nothing recovered ties that unit to the positional one. The
+/// bound is that no two of the thirty Bodies may overlap, which needs at least 166.4 from the
+/// tightest pair, ERIS and VESTA at 2,400 units. 256 is the power of two above it and a shift on
+/// a 68000. Being a lower bound, a Body may be smaller than this and never larger.
+///
+/// It lives here rather than in a surface because it is a property of the field's unit. Two
+/// surfaces drawing Bodies to scale must not each carry a copy of it and drift apart.
+const RADIUS_DIVISOR = 256;
+
+/// A Body's radius in position units, so it can be drawn against the distance scale.
+export const bodyRadius = (body: GammaBody): number =>
+  bodySize(body) / RADIUS_DIVISOR;
 
 export interface GammaSystemDocument {
   readonly bodies: readonly GammaBody[];
@@ -444,6 +460,15 @@ const radiusRule = (
         `${path}.orbitalDistanceUnits`
       )
     };
+  }
+  if (kind === 'recovered-extent') {
+    // No parameters: the radius is the Body's own decoded extent over RADIUS_DIVISOR, so there
+    // is nothing here for a presentation to choose.
+    object(value, path, ['kind']);
+    if (systemId !== 'gamma') {
+      fail(path, 'uses an invalid radius rule for this Body');
+    }
+    return { kind };
   }
   if (kind === 'nearest-neighbour') {
     const rule = object(value, path, ['kind', 'fraction']);
