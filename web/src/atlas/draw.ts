@@ -1,5 +1,6 @@
 import { gridStep, project, type MapView } from '../catalogue/mapView.ts';
 import { SURFACE_CELLS } from '../damocles/world.ts';
+import { wrapImages, type BodySurface } from './surface.ts';
 import {
   layOutLabels,
   type SystemFrame,
@@ -81,14 +82,17 @@ const drawGrid = (
   context.stroke();
 };
 
-/// A Body's surface: sea in the Body's own recovered base colour, and a Surface Cell grid with
-/// its wrapped copies. Coastlines arrive in #431; until then this is the sea and the seam, and
-/// the grid is what makes a pan across the wrap read as movement rather than as a still canvas.
+/// A Body's surface: sea in the Body's own recovered base colour, every recovered Damocles
+/// Island filled in its own land colour with each of its wrap images, and a Surface Cell grid
+/// over the top. The grid and the seam sit above the land so the coordinate reference stays
+/// readable on it, and the seam is brighter than the grid because a uniform lattice looks
+/// identical everywhere.
 export const drawBodySurface = (
   canvas: HTMLCanvasElement,
   view: MapView,
   frame: SystemFrame,
-  seaColour: string
+  seaColour: string,
+  surface: BodySurface | undefined
 ): void => {
   const context = surfaceOf(canvas, frame);
   if (!context) {
@@ -98,10 +102,33 @@ export const drawBodySurface = (
   // camera wraps. So the sea is the whole frame rather than a rectangle within it.
   context.fillStyle = seaColour;
   context.fillRect(0, 0, frame.width, frame.height);
+  const aspect = frame.height / Math.max(frame.width, 1);
+  for (const island of surface?.islands ?? []) {
+    context.fillStyle = island.landColour;
+    context.strokeStyle = OUTLINE;
+    context.lineWidth = OUTLINE_WIDTH;
+    for (const image of wrapImages(island.outline, view, aspect)) {
+      context.beginPath();
+      for (const [index, point] of image.entries()) {
+        const { u, v } = project(view, point, aspect);
+        const x = u * frame.width,
+          y = v * frame.height;
+        if (index === 0) {
+          context.moveTo(x, y);
+        } else {
+          context.lineTo(x, y);
+        }
+      }
+      // A coastline is a closed ring, so the fill and the stroke both close it rather than
+      // relying on the vertex list repeating its first point.
+      context.closePath();
+      context.fill();
+      context.stroke();
+    }
+  }
   drawGrid(context, view, frame);
   // Every wrap image of x = 0 and z = 0 that falls in the frame. A Body Coordinate far apart in
   // number from another may be its neighbour, and this is where that happens.
-  const aspect = frame.height / Math.max(frame.width, 1);
   context.lineWidth = 1;
   context.strokeStyle = SEAM;
   context.beginPath();
