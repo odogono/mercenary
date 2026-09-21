@@ -12,6 +12,8 @@ import { panView, zoomView, type MapView } from '../catalogue/mapView.ts';
 /// `catalogue/map.ts`, which #415 deletes outright once the Atlas absorbs its map.
 
 const BUTTON_ZOOM = 1.5;
+/// A double press zooms by this much, as a slippy map's double-click and double-tap do.
+const DOUBLE_ZOOM = 2;
 const KEY_PAN = 0.1;
 /// Css pixels of movement before a press becomes a drag rather than a pick.
 const DRAG_THRESHOLD = 4;
@@ -75,6 +77,17 @@ export const mountCamera = (surface: CameraSurface): CameraControls => {
     },
     { passive: false }
   );
+  // Double-click and, because `touch-action: none` leaves the browser's own double-tap gesture
+  // alone, double-tap. Anchored under the pointer, so the spot pressed stays put. A press on a
+  // marker has already been handled as a pick by then, so in practice this zooms empty space.
+  element.addEventListener('dblclick', event => {
+    if (!surface.camera()) {
+      return;
+    }
+    event.preventDefault();
+    const { u, v } = at(event);
+    zoom(DOUBLE_ZOOM, u, v);
+  });
   let drag: {
     moved: boolean;
     pointerId: number;

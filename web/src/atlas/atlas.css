@@ -244,14 +244,22 @@ h2 {
   display: none;
 }
 
+/* One row, always. The scale readout is written from inside the ResizeObserver on the map, so
+   a toolbar that could wrap would shrink the frame that had just been measured. */
 #atlas.camera #system-toolbar {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
+  /* A grid item defaults to `min-width: auto`, so without this the unwrappable toolbar sets the
+     stage column's minimum width and pushes the map out under the sidebar. */
+  min-width: 0;
   gap: 0.25rem;
 }
 
 #system-toolbar button {
+  flex: none;
   min-width: 2rem;
+  white-space: nowrap;
   padding: 0.15rem 0.5rem;
   color: var(--text);
   font-family: inherit;
@@ -295,5 +303,9 @@ h2 {
 }
 
 #system-scale {
+  overflow: hidden;
+  min-width: 0;
   margin-left: 0.5rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }

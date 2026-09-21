@@ -25,6 +25,7 @@ import {
   markerAt,
   markerView,
   projectSystemAt,
+  sizeGrowth,
   type MarkerProjection
 } from './systemCamera.ts';
 
@@ -67,6 +68,11 @@ let projection: SystemProjection | undefined;
 let view: MapView | undefined;
 let fit: MapView | undefined;
 let markers: MarkerProjection | undefined;
+/// Prototype only: whether discs grow as the camera closes in. A toggle rather than a setting,
+/// so the authored growth can be judged against the extent ratio on its own.
+let growing = true;
+/// Prototype only: whether the camera is still the untouched fit, so a resize refits it.
+let atFit = true;
 
 const selectedBody = () => {
   const current = state;
@@ -82,11 +88,14 @@ const drawCameraRange = () => {
     return;
   }
   const frame = frameOf(systemRange);
-  // The fit span depends on the frame's aspect, so a resize changes it. Re-clamp the reader's
-  // camera into the new fit rather than refitting it, which would throw away where they were.
+  // The fit span depends on the frame's aspect, so a resize changes it. A camera the reader has
+  // moved is re-clamped into the new fit rather than refitted, which would throw away where
+  // they were looking; a camera still sitting at the fit is refitted, or the first resize after
+  // load would leave the map reading 1.1x without anyone having touched it.
   fit = fitSystem(system.bodies, frame);
-  view = view ? clampView(fit, view) : fit;
-  markers = projectSystemAt(system.bodies, view, frame);
+  view = view && !atFit ? clampView(fit, view) : fit;
+  const growth = growing ? sizeGrowth(fit, view) : 1;
+  markers = projectSystemAt(system.bodies, view, frame, growth);
   const labels = drawMarkerRange(canvas, markers, view, frame);
   if (labels) {
     placeLabels(labelLayer, labels);
@@ -108,10 +117,16 @@ const drawCameraRange = () => {
   // The scale readout lives in the toolbar rather than the status line, as the Catalogue's
   // does. The toolbar's height never changes, so the longest reading cannot shrink the frame
   // this function has already measured.
+  // The ratio to the recovered extent is stated rather than implied: a disc is a fraction of
+  // what the recovered number would draw against the distance scale, and never that number.
+  const widest = Math.max(...system.bodies.map(body => body.radiusExtent));
+  const recovered = widest / markers.unitsPerPixel;
+  const drawn = Math.max(...markers.markers.map(marker => marker.radius));
   node('system-scale').textContent =
     `zoom ${zoom < 10 ? zoom.toFixed(1).replace(/\.0$/, '') : Math.round(zoom).toLocaleString('en-GB')}×` +
     ` · ${formatUnits(markers.unitsPerPixel)} engine units per pixel` +
-    ` · grid ${formatUnits(gridStep(view.span, frame.width))} units`;
+    ` · grid ${formatUnits(gridStep(view.span, frame.width))} units` +
+    ` · discs 1/${Math.round(recovered / Math.max(drawn, 1))} of recovered extent`;
   const withheld = labels?.suppressed.length ?? 0;
   const onFrame = markers.markers.length - (labels?.offscreen.length ?? 0);
   status.textContent = onFrame
@@ -278,6 +293,7 @@ const mountPrototypeCamera = () => {
         return;
       }
       if (marker.bodyIds.length > 1) {
+        atFit = false;
         view = markerView(marker, system.bodies, fit, frameOf(systemRange));
         drawRange();
       } else {
@@ -285,6 +301,13 @@ const mountPrototypeCamera = () => {
       }
     },
     onView: next => {
+      // Comparing against the fit rather than flagging every gesture, so Fit System and the
+      // `0` key put the map back to a camera a later resize will refit.
+      atFit =
+        !!fit &&
+        next.cx === fit.cx &&
+        next.cz === fit.cz &&
+        next.span === fit.span;
       view = next;
       drawRange();
     }
@@ -292,6 +315,13 @@ const mountPrototypeCamera = () => {
   node('system-zoom-out').addEventListener('click', controls.zoomOut);
   node('system-zoom-in').addEventListener('click', controls.zoomIn);
   node('system-fit').addEventListener('click', controls.fit);
+  const sizes = node('system-sizes');
+  sizes.addEventListener('click', () => {
+    growing = !growing;
+    sizes.setAttribute('aria-pressed', String(growing));
+    sizes.textContent = growing ? 'Sizes: growing' : 'Sizes: fixed';
+    drawRange();
+  });
   systemRange.addEventListener('pointermove', event => {
     const point = pointAt(event);
     const marker = markers && markerAt(markers, point.x, point.y);

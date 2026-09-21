@@ -6,7 +6,8 @@ import {
   markerAt,
   markerLabels,
   markerView,
-  projectSystemAt
+  projectSystemAt,
+  sizeGrowth
 } from '../src/atlas/systemCamera.ts';
 import {
   clusterAll,
@@ -147,7 +148,59 @@ describe('the marker partition', () => {
 });
 
 describe('the markers themselves', () => {
-  test('keep one size at every camera, in the recovered extent ratio', async () => {
+  test('grow with the camera, from the fit picture up to a stop', async () => {
+    const system = await gammaSystem();
+    const fit = fitSystem(system.bodies, FRAME);
+    // The fit camera is the extent ratio on its own, so growth cannot flatter it.
+    expect(sizeGrowth(fit, fit)).toBe(1);
+    const growths = [4, 16, 36, 512].map(factor =>
+      sizeGrowth(fit, zoomView(fit, fit, factor))
+    );
+    expect(growths).toEqual([2, 4, 6, 6]);
+    // Never a claim about recovered size: the widest extent drawn against the distance scale
+    // would be 146 px at the fit camera and 508 times its own separation from its neighbours,
+    // so a grown disc stays a small fraction of it.
+    const deep = zoomView(fit, fit, 36);
+    const widest = Math.max(...system.bodies.map(value => value.radiusExtent));
+    const projection = projectSystemAt(
+      system.bodies,
+      deep,
+      FRAME,
+      sizeGrowth(fit, deep)
+    );
+    const drawn = Math.max(...projection.markers.map(marker => marker.radius));
+    expect(drawn).toBeLessThan(widest / projection.unitsPerPixel);
+  });
+
+  test('never overlap one another, at any camera, once they grow', async () => {
+    const system = await gammaSystem();
+    const fit = fitSystem(system.bodies, FRAME);
+    // The reason the merge threshold carries the grown radius: a group that is just separating
+    // would otherwise draw its members as overlapping blobs. Checked across four orders of
+    // magnitude of zoom, and monotone splitting has to survive it.
+    let previous = 0;
+    for (const factor of [1, 2, 4, 8, 16, 32, 64, 128, 512, 4096]) {
+      const camera = zoomView(fit, fit, factor);
+      const { markers } = projectSystemAt(
+        system.bodies,
+        camera,
+        FRAME,
+        sizeGrowth(fit, camera)
+      );
+      for (const [index, a] of markers.entries()) {
+        for (const b of markers.slice(index + 1)) {
+          expect(a.radius + b.radius).toBeLessThan(
+            Math.hypot(a.x - b.x, a.y - b.y)
+          );
+        }
+      }
+      expect(markers.length).toBeGreaterThanOrEqual(previous);
+      previous = markers.length;
+    }
+    expect(previous).toBe(system.bodies.length);
+  });
+
+  test('keep one size at every camera when growth is left off', async () => {
     const system = await gammaSystem();
     const fit = fitSystem(system.bodies, FRAME);
     const radiusOf = (view: typeof fit, name: string) =>

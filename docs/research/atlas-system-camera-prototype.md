@@ -1,6 +1,6 @@
 # Atlas System Range camera prototype findings
 
-**Question:** the Atlas System Range landed in #410 as a flat static fit-to-frame projection of all thirty recovered Bodies. It does not pan, does not zoom, draws whole satellite groups as a one-or-two-pixel pile, and can place only nine of the thirty names. Should it get a Google-Maps-style camera with grouped markers, and should that camera come from a third-party map component or from this project's own `mapView.ts`?
+**Question:** the Atlas System Range landed in #410 as a flat static fit-to-frame projection of all thirty recovered Bodies. It does not pan, does not zoom, draws whole satellite groups as a one-or-two-pixel pile, and can place only nine of the thirty names. Should it get a Google-Maps-style camera with grouped markers, should that camera come from a third-party map component or from this project's own `mapView.ts`, and can a Body's disc stand for its actual size?
 
 **Verdict:** pending owner review in the browser. The evidence below recommends **keeping the project-owned kernel and graduating the camera**, and recommends **against any third-party map library**.
 
@@ -47,6 +47,25 @@ In pixels of the current camera there is a wide plateau. At a 900x600 frame the 
 - **`fitView` was not aspect-aware** (`mapView.ts` measured span across the width only). The Catalogue never noticed because `#map` is `aspect-ratio: 1`. On the Atlas's 900x600 stage it clipped MENTOR and JUNO off the map. Fixed additively: `fitView(points, aspect = 1)`, so the Catalogue's behaviour and tests are unchanged.
 - **`CLUSTER_GAP = 0.02`** is tuned for surface placements and would merge DIALIS with ICARUS. The Atlas needs its own threshold, so the flood fill was generalised to `clusterAll(points, gap)` and `clusterOf` re-expressed through it.
 
+## Can a disc stand for a Body's actual size? No, and the numbers say why
+
+Not at the recovered scale, at any Range. `$006040` is subtracted from range for the engine's own arrival/contact test (`docs/research/damocles-gamma-system.md`), so it is a radius in position units, and at face value it is enormous against the recovered positions:
+
+| | |
+| --- | --- |
+| Widest recovered extent (DIALIS) | 1,446,792 units, or **147 px** at the fit camera |
+| ERIS's extent against its separation from SOLON | **508x** that separation |
+
+So drawn to the distance scale every satellite would sit deep inside its Primary, and the whole System would be a mass of overlapping blobs at every zoom — there is no camera at which true scale reads as a map. **The recovered positions and the recovered extents contradict each other.** That contradiction is what "the radius/extent encoding is unresolved" means in the payload's coverage notes, and it is worth stating in the panel rather than leaving implicit.
+
+What the prototype does instead is authored and labelled as such: a disc grows with the **square root of the zoom**, capped at six times its fit-camera size (`sizeGrowth`). At the fit camera growth is 1, so the fit picture is still the extent ratio on its own. The toolbar states the ratio the reader is looking at — "discs 1/15 of recovered extent" at the fit, 1/1277 at 512x — so the drawing never implies a recovered size. A `Sizes: growing / fixed` toggle keeps the two comparable.
+
+Growth pays off. At 512x the ERIS group reads as six planets of visibly different sizes instead of six dots on a grid (compare the two frames below). It also cost one design change: grown discs have to push the marker merge threshold out with them, or the band where a group is just separating draws its members as overlapping blobs — at 32x the ERIS members are eight pixels apart while their discs have grown past fifty. The threshold is therefore `MARKER_GAP + 2 x LARGEST_DISC x (growth - 1)`, which vanishes at the fit. Measured across four orders of magnitude of zoom, **no two discs overlap at any camera**, and splitting stays monotone: 10, 10, 10, 10, 11, 12, 16, 21, 29, 30 markers at 1x through 4096x. That invariant is pinned by a test.
+
+## Double-press to zoom
+
+`dblclick` on the map zooms 2x anchored under the pointer, which `touch-action: none` also delivers as a double-tap. It needs no guard against hitting a marker: a single press on a marker has already been handled as a pick, so in practice this is the empty-space gesture it was asked for. Measured exact: three double-presses take the camera from 1x to 8x.
+
 ## What the prototype showed
 
 **The picture is much better.** Thirty overlapping discs with eight visible names become ten separated markers with nine names, a grid for spatial reference, and a ring marking every marker that stands for more than one Body. Clicking a group flies to it and always splits it: clicking `ERIS +5` opens at 512x with all six members named. At DPR 2 everything stays crisp.
@@ -55,7 +74,9 @@ In pixels of the current camera there is a wide plateau. At a 900x600 frame the 
 
 **Zooming into the middle shows nothing, and that is true.** The recovered Bodies sit in scattered groups and the System's centroid is empty space, so a wheel zoom anchored at the centre of the frame lands on a blank grid. Google Maps has the same property over ocean. Mitigated here by naming it in the status line — "No recovered Body is in view. The Gamma System is mostly empty space" — plus a Fit System button and the roster. Worth reviewing whether that is enough or whether the camera should prefer the nearest marker.
 
-**The status line had to move.** Writing a scale readout into `#status` from inside the `ResizeObserver` risks the sentence wrapping, shrinking the frame that was just measured. The readout now sits in the toolbar, whose height never changes — the Catalogue's `#map-scale` pattern.
+**The status line had to move, and the toolbar had to be pinned.** Writing a scale readout into `#status` from inside the `ResizeObserver` risks the sentence wrapping, shrinking the frame that was just measured. The readout moved to the toolbar, on the Catalogue's `#map-scale` pattern — and then the toolbar wrapped instead, which was the same bug one row up. Two fixes: the toolbar never wraps and its readout truncates, and it carries `min-width: 0`, because a grid item defaults to `min-width: auto` and an unwrappable toolbar was otherwise setting the stage column's minimum width and pushing the map out under the sidebar. Until both were fixed the camera was not even deterministic: the same gesture landed on 527x or 542x depending on when the observer fired. Afterwards every reading is exact.
+
+**A camera sitting at the fit must be refitted on resize, not re-clamped.** The fit span depends on the frame's aspect, so adding the toolbar row left the untouched map reading 1.1x. Re-clamping is right for a camera the reader has moved and wrong for one they have not, so `atFit` is compared against the fit rather than flagged on every gesture, which also makes Fit System and the `0` key restore a refittable camera.
 
 **Markers still overlap at the split moment.** `LARGEST_DISC = 11` means a 22 px disc while the gap is 14 px. Distinguishable in practice, but whether `LARGEST_DISC` should come down is a presentation judgement about the unresolved radius/extent encoding, and belongs in its own issue.
 
@@ -63,14 +84,14 @@ In pixels of the current camera there is a wide plateau. At a 900x600 frame the 
 
 | | |
 | --- | --- |
-| New source | 182 lines `src/atlas/systemCamera.ts` + 175 lines `src/atlas/camera.ts` |
+| New source | 213 lines `src/atlas/systemCamera.ts` + 188 lines `src/atlas/camera.ts` |
 | Kernel change | `mapView.ts`: `fitView` aspect parameter, `clusterAll`; `clusterOf` re-expressed through it |
 | Changed in place | `boot.ts` (camera ownership, gestures, three-way press), `draw.ts` (grid, rings), `system.ts` (`layOutLabels` over label targets, `offscreen`, fallback sides) |
-| New tests | 249 lines `test/atlas-camera.test.ts`, 12 cases |
+| New tests | 302 lines `test/atlas-camera.test.ts`, 14 cases |
 | Runtime dependency | none |
 | Landed behaviour | unchanged: all 6 Atlas e2e specs and every #410 unit assertion pass untouched |
 
-`bun test` 1536 pass, `tsc --noEmit`, `eslint`, `knip`, `prettier --check` all clean. The three `catalogue.e2e.ts` failures observed in this session reproduce identically on `main` at `054473e` and are unrelated.
+`bun test` 1538 pass, `tsc --noEmit`, `eslint`, `knip`, `prettier --check` all clean. The three `catalogue.e2e.ts` failures observed in this session reproduce identically on `main` at `054473e` and are unrelated.
 
 ## Evidence
 
@@ -82,9 +103,17 @@ The camera prototype at the same viewport — ten markers, nine names, grid, gro
 
 ![The camera prototype at the fit](../frames/atlas-system-camera-fit.png)
 
-Clicking `ERIS +5` opens its six members at 512x:
+Clicking `ERIS +5` opens its six members at 512x, with discs grown:
 
-![The ERIS group opened](../frames/atlas-system-camera-eris-open.png)
+![The ERIS group opened with growing sizes](../frames/atlas-system-camera-eris-open.png)
+
+The same camera with `Sizes: fixed`, which is what the extent ratio alone gives:
+
+![The ERIS group opened with fixed sizes](../frames/atlas-system-camera-eris-open-fixed.png)
+
+Mid-zoom at 32x: the ERIS group stays one disc rather than splitting into overlapping blobs, because the merge threshold carries the grown radius:
+
+![The ERIS group still merged at 32x](../frames/atlas-system-camera-mid-zoom.png)
 
 Wheel zoom anchored on the empty centre of the System, with the status line naming it:
 
@@ -98,6 +127,7 @@ At DPR 2:
 
 1. File a child of #405, "Atlas: System Range camera and Body markers", and comment on #405 that its "System view: a flat static orthographic projection" decision is superseded. **The discrete hop into a Body stands** — only an unambiguous single-Body marker enters a Body; a marker standing for several opens to its members instead, because there is no one Body it could mean.
 2. Land it **before #411**, so both Ranges are built on one camera kernel.
-3. Production work this prototype deliberately skipped: the `?x=&z=&span=` URL round-trip with a debounced `replaceState`; `panel.ts` copy stating what a marker is; e2e coverage of drag, wheel, buttons and keys; pinch-to-zoom.
+3. Production work this prototype deliberately skipped: the `?x=&z=&span=` URL round-trip with a debounced `replaceState`; `panel.ts` copy stating what a marker is and that disc growth is authored; e2e coverage of drag, wheel, double-press, buttons and keys; pinch-to-zoom.
+6. Decide whether `Sizes: growing` is the only behaviour or stays a control. The toggle exists here to make the comparison, not because the Atlas needs a setting.
 4. Note on #411: the clamping seam. The System Range wants today's `clampView` exactly, and the Body Range must not be clamped to a bounded square. When the second behaviour exists, replace the `fit: MapView` first argument of `clampView`/`zoomView`/`panView` with `MapBounds { fit, centre: 'clamp' | 'wrap' }`; the span bound is unconditional either way.
 5. Note on #415: it deletes `catalogue/map.ts`, which is why the gesture layer was written fresh rather than retrofitted. Add "delete the duplicated gesture handling" to its checklist.
