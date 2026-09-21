@@ -520,7 +520,7 @@ const handOver = (next: MapView): boolean => {
   if (surfaceUnits(body) / (next.span / frame.width) < frame.height) {
     return false;
   }
-  const window = surfaceWindow(marker, body, next);
+  const window = surfaceWindow(body, next);
   bodyView = window;
   go({
     bodyId: body.id,
@@ -616,17 +616,7 @@ const bodyControls = mountCamera({
       go(SYSTEM_RANGE);
       return;
     }
-    const fitted = fitSystem(system.bodies, frameOf(systemRange));
-    const marker = projectSystem(
-      system.bodies,
-      fitted,
-      frameOf(systemRange)
-    ).markers.find(value => value.bodyIds.includes(body.id));
-    if (!marker) {
-      go(SYSTEM_RANGE);
-      return;
-    }
-    const matched = systemWindow(marker, body, bodyView);
+    const matched = systemWindow(body, bodyView);
     view = matched;
     atFit = false;
     go({

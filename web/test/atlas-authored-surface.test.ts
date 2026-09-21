@@ -41,12 +41,10 @@ describe('the authored surface scale', () => {
       const radius = bodyRadius(body);
       for (const island of readBodySurface(data, body.sourceIndex).islands) {
         for (const cell of island.outline) {
-          const point = surfacePoint(
-            { ...marker, world: { x: 0, z: 0 } },
-            body,
-            cell
-          );
-          expect(Math.hypot(point.x, point.z)).toBeLessThanOrEqual(radius);
+          const point = surfacePoint(body, cell);
+          expect(
+            Math.hypot(point.x - body.position.x, point.z - body.position.z)
+          ).toBeLessThanOrEqual(radius);
           checked += 1;
         }
       }
@@ -84,7 +82,7 @@ describe('the hand-over between the Ranges', () => {
       cz: marker.world.z,
       span: unitsPerPixel * FRAME.width
     };
-    const handed = surfaceWindow(marker, eris, view);
+    const handed = surfaceWindow(eris, view);
     const fitted = fitBody(FRAME);
     expect(handed.cx).toBeCloseTo(fitted.cx, 6);
     expect(handed.cz).toBeCloseTo(fitted.cz, 6);
@@ -132,6 +130,47 @@ describe('the hand-over between the Ranges', () => {
     );
   });
 
+  test('returns a reader to the Body they were on, not to its group', async () => {
+    const system = await gammaSystem();
+    // The regression this pins. A marker's `world` is the position of whichever Body it is
+    // named for, and at a whole-System camera VESTA's marker is the six-Body ERIS group. Going
+    // out through the marker sent a reader zooming out of VESTA to ERIS, 2,400 units away.
+    const fit = fitSystem(system.bodies, FRAME);
+    const { markers } = projectSystem(system.bodies, fit, FRAME);
+    const grouped = markers.find(marker => marker.bodyIds.includes('vesta'))!;
+    expect(grouped.id).toBe('eris');
+    for (const id of ['vesta', 'solon', 'theon', 'metis', 'lucan']) {
+      const body = system.bodies.find(value => value.id === id)!;
+      const out = systemWindow(body, fitBody(FRAME));
+      // The camera comes back centred on that Body's own recovered position.
+      expect(out.cx).toBeCloseTo(body.position.x, 6);
+      expect(out.cz).toBeCloseTo(body.position.z, 6);
+      // And not on the group's, which is a different place for every one of them.
+      if (id !== 'eris') {
+        expect(
+          Math.hypot(out.cx - grouped.world.x, out.cz - grouped.world.z)
+        ).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  test('round-trips a Body in and back out of its own surface', async () => {
+    const system = await gammaSystem();
+    // Every Body, not the one that happened to work: in through `surfaceWindow` and back out
+    // through `systemWindow` returns the camera it started from.
+    for (const body of system.bodies) {
+      const view = {
+        cx: body.position.x + 17,
+        cz: body.position.z - 23,
+        span: surfaceUnits(body) / 4
+      };
+      const back = systemWindow(body, surfaceWindow(body, view));
+      expect(back.cx).toBeCloseTo(view.cx, 6);
+      expect(back.cz).toBeCloseTo(view.cz, 6);
+      expect(back.span).toBeCloseTo(view.span, 6);
+    }
+  });
+
   test('converts a window both ways without drift', async () => {
     const system = await gammaSystem();
     const eris = system.bodies.find(body => body.id === 'eris')!;
@@ -146,8 +185,8 @@ describe('the hand-over between the Ranges', () => {
       { cx: -630_200, cz: 390_400, span: 400 },
       { cx: -629_800, cz: 389_600, span: 40 }
     ]) {
-      const there = surfaceWindow(marker, eris, view);
-      const back = systemWindow(marker, eris, there);
+      const there = surfaceWindow(eris, view);
+      const back = systemWindow(eris, there);
       expect(back.cx).toBeCloseTo(view.cx, 6);
       expect(back.cz).toBeCloseTo(view.cz, 6);
       expect(back.span).toBeCloseTo(view.span, 6);
@@ -210,11 +249,11 @@ describe('the hand-over between the Ranges', () => {
     )!;
     // Cell 2048 is the middle of the surface and the middle of the disc, because the inscribed
     // square is centred on the Body.
-    const middle = surfacePoint(marker, eris, {
+    const middle = surfacePoint(eris, {
       x: SURFACE_CELLS / 2,
       z: SURFACE_CELLS / 2
     });
-    expect(middle.x).toBeCloseTo(marker.world.x, 6);
-    expect(middle.z).toBeCloseTo(marker.world.z, 6);
+    expect(middle.x).toBeCloseTo(eris.position.x, 6);
+    expect(middle.z).toBeCloseTo(eris.position.z, 6);
   });
 });

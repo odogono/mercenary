@@ -290,6 +290,26 @@ test('a small Body hands over too, not just the large ones', async ({
   await expect(page.locator('#system-scale')).toContainText('Body Range');
 });
 
+test('zooming out of a grouped Body returns to that Body, not its group', async ({
+  page
+}) => {
+  // The regression this covers: a marker's position is that of whichever Body it is named for,
+  // and at a whole-System camera VESTA's marker is the six-Body ERIS group. Going out through
+  // the marker sent a reader zooming out of VESTA to ERIS, 2,400 units away.
+  await page.goto('/damocles/atlas?body=vesta');
+  await expect(page.locator('#system-scale')).toContainText('Body Range');
+  await page.locator('#system-zoom-out').click();
+  await expect(page.locator('#range-system')).toBeVisible();
+  await expect(page).toHaveURL(/\bx=/);
+  const at = new URL(page.url()).searchParams;
+  // VESTA's own recovered position. ERIS, whose marker VESTA sits inside, is at z 390,000.
+  expect(Number(at.get('x'))).toBe(-630_000);
+  expect(Number(at.get('z'))).toBe(392_400);
+  await expect(page.locator('#system-scale')).toContainText(
+    'VESTA surface at an authored scale'
+  );
+});
+
 test('picking an island fills the panel and survives the link', async ({
   page
 }) => {

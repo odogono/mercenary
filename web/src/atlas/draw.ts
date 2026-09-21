@@ -183,11 +183,7 @@ const drawSurfaceOnDisc = (
     context.lineWidth = OUTLINE_WIDTH;
     context.beginPath();
     for (const [index, cell] of island.outline.entries()) {
-      const { u, v } = project(
-        view,
-        surfacePoint(onBody.marker, onBody.body, cell),
-        aspect
-      );
+      const { u, v } = project(view, surfacePoint(onBody.body, cell), aspect);
       const x = u * frame.width,
         y = v * frame.height;
       if (index === 0) {

@@ -383,49 +383,42 @@ export const layOutLabels = (
   return { offscreen, placed, suppressed };
 };
 
+/// These three take the Body and never a marker. A marker's `world` is the position of whichever
+/// Body it is *named* for, so at a whole-System camera VESTA's marker is the ERIS group and
+/// carries ERIS's position. Converting through it sent a reader zooming out of VESTA to ERIS.
+/// The Body carries its own recovered position, so there is nothing to get wrong.
+
 /// The Body Coordinate window a System camera is looking at through the authored scale, so the
 /// Body Range can open on exactly what the disc was showing. The islands then sit in the same
 /// place at the same size across the hand-over: what changes is that sea, the Surface Cell grid
 /// and the coordinate seam appear, and the disc goes.
-export const surfaceWindow = (
-  marker: SystemMarker,
-  body: GammaBody,
-  view: MapView
-): MapView => {
+export const surfaceWindow = (body: GammaBody, view: MapView): MapView => {
   const scale = unitsPerCell(body);
   return {
     // The Body's centre is the middle of its surface, because that is where the inscribed square
     // is centred.
-    cx: SURFACE_CELLS / 2 + (view.cx - marker.world.x) / scale,
-    cz: SURFACE_CELLS / 2 + (view.cz - marker.world.z) / scale,
+    cx: SURFACE_CELLS / 2 + (view.cx - body.position.x) / scale,
+    cz: SURFACE_CELLS / 2 + (view.cz - body.position.z) / scale,
     span: view.span / scale
   };
 };
 
 /// Where one Body Coordinate falls in position units, for drawing a surface on a disc.
-export const surfacePoint = (
-  marker: SystemMarker,
-  body: GammaBody,
-  point: MapPoint
-): MapPoint => {
+export const surfacePoint = (body: GammaBody, point: MapPoint): MapPoint => {
   const scale = unitsPerCell(body);
   return {
-    x: marker.world.x + (point.x - SURFACE_CELLS / 2) * scale,
-    z: marker.world.z + (point.z - SURFACE_CELLS / 2) * scale
+    x: body.position.x + (point.x - SURFACE_CELLS / 2) * scale,
+    z: body.position.z + (point.z - SURFACE_CELLS / 2) * scale
   };
 };
 
 /// The System camera that shows the same Body Coordinate window a Body camera is on. The inverse
 /// of `surfaceWindow`, so the outbound hop can match the picture too.
-export const systemWindow = (
-  marker: SystemMarker,
-  body: GammaBody,
-  view: MapView
-): MapView => {
+export const systemWindow = (body: GammaBody, view: MapView): MapView => {
   const scale = unitsPerCell(body);
   return {
-    cx: marker.world.x + (view.cx - SURFACE_CELLS / 2) * scale,
-    cz: marker.world.z + (view.cz - SURFACE_CELLS / 2) * scale,
+    cx: body.position.x + (view.cx - SURFACE_CELLS / 2) * scale,
+    cz: body.position.z + (view.cz - SURFACE_CELLS / 2) * scale,
     span: view.span * scale
   };
 };
