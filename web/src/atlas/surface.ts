@@ -129,3 +129,34 @@ export const wrapImages = (
   }
   return images;
 };
+
+/// Whether a Body Coordinate falls inside a closed ring, by ray casting. A coastline is a
+/// simple closed polygon of at most 14 vertices, so nothing cleverer earns its keep.
+const inside = (ring: readonly MapPoint[], point: MapPoint): boolean => {
+  let within = false;
+  for (const [index, a] of ring.entries()) {
+    const b = ring[(index + 1) % ring.length]!;
+    if (
+      a.z > point.z !== b.z > point.z &&
+      point.x < a.x + ((point.z - a.z) / (b.z - a.z)) * (b.x - a.x)
+    ) {
+      within = !within;
+    }
+  }
+  return within;
+};
+
+/// The island under a Body Coordinate, tested against every wrap image the camera can see so a
+/// record picked on one side of the seam is the same record on the other.
+///
+/// Islands do not overlap one another, so the first hit is the only hit; the order is the
+/// Catalogue's, which makes the answer the same on every pick.
+export const islandAt = (
+  surface: BodySurface,
+  view: MapView,
+  aspect: number,
+  point: MapPoint
+): SurfaceIsland | null =>
+  surface.islands.find(island =>
+    wrapImages(island.outline, view, aspect).some(image => inside(image, point))
+  ) ?? null;

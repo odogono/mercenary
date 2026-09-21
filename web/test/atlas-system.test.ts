@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
-import { bodyFacts, bodyProvenance } from '../src/atlas/panel.ts';
+import {
+  bodyFacts,
+  bodyProvenance,
+  catalogueHref,
+  islandFacts,
+  islandProvenance
+} from '../src/atlas/panel.ts';
 import { atlasHref, atlasSearch, readAtlasState } from '../src/atlas/state.ts';
 import {
   fitSystem,
@@ -10,6 +16,7 @@ import {
   markerView,
   projectSystem
 } from '../src/atlas/system.ts';
+import { parseCatalogue } from '../src/catalogue/data.ts';
 import {
   clusterAll,
   fitView,
@@ -494,9 +501,10 @@ describe('the Atlas state', () => {
         level: 'system',
         view: { span: 8_883_000, x: 1234.56, z: -78.9 }
       } as const,
-      { bodyId: 'eris', level: 'body', view: null } as const,
+      { bodyId: 'eris', islandId: null, level: 'body', view: null } as const,
       {
         bodyId: 'eris',
+        islandId: 'island-eris-063272',
         level: 'body',
         view: { span: 4096, x: 12.34, z: 56.78 }
       } as const
@@ -504,9 +512,17 @@ describe('the Atlas state', () => {
       expect(readAtlasState(atlasSearch(state), ids)).toEqual(state);
     }
     expect(atlasHref({ level: 'system', view: null })).toBe('/damocles/atlas');
-    expect(atlasHref({ bodyId: 'eris', level: 'body', view: null })).toBe(
-      '/damocles/atlas?body=eris'
-    );
+    expect(
+      atlasHref({ bodyId: 'eris', islandId: null, level: 'body', view: null })
+    ).toBe('/damocles/atlas?body=eris');
+    expect(
+      atlasHref({
+        bodyId: 'eris',
+        islandId: 'island-eris-063272',
+        level: 'body',
+        view: null
+      })
+    ).toBe('/damocles/atlas?body=eris&island=island-eris-063272');
     expect(
       atlasHref({ level: 'system', view: { span: 100, x: 1, z: 2 } })
     ).toBe('/damocles/atlas?x=1&z=2&span=100');
@@ -563,6 +579,51 @@ describe('the Atlas selection panel', () => {
     ]);
     expect(bodyFacts(eris)[1]!.value).toContain('-630,000');
     expect(bodyProvenance(eris)).toHaveLength(1);
+  });
+
+  test('states only recovered numbers for a Damocles Island', async () => {
+    const data = parseCatalogue(
+      await Bun.file('../payload/damocles/catalogue.json').json()
+    );
+    const capital = data.islands.find(
+      island => island.areaName === 'CAPITAL CITY'
+    )!;
+    const labels = islandFacts(capital).map(fact => fact.label);
+    expect(labels).toContain('Origin X/Z');
+    expect(labels).toContain('Land colour');
+    // An island carries no name of its own, so the area name is labelled as what it is.
+    expect(labels).toContain('Settlement published here');
+    expect(labels).not.toContain('Name');
+    const unnamed = data.islands.find(
+      island => island.areaName === null && island.coastline.vertices.length
+    )!;
+    expect(islandFacts(unnamed).map(fact => fact.label)).not.toContain(
+      'Settlement published here'
+    );
+    expect(islandProvenance(unnamed).join(' ')).toContain(
+      'carries no name of its own'
+    );
+  });
+
+  test('says a record crossing the seam wraps, and writes the span as a wrap', async () => {
+    const data = parseCatalogue(
+      await Bun.file('../payload/damocles/catalogue.json').json()
+    );
+    const snow = data.islands.find(
+      island => island.areaName === 'SNOW ISLAND'
+    )!;
+    expect(
+      islandFacts(snow).find(fact => fact.label === 'Extent X')!.value
+    ).toContain('4096');
+    expect(islandProvenance(snow).join(' ')).toContain(
+      'crosses the coordinate seam'
+    );
+  });
+
+  test('hands off to the Body rather than implying an island entry exists', () => {
+    // The Catalogue has no island view: its deep links reach a Model, an Instance or a Body's
+    // placement map, and its search covers Model names. The Body is the nearest true thing.
+    expect(catalogueHref(11)).toBe('/damocles/catalogue?body=body-11');
   });
 
   test('marks the capture-time sample and the recovered black', async () => {
