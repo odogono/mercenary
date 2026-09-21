@@ -43,10 +43,43 @@ export const fitView = (points: readonly MapPoint[], aspect = 1): MapView => {
 export const zoomOf = (fit: MapView, view: MapView): number =>
   fit.span / view.span;
 
-// Keep the span within [fit / MAX_ZOOM, fit] and the centre inside the full-body
-// extent so the placements can never be panned out of reach.
-export const clampView = (fit: MapView, view: MapView): MapView => {
+// What bounds a camera. A span is always bounded the same way, inside
+// [fit / MAX_ZOOM, fit]; the two worlds differ only in what happens to the
+// centre. A bounded world clamps it into the fit, so placements can never be
+// panned out of reach. A world that wraps takes it modulo `period` instead: a
+// Body's surface is a torus 4096 Surface Cells an axis, where clamping to a
+// square would put a hard edge through an island that crosses it.
+export type MapBounds =
+  | { readonly centre: 'clamp'; readonly fit: MapView }
+  | {
+      readonly centre: 'wrap';
+      readonly fit: MapView;
+      readonly period: number;
+    };
+
+// A bare fit means 'clamp', which is every caller that predates the torus.
+// Written as a widening rather than a required argument so the bounded case
+// stays the quiet default and the wrapping one has to say so.
+const boundsOf = (bounds: MapBounds | MapView): MapBounds =>
+  'fit' in bounds ? bounds : { centre: 'clamp', fit: bounds };
+
+const wrapped = (value: number, period: number): number =>
+  ((value % period) + period) % period;
+
+export const clampView = (
+  bounds: MapBounds | MapView,
+  view: MapView
+): MapView => {
+  const resolved = boundsOf(bounds);
+  const { fit } = resolved;
   const span = Math.min(fit.span, Math.max(fit.span / MAX_ZOOM, view.span));
+  if (resolved.centre === 'wrap') {
+    return {
+      cx: wrapped(view.cx, resolved.period),
+      cz: wrapped(view.cz, resolved.period),
+      span
+    };
+  }
   const half = fit.span / 2;
   return {
     cx: Math.min(fit.cx + half, Math.max(fit.cx - half, view.cx)),
@@ -78,19 +111,20 @@ export const unproject = (
 
 // Zoom by `factor` keeping the world point under (u, v) still.
 export const zoomView = (
-  fit: MapView,
+  bounds: MapBounds | MapView,
   view: MapView,
   factor: number,
   u = 0.5,
   v = 0.5,
   aspect = 1
 ): MapView => {
+  const { fit } = boundsOf(bounds);
   const anchor = unproject(view, u, v, aspect);
   const span = Math.min(
     fit.span,
     Math.max(fit.span / MAX_ZOOM, view.span / factor)
   );
-  return clampView(fit, {
+  return clampView(bounds, {
     cx: anchor.x - (u - 0.5) * span,
     cz: anchor.z + (v - 0.5) * span * aspect,
     span
@@ -99,13 +133,13 @@ export const zoomView = (
 
 // Pan by a fraction of the map's width and height, as a drag would.
 export const panView = (
-  fit: MapView,
+  bounds: MapBounds | MapView,
   view: MapView,
   du: number,
   dv: number,
   aspect = 1
 ): MapView =>
-  clampView(fit, {
+  clampView(bounds, {
     cx: view.cx - du * view.span,
     cz: view.cz + dv * view.span * aspect,
     span: view.span

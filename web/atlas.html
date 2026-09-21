@@ -30,7 +30,15 @@
           <canvas id="system-map"></canvas>
           <div id="system-labels" aria-hidden="true"></div>
         </div>
-        <div id="range-body" class="range" hidden></div>
+        <div
+          id="range-body"
+          class="range"
+          tabindex="0"
+          aria-label="Body Range. The surface of one Body, which wraps on both axes. Drag to pan, scroll or double-click to zoom, arrow keys pan, plus and minus zoom, zero fits the surface, zooming out past the surface returns to the Gamma System."
+          hidden
+        >
+          <canvas id="body-map"></canvas>
+        </div>
         <p id="status" role="status"></p>
         <p id="failure" role="alert" hidden></p>
       </section>

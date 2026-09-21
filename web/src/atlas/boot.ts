@@ -10,8 +10,20 @@ import {
   type GammaSystemDocument
 } from '../flyover/documents.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
+import {
+  RANGE_LABEL,
+  SURFACE_SPAN,
+  bodyBounds,
+  fitBody,
+  rangeOf
+} from './bodyRange.ts';
 import { mountCamera, type CameraFrame } from './camera.ts';
-import { drawSystemRange, frameOf, placeLabels } from './draw.ts';
+import {
+  drawBodySurface,
+  drawSystemRange,
+  frameOf,
+  placeLabels
+} from './draw.ts';
 import { renderPanel } from './panel.ts';
 import {
   SYSTEM_RANGE,
@@ -48,6 +60,7 @@ const breadcrumb = node('breadcrumb');
 const systemRange = node('range-system');
 const bodyRange = node('range-body');
 const canvas = node<HTMLCanvasElement>('system-map');
+const bodyCanvas = node<HTMLCanvasElement>('body-map');
 const labelLayer = node('system-labels');
 const roster = node('roster');
 const panel = node('panel');
@@ -65,6 +78,10 @@ let atFit = true;
 /// The camera the URL should carry, written on an idle timer. A wheel gesture produces a camera
 /// a frame, and none of them belongs in history.
 let pending: ReturnType<typeof setTimeout> | undefined;
+/// The Body Range's own camera, in Surface Cells. It has no `atFit` twin: the surface is exactly
+/// SURFACE_SPAN on a side however the frame is shaped, so a resize never moves what the widest
+/// view means.
+let bodyView: MapView | undefined;
 
 const selectedBody = () => {
   const current = state;
@@ -78,16 +95,38 @@ const selectedBody = () => {
 const recordCamera = () => {
   clearTimeout(pending);
   pending = setTimeout(() => {
-    if (!view || state.level !== 'system') {
+    const current = state;
+    if (current.level === 'body') {
+      history.replaceState(
+        null,
+        '',
+        atlasHref(
+          bodyView
+            ? {
+                bodyId: current.bodyId,
+                level: 'body',
+                view: { span: bodyView.span, x: bodyView.cx, z: bodyView.cz }
+              }
+            : { bodyId: current.bodyId, level: 'body', view: null }
+        )
+      );
       return;
     }
-    const next = atFit
-      ? SYSTEM_RANGE
-      : ({
-          level: 'system',
-          view: { span: view.span, x: view.cx, z: view.cz }
-        } as const);
-    history.replaceState(null, '', atlasHref(next));
+    if (!view) {
+      return;
+    }
+    history.replaceState(
+      null,
+      '',
+      atlasHref(
+        atFit
+          ? SYSTEM_RANGE
+          : {
+              level: 'system',
+              view: { span: view.span, x: view.cx, z: view.cz }
+            }
+      )
+    );
   }, 250);
 };
 
@@ -148,6 +187,29 @@ const drawRange = () => {
   recordCamera();
 };
 
+/// Writes nothing to the page but canvas pixels and the two readouts, so the ResizeObserver
+/// that calls it cannot feed the frame back on itself.
+const drawBodyRange = () => {
+  const body = selectedBody();
+  if (!body || bodyRange.hidden) {
+    return;
+  }
+  const frame = frameOf(bodyRange);
+  const fitted = fitBody(frame);
+  bodyView = bodyView ?? fitted;
+  drawBodySurface(bodyCanvas, bodyView, frame, body.baseColour);
+  const band = rangeOf(bodyView, frame.width);
+  const cells = bodyView.span / Math.max(frame.width, 1);
+  scale.textContent =
+    `${RANGE_LABEL[band]} · ${formatUnits(cells)} Surface Cells per pixel` +
+    ` · grid ${formatUnits(gridStep(bodyView.span, frame.width))} cells`;
+  status.textContent =
+    `${body.name} · source slot ${body.sourceIndex} · surface ${SURFACE_SPAN} Surface Cells ` +
+    'an axis, wrapping on both · sea is this Body\u2019s recovered base colour · coastlines, ' +
+    'Settlements and structure footprints are not drawn yet';
+  recordCamera();
+};
+
 const render = () => {
   if (!system) {
     return;
@@ -190,22 +252,24 @@ const render = () => {
   }
   systemRange.hidden = body !== null;
   bodyRange.hidden = body === null;
-  // The Body's own surface arrives with the wrapping camera in #411; until then the Body Range
-  // states which Body the Atlas is in rather than drawing an empty map it cannot yet fill.
-  bodyRange.replaceChildren();
+  node('system-fit').textContent = body ? 'Fit Surface' : 'Fit System';
+  // The Range is a map rather than a heading, so the Body it shows is named to assistive
+  // technology here and in the breadcrumb rather than written over the surface.
+  bodyRange.setAttribute(
+    'aria-label',
+    `${body ? `${body.name}. ` : ''}Body Range. The surface of one Body, which wraps on both ` +
+      'axes. Drag to pan, scroll or double-click to zoom, arrow keys pan, plus and minus zoom, ' +
+      'zero fits the surface, zooming out past the surface returns to the Gamma System.'
+  );
   if (body) {
-    const name = document.createElement('p');
-    name.className = 'range-heading';
-    name.id = 'body-name';
-    name.textContent = body.name;
-    const waiting = document.createElement('p');
-    waiting.className = 'muted';
-    waiting.textContent =
-      'The surface of this Body is not drawn yet. Coastlines, Settlements and structure ' +
-      'footprints arrive in the Ranges that follow.';
-    bodyRange.append(name, waiting);
-    status.textContent = `${body.name} · source slot ${body.sourceIndex}`;
-    scale.textContent = '';
+    // A camera in the URL wins; otherwise the whole surface. Entering a different Body starts
+    // from its own surface rather than inheriting where the reader was on the last one.
+    const carried = state.level === 'body' ? state.view : null;
+    bodyView = carried
+      ? { cx: carried.x, cz: carried.z, span: carried.span }
+      : previous.level === 'body' && previous.bodyId === body.id
+        ? bodyView
+        : undefined;
   }
   for (const anchor of roster.querySelectorAll('a')) {
     anchor.setAttribute(
@@ -214,7 +278,9 @@ const render = () => {
     );
   }
   renderPanel(panel, system, body);
-  if (!body) {
+  if (body) {
+    drawBodyRange();
+  } else {
     drawRange();
   }
 };
@@ -266,7 +332,7 @@ const cameraFrame = (): CameraFrame => {
 };
 
 const controls = mountCamera({
-  camera: () => (fit && view ? { fit, view } : null),
+  camera: () => (fit && view ? { bounds: fit, fit, view } : null),
   element: systemRange,
   frame: cameraFrame,
   onPick: (x, y) => {
@@ -288,9 +354,44 @@ const controls = mountCamera({
   }
 });
 
-node('system-zoom-out').addEventListener('click', controls.zoomOut);
-node('system-zoom-in').addEventListener('click', controls.zoomIn);
-node('system-fit').addEventListener('click', controls.fit);
+/// The Body Range's own gestures, on the same module: it takes a surface descriptor rather than
+/// element ids precisely so a second Range can mount it unchanged.
+const bodyControls = mountCamera({
+  camera: () => {
+    if (!bodyView || !selectedBody()) {
+      return null;
+    }
+    const frame = frameOf(bodyRange);
+    return { bounds: bodyBounds(frame), fit: fitBody(frame), view: bodyView };
+  },
+  element: bodyRange,
+  frame: () => {
+    const frame = frameOf(bodyRange);
+    return {
+      aspect: frame.height / Math.max(frame.width, 1),
+      height: frame.height,
+      width: frame.width
+    };
+  },
+  // Nothing on the surface is selectable yet; islands arrive in #432.
+  onPick: () => {},
+  onView: next => {
+    bodyView = next;
+    drawBodyRange();
+  },
+  // A surface that wraps has no edge to reach, so zooming out past it is the way back up.
+  onZoomedOut: () => go(SYSTEM_RANGE)
+});
+
+const rangeControls = () => (selectedBody() === null ? controls : bodyControls);
+
+node('system-zoom-out').addEventListener('click', () =>
+  rangeControls().zoomOut()
+);
+node('system-zoom-in').addEventListener('click', () =>
+  rangeControls().zoomIn()
+);
+node('system-fit').addEventListener('click', () => rangeControls().fit());
 
 systemRange.addEventListener('pointermove', event => {
   const rect = canvas.getBoundingClientRect();
@@ -332,6 +433,7 @@ window.addEventListener('popstate', render);
 // not enough: writing the status line below it can wrap to a second row and shrink the map after
 // the camera has already been chosen. The canvas is out of flow, so this settles.
 new ResizeObserver(drawRange).observe(systemRange);
+new ResizeObserver(drawBodyRange).observe(bodyRange);
 
 const start = async () => {
   const path = '/payload/damocles/system.json';
