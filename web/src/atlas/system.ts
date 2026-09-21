@@ -388,6 +388,30 @@ export const layOutLabels = (
 /// carries ERIS's position. Converting through it sent a reader zooming out of VESTA to ERIS.
 /// The Body carries its own recovered position, so there is nothing to get wrong.
 
+/// Whether the System camera is wholly inside a Body's authored surface, which is when the
+/// Ranges can change hands without anything appearing or vanishing.
+///
+/// Both halves matter. The scale test alone — the surface covering the frame's diagonal — leaves
+/// a reader centred near the surface's edge looking at space beyond it, and then the wrap copies
+/// and the far side of the surface arrive all at once. That is the pop, and it is worst on an
+/// island near the rim, which is exactly where a reader lingers. So the margin is measured from
+/// the camera's own centre, and a reader at the edge simply hands over a little deeper, once the
+/// frame has shrunk inside the surface.
+export const insideSurface = (
+  body: GammaBody,
+  view: MapView,
+  frame: SystemFrame
+): boolean => {
+  const half = surfaceUnits(body) / 2;
+  // Half the frame's diagonal in position units: the furthest corner from the centre.
+  const reach =
+    (view.span / 2) * Math.hypot(1, frame.height / Math.max(frame.width, 1));
+  return (
+    Math.abs(view.cx - body.position.x) + reach <= half &&
+    Math.abs(view.cz - body.position.z) + reach <= half
+  );
+};
+
 /// The Body Coordinate window a System camera is looking at through the authored scale, so the
 /// Body Range can open on exactly what the disc was showing. The islands then sit in the same
 /// place at the same size across the hand-over: what changes is that sea, the Surface Cell grid

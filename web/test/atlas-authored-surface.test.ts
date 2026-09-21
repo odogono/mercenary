@@ -5,6 +5,7 @@ import { readBodySurface } from '../src/atlas/surface.ts';
 import {
   SYSTEM_MAX_ZOOM,
   fitSystem,
+  insideSurface,
   projectSystem,
   showsSurface,
   surfacePoint,
@@ -67,26 +68,75 @@ describe('the authored surface scale', () => {
 });
 
 describe('the hand-over between the Ranges', () => {
-  test('opens the Body Range on exactly the window the disc was showing', async () => {
+  test('hands over only once the frame is wholly inside the surface', async () => {
     const system = await gammaSystem();
     const eris = system.bodies.find(body => body.id === 'eris')!;
-    const fit = fitSystem(system.bodies, FRAME);
-    const marker = projectSystem(system.bodies, fit, FRAME).markers.find(
-      value => value.bodyIds.includes('eris')
-    )!;
-    // The trigger: the authored surface fills the frame's shorter side. At exactly that camera
-    // the converted window must equal `fitBody`, or the islands would move across the switch.
-    const unitsPerPixel = surfaceUnits(eris) / FRAME.height;
+    const half = surfaceUnits(eris) / 2;
+    const reach = Math.hypot(1, FRAME.height / FRAME.width);
+    const centred = (span: number) => ({
+      cx: eris.position.x,
+      cz: eris.position.z,
+      span
+    });
+    // Just too wide: a corner of the frame still reaches past the surface, so the rim and the
+    // space beyond it are in view and handing over would pop.
+    expect(
+      insideSurface(eris, centred(((2 * half) / reach) * 1.01), FRAME)
+    ).toBe(false);
+    // Just inside.
+    expect(
+      insideSurface(eris, centred(((2 * half) / reach) * 0.99), FRAME)
+    ).toBe(true);
+  });
+
+  test('waits longer for a reader sitting on the surface edge', async () => {
+    const system = await gammaSystem();
+    const eris = system.bodies.find(body => body.id === 'eris')!;
+    const half = surfaceUnits(eris) / 2;
+    const reach = Math.hypot(1, FRAME.height / FRAME.width);
+    // The reported case: an island near the rim. A scale test alone would hand over here, with
+    // the surface's edge mid-frame; the margin is measured from the camera's own centre, so it
+    // does not.
+    const onTheEdge = {
+      cx: eris.position.x + half * 0.9,
+      cz: eris.position.z,
+      span: ((2 * half) / reach) * 0.99
+    };
+    expect(insideSurface(eris, onTheEdge, FRAME)).toBe(false);
+    // Zooming further does reach it, so the edge is not a dead end.
+    let span = onTheEdge.span;
+    let steps = 0;
+    while (!insideSurface(eris, { ...onTheEdge, span }, FRAME) && steps < 40) {
+      span /= 1.35;
+      steps += 1;
+    }
+    expect(insideSurface(eris, { ...onTheEdge, span }, FRAME)).toBe(true);
+    // And it is a handful of wheel steps away rather than a hundred.
+    expect(steps).toBeLessThan(12);
+  });
+
+  test('shows the Body Range the identical window it handed over', async () => {
+    const system = await gammaSystem();
+    const eris = system.bodies.find(body => body.id === 'eris')!;
+    // The guarantee that makes the switch invisible: whatever camera hands over, the Body
+    // window it converts to covers the same ground at the same scale on screen. Checked in
+    // pixels a Surface Cell wide, which is what a reader actually sees.
     const view = {
-      cx: marker.world.x,
-      cz: marker.world.z,
-      span: unitsPerPixel * FRAME.width
+      cx: eris.position.x + 40,
+      cz: eris.position.z - 25,
+      span: 900
     };
     const handed = surfaceWindow(eris, view);
-    const fitted = fitBody(FRAME);
-    expect(handed.cx).toBeCloseTo(fitted.cx, 6);
-    expect(handed.cz).toBeCloseTo(fitted.cz, 6);
-    expect(handed.span).toBeCloseTo(fitted.span, 6);
+    const cellPixels = FRAME.width / handed.span;
+    const unitPixels = FRAME.width / view.span;
+    expect(cellPixels).toBeCloseTo(unitPixels * unitsPerCell(eris), 9);
+    // And a cell's corner lands on the same pixel either way.
+    const cell = { x: 1000, z: 1500 };
+    const viaSystem = surfacePoint(eris, cell);
+    expect((viaSystem.x - view.cx) * unitPixels).toBeCloseTo(
+      (cell.x - handed.cx) * cellPixels,
+      9
+    );
   });
 
   test('is reachable by zooming for every one of the thirty Bodies', async () => {

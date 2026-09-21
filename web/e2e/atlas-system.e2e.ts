@@ -247,23 +247,27 @@ test('zooming into a Body reveals its islands and hands over continuously', asyn
   // Still the System Range: no hop has happened.
   await expect(page).not.toHaveURL(/\bbody=/);
 
-  // Zooming on hands over, on the same window, with no click anywhere. Two wheel steps: the
-  // trigger is the authored surface filling the frame's shorter side, and one step from here
-  // lands just under it.
+  // Zooming on hands over, on the same window, with no click anywhere. It waits until the frame
+  // is wholly inside the authored surface, so it takes a few steps from here rather than one.
   const box = (await page.locator('#range-system').boundingBox())!;
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  for (let step = 0; step < 2; step += 1) {
+  const mid = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  for (let step = 0; step < 10; step += 1) {
+    if (/\bbody=/.test(page.url())) {
+      break;
+    }
+    await page.mouse.move(mid.x, mid.y);
     await page.mouse.wheel(0, -300);
-    await page.waitForTimeout(120);
+    await page.waitForTimeout(140);
   }
   await expect(page).toHaveURL(/\bbody=eris\b/, { timeout: 10_000 });
   await expect(page.locator('#system-scale')).toContainText('Body Range');
   // The hand-over lands on the Body Range's own fit, which is what makes the islands stay put.
-  // Within a few cells of the surface centre, not exactly on it: the wheel anchors on the
-  // pointer, so the camera drifts a fraction of a unit as it zooms.
+  // Near the surface centre because the camera was centred on the Body, and well inside the
+  // surface because the hand-over waits for the whole frame to be: a margin, not a coincidence.
   const handed = new URL(page.url()).searchParams;
-  expect(Math.abs(Number(handed.get('x')) - 2048)).toBeLessThan(5);
-  expect(Math.abs(Number(handed.get('z')) - 2048)).toBeLessThan(5);
+  expect(Math.abs(Number(handed.get('x')) - 2048)).toBeLessThan(40);
+  expect(Math.abs(Number(handed.get('z')) - 2048)).toBeLessThan(40);
+  expect(Number(handed.get('span'))).toBeLessThan(4096);
 });
 
 test('a small Body hands over too, not just the large ones', async ({
@@ -288,6 +292,44 @@ test('a small Body hands over too, not just the large ones', async ({
   }
   await expect(page).toHaveURL(/\bbody=vesta\b/);
   await expect(page.locator('#system-scale')).toContainText('Body Range');
+});
+
+test('hands over without a pop on an island at the surface edge', async ({
+  page
+}) => {
+  // Reported: zooming into an island on the rim popped. BARE ISLAND sits at Surface Cell
+  // x 3052..3136, near Eris's eastern edge, which is the worst case for it.
+  await page.goto('/damocles/atlas?x=-629567&z=389366&span=420');
+  await expect(page.locator('#system-scale')).toContainText(
+    'ERIS surface at an authored scale',
+    { timeout: 20_000 }
+  );
+  // Deep inside the Body, so the System Range must not claim the System is empty here.
+  await expect(page.locator('#status')).not.toContainText(
+    'No recovered Body is in view'
+  );
+  await expect(page.locator('#status')).toContainText('drawn on ERIS');
+
+  const box = (await page.locator('#range-system').boundingBox())!;
+  const mid = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  for (let step = 0; step < 10; step += 1) {
+    if (/\bbody=/.test(page.url())) {
+      break;
+    }
+    await page.mouse.move(mid.x, mid.y);
+    await page.mouse.wheel(0, -300);
+    await page.waitForTimeout(140);
+  }
+  await expect(page).toHaveURL(/\bbody=eris\b/);
+  // Handed over wholly inside the surface, so the rim and the wrap copies were never in frame:
+  // the island stays where it was rather than the far side of the surface arriving at once.
+  const at = new URL(page.url()).searchParams;
+  const span = Number(at.get('span'));
+  const reach = (span / 2) * Math.hypot(1, box.height / box.width);
+  expect(Number(at.get('x')) - reach).toBeGreaterThan(0);
+  expect(Number(at.get('x')) + reach).toBeLessThan(4096);
+  expect(Number(at.get('z')) - reach).toBeGreaterThan(0);
+  expect(Number(at.get('z')) + reach).toBeLessThan(4096);
 });
 
 test('zooming out of a grouped Body returns to that Body, not its group', async ({

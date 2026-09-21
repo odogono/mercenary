@@ -36,11 +36,11 @@ import {
 import { islandAt, readBodySurface, type BodySurface } from './surface.ts';
 import {
   fitSystem,
+  insideSurface,
   markerAt,
   markerView,
   projectSystem,
   showsSurface,
-  surfaceUnits,
   surfaceWindow,
   systemBounds,
   systemWindow,
@@ -270,7 +270,13 @@ const drawRange = () => {
     marker => marker.bodyIds.length > 1
   ).length;
   const withheld = labels?.suppressed.length ?? 0;
-  const onFrame = projection.markers.length - (labels?.offscreen.length ?? 0);
+  // A marker's centre can be off screen while the reader is deep inside that very Body, so a
+  // surface on the disc counts as a Body in view. Saying the System is empty here would be
+  // plainly wrong.
+  const onFrame =
+    projection.markers.length -
+    (labels?.offscreen.length ?? 0) +
+    (discSurface ? 1 : 0);
   status.textContent = onFrame
     ? `${projection.markers.length} markers · ${system.bodies.length} recovered Bodies` +
       (grouped ? ` · ${grouped} group more than one` : '') +
@@ -513,11 +519,11 @@ const handOver = (next: MapView): boolean => {
     return false;
   }
   const frame = frameOf(systemRange);
-  // Hand over the moment the authored surface fills the frame's shorter side, which is exactly
-  // where the Body Range's own fit sits: `fitBody` spans the surface across the height, so the
-  // two cameras show the identical window and the islands do not move across the switch. Any
-  // later and the System Range would already be cropping the surface it is about to hand over.
-  if (surfaceUnits(body) / (next.span / frame.width) < frame.height) {
+  // Hand over once the frame is wholly inside the Body's authored surface, so nothing appears or
+  // vanishes as the Ranges change hands: no disc edge, no space beyond it, and no wrap copies
+  // arriving from off screen. Later than filling the frame's shorter side, which still left the
+  // rim in view and popped worst on an island near the edge.
+  if (!insideSurface(body, next, frame)) {
     return false;
   }
   const window = surfaceWindow(body, next);
