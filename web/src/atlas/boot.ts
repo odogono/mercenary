@@ -5,6 +5,7 @@ import {
   gridStep,
   unproject,
   zoomOf,
+  type MapPoint,
   type MapView
 } from '../catalogue/mapView.ts';
 import {
@@ -33,7 +34,12 @@ import {
   readAtlasState,
   type AtlasState
 } from './state.ts';
-import { islandAt, readBodySurface, type BodySurface } from './surface.ts';
+import {
+  islandAt,
+  readBodySurface,
+  surfaceAnchor,
+  type BodySurface
+} from './surface.ts';
 import {
   fitSystem,
   insideSurface,
@@ -104,6 +110,8 @@ let surface: BodySurface | undefined;
 /// Separate from `surface`, which belongs to the Body Range.
 let onDisc: string | undefined;
 let discSurface: BodySurface | undefined;
+/// Where that Body's surface is centred, in Surface Cells: its islands' own wrap-aware centre.
+let discAnchor: MapPoint | undefined;
 
 const selectedBody = () => {
   const current = state;
@@ -212,18 +220,21 @@ const drawRange = () => {
       discSurface = catalogue
         ? readBodySurface(catalogue, nearBody.sourceIndex)
         : undefined;
+      discAnchor = discSurface && surfaceAnchor(discSurface);
       // Only now is the Catalogue worth 40 MiB (#435): a reader who never zooms this far in
       // never pays for it.
       loadSurface(nearBody.sourceIndex, () => {
         discSurface = catalogue
           ? readBodySurface(catalogue, nearBody.sourceIndex)
           : undefined;
+        discAnchor = discSurface && surfaceAnchor(discSurface);
         drawRange();
       });
     }
   } else {
     onDisc = undefined;
     discSurface = undefined;
+    discAnchor = undefined;
   }
   // The authored-scale note appears and goes with the surface it describes.
   if (onDisc !== wasOnDisc) {
@@ -234,8 +245,8 @@ const drawRange = () => {
     projection,
     view,
     frame,
-    near && nearBody && discSurface
-      ? { body: nearBody, marker: near, surface: discSurface }
+    near && nearBody && discSurface && discAnchor
+      ? { anchor: discAnchor, body: nearBody, surface: discSurface }
       : undefined
   );
   if (labels) {
@@ -526,7 +537,10 @@ const handOver = (next: MapView): boolean => {
   if (!insideSurface(body, next, frame)) {
     return false;
   }
-  const window = surfaceWindow(body, next);
+  if (!discAnchor) {
+    return false;
+  }
+  const window = surfaceWindow(body, discAnchor, next);
   bodyView = window;
   go({
     bodyId: body.id,
@@ -622,7 +636,13 @@ const bodyControls = mountCamera({
       go(SYSTEM_RANGE);
       return;
     }
-    const matched = systemWindow(body, bodyView);
+    // The Body Range's own islands give the anchor here: the reader may have arrived by a deep
+    // link rather than by zooming, so the disc's anchor may never have been computed.
+    const matched = systemWindow(
+      body,
+      surfaceAnchor(surface ?? { gaps: [], islands: [] }),
+      bodyView
+    );
     view = matched;
     atFit = false;
     go({

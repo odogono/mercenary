@@ -262,12 +262,46 @@ test('zooming into a Body reveals its islands and hands over continuously', asyn
   await expect(page).toHaveURL(/\bbody=eris\b/, { timeout: 10_000 });
   await expect(page.locator('#system-scale')).toContainText('Body Range');
   // The hand-over lands on the Body Range's own fit, which is what makes the islands stay put.
-  // Near the surface centre because the camera was centred on the Body, and well inside the
-  // surface because the hand-over waits for the whole frame to be: a margin, not a coincidence.
+  // Well inside one surface, because the hand-over waits for the whole frame to be: the frame's
+  // diagonal fits within a surface, so no island can have two images in view.
   const handed = new URL(page.url()).searchParams;
-  expect(Math.abs(Number(handed.get('x')) - 2048)).toBeLessThan(40);
-  expect(Math.abs(Number(handed.get('z')) - 2048)).toBeLessThan(40);
-  expect(Number(handed.get('span'))).toBeLessThan(4096);
+  const reach =
+    (Number(handed.get('span')) / 2) * Math.hypot(1, box.height / box.width);
+  expect(2 * reach).toBeLessThan(4096);
+});
+
+test('draws each island once on a disc, and centres a ring about the origin', async ({
+  page
+}) => {
+  // Reported: looking at Eris showed two copies of SNOW ISLAND and two of KEY WEST. A disc is a
+  // sphere seen from outside and you cannot see the same island twice on one, so wrapped copies
+  // belong to the Body Range's flat torus and not here.
+  await page.goto('/damocles/atlas?x=-630000&z=390000&span=1600');
+  await expect(page.locator('#status')).toContainText(
+    '5 recovered islands drawn on ERIS',
+    { timeout: 20_000 }
+  );
+
+  // Reported: Lucan's ring of twelve appeared as four broken arcs in the four corners, because
+  // it rings the coordinate origin and the surface was centred on cell 2048. It is now centred
+  // on the ring's own wrap-aware centre, cell 6, so it draws as one ring.
+  await page.goto('/damocles/atlas?x=-635600&z=383600&span=200');
+  await expect(page.locator('#status')).toContainText(
+    '12 recovered islands drawn on LUCAN',
+    { timeout: 20_000 }
+  );
+  // Zooming on still hands over, so the shifted centre has not broken the transition.
+  const box = (await page.locator('#range-system').boundingBox())!;
+  const mid = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  for (let step = 0; step < 10; step += 1) {
+    if (/\bbody=/.test(page.url())) {
+      break;
+    }
+    await page.mouse.move(mid.x, mid.y);
+    await page.mouse.wheel(0, -300);
+    await page.waitForTimeout(140);
+  }
+  await expect(page).toHaveURL(/\bbody=lucan\b/);
 });
 
 test('a small Body hands over too, not just the large ones', async ({
@@ -324,12 +358,11 @@ test('hands over without a pop on an island at the surface edge', async ({
   // Handed over wholly inside the surface, so the rim and the wrap copies were never in frame:
   // the island stays where it was rather than the far side of the surface arriving at once.
   const at = new URL(page.url()).searchParams;
-  const span = Number(at.get('span'));
-  const reach = (span / 2) * Math.hypot(1, box.height / box.width);
-  expect(Number(at.get('x')) - reach).toBeGreaterThan(0);
-  expect(Number(at.get('x')) + reach).toBeLessThan(4096);
-  expect(Number(at.get('z')) - reach).toBeGreaterThan(0);
-  expect(Number(at.get('z')) + reach).toBeLessThan(4096);
+  const reach =
+    (Number(at.get('span')) / 2) * Math.hypot(1, box.height / box.width);
+  // The frame's diagonal fits inside one surface, so the rim and the wrap copies were never in
+  // frame: the island stays where it was rather than the far side arriving all at once.
+  expect(2 * reach).toBeLessThan(4096);
 });
 
 test('zooming out of a grouped Body returns to that Body, not its group', async ({
@@ -344,9 +377,16 @@ test('zooming out of a grouped Body returns to that Body, not its group', async 
   await expect(page.locator('#range-system')).toBeVisible();
   await expect(page).toHaveURL(/\bx=/);
   const at = new URL(page.url()).searchParams;
-  // VESTA's own recovered position. ERIS, whose marker VESTA sits inside, is at z 390,000.
-  expect(Number(at.get('x'))).toBe(-630_000);
-  expect(Number(at.get('z'))).toBe(392_400);
+  // Back on VESTA. Not exactly its centre, because the camera returns to the point the reader
+  // was looking at and a Body's surface is drawn centred on its islands rather than on cell
+  // 2048; but its own derived radius is 360 units, so being within that is being on VESTA.
+  expect(
+    Math.hypot(Number(at.get('x')) + 630_000, Number(at.get('z')) - 392_400)
+  ).toBeLessThan(360);
+  // And nowhere near ERIS, 2,400 units away, which is what the bug did.
+  expect(
+    Math.hypot(Number(at.get('x')) + 630_000, Number(at.get('z')) - 390_000)
+  ).toBeGreaterThan(1000);
   await expect(page.locator('#system-scale')).toContainText(
     'VESTA surface at an authored scale'
   );

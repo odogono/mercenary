@@ -416,33 +416,46 @@ export const insideSurface = (
 /// Body Range can open on exactly what the disc was showing. The islands then sit in the same
 /// place at the same size across the hand-over: what changes is that sea, the Surface Cell grid
 /// and the coordinate seam appear, and the disc goes.
-export const surfaceWindow = (body: GammaBody, view: MapView): MapView => {
+export const surfaceWindow = (
+  body: GammaBody,
+  anchor: MapPoint,
+  view: MapView
+): MapView => {
   const scale = unitsPerCell(body);
   return {
-    // The Body's centre is the middle of its surface, because that is where the inscribed square
-    // is centred.
-    cx: SURFACE_CELLS / 2 + (view.cx - body.position.x) / scale,
-    cz: SURFACE_CELLS / 2 + (view.cz - body.position.z) / scale,
+    // The anchor cell sits at the Body's centre, because that is where the inscribed square is
+    // centred. It is the Body's islands' own wrap-aware centre rather than cell 2048, so a ring
+    // around the coordinate origin draws whole instead of as four corner arcs.
+    cx: anchor.x + (view.cx - body.position.x) / scale,
+    cz: anchor.z + (view.cz - body.position.z) / scale,
     span: view.span / scale
   };
 };
 
 /// Where one Body Coordinate falls in position units, for drawing a surface on a disc.
-export const surfacePoint = (body: GammaBody, point: MapPoint): MapPoint => {
+export const surfacePoint = (
+  body: GammaBody,
+  anchor: MapPoint,
+  point: MapPoint
+): MapPoint => {
   const scale = unitsPerCell(body);
   return {
-    x: body.position.x + (point.x - SURFACE_CELLS / 2) * scale,
-    z: body.position.z + (point.z - SURFACE_CELLS / 2) * scale
+    x: body.position.x + (point.x - anchor.x) * scale,
+    z: body.position.z + (point.z - anchor.z) * scale
   };
 };
 
 /// The System camera that shows the same Body Coordinate window a Body camera is on. The inverse
 /// of `surfaceWindow`, so the outbound hop can match the picture too.
-export const systemWindow = (body: GammaBody, view: MapView): MapView => {
+export const systemWindow = (
+  body: GammaBody,
+  anchor: MapPoint,
+  view: MapView
+): MapView => {
   const scale = unitsPerCell(body);
   return {
-    cx: body.position.x + (view.cx - SURFACE_CELLS / 2) * scale,
-    cz: body.position.z + (view.cz - SURFACE_CELLS / 2) * scale,
+    cx: body.position.x + (view.cx - anchor.x) * scale,
+    cz: body.position.z + (view.cz - anchor.z) * scale,
     span: view.span * scale
   };
 };

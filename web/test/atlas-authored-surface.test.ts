@@ -1,7 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
 import { fitBody } from '../src/atlas/bodyRange.ts';
-import { readBodySurface } from '../src/atlas/surface.ts';
+import {
+  nearestImage,
+  readBodySurface,
+  surfaceAnchor
+} from '../src/atlas/surface.ts';
 import {
   SYSTEM_MAX_ZOOM,
   fitSystem,
@@ -21,6 +25,8 @@ import { SURFACE_CELLS } from '../src/damocles/world.ts';
 import { bodyRadius, readGammaSystem } from '../src/flyover/documents.ts';
 
 const FRAME = { height: 773.5, width: 961.5 };
+/// Any anchor serves for the conversion tests: they check the maths, not the choice of centre.
+const ANCHOR = { x: SURFACE_CELLS / 2, z: SURFACE_CELLS / 2 };
 
 const gammaSystem = async () =>
   readGammaSystem(await Bun.file('../payload/damocles/system.json').json());
@@ -40,9 +46,13 @@ describe('the authored surface scale', () => {
     for (const body of system.bodies) {
       const marker = markers.find(value => value.bodyIds.includes(body.id))!;
       const radius = bodyRadius(body);
-      for (const island of readBodySurface(data, body.sourceIndex).islands) {
-        for (const cell of island.outline) {
-          const point = surfacePoint(body, cell);
+      const surface = readBodySurface(data, body.sourceIndex);
+      const anchor = surfaceAnchor(surface);
+      for (const island of surface.islands) {
+        // Nearest-imaged first, as the drawing does: a record crossing the seam has raw
+        // coordinates on the far side of the surface and is shifted bodily to the anchor.
+        for (const cell of nearestImage(island.outline, anchor)) {
+          const point = surfacePoint(body, anchor, cell);
           expect(
             Math.hypot(point.x - body.position.x, point.z - body.position.z)
           ).toBeLessThanOrEqual(radius);
@@ -126,13 +136,13 @@ describe('the hand-over between the Ranges', () => {
       cz: eris.position.z - 25,
       span: 900
     };
-    const handed = surfaceWindow(eris, view);
+    const handed = surfaceWindow(eris, ANCHOR, view);
     const cellPixels = FRAME.width / handed.span;
     const unitPixels = FRAME.width / view.span;
     expect(cellPixels).toBeCloseTo(unitPixels * unitsPerCell(eris), 9);
     // And a cell's corner lands on the same pixel either way.
     const cell = { x: 1000, z: 1500 };
-    const viaSystem = surfacePoint(eris, cell);
+    const viaSystem = surfacePoint(eris, ANCHOR, cell);
     expect((viaSystem.x - view.cx) * unitPixels).toBeCloseTo(
       (cell.x - handed.cx) * cellPixels,
       9
@@ -191,7 +201,7 @@ describe('the hand-over between the Ranges', () => {
     expect(grouped.id).toBe('eris');
     for (const id of ['vesta', 'solon', 'theon', 'metis', 'lucan']) {
       const body = system.bodies.find(value => value.id === id)!;
-      const out = systemWindow(body, fitBody(FRAME));
+      const out = systemWindow(body, ANCHOR, fitBody(FRAME));
       // The camera comes back centred on that Body's own recovered position.
       expect(out.cx).toBeCloseTo(body.position.x, 6);
       expect(out.cz).toBeCloseTo(body.position.z, 6);
@@ -214,7 +224,11 @@ describe('the hand-over between the Ranges', () => {
         cz: body.position.z - 23,
         span: surfaceUnits(body) / 4
       };
-      const back = systemWindow(body, surfaceWindow(body, view));
+      const back = systemWindow(
+        body,
+        ANCHOR,
+        surfaceWindow(body, ANCHOR, view)
+      );
       expect(back.cx).toBeCloseTo(view.cx, 6);
       expect(back.cz).toBeCloseTo(view.cz, 6);
       expect(back.span).toBeCloseTo(view.span, 6);
@@ -235,8 +249,8 @@ describe('the hand-over between the Ranges', () => {
       { cx: -630_200, cz: 390_400, span: 400 },
       { cx: -629_800, cz: 389_600, span: 40 }
     ]) {
-      const there = surfaceWindow(eris, view);
-      const back = systemWindow(eris, there);
+      const there = surfaceWindow(eris, ANCHOR, view);
+      const back = systemWindow(eris, ANCHOR, there);
       expect(back.cx).toBeCloseTo(view.cx, 6);
       expect(back.cz).toBeCloseTo(view.cz, 6);
       expect(back.span).toBeCloseTo(view.span, 6);
@@ -299,10 +313,7 @@ describe('the hand-over between the Ranges', () => {
     )!;
     // Cell 2048 is the middle of the surface and the middle of the disc, because the inscribed
     // square is centred on the Body.
-    const middle = surfacePoint(eris, {
-      x: SURFACE_CELLS / 2,
-      z: SURFACE_CELLS / 2
-    });
+    const middle = surfacePoint(eris, ANCHOR, ANCHOR);
     expect(middle.x).toBeCloseTo(eris.position.x, 6);
     expect(middle.z).toBeCloseTo(eris.position.z, 6);
   });

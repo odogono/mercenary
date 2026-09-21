@@ -1,14 +1,18 @@
-import { gridStep, project, type MapView } from '../catalogue/mapView.ts';
+import {
+  gridStep,
+  project,
+  type MapPoint,
+  type MapView
+} from '../catalogue/mapView.ts';
 import { SURFACE_CELLS } from '../damocles/world.ts';
 import type { GammaBody } from '../flyover/documents.ts';
-import { wrapImages, type BodySurface } from './surface.ts';
+import { nearestImage, wrapImages, type BodySurface } from './surface.ts';
 import {
   layOutLabels,
   surfacePoint,
   surfaceWindow,
   type SystemFrame,
   type SystemLabels,
-  type SystemMarker,
   type SystemProjection
 } from './system.ts';
 
@@ -182,49 +186,64 @@ export const drawBodySurface = (
 /// spacing and origin at the moment of the switch. Drawing the Body Range's own grid here, from
 /// the very same converted camera, means nothing moves when the Ranges change hands.
 ///
-/// Everything is clipped to the disc, because the surface is the square inscribed in it: the
-/// grid must stop at the Body rather than run out across space.
+/// Each island is drawn **once**, at the wrap image nearest the surface's anchor, and everything
+/// is clipped to the surface square. A disc is a sphere seen from outside, and you cannot see
+/// the same island twice on one: wrapped copies belong to the flat torus of the Body Range, and
+/// on a disc they only ever showed SNOW ISLAND and KEY WEST twice apiece.
 const drawSurfaceOnDisc = (
   context: CanvasRenderingContext2D,
   view: MapView,
   frame: SystemFrame,
   onBody: {
+    readonly anchor: MapPoint;
     readonly body: GammaBody;
-    readonly marker: SystemMarker;
     readonly surface: BodySurface;
   }
 ) => {
   const aspect = frame.height / Math.max(frame.width, 1);
-  const { body, marker, surface } = onBody;
+  const { anchor, body, surface } = onBody;
+  const corner = (x: number, z: number) => {
+    const { u, v } = project(
+      view,
+      surfacePoint(body, anchor, { x, z }),
+      aspect
+    );
+    return { x: u * frame.width, y: v * frame.height };
+  };
+  const from = corner(
+    anchor.x - SURFACE_CELLS / 2,
+    anchor.z + SURFACE_CELLS / 2
+  );
+  const to = corner(anchor.x + SURFACE_CELLS / 2, anchor.z - SURFACE_CELLS / 2);
   context.save();
   context.beginPath();
-  context.arc(marker.x, marker.y, marker.radius, 0, 2 * Math.PI);
+  context.rect(from.x, from.y, to.x - from.x, to.y - from.y);
   context.clip();
   // The Body Range's own camera over the same pixels, so its grid and seam land identically.
-  const asSurface = surfaceWindow(body, view);
+  const asSurface = surfaceWindow(body, anchor, view);
   drawGrid(context, asSurface, frame);
   drawSeams(context, asSurface, frame);
   for (const island of surface.islands) {
     context.fillStyle = island.landColour;
     context.strokeStyle = OUTLINE;
     context.lineWidth = OUTLINE_WIDTH;
-    // Wrapped copies too, so an island crossing the seam is whole here as it is there.
-    for (const image of wrapImages(island.outline, asSurface, aspect)) {
-      context.beginPath();
-      for (const [index, cell] of image.entries()) {
-        const { u, v } = project(view, surfacePoint(body, cell), aspect);
-        const x = u * frame.width,
-          y = v * frame.height;
-        if (index === 0) {
-          context.moveTo(x, y);
-        } else {
-          context.lineTo(x, y);
-        }
+    context.beginPath();
+    for (const [index, cell] of nearestImage(
+      island.outline,
+      anchor
+    ).entries()) {
+      const { u, v } = project(view, surfacePoint(body, anchor, cell), aspect);
+      const x = u * frame.width,
+        y = v * frame.height;
+      if (index === 0) {
+        context.moveTo(x, y);
+      } else {
+        context.lineTo(x, y);
       }
-      context.closePath();
-      context.fill();
-      context.stroke();
     }
+    context.closePath();
+    context.fill();
+    context.stroke();
   }
   context.restore();
 };
@@ -237,8 +256,8 @@ export const drawSystemRange = (
   /// A Body's recovered surface to draw on its own disc, once the camera is close enough. The
   /// scale relating the two is authored; see `unitsPerCell`.
   onBody?: {
+    readonly anchor: MapPoint;
     readonly body: GammaBody;
-    readonly marker: SystemMarker;
     readonly surface: BodySurface;
   }
 ): SystemLabels | null => {
@@ -267,7 +286,7 @@ export const drawSystemRange = (
       );
       context.stroke();
     }
-    if (onBody && onBody.marker.id === marker.id) {
+    if (onBody && onBody.body.id === marker.id) {
       drawSurfaceOnDisc(context, view, frame, onBody);
     }
   }
