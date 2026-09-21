@@ -6,12 +6,16 @@ import type { GammaBody, GammaSystemDocument } from '../flyover/documents.ts';
 /// Shown once for the whole System Range rather than repeated per Body.
 export const SYSTEM_RANGE_NOTE =
   'Positions are recovered from one observed world load and no complete orbital elements ' +
-  'were recovered, so nothing here moves and no Body is shown orbiting another. Discs are ' +
-  'sized in proportion to each other from the raw extent longword and not to the distance ' +
-  'scale. That longword is a packed binary float, so these discs understate the range of ' +
-  'sizes: decoded, the System spans 500 times rather than 1.69 (#424). Drawing decoded sizes ' +
-  'needs a camera and arrives with one (#425). VOID is a place sentinel rather than one of ' +
-  'the 30 physical records and is excluded.';
+  'were recovered, so nothing here moves and no Body is shown orbiting another. Bodies that ' +
+  'fall within fourteen screen pixels of one another are drawn as one marker wearing the name ' +
+  'of the largest Body under it and a count of the rest: that is a fact about this drawing at ' +
+  'this camera and not a relationship, because no Primary was recovered and this map discards ' +
+  'the Y axis. A disc far out is a marker and not a size, compressed so a five-hundred-fold ' +
+  'range of sizes stays legible; close in it is the Body at a radius derived from the ' +
+  'recovered extent, which the scale readout distinguishes. That radius divides the decoded ' +
+  'extent (#424) by 256, the smallest power of two at which no two recovered Bodies overlap, ' +
+  'so a Body may be smaller than drawn and never larger. VOID is a place sentinel rather than ' +
+  'one of the 30 physical records and is excluded.';
 
 const units = (value: number): string =>
   Math.round(value).toLocaleString('en-GB');

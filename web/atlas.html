@@ -11,10 +11,21 @@
       <section class="stage">
         <h1 id="title">Gamma Atlas</h1>
         <nav id="breadcrumb" aria-label="Atlas Ranges"></nav>
+        <div id="system-toolbar">
+          <button id="system-zoom-out" aria-label="Zoom the System Range out">
+            &#8722;
+          </button>
+          <button id="system-zoom-in" aria-label="Zoom the System Range in">
+            +
+          </button>
+          <button id="system-fit">Fit System</button>
+          <span id="system-scale" class="muted"></span>
+        </div>
         <div
           id="range-system"
           class="range"
-          aria-label="System Range. Every recovered Body of the Gamma System, drawn on the X/Z plane."
+          tabindex="0"
+          aria-label="System Range. Every recovered Body of the Gamma System, drawn on the X/Z plane. Drag to pan, scroll or double-click to zoom, arrow keys pan, plus and minus zoom, zero fits the System."
         >
           <canvas id="system-map"></canvas>
           <div id="system-labels" aria-hidden="true"></div>
