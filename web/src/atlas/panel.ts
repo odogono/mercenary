@@ -7,9 +7,11 @@ import type { GammaBody, GammaSystemDocument } from '../flyover/documents.ts';
 export const SYSTEM_RANGE_NOTE =
   'Positions are recovered from one observed world load and no complete orbital elements ' +
   'were recovered, so nothing here moves and no Body is shown orbiting another. Discs are ' +
-  'sized in proportion to each other from the recovered extent, not to the distance scale: ' +
-  'the radius/extent encoding is unresolved. VOID is a place sentinel rather than one of the ' +
-  '30 physical records and is excluded.';
+  'sized in proportion to each other from the raw extent longword and not to the distance ' +
+  'scale. That longword is a packed binary float, so these discs understate the range of ' +
+  'sizes: decoded, the System spans 500 times rather than 1.69 (#424). Drawing decoded sizes ' +
+  'needs a camera and arrives with one (#425). VOID is a place sentinel rather than one of ' +
+  'the 30 physical records and is excluded.';
 
 const units = (value: number): string =>
   Math.round(value).toLocaleString('en-GB');
