@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { fitBody } from '../src/atlas/bodyRange.ts';
 import {
   catalogueBodyId,
+  islandAt,
   readBodySurface,
   wrapImages
 } from '../src/atlas/surface.ts';
@@ -200,5 +201,71 @@ describe('the wrap images of a coastline', () => {
 
   test('gives an empty outline no images', () => {
     expect(wrapImages([], fitBody(FRAME), ASPECT)).toEqual([]);
+  });
+});
+
+describe('picking a Damocles Island', () => {
+  test('picks the record a Body Coordinate falls inside, and nothing in the sea', async () => {
+    const data = await catalogue();
+    const surface = readBodySurface(data, ERIS);
+    const view = fitBody(FRAME);
+    const capital = surface.islands.find(
+      island => island.areaName === 'CAPITAL CITY'
+    )!;
+    // The centroid of a convex-enough ring is inside it, and every vertex neighbourhood is not
+    // a safe bet, so the centroid is the honest probe.
+    const centre = {
+      x:
+        capital.outline.reduce((sum, p) => sum + p.x, 0) /
+        capital.outline.length,
+      z:
+        capital.outline.reduce((sum, p) => sum + p.z, 0) /
+        capital.outline.length
+    };
+    expect(islandAt(surface, view, ASPECT, centre)?.id).toBe(capital.id);
+    // Open sea, far from every Eris record.
+    expect(islandAt(surface, view, ASPECT, { x: 2048, z: 2048 })).toBe(null);
+  });
+
+  test('picks the same record on either side of the seam', async () => {
+    const data = await catalogue();
+    const surface = readBodySurface(data, ERIS);
+    const snow = surface.islands.find(
+      island => island.areaName === 'SNOW ISLAND'
+    )!;
+    const view = fitBody(FRAME);
+    const centre = {
+      x: snow.outline.reduce((sum, p) => sum + p.x, 0) / snow.outline.length,
+      z: snow.outline.reduce((sum, p) => sum + p.z, 0) / snow.outline.length
+    };
+    // The record runs -8..56, so its centroid sits at a negative coordinate and its wrap image
+    // sits near 4096. Both must reach the same record, or a reader picking the half on the far
+    // side of the seam would find nothing there.
+    expect(islandAt(surface, view, ASPECT, centre)?.id).toBe(snow.id);
+    expect(
+      islandAt(surface, view, ASPECT, {
+        x: centre.x + SURFACE_CELLS,
+        z: centre.z
+      })?.id
+    ).toBe(snow.id);
+  });
+
+  test('picks every recovered island of a Body from its own centroid', async () => {
+    const data = await catalogue();
+    for (const index of [ERIS, LUCAN]) {
+      const surface = readBodySurface(data, index);
+      const view = fitBody(FRAME);
+      for (const island of surface.islands) {
+        const centre = {
+          x:
+            island.outline.reduce((sum, p) => sum + p.x, 0) /
+            island.outline.length,
+          z:
+            island.outline.reduce((sum, p) => sum + p.z, 0) /
+            island.outline.length
+        };
+        expect(islandAt(surface, view, ASPECT, centre)?.id).toBe(island.id);
+      }
+    }
   });
 });

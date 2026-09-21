@@ -26,6 +26,9 @@ const GROUP_RING = 3;
 /// lattice looks the same everywhere, and a reader panning across the wrap needs to see that
 /// they have crossed something rather than that nothing happened.
 const SEAM = '#2d769788';
+/// The picked island's ring, matching the accent the roster and breadcrumb use for selection.
+const SELECTED = '#61c8ff';
+const SELECTED_WIDTH = 2;
 
 export const frameOf = (element: HTMLElement): SystemFrame => {
   const rect = element.getBoundingClientRect();
@@ -92,7 +95,8 @@ export const drawBodySurface = (
   view: MapView,
   frame: SystemFrame,
   seaColour: string,
-  surface: BodySurface | undefined
+  surface: BodySurface | undefined,
+  selectedIslandId: string | null
 ): void => {
   const context = surfaceOf(canvas, frame);
   if (!context) {
@@ -104,9 +108,10 @@ export const drawBodySurface = (
   context.fillRect(0, 0, frame.width, frame.height);
   const aspect = frame.height / Math.max(frame.width, 1);
   for (const island of surface?.islands ?? []) {
+    const selected = island.id === selectedIslandId;
     context.fillStyle = island.landColour;
-    context.strokeStyle = OUTLINE;
-    context.lineWidth = OUTLINE_WIDTH;
+    context.strokeStyle = selected ? SELECTED : OUTLINE;
+    context.lineWidth = selected ? SELECTED_WIDTH : OUTLINE_WIDTH;
     for (const image of wrapImages(island.outline, view, aspect)) {
       context.beginPath();
       for (const [index, point] of image.entries()) {

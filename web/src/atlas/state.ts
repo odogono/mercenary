@@ -15,6 +15,9 @@ export type AtlasState =
   | { readonly level: 'system'; readonly view: AtlasView | null }
   | {
       readonly bodyId: string;
+      /// The picked Damocles Island's record id, so a selection survives a link the way a
+      /// camera does. Null when nothing on the surface is picked.
+      readonly islandId: string | null;
       readonly level: 'body';
       readonly view: AtlasView | null;
     };
@@ -50,15 +53,25 @@ export const readAtlasState = (
     return SYSTEM_RANGE;
   }
   const view = readView(params);
-  return bodyId === null
-    ? { level: 'system', view }
-    : { bodyId, level: 'body', view };
+  if (bodyId === null) {
+    return { level: 'system', view };
+  }
+  const islandId = params.get('island');
+  return {
+    bodyId,
+    islandId: islandId !== null && islandId.trim() !== '' ? islandId : null,
+    level: 'body',
+    view
+  };
 };
 
 export const atlasSearch = (state: AtlasState): string => {
   const params = new URLSearchParams();
   if (state.level === 'body') {
     params.set('body', state.bodyId);
+    if (state.islandId) {
+      params.set('island', state.islandId);
+    }
   }
   if (state.view) {
     params.set('x', round(state.view.x));

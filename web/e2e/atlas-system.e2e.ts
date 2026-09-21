@@ -207,6 +207,48 @@ test('a Body draws its recovered coastlines, whole across the seam', async ({
   });
 });
 
+test('picking an island fills the panel and survives the link', async ({
+  page
+}) => {
+  // Framed on Eris's CAPITAL CITY, whose recovered extent is x 38..104, z 112..160.
+  await page.goto('/damocles/atlas?body=eris&x=71&z=136&span=180');
+  await expect(page.locator('#status')).toContainText('5 recovered islands', {
+    timeout: 20_000
+  });
+  const box = (await page.locator('#range-body').boundingBox())!;
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+
+  await expect(page).toHaveURL(/\bisland=island-eris-/);
+  await expect(page.locator('#panel')).toContainText('CAPITAL CITY');
+  await expect(page.locator('#panel')).toContainText('Origin X/Z');
+  // An island carries no name of its own, and the panel must say so rather than heading the
+  // area name as one.
+  await expect(page.locator('#panel')).toContainText(
+    'carries no name of its own'
+  );
+  // The Catalogue has no island view, so the hand-off reaches the Body and says as much.
+  await expect(page.locator('#island-catalogue-link')).toHaveAttribute(
+    'href',
+    '/damocles/catalogue?body=body-11'
+  );
+  await expect(page.locator('#panel')).toContainText(
+    'holds no island record view'
+  );
+
+  // The selection is in the URL, so reloading it restores the same panel.
+  const picked = page.url();
+  await page.goto(picked);
+  await expect(page.locator('#panel')).toContainText('CAPITAL CITY', {
+    timeout: 20_000
+  });
+
+  // Picking the sea clears it without leaving the Body.
+  await page.mouse.click(box.x + 12, box.y + 12);
+  await expect(page).not.toHaveURL(/\bisland=/);
+  await expect(page).toHaveURL(/\bbody=eris\b/);
+  await expect(page.locator('#panel')).not.toContainText('Origin X/Z');
+});
+
 test('a deep-linked Body camera is restored', async ({ page }) => {
   // 32 Surface Cells is two Structure Workspaces across, so about a thirtieth of a cell per
   // pixel: the Settlement Range.

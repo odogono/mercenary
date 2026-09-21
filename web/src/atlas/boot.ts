@@ -3,6 +3,7 @@ import {
   clampView,
   formatUnits,
   gridStep,
+  unproject,
   zoomOf,
   type MapView
 } from '../catalogue/mapView.ts';
@@ -32,7 +33,7 @@ import {
   readAtlasState,
   type AtlasState
 } from './state.ts';
-import { readBodySurface, type BodySurface } from './surface.ts';
+import { islandAt, readBodySurface, type BodySurface } from './surface.ts';
 import {
   fitSystem,
   markerAt,
@@ -116,10 +117,16 @@ const recordCamera = () => {
           bodyView
             ? {
                 bodyId: current.bodyId,
+                islandId: current.islandId,
                 level: 'body',
                 view: { span: bodyView.span, x: bodyView.cx, z: bodyView.cz }
               }
-            : { bodyId: current.bodyId, level: 'body', view: null }
+            : {
+                bodyId: current.bodyId,
+                islandId: current.islandId,
+                level: 'body',
+                view: null
+              }
         )
       );
       return;
@@ -208,7 +215,15 @@ const drawBodyRange = () => {
   }
   const frame = frameOf(bodyRange);
   bodyView = bodyView ?? fitBody(frame);
-  drawBodySurface(bodyCanvas, bodyView, frame, body.baseColour, surface);
+  const current = state;
+  drawBodySurface(
+    bodyCanvas,
+    bodyView,
+    frame,
+    body.baseColour,
+    surface,
+    current.level === 'body' ? current.islandId : null
+  );
   const band = rangeOf(bodyView, frame.width);
   const cells = bodyView.span / Math.max(frame.width, 1);
   scale.textContent =
@@ -253,10 +268,14 @@ const loadSurface = (sourceIndex: number) => {
       });
   void catalogueRequest.then(() => {
     const body = selectedBody();
-    if (catalogue && body) {
-      surface = readBodySurface(catalogue, body.sourceIndex);
-      drawBodyRange();
+    if (!catalogue || !body) {
+      return;
     }
+    surface = readBodySurface(catalogue, body.sourceIndex);
+    // `render` rather than `drawBodyRange`: a deep link may name a picked island, and until the
+    // Catalogue is read there is no record to put in the panel. Re-rendering is idempotent here
+    // because the state has not moved, so the camera survives and nothing is refetched.
+    render();
   });
 };
 
@@ -331,7 +350,17 @@ const render = () => {
       String(anchor.dataset['body'] === body?.id)
     );
   }
-  renderPanel(panel, system, body);
+  // Read out of the union into a local, or the mutable module-level `state` defeats narrowing.
+  const settled = state;
+  const pickedId = settled.level === 'body' ? settled.islandId : null;
+  renderPanel(
+    panel,
+    system,
+    body,
+    pickedId
+      ? (catalogue?.islands.find(island => island.id === pickedId) ?? null)
+      : null
+  );
   if (body) {
     drawBodyRange();
   } else {
@@ -351,7 +380,12 @@ const mountRoster = (loaded: GammaSystemDocument) => {
   // Bodies that a marker stands for together in the list.
   for (const body of loaded.bodies) {
     const anchor = document.createElement('a');
-    anchor.href = atlasHref({ bodyId: body.id, level: 'body', view: null });
+    anchor.href = atlasHref({
+      bodyId: body.id,
+      islandId: null,
+      level: 'body',
+      view: null
+    });
     anchor.dataset['body'] = body.id;
     const swatch = document.createElement('span');
     swatch.className = 'roster-swatch';
@@ -372,7 +406,7 @@ const pick = (marker: SystemMarker) => {
     view = markerView(marker, system.bodies, fit, frameOf(systemRange));
     drawRange();
   } else {
-    go({ bodyId: marker.id, level: 'body', view: null });
+    go({ bodyId: marker.id, islandId: null, level: 'body', view: null });
   }
 };
 
@@ -427,8 +461,33 @@ const bodyControls = mountCamera({
       width: frame.width
     };
   },
-  // Nothing on the surface is selectable yet; islands arrive in #432.
-  onPick: () => {},
+  onPick: (x, y) => {
+    const body = selectedBody();
+    if (!body || !surface || !bodyView || state.level !== 'body') {
+      return;
+    }
+    const frame = frameOf(bodyRange);
+    const aspect = frame.height / Math.max(frame.width, 1);
+    // Tested in Body Coordinates rather than in pixels, so a pick is against the recovered ring
+    // and not against a rasterised one.
+    const point = unproject(
+      bodyView,
+      x / Math.max(frame.width, 1),
+      y / Math.max(frame.height, 1),
+      aspect
+    );
+    const picked = islandAt(surface, bodyView, aspect, point);
+    // Picking the sea clears the selection, which is the only way to put the panel back to the
+    // Body without leaving it.
+    if ((picked?.id ?? null) !== state.islandId) {
+      go({
+        bodyId: body.id,
+        islandId: picked?.id ?? null,
+        level: 'body',
+        view: { span: bodyView.span, x: bodyView.cx, z: bodyView.cz }
+      });
+    }
+  },
   onView: next => {
     bodyView = next;
     drawBodyRange();

@@ -1,4 +1,6 @@
+import type { Island } from '../catalogue/data.ts';
 import type { GammaBody, GammaSystemDocument } from '../flyover/documents.ts';
+import { catalogueBodyId } from './surface.ts';
 
 /// The Atlas selection panel. Everything it prints is a recovered value or a statement about
 /// what was not recovered; nothing here infers a type, a primary or an orbit (ADR 0014).
@@ -58,6 +60,75 @@ export const bodyProvenance = (body: GammaBody): readonly string[] => [
     : [])
 ];
 
+/// A span on the surface torus. An upper bound below its lower bound is a wrapped span and not
+/// an empty one, so it is written as the wrap rather than as a backwards pair.
+const span = (
+  [low, high]: readonly [number, number],
+  wraps: boolean
+): string => (wraps ? `${low} → 4096 → ${high}` : `${low} → ${high}`);
+
+/// The recovered numbers behind one Damocles Island. An island carries no name of its own
+/// (`CONTEXT.md`): `areaName` belongs to the Structure Workspace the record binds, so it is
+/// labelled as the Settlement it publishes and never as the island's name.
+export const islandFacts = (island: Island): readonly BodyFact[] => [
+  { label: 'Record', value: island.id },
+  {
+    label: 'Origin X/Z',
+    value: `${island.origin[0]} / ${island.origin[1]} Surface Cells`
+  },
+  {
+    label: 'Extent X',
+    value: span(island.extent.x, island.extent.wrapsX)
+  },
+  {
+    label: 'Extent Z',
+    value: span(island.extent.z, island.extent.wrapsZ)
+  },
+  { label: 'Coastline', value: `${island.coastline.vertices.length} vertices` },
+  {
+    label: 'Land colour',
+    value: `${island.landColour} · ST $${island.sourceLandColour.toString(16).toUpperCase().padStart(3, '0')}`
+  },
+  {
+    label: 'Structure group',
+    value: `$${island.structureGroup.toString(16).toUpperCase().padStart(2, '0')}`
+  },
+  ...(island.areaName
+    ? [{ label: 'Settlement published here', value: island.areaName }]
+    : []),
+  {
+    label: 'Source address',
+    value: `$${island.sourceAddress.toString(16).toUpperCase().padStart(6, '0')}`
+  }
+];
+
+export const islandProvenance = (island: Island): readonly string[] => [
+  'Recovered: the coastline is the closed ring the scan at $0561CE reads, placed at this ' +
+    "record's own origin in Surface Cells and filled in the colour its $8 word publishes. The " +
+    'box list is authored in the original and recovered as authored.',
+  'An island carries no name of its own. The area name belongs to the Structure Workspace ' +
+    'this record binds, and 33 of the 62 records publish none.',
+  ...(island.extent.wrapsX || island.extent.wrapsZ
+    ? [
+        'This record crosses the coordinate seam, so its extent wraps and its ring is drawn ' +
+          'whole on both sides rather than cut at the edge.'
+      ]
+    : []),
+  ...(island.workspace === null
+    ? [
+        'Structure group $00 binds no workspace, so no Settlement or structure is published ' +
+          'for this record.'
+      ]
+    : [])
+];
+
+/// The Catalogue holds no island record view: its deep links reach a Model, an Instance or a
+/// Body's placement map, and its search covers Model names rather than area names. So the
+/// honest hand-off is the Body, and the panel says as much rather than implying an island entry
+/// exists.
+export const catalogueHref = (sourceIndex: number): string =>
+  `/damocles/catalogue?body=${catalogueBodyId(sourceIndex)}`;
+
 const row = (label: string, value: string): HTMLElement => {
   const div = document.createElement('div');
   div.className = 'panel-row';
@@ -84,7 +155,8 @@ const paragraph = (text: string, className = ''): HTMLElement => {
 export const renderPanel = (
   root: HTMLElement,
   system: GammaSystemDocument,
-  body: GammaBody | null
+  body: GammaBody | null,
+  island?: Island | null
 ): void => {
   root.replaceChildren();
   if (!body) {
@@ -109,6 +181,34 @@ export const renderPanel = (
   }
   for (const note of bodyProvenance(body)) {
     root.append(paragraph(note, 'muted'));
+  }
+  if (island) {
+    const landSwatch = document.createElement('span');
+    landSwatch.className = 'panel-swatch';
+    landSwatch.style.background = island.landColour;
+    // An island has no name, so the heading names what it is rather than inventing one.
+    const islandHeading = paragraph(
+      island.areaName ? `Island · ${island.areaName}` : 'Island',
+      'panel-heading'
+    );
+    islandHeading.prepend(landSwatch);
+    root.append(islandHeading);
+    for (const fact of islandFacts(island)) {
+      root.append(row(fact.label, fact.value));
+    }
+    for (const note of islandProvenance(island)) {
+      root.append(paragraph(note, 'muted'));
+    }
+    const link = document.createElement('a');
+    link.href = catalogueHref(body.sourceIndex);
+    link.id = 'island-catalogue-link';
+    link.textContent = `${body.name} in the Catalogue`;
+    const wrapper = paragraph('', 'muted');
+    wrapper.append(
+      'The Catalogue holds no island record view, so this reaches this Body\u2019s recovered placements · ',
+      link
+    );
+    root.append(wrapper);
   }
   root.append(paragraph(`Evidence · ${system.source.evidence}`, 'muted'));
 };
