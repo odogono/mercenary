@@ -6,7 +6,7 @@ import {
   type MapPoint,
   type MapView
 } from '../catalogue/mapView.ts';
-import { bodySize, type GammaBody } from '../flyover/documents.ts';
+import { bodyRadius, bodySize, type GammaBody } from '../flyover/documents.ts';
 
 /// The Atlas System Range: the recovered Gamma System projected onto the X/Z plane through a
 /// camera, X right and Z up as the Catalogue placement map draws them. Nothing here touches the
@@ -44,19 +44,8 @@ const PICK_RADIUS = 9;
 /// Widest marker in css pixels, and the narrowest a marker may shrink to.
 const WIDEST_MARKER = 11;
 const NARROWEST_MARKER = 3;
-/// Position units per unit of decoded size. **Derived, not decoded** (ADR 0014): #424 decodes
-/// the sizes but not their physical unit, and nothing recovered ties that unit to the positional
-/// one. The bound is that no two of the thirty Bodies may overlap, which needs at least 166.4
-/// from the tightest pair, ERIS and VESTA at 2,400 units. 256 is the power of two above it and a
-/// shift on a 68000. Being a lower bound, a Body may be smaller than drawn and never larger.
-const RADIUS_DIVISOR = 256;
 /// Css pixels between a marker's edge and its label, and between two placed labels.
 const LABEL_GAP = 5;
-
-/// A Body's radius in position units, so a disc can be drawn against the distance scale.
-export const bodyRadius = (body: GammaBody): number =>
-  bodySize(body) / RADIUS_DIVISOR;
-
 /// A marker's size, for when a Body is too small to draw at its own radius. Authored, and about
 /// symbols rather than Bodies: the decoded sizes span 500-fold, so drawn in proportion the
 /// smallest moon would be a fiftieth of a pixel beside DIALIS. The cube root compresses that to
@@ -128,8 +117,8 @@ export const projectSystem = (
   const aspect = aspectOf(frame);
   const widest = Math.max(...bodies.map(bodySize));
   // A flat threshold serves every camera. Markers are bounded by WIDEST_MARKER, and two Bodies
-  // drawn at their derived radii cannot intersect, because non-overlap is the bound
-  // RADIUS_DIVISOR was chosen to satisfy.
+  // drawn at their derived radii cannot intersect, because non-overlap is the bound the divisor
+  // behind `bodyRadius` was chosen to satisfy.
   const markers = clusterAll(
     bodies.map(pointOf),
     MARKER_GAP * unitsPerPixel

@@ -81,7 +81,7 @@ const gamma = () => ({
   bodies: [
     {
       id: 'dialis',
-      radius: { fraction: 0.2, kind: 'nearest-neighbour' },
+      radius: { kind: 'recovered-extent' },
       ranges: ['orbital']
     }
   ],
@@ -302,6 +302,40 @@ describe('Flyover presentation documents', () => {
       readFlyoverPresentation(document, 'targ', ['targ', 'sun']).islands[0]
         ?.polygonDegrees
     ).toHaveLength(8);
+  });
+});
+
+describe('the Flyover radius rules', () => {
+  test('accepts the recovered extent for Gamma and refuses it for Targ', () => {
+    const document = readFlyoverPresentation(gamma(), 'gamma', ['dialis']);
+    expect(document.bodies[0]!.radius).toEqual({ kind: 'recovered-extent' });
+    // Targ has no recovered authority behind it, so it cannot size a Body from one.
+    const onTarg = targ();
+    onTarg.bodies[0]!.radius = { kind: 'recovered-extent' } as never;
+    expect(() => readFlyoverPresentation(onTarg, 'targ', ['targ'])).toThrow(
+      'radius'
+    );
+  });
+
+  test('still accepts the neighbour-distance rule it replaced', () => {
+    // Kept in the union rather than migrated away: the rule set describes what a presentation
+    // may say, and nothing is gained by making an old document unreadable.
+    const document = gamma();
+    document.bodies[0]!.radius = {
+      fraction: 0.2,
+      kind: 'nearest-neighbour'
+    } as never;
+    expect(
+      readFlyoverPresentation(document, 'gamma', ['dialis']).bodies[0]!.radius
+    ).toEqual({ fraction: 0.2, kind: 'nearest-neighbour' });
+  });
+
+  test('refuses a rule the System cannot use', () => {
+    const document = gamma();
+    document.bodies[0]!.radius = { kind: 'nonsense' } as never;
+    expect(() =>
+      readFlyoverPresentation(document, 'gamma', ['dialis'])
+    ).toThrow('radius');
   });
 });
 

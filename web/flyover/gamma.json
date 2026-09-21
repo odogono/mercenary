@@ -28,147 +28,147 @@
     {
       "id": "dialis",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "icarus",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "midas",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "acheron",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "dion",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "atropos",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "clotho",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "lachesis",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "gaea",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "cronus",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "cyclopes",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "eris",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "solon",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "theon",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "vesta",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "metis",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "lucan",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "logos",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "aurora",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "triton",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "pan",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "thalia",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "juno",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "bacchus",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "jason",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "tolosa",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "perseus",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "mentor",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     },
     {
       "id": "sapphire",
       "ranges": ["orbital"],
-      "radius": { "kind": "nearest-neighbour", "fraction": 0.2 }
+      "radius": { "kind": "recovered-extent" }
     }
   ]
 }

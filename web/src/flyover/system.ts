@@ -7,16 +7,17 @@ import {
   type TargOrreryBodyPositions
 } from '../sky/index.ts';
 import { TargPresentationClock } from '../sky/time.ts';
-import type {
-  FlyoverBackdropPresentation,
-  FlyoverBodyMeshPresentation,
-  FlyoverCameraPresentation,
-  FlyoverLighting,
-  FlyoverRange,
-  GammaPresentationDocument,
-  GammaSystemDocument,
-  IslandPresentation,
-  TargPresentationDocument
+import {
+  bodyRadius,
+  type FlyoverBackdropPresentation,
+  type FlyoverBodyMeshPresentation,
+  type FlyoverCameraPresentation,
+  type FlyoverLighting,
+  type FlyoverRange,
+  type GammaPresentationDocument,
+  type GammaSystemDocument,
+  type IslandPresentation,
+  type TargPresentationDocument
 } from './documents.ts';
 
 export type FlyoverValueProvenance =
@@ -176,9 +177,6 @@ export const composeTargSystem = (
   };
 };
 
-const distance = (a: Vector3, b: Vector3): number =>
-  Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
-
 export const composeGammaSystem = (
   authority: GammaSystemDocument,
   presentation: GammaPresentationDocument
@@ -189,17 +187,17 @@ export const composeGammaSystem = (
   const recovered = new Map(stable.map(body => [body.id, body]));
   const bodies = presentation.bodies.map(body => {
     const source = recovered.get(body.id);
-    if (source === undefined || body.radius.kind !== 'nearest-neighbour') {
+    if (source === undefined || body.radius.kind !== 'recovered-extent') {
       throw new Error(`Cannot compose Gamma Body ${body.id}`);
     }
-    const nearest = Math.min(
-      ...stable
-        .filter(candidate => candidate.id !== body.id)
-        .map(candidate => distance(source.position, candidate.position))
-    );
     return {
       colour: source.baseColour,
-      displayRadiusUnits: nearest * body.radius.fraction,
+      // The Body's own decoded extent (#424) over the derived divisor, so the System is drawn
+      // at its recovered relative sizes: DIALIS a star, the moons moons. This replaced a
+      // fraction of the distance to the nearest neighbour, which was the only rule available
+      // before the extent was decoded and got 48% of size comparisons backwards, drawing an
+      // isolated moon larger than a planet in a tight group.
+      displayRadiusUnits: bodyRadius(source),
       id: body.id,
       position: { ...source.position },
       provenance: {
@@ -207,6 +205,8 @@ export const composeGammaSystem = (
         colour: 'recovered',
         identity: 'recovered',
         position: 'recovered',
+        // The size is recovered and decoded; the divisor tying it to the positional scale is
+        // derived and bounded rather than decoded, so the radius as a whole is not `recovered`.
         radius: 'mechanically-derived'
       },
       ranges: body.ranges
