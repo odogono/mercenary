@@ -1,42 +1,73 @@
 /// Where the Atlas is looking, and how that survives a URL.
 ///
 /// One discrete hop: the System Range holds every recovered Body, and entering a Body starts a
-/// camera of its own (#405). `view` is that camera; the System Range never has one, and the
-/// Body Range leaves it null until #411 lands the wrapping surface camera and its `x/z/span`
-/// round-trip.
+/// camera of its own (#405). Each Range carries a camera of its own in the same three keys,
+/// because a URL is only ever in one Range at a time; the System Range's is in engine units and
+/// a Body's will be in Body Coordinates (#411).
 
-export interface AtlasBodyView {
+export interface AtlasView {
   readonly span: number;
   readonly x: number;
   readonly z: number;
 }
 
 export type AtlasState =
-  | { readonly level: 'system' }
+  | { readonly level: 'system'; readonly view: AtlasView | null }
   | {
       readonly bodyId: string;
       readonly level: 'body';
-      readonly view: AtlasBodyView | null;
+      readonly view: AtlasView | null;
     };
 
-export const SYSTEM_RANGE: AtlasState = { level: 'system' };
+export const SYSTEM_RANGE: AtlasState = { level: 'system', view: null };
+
+/// Two decimals of an engine unit is a thousandth of the tightest span the camera reaches, so
+/// nothing visible is lost and `readAtlasState(atlasSearch(state))` is exact.
+const round = (value: number): string => String(Number(value.toFixed(2)));
+
+/// A camera survives only if all three keys are present, finite and the span is positive. Any
+/// partial or unreadable camera yields `null` and the Range refits, the same forgiving rule a
+/// `?body=` naming no recovered Body already gets.
+const readView = (params: URLSearchParams): AtlasView | null => {
+  const numbers = (['x', 'z', 'span'] as const).map(key => {
+    const raw = params.get(key);
+    return raw === null || raw.trim() === '' ? Number.NaN : Number(raw);
+  });
+  const [x, z, span] = numbers as [number, number, number];
+  return numbers.every(Number.isFinite) && span > 0 ? { span, x, z } : null;
+};
 
 /// A `?body=` naming no recovered Body falls back to the System Range rather than opening an
-/// empty Body, so a stale deep link lands somewhere true.
+/// empty Body, so a stale deep link lands somewhere true. It drops the camera with it: those
+/// numbers were written in the missing Body's units and mean nothing in the System's.
 export const readAtlasState = (
   search: string,
   bodyIds: readonly string[]
 ): AtlasState => {
-  const bodyId = new URLSearchParams(search).get('body');
-  return bodyId !== null && bodyIds.includes(bodyId)
-    ? { bodyId, level: 'body', view: null }
-    : SYSTEM_RANGE;
+  const params = new URLSearchParams(search);
+  const bodyId = params.get('body');
+  if (bodyId !== null && !bodyIds.includes(bodyId)) {
+    return SYSTEM_RANGE;
+  }
+  const view = readView(params);
+  return bodyId === null
+    ? { level: 'system', view }
+    : { bodyId, level: 'body', view };
 };
 
-export const atlasSearch = (state: AtlasState): string =>
-  state.level === 'system'
-    ? ''
-    : `?${new URLSearchParams({ body: state.bodyId }).toString()}`;
+export const atlasSearch = (state: AtlasState): string => {
+  const params = new URLSearchParams();
+  if (state.level === 'body') {
+    params.set('body', state.bodyId);
+  }
+  if (state.view) {
+    params.set('x', round(state.view.x));
+    params.set('z', round(state.view.z));
+    params.set('span', round(state.view.span));
+  }
+  const search = params.toString();
+  return search ? `?${search}` : '';
+};
 
 export const atlasHref = (state: AtlasState): string =>
   `/damocles/atlas${atlasSearch(state)}`;

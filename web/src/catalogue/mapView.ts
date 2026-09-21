@@ -18,7 +18,10 @@ const CLUSTER_GAP = 0.02;
 const LONE_ZOOM = 8;
 export const MAX_ZOOM = 8192;
 
-export const fitView = (points: readonly MapPoint[]): MapView => {
+// `aspect` is the map's height over its width. Because a view's span is measured across the
+// width, a taller-than-wide extent has to be divided by the aspect to fit vertically too. The
+// default of 1 is the square Catalogue map, whose callers pass no aspect.
+export const fitView = (points: readonly MapPoint[], aspect = 1): MapView => {
   const xs = points.map(point => point.x),
     zs = points.map(point => point.z);
   const minX = Math.min(...xs),
@@ -28,7 +31,12 @@ export const fitView = (points: readonly MapPoint[]): MapView => {
   return {
     cx: (minX + maxX) / 2,
     cz: (minZ + maxZ) / 2,
-    span: Math.max(maxX - minX, maxZ - minZ, 1) * FIT_PADDING
+    span:
+      Math.max(
+        maxX - minX,
+        (maxZ - minZ) / Math.max(aspect, Number.MIN_VALUE),
+        1
+      ) * FIT_PADDING
   };
 };
 
@@ -103,27 +111,49 @@ export const panView = (
     span: view.span
   });
 
+// Every point partitioned into groups reachable through gaps no wider than
+// `gap`, in world units. Single-linkage, so a chain of close points is one
+// group however far its ends are apart. Members are ascending indices, and the
+// groups come in the order their lowest member appears.
+export const clusterAll = (
+  points: readonly MapPoint[],
+  gap: number
+): readonly (readonly number[])[] => {
+  const seen = new Set<number>();
+  const groups: number[][] = [];
+  for (const start of points.keys()) {
+    if (seen.has(start)) {
+      continue;
+    }
+    seen.add(start);
+    const members = [start];
+    const queue = [start];
+    while (queue.length) {
+      const a = points[queue.pop()!]!;
+      for (const [candidate, b] of points.entries()) {
+        if (!seen.has(candidate) && Math.hypot(a.x - b.x, a.z - b.z) <= gap) {
+          seen.add(candidate);
+          members.push(candidate);
+          queue.push(candidate);
+        }
+      }
+    }
+    groups.push(members.sort((a, b) => a - b));
+  }
+  return groups;
+};
+
 // The local cluster around one placement: every placement reachable through
 // gaps no wider than CLUSTER_GAP of the full-body span.
 export const clusterOf = (
   points: readonly MapPoint[],
   index: number,
   fit: MapView
-): number[] => {
-  const gap = fit.span * CLUSTER_GAP;
-  const members = new Set([index]);
-  const queue = [index];
-  while (queue.length) {
-    const a = points[queue.pop()!]!;
-    for (const [candidate, b] of points.entries()) {
-      if (!members.has(candidate) && Math.hypot(a.x - b.x, a.z - b.z) <= gap) {
-        members.add(candidate);
-        queue.push(candidate);
-      }
-    }
-  }
-  return [...members].sort((a, b) => a - b);
-};
+): number[] => [
+  ...(clusterAll(points, fit.span * CLUSTER_GAP).find(members =>
+    members.includes(index)
+  ) ?? [index])
+];
 
 // The view that opens a placement: its local cluster filling the map, or the
 // placement alone at LONE_ZOOM when nothing else shares its neighbourhood.

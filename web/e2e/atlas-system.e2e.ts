@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 test('the System Range holds every recovered Body', async ({ page }) => {
   await page.goto('/damocles/atlas');
@@ -6,9 +6,19 @@ test('the System Range holds every recovered Body', async ({ page }) => {
   await expect(page.locator('#roster a')).toHaveCount(30);
   await expect(page.locator('#system-map')).toBeVisible();
   await expect(page.locator('#status')).toContainText('30 recovered Bodies');
-  // Labels are withheld wherever Bodies project onto each other, so the map says so rather
-  // than pretending the Gamma System is only as crowded as its legible names.
-  await expect(page.locator('.system-label').first()).toBeVisible();
+  // Ten markers, because whole satellite groups sit within a pixel or two of each other at a
+  // whole-System camera. Most of them keep a name, and the roster carries every Body either way.
+  await expect(page.locator('#status')).toContainText('10 markers');
+  await expect(page.locator('#status')).toContainText('group more than one');
+  await expect(page.locator('.system-label')).toHaveCount(9);
+  await expect(
+    page.locator('.system-label').filter({ hasText: 'ERIS +5' })
+  ).toHaveCount(1);
+  // Far out a disc is a symbol rather than a size, and the readout must say so.
+  await expect(page.locator('#system-scale')).toContainText('zoom 1×');
+  await expect(page.locator('#system-scale')).toContainText(
+    'discs are markers, not sizes'
+  );
   await expect(page.locator('#panel')).toContainText(
     'no complete orbital elements'
   );
@@ -30,22 +40,102 @@ test('clicking ERIS in the roster hops into the Body', async ({ page }) => {
   await expect(page.locator('#range-system')).toBeVisible();
 });
 
-test('clicking a disc on the map hops into the Body under it', async ({
+const markerOf = async (page: Page, id: string) => {
+  const anchor = page.locator(`#roster a[data-body="${id}"]`);
+  await expect(anchor).toHaveAttribute('data-x', /\d/);
+  const box = (await page.locator('#range-system').boundingBox())!;
+  return {
+    x: box.x + Number(await anchor.getAttribute('data-x')),
+    y: box.y + Number(await anchor.getAttribute('data-y'))
+  };
+};
+
+test('a marker standing for several Bodies opens to its members', async ({
   page
 }) => {
   await page.goto('/damocles/atlas');
-  const eris = page.locator('#roster a[data-body="eris"]');
-  await expect(eris).toHaveAttribute('data-x', /\d/);
-  const at = {
-    x: Number(await eris.getAttribute('data-x')),
-    y: Number(await eris.getAttribute('data-y'))
-  };
-  await page.locator('#system-map').click({ position: at });
+  await expect(page.locator('#roster a')).toHaveCount(30);
+  const eris = await markerOf(page, 'eris');
+  await page.mouse.click(eris.x, eris.y);
 
-  // The ERIS group projects onto a few pixels, so the nearest-centre hit test may land on a
-  // neighbour; what matters is that a click on the pile enters one of its Bodies.
-  await expect(page).toHaveURL(/\?body=[a-z]+$/);
-  await expect(page.locator('#breadcrumb-body')).not.toBeEmpty();
+  // Not a hop: there is no one Body `ERIS +5` could mean, so it opens to its six members.
+  await expect(page).toHaveURL(/^[^?]*(\?(?!.*\bbody=).*)?$/);
+  await expect(page.locator('#status')).toContainText('30 markers');
+  for (const name of ['SOLON', 'VESTA', 'LUCAN']) {
+    await expect(
+      page.locator('.system-label').filter({ hasText: name })
+    ).toHaveCount(1);
+  }
+  // Close in a disc is the Body at its derived radius, which the readout distinguishes.
+  await expect(page.locator('#system-scale')).toContainText(
+    'discs at derived radius'
+  );
+
+  // Now the members are unambiguous, so one of them hops.
+  const solon = await markerOf(page, 'solon');
+  await page.mouse.click(solon.x, solon.y);
+  await expect(page).toHaveURL(/\bbody=solon\b/);
+  await expect(page.locator('#breadcrumb-body')).toHaveText('SOLON');
+});
+
+test('the camera pans, zooms and returns to the fit', async ({ page }) => {
+  await page.goto('/damocles/atlas');
+  await expect(page.locator('#system-scale')).toContainText('zoom 1×');
+
+  // A drag pans and is not a selection: it must not navigate into a Body.
+  const box = (await page.locator('#range-system').boundingBox())!;
+  const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  await page.mouse.move(centre.x, centre.y);
+  await page.mouse.down();
+  await page.mouse.move(centre.x + 160, centre.y + 110, { steps: 12 });
+  await page.mouse.up();
+  await expect(page).not.toHaveURL(/\bbody=/);
+  // The camera reaches the URL on an idle timer, as `replaceState` so Back is not buried.
+  await expect(page).toHaveURL(/\bx=-?[\d.]+&z=-?[\d.]+&span=[\d.]+/);
+
+  // Buttons, keys and a double press all zoom.
+  await page.locator('#system-zoom-in').click();
+  await expect(page.locator('#system-scale')).not.toContainText('zoom 1×');
+  await page.locator('#system-fit').click();
+  await expect(page.locator('#system-scale')).toContainText('zoom 1×');
+
+  await page.mouse.dblclick(centre.x, centre.y);
+  await expect(page.locator('#system-scale')).toContainText('zoom 2×');
+  await page.mouse.dblclick(centre.x, centre.y);
+  await expect(page.locator('#system-scale')).toContainText('zoom 4×');
+
+  await page.locator('#range-system').click({ position: { x: 4, y: 4 } });
+  await page.keyboard.press('0');
+  await expect(page.locator('#system-scale')).toContainText('zoom 1×');
+});
+
+test('a deep-linked camera is restored rather than refitted', async ({
+  page
+}) => {
+  await page.goto('/damocles/atlas?x=-630000&z=390000&span=20000');
+  await expect(page.locator('#failure')).toBeHidden();
+  // 20,000 units across the ERIS group: its members are separate Bodies at their own radii.
+  await expect(page.locator('#status')).toContainText('30 markers');
+  await expect(page.locator('#system-scale')).toContainText(
+    'discs at derived radius'
+  );
+  await expect(page.locator('#system-scale')).not.toContainText('zoom 1×');
+  await expect(
+    page.locator('.system-label').filter({ hasText: 'ERIS' })
+  ).toHaveCount(1);
+});
+
+test('zooming into the empty middle of the System says so', async ({
+  page
+}) => {
+  // The recovered Bodies sit in scattered groups and nothing is at the System's centroid, so
+  // an empty view is the truth rather than a failure, and the map must not look broken.
+  await page.goto('/damocles/atlas?x=705800&z=1143200&span=20000');
+  await expect(page.locator('#status')).toContainText(
+    'No recovered Body is in view'
+  );
+  await page.locator('#system-fit').click();
+  await expect(page.locator('#status')).toContainText('10 markers');
 });
 
 test('a deep link opens the Body, and an unknown one falls back', async ({
