@@ -187,6 +187,26 @@ test('the Body Range pans across the wrap and zooms out to the System', async ({
   await expect(page.locator('#status')).toContainText('10 markers');
 });
 
+test('a Body draws its recovered coastlines, whole across the seam', async ({
+  page
+}) => {
+  await page.goto('/damocles/atlas?body=eris');
+  await expect(page.locator('#body-map')).toBeVisible();
+  // The Catalogue is fetched only on entering a Body, so the Range says what it is waiting for
+  // and then says what it found.
+  await expect(page.locator('#status')).toContainText('5 recovered islands', {
+    timeout: 20_000
+  });
+  await expect(page.locator('#failure')).toBeHidden();
+
+  // Lucan's twelve records sit on a ring about the Body Coordinate origin, four of them across
+  // the seam. Reading them without the wrap would strand those four at the far edges.
+  await page.goto('/damocles/atlas?body=lucan');
+  await expect(page.locator('#status')).toContainText('12 recovered islands', {
+    timeout: 20_000
+  });
+});
+
 test('a deep-linked Body camera is restored', async ({ page }) => {
   // 32 Surface Cells is two Structure Workspaces across, so about a thirtieth of a cell per
   // pixel: the Settlement Range.

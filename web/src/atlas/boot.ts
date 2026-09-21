@@ -1,3 +1,4 @@
+import { parseCatalogue, type Catalogue } from '../catalogue/data.ts';
 import {
   clampView,
   formatUnits,
@@ -31,6 +32,7 @@ import {
   readAtlasState,
   type AtlasState
 } from './state.ts';
+import { readBodySurface, type BodySurface } from './surface.ts';
 import {
   fitSystem,
   markerAt,
@@ -82,6 +84,16 @@ let pending: ReturnType<typeof setTimeout> | undefined;
 /// SURFACE_SPAN on a side however the frame is shaped, so a resize never moves what the widest
 /// view means.
 let bodyView: MapView | undefined;
+/// The Catalogue, and the islands of the Body currently open.
+///
+/// Fetched only on first entering a Body, never for the System Range. `catalogue.json` is 40 MiB
+/// because it carries 1,241 Models and 1,746 Instances, and the Atlas needs 60 KiB of coastlines
+/// out of it. `/damocles` and `/damocles/catalogue` both fetch the whole thing already, so this
+/// is the established cost rather than a new one, but there is no reason to pay it for a reader
+/// who only ever looks at the System Range.
+let catalogue: Catalogue | undefined;
+let catalogueRequest: Promise<void> | undefined;
+let surface: BodySurface | undefined;
 
 const selectedBody = () => {
   const current = state;
@@ -195,19 +207,57 @@ const drawBodyRange = () => {
     return;
   }
   const frame = frameOf(bodyRange);
-  const fitted = fitBody(frame);
-  bodyView = bodyView ?? fitted;
-  drawBodySurface(bodyCanvas, bodyView, frame, body.baseColour);
+  bodyView = bodyView ?? fitBody(frame);
+  drawBodySurface(bodyCanvas, bodyView, frame, body.baseColour, surface);
   const band = rangeOf(bodyView, frame.width);
   const cells = bodyView.span / Math.max(frame.width, 1);
   scale.textContent =
     `${RANGE_LABEL[band]} · ${formatUnits(cells)} Surface Cells per pixel` +
     ` · grid ${formatUnits(gridStep(bodyView.span, frame.width))} cells`;
+  const surfaceNote = surface
+    ? `${surface.islands.length} recovered island${surface.islands.length === 1 ? '' : 's'}` +
+      (surface.gaps.length
+        ? ` · ${surface.gaps.length} record${surface.gaps.length === 1 ? '' : 's'} carry no coastline and are not drawn`
+        : '')
+    : 'reading the Catalogue for this Body\u2019s islands';
   status.textContent =
     `${body.name} · source slot ${body.sourceIndex} · surface ${SURFACE_SPAN} Surface Cells ` +
-    'an axis, wrapping on both · sea is this Body\u2019s recovered base colour · coastlines, ' +
-    'Settlements and structure footprints are not drawn yet';
+    `an axis, wrapping on both · ${surfaceNote} · Settlements and structure footprints are ` +
+    'not drawn yet';
   recordCamera();
+};
+
+/// The Catalogue is read once and kept. A failure leaves the sea and the grid drawn, and says so
+/// in the status line, rather than blanking a Range that is already telling the reader something.
+const loadSurface = (sourceIndex: number) => {
+  if (catalogue) {
+    surface = readBodySurface(catalogue, sourceIndex);
+    return;
+  }
+  surface = undefined;
+  catalogueRequest =
+    catalogueRequest ??
+    fetch('/payload/damocles/catalogue.json')
+      .then(async response => {
+        if (!response.ok) {
+          throw new Error(`Request returned HTTP ${response.status}.`);
+        }
+        catalogue = parseCatalogue(await response.json());
+      })
+      .catch(error => {
+        catalogueRequest = undefined;
+        failure.hidden = false;
+        failure.textContent =
+          `/payload/damocles/catalogue.json: ${error instanceof Error ? error.message : String(error)}\n` +
+          'The sea and the Surface Cell grid are drawn from the System authority; coastlines need the Catalogue.';
+      });
+  void catalogueRequest.then(() => {
+    const body = selectedBody();
+    if (catalogue && body) {
+      surface = readBodySurface(catalogue, body.sourceIndex);
+      drawBodyRange();
+    }
+  });
 };
 
 const render = () => {
@@ -265,11 +315,15 @@ const render = () => {
     // A camera in the URL wins; otherwise the whole surface. Entering a different Body starts
     // from its own surface rather than inheriting where the reader was on the last one.
     const carried = state.level === 'body' ? state.view : null;
+    const same = previous.level === 'body' && previous.bodyId === body.id;
     bodyView = carried
       ? { cx: carried.x, cz: carried.z, span: carried.span }
-      : previous.level === 'body' && previous.bodyId === body.id
+      : same
         ? bodyView
         : undefined;
+    if (!same) {
+      loadSurface(body.sourceIndex);
+    }
   }
   for (const anchor of roster.querySelectorAll('a')) {
     anchor.setAttribute(
