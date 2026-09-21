@@ -7,7 +7,7 @@ import {
   type MapView
 } from '../catalogue/mapView.ts';
 import type { GammaBody } from '../flyover/documents.ts';
-import { LARGEST_DISC, type LabelTarget, type SystemFrame } from './system.ts';
+import type { LabelTarget, SystemFrame } from './system.ts';
 
 /// PROTOTYPE (not production; reachable only behind `?camera=1`).
 ///
@@ -39,30 +39,55 @@ const MARKER_GAP = 14;
 /// A marker smaller than this is still picked within this many css pixels of its centre, so a
 /// one-pixel Body is a reachable target.
 const PICK_RADIUS = 9;
-/// Position units per unit of `radiusExtent`, making a Body's recovered extent a radius on the
-/// same scale as its recovered position. **Derived, not decoded** (ADR 0014): the engine's own
-/// size formula is a division, recovered at `$052EB4..$052ECC`, where a logarithm of the extent
-/// has a logarithm of the range subtracted from it and the difference is raised through the
-/// antilog table at `$60000` (whose entry at index `$800` is 5792, exactly 4096 * sqrt 2). So
-/// apparent size is `extent / range` and the extent is a radius in *some* unit, which these two
-/// independent bounds bracket:
+/// `radiusExtent` is a **packed binary float**, not the integer it looks like: the low word is
+/// a mantissa normalised into `[0x1000, 0x2000)`, so an implicit 1 at bit 12, and the high word
+/// is a binary exponent. `bodySize` below decodes it.
 ///
-/// - No two of the thirty recovered Bodies may overlap. The tightest pair, ERIS and VESTA at
-///   2,400 units, needs a divisor of at least **932.8**.
-/// - In a captured screen of the ERIS group, ERIS draws 398 px against VESTA's 123 px. Since
-///   size is `extent / range`, that fixes the range ratio at 2.88, and with the pair 2,400
-///   units apart the viewer can be no further than 1,276 units from ERIS -- which is an upper
-///   bound on ERIS's own radius, so a divisor of at least about **928**.
+/// Decoded, not derived. Four things agree:
 ///
-/// 1024 is the power of two between them, which is a shift on a 68000. At it no pair overlaps,
-/// the tightest clearance is 211 units (ERIS and SOLON) and the screenshot's viewer sits 120
-/// units above ERIS's surface. Bodies could be smaller -- both bounds are lower bounds -- so
-/// this is the largest size the recovered numbers permit, and the map says so.
-const RADIUS_DIVISOR = 1024;
+/// - Every one of the thirty recovered mantissas lies in `[0x1000, 0x2000)`, across only 11
+///   distinct values. Nothing normalises an integer field by accident.
+/// - The antilog table at `$60000` emits exactly that form, `4096 * 2^(i/4096)`, so its outputs
+///   land in 4096..8191. That is why `$052EBC` indexes it with `d1.w`, the mantissa alone.
+/// - The star, DIALIS, becomes the largest object in the System at 5,120,000, and in every
+///   satellite group the Body the structural reading calls the Primary outranks its satellites
+///   (`docs/research/damocles-gamma-system.md`). Read as an integer none of that holds.
+/// - Decoded, ERIS is 3.33 times VESTA. Measured off a captured game frame of the ERIS group,
+///   where the two are at nearly equal range, ERIS draws 3.24 times VESTA. A 2.8% agreement
+///   with a number the decode did not see.
+///
+/// Read as an integer the whole System spans 1.69x, which is why an earlier pass of this
+/// prototype drew every Body nearly the same size. Decoded it spans 500x.
+export const bodySize = (body: GammaBody): number =>
+  ((body.radiusExtent & 0xff_ff) / 0x10_00) * 2 ** (body.radiusExtent >>> 16);
 
-/// A Body's radius in position units, on the derived scale above.
+/// Position units per unit of decoded size. **Derived, not decoded** (ADR 0014): the decode
+/// gives sizes in their own unit, and nothing recovered yet ties that unit to the positional
+/// one. The bound is that no two of the thirty Bodies may overlap, which needs at least 166.4
+/// from the tightest pair, ERIS and VESTA at 2,400 units. 256 is the power of two above it and
+/// a shift on a 68000. It is a lower bound, so a Body may be smaller than drawn, never larger.
+const RADIUS_DIVISOR = 256;
+
+/// A Body's radius in position units, so a disc can be drawn against the distance scale.
 export const bodyRadius = (body: GammaBody): number =>
-  body.radiusExtent / RADIUS_DIVISOR;
+  bodySize(body) / RADIUS_DIVISOR;
+
+/// Widest marker in css pixels, and the narrowest a marker is allowed to shrink to.
+const WIDEST_MARKER = 11;
+const NARROWEST_MARKER = 3;
+
+/// A marker's size, for when a Body is too small to draw at its own radius. Authored, and about
+/// symbols rather than Bodies: the decoded sizes span 500x, so drawn in proportion the smallest
+/// moon would be a fiftieth of a pixel beside DIALIS. The cube root compresses that to a legible
+/// spread while keeping the order, as a star atlas does with magnitudes.
+const markerRadius = (body: GammaBody, widest: number): number =>
+  Math.min(
+    WIDEST_MARKER,
+    Math.max(
+      NARROWEST_MARKER,
+      WIDEST_MARKER * (bodySize(body) / Math.max(widest, 1)) ** (1 / 3)
+    )
+  );
 
 export interface SystemMarker {
   readonly baseColour: string;
@@ -71,9 +96,8 @@ export interface SystemMarker {
   /// The marker's identity: the id of the Body whose name and extent it wears.
   readonly id: string;
   readonly name: string;
-  /// Css pixels, from `radiusExtent` relative to the widest extent in the whole System and
-  /// never to the position scale. Multiplied by `sizeGrowth`, so a disc grows as the camera
-  /// closes in without ever standing for a recovered size.
+  /// Css pixels: the Body's own derived radius once that covers more than its marker, and a
+  /// marker before then.
   readonly radius: number;
   /// True when `radius` is this Body's derived radius rather than a marker, so the map can say
   /// whether what is on screen is a size or a symbol.
@@ -122,34 +146,28 @@ export const projectSystemAt = (
     return { markers: [], unitsPerPixel };
   }
   const aspect = aspectOf(frame);
-  const widestExtent = Math.max(...bodies.map(body => body.radiusExtent));
-  // Grown discs have to push the merge threshold out with them, or the band where a group is
-  // just separating draws its members as overlapping blobs: at 32x the ERIS members are eight
-  // pixels apart while their discs have grown past fifty. Two Bodies therefore stay one marker
-  // until their discs would no longer cover one another, `2 * LARGEST_DISC` being the widest
-  // pair of radii the extent ratio can produce. At the fit camera growth is 1 and this term
-  // vanishes, so the fit picture is MARKER_GAP alone.
+  const widest = Math.max(...bodies.map(bodySize));
+  // A flat threshold is enough at every camera. Markers are bounded by WIDEST_MARKER, and two
+  // Bodies drawn at their derived radii cannot intersect, because non-overlap is the bound
+  // RADIUS_DIVISOR was chosen to satisfy.
   const markers = clusterAll(
     bodies.map(pointOf),
     MARKER_GAP * unitsPerPixel
   ).map(members => {
-    // The widest recovered extent wears the marker's name, which is the rule `layOutLabels`
+    // The largest decoded size wears the marker's name, which is the rule `layOutLabels`
     // already uses to choose between colliding labels. Ties go to the lower source slot so the
     // choice is the same on every draw.
     const named = members.reduce((best, index) => {
       const a = bodies[index]!,
         b = bodies[best]!;
-      return a.radiusExtent > b.radiusExtent ||
-        (a.radiusExtent === b.radiusExtent && a.sourceIndex < b.sourceIndex)
+      return bodySize(a) > bodySize(b) ||
+        (bodySize(a) === bodySize(b) && a.sourceIndex < b.sourceIndex)
         ? index
         : best;
     }, members[0]!);
     const body = bodies[named]!;
     const { u, v } = project(view, pointOf(body), aspect);
-    const marker = Math.max(
-      1,
-      (LARGEST_DISC * body.radiusExtent) / Math.max(widestExtent, 1)
-    );
+    const marker = markerRadius(body, widest);
     const derived = toScale ? bodyRadius(body) / unitsPerPixel : 0;
     return {
       baseColour: body.baseColour,

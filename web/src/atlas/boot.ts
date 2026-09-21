@@ -225,12 +225,15 @@ const render = () => {
     note.className = 'muted';
     note.id = 'derived-scale-note';
     note.textContent =
-      'Prototype: once the camera is close enough, a disc is drawn at a radius derived from ' +
-      'the recovered extent divided by 1024, on the same scale as the recovered positions. ' +
-      'That divisor is derived and not decoded: the engine computes apparent size as extent ' +
-      'divided by range, and 1024 is the power of two above the smallest divisor at which no ' +
-      'two recovered Bodies overlap. Bodies may be smaller than drawn, never larger. Further ' +
-      'out a disc is a marker and not a size, which the scale readout states.';
+      'Prototype: the recovered extent is a packed binary float, a mantissa normalised into ' +
+      '0x1000 to 0x1FFF against a binary exponent, which is the form the program\u2019s own ' +
+      'antilog table emits. Decoded, the Gamma System spans 500 times from DIALIS to the ' +
+      'smallest moon rather than the 1.69 times the raw integer suggests. Sizes are therefore ' +
+      'decoded. The single divisor tying them to the positional scale is derived and not ' +
+      'decoded: 256 is the power of two above the smallest divisor at which no two recovered ' +
+      'Bodies overlap, so a Body may be smaller than drawn and never larger. Further out a ' +
+      'disc is a marker rather than a size, compressed by a cube root so 500 times fits on ' +
+      'screen, which the scale readout states.';
     panel.append(note);
   }
   if (!body) {

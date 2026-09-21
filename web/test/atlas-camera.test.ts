@@ -152,7 +152,7 @@ describe('the markers themselves', () => {
     const system = await gammaSystem();
     // The divisor is derived, so the bound it has to satisfy is the test: no two of the thirty
     // recovered Bodies may overlap at their derived radii. The tightest pair is ERIS and VESTA,
-    // 2,400 units apart, which is what fixes the divisor's lower bound at 932.8.
+    // 2,400 units apart, which is what fixes the divisor's lower bound at 166.4.
     let tightest = Infinity;
     for (const [index, a] of system.bodies.entries()) {
       for (const b of system.bodies.slice(index + 1)) {
@@ -164,12 +164,12 @@ describe('the markers themselves', () => {
       }
     }
     expect(tightest).toBeGreaterThan(0);
-    // 211 units between ERIS and SOLON. A divisor much smaller would put them through one
-    // another, which is the evidence the comment on RADIUS_DIVISOR rests on.
-    expect(Math.round(tightest)).toBe(211);
+    // 840 units of clearance at the chosen divisor. Much smaller and the tightest pair goes
+    // through itself, which is the evidence the comment on RADIUS_DIVISOR rests on.
+    expect(Math.round(tightest)).toBe(840);
     expect(
       Math.round(bodyRadius(system.bodies.find(b => b.id === 'eris')!))
-    ).toBe(1157);
+    ).toBe(1200);
   });
 
   test('become the Body once its derived radius covers more than its marker', async () => {
@@ -178,8 +178,13 @@ describe('the markers themselves', () => {
     // Far out every disc is a marker, because a Body really is well under a pixel across.
     const far = projectSystemAt(system.bodies, fit, FRAME);
     expect(far.markers.every(marker => !marker.toScale)).toBe(true);
-    // Close in every disc is the Body, and the switch is monotone in between.
-    const near = projectSystemAt(system.bodies, zoomView(fit, fit, 512), FRAME);
+    // Close in every disc is the Body. The smallest moons have a radius of only 40 units, so
+    // they are the last to cross their marker and that takes a deep camera.
+    const near = projectSystemAt(
+      system.bodies,
+      zoomView(fit, fit, 4096),
+      FRAME
+    );
     expect(near.markers.every(marker => marker.toScale)).toBe(true);
     let previous = 0;
     for (const factor of [1, 4, 16, 64, 128, 512, 4096]) {
@@ -200,12 +205,13 @@ describe('the markers themselves', () => {
     const camera = zoomView(fit, fit, 512);
     const projection = projectSystemAt(system.bodies, camera, FRAME);
     // The whole point of a derived radius: the disc measures the same on screen as the
-    // distances beside it. ERIS and SOLON are 2,332 units apart and must nearly touch.
+    // distances beside it, so ERIS's 1,200-unit radius is drawn against the 2,332 units
+    // between it and SOLON and the two cannot collide.
     const eris = projection.markers.find(marker => marker.id === 'eris')!;
     const solon = projection.markers.find(marker => marker.id === 'solon')!;
     const apart = Math.hypot(eris.x - solon.x, eris.y - solon.y);
     expect(eris.radius + solon.radius).toBeLessThan(apart);
-    expect(eris.radius + solon.radius).toBeGreaterThan(apart * 0.8);
+    expect(eris.radius).toBeGreaterThan(solon.radius * 5);
     expect(eris.radius).toBeCloseTo(
       bodyRadius(system.bodies.find(b => b.id === 'eris')!) /
         projection.unitsPerPixel,
@@ -224,13 +230,12 @@ describe('the markers themselves', () => {
     expect(radiusOf(zoomView(fit, fit, 4096), 'ERIS')).toBe(
       radiusOf(fit, 'ERIS')
     );
-    // JUNO holds the widest recovered extent in the System, so it draws at full size.
-    const juno = system.bodies.find(value => value.name === 'JUNO')!;
-    const eris = system.bodies.find(value => value.name === 'ERIS')!;
-    expect(radiusOf(fit, 'ERIS') / radiusOf(fit, 'JUNO')).toBeCloseTo(
-      eris.radiusExtent / juno.radiusExtent,
-      10
-    );
+    // DIALIS holds the largest decoded size, so it draws at the widest marker. Markers are
+    // compressed by a cube root, deliberately, so the ratio between two of them is not the
+    // ratio between two Bodies. Only cluster names exist at the fit camera.
+    expect(radiusOf(fit, 'DIALIS')).toBeCloseTo(11, 10);
+    expect(radiusOf(fit, 'ERIS')).toBeLessThan(radiusOf(fit, 'DIALIS'));
+    expect(radiusOf(fit, 'ERIS')).toBeGreaterThanOrEqual(3);
   });
 
   test('never overlap one another on screen, at any camera', async () => {
@@ -286,7 +291,8 @@ describe('the markers themselves', () => {
       FRAME
     );
     const tiny = projection.markers.find(marker => marker.id === 'tiny')!;
-    expect(tiny.radius).toBe(1);
+    // NARROWEST_MARKER: a Body too small to draw is still a three-pixel symbol.
+    expect(tiny.radius).toBe(3);
     expect(markerAt(projection, tiny.x, tiny.y)?.id).toBe('tiny');
     // A one-pixel disc is still a nine-pixel target, but not a thirteen-pixel one.
     expect(markerAt(projection, tiny.x + 8, tiny.y)?.id).toBe('tiny');

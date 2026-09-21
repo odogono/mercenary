@@ -2,7 +2,7 @@
 
 **Question:** the Atlas System Range landed in #410 as a flat static fit-to-frame projection of all thirty recovered Bodies. It does not pan, does not zoom, draws whole satellite groups as a one-or-two-pixel pile, and can place only nine of the thirty names. Should it get a Google-Maps-style camera with grouped markers, should that camera come from a third-party map component or from this project's own `mapView.ts`, and can a Body's disc stand for its actual size?
 
-**Verdict:** pending owner review in the browser. The evidence below recommends **keeping the project-owned kernel and graduating the camera**, recommends **against any third-party map library**, and reports that a Body **can** be drawn at a derived true radius once the camera is close enough.
+**Verdict:** pending owner review in the browser. The evidence below recommends **keeping the project-owned kernel and graduating the camera**, recommends **against any third-party map library**, and reports that `radiusExtent` is a **packed binary float** whose decode makes true Body sizes drawable and spans 500x rather than 1.69x.
 
 Built in one time-boxed session on 2026-09-21 on branch `prototype/atlas-system-camera`, behind `?camera=1` so `/damocles/atlas` is byte-for-byte what #410 landed and the two are comparable side by side. Prototype material, not production code.
 
@@ -47,39 +47,53 @@ In pixels of the current camera there is a wide plateau. At a 900x600 frame the 
 - **`fitView` was not aspect-aware** (`mapView.ts` measured span across the width only). The Catalogue never noticed because `#map` is `aspect-ratio: 1`. On the Atlas's 900x600 stage it clipped MENTOR and JUNO off the map. Fixed additively: `fitView(points, aspect = 1)`, so the Catalogue's behaviour and tests are unchanged.
 - **`CLUSTER_GAP = 0.02`** is tuned for surface placements and would merge DIALIS with ICARUS. The Atlas needs its own threshold, so the flood fill was generalised to `clusterAll(points, gap)` and `clusterOf` re-expressed through it.
 
-## Can a disc stand for a Body's actual size? Yes, and it should
+## Can a disc stand for a Body's actual size? Yes -- `radiusExtent` is a packed float
 
-**This section corrects an earlier reading in this document.** The first pass concluded that true scale was undrawable, on the grounds that the recovered extent is around 10^6 while satellite groups are separated by around 10^4, so every satellite would sit inside its Primary. That treated the extent as a radius in raw position units. It is not.
+**This section corrects two earlier readings in this document.** The first pass said true scale was undrawable, treating the extent as a radius in raw position units. The second pass said apparent size was `extent / range` and derived a divisor of 1024 from it. Both were wrong, and the second was wrong in a way worth recording: the live `$001540` and `$0015C0` arrays are **byte-identical across two unrelated captures**, so they are stale leftovers and were never evidence for that formula. The instruction that should have stopped it was `move.w (a5, d1.w), d1` at `$052EBC`, which indexes with the **low word** of a 21-bit value. Nothing indexes a logarithm table that way. The field is packed.
 
-The engine's own size formula, recovered at `$052EB4..$052ECC`:
+### The decode
+
+`radiusExtent` is a **packed binary float**: the low word is a mantissa normalised into `[0x1000, 0x2000)`, an implicit 1 at bit 12, and the high word is a binary exponent.
 
 ```
-move.l  $6040(a0), d1      ; the extent field
-move.w  (a5, d3.w), d3     ; a5 = $64000, log table, indexed by range
-move.w  (a5, d1.w), d1     ; log of the extent
-sub.l   d3, d1             ; a subtraction in log space is a division
-move.w  (a6, d1.w), d1     ; a6 = $60000, antilog table
-move.l  d1, $1540(a0)      ; apparent size
+size = (radiusExtent & 0xFFFF) / 0x1000 * 2 ** (radiusExtent >>> 16)
 ```
 
-`$60000` is confirmed as an antilog table: its entry at index `$800` is 5792, which is exactly `4096 * sqrt 2`, so the table holds `4096 * 2^(i/4096)` over one octave. The subtraction between two logarithms is therefore a division, and **apparent size is `extent / range`**. The extent is a radius in *some* unit, and two independent bounds bracket that unit:
+Four independent things agree, and none of them was used to build the decode:
 
-| bound | value | basis |
+- **Every one of the thirty mantissas** lies in `[0x1000, 0x2000)`, across only 11 distinct values. An integer field is not normalised by accident.
+- **The antilog table at `$60000` emits exactly that form** -- `4096 * 2^(i/4096)`, so outputs in 4096..8191 -- which is why `$052EBC` indexes it with the mantissa alone.
+- **DIALIS, the star, becomes the largest object** at 5,120,000, and in every satellite group the Body the structural reading calls the Primary outranks its satellites. Read as an integer neither holds: PERSEUS outranks MIDAS and the star is unremarkable. This is independent corroboration of the planet/moon reading in `docs/research/damocles-gamma-system.md`, from a field that reading never touched.
+- **Decoded, ERIS is 3.33x VESTA.** Measured off a captured game frame of the ERIS group, where the two sit at nearly equal range, ERIS draws 3.24x VESTA. A 2.8% agreement with a number the decode did not see.
+
+Read as an integer the System spans **1.69x**. Decoded it spans **500x**:
+
+| | decoded size | kind (structural) |
 | --- | --: | --- |
-| No two of the thirty Bodies may overlap | divisor >= **932.8** | tightest pair ERIS/VESTA, 2,400 units apart |
-| A captured screen of the ERIS group: ERIS 398 px, VESTA 123 px | divisor >= **~928** | size is `extent / range`, so the range ratio is 2.88; with the pair 2,400 units apart the viewer is at most 1,276 units from ERIS, bounding ERIS's radius |
+| DIALIS | 5,120,000 | star |
+| JUNO | 2,048,000 | planet |
+| TRITON | 1,536,000 | planet |
+| ERIS | 307,200 | planet |
+| PAN | 112,640 | moon |
+| VESTA | 92,160 | moon |
+| SOLON | 35,840 | moon |
+| THEON / AURORA / SAPPHIRE | 10,240 | moon |
 
-**1024** is the power of two between them, and a shift on a 68000. At that divisor no pair overlaps, the tightest clearance is 211 units (ERIS and SOLON), and the screenshot's viewer sits about 120 units above ERIS's surface. Both bounds are lower bounds, so a Body may be **smaller** than drawn and never larger; the map says so in the panel and the readout.
+TRITON is **13.6x** PAN, which is what prompted this pass. Read as an integer it was 1.25x, and that is why an earlier prototype drew every Body nearly the same size.
 
-That replaces the authored growth curve the first pass used. A disc is now `max(marker, derivedRadius / unitsPerPixel)`: a marker while a Body is genuinely under a marker's width, the Body itself once it is not. There is no compression constant, no square root and no cap, because the growth is the derived radius arriving. The crossover is around 68x; the whole ERIS group is to scale by 512x.
+### What remains derived
 
-It also removed a design problem rather than creating one. The first pass had to push the marker merge threshold out with the growth, because an invented curve made members collide as a group separated. The derived radius cannot: non-overlap is the bound the divisor was chosen to satisfy. `MARKER_GAP` is therefore back to a flat 14 px and the fit picture is unchanged. Two discs both drawn to scale never intersect at any camera, which is pinned by a test; markers can still touch, because at 11 css pixels a marker is wider than half the gap -- a judgement about symbols, not a claim about Bodies.
+Only the single divisor tying decoded sizes to the positional scale. The bound is that no two of the thirty Bodies may overlap, which needs at least **166.4** from the tightest pair, ERIS and VESTA at 2,400 units. **256** is the power of two above it and a shift on a 68000; at it no pair overlaps and the tightest clearance is 840 units. It is a lower bound, so a Body may be smaller than drawn and never larger, which the panel and the readout both state.
 
-### What this does *not* fix
+So the sizes are **decoded** and their overall scale is **derived**, which is a much better footing than the authored curve of the previous pass. A disc is `max(marker, radius / unitsPerPixel)`: a marker while a Body is genuinely under a marker's width, the Body itself once it is not. No compression constant, no cap.
 
-The recovered extents span only **1.69x** across all thirty Bodies, from 857,088 to 1,446,792, and no divisor changes a ratio. So ERIS really is only 1.12x VESTA, and on a top-down map they correctly look similar.
+Markers do need one authored rule. 500x drawn in proportion would make the smallest moon a fiftieth of a pixel beside DIALIS, so a marker's radius is the **cube root** of the size ratio, clamped to 3..11 css pixels -- order preserved, magnitude compressed, as a star atlas does. That rule is about symbols and not about Bodies, and the readout says which of the two is on screen.
 
-The 3.24x difference in the game screenshot is **range, not size**, which the engine's formula settles: `extent / range` with equal extents and a 2.88x range ratio. The perspective view is dominated by how near the viewer is; a map has no viewer. The two pictures do not disagree.
+Non-overlap also removed a design problem. The authored curve had to push the marker merge threshold out with it, or a separating group drew overlapping blobs. A derived radius cannot collide, because non-overlap is the bound the divisor satisfies. `MARKER_GAP` is a flat 14 px again and the fit picture is unchanged.
+
+### Follow-up this earns
+
+`docs/research/damocles-gamma-system.md` records `$006040`'s "numeric encoding and physical unit" as not decoded. The encoding now is: packed float, with the mantissa/exponent split corroborated four ways. That belongs in the research record and probably in the payload's coverage notes, and it deserves its own issue rather than a line in a prototype's findings. The published `radiusExtent` integers stay exactly as they are -- faithful raw values -- so no payload or schema change is needed.
 
 ## Double-press to zoom
 
@@ -122,7 +136,7 @@ The camera prototype at the same viewport — ten markers, nine names, grid, gro
 
 ![The camera prototype at the fit](../frames/atlas-system-camera-fit.png)
 
-Clicking `ERIS +5` opens its six members at 512x, each drawn at its derived radius against the distance scale -- ERIS widest, THEON narrowest, and the pair ERIS/SOLON nearly touching at 2,332 units:
+Clicking `ERIS +5` opens its six members at 512x, each drawn at its decoded size against the distance scale -- ERIS dominant, VESTA clearly smaller, THEON a speck:
 
 ![The ERIS group opened at derived radii](../frames/atlas-system-camera-eris-open.png)
 
@@ -144,6 +158,6 @@ At DPR 2:
 2. Land it **before #411**, so both Ranges are built on one camera kernel.
 3. Production work this prototype deliberately skipped: the `?x=&z=&span=` URL round-trip with a debounced `replaceState`; `panel.ts` copy stating what a marker is and that disc growth is authored; e2e coverage of drag, wheel, double-press, buttons and keys; pinch-to-zoom.
 6. Decide whether `Sizes: to scale` is the only behaviour or stays a control. The toggle exists here to make the comparison, not because the Atlas needs a setting.
-7. The derived divisor deserves its own issue and a section in `docs/research/damocles-gamma-system.md`, which currently records `$006040`'s encoding as undecoded. The division at `$052EB4` and the antilog table at `$60000` are decoded; the divisor is bounded, not decoded, and should be published as derived or not at all (ADR 0014). The Atlas is the only consumer today.
+7. File the packed-float decode of `$006040` as its own issue against `docs/research/damocles-gamma-system.md`, with the four corroborations above. The Atlas is its only consumer today, and it should not reach the payload's coverage notes through a prototype.
 4. Note on #411: the clamping seam. The System Range wants today's `clampView` exactly, and the Body Range must not be clamped to a bounded square. When the second behaviour exists, replace the `fit: MapView` first argument of `clampView`/`zoomView`/`panView` with `MapBounds { fit, centre: 'clamp' | 'wrap' }`; the span bound is unconditional either way.
 5. Note on #415: it deletes `catalogue/map.ts`, which is why the gesture layer was written fresh rather than retrofitted. Add "delete the duplicated gesture handling" to its checklist.
