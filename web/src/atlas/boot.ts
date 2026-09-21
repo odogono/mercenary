@@ -25,7 +25,6 @@ import {
   markerAt,
   markerView,
   projectSystemAt,
-  sizeGrowth,
   type MarkerProjection
 } from './systemCamera.ts';
 
@@ -68,9 +67,10 @@ let projection: SystemProjection | undefined;
 let view: MapView | undefined;
 let fit: MapView | undefined;
 let markers: MarkerProjection | undefined;
-/// Prototype only: whether discs grow as the camera closes in. A toggle rather than a setting,
-/// so the authored growth can be judged against the extent ratio on its own.
-let growing = true;
+/// Prototype only: whether a Body draws at its derived radius once that covers more than its
+/// marker. A toggle rather than a setting, so the derived scale can be judged against the
+/// marker-only picture #410 landed.
+let toScale = true;
 /// Prototype only: whether the camera is still the untouched fit, so a resize refits it.
 let atFit = true;
 
@@ -94,8 +94,7 @@ const drawCameraRange = () => {
   // load would leave the map reading 1.1x without anyone having touched it.
   fit = fitSystem(system.bodies, frame);
   view = view && !atFit ? clampView(fit, view) : fit;
-  const growth = growing ? sizeGrowth(fit, view) : 1;
-  markers = projectSystemAt(system.bodies, view, frame, growth);
+  markers = projectSystemAt(system.bodies, view, frame, toScale);
   const labels = drawMarkerRange(canvas, markers, view, frame);
   if (labels) {
     placeLabels(labelLayer, labels);
@@ -117,16 +116,16 @@ const drawCameraRange = () => {
   // The scale readout lives in the toolbar rather than the status line, as the Catalogue's
   // does. The toolbar's height never changes, so the longest reading cannot shrink the frame
   // this function has already measured.
-  // The ratio to the recovered extent is stated rather than implied: a disc is a fraction of
-  // what the recovered number would draw against the distance scale, and never that number.
-  const widest = Math.max(...system.bodies.map(body => body.radiusExtent));
-  const recovered = widest / markers.unitsPerPixel;
-  const drawn = Math.max(...markers.markers.map(marker => marker.radius));
+  // Whether the discs on screen are Bodies or markers is stated rather than left to be
+  // guessed, because only one of the two is a size.
+  const scaled = markers.markers.filter(marker => marker.toScale).length;
   node('system-scale').textContent =
     `zoom ${zoom < 10 ? zoom.toFixed(1).replace(/\.0$/, '') : Math.round(zoom).toLocaleString('en-GB')}×` +
     ` · ${formatUnits(markers.unitsPerPixel)} engine units per pixel` +
     ` · grid ${formatUnits(gridStep(view.span, frame.width))} units` +
-    ` · discs 1/${Math.round(recovered / Math.max(drawn, 1))} of recovered extent`;
+    (scaled
+      ? ` · ${scaled} of ${markers.markers.length} discs at derived radius`
+      : ' · discs are markers, not sizes');
   const withheld = labels?.suppressed.length ?? 0;
   const onFrame = markers.markers.length - (labels?.offscreen.length ?? 0);
   status.textContent = onFrame
@@ -219,6 +218,21 @@ const render = () => {
     );
   }
   renderPanel(panel, system, body);
+  if (CAMERA && !body) {
+    // The landed panel note says discs are sized only in proportion to each other. Under the
+    // prototype that is no longer the whole truth, and a map must not contradict its own panel.
+    const note = document.createElement('p');
+    note.className = 'muted';
+    note.id = 'derived-scale-note';
+    note.textContent =
+      'Prototype: once the camera is close enough, a disc is drawn at a radius derived from ' +
+      'the recovered extent divided by 1024, on the same scale as the recovered positions. ' +
+      'That divisor is derived and not decoded: the engine computes apparent size as extent ' +
+      'divided by range, and 1024 is the power of two above the smallest divisor at which no ' +
+      'two recovered Bodies overlap. Bodies may be smaller than drawn, never larger. Further ' +
+      'out a disc is a marker and not a size, which the scale readout states.';
+    panel.append(note);
+  }
   if (!body) {
     drawRange();
   }
@@ -317,9 +331,9 @@ const mountPrototypeCamera = () => {
   node('system-fit').addEventListener('click', controls.fit);
   const sizes = node('system-sizes');
   sizes.addEventListener('click', () => {
-    growing = !growing;
-    sizes.setAttribute('aria-pressed', String(growing));
-    sizes.textContent = growing ? 'Sizes: growing' : 'Sizes: fixed';
+    toScale = !toScale;
+    sizes.setAttribute('aria-pressed', String(toScale));
+    sizes.textContent = toScale ? 'Sizes: to scale' : 'Sizes: markers';
     drawRange();
   });
   systemRange.addEventListener('pointermove', event => {

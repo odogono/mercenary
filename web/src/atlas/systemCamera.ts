@@ -3,7 +3,6 @@ import {
   clusterAll,
   fitView,
   project,
-  zoomOf,
   type MapPoint,
   type MapView
 } from '../catalogue/mapView.ts';
@@ -40,25 +39,30 @@ const MARKER_GAP = 14;
 /// A marker smaller than this is still picked within this many css pixels of its centre, so a
 /// one-pixel Body is a reachable target.
 const PICK_RADIUS = 9;
-/// The most a disc grows over its size at the fit camera. Growth is authored presentation, not
-/// recovered scale, and this is where it stops so members of a group stay separate discs
-/// instead of swallowing one another.
-const MAX_GROWTH = 6;
+/// Position units per unit of `radiusExtent`, making a Body's recovered extent a radius on the
+/// same scale as its recovered position. **Derived, not decoded** (ADR 0014): the engine's own
+/// size formula is a division, recovered at `$052EB4..$052ECC`, where a logarithm of the extent
+/// has a logarithm of the range subtracted from it and the difference is raised through the
+/// antilog table at `$60000` (whose entry at index `$800` is 5792, exactly 4096 * sqrt 2). So
+/// apparent size is `extent / range` and the extent is a radius in *some* unit, which these two
+/// independent bounds bracket:
+///
+/// - No two of the thirty recovered Bodies may overlap. The tightest pair, ERIS and VESTA at
+///   2,400 units, needs a divisor of at least **932.8**.
+/// - In a captured screen of the ERIS group, ERIS draws 398 px against VESTA's 123 px. Since
+///   size is `extent / range`, that fixes the range ratio at 2.88, and with the pair 2,400
+///   units apart the viewer can be no further than 1,276 units from ERIS -- which is an upper
+///   bound on ERIS's own radius, so a divisor of at least about **928**.
+///
+/// 1024 is the power of two between them, which is a shift on a 68000. At it no pair overlaps,
+/// the tightest clearance is 211 units (ERIS and SOLON) and the screenshot's viewer sits 120
+/// units above ERIS's surface. Bodies could be smaller -- both bounds are lower bounds -- so
+/// this is the largest size the recovered numbers permit, and the map says so.
+const RADIUS_DIVISOR = 1024;
 
-/// How much larger than its fit-camera size a disc draws at this camera.
-///
-/// The recovered extents CANNOT be drawn against the distance scale. `$006040` is subtracted
-/// from range for the engine's own contact test, so it is a radius in position units, and at
-/// face value ERIS's is 508 times its separation from SOLON: every satellite would sit deep
-/// inside its Primary. The recovered positions and extents contradict each other, which is what
-/// "the radius/extent encoding is unresolved" means in the payload's coverage notes.
-///
-/// So growth here is authored, and says only "nearer things draw bigger". The square root keeps
-/// it gradual across a zoom range that spans three orders of magnitude, and `MAX_GROWTH` stops
-/// it before a disc can cover its neighbours. At the fit camera growth is 1, so the fit picture
-/// is exactly the one the extent ratio alone gives.
-export const sizeGrowth = (fit: MapView, view: MapView): number =>
-  Math.min(Math.sqrt(zoomOf(fit, view)), MAX_GROWTH);
+/// A Body's radius in position units, on the derived scale above.
+export const bodyRadius = (body: GammaBody): number =>
+  body.radiusExtent / RADIUS_DIVISOR;
 
 export interface SystemMarker {
   readonly baseColour: string;
@@ -71,6 +75,9 @@ export interface SystemMarker {
   /// never to the position scale. Multiplied by `sizeGrowth`, so a disc grows as the camera
   /// closes in without ever standing for a recovered size.
   readonly radius: number;
+  /// True when `radius` is this Body's derived radius rather than a marker, so the map can say
+  /// whether what is on screen is a size or a symbol.
+  readonly toScale: boolean;
   /// The named Body's own recovered position, so a marker never sits on a centroid no Body
   /// occupies.
   readonly world: MapPoint;
@@ -106,9 +113,9 @@ export const projectSystemAt = (
   bodies: readonly GammaBody[],
   view: MapView,
   frame: SystemFrame,
-  /// From `sizeGrowth`. The default draws every disc at its fit-camera size, which is what the
-  /// extent ratio alone supports.
-  growth = 1
+  /// When set, a Body whose derived radius covers more than its marker draws at that radius
+  /// instead, so a disc becomes the Body itself once the camera is close enough to show it.
+  toScale = true
 ): MarkerProjection => {
   const unitsPerPixel = view.span / Math.max(frame.width, 1);
   if (!bodies.length) {
@@ -122,38 +129,43 @@ export const projectSystemAt = (
   // until their discs would no longer cover one another, `2 * LARGEST_DISC` being the widest
   // pair of radii the extent ratio can produce. At the fit camera growth is 1 and this term
   // vanishes, so the fit picture is MARKER_GAP alone.
-  const gap = MARKER_GAP + 2 * LARGEST_DISC * (growth - 1);
-  const markers = clusterAll(bodies.map(pointOf), gap * unitsPerPixel).map(
-    members => {
-      // The widest recovered extent wears the marker's name, which is the rule `layOutLabels`
-      // already uses to choose between colliding labels. Ties go to the lower source slot so the
-      // choice is the same on every draw.
-      const named = members.reduce((best, index) => {
-        const a = bodies[index]!,
-          b = bodies[best]!;
-        return a.radiusExtent > b.radiusExtent ||
-          (a.radiusExtent === b.radiusExtent && a.sourceIndex < b.sourceIndex)
-          ? index
-          : best;
-      }, members[0]!);
-      const body = bodies[named]!;
-      const { u, v } = project(view, pointOf(body), aspect);
-      return {
-        baseColour: body.baseColour,
-        bodyIds: members.map(index => bodies[index]!.id),
-        id: body.id,
-        name: body.name,
-        radius: Math.max(
-          1,
-          (LARGEST_DISC * body.radiusExtent * growth) /
-            Math.max(widestExtent, 1)
-        ),
-        world: pointOf(body),
-        x: u * frame.width,
-        y: v * frame.height
-      };
-    }
-  );
+  const markers = clusterAll(
+    bodies.map(pointOf),
+    MARKER_GAP * unitsPerPixel
+  ).map(members => {
+    // The widest recovered extent wears the marker's name, which is the rule `layOutLabels`
+    // already uses to choose between colliding labels. Ties go to the lower source slot so the
+    // choice is the same on every draw.
+    const named = members.reduce((best, index) => {
+      const a = bodies[index]!,
+        b = bodies[best]!;
+      return a.radiusExtent > b.radiusExtent ||
+        (a.radiusExtent === b.radiusExtent && a.sourceIndex < b.sourceIndex)
+        ? index
+        : best;
+    }, members[0]!);
+    const body = bodies[named]!;
+    const { u, v } = project(view, pointOf(body), aspect);
+    const marker = Math.max(
+      1,
+      (LARGEST_DISC * body.radiusExtent) / Math.max(widestExtent, 1)
+    );
+    const derived = toScale ? bodyRadius(body) / unitsPerPixel : 0;
+    return {
+      baseColour: body.baseColour,
+      bodyIds: members.map(index => bodies[index]!.id),
+      id: body.id,
+      name: body.name,
+      // A marker until the Body is genuinely wider than its marker, then the Body itself.
+      // Nothing is invented and nothing is compressed: the growth is the derived radius
+      // arriving.
+      radius: Math.max(marker, derived),
+      toScale: derived > marker,
+      world: pointOf(body),
+      x: u * frame.width,
+      y: v * frame.height
+    };
+  });
   return {
     markers: [...markers].sort((a, b) => b.radius - a.radius),
     unitsPerPixel

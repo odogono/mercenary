@@ -2,12 +2,12 @@ import { describe, expect, test } from 'bun:test';
 
 import { layOutLabels } from '../src/atlas/system.ts';
 import {
+  bodyRadius,
   fitSystem,
   markerAt,
   markerLabels,
   markerView,
-  projectSystemAt,
-  sizeGrowth
+  projectSystemAt
 } from '../src/atlas/systemCamera.ts';
 import {
   clusterAll,
@@ -148,66 +148,80 @@ describe('the marker partition', () => {
 });
 
 describe('the markers themselves', () => {
-  test('grow with the camera, from the fit picture up to a stop', async () => {
+  test('carry a derived radius no pair of Bodies can overlap', async () => {
     const system = await gammaSystem();
-    const fit = fitSystem(system.bodies, FRAME);
-    // The fit camera is the extent ratio on its own, so growth cannot flatter it.
-    expect(sizeGrowth(fit, fit)).toBe(1);
-    const growths = [4, 16, 36, 512].map(factor =>
-      sizeGrowth(fit, zoomView(fit, fit, factor))
-    );
-    expect(growths).toEqual([2, 4, 6, 6]);
-    // Never a claim about recovered size: the widest extent drawn against the distance scale
-    // would be 146 px at the fit camera and 508 times its own separation from its neighbours,
-    // so a grown disc stays a small fraction of it.
-    const deep = zoomView(fit, fit, 36);
-    const widest = Math.max(...system.bodies.map(value => value.radiusExtent));
-    const projection = projectSystemAt(
-      system.bodies,
-      deep,
-      FRAME,
-      sizeGrowth(fit, deep)
-    );
-    const drawn = Math.max(...projection.markers.map(marker => marker.radius));
-    expect(drawn).toBeLessThan(widest / projection.unitsPerPixel);
+    // The divisor is derived, so the bound it has to satisfy is the test: no two of the thirty
+    // recovered Bodies may overlap at their derived radii. The tightest pair is ERIS and VESTA,
+    // 2,400 units apart, which is what fixes the divisor's lower bound at 932.8.
+    let tightest = Infinity;
+    for (const [index, a] of system.bodies.entries()) {
+      for (const b of system.bodies.slice(index + 1)) {
+        const apart = Math.hypot(
+          a.position.x - b.position.x,
+          a.position.z - b.position.z
+        );
+        tightest = Math.min(tightest, apart - bodyRadius(a) - bodyRadius(b));
+      }
+    }
+    expect(tightest).toBeGreaterThan(0);
+    // 211 units between ERIS and SOLON. A divisor much smaller would put them through one
+    // another, which is the evidence the comment on RADIUS_DIVISOR rests on.
+    expect(Math.round(tightest)).toBe(211);
+    expect(
+      Math.round(bodyRadius(system.bodies.find(b => b.id === 'eris')!))
+    ).toBe(1157);
   });
 
-  test('never overlap one another, at any camera, once they grow', async () => {
+  test('become the Body once its derived radius covers more than its marker', async () => {
     const system = await gammaSystem();
     const fit = fitSystem(system.bodies, FRAME);
-    // The reason the merge threshold carries the grown radius: a group that is just separating
-    // would otherwise draw its members as overlapping blobs. Checked across four orders of
-    // magnitude of zoom, and monotone splitting has to survive it.
+    // Far out every disc is a marker, because a Body really is well under a pixel across.
+    const far = projectSystemAt(system.bodies, fit, FRAME);
+    expect(far.markers.every(marker => !marker.toScale)).toBe(true);
+    // Close in every disc is the Body, and the switch is monotone in between.
+    const near = projectSystemAt(system.bodies, zoomView(fit, fit, 512), FRAME);
+    expect(near.markers.every(marker => marker.toScale)).toBe(true);
     let previous = 0;
-    for (const factor of [1, 2, 4, 8, 16, 32, 64, 128, 512, 4096]) {
-      const camera = zoomView(fit, fit, factor);
+    for (const factor of [1, 4, 16, 64, 128, 512, 4096]) {
       const { markers } = projectSystemAt(
         system.bodies,
-        camera,
-        FRAME,
-        sizeGrowth(fit, camera)
+        zoomView(fit, fit, factor),
+        FRAME
       );
-      for (const [index, a] of markers.entries()) {
-        for (const b of markers.slice(index + 1)) {
-          expect(a.radius + b.radius).toBeLessThan(
-            Math.hypot(a.x - b.x, a.y - b.y)
-          );
-        }
-      }
-      expect(markers.length).toBeGreaterThanOrEqual(previous);
-      previous = markers.length;
+      const scaled = markers.filter(marker => marker.toScale).length;
+      expect(scaled / markers.length).toBeGreaterThanOrEqual(previous);
+      previous = scaled / markers.length;
     }
-    expect(previous).toBe(system.bodies.length);
   });
 
-  test('keep one size at every camera when growth is left off', async () => {
+  test('draw a Body at its derived radius against the distance scale', async () => {
+    const system = await gammaSystem();
+    const fit = fitSystem(system.bodies, FRAME);
+    const camera = zoomView(fit, fit, 512);
+    const projection = projectSystemAt(system.bodies, camera, FRAME);
+    // The whole point of a derived radius: the disc measures the same on screen as the
+    // distances beside it. ERIS and SOLON are 2,332 units apart and must nearly touch.
+    const eris = projection.markers.find(marker => marker.id === 'eris')!;
+    const solon = projection.markers.find(marker => marker.id === 'solon')!;
+    const apart = Math.hypot(eris.x - solon.x, eris.y - solon.y);
+    expect(eris.radius + solon.radius).toBeLessThan(apart);
+    expect(eris.radius + solon.radius).toBeGreaterThan(apart * 0.8);
+    expect(eris.radius).toBeCloseTo(
+      bodyRadius(system.bodies.find(b => b.id === 'eris')!) /
+        projection.unitsPerPixel,
+      6
+    );
+  });
+
+  test('keep one size at every camera when the derived scale is left off', async () => {
     const system = await gammaSystem();
     const fit = fitSystem(system.bodies, FRAME);
     const radiusOf = (view: typeof fit, name: string) =>
-      projectSystemAt(system.bodies, view, FRAME).markers.find(
+      projectSystemAt(system.bodies, view, FRAME, false).markers.find(
         marker => marker.name === name
       )!.radius;
-    expect(radiusOf(zoomView(fit, fit, 64), 'ERIS')).toBe(
+    // Deep enough that the derived radius would otherwise have taken over long before.
+    expect(radiusOf(zoomView(fit, fit, 4096), 'ERIS')).toBe(
       radiusOf(fit, 'ERIS')
     );
     // JUNO holds the widest recovered extent in the System, so it draws at full size.
@@ -217,6 +231,33 @@ describe('the markers themselves', () => {
       eris.radiusExtent / juno.radiusExtent,
       10
     );
+  });
+
+  test('never overlap one another on screen, at any camera', async () => {
+    const system = await gammaSystem();
+    const fit = fitSystem(system.bodies, FRAME);
+    // What the reader actually sees, in the two regimes the map has. Two discs both drawn at
+    // their derived radius can never intersect, because that is the bound the divisor was
+    // chosen to satisfy. Markers are only held apart by MARKER_GAP, so two of them may touch:
+    // at 11 css pixels a disc is wider than half the gap, which is a judgement about symbols
+    // and not a claim about Bodies. The band in between is where an invented growth curve
+    // would have collided, and does not here.
+    for (const factor of [1, 2, 4, 8, 16, 32, 64, 128, 512, 4096]) {
+      const { markers } = projectSystemAt(
+        system.bodies,
+        zoomView(fit, fit, factor),
+        FRAME
+      );
+      for (const [index, a] of markers.entries()) {
+        for (const b of markers.slice(index + 1)) {
+          const apart = Math.hypot(a.x - b.x, a.y - b.y);
+          expect(apart).toBeGreaterThanOrEqual(14);
+          if (a.toScale && b.toScale) {
+            expect(a.radius + b.radius).toBeLessThan(apart);
+          }
+        }
+      }
+    }
   });
 
   test('open to their members when picked, and always split doing it', async () => {
