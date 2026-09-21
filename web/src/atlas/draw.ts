@@ -1,10 +1,13 @@
 import { gridStep, project, type MapView } from '../catalogue/mapView.ts';
 import { SURFACE_CELLS } from '../damocles/world.ts';
+import type { GammaBody } from '../flyover/documents.ts';
 import { wrapImages, type BodySurface } from './surface.ts';
 import {
   layOutLabels,
+  surfacePoint,
   type SystemFrame,
   type SystemLabels,
+  type SystemMarker,
   type SystemProjection
 } from './system.ts';
 
@@ -161,11 +164,56 @@ export const drawBodySurface = (
   context.stroke();
 };
 
+/// A Body's recovered islands drawn on its own disc, through the authored scale. No clipping is
+/// needed: the surface is the square inscribed in the disc, so every island is inside it.
+const drawSurfaceOnDisc = (
+  context: CanvasRenderingContext2D,
+  view: MapView,
+  frame: SystemFrame,
+  onBody: {
+    readonly body: GammaBody;
+    readonly marker: SystemMarker;
+    readonly surface: BodySurface;
+  }
+) => {
+  const aspect = frame.height / Math.max(frame.width, 1);
+  for (const island of onBody.surface.islands) {
+    context.fillStyle = island.landColour;
+    context.strokeStyle = OUTLINE;
+    context.lineWidth = OUTLINE_WIDTH;
+    context.beginPath();
+    for (const [index, cell] of island.outline.entries()) {
+      const { u, v } = project(
+        view,
+        surfacePoint(onBody.marker, onBody.body, cell),
+        aspect
+      );
+      const x = u * frame.width,
+        y = v * frame.height;
+      if (index === 0) {
+        context.moveTo(x, y);
+      } else {
+        context.lineTo(x, y);
+      }
+    }
+    context.closePath();
+    context.fill();
+    context.stroke();
+  }
+};
+
 export const drawSystemRange = (
   canvas: HTMLCanvasElement,
   projection: SystemProjection,
   view: MapView,
-  frame: SystemFrame
+  frame: SystemFrame,
+  /// A Body's recovered surface to draw on its own disc, once the camera is close enough. The
+  /// scale relating the two is authored; see `unitsPerCell`.
+  onBody?: {
+    readonly body: GammaBody;
+    readonly marker: SystemMarker;
+    readonly surface: BodySurface;
+  }
 ): SystemLabels | null => {
   const context = surfaceOf(canvas, frame);
   if (!context) {
@@ -191,6 +239,9 @@ export const drawSystemRange = (
         2 * Math.PI
       );
       context.stroke();
+    }
+    if (onBody && onBody.marker.id === marker.id) {
+      drawSurfaceOnDisc(context, view, frame, onBody);
     }
   }
   context.font = LABEL_FONT;

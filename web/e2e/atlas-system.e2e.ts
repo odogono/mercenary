@@ -182,8 +182,16 @@ test('the Body Range pans across the wrap and zooms out to the System', async ({
   await page.locator('#system-fit').click();
   await expect(page.locator('#system-scale')).toContainText('Body Range');
   await page.locator('#system-zoom-out').click();
-  await expect(page).toHaveURL('/damocles/atlas');
   await expect(page.locator('#range-system')).toBeVisible();
+  // Back at the System Range on the window the surface was showing, not refitted to the whole
+  // System: the hop matches the picture in both directions (#437), so a reader keeps their place.
+  await expect(page).toHaveURL(/\bx=-63\d{4}/);
+  await expect(page).not.toHaveURL(/\bbody=/);
+  await expect(page.locator('#status')).toContainText(
+    'recovered islands drawn on ERIS'
+  );
+  // And Fit System is still the way back to the whole System.
+  await page.locator('#system-fit').click();
   await expect(page.locator('#status')).toContainText('10 markers');
 });
 
@@ -205,6 +213,57 @@ test('a Body draws its recovered coastlines, whole across the seam', async ({
   await expect(page.locator('#status')).toContainText('12 recovered islands', {
     timeout: 20_000
   });
+});
+
+test('zooming into a Body reveals its islands and hands over continuously', async ({
+  page
+}) => {
+  // The Catalogue is 40 MiB, so the System Range must not fetch it until a surface is worth
+  // drawing (#435).
+  const fetches: string[] = [];
+  page.on('request', request => {
+    if (request.url().includes('catalogue.json')) {
+      fetches.push(request.url());
+    }
+  });
+  await page.goto('/damocles/atlas');
+  await expect(page.locator('#status')).toContainText('10 markers');
+  expect(fetches).toHaveLength(0);
+
+  // Far enough in for Eris's islands to be drawn on its own disc, at the authored scale.
+  await page.goto('/damocles/atlas?x=-630000&z=390000&span=3000');
+  await expect(page.locator('#system-scale')).toContainText(
+    'ERIS surface at an authored scale',
+    { timeout: 20_000 }
+  );
+  await expect(page.locator('#status')).toContainText(
+    'recovered islands drawn on ERIS at an authored scale'
+  );
+  // The one authored quantity in the Atlas, so the panel states it rather than assuming it.
+  await expect(page.locator('#panel')).toContainText(
+    'The scale placing them on the disc is authored'
+  );
+  expect(fetches).toHaveLength(1);
+  // Still the System Range: no hop has happened.
+  await expect(page).not.toHaveURL(/\bbody=/);
+
+  // Zooming on hands over, on the same window, with no click anywhere. Two wheel steps: the
+  // trigger is the authored surface filling the frame's shorter side, and one step from here
+  // lands just under it.
+  const box = (await page.locator('#range-system').boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  for (let step = 0; step < 2; step += 1) {
+    await page.mouse.wheel(0, -300);
+    await page.waitForTimeout(120);
+  }
+  await expect(page).toHaveURL(/\bbody=eris\b/, { timeout: 10_000 });
+  await expect(page.locator('#system-scale')).toContainText('Body Range');
+  // The hand-over lands on the Body Range's own fit, which is what makes the islands stay put.
+  // Within a few cells of the surface centre, not exactly on it: the wheel anchors on the
+  // pointer, so the camera drifts a fraction of a unit as it zooms.
+  const handed = new URL(page.url()).searchParams;
+  expect(Math.abs(Number(handed.get('x')) - 2048)).toBeLessThan(5);
+  expect(Math.abs(Number(handed.get('z')) - 2048)).toBeLessThan(5);
 });
 
 test('picking an island fills the panel and survives the link', async ({

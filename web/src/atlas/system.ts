@@ -6,6 +6,7 @@ import {
   type MapPoint,
   type MapView
 } from '../catalogue/mapView.ts';
+import { SURFACE_CELLS } from '../damocles/world.ts';
 import { bodyRadius, bodySize, type GammaBody } from '../flyover/documents.ts';
 
 /// The Atlas System Range: the recovered Gamma System projected onto the X/Z plane through a
@@ -46,6 +47,53 @@ const WIDEST_MARKER = 11;
 const NARROWEST_MARKER = 3;
 /// Css pixels between a marker's edge and its label, and between two placed labels.
 const LABEL_GAP = 5;
+/// Position units per Surface Cell when a Body's surface is drawn on its disc.
+///
+/// **Authored, not recovered and not derived** (ADR 0014, and the amendment on #405). The two
+/// Ranges are in different coordinate systems and nothing recovered joins them: `system.json` is
+/// `resident-cartesian-centre`, while `arrival-poses.json` is `body-local-surface-grid` at
+/// `cellUnits: 65536`, making one surface axis 2^28 units — 57 times the whole Gamma System's
+/// span and 223,696 times a Body's own radius. Separate unit systems, as a 1990 16-bit game
+/// would have: space is a symbolic starfield and the surface is a local world.
+///
+/// So the scale is chosen, and only the scale: the coastline shapes, their land colours, their
+/// origins and their relative positions are all recovered. The 4096-cell axis is drawn as the
+/// largest square **inscribed** in the disc, so no island falls outside it and nothing has to be
+/// clipped or hidden. For ERIS, whose drawn diameter is 2,400 units, that is 0.414 units a cell.
+export const unitsPerCell = (body: GammaBody): number =>
+  (2 * bodyRadius(body)) / Math.SQRT2 / SURFACE_CELLS;
+
+/// Css pixels the authored surface axis must cover before a Body's islands are drawn on it. At
+/// this size the widest Eris island is about seven pixels, which is the point where a coastline
+/// reads as a shape rather than as a speck.
+const ISLANDS_VISIBLE = 320;
+
+/// The authored surface's width in position units: the side of the square inscribed in the disc.
+export const surfaceUnits = (body: GammaBody): number =>
+  unitsPerCell(body) * SURFACE_CELLS;
+
+/// Whether a marker is close enough, and central enough, to draw its Body's surface on.
+///
+/// Both conditions are needed. Size alone is not enough because the Bodies are drawn 500-fold
+/// apart: DIALIS's authored surface is 28,284 units across against ERIS's 1,697, so a size test
+/// on its own lets DIALIS claim the surface from right off the screen while the reader is
+/// looking at ERIS. So the camera's centre must also be standing on the Body in question, which
+/// picks exactly one: the surfaces are inscribed in discs, and no two discs overlap.
+export const showsSurface = (
+  marker: SystemMarker,
+  body: GammaBody,
+  view: MapView,
+  unitsPerPixel: number
+): boolean => {
+  const half = surfaceUnits(body) / 2;
+  return (
+    marker.bodyIds.length === 1 &&
+    surfaceUnits(body) / unitsPerPixel >= ISLANDS_VISIBLE &&
+    Math.abs(view.cx - marker.world.x) <= half &&
+    Math.abs(view.cz - marker.world.z) <= half
+  );
+};
+
 /// A marker's size, for when a Body is too small to draw at its own radius. Authored, and about
 /// symbols rather than Bodies: the decoded sizes span 500-fold, so drawn in proportion the
 /// smallest moon would be a fiftieth of a pixel beside DIALIS. The cube root compresses that to
@@ -316,4 +364,51 @@ export const layOutLabels = (
     placed.push({ id: marker.id, text, x: box.x, y: box.y });
   }
   return { offscreen, placed, suppressed };
+};
+
+/// The Body Coordinate window a System camera is looking at through the authored scale, so the
+/// Body Range can open on exactly what the disc was showing. The islands then sit in the same
+/// place at the same size across the hand-over: what changes is that sea, the Surface Cell grid
+/// and the coordinate seam appear, and the disc goes.
+export const surfaceWindow = (
+  marker: SystemMarker,
+  body: GammaBody,
+  view: MapView
+): MapView => {
+  const scale = unitsPerCell(body);
+  return {
+    // The Body's centre is the middle of its surface, because that is where the inscribed square
+    // is centred.
+    cx: SURFACE_CELLS / 2 + (view.cx - marker.world.x) / scale,
+    cz: SURFACE_CELLS / 2 + (view.cz - marker.world.z) / scale,
+    span: view.span / scale
+  };
+};
+
+/// Where one Body Coordinate falls in position units, for drawing a surface on a disc.
+export const surfacePoint = (
+  marker: SystemMarker,
+  body: GammaBody,
+  point: MapPoint
+): MapPoint => {
+  const scale = unitsPerCell(body);
+  return {
+    x: marker.world.x + (point.x - SURFACE_CELLS / 2) * scale,
+    z: marker.world.z + (point.z - SURFACE_CELLS / 2) * scale
+  };
+};
+
+/// The System camera that shows the same Body Coordinate window a Body camera is on. The inverse
+/// of `surfaceWindow`, so the outbound hop can match the picture too.
+export const systemWindow = (
+  marker: SystemMarker,
+  body: GammaBody,
+  view: MapView
+): MapView => {
+  const scale = unitsPerCell(body);
+  return {
+    cx: marker.world.x + (view.cx - SURFACE_CELLS / 2) * scale,
+    cz: marker.world.z + (view.cz - SURFACE_CELLS / 2) * scale,
+    span: view.span * scale
+  };
 };
