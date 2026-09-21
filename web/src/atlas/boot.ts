@@ -1,12 +1,32 @@
 import {
+  clampView,
+  formatUnits,
+  gridStep,
+  zoomOf,
+  type MapView
+} from '../catalogue/mapView.ts';
+import {
   readGammaSystem,
   type GammaSystemDocument
 } from '../flyover/documents.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
-import { drawSystemRange, frameOf, placeLabels } from './draw.ts';
+import { mountCamera, type CameraFrame } from './camera.ts';
+import {
+  drawMarkerRange,
+  drawSystemRange,
+  frameOf,
+  placeLabels
+} from './draw.ts';
 import { renderPanel } from './panel.ts';
 import { atlasHref, readAtlasState, type AtlasState } from './state.ts';
 import { bodyAt, projectSystem, type SystemProjection } from './system.ts';
+import {
+  fitSystem,
+  markerAt,
+  markerView,
+  projectSystemAt,
+  type MarkerProjection
+} from './systemCamera.ts';
 
 /// The Atlas document (#405).
 ///
@@ -16,6 +36,13 @@ import { bodyAt, projectSystem, type SystemProjection } from './system.ts';
 /// own route so a mis-served document fails here rather than half-rendering.
 
 assertBrowserDocument(window.location.pathname, 'atlas');
+
+/// PROTOTYPE gate. `?camera=1` swaps the System Range for the camera-driven prototype in
+/// `systemCamera.ts`; without it this document is exactly what #410 landed, so the two can be
+/// judged side by side. Read once from the entry URL, because hopping into a Body does not
+/// carry the flag in `atlasHref`.
+const CAMERA =
+  new URLSearchParams(window.location.search).get('camera') === '1';
 
 const node = <T extends HTMLElement = HTMLElement>(id: string): T =>
   document.getElementById(id) as T;
@@ -36,6 +63,10 @@ title.textContent = 'Gamma Atlas';
 let system: GammaSystemDocument | undefined;
 let state: AtlasState = { level: 'system' };
 let projection: SystemProjection | undefined;
+/// Prototype only: the camera, the fit that bounds it, and the markers it last drew.
+let view: MapView | undefined;
+let fit: MapView | undefined;
+let markers: MarkerProjection | undefined;
 
 const selectedBody = () => {
   const current = state;
@@ -44,8 +75,64 @@ const selectedBody = () => {
     : null;
 };
 
+/// Prototype only. Writes nothing to the page but canvas pixels, the label layer and the
+/// status line, so the ResizeObserver that calls it cannot feed the frame back on itself.
+const drawCameraRange = () => {
+  if (!system) {
+    return;
+  }
+  const frame = frameOf(systemRange);
+  // The fit span depends on the frame's aspect, so a resize changes it. Re-clamp the reader's
+  // camera into the new fit rather than refitting it, which would throw away where they were.
+  fit = fitSystem(system.bodies, frame);
+  view = view ? clampView(fit, view) : fit;
+  markers = projectSystemAt(system.bodies, view, frame);
+  const labels = drawMarkerRange(canvas, markers, view, frame);
+  if (labels) {
+    placeLabels(labelLayer, labels);
+  }
+  for (const anchor of roster.querySelectorAll<HTMLAnchorElement>('a')) {
+    const marker = markers.markers.find(value =>
+      value.bodyIds.includes(anchor.dataset['body'] ?? '')
+    );
+    if (marker) {
+      anchor.dataset['x'] = marker.x.toFixed(2);
+      anchor.dataset['y'] = marker.y.toFixed(2);
+      anchor.dataset['marker'] = marker.id;
+    }
+  }
+  const grouped = markers.markers.filter(
+    marker => marker.bodyIds.length > 1
+  ).length;
+  const zoom = zoomOf(fit, view);
+  // The scale readout lives in the toolbar rather than the status line, as the Catalogue's
+  // does. The toolbar's height never changes, so the longest reading cannot shrink the frame
+  // this function has already measured.
+  node('system-scale').textContent =
+    `zoom ${zoom < 10 ? zoom.toFixed(1).replace(/\.0$/, '') : Math.round(zoom).toLocaleString('en-GB')}×` +
+    ` · ${formatUnits(markers.unitsPerPixel)} engine units per pixel` +
+    ` · grid ${formatUnits(gridStep(view.span, frame.width))} units`;
+  const withheld = labels?.suppressed.length ?? 0;
+  const onFrame = markers.markers.length - (labels?.offscreen.length ?? 0);
+  status.textContent = onFrame
+    ? `${markers.markers.length} markers · ${system.bodies.length} recovered Bodies` +
+      (grouped ? ` · ${grouped} group more than one` : '') +
+      ' · X right, Z up' +
+      (withheld
+        ? ` · ${withheld} name${withheld === 1 ? '' : 's'} withheld, in the roster`
+        : '')
+    : // The recovered Bodies sit in scattered groups, so the middle of the System is genuinely
+      // empty. Saying so beats leaving the reader looking at a blank grid wondering what broke.
+      'No recovered Body is in view. The Gamma System is mostly empty space; Fit System ' +
+      'returns to the whole of it, and the roster opens any Body directly.';
+};
+
 const drawRange = () => {
   if (!system || systemRange.hidden) {
+    return;
+  }
+  if (CAMERA) {
+    drawCameraRange();
     return;
   }
   const frame = frameOf(systemRange);
@@ -149,7 +236,7 @@ const pointAt = (event: PointerEvent | MouseEvent) => {
 };
 
 canvas.addEventListener('click', event => {
-  if (!projection) {
+  if (CAMERA || !projection) {
     return;
   }
   const point = pointAt(event);
@@ -160,7 +247,7 @@ canvas.addEventListener('click', event => {
 });
 
 canvas.addEventListener('pointermove', event => {
-  if (!projection) {
+  if (CAMERA || !projection) {
     return;
   }
   const point = pointAt(event);
@@ -168,6 +255,54 @@ canvas.addEventListener('pointermove', event => {
     ? 'pointer'
     : 'default';
 });
+
+/// Prototype only: the gestures, the three buttons, and the three-way press. A marker standing
+/// for several Bodies opens to its members rather than hopping, because there is no one Body it
+/// could mean; only an unambiguous marker enters a Body.
+const mountPrototypeCamera = () => {
+  const cameraFrame = (): CameraFrame => {
+    const frame = frameOf(systemRange);
+    return {
+      aspect: frame.height / Math.max(frame.width, 1),
+      height: frame.height,
+      width: frame.width
+    };
+  };
+  const controls = mountCamera({
+    camera: () => (fit && view ? { fit, view } : null),
+    element: systemRange,
+    frame: cameraFrame,
+    onPick: (x, y) => {
+      const marker = markers && markerAt(markers, x, y);
+      if (!marker || !system || !fit) {
+        return;
+      }
+      if (marker.bodyIds.length > 1) {
+        view = markerView(marker, system.bodies, fit, frameOf(systemRange));
+        drawRange();
+      } else {
+        go({ bodyId: marker.id, level: 'body', view: null });
+      }
+    },
+    onView: next => {
+      view = next;
+      drawRange();
+    }
+  });
+  node('system-zoom-out').addEventListener('click', controls.zoomOut);
+  node('system-zoom-in').addEventListener('click', controls.zoomIn);
+  node('system-fit').addEventListener('click', controls.fit);
+  systemRange.addEventListener('pointermove', event => {
+    const point = pointAt(event);
+    const marker = markers && markerAt(markers, point.x, point.y);
+    // Cleared rather than set to `grab`, so the stylesheet keeps saying grab and grabbing.
+    systemRange.style.cursor = marker
+      ? marker.bodyIds.length > 1
+        ? 'zoom-in'
+        : 'pointer'
+      : '';
+  });
+};
 
 document.addEventListener('click', event => {
   const anchor = (event.target as Element | null)?.closest('a');
@@ -195,6 +330,11 @@ window.addEventListener('popstate', render);
 // is not enough: writing the status line below it can wrap to a second row and shrink the map
 // after the projection has already been chosen. The canvas is out of flow, so this settles.
 new ResizeObserver(drawRange).observe(systemRange);
+
+if (CAMERA) {
+  node('atlas').classList.add('camera');
+  mountPrototypeCamera();
+}
 
 const start = async () => {
   const path = '/payload/damocles/system.json';

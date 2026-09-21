@@ -35,7 +35,7 @@ export interface SystemProjection {
 /// Css pixels kept clear around the outermost disc, so a label has somewhere to sit.
 const MARGIN = 32;
 /// The widest recovered extent draws this big; every other disc keeps its recovered ratio.
-const LARGEST_DISC = 11;
+export const LARGEST_DISC = 11;
 /// Css pixels between a disc's edge and its label, and between two placed labels.
 const LABEL_GAP = 5;
 
@@ -108,10 +108,25 @@ export interface SystemLabel {
 }
 
 export interface SystemLabels {
+  /// Whatever the label stood for has its centre outside the frame, so there was nothing to
+  /// label here. Distinct from `suppressed`: a camera leaves most of the System off screen,
+  /// and calling those names withheld would be untrue.
+  readonly offscreen: readonly string[];
   readonly placed: readonly SystemLabel[];
   /// Bodies whose label would have collided. They stay reachable through the roster, which is
   /// the honest outcome: these groups really are a few hundred pixels-worth of unit apart.
   readonly suppressed: readonly string[];
+}
+
+/// What a label is laid out against: a disc's identity, the text it wears and its circle.
+/// Taking this rather than a `SystemProjection` lets the camera-driven prototype
+/// (`systemCamera.ts`) share one layout rule with the static Range.
+export interface LabelTarget {
+  readonly id: string;
+  readonly radius: number;
+  readonly text: string;
+  readonly x: number;
+  readonly y: number;
 }
 
 export interface LabelMetrics {
@@ -132,7 +147,11 @@ const overlaps = (a: Box, b: Box, gap: number): boolean =>
   a.y < b.y + b.height + gap &&
   b.y < a.y + a.height + gap;
 
-const discBox = (disc: SystemDisc): Box => ({
+const discBox = (disc: {
+  readonly radius: number;
+  readonly x: number;
+  readonly y: number;
+}): Box => ({
   height: 2 * disc.radius,
   width: 2 * disc.radius,
   x: disc.x - disc.radius,
@@ -143,40 +162,85 @@ const discBox = (disc: SystemDisc): Box => ({
 /// widest recovered extent in a group keeps its name. A label may sit against its own disc but
 /// never across another one, so a name is never mistaken for the Body it happens to cover.
 /// Pure: text is measured from the caller's monospace metrics rather than from the document.
+/// `fallbackSides` is the camera prototype's option: when the label beside a disc will not fit,
+/// try above it, below it, and then its other side before withholding the name. The static
+/// Range leaves it off, so its layout is exactly what #410 landed.
 export const layOutLabels = (
-  projection: SystemProjection,
+  targets: readonly LabelTarget[],
   frame: SystemFrame,
-  metrics: LabelMetrics
+  metrics: LabelMetrics,
+  fallbackSides = false
 ): SystemLabels => {
-  const order = projection.discs
+  const order = targets
     .map((disc, index) => ({ disc, index }))
     .sort((a, b) => b.disc.radius - a.disc.radius || a.index - b.index);
   const placed: SystemLabel[] = [];
   const labelBoxes: Box[] = [];
+  const offscreen: string[] = [];
   const suppressed: string[] = [];
   for (const { disc } of order) {
-    const width = disc.name.length * metrics.charWidth;
+    if (
+      disc.x < 0 ||
+      disc.y < 0 ||
+      disc.x > frame.width ||
+      disc.y > frame.height
+    ) {
+      offscreen.push(disc.id);
+      continue;
+    }
+    const width = disc.text.length * metrics.charWidth;
     const height = metrics.lineHeight;
-    const y = disc.y - height / 2;
+    const beside = disc.y - height / 2;
     const right = disc.x + disc.radius + LABEL_GAP;
     const left = disc.x - disc.radius - LABEL_GAP - width;
-    const x = right + width <= frame.width ? right : left;
-    const box = { height, width, x, y };
-    if (
-      x < 0 ||
-      y < 0 ||
-      x + width > frame.width ||
-      y + height > frame.height ||
-      labelBoxes.some(other => overlaps(box, other, LABEL_GAP)) ||
-      projection.discs.some(
-        other => other.id !== disc.id && overlaps(box, discBox(other), 0)
-      )
-    ) {
+    const candidates: Box[] = [
+      {
+        height,
+        width,
+        x: right + width <= frame.width ? right : left,
+        y: beside
+      }
+    ];
+    if (fallbackSides) {
+      candidates.push(
+        {
+          height,
+          width,
+          x: disc.x - width / 2,
+          y: disc.y - disc.radius - LABEL_GAP - height
+        },
+        {
+          height,
+          width,
+          x: disc.x - width / 2,
+          y: disc.y + disc.radius + LABEL_GAP
+        },
+        {
+          height,
+          width,
+          x: right + width <= frame.width ? left : right,
+          y: beside
+        }
+      );
+    }
+    const box = candidates.find(
+      candidate =>
+        candidate.x >= 0 &&
+        candidate.y >= 0 &&
+        candidate.x + width <= frame.width &&
+        candidate.y + height <= frame.height &&
+        !labelBoxes.some(other => overlaps(candidate, other, LABEL_GAP)) &&
+        !targets.some(
+          other =>
+            other.id !== disc.id && overlaps(candidate, discBox(other), 0)
+        )
+    );
+    if (!box) {
       suppressed.push(disc.id);
       continue;
     }
     labelBoxes.push(box);
-    placed.push({ id: disc.id, text: disc.name, x, y });
+    placed.push({ id: disc.id, text: disc.text, x: box.x, y: box.y });
   }
-  return { placed, suppressed };
+  return { offscreen, placed, suppressed };
 };

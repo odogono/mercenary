@@ -2,7 +2,12 @@ import { describe, expect, test } from 'bun:test';
 
 import { bodyFacts, bodyProvenance } from '../src/atlas/panel.ts';
 import { atlasHref, atlasSearch, readAtlasState } from '../src/atlas/state.ts';
-import { bodyAt, layOutLabels, projectSystem } from '../src/atlas/system.ts';
+import {
+  bodyAt,
+  layOutLabels,
+  projectSystem,
+  type SystemProjection
+} from '../src/atlas/system.ts';
 import { readGammaSystem, type GammaBody } from '../src/flyover/documents.ts';
 
 const FRAME = { height: 600, width: 900 };
@@ -24,6 +29,11 @@ const body = (
   sourceColour: 0x7_77,
   sourceIndex: 0
 });
+
+/// `layOutLabels` lays out any circle carrying text, so the static Range hands it its discs
+/// wearing their own names.
+const targetsOf = (projection: SystemProjection) =>
+  projection.discs.map(disc => ({ ...disc, text: disc.name }));
 
 describe('the Atlas System Range projection', () => {
   test('is a pure function of the recovered payload', async () => {
@@ -122,7 +132,7 @@ describe('the Atlas System Range labels', () => {
   test('labels every Body that has room and withholds the rest', async () => {
     const system = await gammaSystem();
     const projection = projectSystem(system.bodies, FRAME);
-    const labels = layOutLabels(projection, FRAME, metrics);
+    const labels = layOutLabels(targetsOf(projection), FRAME, metrics);
     expect(labels.placed.length + labels.suppressed.length).toBe(30);
     // The recovered positions put whole satellite groups within a pixel or two of each other,
     // so some labels must be withheld; the roster carries those Bodies instead.
@@ -135,7 +145,7 @@ describe('the Atlas System Range labels', () => {
   test('never overlaps two placed labels or leaves the frame', async () => {
     const system = await gammaSystem();
     const labels = layOutLabels(
-      projectSystem(system.bodies, FRAME),
+      targetsOf(projectSystem(system.bodies, FRAME)),
       FRAME,
       metrics
     );
@@ -166,7 +176,7 @@ describe('the Atlas System Range labels', () => {
   test('never lays a label across another Body its disc', async () => {
     const system = await gammaSystem();
     const projection = projectSystem(system.bodies, FRAME);
-    const labels = layOutLabels(projection, FRAME, metrics);
+    const labels = layOutLabels(targetsOf(projection), FRAME, metrics);
     for (const label of labels.placed) {
       const box = {
         height: metrics.lineHeight,
@@ -200,7 +210,7 @@ describe('the Atlas System Range labels', () => {
       ],
       frame
     );
-    const labels = layOutLabels(projection, frame, metrics);
+    const labels = layOutLabels(targetsOf(projection), frame, metrics);
     expect(labels.placed.map(label => label.id)).toEqual(['far', 'large']);
     expect(labels.suppressed).toEqual(['small']);
   });

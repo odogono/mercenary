@@ -236,3 +236,64 @@ h2 {
     border-left: 0;
   }
 }
+
+/* PROTOTYPE: everything under `#atlas.camera` belongs to the camera prototype behind
+   `?camera=1` (`src/atlas/systemCamera.ts`) and is inert on the landed static Range. */
+
+#system-toolbar {
+  display: none;
+}
+
+#atlas.camera #system-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+#system-toolbar button {
+  min-width: 2rem;
+  padding: 0.15rem 0.5rem;
+  color: var(--text);
+  font-family: inherit;
+  font-size: inherit;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--panel);
+  cursor: pointer;
+}
+
+#system-toolbar button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+#atlas.camera .stage {
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+}
+
+#atlas.camera #range-system {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+#atlas.camera #range-system.dragging {
+  cursor: grabbing;
+}
+
+#atlas.camera #range-system:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* The status line is written from inside a ResizeObserver on the map. Holding it to one row
+   means a longer sentence can never shrink the frame it just measured. */
+#atlas.camera #status {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#system-scale {
+  margin-left: 0.5rem;
+}
