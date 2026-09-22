@@ -28,6 +28,7 @@ import {
   placeLabels
 } from './draw.ts';
 import { renderPanel } from './panel.ts';
+import { centreReadout, type ReadoutRow } from './readout.ts';
 import {
   SYSTEM_RANGE,
   atlasHref,
@@ -78,6 +79,8 @@ const bodyCanvas = node<HTMLCanvasElement>('body-map');
 const labelLayer = node('system-labels');
 const roster = node('roster');
 const panel = node('panel');
+const systemCentre = node('system-centre');
+const bodyCentre = node('body-centre');
 
 title.textContent = 'Gamma Atlas';
 
@@ -112,6 +115,25 @@ let onDisc: string | undefined;
 let discSurface: BodySurface | undefined;
 /// Where that Body's surface is centred, in Surface Cells: its islands' own wrap-aware centre.
 let discAnchor: MapPoint | undefined;
+
+/// A camera's own centre as a point, which is what a coordinate readout names.
+const cellOf = (view: MapView): MapPoint => ({ x: view.cx, z: view.cz });
+
+/// Where the camera's centre is, written into the map's own corner.
+const placeCentre = (into: HTMLElement, rows: readonly ReadoutRow[]) => {
+  into.replaceChildren();
+  for (const row of rows) {
+    const label = document.createElement('span');
+    label.className = 'centre-label';
+    label.textContent = row.label;
+    const value = document.createElement('span');
+    value.className = row.authored
+      ? 'centre-value centre-authored'
+      : 'centre-value';
+    value.textContent = row.value;
+    into.append(label, value);
+  }
+};
 
 const selectedBody = () => {
   const current = state;
@@ -277,6 +299,21 @@ const drawRange = () => {
     (discSurface && nearBody
       ? ` · ${nearBody.name} surface at an authored scale`
       : '');
+  placeCentre(
+    systemCentre,
+    centreReadout(
+      view,
+      discSurface && nearBody && discAnchor
+        ? {
+            authored: true,
+            body: nearBody,
+            cell: cellOf(surfaceWindow(nearBody, discAnchor, view)),
+            kind: 'body',
+            surface: discSurface
+          }
+        : { kind: 'system' }
+    )
+  );
   const grouped = projection.markers.filter(
     marker => marker.bodyIds.length > 1
   ).length;
@@ -328,6 +365,18 @@ const drawBodyRange = () => {
   scale.textContent =
     `${RANGE_LABEL[band]} · ${formatUnits(cells)} Surface Cells per pixel` +
     ` · grid ${formatUnits(gridStep(bodyView.span, frame.width))} cells`;
+  placeCentre(
+    bodyCentre,
+    centreReadout(bodyView, {
+      // Direct here rather than through the authored scale: the Body Range is in Body
+      // Coordinates, so its centre needs no conversion and carries no authored mark.
+      authored: false,
+      body,
+      cell: cellOf(bodyView),
+      kind: 'body',
+      surface
+    })
+  );
   const surfaceNote = surface
     ? `${surface.islands.length} recovered island${surface.islands.length === 1 ? '' : 's'}` +
       (surface.gaps.length

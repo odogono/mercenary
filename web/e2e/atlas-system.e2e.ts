@@ -392,6 +392,48 @@ test('zooming out of a grouped Body returns to that Body, not its group', async 
   );
 });
 
+test('reads out the centre point in every system that can name it', async ({
+  page
+}) => {
+  // Overlaid inside the map, so it cannot change the frame the ResizeObserver measures.
+  await page.goto('/damocles/atlas');
+  await expect(page.locator('#system-centre')).toContainText('System');
+  await expect(page.locator('#system-centre')).not.toContainText(
+    'Body Coordinate'
+  );
+
+  // On a disc the Body Coordinate is reachable, through the authored scale, and says so.
+  await page.goto('/damocles/atlas?x=-630000&z=390000&span=1600');
+  await expect(page.locator('#system-centre')).toContainText(
+    'Body Coordinate',
+    { timeout: 20_000 }
+  );
+  await expect(page.locator('#system-centre')).toContainText('ERIS');
+  await expect(page.locator('#system-centre .centre-authored')).toHaveCount(1);
+
+  // Inside a Body it is direct, and there is no System row: nothing recovered gives one.
+  await page.goto('/damocles/atlas?body=eris&x=71&z=136&span=120');
+  await expect(page.locator('#body-centre')).toContainText(
+    'ERIS · 71 / 136 cells',
+    { timeout: 20_000 }
+  );
+  // CAPITAL CITY's origin is cell 64 / 128.
+  await expect(page.locator('#body-centre')).toContainText(
+    'CAPITAL CITY · 7 / 8'
+  );
+  await expect(page.locator('#body-centre')).not.toContainText('System');
+  await expect(page.locator('#body-centre .centre-authored')).toHaveCount(0);
+
+  // Open sea names no island.
+  await page.goto('/damocles/atlas?body=eris&x=2048&z=2048&span=400');
+  await expect(page.locator('#body-centre')).toContainText('2048 / 2048', {
+    timeout: 20_000
+  });
+  await expect(page.locator('#body-centre')).not.toContainText(
+    'Island-Local Cell'
+  );
+});
+
 test('picking an island fills the panel and survives the link', async ({
   page
 }) => {

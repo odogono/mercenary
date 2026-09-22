@@ -18,6 +18,8 @@ export interface SurfaceIsland {
   readonly areaName: string | null;
   readonly id: string;
   readonly landColour: string;
+  /// The record's own origin in Body Coordinates, which an Island-Local Cell counts from.
+  readonly origin: MapPoint;
   /// The closed ring in Body Coordinates: the record's origin plus its island-local vertices,
   /// both in whole Surface Cells.
   ///
@@ -63,6 +65,7 @@ export const readBodySurface = (
         areaName: island.areaName,
         id: island.id,
         landColour: island.landColour,
+        origin: { x: island.origin[0], z: island.origin[1] },
         outline: island.coastline.vertices.map(([x, z]) => ({
           x: island.origin[0] + x,
           z: island.origin[1] + z
@@ -176,6 +179,13 @@ const circularMean = (values: readonly number[]): number => {
   );
 };
 
+/// One coordinate counted from another on a wrapping axis, taken on the nearest image so a cell
+/// across the seam from its origin reads as a small signed offset rather than as four thousand.
+const nearestOffset = (from: number, origin: number): number => {
+  const raw = from - origin;
+  return raw - Math.round(raw / SURFACE_CELLS) * SURFACE_CELLS;
+};
+
 /// How far one coordinate must move, in whole surfaces, to sit nearest an anchor.
 const wholeSurfaces = (from: number, to: number): number =>
   -Math.round((from - to) / SURFACE_CELLS) * SURFACE_CELLS;
@@ -232,3 +242,38 @@ export const nearestImage = (
     ? outline
     : outline.map(point => ({ x: point.x + dx, z: point.z + dz }));
 };
+
+/// The island a Body Coordinate falls in, tested against every wrap image so a cell on either
+/// side of the seam finds the same record. Unlike `islandAt` this needs no camera, because a
+/// coordinate is not a pointer.
+export const islandAtCell = (
+  surface: BodySurface,
+  cell: MapPoint
+): SurfaceIsland | null => {
+  for (const island of surface.islands) {
+    for (let i = -1; i <= 1; i += 1) {
+      for (let j = -1; j <= 1; j += 1) {
+        if (
+          inside(island.outline, {
+            x: cell.x + i * SURFACE_CELLS,
+            z: cell.z + j * SURFACE_CELLS
+          })
+        ) {
+          return island;
+        }
+      }
+    }
+  }
+  return null;
+};
+
+/// An Island-Local Cell: a Surface Cell counted from a Damocles Island's origin rather than from
+/// the Body's (`CONTEXT.md`). Signed, and taken on the wrap image nearest the record, so a cell
+/// across the seam from its island still reads as a small offset rather than as four thousand.
+export const islandLocalCell = (
+  island: SurfaceIsland,
+  cell: MapPoint
+): MapPoint => ({
+  x: nearestOffset(cell.x, island.origin.x),
+  z: nearestOffset(cell.z, island.origin.z)
+});
