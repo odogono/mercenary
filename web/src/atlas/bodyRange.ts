@@ -86,6 +86,21 @@ export const LABEL_BAND: Readonly<Record<SurfaceLabelKind, BodyRange>> = {
   settlement: 'body'
 };
 
+/// The band a Settlement's road network appears from, and inward from there.
+///
+/// The Settlement Range rather than the Street Range, because the game itself draws a whole
+/// Settlement's roads from the air (the overhead captures in
+/// `docs/research/damocles-eris-islands.md`) and a network is a 16-cell group, which is exactly
+/// what this band is sized for. At the Street Range the same lines stay, under the footprints
+/// (#413).
+export const ROAD_BAND: BodyRange = 'settlement';
+
+/// Whether a band draws road networks, and so whether it must state the gap where none was
+/// recovered. Outward of it a network would be a smudge a few pixels wide, and the gap would be
+/// a notice about something the reader could not have seen anyway.
+export const showsRoads = (band: BodyRange): boolean =>
+  BODY_RANGES.indexOf(band) >= BODY_RANGES.indexOf(ROAD_BAND);
+
 /// The names a band shows. Inward of the band a kind appears at, it keeps showing: a Settlement
 /// name does not go away because the reader zoomed into it.
 export const labelsInBand = (

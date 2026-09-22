@@ -1,7 +1,13 @@
 import type { Instance, Island, Place } from '../catalogue/data.ts';
 import type { MapPoint } from '../catalogue/mapView.ts';
 import type { GammaBody, GammaSystemDocument } from '../flyover/documents.ts';
-import { catalogueBodyId } from './surface.ts';
+import {
+  BODY_ROAD_GAP_NOTICE,
+  NO_WORKSPACE_NOTICE,
+  ROAD_GAP_NOTICE,
+  catalogueBodyId,
+  type RoadRecovery
+} from './surface.ts';
 
 /// The Atlas selection panel. Everything it prints is a recovered value or a statement about
 /// what was not recovered; nothing here infers a type, a primary or an orbit (ADR 0014).
@@ -201,6 +207,110 @@ export const placeProvenance = (
   ];
 };
 
+/// What the panel says about roads once the camera is close enough to draw them.
+///
+/// The Structure Workspaces in view rather than the Body, because that is what a road gap
+/// belongs to: a capture loads one group at a time, so CAPITAL CITY is drawn while the four
+/// other Settlements on the same Body have never been read. `bodyGap` is the wider statement,
+/// true only where nothing on the Body has a network at all.
+export interface RoadSelection {
+  readonly bodyGap: boolean;
+  /// Those on this Body whose group a capture has loaded, whether or not it held a run.
+  readonly captured: number;
+  /// Structure Workspaces recovered on this Body, drawn or not: 0 where the Body binds none.
+  readonly onBody: number;
+  /// Those the camera can see, in the Catalogue's order, each with what was recovered in it.
+  readonly settlements: readonly {
+    readonly name: string | null;
+    readonly origin: MapPoint;
+    readonly recovery: RoadRecovery;
+    readonly runs: number;
+  }[];
+}
+
+/// A workspace with no published Settlement name is named by where it is, because that is all
+/// it has: 13 of the 42 binding records publish none, and LUCAN's own network belongs to one.
+const settlementLabel = (settlement: {
+  readonly name: string | null;
+  readonly origin: MapPoint;
+}): string =>
+  settlement.name ?? `Group at ${settlement.origin.x} / ${settlement.origin.z}`;
+
+const roadValue = (settlement: {
+  readonly recovery: RoadRecovery;
+  readonly runs: number;
+}): string => {
+  if (settlement.recovery === 'gap') {
+    return 'not yet recovered';
+  }
+  return settlement.recovery === 'none'
+    ? 'recovered, no roads'
+    : `${settlement.runs} run${settlement.runs === 1 ? '' : 's'}`;
+};
+
+/// One row per Structure Workspace in view, then how the Body stands. A reader zoomed into KEY
+/// WEST must be able to read what is true of KEY WEST, not an average of Eris.
+export const roadFacts = (roads: RoadSelection): readonly BodyFact[] => [
+  ...roads.settlements.map(settlement => ({
+    label: settlementLabel(settlement),
+    value: roadValue(settlement)
+  })),
+  ...(roads.onBody
+    ? [
+        {
+          label: 'Workspaces captured',
+          value: `${roads.captured} of ${roads.onBody} on this Body`
+        }
+      ]
+    : [])
+];
+
+/// Roads are the one layer of the Atlas with holes in it, so what is drawn and what is missing
+/// are both stated, and the two are never the same sentence.
+export const roadProvenance = (roads: RoadSelection): readonly string[] => {
+  const kinds = new Set(roads.settlements.map(value => value.recovery));
+  const gap = kinds.has('gap');
+  const notes: string[] = [];
+  if (!roads.onBody) {
+    notes.push(
+      `${NO_WORKSPACE_NOTICE}. Seven of the 30 Bodies bind no Structure Workspace on any ` +
+        'island record, which is a statement about what has been recovered of this Body and ' +
+        'not a claim that nothing is built on it.'
+    );
+  } else if (kinds.has('recovered')) {
+    notes.push(
+      'Recovered: the runs the classifier at $04EC30 finds in the group’s own extent grid, ' +
+        'which are the lines the game itself draws from the air (#441). Each is one Surface ' +
+        'Cell wide and drawn as its centre line, placed at the group’s origin in Surface Cells.',
+      'The road pieces are recovered too — each cell’s piece, its rotation and the ground ' +
+        'record it draws — and none of them is drawn here. This layer is the network and not ' +
+        'its surface: no pad, no ground colouring and no piece face is invented to fill it in.'
+    );
+  }
+  if (kinds.has('none')) {
+    notes.push(
+      'A Settlement marked “recovered, no roads” has been read and holds no run at all (#441), ' +
+        'which is a reading and not a gap: a Settlement is no more obliged to have roads than ' +
+        'it is to have an island.'
+    );
+  }
+  if (gap || roads.bodyGap) {
+    notes.push(
+      `${roads.bodyGap ? BODY_ROAD_GAP_NOTICE : ROAD_GAP_NOTICE}. The Catalogue carries a road ` +
+        'network for each Structure Workspace group a capture has loaded — 22 of the 42 groups ' +
+        'recovered, on 20 of the 30 Bodies — and a capture loads one group at a time, so a ' +
+        'Body may have a network on one Settlement and nothing on the next (#441). Blank ' +
+        'ground inside a dashed square is the absence of a reading and not a recovered claim ' +
+        'that nothing was built there.',
+      'The road records themselves were found by the earlier ground work: #206 located Eris ' +
+        'ground, landing-pad and road geometry, #173 reconciled the model and geometry ' +
+        'census, #281 identified ground-band generation and the route scene slots, and #370 ' +
+        'recovered what bounds the Damocles draw on foot.'
+    );
+  }
+  return notes;
+};
+
 const row = (label: string, value: string): HTMLElement => {
   const div = document.createElement('div');
   div.className = 'panel-row';
@@ -225,6 +335,9 @@ const paragraph = (text: string, className = ''): HTMLElement => {
 export interface PanelSelection {
   readonly island?: Island | null | undefined;
   readonly place?: PlaceSelection | null | undefined;
+  /// This Body's roads, from the band that draws them; absent outward of it, where a notice
+  /// about a layer the reader could not have seen would say nothing.
+  readonly roads?: RoadSelection | null | undefined;
   /// The Body whose surface is drawn on its own disc at the System Range, if any.
   readonly surfaceOnDisc?: string | undefined;
 }
@@ -237,7 +350,7 @@ export const renderPanel = (
   body: GammaBody | null,
   selection: PanelSelection = {}
 ): void => {
-  const { island, place, surfaceOnDisc } = selection;
+  const { island, place, roads, surfaceOnDisc } = selection;
   root.replaceChildren();
   if (!body) {
     root.append(
@@ -307,6 +420,29 @@ export const renderPanel = (
       root.append(wrapper);
     }
     for (const note of placeProvenance(place)) {
+      root.append(paragraph(note, 'muted'));
+    }
+  }
+  if (roads) {
+    // Headed as the gap where there is one, so a reader skimming the panel meets the missing
+    // layer under its own name rather than under a heading promising roads.
+    const shown = new Set(roads.settlements.map(value => value.recovery));
+    const recovery = shown.has('recovered')
+      ? 'recovered'
+      : shown.has('none')
+        ? 'none'
+        : 'gap';
+    const heading = paragraph(
+      recovery === 'recovered' ? 'Roads' : 'Roads · not recovered',
+      'panel-heading'
+    );
+    heading.id = 'road-recovery';
+    heading.dataset['recovery'] = recovery;
+    root.append(heading);
+    for (const fact of roadFacts(roads)) {
+      root.append(row(fact.label, fact.value));
+    }
+    for (const note of roadProvenance(roads)) {
       root.append(paragraph(note, 'muted'));
     }
   }

@@ -3,11 +3,13 @@ import { describe, expect, test } from 'bun:test';
 import {
   BODY_RANGES,
   LABEL_BAND,
+  ROAD_BAND,
   SURFACE_SPAN,
   bodyBounds,
   fitBody,
   labelsInBand,
-  rangeOf
+  rangeOf,
+  showsRoads
 } from '../src/atlas/bodyRange.ts';
 import type { SurfaceLabel } from '../src/atlas/surface.ts';
 import {
@@ -193,5 +195,20 @@ describe('which names a band shows', () => {
     for (const band of Object.values(LABEL_BAND)) {
       expect(BODY_RANGES).toContain(band);
     }
+  });
+});
+
+describe('which bands draw a road network', () => {
+  test('draws roads from the Settlement Range inward', () => {
+    // The game draws a whole Settlement's roads from the air, and a network is one 16-cell
+    // group, which is the size this band is for. Outward of it the network would be a smudge a
+    // few pixels wide.
+    expect(BODY_RANGES.filter(showsRoads)).toEqual(['settlement', 'street']);
+    expect(BODY_RANGES).toContain(ROAD_BAND);
+    // At the Street Range the same lines stay, under the footprints (#413), because the bands
+    // are not a hierarchy.
+    expect(showsRoads('street')).toBe(true);
+    expect(showsRoads('body')).toBe(false);
+    expect(showsRoads('coastal')).toBe(false);
   });
 });

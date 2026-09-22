@@ -2,11 +2,14 @@ import { describe, expect, test } from 'bun:test';
 
 import { fitBody } from '../src/atlas/bodyRange.ts';
 import {
+  bodyRoadGap,
   catalogueBodyId,
   islandAt,
   layOutSurfaceLabels,
   nearestImage,
   readBodySurface,
+  settlementRoads,
+  settlementsInView,
   surfaceAnchor,
   wrapImages
 } from '../src/atlas/surface.ts';
@@ -18,6 +21,9 @@ const FRAME = { height: 800, width: 1280 };
 const ASPECT = FRAME.height / FRAME.width;
 const ERIS = 11;
 const LUCAN = 16;
+const MIDAS = 2;
+const SOLON = 12;
+const DAMOCLES = 29;
 
 let cached: Catalogue | undefined;
 const catalogue = async () => {
@@ -147,7 +153,9 @@ describe('the Atlas Body surface', () => {
     expect(readBodySurface(data, 99)).toEqual({
       gaps: [],
       islands: [],
-      labels: []
+      labels: [],
+      roads: [],
+      settlements: []
     });
   });
 });
@@ -529,5 +537,192 @@ describe('laying names out against a camera', () => {
     // those names suppressed would be untrue.
     expect(away.placed).toHaveLength(0);
     expect(away.suppressed).toBe(0);
+  });
+});
+
+describe('the recovered road networks on a Body', () => {
+  test('places a Settlement’s runs at its group’s own origin', async () => {
+    const data = await catalogue();
+    const capital = readBodySurface(data, ERIS).roads.find(
+      road => road.id === 'roads-eris-capital-city'
+    )!;
+    expect(capital.areaName).toBe('CAPITAL CITY');
+    expect(capital.origin).toEqual({ x: 64, z: 128 });
+    expect(capital.lines).toHaveLength(37);
+    // The overhead capture in `docs/research/damocles-eris-ground.md` reads the live
+    // ground-extent edge list out of $84DC while the player stands in Capital City. Those edges
+    // are the network the aerial view draws, so they are what the map must be drawing: each one
+    // placed at the group's origin and taken through the middle of the cell at either end.
+    for (const [start, end] of [
+      [
+        [7, 8],
+        [11, 8]
+      ],
+      [
+        [4, 1],
+        [4, 11]
+      ],
+      [
+        [9, 8],
+        [9, 13]
+      ]
+    ] as const) {
+      expect(capital.lines).toContainEqual([
+        { x: 64 + start[0] + 0.5, z: 128 + start[1] + 0.5 },
+        { x: 64 + end[0] + 0.5, z: 128 + end[1] + 0.5 }
+      ]);
+    }
+    // A group is 16 Surface Cells square, so every run of it lies within those 16 cells of the
+    // origin. A run outside them would be a network drawn beside the Settlement it belongs to.
+    for (const [start, end] of capital.lines) {
+      for (const point of [start, end]) {
+        expect(point.x - capital.origin.x).toBeWithin(0, 16);
+        expect(point.z - capital.origin.z).toBeWithin(0, 16);
+      }
+    }
+  });
+
+  test('states the gap per Structure Workspace, not per Body', async () => {
+    const data = await catalogue();
+    const eris = readBodySurface(data, ERIS);
+    // The bug this covers: ERIS has five Structure Workspaces and only CAPITAL CITY's was ever
+    // captured, so keying the gap to the Body left a reader zoomed into KEY WEST looking at
+    // blank ground with nothing said about it.
+    expect(eris.settlements).toHaveLength(5);
+    expect(
+      eris.settlements.map(settlement => [
+        settlement.areaName,
+        settlementRoads(settlement)
+      ])
+    ).toEqual([
+      ['CAPITAL CITY', 'recovered'],
+      ['SNOW ISLAND', 'gap'],
+      ['VELOS CITY', 'gap'],
+      ['BARE ISLAND', 'gap'],
+      ['KEY WEST', 'gap']
+    ]);
+    // And the Body as a whole is not a gap, because one of its groups was read.
+    expect(bodyRoadGap(eris.settlements)).toBe(false);
+  });
+
+  test('a Body whose one workspace no capture has loaded is a gap throughout', async () => {
+    const data = await catalogue();
+    // MIDAS binds a single workspace, THE MIDAS PROJECT, and no capture has reached it. Nothing
+    // on this Body has a network, so the Body-wide statement is the true one.
+    const midas = readBodySurface(data, MIDAS);
+    expect(midas.roads).toEqual([]);
+    expect(midas.settlements.map(settlement => settlement.areaName)).toEqual([
+      'THE MIDAS PROJECT'
+    ]);
+    expect(bodyRoadGap(midas.settlements)).toBe(true);
+    expect(settlementRoads(midas.settlements[0]!)).toBe('gap');
+  });
+
+  test('a Body binding no workspace has nothing for a network to belong to', async () => {
+    const data = await catalogue();
+    // Seven of the 30 bind none on any island record. There is no Settlement recovered there
+    // for roads to have been read from, which is not the same as roads not having been read.
+    const damocles = readBodySurface(data, DAMOCLES);
+    expect(damocles.settlements).toEqual([]);
+    expect(bodyRoadGap(damocles.settlements)).toBe(false);
+    expect(bodyRoadGap(readBodySurface(data, 99).settlements)).toBe(false);
+  });
+
+  test('a recovered network with no run at all is not a gap', async () => {
+    const data = await catalogue();
+    const solon = readBodySurface(data, SOLON);
+    // SOLON BASE is one structure and no run: the record was read and it holds nothing, which
+    // is a recovered "this Settlement has no roads" and must not be reported as a gap.
+    expect(solon.roads).toHaveLength(1);
+    expect(solon.roads[0]?.lines).toEqual([]);
+    expect(
+      solon.settlements.map(settlement => settlementRoads(settlement))
+    ).toEqual(['none']);
+    expect(bodyRoadGap(solon.settlements)).toBe(false);
+  });
+
+  test('finds the Structure Workspaces the camera can see, across the seam', async () => {
+    const data = await catalogue();
+    const eris = readBodySurface(data, ERIS);
+    // A camera over CAPITAL CITY's group sees that group and no other: the five on ERIS are
+    // thousands of cells apart, and what the reader is owed is what is in front of them.
+    const capital = settlementsInView(
+      eris,
+      { cx: 72, cz: 136, span: 24 },
+      ASPECT
+    );
+    expect(capital.map(settlement => settlement.areaName)).toEqual([
+      'CAPITAL CITY'
+    ]);
+    // KEY WEST's group is its own, and it is the one with the gap.
+    const keyWest = settlementsInView(
+      eris,
+      { cx: 2568, cz: 3592, span: 24 },
+      ASPECT
+    );
+    expect(keyWest.map(settlement => settlement.areaName)).toEqual([
+      'KEY WEST'
+    ]);
+    expect(settlementRoads(keyWest[0]!)).toBe('gap');
+    // Open sea holds no group at all, and the map must not invent one to talk about.
+    expect(
+      settlementsInView(eris, { cx: 2048, cz: 2048, span: 24 }, ASPECT)
+    ).toEqual([]);
+    // LUCAN's captured group sits at cell (3896, 0), against the coordinate seam. A camera just
+    // the other side of that seam must find it through its wrap image, or the reader panning
+    // north across the wrap would watch the group and its gap notice vanish.
+    const lucan = readBodySurface(data, LUCAN);
+    expect(
+      settlementsInView(lucan, { cx: 3904, cz: 4090, span: 24 }, ASPECT).map(
+        settlement => settlement.origin
+      )
+    ).toContainEqual({ x: 3896, z: 0 });
+  });
+
+  test('20 of the recovered Bodies carry a network the map can draw', async () => {
+    const data = await catalogue();
+    const system = readGammaSystem(
+      await Bun.file('../payload/damocles/system.json').json()
+    );
+    const drawn = system.bodies.filter(body =>
+      readBodySurface(data, body.sourceIndex).roads.some(
+        road => road.lines.length
+      )
+    );
+    expect(drawn).toHaveLength(20);
+    // Every recovered network binds an island record, and it is the record whose origin it
+    // sits on, so a network lands on the Settlement it belongs to rather than beside it. The
+    // record itself need not be drawn: ICARUS's carries no coastline, and a Settlement with no
+    // island under it still has its roads.
+    for (const body of system.bodies) {
+      for (const road of readBodySurface(data, body.sourceIndex).roads) {
+        const record = data.islands.find(
+          candidate => candidate.id === road.islandId
+        );
+        expect(record).toBeDefined();
+        expect({ x: record!.origin[0], z: record!.origin[1] }).toEqual(
+          road.origin
+        );
+      }
+    }
+  });
+
+  test('wraps a network at the coordinate seam as a coastline wraps', async () => {
+    const data = await catalogue();
+    // LUCAN's group sits at Surface Cell x 3,896, so eight of its sixteen cells are across the
+    // seam. Left to wrap cell by cell the network would tear across the whole map; offset
+    // bodily it has an image on each side, exactly as the coastlines do.
+    const lucan = readBodySurface(data, LUCAN).roads[0]!;
+    expect(lucan.origin.x).toBe(3896);
+    const images = wrapImages(lucan.lines.flat(), fitBody(FRAME), ASPECT);
+    expect(images.length).toBeGreaterThanOrEqual(2);
+    for (const image of images) {
+      expect(image).toHaveLength(lucan.lines.length * 2);
+      const dx = image[0]!.x - lucan.lines[0]![0].x;
+      expect(Math.abs(dx % SURFACE_CELLS)).toBe(0);
+      for (const [index, point] of image.entries()) {
+        expect(point.x - lucan.lines.flat()[index]!.x).toBe(dx);
+      }
+    }
   });
 });

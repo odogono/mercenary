@@ -19,7 +19,9 @@ import {
   bodyBounds,
   fitBody,
   labelsInBand,
-  rangeOf
+  rangeOf,
+  showsRoads,
+  type BodyRange
 } from './bodyRange.ts';
 import { mountCamera, type CameraFrame } from './camera.ts';
 import {
@@ -38,13 +40,20 @@ import {
   type AtlasState
 } from './state.ts';
 import {
+  BODY_ROAD_GAP_NOTICE,
+  NO_WORKSPACE_NOTICE,
+  ROAD_GAP_NOTICE,
+  bodyRoadGap,
   islandAt,
   readBodySurface,
+  settlementRoads,
+  settlementsInView,
   surfaceAnchor,
   type BodySurface,
   type PlacedLabel,
   type SurfaceLabel,
-  type SurfaceLabelKind
+  type SurfaceLabelKind,
+  type SurfaceSettlement
 } from './surface.ts';
 import {
   fitSystem,
@@ -115,6 +124,16 @@ let bodyView: MapView | undefined;
 let catalogue: Catalogue | undefined;
 let catalogueRequest: Promise<void> | undefined;
 let surface: BodySurface | undefined;
+/// Which band the Body Range's camera is in, so the panel can describe the layers that band
+/// actually draws. Written by `drawBodyRange`, which is what discovers it.
+let bodyBand: BodyRange | undefined;
+/// The Structure Workspaces that camera can see. A road gap belongs to a group and not to a
+/// Body, so what the panel and the status line owe the reader is what is true of the groups in
+/// front of them; `drawBodyRange` discovers these the same way it discovers the band.
+let inView: readonly SurfaceSettlement[] = [];
+/// What the panel was last told about the band and the groups in view, so a pan that changes
+/// neither does not rewrite the sidebar on every frame.
+let panelKey: string | undefined;
 /// The Body whose surface is currently drawn on its disc at the System Range, and its islands.
 /// Separate from `surface`, which belongs to the Body Range.
 let onDisc: string | undefined;
@@ -211,6 +230,21 @@ const renderSelectionPanel = () => {
   const place = placeId
     ? catalogue?.places.find(candidate => candidate.id === placeId)
     : undefined;
+  const roads =
+    settled.level === 'body' && surface && bodyBand && showsRoads(bodyBand)
+      ? {
+          bodyGap: bodyRoadGap(surface.settlements),
+          captured: surface.settlements.filter(value => value.road !== null)
+            .length,
+          onBody: surface.settlements.length,
+          settlements: inView.map(value => ({
+            name: value.areaName,
+            origin: value.origin,
+            recovery: settlementRoads(value),
+            runs: value.road?.lines.length ?? 0
+          }))
+        }
+      : null;
   renderPanel(panel, system, selectedBody(), {
     island: pickedId
       ? (catalogue?.islands.find(island => island.id === pickedId) ?? null)
@@ -226,6 +260,7 @@ const renderSelectionPanel = () => {
           place
         }
       : null,
+    roads,
     surfaceOnDisc: onDisc
   });
 };
@@ -384,6 +419,73 @@ const labelHref = (label: PlacedLabel): string => {
   });
 };
 
+/// What this band has to say about the roads in front of the reader.
+///
+/// Stated per Structure Workspace, because that is what a road gap belongs to: a capture loads
+/// one group at a time, so CAPITAL CITY is drawn while KEY WEST, on the same Body and the same
+/// screen, has never been read. Saying it per Body would leave the reader over KEY WEST looking
+/// at blank ground with nothing said about it.
+///
+/// Only in the two bands that draw the layer. Outward of the Settlement Range a network is a
+/// few pixels of smudge, so a gap notice there would be about something the reader could not
+/// have seen either way; what is counted there is what is drawn, and where to go to see it.
+const NAMED_IN_STATUS = 2;
+
+const settlementNote = (settlement: SurfaceSettlement): string => {
+  const name =
+    settlement.areaName ??
+    `group at ${settlement.origin.x} / ${settlement.origin.z}`;
+  const runs = settlement.road?.lines.length ?? 0;
+  if (!settlement.road) {
+    return `${name}: ${surface && bodyRoadGap(surface.settlements) ? BODY_ROAD_GAP_NOTICE : ROAD_GAP_NOTICE}`;
+  }
+  return runs
+    ? `${name}: ${runs} road run${runs === 1 ? '' : 's'}`
+    : `${name}: recovered with no road at all`;
+};
+
+const roadNote = (band: BodyRange): string => {
+  if (!surface) {
+    return '';
+  }
+  const runs = surface.roads.reduce(
+    (total, road) => total + road.lines.length,
+    0
+  );
+  if (!showsRoads(band)) {
+    return runs
+      ? ` \u00b7 ${runs} road run${runs === 1 ? '' : 's'}, from the Settlement Range`
+      : '';
+  }
+  if (!surface.settlements.length) {
+    // Nothing here binds a workspace, so there is no Settlement for a network to belong to.
+    // That is a different statement from a network not having been read, and is made as one.
+    return ` \u00b7 ${NO_WORKSPACE_NOTICE}`;
+  }
+  const captured = surface.settlements.filter(
+    value => value.road !== null
+  ).length;
+  const onBody =
+    ` \u00b7 roads: ${captured} of ${surface.settlements.length} Structure ` +
+    `Workspace${surface.settlements.length === 1 ? '' : 's'} captured on this Body`;
+  if (!inView.length) {
+    // Over open sea at this band: no group is in frame to say anything about, so the Body's
+    // own standing is what is left to say.
+    return onBody;
+  }
+  // Named one or two at a time. A camera at the Settlement Range holds a group or two, but
+  // LUCAN rings the coordinate origin with twelve, and twelve names would bury the line.
+  const named = inView.slice(0, NAMED_IN_STATUS).map(settlementNote);
+  const rest = inView.length - named.length;
+  return (
+    ` \u00b7 ${named.join(' \u00b7 ')}` +
+    (rest
+      ? ` \u00b7 and ${rest} more group${rest === 1 ? '' : 's'} in view`
+      : '') +
+    onBody
+  );
+};
+
 /// Writes nothing to the page but canvas pixels, the name layer and the two readouts, so the
 /// ResizeObserver that calls it cannot feed the frame back on itself. The names are absolutely
 /// positioned over the map, so they cannot change the frame either.
@@ -399,6 +501,30 @@ const drawBodyRange = () => {
   const picked =
     current.level === 'body' ? (current.placeId ?? current.islandId) : null;
   const shown = labelsInBand(surface?.labels ?? [], band);
+  // Which groups are in frame is discovered before anything is drawn, because both the dashed
+  // gap squares and the panel are about exactly those.
+  bodyBand = band;
+  inView =
+    surface && showsRoads(band)
+      ? settlementsInView(
+          surface,
+          bodyView,
+          frame.height / Math.max(frame.width, 1)
+        )
+      : [];
+  const roads = {
+    gaps: inView.filter(settlement => settlement.road === null),
+    networks: showsRoads(band) ? (surface?.roads ?? []) : []
+  };
+  // The band decides which layers are drawn and which groups are in frame, and the panel
+  // describes what the reader is looking at, so a change in either re-renders it — the same
+  // arrangement the authored-scale note has. Keyed, because a pan that changes neither must not
+  // rewrite the sidebar on every frame.
+  const key = `${band}|${inView.map(settlement => settlement.id).join(',')}`;
+  if (panelKey !== key) {
+    panelKey = key;
+    renderSelectionPanel();
+  }
   const layout = drawBodySurface(
     bodyCanvas,
     bodyView,
@@ -406,7 +532,8 @@ const drawBodyRange = () => {
     body.baseColour,
     surface,
     current.level === 'body' ? current.islandId : null,
-    { labels: shown, selectedId: picked }
+    { labels: shown, selectedId: picked },
+    roads
   );
   placeSurfaceLabels(bodyLabelLayer, layout, picked, labelHref);
   const cells = bodyView.span / Math.max(frame.width, 1);
@@ -445,7 +572,8 @@ const drawBodyRange = () => {
     : '';
   status.textContent =
     `${body.name} · source slot ${body.sourceIndex} · surface ${SURFACE_SPAN} Surface Cells ` +
-    `an axis, wrapping on both · ${surfaceNote}${names} · structure footprints are not drawn yet`;
+    `an axis, wrapping on both · ${surfaceNote}${names}${roadNote(band)}` +
+    ' · structure footprints are not drawn yet';
   recordCamera();
 };
 
@@ -758,7 +886,7 @@ const bodyControls = mountCamera({
     // link rather than by zooming, so the disc's anchor may never have been computed.
     const matched = systemWindow(
       body,
-      surfaceAnchor(surface ?? { gaps: [], islands: [], labels: [] }),
+      surfaceAnchor(surface ?? { islands: [] }),
       bodyView
     );
     view = matched;

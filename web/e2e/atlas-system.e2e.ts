@@ -622,3 +622,177 @@ test('picking a Settlement name picks the island that publishes it', async ({
     'carries no name of its own'
   );
 });
+
+/// How much of the Body Range's canvas is drawn in the road colour. The network is canvas
+/// geometry rather than DOM, so the only honest check that it is on screen is the pixels.
+const roadPixels = (page: Page) =>
+  page.evaluate(() => {
+    const canvas = document.getElementById('body-map') as HTMLCanvasElement;
+    const context = canvas.getContext('2d')!;
+    const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
+    let found = 0;
+    for (let at = 0; at < data.length; at += 4) {
+      // #d8b25a, the token `draw.ts` strokes a run in.
+      if (data[at] === 0xd8 && data[at + 1] === 0xb2 && data[at + 2] === 0x5a) {
+        found += 1;
+      }
+    }
+    return found;
+  });
+
+/// How much of it is drawn in the dashed square marking a Structure Workspace whose roads were
+/// never captured. Near `#9c7d3c` rather than exactly it: a dashed two-pixel line lands on no
+/// whole pixel, so every pixel of it is a blend with the ground under it. The tolerance still
+/// separates it from both the land colours it is drawn over and the brighter gold of a run.
+const gapSquarePixels = (page: Page) =>
+  page.evaluate(() => {
+    const canvas = document.getElementById('body-map') as HTMLCanvasElement;
+    const context = canvas.getContext('2d')!;
+    const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
+    let found = 0;
+    for (let at = 0; at < data.length; at += 4) {
+      if (
+        Math.abs(data[at]! - 0x9c) <= 40 &&
+        Math.abs(data[at + 1]! - 0x7d) <= 40 &&
+        Math.abs(data[at + 2]! - 0x3c) <= 40
+      ) {
+        found += 1;
+      }
+    }
+    return found;
+  });
+
+test('the Settlement Range draws a Settlement\u2019s recovered road network', async ({
+  page
+}) => {
+  // The game draws a whole Settlement's roads from the air, so the layer arrives at the band
+  // sized for a Structure Workspace rather than waiting for the Street Range.
+  await page.goto('/damocles/atlas?body=eris&x=72&z=136&span=20');
+  await expect(page.locator('#system-scale')).toContainText('Settlement Range');
+  await expect(page.locator('#status')).toContainText(
+    'CAPITAL CITY: 37 road runs',
+    { timeout: 20_000 }
+  );
+  expect(await roadPixels(page)).toBeGreaterThan(0);
+  await expect(page.locator('#panel')).toContainText('37 runs');
+  await expect(page.locator('#road-recovery')).toHaveAttribute(
+    'data-recovery',
+    'recovered'
+  );
+  // The pieces are recovered and are not drawn: this layer is the network, not its surface.
+  await expect(page.locator('#panel')).toContainText(
+    'none of them is drawn here'
+  );
+
+  // The same lines stay at the Street Range, where the footprints will sit over them (#413).
+  await page.goto('/damocles/atlas?body=eris&x=72&z=136&span=2');
+  await expect(page.locator('#system-scale')).toContainText('Street Range');
+  await expect(page.locator('#status')).toContainText('37 road runs', {
+    timeout: 20_000
+  });
+  expect(await roadPixels(page)).toBeGreaterThan(0);
+
+  // Outward of the Settlement Range the network would be a smudge a few pixels wide, so it is
+  // not drawn — and the status line still says it is there and where to go to see it.
+  await page.goto('/damocles/atlas?body=eris&x=72&z=136&span=900');
+  await expect(page.locator('#system-scale')).toContainText('Coastal Range');
+  await expect(page.locator('#status')).toContainText(
+    '37 road runs, from the Settlement Range',
+    { timeout: 20_000 }
+  );
+  expect(await roadPixels(page)).toBe(0);
+});
+
+test('a Settlement whose group no capture has loaded says so where it stands', async ({
+  page
+}) => {
+  // Reported: KEY WEST drew no network and said nothing about it. ERIS has five Structure
+  // Workspaces and only CAPITAL CITY's has been captured, so a road gap belongs to the group
+  // the reader is looking at and not to the Body.
+  await page.goto('/damocles/atlas?body=eris&x=2568&z=3592&span=20');
+  await expect(page.locator('#system-scale')).toContainText('Settlement Range');
+  await expect(page.locator('#status')).toContainText(
+    'KEY WEST: Road network not yet recovered for this Settlement',
+    { timeout: 20_000 }
+  );
+  // How the Body stands overall, so the reader knows the layer exists and where it does not.
+  await expect(page.locator('#status')).toContainText(
+    '1 of 5 Structure Workspaces captured on this Body'
+  );
+  await expect(page.locator('#road-recovery')).toHaveAttribute(
+    'data-recovery',
+    'gap'
+  );
+  await expect(page.locator('#panel')).toContainText('not yet recovered');
+  await expect(page.locator('#panel')).toContainText('#441');
+  // The group's own 16 cells are recovered, so the hole is marked out where it is rather than
+  // left as blank ground that looks the same as bare ground.
+  expect(await gapSquarePixels(page)).toBeGreaterThan(0);
+  // CAPITAL CITY is drawn on the same Body, so this is not the Body-wide wording.
+  await expect(page.locator('#panel')).not.toContainText(
+    'not yet recovered for this Body'
+  );
+});
+
+test('a Body whose one workspace is uncaptured states the gap for the Body', async ({
+  page
+}) => {
+  await page.goto('/damocles/atlas?body=midas&x=2048&z=2048&span=20');
+  await expect(page.locator('#system-scale')).toContainText('Settlement Range');
+  // Open sea at this camera: no group is in frame, so the Body's own standing is what is said.
+  await expect(page.locator('#status')).toContainText(
+    '0 of 1 Structure Workspace captured on this Body',
+    { timeout: 20_000 }
+  );
+  expect(await roadPixels(page)).toBe(0);
+
+  // Over the group itself, the Body-wide wording, because nothing here has a network at all.
+  await page.goto('/damocles/atlas?body=midas&x=1737&z=946&span=20');
+  await expect(page.locator('#status')).toContainText(
+    'THE MIDAS PROJECT: Road network not yet recovered for this Body',
+    { timeout: 20_000 }
+  );
+  await expect(page.locator('#panel')).toContainText('#206');
+  expect(await gapSquarePixels(page)).toBeGreaterThan(0);
+
+  // Outward of the bands that draw roads the notice goes: it would be about a layer the reader
+  // could not have seen at that camera either way.
+  await page.goto('/damocles/atlas?body=midas&x=1737&z=946&span=900');
+  await expect(page.locator('#system-scale')).toContainText('Coastal Range');
+  await expect(page.locator('#status')).not.toContainText('not yet recovered');
+  await expect(page.locator('#road-recovery')).toHaveCount(0);
+});
+
+test('a Body binding no Structure Workspace has nothing for roads to belong to', async ({
+  page
+}) => {
+  // Seven of the 30 bind none on any island record. Calling that a road gap would dress a Body
+  // with no recovered Settlement as one whose roads are merely unread.
+  await page.goto('/damocles/atlas?body=triton&x=2048&z=2048&span=20');
+  await expect(page.locator('#status')).toContainText(
+    'No Structure Workspace is recovered on this Body',
+    { timeout: 20_000 }
+  );
+  await expect(page.locator('#status')).not.toContainText('not yet recovered');
+});
+
+test('a Settlement recovered with no road at all is not reported as a gap', async ({
+  page
+}) => {
+  // SOLON BASE is one structure and no run: the record was read and holds nothing, which is a
+  // reading rather than a hole in what has been recovered.
+  await page.goto('/damocles/atlas?body=solon&x=3982&z=1404&span=20');
+  await expect(page.locator('#system-scale')).toContainText('Settlement Range');
+  await expect(page.locator('#status')).toContainText(
+    'SOLON BASE: recovered with no road at all',
+    { timeout: 20_000 }
+  );
+  await expect(page.locator('#status')).not.toContainText('not yet recovered');
+  await expect(page.locator('#road-recovery')).toHaveAttribute(
+    'data-recovery',
+    'none'
+  );
+  await expect(page.locator('#panel')).toContainText('read and holds no run');
+  // A reading is not a hole, so no dashed square is drawn over it.
+  expect(await gapSquarePixels(page)).toBe(0);
+});
