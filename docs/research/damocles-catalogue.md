@@ -79,6 +79,19 @@ slot's table entry is excluded: VOID is the space-as-place sentinel, not a Body
 surface. See [the Eris islands note](damocles-eris-islands.md) and
 [the island census](damocles-island-census.md).
 
+The `roadNetworks` collection is one entry a captured structure group: the group's
+`origin` and `island`, its six road-piece selectors, every cell the `$04EC30`
+classifier put on a run — with its `piece`, `rotation`, `sourceClass`, the
+`recordAddress` the class selected and the `model` the cell actually draws when a
+placement replaced it — and the authored runs deduplicated as the network's lines.
+The runs are one-cell-wide roads, not a landmass: an island's coastline is its own
+polygon. Twenty-two groups across twenty-one bodies are published and twenty-one
+carry a network, so a body with no entry is a workspace no capture has loaded rather
+than a body without roads; `coverage.roads` counts them.
+`coverage.classifications.roadTemplate` is a different thing and is not that count:
+it is how many models still carry the `$7000` road-template omission, and it is 0.
+See [the Eris ground note](damocles-eris-ground.md).
+
 Each body carries `bodySurface`: its `baseColour`, the low word of `$0060C0 + 4*body`
 masked to twelve bits at `$0592AC`, which is what the surface is drawn in wherever no
 island is painted over it; and the extent `$058F64` masks positions onto, 4096 × 4096
