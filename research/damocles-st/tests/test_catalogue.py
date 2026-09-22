@@ -2711,3 +2711,146 @@ class IslandTests(unittest.TestCase):
         # workspace origin, so they name no record.
         limo = next(item for item in document['instances'] if item['id'] == 'object-slot-5')
         self.assertIsNone(limo['location']['island'])
+
+
+class SettlementRoadNetworkTests(unittest.TestCase):
+    """The $01E000 run grid, replayed against the classification the game made.
+
+    $04EC30-$04EC92 writes two things from one pass: the $0083DC orientation byte
+    the ground decoder already reads, and the $01E400 record selection. A replay
+    that reproduces the live $0083DC table for all 256 cells of every captured
+    workspace is reading the same grid the game read, so the runs it recovers are
+    the game's roads and not an interpretation of them.
+    """
+
+    WORKSPACES = (
+        'vesta-parliament-4-6', 'gaea-ur-city-4-2', 'dion-2-3',
+        'damocles.icarus', 'damocles.acheron', 'damocles.atropos',
+        'damocles.clotho', 'damocles.gaea.transporter', 'damocles.cronus',
+        'damocles.cyclopes', 'damocles.solon', 'damocles.theon',
+        'damocles.metis.transporter', 'damocles.lucan',
+        'damocles.logos.transporter', 'damocles.pan', 'damocles.thalia',
+        'damocles.bacchus.transporter', 'damocles.tolosa', 'damocles.perseus',
+        'damocles.mentor.transporter',
+    )
+
+    def payload(self):
+        root = Path(__file__).resolve().parents[3]
+        return json.loads(
+            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
+        )
+
+    def captures(self):
+        from damocleslab.catalogue import hatari_memstate_ram
+        root = Path(__file__).resolve().parents[1]
+        run = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d'
+        if not (run / 'observed.ram').is_file():
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        images = [('first-world', (run / 'observed.ram').read_bytes())]
+        for name in self.WORKSPACES:
+            images.append((name, hatari_memstate_ram(
+                (root / 'snapshots' / f'{name}.sav').read_bytes())))
+        return images
+
+    def test_the_replay_reproduces_every_captures_live_orientation_table(self):
+        from damocleslab.catalogue import ROAD_CLASS_TABLE, road_cell_class
+        for name, ram in self.captures():
+            replayed = bytes(
+                ram[ROAD_CLASS_TABLE + road_cell_class(ram, cell)]
+                for cell in range(256)
+            )
+            self.assertEqual(replayed, ram[0x83DC:0x84DC], name)
+
+    def test_every_class_the_grid_reaches_names_the_piece_its_runs_imply(self):
+        """What the 64-byte table means, read off the classes the data reaches.
+
+        Each axis is absent, or the cell caps its run, or the cell lies inside
+        it; no authored cell is its own run's start and end at once. The piece is
+        then a function of the pair, and the low nybble is the quarter turn that
+        orients it. The table is resident rather than per-group, so this is one
+        vocabulary every Settlement draws from.
+        """
+        from damocleslab.catalogue import (
+            ROAD_CLASS_TABLE, ROAD_PIECES, road_cell_class)
+        absent, cap, through = 'absent', 'cap', 'through'
+        piece_for = {
+            (through, through): 'crossroads',
+            (through, cap): 'tee', (cap, through): 'tee',
+            (through, absent): 'straight', (absent, through): 'straight',
+            (cap, cap): 'corner',
+            (cap, absent): 'end', (absent, cap): 'end',
+            (absent, absent): 'none',
+        }
+
+        def axis_state(class_bits, run_bit, endpoint_bits):
+            if not class_bits & run_bit:
+                return absent
+            ends = sum(bool(class_bits & bit) for bit in endpoint_bits)
+            self.assertNotEqual(ends, 0, class_bits)  # no run is one cell long
+            return cap if ends == 1 else through
+
+        table = None
+        reached = set()
+        for name, ram in self.captures():
+            if table is None:
+                table = ram[ROAD_CLASS_TABLE:ROAD_CLASS_TABLE + 64]
+            self.assertEqual(ram[ROAD_CLASS_TABLE:ROAD_CLASS_TABLE + 64], table, name)
+            reached.update(road_cell_class(ram, cell) for cell in range(256))
+        for class_bits in reached:
+            row = axis_state(class_bits, 1, (2, 4))
+            column = axis_state(class_bits, 8, (0x10, 0x20))
+            self.assertEqual(
+                ROAD_PIECES[((table[class_bits] >> 3) & 0xE) // 2],
+                piece_for[(row, column)],
+                class_bits,
+            )
+            self.assertLess(table[class_bits] & 7, 4, class_bits)
+        # Every entry the table carries is reached, so none of it is guesswork,
+        # and every class it answers 'none' for is one no authored grid builds.
+        self.assertEqual(sorted(reached), sorted({0} | {c for c in range(64) if table[c]}))
+
+    def test_the_payload_carries_a_network_for_every_captured_group(self):
+        networks = self.payload()['roadNetworks']
+        self.assertEqual(len(networks), 1 + len(self.WORKSPACES))
+        self.assertEqual(
+            [n['id'] for n in networks if not n['cells']], ['roads-solon'])
+        # Twenty Bodies, not Eris alone, and Gaea carries two groups.
+        self.assertEqual(len({n['body'] for n in networks if n['cells']}), 20)
+
+    def test_the_capital_city_network_is_the_one_the_aerial_view_draws(self):
+        """The pinned capture's live ground-extent edge list, cell by cell.
+
+        docs/research/damocles-eris-ground.md reads six nonzero edges out of
+        $84DC in the first-world capture, whose 7x7 window covers x 4-10, z 5-11
+        around cell $87. Every one of them is a run of this network, and no other
+        run reaches that window, so the edges the game drew are exactly the roads
+        recovered here.
+        """
+        capital = next(n for n in self.payload()['roadNetworks']
+                       if n['id'] == 'roads-eris-capital-city')
+        self.assertEqual(capital['origin'], [64, 128])
+        self.assertEqual(len(capital['cells']), 88)
+        live_edges = {
+            ('x', (7, 8), (11, 8)),
+            ('z', (4, 1), (4, 11)),
+            ('z', (9, 8), (9, 13)),
+            ('z', (10, 8), (10, 9)),
+            ('x', (4, 9), (10, 9)),
+            ('x', (3, 11), (5, 11)),
+        }
+        window = lambda x, z: 4 <= x <= 10 and 5 <= z <= 11
+        reached = set()
+        for run in capital['runs']:
+            axis = 0 if run['axis'] == 'x' else 1
+            cells = [
+                (run['start'][0] + (step if axis == 0 else 0),
+                 run['start'][1] + (step if axis == 1 else 0))
+                for step in range(run['end'][axis] - run['start'][axis] + 1)
+            ]
+            if any(window(x, z) for x, z in cells):
+                reached.add((run['axis'], tuple(run['start']), tuple(run['end'])))
+        self.assertEqual(reached, live_edges)
+
+
+if __name__ == '__main__':
+    unittest.main()

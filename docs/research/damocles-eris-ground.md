@@ -491,7 +491,7 @@ built, radius-zero and off-grid states.
 | `$F0`/`$F4` have no representable model-space coordinate                                  | **Refuted**                               | The `$054A64` loop projects them from packed cell indices at `$5E40 + slot`, camera-relative, with Y from `$79BA`. A watch breakpoint at `$056E40` with `A0 = $F0` named the writer and the stack named the caller. |
 | The band below the horizon is drawn by a producer the sky fill does not reach              | **Refuted**                               | A sentinel in the band (`$06A140`) breaks at `$059D34`, inside the same `$059CE2` block fill, returning to `$0595F0`. Sky and band are one colour index; the Timer B handler at `$052280` recolours `$FF8250` at scanline `$7BFC`.                       |
 | The surface record's `sceneColours` are the sky and ground of the outdoor view             | **Refuted for this view**                 | `$7C82`/`$7C84` are installed only at `$059600`, on the `$7B34`-clear branch. The pinned frame has `$7B34 = $C000` and uses `$7C86` (`$001`) and `$7A1A` (`$030`) instead.                                                                              |
-| The `$05499E` route list allocates slots for a road or path network                        | **Refuted**                               | `$054888` clamps a `2r+1` cell square around the camera; `$05499E` dedups those cells' `$1E000` corner words; `$0549D2` assigns slots down from `$F0`; `$054AD2` draws each word as one two-point edge through `$576C4`.                                |
+| The `$05499E` route list allocates slots for a road or path network                        | **Amended by #441 — it is a road network**  | `$054888` clamps a `2r+1` cell square around the camera; `$05499E` dedups those cells' `$1E000` corner words; `$0549D2` assigns slots down from `$F0`; `$054AD2` draws each word as one two-point edge through `$576C4`. The slot numbering is per-frame, but those corners are the endpoints of the `$04EC30` road runs, so each edge drawn is one road line. |
 | The slots below `$F0` need a projector the `$F0`/`$F4` joins do not use                    | **Refuted**                               | A sentinel in slot `$E8`'s projected X (`$10A8`) breaks at `$056E40` with `A0 = $E8`, `A2 = $5E080`, caller `$054AC6` — the same instruction, loop and height the `$F0` probe named.                                                                    |
 | The route list introduces authored data the catalogue has not read                         | **Refuted**                               | Its only input is the per-cell `$1E000` corner longwords the extractor already decodes. `scripts/ground-extent-check.py` reconstructs the live list, lowest slot and `$5E40` bytes from RAM alone on 82 of 82 captures.                                 |
 | Post-terminator attachments also carry pad polygons                                       | **Partially confirmed (family, not pad)** | Ground records continue with `$C00E` / `$7000` after faces. Structure 74's `$4200` door is the documented wall-list attachment. The pad polygons themselves are ordinary colour+ref faces.                |
@@ -668,6 +668,173 @@ and the scene slots below `$F0` are the same joins for the other cells in view:
 a per-frame slot numbering over the `$1E000` corner longwords the extractor
 already reads, excluded for the same reason and checked by
 `scripts/ground-extent-check.py`.
+
+## Research update — #441: the run grid is the Settlement road network
+
+[#441](https://github.com/odogono/mercenary/issues/441) asked for the `$01E000`
+run grid as Catalogue records. Decoding it also settles what the ground-extent
+edge list is: **the corners it joins are road-run endpoints, so the edges the
+aerial view draws are the roads themselves.** The ledger row below is amended
+accordingly; nothing about the record family, the `$01E400` index or the
+altitude radius curve changes.
+
+### The classifier, read in full
+
+`$04EC30`–`$04EC92` walks all 256 cells once, `a0` sweeping the grid four bytes
+at a time and `d0` counting the cell:
+
+```
+04EC30  lea.l   $1e000.l, a0    ; the run grid
+04EC36  lea.l   $1e600.l, a1    ; the 64-byte class table
+04EC3C  lea.l   $1e400.l, a2    ; the per-cell record index it fills
+04EC42  lea.l   $83dc.l, a3     ; the per-cell orientation byte it fills
+04EC4C  move.b  (a0)+, d1       ; row-run start cell
+04EC4E  move.b  (a0)+, d2       ; row-run end cell
+04EC50  beq.b   $4ec66          ; no row run: bits 0-2 stay clear
+04EC52  bset.b  #$0, d7
+04EC56  cmp.b   d0, d2
+04EC5A  bset.b  #$1, d7         ; this cell is not the run's end
+04EC5E  cmp.b   d0, d1
+04EC62  bset.b  #$2, d7         ; nor its start
+04EC66  move.b  (a0)+, d1       ; column-run start, then end, into bits 3-5
+...
+04EC80  move.b  (a1, d7.w), d7  ; class -> orientation byte
+04EC84  move.b  d7, (a3)+       ; $83DC + cell
+04EC86  lsr.w   #$3, d7
+04EC88  andi.w  #$e, d7
+04EC8C  move.w  $40(a1, d7.w), (a2)+   ; one of the six selectors at $1E640
+```
+
+The six selectors are not authored inline: `$04EC1C`–`$04EC2C` copies them into
+`$1E640` from six **indices** the group's stream names, read out of a master
+word table at `$1E64E`. Capital City's indices are `[0, 71, 87, 81, 26, 75]`
+against the generic `[0, 71, 72, 73, 74, 75]`, which is why one Settlement's
+straight is a runway and another's is a lane.
+
+### The replay is self-checking
+
+The same pass writes two tables. `$83DC` is the orientation byte the ground
+decoder already reads, so a replay of `$04EC30` that disagrees with the live
+`$83DC` is wrong about the grid. Replayed against the pinned first-world capture
+and all 21 workspace memstates the extractor consumes, it reproduces `$83DC`
+**byte for byte on all 256 cells of all 22 groups**. The extractor refuses to
+publish a network it cannot reproduce that way.
+
+`$1E400` is not reproduced by the classifier alone, and should not be: the
+placement loop at `$04ECAA` walks the group's own stream afterwards and, at
+`$04ECEE`–`$04ED0E`, replaces a cell's classifier record with the placement's own
+where the two records' first bytes share a high nybble. So the classifier's
+choice is the **base layer** and a Settlement's aprons and plazas sit over it.
+77 of Capital City's 88 road cells are overridden this way; several smaller
+groups have none. The payload carries both: `recordAddress` is the road piece
+the class selected, `model` is the record the cell actually draws, and
+`overridden` distinguishes them.
+
+### What the six pieces are
+
+The class table at `$1E600` is **resident, not per-group** — one identical
+64-byte table in every capture, sha256
+`483fae1b8b35e9e7af68bec3460587c9be82ffec983c6ac75e9581ee50ae9dd1` — so every
+Settlement draws from one vocabulary and only the six selectors differ. Sixteen
+of its 64 classes are ever reached, and they are exactly class 0 plus the
+fifteen entries the table answers nonzero for: no authored cell is both the
+start and the end of one run, so the degenerate classes never occur. Each axis
+is therefore absent, capped by this cell, or passed through by it, and the piece
+follows:
+
+| Row | Column | Class | Orientation byte | Piece |
+| --- | --- | --- | --- | --- |
+| absent | absent | 0 | `$00` | 0 none |
+| cap | absent | 3, 5 | `$10`, `$12` | 1 end |
+| absent | cap | 24, 40 | `$11`, `$13` | 1 end |
+| cap | cap | 27, 29, 43, 45 | `$20`–`$23` | 2 corner |
+| through | absent | 7 | `$30` | 3 straight |
+| absent | through | 56 | `$31` | 3 straight |
+| through | cap / cap | through | 31, 47, 59, 61 | `$40`–`$43` | 4 tee |
+| through | through | 63 | `$50` | 5 crossroads |
+
+The high nybble is the selector index the `lsr`/`andi` pair extracts; the low
+nybble is the quarter turn `$054E40` reads back as the record's transform.
+
+### The ground-extent edges are the road lines
+
+`$05493E` hands the same four bytes to the ground-extent slots `$FC`, `$F8`,
+`$F4`, `$F0`, and `$054AD2` draws each surviving pair as one two-point edge.
+The pinned first-world capture stands in cell `$87` with the window latched at
+radius 3, covering x 4–10, z 5–11, and holds six nonzero edges at `$84DC`:
+
+| Live edge | Recovered run |
+| --- | --- |
+| (11,8) – (7,8) | row run (7,8)–(11,8), own cell |
+| (4,1) – (4,11) | column run (4,1)–(4,11) |
+| (9,8) – (9,13) | column run (9,8)–(9,13) |
+| (10,8) – (10,9) | column run (10,8)–(10,9) |
+| (4,9) – (10,9) | row run (4,9)–(10,9) |
+| (3,11) – (5,11) | row run (3,11)–(5,11) |
+
+Those are all six, and the 37 runs of this network reach that window in exactly
+those six — no run the game drew is missing and none it did not draw is
+present. Since `$054888` widens the window with altitude along `$00915A`, the
+aerial view collects every cell's runs, which is the whole network the overhead
+capture of Capital City shows
+([the islands note](damocles-eris-islands.md)).
+
+### The record family is not Eris-only
+
+Twenty-two captured Settlement groups across twenty-one Bodies, of which
+**twenty-one carry a network**. Solon Base is the exception: one structure and
+no run at all, the same way fourteen Bodies carry a settlement with no island.
+A Body absent from the table below is a workspace no capture has loaded, not a
+Body without roads.
+
+| Capture | `$01E000` grid sha256 (first 16) | Six selectors | Runs | Road cells |
+| --- | --- | --- | ---: | ---: |
+| first-world (Capital City) | `17e92c34e5ff3b6f` | `$0790 $0796 $3304 $3B8E $4426 $1A6E` | 37 | 88 |
+| vesta-parliament-4-6 | `93361a95c8f1f877` | `$0790 $2D06 $3210 $3A36 $1538 $489A` | 4 | 24 |
+| gaea-ur-city-4-2 | `30507a96abda9302` | `$0790 $0796 $0E54 $11B4 $1538 $1A6E` | 15 | 31 |
+| dion-2-3 | `32d699ce76928b20` | `$266C $0796 $0E54 $11B4 $1538 $1AC6` | 31 | 144 |
+| icarus | `19d15de1fc275290` | generic | 3 | 7 |
+| acheron | `21f8a3e5869514f4` | `$0790 $1BFE $1C24 $1ECA $1F00 $1F4A` | 10 | 25 |
+| atropos | `45e26352c6d71673` | generic | 3 | 5 |
+| clotho | `bbb8c80f08a7f239` | `$0790 $545C $5654 $57F6 $58F4 $54F8` | 8 | 21 |
+| gaea (Chaldea Metropolis) | `ae90408632f01992` | generic | 34 | 125 |
+| cronus | `71a8fc8c8dc9c8bc` | `$0790 $1BFE $1C24 $1ECA $1F00 $1FBA` | 6 | 15 |
+| cyclopes | `0646ba034dfa7fe9` | `$0790 $0A04 $0E54 $11B4 $1538 $1A6E` | 6 | 21 |
+| solon | `5f70bf18a0860070` | generic | **0** | **0** |
+| theon | `7427ee8bd42ed387` | generic | 5 | 8 |
+| metis | `39fb35d46e323090` | generic | 11 | 30 |
+| lucan | `fd85303e27fe0755` | generic | 5 | 14 |
+| logos | `318e9dfc7ca1f2c1` | generic | 10 | 24 |
+| pan | `7a0888f45188a4d1` | generic | 10 | 17 |
+| thalia | `37da8fcfa88356fe` | generic | 10 | 19 |
+| bacchus | `3b991a14fb026009` | `$0790 $545C $5654 $57F6 $58F4 $1A6E` | 5 | 19 |
+| tolosa | `0d0fa6d8ddf27949` | generic | 6 | 14 |
+| perseus | `e599f747768e04ba` | generic | 8 | 19 |
+| mentor | `e229ea64eaa0ebb3` | generic | 14 | 23 |
+
+"generic" is `$0790 $0796 $0E54 $11B4 $1538 $1A6E`, the family thirteen of the
+twenty-two groups share.
+
+### Evidence identities
+
+| Range | What | sha256 |
+| --- | --- | --- |
+| `$04EC30`–`$04EC94` | the classifier | `39a7f76a330314e57de48a1d006cb7f4fe6d7a3db27b6814c1f72be2291bfa7b` |
+| `$01E600`–`$01E640` | the class table, resident | `483fae1b8b35e9e7af68bec3460587c9be82ffec983c6ac75e9581ee50ae9dd1` |
+| `$01E000`–`$01E400` | the run grid, per group | per capture in the table above |
+
+### Catalogue disposition
+
+A `roadNetworks` collection, one entry a captured structure group: the group's
+origin and island, its six piece selectors, every classified cell with its
+piece, rotation, source class, selected record and drawn model, and the runs
+deduplicated as the network's lines. `coverage.roads` counts them.
+
+`coverage.classifications.roadTemplate` is **not** the flag for this and stays
+at 0. It counts models still carrying the `$7000` road-template omission, which
+is a different thing that was already discharged; a scalar could not answer a
+per-Body question in any case. A consumer asking whether a Body's roads were
+recovered asks `roadNetworks` for an entry naming that Body.
 
 ## Unresolved
 

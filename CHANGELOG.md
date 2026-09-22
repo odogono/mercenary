@@ -12,6 +12,20 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **Damocles Settlement road networks reach the Catalogue.**
+  `payload/damocles/catalogue.json` gains a `roadNetworks` collection: the structure
+  group's run-length extent grid at `$01E000`, classified the way `$04EC30` classifies
+  it, as the roads it is. Each entry carries the group's origin and island, its six
+  road-piece selectors, every cell on a run with its piece, rotation and the ground
+  record the class selected, and the authored runs as the network's lines. The replay is
+  self-checking: the same pass writes the `$0083DC` orientation table the ground decoder
+  already reads, and it is reproduced byte for byte on all 256 cells of all 22 captured
+  groups. Those runs are also what the game draws from the air — the six ground-extent
+  edges the pinned capture holds at `$84DC` are exactly the six runs that reach its
+  window, and no others. The family is not Eris-only: 21 of the 22 captured groups, over
+  20 Bodies, carry a network; Solon Base is the one that carries none, the same way
+  fourteen Bodies carry a settlement with no island (#441).
+
 - **The Gamma System's islands reach the Catalogue.** `payload/damocles/catalogue.json`
   gains an `islands` collection carrying all 62 island records across 30 Bodies: each
   record's origin in Body Coordinates, its coastline as signed Island-Local vertex

@@ -64,14 +64,81 @@ export interface LevelBinding {
   readonly levelsAuthored: number;
   readonly tableAddress: number;
 }
+export interface Evidence {
+  readonly claim: string;
+  readonly confidence: 'verified' | 'observed' | 'partial' | 'unresolved';
+  readonly source: string;
+}
+export const ROAD_PIECES = [
+  'none',
+  'end',
+  'corner',
+  'straight',
+  'tee',
+  'crossroads'
+] as const;
+export type RoadPiece = (typeof ROAD_PIECES)[number];
+/**
+ * One captured structure group's road network: the run-length extent grid at `$01E000`
+ * that `$04EC30` classifies into the per-cell ground selection.
+ *
+ * The runs are one-cell-wide road lines, not a landmass — the coastline is the island
+ * record's polygon and nothing else. A Body with no entry here is a Body whose group
+ * was never captured, not a Body without roads
+ * (docs/research/damocles-eris-ground.md).
+ */
+export interface RoadNetwork {
+  readonly body: string;
+  /** Every cell whose class is nonzero, in cell order. Cells are workspace-local. */
+  readonly cells: readonly {
+    readonly cell: number;
+    /** The ground record the cell actually draws, which an override may have replaced. */
+    readonly model: string | null;
+    /**
+     * `$04ECEE`-`$04ED0E` lets a placement in the group's own stream replace the
+     * classifier's record with its own where the two share a record class, so the drawn
+     * record is not always the road piece the class selected.
+     */
+    readonly overridden: boolean;
+    readonly piece: number;
+    readonly pieceName: RoadPiece;
+    /** The road piece the class selected, whether or not a placement replaced it. */
+    readonly recordAddress: number;
+    /** Quarter turns, the low nybble of the `$0083DC` orientation byte. */
+    readonly rotation: number;
+    readonly sourceClass: number;
+    readonly x: number;
+    readonly z: number;
+  }[];
+  readonly classTableAddress: number;
+  readonly evidence: readonly Evidence[];
+  readonly id: string;
+  readonly island: string | null;
+  /** Where the group's 16x16 sits on the Body surface, in Surface Cells. */
+  readonly origin: readonly [number, number];
+  /** The group's six road-piece selectors, in the order `$04EC22` copies them. */
+  readonly pieces: readonly {
+    readonly index: number;
+    readonly name: RoadPiece;
+    readonly recordAddress: number;
+  }[];
+  readonly reason: string;
+  /**
+   * The network's lines: each authored run, deduplicated. `$05493E` hands the same four
+   * bytes to the ground-extent slots and `$054AD2` draws each surviving pair as one
+   * two-point edge, which is the network the aerial view shows.
+   */
+  readonly runs: readonly {
+    readonly axis: 'x' | 'z';
+    readonly end: readonly [number, number];
+    readonly start: readonly [number, number];
+  }[];
+  readonly sourceAddress: number;
+}
 export interface Model {
   readonly conditions: readonly string[];
   readonly detailSelection?: readonly DetailGroup[];
-  readonly evidence: readonly {
-    readonly claim: string;
-    readonly confidence: 'verified' | 'observed' | 'partial' | 'unresolved';
-    readonly source: string;
-  }[];
+  readonly evidence: readonly Evidence[];
   readonly id: string;
   /**
    * The record's `$8001` orientation command: how the draw path turns every instance of
@@ -368,6 +435,7 @@ export interface Catalogue {
   readonly islands: readonly Island[];
   readonly models: readonly Model[];
   readonly places: readonly Place[];
+  readonly roadNetworks: readonly RoadNetwork[];
   readonly schemaVersion: 15;
   readonly source: {
     readonly authority: string;
@@ -469,6 +537,20 @@ const signedWord = (value: unknown): number => {
     ? n
     : fail('expected a signed word');
 };
+const evidenceList = (value: unknown): readonly Evidence[] =>
+  list(value).map(item => {
+    const entry = object(item);
+    return {
+      claim: string(entry['claim']),
+      confidence: choice(entry['confidence'], [
+        'verified',
+        'observed',
+        'partial',
+        'unresolved'
+      ] as const),
+      source: string(entry['source'])
+    };
+  });
 const cellPair = (value: unknown): readonly [number, number] => {
   const pair = list(value).map(signedWord);
   if (pair.length !== 2) {
@@ -946,19 +1028,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
               };
             })
           }),
-      evidence: list(m['evidence']).map(value => {
-        const item = object(value);
-        return {
-          claim: string(item['claim']),
-          confidence: choice(item['confidence'], [
-            'verified',
-            'observed',
-            'partial',
-            'unresolved'
-          ]),
-          source: string(item['source'])
-        };
-      }),
+      evidence: evidenceList(m['evidence']),
       id: string(m['id']),
       kind: choice(m['kind'], ['object', 'structure', 'interior', 'ground']),
       linkedInstances: strings(m['linkedInstances']),
@@ -1317,6 +1387,80 @@ export const parseCatalogue = (value: unknown): Catalogue => {
       fail('instance absent from its place');
     }
   }
+  const roadNetworks = list(r['roadNetworks'] ?? []).map(
+    (item): RoadNetwork => {
+      const n = object(item);
+      reference(bodyIds, string(n['body']), 'body');
+      const island = n['island'] === null ? null : string(n['island']);
+      if (island !== null) {
+        reference(islandIds, island, 'island');
+      }
+      const cells = list(n['cells']).map(value => {
+        const c = object(value);
+        const cell = byte(c['cell']);
+        const model = c['model'] === null ? null : string(c['model']);
+        if (model !== null) {
+          reference(modelIds, model, 'road cell ground');
+        }
+        const x = byte(c['x']);
+        const z = byte(c['z']);
+        // The cell number is the grid index the classifier walked, so a payload whose
+        // x/z disagreed with it would place the piece on a cell the game never classified.
+        if (x !== (cell & 15) || z !== cell >> 4) {
+          fail('road cell position disagrees with its cell number');
+        }
+        const piece = byte(c['piece']);
+        if (piece === 0) {
+          fail('a road cell carries the no-road piece');
+        }
+        return {
+          cell,
+          model,
+          overridden: boolean(c['overridden']),
+          piece,
+          pieceName: choice(c['pieceName'], ROAD_PIECES),
+          recordAddress: integer(c['recordAddress']),
+          rotation: byte(c['rotation']),
+          sourceClass: byte(c['sourceClass']),
+          x,
+          z
+        };
+      });
+      const pieces = list(n['pieces']).map(value => {
+        const piece = object(value);
+        return {
+          index: byte(piece['index']),
+          name: choice(piece['name'], ROAD_PIECES),
+          recordAddress: integer(piece['recordAddress'])
+        };
+      });
+      // $04EC22 copies exactly six selectors, and (class >> 3) & $E can name any of them.
+      if (pieces.length !== ROAD_PIECES.length) {
+        fail('a road network does not carry all six road-piece selectors');
+      }
+      return {
+        body: string(n['body']),
+        cells,
+        classTableAddress: integer(n['classTableAddress']),
+        evidence: evidenceList(n['evidence']),
+        id: string(n['id']),
+        island,
+        origin: cellPair(n['origin']),
+        pieces,
+        reason: string(n['reason']),
+        runs: list(n['runs']).map(value => {
+          const run = object(value);
+          return {
+            axis: choice(run['axis'], ['x', 'z'] as const),
+            end: cellPair(run['end']),
+            start: cellPair(run['start'])
+          };
+        }),
+        sourceAddress: integer(n['sourceAddress'])
+      };
+    }
+  );
+  unique(roadNetworks);
   const tables = list(r['tables']).map(item => {
     const t = object(item);
     const entries = strings(t['entries']);
@@ -1440,6 +1584,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     islands,
     models,
     places,
+    roadNetworks,
     schemaVersion: 15,
     source,
     tables
