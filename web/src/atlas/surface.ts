@@ -1,5 +1,5 @@
-import type { Catalogue } from '../catalogue/data.ts';
-import type { MapPoint, MapView } from '../catalogue/mapView.ts';
+import type { Catalogue, Island } from '../catalogue/data.ts';
+import { project, type MapPoint, type MapView } from '../catalogue/mapView.ts';
 import { SURFACE_CELLS } from '../damocles/world.ts';
 
 /// A Body's surface as the Atlas draws it: sea everywhere, with each recovered Damocles Island's
@@ -36,13 +36,116 @@ export interface SurfaceGap {
   readonly reason: string;
 }
 
+export type SurfaceLabelKind = 'place' | 'settlement';
+
+/// One name the map writes on a Body's surface, at a point in Body Coordinates.
+///
+/// Two kinds, and they do not nest. A `settlement` is the area name a Damocles Island's bound
+/// Structure Workspace publishes, so it is carried by an island record; a `place` is a Damocles
+/// Place, whose position is its Instances'. A Settlement may have no island under it and an
+/// island may carry no Settlement (`CONTEXT.md`), so neither kind is ever derived from the
+/// other and a Place is never listed under the Settlement it happens to sit in.
+export interface SurfaceLabel {
+  /// Where the name is written, in Body Coordinates. Not wrapped onto the surface for the same
+  /// reason a coastline is not: `wrapImages` offsets it into every image the camera can see.
+  readonly at: MapPoint;
+  /// The record the name belongs to: an island record for a Settlement, a Place record for a
+  /// Damocles Place. What a click on the name selects.
+  readonly id: string;
+  readonly kind: SurfaceLabelKind;
+  readonly name: string;
+}
+
 export interface BodySurface {
   /// Records carrying no coastline at all: 21 of the 62 share a stub whose extent is the whole
   /// coordinate plane. They are neither land to draw nor sea, so the map states the gap rather
   /// than covering a Body in invented ground (ADR 0014).
   readonly gaps: readonly SurfaceGap[];
   readonly islands: readonly SurfaceIsland[];
+  /// Every name on this Body, Settlements first, each in the Catalogue's own order.
+  readonly labels: readonly SurfaceLabel[];
 }
+
+/// One coordinate counted from another on a wrapping axis, taken on the nearest image so a cell
+/// across the seam from its origin reads as a small signed offset rather than as four thousand.
+export const nearestOffset = (from: number, origin: number): number => {
+  const raw = from - origin;
+  return raw - Math.round(raw / SURFACE_CELLS) * SURFACE_CELLS;
+};
+
+/// Where a Damocles Place is, in Body Coordinates: the mean of its recovered Instances' own
+/// positions.
+///
+/// The Catalogue publishes no position for a Place. A place name alone establishes neither its
+/// position nor its contents (`CONTEXT.md`), so this is the position of what is there and not a
+/// position the Place owns; the panel says so.
+///
+/// Counted on the wrap image nearest the first instance, so a Place whose instances straddle the
+/// coordinate seam averages to the cell between them rather than to the far side of the surface.
+/// No recovered Place does that today — the widest spread within one is a twentieth of a cell —
+/// but the surface is a torus and the arithmetic costs nothing.
+const meanNear = (values: readonly number[], origin: number): number =>
+  origin +
+  values.reduce((sum, value) => sum + nearestOffset(value, origin), 0) /
+    values.length;
+
+const meanOfInstances = (positions: readonly MapPoint[]): MapPoint => {
+  const first = positions[0]!;
+  return {
+    x: meanNear(
+      positions.map(position => position.x),
+      first.x
+    ),
+    z: meanNear(
+      positions.map(position => position.z),
+      first.z
+    )
+  };
+};
+
+/// The names on one Body: its Settlements and its Damocles Places.
+///
+/// A Settlement is written at the island record's own origin rather than over the middle of the
+/// coastline, because that is where the Structure Workspace publishing the name is built
+/// ($056464) and the island is not the Settlement. Every recovered Place on a named island lies
+/// within that workspace's 16 cells of it, so the name lands on what it names.
+const readLabels = (
+  catalogue: Catalogue,
+  bodyId: string,
+  records: readonly Island[]
+): readonly SurfaceLabel[] => [
+  ...records
+    .filter(island => island.areaName !== null)
+    .map(island => ({
+      at: { x: island.origin[0], z: island.origin[1] },
+      id: island.id,
+      kind: 'settlement' as const,
+      name: island.areaName!
+    })),
+  ...catalogue.places
+    .filter(place => place.body === bodyId)
+    .flatMap(place => {
+      const positions = place.instances
+        .map(id => catalogue.instances.find(instance => instance.id === id))
+        .filter(instance => instance?.location)
+        .map(instance => ({
+          x: instance!.location!.position[0],
+          z: instance!.location!.position[2]
+        }));
+      // A Place whose every Instance has an unrecovered location has no position to be drawn
+      // at, and inventing one would be a claim. It stays in the Catalogue and off the map.
+      return positions.length
+        ? [
+            {
+              at: meanOfInstances(positions),
+              id: place.id,
+              kind: 'place' as const,
+              name: place.name
+            }
+          ]
+        : [];
+    })
+];
 
 /// The islands of one Body, by its recovered source index.
 export const readBodySurface = (
@@ -70,7 +173,8 @@ export const readBodySurface = (
           x: island.origin[0] + x,
           z: island.origin[1] + z
         }))
-      }))
+      })),
+    labels: readLabels(catalogue, bodyId, records)
   };
 };
 
@@ -179,13 +283,6 @@ const circularMean = (values: readonly number[]): number => {
   );
 };
 
-/// One coordinate counted from another on a wrapping axis, taken on the nearest image so a cell
-/// across the seam from its origin reads as a small signed offset rather than as four thousand.
-export const nearestOffset = (from: number, origin: number): number => {
-  const raw = from - origin;
-  return raw - Math.round(raw / SURFACE_CELLS) * SURFACE_CELLS;
-};
-
 /// How far one coordinate must move, in whole surfaces, to sit nearest an anchor.
 const wholeSurfaces = (from: number, to: number): number =>
   -Math.round((from - to) / SURFACE_CELLS) * SURFACE_CELLS;
@@ -277,3 +374,108 @@ export const islandLocalCell = (
   x: nearestOffset(cell.x, island.origin.x),
   z: nearestOffset(cell.z, island.origin.z)
 });
+
+/// Css pixels between a name and the point it names, and between two names.
+const LABEL_GAP = 4;
+
+export interface LabelBox {
+  readonly height: number;
+  readonly width: number;
+  readonly x: number;
+  readonly y: number;
+}
+
+const labelsOverlap = (a: LabelBox, b: LabelBox): boolean =>
+  a.x < b.x + b.width + LABEL_GAP &&
+  b.x < a.x + a.width + LABEL_GAP &&
+  a.y < b.y + b.height + LABEL_GAP &&
+  b.y < a.y + a.height + LABEL_GAP;
+
+export interface PlacedLabel {
+  readonly box: LabelBox;
+  readonly id: string;
+  readonly kind: SurfaceLabelKind;
+  readonly name: string;
+  /// Css pixels of the point the name is written against: the mark the map draws under it.
+  readonly x: number;
+  readonly y: number;
+}
+
+export interface SurfaceLabelLayout {
+  readonly placed: readonly PlacedLabel[];
+  /// Names whose point is on screen but whose box would have collided with one already placed.
+  /// Zooming in makes room, and the status line says how many are waiting.
+  readonly suppressed: number;
+}
+
+/// Lay every name out against the camera, in every wrap image of it the camera can see.
+///
+/// Settlements are placed before Damocles Places, so a Body's area names survive a crowd of
+/// Place names rather than being crowded out by whichever happened to come first: at the
+/// Settlement Range eleven of Eris's Places fall inside CAPITAL CITY's own sixteen cells.
+///
+/// Pure: text is measured from the caller's monospace metrics rather than from the document,
+/// the same arrangement `layOutLabels` uses for the System Range.
+export const layOutSurfaceLabels = (
+  labels: readonly SurfaceLabel[],
+  view: MapView,
+  frame: { readonly height: number; readonly width: number },
+  metrics: { readonly charWidth: number; readonly lineHeight: number }
+): SurfaceLabelLayout => {
+  const aspect = frame.height / Math.max(frame.width, 1);
+  const order = [...labels].sort(
+    (a, b) => Number(a.kind === 'place') - Number(b.kind === 'place')
+  );
+  const boxes: LabelBox[] = [];
+  const placed: PlacedLabel[] = [];
+  let suppressed = 0;
+  for (const label of order) {
+    const width = label.name.length * metrics.charWidth;
+    let onFrame = false;
+    let landed = false;
+    for (const image of wrapImages([label.at], view, aspect)) {
+      const { u, v } = project(view, image[0]!, aspect);
+      const x = u * frame.width;
+      const y = v * frame.height;
+      if (x < 0 || y < 0 || x > frame.width || y > frame.height) {
+        continue;
+      }
+      onFrame = true;
+      // Below the point, then above it, in both cases centred on it and slid along the frame's
+      // edge rather than off it. Fewer positions than the System Range's four, because a name
+      // there must dodge a disc it would otherwise cover and a name here covers nothing but sea
+      // and coastline; but the edges matter more, because a Body's own names cluster in one
+      // corner of the surface and CAPITAL CITY sits 128 cells from the coordinate origin.
+      const slid = Math.min(
+        Math.max(x - width / 2, 0),
+        Math.max(frame.width - width, 0)
+      );
+      const box = ([y + LABEL_GAP, y - LABEL_GAP - metrics.lineHeight] as const)
+        .map(top => ({ height: metrics.lineHeight, width, x: slid, y: top }))
+        .find(
+          candidate =>
+            candidate.y >= 0 &&
+            candidate.x + candidate.width <= frame.width &&
+            candidate.y + candidate.height <= frame.height &&
+            !boxes.some(other => labelsOverlap(candidate, other))
+        );
+      if (!box) {
+        continue;
+      }
+      boxes.push(box);
+      placed.push({
+        box,
+        id: label.id,
+        kind: label.kind,
+        name: label.name,
+        x,
+        y
+      });
+      landed = true;
+    }
+    if (onFrame && !landed) {
+      suppressed += 1;
+    }
+  }
+  return { placed, suppressed };
+};

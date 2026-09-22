@@ -4,8 +4,11 @@ import {
   bodyFacts,
   bodyProvenance,
   catalogueHref,
+  instanceHref,
   islandFacts,
-  islandProvenance
+  islandProvenance,
+  placeFacts,
+  placeProvenance
 } from '../src/atlas/panel.ts';
 import { atlasHref, atlasSearch, readAtlasState } from '../src/atlas/state.ts';
 import {
@@ -501,28 +504,59 @@ describe('the Atlas state', () => {
         level: 'system',
         view: { span: 8_883_000, x: 1234.56, z: -78.9 }
       } as const,
-      { bodyId: 'eris', islandId: null, level: 'body', view: null } as const,
+      {
+        bodyId: 'eris',
+        islandId: null,
+        level: 'body',
+        placeId: null,
+        view: null
+      } as const,
       {
         bodyId: 'eris',
         islandId: 'island-eris-063272',
         level: 'body',
+        placeId: null,
         view: { span: 4096, x: 12.34, z: 56.78 }
+      } as const,
+      {
+        bodyId: 'eris',
+        islandId: null,
+        level: 'body',
+        placeId: 'place-02502d',
+        view: { span: 16, x: 73.5, z: 136.5 }
       } as const
     ]) {
       expect(readAtlasState(atlasSearch(state), ids)).toEqual(state);
     }
     expect(atlasHref({ level: 'system', view: null })).toBe('/damocles/atlas');
     expect(
-      atlasHref({ bodyId: 'eris', islandId: null, level: 'body', view: null })
+      atlasHref({
+        bodyId: 'eris',
+        islandId: null,
+        level: 'body',
+        placeId: null,
+        view: null
+      })
     ).toBe('/damocles/atlas?body=eris');
     expect(
       atlasHref({
         bodyId: 'eris',
         islandId: 'island-eris-063272',
         level: 'body',
+        placeId: null,
         view: null
       })
     ).toBe('/damocles/atlas?body=eris&island=island-eris-063272');
+    // A Damocles Place survives a link on the same footing as an island.
+    expect(
+      atlasHref({
+        bodyId: 'eris',
+        islandId: null,
+        level: 'body',
+        placeId: 'place-02502d',
+        view: null
+      })
+    ).toBe('/damocles/atlas?body=eris&place=place-02502d');
     expect(
       atlasHref({ level: 'system', view: { span: 100, x: 1, z: 2 } })
     ).toBe('/damocles/atlas?x=1&z=2&span=100');
@@ -605,6 +639,42 @@ describe('the Atlas selection panel', () => {
     );
   });
 
+  test('states only recovered numbers for a Damocles Place', async () => {
+    const data = parseCatalogue(
+      await Bun.file('../payload/damocles/catalogue.json').json()
+    );
+    const place = data.places.find(
+      candidate => candidate.name === 'STATE OFFICE'
+    )!;
+    const selection = {
+      at: { x: 73.5, z: 136.5 },
+      instances: place.instances.map(id =>
+        data.instances.find(instance => instance.id === id)!
+      ),
+      place
+    };
+    expect(placeFacts(selection).map(fact => fact.label)).toEqual([
+      'Record',
+      'Mean cell',
+      'Instances'
+    ]);
+    expect(placeFacts(selection)[1]!.value).toBe('74 / 137 Surface Cells');
+    // The position is the Instances' and not the Place's, and the panel has to say so: a place
+    // name alone establishes neither its position nor its contents.
+    expect(placeProvenance(selection).join(' ')).toContain(
+      'not a position the Place holds'
+    );
+    // A Place is not part of the Settlement it stands in; neither record lists the other.
+    expect(placeProvenance(selection).join(' ')).toContain(
+      'not part of the Settlement'
+    );
+    // Unlike an island, an Instance is a record the Catalogue does hold a view of, so the
+    // hand-off reaches the thing itself rather than only its Body.
+    expect(instanceHref(11, 'eris-surface-89')).toBe(
+      '/catalogue?body=body-11&instance=eris-surface-89'
+    );
+  });
+
   test('says a record crossing the seam wraps, and writes the span as a wrap', async () => {
     const data = parseCatalogue(
       await Bun.file('../payload/damocles/catalogue.json').json()
@@ -623,7 +693,7 @@ describe('the Atlas selection panel', () => {
   test('hands off to the Body rather than implying an island entry exists', () => {
     // The Catalogue has no island view: its deep links reach a Model, an Instance or a Body's
     // placement map, and its search covers Model names. The Body is the nearest true thing.
-    expect(catalogueHref(11)).toBe('/damocles/catalogue?body=body-11');
+    expect(catalogueHref(11)).toBe('/catalogue?body=body-11');
   });
 
   test('marks the capture-time sample and the recovered black', async () => {

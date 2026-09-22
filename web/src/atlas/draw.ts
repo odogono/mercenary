@@ -6,7 +6,15 @@ import {
 } from '../catalogue/mapView.ts';
 import { SURFACE_CELLS } from '../damocles/world.ts';
 import type { GammaBody } from '../flyover/documents.ts';
-import { nearestImage, wrapImages, type BodySurface } from './surface.ts';
+import {
+  layOutSurfaceLabels,
+  nearestImage,
+  wrapImages,
+  type BodySurface,
+  type PlacedLabel,
+  type SurfaceLabel,
+  type SurfaceLabelLayout
+} from './surface.ts';
 import {
   layOutLabels,
   surfacePoint,
@@ -37,6 +45,12 @@ const SEAM = '#2d769788';
 /// The picked island's ring, matching the accent the roster and breadcrumb use for selection.
 const SELECTED = '#61c8ff';
 const SELECTED_WIDTH = 2;
+/// The mark under a name on a Body's surface. A name with nothing under it says roughly where
+/// something is; the mark says exactly where, which is the whole of what the Catalogue recovered
+/// about a Damocles Place's position.
+const MARK = '#cfe6f2';
+const PLACE_MARK_RADIUS = 2;
+const SETTLEMENT_MARK_RADIUS = 3.5;
 
 export const frameOf = (element: HTMLElement): SystemFrame => {
   const rect = element.getBoundingClientRect();
@@ -133,17 +147,51 @@ const drawSeams = (
   context.stroke();
 };
 
+/// A name's own point, drawn as the map draws a marker: a Damocles Place as a filled dot, a
+/// Settlement as a ring, because a Settlement is an area whose name is written at the origin its
+/// Structure Workspace is built at rather than a single thing standing there.
+const drawLabelMarks = (
+  context: CanvasRenderingContext2D,
+  layout: SurfaceLabelLayout,
+  selectedId: string | null
+) => {
+  for (const label of layout.placed) {
+    const picked = label.id === selectedId;
+    context.beginPath();
+    context.arc(
+      label.x,
+      label.y,
+      label.kind === 'place' ? PLACE_MARK_RADIUS : SETTLEMENT_MARK_RADIUS,
+      0,
+      2 * Math.PI
+    );
+    if (label.kind === 'place') {
+      context.fillStyle = picked ? SELECTED : MARK;
+      context.fill();
+    } else {
+      context.lineWidth = picked ? SELECTED_WIDTH : OUTLINE_WIDTH;
+      context.strokeStyle = picked ? SELECTED : MARK;
+      context.stroke();
+    }
+  }
+};
+
 export const drawBodySurface = (
   canvas: HTMLCanvasElement,
   view: MapView,
   frame: SystemFrame,
   seaColour: string,
   surface: BodySurface | undefined,
-  selectedIslandId: string | null
-): void => {
+  selectedIslandId: string | null,
+  /// The names this band shows, already gated by `labelsInBand`, and whichever is picked.
+  names: {
+    readonly labels: readonly SurfaceLabel[];
+    readonly selectedId: string | null;
+  } = { labels: [], selectedId: null }
+): SurfaceLabelLayout => {
   const context = surfaceOf(canvas, frame);
   if (!context) {
-    return;
+    return { placed: [], suppressed: 0 };
   }
   // The surface has no edge to leave blank: every pixel of the frame is on it, because the
   // camera wraps. So the sea is the whole frame rather than a rectangle within it.
@@ -176,6 +224,13 @@ export const drawBodySurface = (
   }
   drawGrid(context, view, frame);
   drawSeams(context, view, frame);
+  context.font = LABEL_FONT;
+  const layout = layOutSurfaceLabels(names.labels, view, frame, {
+    charWidth: context.measureText('M').width,
+    lineHeight: LABEL_FONT_SIZE * 1.4
+  });
+  drawLabelMarks(context, layout, names.selectedId);
+  return layout;
 };
 
 /// A Body's recovered islands drawn on its own disc, through the authored scale, with the same
@@ -309,5 +364,34 @@ export const placeLabels = (layer: HTMLElement, labels: SystemLabels): void => {
     span.style.left = `${label.x.toFixed(2)}px`;
     span.style.top = `${label.y.toFixed(2)}px`;
     layer.append(span);
+  }
+};
+
+/// The names on a Body's surface, as selectable links rather than as decoration.
+///
+/// Unlike the System Range's labels these take pointer events: there is no roster of Settlements
+/// or Damocles Places, so the name on the map is the only way to reach one, and it has to be
+/// reachable by keyboard and readable by assistive technology as well as clickable. `camera.ts`
+/// leaves a press that starts on one alone for the same reason.
+export const placeSurfaceLabels = (
+  layer: HTMLElement,
+  layout: SurfaceLabelLayout,
+  selectedId: string | null,
+  href: (label: PlacedLabel) => string
+): void => {
+  layer.replaceChildren();
+  for (const label of layout.placed) {
+    const anchor = document.createElement('a');
+    anchor.className = `surface-label surface-${label.kind}`;
+    anchor.href = href(label);
+    anchor.textContent = label.name;
+    anchor.dataset['label'] = label.id;
+    anchor.dataset['kind'] = label.kind;
+    if (label.id === selectedId) {
+      anchor.setAttribute('aria-current', 'true');
+    }
+    anchor.style.left = `${label.box.x.toFixed(2)}px`;
+    anchor.style.top = `${label.box.y.toFixed(2)}px`;
+    layer.append(anchor);
   }
 };

@@ -49,8 +49,14 @@ const run = async (page: Page, line: string): Promise<void> => {
 
 for (const dpr of [1, 2]) {
   test.describe(`at device pixel ratio ${dpr}`, () => {
-    test.use({ deviceScaleFactor: dpr, viewport: { height: 900, width: 1280 } });
-    test.skip(!enabled || out === undefined, 'capture matrix only runs on request');
+    test.use({
+      deviceScaleFactor: dpr,
+      viewport: { height: 900, width: 1280 }
+    });
+    test.skip(
+      !enabled || out === undefined,
+      'capture matrix only runs on request'
+    );
 
     for (const pose of POSES) {
       test(`captures ${pose.name} soft and hard`, async ({ page }) => {

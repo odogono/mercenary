@@ -18,6 +18,7 @@ import {
   SURFACE_SPAN,
   bodyBounds,
   fitBody,
+  labelsInBand,
   rangeOf
 } from './bodyRange.ts';
 import { mountCamera, type CameraFrame } from './camera.ts';
@@ -25,7 +26,8 @@ import {
   drawBodySurface,
   drawSystemRange,
   frameOf,
-  placeLabels
+  placeLabels,
+  placeSurfaceLabels
 } from './draw.ts';
 import { renderPanel } from './panel.ts';
 import { centreReadout, type ReadoutRow } from './readout.ts';
@@ -39,7 +41,10 @@ import {
   islandAt,
   readBodySurface,
   surfaceAnchor,
-  type BodySurface
+  type BodySurface,
+  type PlacedLabel,
+  type SurfaceLabel,
+  type SurfaceLabelKind
 } from './surface.ts';
 import {
   fitSystem,
@@ -81,6 +86,7 @@ const roster = node('roster');
 const panel = node('panel');
 const systemCentre = node('system-centre');
 const bodyCentre = node('body-centre');
+const bodyLabelLayer = node('body-labels');
 
 title.textContent = 'Gamma Atlas';
 
@@ -158,12 +164,14 @@ const recordCamera = () => {
                 bodyId: current.bodyId,
                 islandId: current.islandId,
                 level: 'body',
+                placeId: current.placeId,
                 view: { span: bodyView.span, x: bodyView.cx, z: bodyView.cz }
               }
             : {
                 bodyId: current.bodyId,
                 islandId: current.islandId,
                 level: 'body',
+                placeId: current.placeId,
                 view: null
               }
         )
@@ -199,15 +207,27 @@ const renderSelectionPanel = () => {
   // Read out of the union into a local, or the mutable module-level `state` defeats narrowing.
   const settled = state;
   const pickedId = settled.level === 'body' ? settled.islandId : null;
-  renderPanel(
-    panel,
-    system,
-    selectedBody(),
-    pickedId
+  const placeId = settled.level === 'body' ? settled.placeId : null;
+  const place = placeId
+    ? catalogue?.places.find(candidate => candidate.id === placeId)
+    : undefined;
+  renderPanel(panel, system, selectedBody(), {
+    island: pickedId
       ? (catalogue?.islands.find(island => island.id === pickedId) ?? null)
       : null,
-    onDisc
-  );
+    place: place
+      ? {
+          // The point the map wrote the name at, so the panel and the map cannot disagree
+          // about where a Place is.
+          at: surface?.labels.find(label => label.id === place.id)?.at ?? null,
+          instances: place.instances.flatMap(
+            id => catalogue?.instances.filter(value => value.id === id) ?? []
+          ),
+          place
+        }
+      : null,
+    surfaceOnDisc: onDisc
+  });
 };
 
 /// Writes nothing to the page but canvas pixels, the label layer, the scale readout and the
@@ -342,8 +362,31 @@ const drawRange = () => {
   recordCamera();
 };
 
-/// Writes nothing to the page but canvas pixels and the two readouts, so the ResizeObserver
-/// that calls it cannot feed the frame back on itself.
+const count = (labels: readonly SurfaceLabel[], kind: SurfaceLabelKind) =>
+  labels.filter(label => label.kind === kind).length;
+
+/// Where a name on the surface links to: the same Body and camera, with that name picked. A
+/// Settlement is carried by an island record, so picking one picks the island the Catalogue can
+/// actually show; a Damocles Place is its own record and the panel reaches its Instances.
+const labelHref = (label: PlacedLabel): string => {
+  const body = selectedBody();
+  if (!body) {
+    return '/damocles/atlas';
+  }
+  return atlasHref({
+    bodyId: body.id,
+    islandId: label.kind === 'settlement' ? label.id : null,
+    level: 'body',
+    placeId: label.kind === 'place' ? label.id : null,
+    view: bodyView
+      ? { span: bodyView.span, x: bodyView.cx, z: bodyView.cz }
+      : null
+  });
+};
+
+/// Writes nothing to the page but canvas pixels, the name layer and the two readouts, so the
+/// ResizeObserver that calls it cannot feed the frame back on itself. The names are absolutely
+/// positioned over the map, so they cannot change the frame either.
 const drawBodyRange = () => {
   const body = selectedBody();
   if (!body || bodyRange.hidden) {
@@ -352,15 +395,20 @@ const drawBodyRange = () => {
   const frame = frameOf(bodyRange);
   bodyView = bodyView ?? fitBody(frame);
   const current = state;
-  drawBodySurface(
+  const band = rangeOf(bodyView, frame.width);
+  const picked =
+    current.level === 'body' ? (current.placeId ?? current.islandId) : null;
+  const shown = labelsInBand(surface?.labels ?? [], band);
+  const layout = drawBodySurface(
     bodyCanvas,
     bodyView,
     frame,
     body.baseColour,
     surface,
-    current.level === 'body' ? current.islandId : null
+    current.level === 'body' ? current.islandId : null,
+    { labels: shown, selectedId: picked }
   );
-  const band = rangeOf(bodyView, frame.width);
+  placeSurfaceLabels(bodyLabelLayer, layout, picked, labelHref);
   const cells = bodyView.span / Math.max(frame.width, 1);
   scale.textContent =
     `${RANGE_LABEL[band]} · ${formatUnits(cells)} Surface Cells per pixel` +
@@ -383,10 +431,21 @@ const drawBodyRange = () => {
         ? ` · ${surface.gaps.length} record${surface.gaps.length === 1 ? '' : 's'} carry no coastline and are not drawn`
         : '')
     : 'reading the Catalogue for this Body\u2019s islands';
+  // Named separately, because a Settlement and a Damocles Place are recovered from different
+  // records and neither is a count of the other.
+  const names = surface
+    ? ` · ${count(surface.labels, 'settlement')} Settlement name${count(surface.labels, 'settlement') === 1 ? '' : 's'}` +
+      ` · ${count(surface.labels, 'place')} Damocles Place${count(surface.labels, 'place') === 1 ? '' : 's'}` +
+      // Which names this band is showing, so a reader who can see neither knows to zoom rather
+      // than concluding there are none.
+      (count(shown, 'place') ? '' : ', from the Settlement Range') +
+      (layout.suppressed
+        ? ` · ${layout.suppressed} name${layout.suppressed === 1 ? '' : 's'} withheld where they would collide`
+        : '')
+    : '';
   status.textContent =
     `${body.name} · source slot ${body.sourceIndex} · surface ${SURFACE_SPAN} Surface Cells ` +
-    `an axis, wrapping on both · ${surfaceNote} · Settlements and structure footprints are ` +
-    'not drawn yet';
+    `an axis, wrapping on both · ${surfaceNote}${names} · structure footprints are not drawn yet`;
   recordCamera();
 };
 
@@ -531,6 +590,7 @@ const mountRoster = (loaded: GammaSystemDocument) => {
       bodyId: body.id,
       islandId: null,
       level: 'body',
+      placeId: null,
       view: null
     });
     anchor.dataset['body'] = body.id;
@@ -553,7 +613,13 @@ const pick = (marker: SystemMarker) => {
     view = markerView(marker, system.bodies, fit, frameOf(systemRange));
     drawRange();
   } else {
-    go({ bodyId: marker.id, islandId: null, level: 'body', view: null });
+    go({
+      bodyId: marker.id,
+      islandId: null,
+      level: 'body',
+      placeId: null,
+      view: null
+    });
   }
 };
 
@@ -595,6 +661,7 @@ const handOver = (next: MapView): boolean => {
     bodyId: body.id,
     islandId: null,
     level: 'body',
+    placeId: null,
     view: { span: window.span, x: window.cx, z: window.cz }
   });
   return true;
@@ -662,12 +729,14 @@ const bodyControls = mountCamera({
     );
     const picked = islandAt(surface, bodyView, aspect, point);
     // Picking the sea clears the selection, which is the only way to put the panel back to the
-    // Body without leaving it.
-    if ((picked?.id ?? null) !== state.islandId) {
+    // Body without leaving it. A press on the map is never a Place: a name takes its own
+    // pointer events, so a Place is only ever picked by its label.
+    if ((picked?.id ?? null) !== state.islandId || state.placeId) {
       go({
         bodyId: body.id,
         islandId: picked?.id ?? null,
         level: 'body',
+        placeId: null,
         view: { span: bodyView.span, x: bodyView.cx, z: bodyView.cz }
       });
     }
@@ -689,7 +758,7 @@ const bodyControls = mountCamera({
     // link rather than by zooming, so the disc's anchor may never have been computed.
     const matched = systemWindow(
       body,
-      surfaceAnchor(surface ?? { gaps: [], islands: [] }),
+      surfaceAnchor(surface ?? { gaps: [], islands: [], labels: [] }),
       bodyView
     );
     view = matched;

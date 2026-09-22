@@ -1,7 +1,4 @@
-import {
-  DEFAULT_CAST_SHADOWS,
-  isCastShadowEdge
-} from '../settings/index.ts';
+import { DEFAULT_CAST_SHADOWS, isCastShadowEdge } from '../settings/index.ts';
 import type { PreferencesStore } from './preferences.ts';
 import { applyTypeface, readTypefacePreference } from './typography.ts';
 

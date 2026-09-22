@@ -1,5 +1,6 @@
 import type { MapBounds, MapView } from '../catalogue/mapView.ts';
 import { SURFACE_CELLS } from '../damocles/world.ts';
+import type { SurfaceLabel, SurfaceLabelKind } from './surface.ts';
 
 /// The Atlas Ranges inside one Body: the camera that covers a wrapping surface, and the bands
 /// that camera occupies. Nothing here touches the DOM.
@@ -41,9 +42,12 @@ export const bodyBounds = (frame: {
   period: SURFACE_CELLS
 });
 
-/// The four Ranges within a Body. Bands rather than a hierarchy, because Damocles Islands and
-/// Settlements do not nest (`CONTEXT.md`, **Range**).
-export type BodyRange = 'body' | 'coastal' | 'settlement' | 'street';
+/// The four Ranges within a Body, widest first. Bands rather than a hierarchy, because Damocles
+/// Islands and Settlements do not nest (`CONTEXT.md`, **Range**); the order here is the order of
+/// the camera and says nothing about what contains what.
+export const BODY_RANGES = ['body', 'coastal', 'settlement', 'street'] as const;
+
+export type BodyRange = (typeof BODY_RANGES)[number];
 
 /// Which band a camera occupies, from how many Surface Cells one css pixel covers rather than
 /// from the span, so the band does not move when the window does.
@@ -69,3 +73,26 @@ export const RANGE_LABEL: Readonly<Record<BodyRange, string>> = {
   settlement: 'Settlement Range',
   street: 'Street Range'
 };
+
+/// The band each kind of name appears from, and inward from there.
+///
+/// A Settlement is a whole named area and is the one thing on a Body worth naming at the widest
+/// view, so it is written from the Body Range. A Damocles Place is one location inside one: all
+/// eleven of Eris's fall within CAPITAL CITY's own sixteen cells, so at the Body Range they
+/// would be eleven names on one pixel. They wait for the Settlement Range, which is the band
+/// sized for a Structure Workspace (#412).
+export const LABEL_BAND: Readonly<Record<SurfaceLabelKind, BodyRange>> = {
+  place: 'settlement',
+  settlement: 'body'
+};
+
+/// The names a band shows. Inward of the band a kind appears at, it keeps showing: a Settlement
+/// name does not go away because the reader zoomed into it.
+export const labelsInBand = (
+  labels: readonly SurfaceLabel[],
+  band: BodyRange
+): readonly SurfaceLabel[] =>
+  labels.filter(
+    label =>
+      BODY_RANGES.indexOf(band) >= BODY_RANGES.indexOf(LABEL_BAND[label.kind])
+  );

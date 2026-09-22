@@ -1,11 +1,15 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  BODY_RANGES,
+  LABEL_BAND,
   SURFACE_SPAN,
   bodyBounds,
   fitBody,
+  labelsInBand,
   rangeOf
 } from '../src/atlas/bodyRange.ts';
+import type { SurfaceLabel } from '../src/atlas/surface.ts';
 import {
   MAX_ZOOM,
   clampView,
@@ -147,5 +151,47 @@ describe('the Ranges inside a Body', () => {
   test('survives a frame with no width', () => {
     expect(rangeOf({ cx: 0, cz: 0, span: 1 }, 0)).toBe('body');
     expect(Number.isFinite(fitBody({ height: 0, width: 0 }).span)).toBe(true);
+  });
+});
+
+const name = (kind: 'place' | 'settlement', id: string): SurfaceLabel => ({
+  at: { x: 0, z: 0 },
+  id,
+  kind,
+  name: id
+});
+
+describe('which names a band shows', () => {
+  const labels = [
+    name('settlement', 'CAPITAL CITY'),
+    name('place', 'GUM STORE')
+  ];
+
+  test('writes Settlements from the Body Range and Places from the Settlement Range', () => {
+    // A Settlement is a whole named area and is worth naming at the widest view of a Body. All
+    // eleven of Eris's Places fall inside CAPITAL CITY's own sixteen cells, so at that view
+    // they would be eleven names on one pixel; they wait for the band sized for a workspace.
+    expect(labelsInBand(labels, 'body').map(label => label.name)).toEqual([
+      'CAPITAL CITY'
+    ]);
+    expect(labelsInBand(labels, 'coastal').map(label => label.name)).toEqual([
+      'CAPITAL CITY'
+    ]);
+    expect(labelsInBand(labels, 'settlement').map(label => label.name)).toEqual(
+      ['CAPITAL CITY', 'GUM STORE']
+    );
+  });
+
+  test('keeps a name once its band is reached', () => {
+    // Bands, not a hierarchy: zooming past the Settlement Range does not take the Settlement's
+    // own name away, because the Street Range is inside it rather than instead of it.
+    expect(labelsInBand(labels, 'street').map(label => label.name)).toEqual([
+      'CAPITAL CITY',
+      'GUM STORE'
+    ]);
+    // And every band a kind appears at is one of the four the camera can be in.
+    for (const band of Object.values(LABEL_BAND)) {
+      expect(BODY_RANGES).toContain(band);
+    }
   });
 });

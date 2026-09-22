@@ -55,6 +55,12 @@ export interface CameraControls {
   readonly zoomOut: () => void;
 }
 
+/// Whether an event landed on something inside the map that takes pointer events of its own: a
+/// name on a Body's surface is a link, and a press on one is that link's and not the camera's.
+/// Without this a click on a Settlement both followed the link and picked the sea under it.
+const onItsOwnTarget = (event: Event): boolean =>
+  !!(event.target as Element | null)?.closest?.('a, button');
+
 export const mountCamera = (surface: CameraSurface): CameraControls => {
   const { element } = surface;
   const at = (event: { clientX: number; clientY: number }) => {
@@ -98,7 +104,7 @@ export const mountCamera = (surface: CameraSurface): CameraControls => {
   // alone, double-tap. Anchored under the pointer, so the spot pressed stays put. A press on a
   // marker has already been handled as a pick by then, so in practice this zooms empty space.
   element.addEventListener('dblclick', event => {
-    if (!surface.camera()) {
+    if (!surface.camera() || onItsOwnTarget(event)) {
       return;
     }
     event.preventDefault();
@@ -112,7 +118,7 @@ export const mountCamera = (surface: CameraSurface): CameraControls => {
     y: number;
   } | null = null;
   element.addEventListener('pointerdown', event => {
-    if (!surface.camera() || event.button !== 0) {
+    if (!surface.camera() || event.button !== 0 || onItsOwnTarget(event)) {
       return;
     }
     drag = {
@@ -155,8 +161,8 @@ export const mountCamera = (surface: CameraSurface): CameraControls => {
     if (element.hasPointerCapture(pointerId)) {
       element.releasePointerCapture(pointerId);
     }
-    // A drag that ends over a marker is not a pick. Nothing in the Atlas map takes pointer
-    // events of its own, so unlike the Catalogue there is no click to suppress afterwards.
+    // A drag that ends over a marker is not a pick. A press that started on a name never got
+    // here, so unlike the Catalogue there is no click to suppress afterwards.
     if (!moved && event.type === 'pointerup') {
       const { x, y } = at(event);
       surface.onPick(x, y);
