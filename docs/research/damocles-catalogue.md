@@ -738,9 +738,9 @@ triangular roof records and concave faces.
 
 Desktop end-to-end tests cover direct access without loading Targ, search/filter
 navigation, Back, orbit/zoom/reset, wireframe, visual variants, structure/interior
-links, the Eris placement map, the Gaea Birmingham Island map around 99 CHEVY,
-unknown bodies, unknown records and unavailable or
-incompatible datasets. A storage sentinel remains unchanged. Targ save/resume
+links, the Eris placement list, the Gaea placements around 99 CHEVY, the hand-off
+into the Gamma Atlas at a placement’s own Body Coordinates, unknown bodies,
+unknown records and unavailable or incompatible datasets. A storage sentinel remains unchanged. Targ save/resume
 keys are also seeded and checked byte-for-byte so direct catalogue access cannot
 alter an existing session or save.
 

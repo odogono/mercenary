@@ -1,7 +1,7 @@
 import type { Catalogue, Instance, Mesh, Model } from '../catalogue/data.ts';
-import type { MapPoint, MapView } from '../catalogue/mapView.ts';
 import { DAMOCLES_CELL_UNITS } from '../damocles/residence.ts';
 import { placementHeading } from '../damocles/world.ts';
+import type { MapPoint, MapView } from './mapView.ts';
 import { catalogueBodyId, wrapImages } from './surface.ts';
 
 /// A placed Damocles Instance's footprint as the Atlas draws it: the oriented rectangle its

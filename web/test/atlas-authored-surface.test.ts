@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import { fitBody } from '../src/atlas/bodyRange.ts';
+import { MAX_ZOOM, zoomView } from '../src/atlas/mapView.ts';
 import {
   nearestImage,
   readBodySurface,
@@ -20,7 +21,6 @@ import {
   unitsPerCell
 } from '../src/atlas/system.ts';
 import { parseCatalogue } from '../src/catalogue/data.ts';
-import { MAX_ZOOM, zoomView } from '../src/catalogue/mapView.ts';
 import { SURFACE_CELLS } from '../src/damocles/world.ts';
 import { bodyRadius, readGammaSystem } from '../src/flyover/documents.ts';
 

@@ -1,3 +1,4 @@
+import { readGammaSystem } from '../flyover/documents.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
 import {
   parseCatalogue,
@@ -7,11 +8,15 @@ import {
 } from './data.ts';
 import { detailForms } from './details.ts';
 import { address, element, link, node } from './dom.ts';
-import { mountMap, renderMap, type MapFocus } from './map.ts';
+import { atlasBodyIds, atlasLinkFor, renderPlacements } from './placements.ts';
 import { regionForms } from './regions.ts';
 import { createViewer } from './viewer.ts';
 
 let data: Catalogue;
+// The join from a Catalogue Body to the Atlas's own, read from the Gamma System document. The
+// Catalogue needs none of it to show a record, so a document that cannot be read costs the
+// hand-off into the Atlas and nothing else (#415).
+let atlasBodies: ReadonlyMap<string, string> = new Map();
 let viewer: ReturnType<typeof createViewer> | undefined;
 let viewerError = '';
 const search = node<HTMLInputElement>('search'),
@@ -117,10 +122,20 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
   if (instance) {
     details.append(element('h3', instance.name));
     if (instance.location) {
-      paragraph(
-        details,
+      const where = element(
+        'p',
         `${data.bodies.find(b => b.id === instance.location!.body)?.name} · ${instance.location.position.map(value => value.toFixed(3)).join(', ')} · ${instance.location.coordinateSystem}${instance.location.heading === null ? '' : ` · source instance angle ${instance.location.heading}${model.instanceOrientation?.rotation === 'yaw' ? ` · drawn ${(instance.location.heading + model.instanceOrientation.angleBiasByte) % 256}` : ' · drawn as modelled'}`}`
       );
+      // The hop the Catalogue's own marker map used to be: one map, and this record's place on
+      // it (#415).
+      const atlas = atlasLinkFor(atlasBodies, instance);
+      if (atlas) {
+        const anchor = element('a', 'this placement on the Gamma Atlas');
+        anchor.href = atlas;
+        anchor.id = 'instance-atlas-link';
+        where.append(' · ', anchor);
+      }
+      details.append(where);
     } else if (instance.placement) {
       const parent = data.instances.find(
         value => value.id === instance.placement!.parent
@@ -287,7 +302,7 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
   details.append(list);
 };
 
-const render = (focus: MapFocus) => {
+const render = () => {
   const params = new URL(location.href).searchParams;
   search.value = params.get('q') ?? '';
   kind.value = params.get('kind') ?? '';
@@ -329,13 +344,32 @@ const render = (focus: MapFocus) => {
   if (!body.value) {
     body.selectedIndex = 0;
   }
-  renderMap(data, body.value, instanceId, focus);
+  renderPlacements(data, atlasBodies, body.value);
+};
+
+// The Gamma System document, read only for the Body ids the Atlas keys its URLs by. It catches
+// its own failure rather than joining the dataset's: a Catalogue that cannot reach it still
+// shows every record it holds, and withholds the hand-off rather than blanking the page.
+const readAtlasBodies = async () => {
+  try {
+    const response = await fetch('/payload/damocles/system.json');
+    if (!response.ok) {
+      throw new Error(`Request returned HTTP ${response.status}.`);
+    }
+    return atlasBodyIds(readGammaSystem(await response.json()));
+  } catch {
+    return atlasBodyIds(undefined);
+  }
 };
 
 const start = async () => {
   try {
     assertBrowserDocument(location.pathname, 'catalogue');
-    const response = await fetch('/payload/damocles/catalogue.json');
+    const [response, bodies] = await Promise.all([
+      fetch('/payload/damocles/catalogue.json'),
+      readAtlasBodies()
+    ]);
+    atlasBodies = bodies;
     if (!response.ok) {
       throw new Error(`Dataset request returned HTTP ${response.status}.`);
     }
@@ -437,7 +471,7 @@ const start = async () => {
       option.value = item.id;
       body.append(option);
     }
-    render('cluster');
+    render();
   } catch (error) {
     node('catalogue').hidden = true;
     node('error').hidden = false;
@@ -453,17 +487,12 @@ for (const [input, key] of [
 ] as const) {
   input.addEventListener('input', () => {
     replaceQuery(key, input.value);
-    render('keep');
+    render();
   });
 }
 body.addEventListener('change', () => {
   replaceQuery('body', body.value);
-  renderMap(
-    data,
-    body.value,
-    new URL(location.href).searchParams.get('instance'),
-    'fit'
-  );
+  renderPlacements(data, atlasBodies, body.value);
 });
 node('wireframe').addEventListener('change', event =>
   viewer?.wireframe((event.target as HTMLInputElement).checked)
@@ -474,11 +503,10 @@ node('zoom-out').addEventListener('click', () => viewer?.zoomOut());
 node('model-view').addEventListener('viewer-error', event =>
   message((event as CustomEvent<string>).detail)
 );
-mountMap();
 node('retry').addEventListener('click', () => void start());
 window.addEventListener('popstate', () => {
   if (data) {
-    render('keep');
+    render();
   }
 });
 document.addEventListener('click', event => {
@@ -499,7 +527,7 @@ document.addEventListener('click', event => {
   }
   event.preventDefault();
   history.pushState(null, '', url);
-  render('cluster');
+  render();
   node('model-name').setAttribute('tabindex', '-1');
   node('model-name').focus();
   node('model-name').scrollIntoView({ block: 'start' });

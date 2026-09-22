@@ -5,6 +5,7 @@ import {
   FOOTPRINT_BAND,
   LABEL_BAND,
   ROAD_BAND,
+  STREET_SPAN,
   SURFACE_SPAN,
   bodyBounds,
   fitBody,
@@ -13,14 +14,14 @@ import {
   showsFootprints,
   showsRoads
 } from '../src/atlas/bodyRange.ts';
-import type { SurfaceLabel } from '../src/atlas/surface.ts';
 import {
   MAX_ZOOM,
   clampView,
   panView,
   zoomView,
   type MapBounds
-} from '../src/catalogue/mapView.ts';
+} from '../src/atlas/mapView.ts';
+import type { SurfaceLabel } from '../src/atlas/surface.ts';
 import { SURFACE_CELLS } from '../src/damocles/world.ts';
 
 const FRAME = { height: 600, width: 900 };
@@ -149,6 +150,31 @@ describe('the Ranges inside a Body', () => {
       expect(rangeOf({ cx: 0, cz: 0, span: width * 0.005 }, width)).toBe(
         'street'
       );
+    }
+  });
+
+  test('opens a hand-off in the Street band, at any window and any Body', () => {
+    // What the Catalogue links into (#415). One Surface Cell across the width is the Street
+    // Range on every window a browser can have, so the reader always arrives among footprints
+    // rather than at whichever band their monitor happened to choose.
+    for (const width of [320, 400, 900, 1600, 2560, 5120]) {
+      expect(rangeOf({ cx: 71.51, cz: 136.47, span: STREET_SPAN }, width)).toBe(
+        'street'
+      );
+    }
+    // And it is a camera the Body's own bounds will hold: the zoom ceiling is the surface over
+    // MAX_ZOOM, which is half a cell on a frame no wider than it is tall.
+    for (const frame of [
+      { height: 900, width: 900 },
+      { height: 900, width: 1600 }
+    ]) {
+      expect(
+        clampView(bodyBounds(frame), {
+          cx: 71.51,
+          cz: 136.47,
+          span: STREET_SPAN
+        }).span
+      ).toBe(STREET_SPAN);
     }
   });
 

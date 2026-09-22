@@ -5,6 +5,9 @@
 /// because a URL is only ever in one Range at a time; the System Range's is in engine units and
 /// a Body's will be in Body Coordinates (#411).
 
+import { STREET_SPAN } from './bodyRange.ts';
+import type { MapPoint } from './mapView.ts';
+
 export interface AtlasView {
   readonly span: number;
   readonly x: number;
@@ -103,3 +106,26 @@ export const atlasSearch = (state: AtlasState): string => {
 
 export const atlasHref = (state: AtlasState): string =>
   `/damocles/atlas${atlasSearch(state)}`;
+
+/// Where the Catalogue hands one placed Instance over to the Atlas: that Body, that record
+/// picked, and a camera one Surface Cell wide about its own recovered position (#415).
+///
+/// The Catalogue keeps the record and the Atlas keeps the map, so this is the whole of the hop:
+/// the reader arrives at the Street Range looking at the cell the Instance stands in, with its
+/// footprint selected where one was derived. An Instance the footprint layer does not draw — an
+/// object, a ground record, a structure whose Model recovered no outline — still lands on its
+/// own position, which is a true statement about where it is and an honest silence about what
+/// the map can draw of it.
+export const atlasInstanceHref = (
+  bodyId: string,
+  instanceId: string,
+  at: MapPoint
+): string =>
+  atlasHref({
+    bodyId,
+    instanceId,
+    islandId: null,
+    level: 'body',
+    placeId: null,
+    view: { span: STREET_SPAN, x: at.x, z: at.z }
+  });

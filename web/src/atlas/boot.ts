@@ -1,14 +1,5 @@
 import { parseCatalogue, type Catalogue } from '../catalogue/data.ts';
 import {
-  clampView,
-  formatUnits,
-  gridStep,
-  unproject,
-  zoomOf,
-  type MapPoint,
-  type MapView
-} from '../catalogue/mapView.ts';
-import {
   readGammaSystem,
   type GammaSystemDocument
 } from '../flyover/documents.ts';
@@ -37,6 +28,15 @@ import {
   readBodyFootprints,
   type BodyFootprints
 } from './footprint.ts';
+import {
+  clampView,
+  formatUnits,
+  gridStep,
+  unproject,
+  zoomOf,
+  type MapPoint,
+  type MapView
+} from './mapView.ts';
 import { renderPanel } from './panel.ts';
 import { centreReadout, type ReadoutRow } from './readout.ts';
 import {

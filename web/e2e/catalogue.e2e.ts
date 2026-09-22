@@ -67,9 +67,11 @@ test('the V.I.P. limo opens visibly at its recovered Spaceport placement', async
   await expect(
     page.locator('#details').getByRole('link', { name: /KEY- V.I.P. LIMO/ })
   ).toBeVisible();
-  await expect(
-    page.locator('#map').getByRole('link', { name: /V.I.P. LIMO/ })
-  ).toHaveAttribute('aria-current', 'true');
+  // One map: the placement itself is inspected on the Atlas, at its own Body Coordinates (#415).
+  await expect(page.locator('#instance-atlas-link')).toHaveAttribute(
+    'href',
+    '/damocles/atlas?body=eris&instance=object-slot-5&x=71.51&z=136.47&span=1'
+  );
   const visiblePixels = await page.locator('#model-view').evaluate(element => {
     const canvas = element as HTMLCanvasElement;
     canvas.dispatchEvent(new KeyboardEvent('keydown', { key: '0' }));
@@ -102,7 +104,7 @@ test('the V.I.P. limo opens visibly at its recovered Spaceport placement', async
     .screenshot({ path: 'test-results/catalogue-vip-limo.png' });
 });
 
-test('99 Chevy is mapped on Gaea and links to its key', async ({ page }) => {
+test('99 Chevy is listed on Gaea and links to its key', async ({ page }) => {
   await page.goto('/catalogue?instance=object-slot-2');
   await expect(page.locator('#model-name')).toHaveText('99 CHEVY');
   await expect(page.locator('#details')).toContainText(
@@ -112,19 +114,25 @@ test('99 Chevy is mapped on Gaea and links to its key', async ({ page }) => {
   await expect(page.locator('#details')).toContainText(
     'source instance angle 0 · drawn 64'
   );
-  await expect(page.locator('#map a')).toHaveCount(147);
-  await expect(
-    page.locator('#map').getByRole('link', { name: /99 CHEVY/ })
-  ).toHaveAttribute('aria-current', 'true');
+  await expect(page.locator('#instance-atlas-link')).toHaveAttribute(
+    'href',
+    '/damocles/atlas?body=gaea&instance=object-slot-2&x=519.49&z=1793.49&span=1'
+  );
+  // The Body's own placements stay here as a list, each reaching its own entry: 372 of them on
+  // Gaea, which is the one thing the Atlas is not for (#415).
+  await expect(page.locator('#placement-note')).toContainText(
+    '372 recovered placements · Body Coordinates'
+  );
+  await expect(page.locator('#locations a')).toHaveCount(372);
   await expect(
     page
-      .locator('#map')
-      .getByRole('link', { exact: true, name: 'ELMDON SPACEPORT' })
+      .locator('#locations')
+      .getByRole('link', { name: /^ELMDON SPACEPORT · / })
   ).toHaveAttribute('href', /instance=gaea-surface-40/);
   await expect(
     page
-      .locator('#map')
-      .getByRole('link', { exact: true, name: 'Gaea surface cell 8,2' })
+      .locator('#locations')
+      .getByRole('link', { name: /^Gaea surface cell 8,2 · / })
   ).toHaveAttribute('href', /instance=gaea-surface-28/);
   await page.goto('/catalogue?instance=gaea-surface-40');
   await expect(page.locator('#details')).toContainText('ELMDON SPACEPORT');
@@ -222,15 +230,15 @@ test('direct catalogue access, search, inspection and Back never start Targ', as
   await page.screenshot({ path: 'test-results/catalogue-object.png' });
 });
 
-test('maps known placements and links a surface assembly to building detail', async ({
+test('lists known placements and links a surface assembly to building detail', async ({
   page
 }) => {
   await page.goto('/catalogue?instance=eris-surface-87&q=structure');
   await expect(page.locator('#details')).toContainText('CAPITAL SPACEPORT');
-  await expect(page.locator('#map a')).toHaveCount(207);
+  await expect(page.locator('#locations a')).toHaveCount(207);
   await page
-    .locator('#map')
-    .getByRole('link', { exact: true, name: 'CAPITAL SPACEPORT' })
+    .locator('#locations')
+    .getByRole('link', { name: /^CAPITAL SPACEPORT · / })
     .click();
   await expect(page).toHaveURL(/instance=eris-surface-87/);
   await page.screenshot({ path: 'test-results/catalogue-structure.png' });
@@ -242,10 +250,18 @@ test('maps known placements and links a surface assembly to building detail', as
   await expect(page.locator('#viewer-message')).toBeHidden();
   await page.screenshot({ path: 'test-results/catalogue-interior.png' });
   await page.locator('#body').selectOption('body-1');
-  await expect(page.locator('#map a')).toHaveCount(1);
+  await expect(page.locator('#locations a')).toHaveCount(13);
   await expect(
-    page.locator('#map').getByRole('link', { name: /BLACK BEACON/ })
+    page.locator('#locations').getByRole('link', { name: /BLACK BEACON/ })
   ).toBeVisible();
+  // The Body select carries the hop with it: one Atlas, entered at whichever Body is listed.
+  await expect(page.locator('#placement-hop-link')).toHaveAttribute(
+    'href',
+    '/damocles/atlas?body=icarus'
+  );
+  await expect(page.locator('#placement-hop-link')).toHaveText(
+    'ICARUS on the Gamma Atlas'
+  );
 });
 
 test('a structure offers each recovered region as its own inspection form', async ({
@@ -596,140 +612,51 @@ test('spaceport door states preserve the view and survive direct navigation', as
   await expect(page.locator('#door-control')).toBeHidden();
 });
 
-test('the placement map zooms, pans and resets by pointer and keyboard without losing pins', async ({
+test('a placement hands off to the Atlas at the Street Range', async ({
   page
 }) => {
-  const zoom = async () =>
-    Number(
-      (await page.locator('#map-scale').innerText())
-        .match(/Zoom ([\d,.]+)×/)![1]!
-        .replaceAll(',', '')
-    );
-  const centre = async (name: string) => {
-    const box = (await page
-      .locator('#map')
-      .getByRole('link', { exact: true, name })
-      .boundingBox())!;
-    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
-  };
   await page.goto('/catalogue?instance=eris-surface-89');
   await expect(page.locator('#model-name')).toHaveText('Structure 75');
-  await expect(page.locator('#map a')).toHaveCount(207);
-  await page.locator('#map').scrollIntoViewIfNeeded();
-  // Opening a placement frames its local workspace: neighbouring cells one
-  // unit apart are separate pins.
-  expect(await zoom()).toBeGreaterThan(150);
-  await expect(page.locator('#map-scale')).toContainText('grid 2 units');
-  const office = await centre('STATE OFFICE'),
-    spaceport = await centre('CAPITAL SPACEPORT');
-  expect(Math.abs(office.x - spaceport.x)).toBeGreaterThan(40);
-  await expect(
-    page
-      .locator('#map')
-      .getByRole('link', { exact: true, name: 'STATE OFFICE' })
-  ).toHaveAttribute('aria-current', 'true');
-  // Fit all collapses the workspace back onto one spot, still 207 pins.
-  await page.getByRole('button', { name: 'Fit all' }).click();
-  expect(await zoom()).toBe(1);
-  await expect(page.locator('#map-scale')).toContainText('grid 500 units');
-  const collapsed = await centre('STATE OFFICE');
-  expect(
-    Math.abs(collapsed.x - (await centre('CAPITAL SPACEPORT')).x)
-  ).toBeLessThan(4);
-  await expect(page.locator('#map a')).toHaveCount(207);
-  // Wheel zoom keeps the world under the pointer still. Marker boxes are
-  // pixel-snapped, so the check stays at a zoom where that error is small.
-  await page.mouse.move(collapsed.x, collapsed.y);
-  await page.mouse.wheel(0, -1000);
-  expect(await zoom()).toBeCloseTo(2.7, 0);
-  const anchored = await centre('STATE OFFICE');
-  expect(Math.abs(anchored.x - collapsed.x)).toBeLessThan(8);
-  expect(Math.abs(anchored.y - collapsed.y)).toBeLessThan(8);
-  await page.mouse.wheel(0, -2000);
-  expect(await zoom()).toBeGreaterThan(15);
-  const underPointer = await centre('STATE OFFICE');
-  // Dragging pans by the pointer distance and does not follow a marker link.
-  await page.mouse.move(underPointer.x, underPointer.y);
-  await page.mouse.down();
-  await page.mouse.move(underPointer.x + 40, underPointer.y + 20, { steps: 4 });
-  await page.mouse.move(underPointer.x + 80, underPointer.y + 40, { steps: 4 });
-  await page.mouse.up();
-  const dragged = await centre('STATE OFFICE');
-  expect(dragged.x - underPointer.x).toBeGreaterThan(70);
-  expect(dragged.y - underPointer.y).toBeGreaterThan(30);
-  await expect(page).toHaveURL(/instance=eris-surface-89/);
-  // Buttons and keys.
-  await page.getByRole('button', { name: 'Zoom map in' }).click();
-  const zoomedIn = await zoom();
-  await page.getByRole('button', { name: 'Zoom map out' }).click();
-  expect(await zoom()).toBeLessThan(zoomedIn);
-  await page.locator('#map').focus();
-  await page.keyboard.press('0');
-  expect(await zoom()).toBe(1);
-  await page.keyboard.press('+');
-  await page.keyboard.press('+');
-  expect(await zoom()).toBeCloseTo(2.3, 0);
-  const beforeArrow = await centre('STATE OFFICE');
-  await page.keyboard.press('ArrowLeft');
-  expect((await centre('STATE OFFICE')).x - beforeArrow.x).toBeGreaterThan(30);
-  await page.keyboard.press('-');
-  await page.keyboard.press('-');
-  await page.keyboard.press('-');
-  expect(await zoom()).toBe(1);
-  // The maximum zoom separates a structure from its own ground record, which
-  // sits 0.023 units away, without inventing positions for the coincident pair
-  // one cell over.
-  const pin = await centre('STATE OFFICE');
-  await page.mouse.move(pin.x, pin.y);
-  await page.mouse.wheel(0, -30_000);
-  expect(await zoom()).toBe(8192);
-  await expect(page.locator('#map-scale')).toContainText('grid 0.05 units');
-  const structure = await centre('STATE OFFICE'),
-    ground = await centre('STATE OFFICE ground');
-  expect(
-    Math.hypot(structure.x - ground.x, structure.y - ground.y)
-  ).toBeGreaterThan(12);
-  await page
-    .locator('#map')
-    .getByRole('link', { exact: true, name: 'STATE OFFICE ground' })
-    .click();
-  await expect(page).toHaveURL(/instance=eris-ground-89/);
-  await expect(page.locator('#map-note')).not.toContainText(
-    'shares its position'
+  // The Catalogue draws no map of its own any more: the section states what was recovered,
+  // lists it, and hands the drawing to the Atlas (#415).
+  await expect(page.locator('#map')).toHaveCount(0);
+  await expect(page.locator('#placement-note')).toHaveText(
+    '207 recovered placements · Body Coordinates'
+  );
+  await expect(page.locator('#locations a')).toHaveCount(207);
+  await expect(page.locator('#placement-hop-link')).toHaveAttribute(
+    'href',
+    '/damocles/atlas?body=eris'
   );
   await page
-    .locator('.map-section')
-    .screenshot({ path: 'test-results/catalogue-map-zoomed.png' });
-  // Opening a placement from the list recentres; Back keeps that view.
-  await page
-    .locator('#locations')
-    .getByRole('link', { name: /^PLAYTESTER STORES ground · 73\.500/ })
-    .click();
-  await expect(page).toHaveURL(/instance=eris-ground-29/);
-  await expect(page.locator('#map-note')).toContainText(
-    'shares its position with 1 other'
+    .locator('.placements')
+    .screenshot({ path: 'test-results/catalogue-placements.png' });
+
+  // The hop itself: this record's own cell, at the band its footprint is drawn in.
+  await expect(page.locator('#instance-atlas-link')).toHaveAttribute(
+    'href',
+    '/damocles/atlas?body=eris&instance=eris-surface-89&x=73.5&z=136.48&span=1'
   );
-  const opened = await page.locator('#map-scale').innerText();
-  expect(await zoom()).toBeGreaterThan(150);
-  await page.goBack();
-  await expect(page).toHaveURL(/instance=eris-ground-89/);
-  await expect(page.locator('#map-scale')).toHaveText(opened);
-  await expect(
-    page
-      .locator('#map')
-      .getByRole('link', { exact: true, name: 'STATE OFFICE ground' })
-  ).toHaveAttribute('aria-current', 'true');
-  // A lone outlier opens at 8×; changing body fits the new body.
-  await page
-    .locator('#locations')
-    .getByRole('link', { name: /^DART II/ })
-    .click();
-  expect(await zoom()).toBe(8);
-  await page.locator('#body').selectOption('body-8');
-  expect(await zoom()).toBe(1);
-  await expect(page.locator('#map a')).toHaveCount(147);
-  await page.goBack();
-  await expect(page.locator('#map a')).toHaveCount(207);
+  await page.locator('#instance-atlas-link').click();
+  await expect(page.locator('#title')).toHaveText('Gamma Atlas');
+  await expect(page.locator('#system-scale')).toContainText('Street Range');
+  await expect(page.locator('#panel')).toContainText('STATE OFFICE', {
+    timeout: 30_000
+  });
+  // Arrived on the footprint itself, selected, with its provenance stated.
+  await expect(page.locator('#footprint-derived')).toHaveAttribute(
+    'data-source',
+    'plan'
+  );
+  await expect(page.locator('#panel')).toContainText(
+    'derived from recovered geometry'
+  );
+  await page.screenshot({ path: 'test-results/catalogue-atlas-handoff.png' });
+  // And the Atlas hands the same record back.
+  await expect(page.locator('#footprint-catalogue-link')).toHaveAttribute(
+    'href',
+    '/catalogue?body=body-11&instance=eris-surface-89'
+  );
 });
 
 test('the ledger states measured bank extents and the loads behind them', async ({

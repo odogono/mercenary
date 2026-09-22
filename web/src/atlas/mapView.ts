@@ -1,6 +1,11 @@
-// Pure view arithmetic for the per-body Surface placement map. A view is the
-// world-space window the map shows: its centre and the span, in body-local
-// surface grid units, across the map's full width. Nothing here touches the DOM.
+/// Pure view arithmetic for every Atlas camera. A view is the world-space window a Range shows:
+/// its centre and the span, in that Range's own units, across the map's full width. Nothing here
+/// touches the DOM.
+///
+/// The kernel predates the Atlas: it was written for the Catalogue's per-body marker map, which
+/// the Atlas has since absorbed (#415). It lives here because the Atlas is now its only caller,
+/// and it stays free of Ranges, Bodies and elements so both of the Atlas's cameras — engine
+/// units across the System, Surface Cells across a torus — can be built out of it.
 
 export type MapPoint = { readonly x: number; readonly z: number };
 export type MapView = {
@@ -9,18 +14,13 @@ export type MapView = {
   readonly span: number;
 };
 
-// Fit all keeps the previous framing: placements occupy the middle 80%.
+// A fit leaves a margin: what is fitted occupies the middle 80%.
 const FIT_PADDING = 1.25;
-// Placements separated by more than this fraction of the full-body span are
-// not part of the same local cluster.
-const CLUSTER_GAP = 0.02;
-// A lone placement is shown at this zoom so its surroundings stay legible.
-const LONE_ZOOM = 8;
 export const MAX_ZOOM = 8192;
 
 // `aspect` is the map's height over its width. Because a view's span is measured across the
 // width, a taller-than-wide extent has to be divided by the aspect to fit vertically too. The
-// default of 1 is the square Catalogue map, whose callers pass no aspect.
+// default of 1 is a square frame, for a caller that has none to measure.
 export const fitView = (points: readonly MapPoint[], aspect = 1): MapView => {
   const xs = points.map(point => point.x),
     zs = points.map(point => point.z);
@@ -191,34 +191,6 @@ export const clusterAll = (
   return groups;
 };
 
-// The local cluster around one placement: every placement reachable through
-// gaps no wider than CLUSTER_GAP of the full-body span.
-export const clusterOf = (
-  points: readonly MapPoint[],
-  index: number,
-  fit: MapView
-): number[] => [
-  ...(clusterAll(points, fit.span * CLUSTER_GAP).find(members =>
-    members.includes(index)
-  ) ?? [index])
-];
-
-// The view that opens a placement: its local cluster filling the map, or the
-// placement alone at LONE_ZOOM when nothing else shares its neighbourhood.
-export const clusterView = (
-  points: readonly MapPoint[],
-  index: number,
-  fit: MapView
-): MapView => {
-  const members = clusterOf(points, index, fit).map(i => points[i]!);
-  const local = fitView(members);
-  const extent = local.span / FIT_PADDING;
-  if (members.length === 1 || extent <= 1) {
-    return clampView(fit, { ...local, span: fit.span / LONE_ZOOM });
-  }
-  return clampView(fit, local);
-};
-
 // A grid square is the first 1, 2 or 5 × 10ⁿ units that is at least 40 pixels.
 export const gridStep = (span: number, widthPixels: number): number => {
   const raw = (span * 40) / Math.max(widthPixels, 1);
@@ -230,16 +202,3 @@ export const formatUnits = (value: number): string =>
   value >= 100
     ? Math.round(value).toLocaleString('en-GB')
     : String(Number(value.toPrecision(3)));
-
-export const describeView = (
-  fit: MapView,
-  view: MapView,
-  widthPixels: number
-): string => {
-  const zoom = zoomOf(fit, view);
-  const zoomText =
-    zoom < 10
-      ? zoom.toFixed(1).replace(/\.0$/, '')
-      : Math.round(zoom).toLocaleString('en-GB');
-  return `Zoom ${zoomText}× · view spans ${formatUnits(view.span)} units · grid ${formatUnits(gridStep(view.span, widthPixels))} units`;
-};
