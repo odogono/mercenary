@@ -27,6 +27,7 @@ import { bodyRadius, readGammaSystem } from '../src/flyover/documents.ts';
 const FRAME = { height: 773.5, width: 961.5 };
 /// Any anchor serves for the conversion tests: they check the maths, not the choice of centre.
 const ANCHOR = { x: SURFACE_CELLS / 2, z: SURFACE_CELLS / 2 };
+const ERIS_SLOT = 11;
 
 const gammaSystem = async () =>
   readGammaSystem(await Bun.file('../payload/damocles/system.json').json());
@@ -232,6 +233,43 @@ describe('the hand-over between the Ranges', () => {
       expect(back.cx).toBeCloseTo(view.cx, 6);
       expect(back.cz).toBeCloseTo(view.cz, 6);
       expect(back.span).toBeCloseTo(view.span, 6);
+    }
+  });
+
+  test('survives the Body camera wrapping its own centre', async () => {
+    const system = await gammaSystem();
+    const data = parseCatalogue(
+      await Bun.file('../payload/damocles/catalogue.json').json()
+    );
+    const eris = system.bodies.find(body => body.id === 'eris')!;
+    const anchor = surfaceAnchor(readBodySurface(data, ERIS_SLOT));
+    // The reported bug. A Body camera takes its centre modulo the surface, so a reader who pans
+    // across the seam has a centre on the far side of the anchor in raw numbers while standing
+    // a few cells from it in fact. Taking the raw difference put the System camera a whole
+    // surface out, on the opposite side of the disc, and only after crossing the seam — which
+    // is why it came and went.
+    const view = {
+      cx: eris.position.x + 300,
+      cz: eris.position.z,
+      span: 200
+    };
+    const cell = surfaceWindow(eris, anchor, view);
+    expect(cell.cx).toBeGreaterThan(SURFACE_CELLS);
+    const wrapped = {
+      ...cell,
+      cx: ((cell.cx % SURFACE_CELLS) + SURFACE_CELLS) % SURFACE_CELLS
+    };
+    expect(systemWindow(eris, anchor, wrapped).cx).toBeCloseTo(view.cx, 6);
+
+    // And in general: wherever the Body camera sits on the surface, the System camera it comes
+    // back to is on the Body, never a surface away from it.
+    const half = surfaceUnits(eris) / 2;
+    for (let cx = 0; cx < SURFACE_CELLS; cx += 97) {
+      for (let cz = 0; cz < SURFACE_CELLS; cz += 397) {
+        const out = systemWindow(eris, anchor, { cx, cz, span: 100 });
+        expect(Math.abs(out.cx - eris.position.x)).toBeLessThanOrEqual(half);
+        expect(Math.abs(out.cz - eris.position.z)).toBeLessThanOrEqual(half);
+      }
     }
   });
 

@@ -9,6 +9,7 @@ import {
 } from '../catalogue/mapView.ts';
 import { SURFACE_CELLS } from '../damocles/world.ts';
 import { bodyRadius, bodySize, type GammaBody } from '../flyover/documents.ts';
+import { nearestOffset } from './surface.ts';
 
 /// The Atlas System Range: the recovered Gamma System projected onto the X/Z plane through a
 /// camera, X right and Z up as the Catalogue placement map draws them. Nothing here touches the
@@ -453,9 +454,14 @@ export const systemWindow = (
   view: MapView
 ): MapView => {
   const scale = unitsPerCell(body);
+  // Counted on the nearest wrap image, because a Body camera's centre is taken modulo the
+  // surface: a reader who pans across the seam has a centre on the far side of the anchor in
+  // raw numbers while standing a few cells from it in fact. Taking the raw difference put the
+  // System camera a whole surface out -- 1,697 units on ERIS -- on the opposite side of the
+  // disc, and only when the reader had crossed the seam, which is why it came and went.
   return {
-    cx: body.position.x + (view.cx - anchor.x) * scale,
-    cz: body.position.z + (view.cz - anchor.z) * scale,
+    cx: body.position.x + nearestOffset(view.cx, anchor.x) * scale,
+    cz: body.position.z + nearestOffset(view.cz, anchor.z) * scale,
     span: view.span * scale
   };
 };

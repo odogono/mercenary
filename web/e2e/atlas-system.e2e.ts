@@ -365,6 +365,34 @@ test('hands over without a pop on an island at the surface edge', async ({
   expect(2 * reach).toBeLessThan(4096);
 });
 
+test('zooms out onto the Body from either side of the coordinate seam', async ({
+  page
+}) => {
+  // Reported: zooming out of a Body sometimes jumped the position slightly. A Body camera takes
+  // its centre modulo the surface, so a reader who has crossed the seam sits on the far side of
+  // the anchor in raw numbers; the conversion out took the raw difference and landed a whole
+  // surface away, on the opposite side of the disc. ERIS's surface is centred on cell 3472, so
+  // cell 900 is across the seam from it and cell 3472 is not.
+  for (const cell of [3472, 900]) {
+    await page.goto(`/damocles/atlas?body=eris&x=${cell}&z=437&span=3000`);
+    await expect(page.locator('#system-scale')).toContainText('Range');
+    for (let step = 0; step < 8; step += 1) {
+      if (!/\bbody=/.test(page.url())) {
+        break;
+      }
+      await page.locator('#system-zoom-out').click();
+      await page.waitForTimeout(160);
+    }
+    await expect(page.locator('#range-system')).toBeVisible();
+    const at = new URL(page.url()).searchParams;
+    // Landed on ERIS, whose derived radius is 1,200 units and whose authored surface is 849
+    // units from centre to edge. Before the fix, cell 900 landed 1,024 units out.
+    expect(
+      Math.hypot(Number(at.get('x')) + 630_000, Number(at.get('z')) - 390_000)
+    ).toBeLessThanOrEqual(849);
+  }
+});
+
 test('zooming out of a grouped Body returns to that Body, not its group', async ({
   page
 }) => {

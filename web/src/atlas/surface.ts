@@ -181,7 +181,7 @@ const circularMean = (values: readonly number[]): number => {
 
 /// One coordinate counted from another on a wrapping axis, taken on the nearest image so a cell
 /// across the seam from its origin reads as a small signed offset rather than as four thousand.
-const nearestOffset = (from: number, origin: number): number => {
+export const nearestOffset = (from: number, origin: number): number => {
   const raw = from - origin;
   return raw - Math.round(raw / SURFACE_CELLS) * SURFACE_CELLS;
 };
