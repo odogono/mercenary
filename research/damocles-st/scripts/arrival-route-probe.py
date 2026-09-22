@@ -791,10 +791,18 @@ def navigate(machine: Machine, target: dict, bodies: dict[int, dict], *,
             "centre": centre, "standoff": standoff, "outcome": outcome, "ticks": log}
 
 
-def save_pose(machine: Machine, snapshot_out: Path) -> dict | None:
-    """Statesave wherever the player is standing, if they are on foot."""
+def save_pose(machine: Machine, snapshot_out: Path, *, in_space: bool = False) -> dict | None:
+    """Statesave wherever the player is, on foot or — with `in_space` — in flight.
+
+    `in_space` exists for #439, which needs a pose whose body selector is the
+    VOID sentinel `$78` and whose machine is still running, rather than one of
+    the dead restores that also land on `$78`.
+    """
     state = machine.sample(keep=True, shot=True)
-    if state["onFoot"] != 1:
+    if in_space:
+        if state["occupancy"] != 2:
+            return {"saved": False, "reason": "not in space", "state": state}
+    elif state["onFoot"] != 1:
         return {"saved": False, "reason": "not on foot", "state": state}
     snapshot_out.parent.mkdir(parents=True, exist_ok=True)
     _fifo_send(machine.handle, [
@@ -1035,7 +1043,8 @@ def run(snapshot: Path, roms_root: Path | None, *, target: int | None, board: bo
         space_plan: tuple[tuple[int, float], ...] = (), space_speed: int = 0,
         navigate_to: int | None = None, navigate_seconds: float = 120.0,
         arrive: int = 4000, aim_before_launch: bool = False,
-        capture_name: str | None = None, walk_seconds: float = 0.0,
+        capture_name: str | None = None, capture_space: str | None = None,
+        walk_seconds: float = 0.0,
         walk_plan: tuple[tuple[int, float], ...] = (), chain: int = 0,
         turn_first: float = 0.0, back_step: float = 0.0,
         reverse: bool = False) -> dict:
@@ -1168,6 +1177,9 @@ def run(snapshot: Path, roms_root: Path | None, *, target: int | None, board: bo
                             watch_pcs=watch_pcs, plan=space_plan,
                             space_speed=space_speed,
                             aim_heading=aim_heading)
+                        if capture_space and result["departure"].get("reachedSpace"):
+                            result["captureSpace"] = save_pose(
+                                machine, SNAPSHOTS / f"{capture_space}.sav", in_space=True)
                         if navigate_to is not None and result["departure"].get("reachedSpace"):
                             bodies = system_bodies()
                             if navigate_to not in bodies:
@@ -1391,6 +1403,8 @@ def main() -> None:
                         help="hold the stick forward and log where the player ends up")
     parser.add_argument("--capture", default=None, metavar="NAME",
                         help="after landing, leave the craft and statesave snapshots/NAME.sav")
+    parser.add_argument("--capture-space", default=None, metavar="NAME",
+                        help="once the craft reaches space, statesave snapshots/NAME.sav")
     parser.add_argument("--aim-before-launch", action="store_true",
                         help="turn onto the target heading before pressing Esc")
     parser.add_argument("--arrive", type=int, default=4000,
@@ -1424,7 +1438,8 @@ def main() -> None:
         space_speed=args.space_speed, navigate_to=args.navigate,
         navigate_seconds=args.navigate_seconds, arrive=args.arrive,
         aim_before_launch=args.aim_before_launch, capture_name=args.capture,
-        walk_seconds=args.walk, chain=args.chain, turn_first=args.turn_first,
+        capture_space=args.capture_space, walk_seconds=args.walk, chain=args.chain,
+        turn_first=args.turn_first,
         back_step=args.back_step, reverse=args.reverse,
         walk_plan=tuple(
             (int(leg.split(":")[0], 0), float(leg.split(":")[1]))

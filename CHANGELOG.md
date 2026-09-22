@@ -12,6 +12,23 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **The Gamma System does not orbit; its Bodies turn.** The 32-slot rate table
+  at `$0082DC`, left semantically Unresolved since #181, is each Body's **Body
+  Rotation** — the rate it spins about its own axis. `$04E970` subtracts the
+  accumulator to convert a System-frame bearing into a body-local longitude on
+  arrival, and the three surface passes add it back to leave that frame; the
+  only things that consume the result are the celestial orientation matrix at
+  `$04529C` and the day/night terminator at `$050562`, which compares it against
+  a sub-stellar longitude derived from the Body's own static centre. Poking the
+  rate on ERIS carries the pose from a night starfield into daylight with the
+  Body Coordinate Readout unmoved. `docs/research/damocles-gamma-system.md` now
+  publishes the day of every slot that has one — 23 s for AURORA, 4,181 s for
+  ERIS, none at all for the star DIALIS — and records `VOID`'s fastest-in-table rate as a
+  dead one with no reader. Orbit stasis is Confirmed with it: exactly one
+  instruction pair in the resident image ever writes a Body centre, and it
+  writes DAMOCLES's. `CONTEXT.md` gains **Body Rotation** and rewords **Primary**
+  as a drawn hierarchy rather than a revolution (#439).
+
 - **Damocles Settlement road networks reach the Catalogue.**
   `payload/damocles/catalogue.json` gains a `roadNetworks` collection: the structure
   group's run-length extent grid at `$01E000`, classified the way `$04EC30` classifies

@@ -155,9 +155,12 @@ The code establishes a bounded interpretation:
 
 The source values are therefore **Confirmed per-slot angular phase-rate
 sources**. Whether the phase is axial rotation, orbital phase, or a
-place-relative sky transform is **Unresolved**: notably `VOID` has a nonzero
-value, so this table must not be published as orbital elements without a VOID
-draw-path observation or a controlled perturbation.
+place-relative sky transform was left Unresolved here and is **decided under
+#439 below: it is Body Rotation**, the rate each Body turns about its own axis.
+The `VOID` entry, which is what blocked publishing this as orbital elements, is
+a dead rate with no reader. The per-Body day, and the disproof of the orbital
+reading, are in
+[Issue #439 Body Rotation and orbit stasis](#issue-439-body-rotation-and-orbit-stasis--confirmed).
 
 | Index | Name     | Raw phase-rate source (`$0082DC + 4*index`) |
 | ----: | -------- | ------------------------------------------: |
@@ -205,12 +208,12 @@ are not claimed as a stable table.
 | Hypothesis                                                             | Status                                                | Working-Authority Evidence                                                                                                                                |
 | ---------------------------------------------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | One phase-rate source belongs to each named body/place slot            | **Confirmed**                                         | 32-longword bounded loop; `index * 4` selector reaches the matching phase accumulator; two equal cold-run source blocks.                                  |
-| `$0082DC` contains orbital angular velocities                          | **Partially confirmed**                               | Values drive a per-slot angular phase, but rotation/orbit/sky-transform semantics are not separated and `VOID` also has a value.                          |
+| `$0082DC` contains orbital angular velocities                          | **Disproved (#439)**                                  | The phase never reaches a Body centre. It is Body Rotation: `$04E970` subtracts it to enter a Body's frame and `$059384`/`$0595C8`/`$0597AA` add it to leave it. |
 | A parallel record supplies type (star/planet/moon/comet)               | **Partially confirmed**                               | No explicit type byte was found. Confirmed symmetric draw clusters plus relative centres support a structurally inferred star/9-planet/19-moon partition. |
 | A parallel record supplies Primary                                     | **Partially confirmed**                               | No explicit parent field was found. Cluster anchors support the Primary assignments below; DAMOCLES's Primary remains Unresolved.                         |
 | A parallel record supplies radius                                      | **Confirmed (encoding decoded, #424)**                | `$006040 + selector` controls apparent size in the all-body scan and is subtracted from range for arrival/contact. The field is a packed binary float; the physical unit is still unknown. |
-| A parallel record supplies orbit radius/elements or Cartesian position | **Partially confirmed**                               | X/Y/Z body-centre arrays are recovered. No orbit centre, plane, eccentricity, or separation of orbital from rotational phase is decoded.                  |
-| The game draws bodies at range from VOID                               | **Confirmed (code path), live appearance Unresolved** | The space branch calls the 30-body range/sort/project loop. No live VOID display capture verifies final appearance.                                       |
+| A parallel record supplies orbit radius/elements or Cartesian position | **Cartesian Confirmed; orbit elements Disproved (#439)** | X/Y/Z body-centre arrays are recovered and are the whole of a Body's placement. No orbit centre, plane, period or eccentricity is read anywhere, and only DAMOCLES's centre is ever written. |
+| The game draws bodies at range from VOID                               | **Confirmed (code path), live appearance Unresolved** | The space branch calls the 30-body range/sort/project loop. No live in-flight VOID display capture verifies final appearance; the `$78` selector captured under #439 is the dead prompt, whose view is black. |
 
 #### #181 reproduce path
 
@@ -230,6 +233,303 @@ are not claimed as a stable table.
 The existing `geometry-code.txt` listing under ignored `work/` supplied the
 instruction windows above. It is Working Disassembly / Restricted Material;
 only the decoded facts and reproduce addresses are tracked here.
+
+### Issue #439 Body Rotation and orbit stasis — Confirmed
+
+The phase meaning left Unresolved above is now decided. **The per-slot rate at
+`$0082DC` is each Body's axial rotation rate**: it turns the Body's own surface
+frame under a System whose Body centres never move, so a sun and moons crossing
+a surface sky are the observer's Body turning, not the System revolving. One
+centre is written during play, DAMOCLES's, and that write is the comet's own
+mover, not an orbit integrator.
+
+#### The frame the accumulator rotates
+
+Four instructions read `$0062EA`, and together they bracket the phase as a
+rotation between two frames rather than a position in one.
+
+Three are the surface passes. Each takes the Body Coordinate Step pair the
+panel shows — `$059384` and `$0597AA`'s passes recompute it from the player's
+own body-local position first, `$0595C8`'s reads the `$7A1E` an earlier pass
+left — and then writes a **second, phase-shifted copy of the longitude only**
+to `$042C6C`:
+
+```text
+$059384  add.w  $62ea(a1), d0    ; a1 = the selector alias at $7AA6
+$059388  andi.w #$3ff, d0
+$05938c  move.w d0, $42c6c.l
+```
+
+`$0595C8` and `$0597AA` are the same three instructions in the other two passes;
+`$0597AA`'s pass reaches them from `$059780`, the second Body Coordinate Step
+block already decoded for #371. The panel words `$7A1E`/`$7A22` never receive
+the phase — only the `$042C6C` copy does — which is why the readout holds still
+while the sky turns. `add.w` at a longword's own address reads its
+**high** word, so the angle the sky uses is `(accumulator >> 16) & $3FF` — the
+same ten-bit circle as the yaw word — and one full turn is `$04000000`
+accumulator units.
+
+The fourth read is the inverse, inside the arrival block at `$04E936`:
+
+```text
+$04e942  move.l $799a.w, d0      ; the craft's System position
+$04e94a  sub.l  $5f40(a0), d0    ; minus this Body's centre, a0 = the selector
+$04e94e  sub.l  $5fc0(a0), d1
+$04e962  jsr    $4ea48.l         ; atan2 -> a ten-bit angle
+$04e968  eori.w #$200, d0
+$04e96c  move.w d0, $7a1e.w
+$04e970  sub.w  $62ea(a0), d0    ; minus the phase: System frame -> Body frame
+$04e97c  move.l d0, $7ab2.w      ; the body-local longitude the player lands on
+```
+
+Arriving **subtracts** the accumulator to turn a System-frame bearing into a
+body-local longitude; standing on the surface **adds** it to turn a body-local
+longitude back into a System-frame one. A quantity that converts between a
+Body's own frame and the System frame in exactly those two directions is that
+Body's rotation about its axis. An orbital phase would move the Body's centre,
+and the centres are read here as constants.
+
+#### What consumes the phase-shifted longitude
+
+`$042C6C` and `$042C70` are the sky's own angle pair, and they have two readers:
+
+| Reader    | What it does                                                                                                                                                                             |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `$04529C` | Builds the celestial orientation matrix. It indexes the 1024-entry table at `$064000` with `$042C6C` and `$042C6C + $100` — sine and cosine of the phase-shifted longitude — and with `$042C70` and `$042C70 + $100` for the latitude, then composes them with the further angle words at `$042C2C`/`$042C30`/`$042C34`/`$042C38`. Reached through the vector `$042D18`, which the surface pass calls at `$0597E2`. |
+| `$050562` | The day/night terminator. `$0079BE - $042C6C + $100`, masked to bit 9, then the same test on `$042C70`, selects `$7946` or `$7948` into `$7C86` and sets or clears `$7A4E`.               |
+
+`$0079BE` is written once on arrival, at `$04EA30`, as the atan2 of the Body's
+**own centre** about the System origin, EOR `$200`. DIALIS, the only Body whose
+centre is the origin and the only Body whose rate is zero, sits at that origin,
+so `$0079BE` is the Body's sub-stellar longitude in the System frame. The
+terminator therefore compares a System-frame sub-stellar longitude against a
+System-frame observer longitude, and the only term that moves between them is
+the phase. That is a day.
+
+#### Controlled perturbation
+
+Three runs from the pinned `eris-spaceport-onfoot` pose, each sampling
+`$042C6C` either side of one poke ([`body-phase-probe.py`](../../research/damocles-st/scripts/body-phase-probe.py)):
+
+| Case     | Poke                                     | `$042C6C` before      | `$042C6C` after           | Display                          |
+| -------- | ---------------------------------------- | --------------------- | ------------------------- | -------------------------------- |
+| `spin`   | `$00835C + $2C` := `$00010624`            | 376, 377, 378, 378, 379, 380 | 389, 524, 665, 800, 935, 46 | starfield night → **blue day sky** |
+| `freeze` | `$00835C + $2C` := `$00000000`            | 403, 412, 420, 429, 438, 446 | 448, 448, 448, 448, 448, 448 | night holds; only the panel clock moves |
+| `jump`   | `$0062EA + $2C` += `$01000000` once       | 404, 412, 421, 430, 439, 448 | 705, 714, 723, 731, 740, 749 | night → **day** in one step      |
+
+`jump` adds exactly a quarter of `$04000000` and `$042C6C` steps by exactly
+`$100` of its 1024, which pins the angle's position in the accumulator — and the
+day flag `$7A4E` goes from `$0000` to `$FFFF` on that one poke, so a quarter turn
+of the accumulator is a quarter turn of the sky.
+
+`spin` gives ERIS VOID's own rate — one turn every 1,000 VBLs — and the observer
+crosses the terminator about a quarter of a turn later, within a few seconds of
+play, turning the night starfield into daylight. **The Body Coordinate Readout
+holds at `016-283` and the Cell Readout at `07-08` throughout.** The observer did
+not move; the Body turned under them. That is the distinction the #181 ledger
+could not draw.
+
+#### The published rotation table
+
+Raw source, the derived rate the interrupt adds, and the resulting day. One
+interrupt is one VBL — the same `$051E4E` handler increments `$007B9C`, already
+Confirmed as advancing once per VBL in
+[the limo-key research](damocles-limo-key-pickup.md) — and the Working
+Authority's PAL field rate is
+[50 Hz](damocles-display-rate.md), so a turn in seconds is the VBL count over 50.
+
+| Index | Name     | Raw `$0082DC` | Derived `$00835C` | VBLs a turn | Seconds a turn |
+| ----: | -------- | ------------: | ----------------: | ----------: | -------------: |
+|     0 | DIALIS   |  `$00000000`  |     `$00000000`   |           — |              — |
+|     1 | ICARUS   |  `$00152400`  |     `$00005490`   |     3,100.0 |           62.0 |
+|     2 | MIDAS    |  `$000055C0`  |     `$00000157`   |   195,652.7 |        3,913.1 |
+|     3 | ACHERON  |  `$000FCA80`  |     `$00003F2A`   |     4,150.2 |           83.0 |
+|     4 | DION     |  `$00023F80`  |     `$000008FE`   |    29,152.4 |          583.0 |
+|     5 | ATROPOS  |  `$00219B80`  |     `$0000866E`   |     1,950.0 |           39.0 |
+|     6 | CLOTHO   |  `$00056A80`  |     `$000015AA`   |    12,100.4 |          242.0 |
+|     7 | LACHESIS |  `$0000FD00`  |     `$000003F4`   |    66,313.1 |        1,326.3 |
+|     8 | GAEA     |  `$0000AC80`  |     `$000002B2`   |    97,259.2 |        1,945.2 |
+|     9 | CRONUS   |  `$00009E40`  |     `$00000279`   |   106,017.2 |        2,120.3 |
+|    10 | CYCLOPES |  `$0006EF40`  |     `$00001BBD`   |     9,450.6 |          189.0 |
+|    11 | ERIS     |  `$00005040`  |     `$00000141`   |   209,061.9 |        4,181.2 |
+|    12 | SOLON    |  `$00005FC0`  |     `$0000017F`   |   175,219.0 |        3,504.4 |
+|    13 | THEON    |  `$00326980`  |     `$0000C9A6`   |     1,300.0 |           26.0 |
+|    14 | VESTA    |  `$000C5D80`  |     `$00003176`   |     5,300.0 |          106.0 |
+|    15 | METIS    |  `$0000EC00`  |     `$000003B0`   |    71,089.9 |        1,421.8 |
+|    16 | LUCAN    |  `$0003CC80`  |     `$00000F32`   |    17,251.6 |          345.0 |
+|    17 | LOGOS    |  `$00002CC0`  |     `$000000B3`   |   374,909.9 |        7,498.2 |
+|    18 | AURORA   |  `$0038FCC0`  |     `$0000E3F3`   |     1,150.0 |           23.0 |
+|    19 | TRITON   |  `$00003D80`  |     `$000000F6`   |   272,800.3 |        5,456.0 |
+|    20 | PAN      |  `$00021700`  |     `$0000085C`   |    31,359.3 |          627.2 |
+|    21 | THALIA   |  `$0009EE00`  |     `$000027B8`   |     6,600.0 |          132.0 |
+|    22 | JUNO     |  `$00015B80`  |     `$0000056E`   |    48,279.8 |          965.6 |
+|    23 | BACCHUS  |  `$001ABFC0`  |     `$00006AFF`   |     2,450.0 |           49.0 |
+|    24 | JASON    |  `$00020900`  |     `$00000824`   |    32,202.0 |          644.0 |
+|    25 | TOLOSA   |  `$00039C40`  |     `$00000E71`   |    18,152.2 |          363.0 |
+|    26 | PERSEUS  |  `$00011300`  |     `$0000044C`   |    61,008.1 |        1,220.2 |
+|    27 | MENTOR   |  `$00008E00`  |     `$00000238`   |   118,149.4 |        2,363.0 |
+|    28 | SAPPHIRE |  `$001179C0`  |     `$000045E7`   |     3,750.1 |           75.0 |
+|    29 | DAMOCLES |  `$00002E80`  |     `$000000BA`   |   360,800.3 |        7,216.0 |
+|    30 | VOID     |  `$00418900`  |     `$00010624`   |     1,000.0 |           20.0 |
+
+Every fast Body lands on a whole second: 62, 83, 39, 242, 189, 26, 106, 23, 132,
+49, 75 and — for the sentinel — 20. That is not available as a check on the slow
+Bodies, because only `raw >> 6` reaches the accumulator: one step of the derived
+rate is ±13 s of ERIS's day and ±42 s of LOGOS's, so a whole-second period there
+cannot be told from its neighbours. Read the fast rows as corroborating the
+50 Hz field rate rather than the table as authored in seconds throughout.
+
+**DIALIS's rate is zero.** The star at the System origin is the one Body the
+engine never turns — and, being at the origin, the one Body for which the
+sub-stellar longitude is undefined. Zero here is a star that does not rotate,
+not a Body that does not orbit.
+
+#### Orbit stasis — Confirmed
+
+Nothing in the resident image writes the X array at `$005F40` or the Z array at
+`$005FC0` except **one instruction pair, for one slot**:
+
+```text
+$051F36  move.l d0, $5fb4.w       ; $5F40 + $74 = DAMOCLES X
+$051F3A  move.l d1, $6034.w       ; $5FC0 + $74 = DAMOCLES Z
+```
+
+`$051E88` is DAMOCLES's own mover: it steps the comet's centre along a record
+reached through `$782C` under the game clock at `$793C`, and at
+`$051F26..$051F32` it carries the player's own position along when they are
+standing on it. What that record holds and what path it describes is
+[#440](https://github.com/odogono/mercenary/issues/440); it is named here only
+because orbit stasis needs the one exception accounted for.
+
+Every other reference to `$005F40`, `$005FC0`, `$00626A`, `$0060C0` and
+`$006040` in the listing is a source operand. The one apparent exception,
+`$05491E movea.l #$5f40, a3` followed by four `move.l d6, -(a3)`, predecrements:
+it writes `$005F30..$005F3F`, below the array, and never inside it.
+
+The one write to a Y entry is not motion either:
+
+```text
+$04C9B6  move.w #$8000, $626a(a0)
+```
+
+That is the destruction marker. `$04C98E` records a Body's centre into
+`$0064D0`/`$0068D0`/`$006CD0`, forces its Y negative so the all-body scan's
+`tst.w $626a(a0); bmi` skips it, and bumps the count at `$007BEA` toward `$1E`.
+A destroyed Body leaves the draw; it does not move.
+
+Observationally, over 35,617 interrupts of the pinned `body-phase` scenario and
+again over 40,591 interrupts of a live `stasis` run, the Y array is byte-identical
+and **DAMOCLES is the only slot whose X or Z changes**. Normalising slot 29 to
+zero reproduces the #181 cold-run hashes
+`6d94a5aa…51abddac` (X) and `800b0a03…a1aff1e1` (Z) at both ends of the run, so
+the stasis holds within a session as well as across independent cold enters.
+
+#### VOID — rate integrated, no reader
+
+Slot 30 is integrated like every other: in the `body-phase` scenario its
+accumulator advanced by exactly `$00010624 × 35,617`. Nothing reads it.
+
+- The three surface readers are the only writers of `$042C6C`, and the space
+  branch at `$05989C..$059928` is not one of them: it calls `$042D14` but never
+  `$042D18`, so `$04529C` is not reached and `$042C6C` keeps whatever the last
+  surface pass left in it.
+- The fourth reader, `$04E970`, is the arrival inverse. Its `a0` is the selector
+  of the Body being landed on, never the `$78` sentinel.
+- `$050562`'s terminator is reached from the surface passes, not from the space
+  branch.
+
+So VOID's `$00418900` — a 1,000-VBL turn, the fastest entry in the table — is a
+**dead rate**: authored into the slot the sentinel shares with the named Bodies,
+integrated every VBL, and consumed by nothing while the selector is `$78`. It is
+best read as the table having 32 uniform slots rather than 31 Bodies and an
+exception.
+
+A live capture with the selector at `$78` was taken from the `midas` dead-restore
+pose: selector `$0078`, the view wholly black, the panel naming `VOID` over the
+message `YOU'RE A BIT DEAD — TO QUIT OR LOAD PRESS HELP`, and `$042C6C` frozen at
+466 — the value the last surface pass left. That state also sets the pause gate
+`$007A26`, so nothing advances in it at all; the VOID rate's advance is evidenced
+from the live Eris and scenario runs instead, where the selector is ERIS and
+slot 30 still integrates.
+
+**A live in-flight capture was attempted and not obtained**, so the reported
+white VOID view is neither reproduced nor contradicted here; the only `$78` view
+this note can show is the dead prompt's black. `arrival-route-probe.py` gained
+`--capture-space` for it — it statesaves once occupancy reaches 2 — but neither
+craft reachable from `eris-spaceport-onfoot` will fly (slot 7 and the nearest
+neighbour both answer system string 22, `SHIP NOT REFITTED FOR FURTHER FLIGHT`),
+and a `vesta-parliament-4-6` run boarded slot 3 and then sat on the ground with
+`$7ACA` still reading contact for the whole climb window. The claim that VOID's
+rate is dead does not rest on that capture: it rests on the space branch reading
+no `$0062EA` at all.
+
+#### The reset, and the third `$00835C` reference
+
+The #181 reproduce path lists three references to the derived table and explains
+two. The third, `$0510AC`, is not a read at all:
+
+```text
+$051058  move.w #$1, $7a0c.w
+$05105e  move.l #$ffffffff, $7aa6.w   ; no current Body
+$051080  move.l #$ffffc338, $793c.w   ; the Impact Clock, back to the start
+$0510a8  move.w #$1f, d0
+$0510ac  lea.l  $835c.l, a0
+$0510b2  clr.l  (a0)+                 ; 32 derived rates
+$0510b4  clr.l  -$2076(a0)            ; and the 32 accumulators at $0062EA
+$0510b8  dbra   d0, $510b2
+```
+
+`$051052` is the reset. It zeroes both the derived table and every accumulator,
+and sets the selector alias to `$FFFFFFFF`, so a restarted game starts every
+Body's rotation from phase zero rather than carrying the previous session's.
+`$04D648` refills the derived table from `$0082DC` on the next world load; the
+source table is never written.
+
+#### The pause gate, and why the Bacchus route was not available
+
+`$051E26` tests `$007A26` and skips the whole interrupt body — the accumulate at
+`$051E4E` included — when it is set. `$0555BE` sets it on scancode `$1C`
+(Return) and `$0555C8` clears it on any other key, and `$05100A` sets it in the
+death routine at `$050FF8`, which also forces the selector to `$78`. The probe
+therefore presses Left Shift (`$2A`) rather than poking the flag.
+
+Route 2's Bacchus leg did not produce a full turn. `damocles.bacchus.transporter`
+restores alive but reaches `$050FF8` and the dead prompt within a few hundred
+VBLs: the last live sample of run `body-phase-rate-20260922T094343Z-6f13d75e`
+is interrupt 121,635 with the gate clear, and the next is 121,747 with it set.
+Its accumulators advance at exactly the derived rate up to that point and then
+stop with everything else. A Bacchus day is 2,450 VBLs, so no pose currently
+pinned covers one. The full-turn evidence is the `spin` run on ERIS instead,
+which crosses a terminator under a rate the engine itself uses.
+
+#### #439 hypothesis ledger
+
+| Hypothesis                                                              | Status                                  | Working-Authority Evidence                                                                                                                                                                                             |
+| ----------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `$0082DC` is each Body's axial rotation rate                            | **Confirmed**                           | `$04E970` subtracts the accumulator to enter the Body frame, `$059384`/`$0595C8`/`$0597AA` add it to leave it; `$04529C` and the terminator `$050562` are its only consumers; `spin`, `freeze` and `jump` reproduce.  |
+| `$0082DC` contains orbital angular velocities                           | **Disproved**                           | The phase never reaches a Body centre. The centres are read as constants by the same block that subtracts the phase, and only DAMOCLES's is ever written.                                                              |
+| A sun and moons crossing a surface sky are the observer's Body turning  | **Confirmed**                           | `spin` carries ERIS from night to day with the Body Coordinate Readout and Cell Readout unchanged.                                                                                                                      |
+| Body centres other than DAMOCLES move during play                       | **Disproved**                           | One centre writer in the image, `$051F36`/`$051F3A`, slot 29 only; Y array byte-identical and DAMOCLES the only X/Z change over 35,617 and 40,591 interrupts.                                                          |
+| A parallel record supplies orbit elements                                | **Disproved as a live record**           | No orbit centre, plane, period or eccentricity is read anywhere. The System the engine draws is static apart from the comet, so there is nothing for orbital elements to drive. Authored elements outside the resident image are not addressed here. |
+| VOID's rate has a consumer                                              | **Disproved (dead rate)**               | The space branch writes no `$042C6C` and reads no `$0062EA`; the arrival inverse never sees the `$78` selector.                                                                                                        |
+| One interrupt of `$051E4E` is one VBL                                    | **Confirmed**                           | `$007B9C` advanced 35,617 against `$051D96`'s 35,617 in the pinned scenario, and `$007B9C` is already Confirmed as one per VBL.                                                                                         |
+
+#### #439 reproduce path
+
+| Step                                | Command / evidence                                                                                                                                                                | Expected result                                                                                                                                                              |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Pin the scenario                     | `research/damocles-st/lab observe --scenario research/damocles-st/scenarios/body-phase.json`                                                                                       | Two RAM captures `observed.ram` and `observed-later.ram` about 36,000 interrupts apart; scenario SHA-256 `34298de6…0d66169c`. The gap is not fixed — `wait_vbls` is a host sleep — so read it from `$051D96` rather than assuming it. |
+| Verify it                            | `research/damocles-st/lab verify --run research/damocles-st/work/observe-body-phase-20260922T101226Z-a7df7dd5`                                                                     | Manifest and all 22 artifacts verify.                                                                                                                                        |
+| Confirm the rate, every slot         | in those two RAM files, `($0062EA + 4i)` delta against `($00835C + 4i) × ($051D96` delta`)`                                                                                        | all 32 slots match exactly, whatever the elapsed count is. The cited run elapsed 35,617 and `$007B9C` advanced 35,617 with it; two earlier runs of the same scenario elapsed 36,800 and 36,271 and matched on every slot as well. |
+| Confirm the tables are the #181 ones | SHA-256 of 128 bytes at `$0082DC` and at `$00835C` in `observed.ram`                                                                                                            | `164bf36e…252deb6b` and `b7b8587d…f7932c9d`.                                                                                                                                  |
+| Confirm orbit stasis                 | hash 128 bytes at `$005F40`, `$00626A`, `$005FC0` in both captures; then re-hash X and Z with slot 29 zeroed                                                                       | Y equal; X and Z differ; normalised X `6d94a5aa…51abddac` and Z `800b0a03…a1aff1e1` equal in both, and equal to the #181 cold runs.                                           |
+| Watch the rate live                  | `python3 research/damocles-st/scripts/body-phase-probe.py --case rate --snapshot research/damocles-st/snapshots/eris-spaceport-onfoot.sav`                                         | `mismatched slots: none`; run `body-phase-rate-20260922T100105Z-0b31dc51`. Every run below defaults to the same pose and probe, SHA-256 `dfbb8375…f7e277cc9`.                 |
+| Spin the Body                        | `--case spin --ordinary-rate --samples 12 --interval 2.0`                                                                                                                         | `$042C6C` steps ~136 a sample and the sky goes from starfield to blue; run `body-phase-spin-20260922T100138Z-a3f08f4c`.                                                       |
+| Freeze it                            | `--case freeze --samples 12`                                                                                                                                                      | `$042C6C` holds; run `body-phase-freeze-20260922T094849Z-7e8df468`.                                                                                                          |
+| Jump it                              | `--case jump --samples 12`                                                                                                                                                        | `$042C6C` steps by `$100` and `$7A4E` goes `$0000` → `$FFFF`; run `body-phase-jump-20260922T094929Z-78fd8c24`.                                                                |
+| Confirm stasis live                  | `--case stasis --samples 24`                                                                                                                                                      | `moved: DAMOCLES (slot 29)` and nothing else over 40,591 interrupts; run `body-phase-stasis-20260922T095020Z-31658e46`.                                                       |
+| Capture the VOID selector            | `--case void --snapshot research/damocles-st/snapshots/rehosted/midas.sav`                                                                                                        | selector `0x0078`, black view, `$042C6C` frozen; run `body-phase-void-20260922T095309Z-eeae57ad`.                                                                             |
+| Account for the readers              | `research/damocles-st/lab xref --run research/damocles-st/work/observe-body-phase-20260922T101226Z-a7df7dd5 --address 0x62ea`, then read `$04E936..$04E97C`, `$05935A..$059392`, `$0595C0..$0595D6`, `$0597A2..$0597B8`, `$04529C..$0452F8`, `$050562..$05057E` in the ignored listing | Four reads: one inverse in the arrival block and three surface passes, all three writing `$042C6C`; two consumers of `$042C6C`, the orientation matrix and the terminator. |
 
 ### Issue #181 range-draw lists — Confirmed reader, Primary still unresolved
 
@@ -940,11 +1240,14 @@ best leads (21-byte place stride, ~0x1A key stride, pointer scan into the body
 name table). Not completed here:
 
 - An explicit per-body type / Primary field
-- Meaning of the confirmed per-slot angular phase rate (axial rotation vs
-  orbital phase vs place-relative sky transform)
-- Orbit centre/distance/plane and physical units for centre/extent values
-- Controlled current-body perturbation (the available captures are passive)
-- A live VOID observation (the body-at-range code path is decoded)
+- Physical units for centre/extent values. Orbit centre, distance and plane are
+  no longer among them: #439 shows the engine holds no orbital elements at all,
+  because the System it draws is static apart from the comet
+- A live in-flight VOID observation with the craft in space (the body-at-range
+  code path is decoded, and the `$78` selector has now been captured, but only
+  in the dead prompt, whose view is black rather than the reported white).
+  `arrival-route-probe.py --capture-space` exists for it; what is missing is a
+  pinned pose whose craft will actually leave the ground
 - The attempted boarded-craft memory perturbation and launch replay remained on
   Eris; it therefore supplies no affirmative live-VOID evidence
 - Direct metadata confirmation of the structurally inferred 9+19 partition
@@ -967,6 +1270,8 @@ name table). Not completed here:
 | VOID all-body drawing                                  | Space branch `$0598A6..$059912` calls 30-body scan `$052DB0`                                               |
 | 32×4 phase-rate source at `$0082DC`                    | Same runs; equal bounded SHA-256; `$04D648..$04D660` source-to-derived loop                                |
 | Phase-rate slot binding                                | `$051E4E..$051E6A` accumulator loop and current-body indexed reads at `$05935A..$059392`                   |
+| Phase rate is Body Rotation, not orbit                 | The frame pair `$04E970` (subtract) and `$059384`/`$0595C8`/`$0597AA` (add); consumers `$04529C` and the terminator `$050562`; `spin`/`freeze`/`jump` perturbation runs (#439) |
+| Body centres are static apart from DAMOCLES            | One centre writer in the image, `$051F36`/`$051F3A` for slot 29; `body-phase` scenario and a live `stasis` run leave the Y array byte-identical and change only slot 29's X/Z (#439) |
 | Place labels ~`$023E56+`                               | Same runs; ERIS panel on PNG                                                                               |
 | `016-283` is `(position >> 18)` an axis, rescaled 1024→1000 | Engine blocks `$05935A`, `$059780`, `$04E390` and the landing inverse `$04E968`; 23 pinned memstates across 15 Bodies; #208's six poke samples (#371) |
 | The System Coordinate Readout's cell is `$10000` units | Mode switch `$04D912`; formatter `$04E414`–`$04E4B4`; the space triple `$799A`/`$799E`/`$79A2` copied to the camera longwords at `$058CEA`; high words of the 29 published centres reproduce the secondary source's shared `10-00-05` and its red axes (#382) |

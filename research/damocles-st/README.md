@@ -24,6 +24,7 @@ research/damocles-st/lab observe --scenario research/damocles-st/scenarios/works
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/deadline-clock.json
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/script-dispatch.json
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/horizon-slot-writer.json
+research/damocles-st/lab observe --scenario research/damocles-st/scenarios/body-phase.json
 python3 research/damocles-st/scripts/panel-readout-probe.py --roms /path/to/roms \
   --snapshots /path/to/snapshots clock --vbls 250
 python3 research/damocles-st/scripts/panel-readout-probe.py --roms /path/to/roms \
@@ -132,6 +133,11 @@ Nothing is injected: walking is the `$79C2` soft-copy the laboratory already use
 and boarding is a real key event. See [departure
 routes](../../docs/research/damocles-arrival-routes.md) for the board gate, the
 per-craft key byte at `$7272`, and the route attempts these runs record.
+
+`--capture-space NAME` statesaves once the craft reaches space — occupancy 2,
+body selector `$FFFF` — which is the one live state whose body selector is the
+VOID sentinel and whose machine is still running. `--capture` remains the on-foot
+capture taken after a landing.
 
 ## First-offer checkpoint probe (#287)
 
@@ -491,6 +497,45 @@ refusals being title-screen or TOS-only captures.
 Findings and evidence identities are in
 `docs/research/damocles-eris-ground.md` and
 `docs/research/damocles-structure-draw-selection.md`.
+
+## Body phase probe (#439)
+
+Whether the 32-slot phase-rate table at `$0082DC` is each Body's axial rotation
+rate — and whether any Body centre other than DAMOCLES ever moves.
+
+```sh
+python3 research/damocles-st/scripts/body-phase-probe.py --case rate
+python3 research/damocles-st/scripts/body-phase-probe.py --case spin \
+  --ordinary-rate --samples 12 --interval 2.0
+python3 research/damocles-st/scripts/body-phase-probe.py --case freeze
+python3 research/damocles-st/scripts/body-phase-probe.py --case jump
+python3 research/damocles-st/scripts/body-phase-probe.py --case stasis --samples 24
+python3 research/damocles-st/scripts/body-phase-probe.py --case void \
+  --snapshot research/damocles-st/snapshots/rehosted/midas.sav
+```
+
+`rate` checks every slot's accumulator at `$0062EA` against its derived rate at
+`$00835C` times the elapsed count of the interrupt counter `$051D96`, and
+cross-checks that counter against `$007B9C`. `spin`, `freeze` and `jump` poke the
+current Body's own entry and sample the sky longitude latch `$042C6C` either side
+of the poke, with a screenshot per sample; `spin` on ERIS carries the pose from
+night into day without moving the player. `stasis` hashes the X/Y/Z body-centre
+arrays across a long run and names every slot that changed. `void` records a pose
+whose selector is already the `$78` sentinel.
+
+Several poses restore, or die into, the game's own pause at `$007A26`, which
+gates the whole interrupt body and stops every accumulator. `--press-first
+SCANCODE` presses a key to clear it the way `$0555C8` does, rather than poking
+the flag, and the sampling loop re-presses whenever it sees the gate set.
+
+The pinned scenario `scenarios/body-phase.json` covers the same ground without a
+memstate: two RAM captures far enough apart to check every slot's rate and to
+hash the centre arrays at both ends. How far apart is not fixed — the harness's
+`wait_vbls` is a host sleep — so take the elapsed count from `$051D96` in the
+captures themselves rather than from the scenario.
+
+Findings are in
+[the Gamma System note](../../docs/research/damocles-gamma-system.md#issue-439-body-rotation-and-orbit-stasis--confirmed).
 
 ## Failures and acceptance
 
