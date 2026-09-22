@@ -4,7 +4,9 @@ import { fitBody } from '../src/atlas/bodyRange.ts';
 import {
   catalogueBodyId,
   islandAt,
+  nearestImage,
   readBodySurface,
+  surfaceAnchor,
   wrapImages
 } from '../src/atlas/surface.ts';
 import { parseCatalogue, type Catalogue } from '../src/catalogue/data.ts';
@@ -267,5 +269,92 @@ describe('picking a Damocles Island', () => {
         expect(islandAt(surface, view, ASPECT, centre)?.id).toBe(island.id);
       }
     }
+  });
+});
+
+describe('the surface anchor', () => {
+  test('centres a ring about the coordinate origin instead of quartering it', async () => {
+    const data = await catalogue();
+    const lucan = readBodySurface(data, LUCAN);
+    // LUCAN's twelve records ring the coordinate origin. Their arithmetic mean is the far side
+    // of the surface, so cell 2048 drew the ring as four broken arcs in the four corners. The
+    // circular mean is the ring's own centre.
+    const anchor = surfaceAnchor(lucan);
+    expect(anchor.x).toBeCloseTo(6, 0);
+    expect(anchor.z).toBeCloseTo(6, 0);
+    // And every record is then a couple of hundred cells from it, so the ring is one ring.
+    for (const island of lucan.islands) {
+      for (const cell of nearestImage(island.outline, anchor)) {
+        expect(Math.abs(cell.x - anchor.x)).toBeLessThan(260);
+        expect(Math.abs(cell.z - anchor.z)).toBeLessThan(260);
+      }
+    }
+  });
+
+  test('puts every Body\u2019s islands inside one square, with no copy needed', async () => {
+    const data = await catalogue();
+    const bodies = [...new Set(data.islands.map(island => island.body))].map(
+      id => Number(id.replace('body-', ''))
+    );
+    // The property the single-image drawing rests on, and a property of the recovered data
+    // rather than something the code can guarantee: after nearest-imaging, every vertex of
+    // every Body lies within half a surface of its anchor. The worst is ERIS at 1,952 of the
+    // 2,048 available, so a payload change could break this and should fail here if it does.
+    let worst = 0;
+    let withCoastlines = 0;
+    for (const index of bodies) {
+      const surface = readBodySurface(data, index);
+      if (!surface.islands.length) {
+        continue;
+      }
+      withCoastlines += 1;
+      const anchor = surfaceAnchor(surface);
+      for (const island of surface.islands) {
+        for (const cell of nearestImage(island.outline, anchor)) {
+          worst = Math.max(
+            worst,
+            Math.abs(cell.x - anchor.x),
+            Math.abs(cell.z - anchor.z)
+          );
+        }
+      }
+    }
+    expect(withCoastlines).toBe(9);
+    expect(worst).toBeLessThan(SURFACE_CELLS / 2);
+    expect(Math.round(worst)).toBe(1952);
+  });
+
+  test('shifts a seam-crossing record bodily, never per vertex', async () => {
+    const data = await catalogue();
+    const eris = readBodySurface(data, ERIS);
+    const anchor = surfaceAnchor(eris);
+    const snow = eris.islands.find(
+      island => island.areaName === 'SNOW ISLAND'
+    )!;
+    const moved = nearestImage(snow.outline, anchor);
+    // Same ring, translated by whole surfaces: every vertex moves by the same amount, so the
+    // polygon cannot tear.
+    expect(moved).toHaveLength(snow.outline.length);
+    const dx = moved[0]!.x - snow.outline[0]!.x;
+    const dz = moved[0]!.z - snow.outline[0]!.z;
+    expect(dx % SURFACE_CELLS).toBe(0);
+    expect(dz % SURFACE_CELLS).toBe(0);
+    for (const [index, point] of moved.entries()) {
+      expect(point.x - snow.outline[index]!.x).toBe(dx);
+      expect(point.z - snow.outline[index]!.z).toBe(dz);
+    }
+    // ERIS's anchor is cell 3472, so SNOW ISLAND at -8..56 belongs on the far image.
+    expect(dx).toBe(SURFACE_CELLS);
+  });
+
+  test('falls back to the middle for a Body with no coastline', async () => {
+    const data = await catalogue();
+    // 21 records carry only the coastline-less stub, and their Bodies have nothing to centre on.
+    const stub = readBodySurface(data, 0);
+    expect(stub.islands).toHaveLength(0);
+    expect(surfaceAnchor(stub)).toEqual({
+      x: SURFACE_CELLS / 2,
+      z: SURFACE_CELLS / 2
+    });
   });
 });

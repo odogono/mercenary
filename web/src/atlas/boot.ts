@@ -5,6 +5,7 @@ import {
   gridStep,
   unproject,
   zoomOf,
+  type MapPoint,
   type MapView
 } from '../catalogue/mapView.ts';
 import {
@@ -27,18 +28,29 @@ import {
   placeLabels
 } from './draw.ts';
 import { renderPanel } from './panel.ts';
+import { centreReadout, type ReadoutRow } from './readout.ts';
 import {
   SYSTEM_RANGE,
   atlasHref,
   readAtlasState,
   type AtlasState
 } from './state.ts';
-import { islandAt, readBodySurface, type BodySurface } from './surface.ts';
+import {
+  islandAt,
+  readBodySurface,
+  surfaceAnchor,
+  type BodySurface
+} from './surface.ts';
 import {
   fitSystem,
+  insideSurface,
   markerAt,
   markerView,
   projectSystem,
+  showsSurface,
+  surfaceWindow,
+  systemBounds,
+  systemWindow,
   type SystemMarker,
   type SystemProjection
 } from './system.ts';
@@ -67,6 +79,8 @@ const bodyCanvas = node<HTMLCanvasElement>('body-map');
 const labelLayer = node('system-labels');
 const roster = node('roster');
 const panel = node('panel');
+const systemCentre = node('system-centre');
+const bodyCentre = node('body-centre');
 
 title.textContent = 'Gamma Atlas';
 
@@ -95,6 +109,31 @@ let bodyView: MapView | undefined;
 let catalogue: Catalogue | undefined;
 let catalogueRequest: Promise<void> | undefined;
 let surface: BodySurface | undefined;
+/// The Body whose surface is currently drawn on its disc at the System Range, and its islands.
+/// Separate from `surface`, which belongs to the Body Range.
+let onDisc: string | undefined;
+let discSurface: BodySurface | undefined;
+/// Where that Body's surface is centred, in Surface Cells: its islands' own wrap-aware centre.
+let discAnchor: MapPoint | undefined;
+
+/// A camera's own centre as a point, which is what a coordinate readout names.
+const cellOf = (view: MapView): MapPoint => ({ x: view.cx, z: view.cz });
+
+/// Where the camera's centre is, written into the map's own corner.
+const placeCentre = (into: HTMLElement, rows: readonly ReadoutRow[]) => {
+  into.replaceChildren();
+  for (const row of rows) {
+    const label = document.createElement('span');
+    label.className = 'centre-label';
+    label.textContent = row.label;
+    const value = document.createElement('span');
+    value.className = row.authored
+      ? 'centre-value centre-authored'
+      : 'centre-value';
+    value.textContent = row.value;
+    into.append(label, value);
+  }
+};
 
 const selectedBody = () => {
   const current = state;
@@ -149,6 +188,28 @@ const recordCamera = () => {
   }, 250);
 };
 
+/// The sidebar panel. Separate from `render` because `drawRange` is what discovers whether a
+/// Body's surface is on its disc, and that decides whether the authored-scale note belongs here.
+/// The panel is in the sidebar, which scrolls on its own, so writing a long note into it cannot
+/// shrink the frame the ResizeObserver has just measured.
+const renderSelectionPanel = () => {
+  if (!system) {
+    return;
+  }
+  // Read out of the union into a local, or the mutable module-level `state` defeats narrowing.
+  const settled = state;
+  const pickedId = settled.level === 'body' ? settled.islandId : null;
+  renderPanel(
+    panel,
+    system,
+    selectedBody(),
+    pickedId
+      ? (catalogue?.islands.find(island => island.id === pickedId) ?? null)
+      : null,
+    onDisc
+  );
+};
+
 /// Writes nothing to the page but canvas pixels, the label layer, the scale readout and the
 /// status line, so the ResizeObserver that calls it cannot feed the frame back on itself.
 const drawRange = () => {
@@ -161,9 +222,55 @@ const drawRange = () => {
   // they were looking; a camera still sitting at the fit is refitted, or the first resize after
   // load would leave the map reading 1.1x without anyone having touched it.
   fit = fitSystem(system.bodies, frame);
-  view = view && !atFit ? clampView(fit, view) : fit;
+  // Re-clamped through `systemBounds`, not the bare fit: a bare fit means the kernel's own
+  // ceiling, which would undo the System Range's deeper one on every single draw.
+  view = view && !atFit ? clampView(systemBounds(fit), view) : fit;
   projection = projectSystem(system.bodies, view, frame);
-  const labels = drawSystemRange(canvas, projection, view, frame);
+  // A single Body close enough to draw its own surface on. The scale relating the surface to the
+  // disc is authored; the islands on it are recovered (#437, amending #405).
+  const near = projection.markers.find(marker => {
+    const body = system!.bodies.find(value => value.id === marker.id);
+    return body
+      ? showsSurface(marker, body, view!, projection!.unitsPerPixel)
+      : false;
+  });
+  const nearBody = near && system.bodies.find(value => value.id === near.id);
+  const wasOnDisc = onDisc;
+  if (near && nearBody) {
+    if (onDisc !== nearBody.id) {
+      onDisc = nearBody.id;
+      discSurface = catalogue
+        ? readBodySurface(catalogue, nearBody.sourceIndex)
+        : undefined;
+      discAnchor = discSurface && surfaceAnchor(discSurface);
+      // Only now is the Catalogue worth 40 MiB (#435): a reader who never zooms this far in
+      // never pays for it.
+      loadSurface(nearBody.sourceIndex, () => {
+        discSurface = catalogue
+          ? readBodySurface(catalogue, nearBody.sourceIndex)
+          : undefined;
+        discAnchor = discSurface && surfaceAnchor(discSurface);
+        drawRange();
+      });
+    }
+  } else {
+    onDisc = undefined;
+    discSurface = undefined;
+    discAnchor = undefined;
+  }
+  // The authored-scale note appears and goes with the surface it describes.
+  if (onDisc !== wasOnDisc) {
+    renderSelectionPanel();
+  }
+  const labels = drawSystemRange(
+    canvas,
+    projection,
+    view,
+    frame,
+    near && nearBody && discSurface && discAnchor
+      ? { anchor: discAnchor, body: nearBody, surface: discSurface }
+      : undefined
+  );
   if (labels) {
     placeLabels(labelLayer, labels);
   }
@@ -186,15 +293,44 @@ const drawRange = () => {
     // Which of a size and a symbol is on screen is stated rather than left to be guessed.
     (scaled
       ? ` · ${scaled} of ${projection.markers.length} discs at derived radius`
-      : ' · discs are markers, not sizes');
+      : ' · discs are markers, not sizes') +
+    // The scale relating a surface to a disc is authored, so it is named every time one is
+    // drawn rather than explained once in the panel and then left implicit (#437).
+    (discSurface && nearBody
+      ? ` · ${nearBody.name} surface at an authored scale`
+      : '');
+  placeCentre(
+    systemCentre,
+    centreReadout(
+      view,
+      discSurface && nearBody && discAnchor
+        ? {
+            authored: true,
+            body: nearBody,
+            cell: cellOf(surfaceWindow(nearBody, discAnchor, view)),
+            kind: 'body',
+            surface: discSurface
+          }
+        : { kind: 'system' }
+    )
+  );
   const grouped = projection.markers.filter(
     marker => marker.bodyIds.length > 1
   ).length;
   const withheld = labels?.suppressed.length ?? 0;
-  const onFrame = projection.markers.length - (labels?.offscreen.length ?? 0);
+  // A marker's centre can be off screen while the reader is deep inside that very Body, so a
+  // surface on the disc counts as a Body in view. Saying the System is empty here would be
+  // plainly wrong.
+  const onFrame =
+    projection.markers.length -
+    (labels?.offscreen.length ?? 0) +
+    (discSurface ? 1 : 0);
   status.textContent = onFrame
     ? `${projection.markers.length} markers · ${system.bodies.length} recovered Bodies` +
       (grouped ? ` · ${grouped} group more than one` : '') +
+      (discSurface && nearBody
+        ? ` · ${discSurface.islands.length} recovered islands drawn on ${nearBody.name} at an authored scale; keep zooming to enter it`
+        : '') +
       ' · X right, Z up' +
       (withheld
         ? ` · ${withheld} name${withheld === 1 ? '' : 's'} withheld, in the roster`
@@ -229,6 +365,18 @@ const drawBodyRange = () => {
   scale.textContent =
     `${RANGE_LABEL[band]} · ${formatUnits(cells)} Surface Cells per pixel` +
     ` · grid ${formatUnits(gridStep(bodyView.span, frame.width))} cells`;
+  placeCentre(
+    bodyCentre,
+    centreReadout(bodyView, {
+      // Direct here rather than through the authored scale: the Body Range is in Body
+      // Coordinates, so its centre needs no conversion and carries no authored mark.
+      authored: false,
+      body,
+      cell: cellOf(bodyView),
+      kind: 'body',
+      surface
+    })
+  );
   const surfaceNote = surface
     ? `${surface.islands.length} recovered island${surface.islands.length === 1 ? '' : 's'}` +
       (surface.gaps.length
@@ -244,12 +392,11 @@ const drawBodyRange = () => {
 
 /// The Catalogue is read once and kept. A failure leaves the sea and the grid drawn, and says so
 /// in the status line, rather than blanking a Range that is already telling the reader something.
-const loadSurface = (sourceIndex: number) => {
+const loadSurface = (sourceIndex: number, then: () => void) => {
   if (catalogue) {
-    surface = readBodySurface(catalogue, sourceIndex);
+    then();
     return;
   }
-  surface = undefined;
   catalogueRequest =
     catalogueRequest ??
     fetch('/payload/damocles/catalogue.json')
@@ -267,6 +414,16 @@ const loadSurface = (sourceIndex: number) => {
           'The sea and the Surface Cell grid are drawn from the System authority; coastlines need the Catalogue.';
       });
   void catalogueRequest.then(() => {
+    if (catalogue) {
+      then();
+    }
+  });
+};
+
+/// The Body Range's islands, once the Catalogue is readable.
+const loadBodySurface = (sourceIndex: number) => {
+  surface = catalogue ? readBodySurface(catalogue, sourceIndex) : undefined;
+  loadSurface(sourceIndex, () => {
     const body = selectedBody();
     if (!catalogue || !body) {
       return;
@@ -341,7 +498,7 @@ const render = () => {
         ? bodyView
         : undefined;
     if (!same) {
-      loadSurface(body.sourceIndex);
+      loadBodySurface(body.sourceIndex);
     }
   }
   for (const anchor of roster.querySelectorAll('a')) {
@@ -350,17 +507,7 @@ const render = () => {
       String(anchor.dataset['body'] === body?.id)
     );
   }
-  // Read out of the union into a local, or the mutable module-level `state` defeats narrowing.
-  const settled = state;
-  const pickedId = settled.level === 'body' ? settled.islandId : null;
-  renderPanel(
-    panel,
-    system,
-    body,
-    pickedId
-      ? (catalogue?.islands.find(island => island.id === pickedId) ?? null)
-      : null
-  );
+  renderSelectionPanel();
   if (body) {
     drawBodyRange();
   } else {
@@ -419,8 +566,42 @@ const cameraFrame = (): CameraFrame => {
   };
 };
 
+/// The System camera has zoomed past the point where a Body's disc adds anything: the authored
+/// surface axis now exceeds the frame, so less than the whole surface is on screen. Hand over to
+/// the Body Range on exactly the same window, and the islands stay where they are.
+const handOver = (next: MapView): boolean => {
+  if (!system || !projection || !onDisc) {
+    return false;
+  }
+  const body = system.bodies.find(value => value.id === onDisc);
+  const marker = projection.markers.find(value => value.id === onDisc);
+  if (!body || !marker) {
+    return false;
+  }
+  const frame = frameOf(systemRange);
+  // Hand over once the frame is wholly inside the Body's authored surface, so nothing appears or
+  // vanishes as the Ranges change hands: no disc edge, no space beyond it, and no wrap copies
+  // arriving from off screen. Later than filling the frame's shorter side, which still left the
+  // rim in view and popped worst on an island near the edge.
+  if (!insideSurface(body, next, frame)) {
+    return false;
+  }
+  if (!discAnchor) {
+    return false;
+  }
+  const window = surfaceWindow(body, discAnchor, next);
+  bodyView = window;
+  go({
+    bodyId: body.id,
+    islandId: null,
+    level: 'body',
+    view: { span: window.span, x: window.cx, z: window.cz }
+  });
+  return true;
+};
+
 const controls = mountCamera({
-  camera: () => (fit && view ? { bounds: fit, fit, view } : null),
+  camera: () => (fit && view ? { bounds: systemBounds(fit), fit, view } : null),
   element: systemRange,
   frame: cameraFrame,
   onPick: (x, y) => {
@@ -430,6 +611,9 @@ const controls = mountCamera({
     }
   },
   onView: next => {
+    if (handOver(next)) {
+      return;
+    }
     // Compared against the fit rather than flagged on every gesture, so Fit System and the `0`
     // key put the map back to a camera a later resize will refit.
     atFit =
@@ -492,8 +676,29 @@ const bodyControls = mountCamera({
     bodyView = next;
     drawBodyRange();
   },
-  // A surface that wraps has no edge to reach, so zooming out past it is the way back up.
-  onZoomedOut: () => go(SYSTEM_RANGE)
+  // A surface that wraps has no edge to reach, so zooming out past it is the way back up. The
+  // System camera is set to the window the Body camera was on, so the picture matches across the
+  // hop exactly as it does on the way in.
+  onZoomedOut: () => {
+    const body = selectedBody();
+    if (!system || !body || !bodyView) {
+      go(SYSTEM_RANGE);
+      return;
+    }
+    // The Body Range's own islands give the anchor here: the reader may have arrived by a deep
+    // link rather than by zooming, so the disc's anchor may never have been computed.
+    const matched = systemWindow(
+      body,
+      surfaceAnchor(surface ?? { gaps: [], islands: [] }),
+      bodyView
+    );
+    view = matched;
+    atFit = false;
+    go({
+      level: 'system',
+      view: { span: matched.span, x: matched.cx, z: matched.cz }
+    });
+  }
 });
 
 const rangeControls = () => (selectedBody() === null ? controls : bodyControls);

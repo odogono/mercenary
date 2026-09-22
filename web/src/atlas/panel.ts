@@ -19,6 +19,17 @@ export const SYSTEM_RANGE_NOTE =
   'so a Body may be smaller than drawn and never larger. VOID is a place sentinel rather than ' +
   'one of the 30 physical records and is excluded.';
 
+/// Shown while a Body's surface is drawn on its own disc. The one authored quantity in the
+/// Atlas, so it is stated wherever it is used rather than assumed known.
+export const AUTHORED_SURFACE_NOTE =
+  'The islands on this Body are recovered \u2014 their outlines, land colours, origins and ' +
+  'relative positions all come from the Catalogue. The scale placing them on the disc is ' +
+  'authored and nothing more: the recovered payloads use two coordinate systems that nothing ' +
+  'recovered relates, since a Body surface axis is 2^28 units in the body-local grid against a ' +
+  'whole System span of 4.7 million in the resident one. The 4096-cell surface is therefore ' +
+  'drawn as the largest square that fits inside the disc, so no island falls outside it. ' +
+  'Nothing here is a claim about how large a Body is against its own surface.';
+
 const units = (value: number): string =>
   Math.round(value).toLocaleString('en-GB');
 
@@ -156,7 +167,9 @@ export const renderPanel = (
   root: HTMLElement,
   system: GammaSystemDocument,
   body: GammaBody | null,
-  island?: Island | null
+  island?: Island | null,
+  /// The Body whose surface is drawn on its own disc at the System Range, if any.
+  surfaceOnDisc?: string
 ): void => {
   root.replaceChildren();
   if (!body) {
@@ -166,6 +179,7 @@ export const renderPanel = (
         `${system.bodies.length} recovered Bodies. Choose one on the map or in the roster.`
       ),
       paragraph(SYSTEM_RANGE_NOTE, 'muted'),
+      ...(surfaceOnDisc ? [paragraph(AUTHORED_SURFACE_NOTE, 'muted')] : []),
       paragraph(`Evidence · ${system.source.evidence}`, 'muted')
     );
     return;

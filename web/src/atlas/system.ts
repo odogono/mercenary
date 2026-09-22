@@ -3,10 +3,13 @@ import {
   clusterAll,
   fitView,
   project,
+  type MapBounds,
   type MapPoint,
   type MapView
 } from '../catalogue/mapView.ts';
+import { SURFACE_CELLS } from '../damocles/world.ts';
 import { bodyRadius, bodySize, type GammaBody } from '../flyover/documents.ts';
+import { nearestOffset } from './surface.ts';
 
 /// The Atlas System Range: the recovered Gamma System projected onto the X/Z plane through a
 /// camera, X right and Z up as the Catalogue placement map draws them. Nothing here touches the
@@ -46,6 +49,61 @@ const WIDEST_MARKER = 11;
 const NARROWEST_MARKER = 3;
 /// Css pixels between a marker's edge and its label, and between two placed labels.
 const LABEL_GAP = 5;
+/// Position units per Surface Cell when a Body's surface is drawn on its disc.
+///
+/// **Authored, not recovered and not derived** (ADR 0014, and the amendment on #405). The two
+/// Ranges are in different coordinate systems and nothing recovered joins them: `system.json` is
+/// `resident-cartesian-centre`, while `arrival-poses.json` is `body-local-surface-grid` at
+/// `cellUnits: 65536`, making one surface axis 2^28 units — 57 times the whole Gamma System's
+/// span and 223,696 times a Body's own radius. Separate unit systems, as a 1990 16-bit game
+/// would have: space is a symbolic starfield and the surface is a local world.
+///
+/// So the scale is chosen, and only the scale: the coastline shapes, their land colours, their
+/// origins and their relative positions are all recovered. The 4096-cell axis is drawn as the
+/// largest square **inscribed** in the disc, so no island falls outside it and nothing has to be
+/// clipped or hidden. For ERIS, whose drawn diameter is 2,400 units, that is 0.414 units a cell.
+export const unitsPerCell = (body: GammaBody): number =>
+  (2 * bodyRadius(body)) / Math.SQRT2 / SURFACE_CELLS;
+
+/// How far the System Range may zoom in. Deeper than the kernel's default because the hand-over
+/// into a Body is keyed to that Body's own size, and the recovered sizes span 500-fold: the
+/// smallest Bodies — THEON, AURORA and SAPPHIRE, whose derived radius is 40 position units —
+/// need 126,327x before their surface fills the frame, where DIALIS needs 253x. At the kernel's
+/// 8192 only 8 of the 30 Bodies could be entered by zooming at all. 2^18 leaves headroom past
+/// the deepest of them.
+export const SYSTEM_MAX_ZOOM = 262_144;
+
+/// Css pixels the authored surface axis must cover before a Body's islands are drawn on it. At
+/// this size the widest Eris island is about seven pixels, which is the point where a coastline
+/// reads as a shape rather than as a speck.
+const ISLANDS_VISIBLE = 320;
+
+/// The authored surface's width in position units: the side of the square inscribed in the disc.
+export const surfaceUnits = (body: GammaBody): number =>
+  unitsPerCell(body) * SURFACE_CELLS;
+
+/// Whether a marker is close enough, and central enough, to draw its Body's surface on.
+///
+/// Both conditions are needed. Size alone is not enough because the Bodies are drawn 500-fold
+/// apart: DIALIS's authored surface is 28,284 units across against ERIS's 1,697, so a size test
+/// on its own lets DIALIS claim the surface from right off the screen while the reader is
+/// looking at ERIS. So the camera's centre must also be standing on the Body in question, which
+/// picks exactly one: the surfaces are inscribed in discs, and no two discs overlap.
+export const showsSurface = (
+  marker: SystemMarker,
+  body: GammaBody,
+  view: MapView,
+  unitsPerPixel: number
+): boolean => {
+  const half = surfaceUnits(body) / 2;
+  return (
+    marker.bodyIds.length === 1 &&
+    surfaceUnits(body) / unitsPerPixel >= ISLANDS_VISIBLE &&
+    Math.abs(view.cx - marker.world.x) <= half &&
+    Math.abs(view.cz - marker.world.z) <= half
+  );
+};
+
 /// A marker's size, for when a Body is too small to draw at its own radius. Authored, and about
 /// symbols rather than Bodies: the decoded sizes span 500-fold, so drawn in proportion the
 /// smallest moon would be a fiftieth of a pixel beside DIALIS. The cube root compresses that to
@@ -97,6 +155,14 @@ const aspectOf = (frame: SystemFrame): number =>
 /// The camera that shows the whole recovered System in this frame. `fitView`'s own padding
 /// leaves the outermost marker a fifth of the span to put a label in, so no pixel margin is
 /// added on top: one measured in pixels would move the marker partition with the frame width.
+/// What bounds the System camera: its fit, clamped, with a ceiling deep enough to reach the
+/// smallest Body's surface.
+export const systemBounds = (fit: MapView): MapBounds => ({
+  centre: 'clamp',
+  fit,
+  maxZoom: SYSTEM_MAX_ZOOM
+});
+
 export const fitSystem = (
   bodies: readonly GammaBody[],
   frame: SystemFrame
@@ -316,4 +382,86 @@ export const layOutLabels = (
     placed.push({ id: marker.id, text, x: box.x, y: box.y });
   }
   return { offscreen, placed, suppressed };
+};
+
+/// These three take the Body and never a marker. A marker's `world` is the position of whichever
+/// Body it is *named* for, so at a whole-System camera VESTA's marker is the ERIS group and
+/// carries ERIS's position. Converting through it sent a reader zooming out of VESTA to ERIS.
+/// The Body carries its own recovered position, so there is nothing to get wrong.
+
+/// Whether the System camera is wholly inside a Body's authored surface, which is when the
+/// Ranges can change hands without anything appearing or vanishing.
+///
+/// Both halves matter. The scale test alone — the surface covering the frame's diagonal — leaves
+/// a reader centred near the surface's edge looking at space beyond it, and then the wrap copies
+/// and the far side of the surface arrive all at once. That is the pop, and it is worst on an
+/// island near the rim, which is exactly where a reader lingers. So the margin is measured from
+/// the camera's own centre, and a reader at the edge simply hands over a little deeper, once the
+/// frame has shrunk inside the surface.
+export const insideSurface = (
+  body: GammaBody,
+  view: MapView,
+  frame: SystemFrame
+): boolean => {
+  const half = surfaceUnits(body) / 2;
+  // Half the frame's diagonal in position units: the furthest corner from the centre.
+  const reach =
+    (view.span / 2) * Math.hypot(1, frame.height / Math.max(frame.width, 1));
+  return (
+    Math.abs(view.cx - body.position.x) + reach <= half &&
+    Math.abs(view.cz - body.position.z) + reach <= half
+  );
+};
+
+/// The Body Coordinate window a System camera is looking at through the authored scale, so the
+/// Body Range can open on exactly what the disc was showing. The islands then sit in the same
+/// place at the same size across the hand-over: what changes is that sea, the Surface Cell grid
+/// and the coordinate seam appear, and the disc goes.
+export const surfaceWindow = (
+  body: GammaBody,
+  anchor: MapPoint,
+  view: MapView
+): MapView => {
+  const scale = unitsPerCell(body);
+  return {
+    // The anchor cell sits at the Body's centre, because that is where the inscribed square is
+    // centred. It is the Body's islands' own wrap-aware centre rather than cell 2048, so a ring
+    // around the coordinate origin draws whole instead of as four corner arcs.
+    cx: anchor.x + (view.cx - body.position.x) / scale,
+    cz: anchor.z + (view.cz - body.position.z) / scale,
+    span: view.span / scale
+  };
+};
+
+/// Where one Body Coordinate falls in position units, for drawing a surface on a disc.
+export const surfacePoint = (
+  body: GammaBody,
+  anchor: MapPoint,
+  point: MapPoint
+): MapPoint => {
+  const scale = unitsPerCell(body);
+  return {
+    x: body.position.x + (point.x - anchor.x) * scale,
+    z: body.position.z + (point.z - anchor.z) * scale
+  };
+};
+
+/// The System camera that shows the same Body Coordinate window a Body camera is on. The inverse
+/// of `surfaceWindow`, so the outbound hop can match the picture too.
+export const systemWindow = (
+  body: GammaBody,
+  anchor: MapPoint,
+  view: MapView
+): MapView => {
+  const scale = unitsPerCell(body);
+  // Counted on the nearest wrap image, because a Body camera's centre is taken modulo the
+  // surface: a reader who pans across the seam has a centre on the far side of the anchor in
+  // raw numbers while standing a few cells from it in fact. Taking the raw difference put the
+  // System camera a whole surface out -- 1,697 units on ERIS -- on the opposite side of the
+  // disc, and only when the reader had crossed the seam, which is why it came and went.
+  return {
+    cx: body.position.x + nearestOffset(view.cx, anchor.x) * scale,
+    cz: body.position.z + nearestOffset(view.cz, anchor.z) * scale,
+    span: view.span * scale
+  };
 };

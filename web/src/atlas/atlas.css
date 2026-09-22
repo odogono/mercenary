@@ -305,3 +305,42 @@ h2 {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
+/* Where the camera's centre is, in each coordinate system that can name it.
+   Overlaid inside the map rather than placed under it: the map's own ResizeObserver redraws from
+   the frame it measures, so anything in that column which can change height feeds back on it. */
+.centre-readout {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: auto auto;
+  padding: 0.3rem 0.5rem;
+  gap: 0 0.6rem;
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  background: #03090de6;
+  font-size: 11px;
+  line-height: 1.5;
+  pointer-events: none;
+}
+
+.centre-readout:empty {
+  display: none;
+}
+
+.centre-label {
+  color: var(--muted);
+}
+
+.centre-value {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* The one authored quantity in the Atlas is marked wherever it is used, and a coordinate reached
+   through the authored surface scale is no exception. */
+.centre-authored::after {
+  color: var(--muted);
+  content: ' · authored scale';
+}

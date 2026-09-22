@@ -1,8 +1,16 @@
-import { gridStep, project, type MapView } from '../catalogue/mapView.ts';
+import {
+  gridStep,
+  project,
+  type MapPoint,
+  type MapView
+} from '../catalogue/mapView.ts';
 import { SURFACE_CELLS } from '../damocles/world.ts';
-import { wrapImages, type BodySurface } from './surface.ts';
+import type { GammaBody } from '../flyover/documents.ts';
+import { nearestImage, wrapImages, type BodySurface } from './surface.ts';
 import {
   layOutLabels,
+  surfacePoint,
+  surfaceWindow,
   type SystemFrame,
   type SystemLabels,
   type SystemProjection
@@ -90,6 +98,41 @@ const drawGrid = (
 /// over the top. The grid and the seam sit above the land so the coordinate reference stays
 /// readable on it, and the seam is brighter than the grid because a uniform lattice looks
 /// identical everywhere.
+/// Every wrap image of x = 0 and z = 0 that falls in the frame. A Body Coordinate far apart in
+/// number from another may be its neighbour, and this is where that happens.
+const drawSeams = (
+  context: CanvasRenderingContext2D,
+  view: MapView,
+  frame: SystemFrame
+) => {
+  const aspect = frame.height / Math.max(frame.width, 1);
+  const halfHeight = (view.span * aspect) / 2;
+  context.lineWidth = 1;
+  context.strokeStyle = SEAM;
+  context.beginPath();
+  for (
+    let seam =
+      Math.floor((view.cx - view.span / 2) / SURFACE_CELLS) * SURFACE_CELLS;
+    seam <= view.cx + view.span / 2;
+    seam += SURFACE_CELLS
+  ) {
+    const x = project(view, { x: seam, z: 0 }, aspect).u * frame.width;
+    context.moveTo(x, 0);
+    context.lineTo(x, frame.height);
+  }
+  for (
+    let seam =
+      Math.floor((view.cz - halfHeight) / SURFACE_CELLS) * SURFACE_CELLS;
+    seam <= view.cz + halfHeight;
+    seam += SURFACE_CELLS
+  ) {
+    const y = project(view, { x: 0, z: seam }, aspect).v * frame.height;
+    context.moveTo(0, y);
+    context.lineTo(frame.width, y);
+  }
+  context.stroke();
+};
+
 export const drawBodySurface = (
   canvas: HTMLCanvasElement,
   view: MapView,
@@ -132,40 +175,91 @@ export const drawBodySurface = (
     }
   }
   drawGrid(context, view, frame);
-  // Every wrap image of x = 0 and z = 0 that falls in the frame. A Body Coordinate far apart in
-  // number from another may be its neighbour, and this is where that happens.
-  context.lineWidth = 1;
-  context.strokeStyle = SEAM;
+  drawSeams(context, view, frame);
+};
+
+/// A Body's recovered islands drawn on its own disc, through the authored scale, with the same
+/// Surface Cell grid and coordinate seam the Body Range will draw.
+///
+/// The grid and the seam are the point. Without them the hand-over pops: the System Range's grid
+/// is stepped in position units and the Body Range's in Surface Cells, so the lattice would jump
+/// spacing and origin at the moment of the switch. Drawing the Body Range's own grid here, from
+/// the very same converted camera, means nothing moves when the Ranges change hands.
+///
+/// Each island is drawn **once**, at the wrap image nearest the surface's anchor, and everything
+/// is clipped to the surface square. A disc is a sphere seen from outside, and you cannot see
+/// the same island twice on one: wrapped copies belong to the flat torus of the Body Range, and
+/// on a disc they only ever showed SNOW ISLAND and KEY WEST twice apiece.
+const drawSurfaceOnDisc = (
+  context: CanvasRenderingContext2D,
+  view: MapView,
+  frame: SystemFrame,
+  onBody: {
+    readonly anchor: MapPoint;
+    readonly body: GammaBody;
+    readonly surface: BodySurface;
+  }
+) => {
+  const aspect = frame.height / Math.max(frame.width, 1);
+  const { anchor, body, surface } = onBody;
+  const corner = (x: number, z: number) => {
+    const { u, v } = project(
+      view,
+      surfacePoint(body, anchor, { x, z }),
+      aspect
+    );
+    return { x: u * frame.width, y: v * frame.height };
+  };
+  const from = corner(
+    anchor.x - SURFACE_CELLS / 2,
+    anchor.z + SURFACE_CELLS / 2
+  );
+  const to = corner(anchor.x + SURFACE_CELLS / 2, anchor.z - SURFACE_CELLS / 2);
+  context.save();
   context.beginPath();
-  for (
-    let seam =
-      Math.floor((view.cx - view.span / 2) / SURFACE_CELLS) * SURFACE_CELLS;
-    seam <= view.cx + view.span / 2;
-    seam += SURFACE_CELLS
-  ) {
-    const x = project(view, { x: seam, z: 0 }, aspect).u * frame.width;
-    context.moveTo(x, 0);
-    context.lineTo(x, frame.height);
+  context.rect(from.x, from.y, to.x - from.x, to.y - from.y);
+  context.clip();
+  // The Body Range's own camera over the same pixels, so its grid and seam land identically.
+  const asSurface = surfaceWindow(body, anchor, view);
+  drawGrid(context, asSurface, frame);
+  drawSeams(context, asSurface, frame);
+  for (const island of surface.islands) {
+    context.fillStyle = island.landColour;
+    context.strokeStyle = OUTLINE;
+    context.lineWidth = OUTLINE_WIDTH;
+    context.beginPath();
+    for (const [index, cell] of nearestImage(
+      island.outline,
+      anchor
+    ).entries()) {
+      const { u, v } = project(view, surfacePoint(body, anchor, cell), aspect);
+      const x = u * frame.width,
+        y = v * frame.height;
+      if (index === 0) {
+        context.moveTo(x, y);
+      } else {
+        context.lineTo(x, y);
+      }
+    }
+    context.closePath();
+    context.fill();
+    context.stroke();
   }
-  const halfHeight = (view.span * aspect) / 2;
-  for (
-    let seam =
-      Math.floor((view.cz - halfHeight) / SURFACE_CELLS) * SURFACE_CELLS;
-    seam <= view.cz + halfHeight;
-    seam += SURFACE_CELLS
-  ) {
-    const y = project(view, { x: 0, z: seam }, aspect).v * frame.height;
-    context.moveTo(0, y);
-    context.lineTo(frame.width, y);
-  }
-  context.stroke();
+  context.restore();
 };
 
 export const drawSystemRange = (
   canvas: HTMLCanvasElement,
   projection: SystemProjection,
   view: MapView,
-  frame: SystemFrame
+  frame: SystemFrame,
+  /// A Body's recovered surface to draw on its own disc, once the camera is close enough. The
+  /// scale relating the two is authored; see `unitsPerCell`.
+  onBody?: {
+    readonly anchor: MapPoint;
+    readonly body: GammaBody;
+    readonly surface: BodySurface;
+  }
 ): SystemLabels | null => {
   const context = surfaceOf(canvas, frame);
   if (!context) {
@@ -191,6 +285,9 @@ export const drawSystemRange = (
         2 * Math.PI
       );
       context.stroke();
+    }
+    if (onBody && onBody.body.id === marker.id) {
+      drawSurfaceOnDisc(context, view, frame, onBody);
     }
   }
   context.font = LABEL_FONT;
