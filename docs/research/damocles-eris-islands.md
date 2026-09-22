@@ -644,11 +644,19 @@ draw and place today from pinned evidence, not what is understood.
 | Land colour | `$0030` | `$0777` | `$0420` | `$0322` | `$0030` |
 | Transforms | origin + 28-bit wrap; exact | exact; **crosses the x seam** | exact | exact | exact |
 | Workspace binding | group `$12`, 76 assemblies live | `$10`, static | `$11`, static | `$14`, static | `$15`, static |
+| Road network (#447) | 88 cells, capture-attested | 25 cells, image | 24 cells, image | 28 cells, image | 48 cells, image |
 | Places | 11 | 4 | 2 | 6 | 1 |
 | Capture provenance | `eris-spaceport-onfoot` + 5 more; oblique coast capture | maintainer overhead capture | none standing on it | none standing on it | `damocles.key-west.sav`, over water |
 | Classifier validation | full edge sweep, agrees | full edge sweep, agrees | full edge sweep, agrees | full edge sweep, agrees | full edge sweep, agrees |
 | Overhead view | yes | yes | yes | yes | yes |
 | Blockers | none for geometry; cell-label qualification is a catalogue change | the seam crossing must be handled before it can be drawn | no capture standing on it | none | no capture standing on it |
+
+**Amended by [#447](https://github.com/odogono/mercenary/issues/447).** "No
+capture standing on it" is still true of `VELOS CITY` and `KEY WEST`, and still
+blocks their `$ABDC` surface assemblies. It no longer blocks their **roads**: the
+run grid is expanded from the group's own authored stream, so all five islands
+now publish a road network and the four beyond `CAPITAL CITY` are marked
+`attestation: image`. `KEY WEST`'s is the largest on the body at 48 cells.
 
 No island's geometry, placement, transform or colour is a gap. What is uneven
 is **capture provenance**: three of the five have no memstate taken standing on

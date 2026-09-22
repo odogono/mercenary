@@ -2272,11 +2272,79 @@ ROAD_PIECE_SELECTORS = 0x1E640
 ROAD_PIECES = ('none', 'end', 'corner', 'straight', 'tee', 'crossroads')
 
 
+# The group-offset root, and the master selector table the six per-group
+# indices index. $04EB6A reaches the root through the word at $1E64C; the
+# selector words at $1E640..$1E64A are copied from $1E64E by $04EC22.
+ROAD_GROUP_ROOT = 0x1E64C
+ROAD_SELECTOR_TABLE = 0x1E64E
+
+
+def expand_run_grid(data: bytes, group: int) -> tuple[bytes, list[int]]:
+    """Replay $04EB60-$04EC2C: one group's authored stream into its run grid.
+
+    The run grid at $01E000 is *built*, not authored: the workspace loader
+    expands a run-length extent stream held in the group's own record. That
+    record is in the program image for every group, so the grid a capture would
+    have shown can be reconstructed without one -- which is the only reason a
+    group nobody has stood in can publish a road network at all.
+
+    Each run is three bytes. A zero first byte ends the stream; bit 7 set means
+    the column form at $04EBDE, where the byte is the one's complement of the
+    column, and otherwise the row form at $04EBB6, where it is the 1-based row.
+    The remaining two bytes are the run's first and last cell along that axis,
+    and every cell the run covers stores the pair -- rows in bytes 0-1 and
+    columns in bytes 2-3, which is what `road_cell_class` reads back.
+
+    Returns the 1 KiB grid and the six road-piece selector words.
+    """
+    root = ROAD_RUN_GRID + struct.unpack_from('>H', data, ROAD_GROUP_ROOT)[0]
+    cursor = root + struct.unpack_from('>H', data, root + group * 2)[0] + 2
+    grid = bytearray(1024)
+    while True:
+        first = data[cursor]
+        cursor += 1
+        if first == 0:
+            break
+        start, end = data[cursor], data[cursor + 1]
+        cursor += 2
+        if first & 0x80:
+            column = (~first) & 0xFF
+            # $04EBE8 shifts and adds as *bytes*, so both wrap at 256.
+            run_start = (((start << 4) & 0xFF) + column) & 0xFF
+            run_end = (((end << 4) & 0xFF) + column) & 0xFF
+            for step in range(end - start + 1):
+                cell = (run_start + step * 16) & 0xFF
+                grid[cell * 4 + 2] = run_start
+                grid[cell * 4 + 3] = run_end
+        else:
+            base = ((first - 1) << 4) & 0xFF
+            run_start, run_end = (base + start) & 0xFF, (base + end) & 0xFF
+            for cell in range(run_start, run_end + 1):
+                grid[cell * 4 + 0] = run_start
+                grid[cell * 4 + 1] = run_end
+    # $04EC0E takes the $7AEE/$7AEF pair, then six selector indices.
+    cursor += 2
+    selectors = [
+        struct.unpack_from('>H', data, ROAD_SELECTOR_TABLE + data[cursor + index] * 2)[0]
+        for index in range(6)
+    ]
+    return bytes(grid), selectors
+
+
 def road_cell_class(data: bytes, cell: int) -> int:
     """The six-bit class $04EC4C-$04EC7C builds from one cell's run longword."""
-    row_start, row_end, column_start, column_end = data[
-        ROAD_RUN_GRID + cell * 4:ROAD_RUN_GRID + cell * 4 + 4
-    ]
+    return grid_cell_class(
+        data[ROAD_RUN_GRID + cell * 4:ROAD_RUN_GRID + cell * 4 + 4], cell)
+
+
+def grid_cell_class(entry: bytes, cell: int) -> int:
+    """The same class, from one cell's four grid bytes on their own.
+
+    The run endpoints the entry carries are absolute cell indices, so the class
+    needs the cell they belong to: the bits say whether this cell is the run's
+    start, its end, or inside it.
+    """
+    row_start, row_end, column_start, column_end = entry
     value = 0
     if row_end:
         value |= 1
@@ -2295,23 +2363,36 @@ def road_cell_class(data: bytes, cell: int) -> int:
 
 def decode_road_network(data: bytes, ground_models: dict[int, str], identity: str,
                         body: int, origin: tuple[int, int], island: dict | None,
-                        label: str, source: str) -> dict:
-    """Recover one structure group's road network from its $01E000 run grid.
+                        label: str, source: str, *,
+                        grid: bytes, selectors: list[int],
+                        cell_index: bytes | None,
+                        live_orientations: bytes | None) -> dict:
+    """Recover one structure group's road network from its run grid.
 
-    Replaying $04EC30 against the capture is self-checking: the same pass writes
-    the orientation byte the ground decoder already reads from $0083DC, so a
-    decode that disagrees with the live table is wrong about the grid. The
-    reconstruction raises rather than publishing a network it cannot reproduce.
+    The grid is supplied rather than read from `data`, because it has two
+    sources. A capture standing in the workspace carries the live one the
+    loader built at $01E000; every other group's is reconstructed from its
+    authored stream by `expand_run_grid`. The classification is identical
+    either way -- $01E600 is resident, not per-group -- and only the
+    provenance differs.
+
+    Where the grid is live, replaying $04EC30 is self-checking: the same pass
+    writes the orientation byte the ground decoder reads from $0083DC, so a
+    decode that disagrees with the live table is wrong about the grid, and the
+    reconstruction raises rather than publishing it. Where the grid is
+    reconstructed there is no live table to check against; what stands behind
+    it is that the same expansion reproduces $01E000 byte for byte on every
+    capture that does bind a group.
     """
     orientations = bytearray(256)
     selections = []
     cells = []
     for cell in range(256):
-        class_bits = road_cell_class(data, cell)
+        class_bits = grid_cell_class(grid[cell * 4:cell * 4 + 4], cell)
         orientation = data[ROAD_CLASS_TABLE + class_bits]
         orientations[cell] = orientation
         offset = (orientation >> 3) & 0xE
-        selections.append(struct.unpack_from('>H', data, ROAD_PIECE_SELECTORS + offset)[0])
+        selections.append(selectors[offset // 2])
         if not class_bits:
             continue
         piece = offset // 2
@@ -2323,8 +2404,10 @@ def decode_road_network(data: bytes, ground_models: dict[int, str], identity: st
             # $04ECEE-$04ED0E lets a placement in the group's stream replace the
             # classifier's choice with its own record when the two share a
             # record class, so the drawn record is not always the road piece.
-            'overridden': (
-                struct.unpack_from('>H', data, 0x1E400 + cell * 2)[0] != selections[cell]
+            # That replacement is only in a live $1E400; without a capture the
+            # question is unanswered rather than answered no.
+            'overridden': None if cell_index is None else (
+                struct.unpack_from('>H', cell_index, cell * 2)[0] != selections[cell]
             ),
             'piece': piece,
             'pieceName': ROAD_PIECES[piece],
@@ -2334,7 +2417,7 @@ def decode_road_network(data: bytes, ground_models: dict[int, str], identity: st
             'x': cell & 15,
             'z': cell >> 4,
         })
-    if bytes(orientations) != data[0x83DC:0x84DC]:
+    if live_orientations is not None and bytes(orientations) != live_orientations:
         raise ValueError(
             f'{label} road classification disagrees with the live $83DC orientation table'
         )
@@ -2343,9 +2426,7 @@ def decode_road_network(data: bytes, ground_models: dict[int, str], identity: st
     # two-point edge, which is the network the aerial view shows.
     runs = set()
     for cell in range(256):
-        row_start, row_end, column_start, column_end = data[
-            ROAD_RUN_GRID + cell * 4:ROAD_RUN_GRID + cell * 4 + 4
-        ]
+        row_start, row_end, column_start, column_end = grid[cell * 4:cell * 4 + 4]
         if row_end:
             runs.add(('x', row_start, row_end))
         if column_end:
@@ -2355,13 +2436,23 @@ def decode_road_network(data: bytes, ground_models: dict[int, str], identity: st
         'body': f'body-{body}',
         'cells': cells,
         'classTableAddress': ROAD_CLASS_TABLE,
+        'attestation': 'capture' if live_orientations is not None else 'image',
         'evidence': [{
             'claim': (
                 "Structure group run-length extent grid at $01E000 classified by "
                 "$04EC30-$04EC92 into the $01E600 table's orientation byte and one of "
                 "the six road-piece selectors at $01E640. The replay reproduces this "
                 "capture's live $0083DC orientation table for all 256 cells."
+            ) if live_orientations is not None else (
+                "Structure group run-length extent stream expanded by $04EB60-$04EC2C "
+                "into the $01E000 run grid, then classified by $04EC30-$04EC92 into the "
+                "$01E600 table's orientation byte and one of the six road-piece "
+                "selectors at $01E640. No capture stands in this workspace, so there is "
+                "no live $0083DC to check against; the expansion reproduces $01E000 "
+                "byte for byte on every capture that does bind a group."
             ),
+            # Verified either way: what differs is whether this group was seen
+            # live, which `attestation` carries, not whether the decode holds.
             'confidence': 'verified',
             'source': source,
         }],
@@ -2370,8 +2461,9 @@ def decode_road_network(data: bytes, ground_models: dict[int, str], identity: st
         'pieces': [{
             'index': index,
             'name': ROAD_PIECES[index],
-            'recordAddress': ROAD_RUN_GRID + struct.unpack_from(
-                '>H', data, ROAD_PIECE_SELECTORS + index * 2)[0],
+            # The group's own six, not whichever group `data` happens to have
+            # loaded: one Settlement's straight is a runway and another's a lane.
+            'recordAddress': ROAD_RUN_GRID + selectors[index],
         } for index in range(6)],
         'reason': (
             f'{label} road network: {len(cells)} of 256 cells carry a run and '
@@ -2924,10 +3016,16 @@ def coverage_ledger(models: list, tables: list, notes: list[str], disk_load: lis
                 1 for network in road_networks or [] if network['cells']
             ),
             'bodies': sorted({network['body'] for network in road_networks or []}),
+            'attested': sum(
+                1 for network in road_networks or []
+                if network['attestation'] == 'capture'
+            ),
             'evidence': (
-                'One entry a captured structure group. $04EC30 classifies every group '
-                'that loads, so a Body absent here is an uncaptured workspace rather '
-                'than a Body without roads.'
+                'One entry an island record that binds a structure group, captured or '
+                'not: $04EB60 builds the run grid from the group\'s own authored stream, '
+                'so every group decodes. `attested` counts those a capture also stood in '
+                'and checked against its live $0083DC. A Settlement with no run holds no '
+                'road, which is a reading rather than a gap.'
             ),
         },
         'tables': rows,
@@ -3220,10 +3318,17 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
         f' Entries after index 255 are live {label} workspace-local ground records, '
         'not first-world $1E400 slots.'
     )
+    group = struct.unpack_from('>H', workspace, 0x794e)[0]
     network = decode_road_network(
         workspace, ground_model_by_cell, f'roads-{prefix}', body,
         (int(origin_x), int(origin_z)), island, label, workspace_evidence(slug),
+        grid=workspace[ROAD_RUN_GRID:ROAD_RUN_GRID + 1024],
+        selectors=[struct.unpack_from('>H', workspace, ROAD_PIECE_SELECTORS + i * 2)[0]
+                   for i in range(6)],
+        cell_index=workspace[0x1E400:0x1E600],
+        live_orientations=workspace[0x83DC:0x84DC],
     )
+    network['structureGroup'] = group
     if not any(item['id'] == network['id'] for item in road_networks):
         road_networks.append(network)
     return (
@@ -3710,11 +3815,19 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         model['linkedInstances'].append(identity)
         if place:
             next(p for p in places if p['id'] == place[0])['instances'].append(identity)
-    road_networks = [decode_road_network(
+    capital_group = struct.unpack_from('>H', data, 0x794e)[0]
+    capital = decode_road_network(
         data, dict(ground_cells), 'roads-eris-capital-city', 11,
         (int(origin_x), int(origin_z)), eris_island, 'Capital City',
         'docs/research/damocles-eris-ground.md',
-    )]
+        grid=data[ROAD_RUN_GRID:ROAD_RUN_GRID + 1024],
+        selectors=[struct.unpack_from('>H', data, ROAD_PIECE_SELECTORS + i * 2)[0]
+                   for i in range(6)],
+        cell_index=data[0x1E400:0x1E600],
+        live_orientations=data[0x83DC:0x84DC],
+    )
+    capital['structureGroup'] = capital_group
+    road_networks = [capital]
     workspace_notes = []
     slot_bindings: list[dict] = []
     if workspaces:
@@ -3728,6 +3841,32 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 'world': note.split(' live $ABDC', 1)[0],
                 'bindings': object_slot_bindings(data, workspace),
             })
+    # Every island record that binds a group, whether or not a capture has ever
+    # loaded it. The grid the loader would build is in the group's own authored
+    # stream, so a Settlement nobody has stood in still publishes its roads;
+    # what it does not get is a live $0083DC to check against, which is what
+    # `attestation` distinguishes. Sorted by body and group so the payload does
+    # not depend on the order the island table happens to be walked in.
+    attested = {(network['body'], tuple(network['origin'])) for network in road_networks}
+    for island in sorted(islands, key=lambda item: (item['body'], item['structureGroup'] or 0)):
+        group = island['structureGroup']
+        if not group or (island['body'], tuple(island['origin'])) in attested:
+            continue
+        body = int(island['body'].split('-')[1])
+        slug = re.sub(r'[^a-z0-9]+', '-', bodies[body]['name'].lower()).strip('-')
+        suffix = (re.sub(r'[^a-z0-9]+', '-', island['areaName'].lower()).strip('-')
+                  if island['areaName'] else f'{group:02x}')
+        grid, selectors = expand_run_grid(data, group)
+        network = decode_road_network(
+            data, {}, f'roads-{slug}-{suffix}', body,
+            (island['origin'][0], island['origin'][1]), island,
+            island['areaName'] or f'{bodies[body]["name"]} group ${group:02X}',
+            WORKSPACE_SWEEP_EVIDENCE,
+            grid=grid, selectors=selectors,
+            cell_index=None, live_orientations=None,
+        )
+        network['structureGroup'] = group
+        road_networks.append(network)
     chevy_key = instance_by_id.get('object-slot-180')
     chevy_parent_model = by_address.get('structure-01d188')
     chevy_map_record = data[0x251d7:0x251dd]

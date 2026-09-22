@@ -79,15 +79,25 @@ export const ROAD_PIECES = [
 ] as const;
 export type RoadPiece = (typeof ROAD_PIECES)[number];
 /**
- * One captured structure group's road network: the run-length extent grid at `$01E000`
- * that `$04EC30` classifies into the per-cell ground selection.
+ * One structure group's road network: the run-length extent grid at `$01E000` that
+ * `$04EC30` classifies into the per-cell ground selection.
  *
  * The runs are one-cell-wide road lines, not a landmass — the coastline is the island
- * record's polygon and nothing else. A Body with no entry here is a Body whose group
- * was never captured, not a Body without roads
+ * record's polygon and nothing else. Every island record that binds a group carries a
+ * network, whether or not a capture ever loaded it: the grid is built from the group's
+ * own authored stream, so `attestation` is what separates the two, not presence. A
+ * network with no run is a recovered "this Settlement has no roads"
  * (docs/research/damocles-eris-ground.md).
  */
 export interface RoadNetwork {
+  /**
+   * `capture` where a memstate stood in this workspace and the replay reproduced its
+   * live `$0083DC`; `image` where the run grid was expanded from the group's authored
+   * stream by `$04EB60`, an expansion that reproduces `$01E000` byte for byte on every
+   * capture that binds a group. A Settlement nobody has stood in still publishes its
+   * roads; what it does not have is a live table to check against.
+   */
+  readonly attestation: 'capture' | 'image';
   readonly body: string;
   /** Every cell whose class is nonzero, in cell order. Cells are workspace-local. */
   readonly cells: readonly {
@@ -97,9 +107,11 @@ export interface RoadNetwork {
     /**
      * `$04ECEE`-`$04ED0E` lets a placement in the group's own stream replace the
      * classifier's record with its own where the two share a record class, so the drawn
-     * record is not always the road piece the class selected.
+     * record is not always the road piece the class selected. Only a live `$01E400`
+     * carries the replacement, so this is `null` on an image-derived network: the
+     * question is unanswered there, not answered no.
      */
-    readonly overridden: boolean;
+    readonly overridden: boolean | null;
     readonly piece: number;
     readonly pieceName: RoadPiece;
     /** The road piece the class selected, whether or not a placement replaced it. */
@@ -134,6 +146,8 @@ export interface RoadNetwork {
     readonly start: readonly [number, number];
   }[];
   readonly sourceAddress: number;
+  /** The Structure Workspace group this network belongs to. */
+  readonly structureGroup: number;
 }
 export interface Model {
   readonly conditions: readonly string[];
@@ -1416,7 +1430,8 @@ export const parseCatalogue = (value: unknown): Catalogue => {
         return {
           cell,
           model,
-          overridden: boolean(c['overridden']),
+          overridden:
+            c['overridden'] === null ? null : boolean(c['overridden']),
           piece,
           pieceName: choice(c['pieceName'], ROAD_PIECES),
           recordAddress: integer(c['recordAddress']),
@@ -1439,6 +1454,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
         fail('a road network does not carry all six road-piece selectors');
       }
       return {
+        attestation: choice(n['attestation'], ['capture', 'image'] as const),
         body: string(n['body']),
         cells,
         classTableAddress: integer(n['classTableAddress']),
@@ -1456,7 +1472,8 @@ export const parseCatalogue = (value: unknown): Catalogue => {
             start: cellPair(run['start'])
           };
         }),
-        sourceAddress: integer(n['sourceAddress'])
+        sourceAddress: integer(n['sourceAddress']),
+        structureGroup: byte(n['structureGroup'])
       };
     }
   );

@@ -2809,13 +2809,66 @@ class SettlementRoadNetworkTests(unittest.TestCase):
         # and every class it answers 'none' for is one no authored grid builds.
         self.assertEqual(sorted(reached), sorted({0} | {c for c in range(64) if table[c]}))
 
-    def test_the_payload_carries_a_network_for_every_captured_group(self):
-        networks = self.payload()['roadNetworks']
-        self.assertEqual(len(networks), 1 + len(self.WORKSPACES))
+    def test_the_expansion_reproduces_every_captures_live_run_grid(self):
+        """The grid the loader built, rebuilt from the group's authored stream.
+
+        This is what lets a group nobody has stood in publish a network at all.
+        $01E000 is not authored -- $04EB60 expands a run-length extent stream
+        held in the group's own record -- so reconstructing it is only sound if
+        the reconstruction matches what the machine actually built. Every
+        capture on disk binds some group, and each is an independent check.
+        """
+        from damocleslab.catalogue import (
+            ROAD_RUN_GRID, expand_run_grid, hatari_memstate_ram)
+        root = Path(__file__).resolve().parents[1]
+        run = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d'
+        if not (run / 'observed.ram').is_file():
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        image = (run / 'observed.ram').read_bytes()
+        groups = set()
+        for path in sorted(root.glob('snapshots/*.sav')):
+            memory = hatari_memstate_ram(path.read_bytes())
+            if len(memory) != 1048576:
+                continue
+            group = struct.unpack_from('>H', memory, 0x794e)[0]
+            grid, selectors = expand_run_grid(image, group)
+            self.assertEqual(
+                grid, memory[ROAD_RUN_GRID:ROAD_RUN_GRID + 1024], path.name)
+            self.assertEqual(
+                selectors,
+                [struct.unpack_from('>H', memory, 0x1E640 + index * 2)[0]
+                 for index in range(6)],
+                path.name)
+            groups.add(group)
+        # The captures are Restricted Material and only five are tracked, so
+        # which are present is a property of the checkout; require the tracked
+        # ones rather than a count a fuller checkout would exceed.
+        self.assertLessEqual({0x12}, groups)
+
+    def test_the_payload_carries_a_network_for_every_binding_island_record(self):
+        payload = self.payload()
+        networks = payload['roadNetworks']
+        binding = [island for island in payload['islands']
+                   if island['structureGroup']]
+        self.assertEqual(len(networks), len(binding))
         self.assertEqual(
-            [n['id'] for n in networks if not n['cells']], ['roads-solon'])
-        # Twenty Bodies, not Eris alone, and Gaea carries two groups.
-        self.assertEqual(len({n['body'] for n in networks if n['cells']}), 20)
+            {(n['body'], tuple(n['origin'])) for n in networks},
+            {(i['body'], tuple(i['origin'])) for i in binding})
+        # A capture attests the group it stood in; the rest are expanded from
+        # the image, which is a different provenance and not a lesser network.
+        attested = [n for n in networks if n['attestation'] == 'capture']
+        self.assertEqual(len(attested), 1 + len(self.WORKSPACES))
+        self.assertTrue(all(
+            cell['overridden'] is None
+            for n in networks if n['attestation'] == 'image'
+            for cell in n['cells']))
+        # An empty network is a reading: these three Settlements have no roads.
+        self.assertEqual(
+            sorted(n['id'] for n in networks if not n['cells']),
+            ['roads-gaea-0e', 'roads-midas-the-midas-project', 'roads-solon'])
+        # Twenty-one Bodies now carry roads: the twenty a capture reached,
+        # plus LACHESIS, which no pose stands on and no craft route reaches.
+        self.assertEqual(len({n['body'] for n in networks if n['cells']}), 21)
 
     def test_the_capital_city_network_is_the_one_the_aerial_view_draws(self):
         """The pinned capture's live ground-extent edge list, cell by cell.

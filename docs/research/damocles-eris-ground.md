@@ -822,13 +822,86 @@ twenty-two groups share.
 | `$04EC30`–`$04EC94` | the classifier | `39a7f76a330314e57de48a1d006cb7f4fe6d7a3db27b6814c1f72be2291bfa7b` |
 | `$01E600`–`$01E640` | the class table, resident | `483fae1b8b35e9e7af68bec3460587c9be82ffec983c6ac75e9581ee50ae9dd1` |
 | `$01E000`–`$01E400` | the run grid, per group | per capture in the table above |
+| `$04EB60`–`$04EC2E` | the run-grid expander (#447) | `5706423089cf79c33e03f6b38b2075ed80266ef5809850107216cbcd3d203545` |
 
 ### Catalogue disposition
 
-A `roadNetworks` collection, one entry a captured structure group: the group's
-origin and island, its six piece selectors, every classified cell with its
-piece, rotation, source class, selected record and drawn model, and the runs
-deduplicated as the network's lines. `coverage.roads` counts them.
+A `roadNetworks` collection, one entry an island record that binds a structure
+group: the group's origin and island, its six piece selectors, every classified
+cell with its piece, rotation, source class, selected record and drawn model,
+and the runs deduplicated as the network's lines. `coverage.roads` counts them.
+
+## Research update — #447: the run grid is authored, so every group decodes
+
+#441 published a network for each of the 22 groups a capture had loaded and
+left the other 20 as gaps, on the reading that `$01E000` is capture state. It
+is, but it is *built* capture state: `$04EB60`–`$04EC2C` expands a run-length
+extent stream held in the group's own authored record, and that record is in
+the program image for all 42 groups. So the grid a capture would have shown is
+reconstructible without one, and **no flight, pose or new memstate is needed to
+recover a Settlement's roads**.
+
+### The expansion, read in full
+
+`$04EB64` reaches the run grid, `$04EB6A` adds the word at `$1E64C` to get the
+group-offset root, and `$04EB72` indexes that root by the group to reach the
+authored record. `$04EB9C`–`$04EBAC` then clears `$1E000`–`$1E400` — eight
+passes of four `movem.l` of eight registers, 1 KiB — leaving `a1` at `$1E000`,
+and the stream is walked three bytes at a time from `$04EBB0`:
+
+| First byte | Form | Meaning |
+| --- | --- | --- |
+| `$00` | terminator | `$04EBB2` ends the stream |
+| bit 7 clear | row, `$04EBB6` | the 1-based row; `subq #1` then `asl #4` makes the row base |
+| bit 7 set | column, `$04EBDE` | `not.b` gives the column directly |
+
+The other two bytes are the run's first and last cell along that axis. The row
+form writes the pair into bytes 0–1 of every cell from start to end; the column
+form writes it into bytes 2–3, stepping `$3E` extra bytes a time so it advances
+one row (64 bytes) per cell. Both forms compute the cell index with **byte**
+arithmetic (`add.b`, `asl.b`), so a run wraps at 256 rather than running off the
+grid. `$04EC0E` then takes the `$7AEE`/`$7AEF` pair and six selector *indices*,
+which `$04EC22` turns into the six words at `$1E640` through the master table at
+`$1E64E` — which is why one Settlement's straight is a runway and another's a
+lane, and why the six selectors must come from the group and never from
+whichever group the surrounding image happens to have loaded.
+
+### What stands behind a group nobody has stood in
+
+The expansion is checked the only way it can be: against the machine. For every
+memstate on disk, expanding that capture's own group from the **program image**
+reproduces the capture's live `$01E000` **byte for byte**, and its six live
+selectors at `$1E640` word for word — 32 captures over 25 distinct groups, no
+differences. Feeding those grids through `$04EC30` then reproduces the live
+`$0083DC` orientation table on all 31 comparisons, which is #441's existing
+gate. `tests/test_catalogue.py` pins both.
+
+So a captured group keeps its live self-check and an uncaptured one is an
+expansion of the same kind, validated 25 ways. The payload marks which is which
+in `attestation`, `capture` or `image`, and `overridden` is **null** rather than
+false on an image-derived cell: the placement replacement at `$04ECEE` is only
+in a live `$1E400`, so without a capture the question is unanswered rather than
+answered no.
+
+### The twenty groups this recovers
+
+| Body | Groups | Notes |
+| --- | --- | --- |
+| LUCAN | `$1D`–`$24`, `$26`–`$28` | 18–36 road cells each; eleven of the twenty |
+| ERIS | `$10`, `$11`, `$14`, `$15` | KEY WEST `$15` is the largest at 48 cells |
+| DION | `$1B`, `$1C` | 26 cells each, and different layouts |
+| LACHESIS | `$34` | PULVIN MINES, 10 cells — **no pose stands on this Body at all** |
+| GAEA | `$0E` | **no run**: a recovered "no roads", like SOLON BASE |
+| MIDAS | `$38` | **no run**, the same reading |
+
+Two of these were sitting in existing captures. `damocles.key-west.sav` binds
+group `$15` and `damocles.midas.sav` binds `$38`, and both agree with the static
+decode; the extractor refuses them as *placement* sources because their camera
+pair disagrees with their cell origin, which is a gate about placing cells
+against a fabricated origin and says nothing about the run grid.
+
+GAEA `$0E` and MIDAS `$38` are worth stating plainly: they hold no road at all,
+so a capture standing in either would have returned the same empty answer.
 
 `coverage.classifications.roadTemplate` is **not** the flag for this and stays
 at 0. It counts models still carrying the `$7000` road-template omission, which
