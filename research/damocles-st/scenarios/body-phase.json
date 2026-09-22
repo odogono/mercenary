@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "name": "body-phase",
+  "checkpoint": "title-screen",
+  "description": "From the Damocles title screen, enter the starting world, capture once, wait, then capture again. The wait is the harness's own `wait_vbls`, which is a host sleep rather than a VBL count, so the gap is not fixed; what makes the captures usable is that each one carries the interrupt counter at $051D96, so the elapsed count is read out rather than assumed. The two RAM captures pin the per-Body phase-rate tables at $0082DC and $00835C, the 32 phase accumulators at $0062EA, and the body-centre arrays at $005F40/$00626A/$005FC0, so the accumulator advance can be checked against the derived rate and the centres can be hashed for orbit stasis (#439).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "prefix": "observed",
+      "artifacts": ["display", "registers", "ram"]
+    },
+    {
+      "type": "wait_vbls",
+      "count": 50000
+    },
+    {
+      "type": "capture",
+      "prefix": "observed-later",
+      "artifacts": ["display", "registers", "ram"]
+    }
+  ]
+}

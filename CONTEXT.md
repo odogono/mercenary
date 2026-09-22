@@ -211,8 +211,12 @@ One physical member of a System whose known identity and placement come from tha
 _Avoid_: World, planet, place, sphere
 
 **Primary**:
-The optional Body that another Body is established to revolve around; absence means the relationship is not established, not that the Body revolves around nothing.
-_Avoid_: Parent, centre, star, inferred Primary
+The optional Body that another Body is grouped under in a System's drawn hierarchy; absence means the grouping is not established, not that the Body stands alone. It names how a System organises its Bodies for presentation and naming, and asserts no revolution: in Damocles the recovered System is static apart from its comet, so a Body's Primary is not something it goes round.
+_Avoid_: Parent, centre, star, inferred Primary, orbit, revolution
+
+**Body Rotation**:
+The rate at which a Body turns about its own axis, together with the **Body Day** it implies — the time for one full turn. It is the only motion a recovered System may attribute to a Body that is not the Body moving: it turns the Body's surface frame under a System frame that stays put, so a sun or moon crossing a surface sky is the observer's own Body turning. A Body Day is a duration, not a clock the game shows.
+_Avoid_: Orbital period, revolution, day/night cycle, spin rate, phase
 
 **Island**:
 One authored landmass on a Body in the Flyover, optionally carrying one canonical surface patch; neither a Damocles Place whose recovered kind is `ISLAND` nor a recovered Damocles Island is an Island in this sense.
