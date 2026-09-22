@@ -19,23 +19,52 @@ const windowEdges = [
 ] as const;
 
 describe('the recovered Damocles Settlement road networks', () => {
-  test('every captured Settlement group but one carries a network', async () => {
+  test('every Settlement group carries a network, captured or not', async () => {
     const catalogue = await load();
     const withRoads = catalogue.roadNetworks.filter(
       network => network.cells.length > 0
     );
 
-    expect(catalogue.roadNetworks).toHaveLength(22);
-    expect(withRoads).toHaveLength(21);
-    // Solon Base is one structure and no run at all: a Settlement is not obliged to have
-    // roads any more than it is obliged to have an island.
+    // One per island record that binds a Structure Workspace group, not one per
+    // capture: the run grid is expanded from the group's own authored stream, so a
+    // Settlement nobody has stood in publishes its roads too.
+    const binding = catalogue.islands.filter(
+      island => island.structureGroup !== 0
+    );
+    expect(catalogue.roadNetworks).toHaveLength(binding.length);
+    expect(catalogue.roadNetworks).toHaveLength(42);
+    expect(
+      catalogue.roadNetworks.filter(n => n.attestation === 'capture')
+    ).toHaveLength(22);
+    expect(withRoads).toHaveLength(39);
+    // Three Settlements hold no run at all: a Settlement is not obliged to have roads
+    // any more than it is obliged to have an island. An empty network is a reading.
     expect(
       catalogue.roadNetworks
         .filter(network => network.cells.length === 0)
         .map(network => network.id)
-    ).toEqual(['roads-solon']);
-    // The record family is not Eris-only: nineteen Bodies beyond Eris have one.
-    expect(new Set(withRoads.map(network => network.body)).size).toBe(20);
+        .sort()
+    ).toEqual([
+      'roads-gaea-0e',
+      'roads-midas-the-midas-project',
+      'roads-solon'
+    ]);
+    // The record family is not Eris-only: twenty Bodies beyond Eris have one.
+    expect(new Set(withRoads.map(network => network.body)).size).toBe(21);
+  });
+
+  test('a network binds the group and origin of its own island record', async () => {
+    const catalogue = await load();
+    const byOrigin = new Map(
+      catalogue.islands
+        .filter(island => island.structureGroup !== 0)
+        .map(island => [`${island.body}:${island.origin.join()}`, island])
+    );
+    for (const network of catalogue.roadNetworks) {
+      const island = byOrigin.get(`${network.body}:${network.origin.join()}`);
+      expect(island).toBeDefined();
+      expect(network.structureGroup).toBe(island!.structureGroup);
+    }
   });
 
   test('the Capital City grid holds the network the aerial view draws', async () => {
@@ -110,9 +139,11 @@ describe('the recovered Damocles Settlement road networks', () => {
         if (cell.model !== null) {
           expect(models.has(cell.model)).toBe(true);
         }
-        if (cell.overridden) {
+        if (cell.overridden === true) {
           overridden += 1;
         }
+        // Only a live $01E400 answers the question at all.
+        expect(cell.overridden === null).toBe(network.attestation === 'image');
       }
       // A piece index always names one of the group's own six selectors.
       for (const cell of network.cells) {

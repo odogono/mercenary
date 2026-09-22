@@ -112,6 +112,49 @@ takes the direct path at level 10, and `metis-transporter` lands on `FILOFAX` at
 level 9, where the support supplies the rank the carried key requires, so the
 model-form and height gates run.
 
+## Structure Workspace reach and capture (#447)
+
+```sh
+# every island record that binds a group, and whether a capture attests it
+python3 research/damocles-st/scripts/workspace-capture-probe.py --list
+
+# which pose could fly to which uncaptured group, read without booting anything
+python3 research/damocles-st/scripts/workspace-capture-probe.py --routes
+
+# fly a boarded craft to another workspace on the same body and capture the pose
+python3 research/damocles-st/scripts/workspace-capture-probe.py \
+    --snapshot research/damocles-st/snapshots/rehosted/dion-2-3.sav \
+    --group 0x1b --board-slot 3 --capture dion-north
+```
+
+**The road networks no longer need this probe.** #447 established that the run
+grid at `$01E000` is expanded by `$04EB60` from the group's own authored stream,
+so `damocleslab.catalogue` decodes all 42 groups from the image and a flight adds
+nothing to them. What the probe still answers is *reach*: `--routes` reads every
+tracked memstate and reports, per group with no live attestation, the distance
+from each pose and whether the board gate at `$054310` would accept the craft
+parked there — bit 7 of the key byte at `$7272 + slot*4`. That is the standing
+answer to "could we capture this one", and it is what a future `$ABDC` surface
+assembly or resident capture would start from.
+
+The flight itself boards, climbs, and steers a closed loop to an island record's
+origin, wrapping the surface at 2^28 source units. Boarding, climb and cruise are
+reproducible — 97 cells in 26 seconds on the Dion run — and the descent to ground
+contact is not yet: the craft holds height under power, and atmospheric speed is
+nothing like the space table, word 4 nose-down losing only about 520 units of
+height a second. Runs that ended short are in the ignored `work/` directory.
+
+Two traps worth keeping, both found driving it: Hatari's command FIFO can stop
+being read, and a blocking write into it never returns, so the probe writes
+through a non-blocking fd with a deadline; and `savebin` reuses one filename per
+tick, so a sample taken after the emulator stopped answering silently re-reads
+the previous tick and a dead run looks exactly like a slow one. Each window is
+removed before it is asked for.
+
+Booting needs the **rehosted** container (`snapshots/rehosted/`). The un-rehosted
+memstates the catalogue recipe names are fine as extractor inputs, which only read
+their RAM, but Hatari abandons the restore and exits.
+
 ## Arrival route probe (#326)
 
 ```sh

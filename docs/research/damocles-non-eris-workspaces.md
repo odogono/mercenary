@@ -149,6 +149,17 @@ arrival pose and no recovered workspace**, and MIDAS still holds MAGIC CRYSTAL,
 the only pickup-trigger object outside Eris, Dion and Vesta. Recovering it needs
 a fresh capture standing in a built MIDAS workspace, not a re-read of this one.
 
+**Amended by [#447](https://github.com/odogono/mercenary/issues/447) for roads
+alone.** The refusal is about *placing cells* against an origin the capture does
+not support, and it stands. It says nothing about the run grid: `$01E000` is
+built by `$04EB60` from the group's own authored stream, so THE MIDAS PROJECT's
+road network decodes from the image without any capture — and holds **no run at
+all**, the same recovered "no roads" SOLON BASE gets. A fresh MIDAS capture is
+still what the `$ABDC` surface assembly and MAGIC CRYSTAL need; it is no longer
+what the roads need. The distance is also now measured: the `midas` pose stands
+2073 cells from its own island record, which is why its workspace is not built
+for the cell it is in.
+
 ## Two windows with no surface assembly
 
 `CRONUS` and `LUCAN` publish a workspace with **zero** occupied `$ABDC` cells.

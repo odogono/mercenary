@@ -79,15 +79,24 @@ slot's table entry is excluded: VOID is the space-as-place sentinel, not a Body
 surface. See [the Eris islands note](damocles-eris-islands.md) and
 [the island census](damocles-island-census.md).
 
-The `roadNetworks` collection is one entry a captured structure group: the group's
-`origin` and `island`, its six road-piece selectors, every cell the `$04EC30`
-classifier put on a run — with its `piece`, `rotation`, `sourceClass`, the
-`recordAddress` the class selected and the `model` the cell actually draws when a
-placement replaced it — and the authored runs deduplicated as the network's lines.
-The runs are one-cell-wide roads, not a landmass: an island's coastline is its own
-polygon. Twenty-two groups across twenty-one bodies are published and twenty-one
-carry a network, so a body with no entry is a workspace no capture has loaded rather
-than a body without roads; `coverage.roads` counts them.
+The `roadNetworks` collection is one entry an **island record that binds a structure
+group**, captured or not: the group's `origin` and `island`, its six road-piece
+selectors, every cell the `$04EC30` classifier put on a run — with its `piece`,
+`rotation`, `sourceClass`, the `recordAddress` the class selected and the `model` the
+cell actually draws when a placement replaced it — and the authored runs deduplicated
+as the network's lines. The runs are one-cell-wide roads, not a landmass: an island's
+coastline is its own polygon.
+
+All **42** binding records are published and 39 carry a run, across 23 bodies. The
+run grid is not capture state a memstate has to supply: `$04EB60`–`$04EC2C` builds it
+from a run-length extent stream in the group's own authored record, so #447 expands
+it for every group. `attestation` says which of the two a network is — `capture`
+where a memstate stood in the workspace and the replay reproduced its live `$0083DC`,
+`image` where the grid came from the authored stream — and `overridden` is null
+rather than false on an image-derived cell, because the placement replacement at
+`$04ECEE` exists only in a live `$1E400`. A network with no run is a recovered "this
+Settlement has no roads", which is SOLON BASE, GAEA `$0E` and THE MIDAS PROJECT.
+`coverage.roads` counts them.
 `coverage.classifications.roadTemplate` is a different thing and is not that count:
 it is how many models still carry the `$7000` road-template omission, and it is 0.
 See [the Eris ground note](damocles-eris-ground.md).
