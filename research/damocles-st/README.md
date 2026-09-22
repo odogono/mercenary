@@ -25,6 +25,7 @@ research/damocles-st/lab observe --scenario research/damocles-st/scenarios/deadl
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/script-dispatch.json
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/horizon-slot-writer.json
 research/damocles-st/lab observe --scenario research/damocles-st/scenarios/body-phase.json
+research/damocles-st/lab observe --scenario research/damocles-st/scenarios/comet-motion.json
 python3 research/damocles-st/scripts/panel-readout-probe.py --roms /path/to/roms \
   --snapshots /path/to/snapshots clock --vbls 250
 python3 research/damocles-st/scripts/panel-readout-probe.py --roms /path/to/roms \
@@ -536,6 +537,54 @@ captures themselves rather than from the scenario.
 
 Findings are in
 [the Gamma System note](../../docs/research/damocles-gamma-system.md#issue-439-body-rotation-and-orbit-stasis--confirmed).
+
+## Comet motion probe (#440)
+
+What moves DAMOCLES's centre — the one Body centre the resident image writes —
+and whether the path it traces is a function of the Impact Clock at `$00793C`.
+
+```sh
+python3 research/damocles-st/scripts/comet-motion-probe.py --case path \
+  --samples 24 --interval 2.0
+python3 research/damocles-st/scripts/comet-motion-probe.py --case path \
+  --samples 10 --interval 1.5 \
+  --snapshot research/damocles-st/snapshots/rehosted/gaea-ur-city-4-2.sav
+python3 research/damocles-st/scripts/comet-motion-probe.py --case waypoint \
+  --targets 6 --ordinary-rate --interval 0.05
+python3 research/damocles-st/scripts/comet-motion-probe.py --case pose \
+  --samples 3 --interval 0.5
+```
+
+The mover at `$051E88` holds a cursor at `$00782C` into a table of 31 ten-byte
+waypoints at `$052022` — a signed word of seconds to impact and a longword X
+and Z each — and interpolates between the two the clock falls between at
+1/32-second resolution, writing the result at `$051F36`/`$051F3A`.
+
+`path` samples the centre, the clock, its 1/32-second companion `$007942`, the
+cursor and the derived segment rates, recomputes the centre from the table and
+the clock alone, and reports the residual. It also searches back two
+game-seconds for the single tick that reproduces both axes bit-exactly, which
+separates a wrong formula from a stale frame; the runs behind the note find
+that tick at lag zero everywhere, so the residual is not a tolerance.
+`waypoint` is the one case that injects: it pokes `$00793C` forward onto an
+authored waypoint's time and reads back where the comet went, which only makes
+sense forward, because the cursor steps on and never back. `pose` reconciles
+one restored memstate's held centre against its own clock, which tests the
+formula against captures taken by other work, and reports the two gates on the
+`$051F26..$051F32` carry.
+
+`snapshots/rehosted/damocles.sav` restores into the game's dead prompt rather
+than alive on the comet, so it is usable for `pose` and not for watching the
+comet move.
+
+The pinned scenario `scenarios/comet-motion.json` covers the same ground
+without a memstate: two RAM captures far enough apart to cross a segment, each
+carrying the clock, the cursor, the rates, DAMOCLES's centre and the whole
+table. How far apart is not fixed — the harness's `wait_vbls` is a host sleep —
+so take the elapsed count from `$051D96` in the captures themselves.
+
+Findings are in
+[the motion and time note](../../docs/research/damocles-script-motion-time.md#comet-motion-440--confirmed-damocless-centre-is-a-function-of-the-impact-clock).
 
 ## Failures and acceptance
 

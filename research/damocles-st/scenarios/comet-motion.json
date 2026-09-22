@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "name": "comet-motion",
+  "checkpoint": "title-screen",
+  "description": "From the Damocles title screen, enter the starting world, capture once, wait while the player stands still, then capture again. Both RAM captures carry the Impact Clock at $00793C with its 1/32-second companion at $007942, the comet-path cursor at $00782C with the segment rates at $007822..$00782B, DAMOCLES's centre at $005FB4/$006034, and the whole waypoint table at $052022..$052157, so the comet's centre at each capture can be recomputed from the clock alone and compared with what the machine holds (#440).",
+  "actions": [
+    {
+      "type": "keypress",
+      "key": 57
+    },
+    {
+      "type": "wait_vbls",
+      "count": 90000
+    },
+    {
+      "type": "capture",
+      "prefix": "observed",
+      "artifacts": ["display", "registers", "ram"]
+    },
+    {
+      "type": "wait_vbls",
+      "count": 50000
+    },
+    {
+      "type": "capture",
+      "prefix": "observed-later",
+      "artifacts": ["display", "registers", "ram"]
+    }
+  ]
+}

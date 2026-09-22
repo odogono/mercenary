@@ -210,7 +210,7 @@ are not claimed as a stable table.
 | One phase-rate source belongs to each named body/place slot            | **Confirmed**                                         | 32-longword bounded loop; `index * 4` selector reaches the matching phase accumulator; two equal cold-run source blocks.                                  |
 | `$0082DC` contains orbital angular velocities                          | **Disproved (#439)**                                  | The phase never reaches a Body centre. It is Body Rotation: `$04E970` subtracts it to enter a Body's frame and `$059384`/`$0595C8`/`$0597AA` add it to leave it. |
 | A parallel record supplies type (star/planet/moon/comet)               | **Partially confirmed**                               | No explicit type byte was found. Confirmed symmetric draw clusters plus relative centres support a structurally inferred star/9-planet/19-moon partition. |
-| A parallel record supplies Primary                                     | **Partially confirmed**                               | No explicit parent field was found. Cluster anchors support the Primary assignments below; DAMOCLES's Primary remains Unresolved.                         |
+| A parallel record supplies Primary                                     | **Partially confirmed**                               | No explicit parent field was found. Cluster anchors support the Primary assignments below. DAMOCLES has no Primary to find: #440 shows its centre comes from an authored waypoint table, not from any parent.        |
 | A parallel record supplies radius                                      | **Confirmed (encoding decoded, #424)**                | `$006040 + selector` controls apparent size in the all-body scan and is subtracted from range for arrival/contact. The field is a packed binary float; the physical unit is still unknown. |
 | A parallel record supplies orbit radius/elements or Cartesian position | **Cartesian Confirmed; orbit elements Disproved (#439)** | X/Y/Z body-centre arrays are recovered and are the whole of a Body's placement. No orbit centre, plane, period or eccentricity is read anywhere, and only DAMOCLES's centre is ever written. |
 | The game draws bodies at range from VOID                               | **Confirmed (code path), live appearance Unresolved** | The space branch calls the 30-body range/sort/project loop. No live in-flight VOID display capture verifies final appearance; the `$78` selector captured under #439 is the dead prompt, whose view is black. |
@@ -394,12 +394,16 @@ $051F36  move.l d0, $5fb4.w       ; $5F40 + $74 = DAMOCLES X
 $051F3A  move.l d1, $6034.w       ; $5FC0 + $74 = DAMOCLES Z
 ```
 
-`$051E88` is DAMOCLES's own mover: it steps the comet's centre along a record
-reached through `$782C` under the game clock at `$793C`, and at
-`$051F26..$051F32` it carries the player's own position along when they are
-standing on it. What that record holds and what path it describes is
-[#440](https://github.com/odogono/mercenary/issues/440); it is named here only
-because orbit stasis needs the one exception accounted for.
+`$051E88` is DAMOCLES's own mover, and [#440](https://github.com/odogono/mercenary/issues/440)
+has since answered what it reads: the record reached through `$782C` is a cursor
+into a 31-entry waypoint table at `$052022`, and the mover interpolates the
+comet's centre between the two waypoints the Impact Clock at `$793C` falls
+between. The comet's position is a function of the clock and of nothing else,
+the path ends on ERIS's own centre at zero on the clock, and `$051F26..$051F32`
+carries the player's camera origin along with it behind a gate that wants
+`$7AAE` at 2. See [Comet motion](damocles-script-motion-time.md#comet-motion-440--confirmed-damocless-centre-is-a-function-of-the-impact-clock). The exception is accounted for
+here only so that orbit stasis can be stated; the path itself belongs to that
+note.
 
 Every other reference to `$005F40`, `$005FC0`, `$00626A`, `$0060C0` and
 `$006040` in the listing is a source operand. The one apparent exception,
@@ -511,6 +515,7 @@ which crosses a terminator under a rate the engine itself uses.
 | A sun and moons crossing a surface sky are the observer's Body turning  | **Confirmed**                           | `spin` carries ERIS from night to day with the Body Coordinate Readout and Cell Readout unchanged.                                                                                                                      |
 | Body centres other than DAMOCLES move during play                       | **Disproved**                           | One centre writer in the image, `$051F36`/`$051F3A`, slot 29 only; Y array byte-identical and DAMOCLES the only X/Z change over 35,617 and 40,591 interrupts.                                                          |
 | A parallel record supplies orbit elements                                | **Disproved as a live record**           | No orbit centre, plane, period or eccentricity is read anywhere. The System the engine draws is static apart from the comet, so there is nothing for orbital elements to drive. Authored elements outside the resident image are not addressed here. |
+| DAMOCLES's centre, the one exception, is driven by the Impact Clock     | **Confirmed (#440)**                    | `$051E88` interpolates the waypoint table at `$052022` from `$00793C`; recomputing the centre from the clock alone reproduces the machine's longwords bit-exactly. See [Comet motion](damocles-script-motion-time.md#comet-motion-440--confirmed-damocless-centre-is-a-function-of-the-impact-clock).                    |
 | VOID's rate has a consumer                                              | **Disproved (dead rate)**               | The space branch writes no `$042C6C` and reads no `$0062EA`; the arrival inverse never sees the `$78` selector.                                                                                                        |
 | One interrupt of `$051E4E` is one VBL                                    | **Confirmed**                           | `$007B9C` advanced 35,617 against `$051D96`'s 35,617 in the pinned scenario, and `$007B9C` is already Confirmed as one per VBL.                                                                                         |
 
@@ -613,7 +618,10 @@ authored physical units; the extent column is a packed binary float whose
 decode is below (#424). Every Y value, the complete extent
 table, and slots 0–28 and 30 of X/Z are identical in the second cold run.
 DAMOCLES alone moves between captures: X `1879 -> 1406`, Z
-`306253 -> 307781`. Normalising only DAMOCLES's X/Z longword to zero yields
+`306253 -> 307781`. #440 accounts for that difference exactly: inverting the two
+positions through the comet's waypoint table gives clocks of `02-29-04.6` and
+`02-29-16.0`, against the `02-29-05` and `02-29-17` the two panels read. The two
+captures are one function read at two times, not a nondeterministic record. Normalising only DAMOCLES's X/Z longword to zero yields
 equal X and Z hashes
 `6d94a5aa94b9f7334877fee2e08d30e487acc134eac74d29e289e6b351abddac`
 and `800b0a03eda4360d75d1704fb240020685f296b3e8c37a40593de40ea1aff1e1`,
@@ -672,19 +680,27 @@ nine planets and nineteen moons, independently matching the secondary claim.
 | Moon           | PAN, THALIA                                                  | TRITON                                                                          |
 | Moon           | BACCHUS, JASON, TOLOSA, PERSEUS                              | JUNO                                                                            |
 | Moon           | SAPPHIRE                                                     | MENTOR                                                                          |
-| Comet          | DAMOCLES                                                     | **Unresolved**; DIALIS is plausible but not encoded by the recovered peer lists |
+| Comet          | DAMOCLES                                                     | **None (#440)**; its centre is interpolated from an authored waypoint table, and the path is one perihelion pass about DIALIS |
 | Sentinel/place | VOID                                                         | none                                                                            |
 
 The explicit type/Primary _bytes_, if any, remain Unresolved. The table above
 is **Partially confirmed / structurally inferred**, not a decoded field:
 cluster membership and relative coordinates are Confirmed, while choosing the
-first/largest member as Primary is inference. DAMOCLES's Primary is deliberately
-not assigned.
+first/largest member as Primary is inference. DAMOCLES is the one row that is
+now settled rather than deliberately unassigned: #440 shows the comet's centre
+comes from a waypoint table read against the Impact Clock, with no parent, no
+centre and no elements anywhere in the path, so it has no Primary to assign.
+The path's own geometry — a single close pass of the System origin — is
+consistent with the DIALIS reading that was plausible before, but it remains a
+shape, not a field.
 
 `payload/damocles/system.json` publishes only the 30 physical records with
 their recovered resident positions, radius/extent values and body colours. It
 omits the structurally inferred types and Primaries, marks DAMOCLES's position
-as a capture-time sample, and excludes the VOID sentinel. Its `source` block
+as a capture-time sample, and excludes the VOID sentinel. That marking is still
+right and is now explained rather than merely cautious: the published slot-29
+position is the comet's place at the capture's own Impact Clock, and #440 gives
+the table and the rule that produce any other ([Comet motion](damocles-script-motion-time.md#comet-motion-440--confirmed-damocless-centre-is-a-function-of-the-impact-clock)). Its `source` block
 pins the first cold run and the colour table's own SHA-256, and its `coverage`
 block carries these limitations for downstream readers.
 
