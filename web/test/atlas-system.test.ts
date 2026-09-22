@@ -8,9 +8,12 @@ import {
   islandFacts,
   islandProvenance,
   placeFacts,
-  placeProvenance
+  placeProvenance,
+  roadFacts,
+  roadProvenance
 } from '../src/atlas/panel.ts';
 import { atlasHref, atlasSearch, readAtlasState } from '../src/atlas/state.ts';
+import { ROAD_GAP_NOTICE } from '../src/atlas/surface.ts';
 import {
   fitSystem,
   labelOf,
@@ -694,6 +697,43 @@ describe('the Atlas selection panel', () => {
     // The Catalogue has no island view: its deep links reach a Model, an Instance or a Body's
     // placement map, and its search covers Model names. The Body is the nearest true thing.
     expect(catalogueHref(11)).toBe('/catalogue?body=body-11');
+  });
+
+  test('states the road gap as a gap, and the empty network as a reading', () => {
+    // The gap and the recovered emptiness must never read the same. One says a capture has
+    // never loaded this Body's workspaces; the other says the record was read and holds no run.
+    const gap = roadProvenance({ lines: 0, networks: 0, recovery: 'gap' });
+    expect(gap.join(' ')).toContain(ROAD_GAP_NOTICE);
+    expect(gap.join(' ')).toContain('#441');
+    // The earlier ground work the records came out of, so a reader can follow the gap back.
+    for (const issue of ['#206', '#173', '#281', '#370']) {
+      expect(gap.join(' ')).toContain(issue);
+    }
+    // Nothing to count where nothing was recovered.
+    expect(roadFacts({ lines: 0, networks: 0, recovery: 'gap' })).toEqual([]);
+
+    const none = roadProvenance({ lines: 0, networks: 1, recovery: 'none' });
+    expect(none.join(' ')).not.toContain(ROAD_GAP_NOTICE);
+    expect(none.join(' ')).toContain('has no roads');
+    expect(roadFacts({ lines: 0, networks: 1, recovery: 'none' })).toEqual([
+      { label: 'Road networks', value: '1' },
+      { label: 'Runs drawn', value: '0' }
+    ]);
+
+    const drawn = roadProvenance({
+      lines: 37,
+      networks: 1,
+      recovery: 'recovered'
+    });
+    // What is drawn is the network and not its surface: the pieces are recovered and unused,
+    // and no pad or ground colouring is invented to fill it in (ADR 0014).
+    expect(drawn.join(' ')).toContain('none of them is drawn here');
+    expect(
+      roadFacts({ lines: 37, networks: 1, recovery: 'recovered' })
+    ).toEqual([
+      { label: 'Road networks', value: '1' },
+      { label: 'Runs drawn', value: '37' }
+    ]);
   });
 
   test('marks the capture-time sample and the recovered black', async () => {

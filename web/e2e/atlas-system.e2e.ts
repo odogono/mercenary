@@ -622,3 +622,108 @@ test('picking a Settlement name picks the island that publishes it', async ({
     'carries no name of its own'
   );
 });
+
+/// How much of the Body Range's canvas is drawn in the road colour. The network is canvas
+/// geometry rather than DOM, so the only honest check that it is on screen is the pixels.
+const roadPixels = (page: Page) =>
+  page.evaluate(() => {
+    const canvas = document.getElementById('body-map') as HTMLCanvasElement;
+    const context = canvas.getContext('2d')!;
+    const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
+    let found = 0;
+    for (let at = 0; at < data.length; at += 4) {
+      // #d8b25a, the token `draw.ts` strokes a run in.
+      if (data[at] === 0xd8 && data[at + 1] === 0xb2 && data[at + 2] === 0x5a) {
+        found += 1;
+      }
+    }
+    return found;
+  });
+
+test('the Settlement Range draws a Settlement’s recovered road network', async ({
+  page
+}) => {
+  // The game draws a whole Settlement's roads from the air, so the layer arrives at the band
+  // sized for a Structure Workspace rather than waiting for the Street Range.
+  await page.goto('/damocles/atlas?body=eris&x=72&z=136&span=20');
+  await expect(page.locator('#system-scale')).toContainText('Settlement Range');
+  await expect(page.locator('#status')).toContainText(
+    '37 road runs in 1 recovered network',
+    { timeout: 20_000 }
+  );
+  expect(await roadPixels(page)).toBeGreaterThan(0);
+  await expect(page.locator('#panel')).toContainText('Runs drawn');
+  await expect(page.locator('#road-recovery')).toHaveAttribute(
+    'data-recovery',
+    'recovered'
+  );
+  // The pieces are recovered and are not drawn: this layer is the network, not its surface.
+  await expect(page.locator('#panel')).toContainText(
+    'none of them is drawn here'
+  );
+
+  // The same lines stay at the Street Range, where the footprints will sit over them (#413).
+  await page.goto('/damocles/atlas?body=eris&x=72&z=136&span=2');
+  await expect(page.locator('#system-scale')).toContainText('Street Range');
+  await expect(page.locator('#status')).toContainText('37 road runs', {
+    timeout: 20_000
+  });
+  expect(await roadPixels(page)).toBeGreaterThan(0);
+
+  // Outward of the Settlement Range the network would be a smudge a few pixels wide, so it is
+  // not drawn — and the status line still says it is there and where to go to see it.
+  await page.goto('/damocles/atlas?body=eris&x=72&z=136&span=900');
+  await expect(page.locator('#system-scale')).toContainText('Coastal Range');
+  await expect(page.locator('#status')).toContainText(
+    '37 road runs, from the Settlement Range',
+    { timeout: 20_000 }
+  );
+  expect(await roadPixels(page)).toBe(0);
+});
+
+test('a Body no capture has loaded states the road gap rather than showing bare ground', async ({
+  page
+}) => {
+  await page.goto('/damocles/atlas?body=midas&x=2048&z=2048&span=20');
+  await expect(page.locator('#system-scale')).toContainText('Settlement Range');
+  await expect(page.locator('#status')).toContainText(
+    'Road network not yet recovered for this Body',
+    { timeout: 20_000 }
+  );
+  await expect(page.locator('#road-recovery')).toHaveAttribute(
+    'data-recovery',
+    'gap'
+  );
+  // The panel says what the gap is and where the work that would close it stands.
+  await expect(page.locator('#panel')).toContainText('#441');
+  await expect(page.locator('#panel')).toContainText('#206');
+  expect(await roadPixels(page)).toBe(0);
+
+  // Outward of the bands that draw roads the notice goes: it would be about a layer the reader
+  // could not have seen at that camera either way.
+  await page.goto('/damocles/atlas?body=midas&x=2048&z=2048&span=900');
+  await expect(page.locator('#system-scale')).toContainText('Coastal Range');
+  await expect(page.locator('#status')).not.toContainText(
+    'Road network not yet recovered'
+  );
+  await expect(page.locator('#road-recovery')).toHaveCount(0);
+});
+
+test('a Settlement recovered with no road at all is not reported as a gap', async ({
+  page
+}) => {
+  // SOLON BASE is one structure and no run: the record was read and holds nothing, which is a
+  // reading rather than a hole in what has been recovered.
+  await page.goto('/damocles/atlas?body=solon&x=3982&z=1404&span=20');
+  await expect(page.locator('#system-scale')).toContainText('Settlement Range');
+  await expect(page.locator('#status')).toContainText(
+    'no road run is recovered here',
+    { timeout: 20_000 }
+  );
+  await expect(page.locator('#status')).not.toContainText('not yet recovered');
+  await expect(page.locator('#road-recovery')).toHaveAttribute(
+    'data-recovery',
+    'none'
+  );
+  await expect(page.locator('#panel')).toContainText('has no roads');
+});

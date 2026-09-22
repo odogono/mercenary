@@ -19,7 +19,9 @@ import {
   bodyBounds,
   fitBody,
   labelsInBand,
-  rangeOf
+  rangeOf,
+  showsRoads,
+  type BodyRange
 } from './bodyRange.ts';
 import { mountCamera, type CameraFrame } from './camera.ts';
 import {
@@ -38,8 +40,10 @@ import {
   type AtlasState
 } from './state.ts';
 import {
+  ROAD_GAP_NOTICE,
   islandAt,
   readBodySurface,
+  roadRecovery,
   surfaceAnchor,
   type BodySurface,
   type PlacedLabel,
@@ -115,6 +119,9 @@ let bodyView: MapView | undefined;
 let catalogue: Catalogue | undefined;
 let catalogueRequest: Promise<void> | undefined;
 let surface: BodySurface | undefined;
+/// Which band the Body Range's camera is in, so the panel can describe the layers that band
+/// actually draws. Written by `drawBodyRange`, which is what discovers it.
+let bodyBand: BodyRange | undefined;
 /// The Body whose surface is currently drawn on its disc at the System Range, and its islands.
 /// Separate from `surface`, which belongs to the Body Range.
 let onDisc: string | undefined;
@@ -211,6 +218,17 @@ const renderSelectionPanel = () => {
   const place = placeId
     ? catalogue?.places.find(candidate => candidate.id === placeId)
     : undefined;
+  const roads =
+    settled.level === 'body' && surface && bodyBand && showsRoads(bodyBand)
+      ? {
+          lines: surface.roads.reduce(
+            (total, road) => total + road.lines.length,
+            0
+          ),
+          networks: surface.roads.length,
+          recovery: roadRecovery(surface.roads)
+        }
+      : null;
   renderPanel(panel, system, selectedBody(), {
     island: pickedId
       ? (catalogue?.islands.find(island => island.id === pickedId) ?? null)
@@ -226,6 +244,7 @@ const renderSelectionPanel = () => {
           place
         }
       : null,
+    roads,
     surfaceOnDisc: onDisc
   });
 };
@@ -384,6 +403,39 @@ const labelHref = (label: PlacedLabel): string => {
   });
 };
 
+/// What this band has to say about the Body's roads.
+///
+/// The gap is stated in the two bands that draw the layer and nowhere else: outward of the
+/// Settlement Range a network is a few pixels of smudge, so a notice there would be about
+/// something the reader could not have seen either way. A recovered network is still counted
+/// outward of it, with where to go to see it, exactly as the Place names are.
+const roadNote = (band: BodyRange): string => {
+  if (!surface) {
+    return '';
+  }
+  const runs = surface.roads.reduce(
+    (total, road) => total + road.lines.length,
+    0
+  );
+  const recovery = roadRecovery(surface.roads);
+  if (!showsRoads(band)) {
+    return recovery === 'recovered'
+      ? ` \u00b7 ${runs} road run${runs === 1 ? '' : 's'}, from the Settlement Range`
+      : '';
+  }
+  if (recovery === 'gap') {
+    return ` \u00b7 ${ROAD_GAP_NOTICE}`;
+  }
+  // Recovered and empty is not a gap: the record was read and it holds no run.
+  if (recovery === 'none') {
+    return ' \u00b7 no road run is recovered here: this Settlement\u2019s network is empty';
+  }
+  return (
+    ` \u00b7 ${runs} road run${runs === 1 ? '' : 's'} in ` +
+    `${surface.roads.length} recovered network${surface.roads.length === 1 ? '' : 's'}`
+  );
+};
+
 /// Writes nothing to the page but canvas pixels, the name layer and the two readouts, so the
 /// ResizeObserver that calls it cannot feed the frame back on itself. The names are absolutely
 /// positioned over the map, so they cannot change the frame either.
@@ -399,6 +451,13 @@ const drawBodyRange = () => {
   const picked =
     current.level === 'body' ? (current.placeId ?? current.islandId) : null;
   const shown = labelsInBand(surface?.labels ?? [], band);
+  // The band decides which layers are drawn, and the panel describes the layers of the band it
+  // is in, so a change of band re-renders it — the same arrangement the authored-scale note has.
+  if (bodyBand !== band) {
+    bodyBand = band;
+    renderSelectionPanel();
+  }
+  const roads = showsRoads(band) ? (surface?.roads ?? []) : [];
   const layout = drawBodySurface(
     bodyCanvas,
     bodyView,
@@ -406,7 +465,8 @@ const drawBodyRange = () => {
     body.baseColour,
     surface,
     current.level === 'body' ? current.islandId : null,
-    { labels: shown, selectedId: picked }
+    { labels: shown, selectedId: picked },
+    roads
   );
   placeSurfaceLabels(bodyLabelLayer, layout, picked, labelHref);
   const cells = bodyView.span / Math.max(frame.width, 1);
@@ -445,7 +505,8 @@ const drawBodyRange = () => {
     : '';
   status.textContent =
     `${body.name} · source slot ${body.sourceIndex} · surface ${SURFACE_SPAN} Surface Cells ` +
-    `an axis, wrapping on both · ${surfaceNote}${names} · structure footprints are not drawn yet`;
+    `an axis, wrapping on both · ${surfaceNote}${names}${roadNote(band)}` +
+    ' · structure footprints are not drawn yet';
   recordCamera();
 };
 
@@ -758,7 +819,9 @@ const bodyControls = mountCamera({
     // link rather than by zooming, so the disc's anchor may never have been computed.
     const matched = systemWindow(
       body,
-      surfaceAnchor(surface ?? { gaps: [], islands: [], labels: [] }),
+      surfaceAnchor(
+        surface ?? { gaps: [], islands: [], labels: [], roads: [] }
+      ),
       bodyView
     );
     view = matched;

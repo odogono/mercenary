@@ -36,6 +36,44 @@ export interface SurfaceGap {
   readonly reason: string;
 }
 
+/// One Settlement's recovered road network, as the map draws it: the authored runs of one
+/// captured Structure Workspace group, each already a one-cell-wide line (#441).
+///
+/// The pieces are in the Catalogue too, with their rotations and the ground record each cell
+/// draws, but nothing here reads them: the runs alone are the network the game itself draws
+/// from the air, and drawing a piece's faces would be a second, larger claim.
+export interface SurfaceRoad {
+  readonly areaName: string | null;
+  readonly id: string;
+  readonly islandId: string | null;
+  /// Each run as a pair of endpoints in Body Coordinates, taken through the middle of the cell
+  /// at either end so a run of one cell is a mark rather than nothing.
+  ///
+  /// Unwrapped, for the reason a coastline is: a group is 16 cells square and one of them sits
+  /// at Surface Cell x 3,896, so `wrapImages` offsets the whole network bodily instead.
+  readonly lines: readonly (readonly [MapPoint, MapPoint])[];
+  /// Where the group's 16x16 sits on the surface, in Surface Cells: what a run is counted from.
+  readonly origin: MapPoint;
+}
+
+/// What the Atlas knows about one Body's roads.
+///
+/// `gap` is the absence of a record and not a recovered emptiness. 20 of the 30 Bodies carry a
+/// drawable network and Solon carries a record with no run at all, which is a recovered "this
+/// Settlement has no roads"; the rest are Structure Workspaces no capture has loaded, and the
+/// map says so rather than leaving a reader to read blank ground as bare ground (ADR 0014).
+export type RoadRecovery = 'gap' | 'none' | 'recovered';
+
+/// The words the map and the panel both use for the gap, so they cannot drift apart.
+export const ROAD_GAP_NOTICE = 'Road network not yet recovered for this Body';
+
+export const roadRecovery = (roads: readonly SurfaceRoad[]): RoadRecovery => {
+  if (!roads.length) {
+    return 'gap';
+  }
+  return roads.some(road => road.lines.length) ? 'recovered' : 'none';
+};
+
 export type SurfaceLabelKind = 'place' | 'settlement';
 
 /// One name the map writes on a Body's surface, at a point in Body Coordinates.
@@ -64,6 +102,9 @@ export interface BodySurface {
   readonly islands: readonly SurfaceIsland[];
   /// Every name on this Body, Settlements first, each in the Catalogue's own order.
   readonly labels: readonly SurfaceLabel[];
+  /// The recovered road networks on this Body, in the Catalogue's own order. Empty where no
+  /// capture has loaded this Body's Structure Workspaces, which `roadRecovery` reads as a gap.
+  readonly roads: readonly SurfaceRoad[];
 }
 
 /// One coordinate counted from another on a wrapping axis, taken on the nearest image so a cell
@@ -147,6 +188,38 @@ const readLabels = (
     })
 ];
 
+/// The road networks of one Body, placed on the surface.
+///
+/// A run's endpoints are workspace-local cells, and `origin` is where that 16x16 sits, so the
+/// composition is the same one a coastline gets: the record's origin plus its own local cells.
+/// Every recovered network binds an island whose origin is that very cell, so the network lands
+/// on the Settlement it belongs to rather than beside it.
+const readRoads = (
+  catalogue: Catalogue,
+  bodyId: string,
+  records: readonly Island[]
+): readonly SurfaceRoad[] =>
+  catalogue.roadNetworks
+    .filter(network => network.body === bodyId)
+    .map(network => {
+      const [ox, oz] = network.origin;
+      const at = (cell: readonly [number, number]): MapPoint => ({
+        x: ox + cell[0] + 0.5,
+        z: oz + cell[1] + 0.5
+      });
+      return {
+        areaName:
+          records.find(island => island.id === network.island)?.areaName ??
+          null,
+        id: network.id,
+        islandId: network.island,
+        lines: network.runs.map(
+          run => [at(run.start), at(run.end)] as readonly [MapPoint, MapPoint]
+        ),
+        origin: { x: ox, z: oz }
+      };
+    });
+
 /// The islands of one Body, by its recovered source index.
 export const readBodySurface = (
   catalogue: Catalogue,
@@ -174,7 +247,8 @@ export const readBodySurface = (
           z: island.origin[1] + z
         }))
       })),
-    labels: readLabels(catalogue, bodyId, records)
+    labels: readLabels(catalogue, bodyId, records),
+    roads: readRoads(catalogue, bodyId, records)
   };
 };
 

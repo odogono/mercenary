@@ -13,7 +13,8 @@ import {
   type BodySurface,
   type PlacedLabel,
   type SurfaceLabel,
-  type SurfaceLabelLayout
+  type SurfaceLabelLayout,
+  type SurfaceRoad
 } from './surface.ts';
 import {
   layOutLabels,
@@ -51,6 +52,15 @@ const SELECTED_WIDTH = 2;
 const MARK = '#cfe6f2';
 const PLACE_MARK_RADIUS = 2;
 const SETTLEMENT_MARK_RADIUS = 3.5;
+/// A recovered road network. Warmer than the coastline outline so a network reads as something
+/// built on the land rather than as another edge of it.
+const ROAD = '#d8b25a';
+/// A run is one Surface Cell wide, so the line is drawn as a fraction of a cell rather than at a
+/// fixed pixel width: it then grows with the zoom the way the ground it lies on does. A fifth,
+/// because the network is drawn as the centre lines the runs are and not as the cell-wide band
+/// the road pieces fill — the width is legibility and carries no recovered quantity.
+const ROAD_CELL_FRACTION = 0.2;
+const ROAD_MIN_WIDTH = 1;
 
 export const frameOf = (element: HTMLElement): SystemFrame => {
   const rect = element.getBoundingClientRect();
@@ -107,11 +117,6 @@ const drawGrid = (
   context.stroke();
 };
 
-/// A Body's surface: sea in the Body's own recovered base colour, every recovered Damocles
-/// Island filled in its own land colour with each of its wrap images, and a Surface Cell grid
-/// over the top. The grid and the seam sit above the land so the coordinate reference stays
-/// readable on it, and the seam is brighter than the grid because a uniform lattice looks
-/// identical everywhere.
 /// Every wrap image of x = 0 and z = 0 that falls in the frame. A Body Coordinate far apart in
 /// number from another may be its neighbour, and this is where that happens.
 const drawSeams = (
@@ -147,6 +152,46 @@ const drawSeams = (
   context.stroke();
 };
 
+/// The recovered road networks this band shows, each in every wrap image the camera can see.
+///
+/// One bounding box per network rather than per run: a run's endpoints are laid out in pairs, so
+/// an image of the flattened list is the same network offset bodily, and a group 16 cells square
+/// wraps as one thing or not at all.
+const drawRoads = (
+  context: CanvasRenderingContext2D,
+  view: MapView,
+  frame: SystemFrame,
+  roads: readonly SurfaceRoad[]
+) => {
+  const aspect = frame.height / Math.max(frame.width, 1);
+  const cellPixels = frame.width / Math.max(view.span, Number.MIN_VALUE);
+  context.strokeStyle = ROAD;
+  context.lineCap = 'round';
+  context.lineWidth = Math.max(ROAD_MIN_WIDTH, cellPixels * ROAD_CELL_FRACTION);
+  for (const road of roads) {
+    if (!road.lines.length) {
+      continue;
+    }
+    for (const image of wrapImages(road.lines.flat(), view, aspect)) {
+      context.beginPath();
+      for (let at = 0; at < image.length; at += 2) {
+        for (const [index, point] of [image[at]!, image[at + 1]!].entries()) {
+          const { u, v } = project(view, point, aspect);
+          const x = u * frame.width,
+            y = v * frame.height;
+          if (index === 0) {
+            context.moveTo(x, y);
+          } else {
+            context.lineTo(x, y);
+          }
+        }
+      }
+      context.stroke();
+    }
+  }
+  context.lineCap = 'butt';
+};
+
 /// A name's own point, drawn as the map draws a marker: a Damocles Place as a filled dot, a
 /// Settlement as a ring, because a Settlement is an area whose name is written at the origin its
 /// Structure Workspace is built at rather than a single thing standing there.
@@ -176,6 +221,11 @@ const drawLabelMarks = (
   }
 };
 
+/// A Body's surface: sea in the Body's own recovered base colour, every recovered Damocles
+/// Island filled in its own land colour with each of its wrap images, every recovered road
+/// network the band shows drawn over the land it lies on, and a Surface Cell grid over the top.
+/// The grid and the seam sit above the land so the coordinate reference stays readable on it,
+/// and the seam is brighter than the grid because a uniform lattice looks identical everywhere.
 export const drawBodySurface = (
   canvas: HTMLCanvasElement,
   view: MapView,
@@ -187,7 +237,11 @@ export const drawBodySurface = (
   names: {
     readonly labels: readonly SurfaceLabel[];
     readonly selectedId: string | null;
-  } = { labels: [], selectedId: null }
+  } = { labels: [], selectedId: null },
+  /// The road networks this band draws, already gated by `showsRoads`. Empty at the two widest
+  /// bands, and empty on a Body whose Structure Workspaces no capture has loaded — which the
+  /// status line and the panel state as a gap rather than the map showing bare ground.
+  roads: readonly SurfaceRoad[] = []
 ): SurfaceLabelLayout => {
   const context = surfaceOf(canvas, frame);
   if (!context) {
@@ -222,6 +276,7 @@ export const drawBodySurface = (
       context.stroke();
     }
   }
+  drawRoads(context, view, frame, roads);
   drawGrid(context, view, frame);
   drawSeams(context, view, frame);
   context.font = LABEL_FONT;
