@@ -83,6 +83,11 @@ export interface SurfaceSettlement {
 /// `gap` is the absence of a record and not a recovered emptiness. Solon's group carries a
 /// record with no run at all, which is a recovered "this Settlement has no roads"; a gap is a
 /// group no capture has loaded, and the map says which of the two it is looking at.
+///
+/// Since #448 every binding record carries a network, so the shipped payload reaches no `gap`.
+/// The path stays as a guard: the payload is derived from captures and the image, and one that
+/// loses a group must show a hole rather than bare ground. Its tests take a network out of the
+/// payload to reach it (#450).
 export type RoadRecovery = 'gap' | 'none' | 'recovered';
 
 /// The words the map and the panel both use for a gap, so they cannot drift apart. Two, because

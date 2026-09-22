@@ -179,6 +179,16 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Fixed
 
+- **The Atlas road e2e describes the payload it ships with.** #448 recovered every
+  Structure Workspace's network, so the three road tests written for #414 were
+  still asserting KEY WEST and MIDAS as gaps, 1 of 5 workspaces on ERIS and 37 runs
+  where the Body now has 88. Nothing in the shipped payload reaches a road gap any
+  more. The gap path — both notices, the dashed square and the `gap` reading — is
+  kept as a guard against a regeneration that loses a group. Its e2e now serve the
+  Catalogue with a network taken out, the way such a regression would arrive, and a
+  unit test does the same through `readBodySurface`. The shipped state is asserted
+  as it is: KEY WEST at 17 runs, and THE MIDAS PROJECT recovered with no road (#450).
+
 - **The Damocles Cell Readout is island-local, and a negative axis is red.** The
   readout prints the player's Island-Local Cell — the Body Coordinate less the
   *selected* island record's origin, the record nearest the player, taken signed

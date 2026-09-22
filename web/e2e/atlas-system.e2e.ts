@@ -693,31 +693,74 @@ test('the Settlement Range draws a Settlement\u2019s recovered road network', as
   expect(await roadPixels(page)).toBeGreaterThan(0);
 
   // Outward of the Settlement Range the network would be a smudge a few pixels wide, so it is
-  // not drawn — and the status line still says it is there and where to go to see it.
+  // not drawn — and the status line still says it is there and where to go to see it. The count
+  // is the Body's own here, all five of ERIS's groups, because no one group is in front of the
+  // reader at this band (#448).
   await page.goto('/damocles/atlas?body=eris&x=72&z=136&span=900');
   await expect(page.locator('#system-scale')).toContainText('Coastal Range');
   await expect(page.locator('#status')).toContainText(
-    '37 road runs, from the Settlement Range',
+    '88 road runs, from the Settlement Range',
     { timeout: 20_000 }
   );
   expect(await roadPixels(page)).toBe(0);
 });
 
-test('a Settlement whose group no capture has loaded says so where it stands', async ({
+/// Serves the Catalogue with these road networks taken out, the way a regenerated payload that
+/// lost a group would arrive.
+///
+/// Every binding island record carries a network since #448, so the shipped payload reaches no
+/// road gap at all. The gap path is kept regardless — the payload is derived from captures and
+/// the image and can regress — and this is how its notices and its dashed square stay covered
+/// in the browser rather than only in principle (#450).
+const withoutNetworks = (page: Page, ...ids: readonly string[]) =>
+  page.route('**/payload/damocles/catalogue.json', async route => {
+    const response = await route.fetch();
+    const payload = (await response.json()) as {
+      roadNetworks: { id: string }[];
+    };
+    payload.roadNetworks = payload.roadNetworks.filter(
+      network => !ids.includes(network.id)
+    );
+    await route.fulfill({ json: payload, response });
+  });
+
+test('a Settlement’s roads are stated for the group in view, not the Body', async ({
   page
 }) => {
   // Reported: KEY WEST drew no network and said nothing about it. ERIS has five Structure
-  // Workspaces and only CAPITAL CITY's has been captured, so a road gap belongs to the group
-  // the reader is looking at and not to the Body.
+  // Workspaces, so what the reader is owed is the group they are looking at. All five are
+  // recovered now, KEY WEST from its authored stream (#448).
+  await page.goto('/damocles/atlas?body=eris&x=2568&z=3592&span=20');
+  await expect(page.locator('#system-scale')).toContainText('Settlement Range');
+  await expect(page.locator('#status')).toContainText(
+    'KEY WEST: 17 road runs',
+    {
+      timeout: 20_000
+    }
+  );
+  await expect(page.locator('#status')).toContainText(
+    '5 of 5 Structure Workspaces captured on this Body'
+  );
+  await expect(page.locator('#road-recovery')).toHaveAttribute(
+    'data-recovery',
+    'recovered'
+  );
+  expect(await roadPixels(page)).toBeGreaterThan(0);
+});
+
+test('a Settlement whose network the payload lost says so where it stands', async ({
+  page
+}) => {
+  await withoutNetworks(page, 'roads-eris-key-west');
   await page.goto('/damocles/atlas?body=eris&x=2568&z=3592&span=20');
   await expect(page.locator('#system-scale')).toContainText('Settlement Range');
   await expect(page.locator('#status')).toContainText(
     'KEY WEST: Road network not yet recovered for this Settlement',
-    { timeout: 20_000 }
+    { timeout: 30_000 }
   );
   // How the Body stands overall, so the reader knows the layer exists and where it does not.
   await expect(page.locator('#status')).toContainText(
-    '1 of 5 Structure Workspaces captured on this Body'
+    '4 of 5 Structure Workspaces captured on this Body'
   );
   await expect(page.locator('#road-recovery')).toHaveAttribute(
     'data-recovery',
@@ -734,23 +777,47 @@ test('a Settlement whose group no capture has loaded says so where it stands', a
   );
 });
 
-test('a Body whose one workspace is uncaptured states the gap for the Body', async ({
+test('a Body whose one workspace holds no road says so for the Body', async ({
   page
 }) => {
+  // THE MIDAS PROJECT is MIDAS's only workspace, and its authored stream holds no run: a
+  // recovered "no roads", the reading SOLON BASE gets, and not a gap.
   await page.goto('/damocles/atlas?body=midas&x=2048&z=2048&span=20');
   await expect(page.locator('#system-scale')).toContainText('Settlement Range');
   // Open sea at this camera: no group is in frame, so the Body's own standing is what is said.
   await expect(page.locator('#status')).toContainText(
-    '0 of 1 Structure Workspace captured on this Body',
+    '1 of 1 Structure Workspace captured on this Body',
     { timeout: 20_000 }
   );
   expect(await roadPixels(page)).toBe(0);
+  await page.goto('/damocles/atlas?body=midas&x=1737&z=946&span=20');
+  await expect(page.locator('#status')).toContainText(
+    'THE MIDAS PROJECT: recovered with no road at all',
+    { timeout: 20_000 }
+  );
+  await expect(page.locator('#status')).not.toContainText('not yet recovered');
+  await expect(page.locator('#road-recovery')).toHaveAttribute(
+    'data-recovery',
+    'none'
+  );
+});
+
+test('a Body whose only network the payload lost states the gap for the Body', async ({
+  page
+}) => {
+  await withoutNetworks(page, 'roads-midas-the-midas-project');
+  await page.goto('/damocles/atlas?body=midas&x=2048&z=2048&span=20');
+  await expect(page.locator('#system-scale')).toContainText('Settlement Range');
+  await expect(page.locator('#status')).toContainText(
+    '0 of 1 Structure Workspace captured on this Body',
+    { timeout: 30_000 }
+  );
 
   // Over the group itself, the Body-wide wording, because nothing here has a network at all.
   await page.goto('/damocles/atlas?body=midas&x=1737&z=946&span=20');
   await expect(page.locator('#status')).toContainText(
     'THE MIDAS PROJECT: Road network not yet recovered for this Body',
-    { timeout: 20_000 }
+    { timeout: 30_000 }
   );
   await expect(page.locator('#panel')).toContainText('#206');
   expect(await gapSquarePixels(page)).toBeGreaterThan(0);

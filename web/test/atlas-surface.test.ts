@@ -621,6 +621,45 @@ describe('the recovered road networks on a Body', () => {
     expect(settlementRoads(midas.settlements[0]!)).toBe('none');
   });
 
+  test('still reads a gap for a payload that loses a group', async () => {
+    const data = await catalogue();
+    // Every binding record carries a network today (#448), so nothing in the shipped payload
+    // reaches the gap path. It is kept on purpose: the payload is derived from captures and the
+    // image, and a regeneration that drops a group must show a hole rather than bare ground
+    // (#450). So the payload is made to lose groups here, the way a regression would.
+    const without = (...ids: string[]): Catalogue => ({
+      ...data,
+      roadNetworks: data.roadNetworks.filter(
+        network => !ids.includes(network.id)
+      )
+    });
+    // KEY WEST loses its network while CAPITAL CITY keeps its own: a gap for that Settlement,
+    // and not for the Body.
+    const eris = readBodySurface(without('roads-eris-key-west'), ERIS);
+    expect(
+      eris.settlements.map(settlement => [
+        settlement.areaName,
+        settlementRoads(settlement)
+      ])
+    ).toEqual([
+      ['CAPITAL CITY', 'recovered'],
+      ['SNOW ISLAND', 'recovered'],
+      ['VELOS CITY', 'recovered'],
+      ['BARE ISLAND', 'recovered'],
+      ['KEY WEST', 'gap']
+    ]);
+    expect(bodyRoadGap(eris.settlements)).toBe(false);
+    // MIDAS loses its only one, which is the Body-wide statement. Losing a record is a gap
+    // even where the record held no run: absence of evidence is not a recovered "no roads".
+    const midas = readBodySurface(
+      without('roads-midas-the-midas-project'),
+      MIDAS
+    );
+    expect(midas.roads).toEqual([]);
+    expect(settlementRoads(midas.settlements[0]!)).toBe('gap');
+    expect(bodyRoadGap(midas.settlements)).toBe(true);
+  });
+
   test('a Body binding no workspace has nothing for a network to belong to', async () => {
     const data = await catalogue();
     // Seven of the 30 bind none on any island record. There is no Settlement recovered there
