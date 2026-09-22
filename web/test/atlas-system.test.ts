@@ -13,7 +13,12 @@ import {
   roadProvenance
 } from '../src/atlas/panel.ts';
 import { atlasHref, atlasSearch, readAtlasState } from '../src/atlas/state.ts';
-import { ROAD_GAP_NOTICE } from '../src/atlas/surface.ts';
+import {
+  BODY_ROAD_GAP_NOTICE,
+  NO_WORKSPACE_NOTICE,
+  ROAD_GAP_NOTICE,
+  type RoadRecovery
+} from '../src/atlas/surface.ts';
 import {
   fitSystem,
   labelOf,
@@ -604,6 +609,14 @@ describe('the Atlas state', () => {
   });
 });
 
+/// One Structure Workspace as the panel sees it: what the camera has in front of it.
+const inView = (name: string | null, recovery: RoadRecovery, runs = 0) => ({
+  name,
+  origin: { x: 2560, z: 3584 },
+  recovery,
+  runs
+});
+
 describe('the Atlas selection panel', () => {
   test('states only recovered numbers for a Body', async () => {
     const system = await gammaSystem();
@@ -699,41 +712,112 @@ describe('the Atlas selection panel', () => {
     expect(catalogueHref(11)).toBe('/catalogue?body=body-11');
   });
 
-  test('states the road gap as a gap, and the empty network as a reading', () => {
-    // The gap and the recovered emptiness must never read the same. One says a capture has
-    // never loaded this Body's workspaces; the other says the record was read and holds no run.
-    const gap = roadProvenance({ lines: 0, networks: 0, recovery: 'gap' });
-    expect(gap.join(' ')).toContain(ROAD_GAP_NOTICE);
-    expect(gap.join(' ')).toContain('#441');
+  test('states a road gap against the Structure Workspace it belongs to', () => {
+    // The bug this covers: a gap keyed to the Body said nothing at all about KEY WEST, whose
+    // group has never been captured, while CAPITAL CITY on the same Body was drawn.
+    const keyWest = {
+      bodyGap: false,
+      captured: 1,
+      onBody: 5,
+      settlements: [inView('KEY WEST', 'gap')]
+    };
+    expect(roadFacts(keyWest)).toEqual([
+      { label: 'KEY WEST', value: 'not yet recovered' },
+      { label: 'Workspaces captured', value: '1 of 5 on this Body' }
+    ]);
+    // The Settlement wording, because ERIS itself is not a gap: CAPITAL CITY was captured.
+    expect(roadProvenance(keyWest).join(' ')).toContain(ROAD_GAP_NOTICE);
+    expect(roadProvenance(keyWest).join(' ')).not.toContain(
+      BODY_ROAD_GAP_NOTICE
+    );
+    expect(roadProvenance(keyWest).join(' ')).toContain('#441');
     // The earlier ground work the records came out of, so a reader can follow the gap back.
     for (const issue of ['#206', '#173', '#281', '#370']) {
-      expect(gap.join(' ')).toContain(issue);
+      expect(roadProvenance(keyWest).join(' ')).toContain(issue);
     }
-    // Nothing to count where nothing was recovered.
-    expect(roadFacts({ lines: 0, networks: 0, recovery: 'gap' })).toEqual([]);
 
-    const none = roadProvenance({ lines: 0, networks: 1, recovery: 'none' });
-    expect(none.join(' ')).not.toContain(ROAD_GAP_NOTICE);
-    expect(none.join(' ')).toContain('has no roads');
-    expect(roadFacts({ lines: 0, networks: 1, recovery: 'none' })).toEqual([
-      { label: 'Road networks', value: '1' },
-      { label: 'Runs drawn', value: '0' }
-    ]);
+    // Where nothing on the Body has a network, the wider wording is the true one.
+    const midas = {
+      bodyGap: true,
+      captured: 0,
+      onBody: 1,
+      settlements: [inView('THE MIDAS PROJECT', 'gap')]
+    };
+    expect(roadProvenance(midas).join(' ')).toContain(BODY_ROAD_GAP_NOTICE);
 
-    const drawn = roadProvenance({
-      lines: 37,
-      networks: 1,
-      recovery: 'recovered'
+    // And where no record binds a workspace there is nothing for a network to belong to, which
+    // is not the same statement as a network not having been read.
+    const damocles = {
+      bodyGap: false,
+      captured: 0,
+      onBody: 0,
+      settlements: []
+    };
+    expect(roadProvenance(damocles).join(' ')).toContain(NO_WORKSPACE_NOTICE);
+    expect(roadFacts(damocles)).toEqual([]);
+  });
+
+  test('tells a recovered emptiness from a gap, and names what is drawn', () => {
+    const solon = {
+      bodyGap: false,
+      captured: 1,
+      onBody: 1,
+      settlements: [
+        {
+          name: 'SOLON BASE',
+          origin: { x: 3974, z: 1396 },
+          recovery: 'none' as const,
+          runs: 0
+        }
+      ]
+    };
+    expect(roadFacts(solon)[0]).toEqual({
+      label: 'SOLON BASE',
+      value: 'recovered, no roads'
+    });
+    const read = roadProvenance(solon).join(' ');
+    expect(read).not.toContain(ROAD_GAP_NOTICE);
+    expect(read).toContain('read and holds no run');
+
+    const capital = {
+      bodyGap: false,
+      captured: 1,
+      onBody: 5,
+      settlements: [
+        {
+          name: 'CAPITAL CITY',
+          origin: { x: 64, z: 128 },
+          recovery: 'recovered' as const,
+          runs: 37
+        }
+      ]
+    };
+    expect(roadFacts(capital)[0]).toEqual({
+      label: 'CAPITAL CITY',
+      value: '37 runs'
     });
     // What is drawn is the network and not its surface: the pieces are recovered and unused,
     // and no pad or ground colouring is invented to fill it in (ADR 0014).
-    expect(drawn.join(' ')).toContain('none of them is drawn here');
+    expect(roadProvenance(capital).join(' ')).toContain(
+      'none of them is drawn here'
+    );
+    // A workspace publishing no Settlement name is named by where it is, because that is all
+    // it has: LUCAN's own recovered network belongs to one of the thirteen.
     expect(
-      roadFacts({ lines: 37, networks: 1, recovery: 'recovered' })
-    ).toEqual([
-      { label: 'Road networks', value: '1' },
-      { label: 'Runs drawn', value: '37' }
-    ]);
+      roadFacts({
+        bodyGap: false,
+        captured: 1,
+        onBody: 12,
+        settlements: [
+          {
+            name: null,
+            origin: { x: 3896, z: 0 },
+            recovery: 'recovered' as const,
+            runs: 8
+          }
+        ]
+      })[0]
+    ).toEqual({ label: 'Group at 3896 / 0', value: '8 runs' });
   });
 
   test('marks the capture-time sample and the recovered black', async () => {

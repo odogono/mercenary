@@ -56,23 +56,64 @@ export interface SurfaceRoad {
   readonly origin: MapPoint;
 }
 
-/// What the Atlas knows about one Body's roads.
+/// A Structure Workspace is 16 Surface Cells square ($056464): the group a Settlement's
+/// structures and its road network are both built in, counted from the binding record's origin.
+export const WORKSPACE_CELLS = 16;
+
+/// One Structure Workspace on a Body, and the road network a capture found in it.
 ///
-/// `gap` is the absence of a record and not a recovered emptiness. 20 of the 30 Bodies carry a
-/// drawable network and Solon carries a record with no run at all, which is a recovered "this
-/// Settlement has no roads"; the rest are Structure Workspaces no capture has loaded, and the
-/// map says so rather than leaving a reader to read blank ground as bare ground (ADR 0014).
+/// This, and not the Body, is what a road gap belongs to. A capture loads one group at a time,
+/// so a Body may have a network on one Settlement and nothing on the next: 42 island records
+/// bind a workspace and only 22 of them carry a network, and 4 of Eris's 5 are among the 20
+/// that do not. Keying the gap to the Body would leave a reader zoomed into KEY WEST looking at
+/// blank ground with nothing said about it (ADR 0014).
+export interface SurfaceSettlement {
+  /// The Settlement this workspace publishes, where it publishes one. 13 of the 42 do not.
+  readonly areaName: string | null;
+  /// The island record binding the workspace: what a pick selects and what the panel shows.
+  readonly id: string;
+  /// Where the group's 16x16 sits on the surface, in Surface Cells.
+  readonly origin: MapPoint;
+  /// The recovered network, or null where no capture has loaded this group.
+  readonly road: SurfaceRoad | null;
+}
+
+/// What the Atlas knows about one Structure Workspace's roads.
+///
+/// `gap` is the absence of a record and not a recovered emptiness. Solon's group carries a
+/// record with no run at all, which is a recovered "this Settlement has no roads"; a gap is a
+/// group no capture has loaded, and the map says which of the two it is looking at.
 export type RoadRecovery = 'gap' | 'none' | 'recovered';
 
-/// The words the map and the panel both use for the gap, so they cannot drift apart.
-export const ROAD_GAP_NOTICE = 'Road network not yet recovered for this Body';
+/// The words the map and the panel both use for a gap, so they cannot drift apart. Two, because
+/// the reader is owed the one that is true where they are standing: a Body with no network
+/// anywhere says so, and a Settlement on a Body that has one elsewhere says so for itself.
+export const ROAD_GAP_NOTICE =
+  'Road network not yet recovered for this Settlement';
+export const BODY_ROAD_GAP_NOTICE =
+  'Road network not yet recovered for this Body';
+/// Where no island record on a Body binds a workspace at all — 7 of the 30, DAMOCLES among
+/// them. There is no Settlement recovered here for a network to belong to, which is a different
+/// statement from a network not having been read, and must not be dressed as one.
+export const NO_WORKSPACE_NOTICE =
+  'No Structure Workspace is recovered on this Body, so no road network belongs to one here yet';
 
-export const roadRecovery = (roads: readonly SurfaceRoad[]): RoadRecovery => {
-  if (!roads.length) {
+export const settlementRoads = (
+  settlement: SurfaceSettlement
+): RoadRecovery => {
+  if (!settlement.road) {
     return 'gap';
   }
-  return roads.some(road => road.lines.length) ? 'recovered' : 'none';
+  return settlement.road.lines.length ? 'recovered' : 'none';
 };
+
+/// Whether nothing on this Body has a recovered network, with at least one group that could
+/// have carried one. This is the Body-wide statement the Street Range band makes; where a Body
+/// binds no workspace at all it is false, because there is nothing there to be a gap.
+export const bodyRoadGap = (
+  settlements: readonly SurfaceSettlement[]
+): boolean =>
+  settlements.length > 0 && settlements.every(value => value.road === null);
 
 export type SurfaceLabelKind = 'place' | 'settlement';
 
@@ -102,9 +143,11 @@ export interface BodySurface {
   readonly islands: readonly SurfaceIsland[];
   /// Every name on this Body, Settlements first, each in the Catalogue's own order.
   readonly labels: readonly SurfaceLabel[];
-  /// The recovered road networks on this Body, in the Catalogue's own order. Empty where no
-  /// capture has loaded this Body's Structure Workspaces, which `roadRecovery` reads as a gap.
+  /// The recovered road networks on this Body, in the Catalogue's own order.
   readonly roads: readonly SurfaceRoad[];
+  /// Every Structure Workspace recovered on this Body, each with its network or without one.
+  /// This is what a road gap is stated against, because a capture loads one group at a time.
+  readonly settlements: readonly SurfaceSettlement[];
 }
 
 /// One coordinate counted from another on a wrapping axis, taken on the nearest image so a cell
@@ -220,6 +263,26 @@ const readRoads = (
       };
     });
 
+/// The Structure Workspaces of one Body: every island record that binds one, carrying the road
+/// network a capture found in it where there is one.
+///
+/// Keyed on `workspace` rather than on the area name: 13 of the 42 binding records publish no
+/// Settlement name, and LUCAN's own recovered network belongs to one of them. A record binding
+/// no workspace (structure group $00) is not here at all — it publishes no Settlement and no
+/// structure, so it is not a place roads could have been read from.
+const readSettlements = (
+  records: readonly Island[],
+  roads: readonly SurfaceRoad[]
+): readonly SurfaceSettlement[] =>
+  records
+    .filter(island => island.workspace !== null)
+    .map(island => ({
+      areaName: island.areaName,
+      id: island.id,
+      origin: { x: island.origin[0], z: island.origin[1] },
+      road: roads.find(road => road.islandId === island.id) ?? null
+    }));
+
 /// The islands of one Body, by its recovered source index.
 export const readBodySurface = (
   catalogue: Catalogue,
@@ -227,6 +290,7 @@ export const readBodySurface = (
 ): BodySurface => {
   const bodyId = catalogueBodyId(sourceIndex);
   const records = catalogue.islands.filter(island => island.body === bodyId);
+  const roads = readRoads(catalogue, bodyId, records);
   return {
     gaps: records
       .filter(island => !island.coastline.vertices.length)
@@ -248,7 +312,8 @@ export const readBodySurface = (
         }))
       })),
     labels: readLabels(catalogue, bodyId, records),
-    roads: readRoads(catalogue, bodyId, records)
+    roads,
+    settlements: readSettlements(records, roads)
   };
 };
 
@@ -311,6 +376,32 @@ export const wrapImages = (
   return images;
 };
 
+/// One Structure Workspace's own square in Body Coordinates: the group's origin and its 16
+/// cells, as a closed ring. Unwrapped, like everything else the map places, so `wrapImages`
+/// offsets it bodily into each image the camera can see.
+export const workspaceSquare = (origin: MapPoint): readonly MapPoint[] => [
+  { x: origin.x, z: origin.z },
+  { x: origin.x + WORKSPACE_CELLS, z: origin.z },
+  { x: origin.x + WORKSPACE_CELLS, z: origin.z + WORKSPACE_CELLS },
+  { x: origin.x, z: origin.z + WORKSPACE_CELLS }
+];
+
+/// The Structure Workspaces the camera can see, each tested on every wrap image of its own
+/// square so a group across the seam is found from either side of it.
+///
+/// What the roads bands describe. A reader at the Settlement Range is looking at one group or
+/// two, and what is true of the group in front of them — drawn, empty, or never captured — is
+/// what they are owed, rather than a summary of the whole Body.
+export const settlementsInView = (
+  surface: BodySurface,
+  view: MapView,
+  aspect: number
+): readonly SurfaceSettlement[] =>
+  surface.settlements.filter(
+    settlement =>
+      wrapImages(workspaceSquare(settlement.origin), view, aspect).length > 0
+  );
+
 /// Whether a Body Coordinate falls inside a closed ring, by ray casting. A coastline is a
 /// simple closed polygon of at most 14 vertices, so nothing cleverer earns its keep.
 const inside = (ring: readonly MapPoint[], point: MapPoint): boolean => {
@@ -371,7 +462,9 @@ const wholeSurfaces = (from: number, to: number): number =>
 ///
 /// (2048, 2048) when a Body has no coastline at all, which keeps the surface square where it was
 /// for the 21 Bodies carrying only the coastline-less stub.
-export const surfaceAnchor = (surface: BodySurface): MapPoint => {
+export const surfaceAnchor = (
+  surface: Pick<BodySurface, 'islands'>
+): MapPoint => {
   if (!surface.islands.length) {
     return { x: SURFACE_CELLS / 2, z: SURFACE_CELLS / 2 };
   }

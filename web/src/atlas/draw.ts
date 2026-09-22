@@ -9,12 +9,14 @@ import type { GammaBody } from '../flyover/documents.ts';
 import {
   layOutSurfaceLabels,
   nearestImage,
+  workspaceSquare,
   wrapImages,
   type BodySurface,
   type PlacedLabel,
   type SurfaceLabel,
   type SurfaceLabelLayout,
-  type SurfaceRoad
+  type SurfaceRoad,
+  type SurfaceSettlement
 } from './surface.ts';
 import {
   layOutLabels,
@@ -61,6 +63,17 @@ const ROAD = '#d8b25a';
 /// the road pieces fill — the width is legibility and carries no recovered quantity.
 const ROAD_CELL_FRACTION = 0.2;
 const ROAD_MIN_WIDTH = 1;
+/// The square of a Structure Workspace whose roads were never captured, dashed and dimmer than
+/// a drawn network. The group's 16 cells are recovered even where what stands in them is not,
+/// so the map can show the reader exactly where the hole is rather than leaving blank ground
+/// that looks the same as bare ground (ADR 0014).
+///
+/// Opaque rather than the road colour at an alpha, because the land under it is a recovered
+/// colour that differs island by island: half-transparent gold reads as a different mark on
+/// every Body, and cannot be checked for on a canvas without knowing what it was drawn over.
+const ROAD_GAP_SQUARE = '#9c7d3c';
+const ROAD_GAP_DASH = [6, 5];
+const ROAD_GAP_WIDTH = 2;
 
 export const frameOf = (element: HTMLElement): SystemFrame => {
   const rect = element.getBoundingClientRect();
@@ -192,6 +205,40 @@ const drawRoads = (
   context.lineCap = 'butt';
 };
 
+/// The Structure Workspaces in view whose road network no capture has loaded, each as its own
+/// dashed square. The Settlement name is already written at that origin, so the square needs no
+/// label of its own: it marks out the 16 cells the missing network would have been read from.
+const drawRoadGaps = (
+  context: CanvasRenderingContext2D,
+  view: MapView,
+  frame: SystemFrame,
+  gaps: readonly SurfaceSettlement[]
+) => {
+  const aspect = frame.height / Math.max(frame.width, 1);
+  context.save();
+  context.strokeStyle = ROAD_GAP_SQUARE;
+  context.lineWidth = ROAD_GAP_WIDTH;
+  context.setLineDash(ROAD_GAP_DASH);
+  for (const gap of gaps) {
+    for (const image of wrapImages(workspaceSquare(gap.origin), view, aspect)) {
+      context.beginPath();
+      for (const [index, point] of image.entries()) {
+        const { u, v } = project(view, point, aspect);
+        const x = u * frame.width,
+          y = v * frame.height;
+        if (index === 0) {
+          context.moveTo(x, y);
+        } else {
+          context.lineTo(x, y);
+        }
+      }
+      context.closePath();
+      context.stroke();
+    }
+  }
+  context.restore();
+};
+
 /// A name's own point, drawn as the map draws a marker: a Damocles Place as a filled dot, a
 /// Settlement as a ring, because a Settlement is an area whose name is written at the origin its
 /// Structure Workspace is built at rather than a single thing standing there.
@@ -238,10 +285,13 @@ export const drawBodySurface = (
     readonly labels: readonly SurfaceLabel[];
     readonly selectedId: string | null;
   } = { labels: [], selectedId: null },
-  /// The road networks this band draws, already gated by `showsRoads`. Empty at the two widest
-  /// bands, and empty on a Body whose Structure Workspaces no capture has loaded — which the
-  /// status line and the panel state as a gap rather than the map showing bare ground.
-  roads: readonly SurfaceRoad[] = []
+  /// What this band draws of the roads, already gated by `showsRoads`: the networks recovered,
+  /// and the Structure Workspaces in view carrying none, whose squares are marked out dashed so
+  /// the hole is visible where it is rather than reading as bare ground.
+  roads: {
+    readonly gaps: readonly SurfaceSettlement[];
+    readonly networks: readonly SurfaceRoad[];
+  } = { gaps: [], networks: [] }
 ): SurfaceLabelLayout => {
   const context = surfaceOf(canvas, frame);
   if (!context) {
@@ -276,7 +326,8 @@ export const drawBodySurface = (
       context.stroke();
     }
   }
-  drawRoads(context, view, frame, roads);
+  drawRoads(context, view, frame, roads.networks);
+  drawRoadGaps(context, view, frame, roads.gaps);
   drawGrid(context, view, frame);
   drawSeams(context, view, frame);
   context.font = LABEL_FONT;
