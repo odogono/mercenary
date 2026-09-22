@@ -1,6 +1,6 @@
 import type { Catalogue, Island } from '../catalogue/data.ts';
-import { project, type MapPoint, type MapView } from '../catalogue/mapView.ts';
 import { SURFACE_CELLS } from '../damocles/world.ts';
+import { project, type MapPoint, type MapView } from './mapView.ts';
 
 /// A Body's surface as the Atlas draws it: sea everywhere, with each recovered Damocles Island's
 /// coastline filled in its own land colour. Nothing here touches the DOM.

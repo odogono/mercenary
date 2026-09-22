@@ -1,12 +1,7 @@
-import {
-  gridStep,
-  project,
-  type MapPoint,
-  type MapView
-} from '../catalogue/mapView.ts';
 import { SURFACE_CELLS } from '../damocles/world.ts';
 import type { GammaBody } from '../flyover/documents.ts';
 import type { Footprint } from './footprint.ts';
+import { gridStep, project, type MapPoint, type MapView } from './mapView.ts';
 import {
   layOutSurfaceLabels,
   nearestImage,
@@ -28,9 +23,9 @@ import {
   type SystemProjection
 } from './system.ts';
 
-/// Canvas 2D for the geometry, a DOM layer for the labels, in the Catalogue placement map's
-/// pattern. The canvas carries no text, so labels stay selectable, scale with the reader's type
-/// size and never need re-rastering.
+/// Canvas 2D for the geometry, a DOM layer for the labels, in the pattern the Catalogue's own
+/// marker map established before the Atlas absorbed it (#415). The canvas carries no text, so
+/// labels stay selectable, scale with the reader's type size and never need re-rastering.
 
 /// Mirrors the tokens in `atlas.css`; the canvas cannot read a custom property.
 const OUTLINE = '#2d7697';

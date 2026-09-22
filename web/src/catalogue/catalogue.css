@@ -247,74 +247,24 @@ canvas:active {
   max-height: 200px;
   overflow: auto;
 }
-.map-section {
+.placements {
   border-top: 1px solid var(--border);
   margin-top: 24px;
   padding-top: 20px;
 }
-.map-section select {
+.placements select {
   display: inline-block;
   width: auto;
   min-width: 160px;
   margin: 0 0 12px 8px;
 }
-.map-toolbar {
+#placement-hop {
   margin: 0 0 8px;
-  max-width: 520px;
-}
-.map-toolbar span {
-  margin-right: auto;
-  margin-top: 0;
-}
-#map {
-  position: relative;
-  height: 260px;
-  border: 1px solid var(--border);
-  background:
-    linear-gradient(#28445144 1px, transparent 1px),
-    linear-gradient(90deg, #28445144 1px, transparent 1px);
-  background-size: 32px 32px;
-  overflow: hidden;
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
-}
-#map.dragging {
-  cursor: grabbing;
-}
-#map.dragging a {
-  pointer-events: none;
-}
-#map:empty {
-  display: none;
-}
-#map:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-#map a {
-  position: absolute;
-  display: block;
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--background);
-  background: var(--accent);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-}
-#map a:hover,
-#map a:focus-visible {
-  z-index: 1;
-  border-color: #fff;
-}
-#map a[aria-current='true'] {
-  z-index: 2;
-  width: 18px;
-  height: 18px;
-  background: #fff;
 }
 #locations {
-  max-height: 180px;
+  /* The list is the whole of this section now that the map has moved to the Atlas (#415), so
+     it is given the room the map used to take. */
+  max-height: 320px;
   overflow: auto;
   font-size: 12px;
   margin-top: 12px;
@@ -409,11 +359,4 @@ summary:focus-visible {
   .inspection {
     padding: 16px;
   }
-}
-
-#map {
-  height: auto;
-  width: 100%;
-  max-width: 520px;
-  aspect-ratio: 1;
 }

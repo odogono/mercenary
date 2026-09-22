@@ -1,6 +1,13 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  clusterAll,
+  fitView,
+  project,
+  zoomOf,
+  zoomView
+} from '../src/atlas/mapView.ts';
+import {
   bodyFacts,
   bodyProvenance,
   catalogueHref,
@@ -28,13 +35,6 @@ import {
   projectSystem
 } from '../src/atlas/system.ts';
 import { parseCatalogue } from '../src/catalogue/data.ts';
-import {
-  clusterAll,
-  fitView,
-  project,
-  zoomOf,
-  zoomView
-} from '../src/catalogue/mapView.ts';
 import {
   bodyRadius,
   readGammaSystem,
@@ -734,7 +734,7 @@ describe('the Atlas selection panel', () => {
 
   test('hands off to the Body rather than implying an island entry exists', () => {
     // The Catalogue has no island view: its deep links reach a Model, an Instance or a Body's
-    // placement map, and its search covers Model names. The Body is the nearest true thing.
+    // placement list, and its search covers Model names. The Body is the nearest true thing.
     expect(catalogueHref(11)).toBe('/catalogue?body=body-11');
   });
 

@@ -156,6 +156,7 @@ Build. Both are read for understanding; neither is copied (ADR 0002, ADR 0014, A
 Open `/catalogue` directly or use the game menu's **Damocles catalogue** link.
 This desktop inspection page loads only `payload/damocles/catalogue.json`, with
 orbit/zoom, original flat colours, wireframe, visual forms, evidence, instance
-links and a per-body placement map. Recovery gaps are visible, and empty maps do
-not imply an empty game world. See [extraction and coverage](../docs/research/damocles-catalogue.md)
+links and a per-body list of recovered placements, each handing over to the Gamma
+Atlas at its own position; the Atlas is where placements are drawn (#415). Recovery
+gaps are visible, and an empty list does not imply an empty game world. See [extraction and coverage](../docs/research/damocles-catalogue.md)
 for regeneration, source grammar and remaining research.

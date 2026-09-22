@@ -1,6 +1,6 @@
-import type { MapPoint, MapView } from '../catalogue/mapView.ts';
 import { SURFACE_CELLS } from '../damocles/world.ts';
 import type { GammaBody } from '../flyover/documents.ts';
+import type { MapPoint, MapView } from './mapView.ts';
 import { islandAtCell, islandLocalCell, type BodySurface } from './surface.ts';
 
 /// What the camera's centre point is, said in each coordinate system that can name it. Nothing

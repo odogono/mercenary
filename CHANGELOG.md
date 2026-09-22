@@ -162,6 +162,21 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
   by the captures in `docs/research/damocles-cast-shadow-edge.md`. Authentic
   presentation draws no Cast Shadow whatever the row says (#376).
 
+### Changed
+
+- **One map: the Catalogue's marker map is the Gamma Atlas now.** The Catalogue drew
+  its own pan-and-zoom map of a Body's placements, with its own gesture handling, its
+  own scale readout and its own clustering; the Atlas draws the same placements over
+  recovered coastlines, Settlement names and road networks, so the Catalogue's copy is
+  deleted rather than maintained beside it. Each placed Instance's entry now hands over
+  to `/damocles/atlas`, centred on that record's own Body Coordinates one Surface Cell
+  across, which is the Street Range on any window — the reader lands among footprints
+  with that Instance's own selected, and the Atlas hands the record straight back. The
+  Body select and the list of every placement stay, because a list of 372 records on
+  Gaea is the one thing a map is not for. `web/src/catalogue/mapView.ts` moves to
+  `web/src/atlas/mapView.ts`, the Atlas being its only caller, and the clustering and
+  zoom-readout arithmetic only the marker map used goes with it (#415).
+
 ### Fixed
 
 - **The Damocles Cell Readout is island-local, and a negative axis is red.** The

@@ -1,7 +1,7 @@
 import type { Instance, Island, Place } from '../catalogue/data.ts';
-import type { MapPoint } from '../catalogue/mapView.ts';
 import type { GammaBody, GammaSystemDocument } from '../flyover/documents.ts';
 import type { Footprint } from './footprint.ts';
+import type { MapPoint } from './mapView.ts';
 import {
   BODY_ROAD_GAP_NOTICE,
   NO_WORKSPACE_NOTICE,
@@ -142,7 +142,7 @@ export const islandProvenance = (island: Island): readonly string[] => [
 ];
 
 /// The Catalogue holds no island record view: its deep links reach a Model, an Instance or a
-/// Body's placement map, and its search covers Model names rather than area names. So the
+/// Body's placement list, and its search covers Model names rather than area names. So the
 /// honest hand-off is the Body, and the panel says as much rather than implying an island entry
 /// exists.
 ///

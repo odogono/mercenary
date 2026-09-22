@@ -1,5 +1,5 @@
-import type { MapBounds, MapView } from '../catalogue/mapView.ts';
 import { SURFACE_CELLS } from '../damocles/world.ts';
+import type { MapBounds, MapView } from './mapView.ts';
 import type { SurfaceLabel, SurfaceLabelKind } from './surface.ts';
 
 /// The Atlas Ranges inside one Body: the camera that covers a wrapping surface, and the bands
@@ -124,3 +124,14 @@ export const FOOTPRINT_BAND: BodyRange = 'street';
 /// Whether a band draws footprints, and so whether it must state what stands there undrawn.
 export const showsFootprints = (band: BodyRange): boolean =>
   BODY_RANGES.indexOf(band) >= BODY_RANGES.indexOf(FOOTPRINT_BAND);
+
+/// The span a hand-off into the Street Range opens at: one Surface Cell across the map's width.
+///
+/// The cell rather than the footprint it holds. Structures stand one to a Surface Cell, so the
+/// cell is the frame that shows a footprint together with what it stands among, and a span read
+/// from the rectangle itself would open each structure at a different scale — the largest on
+/// Eris is 0.031 of a cell and the smallest a tenth of that, so the reader would have no fixed
+/// sense of how big anything is. It is inside the Street band at any frame a browser can have
+/// (`rangeOf` needs only 100 pixels of width for it), and inside the camera's own zoom ceiling
+/// up to a 2:1 frame, past which the first gesture eases it back out.
+export const STREET_SPAN = 1;

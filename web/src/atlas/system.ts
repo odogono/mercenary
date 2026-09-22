@@ -1,3 +1,5 @@
+import { SURFACE_CELLS } from '../damocles/world.ts';
+import { bodyRadius, bodySize, type GammaBody } from '../flyover/documents.ts';
 import {
   clampView,
   clusterAll,
@@ -6,13 +8,11 @@ import {
   type MapBounds,
   type MapPoint,
   type MapView
-} from '../catalogue/mapView.ts';
-import { SURFACE_CELLS } from '../damocles/world.ts';
-import { bodyRadius, bodySize, type GammaBody } from '../flyover/documents.ts';
+} from './mapView.ts';
 import { nearestOffset } from './surface.ts';
 
 /// The Atlas System Range: the recovered Gamma System projected onto the X/Z plane through a
-/// camera, X right and Z up as the Catalogue placement map draws them. Nothing here touches the
+/// camera, X right and Z up as every Range draws them. Nothing here touches the
 /// DOM and nothing here holds the camera; `boot.ts` owns that and passes it in.
 ///
 /// Two things the recovered numbers force, both of which the map states rather than hides.

@@ -1,18 +1,13 @@
-import {
-  panView,
-  zoomView,
-  type MapBounds,
-  type MapView
-} from '../catalogue/mapView.ts';
+import { panView, zoomView, type MapBounds, type MapView } from './mapView.ts';
 
 /// Slippy-map gestures over any element: drag to pan, wheel to zoom about the pointer, arrow
-/// keys to pan, `+`/`-` to zoom and `0` to fit. The arithmetic is all
-/// `web/src/catalogue/mapView.ts`; this only turns events into cameras.
+/// keys to pan, `+`/`-` to zoom and `0` to fit. The arithmetic is all `mapView.ts`; this only
+/// turns events into cameras.
 ///
-/// The behaviour is lifted from `web/src/catalogue/map.ts`, which already does exactly this for
-/// the Catalogue placement map, but without that module's element ids or module-level view
-/// state: the caller owns the camera and the redraw. Deliberately not a refactor of
-/// `catalogue/map.ts`, which #415 deletes outright once the Atlas absorbs its map.
+/// The behaviour was lifted from the Catalogue's own marker map, which did exactly this for a
+/// Body's placements, but without that module's element ids or module-level view state: the
+/// caller owns the camera and the redraw. That map is gone and this is the only gesture layer
+/// left (#415).
 
 const BUTTON_ZOOM = 1.5;
 /// A double press zooms by this much, as a slippy map's double-click and double-tap do.
