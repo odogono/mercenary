@@ -15,6 +15,10 @@ export type AtlasState =
   | { readonly level: 'system'; readonly view: AtlasView | null }
   | {
       readonly bodyId: string;
+      /// The picked Damocles Instance's record id, on the same footing as the other two and
+      /// never together with either: a footprint stands inside a Settlement and often on an
+      /// island, and is part of neither.
+      readonly instanceId: string | null;
       /// The picked Damocles Island's record id, so a selection survives a link the way a
       /// camera does. Null when nothing on the surface is picked.
       readonly islandId: string | null;
@@ -66,6 +70,7 @@ export const readAtlasState = (
   };
   return {
     bodyId,
+    instanceId: named('instance'),
     islandId: named('island'),
     level: 'body',
     placeId: named('place'),
@@ -82,6 +87,9 @@ export const atlasSearch = (state: AtlasState): string => {
     }
     if (state.placeId) {
       params.set('place', state.placeId);
+    }
+    if (state.instanceId) {
+      params.set('instance', state.instanceId);
     }
   }
   if (state.view) {

@@ -514,6 +514,7 @@ describe('the Atlas state', () => {
       } as const,
       {
         bodyId: 'eris',
+        instanceId: null,
         islandId: null,
         level: 'body',
         placeId: null,
@@ -521,6 +522,7 @@ describe('the Atlas state', () => {
       } as const,
       {
         bodyId: 'eris',
+        instanceId: null,
         islandId: 'island-eris-063272',
         level: 'body',
         placeId: null,
@@ -528,10 +530,20 @@ describe('the Atlas state', () => {
       } as const,
       {
         bodyId: 'eris',
+        instanceId: null,
         islandId: null,
         level: 'body',
         placeId: 'place-02502d',
         view: { span: 16, x: 73.5, z: 136.5 }
+      } as const,
+      // A picked footprint survives a link on the same footing as the other two (#413).
+      {
+        bodyId: 'eris',
+        instanceId: 'eris-surface-87',
+        islandId: null,
+        level: 'body',
+        placeId: null,
+        view: { span: 1, x: 71.49, z: 136.52 }
       } as const
     ]) {
       expect(readAtlasState(atlasSearch(state), ids)).toEqual(state);
@@ -540,6 +552,7 @@ describe('the Atlas state', () => {
     expect(
       atlasHref({
         bodyId: 'eris',
+        instanceId: null,
         islandId: null,
         level: 'body',
         placeId: null,
@@ -549,6 +562,7 @@ describe('the Atlas state', () => {
     expect(
       atlasHref({
         bodyId: 'eris',
+        instanceId: null,
         islandId: 'island-eris-063272',
         level: 'body',
         placeId: null,
@@ -559,12 +573,24 @@ describe('the Atlas state', () => {
     expect(
       atlasHref({
         bodyId: 'eris',
+        instanceId: null,
         islandId: null,
         level: 'body',
         placeId: 'place-02502d',
         view: null
       })
     ).toBe('/damocles/atlas?body=eris&place=place-02502d');
+    // A footprint's own key, which the Catalogue hand-off is built from.
+    expect(
+      atlasHref({
+        bodyId: 'eris',
+        instanceId: 'eris-surface-87',
+        islandId: null,
+        level: 'body',
+        placeId: null,
+        view: null
+      })
+    ).toBe('/damocles/atlas?body=eris&instance=eris-surface-87');
     expect(
       atlasHref({ level: 'system', view: { span: 100, x: 1, z: 2 } })
     ).toBe('/damocles/atlas?x=1&z=2&span=100');

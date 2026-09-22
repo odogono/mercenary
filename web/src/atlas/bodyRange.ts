@@ -111,3 +111,16 @@ export const labelsInBand = (
     label =>
       BODY_RANGES.indexOf(band) >= BODY_RANGES.indexOf(LABEL_BAND[label.kind])
   );
+
+/// The band a placed Instance's footprint appears at.
+///
+/// The Street Range and no wider. A recovered footprint is a few hundredths of a Surface Cell —
+/// Capital Spaceport, the largest on Eris, is 0.013 by 0.031 — so at the Settlement Range the
+/// whole of a Settlement's structures would be a scattering of single pixels over the road
+/// network, which says less than the network alone. This is the band sized for them, and it is
+/// what the Range is named for (`CONTEXT.md`, **Atlas**).
+export const FOOTPRINT_BAND: BodyRange = 'street';
+
+/// Whether a band draws footprints, and so whether it must state what stands there undrawn.
+export const showsFootprints = (band: BodyRange): boolean =>
+  BODY_RANGES.indexOf(band) >= BODY_RANGES.indexOf(FOOTPRINT_BAND);

@@ -1,6 +1,7 @@
 import type { Instance, Island, Place } from '../catalogue/data.ts';
 import type { MapPoint } from '../catalogue/mapView.ts';
 import type { GammaBody, GammaSystemDocument } from '../flyover/documents.ts';
+import type { Footprint } from './footprint.ts';
 import {
   BODY_ROAD_GAP_NOTICE,
   NO_WORKSPACE_NOTICE,
@@ -311,6 +312,100 @@ export const roadProvenance = (roads: RoadSelection): readonly string[] => {
   return notes;
 };
 
+/// The one phrase every footprint carries. A rectangle is arithmetic over a recovered mesh and
+/// a recovered angle, not a recovered rectangle, and ADR 0014 asks for the difference to be on
+/// the surface rather than in a note somewhere.
+export const FOOTPRINT_DERIVED_LABEL = 'derived from recovered geometry';
+
+/// What the panel says about footprints once the camera is close enough to draw them: how the
+/// Body stands, and the whole of one picked Instance.
+export interface FootprintSelection {
+  /// Footprints drawn on this Body.
+  readonly drawn: number;
+  /// Structure Instances placed on this Body whose Model recovered neither outline.
+  readonly gaps: number;
+  readonly selected: Footprint | null;
+}
+
+/// A drawn angle as the byte the draw path counts in, and the turn that byte is.
+///
+/// Both, because the byte is the recovered value and the degrees are what a reader can picture.
+/// No recovered structure Instance carries a non-zero one today, so this reads "0 · as
+/// modelled" everywhere on the map; the arithmetic is still the draw path's, because the
+/// Catalogue may yet recover an Instance that turns.
+const drawnAngle = (byte: number): string =>
+  byte === 0
+    ? '0 · drawn as modelled'
+    : `${byte} of 256 · ${Math.round((byte / 256) * 360)}\u00b0 clockwise`;
+
+const FOOTPRINT_SOURCE_LABEL: Readonly<Record<Footprint['source'], string>> = {
+  exterior: 'exterior Mesh',
+  plan: 'plan Mesh (fallback)'
+};
+
+export const footprintFacts = (
+  footprints: FootprintSelection
+): readonly BodyFact[] => {
+  const picked = footprints.selected;
+  return [
+    ...(picked
+      ? [
+          { label: 'Instance', value: picked.id },
+          {
+            label: 'Model',
+            value: `${picked.modelName} \u00b7 ${picked.modelId}`
+          },
+          { label: 'Drawn angle', value: drawnAngle(picked.drawnAngle) },
+          {
+            label: 'Measured from',
+            value: FOOTPRINT_SOURCE_LABEL[picked.source]
+          },
+          {
+            label: 'Stands at',
+            value: `${picked.at.x.toFixed(3)} / ${picked.at.z.toFixed(3)} Surface Cells`
+          }
+        ]
+      : []),
+    { label: 'Drawn on this Body', value: String(footprints.drawn) },
+    ...(footprints.gaps
+      ? [
+          {
+            label: 'Recovered no outline',
+            value: `${footprints.gaps} structure Instance${footprints.gaps === 1 ? '' : 's'}`
+          }
+        ]
+      : [])
+  ];
+};
+
+/// A footprint is the one derived layer of the Atlas, so what the rectangle is and what it is
+/// not are both stated, every time one is drawn.
+export const footprintProvenance = (
+  footprints: FootprintSelection
+): readonly string[] => [
+  `Each rectangle is ${FOOTPRINT_DERIVED_LABEL}: the x and z extents of the Model\u2019s ` +
+    'recovered mesh, turned about the Instance\u2019s own recovered position by the angle the ' +
+    'draw path turns it with ($053548). The mesh, the position and the angle are all ' +
+    'recovered; the rectangle is this map\u2019s arithmetic over them and is a bound rather ' +
+    'than an outline. A true top-down exterior rendering is a later refinement (#405).',
+  'Measured from the Model\u2019s exterior Mesh where it has one, and from its Structure ' +
+    'Workspace plan otherwise. Two of the 1,241 Models carry an exterior \u2014 Capital ' +
+    'Spaceport and the Glenn Spaceport sharing its record \u2014 so 577 of the 579 footprints ' +
+    'on the map are measured from the plan, which is the geometry the on-foot renderer draws ' +
+    'the walls from and the pushback clamps against.',
+  'Surface Structures alone. An object Instance is a thing standing on the ground rather than ' +
+    'a building on it \u2014 a Drop rewrites where it is \u2014 and a ground record is the ' +
+    'cell\u2019s own surface, which the roads band already declined to paint in.',
+  ...(footprints.gaps
+    ? [
+        `${footprints.gaps} structure Instance${footprints.gaps === 1 ? '' : 's'} placed on ` +
+          'this Body recovered neither an exterior nor a plan, and so are not drawn. Most are ' +
+          'the intentionally empty surface record, which the Catalogue reads as authored ' +
+          'rather than as missing; either way nothing is invented to stand in for one.'
+      ]
+    : [])
+];
+
 const row = (label: string, value: string): HTMLElement => {
   const div = document.createElement('div');
   div.className = 'panel-row';
@@ -333,6 +428,8 @@ const paragraph = (text: string, className = ''): HTMLElement => {
 };
 
 export interface PanelSelection {
+  /// This Body's footprints, from the band that draws them; absent outward of it.
+  readonly footprints?: FootprintSelection | null | undefined;
   readonly island?: Island | null | undefined;
   readonly place?: PlaceSelection | null | undefined;
   /// This Body's roads, from the band that draws them; absent outward of it, where a notice
@@ -350,7 +447,7 @@ export const renderPanel = (
   body: GammaBody | null,
   selection: PanelSelection = {}
 ): void => {
-  const { island, place, roads, surfaceOnDisc } = selection;
+  const { footprints, island, place, roads, surfaceOnDisc } = selection;
   root.replaceChildren();
   if (!body) {
     root.append(
@@ -443,6 +540,33 @@ export const renderPanel = (
       root.append(row(fact.label, fact.value));
     }
     for (const note of roadProvenance(roads)) {
+      root.append(paragraph(note, 'muted'));
+    }
+  }
+  if (footprints) {
+    // Headed as derived rather than as a layer with a provenance note somewhere below it: a
+    // rectangle is this map's arithmetic and the reader meets that before the numbers.
+    const heading = paragraph('Footprints · derived', 'panel-heading');
+    heading.id = 'footprint-derived';
+    heading.dataset['source'] = footprints.selected?.source ?? 'none';
+    root.append(heading);
+    if (footprints.selected) {
+      root.append(paragraph(footprints.selected.instanceName, 'panel-heading'));
+    }
+    for (const fact of footprintFacts(footprints)) {
+      root.append(row(fact.label, fact.value));
+    }
+    if (footprints.selected) {
+      const link = document.createElement('a');
+      link.href = instanceHref(body.sourceIndex, footprints.selected.id);
+      link.className = 'panel-instance';
+      link.id = 'footprint-catalogue-link';
+      link.textContent = `${footprints.selected.instanceName} in the Catalogue`;
+      const wrapper = paragraph('');
+      wrapper.append(link);
+      root.append(wrapper);
+    }
+    for (const note of footprintProvenance(footprints)) {
       root.append(paragraph(note, 'muted'));
     }
   }
