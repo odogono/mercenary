@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   BODY_RANGES,
+  FOOTPRINT_BAND,
   LABEL_BAND,
   ROAD_BAND,
   SURFACE_SPAN,
@@ -9,6 +10,7 @@ import {
   fitBody,
   labelsInBand,
   rangeOf,
+  showsFootprints,
   showsRoads
 } from '../src/atlas/bodyRange.ts';
 import type { SurfaceLabel } from '../src/atlas/surface.ts';
@@ -210,5 +212,19 @@ describe('which bands draw a road network', () => {
     expect(showsRoads('street')).toBe(true);
     expect(showsRoads('body')).toBe(false);
     expect(showsRoads('coastal')).toBe(false);
+  });
+});
+
+describe('which bands draw a footprint', () => {
+  test('draws footprints at the Street Range alone', () => {
+    // A recovered footprint is a few hundredths of a Surface Cell, so outward of this band the
+    // whole of a Settlement's structures would be a scattering of single pixels over the road
+    // network — which says less than the network on its own.
+    expect(BODY_RANGES.filter(showsFootprints)).toEqual(['street']);
+    expect(BODY_RANGES).toContain(FOOTPRINT_BAND);
+    // The narrowest band of the four, and the one the Range is named for.
+    expect(showsFootprints('settlement')).toBe(false);
+    expect(showsFootprints('coastal')).toBe(false);
+    expect(showsFootprints('body')).toBe(false);
   });
 });

@@ -6,6 +6,7 @@ import {
 } from '../catalogue/mapView.ts';
 import { SURFACE_CELLS } from '../damocles/world.ts';
 import type { GammaBody } from '../flyover/documents.ts';
+import type { Footprint } from './footprint.ts';
 import {
   layOutSurfaceLabels,
   nearestImage,
@@ -74,6 +75,17 @@ const ROAD_MIN_WIDTH = 1;
 const ROAD_GAP_SQUARE = '#9c7d3c';
 const ROAD_GAP_DASH = [6, 5];
 const ROAD_GAP_WIDTH = 2;
+/// A derived footprint: a pale fill under a firmer edge, so a rectangle reads as a thing
+/// standing on the ground rather than as another line drawn on it. Cool against the road
+/// network's warm gold, because the two layers overlap and the reader must be able to tell the
+/// derived rectangle from the recovered run without consulting the panel.
+const FOOTPRINT_FILL = '#8fb9d144';
+const FOOTPRINT_EDGE = '#8fb9d1';
+/// Two pixels rather than one. A hairline edge over a road run is a blend with the gold under it
+/// in every pixel it touches, so the layer could be on screen and still not be checkable; at two
+/// an axis-aligned edge always covers at least one whole pixel in its own colour, whatever it is
+/// drawn over and whatever the device's pixel ratio is.
+const FOOTPRINT_WIDTH = 2;
 
 export const frameOf = (element: HTMLElement): SystemFrame => {
   const rect = element.getBoundingClientRect();
@@ -239,6 +251,43 @@ const drawRoadGaps = (
   context.restore();
 };
 
+/// The footprints this band shows, each in every wrap image the camera can see, with the picked
+/// one in the selection accent.
+///
+/// Drawn over the roads and under the grid, the seam and the names: a footprint stands on the
+/// network rather than beside it, and the coordinate reference stays readable over both.
+const drawFootprints = (
+  context: CanvasRenderingContext2D,
+  view: MapView,
+  frame: SystemFrame,
+  footprints: readonly Footprint[],
+  selectedId: string | null
+) => {
+  const aspect = frame.height / Math.max(frame.width, 1);
+  for (const footprint of footprints) {
+    const picked = footprint.id === selectedId;
+    context.fillStyle = FOOTPRINT_FILL;
+    context.strokeStyle = picked ? SELECTED : FOOTPRINT_EDGE;
+    context.lineWidth = picked ? SELECTED_WIDTH : FOOTPRINT_WIDTH;
+    for (const image of wrapImages(footprint.corners, view, aspect)) {
+      context.beginPath();
+      for (const [index, point] of image.entries()) {
+        const { u, v } = project(view, point, aspect);
+        const x = u * frame.width,
+          y = v * frame.height;
+        if (index === 0) {
+          context.moveTo(x, y);
+        } else {
+          context.lineTo(x, y);
+        }
+      }
+      context.closePath();
+      context.fill();
+      context.stroke();
+    }
+  }
+};
+
 /// A name's own point, drawn as the map draws a marker: a Damocles Place as a filled dot, a
 /// Settlement as a ring, because a Settlement is an area whose name is written at the origin its
 /// Structure Workspace is built at rather than a single thing standing there.
@@ -291,7 +340,13 @@ export const drawBodySurface = (
   roads: {
     readonly gaps: readonly SurfaceSettlement[];
     readonly networks: readonly SurfaceRoad[];
-  } = { gaps: [], networks: [] }
+  } = { gaps: [], networks: [] },
+  /// The derived footprints this band draws, already gated by `showsFootprints`, and whichever
+  /// is picked.
+  footprints: {
+    readonly drawn: readonly Footprint[];
+    readonly selectedId: string | null;
+  } = { drawn: [], selectedId: null }
 ): SurfaceLabelLayout => {
   const context = surfaceOf(canvas, frame);
   if (!context) {
@@ -328,6 +383,7 @@ export const drawBodySurface = (
   }
   drawRoads(context, view, frame, roads.networks);
   drawRoadGaps(context, view, frame, roads.gaps);
+  drawFootprints(context, view, frame, footprints.drawn, footprints.selectedId);
   drawGrid(context, view, frame);
   drawSeams(context, view, frame);
   context.font = LABEL_FONT;

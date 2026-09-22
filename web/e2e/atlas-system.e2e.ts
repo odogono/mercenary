@@ -796,3 +796,122 @@ test('a Settlement recovered with no road at all is not reported as a gap', asyn
   // A reading is not a hole, so no dashed square is drawn over it.
   expect(await gapSquarePixels(page)).toBe(0);
 });
+
+/// How much of the Body Range's canvas is drawn as a derived footprint. The rectangles are
+/// canvas geometry rather than DOM, so the only honest check that they are on screen is the
+/// pixels.
+///
+/// The edge exactly, and not the fill. A footprint sits in the middle of its Surface Cell, which
+/// is exactly where that cell's road run is drawn, so its fill is a blend with recovered gold
+/// rather than with the land — and a blend cannot be checked for without knowing what it was
+/// drawn over. `draw.ts` strokes the edge two pixels wide precisely so an axis-aligned one
+/// always covers a whole pixel in its own `#8fb9d1`.
+const footprintPixels = (page: Page) =>
+  page.evaluate(() => {
+    const canvas = document.getElementById('body-map') as HTMLCanvasElement;
+    const context = canvas.getContext('2d')!;
+    const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
+    let found = 0;
+    for (let at = 0; at < data.length; at += 4) {
+      if (data[at] === 0x8f && data[at + 1] === 0xb9 && data[at + 2] === 0xd1) {
+        found += 1;
+      }
+    }
+    return found;
+  });
+
+/// Centred on a point inside Capital Spaceport's own footprint, so a press in the middle of the
+/// map lands on it. Its rectangle runs x 71.499 to 71.512 and z 136.512 to 136.543 in Surface
+/// Cells, which is 0.013 by 0.031 of a cell — the largest on Eris, and still a fraction of the
+/// cell it stands in.
+const SPACEPORT_VIEW = 'body=eris&x=71.5056&z=136.5272';
+
+test('the Street Range draws a derived footprint for each placed structure', async ({
+  page
+}) => {
+  await page.goto(`/damocles/atlas?${SPACEPORT_VIEW}&span=1`);
+  await expect(page.locator('#system-scale')).toContainText('Street Range');
+  await expect(page.locator('#status')).toContainText('57 derived footprints', {
+    timeout: 20_000
+  });
+  // 20 of Eris's 77 placed structures recovered neither an exterior nor a plan, and nothing is
+  // invented to stand in for one.
+  await expect(page.locator('#status')).toContainText(
+    '20 recovered no outline and are not drawn'
+  );
+  expect(await footprintPixels(page)).toBeGreaterThan(0);
+  // The road network stays under them: the bands are not a hierarchy.
+  expect(await roadPixels(page)).toBeGreaterThan(0);
+
+  // Outward of the Street Range a footprint is a pixel or less, so the layer waits — and the
+  // status line still says it is there and where to go to see it.
+  await page.goto(`/damocles/atlas?${SPACEPORT_VIEW}&span=20`);
+  await expect(page.locator('#system-scale')).toContainText('Settlement Range');
+  await expect(page.locator('#status')).toContainText(
+    '57 derived footprints, from the Street Range',
+    { timeout: 20_000 }
+  );
+  expect(await footprintPixels(page)).toBe(0);
+  await expect(page.locator('#footprint-derived')).toHaveCount(0);
+});
+
+test('tapping a footprint reaches its Catalogue entry', async ({ page }) => {
+  await page.goto(`/damocles/atlas?${SPACEPORT_VIEW}&span=1`);
+  await expect(page.locator('#status')).toContainText('57 derived footprints', {
+    timeout: 20_000
+  });
+  const box = (await page.locator('#range-body').boundingBox())!;
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+
+  await expect(page).toHaveURL(/\binstance=eris-surface-87\b/);
+  await expect(page.locator('#panel')).toContainText('CAPITAL SPACEPORT');
+  // The one Model carrying an exterior Mesh, so this is the one footprint on the map that did
+  // not fall back to the plan.
+  await expect(page.locator('#footprint-derived')).toHaveAttribute(
+    'data-source',
+    'exterior'
+  );
+  await expect(page.locator('#panel')).toContainText(
+    'derived from recovered geometry'
+  );
+  await expect(page.locator('#panel')).toContainText('drawn as modelled');
+  await expect(page.locator('#panel')).toContainText(
+    '577 of the 579 footprints'
+  );
+
+  // And the hand-off reaches the Instance itself, not merely its Body.
+  const href = await page
+    .locator('#footprint-catalogue-link')
+    .getAttribute('href');
+  expect(href).toBe('/catalogue?body=body-11&instance=eris-surface-87');
+  await page.goto(href!);
+  await expect(page.locator('#details')).toContainText('CAPITAL SPACEPORT', {
+    timeout: 30_000
+  });
+});
+
+test('a footprint measured from the plan says which mesh it came from', async ({
+  page
+}) => {
+  // Eris surface cell 4,2 is the ordinary case: 577 of the 579 footprints on the map are the
+  // Structure Workspace plan, because two Models in 1,241 carry an exterior Mesh. Unnamed, so
+  // no Damocles Place label stands over it — a name takes its own pointer events.
+  await page.goto('/damocles/atlas?body=eris&x=68.5355&z=130.5046&span=1');
+  await expect(page.locator('#status')).toContainText('57 derived footprints', {
+    timeout: 20_000
+  });
+  const box = (await page.locator('#range-body').boundingBox())!;
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+
+  await expect(page).toHaveURL(/\binstance=eris-surface-24\b/);
+  await expect(page.locator('#footprint-derived')).toHaveAttribute(
+    'data-source',
+    'plan'
+  );
+  await expect(page.locator('#panel')).toContainText('plan Mesh (fallback)');
+
+  // Pressing bare ground clears the selection rather than leaving the panel on a rectangle the
+  // reader has moved away from.
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2 + 60);
+  await expect(page).not.toHaveURL(/\binstance=/);
+});

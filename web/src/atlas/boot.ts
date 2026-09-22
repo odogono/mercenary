@@ -20,6 +20,7 @@ import {
   fitBody,
   labelsInBand,
   rangeOf,
+  showsFootprints,
   showsRoads,
   type BodyRange
 } from './bodyRange.ts';
@@ -31,6 +32,11 @@ import {
   placeLabels,
   placeSurfaceLabels
 } from './draw.ts';
+import {
+  footprintAt,
+  readBodyFootprints,
+  type BodyFootprints
+} from './footprint.ts';
 import { renderPanel } from './panel.ts';
 import { centreReadout, type ReadoutRow } from './readout.ts';
 import {
@@ -124,6 +130,10 @@ let bodyView: MapView | undefined;
 let catalogue: Catalogue | undefined;
 let catalogueRequest: Promise<void> | undefined;
 let surface: BodySurface | undefined;
+/// The Body's derived footprints, read once beside its surface. Separate from `surface` because
+/// they are the one derived layer on the map and are measured from the Models rather than from
+/// the Body's own records (#413).
+let footprints: BodyFootprints | undefined;
 /// Which band the Body Range's camera is in, so the panel can describe the layers that band
 /// actually draws. Written by `drawBodyRange`, which is what discovers it.
 let bodyBand: BodyRange | undefined;
@@ -181,6 +191,7 @@ const recordCamera = () => {
           bodyView
             ? {
                 bodyId: current.bodyId,
+                instanceId: current.instanceId,
                 islandId: current.islandId,
                 level: 'body',
                 placeId: current.placeId,
@@ -188,6 +199,7 @@ const recordCamera = () => {
               }
             : {
                 bodyId: current.bodyId,
+                instanceId: current.instanceId,
                 islandId: current.islandId,
                 level: 'body',
                 placeId: current.placeId,
@@ -245,7 +257,20 @@ const renderSelectionPanel = () => {
           }))
         }
       : null;
+  const instanceId = settled.level === 'body' ? settled.instanceId : null;
   renderPanel(panel, system, selectedBody(), {
+    footprints:
+      settled.level === 'body' &&
+      footprints &&
+      bodyBand &&
+      showsFootprints(bodyBand)
+        ? {
+            drawn: footprints.drawn.length,
+            gaps: footprints.gaps.length,
+            selected:
+              footprints.drawn.find(value => value.id === instanceId) ?? null
+          }
+        : null,
     island: pickedId
       ? (catalogue?.islands.find(island => island.id === pickedId) ?? null)
       : null,
@@ -410,6 +435,7 @@ const labelHref = (label: PlacedLabel): string => {
   }
   return atlasHref({
     bodyId: body.id,
+    instanceId: null,
     islandId: label.kind === 'settlement' ? label.id : null,
     level: 'body',
     placeId: label.kind === 'place' ? label.id : null,
@@ -486,6 +512,28 @@ const roadNote = (band: BodyRange): string => {
   );
 };
 
+/// What this band has to say about the footprints in front of the reader.
+///
+/// Outward of the Street Range a footprint is a pixel or less, so the line says the layer is
+/// there and where to go to see it rather than counting a thing nobody could have seen. A Body
+/// with no placed structure at all says that instead: it is a statement about what is recovered
+/// of that Body and not a hole in this layer.
+const footprintNote = (band: BodyRange): string => {
+  if (!footprints) {
+    return '';
+  }
+  const { drawn, gaps } = footprints;
+  if (!drawn.length && !gaps.length) {
+    return ' \u00b7 no Surface Structure is placed on this Body, so there is no footprint to draw';
+  }
+  const undrawn = gaps.length
+    ? `, ${gaps.length} recovered no outline and ${gaps.length === 1 ? 'is' : 'are'} not drawn`
+    : '';
+  return showsFootprints(band)
+    ? ` \u00b7 ${drawn.length} derived footprint${drawn.length === 1 ? '' : 's'}${undrawn}`
+    : ` \u00b7 ${drawn.length} derived footprint${drawn.length === 1 ? '' : 's'}, from the Street Range`;
+};
+
 /// Writes nothing to the page but canvas pixels, the name layer and the two readouts, so the
 /// ResizeObserver that calls it cannot feed the frame back on itself. The names are absolutely
 /// positioned over the map, so they cannot change the frame either.
@@ -500,6 +548,7 @@ const drawBodyRange = () => {
   const band = rangeOf(bodyView, frame.width);
   const picked =
     current.level === 'body' ? (current.placeId ?? current.islandId) : null;
+  const instanceId = current.level === 'body' ? current.instanceId : null;
   const shown = labelsInBand(surface?.labels ?? [], band);
   // Which groups are in frame is discovered before anything is drawn, because both the dashed
   // gap squares and the panel are about exactly those.
@@ -520,7 +569,7 @@ const drawBodyRange = () => {
   // describes what the reader is looking at, so a change in either re-renders it — the same
   // arrangement the authored-scale note has. Keyed, because a pan that changes neither must not
   // rewrite the sidebar on every frame.
-  const key = `${band}|${inView.map(settlement => settlement.id).join(',')}`;
+  const key = `${band}|${inView.map(settlement => settlement.id).join(',')}|${instanceId ?? ''}`;
   if (panelKey !== key) {
     panelKey = key;
     renderSelectionPanel();
@@ -533,7 +582,11 @@ const drawBodyRange = () => {
     surface,
     current.level === 'body' ? current.islandId : null,
     { labels: shown, selectedId: picked },
-    roads
+    roads,
+    {
+      drawn: showsFootprints(band) ? (footprints?.drawn ?? []) : [],
+      selectedId: instanceId
+    }
   );
   placeSurfaceLabels(bodyLabelLayer, layout, picked, labelHref);
   const cells = bodyView.span / Math.max(frame.width, 1);
@@ -573,7 +626,7 @@ const drawBodyRange = () => {
   status.textContent =
     `${body.name} · source slot ${body.sourceIndex} · surface ${SURFACE_SPAN} Surface Cells ` +
     `an axis, wrapping on both · ${surfaceNote}${names}${roadNote(band)}` +
-    ' · structure footprints are not drawn yet';
+    footprintNote(band);
   recordCamera();
 };
 
@@ -610,12 +663,16 @@ const loadSurface = (sourceIndex: number, then: () => void) => {
 /// The Body Range's islands, once the Catalogue is readable.
 const loadBodySurface = (sourceIndex: number) => {
   surface = catalogue ? readBodySurface(catalogue, sourceIndex) : undefined;
+  footprints = catalogue
+    ? readBodyFootprints(catalogue, sourceIndex)
+    : undefined;
   loadSurface(sourceIndex, () => {
     const body = selectedBody();
     if (!catalogue || !body) {
       return;
     }
     surface = readBodySurface(catalogue, body.sourceIndex);
+    footprints = readBodyFootprints(catalogue, body.sourceIndex);
     // `render` rather than `drawBodyRange`: a deep link may name a picked island, and until the
     // Catalogue is read there is no record to put in the panel. Re-rendering is idempotent here
     // because the state has not moved, so the camera survives and nothing is refetched.
@@ -716,6 +773,7 @@ const mountRoster = (loaded: GammaSystemDocument) => {
     const anchor = document.createElement('a');
     anchor.href = atlasHref({
       bodyId: body.id,
+      instanceId: null,
       islandId: null,
       level: 'body',
       placeId: null,
@@ -743,6 +801,7 @@ const pick = (marker: SystemMarker) => {
   } else {
     go({
       bodyId: marker.id,
+      instanceId: null,
       islandId: null,
       level: 'body',
       placeId: null,
@@ -787,6 +846,7 @@ const handOver = (next: MapView): boolean => {
   bodyView = window;
   go({
     bodyId: body.id,
+    instanceId: null,
     islandId: null,
     level: 'body',
     placeId: null,
@@ -855,13 +915,25 @@ const bodyControls = mountCamera({
       y / Math.max(frame.height, 1),
       aspect
     );
-    const picked = islandAt(surface, bodyView, aspect, point);
-    // Picking the sea clears the selection, which is the only way to put the panel back to the
-    // Body without leaving it. A press on the map is never a Place: a name takes its own
+    // A footprint first, and only then the island under it. A rectangle is the smaller, more
+    // specific claim and is drawn on top, so a press that lands on one means it; the band gate
+    // is what keeps a press at the Coastal Range from selecting something invisible.
+    const hit =
+      bodyBand && showsFootprints(bodyBand) && footprints
+        ? footprintAt(footprints.drawn, bodyView, aspect, point)
+        : null;
+    const picked = hit ? null : islandAt(surface, bodyView, aspect, point);
+    // Picking bare ground clears the selection, which is the only way to put the panel back to
+    // the Body without leaving it. A press on the map is never a Place: a name takes its own
     // pointer events, so a Place is only ever picked by its label.
-    if ((picked?.id ?? null) !== state.islandId || state.placeId) {
+    if (
+      (picked?.id ?? null) !== state.islandId ||
+      (hit?.id ?? null) !== state.instanceId ||
+      state.placeId
+    ) {
       go({
         bodyId: body.id,
+        instanceId: hit?.id ?? null,
         islandId: picked?.id ?? null,
         level: 'body',
         placeId: null,
