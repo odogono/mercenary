@@ -484,7 +484,7 @@ test('picking an island fills the panel and survives the link', async ({
   // The Catalogue has no island view, so the hand-off reaches the Body and says as much.
   await expect(page.locator('#island-catalogue-link')).toHaveAttribute(
     'href',
-    '/damocles/catalogue?body=body-11'
+    '/catalogue?body=body-11'
   );
   await expect(page.locator('#panel')).toContainText(
     'holds no island record view'
@@ -532,4 +532,93 @@ test('a deep link opens the Body, and an unknown one falls back', async ({
   await expect(page).toHaveURL('/damocles/atlas?body=void');
   await expect(page.locator('#range-system')).toBeVisible();
   await expect(page.locator('#breadcrumb-body')).toHaveCount(0);
+});
+
+test('names Settlements from the Body Range and Places from the Settlement Range', async ({
+  page
+}) => {
+  await page.goto('/damocles/atlas?body=eris');
+  await expect(page.locator('#status')).toContainText('5 Settlement names', {
+    timeout: 20_000
+  });
+  // A Settlement is the one thing on a Body worth naming at the widest view, so all five of
+  // Eris's named records are written. CAPITAL CITY appears twice: the widest view of a surface
+  // is wider than the surface, so the camera sees two wrap images of it side by side.
+  const capital = page.locator('#body-labels a[data-kind="settlement"]', {
+    hasText: 'CAPITAL CITY'
+  });
+  await expect(capital.first()).toBeVisible();
+  await expect(capital).toHaveCount(2);
+  // The eleven Places share CAPITAL CITY's sixteen cells, so at this band they would be eleven
+  // names on one pixel. The status line says where to find them rather than leaving a reader to
+  // conclude there are none.
+  await expect(page.locator('#body-labels a[data-kind="place"]')).toHaveCount(
+    0
+  );
+  await expect(page.locator('#status')).toContainText(
+    '11 Damocles Places, from the Settlement Range'
+  );
+
+  // Zoomed into CAPITAL CITY's own workspace the Places appear, and the Settlement name stays:
+  // these are bands and not a hierarchy.
+  await page.goto('/damocles/atlas?body=eris&x=72&z=136&span=24');
+  await expect(page.locator('#system-scale')).toContainText('Settlement Range');
+  await expect(
+    page.locator('#body-labels a[data-kind="place"]', {
+      hasText: 'STATE OFFICE'
+    })
+  ).toBeVisible({ timeout: 20_000 });
+  await expect(
+    page.locator('#body-labels a[data-kind="settlement"]')
+  ).toContainText('CAPITAL CITY');
+});
+
+test('picking a Damocles Place fills the panel and reaches the Catalogue', async ({
+  page
+}) => {
+  await page.goto('/damocles/atlas?body=eris&x=72&z=136&span=24');
+  const name = page.locator('#body-labels a', { hasText: 'STATE OFFICE' });
+  await expect(name).toBeVisible({ timeout: 20_000 });
+  await name.click();
+
+  // A name is a link, so the press reaches it rather than picking the island under it.
+  await expect(page).toHaveURL(/\bplace=place-/);
+  await expect(page).not.toHaveURL(/\bisland=/);
+  await expect(page.locator('#panel')).toContainText('Place · STATE OFFICE');
+  // Its position is its Instances' and the panel says so.
+  await expect(page.locator('#panel')).toContainText('Mean cell');
+  await expect(page.locator('#panel')).toContainText(
+    'not a position the Place holds'
+  );
+
+  // The selection survives the link, the way an island's does.
+  const picked = page.url();
+  await page.goto(picked);
+  await expect(page.locator('#panel')).toContainText('STATE OFFICE', {
+    timeout: 20_000
+  });
+
+  // And the hand-off reaches the Instance itself, not merely its Body.
+  const link = page.locator('#panel a.panel-instance').first();
+  const href = await link.getAttribute('href');
+  expect(href).toBe('/catalogue?body=body-11&instance=eris-surface-89');
+  await page.goto(href!);
+  await expect(page.locator('#details')).toContainText('STATE OFFICE', {
+    timeout: 30_000
+  });
+});
+
+test('picking a Settlement name picks the island that publishes it', async ({
+  page
+}) => {
+  await page.goto('/damocles/atlas?body=eris&x=72&z=136&span=180');
+  const name = page.locator('#body-labels a', { hasText: 'CAPITAL CITY' });
+  await expect(name).toBeVisible({ timeout: 20_000 });
+  await name.click();
+  // A Settlement is carried by an island record, so the name reaches the record the Catalogue
+  // can actually show rather than a Settlement entry that does not exist.
+  await expect(page).toHaveURL(/\bisland=island-eris-/);
+  await expect(page.locator('#panel')).toContainText(
+    'carries no name of its own'
+  );
 });

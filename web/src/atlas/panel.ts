@@ -1,4 +1,5 @@
-import type { Island } from '../catalogue/data.ts';
+import type { Instance, Island, Place } from '../catalogue/data.ts';
+import type { MapPoint } from '../catalogue/mapView.ts';
 import type { GammaBody, GammaSystemDocument } from '../flyover/documents.ts';
 import { catalogueBodyId } from './surface.ts';
 
@@ -137,8 +138,68 @@ export const islandProvenance = (island: Island): readonly string[] => [
 /// Body's placement map, and its search covers Model names rather than area names. So the
 /// honest hand-off is the Body, and the panel says as much rather than implying an island entry
 /// exists.
+///
+/// `/catalogue` and not `/damocles/catalogue`: the Catalogue's eventual home is under the
+/// Damocles Title's path, but the path it is actually served at is still the root one (ADR
+/// 0042), and `documentPath.ts` resolves no other. Pointing at the eventual one sent every
+/// Catalogue link in the Atlas to the Targ Title instead.
 export const catalogueHref = (sourceIndex: number): string =>
-  `/damocles/catalogue?body=${catalogueBodyId(sourceIndex)}`;
+  `/catalogue?body=${catalogueBodyId(sourceIndex)}`;
+
+/// One recovered Damocles Instance in the Catalogue, on its own Body. A Place holds several, and
+/// each is a record the Catalogue does hold a view of, so unlike an island this hand-off reaches
+/// the thing itself.
+export const instanceHref = (sourceIndex: number, instanceId: string): string =>
+  `${catalogueHref(sourceIndex)}&instance=${encodeURIComponent(instanceId)}`;
+
+/// A picked Damocles Place, with the Instances the Catalogue lists in it.
+export interface PlaceSelection {
+  /// Where the map wrote the name, in Body Coordinates; null if the Place has no located
+  /// Instance and so nothing to stand at.
+  readonly at: MapPoint | null;
+  readonly instances: readonly Instance[];
+  readonly place: Place;
+}
+
+/// The recovered numbers behind one Damocles Place. Its position is its Instances' and not its
+/// own, which the provenance says and the label here does not pretend otherwise.
+export const placeFacts = (selection: PlaceSelection): readonly BodyFact[] => [
+  { label: 'Record', value: selection.place.id },
+  ...(selection.at
+    ? [
+        {
+          label: 'Mean cell',
+          value: `${Math.round(selection.at.x)} / ${Math.round(selection.at.z)} Surface Cells`
+        }
+      ]
+    : []),
+  {
+    label: 'Instances',
+    value: String(selection.place.instances.length)
+  }
+];
+
+export const placeProvenance = (
+  selection: PlaceSelection
+): readonly string[] => {
+  const unlocated =
+    selection.place.instances.length -
+    selection.instances.filter(instance => instance.location).length;
+  return [
+    'Recovered: one named location of this Body, with the Instances the Catalogue lists in ' +
+      'it. A place name alone establishes neither its position nor its contents, so the cell ' +
+      'above is the mean of those Instances\u2019 own recovered Body Coordinates and is not a ' +
+      'position the Place holds.',
+    ...(unlocated
+      ? [
+          `${unlocated} of its ${selection.place.instances.length} Instances carry no ` +
+            'recovered location, and are not counted in that mean.'
+        ]
+      : []),
+    'A Damocles Place is not part of the Settlement it stands in: the two are recovered from ' +
+      'different records, and neither one lists the other.'
+  ];
+};
 
 const row = (label: string, value: string): HTMLElement => {
   const div = document.createElement('div');
@@ -161,16 +222,22 @@ const paragraph = (text: string, className = ''): HTMLElement => {
   return p;
 };
 
+export interface PanelSelection {
+  readonly island?: Island | null | undefined;
+  readonly place?: PlaceSelection | null | undefined;
+  /// The Body whose surface is drawn on its own disc at the System Range, if any.
+  readonly surfaceOnDisc?: string | undefined;
+}
+
 /// Selecting a Body is the same act as hopping into it, so this panel describes whichever
 /// Body the Atlas is in and falls back to the System Range's own note when it is in none.
 export const renderPanel = (
   root: HTMLElement,
   system: GammaSystemDocument,
   body: GammaBody | null,
-  island?: Island | null,
-  /// The Body whose surface is drawn on its own disc at the System Range, if any.
-  surfaceOnDisc?: string
+  selection: PanelSelection = {}
 ): void => {
+  const { island, place, surfaceOnDisc } = selection;
   root.replaceChildren();
   if (!body) {
     root.append(
@@ -223,6 +290,25 @@ export const renderPanel = (
       link
     );
     root.append(wrapper);
+  }
+  if (place) {
+    root.append(paragraph(`Place · ${place.place.name}`, 'panel-heading'));
+    for (const fact of placeFacts(place)) {
+      root.append(row(fact.label, fact.value));
+    }
+    root.append(paragraph('Instances', 'panel-heading'));
+    for (const instance of place.instances) {
+      const link = document.createElement('a');
+      link.href = instanceHref(body.sourceIndex, instance.id);
+      link.className = 'panel-instance';
+      link.textContent = instance.name;
+      const wrapper = paragraph('');
+      wrapper.append(link);
+      root.append(wrapper);
+    }
+    for (const note of placeProvenance(place)) {
+      root.append(paragraph(note, 'muted'));
+    }
   }
   root.append(paragraph(`Evidence · ${system.source.evidence}`, 'muted'));
 };

@@ -125,6 +125,44 @@ h2 {
     0 0 3px #000;
 }
 
+/* The names on a Body's surface. Unlike the System Range's labels these are links: there is no
+   roster of Settlements or Damocles Places, so the name on the map is the only way to reach one.
+   The layer itself takes no pointer events, so only the names themselves interrupt a drag. */
+#body-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.surface-label {
+  position: absolute;
+  padding: 0 0.15rem;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-decoration: none;
+  text-shadow:
+    0 0 3px #000,
+    0 0 3px #000;
+  pointer-events: auto;
+  user-select: text;
+}
+
+.surface-settlement {
+  color: #cfe6f2;
+  letter-spacing: 0.08em;
+}
+
+.surface-label:hover,
+.surface-label:focus-visible {
+  color: var(--accent);
+}
+
+.surface-label[aria-current='true'] {
+  color: var(--accent);
+}
+
 #range-body {
   cursor: grab;
   touch-action: none;

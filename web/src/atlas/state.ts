@@ -19,6 +19,10 @@ export type AtlasState =
       /// camera does. Null when nothing on the surface is picked.
       readonly islandId: string | null;
       readonly level: 'body';
+      /// The picked Damocles Place's record id, on the same footing as the island and never
+      /// together with one: a Place lies inside a Settlement but is not part of it, and the
+      /// panel names one thing at a time.
+      readonly placeId: string | null;
       readonly view: AtlasView | null;
     };
 
@@ -56,11 +60,15 @@ export const readAtlasState = (
   if (bodyId === null) {
     return { level: 'system', view };
   }
-  const islandId = params.get('island');
+  const named = (key: string) => {
+    const value = params.get(key);
+    return value !== null && value.trim() !== '' ? value : null;
+  };
   return {
     bodyId,
-    islandId: islandId !== null && islandId.trim() !== '' ? islandId : null,
+    islandId: named('island'),
     level: 'body',
+    placeId: named('place'),
     view
   };
 };
@@ -71,6 +79,9 @@ export const atlasSearch = (state: AtlasState): string => {
     params.set('body', state.bodyId);
     if (state.islandId) {
       params.set('island', state.islandId);
+    }
+    if (state.placeId) {
+      params.set('place', state.placeId);
     }
   }
   if (state.view) {

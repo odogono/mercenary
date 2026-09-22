@@ -4,6 +4,7 @@ import { fitBody } from '../src/atlas/bodyRange.ts';
 import {
   catalogueBodyId,
   islandAt,
+  layOutSurfaceLabels,
   nearestImage,
   readBodySurface,
   surfaceAnchor,
@@ -143,7 +144,11 @@ describe('the Atlas Body surface', () => {
   test('is a pure function of the payload', async () => {
     const data = await catalogue();
     expect(readBodySurface(data, ERIS)).toEqual(readBodySurface(data, ERIS));
-    expect(readBodySurface(data, 99)).toEqual({ gaps: [], islands: [] });
+    expect(readBodySurface(data, 99)).toEqual({
+      gaps: [],
+      islands: [],
+      labels: []
+    });
   });
 });
 
@@ -356,5 +361,173 @@ describe('the surface anchor', () => {
       x: SURFACE_CELLS / 2,
       z: SURFACE_CELLS / 2
     });
+  });
+});
+
+describe('the names on a Body surface', () => {
+  test('publishes every Settlement and Damocles Place Eris recovers', async () => {
+    const data = await catalogue();
+    const { labels } = readBodySurface(data, ERIS);
+    // A Settlement is the area name a Damocles Island's bound workspace publishes, so the set is
+    // exactly Eris's five named records and never an island without one.
+    expect(
+      labels
+        .filter(label => label.kind === 'settlement')
+        .map(label => label.name)
+    ).toEqual([
+      'CAPITAL CITY',
+      'SNOW ISLAND',
+      'VELOS CITY',
+      'BARE ISLAND',
+      'KEY WEST'
+    ]);
+    // And the Places are the Catalogue's own, in its order. PLAYTESTER STORES appears twice:
+    // two records carrying one name, which is two Places and not a duplicate.
+    expect(
+      labels.filter(label => label.kind === 'place').map(label => label.name)
+    ).toEqual(
+      data.places
+        .filter(place => place.body === catalogueBodyId(ERIS))
+        .map(place => place.name)
+    );
+    expect(labels.filter(label => label.kind === 'place')).toHaveLength(11);
+  });
+
+  test('writes a Settlement at the origin its workspace is built at', async () => {
+    const data = await catalogue();
+    const { labels } = readBodySurface(data, ERIS);
+    const capital = labels.find(label => label.name === 'CAPITAL CITY')!;
+    const record = data.islands.find(island => island.id === capital.id)!;
+    expect(capital.at).toEqual({ x: 64, z: 128 });
+    expect([record.origin[0], record.origin[1]]).toEqual([64, 128]);
+    // Every Place on the island falls inside that workspace's 16 cells, so the name lands on
+    // what it names rather than out at sea.
+    for (const place of labels.filter(label => label.kind === 'place')) {
+      expect(place.at.x - capital.at.x).toBeGreaterThanOrEqual(0);
+      expect(place.at.x - capital.at.x).toBeLessThan(16);
+      expect(place.at.z - capital.at.z).toBeGreaterThanOrEqual(0);
+      expect(place.at.z - capital.at.z).toBeLessThan(16);
+    }
+  });
+
+  test('stands a Place where its own Instances are', async () => {
+    const data = await catalogue();
+    const { labels } = readBodySurface(data, ERIS);
+    const state = labels.find(label => label.name === 'STATE OFFICE')!;
+    const place = data.places.find(candidate => candidate.id === state.id)!;
+    const positions = place.instances.map(
+      id => data.instances.find(instance => instance.id === id)!.location!
+    );
+    expect(positions).toHaveLength(2);
+    // The mean of the Instances and nothing else: the Catalogue publishes no position for a
+    // Place, so there is no other number this could be.
+    expect(state.at.x).toBeCloseTo(
+      positions.reduce((sum, at) => sum + at.position[0], 0) / 2,
+      9
+    );
+    expect(state.at.z).toBeCloseTo(
+      positions.reduce((sum, at) => sum + at.position[2], 0) / 2,
+      9
+    );
+  });
+
+  test('names nothing on a Body whose records publish none', async () => {
+    const data = await catalogue();
+    // DIALIS carries only the coastline-less stub and no Place at all.
+    expect(readBodySurface(data, 0).labels).toEqual([]);
+  });
+});
+
+const METRICS = { charWidth: 6, lineHeight: 15 };
+const eris = async () => readBodySurface(await catalogue(), ERIS);
+
+describe('laying names out against a camera', () => {
+  test('places a name below its own point', async () => {
+    const { labels } = await eris();
+    const capital = labels.find(label => label.name === 'CAPITAL CITY')!;
+    const view = { cx: capital.at.x, cz: capital.at.z, span: 64 };
+    const { placed } = layOutSurfaceLabels([capital], view, FRAME, METRICS);
+    expect(placed).toHaveLength(1);
+    // The camera is centred on the name, so its mark is the middle of the frame and its box
+    // hangs under it, centred on the same pixel.
+    expect(placed[0]!.x).toBeCloseTo(FRAME.width / 2, 6);
+    expect(placed[0]!.y).toBeCloseTo(FRAME.height / 2, 6);
+    expect(placed[0]!.box.x + placed[0]!.box.width / 2).toBeCloseTo(
+      placed[0]!.x,
+      6
+    );
+    expect(placed[0]!.box.y).toBeGreaterThan(placed[0]!.y);
+  });
+
+  test('withholds a name rather than writing it over another', async () => {
+    const { labels } = await eris();
+    const places = labels.filter(label => label.kind === 'place');
+    // Eris's eleven Places share sixteen cells. At a camera showing the whole surface they are
+    // a pixel apart, so all but the two the pile has room for are withheld, and every Place on
+    // the frame is either written or counted: a name never simply disappears.
+    const wide = layOutSurfaceLabels(places, fitBody(FRAME), FRAME, METRICS);
+    const written = new Set(wide.placed.map(label => label.id));
+    expect(written.size).toBeLessThan(places.length);
+    expect(wide.suppressed + written.size).toBe(places.length);
+    // Zooming into the workspace makes room for every one of them.
+    const close = layOutSurfaceLabels(
+      places,
+      { cx: 72, cz: 136, span: 24 },
+      FRAME,
+      METRICS
+    );
+    expect(close.placed).toHaveLength(places.length);
+    expect(close.suppressed).toBe(0);
+  });
+
+  test('keeps a Settlement name when Places crowd it', async () => {
+    const { labels } = await eris();
+    // Settlements are laid out first, so a name for a whole area is never crowded out by the
+    // names inside it however many there are.
+    const { placed } = layOutSurfaceLabels(
+      labels,
+      { cx: 72, cz: 136, span: 40 },
+      FRAME,
+      METRICS
+    );
+    expect(placed.map(label => label.name)).toContain('CAPITAL CITY');
+  });
+
+  test('writes a name on every wrap image the camera can see', async () => {
+    const { labels } = await eris();
+    const snow = labels.find(label => label.name === 'SNOW ISLAND')!;
+    // A point crosses no seam of its own, but a camera wider than the surface sees the same
+    // point several times over. SNOW ISLAND's origin is cell 32, and a camera two and a half
+    // surfaces wide has three images of it on the frame.
+    const images = layOutSurfaceLabels(
+      [snow],
+      {
+        cx: snow.at.x + SURFACE_CELLS,
+        cz: snow.at.z,
+        span: 2.5 * SURFACE_CELLS
+      },
+      { height: 400, width: 1200 },
+      METRICS
+    ).placed;
+    expect(images).toHaveLength(3);
+    // Each one is a whole surface apart on screen, and they are all the same name.
+    expect(new Set(images.map(label => label.id)).size).toBe(1);
+    const across = images.map(label => label.x).sort((a, b) => a - b);
+    expect(across[1]! - across[0]!).toBeCloseTo(across[2]! - across[1]!, 6);
+  });
+
+  test('withholds nothing for a name that is off screen', async () => {
+    const { labels } = await eris();
+    const capital = labels.find(label => label.name === 'CAPITAL CITY')!;
+    const away = layOutSurfaceLabels(
+      [capital],
+      { cx: 2048, cz: 2048, span: 64 },
+      FRAME,
+      METRICS
+    );
+    // Off screen is not withheld: a camera leaves most of a surface behind it, and calling
+    // those names suppressed would be untrue.
+    expect(away.placed).toHaveLength(0);
+    expect(away.suppressed).toBe(0);
   });
 });
