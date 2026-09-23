@@ -205,6 +205,90 @@ h2 {
   background: var(--panel);
 }
 
+#search {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+#search h2,
+#search-model h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+#search-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+#search-form input,
+#search-form select,
+#search button {
+  padding: 0.2rem 0.4rem;
+  color: var(--text);
+  font-family: inherit;
+  font-size: inherit;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  background: var(--background);
+}
+
+#search button {
+  margin-top: 0.4rem;
+  cursor: pointer;
+}
+
+.search-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.search-filters label {
+  display: flex;
+  flex: 1 1 8rem;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+#search-status {
+  margin: 0.6rem 0 0.3rem;
+  color: var(--muted);
+}
+
+#search-results,
+#search-model ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Each list scrolls on its own, so a long answer never pushes the selection panel out of reach. */
+#search-results,
+#search-model {
+  max-height: 18rem;
+  overflow-y: auto;
+}
+
+#search-results li,
+#search-model li {
+  margin-bottom: 0.45rem;
+}
+
+.search-context {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85em;
+  overflow-wrap: anywhere;
+}
+
+#search-model {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border);
+}
+
 #panel {
   padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--border);

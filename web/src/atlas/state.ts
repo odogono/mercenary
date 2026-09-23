@@ -7,6 +7,7 @@
 
 import { STREET_SPAN } from './bodyRange.ts';
 import type { MapPoint } from './mapView.ts';
+import { isSearchKind, type SearchKind } from './search.ts';
 
 export interface AtlasView {
   readonly span: number;
@@ -14,8 +15,32 @@ export interface AtlasView {
   readonly z: number;
 }
 
+/// What the search section is showing (#453). It travels with every Range and every selection,
+/// so a reader can move about the map, and hop between Ranges, without losing the question they
+/// were asking.
+export interface AtlasSearch {
+  /// The Body results must belong to, or null for the whole System. Separate from the map's own
+  /// `body`: which Body is searched and which Body is shown are two different choices.
+  readonly bodyId: string | null;
+  readonly kind: SearchKind | null;
+  /// The Model whose Instances the search section lists, or null.
+  readonly modelId: string | null;
+  readonly q: string;
+}
+
+export const NO_SEARCH: AtlasSearch = {
+  bodyId: null,
+  kind: null,
+  modelId: null,
+  q: ''
+};
+
 export type AtlasState =
-  | { readonly level: 'system'; readonly view: AtlasView | null }
+  | {
+      readonly level: 'system';
+      readonly search?: AtlasSearch;
+      readonly view: AtlasView | null;
+    }
   | {
       readonly bodyId: string;
       /// The picked Damocles Instance's record id, on the same footing as the other two and
@@ -30,6 +55,11 @@ export type AtlasState =
       /// together with one: a Place lies inside a Settlement but is not part of it, and the
       /// panel names one thing at a time.
       readonly placeId: string | null;
+      readonly search?: AtlasSearch;
+      /// The picked Settlement, by the island record that carries it, on the same footing as
+      /// the others. Distinct from `islandId` even though both name an island record: a
+      /// Settlement is the area a Structure Workspace publishes, not the island under it.
+      readonly settlementId?: string | null;
       readonly view: AtlasView | null;
     };
 
@@ -54,18 +84,36 @@ const readView = (params: URLSearchParams): AtlasView | null => {
 /// A `?body=` naming no recovered Body falls back to the System Range rather than opening an
 /// empty Body, so a stale deep link lands somewhere true. It drops the camera with it: those
 /// numbers were written in the missing Body's units and mean nothing in the System's.
+/// Search survives whatever the map does with the rest of the URL: an unknown `searchBody` or
+/// `kind` widens to the whole System or every kind rather than refusing the query.
+const readSearch = (
+  params: URLSearchParams,
+  bodyIds: readonly string[]
+): AtlasSearch => {
+  const kind = params.get('kind');
+  const bodyId = params.get('searchBody');
+  const modelId = params.get('model');
+  return {
+    bodyId: bodyId !== null && bodyIds.includes(bodyId) ? bodyId : null,
+    kind: kind !== null && isSearchKind(kind) ? kind : null,
+    modelId: modelId !== null && modelId.trim() !== '' ? modelId : null,
+    q: params.get('q') ?? ''
+  };
+};
+
 export const readAtlasState = (
   search: string,
   bodyIds: readonly string[]
 ): AtlasState => {
   const params = new URLSearchParams(search);
+  const searched = readSearch(params, bodyIds);
   const bodyId = params.get('body');
   if (bodyId !== null && !bodyIds.includes(bodyId)) {
-    return SYSTEM_RANGE;
+    return { ...SYSTEM_RANGE, search: searched };
   }
   const view = readView(params);
   if (bodyId === null) {
-    return { level: 'system', view };
+    return { level: 'system', search: searched, view };
   }
   const named = (key: string) => {
     const value = params.get(key);
@@ -77,6 +125,8 @@ export const readAtlasState = (
     islandId: named('island'),
     level: 'body',
     placeId: named('place'),
+    search: searched,
+    settlementId: named('settlement'),
     view
   };
 };
@@ -91,6 +141,9 @@ export const atlasSearch = (state: AtlasState): string => {
     if (state.placeId) {
       params.set('place', state.placeId);
     }
+    if (state.settlementId) {
+      params.set('settlement', state.settlementId);
+    }
     if (state.instanceId) {
       params.set('instance', state.instanceId);
     }
@@ -99,6 +152,19 @@ export const atlasSearch = (state: AtlasState): string => {
     params.set('x', round(state.view.x));
     params.set('z', round(state.view.z));
     params.set('span', round(state.view.span));
+  }
+  const searched = state.search ?? NO_SEARCH;
+  if (searched.q) {
+    params.set('q', searched.q);
+  }
+  if (searched.kind) {
+    params.set('kind', searched.kind);
+  }
+  if (searched.bodyId) {
+    params.set('searchBody', searched.bodyId);
+  }
+  if (searched.modelId) {
+    params.set('model', searched.modelId);
   }
   const search = params.toString();
   return search ? `?${search}` : '';

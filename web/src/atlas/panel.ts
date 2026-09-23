@@ -1,4 +1,9 @@
-import type { Instance, Island, Place } from '../catalogue/data.ts';
+import type {
+  Instance,
+  Island,
+  ModelSummary,
+  Place
+} from '../catalogue/data.ts';
 import type { GammaBody, GammaSystemDocument } from '../flyover/documents.ts';
 import type { Footprint } from './footprint.ts';
 import type { MapPoint } from './mapView.ts';
@@ -406,6 +411,124 @@ export const footprintProvenance = (
     : [])
 ];
 
+/// Why a picked Instance has no footprint on the map, so the marker standing in for one is
+/// explained rather than left to look like a footprint that failed to draw.
+export type FootprintAbsence =
+  /// Its footprint exists and the band is too wide to draw it.
+  | 'band'
+  /// Its Model recovered neither an exterior nor a plan.
+  | 'gap'
+  /// A ground record: the cell's own surface.
+  | 'ground'
+  /// A building detail, drawn inside a structure rather than on the surface.
+  | 'interior'
+  /// An object: a thing standing on the ground rather than a building on it.
+  | 'object'
+  /// A structure whose Model is still being read.
+  | 'pending';
+
+/// A picked Instance the footprint layer does not draw, found by its own record rather than
+/// through a rectangle, with the marker the map draws at its recovered position instead.
+export interface InstanceSelection {
+  readonly absence: FootprintAbsence;
+  /// Its recovered position, in Body Coordinates.
+  readonly at: MapPoint;
+  readonly instance: Instance;
+  readonly model: ModelSummary | undefined;
+}
+
+const ABSENCE_NOTE: Readonly<Record<FootprintAbsence, string>> = {
+  band: 'Its footprint is drawn from the Street Range; zoom in to see it. The marker shows where it stands meanwhile.',
+  gap: 'No footprint is displayed: its Model recovered neither an exterior nor a plan to measure one from. The marker shows its recovered position instead.',
+  ground:
+    'No footprint is displayed: a ground record is its cell\u2019s own surface rather than something standing on it. The marker shows where the Catalogue places it.',
+  interior:
+    'No footprint is displayed: a building detail is drawn inside a structure rather than on the surface. The marker shows where the Catalogue places it.',
+  object:
+    'No footprint is displayed: an object stands on the ground rather than being built on it. The marker shows its Catalogue placement.',
+  pending:
+    'Its footprint is still being measured from its Model. The marker shows its recovered position meanwhile.'
+};
+
+export const instanceFacts = (
+  selection: InstanceSelection
+): readonly BodyFact[] => [
+  { label: 'Instance', value: selection.instance.id },
+  ...(selection.model
+    ? [
+        {
+          label: 'Model',
+          value: `${selection.model.name} \u00b7 ${selection.model.id}`
+        }
+      ]
+    : []),
+  {
+    label: 'Catalogue placement',
+    value: `${selection.at.x.toFixed(3)} / ${selection.at.z.toFixed(3)} Surface Cells`
+  }
+];
+
+export const instanceProvenance = (
+  selection: InstanceSelection
+): readonly string[] => [
+  ABSENCE_NOTE[selection.absence],
+  ...(selection.model?.kind === 'object'
+    ? [
+        'A Catalogue placement is where the Catalogue records this object in the one observed ' +
+          'world load. It is not its live Object Residence: a Drop in play moves an object, and ' +
+          'the Atlas is sessionless and follows no play.'
+      ]
+    : [])
+];
+
+/// A picked Settlement, by the island record carrying it, with what its Structure Workspace
+/// holds of roads.
+export interface SettlementSelection {
+  readonly island: Island;
+  readonly roads: RoadRecovery;
+  readonly runs: number;
+}
+
+export const settlementFacts = (
+  selection: SettlementSelection
+): readonly BodyFact[] => [
+  { label: 'Carried by', value: selection.island.id },
+  {
+    label: 'Workspace origin X/Z',
+    value: `${selection.island.origin[0]} / ${selection.island.origin[1]} Surface Cells`
+  },
+  {
+    label: 'Structure group',
+    value: `$${selection.island.structureGroup.toString(16).toUpperCase().padStart(2, '0')}`
+  },
+  {
+    label: 'Roads',
+    value: roadValue({ recovery: selection.roads, runs: selection.runs })
+  },
+  {
+    label: 'Coastline',
+    value: selection.island.coastline.vertices.length
+      ? `${selection.island.coastline.vertices.length} vertices, on the record carrying it`
+      : 'none recovered on the record carrying it'
+  }
+];
+
+export const settlementProvenance = (
+  selection: SettlementSelection
+): readonly string[] => [
+  'Recovered: the area name published by the Structure Workspace this island record binds, ' +
+    'written at the workspace origin. The Settlement is that named area, not the island: a ' +
+    'Settlement need not lie on an island, and an island need not carry a Settlement.',
+  ...(selection.island.coastline.vertices.length
+    ? []
+    : [
+        'The record carrying this Settlement has no coastline, so no island is drawn under it. ' +
+          'Its workspace origin is recovered all the same, and that is where the map centres it.'
+      ]),
+  'Damocles Places standing in it are recovered from different records, and are not listed ' +
+    'here as its contents.'
+];
+
 const row = (label: string, value: string): HTMLElement => {
   const div = document.createElement('div');
   div.className = 'panel-row';
@@ -430,11 +553,14 @@ const paragraph = (text: string, className = ''): HTMLElement => {
 export interface PanelSelection {
   /// This Body's footprints, from the band that draws them; absent outward of it.
   readonly footprints?: FootprintSelection | null | undefined;
+  /// A picked Instance the footprint layer does not draw.
+  readonly instance?: InstanceSelection | null | undefined;
   readonly island?: Island | null | undefined;
   readonly place?: PlaceSelection | null | undefined;
   /// This Body's roads, from the band that draws them; absent outward of it, where a notice
   /// about a layer the reader could not have seen would say nothing.
   readonly roads?: RoadSelection | null | undefined;
+  readonly settlement?: SettlementSelection | null | undefined;
   /// The Body whose surface is drawn on its own disc at the System Range, if any.
   readonly surfaceOnDisc?: string | undefined;
 }
@@ -447,7 +573,15 @@ export const renderPanel = (
   body: GammaBody | null,
   selection: PanelSelection = {}
 ): void => {
-  const { footprints, island, place, roads, surfaceOnDisc } = selection;
+  const {
+    footprints,
+    instance,
+    island,
+    place,
+    roads,
+    settlement,
+    surfaceOnDisc
+  } = selection;
   root.replaceChildren();
   if (!body) {
     root.append(
@@ -499,6 +633,40 @@ export const renderPanel = (
       'The Catalogue holds no island record view, so this reaches this Body\u2019s recovered placements · ',
       link
     );
+    root.append(wrapper);
+  }
+  if (settlement) {
+    const heading = paragraph(
+      `Settlement · ${settlement.island.areaName ?? settlement.island.id}`,
+      'panel-heading'
+    );
+    heading.id = 'settlement-heading';
+    root.append(heading);
+    for (const fact of settlementFacts(settlement)) {
+      root.append(row(fact.label, fact.value));
+    }
+    for (const note of settlementProvenance(settlement)) {
+      root.append(paragraph(note, 'muted'));
+    }
+  }
+  if (instance) {
+    const heading = paragraph(instance.instance.name, 'panel-heading');
+    heading.id = 'instance-heading';
+    heading.dataset['absence'] = instance.absence;
+    root.append(heading);
+    for (const fact of instanceFacts(instance)) {
+      root.append(row(fact.label, fact.value));
+    }
+    for (const note of instanceProvenance(instance)) {
+      root.append(paragraph(note, 'muted'));
+    }
+    const link = document.createElement('a');
+    link.href = instanceHref(body.sourceIndex, instance.instance.id);
+    link.className = 'panel-instance';
+    link.id = 'instance-catalogue-link';
+    link.textContent = `${instance.instance.name} in the Catalogue`;
+    const wrapper = paragraph('');
+    wrapper.append(link);
     root.append(wrapper);
   }
   if (place) {

@@ -49,6 +49,46 @@
         <p id="failure" role="alert" hidden></p>
       </section>
       <aside class="sidebar">
+        <section id="search" aria-labelledby="search-heading">
+          <h2 id="search-heading">Search</h2>
+          <form id="search-form" role="search">
+            <label for="search-q">Name or record id</label>
+            <input
+              id="search-q"
+              type="search"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <div class="search-filters">
+              <label
+                >Kind
+                <select id="search-kind">
+                  <option value="">Every kind</option>
+                  <option value="body">Bodies</option>
+                  <option value="settlement">Settlements</option>
+                  <option value="place">Damocles Places</option>
+                  <option value="model">Models</option>
+                  <option value="instance">Instances</option>
+                </select></label
+              >
+              <label
+                >Body
+                <select id="search-body">
+                  <option value="">Whole System</option>
+                </select></label
+              >
+            </div>
+          </form>
+          <p id="search-status" role="status"></p>
+          <button id="search-retry" type="button" hidden>Try again</button>
+          <ol id="search-results"></ol>
+          <button id="search-more" type="button" hidden></button>
+          <section
+            id="search-model"
+            aria-label="Model placements"
+            hidden
+          ></section>
+        </section>
         <section id="panel" aria-label="Selection"></section>
         <section class="roster-section">
           <h2>Roster</h2>
