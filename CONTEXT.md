@@ -47,11 +47,11 @@ One enclosed underground space, with its own wireframe, its own local coordinate
 _Avoid_: Level, chamber, interior, zone, area
 
 **Occupancy**:
-What the player is currently inside, being either on foot or aboard one identified resident object that admits them — in Targ always a craft, in Damocles a craft or a seat.
+What the player is currently inside, being either on foot or aboard one identified resident object that admits them — in Targ always a craft, in Damocles a craft or a seatable object.
 _Avoid_: Vehicle state, mount, mode
 
 **Vehicle Key**:
-The resident object a Damocles craft demands before it admits the player. It is paired to one craft by the original's table relation rather than by its name, admits only while it is in the Carried Stack, and is neither consumed by boarding nor remembered once dropped.
+The resident object a Damocles craft demands before it admits the player. Each craft has its own, which need not be named for it; the craft admits the player only while its Vehicle Key is in the Carried Stack, and boarding does not consume it.
 _Avoid_: Unlock, craft key, permission, key flag
 
 **Object Residence**:

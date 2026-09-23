@@ -3,6 +3,7 @@
 Accepted, 2026-09-20, for the [Damocles Occupancy map](https://github.com/odogono/mercenary/issues/403).
 
 _(Amended 2026-09-23, issue #407: the seated eye height is **recovered**, not derived. Boarding sets the eye to the craft's resident position plus 63 in Y at `$05437A`–`$054384`, the same 63 as on foot, for every slot, and the boarded captures of `V.I.P. LIMO` and `EAGLE NINE S E` both read 63. No model's Y bounds take part, so the consequence below that derives it from them is withdrawn. The gate also has an eighth guard, not seven: after the key test, `$054338`–`$05434E` refuses silently unless the object's model record carries the single-Y-turn orientation command. See [the board and leave paths note](../research/damocles-board-leave-paths.md). The decision itself, and the rejected alternative's reasoning, stand.)_
+
 A Damocles Gameplay Session may put the player aboard a resident object that admits them. The
 recovered board gate is delivered whole: admission, refusal with the recovered message the original
 chooses, and leaving again, with the object's Object Residence removed on admission and restored at
@@ -53,7 +54,7 @@ routine, or a generalised Object Residence and Occupancy, that Targ and Damocles
 It is rejected. The two implementations do not have the same shape, and only one of them exists.
 Targ's boarding has three guards (in reach, already aboard, is a craft), no Vehicle Key concept at
 all, numeric slot identity, and a `gone` arm in its Object Residence. Damocles has seven guards
-(reach, region flag bit 14, slot 0, the boardable bound at slot 23, already aboard, the VOID staging
+(eight, per the 2026-09-23 amendment) (reach, region flag bit 14, slot 0, the boardable bound at slot 23, already aboard, the VOID staging
 Body `$78`, and bit 7 of the per-craft key byte at `$7272 + slot * 4`), a per-craft key byte, string
 instance identity, and no `gone` arm. Generalising from the one working implementation would put
 Targ's shape on Damocles by default, because Targ's is the one with code behind it and every
@@ -78,7 +79,7 @@ this map from closing.
 - The gate's constants — the boardable bound, the no-key exemptions, slot 7's own refusal and the
   `+178` key pairing — are facts about the original's tables and are published per instance in the
   Damocles Catalogue under ADR 0043's provenance rule, not compiled into session code.
-- Seated eye height is `derived` from each model's recovered Y bounds. No boarded Pose is recovered
-  for any craft.
+- Seated eye height is `derived` from each model's recovered Y bounds. _(Withdrawn by the
+  2026-09-23 amendment: it is recovered, and is 63.)_ No boarded Pose is recovered for any craft.
 - This ADR changes no application code, no `CONTEXT.md` entry, no payload and no schema. The
   contract and the implementation follow as the other children of #403.

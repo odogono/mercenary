@@ -4,7 +4,7 @@ Working-Authority Evidence for
 [#407](https://github.com/odogono/mercenary/issues/407), recovered 2026-09-23 while
 bounding the boarding admission contract. [The arrival-routes note](damocles-arrival-routes.md#the-board-gate)
 recovered the board gate's guards and its refusal chooser, and
-[#404](damocles-vehicle-key-gate.md) settled the key test. Neither note decoded what
+[the vehicle-key gate note](damocles-vehicle-key-gate.md) settled the key test. Neither note decoded what
 the routine does **after** its last guard passes, nor the leave path beyond the two
 instructions [the V.I.P. limo note](damocles-vip-limo.md#what-the-draw-path-reads)
 needed for the instance angle. This note closes both, because the contract needs
@@ -133,7 +133,7 @@ The `+ $3F` at `$05437E` is the same 63 the on-foot height takes at `$057CFC` an
 `web/damocles/eris.json` already carries as the recovered eye height. It is one
 instruction for every slot, with no per-model term, so the model's Y bounds play no part.
 
-Three captures confirm it at runtime:
+Four boarded samples confirm it at runtime, against the on-foot baseline:
 
 | Capture                                        | Occupancy               | `$7AB0` | Body Y `$7A96` | Scene camera Y `$7A30` |
 | ---------------------------------------------- | ----------------------- | ------- | -------------- | ---------------------- |

@@ -16,11 +16,11 @@ no note had done. That decode is recorded in
 [the board and leave paths note](../research/damocles-board-leave-paths.md), and it changes
 three things #403 had assumed:
 
-1. **The seated eye height is recovered, not derived.** Boarding sets the eye to the craft's
+1. **The seated eye height is recovered, not derived.** Boarding sets the Pose position to the craft's
    resident position plus 63 in Y, the same 63 as on foot, with no per-model term. The
    boarded captures read 63 for `V.I.P. LIMO` and `EAGLE NINE S E`. No model's Y bounds take
-   part, and #408 has no seated eye height to publish. ADR 0047's consequence bullet is
-   amended to say so.
+   part, and #408 has no seated eye height to publish. ADR 0047 carries a dated
+   amendment saying so.
 2. **The gate has an eighth guard.** After the key test, a board is refused silently unless
    the object's model record opens with the single-Y-turn orientation command. `ATTACK SHIP`
    and `NEUTRON FUEL` fail it whatever else holds.
@@ -42,7 +42,7 @@ appears nowhere in this contract.
 | Key test `$054332` as `$6FAA + (slot + 178) × 4`, bit 7                         | the Vehicle Key is a carried requirement; four drop/retake replays on two craft   | [vehicle-key gate](../research/damocles-vehicle-key-gate.md)                                                                    |
 | Region guard `$054310`                                                          | exercised by pressing `B` indoors; refuses silently                               | [vehicle-key gate](../research/damocles-vehicle-key-gate.md#the-region-flag-at-054310--exercised-by-an-ordinary-route)          |
 | VOID guard `$05432A`                                                            | reachable state, unexercisable guard                                              | [vehicle-key gate](../research/damocles-vehicle-key-gate.md#the-void-staging-body-at-05432a--reachable-state-unreachable-guard) |
-| Model guard `$054338`–`$05434E`, board body `$054350`–`$0543BA`, tail `$0542B6` | the eighth guard; eye placement, yaw, residence removal                           | [board and leave paths](../research/damocles-board-leave-paths.md#what-boarding-does)                                           |
+| Model guard `$054338`–`$05434E`, board body `$054350`–`$0543BA`, tail `$0542B6` | the eighth guard; Pose position, heading, residence removal                       | [board and leave paths](../research/damocles-board-leave-paths.md#what-boarding-does)                                           |
 | Leave path `$05449C`–`$05450E`, direct placement `$0546CC`                      | four leave guards; leveling; leaving as a direct-placement drop                   | [board and leave paths](../research/damocles-board-leave-paths.md#what-leaving-does)                                            |
 | Occupancy captures on/boarded/driving/left                                      | residence removed while aboard, coordinates stale, restored at the leave position | [V.I.P. limo](../research/damocles-vip-limo.md#residence-while-boarding-driving-and-leaving)                                    |
 | `key slot = vehicle slot + 178`                                                 | the pairing across the eight recovered pairs                                      | [V.I.P. limo](../research/damocles-vip-limo.md#relationship-to-key--vip-limo)                                                   |
@@ -60,8 +60,8 @@ In the order the Reference Build evaluates it:
 - **The refusal chooser** and all four of its outcomes: slot 1 boards unkeyed, slots 14 and
   above board as seatable objects, slot 7 takes `system-string-22`, every other slot takes
   `system-string-3`.
-- **Boarding**: Object Residence removed, the object becomes the Occupancy, the eye moves to
-  it, and the camera takes its yaw.
+- **Boarding**: Object Residence removed, the object becomes the Occupancy, the Pose moves to
+  it, and the Camera takes its heading.
 - **Leaving**, with its four guards: roll and pitch leveled, the instance angle written back,
   and the object restored to Object Residence at the leave position.
 - **The Object Residence round-trip**, including stale resident coordinates while occupied.
@@ -116,10 +116,10 @@ these tests in order. The first that fails decides the outcome.
 
 | #   | Test                                                                                         | On failure                   | Provenance                                                                                                                                                               |
 | --- | -------------------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | The nearest drawn object is less than **1024** source units from the eye                     | nothing                      | derived: `$054302`'s exponent ≤ 9 under the selection note's float rule                                                                                                  |
-| 2   | The Selection names an object at all (slot 0 is none)                                        | nothing                      | recovered: `$05430A`, `$05431A`                                                                                                                                          |
+| 1   | The nearest drawn object is less than **1024** source units from the Pose position           | nothing                      | derived: `$054302`'s exponent ≤ 9 under the selection note's float rule                                                                                                  |
+| 2   | The Selection names an object at all                                                         | nothing                      | recovered: `$05430A`                                                                                                                                                     |
 | 3   | The current structure region's flags have bit 14 set; with no current region the test passes | nothing                      | recovered: `$054310`, exercised by #404; the no-region pass is derived from the `$C000` fallback [`$5A64A`](../research/damocles-generic-entrance-attachments.md) writes |
-| 4   | The object is boardable: its slot is below 23                                                | nothing                      | recovered: `$05431E`                                                                                                                                                     |
+| 4   | The object is boardable: its slot is between 1 and 22                                        | nothing                      | recovered: `$05431A`, `$05431E`                                                                                                                                          |
 | 5   | The player's Occupancy is on foot                                                            | nothing                      | recovered: `$054324`                                                                                                                                                     |
 | 6   | The player is not on the VOID staging Body                                                   | nothing                      | recovered: `$05432A`; **unexercised**                                                                                                                                    |
 | 7   | The object's paired object is in the Carried Stack, or the object is admitted without one    | the object's refusal message | recovered: `$054332`, `$0542E0`                                                                                                                                          |
@@ -169,7 +169,7 @@ Once admitted, in one step:
 - The object leaves Object Residence. It is neither placed nor carried. The Carried Stack is
   unchanged; boarding does not consume the Vehicle Key.
 - The object becomes the Occupancy.
-- The eye moves to the object's current resident position, raised by the same **63** units as
+- The Pose position moves to the object's current resident position, raised by the same **63** units as
   the on-foot eye height. _Recovered_: `$054374`–`$054388`. The player's position before the
   press plays no part.
 - The camera yaw becomes the object's instance angle byte × 4, which is the byte's 256 steps
@@ -188,7 +188,7 @@ While the Occupancy is an object:
   driving is excluded, and running the on-foot Mover aboard would be a departure. _Authored_,
   as the boundary of this map.
 - **The occupied object is not drawn.** It has no Object Residence, and its catalogue
-  coordinates must not stand in for one. _Recovered_ in effect: the boarded capture holds the
+  coordinates must not stand in for one. _Recovered_: the boarded capture holds the
   object's resident coordinates unchanged while its association words say it is not resident.
 - **`B` is refused silently**, by test 5.
 - **Take, Drop, the Body switch and the cell `goto` do nothing.** _Authored._ No capture
@@ -201,12 +201,12 @@ While the Occupancy is an object:
 When the player presses `L`, the Gameplay Session applies these tests in order. Each refuses
 silently.
 
-| #   | Test                                                | Provenance                                                                                |
-| --- | --------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| 1   | The player's Occupancy is an object                 | recovered: `$0544A0`                                                                      |
-| 2   | The occupied object is in ground contact            | recovered: `$0544A8`; **unexercised**, since nothing aboard leaves the ground             |
-| 3   | The eye is not at sea, by the island classification | recovered: `$0544B0`; **unexercised**, since an immobile object stays where it was placed |
-| 4   | The player is not on the VOID staging Body          | recovered: `$0544B8`; **unexercised**                                                     |
+| #   | Test                                                          | Provenance                                                                                |
+| --- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 1   | The player's Occupancy is an object                           | recovered: `$0544A0`                                                                      |
+| 2   | The occupied object is in ground contact                      | recovered: `$0544A8`; **unexercised**, since nothing aboard leaves the ground             |
+| 3   | The Pose position is not at sea, by the island classification | recovered: `$0544B0`; **unexercised**, since an immobile object stays where it was placed |
+| 4   | The player is not on the VOID staging Body                    | recovered: `$0544B8`; **unexercised**                                                     |
 
 Then, in one step:
 
@@ -215,19 +215,19 @@ Then, in one step:
 - The object's instance angle byte becomes the camera yaw ÷ 4. _Recovered_: `$0544FA`. With
   no Mover aboard, the yaw is still the one boarding set, so the byte is unchanged.
 - The object returns to Object Residence **as a direct-placement Drop would place it** at the
-  point 63 units below the eye: the surface where no structure region is current or the
+  point 63 units below the Pose position: the surface where no structure region is current or the
   region's flags have bit 14 set, and otherwise the structure, in the current region's
   insertion group. _Recovered_: `$0546CC`. Leaving enters the drop after its checks, so it is
   never refused with `system-string-9`.
-- The eye stays where it is. The player is standing on foot at the object's origin.
+- The Pose position stays where it is. The player is standing on foot at the object's origin.
 
 ### The Object Residence round-trip
 
-| Moment | Object Residence                                                | Occupancy  | Eye                            |
-| ------ | --------------------------------------------------------------- | ---------- | ------------------------------ |
-| Before | placed, at its resident position                                | on foot    | wherever the player walked     |
-| Aboard | none; its resident coordinates are stale and not drawn          | the object | the object's position, plus 63 |
-| After  | placed at the point below the eye, by the direct-placement rule | on foot    | unchanged from aboard          |
+| Moment | Object Residence                                                          | Occupancy  | Pose position                  |
+| ------ | ------------------------------------------------------------------------- | ---------- | ------------------------------ |
+| Before | placed, at its resident position                                          | on foot    | wherever the player walked     |
+| Aboard | none; its resident coordinates are stale and not drawn                    | the object | the object's position, plus 63 |
+| After  | placed at the point below the Pose position, by the direct-placement rule | on foot    | unchanged from aboard          |
 
 Because nothing moves aboard, **after equals before** for every surface object: same position,
 same instance angle, same Body. That is a consequence of excluding driving, not a rule. The
@@ -235,18 +235,22 @@ original restores the object wherever the player left it — the `occ-left` capt
 restored somewhere new after driving — and the rule above is written so that a driving map
 inherits it unchanged.
 
-For `AUTHOR'S CHAIR` the round-trip can change its residence. It is structure-resident, and
-leaving re-places it by the eye's own region, which is not necessarily the insertion group it
-started in. That follows from the rule and is derived, not observed.
+For `AUTHOR'S CHAIR` the round-trip does not return what it started with. The chair is
+structure-resident in insertion group `$20`. Boarding it needs bit 14 of the current region's
+flags set, and if the region is unchanged at leaving, the same bit sends the direct-placement
+rule to its surface branch, so the chair comes back in the surface form at its own position.
+Boarding moves the Pose to the chair's origin, so the current region at leaving need not be the
+one the board was pressed in; whether it changes there is not established. All of this is
+derived from instructions and published region flags, not observed.
 
 ## The camera
 
-| Value        | Aboard                                 | Provenance                                                                                                                                              |
-| ------------ | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Eye position | the object's resident position, Y + 63 | recovered: `$05437A`–`$054384`; 63 read in the `occ-boarded`, `occ-driving`, `vehicle-key-carried-board` and `vehicle-key-eagle-carried-board` captures |
-| Yaw          | instance angle byte × 4                | recovered: `$054390`; `$7F` → `$01FC` in `occ-boarded`                                                                                                  |
-| Pitch, roll  | unchanged: level                       | recovered: not written by `$054350`–`$0543BA`                                                                                                           |
-| Eye height   | 63, the same value as on foot          | recovered: one instruction for every slot                                                                                                               |
+| Value         | Aboard                                 | Provenance                                                                                                                                              |
+| ------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pose position | the object's resident position, Y + 63 | recovered: `$05437A`–`$054384`; 63 read in the `occ-boarded`, `occ-driving`, `vehicle-key-carried-board` and `vehicle-key-eagle-carried-board` captures |
+| Heading       | yaw word ← instance angle byte × 4     | recovered: `$054390`; `$7F` → `$01FC` in `occ-boarded`                                                                                                  |
+| Pitch, roll   | unchanged: level                       | recovered: not written by `$054350`–`$0543BA`                                                                                                           |
+| Eye height    | 63, the same value as on foot          | recovered: one instruction for every slot                                                                                                               |
 
 The eye height is a single recovered value, not a per-craft one, and it is the eye height the
 presentation document already carries. #403 and ADR 0047 expected a value derived from each
@@ -298,7 +302,7 @@ is named.
 | Trace                                                            | Expected                                                                 | Evidence                                   |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------ |
 | Walk to `V.I.P. LIMO` with an empty Carried Stack, press `B`     | `VEHICLE KEY REQUIRED` on the Damocles Display; limo resident; on foot   | `limo-no-key-route.json`, two runs         |
-| Take `KEY- V.I.P. LIMO`, walk to the limo, press `B`             | aboard slot 5; limo not drawn; eye at the limo + 63; yaw `$01FC`         | `occ-boarded`, `vehicle-key-carried-board` |
+| Take `KEY- V.I.P. LIMO`, walk to the limo, press `B`             | aboard slot 5; limo not drawn; Pose at the limo + 63; yaw `$01FC`        | `occ-boarded`, `vehicle-key-carried-board` |
 | Aboard, press `L`                                                | on foot at the limo's origin; limo drawn where it was; key still carried | `occ-left` (after driving)                 |
 | Take the key, drop it, press `B` beside the limo                 | `VEHICLE KEY REQUIRED`                                                   | `vehicle-key-drop-board`                   |
 | Drop the key, take it back, press `B`                            | aboard                                                                   | `vehicle-key-drop-retake-board`            |
