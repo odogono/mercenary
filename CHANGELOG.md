@@ -12,17 +12,18 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
-- **The Atlas draws Road Pieces at the Street Range, under fixed-width centre
-  lines.** Each captured road cell's **Drawn Record**, the ground record it
-  actually draws, now lies under its run in its recovered face colours and
-  face order. That covers pads and aprons a placement put there instead of the
-  **Selected Piece**. At the Street Range a Settlement reads like the game's
-  view from the air. The 478 cells on the 20 image-derived networks have a
-  Selected Piece and no Drawn Record. They keep the centre line alone, and the
-  status line and panel count them rather than filling them with another
-  cell's geometry (#460). The centre lines are a fixed 2 pixels at every zoom.
-  They were a fifth of a Surface Cell wide, which grew past twenty pixels at
-  the Street Range. `CONTEXT.md` gains **Road Piece**, **Selected Piece** and
+- **The Atlas draws Road Pieces at the Street Range.** Each captured road
+  cell's **Drawn Record**, the ground record it actually draws, is drawn in its
+  recovered face colours and face order. That covers pads and aprons a
+  placement put there instead of the **Selected Piece**. The Drawn Records take
+  the place of the network's gold centre line, so at the Street Range a
+  Settlement reads like the game's view from the air, with its own marking down
+  the middle of the road. The 478 cells on the 20 image-derived networks have a
+  Selected Piece and no Drawn Record. They keep the centre line, and the status
+  line and panel count them rather than filling them with another cell's
+  geometry (#460). The centre lines are a fixed 2 pixels at every zoom. They
+  were a fifth of a Surface Cell wide, which grew past twenty pixels at the
+  Street Range. `CONTEXT.md` gains **Road Piece**, **Selected Piece** and
   **Drawn Record** (#459).
 
 - **The Gamma System does not orbit; its Bodies turn.** The 32-slot rate table

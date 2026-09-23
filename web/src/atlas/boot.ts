@@ -603,10 +603,17 @@ const drawBodyRange = () => {
           frame.height / Math.max(frame.width, 1)
         )
       : [];
+  const pieces = showsRoadPieces(band) ? (roadPieces?.drawn ?? []) : [];
+  // Where a network's Drawn Records are drawn, they are the road and its centre line would
+  // only hide the game's own marking down the middle of it. An image-derived network has no
+  // pieces to draw, so it keeps its line, and a captured one keeps it until its Models land.
+  const pieced = new Set(pieces.map(piece => piece.networkId));
   const roads = {
     gaps: inView.filter(settlement => settlement.road === null),
-    networks: showsRoads(band) ? (surface?.roads ?? []) : [],
-    pieces: showsRoadPieces(band) ? (roadPieces?.drawn ?? []) : []
+    networks: showsRoads(band)
+      ? (surface?.roads ?? []).filter(road => !pieced.has(road.id))
+      : [],
+    pieces
   };
   // The band decides which layers are drawn and which groups are in frame, and the panel
   // describes what the reader is looking at, so a change in either re-renders it — the same

@@ -739,13 +739,14 @@ test('the Settlement Range draws a Settlement\u2019s recovered road network', as
   );
   expect(await piecePixels(page)).toBe(0);
 
-  // The same lines stay at the Street Range, where the footprints will sit over them (#413).
+  // At the Street Range Capital City's captured Drawn Records take the lines' place: they are
+  // the road, and the gold would only hide the game's own marking down its middle (#459).
   await page.goto('/damocles/atlas?body=eris&x=72&z=136&span=2');
   await expect(page.locator('#system-scale')).toContainText('Street Range');
-  await expect(page.locator('#status')).toContainText('37 road runs', {
+  await expect(page.locator('#status')).toContainText('88 Road Pieces drawn', {
     timeout: 20_000
   });
-  expect(await roadPixels(page)).toBeGreaterThan(0);
+  expect(await roadPixels(page)).toBe(0);
 
   // Outward of the Settlement Range the network would be a smudge a few pixels wide, so it is
   // not drawn — and the status line still says it is there and where to go to see it. The count
@@ -763,18 +764,27 @@ test('the Settlement Range draws a Settlement\u2019s recovered road network', as
 /// Capital City's cell (3, 3), a straight on the x run from (1, 3) to (4, 3): its centre line
 /// runs across the middle of the map.
 const STRAIGHT_VIEW = 'body=eris&x=67.5&z=131.5';
+/// KEY WEST's cell (4, 7), a straight on the x run from (0, 7) to (7, 7). The network is
+/// image-derived, so it keeps its centre line at the Street Range.
+const IMAGE_STRAIGHT_VIEW = 'body=eris&x=2564.5&z=3591.5';
 
 test('a road line keeps its width at every zoom', async ({ page }) => {
   // Reported: the line was a fifth of a cell and grew with the zoom, past twenty pixels at the
   // Street Range. It is a fixed stroke now, like every other on the map (#459).
   const widths: number[] = [];
-  for (const span of [20, 4, 1, 0.25]) {
-    await page.goto(`/damocles/atlas?${STRAIGHT_VIEW}&span=${span}`);
-    await expect(page.locator('#status')).toContainText('37 road runs', {
+  for (const [view, span, runs] of [
+    [STRAIGHT_VIEW, 40, '37 road runs'],
+    [STRAIGHT_VIEW, 14, '37 road runs'],
+    [IMAGE_STRAIGHT_VIEW, 1, '17 road runs'],
+    [IMAGE_STRAIGHT_VIEW, 0.25, '17 road runs']
+  ] as const) {
+    await page.goto(`/damocles/atlas?${view}&span=${span}`);
+    await expect(page.locator('#status')).toContainText(runs, {
       timeout: 20_000
     });
-    // Off the centre column and off every cell boundary, where the grid would cross it.
-    widths.push(await roadThickness(page, 0.4));
+    // Just off the centre column, inside the run at every span and clear of the vertical run
+    // at the next cell's centre.
+    widths.push(await roadThickness(page, 0.52));
   }
   for (const width of widths) {
     expect(width).toBeGreaterThan(0);
@@ -794,19 +804,20 @@ test('the Street Range draws each captured road cell\u2019s Drawn Record', async
     { timeout: 20_000 }
   );
   expect(await piecePixels(page)).toBeGreaterThan(0);
-  // The centre line stays over the piece it runs along.
-  expect(await roadPixels(page)).toBeGreaterThan(0);
+  // The pieces are the road here, so no centre line is drawn over them.
+  expect(await roadPixels(page)).toBe(0);
   await expect(page.locator('#panel')).toContainText('Drawn Record');
   await expect(page.locator('#panel')).toContainText('#460');
 
-  // KEY WEST's network is image-derived: its runs are drawn and no piece is invented for them.
-  await page.goto('/damocles/atlas?body=eris&x=2568&z=3592&span=1');
+  // KEY WEST's network is image-derived: its runs stay drawn and no piece is invented for them.
+  await page.goto(`/damocles/atlas?${IMAGE_STRAIGHT_VIEW}&span=1`);
   await expect(page.locator('#system-scale')).toContainText('Street Range');
   await expect(page.locator('#status')).toContainText('KEY WEST', {
     timeout: 20_000
   });
   await expect(page.locator('#status')).toContainText('88 Road Pieces drawn');
   expect(await piecePixels(page)).toBe(0);
+  expect(await roadPixels(page)).toBeGreaterThan(0);
 });
 
 /// Serves the Catalogue with these road networks taken out, the way a regenerated payload that
@@ -1011,8 +1022,8 @@ test('the Street Range draws a derived footprint for each placed structure', asy
     '20 recovered no outline and are not drawn'
   );
   expect(await footprintPixels(page)).toBeGreaterThan(0);
-  // The road network stays under them: the bands are not a hierarchy.
-  expect(await roadPixels(page)).toBeGreaterThan(0);
+  // The road stays under them, as Capital City's Drawn Records: the bands are not a hierarchy.
+  expect(await piecePixels(page)).toBeGreaterThan(0);
 
   // Outward of the Street Range a footprint is a pixel or less, so the layer waits — and the
   // status line still says it is there and where to go to see it.

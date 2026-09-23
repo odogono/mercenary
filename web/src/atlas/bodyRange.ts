@@ -91,8 +91,8 @@ export const LABEL_BAND: Readonly<Record<SurfaceLabelKind, BodyRange>> = {
 /// The Settlement Range rather than the Street Range, because the game itself draws a whole
 /// Settlement's roads from the air (the overhead captures in
 /// `docs/research/damocles-eris-islands.md`) and a network is a 16-cell group, which is exactly
-/// what this band is sized for. At the Street Range the same lines stay, under the footprints
-/// (#413).
+/// what this band is sized for. At the Street Range the same lines stay under the footprints
+/// (#413), except on a network whose Drawn Records are drawn in their place (#459).
 export const ROAD_BAND: BodyRange = 'settlement';
 
 /// Whether a band draws road networks, and so whether it must state the gap where none was
@@ -125,7 +125,7 @@ export const FOOTPRINT_BAND: BodyRange = 'street';
 export const showsFootprints = (band: BodyRange): boolean =>
   BODY_RANGES.indexOf(band) >= BODY_RANGES.indexOf(FOOTPRINT_BAND);
 
-/// The band a road cell's Drawn Record appears at, under the network's centre lines.
+/// The band a road cell's Drawn Record appears at, in place of its network's centre lines.
 ///
 /// The Street Range and no wider, the band footprints share. A recovered road is about 400
 /// engine units across a 65,536-unit Surface Cell, so at the Settlement Range, where a cell is

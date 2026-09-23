@@ -56,8 +56,7 @@ const SETTLEMENT_MARK_RADIUS = 3.5;
 const ROAD = '#d8b25a';
 /// A fixed pixel width at every zoom, like every other stroke on the map. The network is drawn
 /// as the centre lines the runs are, and the width is legibility and carries no recovered
-/// quantity: a line sized to the cell grew past twenty pixels at the Street Range and buried the
-/// Road Pieces it runs along (#459).
+/// quantity: a line sized to the cell grew past twenty pixels at the Street Range (#459).
 const ROAD_WIDTH = 2;
 /// A Road Piece's two-point edges. A hairline, because a recovered road is a fraction of a pixel
 /// wide as the Street Range opens, and the edge is what shows where its markings run.
@@ -375,8 +374,8 @@ const drawLabelMarks = (
 
 /// A Body's surface: sea in the Body's own recovered base colour, every recovered Damocles
 /// Island filled in its own land colour with each of its wrap images, every recovered road
-/// network the band shows drawn over the land it lies on — over its road cells' Drawn Records at
-/// the Street Range — and a Surface Cell grid over the top.
+/// network the band shows drawn over the land it lies on — as its road cells' Drawn Records at
+/// the Street Range, where they were captured — and a Surface Cell grid over the top.
 /// The grid and the seam sit above the land so the coordinate reference stays readable on it,
 /// and the seam is brighter than the grid because a uniform lattice looks identical everywhere.
 export const drawBodySurface = (
@@ -397,8 +396,8 @@ export const drawBodySurface = (
   roads: {
     readonly gaps: readonly SurfaceSettlement[];
     readonly networks: readonly SurfaceRoad[];
-    /// The road cells' Drawn Records, already gated by `showsRoadPieces`, drawn under the
-    /// centre lines.
+    /// The road cells' Drawn Records, already gated by `showsRoadPieces`. A network whose
+    /// pieces are drawn is left out of `networks`: the pieces are its road.
     readonly pieces?: readonly RoadPiece[];
   } = { gaps: [], networks: [] },
   /// The derived footprints this band draws, already gated by `showsFootprints`, and whichever

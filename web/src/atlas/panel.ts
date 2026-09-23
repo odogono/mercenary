@@ -310,14 +310,14 @@ export const roadProvenance = (roads: RoadSelection): readonly string[] => {
         'which are the lines the game itself draws from the air (#441). Each is one Surface ' +
         'Cell wide and drawn as its centre line, placed at the group’s origin in Surface Cells.',
       roads.pieces
-        ? 'Under each centre line is the road cell’s Drawn Record: the ground record the cell ' +
+        ? 'Where a capture recovered them, the road is drawn as its cells’ Drawn Records in place of the centre line: the ground record each cell ' +
             'actually draws, which a placement in the group’s own stream may have put in place ' +
             'of the Selected Piece ($04ECEE), in its recovered face colours and face order. A ' +
             'capture’s record is that cell’s own resolved geometry, already turned by its ' +
             'orientation byte and joined to the scene points its workspace hands it, so it is ' +
             'placed at the cell’s centre and nothing more (#459).'
-        : 'Each road cell’s Drawn Record — the ground record it actually draws — is drawn ' +
-            'under its centre line from the Street Range, where a capture recovered it (#459).'
+        : 'Each road cell’s Drawn Record — the ground record it actually draws — takes the ' +
+            'place of its centre line from the Street Range, where a capture recovered it (#459).'
     );
     if (roads.pieces?.undrawn) {
       notes.push(
